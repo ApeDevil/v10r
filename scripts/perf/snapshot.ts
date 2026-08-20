@@ -14,9 +14,18 @@
  *
  *   podman exec -e NODE_ENV=production v10r bun run build
  *   podman exec -e NODE_ENV=production v10r bun run scripts/perf/snapshot.ts
+ *
+ * --check: measure the build and score it against the budgets.json ceilings
+ * WITHOUT touching the committed snapshot.json. This is the `validate:build`
+ * leg — a pre-ship build check must not dirty the tree (`vr ship` requires it
+ * clean), and the committed snapshot's accepted numbers stay the ratchet
+ * baseline until deliberately regenerated.
  */
 
 import { gzipSync } from 'node:zlib';
+import { checkRatchets, isScoreable, type LabSnapshot } from '$lib/server/perf/snapshot';
+
+const CHECK = process.argv.includes('--check');
 
 const CLIENT_MANIFEST = '.svelte-kit/output/client/.vite/manifest.json';
 const CLIENT_ROOT = '.svelte-kit/output/client';
@@ -179,6 +188,35 @@ async function main() {
 			prerendered_page_count: html?.count ?? 0,
 		},
 	};
+
+	if (CHECK) {
+		const computed = snapshot as LabSnapshot;
+		if (!isScoreable(computed)) {
+			console.error(
+				`[validate:build] build was made with NODE_ENV=${computed.nodeEnv} — dev builds inflate client JS ~9%.`,
+			);
+			console.error('  Rebuild with: podman exec -e NODE_ENV=production v10r bun run validate:build');
+			process.exit(1);
+		}
+		const checks = checkRatchets(computed);
+		console.table(checks);
+		const over = checks.filter((c) => c.exceeds);
+		for (const c of over) {
+			console.error(
+				`[validate:build] ${c.metric} = ${c.value} exceeds the accepted ceiling ${c.ceiling} (${c.slackKb} KB over).`,
+			);
+		}
+		if (over.length > 0) {
+			console.error(
+				'[validate:build] a heavy dependency landed — shrink it, or deliberately re-accept via a snapshot regen.',
+			);
+			process.exit(1);
+		}
+		console.log(
+			`[validate:build] OK — ${checks.length} ratchet(s) within ceilings (production build; committed snapshot.json untouched).`,
+		);
+		return;
+	}
 
 	await Bun.write(OUT, `${JSON.stringify(snapshot, null, '\t')}\n`);
 

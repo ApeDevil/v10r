@@ -10,7 +10,7 @@ category: "Forms & Validation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Forms & Validation · **Tier:** light · **Risk:** medium — authentication flow, delegated to Better Auth client
+**Category:** Forms & Validation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — authentication flow, delegated to Better Auth client
 
 Passwordless login (magic link + OTP) and OAuth forms built directly on the Better Auth client instead of Superforms, since Better Auth already handles rate limiting and token validation.
 

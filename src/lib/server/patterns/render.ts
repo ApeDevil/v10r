@@ -134,7 +134,10 @@ function readmeShowcaseCell(refs: RegRef[]): string {
 function readmeRow(pattern: PatternRecord): string {
 	const page = `${PATTERN_PAGES_DIR}/${pattern.id}.md`;
 	const title = pattern.tier === 'deep' ? `[**${pattern.title}**](${page})` : `[${pattern.title}](${page})`;
-	return `| ${title} | ${readmeDocsCell(pattern.docs)} | ${readmeCodeCell(pattern.code)} | ${readmeShowcaseCell(pattern.showcases)} |`;
+	// Exception badge: only non-proven rows are marked, so the table stays quiet
+	// for the proven majority instead of growing a fifth column.
+	const badge = pattern.maturity === 'proven' ? '' : ` _(${pattern.maturity})_`;
+	return `| ${title}${badge} | ${readmeDocsCell(pattern.docs)} | ${readmeCodeCell(pattern.code)} | ${readmeShowcaseCell(pattern.showcases)} |`;
 }
 
 /** The full marker-delimited README region, markers included. */
@@ -145,6 +148,8 @@ export function renderReadmeIndex(registry: Registry): string {
 		'> rows pointing at docs, code, and proof. Showcase routes live on disk under',
 		'> `src/routes/[[locale=locale]]/(public)/showcases/` — append the route path shown. Routes in parentheses,',
 		'> like (`/desk`), mean there is no showcase; the pattern is live at that app route.',
+		'> Unmarked rows are **proven** (a linked test or showcase, verified at a recorded date); _(implemented)_',
+		'> means the code exists but no proof surface is linked yet, _(planned)_ that it is design-only.',
 		'',
 	);
 	for (const group of registry.groups) {
@@ -246,7 +251,7 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 		);
 	}
 	sections.push(
-		`**Category:** ${categoryTitle(registry, pattern.category)} · **Tier:** ${pattern.tier} · **Risk:** ${pattern.risk}`,
+		`**Category:** ${categoryTitle(registry, pattern.category)} · **Tier:** ${pattern.tier} · **Maturity:** ${pattern.maturity}${pattern.verifiedAt ? ` (verified ${pattern.verifiedAt}${pattern.verifiedSha ? ` @ ${pattern.verifiedSha}` : ''})` : ''} · **Risk:** ${pattern.risk}`,
 		'',
 		pattern.summary,
 		'',

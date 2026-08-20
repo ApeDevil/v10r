@@ -2,6 +2,7 @@
 import { T, useTask } from '@threlte/core';
 import { OrbitControls, useGltf } from '@threlte/extras';
 import { type AnimationClip, AnimationMixer, type Group } from 'three';
+import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
 
 let { currentAnimation }: { currentAnimation: string } = $props();
 
@@ -38,7 +39,7 @@ useTask((delta) => {
 });
 </script>
 
-<T.PerspectiveCamera makeDefault position={[100, 50, 100]}>
+<T.PerspectiveCamera makeDefault={THRELTE_MAKE_DEFAULT} position={[100, 50, 100]}>
 	<OrbitControls target={[0, 30, 0]} />
 </T.PerspectiveCamera>
 <T.DirectionalLight position={[100, 100, 100]} intensity={1} />

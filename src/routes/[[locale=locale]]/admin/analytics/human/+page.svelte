@@ -11,6 +11,7 @@ import { getFormattingLocale } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
 import { formatDuration } from '$lib/utils/format-duration';
+import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 let pairedActive = $state(data.pairedActive);

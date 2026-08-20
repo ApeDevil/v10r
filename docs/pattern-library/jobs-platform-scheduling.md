@@ -10,7 +10,7 @@ category: "Jobs & Scheduling"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Jobs & Scheduling · **Tier:** light · **Risk:** medium — touches deploy config (vercel.json crons) and background execution
+**Category:** Jobs & Scheduling · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — touches deploy config (vercel.json crons) and background execution
 
 Cadence is owned entirely by platform config — vercel.json crons hitting /api/cron/[job] on serverless, or a single flat setInterval scheduler on persistent containers — so the job registry itself never changes when switching hosts.
 
@@ -26,6 +26,10 @@ Cadence is owned entirely by platform config — vercel.json crons hitting /api/
 - `src/lib/server/jobs/scheduler.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/scheduler.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/scheduler.ts))
 - `src/routes/api/cron/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/routes/api/cron) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/routes/api/cron))
 - `vercel.json` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/vercel.json) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/vercel.json))
+
+## Proof
+
+- [`/showcases/jobs`](/showcases/jobs)
 
 ---
 

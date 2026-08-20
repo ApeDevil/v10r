@@ -10,7 +10,7 @@ category: "Architecture & Request Pipeline"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Architecture & Request Pipeline · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** implemented · **Risk:** low — structural pattern, no external services
 
 Describes the Vitest + PGlite testing harness that runs entirely inside the dev container, giving each test an isolated in-process Postgres instance via drizzle-kit's pushSchema.
 

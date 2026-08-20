@@ -8,7 +8,7 @@ category: "AI"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** AI · **Tier:** deep · **Risk:** medium — external embedding/LLM providers with quota limits
+**Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — external embedding/LLM providers with quota limits
 
 A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) feeds two layers: llmwiki TLDR pointer pages as the answer surface over immutable rawrag chunks as the audit trail.
 

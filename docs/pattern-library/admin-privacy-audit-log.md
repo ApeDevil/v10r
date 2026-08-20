@@ -10,7 +10,7 @@ category: "Admin & Privacy"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Admin & Privacy · **Tier:** light · **Risk:** medium — audit integrity and flag correctness affect privileged operations
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — audit integrity and flag correctness affect privileged operations
 
 Admin-side systems for recording an audit trail of privileged actions, publishing site announcements, and toggling feature flags, all under the admin server module.
 

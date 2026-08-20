@@ -12,6 +12,17 @@ export type RefKind = 'file' | 'dir' | 'route' | 'approute' | 'anchor';
  *  `light` = index row (pointers only — both depth fields must stay empty). */
 export type PatternTier = 'deep' | 'light';
 
+/**
+ * Machine-checkable evidence grade, orthogonal to tier (tier = documentation
+ * depth, maturity = proof). Every value is verifiable from the record itself:
+ * `proven` ⇔ at least one tests/showcases ref (whose existence mcp:validate
+ * already enforces) plus a `verifiedAt`/`verifiedSha` attestation;
+ * `planned` ⇔ no proof refs at all; `implemented` = code exists, no linked
+ * proof surface yet. Finer self-declared rungs (unit- vs browser-verified)
+ * were deliberately rejected: a grade no machine can check will rot.
+ */
+export type PatternMaturity = 'planned' | 'implemented' | 'proven';
+
 export interface RegRef {
 	path: string;
 	note?: string;
@@ -48,6 +59,11 @@ export interface PatternRecord {
 	invariants: string[];
 	emulation_notes: string[];
 	risk: string;
+	maturity: PatternMaturity;
+	/** ISO date (YYYY-MM-DD) the proof surface was last verified. Required on `proven`, forbidden otherwise. */
+	verifiedAt?: string;
+	/** Short git sha of the verifying commit (`-dirty` suffix allowed, matching the perf snapshot convention). */
+	verifiedSha?: string;
 }
 
 export interface Registry {
@@ -62,6 +78,8 @@ export const REGISTRY_FILENAME = 'patterns.registry.json';
 
 const REF_KINDS: readonly string[] = ['file', 'dir', 'route', 'approute', 'anchor'];
 const TIERS: readonly string[] = ['deep', 'light'];
+const MATURITIES: readonly string[] = ['planned', 'implemented', 'proven'];
+const VERIFIED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const STRING_LIST_FIELDS = ['capabilities', 'keywords', 'depends_on', 'invariants', 'emulation_notes'] as const;
 const REF_LIST_FIELDS = ['docs', 'code', 'tests', 'showcases'] as const;
@@ -141,6 +159,39 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 		if (Array.isArray(value.docs) && value.docs.length === 0) {
 			errors.push(`${where}.docs: light records still need at least one docs ref`);
 		}
+	}
+	// Maturity contract, enforced structurally (validation here is allow-extra,
+	// so an unchecked field would "work" invisibly and rot):
+	// proven ⇔ proof refs + attestation; planned ⇔ no proof refs; attestation
+	// only on proven.
+	if (typeof value.maturity !== 'string' || !MATURITIES.includes(value.maturity)) {
+		errors.push(`${where}.maturity: must be one of ${MATURITIES.join('|')}`);
+	} else {
+		const proofRefs =
+			(Array.isArray(value.tests) ? value.tests.length : 0) +
+			(Array.isArray(value.showcases) ? value.showcases.length : 0);
+		if (value.maturity === 'proven') {
+			if (proofRefs === 0) {
+				errors.push(`${where}: maturity "proven" requires at least one tests or showcases ref`);
+			}
+			if (typeof value.verifiedAt !== 'string' || !VERIFIED_AT_PATTERN.test(value.verifiedAt)) {
+				errors.push(`${where}.verifiedAt: proven records need a YYYY-MM-DD verification date`);
+			}
+		} else {
+			if (value.maturity === 'planned' && proofRefs > 0) {
+				errors.push(
+					`${where}: maturity "planned" contradicts its tests/showcases refs — use "implemented" or "proven"`,
+				);
+			}
+			if (value.verifiedAt !== undefined || value.verifiedSha !== undefined) {
+				errors.push(
+					`${where}: verifiedAt/verifiedSha are attestations of "proven" — remove them or promote the maturity`,
+				);
+			}
+		}
+	}
+	if (value.verifiedSha !== undefined && (typeof value.verifiedSha !== 'string' || value.verifiedSha.length === 0)) {
+		errors.push(`${where}.verifiedSha: must be a non-empty string when present`);
 	}
 }
 

@@ -30,6 +30,7 @@ function makePattern(overrides: Partial<PatternRecord>): PatternRecord {
 		invariants: [],
 		emulation_notes: [],
 		risk: 'low — test only',
+		maturity: 'implemented',
 		...overrides,
 	};
 }
@@ -44,6 +45,9 @@ const DEEP = makePattern({
 	code: [{ path: 'src/lib/server/alpha', kind: 'dir' }],
 	tests: [{ path: 'src/lib/server/alpha/alpha.test.ts' }],
 	showcases: [{ path: '/showcases/alpha', kind: 'route' }],
+	maturity: 'proven',
+	verifiedAt: '2026-08-20',
+	verifiedSha: 'abc1234',
 });
 
 const LIGHT = makePattern({
@@ -51,6 +55,8 @@ const LIGHT = makePattern({
 	title: 'Light pattern',
 	depends_on: ['alpha-deep'],
 	showcases: [{ path: '/admin/alpha', kind: 'approute', note: 'POST' }],
+	maturity: 'proven',
+	verifiedAt: '2026-08-20',
 });
 
 const REGISTRY: Registry = {
@@ -130,7 +136,14 @@ describe('renderReadmeIndex', () => {
 	it('renders showcase, approute, and empty cells with the README conventions', () => {
 		expect(region).toContain('`/showcases/alpha`');
 		expect(region).toContain('— (`POST /admin/alpha`)');
-		expect(region).toMatch(/\| \[Beta solo\]\(docs\/pattern-library\/beta-solo\.md\) \| .* \| — \| — \|/);
+		expect(region).toMatch(
+			/\| \[Beta solo\]\(docs\/pattern-library\/beta-solo\.md\) _\(implemented\)_ \| .* \| — \| — \|/,
+		);
+	});
+	it('badges only non-proven rows so the proven majority stays quiet', () => {
+		expect(region).toContain('[**Deep pattern**](docs/pattern-library/alpha-deep.md) |');
+		expect(region).not.toContain('[**Deep pattern**](docs/pattern-library/alpha-deep.md) _(');
+		expect(region).toContain('[Beta solo](docs/pattern-library/beta-solo.md) _(implemented)_');
 	});
 	it('omits categories with no patterns', () => {
 		expect(region).not.toContain('### Empty');
@@ -153,6 +166,13 @@ describe('renderPatternPage', () => {
 		expect(page).toContain('_Index card —');
 		expect(page).not.toContain('## Invariants');
 		expect(page).not.toContain('## Emulation notes');
+	});
+	it('renders the maturity grade with its attestation on the metadata line', () => {
+		const proven = renderPatternPage(DEEP, REGISTRY, ALL_PUBLISHED);
+		expect(proven).toContain('**Maturity:** proven (verified 2026-08-20 @ abc1234)');
+		const implemented = renderPatternPage(makePattern({ id: 'beta-solo', category: 'beta' }), REGISTRY, ALL_PUBLISHED);
+		expect(implemented).toContain('**Maturity:** implemented ·');
+		expect(implemented).not.toContain('(verified');
 	});
 	it('links published docs and code-spans unpublished ones', () => {
 		const linked = renderPatternPage(LIGHT, REGISTRY, ALL_PUBLISHED);

@@ -8,7 +8,7 @@ category: "UI Components & Design System"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** UI Components & Design System · **Tier:** deep · **Risk:** low — frontend only
+**Category:** UI Components & Design System · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
 
 A layered component system — Bits UI → primitives (styled atoms) → composites (business logic) → layout (structural wrappers) — styled entirely through CVA → UnoCSS → design-token CSS variables.
 

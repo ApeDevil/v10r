@@ -10,7 +10,7 @@ category: "Jobs & Scheduling"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Jobs & Scheduling · **Tier:** light · **Risk:** low — idempotent, age-filtered deletes/syncs, admin-gated manual trigger
+**Category:** Jobs & Scheduling · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — idempotent, age-filtered deletes/syncs, admin-gated manual trigger
 
 The concrete job implementations — retention sweeps, cleanup, external sync, and delivery — are idempotent slug-keyed functions run by the shared runner and manageable from an admin UI.
 

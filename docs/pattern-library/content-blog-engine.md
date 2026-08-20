@@ -10,7 +10,7 @@ category: "Content & Blog"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content & Blog · **Tier:** light · **Risk:** medium — persists content revisions across locales, multi-author permissions
+**Category:** Content & Blog · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — persists content revisions across locales, multi-author permissions
 
 A DB-backed blog system with posts, immutable revisions, and locale-aware publishing supporting multiple authors.
 

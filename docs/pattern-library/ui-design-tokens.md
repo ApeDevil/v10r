@@ -10,7 +10,7 @@ category: "UI Components & Design System"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** UI Components & Design System · **Tier:** light · **Risk:** low — frontend styling only
+**Category:** UI Components & Design System · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend styling only
 
 Centralizes breakpoints, fluid typography/spacing clamp() scales, and z-index values in a single tokens.ts file consumed by the UnoCSS theme so no component hardcodes design values.
 

@@ -10,7 +10,7 @@ category: "Database Operations"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Database Operations · **Tier:** light · **Risk:** low — dev-time workflow/config, no runtime dependency
+**Category:** Database Operations · **Tier:** light · **Maturity:** implemented · **Risk:** low — dev-time workflow/config, no runtime dependency
 
 Uses drizzle-kit push for schema changes during development and defers versioned generate/migrate SQL files until production holds real data.
 

@@ -3,8 +3,8 @@ set -euo pipefail
 
 # Quality gate: blocks agent completion on test failure.
 # Reads JSON from stdin, runs vitest, returns JSON decision.
-# Note: svelte-check and biome excluded — both have pre-existing errors.
-# Add them back once those are fixed.
+# Deliberately vitest-only: svelte-check adds ~35s per agent stop, so type and
+# lint enforcement stays in `bun run validate` (both are error-free there).
 
 input="$(cat)"
 

@@ -83,7 +83,7 @@ The foundation is declared in root config files and `Containerfile.dev`; nothing
 | Visualization | d3 (force/dag/hierarchy/sankey/zoom), chart.js, @xyflow/svelte, maplibre-gl |
 | Markdown | unified / remark / rehype / shiki |
 
-**Design principles** (`docs/foundation/principles.md`): libraries-over-services, lightweight, standard protocols, free-tier-friendly, svelte-native-first, no-codegen, speed-is-a-feature. The no-codegen constraint is consequential: Better Auth schema is hand-written Drizzle tables rather than auto-generated.
+**Design principles** (`docs/foundation/principles.md`): libraries-over-services, lightweight, standard protocols, free-tier-friendly, svelte-native-first, no-ungated-codegen, speed-is-a-feature. The codegen constraint is consequential in both directions: generated surfaces (pattern pages, MCP excerpts, Paraglide) are deterministic and staleness-gated in `validate`, while the Better Auth schema stays hand-written Drizzle tables rather than auto-generated.
 
 **Connects down to Layer 2** by providing the runtime these patterns run in. No Layer 2 code imports the vendor names directly; it imports from wrappers in `$lib/server/[domain]/`.
 
@@ -223,7 +223,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | Abuse | — | — | `abuse/` | Cross-cutting; wired in hooks |
 | Visual identity | `(public)/showcases/shell/style` | `/api/style/*`, `/api/desk/theme` | `branding/`, `styles/random/` | Picking public; palette CRUD session-gated |
 
-**Self-documenting showcases**: pages under `(public)/showcases/` serve simultaneously as documentation, feature tests, and copy templates. If the showcase works, the feature is proven. This is the repo's primary test strategy for UI patterns.
+**Self-documenting showcases**: pages under `(public)/showcases/` serve simultaneously as documentation, feature tests, and copy templates. If the showcase works, the feature is proven. This is the repo's primary test strategy for UI patterns — and the pattern registry records it as a machine-checked `maturity` grade (`proven` requires a linked test or showcase plus a verification date; `mcp:validate` rejects contradictions).
 
 ---
 

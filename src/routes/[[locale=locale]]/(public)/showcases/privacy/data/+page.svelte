@@ -167,7 +167,7 @@ const categories: DataCategory[] = [
 					<p class="category-when">{cat.when}</p>
 				</div>
 				<div class="basis-tag">
-					<Tag variant="primary" size="sm">
+					<Tag variant="default" size="sm">
 						{cat.basis.article}
 					</Tag>
 					<span class="basis-label">{cat.basis.label}</span>

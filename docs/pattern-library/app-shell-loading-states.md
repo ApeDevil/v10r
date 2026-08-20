@@ -10,7 +10,7 @@ category: "App Shell & Navigation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** App Shell & Navigation · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** App Shell & Navigation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 Defines visual feedback for initial load, navigation, data fetch, action, and streaming states using skeleton screens and a navigation progress bar.
 
@@ -24,6 +24,10 @@ Defines visual feedback for initial load, navigation, data fetch, action, and st
 
 - `src/lib/components/primitives/skeleton/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/primitives/skeleton) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/primitives/skeleton))
 - `src/lib/components/shell/NavigationProgress.svelte` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/shell/NavigationProgress.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/shell/NavigationProgress.svelte))
+
+## Proof
+
+- [`/showcases/ui/components/primitives`](/showcases/ui/components/primitives) — Skeleton variants in the data-display section
 
 ---
 

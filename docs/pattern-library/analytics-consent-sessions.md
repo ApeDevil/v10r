@@ -10,7 +10,7 @@ category: "Analytics"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Analytics · **Tier:** light · **Risk:** low — reads a consent cookie only, no external service
+**Category:** Analytics · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — reads a consent cookie only, no external service
 
 Session identification switches between a cookie-based id under the analytics consent tier and a cookieless hash(visitorId + UTC day) id under the necessary tier, so both tiers still produce a countable session.
 

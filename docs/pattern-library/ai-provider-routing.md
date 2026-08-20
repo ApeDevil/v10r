@@ -10,7 +10,7 @@ category: "AI"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** AI · **Tier:** light · **Risk:** medium — external LLM providers with quota limits
+**Category:** AI · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — external LLM providers with quota limits
 
 Resolver functions pick an active chat, tool-calling, or vision LLM provider per turn and trip a Redis-backed circuit breaker on rate-limited providers.
 
@@ -23,6 +23,10 @@ Resolver functions pick an active chat, tool-calling, or vision LLM provider per
 ## Code
 
 - `src/lib/server/ai/providers.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/providers.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/providers.ts))
+
+## Tests
+
+- `src/lib/server/ai/providers.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/providers.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/providers.test.ts))
 
 ---
 

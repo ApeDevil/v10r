@@ -10,7 +10,7 @@ category: "Anti-Abuse"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Anti-Abuse · **Tier:** light · **Risk:** medium — central point for abuse-signal correctness and auditability
+**Category:** Anti-Abuse · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — central point for abuse-signal correctness and auditability
 
 A shared Decision type and audit trail that lets the anti-abuse layers (captcha, honeypot, rate limits) record and explain their bot/allow decisions consistently.
 

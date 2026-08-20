@@ -8,7 +8,7 @@ category: "Architecture & Request Pipeline"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Architecture & Request Pipeline · **Tier:** deep · **Risk:** low — structural pattern, no external services
+**Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 One backend operations layer ($lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.
 
@@ -23,6 +23,11 @@ One backend operations layer ($lib/server/[domain]/) serves four clients — hum
 ## Code
 
 - `src/lib/server/` — Per-domain modules; canonical shape is [domain]/queries.ts + mutations.ts (+ service.ts only when orchestration spans multiple infra calls) ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server))
+
+## Tests
+
+- `src/lib/server/security/handle-chain.gate.test.ts` — Middleware-order contract of the multi-client wiring; validate gate — runs on every bun run validate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/security/handle-chain.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/security/handle-chain.gate.test.ts))
+- `src/lib/api.gate.test.ts` — Adapter-boundary gate: client code reaches /api only through apiFetch ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/api.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/api.gate.test.ts))
 
 ## Invariants
 

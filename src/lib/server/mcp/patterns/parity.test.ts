@@ -21,4 +21,15 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 	it('has exactly six public pattern tools', () => {
 		expect(hostedToolNames).toHaveLength(6);
 	});
+
+	// The tool SET check above cannot catch a field rendered in one runtime's card
+	// but not the other's. Pin the maturity line the same way — by source text —
+	// in both copies of patternCard.
+	it('renders the maturity grade in both runtimes', () => {
+		const hostedSource = readFileSync('src/lib/server/mcp/patterns/registry.ts', 'utf8');
+		for (const source of [stdioSource, hostedSource]) {
+			expect(source).toContain('**Maturity:** ${pattern.maturity}');
+			expect(source).toContain('${hit.pattern.tier}, ${hit.pattern.maturity}');
+		}
+	});
 });

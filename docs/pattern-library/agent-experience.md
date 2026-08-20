@@ -8,7 +8,7 @@ category: "Docs & Agent Experience"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Docs & Agent Experience · **Tier:** deep · **Risk:** low — read-only derived surfaces; no new state
+**Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — read-only derived surfaces; no new state
 
 Five derived surfaces make the repo consumable by coding agents: a root AGENTS.md contract, raw-markdown doc variants with Accept negotiation, an /llms.txt URL map with in-band prior corrections, MCP tool errors that carry machine-actionable recovery steps, and a generated pattern library (README index + per-pattern docs pages) rendered from the pattern registry.
 

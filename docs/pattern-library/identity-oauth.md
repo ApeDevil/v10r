@@ -10,7 +10,7 @@ category: "Identity & Access"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Identity & Access · **Tier:** light · **Risk:** medium — external managed service (OAuth identity providers)
+**Category:** Identity & Access · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — external managed service (OAuth identity providers)
 
 Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's built-in OAuth plugin.
 

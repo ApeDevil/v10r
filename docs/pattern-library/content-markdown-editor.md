@@ -10,7 +10,7 @@ category: "Content & Blog"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content & Blog · **Tier:** light · **Risk:** low — frontend only
+**Category:** Content & Blog · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
 
 A CodeMirror-based source markdown editor with a slash-command palette that auto-inserts custom syntax.
 
@@ -23,6 +23,10 @@ A CodeMirror-based source markdown editor with a slash-command palette that auto
 ## Code
 
 - `src/lib/components/editor/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/editor) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/editor))
+
+## Proof
+
+- [`desk`](desk) (app route, no showcase) — EditorPanel in the desk workspace
 
 ---
 

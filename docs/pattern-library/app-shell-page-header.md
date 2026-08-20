@@ -10,7 +10,7 @@ category: "App Shell & Navigation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** App Shell & Navigation · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** App Shell & Navigation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 A per-page header component (breadcrumbs, title, actions) rendered inside the main content area instead of a global header, keeping page-specific chrome scoped and safe against XSS.
 
@@ -23,6 +23,10 @@ A per-page header component (breadcrumbs, title, actions) rendered inside the ma
 ## Code
 
 - `src/lib/components/composites/page-header/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/composites/page-header) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/composites/page-header))
+
+## Proof
+
+- [`/showcases/shell`](/showcases/shell) — The shell showcase demonstrates the page chrome PageHeader anchors
 
 ---
 

@@ -10,7 +10,7 @@ category: "Database Operations"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Database Operations · **Tier:** light · **Risk:** medium — external managed service (Neon control plane), admin-only destructive op
+**Category:** Database Operations · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — external managed service (Neon control plane), admin-only destructive op
 
 Resets the dev Neon Postgres branch from its production parent through Neon's control-plane API, recording each run in a ledger and surfacing it at an admin-only page.
 

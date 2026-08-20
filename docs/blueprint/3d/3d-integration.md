@@ -183,7 +183,7 @@ This project does **not** hand-roll WebGL feature detection. Scenes are wrapped 
 - **`useTask`, not `useFrame`.** Threlte 8 renamed the per-frame hook. `useFrame` is Threlte 7.
 - **`useGltf` is a store.** Read `$gltf`, and never render scene contents before it resolves — guard with `{#if $gltf}` / `{#await}`.
 - **Morph-target animations fight the customizer.** When a model has morph customization, strip `morphTargetInfluences` tracks from clips before playing, or the mixer overwrites the customizer's values each frame (see `ViewerScene.svelte`).
-- **`makeDefault` type error.** `T.PerspectiveCamera makeDefault` needs a `@ts-ignore` until tsgo supports the conditional type (noted inline in `ViewerScene.svelte`).
+- **`makeDefault` type error.** Threlte declares the prop through a conditional type that TypeScript collapses to `undefined`, so the boolean is a type error while the runtime requires it. All scenes pass `makeDefault={THRELTE_MAKE_DEFAULT}` — one owned cast in `$lib/utils/threlte-workarounds.ts` — because markup `@ts-ignore` comments are not honored by svelte-check.
 - **`state_referenced_locally` on `useGltf`.** Calling `useGltf(model.path)` at script top reads a prop during init; the codebase silences it with `// svelte-ignore state_referenced_locally`.
 - **Code-split per route.** Keep each scene's Three.js imports inside its own route/scene component. Don't pull 3D libs into a shared parent `+layout.ts` — that defeats the per-route split.
 

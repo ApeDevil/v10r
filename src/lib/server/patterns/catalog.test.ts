@@ -19,6 +19,7 @@ const pattern = (id: string, category: string, tier: 'deep' | 'light' = 'light')
 	invariants: tier === 'deep' ? ['x'] : [],
 	emulation_notes: tier === 'deep' ? ['y'] : [],
 	risk: 'low',
+	maturity: 'implemented',
 });
 
 const fixture = {
@@ -49,12 +50,13 @@ describe('buildCatalog', () => {
 		expect(catalog.groups.some((g) => g.title === 'Idle Group')).toBe(false);
 	});
 
-	it('links every pattern to its section page and carries tier + purpose', () => {
+	it('links every pattern to its section page and carries tier + maturity + purpose', () => {
 		const row = catalog.groups[0]?.categories[0]?.patterns[0];
 		expect(row).toEqual({
 			id: 'alpha-deep',
 			title: 'Title of alpha-deep',
 			tier: 'deep',
+			maturity: 'implemented',
 			summary: 'What alpha-deep does.',
 			href: '/docs/pattern-library/alpha-deep',
 		});

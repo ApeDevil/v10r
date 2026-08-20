@@ -18,6 +18,9 @@ export type RefKind = 'file' | 'dir' | 'route' | 'approute' | 'anchor';
 /** `deep` = full emulation card (invariants + emulation notes); `light` = index row (pointers only). */
 export type PatternTier = 'deep' | 'light';
 
+/** Machine-checked evidence grade: proven ⇔ tests/showcases ref + verifiedAt attestation (see mcp/registry.ts). */
+export type PatternMaturity = 'planned' | 'implemented' | 'proven';
+
 export interface RegRef {
 	path: string;
 	note?: string;
@@ -54,6 +57,9 @@ export interface PatternRecord {
 	invariants: string[];
 	emulation_notes: string[];
 	risk: string;
+	maturity: PatternMaturity;
+	verifiedAt?: string;
+	verifiedSha?: string;
 }
 
 export interface Registry {

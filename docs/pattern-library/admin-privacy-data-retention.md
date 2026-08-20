@@ -10,7 +10,7 @@ category: "Admin & Privacy"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Admin & Privacy · **Tier:** light · **Risk:** medium — retention gaps or over-eager purges both carry compliance/data-loss risk
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — retention gaps or over-eager purges both carry compliance/data-loss risk
 
 Scheduled jobs that enforce data-retention policy by purging stale records on a fixed cadence, using the shared backend jobs framework.
 

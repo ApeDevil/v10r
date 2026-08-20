@@ -10,7 +10,7 @@ category: "App Shell & Navigation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** App Shell & Navigation · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** App Shell & Navigation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 Standardizes the anatomy (icon, title, description, action) for UI shown when there is no data — first-run, zero search results, deleted content, or error recovery.
 
@@ -23,6 +23,10 @@ Standardizes the anatomy (icon, title, description, action) for UI shown when th
 ## Code
 
 - `src/lib/components/composites/empty-state/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/composites/empty-state) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/composites/empty-state))
+
+## Proof
+
+- [`/showcases/ui/components/composites`](/showcases/ui/components/composites) — EmptyState in the feedback section
 
 ---
 

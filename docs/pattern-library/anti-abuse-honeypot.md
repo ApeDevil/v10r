@@ -10,7 +10,7 @@ category: "Anti-Abuse"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Anti-Abuse · **Tier:** light · **Risk:** medium — abuse-prevention layer; bypass reduces spam defense
+**Category:** Anti-Abuse · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — abuse-prevention layer; bypass reduces spam defense
 
 A no-interaction bot check combining a hidden form field bots tend to fill with a minimum elapsed-time threshold between render and submit.
 

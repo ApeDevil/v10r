@@ -10,7 +10,7 @@ category: "AI"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** AI · **Tier:** light · **Risk:** medium — external LLM providers with quota limits
+**Category:** AI · **Tier:** light · **Maturity:** implemented · **Risk:** medium — external LLM providers with quota limits
 
 A compact, TOON-style serialization packs structured context data for LLM prompts more densely than JSON, currently implemented as a hand-rolled layout rather than the external @toon-format/toon library.
 

@@ -10,7 +10,7 @@ category: "Internationalization (i18n)"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Internationalization (i18n) · **Tier:** light · **Risk:** low — build-time compiled output, no runtime service
+**Category:** Internationalization (i18n) · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — build-time compiled output, no runtime service
 
 Compile-time translated messages via Paraglide JS v2 using ICU MessageFormat, authored as per-language JSON files that compile to typed functions.
 

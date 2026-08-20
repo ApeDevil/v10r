@@ -1,5 +1,5 @@
 {
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"note": "Two-tier pattern registry for the v10r pattern library — the single source of truth every derived surface is built from: the README Pattern Index, the /docs/pattern-library section (catalog + one page per record), both MCP runtimes, /showcases/mcp, and Vely's pattern tool. Deep records are full emulation cards (invariants + emulation notes required); light records are index rows (pointers only). Every path is repo-relative and validated by mcp/validate-registry.ts. Records point to docs and code — they do not duplicate explanations.",
 	"groups": [
 		{
@@ -169,7 +169,16 @@
 					"note": "Per-domain modules; canonical shape is [domain]/queries.ts + mutations.ts (+ service.ts only when orchestration spans multiple infra calls)"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/security/handle-chain.gate.test.ts",
+					"note": "Middleware-order contract of the multi-client wiring; validate gate — runs on every bun run validate"
+				},
+				{
+					"path": "src/lib/api.gate.test.ts",
+					"note": "Adapter-boundary gate: client code reaches /api only through apiFetch"
+				}
+			],
 			"showcases": [],
 			"invariants": [
 				"Domain functions must not import from @sveltejs/kit or $app/ — binding to the request cycle breaks tool and job reuse.",
@@ -181,7 +190,10 @@
 				"Start every new project with this shape even if only one client exists yet — the second client (AI tool or cron) always arrives.",
 				"Keep adapters thin: a +page.server.ts action or +server.ts route should validate input, call one domain function, map the result."
 			],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-runtime-layers",
@@ -203,11 +215,19 @@
 					"path": "src/hooks.server.ts"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/security/handle-chain.gate.test.ts",
+					"note": "Pins the middleware order the layer model describes"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-codebase-map",
@@ -234,7 +254,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "implemented"
 		},
 		{
 			"id": "architecture-middleware",
@@ -260,11 +281,19 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/security/handle-chain.gate.test.ts",
+					"note": "Pins middleware presence and load-bearing order"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-rest-api",
@@ -294,11 +323,25 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/api.gate.test.ts",
+					"note": "Client fetches to /api must ride apiFetch (CSRF header)"
+				},
+				{
+					"path": "src/lib/server/api/body.test.ts"
+				},
+				{
+					"path": "src/lib/server/api/rate-limit.test.ts"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-error-handling",
@@ -334,7 +377,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-state-management",
@@ -357,11 +403,21 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/state/layer-stack.svelte.test.ts"
+				},
+				{
+					"path": "src/lib/state/run-monitor.svelte.test.ts"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-request-cycle-visualizer",
@@ -405,14 +461,17 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural/demo pattern, no external services"
+			"risk": "low — structural/demo pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-deployment",
 			"tier": "light",
-			"title": "Deployment (Vercel primary, tri-target)",
+			"title": "Deployment (Vercel serverless, container target planned)",
 			"category": "architecture",
-			"summary": "Covers the tri-target deployment strategy — Vercel Node.js (stable), Vercel Bun (experimental), and Koyeb Bun container — sharing one codebase with per-target adapter configuration.",
+			"summary": "Covers the deployment setup — Vercel Node.js serverless is the one wired target (adapter-vercel hardcoded); a Bun container target (Koyeb) is a planned portability goal the job system and env parity already accommodate.",
 			"when_to_use": "Reach for it when configuring or switching the deployment adapter/target for the app.",
 			"capabilities": ["deployment configuration", "adapter selection"],
 			"keywords": ["vercel", "koyeb", "deployment", "adapter"],
@@ -437,7 +496,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — deployment configuration spans external hosting targets (Vercel, Koyeb)"
+			"risk": "medium — deployment configuration spans external hosting targets (Vercel, Koyeb)",
+			"maturity": "implemented"
 		},
 		{
 			"id": "architecture-testing-infra",
@@ -467,7 +527,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "implemented"
 		},
 		{
 			"id": "architecture-pattern-mcp",
@@ -499,7 +560,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — read-only, network-isolated container"
+			"risk": "low — read-only, network-isolated container",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-hosted-mcp",
@@ -540,7 +604,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "architecture-wasm-kernel",
@@ -600,7 +667,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — browser-only compute, no external services; rebuilds need only podman"
+			"risk": "low — browser-only compute, no external services; rebuilds need only podman",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-layout",
@@ -623,10 +693,18 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/shell",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-sidebar",
@@ -661,7 +739,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-navigation",
@@ -685,10 +766,18 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/shell/sidebar",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-keyboard-shortcuts",
@@ -723,7 +812,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-modals",
@@ -758,7 +850,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-toasts",
@@ -793,7 +888,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-session-lifecycle",
@@ -828,7 +926,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-settings",
@@ -859,7 +960,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-style-randomizer",
@@ -895,7 +999,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-loading-states",
@@ -922,10 +1029,19 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/ui/components/primitives",
+					"kind": "route",
+					"note": "Skeleton variants in the data-display section"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-empty-states",
@@ -949,10 +1065,19 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/ui/components/composites",
+					"kind": "route",
+					"note": "EmptyState in the feedback section"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-page-header",
@@ -976,10 +1101,19 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/shell",
+					"kind": "route",
+					"note": "The shell showcase demonstrates the page chrome PageHeader anchors"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "app-shell-quick-search",
@@ -1020,7 +1154,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services"
+			"risk": "low — structural pattern, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-component-system",
@@ -1104,7 +1241,10 @@
 				"Adopt the layer vocabulary first (primitive/composite/layout) — it decides where every new component goes.",
 				"Port the token file before porting any component; components without tokens re-create the ad-hoc styling problem."
 			],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-design-philosophy",
@@ -1130,10 +1270,22 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/ui/tokens",
+					"kind": "route"
+				},
+				{
+					"path": "/showcases/shell/style",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — documentation/convention only"
+			"risk": "low — documentation/convention only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-design-tokens",
@@ -1170,7 +1322,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend styling only"
+			"risk": "low — frontend styling only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-tonal-elevation",
@@ -1205,7 +1360,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only, no runtime side effects"
+			"risk": "low — frontend only, no runtime side effects",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-primitives",
@@ -1240,7 +1398,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-composites",
@@ -1272,7 +1433,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-layout-primitives",
@@ -1304,7 +1468,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-fluid-styling",
@@ -1330,10 +1497,19 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/ui/typography",
+					"kind": "route",
+					"note": "Fluid type scale demo"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-tables",
@@ -1365,7 +1541,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-menus",
@@ -1405,7 +1584,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-split-panes",
@@ -1441,7 +1623,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-typography",
@@ -1473,7 +1658,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ui-decorative",
@@ -1505,7 +1693,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — decorative, no functional impact"
+			"risk": "low — decorative, no functional impact",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "forms-superforms-valibot",
@@ -1544,7 +1735,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — form validation only, no external services"
+			"risk": "low — form validation only, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "forms-basic-forms",
@@ -1580,7 +1774,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — standard crud form pattern"
+			"risk": "low — standard crud form pattern",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "forms-validation-timing",
@@ -1623,7 +1820,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — client/server validation only"
+			"risk": "low — client/server validation only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "forms-multi-step-dynamic",
@@ -1663,7 +1863,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — client-side wizard/form state only"
+			"risk": "low — client-side wizard/form state only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "forms-advanced-patterns",
@@ -1703,7 +1906,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — form ux patterns only"
+			"risk": "low — form ux patterns only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "forms-auth-forms",
@@ -1734,7 +1940,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — authentication flow, delegated to Better Auth client"
+			"risk": "medium — authentication flow, delegated to Better Auth client",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "forms-file-uploads",
@@ -1757,11 +1966,23 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
-			"showcases": [],
+			"tests": [
+				{
+					"path": "src/lib/server/store/blog/upload-ticket.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/db/storage/transfer",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — server-side file handling (sharp, r2 storage)"
+			"risk": "medium — server-side file handling (sharp, r2 storage)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "i18n-locale-routing",
@@ -1792,7 +2013,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — routing/redirect logic only"
+			"risk": "low — routing/redirect logic only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "i18n-messages",
@@ -1828,7 +2052,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — build-time compiled output, no runtime service"
+			"risk": "low — build-time compiled output, no runtime service",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "i18n-formatting",
@@ -1851,11 +2078,24 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
-			"showcases": [],
+			"tests": [
+				{
+					"path": "src/lib/i18n/plurals.test.ts",
+					"note": "CLDR plural-category correctness across locales"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/i18n",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — presentation formatting only"
+			"risk": "low — presentation formatting only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "i18n-db-content",
@@ -1881,7 +2121,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — schema convention, no external services"
+			"risk": "low — schema convention, no external services",
+			"maturity": "implemented"
 		},
 		{
 			"id": "docs-nav-hubs",
@@ -1908,7 +2149,16 @@
 				}
 			],
 			"code": [],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/docs/markdown-urls.test.ts",
+					"note": "Pins every hub URL and H1-title round-trip"
+				},
+				{
+					"path": "src/lib/showcases/docs-mapping.gate.test.ts",
+					"note": "Every showcase docs button must resolve to a published hub entry"
+				}
+			],
 			"showcases": [],
 			"invariants": [
 				"Each documentation directory has a README.md acting as a navigation hub: a 2-3 sentence intro plus a topic table showing which file covers what.",
@@ -1918,7 +2168,10 @@
 				"This is a convention, not code — emulate by writing the hubs, not by copying files.",
 				"Keep hub intros to 2-3 sentences; the topic table is the payload."
 			],
-			"risk": "low — documentation convention only"
+			"risk": "low — documentation convention only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "pattern-index",
@@ -1951,7 +2204,16 @@
 					"note": "Showcase-route cells are validated against this registry's hrefs"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/patterns/render.test.ts",
+					"note": "Pins the generated index/page renderers; staleness is gated by patterns:check in the same validate gate — runs on every bun run validate"
+				},
+				{
+					"path": "src/lib/server/patterns/links.gate.test.ts",
+					"note": "Every registry docs ref must resolve to a published manifest entry"
+				}
+			],
 			"showcases": [],
 			"invariants": [
 				"Coverage source of truth is mcp/patterns.registry.json — the README region between the PATTERN-INDEX markers is generated and must never be hand-edited.",
@@ -1962,7 +2224,10 @@
 				"Anchor the human-readable index to a machine-readable registry and GENERATE it — a hand-maintained twin drifts (this one did: its own row-count claim went stale before the generator existed).",
 				"Showcase-route cells are validated by mcp/validate-registry.ts against src/lib/showcases/registry.ts membership, not mere directory existence."
 			],
-			"risk": "low — documentation artifact"
+			"risk": "low — documentation artifact",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "agent-experience",
@@ -2045,7 +2310,10 @@
 				"Start with AGENTS.md and llms.txt — the standards that won adoption — and advertise them in-page/headers; an unadvertised llms.txt is dead weight.",
 				"Make recovery hints structural (a required parameter on the error constructor), not a style guideline reviewers must remember."
 			],
-			"risk": "low — read-only derived surfaces; no new state"
+			"risk": "low — read-only derived surfaces; no new state",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-postgres-connection",
@@ -2079,7 +2347,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Neon Postgres)"
+			"risk": "medium — external managed service (Neon Postgres)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-schema-type-inference",
@@ -2114,7 +2385,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Neon Postgres)"
+			"risk": "medium — external managed service (Neon Postgres)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-queries-mutations-split",
@@ -2146,7 +2420,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — code organization pattern, no external dependency"
+			"risk": "low — code organization pattern, no external dependency",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-neo4j-connection",
@@ -2181,7 +2458,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Neo4j Aura)"
+			"risk": "medium — external managed service (Neo4j Aura)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-graph-modeling",
@@ -2213,7 +2493,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Neo4j Aura)"
+			"risk": "medium — external managed service (Neo4j Aura)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-graph-traversal",
@@ -2245,7 +2528,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Neo4j Aura)"
+			"risk": "medium — external managed service (Neo4j Aura)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-polyglot-freshness",
@@ -2271,7 +2557,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — spans two external managed services (Postgres, Neo4j)"
+			"risk": "medium — spans two external managed services (Postgres, Neo4j)",
+			"maturity": "implemented"
 		},
 		{
 			"id": "databases-object-storage",
@@ -2311,7 +2598,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Cloudflare R2)"
+			"risk": "medium — external managed service (Cloudflare R2)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "databases-cache",
@@ -2354,7 +2644,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Upstash Redis)"
+			"risk": "medium — external managed service (Upstash Redis)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "db-ops-dev-prod-schema-workflow",
@@ -2380,7 +2673,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — dev-time workflow/config, no runtime dependency"
+			"risk": "low — dev-time workflow/config, no runtime dependency",
+			"maturity": "implemented"
 		},
 		{
 			"id": "db-ops-branch-refresh",
@@ -2416,7 +2710,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (Neon control plane), admin-only destructive op"
+			"risk": "medium — external managed service (Neon control plane), admin-only destructive op",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "db-ops-bootstrap-seed",
@@ -2447,7 +2744,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — dev-time tooling, no production runtime dependency"
+			"risk": "low — dev-time tooling, no production runtime dependency",
+			"maturity": "implemented"
 		},
 		{
 			"id": "identity-passwordless-auth",
@@ -2484,7 +2782,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (email delivery)"
+			"risk": "medium — external managed service (email delivery)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "identity-oauth",
@@ -2516,7 +2817,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external managed service (OAuth identity providers)"
+			"risk": "medium — external managed service (OAuth identity providers)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "identity-route-guards",
@@ -2547,7 +2851,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — application-level authorization logic, no external calls"
+			"risk": "low — application-level authorization logic, no external calls",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "identity-capability-grants",
@@ -2572,11 +2879,19 @@
 					"path": "src/lib/server/auth/grant-requests.ts"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/auth/guards.test.ts",
+					"note": "Covers grant-based capability checks"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — application-level authorization logic, Postgres-backed"
+			"risk": "low — application-level authorization logic, Postgres-backed",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "identity-passkeys",
@@ -2614,7 +2929,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — security-critical auth factor, Redis-backed step-up gate"
+			"risk": "medium — security-critical auth factor, Redis-backed step-up gate",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "identity-user-management",
@@ -2646,7 +2964,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — handles GDPR-sensitive personal data"
+			"risk": "medium — handles GDPR-sensitive personal data",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "anti-abuse-captcha",
@@ -2681,7 +3002,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — bot/abuse defense; misconfiguration or kill-switch misuse weakens protection"
+			"risk": "medium — bot/abuse defense; misconfiguration or kill-switch misuse weakens protection",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "anti-abuse-honeypot",
@@ -2712,7 +3036,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — abuse-prevention layer; bypass reduces spam defense"
+			"risk": "medium — abuse-prevention layer; bypass reduces spam defense",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "anti-abuse-rate-limiting",
@@ -2747,7 +3074,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — throttling correctness affects both abuse defense and legitimate-user access"
+			"risk": "medium — throttling correctness affects both abuse defense and legitimate-user access",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "anti-abuse-ai-budget",
@@ -2778,7 +3108,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — governs AI cost exposure; misconfiguration can allow spend amplification"
+			"risk": "medium — governs AI cost exposure; misconfiguration can allow spend amplification",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "anti-abuse-bot-decision-audit",
@@ -2812,7 +3145,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — central point for abuse-signal correctness and auditability"
+			"risk": "medium — central point for abuse-signal correctness and auditability",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-admin-area",
@@ -2844,7 +3180,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — gates privileged access; guard bugs risk privilege escalation"
+			"risk": "medium — gates privileged access; guard bugs risk privilege escalation",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-gdpr",
@@ -2887,7 +3226,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — legal-compliance surface; incomplete data collection breaches GDPR obligations"
+			"risk": "medium — legal-compliance surface; incomplete data collection breaches GDPR obligations",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-consent-cookies",
@@ -2921,7 +3263,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — consent bugs cause non-compliant cookie writes"
+			"risk": "medium — consent bugs cause non-compliant cookie writes",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-data-retention",
@@ -2953,7 +3298,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — retention gaps or over-eager purges both carry compliance/data-loss risk"
+			"risk": "medium — retention gaps or over-eager purges both carry compliance/data-loss risk",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-pairing",
@@ -2985,7 +3333,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — HMAC cookie and code claiming must resist forgery/replay"
+			"risk": "medium — HMAC cookie and code claiming must resist forgery/replay",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-style-picking",
@@ -3021,7 +3372,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — cosmetic per-visitor theming, no sensitive data involved"
+			"risk": "low — cosmetic per-visitor theming, no sensitive data involved",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-audit-log",
@@ -3053,7 +3407,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — audit integrity and flag correctness affect privileged operations"
+			"risk": "medium — audit integrity and flag correctness affect privileged operations",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "admin-privacy-feedback",
@@ -3085,7 +3442,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — non-sensitive user feedback, spam is the main risk"
+			"risk": "low — non-sensitive user feedback, spam is the main risk",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-tool-harness",
@@ -3161,7 +3521,10 @@
 				"The manifest is not a single file: meta maps in tools/index.ts + risk vocab in tools/_types.ts + the approval rule in policy/governor.ts together form it.",
 				"Write the drift-guard test early — it is what keeps the manifest honest as tools accumulate."
 			],
-			"risk": "high — governs what an LLM is allowed to execute"
+			"risk": "high — governs what an LLM is allowed to execute",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-surfaces",
@@ -3243,7 +3606,10 @@
 				"Start with the read-only surface; add the mutating surface only with the approval gate (see deskbot-approval-gate).",
 				"Route adapters stay thin — both surfaces call the same guard then their orchestrator."
 			],
-			"risk": "high — user-facing LLM behavior and permissions"
+			"risk": "high — user-facing LLM behavior and permissions",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "deskbot-approval-gate",
@@ -3311,7 +3677,10 @@
 				"An earlier design (inline ConfirmCard with a model-minted confirmed=false→true handshake) was superseded and never shipped — do not emulate it; the proposal→approve flow is the proven shape.",
 				"Record who approved and when at the approve route — the audit trail is the point."
 			],
-			"risk": "high — the safety boundary for AI mutation"
+			"risk": "high — the safety boundary for AI mutation",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "layered-rag",
@@ -3392,7 +3761,10 @@
 				"'nRAG' in docs is a concept name only — the code identifier is rawrag/retrieve(); do not search for an nrag module.",
 				"Build the raw layer first; the pointer layer compiles from it and can start empty."
 			],
-			"risk": "medium — external embedding/LLM providers with quota limits"
+			"risk": "medium — external embedding/LLM providers with quota limits",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "retrieval-endpoints",
@@ -3456,7 +3828,10 @@
 				"Keep the chunker pure (no I/O) — that is what makes the door shareable across runtimes.",
 				"Mind embedding-provider daily quotas when re-ingesting a whole corpus."
 			],
-			"risk": "medium — writes to the corpus store; provider quotas apply"
+			"risk": "medium — writes to the corpus store; provider quotas apply",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-chat-assistant",
@@ -3494,7 +3869,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-chatbot-session",
@@ -3517,10 +3895,18 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/ai/chatbot",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — client-side state only, no external calls"
+			"risk": "low — client-side state only, no external calls",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-provider-routing",
@@ -3542,11 +3928,18 @@
 					"path": "src/lib/server/ai/providers.ts"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/providers.test.ts"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-site-awareness",
@@ -3572,7 +3965,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "implemented"
 		},
 		{
 			"id": "ai-graph-rag",
@@ -3608,7 +4002,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-retrieval-observability",
@@ -3639,7 +4036,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-image-metadata",
@@ -3671,7 +4071,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-cost-monitoring",
@@ -3705,7 +4108,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — read-only admin reporting over existing telemetry"
+			"risk": "low — read-only admin reporting over existing telemetry",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-toon-format",
@@ -3732,7 +4138,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "implemented"
 		},
 		{
 			"id": "ai-deskbot",
@@ -3767,7 +4174,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits"
+			"risk": "medium — external LLM providers with quota limits",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "ai-harness-lens",
@@ -3794,11 +4204,21 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/loop/compact.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/policy/governor.test.ts"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — governs the agent loop that drives external LLM providers"
+			"risk": "medium — governs the agent loop that drives external LLM providers",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "toolkits-image-kit",
@@ -3830,7 +4250,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — no persistence of uploaded media, vision-call cost is the main concern"
+			"risk": "low — no persistence of uploaded media, vision-call cost is the main concern",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "analytics-pageview-hook",
@@ -3861,7 +4284,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — server-side telemetry write, no external service"
+			"risk": "low — server-side telemetry write, no external service",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "analytics-consent-sessions",
@@ -3895,7 +4321,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — reads a consent cookie only, no external service"
+			"risk": "low — reads a consent cookie only, no external service",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "analytics-journeys",
@@ -3926,7 +4355,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — client beacon posts to a first-party endpoint only"
+			"risk": "low — client beacon posts to a first-party endpoint only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "analytics-funnels",
@@ -3958,7 +4390,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — read-only aggregate query"
+			"risk": "low — read-only aggregate query",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "analytics-live-feed",
@@ -3994,7 +4429,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — unauthenticated but self-limited (per-IP rate, connection ceiling, hard timeout)"
+			"risk": "low — unauthenticated but self-limited (per-IP rate, connection ceiling, hard timeout)",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "analytics-rollup-cleanup",
@@ -4019,11 +4457,19 @@
 					"path": "src/lib/server/jobs/analytics-cleanup.ts"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/jobs/analytics-rollup.test.ts",
+					"note": "Pins the rollup half; the cleanup job shares the registry plumbing"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — background job scoped to analytics tables, idempotent"
+			"risk": "low — background job scoped to analytics tables, idempotent",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "analytics-my-data-transparency",
@@ -4055,7 +4501,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — read-only authenticated page, no external service"
+			"risk": "low — read-only authenticated page, no external service",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "notifications-router-outbox",
@@ -4089,7 +4538,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — internal queue/dispatch, no direct external call from the router itself"
+			"risk": "low — internal queue/dispatch, no direct external call from the router itself",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "notifications-channels",
@@ -4125,7 +4577,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — outbound sends only, credentials encrypted at rest"
+			"risk": "low — outbound sends only, credentials encrypted at rest",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "notifications-sse-stream",
@@ -4159,7 +4614,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — same-origin authenticated stream, connection-limited"
+			"risk": "low — same-origin authenticated stream, connection-limited",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "notifications-settings-matrix",
@@ -4191,7 +4649,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — user-scoped preference writes only"
+			"risk": "low — user-scoped preference writes only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "notifications-schema-delivery-log",
@@ -4214,11 +4675,21 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/notifications/outbox.test.ts"
+				},
+				{
+					"path": "src/lib/server/jobs/notification-delivery.test.ts"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — schema/reference only"
+			"risk": "low — schema/reference only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "jobs-scheduler",
@@ -4281,7 +4752,10 @@
 				"Jobs are a client of domain modules (multi-client core): a job body should call the same domain functions the UI calls.",
 				"Vercel Hobby tier rejects sub-daily cron schedules at deploy time — plan cadence accordingly."
 			],
-			"risk": "medium — touches deploy config and background execution"
+			"risk": "medium — touches deploy config and background execution",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "jobs-platform-scheduling",
@@ -4314,10 +4788,18 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/jobs",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — touches deploy config (vercel.json crons) and background execution"
+			"risk": "medium — touches deploy config (vercel.json crons) and background execution",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "jobs-registered-catalog",
@@ -4349,7 +4831,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — idempotent, age-filtered deletes/syncs, admin-gated manual trigger"
+			"risk": "low — idempotent, age-filtered deletes/syncs, admin-gated manual trigger",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "pwa-manifest",
@@ -4384,7 +4869,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — static/localized metadata endpoint, no mutation"
+			"risk": "low — static/localized metadata endpoint, no mutation",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "pwa-service-worker",
@@ -4415,7 +4903,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — touches deploy config and can affect every installed client if misconfigured"
+			"risk": "medium — touches deploy config and can affect every installed client if misconfigured",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "pwa-update-flow",
@@ -4438,10 +4929,18 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/pwa",
+					"kind": "route"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — UI prompt only, no forced reload"
+			"risk": "low — UI prompt only, no forced reload",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "pwa-web-push",
@@ -4468,7 +4967,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — no PII in payload, subscriptions capped and pruned per user"
+			"risk": "low — no PII in payload, subscriptions capped and pruned per user",
+			"maturity": "implemented"
 		},
 		{
 			"id": "viz-charts",
@@ -4500,7 +5000,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "viz-plots",
@@ -4532,7 +5035,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "viz-diagrams",
@@ -4564,7 +5070,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "viz-graphs",
@@ -4596,7 +5105,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "viz-maps",
@@ -4628,7 +5140,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "viz-timelines",
@@ -4655,7 +5170,8 @@
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "implemented"
 		},
 		{
 			"id": "3d-threlte-integration",
@@ -4693,7 +5209,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "3d-static-animated-scenes",
@@ -4728,7 +5247,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "3d-model-viewer-customizer",
@@ -4763,7 +5285,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "content-blog-engine",
@@ -4799,7 +5324,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — persists content revisions across locales, multi-author permissions"
+			"risk": "medium — persists content revisions across locales, multi-author permissions",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "content-comments",
@@ -4823,10 +5351,19 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "blog",
+					"kind": "approute",
+					"note": "Comment threads on blog posts"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — persists user-generated content, moderation authority"
+			"risk": "medium — persists user-generated content, moderation authority",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "content-markdown-pipeline",
@@ -4853,11 +5390,18 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/blog/pipeline.test.ts"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — parsing/rendering pipeline, no db writes"
+			"risk": "low — parsing/rendering pipeline, no db writes",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "content-markdown-editor",
@@ -4881,10 +5425,19 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "desk",
+					"kind": "approute",
+					"note": "EditorPanel in the desk workspace"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend only"
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "content-docs-site",
@@ -4916,7 +5469,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — prerendered, no runtime db dependency"
+			"risk": "low — prerendered, no runtime db dependency",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "desk-workspace",
@@ -5023,7 +5579,10 @@
 				"Bump a monotonic focusSeq on every focus write, repeats included — overlays close by watching it, which makes 'AI focused the already-visible panel' still dismiss the drawer.",
 				"Keep closed panels in the panels registry (only the tree entry is removed) — that is what makes close-undo a cheap re-attach instead of a state reconstruction."
 			],
-			"risk": "medium — persists workspace layout locally and via the file registry; no cross-user surface"
+			"risk": "medium — persists workspace layout locally and via the file registry; no cross-user surface",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "desk-spreadsheet-panel",
@@ -5047,10 +5606,18 @@
 				}
 			],
 			"tests": [],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "desk",
+					"kind": "approute"
+				}
+			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — persists spreadsheet data via desk file registry"
+			"risk": "medium — persists spreadsheet data via desk file registry",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "desk-mobile-chrome",
@@ -5095,7 +5662,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — frontend chrome over existing workspace state"
+			"risk": "low — frontend chrome over existing workspace state",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "desk-panel-menus",
@@ -5140,7 +5710,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — client-side menu state"
+			"risk": "low — client-side menu state",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "desk-ai-effects",
@@ -5181,7 +5754,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "low — effects are client-side; mutations sit behind the deskbot approval gate"
+			"risk": "low — effects are client-side; mutations sit behind the deskbot approval gate",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		},
 		{
 			"id": "desk-explorer",
@@ -5222,7 +5798,10 @@
 			],
 			"invariants": [],
 			"emulation_notes": [],
-			"risk": "medium — mutates posts, assets, and files through their APIs"
+			"risk": "medium — mutates posts, assets, and files through their APIs",
+			"maturity": "proven",
+			"verifiedAt": "2026-08-20",
+			"verifiedSha": "1a130d67"
 		}
 	]
 }

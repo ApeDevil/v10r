@@ -8,7 +8,7 @@ category: "Docs & Agent Experience"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Docs & Agent Experience · **Tier:** deep · **Risk:** low — documentation convention only
+**Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation convention only
 
 An AI-optimized docs tree where every directory's README.md is a navigation hub with topic tables, so agents read index → target file, never everything.
 
@@ -19,6 +19,11 @@ An AI-optimized docs tree where every directory's README.md is a navigation hub 
 - `docs/README.md` — Root hub — the entry point of the whole convention ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/README.md))
 - `docs/blueprint/README.md` — Example directory hub with topic tables ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/README.md))
 - `docs/blueprint/ai/README.md` — Second example hub (AI subsystem) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/README.md))
+
+## Tests
+
+- `src/lib/server/docs/markdown-urls.test.ts` — Pins every hub URL and H1-title round-trip ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/docs/markdown-urls.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/docs/markdown-urls.test.ts))
+- `src/lib/showcases/docs-mapping.gate.test.ts` — Every showcase docs button must resolve to a published hub entry ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/showcases/docs-mapping.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/showcases/docs-mapping.gate.test.ts))
 
 ## Invariants
 

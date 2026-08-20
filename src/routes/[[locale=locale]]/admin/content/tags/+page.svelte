@@ -22,6 +22,7 @@ import {
 import { ICON_OPTIONS } from '$lib/config/icon-options';
 import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
+import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 const toast = getToast();

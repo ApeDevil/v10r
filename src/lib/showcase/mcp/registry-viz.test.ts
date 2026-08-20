@@ -31,6 +31,7 @@ const pattern = (
 	invariants,
 	emulation_notes: [],
 	risk: 'low',
+	maturity: 'implemented' as const,
 });
 
 const fixture: Registry = {

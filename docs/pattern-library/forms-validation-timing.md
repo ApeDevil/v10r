@@ -10,7 +10,7 @@ category: "Forms & Validation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Forms & Validation · **Tier:** light · **Risk:** low — client/server validation only
+**Category:** Forms & Validation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — client/server validation only
 
 Demonstrates the three Superforms validation timing strategies: realtime (oninput), debounced async server checks, and onblur/server-only validation.
 

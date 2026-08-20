@@ -10,7 +10,7 @@ category: "Databases & Storage"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Databases & Storage · **Tier:** light · **Risk:** low — code organization pattern, no external dependency
+**Category:** Databases & Storage · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — code organization pattern, no external dependency
 
 Splits each domain's database access into separate queries.ts (reads) and mutations.ts (writes) modules.
 

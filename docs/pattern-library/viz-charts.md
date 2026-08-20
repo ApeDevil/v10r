@@ -10,7 +10,7 @@ category: "Data Viz"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Data Viz · **Tier:** light · **Risk:** low — frontend only
+**Category:** Data Viz · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
 
 Chart.js wrapper components for standard statistical charts (bar, line, area, pie, radar, bubble, scatter) with SSR-safe canvas lifecycle handling.
 

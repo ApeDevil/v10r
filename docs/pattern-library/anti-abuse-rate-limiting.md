@@ -10,7 +10,7 @@ category: "Anti-Abuse"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Anti-Abuse · **Tier:** light · **Risk:** medium — throttling correctness affects both abuse defense and legitimate-user access
+**Category:** Anti-Abuse · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — throttling correctness affects both abuse defense and legitimate-user access
 
 A sliding-window rate limiter factory backed by Upstash Redis that produces per-purpose limiters (email, IP, comments, grants) and fails closed when Redis is unavailable.
 

@@ -10,7 +10,7 @@ category: "Forms & Validation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Forms & Validation · **Tier:** light · **Risk:** low — client-side wizard/form state only
+**Category:** Forms & Validation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — client-side wizard/form state only
 
 Wizard (per-step schema validation), dynamic array fields, and dependent/cascading field patterns built on top of Superforms.
 

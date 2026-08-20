@@ -10,7 +10,7 @@ category: "PWA"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** PWA · **Tier:** light · **Risk:** medium — touches deploy config and can affect every installed client if misconfigured
+**Category:** PWA · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — touches deploy config and can affect every installed client if misconfigured
 
 The custom service worker precaches the hashed build and icons, serves HTML and __data.json network-only while never intercepting /api/* or SSE, and ships a kill switch that force-wipes caches and unregisters on a bad deploy.
 

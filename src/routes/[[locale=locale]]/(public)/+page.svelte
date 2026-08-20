@@ -3,7 +3,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { Divider, DropdownMenu } from '$lib/components';
 import LogoHero from '$lib/components/branding/LogoHero.svelte';
-import { cookieMaxAge, cookieName, locales, localizeHref } from '$lib/i18n';
+import { cookieMaxAge, cookieName, type Locale, locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { showcases } from '$lib/showcases/registry';
 import { getStyle } from '$lib/state/style.svelte';
@@ -44,7 +44,7 @@ function localeLabel(locale: string): string {
 	}
 }
 
-async function switchLocale(locale: string) {
+async function switchLocale(locale: Locale) {
 	if (locale === currentLocale) return;
 	setCookie(cookieName, locale, { maxAge: cookieMaxAge });
 	await goto(localizeHref(currentHref, { locale }), { invalidateAll: true });

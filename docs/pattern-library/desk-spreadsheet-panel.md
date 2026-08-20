@@ -10,7 +10,7 @@ category: "Desk Workspace"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Desk Workspace · **Tier:** light · **Risk:** medium — persists spreadsheet data via desk file registry
+**Category:** Desk Workspace · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — persists spreadsheet data via desk file registry
 
 A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI.
 
@@ -23,6 +23,10 @@ A spreadsheet file type managed through the desk's unified file registry, editab
 ## Code
 
 - `src/lib/components/spreadsheet/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/spreadsheet) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/spreadsheet))
+
+## Proof
+
+- [`desk`](desk) (app route, no showcase)
 
 ## Depends on
 

@@ -10,7 +10,7 @@ category: "Forms & Validation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Forms & Validation · **Tier:** light · **Risk:** low — form validation only, no external services
+**Category:** Forms & Validation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — form validation only, no external services
 
 The default form stack pairing Superforms v2 with Valibot schemas for progressive-enhancement-friendly, type-safe form validation.
 

@@ -10,7 +10,7 @@ category: "Desk Workspace"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Desk Workspace · **Tier:** light · **Risk:** medium — mutates posts, assets, and files through their APIs
+**Category:** Desk Workspace · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — mutates posts, assets, and files through their APIs
 
 One recursive tree over heterogeneous content APIs: adapters normalize every source into an ExplorerNode with a capability set, and the context menu, touch kebab, drag-and-drop, and inline rename/delete are all driven by capabilities — not per-type branching.
 

@@ -10,7 +10,7 @@ category: "Notifications"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Notifications · **Tier:** light · **Risk:** low — internal queue/dispatch, no direct external call from the router itself
+**Category:** Notifications · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — internal queue/dispatch, no direct external call from the router itself
 
 NotificationService.send() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on containers or a cron sweep on Vercel.
 

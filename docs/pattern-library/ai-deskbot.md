@@ -10,7 +10,7 @@ category: "AI"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** AI · **Tier:** light · **Risk:** medium — external LLM providers with quota limits
+**Category:** AI · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — external LLM providers with quota limits
 
 An agentic AI surface embedded in the desk workspace calls desk-mutating tools, with writes routed through the harness's proposal-and-approval gate.
 

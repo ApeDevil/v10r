@@ -12,6 +12,21 @@ globalThis.__v10r_delivery_scheduler = 'test' as never;
 // value in the environment still wins.
 process.env.BETTER_AUTH_SECRET ||= 'vitest-better-auth-secret-at-least-32-characters';
 
+// Hermeticity tripwire: every suite mocks its remote (PGlite for Postgres,
+// injected fakes for Redis, vi.mock for Neo4j/R2), so no test may ever reach a
+// live service. Erasing the inherited credentials turns an accidental real
+// connection into a loud failure instead of a silent write to prod.
+for (const key of [
+	'NEON_DATABASE_URL_PROD',
+	'NEO4J_URI',
+	'NEO4J_USERNAME',
+	'NEO4J_PASSWORD',
+	'UPSTASH_REDIS_REST_URL',
+	'UPSTASH_REDIS_REST_TOKEN',
+]) {
+	delete process.env[key];
+}
+
 // Mock SvelteKit $env/dynamic/private — redirects to process.env
 // https://github.com/sveltejs/kit/issues/9564
 vi.mock('$env/dynamic/private', () => ({

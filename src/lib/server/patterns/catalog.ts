@@ -12,6 +12,7 @@ export interface CatalogPattern {
 	id: string;
 	title: string;
 	tier: 'deep' | 'light';
+	maturity: 'planned' | 'implemented' | 'proven';
 	summary: string;
 	href: string;
 }
@@ -42,6 +43,7 @@ export function buildCatalog(registry: Registry = REGISTRY): Catalog {
 					id: p.id,
 					title: p.title,
 					tier: p.tier,
+					maturity: p.maturity,
 					summary: p.summary,
 					href: `/docs/pattern-library/${p.id}`,
 				}));

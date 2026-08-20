@@ -10,7 +10,7 @@ category: "UI Components & Design System"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** UI Components & Design System · **Tier:** light · **Risk:** low — frontend only
+**Category:** UI Components & Design System · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
 
 Higher-level components (Card, FormField, CommandPalette, Chatbot, Dock, etc.) composed from primitives that add business logic and feature behavior.
 

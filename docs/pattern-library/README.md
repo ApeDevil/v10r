@@ -16,7 +16,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Error handling (expected/unexpected/form/API)](./architecture-error-handling.md)
 - [State management (Svelte 5 runes)](./architecture-state-management.md)
 - [Request-cycle visualizer (form · API · AI)](./architecture-request-cycle-visualizer.md)
-- [Deployment (Vercel primary, tri-target)](./architecture-deployment.md)
+- [Deployment (Vercel serverless, container target planned)](./architecture-deployment.md)
 - [Testing infrastructure (Vitest, PGlite isolation)](./architecture-testing-infra.md)
 - [Pattern MCP (agent-queryable pattern registry, local stdio)](./architecture-pattern-mcp.md)
 - [Hosted MCP (two trust surfaces: public read-only · bearer admin)](./architecture-hosted-mcp.md)

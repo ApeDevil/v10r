@@ -10,7 +10,7 @@ category: "Identity & Access"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Identity & Access · **Tier:** light · **Risk:** low — application-level authorization logic, Postgres-backed
+**Category:** Identity & Access · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — application-level authorization logic, Postgres-backed
 
 A request-approve-expire workflow where users request a named capability, an admin approves or denies it, and pending requests auto-expire after 14 days.
 
@@ -24,6 +24,10 @@ A request-approve-expire workflow where users request a named capability, an adm
 
 - `src/lib/server/auth/grants.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/auth/grants.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/auth/grants.ts))
 - `src/lib/server/auth/grant-requests.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/auth/grant-requests.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/auth/grant-requests.ts))
+
+## Tests
+
+- `src/lib/server/auth/guards.test.ts` — Covers grant-based capability checks ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/auth/guards.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/auth/guards.test.ts))
 
 ---
 

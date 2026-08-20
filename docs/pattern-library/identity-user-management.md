@@ -10,7 +10,7 @@ category: "Identity & Access"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Identity & Access · **Tier:** light · **Risk:** medium — handles GDPR-sensitive personal data
+**Category:** Identity & Access · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — handles GDPR-sensitive personal data
 
 User account routes and server-side data access covering profile, settings, notifications, security, and GDPR data export.
 

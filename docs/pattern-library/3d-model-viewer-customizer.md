@@ -10,7 +10,7 @@ category: "3D"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** 3D · **Tier:** light · **Risk:** low — frontend only
+**Category:** 3D · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
 
 A full-screen model viewer and GLTF customizer (materials, parts, morph targets, presets) that resets the app layout while open.
 

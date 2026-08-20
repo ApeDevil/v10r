@@ -10,7 +10,7 @@ category: "Architecture & Request Pipeline"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Architecture & Request Pipeline · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 Describes the ordered SvelteKit hook chain in src/hooks.server.ts — security headers, i18n, auth, CSRF, session, consent, and guards — as the single source of truth for request interception.
 
@@ -24,6 +24,10 @@ Describes the ordered SvelteKit hook chain in src/hooks.server.ts — security h
 
 - `src/hooks.server.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/hooks.server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/hooks.server.ts))
 - `src/lib/server/security/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/security) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/security))
+
+## Tests
+
+- `src/lib/server/security/handle-chain.gate.test.ts` — Pins middleware presence and load-bearing order ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/security/handle-chain.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/security/handle-chain.gate.test.ts))
 
 ---
 

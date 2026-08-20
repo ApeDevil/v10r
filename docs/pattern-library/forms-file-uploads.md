@@ -10,7 +10,7 @@ category: "Forms & Validation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Forms & Validation · **Tier:** light · **Risk:** medium — server-side file handling (sharp, r2 storage)
+**Category:** Forms & Validation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — server-side file handling (sharp, r2 storage)
 
 Server-side file upload handling that processes images with Sharp and persists them to Cloudflare R2, validating file metadata via Valibot rather than the file bytes themselves in-schema.
 
@@ -23,6 +23,14 @@ Server-side file upload handling that processes images with Sharp and persists t
 ## Code
 
 - `src/lib/server/store/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/store) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/store))
+
+## Tests
+
+- `src/lib/server/store/blog/upload-ticket.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/store/blog/upload-ticket.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/store/blog/upload-ticket.test.ts))
+
+## Proof
+
+- [`/showcases/db/storage/transfer`](/showcases/db/storage/transfer)
 
 ---
 

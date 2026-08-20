@@ -6,6 +6,7 @@ import { tick } from 'svelte';
 import { AnimationClip, AnimationMixer, Box3 } from 'three';
 import type { Model3D, ResolvedViewportConfig } from '$lib/config/models';
 import { collectPartMeshes, type PartDef, resolvePartId } from '$lib/config/parts';
+import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
 import PartHighlightLayer from './PartHighlightLayer.svelte';
 
 interface Props {
@@ -127,9 +128,8 @@ $effect(() => {
 });
 </script>
 
-<!-- @ts-ignore: Threlte makeDefault type requires tsgo conditional type support -->
 <T.PerspectiveCamera
-	makeDefault
+	makeDefault={THRELTE_MAKE_DEFAULT}
 	position={config.camera.position}
 	fov={config.camera.fov}
 	near={config.camera.near}

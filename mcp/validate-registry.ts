@@ -97,6 +97,22 @@ for (const pattern of registry.patterns) {
 	if (pattern.tier === 'light' && pattern.keywords.length === 0) {
 		warnings.push(`${pattern.id}: no keywords — search recall will be weak`);
 	}
+	// Maturity advisories. proven⇔refs+attestation is a structural error in
+	// registry.ts; these two stay warnings by policy — staleness that fails the
+	// gate teaches people to route around it (same stance as the perf snapshot).
+	if (pattern.maturity === 'implemented' && pattern.tests.length + pattern.showcases.length > 0) {
+		warnings.push(
+			`${pattern.id}: has a tests/showcases ref but maturity is "implemented" — verify it and promote to "proven"`,
+		);
+	}
+	if (pattern.maturity === 'proven' && pattern.verifiedAt) {
+		const ageDays = Math.floor((Date.now() - Date.parse(pattern.verifiedAt)) / 86_400_000);
+		if (Number.isNaN(ageDays) || ageDays > 180) {
+			warnings.push(
+				`${pattern.id}: verifiedAt ${pattern.verifiedAt} is ${Number.isNaN(ageDays) ? 'unparseable' : `${ageDays} days old`} — re-verify the proof surface`,
+			);
+		}
+	}
 }
 
 for (const warning of warnings) {

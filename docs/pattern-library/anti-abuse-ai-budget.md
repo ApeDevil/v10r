@@ -10,7 +10,7 @@ category: "Anti-Abuse"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Anti-Abuse · **Tier:** light · **Risk:** medium — governs AI cost exposure; misconfiguration can allow spend amplification
+**Category:** Anti-Abuse · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — governs AI cost exposure; misconfiguration can allow spend amplification
 
 A per-user daily token cap stored in Redis that prevents a single authenticated user from exhausting AI quota through cost-amplification abuse.
 

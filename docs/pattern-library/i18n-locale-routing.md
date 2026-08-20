@@ -10,7 +10,7 @@ category: "Internationalization (i18n)"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Internationalization (i18n) · **Tier:** light · **Risk:** low — routing/redirect logic only
+**Category:** Internationalization (i18n) · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — routing/redirect logic only
 
 URL-based locale routing using an optional [[locale=locale]] catch-all segment and a param matcher, with the unprefixed default locale (en) 308-redirected from /en/* to keep canonical URLs.
 

@@ -10,7 +10,7 @@ category: "Identity & Access"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Identity & Access · **Tier:** light · **Risk:** medium — security-critical auth factor, Redis-backed step-up gate
+**Category:** Identity & Access · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — security-critical auth factor, Redis-backed step-up gate
 
 WebAuthn passkeys serve as a phishing-resistant first-factor sign-in credential, while TOTP is repurposed as a step-up check before sensitive actions, gated by a Redis freshness stamp.
 

@@ -19,23 +19,23 @@ All external services used by Velociraptor. This separates **what technology** w
 
 | Capability | Technology | Provider | Swappability |
 |------------|------------|----------|--------------|
-| AI Chat | Vercel AI SDK | **Groq** | Easy |
-| AI Embeddings | Vercel AI SDK | **Mistral** | Easy |
-| AI Image Gen | Vercel AI SDK | **Together AI** | Easy |
-| AI Audio/STT | Vercel AI SDK | **Groq** | Easy |
+| AI Chat | Vercel AI SDK | **Groq** / **OpenAI** / **Google** (3-provider routing) | Easy |
+| AI Embeddings | Vercel AI SDK | **Google** (`gemini-embedding-001`, 1536-dim) | Easy |
 | Relational DB | PostgreSQL | **Neon** | Easy |
 | Graph DB | Neo4j | **Neo4j Aura** | Medium |
 | Object Storage | S3 API | **Cloudflare R2** | Easy |
 | Cache | Redis | **Upstash** | Easy |
 | App Hosting | SvelteKit + Node.js | **Vercel** | Medium |
-| App Hosting | SvelteKit + Bun | **Koyeb** | Easy |
-| Email | SMTP/API | **Resend** | Easy |
-| Error Tracking | Sentry SDK | **Sentry** | Easy |
+| App Hosting | SvelteKit + Bun | **Koyeb** *(planned — not deployed)* | Easy |
+| Email | REST API | **Resend** (raw `fetch`, no SDK) | Easy |
+| Error Tracking | — | **None wired** — `handleError` logs structured JSON ([ops/logging.md](./ops/logging.md)) | — |
 | Analytics | Web Analytics | **Vercel Analytics** | Easy |
 | Log Aggregation | JSON logs | **Vercel Logs** | Easy |
-| Background Jobs | HTTP webhooks | **Inngest** | Medium |
-| Notifications | Novu | **Novu Cloud** | Easy (self-host) |
-| Push | Web Push | **FCM** | Medium |
+| Background Jobs | Own registry: `setInterval` in containers, HTTP crons on Vercel | **None** (in-repo) | — |
+| Notifications | Own router + outbox | **None** (in-repo) | — |
+| Push | Web Push (VAPID) | **`web-push`** (library, no vendor) | Easy |
+
+No image-generation or audio/STT provider is wired — [ai/ai-sdk.md](./ai/ai-sdk.md) is the source of truth for the AI provider set.
 
 **Swappability:**
 - **Easy** — Standard protocol/API, drop-in replacement
@@ -49,19 +49,16 @@ All external services used by Velociraptor. This separates **what technology** w
 | Provider | Free Tier | Paid Starts At | Notes |
 |----------|-----------|----------------|-------|
 | **Groq** | 14,400 req/day | $0.05/1M tokens | Fastest inference, Llama 3.3 70B |
-| **Mistral** | 1B tokens/mo | $0.10/1M tokens | Embeddings included |
-| **Together AI** | 3 months unlimited | ~$0.003/image | FLUX Schnell |
+| **OpenAI** | None | ~$0.15/1M input tokens (gpt-4o-mini) | Pay-as-you-go only |
+| **Google AI** | Per-model daily quotas (e.g. embeddings ~1,000 req/day, flash ~20 req/day) | Gemini API pricing | Quotas tracked live on `/admin/ai` |
 | **Neon** | 0.5 GB, 100 CU-hours/mo | $19/mo | Sleeps after 5min inactivity |
 | **Vercel** | 100 GB bandwidth/mo | $20/mo | Hobby tier, 1 concurrent build |
-| **Koyeb** | 1 service, 512MB RAM | $5.50/mo | Nano instance, no credit card for free |
+| **Koyeb** *(planned)* | 1 service, 512MB RAM | $5.50/mo | Nano instance, no credit card for free |
 | **Cloudflare R2** | 10 GB, 10M reads, 1M writes | $0.015/GB/mo | Zero egress fees |
 | **Upstash** | 500K cmd/mo, 256MB | $0.20/100K cmd | Archived after 14d inactivity |
 | **Neo4j Aura** | 200K nodes, 400K relationships | $65/mo | Free tier is generous |
 | **Resend** | 100 emails/day (3K/mo) | $20/mo | 50K emails/mo |
-| **Sentry** | 5K errors/mo | $26/mo | 50K errors/mo |
 | **Vercel Analytics** | Included | - | Cookieless, no extra cost |
-| **Inngest** | 25K runs/mo | $50/mo | Step functions, retries |
-| **Novu Cloud** | 30K events/mo | $25/mo | Self-host for free |
 
 **Estimated total at free tier:** $0/mo
 **Estimated at ~10K MAU:** $50-150/mo (depends on usage patterns)
@@ -73,16 +70,14 @@ All external services used by Velociraptor. This separates **what technology** w
 | Provider | GDPR | DPA Available | EU Region | SOC 2 |
 |----------|------|---------------|-----------|-------|
 | **Groq** | Yes | Yes | No (US) | Yes |
-| **Mistral** | Yes | Yes | Yes (EU-based) | Yes |
-| **Together AI** | Yes | Yes | No (US) | Yes |
+| **OpenAI** | Yes | Yes | No (US) | Yes |
+| **Google AI** | Yes | Yes | No (US) | Yes |
 | **Neon** | Yes | Yes | Yes | Yes |
 | **Vercel** | Yes | Yes | Edge (global) | Yes |
 | **Cloudflare** | Yes | Yes | Yes | Yes |
 | **Upstash** | Yes | Yes | Yes (EU) | Yes |
 | **Neo4j Aura** | Yes | Yes | Yes | Yes |
 | **Resend** | Yes | Yes | No | In progress |
-| **Sentry** | Yes | Yes | Yes | Yes |
-| **Inngest** | Yes | Yes | Yes | Yes |
 
 All providers have Data Processing Agreements (DPAs) available. See [gdpr.md](./capabilities/gdpr.md) for compliance checklist.
 
@@ -92,97 +87,57 @@ All providers have Data Processing Agreements (DPAs) available. See [gdpr.md](./
 
 ### AI Providers (Multi-Provider Architecture)
 
-We use a **multi-provider architecture** with Vercel AI SDK, selecting the best provider for each AI capability while maximizing free tier usage.
+We use a **multi-provider architecture** with Vercel AI SDK — chat routes across three providers (fallback + quota spreading), embeddings use one. There is no image-generation or audio provider. [ai/ai-sdk.md](./ai/ai-sdk.md) is the source of truth; live quota state renders on `/admin/ai`.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Vercel AI SDK (unified API)              │
-├──────────────┬──────────────┬──────────────┬───────────────┤
-│    Chat      │  Embeddings  │    Image     │    Audio      │
-│    Groq      │   Mistral    │  Together AI │  Groq Whisper │
-└──────────────┴──────────────┴──────────────┴───────────────┘
+├──────────────────────────────────────┬──────────────────────┤
+│                 Chat                 │      Embeddings      │
+│  Groq · OpenAI · Google (routing)    │   Google Gemini      │
+└──────────────────────────────────────┴──────────────────────┘
 ```
 
-#### Groq (Chat + Audio)
+#### Groq (Chat)
 
-**What:** Ultra-fast LLM inference and speech-to-text
-**Technology:** Vercel AI SDK (`@ai-sdk/groq`)
-
-| Capability | Model | Free Tier |
-|------------|-------|-----------|
-| Chat | Llama 3.3 70B | 14,400 req/day |
-| Audio/STT | Whisper Large v3 | 7,200 audio-sec/min |
+**What:** Ultra-fast LLM inference
+**Technology:** Vercel AI SDK (`@ai-sdk/groq`), model `llama-3.3-70b-versatile`
 
 | Feature | Details |
 |---------|---------|
-| Speed | 300+ tokens/sec (10x faster than competitors) |
+| Free tier | 14,400 req/day |
+| Speed | 300+ tokens/sec |
 | Streaming | Native support via AI SDK |
 | Credit Card | Not required for free tier |
 
-**Alternatives:**
-| Provider | Trade-off |
-|----------|-----------|
-| Cerebras | Similar speed, different models |
-| Google Gemini | Multimodal, but slower |
-| OpenRouter | 30+ free models, lower limits |
+#### OpenAI (Chat)
 
-#### Mistral (Embeddings)
-
-**What:** Vector embeddings for semantic search and RAG
-**Technology:** Vercel AI SDK (`@ai-sdk/mistral`)
-
-| Capability | Model | Free Tier |
-|------------|-------|-----------|
-| Embeddings | mistral-embed | 1B tokens/mo |
-| Chat (backup) | mistral-small | 1B tokens/mo (shared) |
+**What:** Chat fallback lane
+**Technology:** Vercel AI SDK (`@ai-sdk/openai`), model `gpt-4o-mini`
 
 | Feature | Details |
 |---------|---------|
-| Dimensions | 1024 |
-| EU-based | Yes (GDPR-friendly) |
-| Quality | Competitive with OpenAI |
+| Free tier | None — pay-as-you-go |
+| Role | Reliability lane when Groq/Google quotas exhaust |
 
-**Alternatives:**
+#### Google Gemini (Chat + Embeddings)
+
+**What:** Chat lane plus the embeddings provider for all RAG surfaces
+**Technology:** Vercel AI SDK (`@ai-sdk/google`), models `gemini-2.5-flash` (chat) and `gemini-embedding-001` (embeddings, 1536-dim)
+
+| Feature | Details |
+|---------|---------|
+| Free tier | Per-model daily quotas (flash ~20 req/day; embeddings ~1,000 req/day) |
+| Quota reality | Small free quotas 503 under load — the admin quota board tracks them honestly |
+
+**Alternatives (embeddings):**
 | Provider | Trade-off |
 |----------|-----------|
-| Google Gemini | 768 dimensions, included in chat tier |
-| Cohere | 1K req/mo (limited) |
+| Mistral | EU-based, 1024-dim, large free quota |
 | Voyage AI | 50M tokens/mo, highest quality |
-| Jina AI | 1M tokens/mo, no AI SDK support |
+| Cohere | 1K req/mo (limited) |
 
-#### Together AI (Image Generation)
-
-**What:** AI image generation with FLUX models
-**Technology:** Vercel AI SDK (`@ai-sdk/togetherai`)
-
-| Capability | Model | Free Tier |
-|------------|-------|-----------|
-| Image Gen | FLUX.1 Schnell | 3 months unlimited |
-| Image Gen | FLUX.1 Dev | Pay-as-you-go |
-
-| Feature | Details |
-|---------|---------|
-| Speed | ~1-2 sec per image |
-| Quality | State-of-the-art (FLUX) |
-| Resolution | Up to 1024x1024 |
-
-**Alternatives:**
-| Provider | Trade-off |
-|----------|-----------|
-| Replicate | 50 gen/mo free, more models |
-| fal.ai | Fast, has free tier |
-| Stability AI | Free for <$1M revenue orgs |
-
-#### Provider Comparison Summary
-
-| Capability | Provider | Free Tier | Why Chosen |
-|------------|----------|-----------|------------|
-| **Chat** | Groq | 14,400 req/day | Fastest, generous |
-| **Embeddings** | Mistral | 1B tokens/mo | EU-based, massive quota |
-| **Image** | Together AI | 3mo unlimited | Best free offer |
-| **Audio** | Groq | 7,200 sec/min | Already using Groq |
-
-**Migration:** Each provider is independent. Change in `src/lib/server/ai/providers.ts`. See [blueprint/ai/README.md](../blueprint/ai/README.md).
+**Migration:** Each provider is independent. Change in `src/lib/server/ai/providers.ts`. See [blueprint/ai/README.md](../blueprint/ai/README.md). Note: switching the embeddings provider/dimensions invalidates every stored vector — a full re-ingest, not a config change.
 
 ---
 
@@ -223,7 +178,7 @@ We use a **multi-provider architecture** with Vercel AI SDK, selecting the best 
 | Feature | Details |
 |---------|---------|
 | Edge Network | Global CDN, automatic |
-| Runtime | Node.js 20 (Bun runtime doesn't support SvelteKit) |
+| Runtime | Node.js 22 (`nodejs22.x` in `svelte.config.js`; Bun runtime doesn't support SvelteKit) |
 | Preview Deploys | Per-PR deployments |
 | Analytics | Built-in, cookieless |
 
@@ -244,9 +199,9 @@ We use a **multi-provider architecture** with Vercel AI SDK, selecting the best 
 
 ---
 
-### Koyeb
+### Koyeb (planned — no deployment exists yet)
 
-**What:** Container hosting with native Bun support
+**What:** Container hosting with native Bun support, evaluated as the container target
 **Technology:** Docker containers
 
 | Feature | Details |
@@ -392,69 +347,31 @@ We use a **multi-provider architecture** with Vercel AI SDK, selecting the best 
 
 ---
 
-### Sentry
+### Capabilities served without a vendor
 
-**What:** Error tracking and performance monitoring
-**Technology:** Sentry SDK
+| Capability | How it works instead | Where |
+|------------|----------------------|-------|
+| Error tracking | `handleError` mints an errorId and logs structured JSON to the console (Vercel Logs aggregates) — no Sentry/SDK | [ops/logging.md](./ops/logging.md) |
+| Background jobs | Own job registry — `setInterval` schedulers in containers, authenticated HTTP crons on Vercel; no Inngest | [../blueprint/deployment.md](../blueprint/deployment.md) |
+| Notifications | Own router + outbox over email (Resend REST) and Web Push; no Novu | [notifications/README.md](./notifications/README.md) |
+| Web Push | `web-push` library with self-generated VAPID keys — no FCM account | [capabilities/pwa.md](./capabilities/pwa.md) |
 
-| Feature | Details |
-|---------|---------|
-| Error Tracking | Stack traces, context |
-| Performance | Transaction tracing |
-| Releases | Deploy tracking |
-| Alerts | Slack, email, webhooks |
-
-**Alternatives:**
-| Provider | Trade-off |
-|----------|-----------|
-| Bugsnag | Similar, different pricing |
-| Rollbar | Similar features |
-| LogRocket | Session replay focus |
-| Self-hosted Sentry | Free, ops burden |
-
-**Migration:** Change SDK initialization, update DSN.
-
----
-
-### Inngest
-
-**What:** Background jobs and workflows
-**Technology:** HTTP webhooks + step functions
-
-| Feature | Details |
-|---------|---------|
-| Step Functions | Multi-step workflows |
-| Retries | Automatic with backoff |
-| Cron | Scheduled jobs |
-| Fan-out | Parallel execution |
-
-**Alternatives:**
-| Provider | Trade-off |
-|----------|-----------|
-| Trigger.dev | Similar, open-source |
-| QStash (Upstash) | Simpler, fire-and-forget |
-| BullMQ + Redis | Self-hosted, more control |
-| Temporal | Enterprise, complex |
-
-**Migration:** Rewrite workflow definitions. Core logic is portable.
+Managed alternatives for these (Sentry, Inngest, Novu, Trigger.dev, …) were considered and remain viable swap-ins; the decision records live in the linked blueprint docs.
 
 ---
 
 ## Local Development
 
-All production services have local equivalents:
+There are **no local service containers** — dev runs against the same remote services as production, by construction (one database per stack; see [../foundation/development-environment.md](../foundation/development-environment.md)). Mute-gates (`ANALYTICS_DEV_TRACKING`, `JOBS_DEV_ENABLED`) keep a dev process from polluting production data lanes, and tests run fully hermetic (PGlite in-memory Postgres, mocked Neo4j/R2, injected Redis fakes — credentials are scrubbed in the vitest setup).
 
-| Production | Local | Notes |
-|------------|-------|-------|
-| Neon | PostgreSQL (Docker) | `postgres:16-alpine` |
-| Neo4j Aura | Neo4j (Docker) | `neo4j:5-community` |
-| Cloudflare R2 | MinIO | S3-compatible |
-| Upstash Redis | Dev database | Use Upstash dev instance directly — no local container needed |
-| Vercel | `vite dev` | SvelteKit dev server |
-| Resend | Mailpit | Local SMTP capture |
-| Sentry | Console logging | Or self-hosted Sentry |
-
-See [../blueprint/db/README.md](../blueprint/db/README.md) for container setup.
+| Production | In dev | In tests |
+|------------|--------|----------|
+| Neon | Same remote DB | PGlite (WASM, in-memory) |
+| Neo4j Aura | Same remote instance | `vi.mock` |
+| Cloudflare R2 | Same remote bucket | `vi.mock` |
+| Upstash Redis | Same remote instance | Injected fakes |
+| Vercel | `vite dev` in the container | n/a |
+| Resend | Same API (real sends) | `vi.mock` |
 
 ---
 
@@ -462,9 +379,9 @@ See [../blueprint/db/README.md](../blueprint/db/README.md) for container setup.
 
 | Variable | Provider | Purpose |
 |----------|----------|---------|
-| `GROQ_API_KEY` | Groq | Chat + Audio API key |
-| `MISTRAL_API_KEY` | Mistral | Embeddings API key |
-| `TOGETHER_API_KEY` | Together AI | Image generation API key |
+| `GROQ_API_KEY` | Groq | Chat API key |
+| `OPENAI_API_KEY` | OpenAI | Chat fallback API key |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Google AI | Chat + embeddings API key |
 | `NEON_DATABASE_URL_PROD` | Neon | Postgres connection (app's own var, not the ecosystem-standard `DATABASE_URL`) |
 | `NEO4J_URI` | Neo4j Aura | Graph connection |
 | `NEO4J_USERNAME` | Neo4j Aura | Graph auth |
@@ -476,8 +393,8 @@ See [../blueprint/db/README.md](../blueprint/db/README.md) for container setup.
 | `UPSTASH_REDIS_REST_URL` | Upstash | Redis REST endpoint |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash | Redis REST auth token |
 | `RESEND_API_KEY` | Resend | Email auth |
-| `SENTRY_DSN` | Sentry | Error tracking |
-| `INNGEST_SIGNING_KEY` | Inngest | Webhook auth |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | — (self-generated) | Web Push signing |
+| `CRON_SECRET` | — (self-generated) | Vercel cron endpoint auth |
 
 ---
 

@@ -98,7 +98,7 @@ export function checksum(bytes: Uint8Array | Uint8ClampedArray): string {
  * decode step, no asset, no PRNG — every visitor benchmarks the exact same
  * bytes, and the XOR plane's hard edges make the blur visually unmistakable.
  */
-export function makeTestImage(width: number, height: number): Uint8ClampedArray {
+export function makeTestImage(width: number, height: number): Uint8ClampedArray<ArrayBuffer> {
 	const pixels = new Uint8ClampedArray(width * height * 4);
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {

@@ -7,6 +7,7 @@ import { Stack } from '$lib/components/layout';
 import { Button, Tag } from '$lib/components/primitives';
 import { formatRelative, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
+import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 

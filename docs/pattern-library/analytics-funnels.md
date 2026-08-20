@@ -10,7 +10,7 @@ category: "Analytics"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Analytics · **Tier:** light · **Risk:** low — read-only aggregate query
+**Category:** Analytics · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — read-only aggregate query
 
 Funnel conversion is computed as count(distinct session_id) per step in one grouped query, so a reload mid-funnel is deduped instead of double-counted.
 

@@ -10,7 +10,7 @@ category: "Anti-Abuse"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Anti-Abuse · **Tier:** light · **Risk:** medium — bot/abuse defense; misconfiguration or kill-switch misuse weakens protection
+**Category:** Anti-Abuse · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — bot/abuse defense; misconfiguration or kill-switch misuse weakens protection
 
 A self-hosted proof-of-work captcha where the client solves a CPU-bound puzzle and the server verifies an HMAC-signed payload via altcha-lib.
 

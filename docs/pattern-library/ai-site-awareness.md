@@ -10,7 +10,7 @@ category: "AI"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** AI · **Tier:** light · **Risk:** medium — external LLM providers with quota limits
+**Category:** AI · **Tier:** light · **Maturity:** implemented · **Risk:** medium — external LLM providers with quota limits
 
 Server-resolved page context is injected as a passive block into the chatbot's prompt so deictic questions like "how does this work?" resolve to the page the user is viewing.
 

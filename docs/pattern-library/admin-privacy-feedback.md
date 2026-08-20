@@ -10,7 +10,7 @@ category: "Admin & Privacy"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Admin & Privacy · **Tier:** light · **Risk:** low — non-sensitive user feedback, spam is the main risk
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — non-sensitive user feedback, spam is the main risk
 
 A user feedback capture form protected by the honeypot bot-detection pattern to keep submissions spam-free.
 

@@ -32,7 +32,7 @@ repo you're in.
 | Command | Does |
 |---------|------|
 | `vr ship` / `vr s` | Gate + promote the current branch toward `main` (see below) |
-| `vr validate` / `vr v` | Run the full gate (`bun run validate`) in the repo's container |
+| `vr validate` / `vr v` | Run the full gate (`bun run validate`) in the repo's container; `--build` adds `bun run validate:build` |
 | `vr refresh` / `vr ref` | Refresh derived pattern-library surfaces (`bun run refresh`) in the container |
 | `vr dev` | Start the dev server (`podman compose up`, foreground) |
 | `vr up` / `vr u` | Start the repo's container (background) |
@@ -128,6 +128,14 @@ another.
 It needs a `compose.yaml` at the repo root **and** a `validate` script in that project's
 `package.json`; without either, `vr` stops — the gate is container-only, and `bun run
 validate` is the contract every repo's gate must provide.
+
+`vr validate --build` additionally runs `bun run validate:build`: a production build
+(`NODE_ENV=production` is baked into the npm script — the compose file pins
+`development`, which inflates client JS ~9%) followed by the perf-ratchet check scored
+against the fresh build. The committed `src/lib/server/perf/snapshot.json` is not
+rewritten, so the tree stays clean for ship. `validate` itself stays build-free and fast;
+run `--build` before shipping — two past deploy failures were build-only breakages the
+plain gate structurally cannot catch.
 
 ## The refresh chain
 

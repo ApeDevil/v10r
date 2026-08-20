@@ -10,7 +10,7 @@ category: "PWA"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** PWA · **Tier:** light · **Risk:** low — static/localized metadata endpoint, no mutation
+**Category:** PWA · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — static/localized metadata endpoint, no mutation
 
 The web manifest is served dynamically so name/description follow the Paraglide locale cookie, with maskable icons and an explicit cache header that pre-empts the hooks' no-store stamp.
 

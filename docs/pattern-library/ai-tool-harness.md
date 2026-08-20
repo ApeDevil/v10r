@@ -8,7 +8,7 @@ category: "AI"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** AI · **Tier:** deep · **Risk:** high — governs what an LLM is allowed to execute
+**Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** high — governs what an LLM is allowed to execute
 
 Tool definitions are thin wrappers whose risk-tier metadata and per-surface membership live in a registry, with harness concerns (agent loop, compaction, policy) factored out separately.
 

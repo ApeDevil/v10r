@@ -3,7 +3,9 @@ import type { HTMLInputAttributes } from 'svelte/elements';
 import { cn } from '$lib/utils/cn';
 
 interface Props extends Omit<HTMLInputAttributes, 'value'> {
-	value?: string;
+	// null is accepted (renders empty) so DB-backed nullable form fields can bind
+	// without per-page coalescing; user input always writes a string back.
+	value?: string | null;
 	error?: boolean;
 	class?: string;
 }

@@ -8,7 +8,7 @@ category: "Docs & Agent Experience"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Docs & Agent Experience · **Tier:** deep · **Risk:** low — documentation artifact
+**Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation artifact
 
 A generated table in README.md mapping every repo pattern to the doc that explains it, the code that implements it, and the showcase page that proves it — rendered from this registry (136 rows, 20 categories, two tiers).
 
@@ -23,6 +23,11 @@ A generated table in README.md mapping every repo pattern to the doc that explai
 - `scripts/patterns/build-derived.ts` — Generates the README region + docs/pattern-library/ pages; --check mode gates staleness ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/patterns/build-derived.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/patterns/build-derived.ts))
 - `src/lib/server/patterns/render.ts` — Pure renderers (testable, Vite-free) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/patterns/render.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/patterns/render.ts))
 - `src/lib/showcases/registry.ts` — Showcase-route cells are validated against this registry's hrefs ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/showcases/registry.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/showcases/registry.ts))
+
+## Tests
+
+- `src/lib/server/patterns/render.test.ts` — Pins the generated index/page renderers; staleness is gated by patterns:check in the same validate gate — runs on every bun run validate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/patterns/render.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/patterns/render.test.ts))
+- `src/lib/server/patterns/links.gate.test.ts` — Every registry docs ref must resolve to a published manifest entry ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/patterns/links.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/patterns/links.gate.test.ts))
 
 ## Invariants
 

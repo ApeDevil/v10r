@@ -10,7 +10,7 @@ category: "Databases & Storage"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Databases & Storage · **Tier:** light · **Risk:** medium — external managed service (Neo4j Aura)
+**Category:** Databases & Storage · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — external managed service (Neo4j Aura)
 
 Defines how entities and their relationships are represented as nodes and edges in the Neo4j graph.
 

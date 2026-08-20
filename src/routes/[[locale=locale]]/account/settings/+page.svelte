@@ -10,6 +10,7 @@ import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { userSettingsSchema } from '$lib/schemas/app/settings';
 import { getSidebar } from '$lib/state/sidebar.svelte';
+import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 

@@ -3,6 +3,7 @@ import { T, useTask } from '@threlte/core';
 import { useGltf } from '@threlte/extras';
 import { AnimationMixer, type PerspectiveCamera, Vector3 } from 'three';
 import type { Model3D, ResolvedCardConfig } from '$lib/config/models';
+import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
 
 interface Props {
 	model: Model3D;
@@ -42,7 +43,7 @@ useTask((delta) => {
 </script>
 
 <T.PerspectiveCamera
-	makeDefault
+	makeDefault={THRELTE_MAKE_DEFAULT}
 	position={config.camera.position}
 	fov={config.camera.fov ?? 50}
 	near={config.camera.near ?? 0.1}

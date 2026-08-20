@@ -10,7 +10,7 @@ category: "Notifications"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Notifications · **Tier:** light · **Risk:** low — user-scoped preference writes only
+**Category:** Notifications · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — user-scoped preference writes only
 
 The settings UI renders a channel-by-notification-type matrix backed by a form schema, letting a user toggle which channels receive which notification types.
 

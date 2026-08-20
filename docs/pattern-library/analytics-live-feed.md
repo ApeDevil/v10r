@@ -10,7 +10,7 @@ category: "Analytics"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Analytics · **Tier:** light · **Risk:** low — unauthenticated but self-limited (per-IP rate, connection ceiling, hard timeout)
+**Category:** Analytics · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — unauthenticated but self-limited (per-IP rate, connection ceiling, hard timeout)
 
 An unauthenticated, self-limiting SSE stream at /api/analytics/stream pushes live event-style updates for the showcase demo, using synthetic rather than production data.
 

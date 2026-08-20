@@ -17,6 +17,7 @@ import {
 } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import type { ProviderResult, ThresholdLevel } from '$lib/server/monitoring';
+import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 

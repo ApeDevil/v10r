@@ -10,7 +10,7 @@ category: "AI"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** AI · **Tier:** light · **Risk:** low — client-side state only, no external calls
+**Category:** AI · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — client-side state only, no external calls
 
 A client-side Svelte state machine keeps Vely's conversation alive across page navigation, minimizing the panel instead of closing it when the user follows a link.
 
@@ -23,6 +23,10 @@ A client-side Svelte state machine keeps Vely's conversation alive across page n
 ## Code
 
 - `src/lib/state/chatbot-session.svelte.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/chatbot-session.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/chatbot-session.svelte.ts))
+
+## Proof
+
+- [`/showcases/ai/chatbot`](/showcases/ai/chatbot)
 
 ---
 

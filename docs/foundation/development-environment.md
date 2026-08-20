@@ -17,8 +17,10 @@ Host Machine          Container (v10r)
 
 Never run `bun add` on the host. The workflow is:
 
-1. **Edit `package.json`** — add the package to `dependencies` or `devDependencies`
-2. **Restart the container** — the container runs `bun install` automatically on startup
+1. **Add inside the container** — `podman exec v10r bun add <pkg>` (or `bun add -D`). This updates `package.json` *and* `bun.lock` on the bind mount and installs into the volume in one step.
+2. **Restart the container** — `podman compose restart`. Startup runs `bun install --frozen-lockfile`, so a passing restart proves manifest and lockfile agree.
+
+Editing `package.json` by hand without regenerating `bun.lock` fails that frozen-lockfile startup guard — the fix is reconciling the lockfile in the container, never dropping the flag.
 
 ### Why No Manual Installation?
 
@@ -33,12 +35,12 @@ Never run `bun add` on the host. The workflow is:
 
 | Action | Command |
 |--------|---------|
-| Start | `podman-compose up -d` |
-| Stop | `podman-compose down` |
-| Restart | `podman-compose restart app` |
-| Logs | `podman-compose logs -f app` |
+| Start | `podman compose up -d` |
+| Stop | `podman compose down` |
+| Restart | `podman compose restart app` |
+| Logs | `podman compose logs -f app` |
 | Shell into container | `podman exec -it v10r sh` |
-| Rebuild image | `podman-compose build --no-cache` |
+| Rebuild image | `podman compose build --no-cache` |
 | Measure cold-start times | `bun run perf:cold-start` |
 
 ## Ports
@@ -74,7 +76,7 @@ After `ready`, HMR is fast. Subsequent restarts on the same container are simila
 bun run perf:cold-start
 ```
 
-Drives `podman compose down && up`, parses Vite logs, and reports `install_ms`, `vite_ready_ms`, `first_ssr_ttfb_ms`, `ssr_reload_count`. Thresholds: warn `> 15 s`, fail `> 25 s` (current baseline ~36 s is set as the working ceiling for this stack until Vite 8 / Rolldown lands).
+Drives `podman compose down && up`, parses Vite logs, and reports `install_ms`, `vite_ready_ms`, `first_ssr_ttfb_ms`, `ssr_reload_count`. The 15 s warn / 25 s fail thresholds in `budgets.json` are **targets** the current stack does not meet — the measured baseline is ~36 s, so a run "failing" the target is the expected, honest state until Vite 8 / Rolldown lands. The probe is a manual trend check, not part of `validate`.
 
 ## Running Commands Inside Container
 
@@ -84,6 +86,6 @@ Use `podman exec -it v10r <command>` for one-off commands (e.g., `bun run check`
 
 | Problem | Fix |
 |---------|-----|
-| Dependencies not updating | `podman-compose down` then `podman-compose up -d` |
-| Need a fresh start | `podman-compose down -v` (removes volumes) then `podman-compose up -d` |
-| Container won't start | Check logs with `podman-compose logs app` |
+| Dependencies not updating | `podman compose down` then `podman compose up -d` |
+| Need a fresh start | `podman compose down -v` (removes volumes) then `podman compose up -d` |
+| Container won't start | Check logs with `podman compose logs app` |

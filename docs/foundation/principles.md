@@ -13,7 +13,7 @@ Own your auth, data, and logic. Prefer libraries over managed services where pra
 - No per-user or per-request pricing surprises
 - Full control over data and behavior
 - Minimize vendor lock-in
-- Can run locally without external dependencies
+- Behavior lives in the repo — managed services hold state, never logic (there is deliberately ONE database per stack, remote in every environment; see [development-environment.md](./development-environment.md))
 
 **Exceptions:** Accept managed services when they meet these criteria:
 
@@ -32,10 +32,12 @@ Services meeting 3+ criteria are acceptable. Document the trade-off in stack doc
 
 Smaller bundles, faster loads, less complexity. Only pay for what you use.
 
+The reference repo itself is deliberately broad — the lightweight promise is about each **emulated pattern slice** and each **route's payload**, not the repo's total size. Per-route weight is measured and ratcheted (`src/lib/server/perf/budgets.json`).
+
 - Bundle size matters for user experience
 - Fewer dependencies = fewer vulnerabilities
 - Simpler tools are easier to understand and debug
-- Avoid "kitchen sink" libraries
+- Heavy libraries (Three.js, MapLibre, Chart.js, editors) stay behind deep imports and route splits — never in the shared baseline (the component barrel is a bundle-size boundary)
 
 ---
 
@@ -73,27 +75,27 @@ Prefer tools built for Svelte over adapted React libraries.
 
 ---
 
-### 6. No code generation
+### 6. No ungated code generation
 
-Runtime-only tooling. Avoid build-step dependencies.
+Generated artifacts are accepted only under a strict contract: the generator is deterministic, the output is committed (or rebuilt on install, like Paraglide), and a `--check` mode fails the gate when the output goes stale. The pattern-library pages, MCP excerpts, and perf snapshot all live under this contract; what is forbidden is *hidden* generation — output nobody can rebuild, or drift nobody notices.
 
-- No generated files to maintain or commit
-- No "regenerate after schema change" workflows
-- Simpler CI/CD pipelines
-- Easier to understand what code does
+- Every generated surface has exactly one generator and a staleness check inside `validate` (`patterns:check`, `mcp:excerpts:check`)
+- Regeneration is one command (`bun run refresh`), never a hand-edit — generated files say so in their headers
+- No generated DB schema: Drizzle tables are hand-written, including Better Auth's
 
-> **Note on Better Auth:** Better Auth offers both CLI schema generation (`bunx @better-auth/cli generate`) and manual schema definition. This project uses **manual schemas** to maintain this principle. See [stack/data/drizzle.md](../stack/data/drizzle.md) for the hand-written schema approach.
+> **Note on Better Auth:** Better Auth offers both CLI schema generation (`bunx @better-auth/cli generate`) and manual schema definition. This project uses **manual schemas**. See [stack/data/drizzle.md](../stack/data/drizzle.md) for the hand-written schema approach.
 
 ---
 
 ### 7. Speed is a feature
 
-Fast runtime, fast builds, fast DX. Performance is non-negotiable.
+Fast runtime, fast builds, fast DX — measured honestly, not asserted.
 
 - User-facing performance affects conversion
 - Developer experience affects productivity
 - Fast feedback loops improve code quality
 - Benchmark before adopting
+- Targets state where we want to be; ratchets stop regression — several targets are red today and `src/lib/server/perf/budgets.json` says so rather than hiding it
 
 ---
 
@@ -108,7 +110,7 @@ When considering a new dependency:
 | Does it use standard protocols? | Standard protocols |
 | Is there a free tier for dev? | Free tier friendly |
 | Is there a Svelte-native option? | Svelte-native first |
-| Does it require code generation? | No code generation |
+| Is its codegen deterministic and staleness-gated? | No ungated code generation |
 | Is it fast? | Speed is a feature |
 
 If a tool fails multiple checks, look for alternatives. If no alternative exists, document the exception.

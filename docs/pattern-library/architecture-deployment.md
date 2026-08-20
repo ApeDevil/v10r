@@ -1,18 +1,18 @@
 ---
-title: "Deployment (Vercel primary, tri-target)"
-description: "Covers the tri-target deployment strategy — Vercel Node.js (stable), Vercel Bun (experimental), and Koyeb Bun container — sharing one codebase with per-target…"
+title: "Deployment (Vercel serverless, container target planned)"
+description: "Covers the deployment setup — Vercel Node.js serverless is the one wired target (adapter-vercel hardcoded); a Bun container target (Koyeb) is a planned…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Deployment (Vercel primary, tri-target)
+# Deployment (Vercel serverless, container target planned)
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Architecture & Request Pipeline · **Tier:** light · **Risk:** medium — deployment configuration spans external hosting targets (Vercel, Koyeb)
+**Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** implemented · **Risk:** medium — deployment configuration spans external hosting targets (Vercel, Koyeb)
 
-Covers the tri-target deployment strategy — Vercel Node.js (stable), Vercel Bun (experimental), and Koyeb Bun container — sharing one codebase with per-target adapter configuration.
+Covers the deployment setup — Vercel Node.js serverless is the one wired target (adapter-vercel hardcoded); a Bun container target (Koyeb) is a planned portability goal the job system and env parity already accommodate.
 
 **When to use:** Reach for it when configuring or switching the deployment adapter/target for the app.
 

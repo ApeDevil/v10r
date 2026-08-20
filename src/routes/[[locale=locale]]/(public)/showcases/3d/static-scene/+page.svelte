@@ -4,6 +4,7 @@ import { GLTF, OrbitControls } from '@threlte/extras';
 import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components';
 import { BoundaryFallback } from '$lib/components/composites';
 import * as m from '$lib/paraglide/messages';
+import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
 </script>
 <div class="page">
 	<PageHeader
@@ -23,7 +24,7 @@ import * as m from '$lib/paraglide/messages';
 <svelte:boundary>
 	<div class="container">
 		<Canvas>
-			<T.PerspectiveCamera makeDefault position={[3, 3, 3]}>
+			<T.PerspectiveCamera makeDefault={THRELTE_MAKE_DEFAULT} position={[3, 3, 3]}>
 				<OrbitControls />
 			</T.PerspectiveCamera>
 			<T.DirectionalLight position={[10, 10, 10]} intensity={1} />

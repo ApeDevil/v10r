@@ -10,7 +10,7 @@ category: "Databases & Storage"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Databases & Storage · **Tier:** light · **Risk:** medium — spans two external managed services (Postgres, Neo4j)
+**Category:** Databases & Storage · **Tier:** light · **Maturity:** implemented · **Risk:** medium — spans two external managed services (Postgres, Neo4j)
 
 Documents strategies for keeping references between Postgres and Neo4j valid, since no foreign keys exist across the two stores.
 

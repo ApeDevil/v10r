@@ -10,7 +10,7 @@ category: "Internationalization (i18n)"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Internationalization (i18n) · **Tier:** light · **Risk:** low — presentation formatting only
+**Category:** Internationalization (i18n) · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — presentation formatting only
 
 Locale-explicit date, number, currency, percent, and relative-time formatting helpers built on the native Intl API, decoupled from the translation locale to avoid SSR/CSR hydration mismatches.
 
@@ -23,6 +23,14 @@ Locale-explicit date, number, currency, percent, and relative-time formatting he
 ## Code
 
 - `src/lib/i18n/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/i18n) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/i18n))
+
+## Tests
+
+- `src/lib/i18n/plurals.test.ts` — CLDR plural-category correctness across locales ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/i18n/plurals.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/i18n/plurals.test.ts))
+
+## Proof
+
+- [`/showcases/i18n`](/showcases/i18n)
 
 ---
 

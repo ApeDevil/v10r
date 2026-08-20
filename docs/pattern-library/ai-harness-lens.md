@@ -10,7 +10,7 @@ category: "AI"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** AI · **Tier:** light · **Risk:** medium — governs the agent loop that drives external LLM providers
+**Category:** AI · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — governs the agent loop that drives external LLM providers
 
 A conceptual audit lens (not a module) names which slice — loop, context, policy, or tools — owns each agent-harness primitive such as compaction, step caps, and approval gating.
 
@@ -24,6 +24,11 @@ A conceptual audit lens (not a module) names which slice — loop, context, poli
 
 - `src/lib/server/ai/loop/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/ai/loop) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/ai/loop))
 - `src/lib/server/ai/policy/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/ai/policy) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/ai/policy))
+
+## Tests
+
+- `src/lib/server/ai/loop/compact.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/loop/compact.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/loop/compact.test.ts))
+- `src/lib/server/ai/policy/governor.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/policy/governor.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/policy/governor.test.ts))
 
 ---
 

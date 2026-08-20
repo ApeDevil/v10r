@@ -1,6 +1,9 @@
 export const pillColorVariants = {
 	default: 'bg-primary-container text-primary',
 	secondary: 'bg-surface-2 text-muted',
+	// Quieter than secondary: sits on the base surface instead of an elevated one,
+	// for de-emphasized states (off, n/a, historical).
+	muted: 'bg-surface-1 text-muted',
 	success: 'bg-success-light text-success',
 	warning: 'bg-warning-light text-warning',
 	error: 'bg-error-bg text-error',

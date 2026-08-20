@@ -1,23 +1,25 @@
 # Deployment
 
-Tri-target deployment: Vercel (Node.js), Vercel (Bun experimental), and Koyeb (Bun container).
+Tri-target deployment design: Vercel (Node.js), Vercel (Bun experimental), and Koyeb (Bun container).
 
-**Strategy:** Same codebase, different configurations. See [stack/ops/deployment.md](../stack/ops/deployment.md) for decision rationale.
+> **Status: only the Vercel Node.js target is wired.** `svelte.config.js` hardcodes `adapter-vercel`; `DEPLOY_TARGET`, `svelte-adapter-bun`, and the Dockerfile referenced below do not exist yet. The Bun/Koyeb sections are design intent for the planned container target, kept because the job system and env parity were built to support them.
+
+**Strategy:** Same codebase, different configurations. See [stack/ops/deployment.md](../stack/ops/deployment.md) for decision rationale and current status.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Vercel (Node.js) — Stable
+# Vercel (Node.js) — Stable, the only target wired today
 bun run build
 # Deploy via Vercel dashboard or CLI
 
-# Vercel (Bun) — Experimental
+# Vercel (Bun) — PLANNED, experimental
 bun run build
 # Add "bunVersion": "1.x" to vercel.json
 
-# Koyeb (Bun) — Container
+# Koyeb (Bun) — PLANNED; DEPLOY_TARGET and the Dockerfile do not exist yet
 DEPLOY_TARGET=bun bun run build
 # Deploy via Dockerfile
 ```
@@ -26,7 +28,9 @@ DEPLOY_TARGET=bun bun run build
 
 ## Adapter Configuration
 
-### Dynamic Adapter Selection
+### Dynamic Adapter Selection (planned)
+
+Today `svelte.config.js` imports `@sveltejs/adapter-vercel` unconditionally. The switch below is the shape the container target will introduce:
 
 ```javascript
 // svelte.config.js
@@ -48,7 +52,7 @@ export default {
 
 ### Adapter Dependencies
 
-Dev dependencies:
+Dev dependencies (`svelte-adapter-bun` is not installed until the container target lands):
 ```json
 "@sveltejs/adapter-vercel": "^5.x",
 "svelte-adapter-bun": "^0.5.x"

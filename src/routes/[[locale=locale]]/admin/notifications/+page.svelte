@@ -7,6 +7,7 @@ import { Badge, Button, Input, Skeleton, Spinner, Tag, Textarea } from '$lib/com
 import AnnouncementBanner from '$lib/components/shell/AnnouncementBanner.svelte';
 import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
+import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 const toast = getToast();

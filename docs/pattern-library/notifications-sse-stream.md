@@ -10,7 +10,7 @@ category: "Notifications"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Notifications · **Tier:** light · **Risk:** low — same-origin authenticated stream, connection-limited
+**Category:** Notifications · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — same-origin authenticated stream, connection-limited
 
 A container-mode in-memory connection map pushes notifications over SSE in real time (falling back to invalidate()-based polling on Vercel serverless) and feeds a Svelte 5 runes notification-center state.
 

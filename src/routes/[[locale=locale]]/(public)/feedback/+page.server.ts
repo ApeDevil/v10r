@@ -65,8 +65,8 @@ export const actions: Actions = {
 		await submitFeedback({
 			subject: form.data.subject,
 			body: form.data.body,
-			rating: form.data.rating,
-			contactEmail: form.data.contactEmail,
+			rating: form.data.rating ?? null,
+			contactEmail: form.data.contactEmail ?? null,
 			pageOfOrigin: form.data.pageOfOrigin,
 			sessionId,
 			nonce: form.data.nonce,

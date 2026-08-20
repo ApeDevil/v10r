@@ -35,6 +35,9 @@ export interface RegistryPattern {
 	invariants: string[];
 	emulation_notes: string[];
 	risk: string;
+	maturity: 'planned' | 'implemented' | 'proven';
+	verifiedAt?: string;
+	verifiedSha?: string;
 }
 
 export interface Registry {

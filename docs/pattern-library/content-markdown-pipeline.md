@@ -10,7 +10,7 @@ category: "Content & Blog"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content & Blog · **Tier:** light · **Risk:** low — parsing/rendering pipeline, no db writes
+**Category:** Content & Blog · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — parsing/rendering pipeline, no db writes
 
 A remark/rehype-based markdown rendering pipeline extended with custom directive syntax for embeds; wikilink cross-references are designed for but not yet implemented.
 
@@ -24,6 +24,10 @@ A remark/rehype-based markdown rendering pipeline extended with custom directive
 
 - `src/lib/server/content/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/content) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/content))
 - `src/lib/content-syntax/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/content-syntax) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/content-syntax))
+
+## Tests
+
+- `src/lib/server/blog/pipeline.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/blog/pipeline.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/blog/pipeline.test.ts))
 
 ---
 

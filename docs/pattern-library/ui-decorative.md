@@ -10,7 +10,7 @@ category: "UI Components & Design System"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** UI Components & Design System · **Tier:** light · **Risk:** low — decorative, no functional impact
+**Category:** UI Components & Design System · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — decorative, no functional impact
 
 Decorative primitive components (ornaments, backgrounds) used by the style-randomization system to vary visual flourish without affecting core UI predictability.
 

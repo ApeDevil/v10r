@@ -10,7 +10,7 @@ category: "UI Components & Design System"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** UI Components & Design System · **Tier:** light · **Risk:** low — frontend only
+**Category:** UI Components & Design System · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
 
 A UnoCSS-driven mobile-first strategy combining clamp()-based fluid typography/spacing, media-query breakpoints for page layout, and container queries for self-contained component responsiveness.
 
@@ -24,6 +24,10 @@ A UnoCSS-driven mobile-first strategy combining clamp()-based fluid typography/s
 ## Code
 
 - `uno.config.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/uno.config.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/uno.config.ts))
+
+## Proof
+
+- [`/showcases/ui/typography`](/showcases/ui/typography) — Fluid type scale demo
 
 ---
 

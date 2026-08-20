@@ -2,6 +2,7 @@
 import { T, useTask } from '@threlte/core';
 import { OrbitControls, useGltf } from '@threlte/extras';
 import { AnimationMixer, type PerspectiveCamera, Vector3 } from 'three';
+import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
 
 interface Props {
 	path: string;
@@ -69,9 +70,8 @@ useTask((delta) => {
 });
 </script>
 
-<!-- @ts-ignore: Threlte makeDefault type requires tsgo conditional type support -->
 <T.PerspectiveCamera
-	makeDefault
+	makeDefault={THRELTE_MAKE_DEFAULT}
 	position={cameraPosition}
 	fov={cameraFov}
 	near={0.1}

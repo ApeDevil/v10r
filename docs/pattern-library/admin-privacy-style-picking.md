@@ -10,7 +10,7 @@ category: "Admin & Privacy"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Admin & Privacy · **Tier:** light · **Risk:** low — cosmetic per-visitor theming, no sensitive data involved
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — cosmetic per-visitor theming, no sensitive data involved
 
 A per-visitor palette, typography, and radius resolution system with a randomizer, manual picker, and optional saved custom palettes, deliberately without a site-wide brand lock.
 

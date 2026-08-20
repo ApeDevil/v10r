@@ -10,7 +10,7 @@ category: "Architecture & Request Pipeline"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Architecture & Request Pipeline · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 Defines the file-based +server.ts convention for REST endpoints, covering Valibot validation, error() status codes, pagination, and response envelopes.
 
@@ -25,6 +25,12 @@ Defines the file-based +server.ts convention for REST endpoints, covering Valibo
 
 - `src/routes/api/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/routes/api) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/routes/api))
 - `src/lib/server/api/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/api) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/api))
+
+## Tests
+
+- `src/lib/api.gate.test.ts` — Client fetches to /api must ride apiFetch (CSRF header) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/api.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/api.gate.test.ts))
+- `src/lib/server/api/body.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/api/body.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/api/body.test.ts))
+- `src/lib/server/api/rate-limit.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/api/rate-limit.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/api/rate-limit.test.ts))
 
 ---
 

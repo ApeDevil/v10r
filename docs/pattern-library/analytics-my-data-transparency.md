@@ -10,7 +10,7 @@ category: "Analytics"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Analytics · **Tier:** light · **Risk:** low — read-only authenticated page, no external service
+**Category:** Analytics · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — read-only authenticated page, no external service
 
 An authenticated "Your data" page streams cookie state, live request metadata, and a full collectUserData report so a visitor can see what analytics has captured about them.
 

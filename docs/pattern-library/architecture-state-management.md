@@ -10,7 +10,7 @@ category: "Architecture & Request Pipeline"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Architecture & Request Pipeline · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 Establishes v10r's rune-based state strategy — $state/$derived for component state, .svelte.ts modules or the Context API for shared state, with an SSR-safety rule against module-level state leaking across requests.
 
@@ -23,6 +23,11 @@ Establishes v10r's rune-based state strategy — $state/$derived for component s
 ## Code
 
 - `src/lib/state/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/state) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/state))
+
+## Tests
+
+- `src/lib/state/layer-stack.svelte.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/layer-stack.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/layer-stack.svelte.test.ts))
+- `src/lib/state/run-monitor.svelte.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/run-monitor.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/run-monitor.svelte.test.ts))
 
 ---
 

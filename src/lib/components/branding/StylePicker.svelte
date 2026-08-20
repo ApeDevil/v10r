@@ -50,7 +50,7 @@ function swatches(p: Palette): string[] {
 async function pickPalette(id: string, name: string) {
 	await style.pick({ paletteId: id, paletteName: name }, toast);
 
-	// A custom palette's CSS lives in a <style> block that only a full document
+	// A custom palette's CSS lives in a style element that only a full document
 	// render injects (see the i18n hook) — client-side there is no rule for
 	// [data-palette="CP_…"] and the page would fall back to the :root defaults.
 	// The endpoint already wrote the cookie, so a reload renders it properly,

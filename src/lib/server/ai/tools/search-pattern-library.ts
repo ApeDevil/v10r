@@ -41,6 +41,7 @@ function toRow(pattern: PatternRecord) {
 		title: pattern.title,
 		category: pattern.category,
 		tier: pattern.tier,
+		maturity: pattern.maturity,
 		summary: pattern.summary,
 		when_to_use: pattern.when_to_use,
 		path: `${PAGES_BASE}/${pattern.id}`,

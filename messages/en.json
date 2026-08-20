@@ -1008,6 +1008,7 @@
 	"showcase_docs_button": "Documentation",
 	"showcase_docs_aria": "Documentation for this showcase",
 	"showcase_3d_title": "3D",
+	"showcase_3d_breadcrumb": "3D",
 	"showcase_3d_description": "Three.js + Threlte 3D demonstrations with GLTF models, animations, and interactive controls.",
 	"showcase_viz_title": "Data Viz",
 	"showcase_viz_description": "Chart, plot, diagram, graph, and map components for data visualization.",

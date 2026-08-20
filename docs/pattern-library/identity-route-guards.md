@@ -10,7 +10,7 @@ category: "Identity & Access"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Identity & Access · **Tier:** light · **Risk:** low — application-level authorization logic, no external calls
+**Category:** Identity & Access · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — application-level authorization logic, no external calls
 
 Server-side guard functions that check a user's capability grants or admin status before allowing access to a route or API endpoint.
 

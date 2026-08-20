@@ -10,7 +10,7 @@ category: "Analytics"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Analytics · **Tier:** light · **Risk:** low — server-side telemetry write, no external service
+**Category:** Analytics · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — server-side telemetry write, no external service
 
 A hooks.server.ts middleware stage that runs last in the 14-stage sequence and records public GET pageviews into separate anonymous and authenticated lanes only after auth and routing have resolved; sessions gain human_confirmed_at via a consent-free confirm ping so dashboards count JS-corroborated visitors, and collection is muted in dev because every environment shares one database.
 

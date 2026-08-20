@@ -10,7 +10,7 @@ category: "Admin & Privacy"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Admin & Privacy · **Tier:** light · **Risk:** medium — gates privileged access; guard bugs risk privilege escalation
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — gates privileged access; guard bugs risk privilege escalation
 
 The overall admin area architecture — a vertical sidebar, route guards, and a canonical data-table pattern reused across admin pages.
 

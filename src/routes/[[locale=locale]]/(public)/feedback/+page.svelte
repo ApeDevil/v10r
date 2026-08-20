@@ -109,13 +109,13 @@ let privacyOpen = $state('');
 					<FormField label={m.feedback_field_rating_label()} id="feedback-rating">
 						{#snippet children({ fieldId })}
 							<Select
-								name="rating"
 								options={ratingOptions}
 								value={$form.rating == null ? '' : String($form.rating)}
 								onchange={(value) => ($form.rating = value === '' ? null : Number(value))}
 								placeholder={m.feedback_field_rating_none()}
 							/>
-							<input type="hidden" id={fieldId} value={$form.rating ?? ''} />
+							<!-- The Select is display-only; this input is what the form actually submits. -->
+							<input type="hidden" id={fieldId} name="rating" value={$form.rating ?? ''} />
 						{/snippet}
 					</FormField>
 

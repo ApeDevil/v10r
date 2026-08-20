@@ -8,7 +8,7 @@ category: "Jobs & Scheduling"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Jobs & Scheduling · **Tier:** deep · **Risk:** medium — touches deploy config and background execution
+**Category:** Jobs & Scheduling · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — touches deploy config and background execution
 
 A slug→execute job registry with a unified runner; cadence lives entirely in platform config (Vercel cron vs container setInterval), so switching hosts needs zero job-code change.
 

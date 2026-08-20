@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Velociraptor (v10r) is a full-stack **pattern library** — proven, high-performance SvelteKit patterns that an AI agent reads and adapts to a new project. Emulation, not cloning. It is simultaneously documentation, a test environment, and a reusable reference. Full goals: `docs/foundation/PRD.md`.
 
-Showcase pages under `(public)/showcases/` are the primary test strategy for UI patterns: each page is documentation, feature test, and copy template at once. If the showcase works, the pattern is proven.
+Showcase pages under `(public)/showcases/` are the primary test strategy for UI patterns: each page is documentation, feature test, and copy template at once. If the showcase works, the pattern is proven — and "proven" is a machine-checked `maturity` grade in `mcp/patterns.registry.json` (requires a linked test/showcase + `verifiedAt`; contradictions fail `mcp:validate`).
 
 **No backward compatibility.** Active development, no production users. Never add migration shims, retired-ID filters, version upgrade paths, or deprecation layers — change the code directly.
 
@@ -31,7 +31,7 @@ podman exec v10r bun run validate
 ### Individual checks
 
 ```bash
-podman exec v10r bun run check            # paraglide compile + svelte-kit sync + svelte-check-rs
+podman exec v10r bun run check            # paraglide compile + svelte-kit sync + svelte-check (gated, scripts/quality/svelte-check-gate.ts)
 podman exec v10r bun run test             # vitest run
 podman exec v10r bun run lint             # biome check .
 podman exec v10r bun run lint:fix         # biome check --write .
@@ -153,7 +153,7 @@ Comment the WHY, never the WHAT. Delete a comment that restates its next line.
 - Present tense; one owner per fact, cross-referenced by path. No "previously…"/"used to…" outside a regression test, where the bug IS the reason.
 - No banners or structural `<!-- -->` / `/* */` labels — group with blank lines; keep a label's words, drop its frame. A `##` heading in a docblock means it outgrew a comment.
 - Keep: ordering constraints, upstream-bug workarounds, security invariants, "looks wrong, is deliberate", `svelte-ignore`/`biome-ignore` justifications, gate-test docstrings (invariant → motivating bug → `── Honest limits ──` → alternative to widening the allowlist).
-- Don't edit casually: `@ts-expect-error`, `@unocss-include`, `PATTERN-INDEX` anchors in `docs/pattern-library/README.md`, comments in raw-text-gate files — most gates don't strip comments, so edits flip them either way.
+- Don't edit casually: `@ts-expect-error`, `@unocss-include`, the `PATTERN-INDEX:START/END` anchors in the root `README.md`, comments in raw-text-gate files — most gates don't strip comments, so edits flip them either way.
 
 ## Documentation
 

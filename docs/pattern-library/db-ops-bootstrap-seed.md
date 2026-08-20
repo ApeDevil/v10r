@@ -10,7 +10,7 @@ category: "Database Operations"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Database Operations · **Tier:** light · **Risk:** low — dev-time tooling, no production runtime dependency
+**Category:** Database Operations · **Tier:** light · **Maturity:** implemented · **Risk:** low — dev-time tooling, no production runtime dependency
 
 Scripts and seed modules that populate a fresh database with baseline and sample data.
 

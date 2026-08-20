@@ -144,3 +144,7 @@ container_run() {
 
 # Run the full gate (`bun run validate`) inside the current repo's container.
 run_validate() { container_run bun run validate; }
+
+# Production build + perf-ratchet check against fresh numbers. NODE_ENV lives
+# inside the npm script itself so every entry point gets it right.
+run_validate_build() { container_run bun run validate:build; }

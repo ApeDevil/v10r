@@ -1008,6 +1008,7 @@
 	"showcase_docs_button": "Документация",
 	"showcase_docs_aria": "Документация для этой витрины",
 	"showcase_3d_title": "3D",
+	"showcase_3d_breadcrumb": "3D",
 	"showcase_3d_description": "Демонстрации 3D на Three.js + Threlte: GLTF-модели, анимации и интерактивные управления.",
 	"showcase_viz_title": "Графики",
 	"showcase_viz_description": "Компоненты диаграмм, графиков, схем, графов и карт для визуализации данных.",

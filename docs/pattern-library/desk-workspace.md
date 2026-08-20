@@ -8,7 +8,7 @@ category: "Desk Workspace"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Desk Workspace · **Tier:** deep · **Risk:** medium — persists workspace layout locally and via the file registry; no cross-user surface
+**Category:** Desk Workspace · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — persists workspace layout locally and via the file registry; no cross-user surface
 
 A full-page multi-panel workspace on a binary split-tree dock: resizable panes, drag-and-drop tabs, a panel-type registry, typed cross-panel pub/sub (DeskBus), one persisted desktop tree with total focus derivation, and a mobile chrome that is a projection over the same state — never a second layout.
 

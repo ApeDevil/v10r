@@ -10,7 +10,7 @@ category: "Admin & Privacy"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Admin & Privacy · **Tier:** light · **Risk:** medium — HMAC cookie and code claiming must resist forgery/replay
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — HMAC cookie and code claiming must resist forgery/replay
 
 A short-lived, single-use pairing code and QR flow that attributes a phone's anonymous pageviews to an admin's identity via an HMAC-signed cookie, without logging the phone in.
 

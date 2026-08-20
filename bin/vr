@@ -18,7 +18,8 @@ menu() {
 vr — solo-dev cli (acts on the git repo you're standing in)
 
   ship, s           gate + promote current branch → main (deploys on push)
-  validate, v       run the full gate (bun run validate) in the container
+  validate, v       run the full gate (bun run validate); --build adds a
+                    production build + perf-ratchet check (validate:build)
   refresh, ref      refresh derived surfaces (bun run refresh) in the container
   dev               start the dev server (podman compose up, foreground)
   up, u             start the container in the background

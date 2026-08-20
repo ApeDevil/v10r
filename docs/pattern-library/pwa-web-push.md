@@ -10,7 +10,7 @@ category: "PWA"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** PWA · **Tier:** light · **Risk:** low — no PII in payload, subscriptions capped and pruned per user
+**Category:** PWA · **Tier:** light · **Maturity:** implemented · **Risk:** low — no PII in payload, subscriptions capped and pruned per user
 
 Web push uses one Declarative Web Push JSON payload carrying no PII (brand title, generic body, same-origin navigate path) so real content only loads after tap-through session auth, delivered synchronously and bypassing the outbox.
 

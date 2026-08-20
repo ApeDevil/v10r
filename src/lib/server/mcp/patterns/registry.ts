@@ -215,7 +215,7 @@ function patternCard(pattern: PatternRecord): string {
 	const header = [
 		`# ${pattern.title} (\`${pattern.id}\`)`,
 		'',
-		`**Category:** ${pattern.category} · **Tier:** ${pattern.tier} · **Risk:** ${pattern.risk}`,
+		`**Category:** ${pattern.category} · **Tier:** ${pattern.tier} · **Maturity:** ${pattern.maturity}${pattern.verifiedAt ? ` (verified ${pattern.verifiedAt})` : ''} · **Risk:** ${pattern.risk}`,
 		pattern.depends_on.length > 0 ? `**Depends on:** ${pattern.depends_on.join(', ')}` : '',
 		'',
 		pattern.summary,
@@ -279,7 +279,7 @@ function searchPatterns(args: Record<string, unknown>): ToolResult {
 	if (scored.length === 0) return noMatchResult(`query "${query}"`);
 	const lines = scored.map(
 		(hit, index) =>
-			`${index + 1}. **${hit.pattern.title}** (\`${hit.pattern.id}\`, ${hit.pattern.category}, ${hit.pattern.tier})\n   ${hit.pattern.summary}\n   _matched: ${hit.matchedTerms.join(', ') || 'title'} in ${hit.matchedFields.join(', ')}_`,
+			`${index + 1}. **${hit.pattern.title}** (\`${hit.pattern.id}\`, ${hit.pattern.category}, ${hit.pattern.tier}, ${hit.pattern.maturity})\n   ${hit.pattern.summary}\n   _matched: ${hit.matchedTerms.join(', ') || 'title'} in ${hit.matchedFields.join(', ')}_`,
 	);
 	return textResult(
 		`Found ${scored.length} pattern(s) for "${query}":\n\n${lines.join('\n')}\n\nNext: call get_pattern with an id for the full card.`,

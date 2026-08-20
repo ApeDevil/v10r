@@ -10,7 +10,7 @@ category: "Internationalization (i18n)"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Internationalization (i18n) · **Tier:** light · **Risk:** low — schema convention, no external services
+**Category:** Internationalization (i18n) · **Tier:** light · **Maturity:** implemented · **Risk:** low — schema convention, no external services
 
 A source-column plus JSONB-sidecar convention (e.g. name / name_i18n) for translating short database fields, resolved at read time by the tc() helper with an explicit locale argument.
 

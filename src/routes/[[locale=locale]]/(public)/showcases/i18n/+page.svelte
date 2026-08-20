@@ -19,6 +19,7 @@ import {
 	cookieMaxAge,
 	cookieName,
 	extractLocaleFromUrl,
+	type Locale,
 	locales,
 	localizeHref,
 } from '$lib/paraglide/runtime';
@@ -40,7 +41,7 @@ const formattingLocale = $derived(getFormattingLocale(currentLocale));
 // so after goto() the URL changes and all m.xxx() calls pick up the new locale.
 let switching = $state(false);
 
-async function switchLocale(event: Event, lang: string) {
+async function switchLocale(event: Event, lang: Locale) {
 	event.preventDefault();
 	if (switching || lang === currentLocale) return;
 	switching = true;

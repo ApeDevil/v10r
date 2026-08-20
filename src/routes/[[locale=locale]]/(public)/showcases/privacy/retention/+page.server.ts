@@ -21,7 +21,9 @@ async function getLastJobRun(slug: string) {
 		.orderBy(desc(jobExecution.startedAt))
 		.limit(1);
 
-	return rows[0] ?? null;
+	// .at(0) keeps the | undefined arm so the ?? null actually types as nullable
+	// (plain rows[0] erases it without noUncheckedIndexedAccess).
+	return rows.at(0) ?? null;
 }
 
 export const load: PageServerLoad = async () => {

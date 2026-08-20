@@ -10,7 +10,7 @@ category: "Content & Blog"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content & Blog · **Tier:** light · **Risk:** medium — persists user-generated content, moderation authority
+**Category:** Content & Blog · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — persists user-generated content, moderation authority
 
 A flat, per-locale comment system with a short author edit window and admin moderation (hide/unhide/remove).
 
@@ -23,6 +23,10 @@ A flat, per-locale comment system with a short author edit window and admin mode
 ## Code
 
 - `src/lib/server/blog/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/blog) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/blog))
+
+## Proof
+
+- [`blog`](blog) (app route, no showcase) — Comment threads on blog posts
 
 ---
 

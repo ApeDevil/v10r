@@ -9,6 +9,11 @@
  *   4. DB drift: file en.md hash matches the latest published EN revision (warn; fail in --strict)
  *   5. Orphans: DB rows with sourcePath set but file gone (warn always; fail in --strict)
  *
+ * Checks 4–5 need the live Neon DB. --offline skips them (and never opens a
+ * connection) so the validate gate stays hermetic: `content:check` runs
+ * --offline inside `bun run validate`; `content:check:db` is the connected
+ * drift audit to run before content pushes / deploys.
+ *
  * Exit codes:
  *   0  no issues
  *   1  argument error
@@ -17,9 +22,9 @@
  * Mirrors `scripts/i18n/check-missing.ts` for muscle memory.
  *
  * Usage:
- *   bun run content:check
- *   bun run content:check --strict
- *   bun run content:check --json
+ *   bun run content:check          # offline checks only (validate leg)
+ *   bun run content:check:db      # full audit incl. DB drift + orphans
+ *   … --strict --json
  */
 
 import { readdir, readFile, stat } from 'node:fs/promises';
@@ -28,18 +33,19 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { isLocale, type Locale, locales } from '$lib/i18n/runtime';
 import { contentHash, FrontmatterError, findOrphanedSourcePaths, parseContentFile } from '$lib/server/content';
 import { post, publishedRevision, revision } from '$lib/server/db/schema/blog';
-import { db, pool } from './_db';
 
 interface Flags {
 	strict: boolean;
 	json: boolean;
+	offline: boolean;
 }
 
 function parseArgs(argv: string[]): Flags {
-	const flags: Flags = { strict: false, json: false };
+	const flags: Flags = { strict: false, json: false, offline: false };
 	for (const arg of argv) {
 		if (arg === '--strict') flags.strict = true;
 		else if (arg === '--json') flags.json = true;
+		else if (arg === '--offline') flags.offline = true;
 		else {
 			console.error(`unknown flag: ${arg}`);
 			process.exit(1);
@@ -49,6 +55,10 @@ function parseArgs(argv: string[]): Flags {
 }
 
 const flags = parseArgs(process.argv.slice(2));
+
+// _db connects (and exits on missing NEON_DATABASE_URL_PROD) at module load,
+// so offline mode must never import it — a static import would defeat the flag.
+const dbm = flags.offline ? null : await import('./_db');
 
 interface Issue {
 	level: 'warn' | 'error';
@@ -163,7 +173,8 @@ for (const slug of slugs.sort()) {
 	}
 
 	// 3: DB drift for the EN file
-	const [latestEn] = await db
+	if (!dbm) continue;
+	const [latestEn] = await dbm.db
 		.select({ hash: revision.contentHash })
 		.from(post)
 		.innerJoin(publishedRevision, and(eq(publishedRevision.postId, post.id), eq(publishedRevision.locale, 'en')))
@@ -191,13 +202,15 @@ for (const slug of slugs.sort()) {
 }
 
 // 5: orphan DB rows (sourcePath set, file gone)
-for (const orphan of await findOrphanedSourcePaths(db)) {
-	issues.push({
-		level: flags.strict ? 'error' : 'warn',
-		slug: orphan.slug,
-		code: 'orphan',
-		message: `DB row claims sourcePath ${orphan.sourcePath} but the file is gone`,
-	});
+if (dbm) {
+	for (const orphan of await findOrphanedSourcePaths(dbm.db)) {
+		issues.push({
+			level: flags.strict ? 'error' : 'warn',
+			slug: orphan.slug,
+			code: 'orphan',
+			message: `DB row claims sourcePath ${orphan.sourcePath} but the file is gone`,
+		});
+	}
 }
 
 // ── Report ──
@@ -212,13 +225,18 @@ if (flags.json) {
 		const where = issue.locale ? `${issue.slug}/${issue.locale}` : issue.slug;
 		console.error(`${sigil} ${where}: ${issue.message}`);
 	}
-	if (issues.length === 0) console.log('[content:check] OK — no drift detected');
+	if (issues.length === 0)
+		console.log(
+			flags.offline
+				? '[content:check] OK — no drift detected (offline: DB drift + orphan audit skipped, run content:check:db)'
+				: '[content:check] OK — no drift detected',
+		);
 	else
 		console.error(
 			`\n[content:check] ${issues.length} issue(s) — ${issues.filter((i) => i.level === 'error').length} error(s)`,
 		);
 }
 
-await pool.end();
+if (dbm) await dbm.pool.end();
 const hasErrors = issues.some((i) => i.level === 'error');
 process.exit(hasErrors ? 2 : 0);

@@ -10,7 +10,7 @@ category: "App Shell & Navigation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** App Shell & Navigation · **Tier:** light · **Risk:** low — structural pattern, no external services
+**Category:** App Shell & Navigation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 Structures nav items as compound split buttons — a primary click zone that navigates and a dropdown zone that progressively reveals subpages or section anchors.
 
@@ -23,6 +23,10 @@ Structures nav items as compound split buttons — a primary click zone that nav
 ## Code
 
 - `src/lib/nav/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/nav) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/nav))
+
+## Proof
+
+- [`/showcases/shell/sidebar`](/showcases/shell/sidebar)
 
 ---
 

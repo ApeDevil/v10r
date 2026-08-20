@@ -10,7 +10,7 @@ category: "UI Components & Design System"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** UI Components & Design System · **Tier:** light · **Risk:** low — frontend only, no runtime side effects
+**Category:** UI Components & Design System · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only, no runtime side effects
 
 A pure, SSR-safe TypeScript engine that computes each surface's relative depth (parent level + 1) via Svelte context and stamps it as a data-elevation attribute, decoupled from z-index.
 

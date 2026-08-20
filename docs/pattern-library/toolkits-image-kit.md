@@ -10,7 +10,7 @@ category: "Toolkits"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Toolkits · **Tier:** light · **Risk:** low — no persistence of uploaded media, vision-call cost is the main concern
+**Category:** Toolkits · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — no persistence of uploaded media, vision-call cost is the main concern
 
 A single-page toolkit that chains an AI metadata reader, frame-cropper, and embedder on one uploaded image, then discards the upload after an honest approval terminal.
 

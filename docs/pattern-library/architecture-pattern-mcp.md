@@ -10,7 +10,7 @@ category: "Architecture & Request Pipeline"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Architecture & Request Pipeline · **Tier:** light · **Risk:** low — read-only, network-isolated container
+**Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — read-only, network-isolated container
 
 A read-only local stdio MCP server that exposes v10r's curated pattern registry (docs, code, tests, invariants) to coding agents so they can emulate patterns instead of grepping.
 

@@ -10,7 +10,7 @@ category: "Analytics"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Analytics · **Tier:** light · **Risk:** low — client beacon posts to a first-party endpoint only
+**Category:** Analytics · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — client beacon posts to a first-party endpoint only
 
 Page-to-page journeys are computed in Postgres with a LEAD() window function over consecutive pageviews in a session and shown as a ranked table rather than an aggregate flow diagram.
 

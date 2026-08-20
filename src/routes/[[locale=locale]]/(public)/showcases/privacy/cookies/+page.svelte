@@ -8,7 +8,7 @@ interface CookieRow {
 	name: string;
 	category: 'strictly-necessary' | 'analytics';
 	categoryLabel: string;
-	categoryVariant: 'success' | 'primary';
+	categoryVariant: 'success' | 'default';
 	duration: string;
 	purpose: string;
 	setBy: string;
@@ -35,7 +35,7 @@ const cookies: CookieRow[] = [
 		name: '_v10r_sid',
 		category: 'analytics',
 		categoryLabel: 'Analytics (consent-gated)',
-		categoryVariant: 'primary',
+		categoryVariant: 'default',
 		duration: '30 minutes (rolling) — extended on activity, deleted on tab close',
 		purpose:
 			'A short, opaque session ID that lets us reconstruct the page-by-page journey for the consented session. Cleared when you reject analytics or close the tab.',

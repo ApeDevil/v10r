@@ -10,7 +10,7 @@ category: "Admin & Privacy"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Admin & Privacy · **Tier:** light · **Risk:** medium — consent bugs cause non-compliant cookie writes
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — consent bugs cause non-compliant cookie writes
 
 Client-side consent state and a consent banner component that gate any cookie or storage write, satisfying ePrivacy/TDDDG consent requirements.
 

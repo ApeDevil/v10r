@@ -8,7 +8,7 @@ category: "AI"
 
 > Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** AI · **Tier:** deep · **Risk:** medium — writes to the corpus store; provider quotas apply
+**Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — writes to the corpus store; provider quotas apply
 
 The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a unified ingest door: the app runtime and the Bun docs-ingest script share the same pure planChunks() core.
 

@@ -10,7 +10,7 @@ category: "AI"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** AI · **Tier:** light · **Risk:** low — read-only admin reporting over existing telemetry
+**Category:** AI · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — read-only admin reporting over existing telemetry
 
 Chat and image telemetry are merged into one admin table that derives a reference token cost at read time from a hand-maintained price table, without charging or faking a real bill.
 

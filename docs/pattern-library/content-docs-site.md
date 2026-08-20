@@ -10,7 +10,7 @@ category: "Content & Blog"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Content & Blog · **Tier:** light · **Risk:** low — prerendered, no runtime db dependency
+**Category:** Content & Blog · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — prerendered, no runtime db dependency
 
 A prerendered documentation site where each page both explains and demonstrates the feature it documents.
 

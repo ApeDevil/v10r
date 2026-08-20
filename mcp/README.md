@@ -14,7 +14,7 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 
 | File | Role |
 |---|---|
-| `patterns.registry.json` | The product: the complete two-tier pattern record set — deep emulation cards (invariants + emulation notes) and light index rows — plus the `groups`/`categories` taxonomy that orders every generated surface |
+| `patterns.registry.json` | The product: the complete two-tier pattern record set — deep emulation cards (invariants + emulation notes) and light index rows — each carrying a machine-checked `maturity` grade (`proven` ⇔ linked test/showcase + `verifiedAt`), plus the `groups`/`categories` taxonomy that orders every generated surface |
 | `server.ts` | Entry: stdio loop, dispatch, lifecycle (exits on stdin EOF / SIGTERM — no orphan containers) |
 | `protocol.ts` | JSON-RPC framing and line buffering |
 | `registry.ts` | Types, structural validation, topological sort |
@@ -56,7 +56,7 @@ Vitest/svelte-check don't sweep `mcp/` (tests use `bun:test`); Biome does — ke
 
 ## Adding a pattern
 
-Pick a tier first. A **light** record is an index row: pointers to docs/code/showcase, empty `invariants`/`emulation_notes` (the validator rejects depth on light records). A **deep** record is a full emulation card: `invariants` and `emulation_notes` are required — curate them from the pattern's docs; they are the value the raw repo can't provide. Add the record to `patterns.registry.json` (copy a same-tier sibling's shape; `category` must be one of the root `categories[]` ids), then run `bun run mcp:validate` — it fails on any missing path, unregistered showcase route, malformed field, tier violation, or dependency cycle. Finally run `bun run patterns:build` (or the full `vr ref` chain) to regenerate the README Pattern Index and the `docs/pattern-library/` pages, and commit them with the registry change.
+Pick a tier first. A **light** record is an index row: pointers to docs/code/showcase, empty `invariants`/`emulation_notes` (the validator rejects depth on light records). A **deep** record is a full emulation card: `invariants` and `emulation_notes` are required — curate them from the pattern's docs; they are the value the raw repo can't provide. Add the record to `patterns.registry.json` (copy a same-tier sibling's shape; `category` must be one of the root `categories[]` ids) and grade it honestly: `maturity: "proven"` needs at least one `tests`/`showcases` ref plus a `verifiedAt` date (and ideally `verifiedSha`); no proof surface yet means `"implemented"`, design-only means `"planned"`. Then run `bun run mcp:validate` — it fails on any missing path, unregistered showcase route, malformed field, tier violation, maturity/proof contradiction, or dependency cycle. Finally run `bun run patterns:build` (or the full `vr ref` chain) to regenerate the README Pattern Index and the `docs/pattern-library/` pages, and commit them with the registry change.
 
 ## Also served over HTTP (read-only)
 

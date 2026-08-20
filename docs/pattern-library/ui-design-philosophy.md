@@ -10,7 +10,7 @@ category: "UI Components & Design System"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** UI Components & Design System · **Tier:** light · **Risk:** low — documentation/convention only
+**Category:** UI Components & Design System · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation/convention only
 
 Five content-first, accessibility-driven design principles paired with a three-tier token system (primitives → semantic tokens → component usage) flowing from src/app.css through tokens.ts into UnoCSS.
 
@@ -24,6 +24,11 @@ Five content-first, accessibility-driven design principles paired with a three-t
 
 - `src/app.css` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/app.css) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/app.css))
 - `src/lib/styles/tokens.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/styles/tokens.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/styles/tokens.ts))
+
+## Proof
+
+- [`/showcases/ui/tokens`](/showcases/ui/tokens)
+- [`/showcases/shell/style`](/showcases/shell/style)
 
 ---
 

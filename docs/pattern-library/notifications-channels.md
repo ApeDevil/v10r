@@ -10,7 +10,7 @@ category: "Notifications"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Notifications · **Tier:** light · **Risk:** low — outbound sends only, credentials encrypted at rest
+**Category:** Notifications · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — outbound sends only, credentials encrypted at rest
 
 Email (Resend), Telegram (bot API), and Discord (OAuth2) each implement a common provider interface (send/validateConnection/getProviderName) behind their own connection and token-management flow.
 

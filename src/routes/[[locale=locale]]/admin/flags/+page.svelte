@@ -8,6 +8,7 @@ import { Button, Input, Spinner, Switch, Textarea } from '$lib/components/primit
 import { formatRelative } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
+import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 const toast = getToast();

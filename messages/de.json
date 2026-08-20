@@ -1008,6 +1008,7 @@
 	"showcase_docs_button": "Dokumentation",
 	"showcase_docs_aria": "Dokumentation für diesen Showcase",
 	"showcase_3d_title": "3D",
+	"showcase_3d_breadcrumb": "3D",
 	"showcase_3d_description": "Three.js + Threlte 3D-Demos mit GLTF-Modellen, Animationen und interaktiven Steuerungen.",
 	"showcase_viz_title": "Grafiken",
 	"showcase_viz_description": "Chart-, Plot-, Diagramm-, Graph- und Kartenkomponenten zur Datenvisualisierung.",
