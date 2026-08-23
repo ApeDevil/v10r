@@ -2,15 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+**Stas is your human development partner** — this project's solo developer and the only human in the loop.
+
+## Project
 
 Velociraptor (v10r) is a full-stack **pattern library** — proven, high-performance SvelteKit patterns that an AI agent reads and adapts to a new project. Emulation, not cloning. It is simultaneously documentation, a test environment, and a reusable reference. Full goals: `docs/foundation/PRD.md`.
 
 Showcase pages under `(public)/showcases/` are the primary test strategy for UI patterns: each page is documentation, feature test, and copy template at once. If the showcase works, the pattern is proven — and "proven" is a machine-checked `maturity` grade in `mcp/patterns.registry.json` (requires a linked test/showcase + `verifiedAt`; contradictions fail `mcp:validate`).
 
-**No backward compatibility.** Active development, no production users. Never add migration shims, retired-ID filters, version upgrade paths, or deprecation layers — change the code directly.
-
-## Commands
+### Commands
 
 **Everything runs inside the `v10r` Podman container.** The host has only Podman — no `node_modules`, no runtime, no package manager. Never run `bun install` (or any package manager) on the host. Databases are remote (Neon, Neo4j Aura, Upstash), not containerized.
 
@@ -20,7 +20,7 @@ podman exec v10r <command>               # run anything inside it
 podman exec -it v10r bash                # shell in
 ```
 
-### The gate
+#### The gate
 
 There is no CI pipeline (solo dev). `bun run validate` is the authority — typecheck + biome + tests + registry/i18n/content/quality checks:
 
@@ -28,7 +28,7 @@ There is no CI pipeline (solo dev). `bun run validate` is the authority — type
 podman exec v10r bun run validate
 ```
 
-### Individual checks
+#### Individual checks
 
 ```bash
 podman exec v10r bun run check            # paraglide compile + svelte-kit sync + svelte-check (gated, scripts/quality/svelte-check-gate.ts)
@@ -38,7 +38,7 @@ podman exec v10r bun run lint:fix         # biome check --write .
 podman exec v10r bun run knip             # unused exports / dead code
 ```
 
-### Running a single test
+#### Running a single test
 
 ```bash
 podman exec v10r bunx vitest run src/lib/server/mcp/http.test.ts     # one file
@@ -48,7 +48,7 @@ podman exec v10r bunx vitest run src/lib/server/rag                  # by path p
 
 Tests are co-located as `*.test.ts` (no `__tests__/` dir). Vitest runs in the **node** environment — `$effect` never fires, so Svelte 5 effects cannot be unit-tested here; test the state half and verify effects in the browser.
 
-### Database
+#### Database
 
 Postgres connection env var is `NEON_DATABASE_URL_PROD` (not `DATABASE_URL`).
 
@@ -61,7 +61,7 @@ podman exec v10r bun run db:ingest-docs   # ingest docs/**/*.md into the RAG cor
 
 `drizzle-kit push` is interactive and re-prompts on TTY; it cannot be cleanly piped.
 
-### Derived surfaces
+#### Derived surfaces
 
 Pattern-library pages, MCP excerpts, and the RAG index are **generated**. Never hand-edit `docs/pattern-library/`; rebuild instead:
 
@@ -69,15 +69,9 @@ Pattern-library pages, MCP excerpts, and the RAG index are **generated**. Never 
 podman exec v10r bun run refresh          # mcp:validate → patterns:build → mcp:excerpts:build → db:ingest-docs
 ```
 
-### The `vr` CLI
+### Architecture
 
-`vr` is the host-side solo-dev dispatcher (`bin/vr`, logic in `scripts/`). Commands: `validate`/`v`, `refresh`/`ref`, `ship`/`s`, `dev`, `up`, `down`, `shell`. Reference: `docs/stack/ops/dev-cli.md`.
-
-**CRITICAL — never run a `vr` command on your own initiative.** Run one *only* when the user explicitly names that specific command. This is non-negotiable for `vr ship`, which fast-forwards `main` and pushes — **pushing `main` deploys to production**. Do not infer authorization from a task that merely "would benefit" from validating or shipping. Prefer the `podman exec v10r` forms above for your own verification.
-
-## Architecture
-
-### Two spines
+#### Two spines
 
 The whole system hangs off two structures. Read `docs/system-abstraction.md` (how it runs) and `docs/codebase-organization.md` (where code lives) before any structural or cross-cutting work.
 
@@ -93,7 +87,7 @@ Order is load-bearing: `securityHeaders` must be first (auth pins `ipAddressHead
 
 **Hexagonal multi-client core** — all business logic lives in framework-free `$lib/server/[domain]/` modules (~40 of them). Thin adapters wrap them per client type: `+page.server.ts` (form actions/loads), `+server.ts` (REST/SSE), `ai/tools/` (AI tool `execute`), `jobs/` (cron/scheduler). The same domain function serves all four.
 
-### The four invariants
+#### The four invariants
 
 Violating these breaks cross-client reuse:
 
@@ -102,13 +96,13 @@ Violating these breaks cross-client reuse:
 3. **`redirect` / `error` / `fail` / `message` only in adapters.** Domains return `null`, not `error(404)`. AI tools return `{ error: 'safe message' }` — they never throw.
 4. **Domains call down, not across.** Cross-domain access goes through the other domain's `index.ts` barrel only — never into its internals.
 
-### Import direction
+#### Import direction
 
 - `$lib/server/` is server-only **by path** — SvelteKit refuses to bundle it client-side. No runtime guard needed. Never import it from a `.svelte` file or a universal `+page.ts`.
 - `db/` is the sink: it imports no sibling domains. Everything flows toward it.
 - The import graph is a DAG. Drizzle relations are centralized in `db/schema/relations.ts` for exactly this reason.
 
-### Database layout
+#### Database layout
 
 `src/lib/server/db/` holds two parallel trees: `schema/[namespace]/` (table definitions, grouped by *storage*) and `db/[domain]/{queries,mutations}.ts` (data access, grouped by *call site*). They are deliberately not 1:1.
 
@@ -119,7 +113,7 @@ Reads/writes split into `queries.ts` (no side effects) / `mutations.ts` (explici
 
 **Push-only workflow.** No `drizzle/` migrations directory exists. Every `pgSchema()` and `pgEnum()` must be exported through `schema/index.ts` *and* listed in `drizzle.config.ts` `schemaFilter`, or `db:push` silently omits it.
 
-### Components
+#### Components
 
 Layer order (leaf → root): `primitives/` (wrap Bits UI) ← `composites/` ← `layout/` + `shell/` ← feature dirs (`blog/`, `chat/`, `editor/`, `viz/`, `3d/`, …). Feature dirs depend downward and **never import each other**.
 
@@ -127,7 +121,7 @@ Layer order (leaf → root): `primitives/` (wrap Bits UI) ← `composites/` ← 
 
 **Component-First Rule — never use a raw HTML element when a project component exists.** Raw `<button>`, `<input>`, `<select>`, `<textarea>` bypass the design system. Exceptions: `<input type="hidden">`, `<input type="checkbox">` inside table rows (native indeterminate), `<select>` binding numeric values (the Select component is string-only), and custom interactive regions needing specialized styling.
 
-### Styling
+#### Styling
 
 - `src/app.css` — runtime CSS custom properties. **All color tokens live here**; never hardcode a color.
 - `src/lib/styles/tokens.ts` — build-time tokens read by `uno.config.ts`. Custom spacing **replaces** the UnoCSS/Tailwind default scale, so keys do not mean what they mean in Tailwind.
@@ -135,16 +129,36 @@ Layer order (leaf → root): `primitives/` (wrap Bits UI) ← `composites/` ← 
 
 Global CSS (`uno.css`, `app.css`, fonts) is imported once in the **root** `src/routes/+layout.svelte`, not the locale layout — a `+page@.svelte` layout reset sheds the locale layer and would otherwise render token-less.
 
-### Routes
+#### Routes
 
 `src/routes/[[locale=locale]]/` is the localized tree (`(public)/`, `(dev)/`, `admin/`, `app/`, `auth/`, `desk/`, `pair/`); `src/routes/api/` is the parallel un-localized REST/SSE tree. Auth gates live in `+layout.server.ts` files, not route groups. Route-local private folders use a leading underscore (`_components/`, `_sections/`) — promote to `$lib/components/[layer]/` only when a second route needs them.
 
-### Conventions
+#### Conventions
 
 - Server `.ts`: kebab-case. Components: PascalCase `.svelte` in a kebab-case folder. Barrels: always `index.ts`.
 - Svelte 5 runes only — no Svelte 4 stores. Reactive state files **must** use the `.svelte.ts` extension: app-wide in `src/lib/state/[concern].svelte.ts`, component-local co-located as `[component].state.svelte.ts`.
 - Never name a prop `state` — it collides with the `$state` rune (`store_invalid_shape`).
 - `src/lib/paraglide/` is generated and gitignored — never edit. Translation source of truth is `messages/*.json` (en/de/ru). Adding a new i18n key requires a dev-server restart; the running Vite process 500s on the unknown key until then.
+
+### Documentation
+
+Every docs directory has a `README.md` navigation hub with a topic table. **Read the directory README first, use its table to pick the file, then read the file. Never grep blindly through `docs/`.** Entry points: `docs/README.md`, then `docs/system-abstraction.md` and `docs/codebase-organization.md`.
+
+## Behavior
+
+### Dev flow
+
+Source control is not your concern. Never commit, stage, or push on your own initiative — and never ask or offer to. The workflow: uncommitted changes in local source control are how Stas reviews your work and observes the implementation take shape; he commits and pushes himself once a feature works the way he imagined it, or better. Commit only when explicitly instructed. Read-only git (`status`, `diff`, `log`) for your own orientation is always fine.
+
+### The `vr` CLI
+
+`vr` (`bin/vr`, logic in `scripts/`) is Stas's personal host-side dispatcher — **every `vr` command is his alone; never run one**. Above all `vr ship`, which fast-forwards `main` and pushes — **pushing `main` deploys to production**. Reference: `docs/stack/ops/dev-cli.md`.
+
+The prohibition is on the `vr` wrapper, not the work it dispatches: run the container commands directly and freely — `podman exec v10r bun run validate`, `bun run build`, `bun run db:push`, and everything else in the Commands section.
+
+### No backward compatibility
+
+Active development, no production users. Never add migration shims, retired-ID filters, version upgrade paths, or deprecation layers — change the code directly.
 
 ### Comments
 
@@ -155,6 +169,6 @@ Comment the WHY, never the WHAT. Delete a comment that restates its next line.
 - Keep: ordering constraints, upstream-bug workarounds, security invariants, "looks wrong, is deliberate", `svelte-ignore`/`biome-ignore` justifications, gate-test docstrings (invariant → motivating bug → `── Honest limits ──` → alternative to widening the allowlist).
 - Don't edit casually: `@ts-expect-error`, `@unocss-include`, the `PATTERN-INDEX:START/END` anchors in the root `README.md`, comments in raw-text-gate files — most gates don't strip comments, so edits flip them either way.
 
-## Documentation
+### Acknowledgment
 
-Every docs directory has a `README.md` navigation hub with a topic table. **Read the directory README first, use its table to pick the file, then read the file. Never grep blindly through `docs/`.** Entry points: `docs/README.md`, then `docs/system-abstraction.md` and `docs/codebase-organization.md`.
+Optimize responses for signal over narration. End every substantive response with a final line prefixed **`TL;DR for Stas:`** — the outcome in one or two sentences, plus open issues if any. In a terminal the bottom of the response is what's on screen when output stops, so this is the scan-anchor. Skip it only when the whole response is already one or two sentences. Its presence also confirms this file is loaded and in effect.
