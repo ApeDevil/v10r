@@ -2,7 +2,7 @@
 name: uxy
 description: "Use this agent for the *usability* dimension of the UI — user flows, friction reduction, error recovery patterns, accessibility (WCAG, keyboard, screen readers, contrast), affordances, micro-interactions, form behavior, validation display, loading/success/error feedback patterns. Uxy owns how an interface *works for everyone*. For *written words* (microcopy, labels, errors, all copy in any locale) use `cony`. For *aesthetic* concerns (visual hierarchy, spacing, color, typography) use `arty`. For source code refactoring use `ary`.\n\nExamples:\n\n<example>\nContext: User is building a new feature with UI.\nuser: \"I need to create a settings page where users can update their profile\"\nassistant: \"Let me use the uxy agent to design the flow, accessibility, and error recovery.\"\n</example>\n\n<example>\nContext: Counter-example (NOT uxy).\nuser: \"This empty state copy feels off-brand — make it sound like us.\"\nassistant: \"That's voice and microcopy — route to `cony`.\"\n</example>\n\n<example>\nContext: Counter-example (NOT uxy).\nuser: \"This error message is unclear — users don't know what went wrong.\"\nassistant: \"Word-level clarity is cony's domain — route to `cony`.\"\n</example>"
 tools: Read, Glob, Grep, WebFetch, WebSearch
-model: inherit
+model: opus
 color: cyan
 ---
 

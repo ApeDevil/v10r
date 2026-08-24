@@ -2,7 +2,7 @@
 name: svey
 description: "Use this agent when working on SvelteKit applications, including: creating new routes and pages, implementing data loading strategies, optimizing rendering performance, debugging SSR/CSR/prerender behavior, refactoring to idiomatic Svelte patterns, reducing client-side JavaScript bundle size, or when you need guidance on SvelteKit best practices.\n\nExamples:\n\n<example>\nContext: User needs to fetch and display data.\nuser: \"I need to display a list of products from our API\"\nassistant: \"I'll use the svey agent to implement this with proper SvelteKit data loading patterns.\"\n</example>\n\n<example>\nContext: Counter-example (NOT svey).\nuser: \"How should this REST endpoint handle pagination cursors?\"\nassistant: \"That's contract design — route to the apy agent.\"\n</example>"
 tools: Read, Glob, Grep, Edit, Write, Bash, WebFetch
-model: inherit
+model: opus
 color: blue
 ---
 

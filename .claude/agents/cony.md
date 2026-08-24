@@ -2,7 +2,7 @@
 name: cony
 description: "Use this agent for all user-facing written words in every locale (en/de/ru) — page copy, microcopy, button labels, empty states, error messages, validation text, blog content, names of public surfaces, and the JSONB content i18n layer. Cony owns how the interface *reads*. For *visual* aesthetics (hierarchy, spacing, color, typography) use `arty`. For *interaction* behavior (flows, friction, accessibility, error recovery patterns) use `uxy`. For developer/contributor docs use `docy`.\n\nExamples:\n\n<example>\nContext: User has implemented a feature with placeholder copy.\nuser: \"I added the password reset flow but the copy is just `TODO`\"\nassistant: \"Let me use the cony agent to write the copy across all three locales — the email subject, the page heading, the success state, the error states.\"\n</example>\n\n<example>\nContext: Counter-example (NOT cony).\nuser: \"The error toast color clashes with the surface.\"\nassistant: \"That's visual aesthetics — route to `arty`.\"\n</example>\n\n<example>\nContext: Counter-example (NOT cony).\nuser: \"Errors don't offer a way back to the previous step.\"\nassistant: \"That's recovery behavior — route to `uxy`. Cony writes the words; uxy designs the path.\"\n</example>"
 tools: Read, Edit, Write, Glob, Grep, WebSearch
-model: inherit
+model: opus
 color: amber
 ---
 

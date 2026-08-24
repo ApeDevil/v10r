@@ -2,7 +2,7 @@
 name: arty
 description: "Use this agent for the *artistic* dimension of the UI — color, typography, optical balance, stroke-weight, visual polish, design-token aesthetic discipline. Arty owns how each element *looks*. For *spatial arrangement* — layout, grid/flex composition, spacing rhythm, visual hierarchy, density, breakpoints, desktop↔mobile responsiveness — use `laly` (arty styles the elements; laly arranges them). For *written words* (microcopy, labels, errors, naming of public surfaces, all locales) use `cony`. For *usability* (flows, friction, accessibility, error recovery patterns) use `uxy`. For source code refactoring use `ary`. For dead code detection use `clyn`.\n\nExamples:\n\n<example>\nContext: User senses the page is aesthetically incoherent.\nuser: \"The colors and type on this page feel off — something's not cohesive.\"\nassistant: \"I'll bring in arty to assess color balance and typographic cohesion. (If the problem is spacing or arrangement, that's laly.)\"\n</example>\n\n<example>\nContext: Counter-example (NOT arty).\nuser: \"This card layout feels cramped — the proportions are off.\"\nassistant: \"Spacing, rhythm, and spatial proportion are laly's territory — route to laly.\"\n</example>\n\n<example>\nContext: Counter-example (NOT arty).\nuser: \"This error message is unclear — users don't know what went wrong.\"\nassistant: \"That's word-level clarity — route to cony.\"\n</example>\n\n<example>\nContext: Counter-example (NOT arty).\nuser: \"This empty state copy feels off-brand — make it sound like us.\"\nassistant: \"That's voice and microcopy — route to cony.\"\n</example>"
 tools: Read, Glob, Grep, WebFetch, WebSearch
-model: inherit
+model: opus
 color: pink
 ---
 

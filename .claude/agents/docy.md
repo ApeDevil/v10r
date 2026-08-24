@@ -2,7 +2,7 @@
 name: docy
 description: "Use this agent when you need to write, edit, or improve documentation. This includes README files, API docs, guides, tutorials, explanations, or any technical writing. Use it when existing docs are bloated, unclear, or hard to scan. Use it to turn complex knowledge into simple understanding.\n\nExamples:\n\n<example>\nContext: User has verbose documentation that needs trimming.\nuser: \"This README is too long. Nobody reads it.\"\nassistant: \"Let me use the docy agent to cut the fat and make this scannable.\"\n</example>\n\n<example>\nContext: Counter-example (NOT docy).\nuser: \"This error message is unclear — users don't understand what to do.\"\nassistant: \"That's user-facing microcopy — route to the cony agent.\"\n</example>"
 tools: Edit, Write, NotebookEdit, Glob, Grep, Read, WebFetch, TodoWrite, WebSearch
-model: inherit
+model: opus
 color: cyan
 ---
 

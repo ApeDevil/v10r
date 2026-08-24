@@ -2,7 +2,7 @@
 name: secy
 description: "Use this agent when you need to evaluate code, architecture, or systems for security vulnerabilities and risks. This includes reviewing authentication flows, API designs, data handling, infrastructure configurations, dependency choices, or any code that handles sensitive data. Also use when designing new features to ensure security is built in from the start, or when conducting threat modeling exercises.\n\nExamples:\n\n<example>\nContext: User has implemented authentication.\nuser: \"I've added a login endpoint that accepts username and password\"\nassistant: \"Let me use the secy agent to review this authentication flow for security concerns.\"\n</example>\n\n<example>\nContext: Counter-example (NOT secy).\nuser: \"This auth flow is too clunky — users keep abandoning the signup.\"\nassistant: \"That's friction — route to the uxy agent.\"\n</example>"
 tools: Read, Glob, Grep, WebFetch, WebSearch
-model: inherit
+model: opus
 color: pink
 ---
 

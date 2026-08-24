@@ -2,7 +2,7 @@
 name: tray
 description: "Use this agent when you encounter errors, failures, exceptions, or unexpected behavior in code that needs systematic debugging and root cause analysis. This includes runtime errors, test failures, build failures, unexpected outputs, performance issues, or any situation where something isn't working as expected and you need to understand why before fixing it.\n\nExamples:\n\n<example>\nContext: User encounters a failing test.\nuser: \"The test_user_authentication test is failing with a 401 error\"\nassistant: \"Let me use the tray agent to systematically trace this error to its root cause.\"\n</example>\n\n<example>\nContext: Counter-example (NOT tray).\nuser: \"Help me design a test that catches this kind of regression.\"\nassistant: \"That's test design — route to the tesy agent.\"\n</example>"
 tools: Read, Glob, Grep, Bash, LSP
-model: inherit
+model: opus
 color: red
 ---
 
