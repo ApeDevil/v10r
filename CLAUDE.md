@@ -160,14 +160,20 @@ The prohibition is on the `vr` wrapper, not the work it dispatches: run the cont
 
 Active development, no production users. Never add migration shims, retired-ID filters, version upgrade paths, or deprecation layers — change the code directly.
 
-### Comments
+### Self-Expressive Codebase
 
-Comment the WHY, never the WHAT. Delete a comment that restates its next line.
+The codebase itself should represent the system.
 
-- Present tense; one owner per fact, cross-referenced by path. No "previously…"/"used to…" outside a regression test, where the bug IS the reason.
-- No banners or structural `<!-- -->` / `/* */` labels — group with blank lines; keep a label's words, drop its frame. A `##` heading in a docblock means it outgrew a comment.
-- Keep: ordering constraints, upstream-bug workarounds, security invariants, "looks wrong, is deliberate", `svelte-ignore`/`biome-ignore` justifications, gate-test docstrings (invariant → motivating bug → `── Honest limits ──` → alternative to widening the allowlist).
-- Don't edit casually: `@ts-expect-error`, `@unocss-include`, the `PATTERN-INDEX:START/END` anchors in the root `README.md`, comments in raw-text-gate files — most gates don't strip comments, so edits flip them either way.
+By looking at its folders, modules, types, names, boundaries, and relationships, a developer should be able to understand how the product works and how its concepts relate.
+
+**Code should express intent; the codebase should express the system.**
+
+Documentation and comments are exceptions, not the primary explanation mechanism. Prefer expressing knowledge through naming, types, structure, boundaries, and APIs.
+
+- **Self-Expressive Code:** A function, type, or module should communicate its purpose without requiring explanatory comments.
+- **System-Reflective Architecture:** The organization and boundaries of the codebase should mirror the product and domain architecture.
+- **Comments Explain Why:** Comments exist for rationale, constraints, invariants, workarounds, and deliberate non-obvious behavior—not to describe what the code does.
+- **One Source of Truth:** A fact should have one authoritative owner. Reference that source instead of duplicating explanations.
 
 ### Acknowledgment
 
