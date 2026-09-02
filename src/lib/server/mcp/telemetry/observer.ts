@@ -25,13 +25,14 @@
  */
 import { waitUntil } from '@vercel/functions';
 import { env } from '$env/dynamic/private';
+import type { McpCallLogInsert } from '$lib/server/db/schema/mcp/call-log';
 import type { McpCallObservation, McpCallObserver } from '../types';
 import { deriveClientKey } from './client-key';
 import { inferOutcome, type McpGateReason, normalizeMethod } from './outcome';
 import { normalizeQueryText, normalizeResponseText } from './scrub';
 import { classifyClientFamily, classifyTraffic } from './self-traffic';
 import { resolveTraceId } from './traceparent';
-import { type McpCallLogRow, writeCallLog } from './writer';
+import { writeCallLog } from './writer';
 
 /** Mirrors the database CHECK. The DB is the floor; this is the polite path. */
 const MAX_QUERY_TEXT = 200;
@@ -86,7 +87,7 @@ export function buildCallLogRow(
 	observation: McpCallObservation,
 	context: McpObserverContext,
 	now: Date,
-): McpCallLogRow {
+): McpCallLogInsert {
 	const { stage, outcome } = inferOutcome(observation, context.knownTool);
 	const userAgent = context.headers.get('user-agent');
 	const traffic = classifyTraffic({
@@ -126,7 +127,7 @@ export function buildCallLogRow(
 		traffic,
 		stage,
 		outcome,
-		method: normalizeMethod(observation.method) as McpCallLogRow['method'],
+		method: normalizeMethod(observation.method) as McpCallLogInsert['method'],
 		toolName: observation.method === 'tools/call' ? (cap(observation.toolName, 64) ?? '(unknown)') : null,
 		subject: null,
 		queryText,
@@ -201,7 +202,7 @@ export function recordMcpGateRejection(context: McpObserverContext, reason: McpG
 	waitUntil(
 		(async () => {
 			const now = new Date();
-			const row: McpCallLogRow = {
+			const row: McpCallLogInsert = {
 				surface: context.surface,
 				traffic: classifyTraffic({
 					headers: context.headers,

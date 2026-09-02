@@ -16,7 +16,8 @@ import {
 	IMAGE_CATEGORIES,
 	type ImageCategory,
 	imageCategorySchema,
-} from './image-metadata';
+	type MetadataFieldKey,
+} from '../image-metadata';
 
 // Re-export the reused vocab so consumers need a single import for the image-kit surface.
 export {
@@ -26,6 +27,7 @@ export {
 	type CostEstimate,
 	type ImageCategory,
 	IMAGE_CATEGORIES,
+	type MetadataFieldKey,
 };
 
 // Auth-gated v1 needs no signed handle: the server derives the R2 key from the
@@ -105,8 +107,6 @@ export function visionIsEmpty(a: ImageKitVision): boolean {
 
 export const VISION_FAILURE_REASONS = ['no_provider', 'budget', 'model_refused', 'timeout', 'error'] as const;
 export type VisionFailureReason = (typeof VISION_FAILURE_REASONS)[number];
-
-export type MetadataFieldKey = 'title' | 'caption' | 'altText' | 'keywords' | 'category';
 
 export interface VisionFields {
 	title: string | null;
@@ -201,7 +201,7 @@ export interface PreRunEstimate {
 	cost: CostEstimate | null;
 }
 
-export interface UploadResult {
+export interface ImageKitUploadResult {
 	imageId: string;
 	previewUrl: string;
 	width: number;

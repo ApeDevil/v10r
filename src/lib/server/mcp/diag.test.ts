@@ -20,7 +20,7 @@ vi.mock('$lib/server/db', () => ({ db: {} }));
 vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 
 const { handleMcpMessage } = await import('./transport');
-const { publicPatternRegistry } = await import('./patterns/registry');
+const { publicPatternRegistry } = await import('./patterns/tools');
 const { readAllowlistedExcerpt } = await import('./patterns/excerpts');
 const { MAX_NEXT_ACTIONS, NEXT_ACTIONS_HEADING } = await import('./types');
 

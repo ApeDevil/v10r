@@ -1,5 +1,5 @@
-import { requireAdmin } from '$lib/server/auth/guards';
 import { getFeedbackCounts, listFeedback, setFeedbackStatus } from '$lib/server/feedback';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 const VALID_STATUSES = new Set(['new', 'read', 'archived'] as const);

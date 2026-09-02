@@ -1,17 +1,16 @@
+import type { AiSurface } from '$lib/types/db-enums';
 /**
  * Context-probe report — the wire contract of `POST /api/ai/context-probe`,
  * the showcase "context orchestration x-ray" behind `/showcases/ai/*#probe`.
  *
  * CLIENT-SAFE BY CONSTRUCTION: ids, names, counts, scores, and short previews
  * only. No prompt bodies, no thresholds, no provider internals — the type has
- * no field that could hold them. The server maps lane failures to the generic
+ * no field that could hold them. The server maps corpus failures to the generic
  * `retrieval_failed` code; raw error messages never cross this boundary.
  */
 
-export type ProbeSurface = 'chatbot' | 'deskbot';
-
-/** A retrieval lane the probe can exercise. */
-export type ProbeLane = 'llmwiki' | 'docs' | 'desk';
+/** A retrieval corpus the probe can exercise. */
+export type ProbeCorpus = 'llmwiki' | 'docs' | 'desk';
 
 /** One routing decision the surface made for THIS query. */
 export interface ProbeGate {
@@ -29,9 +28,9 @@ export interface ProbeGate {
 	inputs?: Record<string, boolean>;
 }
 
-/** Corpus size visible to this user on one lane — the "available" side. */
-export interface ProbeLaneInventory {
-	lane: ProbeLane;
+/** Corpus size visible to this user on one corpus — the "available" side. */
+export interface ProbeCorpusInventory {
+	corpus: ProbeCorpus;
 	documents: number;
 	chunks?: number;
 }
@@ -41,7 +40,7 @@ export interface ProbeCandidate {
 	title: string;
 	/** Short plain-text preview (truncated server-side). */
 	preview: string;
-	/** Relevance score where the lane exposes one (llmwiki hits are RRF-fused, no score). */
+	/** Relevance score where the corpus exposes one (llmwiki hits are RRF-fused, no score). */
 	score?: number;
 	source: 'vector' | 'bm25' | 'graph' | 'llmwiki';
 	tier: string;
@@ -49,20 +48,20 @@ export interface ProbeCandidate {
 	chosen: boolean;
 }
 
-/** What one lane did for this query: ran + ranked, or why it didn't run. */
-export interface ProbeLaneResult {
-	lane: ProbeLane;
+/** What one corpus did for this query: ran + ranked, or why it didn't run. */
+export interface ProbeCorpusResult {
+	corpus: ProbeCorpus;
 	ran: boolean;
 	/**
 	 * - `gated_off`    — the triviality gate closed (no embed spent).
 	 * - `scope_off`    — deskbot: `desk:ask` not granted, so the search tool isn't mounted.
-	 * - `empty_corpus` — nothing ingested on this lane for this user (no embed spent).
+	 * - `empty_corpus` — nothing ingested on this corpus for this user (no embed spent).
 	 */
 	skippedReason?: 'gated_off' | 'scope_off' | 'empty_corpus';
 	/** Production top-k — candidates at rank < cutoff are the chosen set. */
 	cutoff: number;
 	candidates: ProbeCandidate[];
-	/** Generic failure code when the lane errored (`retrieval_failed`). */
+	/** Generic failure code when the corpus errored (`retrieval_failed`). */
 	error?: string;
 }
 
@@ -76,14 +75,14 @@ export interface ProbePromptBlock {
 }
 
 export interface ProbeReport {
-	surface: ProbeSurface;
+	surface: AiSurface;
 	gates: ProbeGate[];
-	/** What exists (per lane) before any choosing happens. */
-	inventory: ProbeLaneInventory[];
+	/** What exists (per corpus) before any choosing happens. */
+	inventory: ProbeCorpusInventory[];
 	/** Tool names mounted for this surface/scope set — static per turn, never per query. */
 	tools: string[];
-	/** What each lane did for this query. */
-	lanes: ProbeLaneResult[];
+	/** What each corpus did for this query. */
+	corpora: ProbeCorpusResult[];
 	/** Block outline of the prompt this query would produce (ids + sizes only). */
 	prompt: { blocks: ProbePromptBlock[]; totalTokensEst: number };
 	/**

@@ -6,7 +6,7 @@ category: "Internationalization (i18n)"
 
 # Formatting & CLDR plural correctness
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -34,4 +34,4 @@ Locale-explicit date, number, currency, percent, and relative-time formatting he
 
 ---
 
-_Machine-readable record: `i18n-formatting` in `mcp/patterns.registry.json`._
+_Machine-readable record: `i18n-formatting` in `pattern-library/registry.json`._

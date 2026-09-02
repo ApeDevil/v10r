@@ -1,6 +1,6 @@
 /** Valibot schemas for blog API endpoints. */
 import * as v from 'valibot';
-import { LocaleParam, Markdown, SlugParam } from '$lib/server/schemas/shared';
+import { LocaleParam, Markdown, SlugParam } from '$lib/server/schemas';
 
 const MAX_MARKDOWN_SIZE = 500_000;
 

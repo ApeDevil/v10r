@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { getManifest } from './manifest';
-import { docsMarkdown } from './markdown-hook';
+import { docsMarkdown } from './markdown.hook';
 import { markdownHrefFor } from './markdown-urls';
 
 /** Drive the Handle directly — the hook only reads request.method, url.pathname,

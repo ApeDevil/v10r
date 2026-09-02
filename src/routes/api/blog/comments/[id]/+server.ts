@@ -1,6 +1,4 @@
 import * as v from 'valibot';
-import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	CommentEditWindowExpiredError,
 	CommentHiddenError,
@@ -10,6 +8,8 @@ import {
 	editOwnComment,
 	softDeleteOwnComment,
 } from '$lib/server/blog/comments';
+import { guardApiUser } from '$lib/server/http/guards';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 /** Edit own comment. 5-minute window from creation. */

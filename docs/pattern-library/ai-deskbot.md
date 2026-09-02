@@ -6,7 +6,7 @@ category: "AI"
 
 # Deskbot (AI in the desk workspace)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,7 +22,7 @@ An agentic AI surface embedded in the desk workspace calls desk-mutating tools, 
 
 ## Code
 
-- `src/lib/server/ai/deskbot-rag.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/deskbot-rag.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/deskbot-rag.ts))
+- `src/lib/server/ai/deskbot-retrieval.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/deskbot-retrieval.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/deskbot-retrieval.ts))
 - `src/lib/server/agents/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/agents) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/agents))
 
 ## Proof
@@ -31,4 +31,4 @@ An agentic AI surface embedded in the desk workspace calls desk-mutating tools, 
 
 ---
 
-_Machine-readable record: `ai-deskbot` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-deskbot` in `pattern-library/registry.json`._

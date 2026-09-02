@@ -1,12 +1,12 @@
 <script lang="ts">
 import { Badge } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
-import { buildToolCards, toolCounts } from '$lib/showcase/ai/topology';
-import type { AiSurfaceId } from '$lib/types/ai-tools';
+import { buildToolCards, toolCounts } from '$lib/showcases/ai/topology';
+import type { AiSurface } from '$lib/types/db-enums';
 
 // Manifest-derived, never hand-copied: rows come from TOOL_MANIFEST via
 // buildToolCards(), so a renamed tool updates this page in the same commit.
-let { surface }: { surface: AiSurfaceId } = $props();
+let { surface }: { surface: AiSurface } = $props();
 
 const cards = buildToolCards();
 const own = cards.filter((c) => c.surface === surface);

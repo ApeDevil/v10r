@@ -14,16 +14,16 @@
  * documented Art 6(4) basis — see $lib/server/privacy/report.ts.
  */
 import { cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
+import { CONSENT_COOKIE } from '$lib/server/analytics/config';
 import { parseConsentTier } from '$lib/server/analytics/consent';
-import { requireAuth } from '$lib/server/auth/guards';
-import { ANALYTICS_CONSENT_COOKIE } from '$lib/server/config';
+import { requireAuth } from '$lib/server/http/guards';
 import { collectUserData } from '$lib/server/privacy';
 import type { PageServerLoad } from './$types';
 
 export const prerender = false;
 
 /** Cookie values safe to echo back. Everything else: presence only (session tokens!). */
-const SAFE_VALUE_COOKIES = new Set<string>([ANALYTICS_CONSENT_COOKIE, PARAGLIDE_LOCALE_COOKIE]);
+const SAFE_VALUE_COOKIES = new Set<string>([CONSENT_COOKIE, PARAGLIDE_LOCALE_COOKIE]);
 
 export const load: PageServerLoad = async ({ locals, url, cookies, request, getClientAddress, setHeaders }) => {
 	const { user, session } = requireAuth(locals, url.pathname);
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async ({ locals, url, cookies, request, getC
 	return {
 		title: 'Your data',
 		welcome: url.searchParams.get('welcome') === '1',
-		consentTier: parseConsentTier(cookies.get(ANALYTICS_CONSENT_COOKIE)),
+		consentTier: parseConsentTier(cookies.get(CONSENT_COOKIE)),
 		deviceCookies: cookies.getAll().map((c) => ({
 			name: c.name,
 			value: SAFE_VALUE_COOKIES.has(c.name) ? c.value : null,

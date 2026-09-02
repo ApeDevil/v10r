@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Dialog as DialogPrimitive } from 'bits-ui';
-import type { PartPhoto } from '$lib/config/parts';
+import type { PartPhoto } from '$lib/3d/parts';
 
 interface Props {
 	/** Photos of the selected part (thumbnail grid → click opens the lightbox) */

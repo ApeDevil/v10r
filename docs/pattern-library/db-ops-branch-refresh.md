@@ -6,7 +6,7 @@ category: "Database Operations"
 
 # Neon branch refresh from prod (control plane, run ledger)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Resets the dev Neon Postgres branch from its production parent through Neon's co
 
 ---
 
-_Machine-readable record: `db-ops-branch-refresh` in `mcp/patterns.registry.json`._
+_Machine-readable record: `db-ops-branch-refresh` in `pattern-library/registry.json`._

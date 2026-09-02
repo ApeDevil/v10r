@@ -1,7 +1,7 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent, apiValidationError } from '$lib/server/http/response';
 import { updatePreferences } from '$lib/server/preferences';
 import { UpdatePreferencesSchema } from '$lib/server/preferences/schemas';
 import type { RequestHandler } from './$types';

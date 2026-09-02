@@ -1,13 +1,21 @@
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import {
+	CONVERSATION_RATE_LIMIT_MAX,
+	CONVERSATION_RATE_LIMIT_PREFIX,
+	CONVERSATION_RATE_LIMIT_WINDOW,
+} from '$lib/server/ai/config';
 import { deleteConversation } from '$lib/server/db/ai/mutations';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
-const ratelimit = createLimiter(CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_WINDOW);
+const ratelimit = createLimiter(
+	CONVERSATION_RATE_LIMIT_PREFIX,
+	CONVERSATION_RATE_LIMIT_MAX,
+	CONVERSATION_RATE_LIMIT_WINDOW,
+);
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const guard = guardApiUser(locals);

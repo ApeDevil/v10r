@@ -1,5 +1,6 @@
+import type { Locale } from '$lib/i18n';
 import { match } from '$lib/search/match';
-import type { SearchLocale, SearchResult } from '$lib/search/types';
+import type { SearchResult } from '$lib/search/types';
 import { buildSearchIndex, searchContent } from '$lib/server/search';
 import type { PageServerLoad } from './$types';
 
@@ -7,7 +8,7 @@ const key = (r: SearchResult) => `${r.surface}:${r.path}:${r.anchor ?? ''}`;
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const q = (url.searchParams.get('q') ?? '').trim().slice(0, 200);
-	const locale = (locals.locale ?? 'en') as SearchLocale;
+	const locale = (locals.locale ?? 'en') as Locale;
 
 	if (!q) return { q: '', results: [] as SearchResult[] };
 

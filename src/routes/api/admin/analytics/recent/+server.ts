@@ -2,10 +2,11 @@
  * Admin live-feed polling endpoint.
  * Returns events newer than `?since=<id>`, optionally filtered to paired sessions.
  */
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import { requireAdmin } from '$lib/server/auth/guards';
+
 import { getActiveSessionCount, getPairedSessionCount, getRecentEvents } from '$lib/server/db/analytics/queries';
+import { requireAdmin } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const config = { runtime: 'nodejs22.x', maxDuration: 10 };

@@ -80,7 +80,7 @@ describe('createDeskTools scope gating', () => {
 		expect(keys).not.toContain('desk_create_spreadsheet');
 	});
 
-	it('returns read + ask (nRAG) tool for ["desk:ask"], without mounting the plan tool', () => {
+	it('returns read + ask (retrieval) tool for ["desk:ask"], without mounting the plan tool', () => {
 		const tools = createDeskTools(USER_ID, ['desk:ask']);
 		const keys = Object.keys(tools);
 		expect(keys).toContain('desk_search_knowledge');
@@ -203,7 +203,7 @@ describe('stepsForScopes', () => {
 		expect(stepsForScopes([])).toBe(3);
 	});
 
-	it('returns 3 for desk:ask (read-only nRAG grounding, not a mutation)', () => {
+	it('returns 3 for desk:ask (read-only retrieval grounding, not a mutation)', () => {
 		expect(stepsForScopes(['desk:ask'])).toBe(3);
 		expect(stepsForScopes(['desk:read', 'desk:ask'])).toBe(3);
 	});

@@ -29,7 +29,7 @@ Every artifact derives from an existing single source of truth, because a parall
 | `/llms.txt` | `buildLlmsTxt(getManifest())` — it cannot drift from the docs, and its test round-trips every emitted URL through the `.md` resolver |
 | `validate_snippet` rules | `mcp/snippet-rules.json` (shared by both MCP runtimes) + the `--color-*` names extracted from `src/app.css` at load time |
 | Agent pages (`/docs/programming/*.md`) | the agents registry body — never the raw files, whose frontmatter carries tool grants the HTML page has never published |
-| README Pattern Index (the marker-delimited region) | `mcp/patterns.registry.json` via `scripts/patterns/build-derived.ts` (`patterns:build`; staleness gated by `patterns:check`) |
+| README Pattern Index (the marker-delimited region) | `pattern-library/registry.json` via `scripts/patterns/build-derived.ts` (`patterns:build`; staleness gated by `patterns:check`) |
 | `docs/pattern-library/*.md` (one page per pattern in its own docs section, → `/docs`, RAG, `/llms.txt`) | the same registry + generator — pointer pages only, never copied prose |
 | `/docs/pattern-library` (the section's catalog index: every pattern + purpose) | the same registry, projected live by `$lib/server/patterns/catalog.ts` — no build step |
 

@@ -2,7 +2,7 @@
  * Post-hoc citation verification.
  *
  * Runs after the LLM finishes its response (`onFinish`). Given the set of
- * rawrag chunkIds the model actually expanded via `get_rawrag_chunks`, we
+ * source chunkIds the model actually expanded via `get_source_chunks`, we
  * compare their current `chunk.content_hash` to the `source_hash_at_compile`
  * recorded in `llmwiki_page_source`. A match = `paraphrase` (the wiki page
  * citing this chunk is consistent with the current source). A quote-level
@@ -14,12 +14,12 @@
 
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { chunk as chunkTable, document, llmwikiPageSource } from '$lib/server/db/schema/rag';
+import { chunk as chunkTable, document, llmwikiPageSource } from '$lib/server/db/schema/retrieval';
 import type { LlmwikiCitationVerification } from './types';
 
 export interface VerifyInput {
 	userId: string;
-	/** Chunk IDs the model surfaced via get_rawrag_chunks during the turn. */
+	/** Chunk IDs the model surfaced via get_source_chunks during the turn. */
 	drilledChunkIds: string[];
 	/** The answer text, for optional quote-level checks. */
 	answerText?: string;

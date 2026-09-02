@@ -8,8 +8,8 @@
 import { json } from '@sveltejs/kit';
 import { type EmbedFailureReason, type EmbedResponse, isImageId } from '$lib/schemas/showcase/image-kit';
 import { checkUserBudget } from '$lib/server/ai/budget';
-import { embedCaptionText, embedImage, l2Norm } from '$lib/server/imagekit';
-import { buildImagekitKey, getImagekitBytes } from '$lib/server/store/showcase/imagekit';
+import { embedCaptionText, embedImage, l2Norm } from '$lib/server/showcases/image-kit';
+import { buildImagekitKey, getImagekitBytes } from '$lib/server/showcases/image-kit/storage';
 import type { RequestHandler } from './$types';
 
 // A multimodal image embed can outrun the ~10s serverless default; give it headroom.

@@ -1,14 +1,14 @@
 /**
  * POST /api/ai/deskbot — the deskbot surface (in-desk operator: agentic, mutating,
- * plan-gated; UI-parity tools + desk:ask nRAG grounding). See `docs/blueprint/ai/surfaces.md`.
+ * plan-gated; UI-parity tools + desk:ask retrieval grounding). See `docs/blueprint/ai/surfaces.md`.
  */
 import { safeParse } from 'valibot';
 import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { DeskRequestSchema } from '$lib/server/ai/validation';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
-import { apiError, apiValidationError } from '$lib/server/api/response';
-import { isAdmin } from '$lib/server/auth/guards';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { isAdmin } from '$lib/server/http/guards';
+import { apiError, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 // Node runtime + extended duration: an LLM stream routinely outlives the Vercel

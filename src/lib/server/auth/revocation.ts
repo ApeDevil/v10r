@@ -26,7 +26,7 @@
 import { createHash } from 'node:crypto';
 import { dev } from '$app/environment';
 import { redis } from '$lib/server/cache';
-import { SESSION_EXPIRES_IN } from '$lib/server/config';
+import { SESSION_EXPIRES_IN } from './config';
 
 const key = (userId: string) => `authepoch:${userId}`;
 

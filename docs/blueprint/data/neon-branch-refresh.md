@@ -90,7 +90,7 @@ When unconfigured it degrades to `status: 'unavailable'` rather than throwing �
 
 The operate orchestrator. Depends on the read-only `monitoring/` layer; the reverse import (`monitoring → dbops`) is forbidden.
 
-`startOperation`, `advanceRun`, `getRun`, `listRuns`, `cancelRun`, `reapExpiredRuns`.
+`startOperation`, `advanceRun`, `listRuns`, `cancelRun`, `reapExpiredRuns`. (`advanceRun` is the poll: it settles a finished run as a side effect, which is why there is no read-only `getRun`.)
 
 **Executor model — lazy-advance-on-poll.** Neon's restore is asynchronous: `restoreBranchFromParent` returns an `operations[]` array, not a finished result. So:
 
@@ -126,7 +126,7 @@ Both reuse the existing `CRON_SECRET` bearer auth and are registered in `$lib/se
 | `dbops-refresh` | `0 4 * * *` daily | Scheduled auto-reset. Drives `advanceRun` to terminal. **Gated by `DBOPS_AUTO_REFRESH_ENABLED`** (default off). |
 | `dbops-reaper` | `*/15 * * * *` | Sweep stuck runs whose lease expired. |
 
-`vercel.json` cron paths: `/api/cron/dbops-refresh`, `/api/cron/dbops-reaper`.
+Both run inside the daily `/api/cron/due` sweep (refresh before reaper, by registry order); `/api/cron/dbops-refresh` and `/api/cron/dbops-reaper` remain callable by slug.
 
 ## Operating notes
 

@@ -17,7 +17,7 @@ describe('shouldHandle', () => {
 	it('refuses all /api/ paths (REST, auth, cron, SSE endpoints)', () => {
 		expect(shouldHandle(new Request(`${ORIGIN}/api/notifications/stream`))).toBe(false);
 		expect(shouldHandle(new Request(`${ORIGIN}/api/auth/callback/google`))).toBe(false);
-		expect(shouldHandle(new Request(`${ORIGIN}/api/me`))).toBe(false);
+		expect(shouldHandle(new Request(`${ORIGIN}/api/account`))).toBe(false);
 	});
 
 	it('refuses SSE requests by accept header even off /api/', () => {
@@ -34,7 +34,7 @@ describe('isImmutableAsset', () => {
 	});
 
 	it('refuses immutable-looking URLs carrying a query string (cache-deception guard)', () => {
-		expect(isImmutableAsset(new URL(`${ORIGIN}/_app/immutable/chunks/abc123.js?__pathname=/api/me`))).toBe(false);
+		expect(isImmutableAsset(new URL(`${ORIGIN}/_app/immutable/chunks/abc123.js?__pathname=/api/account`))).toBe(false);
 	});
 
 	it('refuses non-immutable paths, including admin and data requests', () => {

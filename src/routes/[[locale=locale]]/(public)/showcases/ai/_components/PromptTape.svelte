@@ -1,13 +1,13 @@
 <script lang="ts">
 import * as m from '$lib/paraglide/messages';
-import { PROMPT_BLOCKS } from '$lib/showcase/ai/topology';
-import type { AiSurfaceId } from '$lib/types/ai-tools';
+import { PROMPT_BLOCKS } from '$lib/showcases/ai/topology';
+import type { AiSurface } from '$lib/types/db-enums';
 import type { PromptOutline } from '$lib/types/turn-trace';
 
 // An ordered band stack (HTML, not SVG) with the cache boundary drawn as a rule.
 // Block NAMES and estimated counts only — bodies never reach this page (the
 // PromptOutline type physically cannot carry them).
-let { surface, prompt = null }: { surface: AiSurfaceId; prompt?: PromptOutline | null } = $props();
+let { surface, prompt = null }: { surface: AiSurface; prompt?: PromptOutline | null } = $props();
 
 const blocks = PROMPT_BLOCKS[surface];
 const boundaryIndex = blocks.findIndex((b) => !b.cacheStable);

@@ -1,13 +1,13 @@
 import { fail } from '@sveltejs/kit';
-import { isAdmin } from '$lib/server/auth/guards';
 import { cypher } from '$lib/server/graph';
 import { Neo4jError } from '$lib/server/graph/errors';
+import { isAdmin } from '$lib/server/http/guards';
 import {
-	findShortestPath,
+	findDemoShortestPath,
 	getAllNodes,
 	getNodeWithConnections,
 	getRecommendations,
-} from '$lib/server/graph/showcase/queries';
+} from '$lib/server/showcases/graph/queries';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Block write operations in REPL */
@@ -15,7 +15,7 @@ const WRITE_PATTERN = /\b(CREATE|MERGE|SET|DELETE|DETACH|REMOVE|DROP|CALL\s+\{)\
 
 export const load: PageServerLoad = async ({ locals }) => {
 	// The Cypher REPL runs arbitrary read queries against a Neo4j instance shared with
-	// per-user RAG data, so it can't be safely label-constrained — it's admin-only.
+	// per-user retrieval data, so it can't be safely label-constrained — it's admin-only.
 	// Every other query on this page is label-scoped to the demo graph (see queries.ts).
 	const admin = isAdmin(locals.user);
 	try {
@@ -53,7 +53,7 @@ export const actions: Actions = {
 		if (fromId === toId) return fail(400, { message: 'Select two different nodes.' });
 
 		try {
-			const path = await findShortestPath(fromId, toId);
+			const path = await findDemoShortestPath(fromId, toId);
 			if (path.length === 0)
 				return { success: true, pathResult: [], pathMessage: 'No path found between these nodes.' };
 			return { success: true, pathResult: path };
@@ -76,7 +76,7 @@ export const actions: Actions = {
 	},
 
 	repl: async ({ request, locals }) => {
-		// Arbitrary Cypher can read any label, incl. per-user RAG :Entity/:Chunk nodes on
+		// Arbitrary Cypher can read any label, incl. per-user retrieval :Entity/:Chunk nodes on
 		// this shared instance — admin-only, enforced server-side (not just UI-hidden).
 		if (!isAdmin(locals.user)) {
 			return fail(403, { message: 'The Cypher REPL is restricted to administrators.' });

@@ -1,22 +1,24 @@
 /**
  * Comment read paths — list with cursor pagination + cross-locale counts.
  */
+
 import { and, count, desc, eq, isNull, lt, or, type SQL, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { comment } from '$lib/server/db/schema/blog/comment';
+import type { CommentStatus } from '$lib/types/db-enums';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 
-export interface CommentDTO {
+export interface PublicComment {
 	id: string;
 	postId: string;
 	locale: string;
 	authorId: string;
 	authorName: string;
 	body: string;
-	status: 'visible' | 'hidden' | 'removed';
+	status: CommentStatus;
 	createdAt: string;
 	editedAt: string | null;
 }
@@ -33,7 +35,7 @@ interface ListParams {
 }
 
 interface ListResult {
-	items: CommentDTO[];
+	items: PublicComment[];
 	nextCursor: string | null;
 	crossLocaleTotals: Record<string, number>;
 }
@@ -113,7 +115,7 @@ export async function listComments(params: ListParams): Promise<ListResult> {
 
 	const hasMore = rows.length > limit;
 	const items = (hasMore ? rows.slice(0, limit) : rows).map(
-		(r): CommentDTO => ({
+		(r): PublicComment => ({
 			id: r.id,
 			postId: r.postId,
 			locale: r.locale,
@@ -146,7 +148,7 @@ export async function listComments(params: ListParams): Promise<ListResult> {
  * Admin moderation queue — paginated list filtered by status/post/search.
  */
 interface ModerationListParams {
-	status?: 'visible' | 'hidden' | 'removed' | 'all';
+	status?: CommentStatus | 'all';
 	postId?: string;
 	q?: string;
 	page?: number;

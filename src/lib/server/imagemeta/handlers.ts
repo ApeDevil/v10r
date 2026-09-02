@@ -10,11 +10,11 @@
  */
 
 import { and, eq, sql } from 'drizzle-orm';
-import type { FieldProvenance, ImageMetadataOutput } from '$lib/schemas/showcase/image-metadata';
-import { IMAGE_ALLOWED_MIME, MAX_IMAGE_UPLOAD_SIZE } from '$lib/server/config';
+import type { FieldProvenance, ImageMetadataOutput } from '$lib/schemas/image-metadata';
 import { db } from '$lib/server/db';
 import { imageAiProposal, imageAsset, imageMetadata, imageMetadataTag, imageTag } from '$lib/server/db/schema';
-import { buildImagemetaKey, deleteImagemetaObject, putImagemetaDerivative } from '$lib/server/store/showcase/image';
+import { buildImagemetaKey, deleteImagemetaObject, putImagemetaDerivative } from '$lib/server/store/image';
+import { ALLOWED_MIME, MAX_UPLOAD_SIZE } from './config';
 import { ImageMetaError } from './errors';
 import { processImage, sniffImageMime } from './process';
 import type { ExtractResult, IngestResult } from './types';
@@ -34,16 +34,13 @@ export async function ingestImage(userId: string, file: File): Promise<IngestRes
 	if (!file || file.size === 0) {
 		throw new ImageMetaError('validation', 'No image file was provided.');
 	}
-	if (file.size > MAX_IMAGE_UPLOAD_SIZE) {
-		throw new ImageMetaError(
-			'too_large',
-			`Image exceeds the ${(MAX_IMAGE_UPLOAD_SIZE / 1024 / 1024).toFixed(0)} MB limit.`,
-		);
+	if (file.size > MAX_UPLOAD_SIZE) {
+		throw new ImageMetaError('too_large', `Image exceeds the ${(MAX_UPLOAD_SIZE / 1024 / 1024).toFixed(0)} MB limit.`);
 	}
 
 	const bytes = new Uint8Array(await file.arrayBuffer());
 	const sniffed = sniffImageMime(bytes);
-	if (!sniffed || !(IMAGE_ALLOWED_MIME as readonly string[]).includes(sniffed)) {
+	if (!sniffed || !(ALLOWED_MIME as readonly string[]).includes(sniffed)) {
 		throw new ImageMetaError('unsupported', 'Unsupported image type. Use PNG, JPEG, or WebP.');
 	}
 

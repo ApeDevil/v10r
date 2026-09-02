@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const limiterState = vi.hoisted(() => ({ success: true }));
-vi.mock('$lib/server/api/rate-limit', () => ({
+vi.mock('$lib/server/http/rate-limit', () => ({
 	createLimiter: () => ({ limit: async () => ({ success: limiterState.success, reset: 0 }) }),
 	rateLimitResponse: () => new Response('{}', { status: 429 }),
 }));

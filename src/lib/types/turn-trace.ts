@@ -2,9 +2,9 @@
  * Turn trace — the ONE viewer-input contract for the AI-surface showcase pages.
  *
  * Both trace sources reduce into this shape: a recorded fixture
- * (`$lib/showcase/ai/fixtures/`) and a live turn observed from the Vely singleton
+ * (`$lib/showcases/ai/fixtures/`) and a live turn observed from the Vely singleton
  * (`chatbotSession.chat` message metadata). One state type, one pure reducer
- * (`$lib/showcase/ai/replay.ts`), two thin adapters — so the fixture player and the
+ * (`$lib/showcases/ai/replay.ts`), two thin adapters — so the fixture player and the
  * live x-ray can never render through divergent code paths.
  *
  * Deliberately text-free where it matters: there is NO field anywhere in this
@@ -13,11 +13,11 @@
  * review discipline (same principle as `$lib/types/ai-tools.ts`).
  */
 
-import type { AiSurfaceId } from './ai-tools';
-import type { NragTraceStep, PipelineStepStatus } from './pipeline';
+import type { AiSurface } from '$lib/types/db-enums';
+import type { RetrievalStepStatus, RetrievalTraceStep } from './retrieval-trace';
 
 /**
- * Per-turn runtime status vocabulary — `PipelineStepStatus` plus `not-taken`.
+ * Per-turn runtime status vocabulary — `RetrievalStepStatus` plus `not-taken`.
  *
  * `skipped` means the ENGINE declined (e.g. relevance gate); `not-taken` means a
  * HUMAN declined — the un-chosen arm of the approval branch. Rendering a rejected
@@ -26,11 +26,11 @@ import type { NragTraceStep, PipelineStepStatus } from './pipeline';
  * (`live | dormant | planned` on the static topology): a dormant layer simply never
  * leaves `pending`.
  */
-export type TraceStatus = PipelineStepStatus | 'not-taken';
+export type TraceStatus = RetrievalStepStatus | 'not-taken';
 
 /**
  * Spine layer identifiers — the bands of the `SurfaceFlow` stack, in request order.
- * The static topology (`$lib/showcase/ai/topology.ts`) keys off these; registration
+ * The static topology (`$lib/showcases/ai/topology.ts`) keys off these; registration
  * maps (`STEP_LAYER`, `TOOL_LAYER`) let a firing trace light the layer it belongs to.
  */
 export type AiLayerId =
@@ -96,7 +96,7 @@ export type PromptBlockId =
 /** One block of the prompt tape — identity, size estimate, and its gating predicate. */
 export interface PromptBlockOutline {
 	id: PromptBlockId;
-	/** chars/4 estimate, never a provider count (mirrors `PipelinePromptEvent.estimated`). */
+	/** chars/4 estimate, never a provider count (mirrors `RetrievalPromptEvent.estimated`). */
 	tokensEst?: number;
 	/** Name of the predicate that gates a conditional block (e.g. `requirePlan`). */
 	conditional?: string;
@@ -109,7 +109,11 @@ export interface PromptOutline {
 	estimated: true;
 }
 
-/** One proposed step as the PlanCard renders it (structurally `ProposedStep`). */
+/**
+ * One proposed step as the PlanCard renders it — the canonical client-side shape, read by
+ * `composites/chatbot/harness-types.ts` too. The server's `ProposedStep` carries an extra
+ * `args` object for the approve-route replay; it never crosses to the client.
+ */
 export interface ProposalCardStep {
 	action: string;
 	tool: string;
@@ -149,7 +153,7 @@ export interface TurnOutcome {
 
 /** The reduced state of one turn — everything the viewer renders. */
 export interface TurnTrace {
-	surface: AiSurfaceId;
+	surface: AiSurface;
 	/** Provenance is data, never inferred — drives the mandatory provenance strip. */
 	source: 'recorded' | 'live';
 	/** Fixed length 4, `guardAiRequest()` order. */
@@ -157,7 +161,7 @@ export interface TurnTrace {
 	/** Spine band statuses, derived via the registration maps. */
 	layers: Readonly<Partial<Record<AiLayerId, TraceStatus>>>;
 	/** Retrieval pipeline steps (chatbot profile) — same shape the rag observability used. */
-	steps: readonly NragTraceStep[];
+	steps: readonly RetrievalTraceStep[];
 	/** Agent-loop steps (deskbot profile). */
 	harness: readonly HarnessStepState[];
 	prompt: PromptOutline | null;

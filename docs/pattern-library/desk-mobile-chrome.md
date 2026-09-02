@@ -6,7 +6,7 @@ category: "Desk Workspace"
 
 # Desk mobile chrome (tab strip + pill + drawers)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,8 +22,8 @@ Phone chrome for the dock workspace: a scrollable top tab strip of open panel in
 
 ## Code
 
-- `src/lib/components/composites/dock/DockMobileTabs.svelte` — Open-instance tab strip; taps go through focusPanel ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/DockMobileTabs.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/DockMobileTabs.svelte))
-- `src/lib/components/composites/dock/dock-mobile.state.svelte.ts` — Context-scoped surface discriminator ('panels' | 'commands' | null) + focusSeq auto-close ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dock-mobile.state.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dock-mobile.state.svelte.ts))
+- `src/lib/components/desk/DockMobileTabs.svelte` — Open-instance tab strip; taps go through focusPanel ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/DockMobileTabs.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/DockMobileTabs.svelte))
+- `src/lib/components/desk/dock-mobile.state.svelte.ts` — Context-scoped surface discriminator ('panels' | 'commands' | null) + focusSeq auto-close ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock-mobile.state.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock-mobile.state.svelte.ts))
 - `src/lib/state/visual-viewport.svelte.ts` — rAF-coalesced visualViewport watcher with hysteresis → --keyboard-inset + data-keyboard on <html> ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/visual-viewport.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/visual-viewport.svelte.ts))
 
 ## Tests
@@ -40,4 +40,4 @@ Phone chrome for the dock workspace: a scrollable top tab strip of open panel in
 
 ---
 
-_Machine-readable record: `desk-mobile-chrome` in `mcp/patterns.registry.json`._
+_Machine-readable record: `desk-mobile-chrome` in `pattern-library/registry.json`._

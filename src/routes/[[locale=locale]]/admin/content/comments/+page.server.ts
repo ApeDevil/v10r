@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import { requireAdmin } from '$lib/server/auth/guards';
 import { hideComment, listForModeration, removeComment, unhideComment } from '$lib/server/blog/comments';
+import { requireAdmin } from '$lib/server/http/guards';
+import type { CommentStatus } from '$lib/types/db-enums';
 import type { Actions, PageServerLoad } from './$types';
 
 const STATUSES = new Set(['visible', 'hidden', 'removed', 'all']);
@@ -8,7 +9,7 @@ const STATUSES = new Set(['visible', 'hidden', 'removed', 'all']);
 export const load: PageServerLoad = async ({ url, locals }) => {
 	requireAdmin(locals);
 	const statusParam = url.searchParams.get('status') ?? 'all';
-	const status = (STATUSES.has(statusParam) ? statusParam : 'all') as 'visible' | 'hidden' | 'removed' | 'all';
+	const status = (STATUSES.has(statusParam) ? statusParam : 'all') as CommentStatus | 'all';
 	const postId = url.searchParams.get('postId') ?? undefined;
 	const q = url.searchParams.get('q') ?? undefined;
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);

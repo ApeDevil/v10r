@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { PATTERN_TOOLS } from './registry';
+import { PATTERN_TOOLS } from './tools';
 
 /**
  * Drift guard between the two runtimes. The stdio server (`mcp/tools.ts`) and this hosted
@@ -26,7 +26,7 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 	// but not the other's. Pin the maturity line the same way — by source text —
 	// in both copies of patternCard.
 	it('renders the maturity grade in both runtimes', () => {
-		const hostedSource = readFileSync('src/lib/server/mcp/patterns/registry.ts', 'utf8');
+		const hostedSource = readFileSync('src/lib/server/mcp/patterns/tools.ts', 'utf8');
 		for (const source of [stdioSource, hostedSource]) {
 			expect(source).toContain('**Maturity:** ${pattern.maturity}');
 			expect(source).toContain('${hit.pattern.tier}, ${hit.pattern.maturity}');

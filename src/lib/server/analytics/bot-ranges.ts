@@ -13,16 +13,20 @@
  * job reports a failure for that source and leaves the previous prefixes in
  * place (see `botRangesRefresh` in `jobs/bot-ranges-refresh.ts`).
  *
- * ## Why this is a job and not a request-path fetch
+ * ## Why this is a job, and where the request path reads from
  *
  * Verification runs on every bot hit. Fetching every feed per request would be
  * absurd, and caching them in module scope would still mean a cold start pays for
- * it — on Vercel, frequently. Instead the job writes prefixes to
- * `analytics.bot_ip_ranges` and the containment test runs in Postgres as part of
- * the INSERT, costing nothing extra.
+ * it — on Vercel, frequently. So the `bot-ranges-refresh` job fetches the feeds
+ * and writes them twice: to `analytics.bot_ip_ranges` (the record the admin panel
+ * reads) and, per operator, to Redis (`publishBotRanges`). The request path reads
+ * only the Redis copy (`publishedBotRanges`) — it must never touch Postgres, which
+ * is the whole point of buffering bot hits (see `bot-hit-buffer.ts`).
  */
 
+import { redis } from '$lib/server/cache';
 import type { BotRangeSource } from '$lib/server/db/schema/analytics/bot-hits';
+import { BOT_RANGES_CACHE_TTL_MS, BOT_RANGES_PROJECTION_KEY_PREFIX } from './config';
 
 export interface BotRangeFeed {
 	source: BotRangeSource;
@@ -153,4 +157,37 @@ export function parsePrefixes(payload: unknown): string[] {
 		if (typeof value === 'string' && isValidPrefix(value)) out.push(value);
 	}
 	return out;
+}
+
+/** Replace one operator's projected prefixes. Called by the refresh job after the Postgres swap. */
+export async function publishBotRanges(source: BotRangeSource, prefixes: readonly string[]): Promise<void> {
+	if (!redis) return;
+	await redis.set(`${BOT_RANGES_PROJECTION_KEY_PREFIX}${source}`, prefixes);
+	projected.delete(source);
+}
+
+const projected = new Map<BotRangeSource, { prefixes: readonly string[] | null; loadedAt: number }>();
+
+/**
+ * One operator's published prefixes as the request path sees them: the Redis
+ * projection, held in-process for `BOT_RANGES_CACHE_TTL_MS` so a busy crawler costs
+ * one Redis read per process per ten minutes, not one per hit.
+ *
+ * Null when nothing is published (the job has never run, or Redis is down), which the
+ * verdict renders as `unchecked` — never as `spoofed`.
+ */
+export async function publishedBotRanges(source: BotRangeSource): Promise<readonly string[] | null> {
+	const cached = projected.get(source);
+	if (cached && Date.now() - cached.loadedAt < BOT_RANGES_CACHE_TTL_MS) return cached.prefixes;
+	if (!redis) return null;
+
+	let prefixes: readonly string[] | null = null;
+	try {
+		const stored = await redis.get<unknown>(`${BOT_RANGES_PROJECTION_KEY_PREFIX}${source}`);
+		if (Array.isArray(stored)) prefixes = stored.filter((p): p is string => typeof p === 'string');
+	} catch (err) {
+		console.error(`[analytics] bot ranges for ${source} unavailable:`, err);
+	}
+	projected.set(source, { prefixes, loadedAt: Date.now() });
+	return prefixes;
 }

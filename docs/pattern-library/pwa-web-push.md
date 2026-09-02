@@ -6,7 +6,7 @@ category: "PWA"
 
 # Web push channel (declarative JSON, no PII)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,8 +22,8 @@ Web push uses one Declarative Web Push JSON payload carrying no PII (brand title
 
 ## Code
 
-- `src/lib/server/notifications/providers/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/notifications/providers) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/notifications/providers))
+- `src/lib/server/notifications/channels/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/notifications/channels) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/notifications/channels))
 
 ---
 
-_Machine-readable record: `pwa-web-push` in `mcp/patterns.registry.json`._
+_Machine-readable record: `pwa-web-push` in `pattern-library/registry.json`._

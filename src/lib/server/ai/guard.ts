@@ -6,13 +6,13 @@
  * Returns `{ user }` on success, or an early `Response` (503 / 429 / budget decision)
  * the caller must return as-is.
  */
-import { decisionResponse } from '$lib/server/abuse';
+import { decisionResponse } from '$lib/server/abuse/decision.adapter';
 import { aiConfigured } from '$lib/server/ai';
 import { checkUserBudget } from '$lib/server/ai/budget';
 import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '$lib/server/ai/config';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError } from '$lib/server/http/response';
 
 const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
@@ -36,7 +36,7 @@ export async function guardAiRequest(locals: App.Locals): Promise<GuardResult> {
 	if (!success) return { response: rateLimitResponse(reset) };
 
 	// Per-user daily token budget — a cheap Redis read at entry that rejects once today's
-	// spend exceeds AI_DAILY_TOKEN_CAP. The charge side runs in the orchestrator's onFinish.
+	// spend exceeds DAILY_TOKEN_CAP. The charge side runs in the orchestrator's onFinish.
 	const budget = await checkUserBudget(user.id);
 	if (!budget.allowed) return { response: decisionResponse(budget) };
 

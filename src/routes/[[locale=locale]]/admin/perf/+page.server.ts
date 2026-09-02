@@ -1,10 +1,11 @@
 import { parseAnalyticsRange } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { safeDeferPromise } from '$lib/server/http/defer';
+import { requireAdmin } from '$lib/server/http/guards';
 import {
 	checkRatchets,
 	getFieldVitals,
 	getIdleGapProfile,
-	getLaneHealth,
+	getOriginHealth,
 	getRouteHotPaths,
 	idleGapIsReadable,
 	isScoreable,
@@ -12,7 +13,6 @@ import {
 	snapshot,
 	snapshotAgeDays,
 } from '$lib/server/perf';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -41,7 +41,7 @@ export const load: PageServerLoad = ({ url, locals }) => {
 			ageDays: snapshotAgeDays(),
 		},
 		vitals: safeDeferPromise(getFieldVitals(days), []),
-		lanes: safeDeferPromise(getLaneHealth(days), { census: [], total: 0, prodShare: 0, devSamples: 0 }),
+		origins: safeDeferPromise(getOriginHealth(days), { census: [], total: 0, prodShare: 0, devSamples: 0 }),
 		idleGap: safeDeferPromise(
 			getIdleGapProfile(days).then((rows) => ({ rows, readable: idleGapIsReadable(rows) })),
 			{ rows: [], readable: false },

@@ -1,21 +1,13 @@
 /**
- * Showcase safety guards — row limits and validation helpers.
- * Prevents unbounded growth in public-facing showcase tables.
+ * Row counting for the public showcase tables. The cap those counts are compared against
+ * is showcase policy, not a property of the data — see `showcases/row-limit.ts`.
  */
 
 import { sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
-import { MAX_SHOWCASE_ROWS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 
-/**
- * Check if a table has reached the row limit.
- * Returns an error message if the limit is reached, null otherwise.
- */
-export async function checkRowLimit(table: PgTable, limit = MAX_SHOWCASE_ROWS): Promise<string | null> {
+export async function countRows(table: PgTable): Promise<number> {
 	const [result] = await db.select({ count: sql<number>`count(*)::int` }).from(table);
-	if (result.count >= limit) {
-		return `Showcase limit reached (${limit} rows). Use reset to clear.`;
-	}
-	return null;
+	return result.count;
 }

@@ -6,16 +6,18 @@
  * so anonymous search never reveals their existence (fixes a prior leak where
  * the old `searchPages` exposed them to everyone).
  */
+
+import type { Locale } from '$lib/i18n';
 import { navItems } from '$lib/nav';
 import * as m from '$lib/paraglide/messages';
-import type { SearchLocale, SearchRecord } from '$lib/search/types';
+import type { SearchRecord } from '$lib/search/types';
 import { REDIRECT_HREFS } from './_redirects';
 
 function isPublic(href: string): boolean {
 	return !href.startsWith('/account') && !href.startsWith('/admin');
 }
 
-export function pageRecords(locale: SearchLocale): SearchRecord[] {
+export function pageRecords(locale: Locale): SearchRecord[] {
 	const out: SearchRecord[] = [];
 	const seen = new Set<string>();
 

@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Session lifecycle UI (expiry, re-auth)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Shell-level UI that reacts to authentication session state — showing an expiry
 
 ---
 
-_Machine-readable record: `app-shell-session-lifecycle` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-session-lifecycle` in `pattern-library/registry.json`._

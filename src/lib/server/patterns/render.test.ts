@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PatternRecord, Registry } from '../mcp/patterns/data';
+import type { PatternRecord, Registry } from './registry';
 import {
 	anchorFor,
 	docsUrlFor,

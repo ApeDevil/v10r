@@ -6,7 +6,7 @@ category: "Desk Workspace"
 
 # Spreadsheet panel (file type, dual-mode)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,7 +22,7 @@ A spreadsheet file type managed through the desk's unified file registry, editab
 
 ## Code
 
-- `src/lib/components/spreadsheet/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/spreadsheet) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/spreadsheet))
+- `src/lib/components/desk/panels/spreadsheet/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/desk/panels/spreadsheet) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/desk/panels/spreadsheet))
 
 ## Proof
 
@@ -34,4 +34,4 @@ A spreadsheet file type managed through the desk's unified file registry, editab
 
 ---
 
-_Machine-readable record: `desk-spreadsheet-panel` in `mcp/patterns.registry.json`._
+_Machine-readable record: `desk-spreadsheet-panel` in `pattern-library/registry.json`._

@@ -1,10 +1,10 @@
 import { fail } from '@sveltejs/kit';
 import { and, eq, ilike, or, sql } from 'drizzle-orm';
 import { grantCapability, listGrantedUsers, revokeCapability } from '$lib/server/auth/grants';
-import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { post } from '$lib/server/db/schema/blog/post';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {

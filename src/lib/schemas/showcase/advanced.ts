@@ -11,7 +11,7 @@ export const confirmSchema = v.object({
 export type ConfirmInput = v.InferInput<typeof confirmSchema>;
 export type ConfirmOutput = v.InferOutput<typeof confirmSchema>;
 
-export const feedbackSchema = v.object({
+export const feedbackFormSchema = v.object({
 	rating: v.pipe(v.number(), v.integer(), v.minValue(1, 'Please select a rating'), v.maxValue(5, 'Max rating is 5')),
 	comment: v.pipe(
 		v.string(),
@@ -23,8 +23,8 @@ export const feedbackSchema = v.object({
 	recommend: v.optional(v.boolean(), false),
 });
 
-export type FeedbackInput = v.InferInput<typeof feedbackSchema>;
-export type FeedbackOutput = v.InferOutput<typeof feedbackSchema>;
+export type FeedbackInput = v.InferInput<typeof feedbackFormSchema>;
+export type FeedbackOutput = v.InferOutput<typeof feedbackFormSchema>;
 
 export const profileEditSchema = v.object({
 	name: v.pipe(v.string(), v.trim(), v.nonEmpty('Name is required'), v.maxLength(100)),

@@ -1,16 +1,11 @@
 import { PER_EMAIL_LIMIT_MAX, PER_EMAIL_LIMIT_PREFIX, PER_EMAIL_LIMIT_WINDOW } from '$lib/server/abuse';
-import {
-	AI_RATE_LIMIT_MAX,
-	AI_RATE_LIMIT_PREFIX,
-	AI_RATE_LIMIT_WINDOW,
-	AUTH_RATE_LIMIT_MAX,
-	AUTH_RATE_LIMIT_WINDOW,
-	FEEDBACK_RATE_LIMIT_MAX,
-	FEEDBACK_RATE_LIMIT_PREFIX,
-	FEEDBACK_RATE_LIMIT_WINDOW,
-	USERNAME_CHECK_RATE_LIMIT_MAX,
-	USERNAME_CHECK_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+// Namespaced, because this page is the one place that shows four domains' limits side by
+// side — `aiPolicy.RATE_LIMIT_MAX` vs `authPolicy.RATE_LIMIT_MAX` is the distinction the
+// table is about.
+import * as aiPolicy from '$lib/server/ai/config';
+import * as authPolicy from '$lib/server/auth/config';
+import * as feedbackPolicy from '$lib/server/feedback/config';
+import { USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW } from '$lib/server/showcases/config';
 import type { PageServerLoad } from './$types';
 
 interface LimiterRow {
@@ -26,8 +21,8 @@ export const load: PageServerLoad = async () => {
 	const rows: LimiterRow[] = [
 		{
 			prefix: 'rl:auth (Better Auth wrapper)',
-			max: AUTH_RATE_LIMIT_MAX,
-			window: AUTH_RATE_LIMIT_WINDOW,
+			max: authPolicy.RATE_LIMIT_MAX,
+			window: authPolicy.RATE_LIMIT_WINDOW,
 			keyedOn: 'IP',
 			surface: '/api/auth/sign-in/*',
 			scope: 'Coarse per-IP gate on sign-in endpoints',
@@ -49,17 +44,17 @@ export const load: PageServerLoad = async () => {
 			scope: 'Prevents stockpiling of pre-solved ALTCHA challenges',
 		},
 		{
-			prefix: AI_RATE_LIMIT_PREFIX,
-			max: AI_RATE_LIMIT_MAX,
-			window: AI_RATE_LIMIT_WINDOW,
+			prefix: aiPolicy.RATE_LIMIT_PREFIX,
+			max: aiPolicy.RATE_LIMIT_MAX,
+			window: aiPolicy.RATE_LIMIT_WINDOW,
 			keyedOn: 'IP',
 			surface: '/api/ai/{chatbot,deskbot}',
 			scope: 'Per-user rate limit on chat completions (in addition to per-user daily token cap)',
 		},
 		{
-			prefix: FEEDBACK_RATE_LIMIT_PREFIX,
-			max: FEEDBACK_RATE_LIMIT_MAX,
-			window: FEEDBACK_RATE_LIMIT_WINDOW,
+			prefix: feedbackPolicy.RATE_LIMIT_PREFIX,
+			max: feedbackPolicy.RATE_LIMIT_MAX,
+			window: feedbackPolicy.RATE_LIMIT_WINDOW,
 			keyedOn: 'IP',
 			surface: '/feedback (form action)',
 			scope: 'Public feedback submission — paired with honeypot for unauthenticated posts',

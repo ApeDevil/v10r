@@ -116,8 +116,9 @@ Sidebar Header:
 ```svelte
 <script lang="ts">
   import { invalidate } from '$app/navigation';
-  import { toast } from '$lib/components/ui/toast';
+  import { getToast } from '$lib/state';
 
+  const toast = getToast();
   let { data } = $props();
   let filter = $state<'all' | 'mentions' | 'system'>('all');
 

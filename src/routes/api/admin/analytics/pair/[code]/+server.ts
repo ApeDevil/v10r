@@ -1,8 +1,9 @@
 /**
  * Admin revokes one of their own pairing codes / paired sessions.
  */
-import { apiError, apiNoContent } from '$lib/server/api/response';
-import { requireAdmin } from '$lib/server/auth/guards';
+
+import { requireAdmin } from '$lib/server/http/guards';
+import { apiError, apiNoContent } from '$lib/server/http/response';
 import { revokePairing } from '$lib/server/pairing';
 import type { RequestHandler } from './$types';
 

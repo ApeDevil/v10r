@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Hosted MCP (two trust surfaces: public read-only · bearer admin)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ Serves the pattern registry and a separate demo-state service over HTTP through 
 
 ---
 
-_Machine-readable record: `architecture-hosted-mcp` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-hosted-mcp` in `pattern-library/registry.json`._

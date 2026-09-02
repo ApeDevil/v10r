@@ -15,7 +15,7 @@ import {
 } from '$lib/components/primitives';
 import { ErdDiagram } from '$lib/components/viz';
 import * as m from '$lib/paraglide/messages';
-import { authFixture } from '$lib/showcase/auth/fixture';
+import { authFixture } from '$lib/showcases/auth/fixture';
 
 // Working copy of fixture users — all mutations are local $state, reset on navigation.
 let users = $state(

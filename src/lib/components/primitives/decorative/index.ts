@@ -8,6 +8,7 @@ export {
 	RadialGlow,
 	RetroGrid,
 } from './background';
+export { createDecorativeId } from './decorative-id';
 export {
 	Asterism,
 	ConcentricRings,
@@ -20,4 +21,3 @@ export {
 	TickMarks,
 	WaveDivider,
 } from './ornament';
-export { createDecorativeId } from './utils';

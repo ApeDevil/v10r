@@ -6,7 +6,7 @@ category: "Internationalization (i18n)"
 
 # Locale routing (optional catch-all, matcher, 308 canonical)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ URL-based locale routing using an optional [[locale=locale]] catch-all segment a
 
 ---
 
-_Machine-readable record: `i18n-locale-routing` in `mcp/patterns.registry.json`._
+_Machine-readable record: `i18n-locale-routing` in `pattern-library/registry.json`._

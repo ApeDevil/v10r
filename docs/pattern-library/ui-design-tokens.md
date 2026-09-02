@@ -6,7 +6,7 @@ category: "UI Components & Design System"
 
 # Design tokens (breakpoints, fluid type/space, z-index)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ Centralizes breakpoints, fluid typography/spacing clamp() scales, and z-index va
 
 ---
 
-_Machine-readable record: `ui-design-tokens` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ui-design-tokens` in `pattern-library/registry.json`._

@@ -19,7 +19,7 @@ Layer                    Canonical Home
                          + multi-client-core pattern
                          server/client boundary = the $lib/server/ path
 
-3  Services/Applications src/routes/[[locale=locale]]/  (app/, admin/, desk/,
+3  Services/Applications src/routes/[[locale=locale]]/  (account/, admin/, desk/,
                          auth/, (public)/showcases/)
                          + parallel src/routes/api/ tree
 
@@ -171,7 +171,7 @@ All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it f
 │                      DOMAIN MODULES                          │
 │                 $lib/server/[domain]/                         │
 │                                                              │
-│  notifications/    auth/         rawrag/      llmwiki/        │
+│  notifications/    auth/         retrieval/      llmwiki/        │
 │  ├── index.ts      ├── index.ts  ├── index.ts ├── search.ts  │
 │  ├── service.ts    └── guards.ts └── ...      └── ...        │
 │  └── ...                                                     │
@@ -188,16 +188,16 @@ All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it f
 └──────────────────────┘  └────────────────────────────────────┘
 ```
 
-**The four invariants** — violations break cross-client reuse:
+**The four invariants** — violations break cross-client reuse. They are executable: `src/lib/architecture.gate.test.ts` checks all four and ratchets, so this list cannot drift from the code the way it did before.
 
-1. **No framework imports in domain modules.** No `@sveltejs/kit` or `$app/` imports inside `$lib/server/[domain]/`. These bind logic to the SvelteKit request cycle, preventing reuse by AI tools and jobs.
+1. **No framework imports in domain modules.** No `@sveltejs/kit` or `$app/` imports inside `$lib/server/[domain]/`. These bind logic to the SvelteKit request cycle, preventing reuse by AI tools and jobs. A module that needs the framework is an adapter: it belongs in `server/http/`, or carries a `*.adapter.ts` / `*.hook.ts` suffix.
 2. **Date serialization happens in the adapter layer.** Domain modules return `Date` objects as-is. The route or tool `execute` converts them to ISO strings.
 3. **SvelteKit response helpers (`redirect`, `error`, `fail`, `message`) only in adapters.** Never in domain modules.
 4. **Domains call down, not across.** Cross-domain reads go through the other domain's `index.ts` barrel only — never into its internals.
 
 **Server/client boundary**: the `$lib/server/` path itself. SvelteKit refuses to bundle it client-side. No runtime guard is needed; the path is the boundary.
 
-**Error spine**: `ServerError` base class (`src/lib/server/errors/index.ts`) with `kind` / `toStatus()` / `toJSON()`. Subclasses: `DbError` (maps PG SQLSTATE → safe message + HTTP status), `AIError`, `Neo4jError`, `LlmwikiError`. Each adapter translates: REST endpoints return `apiError(status, kind, safeMessage)`; AI stream tools return structured error objects (never throw); form actions use `fail()`; jobs capture into `JobResult`. Safe messages only — no PG codes, constraint names, or API-key prefixes reach the client.
+**Error spine**: `ServerError` base class (`src/lib/server/errors/index.ts`) with `kind` / `toStatus()` / `toJSON()`. Subclasses: `DbError` (maps PG SQLSTATE → safe message + HTTP status), `AiError`, `Neo4jError`, `LlmwikiError`. Each adapter translates: REST endpoints return `apiError(status, kind, safeMessage)`; AI stream tools return structured error objects (never throw); form actions use `fail()`; jobs capture into `JobResult`. Safe messages only — no PG codes, constraint names, or API-key prefixes reach the client.
 
 ---
 
@@ -209,17 +209,17 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 |-------------|-----------|-----------|---------------|------|
 | Public + Showcases | `(public)/` (blog, docs, showcases, feedback) | — | — | None; self-documenting layer |
 | Auth | `auth/` (login, verify) | `/api/auth/*` | `auth/` | ALTCHA-gated, rate-limited |
-| App (member) | `app/` (dashboard, account, account/data, notifications, settings) | `/api/preferences/*`, `/api/notifications/*`, `/api/consent`, `/api/me/*` | `preferences/`, `notifications/`, `privacy/` | `app/+layout.server.ts` |
-| Admin | `admin/` (access, ai, analytics, audit, cache, content, db, feedback, flags, jobs, notifications, rag, users — ~13 areas) | `/api/admin/*` | various | `admin/+layout.server.ts` |
+| Account (member) | `account/` (dashboard, data, notifications, security, settings) | `/api/preferences/*`, `/api/notifications/*`, `/api/consent`, `/api/account/*` | `preferences/`, `notifications/`, `privacy/` | `account/+layout.server.ts` |
+| Admin | `admin/` (access, ai, analytics, audit, cache, content, db, feedback, flags, jobs, mcp, notifications, perf, users) | `/api/admin/*` | various | `admin/+layout.server.ts` |
 | Desk (AI workspace) | `desk/` | `/api/desk/*` (files, folders, spreadsheets, theme, workspaces) | `store/`, `branding/` | `desk/+layout.server.ts` |
 | Blog | `(public)/blog/` | `/api/blog/*` (posts, comments, tags, assets, domains, folders, feed.xml) | `blog/`, `content/` | Capability-gated authoring |
 | AI Assistant | — | `/api/ai/*` (chat, conversations, proposals, providers) | `ai/` | Session-gated |
-| RAG / Retrieval | — | `/api/retrieval/*` (documents, graph, ingest, search, stats) | `rawrag/`, `llmwiki/`, `graph/` | Admin-gated |
+| RAG / Retrieval | — | `/api/retrieval/*` (documents, graph, ingest, search, stats) | `retrieval/`, `llmwiki/`, `graph/` | Admin-gated |
 | Notifications | — | `/api/notifications/*` (stream SSE, telegram, discord, read-all) | `notifications/` | Session-gated |
 | Analytics | — | `/api/analytics/*` (journey beacon, stream) | `analytics/` | Consent-tiered |
-| Privacy (GDPR) | `app/account/data` (transparency mirror) | `/api/me/*` (data, data/export, DELETE) | `privacy/` | Session-gated; per-endpoint rate limits (10/5/3 per min) |
+| Privacy (GDPR) | `account/data` (transparency mirror) | `/api/account/*` (data, data/export, DELETE) | `privacy/` | Session-gated; per-endpoint rate limits (10/5/3 per min) |
 | Pairing | `pair/[code]` | `/api/pair/*` | `pairing/` | HMAC cookie; independent of Better Auth |
-| Jobs | — | `/api/cron/[job]` dispatcher | `jobs/` | Bearer token (Vercel cron) |
+| Jobs | — | `/api/cron/due` sweep + `/api/cron/[job]` dispatcher | `jobs/` | Bearer token (Vercel cron) |
 | Abuse | — | — | `abuse/` | Cross-cutting; wired in hooks |
 | Visual identity | `(public)/showcases/shell/style` | `/api/style/*`, `/api/desk/theme` | `branding/`, `styles/random/` | Picking public; palette CRUD session-gated |
 
@@ -229,7 +229,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 
 ## Layer 4 — Modules
 
-`src/lib/server/[domain]/` holds ~40 server-side domain modules. `src/lib/[client-domain]/` holds client-side state, styles, i18n, schemas, and config. The public surface of every module is its `index.ts` **barrel export** — external callers import from the barrel only, never from internal files.
+`src/lib/server/[domain]/` holds ~40 server-side domain modules; `src/lib/server/showcases/[name]/` holds the ones that exist only to demonstrate a pattern. `src/lib/[client-domain]/` holds client-side state, styles, i18n, schemas, and the catalogues that sit below the component layer (`3d/`, `desk/`, `showcases/catalog/`). A module's public surface is its `index.ts` **barrel** — external callers should import from the barrel only. `db/` and `server/http/` are the two shared sinks, reached by file.
 
 ### Server-side domains (selected by file count)
 
@@ -237,12 +237,12 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 |--------|-------|------|
 | `db/` | 135 | Drizzle client + schema + all read/write query files |
 | `ai/` | 35 | Provider registry, orchestrator, tools, errors, budget |
-| `rawrag/` | 18 | Three-tier retrieval pipeline (tiers/, ingest/) |
+| `retrieval/` | 18 | Three-tier retrieval pipeline (tiers/, ingest/) |
 | `notifications/` | 17 | Send, stream (SSE), route, outbox, channel providers |
 | `blog/` | 16 | Posts, comments, tags, assets, feed |
 | `llmwiki/` | 14 | Hybrid vector+BM25 wiki search, compile, lint |
-| `jobs/` | 13 | Runner, scheduler, delivery-scheduler, 8 registered jobs |
-| `store/` | 12 | Desk workspace and file data |
+| `jobs/` | 25 | Runner, scheduler, delivery-scheduler (both muted in dev), 20 registered jobs with a `cadence` |
+| `store/` | 12 | R2 object storage — uploads, presigned URLs, per-namespace budgets |
 | `cache/` | 9 | Upstash Redis wrappers |
 | `abuse/` | 9 | ALTCHA, honeypot, rate-limits, AI budget |
 
@@ -259,7 +259,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
   errors.ts
   [feature].ts       ← one file per capability
   *.test.ts          ← co-located unit tests
-  [sub-pipeline]/    ← e.g. rawrag/tiers/, rawrag/ingest/, ai/tools/, ai/loop/
+  [sub-pipeline]/    ← e.g. retrieval/tiers/, retrieval/ingest/, ai/tools/, ai/loop/
 ```
 
 Deviations: `auth/index.ts` is the Better Auth instance (construction site, not re-export). `ai/index.ts` exposes provider-resolver functions. Tiny modules (`utils/`, `errors/`, `schemas/`, `feedback/`) skip the full structure.
@@ -289,7 +289,7 @@ const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 ```
 
-**Push-only workflow**: only `db:push` is used; no migrations directory exists. All `pgSchema()` and `pgEnum()` objects must be exported through `schema/index.ts` AND listed in `drizzle.config.ts` `schemaFilter` (14 namespaces: admin, showcase, image, auth, ai, rag, jobs, notifications, analytics, app, blog, dbops, desk, feedback) or `db:push` silently omits them.
+**Push-only workflow**: only `db:push` is used; no migrations directory exists. Every `pgSchema()` must be exported through `schema/index.ts` AND listed in `drizzle.config.ts` `schemaFilter` (15 namespaces: admin, showcase, image, auth, ai, retrieval, jobs, mcp, notifications, analytics, personalization, blog, dbops, desk, feedback) or `db:push` silently omits it. Enums are `<namespace>Schema.enum(...)` and travel with their namespace.
 
 ### Client-side modules
 
@@ -303,11 +303,16 @@ export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 | `showcases/` | Showcase registry + sections — the catalog hubs, nav, and search read |
 | `pwa/` | Service-worker policy (pure) + push / session-refresh clients |
 | `workers/` | Web Worker payloads — pure compute, browser-API half, `postMessage` shell |
-| `nav/`, `shortcuts/`, `config/` | App navigation, keyboard shortcuts, app config |
+| `nav/`, `shortcuts/` | App navigation, keyboard shortcuts |
+| `3d/`, `desk/`, `showcases/catalog/` | Catalogues below the component layer — read by more than one feature dir |
 
 ### Import direction
 
-The import graph is a verified DAG. Cross-domain references always target barrel roots — never internals. The `db/` module imports no sibling domains; it is the sink. Framework coupling is confined to adapter-purpose files (`auth/guards.ts`, `api/response.ts`, `api/rate-limit.ts`, `abuse/decision.ts`) and scheduler-boot code that reads the `building` / `dev` flags. Pure domain modules — `db/`, `rawrag/`, `blog/`, `store/`, `llmwiki/`, `ai/providers` — have zero framework imports.
+Framework coupling is confined to the adapter kit (`server/http/`), files suffixed `*.adapter.ts` / `*.hook.ts`, and scheduler-boot code reading the `building` / `dev` flags. That rule holds with **zero exceptions** and is asserted by the architecture gate.
+
+The other three invariants are enforced as a **ratchet rather than a clean bill of health**, because the codebase does not yet satisfy them: 68 cross-domain imports still reach past a barrel, 11 modules under `db/` still import a sibling domain, and 20 of the 40 server domains sit in one mutually-recursive cluster. Those counts are recorded in the gate and may only go down. Earlier revisions of this document claimed the graph was "a verified DAG"; nothing verified it, and it was not true.
+
+Fixing the `db/` back-edges is the highest-leverage move: removing just those splits the 20-domain cluster into a 10-domain and a 3-domain one.
 
 ---
 
@@ -365,7 +370,7 @@ Individual files inside a module or component folder. Private by default; public
 
 ### Recurring kinds
 
-**Guards** (`auth/guards.ts`):
+**Guards** (`http/guards.ts`):
 
 | Function | Failure |
 |----------|---------|
@@ -375,23 +380,23 @@ Individual files inside a module or component folder. Private by default; public
 
 **Step-up gate** (`auth/step-up.ts`): `requireStepUp` / `isStepUpFresh` / `stampStepUp` over a Redis `stepup:<userId>` key (600s). Reads Redis, never the session (freshness must not ride the cookie cache); fail-closed in prod. Never imports the auth instance — `auth/index.ts` imports *from* it via its hooks. `factor-changes.ts:onFactorChanged` is the single chokepoint for passkey/TOTP side effects (audit + sibling-revoke + email). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp).
 
-**Services** — multi-step orchestration warranting extraction: `NotificationService.send()` (DB insert → SSE push → async channel routing).
+**Services** — multi-step orchestration warranting extraction: `sendNotification()` (DB insert → SSE push → async channel routing).
 
-**Domain functions** — the shared call site for all adapters: `getNotifications`, `markAsRead`, `retrieve` (rawrag), `searchLlmwiki`, `getCustomPaletteById`.
+**Domain functions** — the shared call site for all adapters: `getNotifications`, `markAsRead`, `retrieve` (retrieval), `searchLlmwiki`, `getCustomPaletteById`.
 
 **Read/write seam**: `queries.ts` contains reads with no side effects; `mutations.ts` contains writes with explicit intent. This split is a naming convention, not a CQRS infrastructure.
 
-**Error classes and classifiers**: `ServerError` → `DbError` / `AIError` / `Neo4jError` / `LlmwikiError`; `classifyDbError` / `classifyAIError` / `classifyNeo4jError`; `safeDbMessage` / `safeAIMessage`.
+**Error classes and classifiers**: `ServerError` → `DbError` / `AiError` / `Neo4jError` / `LlmwikiError`; `classifyDbError` / `classifyAiError` / `classifyNeo4jError`; `safeDbMessage` / `safeAiMessage`.
 
 **Provider resolution** (`ai/providers.ts`): `getActiveProvider` / `getToolProvider` resolves in order: request override → user preference → env → first configured. Circuit breaker: `markCooldown` / `isCooledDown` (60-second window), Redis-backed (`ai:cooldown:{id}`) so it is cross-instance and async.
 
-**AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `get-rawrag-chunks`, `get-llmwiki-pages`, `resolve-ref`, `search-catalog`, `search-docs`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
+**AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `get-source-chunks`, `get-llmwiki-pages`, `resolve-ref`, `search-catalog`, `search-docs`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
 
 **Catalog grounding** (`ai/catalog-citations.ts`, `ai/tool-leak-guard.ts`): post-stream surface-citation verifier and Groq/llama textual-tool-call leak guard. See [blueprint/ai/provider-routing.md](./blueprint/ai/provider-routing.md).
 
 **Catalog graph** (`search/catalog-map.ts`, `search/catalog-projection.ts`, `graph/catalog.ts`): `formatCatalogMap` injects a path-free shape hint into the system prompt; `deriveCatalogGraph` projects the showcase registry to typed `:Resource` nodes + `PART_OF` edges; `seedCatalogResources` writes them to Neo4j idempotently (run via `db:catalog-sync`, chained into `db:setup`).
 
-**Docs corpus** (`rawrag/markdown-split.ts`, `ai/tools/search-docs.ts`, `scripts/db/ingest-docs.ts`): the project's own `docs/**/*.md` is ingested into `rag.document`/`rag.chunk` (owned by `SYSTEM_DOCS_USER_ID`) so the `search_project_docs` tool can ground "how does X work" answers in the real docs. Ingestion is **manual** — `db:ingest-docs` (not chained into `db:setup`). See [blueprint/ai/layered-rag.md](./blueprint/ai/layered-rag.md#docs-corpus-search_project_docs).
+**Docs corpus** (`retrieval/markdown-split.ts`, `ai/tools/search-docs.ts`, `scripts/db/ingest-docs.ts`): the project's own `docs/**/*.md` is ingested into `retrieval.document`/`retrieval.chunk` (owned by `SYSTEM_DOCS_USER_ID`) so the `search_project_docs` tool can ground "how does X work" answers in the real docs. Ingestion is **manual** — `db:ingest-docs` (not chained into `db:setup`). See [blueprint/ai/layered-rag.md](./blueprint/ai/layered-rag.md#docs-corpus-search_project_docs).
 
 **CVA variant definitions** (e.g. `button.ts`): class-variance-authority variants double as DOM markers for scoped CSS selectors (UnoCSS cannot extract complex classes from `.ts` files reliably; `Button.svelte` scoped CSS does the actual styling, targeting CVA class names as `:global()` selectors).
 
@@ -482,12 +487,12 @@ Nine end-to-end flows have been traced through the system:
 1. **Request lifecycle** — HTTP edge → hooks pipeline → route adapter → domain → DB → response
 2. **Multi-client core** (notifications) — same `getNotifications` / `markAsRead` called from UI, REST, AI tool, and job
 3. **AI chat + tool-calling** — `orchestrateChat` in `ai/chat-orchestrator.ts`; provider resolution → `streamText` → tool loop → persistence
-4. **RAG retrieval** — `retrieve` in `rawrag/index.ts` fans out across `tiers/` (tier-1 `searchContextual` = pgvector + BM25 fused via reciprocal-rank fusion, tier-2 `searchParentChild`, tier-3 `searchGraph` — Postgres seeds → Neo4j expand → Postgres hydrate)
-5. **Notification delivery** — `NotificationService.send()` → DB insert + SSE push + web push (both synchronous) + channel routing (async via outbox: Telegram / Discord / email). The outbox drain is a claim-based queue worker: rows are taken with an atomic `FOR UPDATE SKIP LOCKED` claim, terminal writes are fenced on `attempts`, and a lapsed lease is reclaimed inside the same drain. See [blueprint/architecture/workers.md](./blueprint/architecture/workers.md)
-6. **Background jobs** — `runJob()` + scheduler (`setInterval`, persistent container) vs cron dispatcher (`/api/cron/[job]`, serverless); same runner, different trigger
+4. **RAG retrieval** — `retrieve` in `retrieval/index.ts` fans out across `tiers/` (tier-1 `searchContextual` = pgvector + BM25 fused via reciprocal-rank fusion, tier-2 `searchParentChild`, tier-3 `searchGraph` — Postgres seeds → Neo4j expand → Postgres hydrate)
+5. **Notification delivery** — `sendNotification()` → DB insert + SSE push + web push (both synchronous) + channel routing (async via outbox: Telegram / Discord / email). The outbox drain is a claim-based queue worker: rows are taken with an atomic `FOR UPDATE SKIP LOCKED` claim, terminal writes are fenced on `attempts`, and a lapsed lease is reclaimed inside the same drain. See [blueprint/architecture/workers.md](./blueprint/architecture/workers.md)
+6. **Background jobs** — `runJob()` + scheduler (`setInterval`, persistent container) vs the daily `/api/cron/due` sweep (serverless, one Neon wake for everything due); same runner, different trigger
 7. **Visual identity** — `loadStyle` in hooks resolves cookie → custom palette DB lookup (`CP_` ids only) → `generateRandomStyle` fallback; Paraglide `transformPageChunk` injects palette CSS into every HTML response. There is no site-wide brand override: every visitor's style is their own
 8. **Auth + session + grants + analytics** — `authHandler` (Better Auth) → `sessionPopulate` (locals.user/session/grants) → `analyticsCollector` (consent-tiered, fire-and-forget). Factor mutations (passkey/TOTP) route through two global Better Auth hooks in `auth/index.ts`: a `before` step-up gate and an `after` chokepoint that audits, revokes sibling sessions, emails, and stamps step-up freshness. Passkeys are a phishing-resistant first factor; TOTP is a step-up factor only (passwordless sign-ins are never challenged). See [blueprint/auth.md](./blueprint/auth.md#passkeys--step-up-totp)
-9. **Personal-data access** (privacy) — `collectUserData` in `privacy/report.ts` is the one aggregator behind four adapters: the `/account/data` page load (streamed), `GET /api/me/data`, `GET /api/me/data/export`, and `DELETE /api/me` (via `deleteUserData`). One definition of "all my data"; secrets projected out at the query, prior-session IPs masked. Erasure is the Postgres FK cascade plus a best-effort `deleteUserGraph` sweep (Neo4j has no FKs). See [stack/capabilities/gdpr.md](./stack/capabilities/gdpr.md)
+9. **Personal-data access** (privacy) — `collectUserData` in `privacy/report.ts` is the one aggregator behind four adapters: the `/account/data` page load (streamed), `GET /api/account/data`, `GET /api/account/data/export`, and `DELETE /api/account` (via `deleteUserData`). One definition of "all my data"; secrets projected out at the query, prior-session IPs masked. Erasure is the Postgres FK cascade plus a best-effort `deleteUserGraph` sweep (Neo4j has no FKs). See [stack/capabilities/gdpr.md](./stack/capabilities/gdpr.md)
 
 ---
 
@@ -495,11 +500,11 @@ Nine end-to-end flows have been traced through the system:
 
 These gaps make the blueprint-to-code mapping imperfect. They are recorded here, not concealed, so the doc remains trustworthy.
 
-1. **No notification AI tool implemented.** `multi-client-core.md` uses `createNotificationTools` / `markNotificationRead` as its flagship example. `ai/tools/` currently holds desk, llmwiki, rawrag, propose-plan, and resolve-ref tools. Multi-client reuse for notifications is real for UI, REST, and jobs — not yet for AI.
+1. **No notification AI tool implemented.** `multi-client-core.md` uses `createNotificationTools` / `markNotificationRead` as its flagship example. `ai/tools/` currently holds desk, llmwiki, retrieval, propose-plan, and resolve-ref tools. Multi-client reuse for notifications is real for UI, REST, and jobs — not yet for AI.
 
 2. **Daily token budget is enforced.** `chargeTokens` records daily AI spend to Redis in `onFinish`; the entry-gate `checkUserBudget` (`ai/budget.ts`) now runs in the shared `guardAiRequest` (`ai/guard.ts`) before `orchestrateChat`, rejecting once the day's spend exceeds the cap. (It was previously called nowhere — recorded but unenforced.)
 
-3. **`notification-delivery` drains on every platform.** It is registered in the jobs registry (`jobs/index.ts`) and scheduled in `vercel.json` (`/api/cron/notification-delivery`, daily — Vercel Hobby rejects sub-daily crons at deploy time) — on Vercel the cron sweep is what drains pending Telegram / Discord / email deliveries. On persistent platforms the 15-second `delivery-scheduler` `setInterval` still owns it; the cron never fires there. Web push bypasses the outbox entirely — it is partitioned out before `createDeliveries` runs and sent synchronously inside `NotificationService.send()`, alongside in-app SSE. (It previously had no serverless trigger and was absent from the registry, so deliveries queued as `pending` and never drained on Vercel.)
+3. **`notification-delivery` drains on every platform.** It is registered in the jobs registry (`jobs/index.ts`) and due daily inside the `/api/cron/due` sweep (Vercel Hobby rejects sub-daily crons at deploy time) — on Vercel that sweep is what drains pending Telegram / Discord / email deliveries. On persistent platforms the 15-second `delivery-scheduler` `setInterval` still owns it; the cron never fires there. Web push bypasses the outbox entirely — it is partitioned out before `createDeliveries` runs and sent synchronously inside `sendNotification()`, alongside in-app SSE. (It previously had no serverless trigger and was absent from the registry, so deliveries queued as `pending` and never drained on Vercel.)
 
 4. **Per-surface chat routes, one orchestrator.** Three thin routes — `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag` — set an explicit `surface` and share one entry guard (`guardAiRequest`), then call the single `orchestrateChat` (routing, retrieval, tools, persistence). They replace the former single `/api/ai/chat`; the bare `/api/ai/chat/stream` is also gone. See [blueprint/ai/surfaces.md](./blueprint/ai/surfaces.md).
 
@@ -511,7 +516,7 @@ These gaps make the blueprint-to-code mapping imperfect. They are recorded here,
 
 | Document | What it elaborates |
 |----------|--------------------|
-| [`codebase-organization.md`](./codebase-organization.md) | The spatial map: source-tree layout, canonical-home rules, import direction |
+| [`codebase-organization.md`](./codebase-organization.md) | Where code lives: adapter vs domain, canonical homes, external constraints |
 | [`blueprint/architecture/multi-client-core.md`](./blueprint/architecture/multi-client-core.md) | Full hexagonal core pattern: the four invariants, adapter patterns, auth per client type, error handling, extraction rules |
 | [`blueprint/middleware.md`](./blueprint/middleware.md) | Hooks pipeline detail: CORS, security headers, session strategy |
 | [`blueprint/ai/`](./blueprint/ai/) | AI assistant architecture, RAG pipeline, TOON format, tool design |

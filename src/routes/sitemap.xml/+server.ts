@@ -1,7 +1,7 @@
 import { baseLocale, locales } from '$lib/paraglide/runtime';
 import { listPublishedPostsForFeed } from '$lib/server/blog';
 import { REDIRECT_HREFS } from '$lib/server/search/adapters/_redirects';
-import { showcases } from '$lib/showcases/registry';
+import { showcases } from '$lib/showcases/catalog/registry';
 import type { RequestHandler } from './$types';
 
 const PROD_ORIGIN = 'https://www.v10r.dev';

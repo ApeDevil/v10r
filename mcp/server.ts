@@ -11,8 +11,10 @@
  * and the process self-terminates on stdin EOF / SIGTERM / SIGINT / EPIPE so no
  * orphan containers accumulate when the client exits uncleanly.
  */
+
+import { loadRegistry } from '../pattern-library/load.ts';
 import { createLineBuffer, ERR, err, type Id, isNotification, ok, parseLine, type RpcMessage } from './protocol.ts';
-import { loadRegistry } from './registry.ts';
+
 import { handleToolCall, TOOLS, type ToolContext } from './tools.ts';
 
 const SUPPORTED_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'];

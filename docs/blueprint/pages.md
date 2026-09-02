@@ -46,7 +46,7 @@ No documentation drift. No stale examples. The template validates itself.
 │   │   ├── /tokens                  # Colors, spacing, shadows
 │   │   ├── /menus                   # Dropdown, context, menubar
 │   │   ├── /tables                  # Data tables
-│   │   ├── /workbench               # Dock workspace (tabs, activity bar)
+│   │   ├── /dock                    # Dock workspace (tabs, activity bar)
 │   │   └── /splits
 │   │       ├── /resizable           # PaneForge resize primitives
 │   │       └── /reorderable         # Drag-to-reorder panes
@@ -343,7 +343,7 @@ Component gallery covering every UI primitive and composite.
 | `/tokens` | Color swatches, spacing scale, shadow scale |
 | `/menus` | Dropdown, context, and menubar menus |
 | `/tables` | Data tables: sorting, selection, density |
-| `/workbench` | Dock workspace with tabs and activity bar |
+| `/dock` | Dock workspace with tabs and activity bar |
 | `/splits/resizable` | PaneForge resize primitives |
 | `/splits/reorderable` | Drag-to-reorder panes |
 
@@ -523,7 +523,7 @@ Cache layer showcase. Three sub-pages covering connection, ephemeral keys, and c
 
 ### /showcases/ai
 
-Architecture x-ray of the two AI surfaces (see [ai/surfaces.md](./ai/surfaces.md)). Two sibling pages with an identical 8-anchor skeleton (`#spine #guard #prompt #nrag #tools #verify|#approval #stream #awareness`), driven by recorded trace fixtures — fully readable signed-out, zero `+page.server.ts` (leak-gate enforced).
+Architecture x-ray of the two AI surfaces (see [ai/surfaces.md](./ai/surfaces.md)). Two sibling pages with an identical 8-anchor skeleton (`#spine #guard #prompt #retrieval #tools #verify|#approval #stream #awareness`), driven by recorded trace fixtures — fully readable signed-out, zero `+page.server.ts` (leak-gate enforced).
 
 | Tests | Stack |
 |-------|-------|
@@ -538,7 +538,7 @@ Architecture x-ray of the two AI surfaces (see [ai/surfaces.md](./ai/surfaces.md
 | `/chatbot` | The v10r-expert surface layer by layer: guard chain, prompt tape, retrieval profile (tier-1 live, tiers 2–3 dormant), read-only tool set, citation verification |
 | `/deskbot` | The in-desk operator layer by layer: scoped desk tools, proposal state machine, approval replay as a second stack, desk-awareness |
 
-Retired 2026-08 (308 stubs until 2026-11): `/chat`, `/retrieval`, `/retrieval/rag-chat`, `/retrieval/explorer`, `/retrieval/ingest` (retrieval pedagogy lives in each page's `#nrag` section); `/image-metadata` moved to `/showcases/toolkits/image-metadata`.
+Retired 2026-08 (308 stubs until 2026-11): `/chat`, `/retrieval`, `/retrieval/rag-chat`, `/retrieval/explorer`, `/retrieval/ingest` (retrieval pedagogy lives in each page's `#retrieval` section); `/image-metadata` moved to `/showcases/toolkits/image-metadata`.
 
 ---
 
@@ -817,7 +817,7 @@ GDPR compliance routes.
 | Route | Purpose |
 |-------|---------|
 | `/account` | Account overview |
-| `/account/data` | View stored data; data export served by `/api/me/data/export` |
+| `/account/data` | View stored data; data export served by `/api/account/data/export` |
 | `/account/security` | Sessions, passkeys, account deletion |
 
 ---
@@ -908,7 +908,7 @@ src/routes/
 │   │   ├── tokens/+page.svelte
 │   │   ├── menus/+page.svelte
 │   │   ├── tables/+page.svelte
-│   │   ├── workbench/+page.svelte
+│   │   ├── dock/+page.svelte
 │   │   └── splits/
 │   │       ├── resizable/+page.svelte
 │   │       └── reorderable/+page.svelte

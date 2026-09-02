@@ -8,7 +8,7 @@
  * a structured report: what each corpus had available, what the ranker chose
  * (with the production cutoff marked), and which prompt blocks are static vs
  * dynamically ingested for THIS query. It NEVER calls the LLM: worst-case cost
- * is one query embedding plus a few DB counts, and lanes whose gate closes
+ * is one query embedding plus a few DB counts, and corpora whose gate closes
  * (trivial query, empty corpus, missing scope) spend nothing at all.
  *
  * Guarded like every other AI endpoint (`guardAiRequest`: auth → aiConfigured
@@ -17,21 +17,21 @@
  * ids, counts, scores, and short previews; never prompt bodies.
  */
 import { safeParse } from 'valibot';
-import type { SearchLocale } from '$lib/search/types';
+import type { Locale } from '$lib/i18n';
 import { buildSystemPromptBlocks } from '$lib/server/ai/context/system-prompt';
 import { assembleChatbotContext, SYSTEM_DOCS_MAX_CHUNKS } from '$lib/server/ai/context-assembly';
-import { DESK_SEARCH_MAX_CHUNKS, retrieveDeskDocs } from '$lib/server/ai/deskbot-rag';
+import { DESK_SEARCH_MAX_CHUNKS, retrieveDeskDocs } from '$lib/server/ai/deskbot-retrieval';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { hasDestructiveIntent, shouldRequirePlan } from '$lib/server/ai/policy';
 import { ContextProbeRequestSchema } from '$lib/server/ai/validation';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
-import { countCorpus } from '$lib/server/db/rag/queries';
+import { countCorpus } from '$lib/server/db/retrieval/queries';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import { countPages, LLMWIKI_SEARCH_LIMIT } from '$lib/server/llmwiki';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
 import { resolvePageContext } from '$lib/server/search';
 import { type DeskToolScope, TOOL_MANIFEST } from '$lib/types/ai-tools';
-import type { ProbeCandidate, ProbeLaneResult, ProbeReport } from '$lib/types/context-probe';
+import type { ProbeCandidate, ProbeCorpusResult, ProbeReport } from '$lib/types/context-probe';
 import type { RequestHandler } from './$types';
 
 /**
@@ -49,7 +49,7 @@ async function probeChatbot(
 	userId: string,
 	query: string,
 	pageRouteId: string | undefined,
-	locale: SearchLocale,
+	locale: Locale,
 ): Promise<ProbeReport> {
 	// Same trust boundary as the chatbot route: the raw route id resolves against
 	// the public catalog here and is discarded on miss.
@@ -74,8 +74,8 @@ async function probeChatbot(
 	]);
 
 	const chosenIds = new Set(assembly.docsChosen.map((c) => c.chunkId));
-	const docsLane: ProbeLaneResult = {
-		lane: 'docs',
+	const docsCorpusResult: ProbeCorpusResult = {
+		corpus: 'docs',
 		ran: assembly.gates.groundDocs && !assembly.errors.docs,
 		cutoff: SYSTEM_DOCS_MAX_CHUNKS,
 		candidates: assembly.docsCandidates.map(
@@ -89,11 +89,11 @@ async function probeChatbot(
 			}),
 		),
 	};
-	if (!assembly.gates.groundDocs) docsLane.skippedReason = 'gated_off';
-	if (assembly.errors.docs) docsLane.error = 'retrieval_failed';
+	if (!assembly.gates.groundDocs) docsCorpusResult.skippedReason = 'gated_off';
+	if (assembly.errors.docs) docsCorpusResult.error = 'retrieval_failed';
 
-	const llmwikiLane: ProbeLaneResult = {
-		lane: 'llmwiki',
+	const llmwikiCorpusResult: ProbeCorpusResult = {
+		corpus: 'llmwiki',
 		ran: assembly.gates.groundDocs && !assembly.errors.llmwiki,
 		cutoff: LLMWIKI_SEARCH_LIMIT,
 		// Every returned hit enters the context (TLDRs + pointers) — chosen by construction.
@@ -107,8 +107,8 @@ async function probeChatbot(
 			}),
 		),
 	};
-	if (!assembly.gates.groundDocs) llmwikiLane.skippedReason = 'gated_off';
-	if (assembly.errors.llmwiki) llmwikiLane.error = 'retrieval_failed';
+	if (!assembly.gates.groundDocs) llmwikiCorpusResult.skippedReason = 'gated_off';
+	if (assembly.errors.llmwiki) llmwikiCorpusResult.error = 'retrieval_failed';
 
 	return {
 		surface: 'chatbot',
@@ -117,11 +117,11 @@ async function probeChatbot(
 			{ id: 'page_deixis', fired: assembly.gates.wantsPageGrounding },
 		],
 		inventory: [
-			{ lane: 'llmwiki', documents: wikiPages },
-			{ lane: 'docs', documents: docsCorpus.documents, chunks: docsCorpus.chunks },
+			{ corpus: 'llmwiki', documents: wikiPages },
+			{ corpus: 'docs', documents: docsCorpus.documents, chunks: docsCorpus.chunks },
 		],
 		tools: TOOL_MANIFEST.filter((t) => t.surface === 'chatbot').map((t) => t.name),
-		lanes: [llmwikiLane, docsLane],
+		corpora: [llmwikiCorpusResult, docsCorpusResult],
 		prompt: {
 			blocks: assembly.blocks.map((b) => ({ id: b.id, tokensEst: b.tokensEst, dynamic: b.dynamic })),
 			totalTokensEst: Math.ceil(assembly.systemPrompt.length / 4),
@@ -152,21 +152,21 @@ async function probeDeskbot(
 
 	// Mirror `desk_search_knowledge` (`desk:ask` scope): skip without the scope
 	// (tool not mounted) or on an empty corpus (no embedding spent either way).
-	const deskLane: ProbeLaneResult = {
-		lane: 'desk',
+	const deskCorpusResult: ProbeCorpusResult = {
+		corpus: 'desk',
 		ran: false,
 		cutoff: DESK_SEARCH_MAX_CHUNKS,
 		candidates: [],
 	};
 	if (!scopes.includes('desk:ask')) {
-		deskLane.skippedReason = 'scope_off';
+		deskCorpusResult.skippedReason = 'scope_off';
 	} else if (deskCorpus.documents === 0) {
-		deskLane.skippedReason = 'empty_corpus';
+		deskCorpusResult.skippedReason = 'empty_corpus';
 	} else {
 		try {
 			const result = await retrieveDeskDocs(userId, query, PROBE_CANDIDATE_POOL);
-			deskLane.ran = true;
-			deskLane.candidates = result.chunks.map(
+			deskCorpusResult.ran = true;
+			deskCorpusResult.candidates = result.chunks.map(
 				(c, i): ProbeCandidate => ({
 					title: c.documentTitle,
 					preview: preview(c.content),
@@ -178,17 +178,17 @@ async function probeDeskbot(
 			);
 		} catch (err) {
 			console.error('[api:ai:context-probe] Desk retrieval failed:', err instanceof Error ? err.message : err);
-			deskLane.error = 'retrieval_failed';
+			deskCorpusResult.error = 'retrieval_failed';
 		}
 	}
 
 	return {
 		surface: 'deskbot',
 		gates: [{ id: 'require_plan', fired: requirePlan, inputs: { mutatingScopeGranted, destructiveIntent } }],
-		inventory: [{ lane: 'desk', documents: deskCorpus.documents, chunks: deskCorpus.chunks }],
+		inventory: [{ corpus: 'desk', documents: deskCorpus.documents, chunks: deskCorpus.chunks }],
 		// Deskbot mounting IS scope-dependent: only tools whose scope is granted exist this turn.
 		tools: TOOL_MANIFEST.filter((t) => t.surface === 'deskbot' && scopes.includes(t.scope)).map((t) => t.name),
-		lanes: [deskLane],
+		corpora: [deskCorpusResult],
 		prompt: {
 			blocks: blocks.map((b) => ({
 				id: b.id,
@@ -215,7 +215,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const parsed = safeParse(ContextProbeRequestSchema, read.value);
 	if (!parsed.success) return apiValidationError(parsed.issues);
 
-	const locale = (locals.locale ?? 'en') as SearchLocale;
+	const locale = (locals.locale ?? 'en') as Locale;
 	try {
 		const report =
 			parsed.output.surface === 'chatbot'

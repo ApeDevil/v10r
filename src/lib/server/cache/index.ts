@@ -9,3 +9,7 @@ function createRedis(): Redis | null {
 }
 
 export const redis: Redis | null = createRedis();
+
+// Public surface — see the note in `store/index.ts`; same shape, same reason.
+export { CacheError, type CacheErrorKind, classifyCacheError } from './errors';
+export * from './types';

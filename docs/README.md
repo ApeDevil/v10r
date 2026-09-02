@@ -4,18 +4,19 @@ Velociraptor documentation organized into three layers: project foundation, stac
 
 ## Cross-Cutting Maps
 
-Two maps sit above the three layers. Start here for the whole-system view.
+Three maps sit above the three layers. Start here for the whole-system view.
 
 | File | Purpose |
 |------|---------|
 | **[system-abstraction.md](./system-abstraction.md)** | How the system runs — 7-layer runtime hierarchy, request flow, the 14-stage hooks pipeline |
-| **[codebase-organization.md](./codebase-organization.md)** | Where code lives — annotated source tree, canonical homes, import rules |
+| **[codebase-organization.md](./codebase-organization.md)** | Where code lives — the adapter/domain split, canonical homes, and the constraints behind non-obvious placements |
+| **[naming.md](./naming.md)** | What things are called — the canonical term for each concept, the words that are already spoken for, and what may not be renamed |
 
 ## Directory Structure
 
 | Directory | Purpose | Key Files |
 |-----------|---------|-----------|
-| **[pattern-library/](./pattern-library/)** | The product: one generated page per pattern record (never hand-edit; `bun run patterns:build`) | • Catalog at `/docs/pattern-library`, per-pattern pages at `/docs/pattern-library/<id>`<br>• Generated from `mcp/patterns.registry.json` |
+| **[pattern-library/](./pattern-library/)** | The product: one generated page per pattern record (never hand-edit; `bun run patterns:build`) | • Catalog at `/docs/pattern-library`, per-pattern pages at `/docs/pattern-library/<id>`<br>• Generated from `pattern-library/registry.json` |
 | **[foundation/](./foundation/)** | Core project vision, principles, and architecture | • [PRD.md](./foundation/PRD.md) - project concept and goals<br>• [principles.md](./foundation/principles.md) - decision constraints that drive stack choices<br>• [architecture.md](./foundation/architecture.md) - framework-agnostic architecture principles |
 | **[stack/](./stack/)** | Technology decisions and vendor choices | • [core/](./stack/core/) - runtime, framework, database<br>• [auth/](./stack/auth/) - authentication<br>• [ui/](./stack/ui/) - styling, components<br>• [capabilities/](./stack/capabilities/) - API, AI/LLM, SEO, notifications, GDPR<br>• [vendors.md](./stack/vendors.md) - provider matrix and cost analysis |
 | **[blueprint/](./blueprint/)** | Implementation designs and feature specifications | See [Blueprint Areas](#blueprint-areas) below — every subdirectory, one hop away |
@@ -30,7 +31,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [3d/](./blueprint/3d/) | Threlte integration, copy-paste quick-reference templates |
 | [abuse/](./blueprint/abuse/) | ALTCHA captcha, honeypot, rate limits, AI token budget |
 | [admin/](./blueprint/admin/) | Cross-device debug pairing (QR flow, HMAC cookie) |
-| [ai/](./blueprint/ai/) | AI assistant, layered RAG (llmwiki + rawrag), provider routing, TOON format |
+| [ai/](./blueprint/ai/) | AI assistant, layered RAG (llmwiki + retrieval), provider routing, TOON format |
 | [analytics/](./blueprint/analytics/) | Two-lane model (anonymous vs authenticated), consent gating, LIA + DPIA screening, client telemetry, rollups |
 | [app-shell/](./blueprint/app-shell/) | Layout, sidebar, navigation, toasts, session lifecycle, settings |
 | [architecture/](./blueprint/architecture/) | Multi-client core (hexagonal), background jobs, workers (Web Worker + claim-based queue worker), native-client seam |
@@ -64,4 +65,4 @@ Every `stack/` subdirectory, one line each. The per-technology file map lives in
 
 ---
 
-The complete pattern-to-code map lives in the root [README's Pattern Index](../README.md#pattern-index); its in-app form is the [pattern-library/](./pattern-library/) docs section — the catalog at `/docs/pattern-library`, one page per pattern at `/docs/pattern-library/<id>`. Both are generated from `mcp/patterns.registry.json`.
+The complete pattern-to-code map lives in the root [README's Pattern Index](../README.md#pattern-index); its in-app form is the [pattern-library/](./pattern-library/) docs section — the catalog at `/docs/pattern-library`, one page per pattern at `/docs/pattern-library/<id>`. Both are generated from `pattern-library/registry.json`.

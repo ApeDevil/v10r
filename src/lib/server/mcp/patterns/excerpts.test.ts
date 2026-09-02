@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { PATTERNS } from '$lib/server/patterns';
 import { deriveExcerptAllowlist, isFileRef } from './allowlist';
-import { PATTERNS } from './data';
 import { EXCERPT_ALLOWLIST, isAllowlisted, readAllowlistedExcerpt, SNAPSHOT_PATHS } from './excerpts';
 
 describe('EXCERPT_ALLOWLIST', () => {

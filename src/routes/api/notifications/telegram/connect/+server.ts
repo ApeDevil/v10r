@@ -1,9 +1,9 @@
 import { env } from '$env/dynamic/private';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:telegram', 10, '1 m');

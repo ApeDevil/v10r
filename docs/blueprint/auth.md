@@ -206,7 +206,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { auth } from '$lib/server/auth';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/environment';
-import { authLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { authLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 
 // Rate limiting (BEFORE auth - block brute force early)
 const rateLimitHandle = async ({ event, resolve }) => {
@@ -625,7 +625,7 @@ On grant/revoke: the mutation deletes all sessions for the affected user. Next s
 
 | Guard | Check | Replaces |
 |-------|-------|---------|
-| `requireBlogAuthor(locals)` | `locals.grants?.includes('blog-author')` or admin | `requireAuthor` |
+| `guardApiBlogAuthor(locals)` | `locals.grants?.includes('blog-author')` or admin | `requireAuthor` |
 | `guardApiBlogAuthor(locals)` | same, **returns** 401/403 JSON | `requireApiAuthor` |
 | `guardApiBlogAuthor(locals)` | same, returns early | `guardApiAuthor` |
 | `guardApiAdmin(locals)` | admin env check | (new) |
@@ -637,7 +637,7 @@ Admin (env-pinned via `ADMIN_USER_ID`, a comma-separated list of admin user ids 
 `guardApiAdmin` and its page-load counterpart `requireAdmin` return a generic 404 for non-admins — never 403. A 403 confirms "this route exists, you're just not allowed"; an admin-only surface must not make that admission to an unauthenticated or under-privileged caller, so denied is made indistinguishable from absent:
 
 ```typescript
-// src/lib/server/auth/guards.ts (excerpt)
+// src/lib/server/http/guards.ts (excerpt)
 export function requireAdmin(locals: App.Locals) {
   const user = requireAuth(locals);
   if (!isAdmin(user)) throw error(404, 'Not Found'); // 404, NOT 403
@@ -645,7 +645,7 @@ export function requireAdmin(locals: App.Locals) {
 }
 ```
 
-Capability guards (`requireBlogAuthor` and friends) still throw a normal 403 — the 404 disguise is reserved for the admin boundary, where even acknowledging the surface exists is the leak. See [Live showcase](/showcases/auth/authz).
+Capability guards (`guardApiBlogAuthor` and friends) still throw a normal 403 — the 404 disguise is reserved for the admin boundary, where even acknowledging the surface exists is the leak. See [Live showcase](/showcases/auth/authz).
 
 ### Audit Log: No Foreign Key by Design
 
@@ -840,7 +840,7 @@ A mail outage can never block a security event from being recorded.
 Route `/account/security` (a Card link from `/account`):
 
 - **Passkeys** — list / add / rename / delete, **client-call-driven + `invalidateAll`**, not Superforms. Deliberate: matches the login/verify client-call precedent (the WebAuthn ceremony is a browser API call, not a form post).
-- **TOTP enroll** — `enable()` → `totpURI` + backup codes shown **once** → QR via `POST /api/me/two-factor/qr` (server-rendered with the existing `qrSvg()`) → `verifyTotp` confirm → `getSession({ disableCookieCache: true })` → `invalidateAll`.
+- **TOTP enroll** — `enable()` → `totpURI` + backup codes shown **once** → QR via `POST /api/account/two-factor/qr` (server-rendered with the existing `qrSvg()`) → `verifyTotp` confirm → `getSession({ disableCookieCache: true })` → `invalidateAll`.
 
 > **`enable()` is not idempotent** — re-calling rotates the secret. The UI locks the button to prevent an accidental re-roll.
 
@@ -902,14 +902,14 @@ The session is resolved **inline in `authHandler`** because `sessionPopulate` ru
 
 Better Auth's built-in `rateLimit` is **not used**. Auth paths are limited by an Upstash limiter wired in `hooks.server.ts`.
 
-- `authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW)` — 5 per 60s (`createLimiter` from `$lib/server/api/rate-limit`).
+- `authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)` — 5 per 60s (`createLimiter` from `$lib/server/http/rate-limit`).
 - The hook calls `authRatelimit.limit(event.locals.clientIp)` on `/api/auth/*` before Better Auth runs.
 - `event.locals.clientIp` is stamped once in `securityHeaders` from `event.getClientAddress()` — downstream code reads it, never the attacker-mutable forwarded-for chain.
 - Better Auth's `advanced.ipAddress.ipAddressHeaders` is pinned to `['x-client-ip']`, so any IP Better Auth records comes from that single trusted stamp.
 
 ```typescript
 // src/hooks.server.ts
-const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
+const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 const authHandler: Handle = async ({ event, resolve }) => {
   if (event.url.pathname.startsWith('/api/auth/') && event.locals.clientIp) {
@@ -1030,7 +1030,7 @@ src/
 │   │   │   ├── login/+page.svelte   # Email entry + passkey button + conditional-UI
 │   │   │   └── verify/+page.svelte  # OTP verification
 │   │   └── app/account/security/    # Passkey + TOTP enrollment
-│   └── api/me/two-factor/qr/+server.ts  # Server-rendered TOTP QR (qrSvg)
+│   └── api/account/two-factor/qr/+server.ts  # Server-rendered TOTP QR (qrSvg)
 └── hooks.server.ts               # Auth handler + per-account 2FA verify limiter + session/grants populate
 ```
 

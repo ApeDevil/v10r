@@ -1,4 +1,5 @@
 import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import type { DeskFileType } from '$lib/types/db-enums';
 import { db } from '../index';
 import { file, folder, markdown, spreadsheet } from '../schema/desk';
 
@@ -12,7 +13,7 @@ import { file, folder, markdown, spreadsheet } from '../schema/desk';
 export async function listFiles(userId: string, type?: string, offset = 0, limit = 50) {
 	const conditions = [eq(file.userId, userId), isNull(file.deletedAt)];
 	if (type) {
-		conditions.push(eq(file.type, type as 'spreadsheet' | 'markdown'));
+		conditions.push(eq(file.type, type as DeskFileType));
 	}
 	const where = and(...conditions);
 	const [items, [countResult]] = await Promise.all([
@@ -166,7 +167,7 @@ export async function getAiContextFiles(userId: string) {
 
 /**
  * Global: every ai_context file across all users (with owner + freshness), for the
- * deskbot nRAG sync job to reconcile against the rawrag corpus. Skips soft-deleted.
+ * deskbot retrieval sync job to reconcile against the retrieval corpus. Skips soft-deleted.
  */
 export async function listAiContextFilesForSync() {
 	return db

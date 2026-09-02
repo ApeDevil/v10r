@@ -1,21 +1,13 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { renderBlogPost } from '$lib/server/blog';
+import { PREVIEW_RATE_LIMIT_MAX, PREVIEW_RATE_LIMIT_PREFIX, PREVIEW_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
 import { PreviewSchema } from '$lib/server/blog/schemas';
-import {
-	BLOG_PREVIEW_RATE_LIMIT_MAX,
-	BLOG_PREVIEW_RATE_LIMIT_PREFIX,
-	BLOG_PREVIEW_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+import { guardApiBlogAuthor } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
-const ratelimit = createLimiter(
-	BLOG_PREVIEW_RATE_LIMIT_PREFIX,
-	BLOG_PREVIEW_RATE_LIMIT_MAX,
-	BLOG_PREVIEW_RATE_LIMIT_WINDOW,
-);
+const ratelimit = createLimiter(PREVIEW_RATE_LIMIT_PREFIX, PREVIEW_RATE_LIMIT_MAX, PREVIEW_RATE_LIMIT_WINDOW);
 
 /** Render markdown preview (server-side pipeline). */
 export const POST: RequestHandler = async ({ request, locals }) => {

@@ -1,11 +1,9 @@
 <script lang="ts">
 import { invalidateAll } from '$app/navigation';
 import { apiFetch } from '$lib/api';
-import CustomPaletteWorkshop from '$lib/components/branding/CustomPaletteWorkshop.svelte';
-import StylePicker from '$lib/components/branding/StylePicker.svelte';
-import type { OwnedPalette } from '$lib/components/branding/types';
 import { ConfirmDialog, NavSection } from '$lib/components/composites';
 import { Button } from '$lib/components/primitives';
+import { CustomPaletteWorkshop, type OwnedPalette, StylePicker } from '$lib/components/style';
 import * as m from '$lib/paraglide/messages';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';

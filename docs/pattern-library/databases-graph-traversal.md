@@ -6,7 +6,7 @@ category: "Databases & Storage"
 
 # Graph traversal
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Runs Cypher traversal queries, such as shortest-path and multi-hop lookups, over
 
 ---
 
-_Machine-readable record: `databases-graph-traversal` in `mcp/patterns.registry.json`._
+_Machine-readable record: `databases-graph-traversal` in `pattern-library/registry.json`._

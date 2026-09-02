@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit';
 import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { USERS_PAGE_SIZE } from '$lib/server/admin/config';
 import { clearRevocation, stampRevocation } from '$lib/server/auth/revocation';
-import { ADMIN_USERS_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { session as sessionTable, user } from '$lib/server/db/schema/auth';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 const SORTABLE_COLUMNS = ['email', 'name', 'createdAt'] as const;
@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const sort: SortColumn = isSortColumn(sortParam) ? sortParam : 'createdAt';
 	const dir = url.searchParams.get('dir') === 'asc' ? 'asc' : 'desc';
 	const statusFilter = url.searchParams.get('status') ?? 'all';
-	const offset = (page - 1) * ADMIN_USERS_PAGE_SIZE;
+	const offset = (page - 1) * USERS_PAGE_SIZE;
 
 	const conditions = [];
 
@@ -56,7 +56,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			.from(user)
 			.where(where)
 			.orderBy(orderBy)
-			.limit(ADMIN_USERS_PAGE_SIZE)
+			.limit(USERS_PAGE_SIZE)
 			.offset(offset),
 		db.select({ total: count() }).from(user).where(where),
 	]);
@@ -70,7 +70,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			createdAt: u.createdAt.toISOString(),
 		})),
 		page,
-		totalPages: Math.max(1, Math.ceil(total / ADMIN_USERS_PAGE_SIZE)),
+		totalPages: Math.max(1, Math.ceil(total / USERS_PAGE_SIZE)),
 		q,
 		sort,
 		dir,

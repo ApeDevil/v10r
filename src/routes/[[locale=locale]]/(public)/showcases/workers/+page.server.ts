@@ -5,6 +5,8 @@
  * Vercel (no process survives the response) and running in a persistent container.
  */
 import { sql } from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import {
 	DEFAULT_DELIVERY_INTERVAL_MS,
 	DELIVERY_BATCH_SIZE,
@@ -12,9 +14,7 @@ import {
 	DELIVERY_MAX_ATTEMPTS,
 	DELIVERY_RETRY_BASE_MS,
 	DELIVERY_RETRY_FACTOR,
-} from '$lib/server/config';
-import { db } from '$lib/server/db';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
+} from '$lib/server/notifications/config';
 import { platform } from '$lib/server/platform';
 import { highlight } from '$lib/server/shiki';
 import type { PageServerLoad } from './$types';

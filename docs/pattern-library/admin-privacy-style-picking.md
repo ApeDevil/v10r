@@ -6,7 +6,7 @@ category: "Admin & Privacy"
 
 # Style picking + custom palettes
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,8 +22,8 @@ A per-visitor palette, typography, and radius resolution system with a randomize
 
 ## Code
 
-- `src/lib/server/branding/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/branding) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/branding))
-- `src/lib/components/branding/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/branding) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/branding))
+- `src/lib/server/style/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/style) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/style))
+- `src/lib/components/style/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/style) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/style))
 
 ## Proof
 
@@ -31,4 +31,4 @@ A per-visitor palette, typography, and radius resolution system with a randomize
 
 ---
 
-_Machine-readable record: `admin-privacy-style-picking` in `mcp/patterns.registry.json`._
+_Machine-readable record: `admin-privacy-style-picking` in `pattern-library/registry.json`._

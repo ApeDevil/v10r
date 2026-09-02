@@ -2,7 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { and, eq, inArray } from 'drizzle-orm';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { createAnnouncement, deactivateAnnouncement, getAllAnnouncementsAdmin } from '$lib/server/admin/announcements';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { DELIVERY_PAGE_SIZE } from '$lib/server/admin/config';
 import { db } from '$lib/server/db';
 import {
 	type DeadDeliveryEntry,
@@ -13,9 +13,10 @@ import {
 	getDeliveryLog,
 } from '$lib/server/db/notifications/admin-queries';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
+import { safeDeferPromise } from '$lib/server/http/defer';
+import { requireAdmin } from '$lib/server/http/guards';
 import { probeChannels } from '$lib/server/notifications/health';
 import { renderNotification } from '$lib/server/notifications/render-message';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -60,7 +61,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		liveProbes: safeDeferPromise(probeChannels(), { discord: null, telegram: null }),
 		// Deferred: paginated delivery log
 		deliveryLog: safeDeferPromise(
-			getDeliveryLog({ channel, status, page }).then((result) => ({
+			getDeliveryLog({ channel, status, page, pageSize: DELIVERY_PAGE_SIZE }).then((result) => ({
 				...result,
 				entries: result.entries.map((e: DeliveryLogEntry) => withRenderedTitle(e, locals.locale)),
 			})),

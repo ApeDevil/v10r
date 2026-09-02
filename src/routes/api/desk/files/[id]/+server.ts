@@ -1,7 +1,4 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	deleteFile,
 	duplicateSpreadsheetFile,
@@ -11,6 +8,9 @@ import {
 	updateSpreadsheetByFileId,
 } from '$lib/server/db/desk/mutations';
 import { getFile, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 /** Constrained cell/meta value — allows primitives and shallow objects, capped by JSON size. */

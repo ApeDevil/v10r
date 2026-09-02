@@ -6,7 +6,7 @@ category: "Analytics"
 
 # Live events feed
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ An unauthenticated, self-limiting SSE stream at /api/analytics/stream pushes liv
 
 ---
 
-_Machine-readable record: `analytics-live-feed` in `mcp/patterns.registry.json`._
+_Machine-readable record: `analytics-live-feed` in `pattern-library/registry.json`._

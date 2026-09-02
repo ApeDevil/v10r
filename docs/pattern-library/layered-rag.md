@@ -1,16 +1,16 @@
 ---
-title: "Layered RAG (llmwiki pointer layer over a rawrag kernel)"
-description: "A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) feeds two layers: llmwiki TLDR pointer pages as the answer surface over immutable…"
+title: "Layered RAG (llmwiki pointer layer over a retrieval kernel)"
+description: "A shared retrieval retrieve() kernel (embed → tiers → RRF fusion → drill) feeds two layers: llmwiki TLDR pointer pages as the answer surface over immutable…"
 category: "AI"
 ---
 
-# Layered RAG (llmwiki pointer layer over a rawrag kernel)
+# Layered RAG (llmwiki pointer layer over a retrieval kernel)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — external embedding/LLM providers with quota limits
 
-A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) feeds two layers: llmwiki TLDR pointer pages as the answer surface over immutable rawrag chunks as the audit trail.
+A shared retrieval retrieve() kernel (embed → tiers → RRF fusion → drill) feeds two layers: llmwiki TLDR pointer pages as the answer surface over immutable retrieval chunks as the audit trail.
 
 **When to use:** Use when a project needs grounded answers over a corpus: start with read-only search plus citation/provenance before adding any mutating tools.
 
@@ -22,17 +22,17 @@ A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) fee
 
 ## Code
 
-- `src/lib/server/rawrag/index.ts` — retrieve() — the single shared kernel ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/rawrag/index.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/rawrag/index.ts))
-- `src/lib/server/rawrag/plan.ts` — Retrieval planning ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/rawrag/plan.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/rawrag/plan.ts))
-- `src/lib/server/rawrag/tiers/` — Tier implementations ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/rawrag/tiers) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/rawrag/tiers))
+- `src/lib/server/retrieval/index.ts` — retrieve() — the single shared kernel ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/index.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/index.ts))
+- `src/lib/server/retrieval/plan.ts` — Retrieval planning ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/plan.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/plan.ts))
+- `src/lib/server/retrieval/tiers/` — Tier implementations ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/retrieval/tiers) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/retrieval/tiers))
 - `src/lib/server/llmwiki/search.ts` — Pointer-layer search ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/llmwiki/search.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/llmwiki/search.ts))
 - `src/lib/server/llmwiki/overview.ts` — Deterministic system-overview anchor ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/llmwiki/overview.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/llmwiki/overview.ts))
 
 ## Tests
 
-- `src/lib/server/rawrag/index.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/rawrag/index.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/rawrag/index.test.ts))
-- `src/lib/server/rawrag/plan.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/rawrag/plan.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/rawrag/plan.test.ts))
-- `src/lib/server/rawrag/rank.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/rawrag/rank.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/rawrag/rank.test.ts))
+- `src/lib/server/retrieval/index.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/index.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/index.test.ts))
+- `src/lib/server/retrieval/plan.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/plan.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/plan.test.ts))
+- `src/lib/server/retrieval/rank.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/rank.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/rank.test.ts))
 - `src/lib/server/llmwiki/rrf.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/llmwiki/rrf.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/llmwiki/rrf.test.ts))
 - `src/lib/server/llmwiki/overview.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/llmwiki/overview.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/llmwiki/overview.test.ts))
 
@@ -48,7 +48,7 @@ A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) fee
 
 ## Emulation notes
 
-- 'nRAG' in docs is a concept name only — the code identifier is rawrag/retrieve(); do not search for an nrag module.
+- 'nRAG' in docs is a concept name only — the code identifier is retrieval/retrieve(); do not search for an retrieval module.
 - Build the raw layer first; the pointer layer compiles from it and can start empty.
 
 ## Depends on
@@ -57,4 +57,4 @@ A shared rawrag retrieve() kernel (embed → tiers → RRF fusion → drill) fee
 
 ---
 
-_Machine-readable record: `layered-rag` in `mcp/patterns.registry.json`._
+_Machine-readable record: `layered-rag` in `pattern-library/registry.json`._

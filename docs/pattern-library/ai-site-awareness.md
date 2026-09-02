@@ -6,7 +6,7 @@ category: "AI"
 
 # Chatbot site awareness (page context)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -26,4 +26,4 @@ Server-resolved page context is injected as a passive block into the chatbot's p
 
 ---
 
-_Machine-readable record: `ai-site-awareness` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-site-awareness` in `pattern-library/registry.json`._

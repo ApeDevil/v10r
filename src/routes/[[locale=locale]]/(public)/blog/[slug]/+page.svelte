@@ -1,7 +1,8 @@
 <script lang="ts">
 import { page } from '$app/state';
 import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
-import { BlogTag, CommentsIsland, Renderer } from '$lib/components/blog';
+import { BlogTag, CommentsIsland } from '$lib/components/blog';
+import { MarkdownProse } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Asterism, Typography } from '$lib/components/primitives';
 import { deLocalizeHref, formatDate, localizeHref } from '$lib/i18n';
@@ -111,7 +112,7 @@ const jsonLdScript = $derived(
 		</header>
 
 		<div use:hydrateEmbeds={post.revision.embedDescriptors ?? []}>
-			<Renderer html={post.revision.renderedHtml} />
+			<MarkdownProse html={post.revision.renderedHtml} />
 		</div>
 
 		<div class="post-trailer">

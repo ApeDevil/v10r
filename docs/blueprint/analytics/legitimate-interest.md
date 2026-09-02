@@ -34,7 +34,7 @@ interface is slow, and where visitors get stuck.
 
 Is the interest **real** (not speculative), **present** (not hypothetical), and **lawful**?
 
-- Real and present: the data feeds live surfaces (`/admin/analytics`, `/admin/vitals`, the analytics showcase
+- Real and present: the data feeds live surfaces (`/admin/analytics`, `/admin/perf`, the analytics showcase
   pages) that inform actual decisions about what to build and fix.
 - Lawful: *KNLTB* confirmed that a purely commercial interest can qualify. Operating and
   improving one's own website is well within that.
@@ -104,7 +104,7 @@ and ad targeting — none of which happen here.
 | Keyed, non-reversible visitor identifier | `analytics/consent.ts` `hashVisitorId`, keyed via `analytics/visitor.ts` |
 | Daily-rotating session identifier | `analytics/consent.ts` `deriveCookielessSessionId` |
 | Referrer reduced to an origin before storage | `db/analytics/mutations.ts` — the write chokepoint, so every lane inherits it |
-| No raw IP persisted anywhere | `analytics/hook.ts` — hashed before write |
+| No raw IP persisted anywhere | `analytics/collector.hook.ts` — hashed before write |
 | Authenticated surfaces excluded from this lane | `analytics/collect-policy.ts` |
 | No join key to the identified lane | schema-level; see `user-events.ts` docblock |
 | Closed allowlist on event names and properties | `analytics/event-schema.ts` |

@@ -35,8 +35,8 @@ This is the defining difference from the reader, which has its own `image` pgSch
 | Piece | Location | Role |
 |-------|----------|------|
 | Wire + validation schema | `src/lib/schemas/showcase/image-kit.ts` | Client+server safe. Merged-vision Valibot schema (metadata + crop HINT), `CROP_RATIOS`, `largestRatioRect`, wire DTOs (`VisionResponse` / `CropDerivativeResponse` / `EmbedResponse` / `UploadResult`), `isImageId` / `isCropRatio`. Re-uses the reader's category/confidence vocab so the two can't drift. |
-| Server domain | `src/lib/server/imagekit/` | Framework-free, **no DB**. `ingest.ts`, `vision.ts`, `geometry.ts`, `crop.ts`, `embed.ts`, `corpus.ts`, `cost-estimate.ts`, `types.ts`, `index.ts` barrel. |
-| R2 store | `src/lib/server/store/showcase/imagekit.ts` | Sibling of `image.ts` on a SEPARATE prefix (`showcase/imagekit/`) so ephemeral objects can be TTL-expired independently. |
+| Server domain | `src/lib/server/showcases/imagekit/` | Framework-free, **no DB**. `ingest.ts`, `vision.ts`, `geometry.ts`, `crop.ts`, `embed.ts`, `corpus.ts`, `cost-estimate.ts`, `types.ts`, `index.ts` barrel. |
+| R2 store | `src/lib/server/showcases/store/imagekit.ts` | Sibling of `image.ts` on a SEPARATE prefix (`showcase/imagekit/`) so ephemeral objects can be TTL-expired independently. |
 | Routes | `src/routes/[[locale=locale]]/(public)/showcases/toolkits/` | Collection chrome (`+layout`, `+page.ts` redirect) + `image-kit/` page (`+page.server.ts` auth-gated load + upload action; `+page.svelte` orchestration) + RPC endpoints `vision/` `crop/` `embed/` `discard/`. Components in `image-kit/_components/`. |
 
 ### Server domain files
@@ -54,13 +54,13 @@ This is the defining difference from the reader, which has its own `image` pgSch
 ### Import wall — same boundary as the reader
 
 ```
-imagekit  → ai / store / schemas / imagemeta (image processing) / rawrag (embeddings)
+imagekit  → ai / store / schemas / imagemeta (image processing) / retrieval (embeddings)
 imagekit  ✗ no DB, writes nothing
 ai        ✗ never imports imagekit
 imagemeta ✗ never imports imagekit  (greenfield-additive — the reader is untouched)
 ```
 
-Image Kit reuses framework-free logic **by import**: `processImage` / `sniffImageMime` from `imagemeta`, `generateEmbedding` from `rawrag`, `estimateCost` / `pricing` from `ai`. It deletes nothing and depends on no DB.
+Image Kit reuses framework-free logic **by import**: `processImage` / `sniffImageMime` from `imagemeta`, `generateEmbedding` from `retrieval`, `estimateCost` / `pricing` from `ai`. It deletes nothing and depends on no DB.
 
 ---
 
@@ -169,4 +169,4 @@ No schema registration is needed: Image Kit writes no Postgres tables, so there 
 - [provider-routing.md](./provider-routing.md) — the chat/tool/vision resolver split the vision call uses.
 - [../architecture/multi-client-core.md](../architecture/multi-client-core.md) — the hexagonal core / thin-adapter pattern the RPC routes follow.
 - [graph-rag.md](./graph-rag.md) — the RAG pipeline whose `generateEmbedding` the text-embedding tool reuses.
-- `src/lib/server/imagekit/` — domain core. `src/lib/schemas/showcase/image-kit.ts` — wire + validation contracts.
+- `src/lib/server/showcases/imagekit/` — domain core. `src/lib/schemas/showcase/image-kit.ts` — wire + validation contracts.

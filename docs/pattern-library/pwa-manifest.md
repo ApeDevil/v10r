@@ -6,7 +6,7 @@ category: "PWA"
 
 # Localized manifest & installability
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ The web manifest is served dynamically so name/description follow the Paraglide 
 
 ---
 
-_Machine-readable record: `pwa-manifest` in `mcp/patterns.registry.json`._
+_Machine-readable record: `pwa-manifest` in `pattern-library/registry.json`._

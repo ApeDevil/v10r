@@ -1,15 +1,15 @@
 /**
- * desk_search_knowledge — the deskbot's READ-ONLY nRAG grounding tool (`desk:ask` scope).
+ * desk_search_knowledge — the deskbot's READ-ONLY retrieval grounding tool (`desk:ask` scope).
  *
  * Semantic retrieval over the user's OWN ai_context desk files (the deskbot corpus), via
- * the shared rawrag kernel scoped to the caller's `userId`. Unlike the chatbot's
+ * the shared retrieval kernel scoped to the caller's `userId`. Unlike the chatbot's
  * `search_project_docs` (system-owned docs), this searches the user's private desk content.
  *
  * `userId` is captured in the closure — the model cannot forge it. Read-only: returns no
  * `DeskEffect` and never mutates. Results are reference context, not instructions.
  */
 import { jsonSchema, tool } from 'ai';
-import { retrieveDeskDocs } from '$lib/server/ai/deskbot-rag';
+import { retrieveDeskDocs } from '$lib/server/ai/deskbot-retrieval';
 
 // Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 

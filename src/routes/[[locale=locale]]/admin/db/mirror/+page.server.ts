@@ -3,9 +3,9 @@ import { message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { startOperationSchema } from '$lib/schemas/dbops/operation';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
 import { createId } from '$lib/server/db/id';
-import { ConflictError, listRuns, NotConfiguredError, RefusedError, startOperation } from '$lib/server/dbops';
+import { ConflictError, listOperations, NotConfiguredError, RefusedError, startOperation } from '$lib/server/dbops';
+import { requireAdmin } from '$lib/server/http/guards';
 import { fetchBranchStatus, neonConfigured, TargetsError } from '$lib/server/neon';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ depends, locals }) => {
 	const form = await superValidate(valibot(startOperationSchema));
 
 	// Resume the monitor if a run is still in flight (e.g. after a reload).
-	const recent = configured ? await listRuns(5, null) : [];
+	const recent = configured ? await listOperations(5, null) : [];
 	const inFlight = recent.filter((r) => r.status === 'running' || r.status === 'queued');
 
 	return {
@@ -37,7 +37,7 @@ export const actions: Actions = {
 
 		const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 		try {
-			const { run } = await startOperation({
+			const { operation } = await startOperation({
 				kind: form.data.kind,
 				trigger: 'manual',
 				actorId: ctx.actorId,
@@ -47,11 +47,11 @@ export const actions: Actions = {
 			await recordAuditEvent({
 				...ctx,
 				action: 'dbops.start',
-				targetType: 'dbops_run',
-				targetId: run.id,
-				detail: { kind: run.kind, trigger: 'manual' },
+				targetType: 'dbops_operation',
+				targetId: operation.id,
+				detail: { kind: operation.kind, trigger: 'manual' },
 			});
-			return message(form, { ok: true, runId: run.id });
+			return message(form, { ok: true, operationId: operation.id });
 		} catch (err) {
 			if (err instanceof NotConfiguredError) {
 				return message(form, { ok: false, error: err.message }, { status: 503 });

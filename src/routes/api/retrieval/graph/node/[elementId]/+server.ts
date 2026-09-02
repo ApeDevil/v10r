@@ -1,12 +1,13 @@
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW, SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { Neo4jError, safeGraphMessage } from '$lib/server/graph/errors';
-import { getEntityNeighborhood } from '$lib/server/graph/rag/queries';
+import { getEntityNeighborhood } from '$lib/server/graph/retrieval/queries';
+import { READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW } from '$lib/server/http/config';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
 import type { RequestHandler } from './$types';
 
-const limiter = createLimiter('rl:retrieval:graph:node', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
+const limiter = createLimiter('rl:retrieval:graph:node', READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW);
 
 // Owner-scoped (Wave 2.1): a non-owned elementId yields an empty neighborhood → 404.
 export const GET: RequestHandler = async ({ params, locals }) => {

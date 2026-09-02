@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as m from '$lib/paraglide/messages';
-import { PROPOSAL_STATES, PROPOSAL_TRANSITIONS, type ProposalState } from '$lib/showcase/ai/topology';
+import { PROPOSAL_STATES, PROPOSAL_TRANSITIONS, type ProposalState } from '$lib/showcases/ai/topology';
 import type { ProposalRunState } from '$lib/types/turn-trace';
 
 // A genuine state machine, mirrored from the pg enum + the approve route and pinned

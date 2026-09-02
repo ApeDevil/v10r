@@ -1,12 +1,12 @@
 import * as v from 'valibot';
 import { startOperationSchema } from '$lib/schemas/dbops/operation';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { paginatedResponse, parseCursor, parseLimit } from '$lib/server/api/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiAdmin } from '$lib/server/auth/guards';
 import { createId } from '$lib/server/db/id';
-import { ConflictError, listRuns, NotConfiguredError, RefusedError, startOperation } from '$lib/server/dbops';
+import { ConflictError, listOperations, NotConfiguredError, RefusedError, startOperation } from '$lib/server/dbops';
+import { guardApiAdmin } from '$lib/server/http/guards';
+import { paginatedResponse, parseCursor, parseLimit } from '$lib/server/http/pagination';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import { TargetsError } from '$lib/server/neon';
 import type { RequestHandler } from './$types';
 
@@ -30,7 +30,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const ctx = getAuditContext(event.locals.user, event.getClientAddress());
 	try {
-		const { run, replayed } = await startOperation({
+		const { operation, replayed } = await startOperation({
 			kind: parsed.output.kind,
 			trigger: 'manual',
 			actorId: ctx.actorId,
@@ -40,11 +40,11 @@ export const POST: RequestHandler = async (event) => {
 		await recordAuditEvent({
 			...ctx,
 			action: 'dbops.start',
-			targetType: 'dbops_run',
-			targetId: run.id,
-			detail: { kind: run.kind, status: run.status },
+			targetType: 'dbops_operation',
+			targetId: operation.id,
+			detail: { kind: operation.kind, status: operation.status },
 		});
-		return apiOk(run, replayed ? 200 : 202);
+		return apiOk(operation, replayed ? 200 : 202);
 	} catch (err) {
 		if (err instanceof NotConfiguredError) return apiError(503, 'not_configured', err.message);
 		if (err instanceof ConflictError) return apiError(409, 'operation_in_flight', err.message);
@@ -65,6 +65,6 @@ export const GET: RequestHandler = async (event) => {
 			? { createdAt: raw.createdAt, id: raw.id }
 			: null;
 
-	const items = await listRuns(limit, cursor);
+	const items = await listOperations(limit, cursor);
 	return apiOk(paginatedResponse(items, limit, (r) => ({ createdAt: r.createdAt, id: r.id })));
 };

@@ -8,7 +8,7 @@ import { redis } from '$lib/server/cache';
  * quota-relevant signals never reach it:
  *   - 429s / rate-limit trips: the request errored before a step finished.
  *   - embedding calls: retrieval embeddings (gemini-embedding-001) go through
- *     rawrag/embed.ts on the *same* Google key, never the chat orchestrator.
+ *     retrieval/embed.ts on the *same* Google key, never the chat orchestrator.
  *
  * Both are counted here in Redis (cross-instance, unlike an in-process Map),
  * bucketed by UTC day with a ~25h TTL so the key self-expires. Best-effort and

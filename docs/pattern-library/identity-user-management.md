@@ -6,7 +6,7 @@ category: "Identity & Access"
 
 # User management
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ User account routes and server-side data access covering profile, settings, noti
 
 ---
 
-_Machine-readable record: `identity-user-management` in `mcp/patterns.registry.json`._
+_Machine-readable record: `identity-user-management` in `pattern-library/registry.json`._

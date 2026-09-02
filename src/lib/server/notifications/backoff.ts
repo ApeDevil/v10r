@@ -11,7 +11,7 @@ import {
 	DELIVERY_RETRY_FACTOR,
 	DELIVERY_RETRY_JITTER,
 	DELIVERY_RETRY_MAX_MS,
-} from '$lib/server/config';
+} from './config';
 
 /** Deterministic delay before the next attempt, given `attempts` already burned. */
 export function backoffMs(attempts: number): number {
@@ -31,8 +31,8 @@ export type FailureDecision = { status: 'pending'; delayMs: number } | { status:
  * Terminal-state policy. The 'failed' / 'dead' split is what makes the admin
  * "Needs Attention" panel useful rather than merely non-empty:
  *
- *   not retryable        → 'failed'  the provider told us this will never work
- *                                    (403 blocked, no recipient, no provider,
+ *   not retryable        → 'failed'  the channel told us this will never work
+ *                                    (403 blocked, no recipient, no channel,
  *                                    invalid address). Retrying is pointless, so
  *                                    it does NOT belong in a panel whose only
  *                                    affordance is a Retry button.

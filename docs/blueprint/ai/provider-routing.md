@@ -25,7 +25,7 @@ The orchestrator calls two separate resolver functions from `src/lib/server/ai/p
 const wantsTools = !!toolScopes?.length || !!useLlmwiki || !!useRetrieval;
 ```
 
-Previously only desk `toolScopes` triggered the tool provider. The llmwiki and rawrag retrieval branches now also set `wantsTools` because they attach their own retrieval tools (`get_llmwiki_pages`, `get_rawrag_chunks`, `search_catalog`). Without the tool provider, those tool calls silently fail to fire.
+Previously only desk `toolScopes` triggered the tool provider. The llmwiki and retrieval retrieval branches now also set `wantsTools` because they attach their own retrieval tools (`get_llmwiki_pages`, `get_source_chunks`, `search_catalog`). Without the tool provider, those tool calls silently fail to fire.
 
 Separately, `deskTools` is only built when there are actual desk scopes — retrieval branches claim the tool model but bring their own tools and pass no desk scopes.
 
@@ -82,7 +82,7 @@ Three inputs, served by `buildProviderQuota()` in `quota.ts` (single source for 
 | Estimated usage | `getProviderUsageToday()` (`conversation_step` `COUNT(*)` for the UTC day) + Redis daily counters | A **lower bound**, not exact. Counters track the two quota signals `conversation_step` can't see: 429 hits and embedding calls. |
 | Live signals | Circuit-breaker cooldown state | Truthful "rate-limited now" flag. |
 
-**Embeddings share the Gemini key.** `gemini-embedding-001` (`rawrag/embed.ts`) uses the same `GOOGLE_GENERATIVE_AI_API_KEY` as Gemini chat, so it consumes the same provider quota but is invisible to `conversation_step`. Counted separately in Redis so the board reflects it.
+**Embeddings share the Gemini key.** `gemini-embedding-001` (`retrieval/embed.ts`) uses the same `GOOGLE_GENERATIVE_AI_API_KEY` as Gemini chat, so it consumes the same provider quota but is invisible to `conversation_step`. Counted separately in Redis so the board reflects it.
 
 Served at `GET /api/admin/ai/quota` (admin-guarded, `no-store`, own rate-limit bucket; never makes a real generation call). Surfaced as `QuotaPanel.svelte` on the admin Models tab plus a headroom strip on Overview.
 

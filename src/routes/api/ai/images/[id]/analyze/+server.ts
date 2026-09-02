@@ -10,8 +10,8 @@
  */
 
 import { guardAiRequest } from '$lib/server/ai/guard';
-import { apiError, apiOk } from '$lib/server/api/response';
 import { redis } from '$lib/server/cache';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { ExtractFailureReason } from '$lib/server/imagemeta';
 import { extractImageMetadata, getUserImage, recordProposal } from '$lib/server/imagemeta';
 import type { RequestHandler } from './$types';

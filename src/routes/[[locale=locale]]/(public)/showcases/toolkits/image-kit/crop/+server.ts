@@ -8,8 +8,13 @@
  */
 import { json } from '@sveltejs/kit';
 import { type CropDerivativeResponse, type CropRatio, isCropRatio, isImageId } from '$lib/schemas/showcase/image-kit';
-import { generateAttentionCrop, generateCropDerivative, imageDimensions, toDataUrl } from '$lib/server/imagekit';
-import { buildImagekitKey, getImagekitBytes } from '$lib/server/store/showcase/imagekit';
+import {
+	generateAttentionCrop,
+	generateCropDerivative,
+	imageDimensions,
+	toDataUrl,
+} from '$lib/server/showcases/image-kit';
+import { buildImagekitKey, getImagekitBytes } from '$lib/server/showcases/image-kit/storage';
 import type { RequestHandler } from './$types';
 
 interface RectInput {

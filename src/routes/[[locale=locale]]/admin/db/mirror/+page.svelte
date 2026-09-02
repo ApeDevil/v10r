@@ -5,37 +5,37 @@ import { Alert, Card, ConfirmDialog, DiagGrid, DiagRow } from '$lib/components/c
 import { Stack } from '$lib/components/layout';
 import { Badge, Button, Progress, Skeleton, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
-import type { RunStatus } from '$lib/server/dbops';
+import type { BranchOperationStatus } from '$lib/server/dbops';
 import type { ThresholdLevel } from '$lib/server/monitoring';
-import { RunMonitor } from '$lib/state/run-monitor.svelte';
+import { BranchOperationMonitor } from '$lib/state/branch-operation-monitor.svelte';
 import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();
 
-const monitor = new RunMonitor();
+const monitor = new BranchOperationMonitor();
 
 // Destructive op → gate the submit behind a typed confirmation dialog.
 let confirmOpen = $state(false);
 let formEl: HTMLFormElement;
 
-// Resume the monitor for a run still in flight (e.g. after a page reload).
+// Resume the monitor for an operation still in flight (e.g. after a page reload).
 let seeded = $state(false);
 $effect(() => {
-	const run = data.inFlight?.[0];
-	if (run && !seeded) {
+	const inFlight = data.inFlight?.[0];
+	if (inFlight && !seeded) {
 		seeded = true;
-		monitor.seed({ id: run.id, status: run.status, error: run.error }, () => invalidate('admin:dbops'));
+		monitor.seed({ id: inFlight.id, status: inFlight.status, error: inFlight.error }, () => invalidate('admin:dbops'));
 	}
 });
 
 const { enhance, delayed } = superForm(data.form, {
 	onUpdated({ form }) {
-		const msg = form.message as { ok: boolean; runId?: string; error?: string } | undefined;
+		const msg = form.message as { ok: boolean; operationId?: string; error?: string } | undefined;
 		if (!msg) return;
-		if (msg.ok && msg.runId) {
+		if (msg.ok && msg.operationId) {
 			toast.success(m.admin_dbops_toast_started());
-			monitor.start(msg.runId, () => invalidate('admin:dbops'));
+			monitor.start(msg.operationId, () => invalidate('admin:dbops'));
 		} else if (!msg.ok && msg.error) {
 			toast.error(msg.error);
 		}
@@ -65,14 +65,14 @@ function thresholdToProgressVariant(t: ThresholdLevel): 'default' | 'success' | 
 	return t === 'ok' ? 'default' : t;
 }
 
-function statusVariant(s: RunStatus): 'default' | 'success' | 'error' | 'warning' | 'secondary' {
+function statusVariant(s: BranchOperationStatus): 'default' | 'success' | 'error' | 'warning' | 'secondary' {
 	if (s === 'succeeded') return 'success';
 	if (s === 'failed') return 'error';
 	if (s === 'canceled') return 'secondary';
 	return 'warning'; // queued / running
 }
 
-function statusLabel(s: RunStatus): string {
+function statusLabel(s: BranchOperationStatus): string {
 	if (s === 'succeeded') return m.admin_dbops_status_succeeded();
 	if (s === 'failed') return m.admin_dbops_status_failed();
 	if (s === 'canceled') return m.admin_dbops_status_canceled();
@@ -120,7 +120,7 @@ function statusLabel(s: RunStatus): string {
 						<div class="run-status">
 							<Badge variant={statusVariant(monitor.status)}>{statusLabel(monitor.status)}</Badge>
 							{#if monitor.isPolling}
-								<span class="text-fluid-xs text-muted">{m.admin_dbops_run_in_progress()}</span>
+								<span class="text-fluid-xs text-muted">{m.admin_dbops_operation_in_progress()}</span>
 							{/if}
 							{#if monitor.error}
 								<span class="text-fluid-xs text-error">{monitor.error}</span>

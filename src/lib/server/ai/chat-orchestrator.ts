@@ -3,6 +3,7 @@
  * Handles conversation management, retrieval integration, streaming, and fallback rotation.
  * No SvelteKit imports — reusable from AI tools, REST, and background jobs.
  */
+
 import {
 	convertToModelMessages,
 	createUIMessageStream,
@@ -14,7 +15,8 @@ import {
 	streamText,
 	type UIMessage,
 } from 'ai';
-import type { SearchLocale, SearchResult } from '$lib/search/types';
+import type { Locale } from '$lib/i18n';
+import type { SearchResult } from '$lib/search/types';
 import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
 import { chargeTokens } from '$lib/server/ai/budget';
 import { CHATBOT_MAX_STEPS, MAX_TOKENS } from '$lib/server/ai/config';
@@ -25,7 +27,7 @@ import {
 	windowMessages,
 } from '$lib/server/ai/context/system-prompt';
 import { assembleChatbotContext } from '$lib/server/ai/context-assembly';
-import { aiErrorToStatus, classifyAIError, safeAIMessage } from '$lib/server/ai/errors';
+import { aiErrorToStatus, classifyAiError, safeAiMessage } from '$lib/server/ai/errors';
 import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
 import { hasDestructiveIntent, shouldRequirePlan } from '$lib/server/ai/policy';
 import { incrProvider429 } from '$lib/server/ai/provider-usage';
@@ -38,8 +40,8 @@ import {
 	getToolRisk,
 	stepsForScopes,
 } from '$lib/server/ai/tools';
+import type { ChatMessage } from '$lib/server/ai/types';
 import { isAdminUserId as isAdminUser } from '$lib/server/auth/admin-ids';
-import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import {
 	createConversation,
 	refreshConversationTokens,
@@ -52,16 +54,17 @@ import { createProposal, getProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { DbError, safeDbMessage } from '$lib/server/db/errors';
 import type { ProposalExecutionResult, ProposedToolCall } from '$lib/server/db/schema/ai/proposal';
-import { MAX_RAWRAG_TOOL_CALLS_PER_TURN, verifyCitations } from '$lib/server/llmwiki';
+import { MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN, verifyCitations } from '$lib/server/llmwiki';
 import { buildSearchIndex, type PageContext } from '$lib/server/search';
+import type { AiSurface } from '$lib/types/db-enums';
 import {
-	LANE_OF,
 	type LlmwikiCitationsEvent,
 	PHASE_OF,
-	type PipelineChunksEvent,
-	type PipelinePromptEvent,
-	type PipelineStepEvent,
-} from '$lib/types/pipeline';
+	RETRIEVER_OF,
+	type RetrievalChunksEvent,
+	type RetrievalPromptEvent,
+	type RetrievalStepEvent,
+} from '$lib/types/retrieval-trace';
 import {
 	type AttemptFailure,
 	type PumpableTextResult,
@@ -70,24 +73,21 @@ import {
 } from './_shared/streaming-turn';
 import { verifyCatalogCitations } from './catalog-citations';
 import { shapeDrilledCitations } from './citations/drill';
+import { checkConversationLimit } from './conversation-quota';
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
-
-/** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
-export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
 
 /**
  * Which AI surface a turn belongs to — the explicit dispatch discriminant.
  * - `chatbot`  — the v10r expert: read-only, grounded, citation-faithful Q&A.
  * - `deskbot`  — the in-desk operator: agentic, mutating, plan-gated UI parity.
  */
-export type TurnSurface = 'chatbot' | 'deskbot';
 
 /**
  * A `pipeline:step` event as authored at a call site. The emit closures stamp the
- * derived axes (`phase` via PHASE_OF, `lane` via LANE_OF), the stable `instanceKey`,
+ * derived axes (`phase` via PHASE_OF, `lane` via RETRIEVER_OF), the stable `instanceKey`,
  * and the turn `requestId`, so literals stay terse and can't drift from the registry.
  */
-type RawStepInput = Omit<PipelineStepEvent, 'phase' | 'instanceKey' | 'requestId'> & {
+type RawStepInput = Omit<RetrievalStepEvent, 'phase' | 'instanceKey' | 'requestId'> & {
 	instanceKey?: string;
 };
 
@@ -98,7 +98,7 @@ export interface ChatInput {
 	 * (chatbot) turn additionally requires a fresh user turn — anything else degrades
 	 * to the plain deskbot streaming path.
 	 */
-	surface: TurnSurface;
+	surface: AiSurface;
 	providerId?: string;
 	messages: ChatMessage[];
 	conversationId?: string;
@@ -126,7 +126,7 @@ export interface ChatInput {
 	 */
 	resumeFromProposalId?: string;
 	/** Resolved request locale (server-derived from `event.locals.locale`). Used by `search_catalog`. */
-	locale?: SearchLocale;
+	locale?: Locale;
 	/** Auth ceiling for catalog visibility (server-derived via `isAdmin()` — never a DB column). */
 	authCeiling?: string | null;
 	/**
@@ -321,13 +321,13 @@ async function tryFallback(
 					writer.merge(result.toUIMessageStream());
 				},
 				onError: (error: unknown): string => {
-					const aiErr = classifyAIError(error);
+					const aiErr = classifyAiError(error);
 					console.error(`[ai:chat:fallback] Stream classify [${aiErr.kind}]:`, error);
 					if (aiErr.kind === 'rate_limit') {
 						void markCooldown(fallback.id);
 						void incrProvider429(fallback.id);
 					}
-					return `[${aiErr.kind}] ${safeAIMessage(aiErr.kind)}`;
+					return `[${aiErr.kind}] ${safeAiMessage(aiErr.kind)}`;
 				},
 			});
 			return createUIMessageStreamResponse({ stream, headers });
@@ -421,7 +421,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		authCeiling,
 		pageContext,
 	} = input;
-	const catalogLocale: SearchLocale = locale ?? 'en';
+	const catalogLocale: Locale = locale ?? 'en';
 
 	// Window conversation history to prevent context overflow in multi-turn chats.
 	// Cloned to a mutable array so resume injection can rewrite the sentinel user message.
@@ -455,8 +455,8 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	}
 
 	// Use tool-capable provider when tools requested, fall back to chatModel without tools.
-	// The llmwiki + rawrag retrieval branches attach their own tools (search_catalog, llmwiki/
-	// rawrag drill-down) even without desk scopes, so they must route to the tool-capable model
+	// The llmwiki + retrieval retrieval branches attach their own tools (search_catalog, llmwiki/
+	// retrieval drill-down) even without desk scopes, so they must route to the tool-capable model
 	// too — otherwise grounding tool calls run on the chat model and silently fail to fire.
 	const wantsTools = !!toolScopes?.length || input.surface === 'chatbot';
 	const availableToolProvider = wantsTools
@@ -464,7 +464,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		: null;
 	const hasTools = wantsTools && !!availableToolProvider;
 	const model = availableToolProvider?.model ?? resolvedChatModel;
-	// Desk tools only for actual desk scopes — the llmwiki/rawrag branches set hasTools (to claim
+	// Desk tools only for actual desk scopes — the llmwiki/retrieval branches set hasTools (to claim
 	// the tool model) but bring their own retrieval tools and pass no desk scopes.
 	// On a resume-from-proposal turn the approved plan has ALREADY executed via the
 	// deterministic approve-route replay — this turn's only job is to acknowledge it.
@@ -489,7 +489,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// the plain deskbot streaming path. Computed BEFORE conversation resolution so it can
 	// be stamped on the conversation at creation.
 	const isFreshUserTurn = lastRawMsg?.role === 'user' && !!userMsgText && !resumeContext;
-	const surface: TurnSurface = isFreshUserTurn && input.surface === 'chatbot' ? 'chatbot' : 'deskbot';
+	const surface: AiSurface = isFreshUserTurn && input.surface === 'chatbot' ? 'chatbot' : 'deskbot';
 
 	// Plan-before-execute gate (policy/governor.ts)
 	// Pre-turn estimate of whether this is a destructive, multi-capability, multi-target
@@ -547,7 +547,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 	/** Classify a stream error and return a `[kind] user-safe message` string.
 	 *  The client parses the `[kind]` prefix to drive error UI and IO log. */
 	function classifyStreamError(error: unknown): string {
-		const aiErr = classifyAIError(error);
+		const aiErr = classifyAiError(error);
 		console.error(`[ai:chat] Stream error [${aiErr.kind}]:`, error);
 
 		// Circuit breaker for rate limits during streaming. This is the FINAL-failure path: the
@@ -562,11 +562,11 @@ The user has just approved the plan above and the listed steps were executed. Ac
 			}
 		}
 
-		return `[${aiErr.kind}] ${safeAIMessage(aiErr.kind)}`;
+		return `[${aiErr.kind}] ${safeAiMessage(aiErr.kind)}`;
 	}
 
 	try {
-		// chatbot (llmwiki) path — primary answer surface; exposes drill-down tools for rawrag.
+		// chatbot (llmwiki) path — primary answer surface; exposes drill-down tools for retrieval.
 		// Resume turns skip retrieval branches: the model just needs to acknowledge the
 		// executed plan from `<plan-execution-result>`, not re-search for context.
 		if (surface === 'chatbot') {
@@ -594,7 +594,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					writer.write({ type: 'start', messageId: assistantMsgId });
 
 					// Turn t0 — one origin for every step's startOffsetMs (retrieve + generate share it),
-					// so the waterfall renders true parallel overlap. See nrag-observability.md.
+					// so the waterfall renders true parallel overlap. See retrieval-observability.md.
 					const t0 = performance.now();
 
 					let systemPrompt = baseSystemPrompt;
@@ -603,15 +603,19 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					// token counts. Was DEV-only, so admins saw nothing in prod.
 					const isDevOrAdmin = !!import.meta.env?.DEV || isAdminUser(userId);
 
-					type AnyLlmwikiEvent = PipelineStepEvent | PipelineChunksEvent | PipelinePromptEvent | LlmwikiCitationsEvent;
+					type AnyLlmwikiEvent =
+						| RetrievalStepEvent
+						| RetrievalChunksEvent
+						| RetrievalPromptEvent
+						| LlmwikiCitationsEvent;
 					const pipelineEvents: AnyLlmwikiEvent[] = [];
 					// Enumerable context blocks injected into the system prompt (llmwiki pages + system-docs
 					// chunks) for the Tokens-pane per-block breakdown. The honest aggregate (Context = the
 					// full injected delta) is computed at emit time, after the prompt is fully assembled.
 					const promptContextBlocks: { chunkId: string; tokens: number }[] = [];
-					// Mirror rawrag's citations extra payload so existing consumers still read it.
+					// Mirror retrieval's citations extra payload so existing consumers still read it.
 					let citationsPayload: {
-						citations: Array<{ chunkId: string; verification: string; tier: 'rawrag' }>;
+						citations: Array<{ chunkId: string; verification: string; tier: 'chunks' }>;
 						driftedChunkIds: string[];
 					} | null = null;
 					// Evidence chips: the original drilled chunks (content + verdict + level)
@@ -635,15 +639,15 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						writer.write({ type: 'message-metadata', messageMetadata: meta });
 					};
 					// Step events are authored as raw literals (step/status/offset/detail); this
-					// closure stamps the derived axes (phase/lane), the stable instanceKey, and the
-					// turn requestId so every literal stays terse and can't drift from PHASE_OF/LANE_OF.
-					const emit = (event: RawStepInput | PipelineChunksEvent | PipelinePromptEvent | LlmwikiCitationsEvent) => {
+					// closure stamps the derived axes (phase/retriever), the stable instanceKey, and the
+					// turn requestId so every literal stays terse and can't drift from PHASE_OF/RETRIEVER_OF.
+					const emit = (event: RawStepInput | RetrievalChunksEvent | RetrievalPromptEvent | LlmwikiCitationsEvent) => {
 						if (event.type === 'pipeline:step') {
 							pipelineEvents.push({
 								...event,
 								phase: PHASE_OF[event.step],
 								instanceKey: event.instanceKey ?? event.step,
-								lane: event.lane ?? LANE_OF[event.step],
+								retriever: event.retriever ?? RETRIEVER_OF[event.step],
 								requestId,
 							});
 						} else {
@@ -737,19 +741,19 @@ The user has just approved the plan above and the listed steps were executed. Ac
 								if (toolCalls) {
 									for (let i = 0; i < toolCalls.length; i++) {
 										const tc = toolCalls[i];
-										if (tc.toolName !== 'get_rawrag_chunks') continue;
+										if (tc.toolName !== 'get_source_chunks') continue;
 										const callIndex = toolCallCount as 0 | 1 | 2;
 										toolCallCount++;
-										if (toolCallCount > MAX_RAWRAG_TOOL_CALLS_PER_TURN) {
+										if (toolCallCount > MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN) {
 											console.warn(
-												`[ai:chat:llmwiki] get_rawrag_chunks called ${toolCallCount} times, cap is ${MAX_RAWRAG_TOOL_CALLS_PER_TURN}`,
+												`[ai:chat:llmwiki] get_source_chunks called ${toolCallCount} times, cap is ${MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN}`,
 											);
 										}
 										const idsRequested = tc.args?.ids?.length ?? 0;
 										const chunksReturned = toolResults?.[i]?.result?.chunks?.length ?? 0;
 										emit({
 											type: 'pipeline:step',
-											step: 'rawrag:drill',
+											step: 'chunks:drill',
 											// Unique per drill so the waterfall keys 0–3 distinct ticks (avoids each_key_duplicate).
 											instanceKey: `drill#${callIndex}`,
 											status: 'done',
@@ -863,7 +867,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 									citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
 										chunkId,
 										verification,
-										tier: 'rawrag' as const,
+										tier: 'chunks' as const,
 									})),
 									driftedChunkIds,
 								};
@@ -953,7 +957,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 							currentModelId = attempt.modelId;
 						},
 						onAttemptFailure: async ({ providerId: failedId, error, willRetry }: AttemptFailure) => {
-							const aiErr = classifyAIError(error);
+							const aiErr = classifyAiError(error);
 							console.error(
 								`[ai:chat:llmwiki] attempt failed provider=${failedId ?? 'unknown'} kind=${aiErr.kind} willRetry=${willRetry}:`,
 								error,
@@ -1239,7 +1243,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		});
 		return createUIMessageStreamResponse({ stream, headers: responseHeaders });
 	} catch (err) {
-		// Error hygiene: a DB failure is NOT an AI failure. `classifyAIError`'s substring rules
+		// Error hygiene: a DB failure is NOT an AI failure. `classifyAiError`'s substring rules
 		// ('rate' → rate_limit, 'token' → context_length) cheerfully mislabel Postgres messages,
 		// which then cooled a perfectly healthy provider and burned a fallback turn on an outage
 		// no model can fix. Surface it honestly instead — no cooldown, no fallback.
@@ -1251,7 +1255,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 			);
 		}
 
-		const aiErr = classifyAIError(err);
+		const aiErr = classifyAiError(err);
 
 		// Circuit breaker: cooldown the provider that just failed with rate limit
 		if (aiErr.kind === 'rate_limit') {
@@ -1262,7 +1266,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 			}
 		}
 
-		// `unknown` is deliberately NOT in this allowlist: it is `classifyAIError`'s catch-all, so
+		// `unknown` is deliberately NOT in this allowlist: it is `classifyAiError`'s catch-all, so
 		// falling back on it spent a second provider's quota re-running deterministic bugs (bad
 		// tool schema, serialization failure) that every provider fails identically.
 		if (['unavailable', 'timeout', 'rate_limit'].includes(aiErr.kind)) {
@@ -1288,7 +1292,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		}
 
 		return Response.json(
-			{ error: { code: aiErr.kind, message: safeAIMessage(aiErr.kind) } },
+			{ error: { code: aiErr.kind, message: safeAiMessage(aiErr.kind) } },
 			{ status: aiErrorToStatus(aiErr.kind), headers: { 'X-AI-Error-Kind': aiErr.kind } },
 		);
 	}

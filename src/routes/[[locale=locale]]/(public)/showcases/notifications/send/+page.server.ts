@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
-import { NotificationService } from '$lib/server/notifications/service';
+import { sendNotification } from '$lib/server/notifications';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -41,7 +41,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid notification type' });
 		}
 
-		const notification = await NotificationService.send({
+		const notification = await sendNotification({
 			userId: locals.user.id,
 			type: type as 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow',
 			messageKey: PRESETS[type],
@@ -68,7 +68,7 @@ export const actions: Actions = {
 
 		// Custom showcase sends use the generic `notif_custom` template with the
 		// supplied text as a parameter, demonstrating ICU interpolation.
-		const notification = await NotificationService.send({
+		const notification = await sendNotification({
 			userId: locals.user.id,
 			type: type as 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow',
 			messageKey: 'notif_custom',

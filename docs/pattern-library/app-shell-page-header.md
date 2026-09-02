@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Page header (per-page, XSS-safe)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A per-page header component (breadcrumbs, title, actions) rendered inside the ma
 
 ---
 
-_Machine-readable record: `app-shell-page-header` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-page-header` in `pattern-library/registry.json`._

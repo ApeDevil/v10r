@@ -6,7 +6,7 @@ category: "Toolkits"
 
 # Image Kit (upload → AI pipeline → adjust → approve, persists nothing)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,7 +22,7 @@ A single-page toolkit that chains an AI metadata reader, frame-cropper, and embe
 
 ## Code
 
-- `src/lib/server/imagekit/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/imagekit) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/imagekit))
+- `src/lib/server/showcases/image-kit/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/showcases/image-kit) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/showcases/image-kit))
 
 ## Proof
 
@@ -30,4 +30,4 @@ A single-page toolkit that chains an AI metadata reader, frame-cropper, and embe
 
 ---
 
-_Machine-readable record: `toolkits-image-kit` in `mcp/patterns.registry.json`._
+_Machine-readable record: `toolkits-image-kit` in `pattern-library/registry.json`._

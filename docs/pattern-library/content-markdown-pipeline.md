@@ -6,7 +6,7 @@ category: "Content & Blog"
 
 # Markdown pipeline & custom syntax (directives, wikilinks)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ A remark/rehype-based markdown rendering pipeline extended with custom directive
 
 ---
 
-_Machine-readable record: `content-markdown-pipeline` in `mcp/patterns.registry.json`._
+_Machine-readable record: `content-markdown-pipeline` in `pattern-library/registry.json`._

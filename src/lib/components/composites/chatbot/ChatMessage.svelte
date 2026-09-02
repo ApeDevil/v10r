@@ -1,7 +1,7 @@
 <script lang="ts">
-import CitationChip from '$lib/components/chat/CitationChip.svelte';
-import ConfirmationCard from '$lib/components/chat/ConfirmationCard.svelte';
-import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
+import CitationChip from '$lib/components/composites/citation/CitationChip.svelte';
+import ConfirmationCard from '$lib/components/composites/citation/ConfirmationCard.svelte';
+import type { CatalogSource, SourceChunk } from '$lib/components/composites/citation/citation-types';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import ToolCallStatus from './ToolCallStatus.svelte';
@@ -32,7 +32,7 @@ interface Props {
 	content?: string;
 	/** Grounded catalog surfaces the assistant referenced — rendered as citation chips. */
 	catalogSources?: CatalogSource[];
-	/** Original drilled nRAG chunks — rendered as a "View N sources" evidence affordance. */
+	/** Original drilled retrieval chunks — rendered as a "View N sources" evidence affordance. */
 	sourceChunks?: SourceChunk[];
 	/** Callback when user confirms a destructive AI action */
 	onconfirmaction?: (description: string) => void;

@@ -47,7 +47,7 @@ Deferred writes are wrapped in `waitUntil()` from `@vercel/functions`. This is l
 
 ## Consent gating
 
-The collector reads the tier from `ANALYTICS_CONSENT_COOKIE` (`v10r_consent`). There are **two tiers**, `necessary` and `analytics` — a former `full` tier was removed because nothing gated on it while the banner promised it granted more.
+The collector reads the tier from `CONSENT_COOKIE` (`v10r_consent`). There are **two tiers**, `necessary` and `analytics` — a former `full` tier was removed because nothing gated on it while the banner promised it granted more.
 
 **The `_v10r_sid` session cookie** writes to terminal equipment and is not strictly necessary, so under TDDDG §25 / ePrivacy Art 5(3) it needs `analytics` consent:
 
@@ -84,7 +84,7 @@ Allowed events: `rage_click`, `dead_click`, `scroll_depth`, `form_abandon`, `eng
 
 `src/lib/analytics/telemetry.ts`, ingesting at `/api/analytics/journey/collect`:
 
-- **Web Vitals with the attribution build** — LCP, INP, CLS, TTFB, FCP, each reporting the element responsible. A bare INP number says something is slow; attribution says which button. Dynamically imported, so the larger attribution bundle never sits on the critical path. Surfaced at `/admin/vitals`.
+- **Web Vitals with the attribution build** — LCP, INP, CLS, TTFB, FCP, each reporting the element responsible. A bare INP number says something is slow; attribution says which button. Dynamically imported, so the larger attribution bundle never sits on the critical path. Surfaced at `/admin/perf`.
 - **Engaged time** via `visibilitychange`, not wall clock — a hidden tab contributes nothing.
 - **Rage and dead clicks** — the aggregate signals session replay is normally used to hunt for, obtainable without recording anyone's screen.
 - **Scroll depth**, bucketed to quartiles.

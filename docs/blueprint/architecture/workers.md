@@ -105,7 +105,7 @@ RETURNING d.id AS "id", d.notification_id AS "notificationId", ...
 
 Four constraints shape this statement:
 
-**One statement, not a transaction.** `neonConfig.poolQueryViaFetch` only redirects single stateless `Pool.query()` calls to HTTP; `db.transaction()` takes the WebSocket path Bun mishandles. A single statement is its own transaction, so the subquery's row locks are held exactly as long as the `UPDATE` needs. Same reasoning as `$lib/server/mcp/demo/service.ts`.
+**One statement, not a transaction.** `neonConfig.poolQueryViaFetch` only redirects single stateless `Pool.query()` calls to HTTP; `db.transaction()` takes the WebSocket path Bun mishandles. A single statement is its own transaction, so the subquery's row locks are held exactly as long as the `UPDATE` needs. Same reasoning as `$lib/server/mcp/demo/state.ts`.
 
 **Raw SQL, not the query builder.** The lock clause must be literal and reviewable. PGlite is single-connection, so a silently-dropped `SKIP LOCKED` could never be caught by a test — this is the one place where raw SQL is *safer* than the builder.
 
@@ -151,8 +151,8 @@ The same code, two very different lives:
 
 | Platform | `platform.persistent` | Drain cadence |
 |----------|----------------------|---------------|
-| Container / Fly / Railway | `true` | `delivery-scheduler.ts`, every 15s |
-| Vercel | `false` | `vercel.json` cron, **once daily** |
+| Container / Fly / Railway | `true` | `delivery-scheduler.ts`, every 15s — **muted in dev** unless `JOBS_DEV_ENABLED=true`, because the dev container shares the production database and a 15 s tick never lets Neon scale to zero |
+| Vercel | `false` | the daily `/api/cron/due` sweep (`notification-delivery` runs right after `notification-digest`) |
 
 On Vercel the worker is dormant between invocations — no process survives the response. This is not a defect to fix; it is why the whole jobs architecture is push-triggered. `/showcases/workers` renders this live from `platform.id`.
 
@@ -185,7 +185,7 @@ Verify real `SKIP LOCKED` behaviour manually with two `psql` sessions against Ne
 ## Follow-ups
 
 - **Provider timeouts.** None of the fetch-based providers sets `AbortSignal.timeout()`. This is what would make the lease invariant real rather than aspirational.
-- **Idempotency key.** No unique constraint on `(notification_id, channel)`, so a retried `NotificationService.send()` can duplicate outbox rows.
+- **Idempotency key.** No unique constraint on `(notification_id, channel)`, so a retried `sendNotification()` can duplicate outbox rows.
 - **Derived "retrying" label** for the admin log: `status = 'pending' && attempts > 0 && nextAttemptAt > now()`. Zero DDL.
 
 ---

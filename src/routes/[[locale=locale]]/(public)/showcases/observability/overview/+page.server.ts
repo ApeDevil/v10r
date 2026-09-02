@@ -1,4 +1,4 @@
-import { getFieldVitals, getLaneHealth, scoreSnapshot, snapshot } from '$lib/server/perf';
+import { getFieldVitals, getOriginHealth, scoreSnapshot, snapshot } from '$lib/server/perf';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -10,15 +10,15 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async () => {
 	const days = 30;
 
-	const [vitals, lanes] = await Promise.all([
+	const [vitals, origins] = await Promise.all([
 		getFieldVitals(days).catch(() => []),
-		getLaneHealth(days).catch(() => ({ census: [], total: 0, prodShare: 0, devSamples: 0 })),
+		getOriginHealth(days).catch(() => ({ census: [], total: 0, prodShare: 0, devSamples: 0 })),
 	]);
 
 	return {
 		days,
 		vitals,
-		lanes,
+		origins,
 		lab: {
 			generatedAt: snapshot.generatedAt,
 			nodeEnv: snapshot.nodeEnv,

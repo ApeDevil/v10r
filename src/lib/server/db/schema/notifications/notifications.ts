@@ -38,8 +38,6 @@ export const notifications = notificationsSchema.table(
 		type: notificationTypeEnum('type').notNull(),
 		messageKey: text('message_key').notNull(),
 		messageParams: jsonb('message_params').$type<NotificationParams>().notNull().default(sql`'{}'::jsonb`),
-		entityRef: text('entity_ref'),
-		groupKey: text('group_key'),
 		actionUrl: text('action_url'),
 		isRead: boolean('is_read').notNull().default(false),
 		readAt: timestamp('read_at', { withTimezone: true }),

@@ -1,6 +1,6 @@
 /**
  * search_pattern_library — model looks up the canonical v10r pattern registry
- * (the SAME `mcp/patterns.registry.json` both MCP runtimes serve) and gets back
+ * (the SAME `pattern-library/registry.json` both MCP runtimes serve) and gets back
  * pattern records with their citable `/docs/pattern-library/<id>` page.
  *
  * Named `search_pattern_library`, NOT `search_patterns` — that name is the live
@@ -16,9 +16,10 @@
  */
 
 import { jsonSchema, tool } from 'ai';
-import type { SearchLocale, SearchResult } from '$lib/search/types';
-import { CATEGORIES, PATTERNS, type PatternRecord } from '$lib/server/mcp/patterns/data';
+import type { Locale } from '$lib/i18n';
+import type { SearchResult } from '$lib/search/types';
 import { scorePatterns } from '$lib/server/mcp/patterns/search';
+import { CATEGORIES, PATTERNS, type PatternRecord } from '$lib/server/patterns';
 import type { CatalogSink } from './search-catalog';
 
 interface ToolInput {
@@ -53,7 +54,7 @@ function toRow(pattern: PatternRecord) {
 	};
 }
 
-function toSinkRow(pattern: PatternRecord, locale: SearchLocale, score: number): SearchResult {
+function toSinkRow(pattern: PatternRecord, locale: Locale, score: number): SearchResult {
 	return {
 		id: `pattern:${pattern.id}`,
 		surface: 'doc',
@@ -69,7 +70,7 @@ function toSinkRow(pattern: PatternRecord, locale: SearchLocale, score: number):
 	};
 }
 
-export function createSearchPatternLibraryTool(locale: SearchLocale, sink?: CatalogSink) {
+export function createSearchPatternLibraryTool(locale: Locale, sink?: CatalogSink) {
 	return {
 		search_pattern_library: tool({
 			description:

@@ -1,10 +1,9 @@
 import { count, desc, eq, gte, sql } from 'drizzle-orm';
-import { ADMIN_AI_PAGE_SIZE, MAX_CONVERSATIONS_PER_USER } from '$lib/server/config';
 import { db } from '../index';
 import { conversation, conversationStep, message } from '../schema/ai/conversation';
 import { user } from '../schema/auth/_better-auth';
 
-export interface AIOverviewStats {
+export interface AiOverviewStats {
 	totalConversations: number;
 	totalMessages: number;
 	conversationsToday: number;
@@ -24,7 +23,6 @@ export interface UserNearLimit {
 	email: string;
 	name: string;
 	conversationCount: number;
-	percentageUsed: number;
 }
 
 export interface ConversationListItem {
@@ -42,7 +40,7 @@ export interface MessageVolumeDay {
 	count: number;
 }
 
-export async function getAIOverviewStats(): Promise<AIOverviewStats> {
+export async function getAiOverviewStats(): Promise<AiOverviewStats> {
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
 
@@ -101,19 +99,16 @@ export async function getUsersNearLimit(threshold = 40): Promise<UserNearLimit[]
 		.having(gte(count(), threshold))
 		.orderBy(desc(count()));
 
-	return rows.map((r) => ({
-		...r,
-		conversationCount: Number(r.conversationCount),
-		percentageUsed: Math.round((Number(r.conversationCount) / MAX_CONVERSATIONS_PER_USER) * 100),
-	}));
+	return rows.map((r) => ({ ...r, conversationCount: Number(r.conversationCount) }));
 }
 
 export async function getConversationsList(filters: {
 	userId?: string;
 	page: number;
+	pageSize: number;
 }): Promise<{ entries: ConversationListItem[]; total: number; totalPages: number }> {
-	const { userId, page } = filters;
-	const offset = (page - 1) * ADMIN_AI_PAGE_SIZE;
+	const { userId, page, pageSize } = filters;
+	const offset = (page - 1) * pageSize;
 
 	const baseWhere = userId ? eq(conversation.userId, userId) : undefined;
 
@@ -134,7 +129,7 @@ export async function getConversationsList(filters: {
 			.innerJoin(user, eq(conversation.userId, user.id))
 			.where(baseWhere)
 			.orderBy(desc(conversation.updatedAt))
-			.limit(ADMIN_AI_PAGE_SIZE)
+			.limit(pageSize)
 			.offset(offset),
 		db.select({ total: count() }).from(conversation).where(baseWhere),
 	]);
@@ -144,7 +139,7 @@ export async function getConversationsList(filters: {
 	return {
 		entries: entries.map((e) => ({ ...e, messageCount: Number(e.messageCount) })),
 		total,
-		totalPages: Math.max(1, Math.ceil(total / ADMIN_AI_PAGE_SIZE)),
+		totalPages: Math.max(1, Math.ceil(total / pageSize)),
 	};
 }
 

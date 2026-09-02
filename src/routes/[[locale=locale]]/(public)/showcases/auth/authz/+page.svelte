@@ -33,33 +33,40 @@ function outcome(min: Role): '200' | '404' {
 	return RANK[simulatedRole] >= RANK[min] ? '200' : '404';
 }
 
-const GUARDS_SRC = `// src/lib/server/auth/guards.ts (excerpt)
+const GUARDS_SRC = `// src/lib/server/http/guards.ts (excerpt)
 
-export function requireAuth(locals: App.Locals) {
-  if (!locals.user) throw redirect(303, '/auth/login');
-  return locals.user;
-}
-
-export function requireAdmin(locals: App.Locals) {
-  const user = requireAuth(locals);
-  // 404, NOT 403 — an admin surface must not confirm it exists.
-  if (!isAdmin(user)) throw error(404, 'Not Found');
-  return user;
-}
-
-export function requireBlogAuthor(locals: App.Locals) {
-  const user = requireAuth(locals);
-  // Grants array is populated per-request by the populateGrants hook
-  // from auth.grant rows where revoked_at IS NULL.
-  if (!isAdmin(user) && !locals.grants?.includes('blog-author')) {
-    throw error(403, 'Forbidden');
+// Page guards THROW Kit's own error/redirect objects.
+export function requireAuth(locals: App.Locals, returnTo?: string) {
+  if (!locals.user || !locals.session) {
+    const target = returnTo ? \`/auth/login?returnTo=\${encodeURIComponent(returnTo)}\` : '/auth/login';
+    redirect(303, localizeHref(target));
   }
-  return user;
+  return { user: locals.user, session: locals.session };
 }
 
-function isAdmin(user: { id: string; email: string }): boolean {
-  /* admin identity check elided */
+export function requireAdmin(locals: App.Locals, returnTo?: string) {
+  const { user, session } = requireAuth(locals, returnTo);
+  // 404, NOT 403 — an admin surface must not confirm it exists.
+  if (!isAdmin(user)) error(404, 'Not Found');
+  return { user, session };
+}
+
+// API guards RETURN a Response instead. SvelteKit does not unwrap a thrown
+// Response the way it unwraps HttpError/Redirect, so \`throw apiError(...)\`
+// would answer 500 rather than 401/403 — invisibly, because a Response also
+// has a .status. This split is enforced by guard-contract.gate.test.ts.
+export function guardApiBlogAuthor(locals: App.Locals): ApiGuardResult {
+  if (!locals.user || !locals.session) {
+    return { error: apiError(401, 'unauthorized', 'Authentication required') };
+  }
+  // Grants are populated per-request by sessionPopulate from auth.grant
+  // rows where revoked_at IS NULL.
+  if (!isAdmin(locals.user) && !hasBlogAuthorGrant(locals)) {
+    return { error: apiError(403, 'forbidden_no_grant', 'Insufficient permissions') };
+  }
+  return { user: locals.user, session: locals.session };
 }`;
+
 const sections = $derived([
 	{ id: 'authz-sim', label: m.showcase_auth_authz_sim_card() },
 	{ id: 'authz-matrix', label: m.showcase_auth_authz_matrix_card() },

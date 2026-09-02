@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Pattern MCP (agent-queryable pattern registry, local stdio)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A read-only local stdio MCP server that exposes v10r's curated pattern registry 
 
 ---
 
-_Machine-readable record: `architecture-pattern-mcp` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-pattern-mcp` in `pattern-library/registry.json`._

@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, publishRevision } from '$lib/server/blog';
 import { PublishSchema } from '$lib/server/blog/schemas';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:publish', 10, '1 m');

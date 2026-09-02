@@ -1,10 +1,10 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
 import { deleteWorkspace, updateWorkspace } from '$lib/server/desk';
 import { UpdateWorkspaceSchema } from '$lib/server/desk/schemas';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:workspaces:mutate', 30, '1 m');

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { allowed, authDecisionResponse, decisionResponse, denied } from './decision';
+import { allowed, denied } from './decision';
+import { authDecisionResponse, decisionResponse } from './decision.adapter';
 
 describe('decisionResponse', () => {
 	it('keeps the nested apiError contract for general API surfaces', async () => {

@@ -1,5 +1,5 @@
+import { DAILY_TOKEN_CAP } from '$lib/server/ai/config';
 import { redis } from '$lib/server/cache';
-import { AI_DAILY_TOKEN_CAP } from '$lib/server/config';
 import type { PageServerLoad } from './$types';
 
 function dayKey(userId: string): string {
@@ -22,11 +22,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		title: 'AI Budget - Anti-Abuse - Showcases',
-		dailyCap: AI_DAILY_TOKEN_CAP,
+		dailyCap: DAILY_TOKEN_CAP,
 		signedIn: !!user,
 		usedToday: used,
-		remaining: Math.max(0, AI_DAILY_TOKEN_CAP - used),
-		percentUsed: Math.min(100, (used / AI_DAILY_TOKEN_CAP) * 100),
+		remaining: Math.max(0, DAILY_TOKEN_CAP - used),
+		percentUsed: Math.min(100, (used / DAILY_TOKEN_CAP) * 100),
 		resetsInMs: msUntilUtcMidnight(),
 	};
 };

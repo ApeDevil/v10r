@@ -3,7 +3,8 @@ import { tc } from '$lib/i18n/translate';
 import { getActiveAnnouncements } from '$lib/server/admin/announcements';
 import { issueConfirmToken } from '$lib/server/analytics/confirm-token';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { isAdmin } from '$lib/server/auth/guards';
+import { isAdmin } from '$lib/server/http/guards';
+import type { Theme } from '$lib/types/db-enums';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies, locals, depends, request, getClientAddress }) => {
@@ -23,7 +24,7 @@ export const load: LayoutServerLoad = async ({ cookies, locals, depends, request
 
 	// Read theme preference from cookie to prevent flash on full-page reload
 	const raw = cookies.get('theme');
-	const themeMode: 'light' | 'dark' | 'system' = raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
+	const themeMode: Theme = raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
 
 	const rawWidth = Number(cookies.get('sidebar-width'));
 	const sidebarWidth = rawWidth >= 160 && rawWidth <= 320 ? rawWidth : 240;

@@ -6,7 +6,7 @@ category: "Databases & Storage"
 
 # Polyglot freshness (Postgres ↔ Neo4j sync)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -26,4 +26,4 @@ Documents strategies for keeping references between Postgres and Neo4j valid, si
 
 ---
 
-_Machine-readable record: `databases-polyglot-freshness` in `mcp/patterns.registry.json`._
+_Machine-readable record: `databases-polyglot-freshness` in `pattern-library/registry.json`._

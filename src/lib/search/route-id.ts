@@ -10,7 +10,7 @@
  * `docs/blueprint/ai/site-awareness.md`.
  */
 import { navItems } from '$lib/nav';
-import { showcases } from '$lib/showcases/registry';
+import { showcases } from '$lib/showcases/catalog/registry';
 
 /**
  * `page.route.id` → locale-bare public path (`/showcases/forms`), or `null` when the route has

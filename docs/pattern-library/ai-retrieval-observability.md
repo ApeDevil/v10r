@@ -6,7 +6,7 @@ category: "AI"
 
 # Retrieval observability (waterfall, explorer)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -18,11 +18,11 @@ A waterfall/step-timeline view exposes the concurrent-tier timing, provenance pa
 
 ## Docs
 
-- [docs/blueprint/ai/nrag-observability.md](/docs/blueprint/ai/nrag-observability) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/nrag-observability.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/nrag-observability.md))
+- [docs/blueprint/ai/retrieval-observability.md](/docs/blueprint/ai/retrieval-observability) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/retrieval-observability.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/retrieval-observability.md))
 
 ## Code
 
-- `src/lib/server/rawrag/queries.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/rawrag/queries.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/rawrag/queries.ts))
+- `src/lib/server/retrieval/queries.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/queries.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/queries.ts))
 
 ## Proof
 
@@ -30,4 +30,4 @@ A waterfall/step-timeline view exposes the concurrent-tier timing, provenance pa
 
 ---
 
-_Machine-readable record: `ai-retrieval-observability` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-retrieval-observability` in `pattern-library/registry.json`._

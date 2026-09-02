@@ -6,6 +6,5 @@
 
 import type { drizzle } from 'drizzle-orm/neon-serverless';
 import type * as schema from './schema';
-import type * as relations from './schema/relations';
 
-export type Database = ReturnType<typeof drizzle<typeof schema & typeof relations>>;
+export type Database = ReturnType<typeof drizzle<typeof schema>>;

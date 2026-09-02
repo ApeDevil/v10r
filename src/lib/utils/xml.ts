@@ -3,7 +3,7 @@
  *
  * Lives in `$lib/utils` rather than beside the prompt builder because the
  * retrieval layer needs it too, and `$lib/server/ai` already imports
- * `$lib/server/rawrag` — reaching back the other way would close a cycle.
+ * `$lib/server/retrieval` — reaching back the other way would close a cycle.
  */
 
 /** Escape XML-special characters to prevent attribute breakout in system prompts. */

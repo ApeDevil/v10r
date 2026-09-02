@@ -4,13 +4,14 @@ import { valibot } from 'sveltekit-superforms/adapters';
 import { sanitizeFeedbackSource } from '$lib/feedback/source';
 import { feedbackSubmissionSchema } from '$lib/feedback/validation';
 import { localizeHref } from '$lib/i18n';
-import { checkHoneypot, getClientIp, ipLimitKey } from '$lib/server/abuse';
-import { createLimiter } from '$lib/server/api/rate-limit';
-import { FEEDBACK_RATE_LIMIT_MAX, FEEDBACK_RATE_LIMIT_PREFIX, FEEDBACK_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { checkHoneypot, ipLimitKey } from '$lib/server/abuse';
 import { submitFeedback } from '$lib/server/feedback';
+import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '$lib/server/feedback/config';
+import { getClientIp } from '$lib/server/http/client-ip';
+import { createLimiter } from '$lib/server/http/rate-limit';
 import type { Actions, PageServerLoad } from './$types';
 
-const limiter = createLimiter(FEEDBACK_RATE_LIMIT_PREFIX, FEEDBACK_RATE_LIMIT_MAX, FEEDBACK_RATE_LIMIT_WINDOW);
+const limiter = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const accountEmail = locals.user?.email ?? null;

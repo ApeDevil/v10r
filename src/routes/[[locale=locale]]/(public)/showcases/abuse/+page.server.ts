@@ -6,7 +6,7 @@ import {
 	PER_EMAIL_LIMIT_MAX,
 	PER_EMAIL_LIMIT_WINDOW,
 } from '$lib/server/abuse';
-import { AI_DAILY_TOKEN_CAP } from '$lib/server/config';
+import { DAILY_TOKEN_CAP } from '$lib/server/ai/config';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -25,7 +25,7 @@ export const load: PageServerLoad = async () => {
 			window: PER_EMAIL_LIMIT_WINDOW,
 		},
 		aiBudget: {
-			dailyCap: AI_DAILY_TOKEN_CAP,
+			dailyCap: DAILY_TOKEN_CAP,
 		},
 	};
 };

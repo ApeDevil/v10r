@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Shell layout (no global header, sidebar-first)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Defines the app shell's structural layout — a collapsible sidebar for primary 
 
 ---
 
-_Machine-readable record: `app-shell-layout` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-layout` in `pattern-library/registry.json`._

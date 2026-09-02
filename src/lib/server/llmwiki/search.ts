@@ -4,13 +4,14 @@
  * Vector search against the TLDR+title+tags embedding.
  * BM25 full-text search against the weighted tsvector (title A, tldr B,
  * body C with 'simple' dict, tags D).
- * Fuse via RRF. Hydrate top-K rawrag pointers per surviving hit.
+ * Fuse via RRF. Hydrate top-K source-chunk pointers per surviving hit.
  */
 
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { generateEmbedding } from '$lib/server/rawrag/embed';
-import { LLMWIKI_OVERFETCH_MULTIPLIER, LLMWIKI_RRF_K, LLMWIKI_SEARCH_LIMIT, POINTER_CAP } from './config';
+import { OVERFETCH_MULTIPLIER, RRF_K } from '$lib/server/retrieval';
+import { generateEmbedding } from '$lib/server/retrieval/embed';
+import { LLMWIKI_SEARCH_LIMIT, POINTER_CAP } from './config';
 import { LlmwikiError } from './errors';
 import { computeCoverage, hydratePointers } from './queries';
 import type { LlmwikiHit, LlmwikiSearchOptions } from './types';
@@ -30,7 +31,7 @@ export function rrf(lists: RankedPage[][]): RankedPage[] {
 	for (const list of lists) {
 		for (let rank = 0; rank < list.length; rank++) {
 			const page = list[rank];
-			const contribution = 1 / (LLMWIKI_RRF_K + rank + 1);
+			const contribution = 1 / (RRF_K + rank + 1);
 			const existing = scores.get(page.pageId);
 			if (existing) {
 				existing.rrfScore += contribution;
@@ -65,7 +66,7 @@ async function vectorHits(
 		       p.tldr AS tldr,
 		       p.tags AS tags,
 		       p.embedding <=> ${embeddingStr}::vector AS distance
-		FROM rag.llmwiki_page p
+		FROM retrieval.llmwiki_page p
 		WHERE p.embedding IS NOT NULL
 		  AND p.kind = 'page'
 		  AND p.deleted_at IS NULL
@@ -104,7 +105,7 @@ async function bm25Hits(
 		       p.tldr AS tldr,
 		       p.tags AS tags,
 		       ts_rank_cd(p.search_vector, plainto_tsquery('english', ${query})) AS rank
-		FROM rag.llmwiki_page p
+		FROM retrieval.llmwiki_page p
 		WHERE p.search_vector @@ plainto_tsquery('english', ${query})
 		  AND p.kind = 'page'
 		  AND p.deleted_at IS NULL
@@ -131,7 +132,7 @@ export async function searchLlmwiki(query: string, options: LlmwikiSearchOptions
 	if (!query.trim()) return [];
 	const limit = options.limit ?? LLMWIKI_SEARCH_LIMIT;
 	const pointerCap = options.pointerCap ?? POINTER_CAP;
-	const overfetch = limit * LLMWIKI_OVERFETCH_MULTIPLIER;
+	const overfetch = limit * OVERFETCH_MULTIPLIER;
 
 	// Reuse a caller-supplied vector when present (the chatbot embeds the user message
 	// once and shares it across llmwiki search + system-docs retrieve). Only the dense

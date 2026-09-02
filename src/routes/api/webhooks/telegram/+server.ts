@@ -2,8 +2,8 @@ import { timingSafeEqual } from 'node:crypto';
 import { json } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter } from '$lib/server/api/rate-limit';
-import { linkTelegramAccount, sendTelegramMessage } from '$lib/server/notifications/telegram';
+import { createLimiter } from '$lib/server/http/rate-limit';
+import { linkTelegramAccount, sendTelegramMessage } from '$lib/server/notifications/telegram-linking';
 import type { RequestHandler } from './$types';
 
 // Telegram delivers updates one at a time per chat; 120/min is far above real

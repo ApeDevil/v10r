@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Request-cycle visualizer (form · API · AI)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,8 +22,8 @@ An interactive showcase that visualizes the full form, REST API, and AI request 
 
 ## Code
 
-- `src/lib/server/cycle/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/cycle) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/cycle))
-- `src/lib/components/cycle/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/cycle) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/cycle))
+- `src/lib/server/showcases/cycle/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/showcases/cycle) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/showcases/cycle))
+- `src/lib/components/showcases/cycle/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/showcases/cycle) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/showcases/cycle))
 
 ## Proof
 
@@ -33,4 +33,4 @@ An interactive showcase that visualizes the full form, REST API, and AI request 
 
 ---
 
-_Machine-readable record: `architecture-request-cycle-visualizer` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-request-cycle-visualizer` in `pattern-library/registry.json`._

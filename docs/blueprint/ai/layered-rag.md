@@ -1,15 +1,15 @@
 # Layered RAG
 
-Two-layer retrieval: `llmwiki` is the primary answer surface; `rawrag` is the audit and drill-down trail.
+Two-layer retrieval: `llmwiki` is the primary answer surface; `retrieval` is the audit and drill-down trail.
 
-> rawrag internals (chunking, embeddings, parent-child, graph traversal): see [graph-rag.md](./graph-rag.md).
+> retrieval internals (chunking, embeddings, parent-child, graph traversal): see [graph-rag.md](./graph-rag.md).
 > Surface naming (chatbot vs. deskbot) and the one-kernel/two-profile model: see [surfaces.md](./surfaces.md).
 
 ---
 
 ## One kernel, two profiles
 
-The `rawrag/retrieve()` kernel (embed → tiers → RRF fusion → drill, with the single `user_id` tenant-isolation filter) is **shared mechanism**. Two surfaces exercise it as distinct profiles over distinct corpora — the kernel is never forked (a duplicated `user_id` filter would be a cross-tenant-leak risk), so the corpus boundary is the per-chunk `chunk.user_id` filter (denormalized from `document.userId` at ingest, indexed by `chunk_user_idx`). The owner semantics are unchanged; the mechanism just moved from a document-side JOIN filter to a chunk-side direct filter — so the same `user_id` now lives on both `document` and `chunk` and must stay in sync.
+The `retrieval/retrieve()` kernel (embed → tiers → RRF fusion → drill, with the single `user_id` tenant-isolation filter) is **shared mechanism**. Two surfaces exercise it as distinct profiles over distinct corpora — the kernel is never forked (a duplicated `user_id` filter would be a cross-tenant-leak risk), so the corpus boundary is the per-chunk `chunk.user_id` filter (denormalized from `document.userId` at ingest, indexed by `chunk_user_idx`). The owner semantics are unchanged; the mechanism just moved from a document-side JOIN filter to a chunk-side direct filter — so the same `user_id` now lives on both `document` and `chunk` and must stay in sync.
 
 | | chatbot profile | deskbot profile |
 |---|---|---|
@@ -18,7 +18,7 @@ The `rawrag/retrieve()` kernel (embed → tiers → RRF fusion → drill, with t
 | Entry | llmwiki + `search_catalog`/`search_project_docs` + relevance-gated system-docs prefetch + on-demand drill | `desk_search_knowledge` (`desk:ask`, read-only) |
 | Grounding | Post-stream citation verification, citation chips | Reference context; no citation chips; read-only |
 
-The deskbot profile lives in `src/lib/server/ai/deskbot-rag.ts` (`retrieveDeskDocs`, `syncDeskFileToRag`); the chatbot profile is the read path below plus the relevance-gated prefetch. See [Deskbot Corpus](#deskbot-corpus-source--desk).
+The deskbot profile lives in `src/lib/server/ai/deskbot-retrieval.ts` (`retrieveDeskDocs`, `syncDeskFileToRetrieval`); the chatbot profile is the read path below plus the relevance-gated prefetch. See [Deskbot Corpus](#deskbot-corpus-source--desk).
 
 ---
 
@@ -27,7 +27,7 @@ The deskbot profile lives in `src/lib/server/ai/deskbot-rag.ts` (`retrieveDeskDo
 | Layer | Module | Role |
 |-------|--------|------|
 | **llmwiki** | `src/lib/server/llmwiki/` | LLM-compiled wiki pages. Primary retrieval surface. |
-| **rawrag** | `src/lib/server/rawrag/` | Immutable source chunks. Drill-down trail and ground truth. |
+| **retrieval** | `src/lib/server/retrieval/` | Immutable source chunks. Drill-down trail and ground truth. |
 | **tools** | `src/lib/server/ai/tools/` | AI SDK tool wrappers closing over `userId`. |
 
 **Why two layers?** Wiki pages give the model a coherent, token-efficient answer surface — one TLDR per topic beats 10 raw chunks. Raw chunks preserve the original text unchanged so claims can be verified against the source. The model answers from wiki TLDRs by default and drills into raw chunks only when the user asks for exact wording or challenges a claim.
@@ -39,7 +39,7 @@ The deskbot profile lives in `src/lib/server/ai/deskbot-rag.ts` (`retrieveDeskDo
 ```
 src/lib/server/
   llmwiki/
-    config.ts          ← limits (POINTER_CAP, MAX_RAWRAG_TOOL_CALLS_PER_TURN)
+    config.ts          ← limits (POINTER_CAP, MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN)
     overview.ts        ← load the top-level 'overview' page (~500 tok)
     search.ts          ← hybrid vector+BM25 → LlmwikiHit[]
     queries.ts         ← hydratePointers (JOIN chunks, cap at POINTER_CAP=5)
@@ -47,7 +47,7 @@ src/lib/server/
     verify.ts          ← citation verification (onFinish)
     compile/           ← scaffold: page compilation jobs
     lint/              ← scaffold: lint runner
-  rawrag/
+  retrieval/
     index.ts           ← retrieve(), formatContextForPrompt()
     chunk.ts           ← chunking logic (delegates to markdown-split)
     markdown-split.ts  ← splitMarkdown: heading-aware, fence-safe; dep-free (shared with Bun ingest script)
@@ -58,7 +58,7 @@ src/lib/server/
     catalog-projection.ts ← deriveCatalogGraph(): pure catalog → Resource nodes + PART_OF edges
   ai/tools/
     get-llmwiki-pages.ts   ← expand wiki pages beyond TLDR
-    get-rawrag-chunks.ts   ← drill-down to raw source chunks
+    get-source-chunks.ts   ← drill-down to raw source chunks
     search-catalog.ts      ← search_catalog tool: composes quick-search lanes, returns canonical paths
     search-docs.ts         ← search_project_docs tool: semantic retrieval over the ingested docs/ corpus
     index.ts               ← buildRetrievalTools(userId, locale, authCeiling)
@@ -75,13 +75,13 @@ src/lib/server/
 
 | Table | Purpose |
 |-------|---------|
-| `rag.llmwiki_page` | Page with `title + tldr + body + tags + frontmatter`. Only `title + tldr + tags` are embedded. |
-| `rag.llmwiki_page_source` | Junction to `rag.chunk` with `weight`. Maps which raw chunks a page was compiled from. |
-| `rag.llmwiki_page_link` | Wikilinks between pages (`[[slug]]`). |
-| `rag.llmwiki_page_redirect` | Slug renames — old slug → new slug. |
+| `retrieval.llmwiki_page` | Page with `title + tldr + body + tags + frontmatter`. Only `title + tldr + tags` are embedded. |
+| `retrieval.llmwiki_page_source` | Junction to `retrieval.chunk` with `weight`. Maps which raw chunks a page was compiled from. |
+| `retrieval.llmwiki_page_link` | Wikilinks between pages (`[[slug]]`). |
+| `retrieval.llmwiki_page_redirect` | Slug renames — old slug → new slug. |
 | `rag.llmwiki_lint_issue` | Lint findings per page (broken links, stale pointers, etc.). |
 
-**rawrag tables** (`rag` schema): `rag.document` (source documents) and `rag.chunk` (pgvector 1536 + BM25 tsvector). See [graph-rag.md](./graph-rag.md) for schema detail. `document.source` is a `documentSourceEnum` — `'docs'` marks the system-owned project-documentation corpus (see [Docs Corpus](#docs-corpus-search_project_docs) below); `'desk'` marks a user's own desk file in the deskbot corpus (see [Deskbot Corpus](#deskbot-corpus-source--desk)).
+**retrieval tables** (`rag` schema): `retrieval.document` (source documents) and `retrieval.chunk` (pgvector 1536 + BM25 tsvector). See [graph-rag.md](./graph-rag.md) for schema detail. `document.source` is a `documentSourceEnum` — `'docs'` marks the system-owned project-documentation corpus (see [Docs Corpus](#docs-corpus-search_project_docs) below); `'desk'` marks a user's own desk file in the deskbot corpus (see [Deskbot Corpus](#deskbot-corpus-source--desk)).
 
 ---
 
@@ -97,17 +97,17 @@ get_llmwiki_pages({ ids: string[], include_body?: boolean })
 
 Expands wiki pages (by id or slug) beyond the TLDR already in the system prompt. The model calls this when a topic summary isn't enough but it doesn't yet need raw source text.
 
-### `get_rawrag_chunks`
+### `get_source_chunks`
 
 ```typescript
-get_rawrag_chunks({ ids: string[] })
+get_source_chunks({ ids: string[] })
 ```
 
 Fetches raw source chunks by ID. **Drill-down only.** The model calls this when the user asks for exact wording, quotations, specific detail, or challenges a claim.
 
 **The verbatim-IDs rule:** chunk IDs passed to this tool MUST be copied verbatim from a page's `pointers:` list in the `<llmwiki-hits>` block. The model is explicitly forbidden from inventing, guessing, transforming, or abbreviating IDs. This rule was hardened after the model hallucinated `chk_rrf_constant_k` when the pointer was `chk_seed_rrf` — an invented ID silently returns no data, making the fabrication invisible to the user.
 
-A per-turn cap (`MAX_RAWRAG_TOOL_CALLS_PER_TURN = 3`) is enforced by the orchestrator via `stepsForScopes`.
+A per-turn cap (`MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN = 3`) is enforced by the orchestrator via `stepsForScopes`.
 
 ---
 
@@ -120,7 +120,7 @@ A per-turn cap (`MAX_RAWRAG_TOOL_CALLS_PER_TURN = 3`) is enforced by the orchest
 2. **Wiki search** — `llmwiki/search.ts` runs hybrid vector (TLDR + title + tags) + BM25 (body) → top-N `LlmwikiHit[]`.
 3. **Pointer hydration** — `llmwiki/queries.ts:hydratePointers` runs a single JOIN, caps pointers per page at `POINTER_CAP=5`, ordered by `weight DESC, chunkId ASC`.
 4. **Prompt encoding** — `llmwiki/wiki-format.ts` (`formatLlmwikiContext`) formats hits + pointers in a compact TOON-ish layout (no external TOON dependency) into a `<llmwiki-hits>` block in the system prompt. See [toon.md](./toon.md).
-5. **Stream** — `streamText` runs with `get_llmwiki_pages` and `get_rawrag_chunks` in the tool set. The model answers from TLDRs by default; calls `get_rawrag_chunks` only for exact wording, quotes, or claim verification.
+5. **Stream** — `streamText` runs with `get_llmwiki_pages` and `get_source_chunks` in the tool set. The model answers from TLDRs by default; calls `get_source_chunks` only for exact wording, quotes, or claim verification.
 6. **Citation verification** — `onFinish` calls `llmwiki/verify.ts`, which compares drilled chunk IDs against current `chunk.contentHash` and emits an SSE `citations` frame.
 
 ---
@@ -177,7 +177,7 @@ Meta: `searchCatalogToolMeta = { search_catalog: { risk: 'read', scope: 'desk:re
 
 ### Citation chips (UI)
 
-`src/lib/components/chat/CitationChip.svelte` + `chat/citation-types.ts`. A native `<a>` to `localizeHref(path) + anchor`, ≥44px touch target, surface badge, EN-fallback badge. The orchestrator builds `metadata.catalogSources` (only rows the answer text references); `ChatMessage.svelte` renders a "Related surfaces" chip row below the answer.
+`src/lib/components/desk/panels/bot/CitationChip.svelte` + `chat/citation-types.ts`. A native `<a>` to `localizeHref(path) + anchor`, ≥44px touch target, surface badge, EN-fallback badge. The orchestrator builds `metadata.catalogSources` (only rows the answer text references); `ChatMessage.svelte` renders a "Related surfaces" chip row below the answer.
 
 ---
 
@@ -204,14 +204,13 @@ Meta: `searchDocsToolMeta = { search_project_docs: { risk: 'read', scope: 'desk:
 
 Every RAG retrieval query hard-filters by owner. The docs corpus is therefore owned by a reserved system user so the orchestrator can query it on any user's behalf without leaking per-user documents.
 
-| Constant (`$lib/server/config.ts`) | Value |
-|------------------------------------|-------|
-| `SYSTEM_DOCS_USER_ID` | `'system-docs'` |
-| `PROJECT_DOCS_COLLECTION_ID` | `'project-docs'` |
+`SYSTEM_DOCS_USER_ID` and `PROJECT_DOCS_COLLECTION_ID` live in
+[`src/lib/server/retrieval/config.ts`](../../../src/lib/server/retrieval/config.ts); their
+values are not restated here.
 
 The tool captures `SYSTEM_DOCS_USER_ID` in its closure — the model never supplies it. Ingested rows carry `document.source = 'docs'` (a value in `documentSourceEnum`) with `sourceUri` set to the canonical `/docs` path.
 
-`rag.document.userId` is **NOT NULL with `onDelete: cascade`**. System-owned docs use `SYSTEM_DOCS_USER_ID`; user documents carry the real user id. There is no null/orphan ownership state — every document belongs to exactly one owner and is erased with that owner.
+`retrieval.document.userId` is **NOT NULL with `onDelete: cascade`**. System-owned docs use `SYSTEM_DOCS_USER_ID`; user documents carry the real user id. There is no null/orphan ownership state — every document belongs to exactly one owner and is erased with that owner.
 
 ---
 
@@ -221,21 +220,21 @@ The deskbot grounds in the user's **own** desk files (markdown + spreadsheets op
 
 ### `desk_search_knowledge` tool
 
-`src/lib/server/ai/tools/desk-ask.ts`. The deskbot's read-only nRAG grounding tool, gated by the `desk:ask` scope.
+`src/lib/server/ai/tools/desk-ask.ts`. The deskbot's read-only retrieval grounding tool, gated by the `desk:ask` scope.
 
 ```typescript
 desk_search_knowledge({ query: string })
 ```
 
-- Runs `retrieveDeskDocs` (`deskbot-rag.ts`) — `retrieve()` over tiers 1–2, hard-filtered to the caller's `userId` (no graph tier; desk files aren't Neo4j-seeded).
+- Runs `retrieveDeskDocs` (`deskbot-retrieval.ts`) — `retrieve()` over tiers 1–2, hard-filtered to the caller's `userId` (no graph tier; desk files aren't Neo4j-seeded).
 - Read-only: emits no `DeskEffect`, never mutates, returns the top 5 chunks as reference context (no citation chips).
 - `desk:ask` is **excluded** from `hasMutatingScope` / `stepsForScopes` / the plan gate — it never triggers plan-before-execute.
 
 ### Ingestion & freshness
 
-`syncDeskFileToRag(userId, fileId, type)` (`deskbot-rag.ts`) (re)ingests one file: deletes any prior copy by `sourceUri` (`desk_file_<id>`), then `ingest({ sourceType: 'desk', userId })`. Empty files are dropped, not ingested.
+`syncDeskFileToRetrieval(userId, fileId, type)` (`deskbot-retrieval.ts`) (re)ingests one file: deletes any prior copy by `sourceUri` (`desk_file_<id>`), then `ingest({ sourceType: 'desk', userId })`. Empty files are dropped, not ingested.
 
-Freshness is **poll-based, off the hot path** — the `desk-rawrag-sync` job (`jobs/desk-rawrag-sync.ts`) compares `desk.file.updatedAt` to the ingested doc's `updatedAt`, (re)ingests new/changed files, and prunes orphans (origin file deleted or AI-context turned off). Editing a file never pays a per-save embedding round-trip.
+Freshness is **poll-based, off the hot path** — the `desk-retrieval-sync` job (`jobs/desk-retrieval-sync.ts`) compares `desk.file.updatedAt` to the ingested doc's `updatedAt`, (re)ingests new/changed files, and prunes orphans (origin file deleted or AI-context turned off). Editing a file never pays a per-save embedding round-trip.
 
 ---
 
@@ -254,7 +253,7 @@ The Neo4j RAG graph is **per-tenant**. A read returns only the caller's own node
 
 ### Scoped reads
 
-Every RAG graph read in `src/lib/server/graph/rag/queries.ts` is scoped `WHERE ownerId IN $ownerIds`. Callers pass `[user.id, SYSTEM_DOCS_USER_ID]` — a user sees their own corpus plus the shared system-docs corpus, nothing else. The three `/api/retrieval/graph*` endpoints are owner-scoped this way (they previously leaked cross-tenant). The chat retrieval path is user-scoped through the same filter.
+Every RAG graph read in `src/lib/server/graph/retrieval/queries.ts` is scoped `WHERE ownerId IN $ownerIds`. Callers pass `[user.id, SYSTEM_DOCS_USER_ID]` — a user sees their own corpus plus the shared system-docs corpus, nothing else. The three `/api/retrieval/graph*` endpoints are owner-scoped this way (they previously leaked cross-tenant). The chat retrieval path is user-scoped through the same filter.
 
 ### Erasure (GDPR)
 
@@ -276,7 +275,7 @@ podman exec v10r bun run db:ingest-docs
 (Or `vr ref`, which chains this after the MCP registry/excerpt-snapshot steps — see
 [dev-cli.md](../../stack/ops/dev-cli.md).)
 
-- Hand-rolls its own Neon pool + Gemini embedder from `process.env` (the app's `rawrag` modules import `$lib`/`$env` and can't run under bare Bun). Reuses only the Vite-free `splitMarkdown`.
+- Hand-rolls its own Neon pool + Gemini embedder from `process.env` (the app's `retrieval` modules import `$lib`/`$env` and can't run under bare Bun). Reuses only the Vite-free `splitMarkdown`.
 - Enumerates `docs/**/*.md`, importing the blocklist + canonical-path derivation (`isBlocked`, `parseFrontmatter`, `slugify`, `deriveTitle`) from the Vite-free SSOT `src/lib/server/docs/doc-filter.ts` — the same module the `/docs` manifest imports, so there is no manual sync. Only `RAG_ONLY_BLOCK` (docs rendered in `/docs` but withheld from the chatbot) is ingest-local.
 - Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.
 - As of 2026-06-25 it writes hierarchical chunks (section-parents + paragraph-children) via the shared `planChunks()`, making the docs corpus tier-2-*eligible* — partial today (36/93 docs converted, multi-day quota-gated). The chatbot still reads **tier-1 only**. Separately, the llmwiki tier-2 *compiler* (auto-generated wiki pages) remains deferred — a different thing from the parent-child chunks.

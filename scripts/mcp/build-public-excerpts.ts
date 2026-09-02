@@ -15,7 +15,7 @@
 import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { deriveExcerptAllowlist, MAX_FILE_BYTES } from '../../src/lib/server/mcp/patterns/allowlist.ts';
-import { REGISTRY } from '../../src/lib/server/mcp/patterns/data.ts';
+import { REGISTRY } from '../../src/lib/server/patterns/registry.ts';
 
 const ROOT = resolve(import.meta.dir, '../..');
 const SNAPSHOT_PATH = resolve(ROOT, 'mcp/public-excerpts.snapshot.json');

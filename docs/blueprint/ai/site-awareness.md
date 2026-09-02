@@ -177,7 +177,7 @@ catalog strings. Two reasons:
 1. **Provenance.** What seeds the query is the server's own lookup result, keyed by an
    allowlisted route. There is no attacker-controlled content in it.
 2. **Structure.** The embed query is only a *relevance* input. It physically cannot cross
-   the `d.user_id = ${userId}` SQL boundary (`rawrag/tiers/contextual.ts`), so even a
+   the `d.user_id = ${userId}` SQL boundary (`retrieval/tiers/contextual.ts`), so even a
    maximally-wrong seed can only re-rank chunks the user is **already** authorized to see.
 
 **Enforce as a type:** only a `RouteContext` value produced by the server resolver may

@@ -6,7 +6,7 @@ category: "Databases & Storage"
 
 # Postgres client & connection (Neon serverless)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Sets up the Drizzle client for PostgreSQL using the Neon serverless driver as th
 
 ---
 
-_Machine-readable record: `databases-postgres-connection` in `mcp/patterns.registry.json`._
+_Machine-readable record: `databases-postgres-connection` in `pattern-library/registry.json`._

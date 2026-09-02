@@ -64,7 +64,7 @@ Page (`pages.ts`) and showcase (`showcases.ts`) records are not locale-fallbacks
 ## `buildSearchIndex(locale)`
 
 ```ts
-function buildSearchIndex(locale: SearchLocale): SearchRecord[] {
+function buildSearchIndex(locale: Locale): SearchRecord[] {
   // Pins Paraglide locale so nav labels render in the right language.
   return [...pageRecords(locale), ...showcaseRecords(locale), ...docTitleRecords(locale)];
 }

@@ -106,7 +106,7 @@ function handleReset() {
 				<span class="boundary-purpose">Root fallback &mdash; "Go home" action</span>
 			</div>
 			<div class="boundary-entry">
-				<code class="boundary-path">routes/app/+error.svelte</code>
+				<code class="boundary-path">routes/account/+error.svelte</code>
 				<span class="boundary-purpose">Authenticated area &mdash; "Back to dashboard" with sidebar visible</span>
 			</div>
 			<div class="boundary-entry">

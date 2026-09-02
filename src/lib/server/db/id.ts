@@ -44,8 +44,6 @@ export const createId = {
 	conversationStep: () => `stp_${shortId()}`,
 	/** Agent proposal (plan-before-execute): prp_a8f3e1b2c4d9 */
 	agentProposal: () => `prp_${shortId()}`,
-	/** Agent audit log entry: aud_a8f3e1b2c4d9 */
-	agentAudit: () => `aud_${shortId()}`,
 	/** Desk workspace: wsp_a8f3e1b2c4d9 */
 	workspace: () => `wsp_${shortId()}`,
 	/** Feedback submission: fbk_a8f3e1b2c4d9 */
@@ -56,8 +54,8 @@ export const createId = {
 	grant: () => `grn_${shortId()}`,
 	/** Auth grant request: grq_a8f3e1b2c4d9 */
 	grantRequest: () => `grq_${shortId()}`,
-	/** DB ops run (branch refresh): dbr_a8f3e1b2c4d9 */
-	dbRun: () => `dbr_${shortId()}`,
+	/** Neon branch operation (branch refresh): dbr_a8f3e1b2c4d9 — prefix predates the rename. */
+	branchOperation: () => `dbr_${shortId()}`,
 	/** Generic UUID */
 	uuid: () => crypto.randomUUID(),
 } as const;

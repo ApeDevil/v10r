@@ -2,13 +2,13 @@
 import { onDestroy, onMount } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
 import { beforeNavigate } from '$app/navigation';
-import { cssColorToRgb, getCSSVar, onThemeChange } from '$lib/components/viz/_shared/theme-bridge';
+import { cssColorToRgb, getCssVar, onThemeChange } from '$lib/components/viz/_shared/theme-bridge';
 import * as m from '$lib/paraglide/messages';
-import { PROBE_LANE_LABELS } from '$lib/showcase/ai/labels';
+import { PROBE_LANE_LABELS } from '$lib/showcases/ai/labels';
 import type { ProbeReport } from '$lib/types/context-probe';
 import { layoutGalaxy } from './galaxy-layout';
 
-// The probe report as a constellation: lanes are sectors, candidates are stars
+// The probe report as a constellation: corpora are sectors, candidates are stars
 // placed by rank, the dashed ring is the production cutoff. Star positions and
 // dust are illustrative (the caveat below says so); panel 2's ranked list stays
 // the accessible, factual record — the whole canvas is aria-hidden.
@@ -46,11 +46,11 @@ let palette: Palette | undefined;
 function getPalette(): Palette {
 	if (!palette) {
 		palette = {
-			primary: cssColorToRgb(getCSSVar('color-primary'), '#888'),
-			muted: cssColorToRgb(getCSSVar('color-muted'), '#888'),
-			warning: getCSSVar('color-warning'),
-			fg: getCSSVar('color-fg'),
-			border: getCSSVar('color-border'),
+			primary: cssColorToRgb(getCssVar('color-primary'), '#888'),
+			muted: cssColorToRgb(getCssVar('color-muted'), '#888'),
+			warning: getCssVar('color-warning'),
+			fg: getCssVar('color-fg'),
+			border: getCssVar('color-border'),
 		};
 	}
 	return palette;
@@ -111,10 +111,10 @@ function draw(now = performance.now(), animate = false) {
 	}
 	ctx.globalAlpha = 1;
 
-	// Sector separators + lane labels; degenerate lanes keep their sector.
-	const laneCount = layout.sectors.length;
+	// Sector separators + corpus labels; degenerate corpora keep their sector.
+	const corpusCount = layout.sectors.length;
 	for (const sector of layout.sectors) {
-		if (laneCount > 1) {
+		if (corpusCount > 1) {
 			ctx.strokeStyle = p.border;
 			ctx.lineWidth = 1;
 			ctx.globalAlpha = 0.7;
@@ -131,7 +131,7 @@ function draw(now = performance.now(), animate = false) {
 		ctx.textAlign = Math.abs(Math.cos(mid)) < 0.3 ? 'center' : Math.cos(mid) > 0 ? 'left' : 'right';
 		ctx.textBaseline = Math.sin(mid) > 0.3 ? 'top' : Math.sin(mid) < -0.3 ? 'bottom' : 'middle';
 		ctx.fillStyle = p.fg;
-		ctx.fillText(PROBE_LANE_LABELS[sector.lane](), lx, ly);
+		ctx.fillText(PROBE_LANE_LABELS[sector.corpus](), lx, ly);
 		if (sector.kind !== 'ran') {
 			ctx.fillStyle = `rgb(${p.muted[0]},${p.muted[1]},${p.muted[2]})`;
 			ctx.textAlign = 'center';
@@ -142,10 +142,10 @@ function draw(now = performance.now(), animate = false) {
 	}
 
 	// Production cutoff — dashed arc between the last chosen and first passed-over rank.
-	const span = (Math.PI * 2) / Math.max(laneCount, 1);
+	const span = (Math.PI * 2) / Math.max(corpusCount, 1);
 	const pad = span * 0.08;
 	for (const arc of layout.cutoffArcs) {
-		const sector = layout.sectors[arc.laneIndex];
+		const sector = layout.sectors[arc.corpusIndex];
 		ctx.strokeStyle = p.warning;
 		ctx.lineWidth = 1.5;
 		ctx.setLineDash([4, 4]);

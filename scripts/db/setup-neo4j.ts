@@ -1,9 +1,9 @@
 /**
- * Neo4j RAG constraints and indexes setup.
+ * Neo4j retrieval-graph constraints and indexes setup.
  * Usage: bun run db:neo4j-setup
  *
  * Creates uniqueness constraints, property indexes, and fulltext index
- * for the RAG graph model. All statements use IF NOT EXISTS — idempotent.
+ * for the retrieval graph model. All statements use IF NOT EXISTS — idempotent.
  */
 
 const NEO4J_URI = process.env.NEO4J_URI;

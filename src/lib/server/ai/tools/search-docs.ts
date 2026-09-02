@@ -18,11 +18,12 @@
 
 import { jsonSchema, tool } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
-import type { SearchLocale, SearchResult } from '$lib/search/types';
-import { SYSTEM_DOCS_USER_ID } from '$lib/server/config';
+import type { Locale } from '$lib/i18n';
+import type { SearchResult } from '$lib/search/types';
 import { db } from '$lib/server/db';
-import { document } from '$lib/server/db/schema/rag';
-import { retrieve } from '$lib/server/rawrag';
+import { document } from '$lib/server/db/schema/retrieval';
+import { retrieve } from '$lib/server/retrieval';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
 import type { CatalogSink } from './search-catalog';
 
 // Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
@@ -37,7 +38,7 @@ const MAX_LIMIT = 8;
 /** Per-chunk content budget handed to the model (chars). */
 const SNIPPET_CHARS = 600;
 
-export function createSearchDocsTool(locale: SearchLocale, sink?: CatalogSink) {
+export function createSearchDocsTool(locale: Locale, sink?: CatalogSink) {
 	return {
 		search_project_docs: tool({
 			description:
@@ -53,7 +54,7 @@ export function createSearchDocsTool(locale: SearchLocale, sink?: CatalogSink) {
 				properties: {
 					query: {
 						type: 'string',
-						description: 'The concept or question to look up, e.g. "how does the RAG retrieval pipeline work".',
+						description: 'The concept or question to look up, e.g. "how does the retrieval pipeline work".',
 					},
 					limit: {
 						type: 'number',

@@ -1,6 +1,5 @@
 <script lang="ts">
-import Renderer from '$lib/components/blog/Renderer.svelte';
-import { PageHeader } from '$lib/components/composites';
+import { MarkdownProse, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
@@ -33,7 +32,7 @@ let { data } = $props();
 	{/if}
 
 	<article class="prompt" aria-label={m.programming_view_prompt_aria({ name: data.agent.id })}>
-		<Renderer html={data.html} />
+		<MarkdownProse html={data.html} />
 	</article>
 
 	<nav class="adjacent" aria-label="Adjacent agents">

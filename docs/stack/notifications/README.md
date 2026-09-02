@@ -96,7 +96,7 @@ The `notificationTypeEnum` has 6 values:
 | Complexity | Simpler for 3-4 channels |
 | Stack alignment | Matches our serverless-first approach |
 
-**Decision**: Custom routing with an in-process `setInterval` delivery worker on the persistent container (`jobs/delivery-scheduler.ts` + `jobs/notification-delivery.ts`), plus the `/api/cron/[job]` sweep route on serverless. Inngest is design-intent only — not a dependency. See [../../blueprint/notifications/](../../blueprint/notifications/) for implementation.
+**Decision**: Custom routing with an in-process `setInterval` delivery worker on the persistent container (`jobs/delivery-scheduler.ts` + `jobs/notification-delivery.ts`), plus the daily `/api/cron/due` sweep on serverless. Inngest is design-intent only — not a dependency. See [../../blueprint/notifications/](../../blueprint/notifications/) for implementation.
 
 ### Why Email is Primary?
 

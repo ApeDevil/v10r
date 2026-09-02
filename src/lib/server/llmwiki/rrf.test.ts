@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 // rrf imports from './config' only; no db or embed imports pull in env.
-vi.mock('$lib/server/rawrag/embed', () => ({
+vi.mock('$lib/server/retrieval/embed', () => ({
 	generateEmbedding: vi.fn(),
 }));
 vi.mock('$lib/server/db', () => ({ db: {} }));

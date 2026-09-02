@@ -6,11 +6,12 @@
  */
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
+import { loadRegistry } from '../pattern-library/load.ts';
+import { buildById, topoSort } from '../pattern-library/schema.ts';
 import { createLineBuffer, err, isNotification, ok, parseLine } from './protocol.ts';
-import { buildById, loadRegistry, topoSort } from './registry.ts';
 import { readExcerpt, resolveSafe } from './security.ts';
 import { dispatchLine } from './server.ts';
-import { handleToolCall, scorePatterns, TOOLS, tokenize } from './tools.ts';
+import { handleToolCall, scorePatterns, TOOLS, tokenizePatternQuery } from './tools.ts';
 
 const REPO_ROOT = resolve(import.meta.dir, '..');
 const { registry } = loadRegistry();
@@ -80,8 +81,8 @@ describe('registry', () => {
 });
 
 describe('search', () => {
-	test('tokenize drops stopwords and short tokens', () => {
-		expect(tokenize('How is the RAG kernel wired?')).toEqual(['rag', 'kernel', 'wired']);
+	test('tokenizePatternQuery drops stopwords and short tokens', () => {
+		expect(tokenizePatternQuery('How is the RAG kernel wired?')).toEqual(['rag', 'kernel', 'wired']);
 	});
 
 	test('ranks the obvious pattern first', () => {

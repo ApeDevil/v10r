@@ -1,6 +1,6 @@
 import transformerDirectives from '@unocss/transformer-directives';
 import { defineConfig, presetIcons, presetUno } from 'unocss';
-import { ICON_OPTIONS } from './src/lib/config/icon-options.ts';
+import { ICON_OPTIONS } from './src/lib/styles/icon-options.ts';
 import {
 	borderRadius,
 	boxShadow,

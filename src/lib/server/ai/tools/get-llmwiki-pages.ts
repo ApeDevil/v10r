@@ -22,7 +22,7 @@ export function createGetLlmwikiPagesTool(userId: string) {
 			description:
 				'Expand one or more llmwiki pages by slug. ' +
 				'Use this when a TLDR in the llmwiki-hits block is not enough and you need the full page body. ' +
-				'Do not use for drill-down into raw source — use get_rawrag_chunks for that.',
+				'Do not use for drill-down into raw source — use get_source_chunks for that.',
 			inputSchema: jsonSchema<ToolInput>({
 				type: 'object',
 				properties: {

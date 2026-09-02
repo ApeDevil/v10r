@@ -11,7 +11,7 @@ import { showcaseSchema, typeSpecimen } from './type-specimen';
  * Smaller storage (4 bytes), type safety at DB level, self-documenting.
  * Caveat: adding values requires ALTER TYPE, can't remove without recreation.
  */
-export const auditActionEnum = showcaseSchema.enum('audit_action', [
+export const showcaseAuditActionEnum = showcaseSchema.enum('audit_action', [
 	'create',
 	'update',
 	'delete',
@@ -22,7 +22,7 @@ export const auditActionEnum = showcaseSchema.enum('audit_action', [
 	'logout',
 ]);
 
-export const auditSeverityEnum = showcaseSchema.enum('audit_severity', [
+export const showcaseAuditSeverityEnum = showcaseSchema.enum('audit_severity', [
 	'debug',
 	'info',
 	'warning',
@@ -30,7 +30,7 @@ export const auditSeverityEnum = showcaseSchema.enum('audit_severity', [
 	'critical',
 ]);
 
-export const auditLog = showcaseSchema.table(
+export const showcaseAuditLog = showcaseSchema.table(
 	'audit_log',
 	{
 		/** serial (4 bytes): auto-incrementing integer */
@@ -39,8 +39,8 @@ export const auditLog = showcaseSchema.table(
 		/** bigserial (8 bytes): for tables that grow indefinitely */
 		sequenceNum: bigserial('sequence_num', { mode: 'number' }).notNull().unique(),
 
-		action: auditActionEnum('action').notNull(),
-		severity: auditSeverityEnum('severity').notNull().default('info'),
+		action: showcaseAuditActionEnum('action').notNull(),
+		severity: showcaseAuditSeverityEnum('severity').notNull().default('info'),
 
 		/** Which specimen this event relates to (nullable) */
 		specimenId: integer('specimen_id').references(() => typeSpecimen.id, {

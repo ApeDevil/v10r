@@ -10,7 +10,7 @@ Backend architecture for multi-channel notification delivery.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         NotificationService.send()                           │
+│                         sendNotification()                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  Input: { userId, type, title, body, entityRef?, actionUrl?, groupKey? }    │
@@ -24,7 +24,7 @@ Backend architecture for multi-channel notification delivery.
 │  4. Create delivery records in outbox                                       │
 │  5. routeExternal (fire-and-forget) writes outbox records:                  │
 │     - Container: in-process worker polls and delivers                       │
-│     - Vercel: /api/cron/[job] sweep delivers pending records                │
+│     - Vercel: the daily /api/cron/due sweep delivers pending records        │
 │                                                                              │
 │  Output: { notificationId, queuedChannels[] }                               │
 │                                                                              │
@@ -142,8 +142,8 @@ Container runtime:
 
 Vercel serverless:
 ┌─────────────┐     ┌─────────────────────┐     ┌──────────────────┐
-│  Sync       │────▶│ notification_       │────▶│  /api/cron/[job] │
-│  Handler    │     │ deliveries (outbox) │     │  sweep           │
+│  Sync       │────▶│ notification_       │────▶│  /api/cron/due   │
+│  Handler    │     │ deliveries (outbox) │     │  daily sweep     │
 └─────────────┘     └─────────────────────┘     └──────────────────┘
 ```
 
@@ -165,7 +165,7 @@ The outbox table is the contract. **Who processes it** depends on the runtime.
 
 ### Container: In-Process Worker (Primary)
 
-The delivery worker runs on its own `setInterval` in `src/lib/server/jobs/delivery-scheduler.ts` (separate from the 3-hourly `scheduler.ts`). It is gated on `platform.persistent` and ticks at `DEFAULT_DELIVERY_INTERVAL_MS` (15s). The worker logic lives in `src/lib/server/jobs/notification-delivery.ts`:
+The delivery worker runs on its own `setInterval` in `src/lib/server/jobs/delivery-scheduler.ts` (separate from the 3-hourly `scheduler.ts`). It is gated on `platform.persistent` and ticks at `DEFAULT_DELIVERY_INTERVAL_MS` (15s). Like `scheduler.ts` it is **muted in dev** unless `JOBS_DEV_ENABLED=true`: the dev container is a persistent platform pointed at the one production database, and a 15 s tick — two `UPDATE … RETURNING` statements, queue empty or not — never lets the Neon endpoint reach its 5-minute scale-to-zero. That single missing guard kept the endpoint awake ~20 h a day in August 2026. The worker logic lives in `src/lib/server/jobs/notification-delivery.ts`:
 
 | Aspect | Detail |
 |--------|--------|
@@ -177,23 +177,23 @@ The delivery worker runs on its own `setInterval` in `src/lib/server/jobs/delive
 
 The claim, the fence token, and the reaper are specified in [architecture/workers.md](../architecture/workers.md) — this table is only the routing view of them.
 
-`service.ts` calls `routeExternal` directly (fire-and-forget) after the outbox write — there is no runtime branch and no event emit.
+`send.ts` calls `routeExternal` directly (fire-and-forget) after the outbox write — there is no runtime branch and no event emit.
 
 ### Vercel: Cron Sweep (Serverless)
 
-On serverless (no persistent process), `notification-delivery` is a registered job (`jobs/index.ts`) scheduled in `vercel.json` at `/api/cron/notification-delivery` (dispatched through the generic `/api/cron/[job]` route). This cron is what drains pending Telegram / Discord / email deliveries on Vercel — the interval scheduler never runs there.
+On serverless (no persistent process), `notification-delivery` is a registered daily job (`jobs/index.ts`) that runs inside the `/api/cron/due` sweep, immediately after `notification-digest` so digest rows are drained in the same run. That sweep is what drains pending Telegram / Discord / email deliveries on Vercel — the interval scheduler never runs there.
 
 | Setting | Value |
 |---------|-------|
-| **Endpoint** | `/api/cron/notification-delivery` (via `/api/cron/[job]`) |
-| **Cadence** | `0 8 * * *` (daily — Vercel Hobby rejects sub-daily crons at deploy time; restore `*/5 * * * *` on Pro) |
+| **Endpoint** | `/api/cron/due` (registry order); `/api/cron/notification-delivery` for a manual re-run |
+| **Cadence** | once daily with the sweep (`0 3 * * *`) — Vercel Hobby rejects sub-daily crons at deploy time; on Pro, a dedicated `*/5 * * * *` entry could return |
 | **Purpose** | Process pending deliveries, retries |
 
 > **Inngest is design-intent only.** It is not a dependency and is never imported. Async delivery uses the in-process worker (container) plus the cron sweep (serverless).
 
 ### Retry Configuration
 
-Policy lives in `$lib/server/notifications/backoff.ts` (pure) with constants in `$lib/server/config.ts`. The delay is applied against the **database** clock, so a skewed app server cannot shift the queue.
+Policy lives in `$lib/server/notifications/backoff.ts` (pure) with its constants alongside it in `$lib/server/notifications/config.ts`. The delay is applied against the **database** clock, so a skewed app server cannot shift the queue.
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
@@ -209,7 +209,7 @@ Terminal states are split deliberately: **`failed`** means the provider says thi
 
 ## Web Push Bypasses the Outbox
 
-Push never writes a `notification_deliveries` row. `service.ts` partitions `'push'` out of the router's channel list **before** `createDeliveries` runs, then calls `sendPushNow()` directly: it renders a generic localized category line (`renderNotification('notif_push_{type}', {}, recipientLocale)`) and hands it to `WebPushProvider` fire-and-forget. No outbox row means no retry and no dead-letter state — a push send either reaches the browser's push service on the first attempt or it doesn't. See [../pwa.md](../pwa.md) for the full payload contract and subscription lifecycle.
+Push never writes a `notification_deliveries` row. `send.ts` partitions `'push'` out of the router's channel list **before** `createDeliveries` runs, then calls `sendPushNow()` directly: it renders a generic localized category line (`renderNotification('notif_push_{type}', {}, recipientLocale)`) and hands it to `WebPushChannel` fire-and-forget. No outbox row means no retry and no dead-letter state — a push send either reaches the browser's push service on the first attempt or it doesn't. See [../pwa.md](../pwa.md) for the full payload contract and subscription lifecycle.
 
 ---
 
@@ -297,7 +297,7 @@ The existing `jobs/notification-cleanup.ts` only touches the `notifications` tab
 ```
 src/lib/server/notifications/
 ├── index.ts                # Re-exports public API
-├── service.ts              # NotificationService.send() — single entry point (NotificationType inline union)
+├── send.ts                 # sendNotification() — single entry point (NotificationType inline union)
 ├── router.ts               # Preference resolution, channel selection
 ├── outbox.ts               # Delivery record management
 ├── stream.ts               # SSE: notifyUser() + connection registry (container only)
@@ -311,7 +311,7 @@ src/lib/server/notifications/
     ├── email.ts            # Resend provider
     ├── telegram.ts         # Raw fetch() to Bot API
     ├── discord.ts          # Discord REST provider
-    └── web-push.ts         # WebPushProvider (VAPID, per-device fan-out)
+    └── web-push.ts         # WebPushChannel (VAPID, per-device fan-out)
 ```
 
 DB read/write helpers live under `$lib/server/db/notifications/{queries,mutations,admin-queries}.ts`.
@@ -320,7 +320,7 @@ The delivery worker is `$lib/server/jobs/notification-delivery.ts`, driven by `$
 
 ### Runtime Detection
 
-`service.ts` does not branch on runtime. After the outbox write it calls `routeExternal` directly (fire-and-forget). The persistent container's `delivery-scheduler.ts` worker (gated on `platform.persistent`) picks up pending records on its own interval; on serverless the `/api/cron/[job]` route sweeps them. No `inngest.send` call exists.
+`send.ts` does not branch on runtime. After the outbox write it calls `routeExternal` directly (fire-and-forget). The persistent container's `delivery-scheduler.ts` worker (gated on `platform.persistent`) picks up pending records on its own interval; on serverless the `/api/cron/[job]` route sweeps them. No `inngest.send` call exists.
 
 ---
 

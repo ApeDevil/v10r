@@ -16,8 +16,9 @@
  */
 
 import { jsonSchema, tool } from 'ai';
+import type { Locale } from '$lib/i18n';
 import { match, toResult } from '$lib/search/match';
-import type { SearchLocale, SearchResult, SearchSurface } from '$lib/search/types';
+import type { SearchResult, SearchSurface } from '$lib/search/types';
 import { buildSearchIndex, searchContent } from '$lib/server/search';
 
 // Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
@@ -72,7 +73,7 @@ function scopeFor(surface: SearchSurface | null | undefined): 'all' | 'docs' | '
 	return 'all';
 }
 
-export function createSearchCatalogTool(locale: SearchLocale, authCeiling: string | null, sink?: CatalogSink) {
+export function createSearchCatalogTool(locale: Locale, authCeiling: string | null, sink?: CatalogSink) {
 	return {
 		search_catalog: tool({
 			description:

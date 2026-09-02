@@ -1,18 +1,18 @@
 ---
 title: "Router, outbox & delivery worker"
-description: "NotificationService.send() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on…"
+description: "sendNotification() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on containers…"
 category: "Notifications"
 ---
 
 # Router, outbox & delivery worker
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
 **Category:** Notifications · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — internal queue/dispatch, no direct external call from the router itself
 
-NotificationService.send() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on containers or a cron sweep on Vercel.
+sendNotification() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on containers or a cron sweep on Vercel.
 
 **When to use:** Use as the single entry point for sending any multi-channel notification instead of calling a channel provider directly.
 
@@ -31,4 +31,4 @@ NotificationService.send() writes an in-app record, evaluates the settings matri
 
 ---
 
-_Machine-readable record: `notifications-router-outbox` in `mcp/patterns.registry.json`._
+_Machine-readable record: `notifications-router-outbox` in `pattern-library/registry.json`._

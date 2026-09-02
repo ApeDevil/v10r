@@ -23,9 +23,6 @@
 
 import type { DeskToolScope } from '$lib/server/ai/tools/_types';
 import { executeDeskToolCall } from '$lib/server/ai/tools/desk-execute';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	approveProposal,
 	getProposal,
@@ -39,6 +36,9 @@ import {
 import { getConversation } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import type { ProposalExecutionResult } from '$lib/server/db/schema/ai/proposal';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 // Proposal execution runs desk mutations; cap per-user throughput. Idempotency

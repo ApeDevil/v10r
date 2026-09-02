@@ -12,7 +12,7 @@ export { default as NavAccordion } from './NavAccordion.svelte';
 export { default as NavItem } from './NavItem.svelte';
 // Utilities
 export { default as NavigationProgress } from './NavigationProgress.svelte';
-export { default as ShortcutsModal } from './ShortcutsModal.svelte';
+export { default as ShortcutsDialog } from './ShortcutsDialog.svelte';
 // Sidebar
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as SidebarDrawer } from './SidebarDrawer.svelte';
@@ -22,7 +22,7 @@ export { default as SidebarNav } from './SidebarNav.svelte';
 // Notifications
 export { default as SidebarRail } from './SidebarRail.svelte';
 export { default as SidebarTriggers } from './SidebarTriggers.svelte';
-export { default as SessionExpiryModal } from './session/SessionExpiryModal.svelte';
+export { default as SessionExpiryDialog } from './session/SessionExpiryDialog.svelte';
 
 // Session lifecycle
 export { default as SessionMonitor } from './session/SessionMonitor.svelte';

@@ -1,5 +1,5 @@
 import { getAnnouncementCacheSize } from '$lib/server/admin/announcements';
-import type { ProviderResult, UpstashMetrics } from '$lib/server/monitoring';
+import type { DependencyResult, UpstashMetrics } from '$lib/server/monitoring';
 import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
 import { CacheError } from '../errors';
 import { redis } from '../index';
@@ -9,7 +9,7 @@ export interface CacheOverview {
 	totalKeys: number;
 	keysByPrefix: Record<string, number>;
 	keysByType: Record<string, number>;
-	upstash: ProviderResult<UpstashMetrics>;
+	upstash: DependencyResult<UpstashMetrics>;
 }
 
 export interface InProcessCacheStatus {

@@ -4,7 +4,7 @@ import { Card, EmptyState } from '$lib/components/composites';
 import { Cluster } from '$lib/components/layout';
 import { Badge, Button } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
-import type { RunStatus } from '$lib/server/dbops';
+import type { BranchOperationStatus } from '$lib/server/dbops';
 
 let { data } = $props();
 
@@ -21,14 +21,14 @@ function relativeTime(iso: string): string {
 	return m.admin_jobs_time_days_ago({ days });
 }
 
-function statusVariant(s: RunStatus): 'default' | 'success' | 'error' | 'warning' | 'secondary' {
+function statusVariant(s: BranchOperationStatus): 'default' | 'success' | 'error' | 'warning' | 'secondary' {
 	if (s === 'succeeded') return 'success';
 	if (s === 'failed') return 'error';
 	if (s === 'canceled') return 'secondary';
 	return 'warning';
 }
 
-function statusLabel(s: RunStatus): string {
+function statusLabel(s: BranchOperationStatus): string {
 	if (s === 'succeeded') return m.admin_dbops_status_succeeded();
 	if (s === 'failed') return m.admin_dbops_status_failed();
 	if (s === 'canceled') return m.admin_dbops_status_canceled();
@@ -44,7 +44,7 @@ function triggerVariant(t: string): 'default' | 'secondary' | 'warning' {
 <Card>
 	{#snippet header()}
 		<Cluster justify="between" align="center">
-			<h2 class="text-fluid-lg font-semibold">{m.admin_dbops_runs_heading()}</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.admin_dbops_operations_heading()}</h2>
 			<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
 				<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 				{m.admin_action_refresh()}
@@ -55,11 +55,11 @@ function triggerVariant(t: string): 'default' | 'secondary' | 'warning' {
 	{#if data.history.length === 0}
 		<EmptyState
 			icon="i-lucide-history"
-			title={m.admin_dbops_runs_empty_title()}
-			description={m.admin_dbops_runs_empty_desc()}
+			title={m.admin_dbops_operations_empty_title()}
+			description={m.admin_dbops_operations_empty_desc()}
 		/>
 	{:else}
-		<div class="history-table-wrap" tabindex="0" aria-label={m.admin_dbops_runs_heading()}>
+		<div class="history-table-wrap" tabindex="0" aria-label={m.admin_dbops_operations_heading()}>
 			<table class="history-table">
 				<thead>
 					<tr>

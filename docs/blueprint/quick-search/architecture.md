@@ -106,6 +106,6 @@ Lane-A shard. Prerendered at build time. Returns `SearchRecord[]` (titles only, 
 
 - `SearchRecord` — indexed item (what goes into the shard and the in-memory corpus)
 - `SearchResult` — ranked hit (what the palette, `/search` page, and `/api/search` all return)
-- `SearchSurface`, `SearchLocale`, `SURFACE_ORDER`
+- `SearchSurface`, `Locale`, `SURFACE_ORDER`
 
 `$lib/search/match.ts` — pure lexical matcher used by Lane A (browser) and by the `/search` SSR load. Unicode-aware tokenization, AND semantics, phrase-bonus, locale-fallback rank penalty.

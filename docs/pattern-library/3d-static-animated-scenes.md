@@ -6,7 +6,7 @@ category: "3D"
 
 # Static & animated scenes
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ A shared scene component that renders either a static GLTF model with orbit cont
 
 ---
 
-_Machine-readable record: `3d-static-animated-scenes` in `mcp/patterns.registry.json`._
+_Machine-readable record: `3d-static-animated-scenes` in `pattern-library/registry.json`._

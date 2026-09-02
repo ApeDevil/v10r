@@ -4,7 +4,7 @@
  * (for the demo state) alongside every read/write.
  */
 import { env } from '$env/dynamic/private';
-import { REGISTRY } from './patterns/data';
+import { REGISTRY } from '$lib/server/patterns';
 
 /** Mirrors package.json "version". Kept as a constant to avoid bundling package.json here. */
 export const APP_VERSION = '0.0.1';

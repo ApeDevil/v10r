@@ -7,12 +7,12 @@
 
 import { and, count, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { llmwikiPage } from '$lib/server/db/schema/rag';
+import { llmwikiPage } from '$lib/server/db/schema/retrieval';
 import { POINTER_CAP } from './config';
 import type { LlmwikiPage, LlmwikiPointer } from './types';
 
 /**
- * Hydrate top-K rawrag pointers for each given llmwiki page.
+ * Hydrate top-K source-chunk pointers for each given llmwiki page.
  * Single JOIN using ROW_NUMBER() window — no N+1. User-scoped via document.
  */
 export async function hydratePointers(
@@ -41,13 +41,13 @@ export async function hydratePointers(
 			         PARTITION BY llmwiki_page_id
 			         ORDER BY weight DESC, chunk_id ASC
 			       ) AS rn
-			FROM rag.llmwiki_page_source
+			FROM retrieval.llmwiki_page_source
 			WHERE llmwiki_page_id IN (${sql.join(
 				pageIds.map((id) => sql`${id}`),
 				sql`, `,
 			)})
 		) s
-		JOIN rag.document d ON d.id = s.document_id
+		JOIN retrieval.document d ON d.id = s.document_id
 		WHERE s.rn <= ${cap}
 		  AND d.user_id = ${userId}
 		  AND d.deleted_at IS NULL
@@ -86,9 +86,9 @@ export async function computeCoverage(
 		SELECT s.llmwiki_page_id AS "pageId",
 		       COUNT(*)::int AS total,
 		       COUNT(*) FILTER (WHERE s.source_hash_at_compile <> c.content_hash)::int AS drifted
-		FROM rag.llmwiki_page_source s
-		JOIN rag.chunk c ON c.id = s.chunk_id
-		JOIN rag.document d ON d.id = s.document_id
+		FROM retrieval.llmwiki_page_source s
+		JOIN retrieval.chunk c ON c.id = s.chunk_id
+		JOIN retrieval.document d ON d.id = s.document_id
 		WHERE s.llmwiki_page_id IN (${sql.join(
 			pageIds.map((id) => sql`${id}`),
 			sql`, `,
@@ -176,7 +176,7 @@ export async function fetchPagesByIds(
 
 /**
  * Load the always-in-context overview page for a collection (or global). `ownerIds`
- * mirrors the graph-RAG read pattern — pass `[user.id]` for a user's own overview, or
+ * mirrors the graph-retrieval read pattern — pass `[user.id]` for a user's own overview, or
  * `[SYSTEM_DOCS_USER_ID]` for the system project map. Scoping by owner-set, not a single
  * user, is what lets the chatbot surface the system overview a logged-in user doesn't own.
  */

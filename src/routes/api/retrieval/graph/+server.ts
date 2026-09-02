@@ -1,14 +1,15 @@
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW, SYSTEM_DOCS_USER_ID } from '$lib/server/config';
 import { Neo4jError, safeGraphMessage } from '$lib/server/graph/errors';
-import { getAllRagEntities } from '$lib/server/graph/rag/queries';
+import { getAllRetrievalEntities } from '$lib/server/graph/retrieval/queries';
+import { READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW } from '$lib/server/http/config';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
+import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
 import type { RequestHandler } from './$types';
 
-const limiter = createLimiter('rl:retrieval:graph', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
+const limiter = createLimiter('rl:retrieval:graph', READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW);
 
-// Owner-scoped (Wave 2.1): a user sees only their own RAG graph plus the shared
+// Owner-scoped (Wave 2.1): a user sees only their own retrieval graph plus the shared
 // system-docs corpus.
 export const GET: RequestHandler = async ({ locals }) => {
 	const guard = guardApiUser(locals);
@@ -19,7 +20,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (!success) return rateLimitResponse(reset);
 
 	try {
-		const data = await getAllRagEntities([user.id, SYSTEM_DOCS_USER_ID]);
+		const data = await getAllRetrievalEntities([user.id, SYSTEM_DOCS_USER_ID]);
 		return apiOk(data);
 	} catch (err) {
 		if (err instanceof Neo4jError) {

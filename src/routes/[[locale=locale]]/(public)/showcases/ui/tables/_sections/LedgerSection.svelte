@@ -7,7 +7,7 @@ import {
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
 } from '$lib/components';
-import { EMPLOYEES, formatDate, formatSalary, type SortDirection, type SortKey } from '../_data/mock-data';
+import { EMPLOYEES, formatSalary, formatStartDate, type SortDirection, type SortKey } from '../_data/mock-data';
 
 let sortKey = $state<SortKey | null>(null);
 let sortDir = $state<SortDirection>('asc');
@@ -91,7 +91,7 @@ let sorted = $derived.by(() => {
 									<TableCell>{emp.department}</TableCell>
 									<TableCell>{emp.role}</TableCell>
 									<TableCell class="text-right tabular-nums">{formatSalary(emp.salary)}</TableCell>
-									<TableCell>{formatDate(emp.startDate)}</TableCell>
+									<TableCell>{formatStartDate(emp.startDate)}</TableCell>
 								</TableRow>
 							{/each}
 						</TableBody>

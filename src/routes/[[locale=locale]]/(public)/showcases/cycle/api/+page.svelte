@@ -3,12 +3,12 @@ import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
 import { Alert, Card, FormField } from '$lib/components/composites';
-import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
-import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
-import type { CycleTrace } from '$lib/components/cycle/types';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Select, Spinner } from '$lib/components/primitives';
+import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/showcases/cycle';
+import { createCycleState } from '$lib/components/showcases/cycle/cycle.state.svelte';
 import * as m from '$lib/paraglide/messages';
+import type { CycleTrace } from '$lib/showcases/cycle/types';
 
 const cycle = createCycleState('default');
 let submitting = $state(false);

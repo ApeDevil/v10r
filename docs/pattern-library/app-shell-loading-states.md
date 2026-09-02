@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Loading states (skeletons, nav progress)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Defines visual feedback for initial load, navigation, data fetch, action, and st
 
 ---
 
-_Machine-readable record: `app-shell-loading-states` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-loading-states` in `pattern-library/registry.json`._

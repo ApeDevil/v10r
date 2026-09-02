@@ -6,7 +6,7 @@ category: "Analytics"
 
 # Pageview collector hook (last of 14 middleware stages)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,7 +22,7 @@ A hooks.server.ts middleware stage that runs last in the 14-stage sequence and r
 
 ## Code
 
-- `src/lib/server/analytics/hook.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/analytics/hook.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/analytics/hook.ts))
+- `src/lib/server/analytics/collector.hook.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/analytics/collector.hook.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/analytics/collector.hook.ts))
 
 ## Proof
 
@@ -30,4 +30,4 @@ A hooks.server.ts middleware stage that runs last in the 14-stage sequence and r
 
 ---
 
-_Machine-readable record: `analytics-pageview-hook` in `mcp/patterns.registry.json`._
+_Machine-readable record: `analytics-pageview-hook` in `pattern-library/registry.json`._

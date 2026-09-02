@@ -1,9 +1,9 @@
 import * as v from 'valibot';
 import { env } from '$env/dynamic/private';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import { createPushSubscription, deletePushSubscription } from '$lib/server/db/notifications/mutations';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:push', 10, '1 m');

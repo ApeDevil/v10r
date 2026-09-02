@@ -6,7 +6,7 @@ category: "Identity & Access"
 
 # Route guards & per-route authorization
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,7 +22,7 @@ Server-side guard functions that check a user's capability grants or admin statu
 
 ## Code
 
-- `src/lib/server/auth/guards.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/auth/guards.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/auth/guards.ts))
+- `src/lib/server/http/guards.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/guards.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/guards.ts))
 
 ## Proof
 
@@ -30,4 +30,4 @@ Server-side guard functions that check a user's capability grants or admin statu
 
 ---
 
-_Machine-readable record: `identity-route-guards` in `mcp/patterns.registry.json`._
+_Machine-readable record: `identity-route-guards` in `pattern-library/registry.json`._

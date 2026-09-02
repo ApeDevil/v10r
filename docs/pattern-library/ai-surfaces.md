@@ -6,7 +6,7 @@ category: "AI"
 
 # AI surfaces (chatbot vs deskbot split over one guard)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** high — user-facing LLM behavior and permissions
 
@@ -24,7 +24,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 - `src/lib/server/ai/guard.ts` — guardAiRequest() — the one shared gate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/guard.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/guard.ts))
 - `src/lib/server/ai/chat-orchestrator.ts` — Chatbot orchestration ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/chat-orchestrator.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/chat-orchestrator.ts))
-- `src/lib/server/ai/deskbot-rag.ts` — Deskbot retrieval side ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/deskbot-rag.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/deskbot-rag.ts))
+- `src/lib/server/ai/deskbot-retrieval.ts` — Deskbot retrieval side ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/deskbot-retrieval.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/deskbot-retrieval.ts))
 - `src/routes/api/ai/chatbot/+server.ts` — Chatbot route adapter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/ai/chatbot/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/ai/chatbot/+server.ts))
 - `src/routes/api/ai/deskbot/+server.ts` — Deskbot route adapter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/ai/deskbot/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/ai/deskbot/+server.ts))
 - `src/lib/components/composites/chatbot/` — Chatbot UI ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/composites/chatbot) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/composites/chatbot))
@@ -56,4 +56,4 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 ---
 
-_Machine-readable record: `ai-surfaces` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-surfaces` in `pattern-library/registry.json`._

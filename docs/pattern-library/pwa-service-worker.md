@@ -6,7 +6,7 @@ category: "PWA"
 
 # Service-worker caching contract (HTML network-only, kill switch)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ The custom service worker precaches the hashed build and icons, serves HTML and 
 
 ---
 
-_Machine-readable record: `pwa-service-worker` in `mcp/patterns.registry.json`._
+_Machine-readable record: `pwa-service-worker` in `pattern-library/registry.json`._

@@ -6,7 +6,7 @@ category: "Forms & Validation"
 
 # Auth forms (Better Auth client, not Superforms)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Passwordless login (magic link + OTP) and OAuth forms built directly on the Bett
 
 ---
 
-_Machine-readable record: `forms-auth-forms` in `mcp/patterns.registry.json`._
+_Machine-readable record: `forms-auth-forms` in `pattern-library/registry.json`._

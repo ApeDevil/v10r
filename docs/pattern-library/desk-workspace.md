@@ -6,7 +6,7 @@ category: "Desk Workspace"
 
 # Desk workspace (dock layout, focus architecture, mobile projection)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** Desk Workspace · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — persists workspace layout locally and via the file registry; no cross-user surface
 
@@ -21,23 +21,23 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 
 ## Code
 
-- `src/lib/components/composites/dock/` — The whole composite: DockLayout, leaves, tab bars, mobile chrome, state modules ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/composites/dock) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/composites/dock))
-- `src/lib/components/composites/dock/dock.state.svelte.ts` — Split-tree state: total focus derivation (focusedLeafId → first non-empty leaf fallback), focusSeq counter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dock.state.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dock.state.svelte.ts))
-- `src/lib/components/composites/dock/dock.operations.ts` — Pure tree math (split/remove/move) — kept side-effect-free and unit-tested as such ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dock.operations.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dock.operations.ts))
-- `src/lib/components/composites/dock/panel-actions.ts` — focusPanel() — the single focus writer every activation path goes through (tabs, drawer rows, AI effects, deep links) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/panel-actions.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/panel-actions.ts))
-- `src/lib/components/composites/dock/desk-bus.svelte.ts` — Typed pub/sub channels between panels (context-scoped factory, not module state) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/desk-bus.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/desk-bus.svelte.ts))
+- `src/lib/components/desk/` — The whole composite: DockLayout, leaves, tab bars, mobile chrome, state modules ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/desk) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/desk))
+- `src/lib/components/desk/dock.state.svelte.ts` — Split-tree state: total focus derivation (focusedLeafId → first non-empty leaf fallback), focusSeq counter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.state.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.state.svelte.ts))
+- `src/lib/components/desk/dock.operations.ts` — Pure tree math (split/remove/move) — kept side-effect-free and unit-tested as such ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.operations.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.operations.ts))
+- `src/lib/components/desk/panel-actions.ts` — focusPanel() — the single focus writer every activation path goes through (tabs, drawer rows, AI effects, deep links) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/panel-actions.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/panel-actions.ts))
+- `src/lib/components/desk/desk-bus.svelte.ts` — Typed pub/sub channels between panels (context-scoped factory, not module state) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/desk-bus.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/desk-bus.svelte.ts))
 - `src/lib/server/desk/` — File registry domain module + DockLayoutState valibot schemas ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/desk) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/desk))
 
 ## Tests
 
-- `src/lib/components/composites/dock/dock.operations.test.ts` — Tree-op purity ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dock.operations.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dock.operations.test.ts))
-- `src/lib/components/composites/dock/dock.state.focus.svelte.test.ts` — Total focus derivation, fallback, focusSeq ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dock.state.focus.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dock.state.focus.svelte.test.ts))
+- `src/lib/components/desk/dock.operations.test.ts` — Tree-op purity ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.operations.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.operations.test.ts))
+- `src/lib/components/desk/dock.state.focus.svelte.test.ts` — Total focus derivation, fallback, focusSeq ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.state.focus.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.state.focus.svelte.test.ts))
 - `src/lib/server/desk/schemas.parity.test.ts` — Gates DockLayoutState ↔ valibot schema key parity ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/desk/schemas.parity.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/desk/schemas.parity.test.ts))
 
 ## Proof
 
 - [`/desk`](/desk) (app route, no showcase)
-- [`/showcases/ui/workbench`](/showcases/ui/workbench) — The same DockLayout embedded in a Card with mobileChrome="bar" — proves the composite is not /desk-specific
+- [`/showcases/ui/dock`](/showcases/ui/dock) — The same DockLayout embedded in a Card with mobileChrome="bar" — proves the composite is not /desk-specific
 
 ## Invariants
 
@@ -62,4 +62,4 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 
 ---
 
-_Machine-readable record: `desk-workspace` in `mcp/patterns.registry.json`._
+_Machine-readable record: `desk-workspace` in `pattern-library/registry.json`._

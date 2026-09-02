@@ -1,0 +1,204 @@
+<script lang="ts">
+import { onDestroy } from 'svelte';
+import { apiFetch } from '$lib/api';
+import { MarkdownProse } from '$lib/components/composites';
+import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { getDeskBus, getPanelMenus } from '$lib/components/desk';
+import { Spinner } from '$lib/components/primitives';
+
+interface Props {
+	/** Panel instance id — menu registrations key on it. */
+	panelId: string;
+}
+
+let { panelId }: Props = $props();
+
+const bus = getDeskBus();
+const panelMenus = getPanelMenus();
+
+let html = $state('');
+let rendering = $state(false);
+let error = $state('');
+let hasDocument = $state(false);
+let debounceTimer: ReturnType<typeof setTimeout>;
+let abortController: AbortController | null = null;
+
+async function renderPreview(markdown: string) {
+	rendering = true;
+	error = '';
+
+	// Abort previous request
+	abortController?.abort();
+	abortController = new AbortController();
+
+	try {
+		const res = await apiFetch('/api/blog/preview', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ markdown }),
+			signal: abortController.signal,
+		});
+
+		if (!res.ok) throw new Error('Preview failed');
+
+		const data = await res.json();
+		html = data.html;
+	} catch (e) {
+		if (e instanceof DOMException && e.name === 'AbortError') return;
+		error = e instanceof Error ? e.message : 'Preview failed';
+	} finally {
+		rendering = false;
+	}
+}
+
+// Subscribe to editor content changes
+const unsubContent = bus.subscribe(
+	'editor:content',
+	(payload) => {
+		hasDocument = true;
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			if (payload.content) renderPreview(payload.content);
+		}, 300);
+	},
+	{ replayLast: true },
+);
+
+const unsubDocument = bus.subscribe('editor:document', (payload) => {
+	if (!payload) {
+		hasDocument = false;
+		html = '';
+	}
+});
+
+// Register menus for the global MenuBar
+const previewMenus: MenuBarMenu[] = [];
+
+$effect(() => {
+	return panelMenus.register(panelId, { menuBar: previewMenus });
+});
+
+onDestroy(() => {
+	unsubContent();
+	unsubDocument();
+	clearTimeout(debounceTimer);
+	abortController?.abort();
+});
+</script>
+
+<div class="preview-panel">
+	{#if !hasDocument}
+		<div class="preview-center">
+			<span class="i-lucide-eye empty-icon"></span>
+			<p class="empty-text">Open a document to see preview</p>
+		</div>
+	{:else}
+		{#if rendering && !html}
+			<div class="preview-center">
+				<Spinner size="sm" />
+				<p class="loading-text">Rendering preview...</p>
+			</div>
+		{:else}
+			{#if error}
+				<div class="preview-error" role="alert">
+					<span class="i-lucide-alert-triangle"></span>
+					{error}
+				</div>
+			{/if}
+
+			{#if rendering}
+				<div class="preview-updating">
+					<Spinner size="xs" />
+					<span>Updating...</span>
+				</div>
+			{/if}
+
+			<div class="preview-content" role="region" aria-label="Post preview" aria-live="polite">
+				<MarkdownProse {html} />
+			</div>
+		{/if}
+	{/if}
+</div>
+
+<style>
+	.preview-panel {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		background: var(--desk-panel-bg, var(--color-bg));
+		overflow: hidden;
+	}
+
+	.preview-center {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 12px;
+	}
+
+	.empty-icon {
+		font-size: 40px;
+		color: var(--color-muted);
+		opacity: 0.3;
+	}
+
+	.empty-text,
+	.loading-text {
+		font-size: 13px;
+		color: var(--color-muted);
+	}
+
+	.preview-error {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 12px;
+		font-size: 12px;
+		color: var(--color-error);
+		background: var(--color-error-bg);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.preview-updating {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 12px;
+		font-size: 11px;
+		color: var(--color-muted);
+		background: var(--surface-1);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.preview-content {
+		flex: 1;
+		overflow-y: auto;
+		padding: 24px;
+	}
+
+	/* Mobile: tighter measure; wide rendered-HTML blocks scroll inside their
+	   own container instead of widening the panel */
+	@media (max-width: 767px) {
+		.preview-content {
+			padding: 16px;
+		}
+
+		.preview-content :global(img) {
+			max-width: 100%;
+			height: auto;
+		}
+
+		.preview-content :global(pre) {
+			max-width: 100%;
+			overflow-x: auto;
+		}
+
+		.preview-content :global(table) {
+			display: block;
+			max-width: 100%;
+			overflow-x: auto;
+		}
+	}
+</style>

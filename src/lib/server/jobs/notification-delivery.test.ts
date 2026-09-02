@@ -1,12 +1,12 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from '$lib/server/config';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import type { DeliveryResult } from '$lib/server/notifications/providers/types';
+import type { DeliveryResult } from '$lib/server/notifications/channels/types';
+import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from '$lib/server/notifications/config';
 import { makeNotification, makeUser } from '$lib/server/test/fixtures';
 
 let testClient: PGlite;
@@ -24,8 +24,8 @@ let sendImpl: (() => Promise<DeliveryResult>) | null = null;
 let sendCalls = 0;
 let knownChannels = new Set(['email', 'telegram', 'discord', 'push']);
 
-vi.mock('$lib/server/notifications/providers', () => ({
-	getProvider: (channel: string) =>
+vi.mock('$lib/server/notifications/channels', () => ({
+	getChannel: (channel: string) =>
 		knownChannels.has(channel)
 			? {
 					send: async () => {
@@ -129,7 +129,7 @@ describe('notificationDelivery worker', () => {
 		expect((await row(id)).status).toBe('failed');
 	});
 
-	it('counts the attempt when no provider exists for the channel', async () => {
+	it('counts the attempt when no channel is registered', async () => {
 		// Previously markFailed ran before markProcessing, so this path never
 		// incremented attempts — a row could fail forever at attempts = 0.
 		knownChannels = new Set(['telegram']);
@@ -139,7 +139,7 @@ describe('notificationDelivery worker', () => {
 
 		const r = await row(id);
 		expect(r.status).toBe('failed');
-		expect(r.errorCode).toBe('NO_PROVIDER');
+		expect(r.errorCode).toBe('NO_CHANNEL');
 		expect(r.attempts).toBe(1);
 	});
 

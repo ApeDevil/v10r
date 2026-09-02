@@ -1,6 +1,6 @@
 # Pattern Library
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 One page per pattern record — 140 patterns (12 deep cards / 128 index rows) across 21 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
@@ -128,7 +128,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**AI tool manifest & harness split (tool defs, risk metadata, registry)**](./ai-tool-harness.md)
 - [**AI surfaces (chatbot vs deskbot split over one guard)**](./ai-surfaces.md)
 - [**Deskbot approval gate (proposal → approve, plan-gated mutation)**](./deskbot-approval-gate.md)
-- [**Layered RAG (llmwiki pointer layer over a rawrag kernel)**](./layered-rag.md)
+- [**Layered RAG (llmwiki pointer layer over a retrieval kernel)**](./layered-rag.md)
 - [**Retrieval ingest/search endpoints (one ingest door, /api/retrieval/*)**](./retrieval-endpoints.md)
 - [Chat assistant "Vely" (orchestrator, streaming)](./ai-chat-assistant.md)
 - [Persistent minimizable chatbot session](./ai-chatbot-session.md)

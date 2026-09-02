@@ -26,10 +26,14 @@ export async function createTestDb() {
 		await client.exec(stmt);
 	}
 
-	// Add all custom schemas to search_path so unqualified enum references resolve
-	await client.exec(
-		'SET search_path TO public, admin, ai, analytics, app, auth, blog, desk, jobs, mcp, notifications, rag, showcase',
-	);
+	// Unqualified enum references in the generated DDL resolve through search_path, so every
+	// namespace must be on it. Derived from the CREATE SCHEMA statements rather than listed:
+	// the hand-kept list went stale twice (it still named `app` and `rag` after both were
+	// renamed) and the symptom was a type-does-not-exist error far from the cause.
+	const namespaces = schemaStmts
+		.map((stmt) => /CREATE SCHEMA (?:IF NOT EXISTS )?"?([\w]+)"?/.exec(stmt)?.[1])
+		.filter((name): name is string => Boolean(name));
+	await client.exec(`SET search_path TO public, ${namespaces.join(', ')}`);
 
 	for (const stmt of otherStmts) {
 		await client.exec(stmt);

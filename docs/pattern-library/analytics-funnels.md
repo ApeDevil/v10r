@@ -6,7 +6,7 @@ category: "Analytics"
 
 # Funnels
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Funnel conversion is computed as count(distinct session_id) per step in one grou
 
 ---
 
-_Machine-readable record: `analytics-funnels` in `mcp/patterns.registry.json`._
+_Machine-readable record: `analytics-funnels` in `pattern-library/registry.json`._

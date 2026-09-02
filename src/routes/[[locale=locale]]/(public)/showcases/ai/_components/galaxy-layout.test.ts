@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PROBE_EXAMPLES } from '$lib/showcase/ai/fixtures/probes';
-import type { ProbeCandidate, ProbeLaneResult, ProbeReport } from '$lib/types/context-probe';
+import { PROBE_EXAMPLES } from '$lib/showcases/ai/fixtures/probes';
+import type { ProbeCandidate, ProbeCorpusResult, ProbeReport } from '$lib/types/context-probe';
 import { DUST_MAX, layoutGalaxy, R_INNER, R_OUTER, rankRadius } from './galaxy-layout';
 
 function makeCandidates(n: number, cutoff: number, withScores = true): ProbeCandidate[] {
@@ -14,13 +14,13 @@ function makeCandidates(n: number, cutoff: number, withScores = true): ProbeCand
 	}));
 }
 
-function makeReport(lanes: ProbeLaneResult[], inventory: ProbeReport['inventory'] = []): ProbeReport {
+function makeReport(corpora: ProbeCorpusResult[], inventory: ProbeReport['inventory'] = []): ProbeReport {
 	return {
 		surface: 'chatbot',
 		gates: [],
 		inventory,
 		tools: [],
-		lanes,
+		corpora,
 		prompt: { blocks: [], totalTokensEst: 0 },
 	};
 }
@@ -46,15 +46,15 @@ describe('rankRadius', () => {
 });
 
 describe('layoutGalaxy', () => {
-	it('splits the circle equally: one lane spans the full circle, two lanes half each', () => {
-		const one = layoutGalaxy(makeReport([{ lane: 'desk', ran: true, cutoff: 5, candidates: makeCandidates(3, 3) }]));
+	it('splits the circle equally: one corpus spans the full circle, two corpora half each', () => {
+		const one = layoutGalaxy(makeReport([{ corpus: 'desk', ran: true, cutoff: 5, candidates: makeCandidates(3, 3) }]));
 		expect(one.sectors).toHaveLength(1);
 		expect(one.sectors[0].endAngle - one.sectors[0].startAngle).toBeCloseTo(Math.PI * 2);
 
 		const two = layoutGalaxy(
 			makeReport([
-				{ lane: 'llmwiki', ran: true, cutoff: 6, candidates: makeCandidates(1, 1, false) },
-				{ lane: 'docs', ran: true, cutoff: 4, candidates: makeCandidates(6, 4) },
+				{ corpus: 'llmwiki', ran: true, cutoff: 6, candidates: makeCandidates(1, 1, false) },
+				{ corpus: 'docs', ran: true, cutoff: 4, candidates: makeCandidates(6, 4) },
 			]),
 		);
 		expect(two.sectors).toHaveLength(2);
@@ -64,7 +64,9 @@ describe('layoutGalaxy', () => {
 	});
 
 	it('draws the cutoff arc strictly between the last-chosen and first-passed radii', () => {
-		const layout = layoutGalaxy(makeReport([{ lane: 'docs', ran: true, cutoff: 4, candidates: makeCandidates(6, 4) }]));
+		const layout = layoutGalaxy(
+			makeReport([{ corpus: 'docs', ran: true, cutoff: 4, candidates: makeCandidates(6, 4) }]),
+		);
 		expect(layout.cutoffArcs).toHaveLength(1);
 		const arc = layout.cutoffArcs[0];
 		expect(arc.radius).toBeGreaterThan(rankRadius(3, 6));
@@ -72,28 +74,30 @@ describe('layoutGalaxy', () => {
 	});
 
 	it('emits no arc when the cutoff is not crossed (all candidates chosen)', () => {
-		const layout = layoutGalaxy(makeReport([{ lane: 'desk', ran: true, cutoff: 5, candidates: makeCandidates(2, 2) }]));
+		const layout = layoutGalaxy(
+			makeReport([{ corpus: 'desk', ran: true, cutoff: 5, candidates: makeCandidates(2, 2) }]),
+		);
 		expect(layout.cutoffArcs).toHaveLength(0);
 	});
 
-	it('marks skipped lanes and emits neither stars nor arcs nor dust-free crashes for them', () => {
+	it('marks skipped corpora and emits neither stars nor arcs nor dust-free crashes for them', () => {
 		const layout = layoutGalaxy(
-			makeReport([{ lane: 'docs', ran: false, skippedReason: 'gated_off', cutoff: 4, candidates: [] }]),
+			makeReport([{ corpus: 'docs', ran: false, skippedReason: 'gated_off', cutoff: 4, candidates: [] }]),
 		);
 		expect(layout.sectors[0].kind).toBe('skipped');
 		expect(layout.stars).toHaveLength(0);
 		expect(layout.cutoffArcs).toHaveLength(0);
 	});
 
-	it('marks ran-but-zero-hits lanes as empty', () => {
-		const layout = layoutGalaxy(makeReport([{ lane: 'llmwiki', ran: true, cutoff: 6, candidates: [] }]));
+	it('marks ran-but-zero-hits corpora as empty', () => {
+		const layout = layoutGalaxy(makeReport([{ corpus: 'llmwiki', ran: true, cutoff: 6, candidates: [] }]));
 		expect(layout.sectors[0].kind).toBe('empty');
 		expect(layout.stars).toHaveLength(0);
 	});
 
 	it('gives score-less candidates a finite default brightness', () => {
 		const layout = layoutGalaxy(
-			makeReport([{ lane: 'llmwiki', ran: true, cutoff: 6, candidates: makeCandidates(3, 3, false) }]),
+			makeReport([{ corpus: 'llmwiki', ran: true, cutoff: 6, candidates: makeCandidates(3, 3, false) }]),
 		);
 		for (const star of layout.stars) {
 			expect(Number.isFinite(star.brightness)).toBe(true);
@@ -112,19 +116,19 @@ describe('layoutGalaxy', () => {
 		}
 	});
 
-	it('caps dust per lane and scales it from real inventory counts', () => {
+	it('caps dust per corpus and scales it from real inventory counts', () => {
 		const capped = layoutGalaxy(
 			makeReport(
-				[{ lane: 'docs', ran: true, cutoff: 4, candidates: makeCandidates(6, 4) }],
-				[{ lane: 'docs', documents: 148, chunks: 1_000_000 }],
+				[{ corpus: 'docs', ran: true, cutoff: 4, candidates: makeCandidates(6, 4) }],
+				[{ corpus: 'docs', documents: 148, chunks: 1_000_000 }],
 			),
 		);
 		expect(capped.dust).toHaveLength(DUST_MAX);
 
 		const small = layoutGalaxy(
 			makeReport(
-				[{ lane: 'llmwiki', ran: true, cutoff: 6, candidates: makeCandidates(1, 1, false) }],
-				[{ lane: 'llmwiki', documents: 4 }],
+				[{ corpus: 'llmwiki', ran: true, cutoff: 6, candidates: makeCandidates(1, 1, false) }],
+				[{ corpus: 'llmwiki', documents: 4 }],
 			),
 		);
 		expect(small.dust.length).toBeGreaterThan(0);

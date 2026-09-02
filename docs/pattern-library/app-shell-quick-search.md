@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Quick Search / command palette (two-lane FTS)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ A universal search combining an instant client-side lane with a debounced server
 
 ---
 
-_Machine-readable record: `app-shell-quick-search` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-quick-search` in `pattern-library/registry.json`._

@@ -2,24 +2,24 @@
  * Probe-galaxy layout — pure math from a `ProbeReport` to unit-space geometry.
  *
  * Star/dust POSITIONS are illustrative (the page says so); everything else is
- * report-truthful: one sector per lane, star radius = rank, the cutoff arc sits
- * exactly between the last chosen and first passed-over rank, degenerate lanes
+ * report-truthful: one sector per corpus, star radius = rank, the cutoff arc sits
+ * exactly between the last chosen and first passed-over rank, degenerate corpora
  * (skipped / zero hits) keep their sector. Deterministic by construction — no
- * `Math.random`, all jitter is seeded from lane names — so redraws never
+ * `Math.random`, all jitter is seeded from corpus names — so redraws never
  * re-scatter and tests can pin output.
  *
  * Coordinates: center (0,0), radius 0..1 (the component scales to the canvas).
  * `r` on stars is the draw radius in CSS px, not unit space.
  */
 
-import type { ProbeLane, ProbeReport } from '$lib/types/context-probe';
+import type { ProbeCorpus, ProbeReport } from '$lib/types/context-probe';
 
 export const R_INNER = 0.3;
 export const R_OUTER = 0.92;
 export const DUST_MAX = 120;
 
 export interface GalaxySector {
-	lane: ProbeLane;
+	corpus: ProbeCorpus;
 	startAngle: number;
 	endAngle: number;
 	kind: 'ran' | 'skipped' | 'empty';
@@ -31,9 +31,9 @@ export interface GalaxyStar {
 	/** Draw radius in CSS px. */
 	r: number;
 	chosen: boolean;
-	/** 0..1 alpha driver — from `score` when the lane exposes one, flat default otherwise. */
+	/** 0..1 alpha driver — from `score` when the corpus exposes one, flat default otherwise. */
 	brightness: number;
-	laneIndex: number;
+	corpusIndex: number;
 	rank: number;
 }
 
@@ -44,7 +44,7 @@ export interface GalaxyDust {
 }
 
 export interface GalaxyCutoffArc {
-	laneIndex: number;
+	corpusIndex: number;
 	radius: number;
 }
 
@@ -89,27 +89,27 @@ function dustCount(documents: number, chunks: number | undefined): number {
 }
 
 export function layoutGalaxy(report: ProbeReport): GalaxyLayout {
-	const laneCount = report.lanes.length;
+	const corpusCount = report.corpora.length;
 	const sectors: GalaxySector[] = [];
 	const stars: GalaxyStar[] = [];
 	const cutoffArcs: GalaxyCutoffArc[] = [];
 	const dust: GalaxyDust[] = [];
-	if (laneCount === 0) return { sectors, stars, cutoffArcs, dust };
+	if (corpusCount === 0) return { sectors, stars, cutoffArcs, dust };
 
-	const span = (Math.PI * 2) / laneCount;
+	const span = (Math.PI * 2) / corpusCount;
 	const pad = span * 0.12;
 
-	report.lanes.forEach((lane, laneIndex) => {
-		const startAngle = -Math.PI / 2 + laneIndex * span;
+	report.corpora.forEach((corpus, corpusIndex) => {
+		const startAngle = -Math.PI / 2 + corpusIndex * span;
 		const endAngle = startAngle + span;
-		const kind = !lane.ran ? 'skipped' : lane.candidates.length === 0 ? 'empty' : 'ran';
-		sectors.push({ lane: lane.lane, startAngle, endAngle, kind });
+		const kind = !corpus.ran ? 'skipped' : corpus.candidates.length === 0 ? 'empty' : 'ran';
+		sectors.push({ corpus: corpus.corpus, startAngle, endAngle, kind });
 
 		if (kind !== 'ran') return;
 
-		const slots = lane.candidates.length;
-		lane.candidates.forEach((candidate, rank) => {
-			const jitter = mulberry32(hashSeed(`${lane.lane}:${rank}`));
+		const slots = corpus.candidates.length;
+		corpus.candidates.forEach((candidate, rank) => {
+			const jitter = mulberry32(hashSeed(`${corpus.corpus}:${rank}`));
 			const angle = startAngle + pad + jitter() * (span - pad * 2);
 			const radius = rankRadius(rank, slots);
 			stars.push({
@@ -118,25 +118,25 @@ export function layoutGalaxy(report: ProbeReport): GalaxyLayout {
 				r: candidate.chosen ? 4 : 3,
 				chosen: candidate.chosen,
 				brightness: candidate.score === undefined ? 0.7 : Math.min(Math.max(candidate.score, 0.35), 1),
-				laneIndex,
+				corpusIndex,
 				rank,
 			});
 		});
 
-		if (slots > lane.cutoff) {
-			const lo = lane.cutoff > 0 ? rankRadius(lane.cutoff - 1, slots) : R_INNER * 0.6;
-			const hi = rankRadius(lane.cutoff, slots);
-			cutoffArcs.push({ laneIndex, radius: (lo + hi) / 2 });
+		if (slots > corpus.cutoff) {
+			const lo = corpus.cutoff > 0 ? rankRadius(corpus.cutoff - 1, slots) : R_INNER * 0.6;
+			const hi = rankRadius(corpus.cutoff, slots);
+			cutoffArcs.push({ corpusIndex, radius: (lo + hi) / 2 });
 		}
 	});
 
 	// Dust density comes from the real inventory counts; positions are decorative.
 	for (const inv of report.inventory) {
-		const laneIndex = report.lanes.findIndex((l) => l.lane === inv.lane);
-		if (laneIndex === -1) continue;
-		const sector = sectors[laneIndex];
+		const corpusIndex = report.corpora.findIndex((l) => l.corpus === inv.corpus);
+		if (corpusIndex === -1) continue;
+		const sector = sectors[corpusIndex];
 		const count = dustCount(inv.documents, inv.chunks);
-		const rand = mulberry32(hashSeed(`dust:${inv.lane}`));
+		const rand = mulberry32(hashSeed(`dust:${inv.corpus}`));
 		for (let i = 0; i < count; i++) {
 			const angle = sector.startAngle + rand() * (sector.endAngle - sector.startAngle);
 			const radius = 0.15 + rand() * 0.85;

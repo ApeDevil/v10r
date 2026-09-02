@@ -16,6 +16,7 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { consentEvents, events, sessions } from '$lib/server/db/schema/analytics';
+import type { ConsentTier } from '$lib/types/db-enums';
 
 // DB setup (PGlite)
 
@@ -60,11 +61,10 @@ const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
 const { getAudienceBreakdown } = await import('$lib/server/db/analytics/aggregations');
-const { analyticsCollector } = await import('./hook');
+const { analyticsCollector } = await import('./collector.hook');
 const { analyticsCleanup } = await import('$lib/server/jobs/analytics-cleanup');
-const { ANALYTICS_RETENTION_DAYS, ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE } = await import(
-	'$lib/server/config'
-);
+const { CONSENT_COOKIE, SESSION_COOKIE } = await import('./config');
+const { retentionDays } = await import('$lib/server/retention');
 const consentState = await import('$lib/state/consent.svelte');
 
 afterAll(async () => {
@@ -439,7 +439,7 @@ describe('isPrefetch', () => {
 describe('analyticsCollector — cookie naming', () => {
 	it('session cookie and consent cookie are distinct names', () => {
 		// If the same cookie name were used, clearing consent would kill the session
-		expect(ANALYTICS_SESSION_COOKIE).not.toBe(ANALYTICS_CONSENT_COOKIE);
+		expect(SESSION_COOKIE).not.toBe(CONSENT_COOKIE);
 	});
 });
 
@@ -619,7 +619,7 @@ const BROWSER_NAV_HEADERS = {
 describe('analyticsCollector — session cookie requires analytics consent', () => {
 	function makeEvent(consent?: string, existingSid?: string) {
 		const jar = new Map<string, string>();
-		if (consent) jar.set(ANALYTICS_CONSENT_COOKIE, consent);
+		if (consent) jar.set(CONSENT_COOKIE, consent);
 		if (existingSid) jar.set('_v10r_sid', existingSid);
 		const set = vi.fn((name: string, value: string) => jar.set(name, value));
 		const del = vi.fn((name: string) => jar.delete(name));
@@ -680,7 +680,7 @@ describe('analyticsCollector — session cookie requires analytics consent', () 
  */
 describe('analyticsCollector — misses write nothing', () => {
 	function makeEvent(routeId: string | null) {
-		const jar = new Map<string, string>([[ANALYTICS_CONSENT_COOKIE, 'analytics']]);
+		const jar = new Map<string, string>([[CONSENT_COOKIE, 'analytics']]);
 		return {
 			url: new URL('https://example.com/blog'),
 			request: new Request('https://example.com/blog', { headers: BROWSER_NAV_HEADERS }),
@@ -754,7 +754,7 @@ describe('dev gate — collectors refuse in dev without ANALYTICS_DEV_TRACKING',
 	});
 
 	it('hook writes nothing and touches no cookie', async () => {
-		const jar = new Map<string, string>([[ANALYTICS_CONSENT_COOKIE, 'analytics']]);
+		const jar = new Map<string, string>([[CONSENT_COOKIE, 'analytics']]);
 		const set = vi.fn();
 		const event = {
 			url: new URL('https://example.com/blog'),
@@ -859,7 +859,7 @@ describe('confirm endpoint — sessions get human_confirmed_at at every tier', (
 	const UA = 'Mozilla/5.0 (Test) Gecko/20100101';
 	const IP = '203.0.113.5';
 
-	function makeConfirmEvent(body: unknown, opts: { tier?: 'necessary' | 'analytics'; sid?: string; ua?: string } = {}) {
+	function makeConfirmEvent(body: unknown, opts: { tier?: ConsentTier; sid?: string; ua?: string } = {}) {
 		const jar = new Map<string, string>();
 		if (opts.sid) jar.set('_v10r_sid', opts.sid);
 		return {
@@ -1288,7 +1288,7 @@ describe('analyticsCleanup — retention constant', () => {
 		// controller), so the retention window is a compliance commitment, not a
 		// tuning knob. Raising it is a decision that belongs in the LIA, not a
 		// config tweak.
-		expect(ANALYTICS_RETENTION_DAYS).toBe(60);
+		expect(retentionDays('analytics-events')).toBe(60);
 	});
 });
 
@@ -1301,7 +1301,7 @@ describe('analyticsCleanup — functional behaviour', () => {
 
 	it('deletes events older than retention window and keeps recent ones', async () => {
 		const oldDate = new Date();
-		oldDate.setDate(oldDate.getDate() - (ANALYTICS_RETENTION_DAYS + 1));
+		oldDate.setDate(oldDate.getDate() - (retentionDays('analytics-events') + 1));
 
 		await db.insert(events).values({
 			sessionId: 'sess-old',
@@ -1332,13 +1332,12 @@ describe('analyticsCleanup — functional behaviour', () => {
 	it('consent_events age out at the ~13-month Art 7(1) window — and no sooner', async () => {
 		// The consent audit trail outlives the events lane on purpose (evidence of
 		// the grant must survive as long as claims about it can arise), but it is
-		// NOT infinite: CONSENT_RETENTION_DAYS is enforced by the same sweep.
-		const { CONSENT_RETENTION_DAYS } = await import('$lib/server/config');
+		// NOT infinite: the 'consent-events' retention rule is enforced by the same sweep.
 		const beyondWindow = new Date();
-		beyondWindow.setDate(beyondWindow.getDate() - (CONSENT_RETENTION_DAYS + 5));
+		beyondWindow.setDate(beyondWindow.getDate() - (retentionDays('consent-events') + 5));
 		// Older than the events lane, comfortably inside the consent window.
 		const insideWindow = new Date();
-		insideWindow.setDate(insideWindow.getDate() - (ANALYTICS_RETENTION_DAYS + 5));
+		insideWindow.setDate(insideWindow.getDate() - (retentionDays('analytics-events') + 5));
 
 		await db.insert(consentEvents).values([
 			{
@@ -1365,11 +1364,10 @@ describe('analyticsCleanup — functional behaviour', () => {
 	});
 
 	it('sweeps daily_page_stats past the aggregate window — the promise the privacy page makes', async () => {
-		const { ANALYTICS_AGGREGATE_RETENTION_DAYS } = await import('$lib/server/config');
 		const { dailyPageStats } = await import('$lib/server/db/schema/analytics');
 
 		const stale = new Date();
-		stale.setDate(stale.getDate() - (ANALYTICS_AGGREGATE_RETENTION_DAYS + 5));
+		stale.setDate(stale.getDate() - (retentionDays('analytics-aggregates') + 5));
 
 		await db.insert(dailyPageStats).values([
 			{ date: stale.toISOString().slice(0, 10), path: '/old', pageviews: 5, uniqueVisitors: 2 },

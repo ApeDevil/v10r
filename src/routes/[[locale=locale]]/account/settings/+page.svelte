@@ -64,11 +64,11 @@ const sidebar = getSidebar();
 let sliderValue = $state<number[]>([$form.sidebarWidth]);
 
 const widthLabels: Record<number, () => string> = {
-	160: m.app_settings_appearance_sidebar_narrow,
-	200: m.app_settings_appearance_sidebar_compact,
-	240: m.app_settings_appearance_sidebar_default,
-	280: m.app_settings_appearance_sidebar_comfortable,
-	320: m.app_settings_appearance_sidebar_wide,
+	160: m.account_settings_appearance_sidebar_narrow,
+	200: m.account_settings_appearance_sidebar_compact,
+	240: m.account_settings_appearance_sidebar_default,
+	280: m.account_settings_appearance_sidebar_comfortable,
+	320: m.account_settings_appearance_sidebar_wide,
 };
 
 const currentWidthLabel = $derived(widthLabels[sliderValue[0]]?.() ?? `${sliderValue[0]}px`);
@@ -90,31 +90,31 @@ let avatarUploading = $state(false);
 let fileInput: HTMLInputElement;
 
 const themeItems = $derived([
-	{ value: 'light', label: m.app_settings_appearance_theme_light() },
-	{ value: 'system', label: m.app_settings_appearance_theme_system() },
-	{ value: 'dark', label: m.app_settings_appearance_theme_dark() },
+	{ value: 'light', label: m.account_settings_appearance_theme_light() },
+	{ value: 'system', label: m.account_settings_appearance_theme_system() },
+	{ value: 'dark', label: m.account_settings_appearance_theme_dark() },
 ]);
 
 const densityItems = $derived([
-	{ value: 'compact', label: m.app_settings_appearance_density_compact() },
-	{ value: 'comfortable', label: m.app_settings_appearance_density_comfortable() },
-	{ value: 'spacious', label: m.app_settings_appearance_density_spacious() },
+	{ value: 'compact', label: m.account_settings_appearance_density_compact() },
+	{ value: 'comfortable', label: m.account_settings_appearance_density_comfortable() },
+	{ value: 'spacious', label: m.account_settings_appearance_density_spacious() },
 ]);
 
 const localeOptions = $derived([
-	{ value: 'en', label: m.app_settings_locale_lang_en() },
-	{ value: 'es', label: m.app_settings_locale_lang_es() },
-	{ value: 'fr', label: m.app_settings_locale_lang_fr() },
-	{ value: 'de', label: m.app_settings_locale_lang_de() },
-	{ value: 'ja', label: m.app_settings_locale_lang_ja() },
+	{ value: 'en', label: m.account_settings_locale_lang_en() },
+	{ value: 'es', label: m.account_settings_locale_lang_es() },
+	{ value: 'fr', label: m.account_settings_locale_lang_fr() },
+	{ value: 'de', label: m.account_settings_locale_lang_de() },
+	{ value: 'ja', label: m.account_settings_locale_lang_ja() },
 ]);
 
 const timezoneOptions = $derived([
 	{ value: 'UTC', label: 'UTC' },
-	{ value: 'America/New_York', label: m.app_settings_locale_tz_eastern() },
-	{ value: 'America/Chicago', label: m.app_settings_locale_tz_central() },
-	{ value: 'America/Denver', label: m.app_settings_locale_tz_mountain() },
-	{ value: 'America/Los_Angeles', label: m.app_settings_locale_tz_pacific() },
+	{ value: 'America/New_York', label: m.account_settings_locale_tz_eastern() },
+	{ value: 'America/Chicago', label: m.account_settings_locale_tz_central() },
+	{ value: 'America/Denver', label: m.account_settings_locale_tz_mountain() },
+	{ value: 'America/Los_Angeles', label: m.account_settings_locale_tz_pacific() },
 	{ value: 'Europe/London', label: 'London' },
 	{ value: 'Europe/Berlin', label: 'Berlin' },
 	{ value: 'Europe/Paris', label: 'Paris' },
@@ -124,9 +124,9 @@ const timezoneOptions = $derived([
 ]);
 
 const dateFormatOptions = $derived([
-	{ value: 'relative', label: m.app_settings_locale_date_relative() },
-	{ value: 'absolute', label: m.app_settings_locale_date_absolute() },
-	{ value: 'iso', label: m.app_settings_locale_date_iso() },
+	{ value: 'relative', label: m.account_settings_locale_date_relative() },
+	{ value: 'absolute', label: m.account_settings_locale_date_absolute() },
+	{ value: 'iso', label: m.account_settings_locale_date_iso() },
 ]);
 
 async function handleAvatarUpload() {
@@ -144,12 +144,12 @@ async function handleAvatarUpload() {
 		const result = await res.json();
 
 		if (result.type === 'failure') {
-			avatarError = result.data?.avatarError ?? m.app_settings_avatar_upload_failed();
+			avatarError = result.data?.avatarError ?? m.account_settings_avatar_upload_failed();
 		} else {
 			avatarUrl = result.data?.avatarUrl ?? avatarUrl;
 		}
 	} catch {
-		avatarError = m.app_settings_avatar_upload_failed_retry();
+		avatarError = m.account_settings_avatar_upload_failed_retry();
 	} finally {
 		avatarUploading = false;
 		if (fileInput) fileInput.value = '';
@@ -168,7 +168,7 @@ async function handleAvatarRemove() {
 			avatarUrl = null;
 		}
 	} catch {
-		avatarError = m.app_settings_avatar_remove_failed();
+		avatarError = m.account_settings_avatar_remove_failed();
 	} finally {
 		avatarUploading = false;
 	}
@@ -176,7 +176,7 @@ async function handleAvatarRemove() {
 </script>
 <Stack gap="6">
 	{#if $formMessage}
-		<Alert variant="success" title={m.app_settings_alert_saved()}>
+		<Alert variant="success" title={m.account_settings_alert_saved()}>
 			{#snippet children()}
 				<p>{$formMessage}</p>
 			{/snippet}
@@ -186,12 +186,12 @@ async function handleAvatarRemove() {
 	<!-- Avatar section (separate from main form) -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">{m.app_settings_avatar_heading()}</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.account_settings_avatar_heading()}</h2>
 		{/snippet}
 
 		{#snippet children()}
 			<Cluster gap="4" align="center">
-				<Avatar src={avatarUrl} alt={m.app_settings_avatar_alt()} fallback={$form.displayName || '?'} size="lg" />
+				<Avatar src={avatarUrl} alt={m.account_settings_avatar_alt()} fallback={$form.displayName || '?'} size="lg" />
 				<Stack gap="2">
 					<Cluster gap="2">
 						<Button
@@ -201,7 +201,7 @@ async function handleAvatarRemove() {
 							onclick={() => fileInput?.click()}
 						>
 							{#if avatarUploading}<Spinner size="sm" class="mr-2" />{/if}
-							{m.app_settings_avatar_change()}
+							{m.account_settings_avatar_change()}
 						</Button>
 						{#if avatarUrl}
 							<Button
@@ -210,7 +210,7 @@ async function handleAvatarRemove() {
 								disabled={avatarUploading}
 								onclick={handleAvatarRemove}
 							>
-								{m.app_settings_avatar_remove()}
+								{m.account_settings_avatar_remove()}
 							</Button>
 						{/if}
 					</Cluster>
@@ -234,12 +234,12 @@ async function handleAvatarRemove() {
 		<Stack gap="6">
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">{m.app_settings_profile_heading()}</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.account_settings_profile_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<div class="form-grid">
-						<FormField label={m.app_settings_profile_display_name()} error={$errors.displayName?.[0]} required>
+						<FormField label={m.account_settings_profile_display_name()} error={$errors.displayName?.[0]} required>
 							{#snippet children({ fieldId, describedBy })}
 								<Input
 									id={fieldId}
@@ -256,19 +256,19 @@ async function handleAvatarRemove() {
 
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">{m.app_settings_appearance_heading()}</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.account_settings_appearance_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<Stack gap="4">
-						<FormField label={m.app_settings_appearance_theme()}>
+						<FormField label={m.account_settings_appearance_theme()}>
 							{#snippet children(_)}
 								<input type="hidden" name="theme" value={$form.theme} />
 								<ToggleGroup items={themeItems} bind:value={$form.theme} />
 							{/snippet}
 						</FormField>
 
-						<FormField label={m.app_settings_appearance_density()}>
+						<FormField label={m.account_settings_appearance_density()}>
 							{#snippet children(_)}
 								<input type="hidden" name="displayDensity" value={$form.displayDensity} />
 								<ToggleGroup items={densityItems} bind:value={$form.displayDensity} />
@@ -277,7 +277,7 @@ async function handleAvatarRemove() {
 
 						<div class="space-y-2">
 							<div class="flex items-center justify-between">
-								<span class="text-fluid-sm font-medium text-fg">{m.app_settings_appearance_sidebar_width()}</span>
+								<span class="text-fluid-sm font-medium text-fg">{m.account_settings_appearance_sidebar_width()}</span>
 								<span class="text-fluid-xs text-muted">{currentWidthLabel}</span>
 							</div>
 							<input type="hidden" name="sidebarWidth" value={$form.sidebarWidth} />
@@ -289,26 +289,26 @@ async function handleAvatarRemove() {
 
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">{m.app_settings_locale_heading()}</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.account_settings_locale_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<div class="form-grid">
-						<FormField label={m.app_settings_locale_language()} error={$errors.locale?.[0]}>
+						<FormField label={m.account_settings_locale_language()} error={$errors.locale?.[0]}>
 							{#snippet children(_)}
 								<input type="hidden" name="locale" value={$form.locale} />
 								<Select options={localeOptions} bind:value={$form.locale} error={!!$errors.locale} />
 							{/snippet}
 						</FormField>
 
-						<FormField label={m.app_settings_locale_timezone()} error={$errors.timezone?.[0]}>
+						<FormField label={m.account_settings_locale_timezone()} error={$errors.timezone?.[0]}>
 							{#snippet children(_)}
 								<input type="hidden" name="timezone" value={$form.timezone} />
 								<Select options={timezoneOptions} bind:value={$form.timezone} error={!!$errors.timezone} />
 							{/snippet}
 						</FormField>
 
-						<FormField label={m.app_settings_locale_date_format()} error={$errors.dateFormat?.[0]}>
+						<FormField label={m.account_settings_locale_date_format()} error={$errors.dateFormat?.[0]}>
 							{#snippet children(_)}
 								<input type="hidden" name="dateFormat" value={$form.dateFormat} />
 								<Select options={dateFormatOptions} bind:value={$form.dateFormat} error={!!$errors.dateFormat} />
@@ -320,22 +320,22 @@ async function handleAvatarRemove() {
 
 			<Card>
 				{#snippet header()}
-					<h2 class="text-fluid-lg font-semibold">{m.app_settings_a11y_heading()}</h2>
+					<h2 class="text-fluid-lg font-semibold">{m.account_settings_a11y_heading()}</h2>
 				{/snippet}
 
 				{#snippet children()}
 					<Stack gap="4">
-						<FormField label={m.app_settings_a11y_reduce_motion()} description={m.app_settings_a11y_reduce_motion_description()}>
+						<FormField label={m.account_settings_a11y_reduce_motion()} description={m.account_settings_a11y_reduce_motion_description()}>
 							{#snippet children(_)}
 								<input type="hidden" name="reduceMotion" value={$form.reduceMotion ? 'on' : ''} />
-								<Switch bind:checked={$form.reduceMotion} label={$form.reduceMotion ? m.app_settings_toggle_on() : m.app_settings_toggle_off()} />
+								<Switch bind:checked={$form.reduceMotion} label={$form.reduceMotion ? m.account_settings_toggle_on() : m.account_settings_toggle_off()} />
 							{/snippet}
 						</FormField>
 
-						<FormField label={m.app_settings_a11y_high_contrast()} description={m.app_settings_a11y_high_contrast_description()}>
+						<FormField label={m.account_settings_a11y_high_contrast()} description={m.account_settings_a11y_high_contrast_description()}>
 							{#snippet children(_)}
 								<input type="hidden" name="highContrast" value={$form.highContrast ? 'on' : ''} />
-								<Switch bind:checked={$form.highContrast} label={$form.highContrast ? m.app_settings_toggle_on() : m.app_settings_toggle_off()} />
+								<Switch bind:checked={$form.highContrast} label={$form.highContrast ? m.account_settings_toggle_on() : m.account_settings_toggle_off()} />
 							{/snippet}
 						</FormField>
 					</Stack>
@@ -345,7 +345,7 @@ async function handleAvatarRemove() {
 			<Cluster justify="end">
 				<Button type="submit" disabled={$submitting || !$tainted}>
 					{#if $delayed}<Spinner size="sm" class="mr-2" />{/if}
-					{$tainted ? m.app_settings_save() : m.app_settings_no_changes()}
+					{$tainted ? m.account_settings_save() : m.account_settings_no_changes()}
 				</Button>
 			</Cluster>
 		</Stack>
@@ -354,42 +354,42 @@ async function handleAvatarRemove() {
 	<!-- Your Data (transparency mirror: live report + JSON export live there) -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold">{m.app_data_link_title()}</h2>
+			<h2 class="text-fluid-lg font-semibold">{m.account_data_link_title()}</h2>
 		{/snippet}
-		<p class="text-sm text-muted mb-4">{m.app_data_link_description()}</p>
+		<p class="text-sm text-muted mb-4">{m.account_data_link_description()}</p>
 		<Button href={localizeHref('/account/data')} variant="outline">
 			<span class="i-lucide-scan-eye h-4 w-4 mr-1"></span>
-			{m.app_data_link_button()}
+			{m.account_data_link_button()}
 		</Button>
 	</Card>
 
 	<!-- Delete Account -->
 	<Card>
 		{#snippet header()}
-			<h2 class="text-fluid-lg font-semibold text-error">{m.app_account_heading_danger()}</h2>
+			<h2 class="text-fluid-lg font-semibold text-error">{m.account_heading_danger()}</h2>
 		{/snippet}
 
 		<p class="text-sm text-muted mb-4">
-			{m.app_account_delete_description()}
+			{m.account_delete_description()}
 		</p>
 
 		{#if !confirmDelete}
 			<Button variant="destructive" onclick={() => (confirmDelete = true)}>
 				<span class="i-lucide-trash-2 h-4 w-4 mr-1" ></span>
-				{m.app_account_delete_button()}
+				{m.account_delete_button()}
 			</Button>
 		{:else}
-			<Alert variant="error" title={m.app_account_delete_confirm_title()}>
+			<Alert variant="error" title={m.account_delete_confirm_title()}>
 				{#snippet children()}
-					<p>{m.app_account_delete_confirm_body()}</p>
-					<p class="text-sm mt-2">{m.app_account_delete_confirm_instruction()}</p>
+					<p>{m.account_delete_confirm_body()}</p>
+					<p class="text-sm mt-2">{m.account_delete_confirm_instruction()}</p>
 					<Input
 						type="text"
 						bind:value={deleteConfirmText}
 						placeholder="DELETE"
 						class="delete-confirm-input"
 						autocomplete="off"
-						aria-label={m.app_account_delete_confirm_aria()}
+						aria-label={m.account_delete_confirm_aria()}
 					/>
 					<div class="flex gap-3 mt-4">
 						<form
@@ -412,7 +412,7 @@ async function handleAvatarRemove() {
 								{#if deleting}
 									<Spinner size="xs" class="mr-2" />
 								{/if}
-								{m.app_account_delete_confirm_submit()}
+								{m.account_delete_confirm_submit()}
 							</Button>
 						</form>
 						<Button variant="outline" onclick={() => { confirmDelete = false; deleteConfirmText = ''; }}>

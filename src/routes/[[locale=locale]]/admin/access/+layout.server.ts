@@ -1,5 +1,5 @@
 import { countPendingRequests } from '$lib/server/auth/grant-requests';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {

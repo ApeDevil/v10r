@@ -4,15 +4,16 @@
  * `$lib/server/ai/usage-summary.ts`; cost is always a REFERENCE estimate, never a charge.
  */
 
-import type { CostEstimate } from '$lib/schemas/showcase/image-metadata';
+import type { CostEstimate } from '$lib/schemas/image-metadata';
 
 /**
- * Which AI surface a usage row came from. Load-bearing discriminant: the same model
- * (e.g. gemini-2.5-flash) appears in BOTH the chatbot and the image reader with very
- * different per-call token profiles, so rows are keyed on (surface, modelId), never
- * modelId alone — otherwise the two surfaces' costs silently collapse into one row.
+ * What the model was asked to DO, which is not the same question as which product surface
+ * asked it — `AiSurface` in `$lib/types/db-enums` is chatbot-vs-deskbot and this is
+ * conversation-vs-vision. Load-bearing discriminant: the same model (e.g. gemini-2.5-flash)
+ * serves both with very different per-call token profiles, so rows are keyed on
+ * (workload, modelId), never modelId alone — otherwise the two collapse into one row.
  */
-export type AiSurface = 'chat' | 'image';
+export type AiWorkload = 'chat' | 'image';
 
 /**
  * One row of the cross-surface "usage by model" table. Token counts are individually
@@ -22,7 +23,7 @@ export type AiSurface = 'chat' | 'image';
  * the price table OR no tokens were reported.
  */
 export interface UnifiedModelUsageRow {
-	surface: AiSurface;
+	workload: AiWorkload;
 	modelId: string;
 	/** Resolved provider; null when the source bucketed it (chat pre-capture/fallback rows). */
 	providerId: string | null;

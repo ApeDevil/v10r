@@ -1,8 +1,8 @@
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { SSE_HEARTBEAT_MS, SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW } from '$lib/server/config';
 import { getUnreadCount } from '$lib/server/db/notifications/queries';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { encodeEvent, registerStream, subscribeUser, unregisterStream } from '$lib/server/notifications';
+import { SSE_HEARTBEAT_MS, SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW } from '$lib/server/notifications/config';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:stream', SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW);

@@ -7,15 +7,15 @@
  * docs/blueprint/architecture/workers.md.
  */
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { rowsOf } from '$lib/server/db/rows';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import type { NotificationParams } from '$lib/server/db/schema/notifications/notifications';
 import { backoffMs, decideFailure, type FailureDecision } from './backoff';
+import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from './config';
 
 // 'push' exists in the enum/union for admin/health parity, but v1 never writes
-// push outbox rows — push delivers synchronously in NotificationService.
+// push outbox rows — push delivers synchronously in sendNotification.
 type Channel = 'email' | 'telegram' | 'discord' | 'push';
 
 /** A delivery taken by this worker, joined with the fields needed to render it. */
@@ -64,7 +64,7 @@ export async function createDeliveries(notificationId: string, channels: Channel
  * ONE statement, deliberately: `poolQueryViaFetch` only redirects single stateless
  * Pool.query() calls to HTTP — db.transaction() takes the WebSocket path that Bun
  * mishandles (see the comment in $lib/server/db/index.ts). Same reasoning as
- * $lib/server/mcp/demo/service.ts. A single statement is its own transaction, so the
+ * $lib/server/mcp/demo/state.ts. A single statement is its own transaction, so the
  * row locks taken by the subquery are held for the statement and released at commit,
  * which is exactly the window the UPDATE needs.
  *
@@ -239,7 +239,7 @@ export async function markFailed(
  * fence, and a repeatedly-reaped row still converges on 'dead' rather than looping.
  *
  * Flat reclaim delay rather than per-row exponential: a lapsed lease means the
- * WORKER died, not that the provider rejected us, and one constant keeps the backoff
+ * WORKER died, not that the channel rejected us, and one constant keeps the backoff
  * curve implemented in exactly one place.
  *
  * Called from notificationDelivery() inside the drain guard, so a process can never

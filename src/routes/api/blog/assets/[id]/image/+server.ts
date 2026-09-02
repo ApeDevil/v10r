@@ -1,8 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError } from '$lib/server/api/response';
 import { getPublicAssetById } from '$lib/server/blog';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError } from '$lib/server/http/response';
 import { generateBlogDownloadUrl } from '$lib/server/store/blog';
 import type { RequestHandler } from './$types';
 

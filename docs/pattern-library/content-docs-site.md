@@ -6,7 +6,7 @@ category: "Content & Blog"
 
 # Prerendered docs site
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A prerendered documentation site where each page both explains and demonstrates 
 
 ---
 
-_Machine-readable record: `content-docs-site` in `mcp/patterns.registry.json`._
+_Machine-readable record: `content-docs-site` in `pattern-library/registry.json`._

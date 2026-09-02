@@ -59,54 +59,41 @@ This extends the multi-client core pattern from `multi-client-core.md` — sched
 
 ## Vendor-Agnostic Scheduling
 
-**Principle: the registry owns the job. The platform owns the schedule.**
+**Principle: the registry owns the job and how often it is due. The platform owns the clock.**
 
-The registry maps a slug to an `execute` function — nothing more. Cadence lives in platform config (`vercel.json` crons on Vercel, a flat interval on persistent platforms). Switching hosting platforms requires zero job code changes; only the schedule source moves.
+The registry maps a slug to an `execute` function plus a `cadence` (`daily` | `weekly`). The platform decides *when* the clock ticks (one daily `vercel.json` entry on Vercel, a flat interval on persistent platforms) and asks the registry what is due. Switching hosting platforms requires zero job code changes; only the clock moves.
 
 ### How It Works
 
 ```
 Job Registry (slug → execute fn)
          │
-         ├── Vercel adapter:     vercel.json crons → GET /api/cron/[job]
+         ├── Vercel adapter:     vercel.json → GET /api/cron/due (everything due today, one wake)
+         │                       + one entry per `standalone` job → GET /api/cron/[job]
          ├── Persistent adapter: setInterval runs every job on a flat cadence
-         └── External adapter:   any HTTP cron service calls /api/cron/[job]
+         └── External adapter:   any HTTP cron service calls /api/cron/due or /api/cron/[job]
 ```
 
 ### The Three Triggering Strategies
 
 **Strategy A: Vercel Cron (serverless platforms)**
 
-Vercel sends an HTTP GET to `/api/cron/[job]` on the schedule defined in `vercel.json`. The endpoint validates the bearer token, looks up the job, and calls `runJob()`. Schedules live in `vercel.json` only — the registry has no `schedule` field to read.
+Vercel sends one HTTP GET a day to `/api/cron/due`. The endpoint validates the bearer token, asks the registry for `jobsDueOn(today)` — every `daily` job, plus the `weekly` ones on Sunday (UTC) — and calls `runJob()` for each **sequentially, in registry order**, so the order in `jobs/index.ts` is the run order (digest before delivery, rollup before cleanup). Each job still gets its own `job_execution` row.
 
 ```json
 {
   "crons": [
-    { "path": "/api/cron/session-cleanup", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/log-cleanup", "schedule": "0 4 * * 0" },
-    { "path": "/api/cron/analytics-cleanup", "schedule": "0 2 * * *" },
-    { "path": "/api/cron/analytics-rollup", "schedule": "30 2 * * *" },
-    { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" },
-    { "path": "/api/cron/dbops-refresh", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/dbops-reaper", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/notification-cleanup", "schedule": "15 3 * * *" },
-    { "path": "/api/cron/notification-delivery", "schedule": "0 8 * * *" },
-    { "path": "/api/cron/telegram-token-cleanup", "schedule": "30 3 * * *" },
-    { "path": "/api/cron/grant-request-expiry", "schedule": "45 3 * * *" },
-    { "path": "/api/cron/discord-token-refresh", "schedule": "30 4 * * *" },
-    { "path": "/api/cron/desk-rawrag-sync", "schedule": "15 5 * * *" },
-    { "path": "/api/cron/desk-retention", "schedule": "0 6 * * 0" },
-    { "path": "/api/cron/ai-telemetry-retention", "schedule": "30 6 * * 0" },
-    { "path": "/api/cron/audit-log-retention", "schedule": "0 7 * * 0" },
-    { "path": "/api/cron/mcp-telemetry-retention", "schedule": "30 7 * * 0" },
-    { "path": "/api/cron/blog-orphan-reaper", "schedule": "45 5 * * *" }
+    { "path": "/api/cron/due", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" }
   ]
 }
 ```
 
-> **Every registered job needs a `vercel.json` cron.** A slug with no entry never fires on Vercel — the registry does not imply a schedule. Earlier only 6 of 11 jobs were scheduled, so `desk-rawrag-sync`, `grant-request-expiry`, `notification-cleanup`, and the two token jobs silently never ran in production. All jobs now carry a cron.
+> **Why one sweep and not one entry per job.** Neon bills the endpoint's *awake* time, and a suspended endpoint that a cron wakes for two seconds of DELETEs stays up for its 5-minute minimum. Nineteen entries spread across the morning were thirteen separate wakes a day — ~9 CU-hours a month of the Free plan's 100 for trivial work. Hobby quantizes cron timing by up to an hour, so staggering entries can never be relied on to coalesce them; one handler can. The August 2026 quota exhaustion is the receipt.
 
-> **Vercel Hobby allows daily crons only.** Any expression that would fire more than once per day (`*/5 * * * *`, `0 */6 * * *`, …) **fails the whole deployment** with "Hobby accounts are limited to daily cron jobs" — this bit us on 2026-07-04. All schedules above are therefore once-daily (Hobby also quantizes timing to ±59 min). On a Pro plan, `notification-delivery` should go back to `*/5 * * * *` and the two token/sync jobs to `0 */6 * * *`.
+> **`standalone: true` keeps a job on its own entry.** The sweep has to fit Vercel Hobby's 60 s function ceiling with room to spare. Every job finishes in under four seconds except `bot-ranges-refresh`, which fetches ~10 operator and datacenter feeds and has taken 45 s — so it is marked `standalone` and keeps its own cron. `jobs/index.test.ts` asserts that the Sunday sweep plus the standalone entries cover the whole registry, so a job can no longer be registered and silently never run (which is what happened to 5 of 11 jobs before 2026-07).
+
+> **Vercel Hobby allows daily crons only.** Any expression that would fire more than once per day (`*/5 * * * *`, `0 */6 * * *`, …) **fails the whole deployment** with "Hobby accounts are limited to daily cron jobs" — this bit us on 2026-07-04. Hobby also quantizes timing to ±59 min. On a Pro plan, `notification-delivery` could get its own `*/5 * * * *` entry again.
 
 **Strategy B: Persistent scheduler (containers, VPS, Fly, Railway)**
 
@@ -133,7 +120,7 @@ The platform detection (`platform.persistent`) gates activation — on Vercel, t
 
 **Strategy C: External HTTP cron (any platform)**
 
-The `/api/cron/[job]` endpoint is already platform-agnostic. Any HTTP client that passes the bearer token can trigger any registered job. This works with external cron services (cron-job.org, EasyCron, GitHub Actions scheduled workflows) as a universal fallback.
+Both endpoints are platform-agnostic. Any HTTP client that passes the bearer token can call `/api/cron/due` for the daily sweep or `/api/cron/[job]` for one job by slug. This works with external cron services (cron-job.org, EasyCron, GitHub Actions scheduled workflows) as a universal fallback, and `/api/cron/[job]` is also how a single job is re-run by hand.
 
 ### Migration Between Platforms
 
@@ -167,7 +154,7 @@ src/lib/server/
     grant-request-expiry.ts
     dbops-refresh.ts
     dbops-reaper.ts
-    desk-rawrag-sync.ts
+    desk-retrieval-sync.ts
     desk-retention.ts
     ai-telemetry-retention.ts
     audit-log-retention.ts
@@ -176,7 +163,8 @@ src/lib/server/
 
 src/routes/
   api/
-    cron/[job]/+server.ts           ← Vercel cron + external HTTP trigger
+    cron/due/+server.ts             ← Vercel cron: everything due today, one invocation
+    cron/[job]/+server.ts           ← one job by slug: standalone crons, external triggers, re-runs
   [[locale=locale]]/
     admin/jobs/                     ← Admin UI for job management
       +page.server.ts               ← List + trigger (form actions)
@@ -187,38 +175,37 @@ src/routes/
 
 ## Job Registry
 
-The registry is the single source of truth for all scheduled and manual jobs. Each entry maps a slug to an `execute` function returning a result count — no metadata. Cadence lives in `vercel.json`, not here.
+The registry is the single source of truth for all scheduled and manual jobs. Each entry maps a slug to an `execute` function returning a result count, a `cadence`, and optionally `standalone`. **Insertion order is the run order of the daily sweep** — the comment above the object lists the dependencies it carries.
 
 ```typescript
 // src/lib/server/jobs/index.ts
 
 export interface Job {
   execute: () => Promise<number>;
+  cadence: 'daily' | 'weekly';   // weekly jobs ride the Sunday (UTC) sweep
+  standalone?: true;             // own vercel.json entry; never in the sweep
 }
 
 export const jobs: Record<string, Job> = {
-  'session-cleanup': { execute: sessionCleanup },
-  'log-cleanup': { execute: logCleanup },
-  'notification-cleanup': { execute: notificationCleanup },
-  'notification-delivery': { execute: notificationDelivery },
-  'telegram-token-cleanup': { execute: telegramTokenCleanup },
-  'discord-token-refresh': { execute: discordTokenRefresh },
-  'analytics-cleanup': { execute: analyticsCleanup },
-  'analytics-rollup': { execute: analyticsRollup },
-  'bot-ranges-refresh': { execute: botRangesRefresh },
-  'grant-request-expiry': { execute: grantRequestExpiry },
-  'dbops-refresh': { execute: dbopsRefresh },
-  'dbops-reaper': { execute: dbopsReaper },
-  'desk-rawrag-sync': { execute: deskRawragSync },
-  'desk-retention': { execute: deskRetention },
-  'ai-telemetry-retention': { execute: aiTelemetryRetention },
-  'audit-log-retention': { execute: auditLogRetention },
-  'mcp-telemetry-retention': { execute: mcpTelemetryRetention },
-  'blog-orphan-reaper': { execute: blogOrphanReaper },
+  'bot-hits-flush': { execute: botHitsFlush, cadence: 'daily' },        // first: lands rows the sweeps below govern
+  'analytics-rollup': { execute: analyticsRollup, cadence: 'daily' },
+  'analytics-cleanup': { execute: analyticsCleanup, cadence: 'daily' },
+  'session-cleanup': { execute: sessionCleanup, cadence: 'daily' },
+  // …
+  'notification-digest': { execute: notificationDigest, cadence: 'daily' },
+  'notification-delivery': { execute: notificationDelivery, cadence: 'daily' },
+  // …
+  'log-cleanup': { execute: logCleanup, cadence: 'weekly' },
+  'desk-retention': { execute: deskRetention, cadence: 'weekly' },
+  // …
+  'bot-ranges-refresh': { execute: botRangesRefresh, cadence: 'daily', standalone: true },
 };
+
+/** Slugs the sweep runs on `date`, in registry order. Standalone jobs never appear. */
+export function jobsDueOn(date: Date): string[];
 ```
 
-The slug is the only identifier — it keys the registry, the `vercel.json` cron path, and the `job_slug` column in `job_execution`. Which slugs run on a cron, and when, is defined entirely in `vercel.json`.
+The slug is the only identifier — it keys the registry, the `/api/cron/[job]` path, and the `job_slug` column in `job_execution`. Which slugs are due on a given day is answered by `jobsDueOn`; the only thing `vercel.json` says is when the sweep runs.
 
 ---
 

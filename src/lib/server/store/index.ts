@@ -15,3 +15,16 @@ function createS3(): S3Client | null {
 
 export const s3: S3Client | null = createS3();
 export const BUCKET: string = env.R2_BUCKET_NAME ?? '';
+
+// Public surface. This file is a construction site (it builds the S3 client), so the
+// re-exports live here rather than in a separate barrel — callers outside `store/` must
+// still be able to reach the error, type and guard modules without a deep import.
+export { classifyS3Error, StoreError, type StoreErrorKind } from './errors';
+export {
+	assertShowcaseKey,
+	checkObjectLimit,
+	isPublicShowcaseKey,
+	SHOWCASE_PREFIX,
+	SHOWCASE_PRIVATE_PREFIXES,
+} from './guards';
+export * from './types';

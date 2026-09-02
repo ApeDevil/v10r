@@ -5,7 +5,7 @@
 import { and, eq, lt, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { refreshDiscordTokens } from '$lib/server/notifications/providers/discord';
+import { refreshDiscordTokens } from '$lib/server/notifications/channels/discord';
 
 export async function discordTokenRefresh(): Promise<number> {
 	const refreshBefore = new Date(Date.now() + 24 * 60 * 60 * 1000);

@@ -13,8 +13,8 @@ import {
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { DagGraph, FlowDiagram, StateDiagram } from '$lib/components/viz';
 import * as m from '$lib/paraglide/messages';
-import { HANDSHAKE_STEPS, TOOL_CARDS } from '$lib/showcase/mcp/tool-cards';
-import DemoCard from './_components/DemoCard.svelte';
+import { HANDSHAKE_STEPS, TOOL_CARDS } from '$lib/showcases/mcp/tool-cards';
+import VizDemoCard from './_components/VizDemoCard.svelte';
 
 // Registry data arrives projected from +page.server.ts — the registry JSON
 // itself must never enter the client module graph (dev-server fs.allow 403).
@@ -56,7 +56,7 @@ const archNodes: Node[] = [
 	{ id: 'container', type: 'flow', position: { x: 250, y: 200 }, data: { label: 'Ephemeral bun container' } },
 	{ id: 'server', type: 'flow', position: { x: 250, y: 300 }, data: { label: 'server.ts stdio JSON-RPC loop' } },
 	{ id: 'tools', type: 'flow', position: { x: 250, y: 400 }, data: { label: '6 read-only tools' } },
-	{ id: 'registry', type: 'flow', position: { x: 80, y: 500 }, data: { label: 'patterns.registry.json' } },
+	{ id: 'registry', type: 'flow', position: { x: 80, y: 500 }, data: { label: 'registry.json' } },
 	{ id: 'files', type: 'flow', position: { x: 420, y: 500 }, data: { label: 'Repo file excerpts' } },
 	{
 		id: 'response',
@@ -154,7 +154,7 @@ const handshakeEdges: Edge[] = [
 			{/each}
 		</div>
 		<p class="lead">
-			Every number on this page is computed live from <code>mcp/patterns.registry.json</code> — the same file the
+			Every number on this page is computed live from <code>pattern-library/registry.json</code> — the same file the
 			MCP server reads.
 		</p>
 
@@ -167,9 +167,9 @@ const handshakeEdges: Edge[] = [
 			</p>
 
 			<div class="demos">
-				<DemoCard
+				<VizDemoCard
 					title="Registry Dependency DAG"
-					description="Live projection of mcp/patterns.registry.json. Emulating a pattern means building its ancestors first."
+					description="Live projection of pattern-library/registry.json. Emulating a pattern means building its ancestors first."
 				>
 					{#snippet visualization()}
 						<DagGraph data={dagData} ariaLabel="Pattern dependency graph of the MCP registry" />
@@ -199,14 +199,14 @@ const handshakeEdges: Edge[] = [
 						</Table>
 					{/snippet}
 					{#snippet code()}
-						<pre><code>{`// $lib/showcase/mcp/registry-viz.ts — fed by a build-time JSON import
+						<pre><code>{`// $lib/showcases/mcp/registry-viz.ts — fed by a build-time JSON import
 const dagData = toDagData(registry); // deep-tier subgraph only
 // nodes: deep.map((p) => ({ id: p.id, label: SHORT_LABELS[p.id], group: p.category }))
 // edges: deep.flatMap((p) => p.depends_on.map((dep) => ({ source: dep, target: p.id })))
 
 <DagGraph data={dagData} ariaLabel="Pattern dependency graph" />`}</code></pre>
 					{/snippet}
-				</DemoCard>
+				</VizDemoCard>
 				{#if undrawn.length > 0}
 					<p class="dag-caption">
 						{undrawn.length} of {stats.deepCount} deep patterns ({undrawn.map((n) => n.id).join(', ')}) have no
@@ -225,7 +225,7 @@ const dagData = toDagData(registry); // deep-tier subgraph only
 			</p>
 
 			<div class="demos">
-				<DemoCard
+				<VizDemoCard
 					title="Spawn-per-session Architecture"
 					description="Kernel-enforced isolation: the server can read the repo and nothing else — no network, no writes, no persistence."
 				>
@@ -246,7 +246,7 @@ const dagData = toDagData(registry); // deep-tier subgraph only
   -v <repo>:/v10r:ro \\
   docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts`}</code></pre>
 					{/snippet}
-				</DemoCard>
+				</VizDemoCard>
 			</div>
 		</section>
 
@@ -277,7 +277,7 @@ const dagData = toDagData(registry); // deep-tier subgraph only
 			</div>
 
 			<div class="demos">
-				<DemoCard
+				<VizDemoCard
 					title="MCP Handshake"
 					description="The client → server sequence mcp/smoke.ts exercises. Notifications get no reply; tools/call repeats per invocation."
 				>
@@ -304,7 +304,7 @@ const dagData = toDagData(registry); // deep-tier subgraph only
 							</Body>
 						</Table>
 					{/snippet}
-				</DemoCard>
+				</VizDemoCard>
 			</div>
 		</section>
 	</main>

@@ -14,7 +14,7 @@ import {
 	SphereGeometry,
 	Vector3,
 } from 'three';
-import type { Accessory, CustomizationConfig, CustomizationState } from '$lib/config/customization';
+import type { Accessory, CustomizationConfig, CustomizationState } from '$lib/3d/customization';
 
 /** Subset of THREE.GLTFParser used for variant material resolution */
 interface GltfParser {

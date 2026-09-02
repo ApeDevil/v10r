@@ -8,6 +8,7 @@ import { getOrCreatePreferences, updatePreferences } from '$lib/server/db/prefer
 import { updateDisplayName } from '$lib/server/db/user';
 import { deleteUserData, SoleAdminBlockedError } from '$lib/server/privacy';
 import { AVATAR_ERROR_MESSAGES, removeAvatar, uploadAvatar, validateAvatar } from '$lib/server/store/avatar';
+import type { Theme } from '$lib/types/db-enums';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -18,7 +19,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const form = await superValidate(
 		{
 			displayName: locals.user.name,
-			theme: prefs.theme as 'light' | 'dark' | 'system',
+			theme: prefs.theme as Theme,
 			displayDensity: prefs.displayDensity as 'compact' | 'comfortable' | 'spacious',
 			locale: prefs.locale as 'en' | 'es' | 'fr' | 'de' | 'ja',
 			timezone: prefs.timezone,

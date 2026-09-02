@@ -1,6 +1,6 @@
 import { eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../index';
-import { userPreferences } from '../schema/app/user-preferences';
+import { userPreferences } from '../schema/personalization/user-preferences';
 
 /** Get or create user preferences (triple-read pattern for race safety) */
 export async function getOrCreatePreferences(userId: string) {

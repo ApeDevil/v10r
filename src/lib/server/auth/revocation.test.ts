@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const store = new Map<string, string>();
 
 vi.mock('$app/environment', () => ({ dev: false }));
-vi.mock('$lib/server/config', () => ({ SESSION_EXPIRES_IN: 604800 }));
+vi.mock('./config', () => ({ SESSION_EXPIRES_IN: 604800 }));
 vi.mock('$lib/server/cache', () => ({
 	redis: {
 		get: async (k: string) => store.get(k) ?? null,

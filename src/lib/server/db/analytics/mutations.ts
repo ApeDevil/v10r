@@ -6,6 +6,7 @@ import { and, eq, isNull, type SQL, sql } from 'drizzle-orm';
 import { normalizeIpForVerification } from '$lib/server/analytics/bot-ranges';
 import { db } from '$lib/server/db';
 import { events, sessions } from '$lib/server/db/schema/analytics';
+import type { ConsentTier } from '$lib/types/db-enums';
 
 /**
  * Longest path we will store. Every real route is far shorter, and the bound is
@@ -61,7 +62,7 @@ export interface RecordEventInput {
 	route?: string;
 	referrer?: string;
 	metadata?: Record<string, string | number | boolean>;
-	consentTier?: 'necessary' | 'analytics';
+	consentTier?: ConsentTier;
 	debugOwnerId?: string | null;
 	occurredAt?: Date;
 }
@@ -138,7 +139,7 @@ export async function upsertSession(session: {
 	device?: string;
 	browser?: string;
 	country?: string;
-	consentTier?: 'necessary' | 'analytics';
+	consentTier?: ConsentTier;
 	pairedAdminUserId?: string | null;
 	/**
 	 * Permanent debug attribution, unlike `pairedAdminUserId` (which the cleanup

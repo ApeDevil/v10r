@@ -1,10 +1,10 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { createAsset } from '$lib/server/blog';
 import { ConfirmUploadSchema } from '$lib/server/blog/schemas';
 import { isUniqueViolation } from '$lib/server/db/shared/folder-tree';
+import { guardApiBlogAuthor } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
 import { confirmBlogUpload, deleteBlogObject, verifyUploadTicket } from '$lib/server/store/blog';
 import { classifyS3Error, StoreError } from '$lib/server/store/errors';
 import type { RequestHandler } from './$types';

@@ -2,10 +2,10 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { Divider, DropdownMenu } from '$lib/components';
-import LogoHero from '$lib/components/branding/LogoHero.svelte';
+import { LogoHero } from '$lib/components/primitives';
 import { cookieMaxAge, cookieName, type Locale, locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
-import { showcases } from '$lib/showcases/registry';
+import { showcases } from '$lib/showcases/catalog/registry';
 import { getStyle } from '$lib/state/style.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { setCookie } from '$lib/utils/cookies';

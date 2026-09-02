@@ -1,20 +1,16 @@
 import * as v from 'valibot';
-import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { listAssets } from '$lib/server/blog';
+import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
 import { RequestUploadSchema } from '$lib/server/blog/schemas';
-import {
-	BLOG_WRITE_RATE_LIMIT_MAX,
-	BLOG_WRITE_RATE_LIMIT_PREFIX,
-	BLOG_WRITE_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+import { guardApiBlogAuthor } from '$lib/server/http/guards';
+import { apiPaginated, parsePagination } from '$lib/server/http/pagination';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
 import { generateBlogDownloadUrl, generateBlogUploadUrl } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
 import type { RequestHandler } from './$types';
 
-const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
+const ratelimit = createLimiter(WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);
 
 /** List all assets for the current author, with download URLs. */
 export const GET: RequestHandler = async ({ url, locals }) => {

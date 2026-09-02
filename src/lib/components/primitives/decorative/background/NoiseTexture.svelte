@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { cn } from '$lib/utils/cn';
-import { createDecorativeId } from '../utils';
+import { createDecorativeId } from '../decorative-id';
 
 interface Props {
 	frequency?: number;

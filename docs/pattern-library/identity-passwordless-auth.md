@@ -6,7 +6,7 @@ category: "Identity & Access"
 
 # Passwordless auth (magic link + OTP)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ Session-based authentication through Better Auth using a magic link and OTP code
 
 ---
 
-_Machine-readable record: `identity-passwordless-auth` in `mcp/patterns.registry.json`._
+_Machine-readable record: `identity-passwordless-auth` in `pattern-library/registry.json`._

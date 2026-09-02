@@ -8,9 +8,9 @@
  */
 import { getActiveProviderInfo, getToolProvider } from '$lib/server/ai';
 import { buildProviderRegistry, getCooldownResumeAt } from '$lib/server/ai/providers';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiOk } from '$lib/server/api/response';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const config = { runtime: 'nodejs22.x', maxDuration: 10 };

@@ -1,5 +1,5 @@
-import { ANALYTICS_AGGREGATE_RETENTION_DAYS, ANALYTICS_RETENTION_DAYS } from '$lib/server/config';
 import { getConsentSplit, getDataAgeStats } from '$lib/server/db/analytics/aggregations';
+import { retentionDays } from '$lib/server/retention';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -13,8 +13,8 @@ export const load: PageServerLoad = async () => {
 		return {
 			consent,
 			dataAge,
-			retentionDays: ANALYTICS_RETENTION_DAYS,
-			aggregateRetentionDays: ANALYTICS_AGGREGATE_RETENTION_DAYS,
+			eventRetentionDays: retentionDays('analytics-events'),
+			aggregateRetentionDays: retentionDays('analytics-aggregates'),
 			queryMs,
 		};
 	} catch (err) {
@@ -22,8 +22,8 @@ export const load: PageServerLoad = async () => {
 		return {
 			consent: [],
 			dataAge: { totalEvents: 0, oldestEvent: null, newestEvent: null, totalSessions: 0 },
-			retentionDays: ANALYTICS_RETENTION_DAYS,
-			aggregateRetentionDays: ANALYTICS_AGGREGATE_RETENTION_DAYS,
+			eventRetentionDays: retentionDays('analytics-events'),
+			aggregateRetentionDays: retentionDays('analytics-aggregates'),
 			error: 'Unable to load analytics data',
 		};
 	}

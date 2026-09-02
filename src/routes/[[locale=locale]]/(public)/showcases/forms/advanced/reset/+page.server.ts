@@ -1,16 +1,16 @@
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { feedbackSchema } from '$lib/schemas/showcase/advanced';
+import { feedbackFormSchema } from '$lib/schemas/showcase/advanced';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate({ rating: 3, comment: '', recommend: false }, valibot(feedbackSchema));
+	const form = await superValidate({ rating: 3, comment: '', recommend: false }, valibot(feedbackFormSchema));
 	return { title: 'Reset - Advanced - Showcases', form };
 };
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, valibot(feedbackSchema));
+		const form = await superValidate(request, valibot(feedbackFormSchema));
 
 		if (!form.valid) {
 			return fail(400, { form });

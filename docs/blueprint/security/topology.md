@@ -10,7 +10,7 @@ this endpoint?" has no index to consult. This is that index.
 | Concern | Home |
 |---|---|
 | Admin authority | `$lib/server/auth/admin-ids.ts` — parses `ADMIN_USER_ID`; the single source |
-| Route/endpoint guards | `$lib/server/auth/guards.ts` |
+| Route/endpoint guards | `$lib/server/http/guards.ts` |
 | Session revocation + ban | `$lib/server/auth/revocation.ts`, enforced in `sessionPopulate` |
 | Step-up freshness | `$lib/server/auth/step-up.ts` |
 | Factor-change side effects | `$lib/server/auth/factor-changes.ts` (audit, notify, revoke) |
@@ -18,7 +18,7 @@ this endpoint?" has no index to consult. This is that index.
 | Redirect-target validation | `$lib/server/security/safe-path.ts` |
 | Response headers | `securityHeaders` in `src/hooks.server.ts` |
 | CSP | `svelte.config.js` (not a hook — it is build config) |
-| Rate limiting | `$lib/server/api/rate-limit.ts` + per-route limiters |
+| Rate limiting | `$lib/server/http/rate-limit.ts` + per-route limiters |
 | Abuse (captcha, honeypot, per-email) | `$lib/server/abuse/` |
 | MCP bearer | `$lib/server/mcp/auth.ts` |
 | AI entry guard + budget | `$lib/server/ai/guard.ts` |

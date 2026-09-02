@@ -1,6 +1,6 @@
-import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
-import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { listDomains } from '$lib/server/blog';
+import { guardApiBlogAuthor } from '$lib/server/http/guards';
+import { apiPaginated, parsePagination } from '$lib/server/http/pagination';
 import type { RequestHandler } from './$types';
 
 /** List all domains (for the metadata drawer domain picker). */

@@ -1,6 +1,5 @@
 import { fail } from '@sveltejs/kit';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
 import {
 	createDomain,
 	createTag,
@@ -11,9 +10,10 @@ import {
 	updateDomain,
 	updateTag,
 } from '$lib/server/blog';
+import { requireAdmin } from '$lib/server/http/guards';
+import { SLUG_PATTERN } from '$lib/server/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
-const SLUG_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 // Only the lucide collection is registered in presetIcons (uno.config.ts), so
 // non-lucide prefixes would validate but render blank — restrict to lucide.
 const ICON_RE = /^i-lucide-[a-z0-9-]+$/;
@@ -38,7 +38,7 @@ export const actions: Actions = {
 
 		if (!name) return fail(400, { message: 'Tag name is required.' });
 		if (!slug) return fail(400, { message: 'Tag slug is required.' });
-		if (!SLUG_RE.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
+		if (!SLUG_PATTERN.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
 		if (icon && !ICON_RE.test(icon))
 			return fail(400, { message: 'Icon must be a valid icon class (e.g. i-lucide-code).' });
 		if (color !== null && (Number.isNaN(color) || color < 1 || color > 8))
@@ -84,7 +84,7 @@ export const actions: Actions = {
 		if (!tagId) return fail(400, { message: 'Tag ID required.' });
 		if (!name) return fail(400, { message: 'Tag name is required.' });
 		if (!slug) return fail(400, { message: 'Tag slug is required.' });
-		if (!SLUG_RE.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
+		if (!SLUG_PATTERN.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
 		if (icon && !ICON_RE.test(icon))
 			return fail(400, { message: 'Icon must be a valid icon class (e.g. i-lucide-code).' });
 		if (color !== null && (Number.isNaN(color) || color < 1 || color > 8))
@@ -149,7 +149,7 @@ export const actions: Actions = {
 
 		if (!name) return fail(400, { message: 'Domain name is required.' });
 		if (!slug) return fail(400, { message: 'Domain slug is required.' });
-		if (!SLUG_RE.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
+		if (!SLUG_PATTERN.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
 		if (icon && !ICON_RE.test(icon))
 			return fail(400, { message: 'Icon must be a valid icon class (e.g. i-lucide-code).' });
 		if (color !== null && (Number.isNaN(color) || color < 1 || color > 8))
@@ -190,7 +190,7 @@ export const actions: Actions = {
 		if (!domainId) return fail(400, { message: 'Domain ID required.' });
 		if (!name) return fail(400, { message: 'Domain name is required.' });
 		if (!slug) return fail(400, { message: 'Domain slug is required.' });
-		if (!SLUG_RE.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
+		if (!SLUG_PATTERN.test(slug)) return fail(400, { message: 'Slug must be lowercase alphanumeric with hyphens.' });
 		if (icon && !ICON_RE.test(icon))
 			return fail(400, { message: 'Icon must be a valid icon class (e.g. i-lucide-code).' });
 		if (color !== null && (Number.isNaN(color) || color < 1 || color > 8))

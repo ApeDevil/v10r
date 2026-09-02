@@ -112,17 +112,17 @@ async function embedMany_(texts: string[]): Promise<number[][]> {
 
 async function deleteExisting() {
 	console.log('[seed:silly] Removing previous fixture rows...');
-	await db.execute(sql`DELETE FROM rag.llmwiki_page_source WHERE llmwiki_page_id LIKE 'lwp_silly_%'`);
-	await db.execute(sql`DELETE FROM rag.llmwiki_page WHERE id LIKE 'lwp_silly_%'`);
-	await db.execute(sql`DELETE FROM rag.chunk WHERE id LIKE 'chk_silly_%'`);
-	await db.execute(sql`DELETE FROM rag.document WHERE id = ${DOC_ID}`);
+	await db.execute(sql`DELETE FROM retrieval.llmwiki_page_source WHERE llmwiki_page_id LIKE 'lwp_silly_%'`);
+	await db.execute(sql`DELETE FROM retrieval.llmwiki_page WHERE id LIKE 'lwp_silly_%'`);
+	await db.execute(sql`DELETE FROM retrieval.chunk WHERE id LIKE 'chk_silly_%'`);
+	await db.execute(sql`DELETE FROM retrieval.document WHERE id = ${DOC_ID}`);
 }
 
 async function insertDocumentAndChunks(userId: string) {
 	console.log('[seed:silly] Inserting document + chunks...');
 	const docHash = hash(CHUNKS.map((c) => c.content).join('\n\n'));
 	await db.execute(sql`
-		INSERT INTO rag.document (id, user_id, title, source, status, total_chunks, total_tokens, content_hash)
+		INSERT INTO retrieval.document (id, user_id, title, source, status, total_chunks, total_tokens, content_hash)
 		VALUES (${DOC_ID}, ${userId}, 'Quorblaxian Cheese Codex (fictional)', 'text', 'ready', ${CHUNKS.length}, 700, ${docHash})
 	`);
 
@@ -130,7 +130,7 @@ async function insertDocumentAndChunks(userId: string) {
 	for (let i = 0; i < CHUNKS.length; i++) {
 		const c = CHUNKS[i];
 		await db.execute(sql`
-			INSERT INTO rag.chunk (
+			INSERT INTO retrieval.chunk (
 				id, document_id, user_id, level, position, content, token_count, content_hash,
 				embedding_model_id, embedding
 			)
@@ -149,7 +149,7 @@ async function insertLlmwikiPages(userId: string) {
 		`${OVERVIEW_TEXT.title}\n${OVERVIEW_TEXT.tldr}\n${OVERVIEW_TEXT.tags.join(' ')}`,
 	);
 	await db.execute(sql`
-		INSERT INTO rag.llmwiki_page (
+		INSERT INTO retrieval.llmwiki_page (
 			id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,
 			frontmatter, embedding, search_vector, source_hash, source_count,
 			compiled_at, compiled_by_model, stale
@@ -172,7 +172,7 @@ async function insertLlmwikiPages(userId: string) {
 	for (let i = 0; i < PAGES.length; i++) {
 		const p = PAGES[i];
 		await db.execute(sql`
-			INSERT INTO rag.llmwiki_page (
+			INSERT INTO retrieval.llmwiki_page (
 				id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,
 				frontmatter, embedding, search_vector, source_hash, source_count,
 				compiled_at, compiled_by_model, stale
@@ -197,7 +197,7 @@ async function insertPageSources() {
 	for (const p of PAGES) {
 		const chunkContent = CHUNKS.find((c) => c.id === p.chunkId)?.content ?? '';
 		await db.execute(sql`
-			INSERT INTO rag.llmwiki_page_source (
+			INSERT INTO retrieval.llmwiki_page_source (
 				llmwiki_page_id, chunk_id, document_id, weight, source_hash_at_compile
 			)
 			VALUES (${p.id}, ${p.chunkId}, ${DOC_ID}, 1.0, ${hash(chunkContent)})
@@ -207,7 +207,7 @@ async function insertPageSources() {
 	// RITUALS page also cross-cites schedule chunk at lower weight so we exercise pointer ordering.
 	const scheduleChunk = CHUNKS[2];
 	await db.execute(sql`
-		INSERT INTO rag.llmwiki_page_source (
+		INSERT INTO retrieval.llmwiki_page_source (
 			llmwiki_page_id, chunk_id, document_id, weight, source_hash_at_compile
 		)
 		VALUES (${PAGE_RITUALS}, ${scheduleChunk.id}, ${DOC_ID}, 0.4, ${hash(scheduleChunk.content)})

@@ -6,7 +6,7 @@ category: "Docs & Agent Experience"
 
 # Pattern Index (the generated README capability map)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation artifact
 
@@ -22,7 +22,7 @@ A generated table in README.md mapping every repo pattern to the doc that explai
 
 - `scripts/patterns/build-derived.ts` — Generates the README region + docs/pattern-library/ pages; --check mode gates staleness ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/patterns/build-derived.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/patterns/build-derived.ts))
 - `src/lib/server/patterns/render.ts` — Pure renderers (testable, Vite-free) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/patterns/render.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/patterns/render.ts))
-- `src/lib/showcases/registry.ts` — Showcase-route cells are validated against this registry's hrefs ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/showcases/registry.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/showcases/registry.ts))
+- `src/lib/showcases/catalog/registry.ts` — Showcase-route cells are validated against this registry's hrefs ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/showcases/catalog/registry.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/showcases/catalog/registry.ts))
 
 ## Tests
 
@@ -38,7 +38,7 @@ A generated table in README.md mapping every repo pattern to the doc that explai
 ## Emulation notes
 
 - Anchor the human-readable index to a machine-readable registry and GENERATE it — a hand-maintained twin drifts (this one did: its own row-count claim went stale before the generator existed).
-- Showcase-route cells are validated by mcp/validate-registry.ts against src/lib/showcases/registry.ts membership, not mere directory existence.
+- Showcase-route cells are validated by mcp/validate-registry.ts against src/lib/showcases/catalog/registry.ts membership, not mere directory existence.
 
 ## Depends on
 
@@ -46,4 +46,4 @@ A generated table in README.md mapping every repo pattern to the doc that explai
 
 ---
 
-_Machine-readable record: `pattern-index` in `mcp/patterns.registry.json`._
+_Machine-readable record: `pattern-index` in `pattern-library/registry.json`._

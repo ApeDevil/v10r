@@ -10,14 +10,15 @@ import {
 	Footer,
 	NavigationProgress,
 	SessionMonitor,
-	ShortcutsModal,
+	ShortcutsDialog,
 	Sidebar,
 	ToastContainer,
 } from '$lib/components/shell';
-import { DESK_PANELS } from '$lib/config/desk-panels';
+import { DESK_PANELS } from '$lib/desk/panels';
+import type { Locale } from '$lib/i18n';
 import { localizeHref } from '$lib/i18n/runtime';
 import * as m from '$lib/paraglide/messages';
-import type { SearchLocale, SearchResult } from '$lib/search/types';
+import type { SearchResult } from '$lib/search/types';
 import type { ResolvedAnnouncement } from '$lib/server/admin/announcements';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { getModals } from '$lib/state/modals.svelte';
@@ -88,7 +89,7 @@ onMount(() => {
 // server lane (full-body docs + live blog). Lazy-fetches the shard on first open.
 const search = createSearchEngine();
 let searchQuery = $state('');
-const activeLocale = $derived((page.params.locale ?? 'en') as SearchLocale);
+const activeLocale = $derived((page.params.locale ?? 'en') as Locale);
 
 $effect(() => {
 	search.setLocale(activeLocale);
@@ -231,7 +232,7 @@ const searchItems = $derived<CommandPaletteItem[]>([
 {/if}
 
 <!-- Shortcuts modal -->
-<ShortcutsModal />
+<ShortcutsDialog />
 
 <!-- Session lifecycle monitor -->
 {#if session}

@@ -3,8 +3,8 @@ import type { AddressInfo } from 'node:net';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { mcpMethodNotAllowed, respondToMcpPost } from './http';
-import { publicPatternRegistry } from './patterns/registry';
+import { mcpMethodNotAllowed, respondToMcpPost } from './http.adapter';
+import { publicPatternRegistry } from './patterns/tools';
 import type { McpServerIdentity } from './transport';
 import { noopMcpObserver } from './types';
 

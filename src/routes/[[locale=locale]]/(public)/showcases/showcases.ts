@@ -8,7 +8,7 @@
  * `ShowcaseLayout` / `NavTab` / `PageHeader`.
  */
 import * as m from '$lib/paraglide/messages';
-import { groupByDomain, type ShowcaseCard, showcases } from '$lib/showcases/registry';
+import { groupByDomain, type ShowcaseCard, showcases } from '$lib/showcases/catalog/registry';
 
 export { groupByDomain };
 

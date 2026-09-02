@@ -6,7 +6,7 @@ category: "Data Viz"
 
 # Maps
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ MapLibre GL components for a base map, markers, and GeoJSON choropleth overlays,
 
 ---
 
-_Machine-readable record: `viz-maps` in `mcp/patterns.registry.json`._
+_Machine-readable record: `viz-maps` in `pattern-library/registry.json`._

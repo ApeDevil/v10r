@@ -9,7 +9,7 @@
 
 import ExifReader from 'exifreader';
 import sharp from 'sharp';
-import { IMAGE_MAX_DIMENSION } from '$lib/server/config';
+import { MAX_DIMENSION } from './config';
 import type { ExtractedExif, ProcessedImage } from './types';
 
 const MAGIC: { mime: string; test: (b: Uint8Array) => boolean }[] = [
@@ -46,8 +46,8 @@ export async function processImage(bytes: Uint8Array): Promise<ProcessedImage> {
 	const out = await sharp(bytes, { limitInputPixels: 25_000_000, failOn: 'truncated' })
 		.rotate() // bake EXIF orientation into pixels, then it's gone with the rest of the metadata
 		.resize({
-			width: IMAGE_MAX_DIMENSION,
-			height: IMAGE_MAX_DIMENSION,
+			width: MAX_DIMENSION,
+			height: MAX_DIMENSION,
 			fit: 'inside',
 			withoutEnlargement: true,
 		})

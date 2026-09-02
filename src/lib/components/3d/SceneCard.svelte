@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
+import type { Model3D } from '$lib/3d/models';
+import { resolveCardConfig } from '$lib/3d/models';
 import { BoundaryFallback } from '$lib/components/composites';
-import type { Model3D } from '$lib/config/models';
-import { resolveCardConfig } from '$lib/config/models';
 import SceneContent from './SceneContent.svelte';
 
 interface Props {

@@ -6,7 +6,7 @@ category: "AI"
 
 # Chat assistant "Vely" (orchestrator, streaming)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ The chat-orchestrator module streams multi-provider LLM responses through Vely, 
 
 ---
 
-_Machine-readable record: `ai-chat-assistant` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-chat-assistant` in `pattern-library/registry.json`._

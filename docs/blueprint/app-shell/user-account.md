@@ -20,7 +20,7 @@ User account management for identity, security, and GDPR compliance. High-stakes
 The section is reached exclusively through the user menu (user button → Account);
 there is no sidebar nav entry for it.
 
-The data-export download is served by `/api/me/data/export/+server.ts` (GET → JSON), not a route under `/account`.
+The data-export download is served by `/api/account/data/export/+server.ts` (GET → JSON), not a route under `/account`.
 
 ## Tabbed Layout
 
@@ -263,12 +263,12 @@ await auth.api.revokeOtherSessions({
 
 ### Data Export Endpoint
 
-**Rate Limited:** Data export is computationally expensive. A per-IP limiter built with `createLimiter` from `$lib/server/api/rate-limit.ts` caps exports. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
+**Rate Limited:** Data export is computationally expensive. A per-IP limiter built with `createLimiter` from `$lib/server/http/rate-limit.ts` caps exports. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
 
 ```typescript
-// /api/me/data/export/+server.ts
+// /api/account/data/export/+server.ts
 import { error } from '@sveltejs/kit';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import type { RequestHandler } from './$types';
 
 // Sliding-window: 3 exports per day, keyed on client IP

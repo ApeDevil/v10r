@@ -4,13 +4,12 @@ Per-user daily token cap that prevents cost-amplification abuse. A single authen
 
 ---
 
-## Config (`$lib/server/config.ts`)
+## Config
 
-| Constant | Value | Note |
-|----------|-------|------|
-| `AI_DAILY_TOKEN_CAP` | `100_000` | Input + output tokens combined |
-
-At current model prices this caps spend at roughly $1–2 per user per day on premium models.
+`DAILY_TOKEN_CAP` in [`src/lib/server/ai/config.ts`](../../../src/lib/server/ai/config.ts)
+caps input + output tokens combined, per user, per UTC day. The number is not repeated here
+— at the value it currently holds, spend lands around $1–2 per user per day on premium
+models, and a doc that restates it is a doc that goes stale the first time it is tuned.
 
 ---
 
@@ -65,7 +64,7 @@ Uses Redis `INCRBY` followed by `EXPIRE` to set the TTL on first write of the da
 
 ## Check-Then-Charge Caveat (v1)
 
-The gate and charge are not atomic. A burst of N parallel requests can each pass `checkUserBudget` before any has called `chargeTokens`. The daily total can overshoot by up to `N × AI_MAX_TOKENS` before the cap engages.
+The gate and charge are not atomic. A burst of N parallel requests can each pass `checkUserBudget` before any has called `chargeTokens`. The daily total can overshoot by up to `N × MAX_TOKENS` before the cap engages.
 
 At current rates the worst-case overshoot is $0.20–0.50 — acceptable for v1. Upgrade to atomic pre-charge (reserve tokens before generation, reconcile after) if abuse data warrants it.
 

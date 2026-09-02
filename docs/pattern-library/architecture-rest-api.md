@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # REST API patterns (pagination, envelopes, rate limits)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -24,14 +24,14 @@ Defines the file-based +server.ts convention for REST endpoints, covering Valibo
 ## Code
 
 - `src/routes/api/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/routes/api) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/routes/api))
-- `src/lib/server/api/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/api) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/api))
+- `src/lib/server/http/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/http) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/http))
 
 ## Tests
 
 - `src/lib/api.gate.test.ts` — Client fetches to /api must ride apiFetch (CSRF header) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/api.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/api.gate.test.ts))
-- `src/lib/server/api/body.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/api/body.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/api/body.test.ts))
-- `src/lib/server/api/rate-limit.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/api/rate-limit.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/api/rate-limit.test.ts))
+- `src/lib/server/http/body.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/body.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/body.test.ts))
+- `src/lib/server/http/rate-limit.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/rate-limit.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/rate-limit.test.ts))
 
 ---
 
-_Machine-readable record: `architecture-rest-api` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-rest-api` in `pattern-library/registry.json`._

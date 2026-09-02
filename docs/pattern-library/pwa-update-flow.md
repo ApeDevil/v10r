@@ -6,7 +6,7 @@ category: "PWA"
 
 # Update flow (silent + idle toast, no auto skipWaiting)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A pending service-worker update rides the next client-side navigation silently, 
 
 ---
 
-_Machine-readable record: `pwa-update-flow` in `mcp/patterns.registry.json`._
+_Machine-readable record: `pwa-update-flow` in `pattern-library/registry.json`._

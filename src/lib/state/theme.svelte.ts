@@ -5,9 +5,10 @@
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import { apiFetch } from '$lib/api';
+import type { Theme } from '$lib/types/db-enums';
 import { setCookie } from '$lib/utils/cookies';
 
-type ThemeMode = 'light' | 'dark' | 'system';
+type ThemeMode = Theme;
 type AccentColor = 'blue' | 'purple' | 'green' | 'orange';
 
 interface ThemeState {

@@ -3,7 +3,7 @@
  *
  * LlmwikiHit  — what search returns for a single page (TOON-encoded into
  *               the chat system prompt).
- * LlmwikiPointer — link back to a rawrag chunk, hydrated from
+ * LlmwikiPointer — link back to a source chunk, hydrated from
  *               llmwiki_page_source for each hit (capped at POINTER_CAP).
  * LlmwikiPage — full page with body; returned by get_llmwiki_pages when
  *               the model asks for detail.
@@ -66,5 +66,5 @@ export interface LlmwikiCitation {
 	compiledAt: string;
 	sourceUpdatedAt: string;
 	verification: LlmwikiCitationVerification;
-	tier: 'llmwiki' | 'rawrag';
+	tier: 'llmwiki' | 'chunks';
 }

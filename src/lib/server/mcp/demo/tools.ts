@@ -14,7 +14,7 @@ import {
 	type ToolResult,
 	textResult,
 } from '../types';
-import { DEMO_COLORS } from './constants';
+import { DEMO_COLORS } from './config';
 import {
 	type DemoActor,
 	type DemoStateView,
@@ -25,7 +25,7 @@ import {
 	type SetStateResult,
 	setDemoColor,
 	setDemoMessage,
-} from './service';
+} from './state';
 
 /** Fixed machine identity for changes made through the admin MCP. */
 export const ADMIN_MCP_ACTOR: DemoActor = {

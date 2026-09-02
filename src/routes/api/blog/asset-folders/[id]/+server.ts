@@ -1,8 +1,5 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { deleteAssetFolder, getAssetFolder, moveAssetFolder, renameAssetFolder } from '$lib/server/blog/asset-folders';
 import {
 	FolderCycleError,
@@ -10,6 +7,9 @@ import {
 	FolderNotEmptyError,
 	FolderNotFoundError,
 } from '$lib/server/db/shared/folder-tree';
+import { guardApiBlogAuthor } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:asset-folders:mutate', 60, '1 m');

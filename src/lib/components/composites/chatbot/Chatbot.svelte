@@ -2,8 +2,8 @@
 import { MediaQuery } from 'svelte/reactivity';
 import { page } from '$app/state';
 import { apiFetch } from '$lib/api';
-import ChunkView from '$lib/components/chat/ChunkView.svelte';
-import type { CatalogSource, SourceChunk } from '$lib/components/chat/citation-types';
+import ChunkView from '$lib/components/composites/citation/ChunkView.svelte';
+import type { CatalogSource, SourceChunk } from '$lib/components/composites/citation/citation-types';
 import { Button } from '$lib/components/primitives/button';
 import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
 import { localizeHref } from '$lib/i18n';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml } from './providers/email';
+import { escapeHtml } from './channels/email';
 import { DIGEST_BODY_LIMITS, type DigestItem, renderDigest, renderNotification } from './render-message';
 
 const item = (messageKey: string): DigestItem => ({ messageKey, messageParams: {} });

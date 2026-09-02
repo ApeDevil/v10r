@@ -68,7 +68,7 @@ Every query and mutation module imports `db` as a module-level singleton (`impor
 
 ## Directory Structure
 
-Tests live next to source (co-located). A test file for `service.ts` sits at `service.test.ts`.
+Tests live next to source (co-located). A test file for `send.ts` sits at `send.test.ts`.
 
 ```
 src/
@@ -77,7 +77,7 @@ src/
       errors/
         index.ts
         index.test.ts              ← unit test
-      rawrag/
+      retrieval/
         rank.ts
         rank.test.ts               ← unit test (pure logic, highest value)
         chunk.ts
@@ -87,8 +87,8 @@ src/
           queries.ts
           queries.test.ts          ← integration test (PGlite)
       notifications/
-        service.ts
-        service.test.ts            ← integration test (PGlite)
+        send.ts
+        send.test.ts               ← integration test (PGlite)
       test/                        ← shared test utilities (not a test runner target)
         db.ts                      ← PGlite setup + schema push (drizzle-kit/api)
         fixtures.ts                ← test data factories
@@ -134,7 +134,7 @@ This project defines 14 custom PostgreSQL schemas (`admin`, `ai`, `analytics`, `
 | Then | `auth` + `ai` | Another cross-schema domain |
 | Last | `auth` + `rag` | Adds pgvector, custom types, post-push SQL |
 
-**Out-of-schema DDL:** `src/lib/server/db/rag/setup.ts` contains raw SQL for a generated tsvector column (`search_vector`), an HNSW index (`chunk_embedding_hnsw_idx`), a GIN index on `search_vector`, and a seed row in `embedding_model`. These live outside Drizzle schema definitions and are **not emitted by `pushSchema`**. They require a separate `client.exec(sql)` after the push — only when testing RAG-specific queries.
+**Out-of-schema DDL:** `src/lib/server/db/retrieval/setup.ts` contains raw SQL for a generated tsvector column (`search_vector`), an HNSW index (`chunk_embedding_hnsw_idx`), a GIN index on `search_vector`, and a seed row in `embedding_model`. These live outside Drizzle schema definitions and are **not emitted by `pushSchema`**. They require a separate `client.exec(sql)` after the push — only when testing RAG-specific queries.
 
 **Index support:** PGlite supports GiST (for range types), GIN (for tsvector/jsonb), and B-tree indexes natively — no extensions needed. HNSW indexes (pgvector) are theoretically supported but unverified in WASM at scale — functional correctness is expected, not performance parity with native Postgres.
 
@@ -496,8 +496,8 @@ Start with modules that have zero external dependencies — no DB, no mocks, max
 
 **Priority order:**
 
-1. `$lib/server/rawrag/rank.ts` — RRF algorithm, deduplication, fusion. Four functions, deterministic math, highest ROI. The ranking logic is non-trivial and could easily have off-by-one errors.
-2. `$lib/server/rawrag/chunk.ts` — text splitting with overlap and hierarchy. Only needs `crypto.subtle` (available in Bun). Complex enough to have real bugs.
+1. `$lib/server/retrieval/rank.ts` — RRF algorithm, deduplication, fusion. Four functions, deterministic math, highest ROI. The ranking logic is non-trivial and could easily have off-by-one errors.
+2. `$lib/server/retrieval/chunk.ts` — text splitting with overlap and hierarchy. Only needs `crypto.subtle` (available in Bun). Complex enough to have real bugs.
 3. `$lib/server/errors/index.ts` — `ServerError` class, `toStatus()` mapping, JSON serialization. Pure logic, validates the pipeline.
 4. `$lib/schemas/showcase/` — Valibot schema rules. Test with `v.safeParse()`. The `realtimeSchema` password-confirm cross-field validation is the most interesting.
 
@@ -599,12 +599,12 @@ Priority order based on codebase analysis (highest value first):
 
 **Orchestration layer:**
 
-5. `$lib/server/notifications/service.ts` — `NotificationService.send()` coordinates DB insert, SSE push, and external routing. Requires mocking SSE and router in addition to the DB.
-6. `$lib/server/rawrag/index.ts` — 261 lines of pure orchestration over embedding, three retrieval tiers, and ranking. Highly testable with mocked tier functions, no DB needed.
+5. `$lib/server/notifications/send.ts` — `sendNotification()` coordinates DB insert, SSE push, and external routing. Requires mocking SSE and router in addition to the DB.
+6. `$lib/server/retrieval/index.ts` — 261 lines of pure orchestration over embedding, three retrieval tiers, and ranking. Highly testable with mocked tier functions, no DB needed.
 
 **Auth and security:**
 
-7. `$lib/server/auth/guards.ts` — `requireAuth`, `requireAdmin` (throwing, pages) and `guardApiUser` (returning, endpoints). Takes `App.Locals` as a plain argument — mock the object, assert redirect/error behavior.
+7. `$lib/server/http/guards.ts` — `requireAuth`, `requireAdmin` (throwing, pages) and `guardApiUser` (returning, endpoints). Takes `App.Locals` as a plain argument — mock the object, assert redirect/error behavior.
 8. `hooks.server.ts` — security middleware (headers, CSRF, auth, rate limiting). **Isolate as a separate concern:** it has side-effect imports (schedulers), Redis connection, and feature logging that must be fully mocked. Mock `auth.api.getSession`, `@upstash/ratelimit`, construct `RequestEvent` objects. 515 lines of critical security logic.
 
 **Load functions:**
@@ -618,7 +618,7 @@ Priority order based on codebase analysis (highest value first):
 
 **State machines (high value, tested as factories):**
 
-12. `createRawragTrace()` from `rawrag-trace.svelte.ts` — streaming annotation processing, cursor tracking, step status transitions. Pure factory, no external imports.
+12. `createRetrievalTrace()` from `retrieval-trace.svelte.ts` — streaming annotation processing, cursor tracking, step status transitions. Pure factory, no external imports.
 13. `createDockState()` from `dock.state.svelte.ts` — tab activation, panel close, split creation. Pure factory.
 
 **What NOT to test (thin adapters):**
@@ -665,11 +665,11 @@ The container must be running (`podman compose up -d`).
 | `podman exec v10r bun run test:watch` | Watch mode during development |
 | `podman exec v10r bun run validate` | Full quality gate before declaring done |
 | `podman exec v10r bun vitest run src/lib/server/errors/` | Run tests for one module |
-| `podman exec v10r bun biome check --write src/lib/server/notifications/service.ts` | Lint and fix one file |
+| `podman exec v10r bun biome check --write src/lib/server/notifications/send.ts` | Lint and fix one file |
 
 ## Test Patterns
 
-**Co-location:** Tests live next to source. `service.ts` → `service.test.ts`.
+**Co-location:** Tests live next to source. `send.ts` → `send.test.ts`.
 
 **DB isolation:** Use PGlite for any test touching the database.
 Mock the DB module with `vi.mock('$lib/server/db', ...)` — see `src/lib/server/test/db.ts`.

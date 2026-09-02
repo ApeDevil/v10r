@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { backoffMs, decideFailure, jitter } from './backoff';
 import {
 	DELIVERY_MAX_ATTEMPTS,
 	DELIVERY_RETRY_BASE_MS,
 	DELIVERY_RETRY_FACTOR,
 	DELIVERY_RETRY_JITTER,
 	DELIVERY_RETRY_MAX_MS,
-} from '$lib/server/config';
-import { backoffMs, decideFailure, jitter } from './backoff';
+} from './config';
 
 describe('backoffMs', () => {
 	it('starts at the base delay', () => {
@@ -58,7 +58,7 @@ describe('jitter', () => {
 describe('decideFailure', () => {
 	const rand = () => 0.5; // no jitter offset
 
-	it('is permanently failed when the provider says it is not retryable', () => {
+	it('is permanently failed when the channel says it is not retryable', () => {
 		// Regardless of remaining budget — retrying a blocked bot or a bad address
 		// is pointless, so it must NOT land in the retry-button panel.
 		expect(decideFailure({ attempts: 1, retryable: false, rand })).toEqual({ status: 'failed' });

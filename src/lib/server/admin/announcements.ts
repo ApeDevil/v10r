@@ -1,9 +1,9 @@
 import { and, count, desc, eq, sql } from 'drizzle-orm';
 import type { TranslationMap } from '$lib/i18n/translate';
-import { ADMIN_ANNOUNCEMENT_CACHE_TTL_MS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { announcementDismissals, announcements } from '$lib/server/db/schema/admin';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { ANNOUNCEMENT_CACHE_TTL_MS } from './config';
 
 export interface ActiveAnnouncement {
 	id: string;
@@ -72,7 +72,7 @@ export function getAnnouncementCacheSize(): number {
 
 export async function getActiveAnnouncements(userId: string): Promise<ActiveAnnouncement[]> {
 	const cached = cache.get(userId);
-	if (cached && Date.now() - cached.cachedAt < ADMIN_ANNOUNCEMENT_CACHE_TTL_MS) {
+	if (cached && Date.now() - cached.cachedAt < ANNOUNCEMENT_CACHE_TTL_MS) {
 		return cached.data;
 	}
 

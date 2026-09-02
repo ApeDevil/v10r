@@ -1,7 +1,7 @@
 import { and, count, desc, eq, gte, ilike, lt, lte, or } from 'drizzle-orm';
-import { ADMIN_AUDIT_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { adminAuditLog } from '$lib/server/db/schema/admin';
+import { AUDIT_PAGE_SIZE } from './config';
 
 export interface AuditEventInput {
 	actorId: string;
@@ -58,7 +58,7 @@ function buildWhereClause(filters: AuditLogFilters) {
 }
 
 export async function queryAuditLog(filters: AuditLogFilters = {}) {
-	const pageSize = filters.pageSize ?? ADMIN_AUDIT_PAGE_SIZE;
+	const pageSize = filters.pageSize ?? AUDIT_PAGE_SIZE;
 	const page = Math.max(1, filters.page ?? 1);
 	const offset = (page - 1) * pageSize;
 	const where = buildWhereClause(filters);

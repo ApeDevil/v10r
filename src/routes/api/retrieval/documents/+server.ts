@@ -1,12 +1,12 @@
-import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { listDocuments } from '$lib/server/db/rag/queries';
+import { listDocuments } from '$lib/server/db/retrieval/queries';
+import { READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW } from '$lib/server/http/config';
+import { guardApiUser } from '$lib/server/http/guards';
+import { apiPaginated, parsePagination } from '$lib/server/http/pagination';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
-const limiter = createLimiter('rl:retrieval:documents', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
+const limiter = createLimiter('rl:retrieval:documents', READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const guard = guardApiUser(locals);

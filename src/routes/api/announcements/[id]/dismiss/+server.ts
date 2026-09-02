@@ -1,7 +1,7 @@
 import { dismissAnnouncement, getAnnouncementById } from '$lib/server/admin/announcements';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:announcements:dismiss', 60, '1 m');

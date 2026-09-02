@@ -1,6 +1,6 @@
-import { requireAdmin } from '$lib/server/auth/guards';
-import { DEMO_COLORS, MAX_MESSAGE_LENGTH } from '$lib/server/mcp/demo/constants';
-import { getDemoState } from '$lib/server/mcp/demo/service';
+import { requireAdmin } from '$lib/server/http/guards';
+import { DEMO_COLORS, MAX_MESSAGE_LENGTH } from '$lib/server/mcp/demo/config';
+import { getDemoState } from '$lib/server/mcp/demo/state';
 import type { PageServerLoad } from './$types';
 
 /**

@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { BLOG_PAGE_SIZE } from '$lib/server/admin/config';
 import {
 	getLatestRevision,
 	listPosts,
@@ -9,7 +9,7 @@ import {
 	unpublishPost,
 	updatePostMetadata,
 } from '$lib/server/blog';
-import { ADMIN_BLOG_PAGE_SIZE } from '$lib/server/config';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 const SORTABLE_COLUMNS = ['title', 'status', 'created', 'updated', 'published'] as const;
@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		status,
 		search: q || undefined,
 		page,
-		pageSize: ADMIN_BLOG_PAGE_SIZE,
+		pageSize: BLOG_PAGE_SIZE,
 		sort,
 		dir,
 	});
@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			publishedAt: p.publishedAt?.toISOString() ?? null,
 		})),
 		page,
-		totalPages: Math.max(1, Math.ceil(total / ADMIN_BLOG_PAGE_SIZE)),
+		totalPages: Math.max(1, Math.ceil(total / BLOG_PAGE_SIZE)),
 		q,
 		sort,
 		dir,

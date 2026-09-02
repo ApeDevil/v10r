@@ -1,17 +1,14 @@
 import { parse as parseYaml } from 'yaml';
-import { payloadTooLargeResponse, readTextBounded } from '$lib/server/api/body';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { createPost, createRevision, getPostBySlug } from '$lib/server/blog';
-import {
-	BLOG_WRITE_RATE_LIMIT_MAX,
-	BLOG_WRITE_RATE_LIMIT_PREFIX,
-	BLOG_WRITE_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
+import { payloadTooLargeResponse, readTextBounded } from '$lib/server/http/body';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiOk } from '$lib/server/http/response';
+import { SLUG_PATTERN } from '$lib/server/schemas';
 import type { RequestHandler } from './$types';
 
-const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
+const ratelimit = createLimiter(WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);
 
 /**
  * A markdown post with frontmatter. Generous for prose, and far below the point
@@ -59,7 +56,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			.replace(/^-|-$/g, '');
 	}
 
-	if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug)) {
+	if (!SLUG_PATTERN.test(slug)) {
 		return apiError(400, 'invalid_slug', 'Invalid slug format');
 	}
 

@@ -174,13 +174,13 @@ src/lib/
 
 ### Implementation
 
-Limiters are built with `createLimiter` from `$lib/server/api/rate-limit.ts` and keyed on the user ID. Layer one limiter per window. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
+Limiters are built with `createLimiter` from `$lib/server/http/rate-limit.ts` and keyed on the user ID. Layer one limiter per window. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
 
 ```typescript
 // Illustrative — the live rate-limit preamble is shared across the per-surface AI
 // routes via guardAiRequest ($lib/server/ai/guard.ts). Sketch shown inline here.
 import { json } from '@sveltejs/kit';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 
 // Sliding-window limiters, keyed on user ID
 const perMinute = createLimiter('rl:ai:chat:min', 10, '1 m');

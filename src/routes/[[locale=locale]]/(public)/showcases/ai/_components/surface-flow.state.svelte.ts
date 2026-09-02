@@ -7,7 +7,7 @@
  * more dwell than sweeps). No autoplay — the resting diagram is already complete.
  */
 
-import { type HaltDecision, reduceTurn, replayTimeline, type SurfaceReplay } from '$lib/showcase/ai/replay';
+import { type HaltDecision, reduceTurn, replayTimeline, type SurfaceReplay } from '$lib/showcases/ai/replay';
 import type { TurnTrace } from '$lib/types/turn-trace';
 
 const STEP_MS = 900;

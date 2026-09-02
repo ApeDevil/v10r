@@ -3,8 +3,11 @@
  * Fields are masked based on the visitor's consent level.
  */
 
-const CONSENT_LEVELS = { necessary: 0, analytics: 1 } as const;
-export type ConsentTier = keyof typeof CONSENT_LEVELS;
+import type { ConsentTier } from '$lib/types/db-enums';
+
+export type { ConsentTier };
+
+const CONSENT_LEVELS: Record<ConsentTier, number> = { necessary: 0, analytics: 1 };
 
 /**
  * Parse a raw cookie value into a valid ConsentTier (defaults to 'necessary').

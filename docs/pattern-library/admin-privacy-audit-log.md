@@ -6,7 +6,7 @@ category: "Admin & Privacy"
 
 # Audit log, announcements, feature flags
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Admin-side systems for recording an audit trail of privileged actions, publishin
 
 ---
 
-_Machine-readable record: `admin-privacy-audit-log` in `mcp/patterns.registry.json`._
+_Machine-readable record: `admin-privacy-audit-log` in `pattern-library/registry.json`._

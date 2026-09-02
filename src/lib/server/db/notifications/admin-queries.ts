@@ -4,7 +4,6 @@
  */
 
 import { and, count, desc, eq, gte, max, sql } from 'drizzle-orm';
-import { ADMIN_DELIVERY_PAGE_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
@@ -79,9 +78,10 @@ export interface DeliveryLogEntry {
 	createdAt: Date;
 }
 
-export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
+export async function getDeliveryLog(filters: DeliveryLogFilters & { pageSize: number }) {
+	const { pageSize } = filters;
 	const page = Math.max(1, filters.page ?? 1);
-	const offset = (page - 1) * ADMIN_DELIVERY_PAGE_SIZE;
+	const offset = (page - 1) * pageSize;
 
 	const conditions = [];
 	if (filters.channel && filters.channel !== 'all') {
@@ -118,7 +118,7 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 			.innerJoin(notifications, eq(notificationDeliveries.notificationId, notifications.id))
 			.where(where)
 			.orderBy(desc(notificationDeliveries.createdAt))
-			.limit(ADMIN_DELIVERY_PAGE_SIZE)
+			.limit(pageSize)
 			.offset(offset),
 		db.select({ total: count() }).from(notificationDeliveries).where(where),
 	]);
@@ -144,7 +144,7 @@ export async function getDeliveryLog(filters: DeliveryLogFilters = {}) {
 		entries,
 		total,
 		page,
-		totalPages: Math.max(1, Math.ceil(total / ADMIN_DELIVERY_PAGE_SIZE)),
+		totalPages: Math.max(1, Math.ceil(total / pageSize)),
 	};
 }
 

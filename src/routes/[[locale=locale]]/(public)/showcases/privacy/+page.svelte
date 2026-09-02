@@ -43,7 +43,7 @@ const subPages = [
 		href: '/showcases/privacy/retention',
 		icon: 'i-lucide-timer',
 		title: 'How long we keep it',
-		body: `Live retention values from config — events ${data.retention.events}d, consent ${data.retention.consent}d.`,
+		body: `Every window we enforce, straight from the schedule — events ${data.retention.events}d, consent ${data.retention.consent}d.`,
 	},
 	{
 		href: '/showcases/privacy/rights',
@@ -80,7 +80,8 @@ const sections = $derived([
 		<p class="hero-body">
 			v10r.dev is a code template hosted by one person. The controller below decides what happens to your data,
 			and bears legal responsibility for it. Everything on the next four pages is derived from the live codebase
-			— if a retention value changes in <code>src/lib/server/config.ts</code>, the number on this page changes too.
+			— if a retention window changes in <code>src/lib/server/retention/schedule.ts</code>, the number on this
+			page changes with it.
 		</p>
 	</section>
 

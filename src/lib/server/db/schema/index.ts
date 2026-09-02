@@ -1,7 +1,6 @@
 export * from './admin';
 export * from './ai';
 export * from './analytics';
-export * from './app';
 export * from './auth';
 export * from './blog';
 export * from './dbops';
@@ -10,5 +9,6 @@ export * from './feedback';
 export * from './jobs';
 export * from './mcp';
 export * from './notifications';
-export * from './rag';
+export * from './personalization';
+export * from './retrieval';
 export * from './showcase';

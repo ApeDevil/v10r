@@ -7,7 +7,7 @@ const svc = vi.hoisted(() => ({
 	resetDemoState: vi.fn(),
 	getDemoHistory: vi.fn(),
 }));
-vi.mock('./service', () => svc);
+vi.mock('./state', () => svc);
 
 const { createAdminStateRegistry, ADMIN_STATE_TOOLS } = await import('./tools');
 

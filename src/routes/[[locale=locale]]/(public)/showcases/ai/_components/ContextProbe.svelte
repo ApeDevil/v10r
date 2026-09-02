@@ -4,10 +4,10 @@ import { apiFetch } from '$lib/api';
 import { Badge, Button, Input } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
-import { PROBE_EXAMPLES } from '$lib/showcase/ai/fixtures/probes';
-import { PROBE_GATE_LABELS, PROBE_LANE_LABELS, PROBE_SKIP_LABELS } from '$lib/showcase/ai/labels';
-import type { AiSurfaceId } from '$lib/types/ai-tools';
+import { PROBE_EXAMPLES } from '$lib/showcases/ai/fixtures/probes';
+import { PROBE_GATE_LABELS, PROBE_LANE_LABELS, PROBE_SKIP_LABELS } from '$lib/showcases/ai/labels';
 import type { ProbeReport } from '$lib/types/context-probe';
+import type { AiSurface } from '$lib/types/db-enums';
 import ProbeGalaxy from './ProbeGalaxy.svelte';
 import ProvenanceStrip from './ProvenanceStrip.svelte';
 
@@ -16,7 +16,7 @@ import ProvenanceStrip from './ProvenanceStrip.svelte';
 // vs dynamically ingested for THIS query. Recorded examples carry the section
 // signed-out; the live input POSTs to /api/ai/context-probe — the SAME assembly
 // code a real turn runs, minus the model call.
-let { surface, signedIn }: { surface: AiSurfaceId; signedIn: boolean } = $props();
+let { surface, signedIn }: { surface: AiSurface; signedIn: boolean } = $props();
 
 const examples = PROBE_EXAMPLES[surface];
 const initial = examples.find((e) => e.id === 'grounded') ?? examples[0];
@@ -161,11 +161,11 @@ const deixisFired = $derived(report.gates.some((g) => g.id === 'page_deixis' && 
 			<section class="panel" aria-label={m.showcase_ai_probe_available()}>
 				<h3 class="panel-title">{m.showcase_ai_probe_available()}</h3>
 				<ul class="inventory">
-					{#each report.inventory as inv (inv.lane)}
+					{#each report.inventory as inv (inv.corpus)}
 						<li>
-							<span class="inv-lane">{PROBE_LANE_LABELS[inv.lane]()}</span>
+							<span class="inv-corpus">{PROBE_LANE_LABELS[inv.corpus]()}</span>
 							<span class="inv-counts">
-								{inv.lane === 'llmwiki'
+								{inv.corpus === 'llmwiki'
 									? m.showcase_ai_probe_inv_pages({ n: inv.documents })
 									: m.showcase_ai_probe_inv_documents({ n: inv.documents })}
 								{#if inv.chunks != null}
@@ -185,24 +185,24 @@ const deixisFired = $derived(report.gates.some((g) => g.id === 'page_deixis' && 
 
 			<section class="panel" aria-label={m.showcase_ai_probe_chosen()}>
 				<h3 class="panel-title">{m.showcase_ai_probe_chosen()}</h3>
-				{#each report.lanes as lane (lane.lane)}
-					<div class="lane">
-						<div class="lane-head">
-							<span class="lane-name">{PROBE_LANE_LABELS[lane.lane]()}</span>
-							{#if lane.ran}
-								<span class="lane-cutoff">{m.showcase_ai_probe_cutoff({ n: lane.cutoff })}</span>
+				{#each report.corpora as corpus (corpus.corpus)}
+					<div class="corpus">
+						<div class="corpus-head">
+							<span class="corpus-name">{PROBE_LANE_LABELS[corpus.corpus]()}</span>
+							{#if corpus.ran}
+								<span class="corpus-cutoff">{m.showcase_ai_probe_cutoff({ n: corpus.cutoff })}</span>
 							{/if}
 						</div>
-						{#if lane.error}
-							<p class="lane-note">{m.showcase_ai_probe_lane_error()}</p>
-						{:else if lane.skippedReason}
-							<p class="lane-note">{PROBE_SKIP_LABELS[lane.skippedReason]()}</p>
-						{:else if lane.candidates.length === 0}
-							<p class="lane-note">{m.showcase_ai_probe_no_hits()}</p>
+						{#if corpus.error}
+							<p class="corpus-note">{m.showcase_ai_probe_corpus_error()}</p>
+						{:else if corpus.skippedReason}
+							<p class="corpus-note">{PROBE_SKIP_LABELS[corpus.skippedReason]()}</p>
+						{:else if corpus.candidates.length === 0}
+							<p class="corpus-note">{m.showcase_ai_probe_no_hits()}</p>
 						{:else}
 							<ol class="candidates">
-								{#each lane.candidates as c, i (`${lane.lane}-${i}`)}
-									{#if i > 0 && !c.chosen && lane.candidates[i - 1].chosen}
+								{#each corpus.candidates as c, i (`${corpus.corpus}-${i}`)}
+									{#if i > 0 && !c.chosen && corpus.candidates[i - 1].chosen}
 										<li class="cutoff-line" aria-hidden="true"></li>
 									{/if}
 									<li class="candidate" data-chosen={c.chosen}>
@@ -428,7 +428,7 @@ const deixisFired = $derived(report.gates.some((g) => g.id === 'page_deixis' && 
 		font-size: var(--text-fluid-xs);
 	}
 
-	.inv-lane {
+	.inv-corpus {
 		color: var(--color-fg);
 	}
 
@@ -461,19 +461,19 @@ const deixisFired = $derived(report.gates.some((g) => g.id === 'page_deixis' && 
 		color: var(--color-muted);
 	}
 
-	.lane {
+	.corpus {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-1);
 	}
 
-	.lane + .lane {
+	.corpus + .corpus {
 		margin-top: var(--spacing-2);
 		padding-top: var(--spacing-2);
 		border-top: 1px dashed var(--color-border);
 	}
 
-	.lane-head {
+	.corpus-head {
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
@@ -481,18 +481,18 @@ const deixisFired = $derived(report.gates.some((g) => g.id === 'page_deixis' && 
 		flex-wrap: wrap;
 	}
 
-	.lane-name {
+	.corpus-name {
 		font-size: var(--text-fluid-xs);
 		font-weight: 600;
 		color: var(--color-fg);
 	}
 
-	.lane-cutoff {
+	.corpus-cutoff {
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 	}
 
-	.lane-note {
+	.corpus-note {
 		margin: 0;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);

@@ -1,9 +1,9 @@
 export type ThresholdLevel = 'ok' | 'warning' | 'error';
 
-export type ProviderStatus = 'ok' | 'unavailable' | 'error';
+export type DependencyStatus = 'ok' | 'unavailable' | 'error';
 
-export interface ProviderResult<T> {
-	status: ProviderStatus;
+export interface DependencyResult<T> {
+	status: DependencyStatus;
 	data: T | null;
 	error: string | null;
 	measuredAt: string;

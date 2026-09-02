@@ -7,9 +7,9 @@
  * GET → 405 (SSE is not supported); all interaction is POST.
  */
 import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http';
-import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/registry';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http.adapter';
+import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/tools';
 import { publicBuildInfo } from '$lib/server/mcp/server-info';
 import { createMcpObserver } from '$lib/server/mcp/telemetry/observer';
 import type { McpServerIdentity } from '$lib/server/mcp/transport';

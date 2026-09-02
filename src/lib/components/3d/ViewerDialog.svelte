@@ -2,10 +2,10 @@
 import { Canvas } from '@threlte/core';
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import { MediaQuery } from 'svelte/reactivity';
+import type { Model3D } from '$lib/3d/models';
+import { resolveViewportConfig } from '$lib/3d/models';
+import { PART_EXPLORERS_BY_MODEL } from '$lib/3d/parts';
 import { BoundaryFallback } from '$lib/components/composites';
-import type { Model3D } from '$lib/config/models';
-import { resolveViewportConfig } from '$lib/config/models';
-import { PART_EXPLORERS_BY_MODEL } from '$lib/config/parts';
 import PartInfoPanel from './PartInfoPanel.svelte';
 import ViewerOverlay from './ViewerOverlay.svelte';
 import ViewerScene from './ViewerScene.svelte';

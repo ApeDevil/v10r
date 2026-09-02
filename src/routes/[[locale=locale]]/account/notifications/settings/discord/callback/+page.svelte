@@ -4,4 +4,4 @@
 import * as m from '$lib/paraglide/messages';
 </script>
 
-<p>{m.app_notifications_discord_connecting()}</p>
+<p>{m.account_notifications_discord_connecting()}</p>

@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import type { Actions, PageServerLoad } from './$types';
 
-async function measureConnection() {
+async function verifyConnection() {
 	const start = performance.now();
 
 	try {
@@ -48,11 +48,11 @@ async function measureConnection() {
 }
 
 export const load: PageServerLoad = async () => {
-	return measureConnection();
+	return verifyConnection();
 };
 
 export const actions: Actions = {
 	retest: async () => {
-		return measureConnection();
+		return verifyConnection();
 	},
 };

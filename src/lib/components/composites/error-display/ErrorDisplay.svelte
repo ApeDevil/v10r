@@ -93,10 +93,10 @@ function copyErrorId() {
 	<!-- Feedback recovery — 5xx only. 404 is navigation-recovery state, not critique. -->
 	{#if status >= 500}
 		<p class="error-feedback">
-			<span class="error-feedback-text">{m.error_5xx_feedback_text()}</span>
+			<span class="error-feedback-text">{m.errors_5xx_feedback_text()}</span>
 			<a href={feedbackHref} class="error-feedback-link">
 				<span class="i-lucide-message-square error-feedback-icon" aria-hidden="true"></span>
-				<span>{m.error_5xx_feedback_link()}</span>
+				<span>{m.errors_5xx_feedback_link()}</span>
 			</a>
 		</p>
 	{/if}

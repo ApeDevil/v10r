@@ -6,7 +6,13 @@
 
 import { and, desc, eq, gt, isNull, lte, max, or } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { auditLog, documentVault, temporalRecord, typeSpecimen, typeSpecimenHistory } from '$lib/server/db/schema';
+import {
+	documentVault,
+	showcaseAuditLog,
+	temporalRecord,
+	typeSpecimen,
+	typeSpecimenHistory,
+} from '$lib/server/db/schema';
 
 export async function createSpecimen(data: {
 	label: string;
@@ -137,7 +143,7 @@ export async function appendAuditEntry(data: {
 	description: string;
 }) {
 	const [entry] = await db
-		.insert(auditLog)
+		.insert(showcaseAuditLog)
 		.values({
 			action: data.action,
 			severity: data.severity,

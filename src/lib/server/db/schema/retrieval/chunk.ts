@@ -1,0 +1,62 @@
+/**
+ * CHUNK — Text segments with embeddings for retrieval.
+ * Supports hierarchical parent-child (sentence < paragraph < section),
+ * contextual metadata (Anthropic's prepended context approach),
+ * full-text search (tsvector via migration), and vector similarity (pgvector HNSW).
+ */
+
+import { type SQL, sql } from 'drizzle-orm';
+import { type AnyPgColumn, index, integer, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { tsvector, vector } from './_custom-types';
+import { document } from './document';
+import { embeddingModel, retrievalSchema } from './embedding-model';
+
+export const chunkLevelEnum = retrievalSchema.enum('chunk_level', ['sentence', 'paragraph', 'section']);
+
+export const chunk = retrievalSchema.table(
+	'chunk',
+	{
+		id: text('id').primaryKey(),
+		documentId: text('document_id')
+			.notNull()
+			.references(() => document.id, { onDelete: 'cascade' }),
+		/**
+		 * Denormalized owner (copied from document.user_id at ingest). Lets vector
+		 * + full-text retrieval filter the chunk row DIRECTLY instead of JOINing to
+		 * document — which is what keeps the HNSW index usable (a join-side filter
+		 * forces a seq scan + sort). Invariant: deleted/errored docs have no chunks
+		 * (hard-deleted), so ownership is the only per-chunk gate retrieval needs.
+		 */
+		userId: text('user_id').notNull(),
+		parentId: text('parent_id').references((): AnyPgColumn => chunk.id, { onDelete: 'cascade' }),
+		level: chunkLevelEnum('level').notNull(),
+		position: integer('position').notNull(),
+		content: text('content').notNull(),
+		contextPrefix: text('context_prefix'),
+		tokenCount: integer('token_count').notNull(),
+		contentHash: text('content_hash').notNull(),
+		overlapPrev: integer('overlap_prev').notNull().default(0),
+		overlapNext: integer('overlap_next').notNull().default(0),
+		embeddingModelId: text('embedding_model_id').references(() => embeddingModel.id, { onDelete: 'restrict' }),
+		embedding: vector(1536)('embedding'),
+		/**
+		 * Full-text search vector — generated from context_prefix + content.
+		 * Column references use string-literal form to avoid TS hoisting
+		 * and match Postgres's canonical stored expression.
+		 */
+		searchVector: tsvector('search_vector').generatedAlwaysAs(
+			(): SQL => sql`to_tsvector('english', coalesce(context_prefix, '') || ' ' || content)`,
+		),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+	},
+	(table) => [
+		index('chunk_document_idx').on(table.documentId),
+		index('chunk_user_idx').on(table.userId),
+		index('chunk_parent_idx').on(table.parentId),
+		index('chunk_doc_level_pos_idx').on(table.documentId, table.level, table.position),
+		uniqueIndex('chunk_doc_hash_level_idx').on(table.documentId, table.contentHash, table.level),
+		index('chunk_embedding_model_idx').on(table.embeddingModelId),
+		index('chunk_children_idx').on(table.parentId, table.position).where(sql`parent_id IS NOT NULL`),
+		index('chunk_search_vector_idx').using('gin', table.searchVector),
+	],
+);

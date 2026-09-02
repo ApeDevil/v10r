@@ -6,7 +6,7 @@ category: "AI"
 
 # Persistent minimizable chatbot session
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A client-side Svelte state machine keeps Vely's conversation alive across page n
 
 ---
 
-_Machine-readable record: `ai-chatbot-session` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-chatbot-session` in `pattern-library/registry.json`._

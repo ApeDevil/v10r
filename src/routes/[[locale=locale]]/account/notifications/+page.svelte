@@ -5,11 +5,11 @@ import { EmptyState, NotificationCenter } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, buttonVariants } from '$lib/components/primitives/button';
 import * as m from '$lib/paraglide/messages';
-import { getNotifications, getToast } from '$lib/state';
+import { getNotificationsState, getToast } from '$lib/state';
 
 let { data } = $props();
 
-const notifs = getNotifications();
+const notifs = getNotificationsState();
 const toast = getToast();
 let filter = $state('all');
 
@@ -32,7 +32,7 @@ async function handleMarkAllRead() {
 	if (res.ok) {
 		const { data } = await res.json();
 		notifs.decrementBy(data.count);
-		toast.success(m.app_notifications_marked_read({ count: data.count }));
+		toast.success(m.account_notifications_marked_read({ count: data.count }));
 		await invalidate('app:notifications');
 	}
 }
@@ -40,16 +40,16 @@ async function handleMarkAllRead() {
 
 <Stack gap="5">
 	<Cluster justify="between">
-		<h2 class="text-fluid-lg font-semibold">{m.app_notifications_heading()}</h2>
+		<h2 class="text-fluid-lg font-semibold">{m.account_notifications_heading()}</h2>
 		<Cluster gap="3">
 			{#if data.unreadCount > 0}
 				<Button variant="ghost" size="sm" onclick={handleMarkAllRead}>
-					{m.app_notifications_mark_all_read()}
+					{m.account_notifications_mark_all_read()}
 				</Button>
 			{/if}
 			<a href="/account/notifications/settings" class={buttonVariants({ variant: 'ghost', size: 'sm' })}>
 				<span class="i-lucide-settings" aria-hidden="true"></span>
-				{m.app_notifications_settings()}
+				{m.account_notifications_settings()}
 			</a>
 		</Cluster>
 	</Cluster>
@@ -57,8 +57,8 @@ async function handleMarkAllRead() {
 	{#if data.notifications.length === 0 && filter === 'all'}
 		<EmptyState
 			icon="i-lucide-bell-off"
-			title={m.app_notifications_empty_title()}
-			description={m.app_notifications_empty_description()}
+			title={m.account_notifications_empty_title()}
+			description={m.account_notifications_empty_description()}
 		/>
 	{:else}
 		<NotificationCenter

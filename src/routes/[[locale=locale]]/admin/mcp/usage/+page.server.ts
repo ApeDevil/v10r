@@ -1,4 +1,5 @@
-import { requireAdmin } from '$lib/server/auth/guards';
+import { safeDeferPromise } from '$lib/server/http/defer';
+import { requireAdmin } from '$lib/server/http/guards';
 import {
 	countSuppressedGaps,
 	GAP_MIN_DISTINCT_CLIENTS,
@@ -19,7 +20,6 @@ import {
 	telemetryReachable,
 	windowStart,
 } from '$lib/server/mcp/telemetry/queries';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { PageServerLoad } from './$types';
 
 const WINDOWS = ['24h', '7d', '30d'] as const;

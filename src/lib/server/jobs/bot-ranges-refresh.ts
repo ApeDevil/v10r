@@ -18,6 +18,7 @@
  */
 
 import { eq, sql } from 'drizzle-orm';
+import { publishBotRanges } from '$lib/server/analytics';
 import { BOT_RANGE_FEEDS, parsePrefixes } from '$lib/server/analytics/bot-ranges';
 import { DATACENTER_RANGE_FEEDS } from '$lib/server/analytics/datacenter-ranges';
 import { db } from '$lib/server/db';
@@ -79,6 +80,9 @@ export async function botRangesRefresh(): Promise<number> {
 			await tx.delete(botIpRanges).where(eq(botIpRanges.source, feed.source));
 			await tx.insert(botIpRanges).values(prefixes.map((prefix) => ({ source: feed.source, prefix })));
 		});
+		// The copy the request path verifies against. After Postgres, so the record is
+		// never ahead of the projection; per source, so a failed feed keeps its old copy.
+		await publishBotRanges(feed.source, prefixes);
 	}
 
 	// Datacenter / relay feeds (sessions.ip_class)

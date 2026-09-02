@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { MorphTargetGroup } from '$lib/config/customization';
+import type { MorphTargetGroup } from '$lib/3d/customization';
 
 interface Props {
 	groups: MorphTargetGroup[];

@@ -1,9 +1,10 @@
 /**
  * Admin pairing endpoints — generate a code (POST) or list active pairings (GET).
  */
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk } from '$lib/server/api/response';
-import { requireAdmin } from '$lib/server/auth/guards';
+
+import { requireAdmin } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiOk } from '$lib/server/http/response';
 import { createPairingCode, getActivePairings, qrSvg } from '$lib/server/pairing';
 import type { RequestHandler } from './$types';
 

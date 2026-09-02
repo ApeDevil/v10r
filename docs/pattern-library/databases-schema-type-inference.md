@@ -6,7 +6,7 @@ category: "Databases & Storage"
 
 # Schema & type inference (Drizzle, 14 namespaces)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Drizzle table definitions split across 14 pgSchema() namespaces and re-exported 
 
 ---
 
-_Machine-readable record: `databases-schema-type-inference` in `mcp/patterns.registry.json`._
+_Machine-readable record: `databases-schema-type-inference` in `pattern-library/registry.json`._

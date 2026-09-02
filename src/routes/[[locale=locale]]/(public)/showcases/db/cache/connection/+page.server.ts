@@ -1,7 +1,7 @@
 import { UPSTASH_REDIS_REST_URL } from '$env/static/private';
 import { classifyCacheError } from '$lib/server/cache/errors';
-import { verifyConnection } from '$lib/server/cache/showcase/queries';
-import { reseedCache } from '$lib/server/cache/showcase/seed';
+import { verifyConnection } from '$lib/server/showcases/cache/queries';
+import { reseedCache } from '$lib/server/showcases/cache/seed';
 import type { Actions, PageServerLoad } from './$types';
 
 async function measureConnection() {

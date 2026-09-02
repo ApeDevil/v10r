@@ -1,6 +1,6 @@
 <script lang="ts">
 import { browser } from '$app/environment';
-import { createScrollSpy } from './scrollspy.svelte';
+import { createScrollSpy } from './scrollspy.state.svelte';
 
 interface Section {
 	id: string;

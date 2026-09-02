@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Testing infrastructure (Vitest, PGlite isolation)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -27,4 +27,4 @@ Describes the Vitest + PGlite testing harness that runs entirely inside the dev 
 
 ---
 
-_Machine-readable record: `architecture-testing-infra` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-testing-infra` in `pattern-library/registry.json`._

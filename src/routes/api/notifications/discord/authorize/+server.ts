@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { apiError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/http/guards';
+import { apiError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, cookies }) => {

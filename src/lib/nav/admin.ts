@@ -69,7 +69,7 @@ export const adminNavGroups: AdminNavGroup[] = [
 			{ label: m.admin_nav_ai_models, href: '/admin/ai/models', icon: 'i-lucide-cpu' },
 			{ label: m.admin_nav_ai_usage, href: '/admin/ai/usage', icon: 'i-lucide-bar-chart-2' },
 			{ label: m.admin_nav_ai_cost, href: '/admin/ai/cost', icon: 'i-lucide-receipt' },
-			{ label: m.admin_nav_ai_nrag, href: '/admin/ai/nrag', icon: 'i-lucide-book-marked' },
+			{ label: m.admin_nav_ai_retrieval, href: '/admin/ai/retrieval', icon: 'i-lucide-book-marked' },
 			{ label: m.admin_nav_ai_tools, href: '/admin/ai/tools', icon: 'i-lucide-wrench' },
 		],
 	},

@@ -1,7 +1,7 @@
 import { R2_ACCOUNT_ID } from '$env/static/private';
+import { verifyConnection } from '$lib/server/showcases/store/queries';
+import { reseedBucket } from '$lib/server/showcases/store/seed';
 import { classifyS3Error } from '$lib/server/store/errors';
-import { verifyConnection } from '$lib/server/store/showcase/queries';
-import { reseedBucket } from '$lib/server/store/showcase/seed';
 import { formatBytes } from '$lib/server/store/types';
 import type { Actions, PageServerLoad } from './$types';
 

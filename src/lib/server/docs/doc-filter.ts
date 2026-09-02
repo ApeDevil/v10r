@@ -2,7 +2,7 @@
  * doc-filter — single source of truth for which docs are public, plus the shared
  * markdown helpers used by BOTH consumers of the docs corpus:
  *   - src/lib/server/docs/manifest.ts  (the /docs routes, via Vite import.meta.glob)
- *   - scripts/db/ingest-docs.ts        (the chatbot RAG ingestion, under Bun)
+ *   - scripts/db/ingest-docs.ts        (the chatbot retrieval ingestion, under Bun)
  *
  * Kept Vite-free and dependency-light (only `yaml`) so the Bun script can import it
  * by relative path. Neither consumer may keep its own copy of these constants:
@@ -11,8 +11,8 @@
 import { parse as parseYaml } from 'yaml';
 
 /**
- * Docs hidden from BOTH the /docs routes and the RAG corpus.
- * RAG-only exclusions — docs that render for humans but must not be embedded —
+ * Docs hidden from BOTH the /docs routes and the retrieval corpus.
+ * Retrieval-only exclusions — docs that render for humans but must not be embedded —
  * are passed per-consumer via the `extra` arg to {@link isBlocked}.
  */
 export const BLOCKLIST = new Set<string>([
@@ -35,7 +35,7 @@ export interface ParsedFile {
 
 /**
  * Is this doc excluded from a corpus? `extra` lets one consumer add its own
- * exclusions (e.g. the RAG ingester hides planned-but-unbuilt designs that still
+ * exclusions (e.g. the retrieval ingester hides planned-but-unbuilt designs that still
  * render for humans at /docs).
  */
 export function isBlocked(sourcePath: string, extra?: ReadonlySet<string>): boolean {

@@ -7,10 +7,11 @@
  * from the prompt rather than a tool result. So: counts orient the model; the tool
  * is the only source of links.
  */
-import type { SearchLocale, SearchSurface } from '$lib/search/types';
+import type { Locale } from '$lib/i18n';
+import type { SearchSurface } from '$lib/search/types';
 import { buildSearchIndex } from './query';
 
-export function formatCatalogMap(locale: SearchLocale): string {
+export function formatCatalogMap(locale: Locale): string {
 	const records = buildSearchIndex(locale);
 	const counts: Record<SearchSurface, number> = { page: 0, showcase: 0, section: 0, doc: 0, blog: 0 };
 	const groups = new Map<string, number>();

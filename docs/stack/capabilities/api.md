@@ -16,7 +16,7 @@ API patterns and service integrations — SvelteKit-native REST + server actions
 | Complexity | Technology | Use case |
 |------------|------------|----------|
 | Default | Server actions | Fast, no deps |
-| Scheduled / async | Custom job runner | `$lib/server/jobs` (`runJob`) via Vercel-cron `/api/cron/[job]` |
+| Scheduled / async | Custom job runner | `$lib/server/jobs` (`runJob`) via the daily Vercel-cron sweep `/api/cron/due` (+ `/api/cron/[job]` by slug) |
 
 ## Known limitations
 

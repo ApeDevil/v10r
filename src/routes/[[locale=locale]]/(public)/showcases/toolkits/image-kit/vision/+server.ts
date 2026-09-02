@@ -8,8 +8,8 @@
  */
 import { json } from '@sveltejs/kit';
 import { isImageId, type VisionFailureReason, type VisionResponse } from '$lib/schemas/showcase/image-kit';
-import { runVision } from '$lib/server/imagekit';
-import { buildImagekitKey, getImagekitBytes } from '$lib/server/store/showcase/imagekit';
+import { runVision } from '$lib/server/showcases/image-kit';
+import { buildImagekitKey, getImagekitBytes } from '$lib/server/showcases/image-kit/storage';
 import type { RequestHandler } from './$types';
 
 const REASON_STATUS: Record<VisionFailureReason, number> = {

@@ -9,7 +9,7 @@
  */
 
 import type { ModelUsageSummary, UnifiedModelUsageRow } from '$lib/schemas/admin/model-usage';
-import type { CostEstimate } from '$lib/schemas/showcase/image-metadata';
+import type { CostEstimate } from '$lib/schemas/image-metadata';
 import type { ModelUsageRow } from '$lib/server/db/ai/admin-queries';
 import type { ImageModelUsageRow } from '$lib/server/db/ai/image-metadata-queries';
 import { estimateCost } from './pricing';
@@ -32,7 +32,7 @@ export function buildUnifiedModelUsage(
 	const rows: UnifiedModelUsageRow[] = [
 		...chatRows.map(
 			(r): UnifiedModelUsageRow => ({
-				surface: 'chat',
+				workload: 'chat',
 				modelId: r.model,
 				providerId: r.providerId,
 				inputTokens: r.inputTokens,
@@ -49,7 +49,7 @@ export function buildUnifiedModelUsage(
 		),
 		...imageRows.map(
 			(r): UnifiedModelUsageRow => ({
-				surface: 'image',
+				workload: 'image',
 				modelId: r.modelId,
 				providerId: r.providerId,
 				inputTokens: r.inputTokens,

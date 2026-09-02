@@ -32,7 +32,7 @@ vi.mock('$lib/server/db', () => ({
 	},
 }));
 
-vi.mock('$lib/server/db/schema/rag', () => ({
+vi.mock('$lib/server/db/schema/retrieval', () => ({
 	chunk: {
 		id: 'chunk.id',
 		content: 'chunk.content',

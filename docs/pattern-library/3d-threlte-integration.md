@@ -6,7 +6,7 @@ category: "3D"
 
 # Threlte integration (SSR-off, code-split model registry)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -24,7 +24,7 @@ Threlte 8 is wired into SvelteKit with SSR and prerendering disabled for the 3D 
 ## Code
 
 - `src/lib/components/3d/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/3d) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/3d))
-- `src/lib/config/models.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/config/models.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/config/models.ts))
+- `src/lib/3d/models.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/3d/models.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/3d/models.ts))
 
 ## Proof
 
@@ -32,4 +32,4 @@ Threlte 8 is wired into SvelteKit with SSR and prerendering disabled for the 3D 
 
 ---
 
-_Machine-readable record: `3d-threlte-integration` in `mcp/patterns.registry.json`._
+_Machine-readable record: `3d-threlte-integration` in `pattern-library/registry.json`._

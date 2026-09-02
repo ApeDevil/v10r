@@ -5,9 +5,9 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
 import { getVisionProvider } from '$lib/server/ai';
-import { estimatePreRunCost, ingestEphemeralImage } from '$lib/server/imagekit';
 import { ImageMetaError } from '$lib/server/imagemeta';
-import { getImagekitReadUrl } from '$lib/server/store/showcase/imagekit';
+import { estimatePreRunCost, ingestEphemeralImage } from '$lib/server/showcases/image-kit';
+import { getImagekitReadUrl } from '$lib/server/showcases/image-kit/storage';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

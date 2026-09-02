@@ -4,8 +4,8 @@ import { CameraControls, interactivity, OrbitControls, useGltf } from '@threlte/
 import type CameraControlsImpl from 'camera-controls';
 import { tick } from 'svelte';
 import { AnimationClip, AnimationMixer, Box3 } from 'three';
-import type { Model3D, ResolvedViewportConfig } from '$lib/config/models';
-import { collectPartMeshes, type PartDef, resolvePartId } from '$lib/config/parts';
+import type { Model3D, ResolvedViewportConfig } from '$lib/3d/models';
+import { collectPartMeshes, type PartDef, resolvePartId } from '$lib/3d/parts';
 import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
 import PartHighlightLayer from './PartHighlightLayer.svelte';
 

@@ -268,13 +268,13 @@ The preview panel is **content-type-agnostic** — it renders whatever the edito
 
 ```typescript
 const renderers: Record<string, () => Promise<typeof import('*.svelte')>> = {
-  'blog-post': () => import('$lib/components/blog/Renderer.svelte'),
+  'blog-post': () => import('$lib/components/composites/markdown/MarkdownProse.svelte'),
   'note':      () => import('$lib/components/editor/SimpleRenderer.svelte'),
   'doc':       () => import('$lib/components/editor/SimpleRenderer.svelte'),
 };
 ```
 
-For blog posts, it runs the unified pipeline and renders with `blog/Renderer.svelte` (prose + hydrated embeds). For notes and docs, a simpler markdown renderer. New content types register a renderer — the preview panel itself never changes.
+For blog posts, it runs the unified pipeline and renders with `composites/markdown/MarkdownProse.svelte` (prose + hydrated embeds). For notes and docs, a simpler markdown renderer. New content types register a renderer — the preview panel itself never changes.
 
 **Live preview**: the preview panel subscribes to content changes from the editor panel via cross-panel pub/sub (see below). Debounced rendering (300ms after last keystroke). The pipeline runs server-side via `/api/blog/preview` to guarantee the preview is identical to the published output — no bundle size trade-off, no client/server drift. No optimistic client-side `marked` preview — `marked` can't render directives or wikilinks, so the "optimistic" output would be visibly wrong for custom syntax.
 
@@ -736,11 +736,6 @@ async function publishPost(postId: string, locale: string, revisionId: string): 
       userId: post.authorId,
     });
 
-    // Add to blog collection (singleton, created by migration seed)
-    await db.insert(collectionDocument)
-      .values({ collectionId: 'col_blog', documentId: ingestResult.documentId })
-      .onConflictDoNothing();
-
     // 4. Neo4j sync (fire-and-forget with outbox)
     try {
       await syncBlogGraph(post, revision, ingestResult.documentId);
@@ -954,11 +949,11 @@ $lib/components/preview/           # Multipurpose preview (desk panel)
   PreviewPanel.svelte               # Subscribes to editor:content, delegates to renderer
   renderers.ts                      # (planned) type -> dynamic import() registry
 
-$lib/components/composites/dock/
+$lib/components/desk/
   desk-bus.svelte.ts                # Typed cross-panel pub/sub (DeskEvents)
   layout-presets.ts                 # Writing, reviewing, dashboard presets
 
-$lib/config/desk-panels.ts         # Add 'editor' + 'preview' + 'documents' panel types
+$lib/3d/desk-panels.ts         # Add 'editor' + 'preview' + 'documents' panel types
 ```
 
 `syncBlogGraph()`, `linkPostToChunks()`, `removeBlogFromGraph()` (the Phase 3 AI graph sync) are **planned** — there is no `ai-sync.ts` yet.
@@ -1214,7 +1209,7 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 4. `blog` schema migration (0002-0009: 8 tables + seed)
 5. `$lib/server/blog/` domain module with render pipeline
 6. `$lib/content-syntax/` with initial directive definitions (callout, chart, code)
-7. `$lib/components/blog/Renderer.svelte` + embed registry
+7. `$lib/components/composites/markdown/MarkdownProse.svelte` + embed registry
 8. Public routes: `/blog/`, `/blog/[slug]` (with JSON-LD + OG meta), `/blog/tag/[tag]`, `/blog/feed.xml`, `/blog/sitemap.xml`
 9. Admin content page: `/admin/content` (post list + status management via form actions)
 10. API endpoints: `POST /api/blog` (create), `PATCH /api/blog/[id]` (metadata), `POST /api/blog/[id]/revision`, `POST /api/blog/[id]/publish`

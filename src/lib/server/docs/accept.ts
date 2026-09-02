@@ -4,7 +4,7 @@
  * True only when the caller EXPLICITLY prefers markdown over HTML. Wildcards never
  * count — curl's default Accept (a bare wildcard) must not negotiate, and a browser
  * navigation (`sec-fetch-dest: document`) never negotiates regardless of its Accept.
- * Mirrors the precedence style of isDocumentRequest in $lib/server/api/rate-limit.ts.
+ * Mirrors the precedence style of isDocumentRequest in $lib/server/http/rate-limit.ts.
  */
 
 const MARKDOWN_TYPES = new Set(['text/markdown', 'text/x-markdown']);

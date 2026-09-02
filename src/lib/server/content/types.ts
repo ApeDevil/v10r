@@ -4,6 +4,7 @@
  */
 
 import type { Locale } from '$lib/i18n/runtime';
+import type { PostStatus } from '$lib/types/db-enums';
 
 /**
  * YAML frontmatter shape for content files (`content/<domain>/<slug>/<locale>.md`).
@@ -23,7 +24,7 @@ export interface FrontmatterMeta {
 	/** Tag slugs (raw passthrough; not translated). */
 	tags?: string[];
 	/** draft | published | archived. Pushed straight through to blog.post.status. */
-	status?: 'draft' | 'published' | 'archived';
+	status?: PostStatus;
 	/** ISO date string; raw passthrough. */
 	date?: string;
 	/** Optional domain slug (links to blog.domain). */

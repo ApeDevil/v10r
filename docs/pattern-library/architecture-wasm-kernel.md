@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Rust→wasm compute kernel (vendored, plugin-free)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -40,4 +40,4 @@ Rust crate compiled to wasm in an ephemeral container, artifacts vendored into s
 
 ---
 
-_Machine-readable record: `architecture-wasm-kernel` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-wasm-kernel` in `pattern-library/registry.json`._

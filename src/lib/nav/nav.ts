@@ -1,5 +1,5 @@
 import * as m from '$lib/paraglide/messages';
-import { showcases } from '$lib/showcases/registry';
+import { showcases } from '$lib/showcases/catalog/registry';
 import type { NavItem } from './types';
 
 /**

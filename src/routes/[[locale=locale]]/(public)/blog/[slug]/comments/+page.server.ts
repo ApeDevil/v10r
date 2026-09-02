@@ -11,7 +11,6 @@ import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
-import { requireAuth } from '$lib/server/auth/guards';
 import {
 	CommentEditWindowExpiredError,
 	CommentHiddenError,
@@ -21,6 +20,7 @@ import {
 	editOwnComment,
 	softDeleteOwnComment,
 } from '$lib/server/blog/comments';
+import { requireAuth } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ params }) => {

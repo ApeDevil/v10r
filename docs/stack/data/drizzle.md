@@ -29,7 +29,7 @@ Two tools for two stages — one TypeScript schema as the single source of truth
 When using custom PostgreSQL schemas:
 
 1. Every `pgSchema()` object **must be exported** — otherwise silently omits `CREATE SCHEMA IF NOT EXISTS`
-2. Every `pgEnum()` object **must be exported** — otherwise silently omits `CREATE TYPE`
+2. Every enum **must be exported** — otherwise `db:push` silently omits `CREATE TYPE`
 3. `drizzle.config.ts` must list all schemas in `schemaFilter` (only affects `push`/`pull`, not `generate`)
 
 ## Better Auth adapter: model→table by export-const name

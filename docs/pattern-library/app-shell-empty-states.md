@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Empty states
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Standardizes the anatomy (icon, title, description, action) for UI shown when th
 
 ---
 
-_Machine-readable record: `app-shell-empty-states` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-empty-states` in `pattern-library/registry.json`._

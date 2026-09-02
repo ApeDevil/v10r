@@ -7,14 +7,16 @@
  *
  * Paths in the shard are locale-bare; consumers localize hrefs at render.
  */
+
+import type { Locale } from '$lib/i18n';
 import { match } from '$lib/search/match';
-import type { SearchLocale, SearchRecord, SearchResult } from '$lib/search/types';
+import type { SearchRecord, SearchResult } from '$lib/search/types';
 
 export type SearchStatus = 'idle' | 'loading' | 'done' | 'error';
 
 export function createSearchEngine() {
 	let query = $state('');
-	let locale = $state<SearchLocale>('en');
+	let locale = $state<Locale>('en');
 	let records = $state.raw<SearchRecord[]>([]);
 	let asyncResults = $state.raw<SearchResult[]>([]);
 	let status = $state<SearchStatus>('idle');
@@ -25,7 +27,7 @@ export function createSearchEngine() {
 
 	const instant = $derived(query.trim().length > 0 ? match(records, query, 24) : []);
 
-	async function loadShard(loc: SearchLocale) {
+	async function loadShard(loc: Locale) {
 		if (shardLocale === loc) return;
 		shardLocale = loc;
 		try {
@@ -67,7 +69,7 @@ export function createSearchEngine() {
 		ensureLoaded() {
 			void loadShard(locale);
 		},
-		setLocale(loc: SearchLocale) {
+		setLocale(loc: Locale) {
 			locale = loc;
 			void loadShard(loc);
 		},

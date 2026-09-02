@@ -1,4 +1,4 @@
-// This URL ships in mcp/patterns.registry.json to external MCP consumers, so it
+// This URL ships in pattern-library/registry.json to external MCP consumers, so it
 // must keep resolving via this 308. Not a compat shim — remove after 2026-11.
 import { redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';

@@ -13,14 +13,14 @@
  * with the caller: pass `telemetry` to receive the same pipeline:step /
  * pipeline:chunks events the orchestrator streams to the client.
  */
-import type { SearchLocale } from '$lib/search/types';
-import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/config';
+import type { Locale } from '$lib/i18n';
 import { formatLlmwikiContext, type LlmwikiHit, loadOverview, searchLlmwiki } from '$lib/server/llmwiki';
-import { formatContextForPrompt, retrieve } from '$lib/server/rawrag';
-import { generateEmbedding } from '$lib/server/rawrag/embed';
-import type { RetrievalResult } from '$lib/server/rawrag/types';
+import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
+import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
+import { generateEmbedding } from '$lib/server/retrieval/embed';
+import type { RetrievalResult } from '$lib/server/retrieval/types';
 import { formatCatalogMap, type PageContext } from '$lib/server/search';
-import type { ChunkSummary, PipelineChunksEvent, PipelineStepEvent } from '$lib/types/pipeline';
+import type { ChunkSummary, RetrievalChunksEvent, RetrievalStepEvent } from '$lib/types/retrieval-trace';
 import { formatCurrentPageBlock } from './context/system-prompt';
 
 /** Production system-docs retrieval profile for a chatbot turn. */
@@ -57,7 +57,7 @@ export function referencesCurrentPage(text: string): boolean {
 }
 
 /** A pipeline step as authored at a call site — the caller's emit stamps the derived axes. */
-type RawStepInput = Omit<PipelineStepEvent, 'phase' | 'instanceKey' | 'requestId'> & { instanceKey?: string };
+type RawStepInput = Omit<RetrievalStepEvent, 'phase' | 'instanceKey' | 'requestId'> & { instanceKey?: string };
 
 /**
  * Caller-supplied telemetry sink. The orchestrator passes its streaming `emit`
@@ -65,7 +65,7 @@ type RawStepInput = Omit<PipelineStepEvent, 'phase' | 'instanceKey' | 'requestId
  * timeline; the probe endpoint omits it (the report carries its own timings).
  */
 export interface AssemblyTelemetry {
-	emit: (event: RawStepInput | PipelineChunksEvent) => void;
+	emit: (event: RawStepInput | RetrievalChunksEvent) => void;
 	/** Turn origin (`performance.now()`) — one zero for every step's startOffsetMs. */
 	t0: number;
 }
@@ -80,7 +80,7 @@ export interface ChatbotContextInput {
 	collectionId: string | null;
 	/** Trusted, server-resolved current page (site-awareness) or null. */
 	pageContext: PageContext | null;
-	catalogLocale: SearchLocale;
+	catalogLocale: Locale;
 	/** Whether retrieval tools are mounted this turn (drives the honest-degrade note). */
 	hasTools: boolean;
 	/**
@@ -322,9 +322,9 @@ ${contextBlock}
 
 Retrieval rules:
 1. Answer from the llmwiki pages above. Their TLDRs and bodies are your primary source.
-2. Each page's \`pointers:\` list contains raw chunk IDs (e.g. \`chk_seed_rrf\`). These are the ONLY valid inputs to \`get_rawrag_chunks\`.
-3. Call \`get_rawrag_chunks\` ONLY when the user asks for exact wording, a verbatim quote, specific details not in the TLDR, or challenges a claim.
-4. When calling \`get_rawrag_chunks\`, you MUST copy chunk IDs verbatim from a page's \`pointers:\` list. NEVER invent, guess, transform, or abbreviate a chunk ID.
+2. Each page's \`pointers:\` list contains raw chunk IDs (e.g. \`chk_seed_rrf\`). These are the ONLY valid inputs to \`get_source_chunks\`.
+3. Call \`get_source_chunks\` ONLY when the user asks for exact wording, a verbatim quote, specific details not in the TLDR, or challenges a claim.
+4. When calling \`get_source_chunks\`, you MUST copy chunk IDs verbatim from a page's \`pointers:\` list. NEVER invent, guess, transform, or abbreviate a chunk ID.
 5. If no pointer exists for what the user asked, say so plainly instead of fabricating an ID.
 6. Do not expand pointers preemptively on broad questions.`;
 				pushBlock('llmwiki-context', before, true);

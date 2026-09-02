@@ -13,8 +13,6 @@ interface CreateNotificationInput {
 	messageKey: string;
 	/** ICU interpolation values for the message. Defaults to {}. */
 	messageParams?: NotificationParams;
-	entityRef?: string;
-	groupKey?: string;
 	actionUrl?: string;
 }
 

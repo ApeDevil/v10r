@@ -6,7 +6,7 @@ category: "Database Operations"
 
 # Dev→prod schema workflow (push-only, no migrations dir)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -26,4 +26,4 @@ Uses drizzle-kit push for schema changes during development and defers versioned
 
 ---
 
-_Machine-readable record: `db-ops-dev-prod-schema-workflow` in `mcp/patterns.registry.json`._
+_Machine-readable record: `db-ops-dev-prod-schema-workflow` in `pattern-library/registry.json`._

@@ -1,12 +1,12 @@
 <script lang="ts">
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
-import { BUILD_LABELS, LANE_LABELS, LAYER_NAMES, layerRole, STATUS_LABELS } from '$lib/showcase/ai/labels';
-import { AI_LAYERS, type AiLayer, STEP_BUDGETS } from '$lib/showcase/ai/topology';
-import type { AiSurfaceId } from '$lib/types/ai-tools';
+import { BUILD_LABELS, LANE_LABELS, LAYER_NAMES, layerRole, STATUS_LABELS } from '$lib/showcases/ai/labels';
+import { AI_LAYERS, type AiLayer, STEP_BUDGETS } from '$lib/showcases/ai/topology';
+import type { AiSurface } from '$lib/types/db-enums';
 import type { AiLayerId, TraceStatus, TurnTrace } from '$lib/types/turn-trace';
 
-let { surface, trace = null }: { surface: AiSurfaceId; trace?: TurnTrace | null } = $props();
+let { surface, trace = null }: { surface: AiSurface; trace?: TurnTrace | null } = $props();
 
 const layers = AI_LAYERS.filter((l) => l.surfaces.includes(surface));
 

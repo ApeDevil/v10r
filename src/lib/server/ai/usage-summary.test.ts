@@ -34,8 +34,8 @@ describe('buildUnifiedModelUsage', () => {
 
 	it('tags surface, call unit, and nulls chat reasoning', () => {
 		const { rows } = buildUnifiedModelUsage([chat()], [image()]);
-		const chatRow = rows.find((r) => r.surface === 'chat');
-		const imageRow = rows.find((r) => r.surface === 'image');
+		const chatRow = rows.find((r) => r.workload === 'chat');
+		const imageRow = rows.find((r) => r.workload === 'image');
 		expect(chatRow?.callUnit).toBe('step');
 		expect(chatRow?.reasoningTokens).toBeNull();
 		expect(imageRow?.callUnit).toBe('analysis');

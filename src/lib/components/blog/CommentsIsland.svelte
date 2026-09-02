@@ -3,22 +3,23 @@ import { Stack } from '$lib/components/layout';
 import { Button, Spinner, Textarea, Typography } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n';
 import { getToast } from '$lib/state/toast.svelte';
+import type { CommentStatus } from '$lib/types/db-enums';
 
-interface CommentDTO {
+interface PublicComment {
 	id: string;
 	postId: string;
 	locale: string;
 	authorId: string;
 	authorName: string;
 	body: string;
-	status: 'visible' | 'hidden' | 'removed';
+	status: CommentStatus;
 	createdAt: string;
 	editedAt: string | null;
 }
 
 interface ListResponse {
 	data: {
-		items: CommentDTO[];
+		items: PublicComment[];
 		nextCursor: string | null;
 		crossLocaleTotals: Record<string, number>;
 	};
@@ -34,7 +35,7 @@ interface Props {
 
 let { postId, postSlug, locale, currentUserId, isSignedIn }: Props = $props();
 
-let comments = $state<CommentDTO[]>([]);
+let comments = $state<PublicComment[]>([]);
 let nextCursor = $state<string | null>(null);
 let totals = $state<Record<string, number>>({});
 let loading = $state(true);
@@ -150,7 +151,7 @@ async function deleteOwn(commentId: string) {
 	}
 }
 
-function startEdit(c: CommentDTO) {
+function startEdit(c: PublicComment) {
 	editingId = c.id;
 	editingBody = c.body;
 }
@@ -177,7 +178,7 @@ async function saveEdit() {
 }
 
 const editWindowMs = 5 * 60 * 1000;
-function canEdit(c: CommentDTO): boolean {
+function canEdit(c: PublicComment): boolean {
 	return c.authorId === currentUserId && Date.now() - new Date(c.createdAt).getTime() < editWindowMs;
 }
 </script>

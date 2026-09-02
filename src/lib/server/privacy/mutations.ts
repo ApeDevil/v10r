@@ -3,7 +3,7 @@
  *
  * Deleting the auth.user row IS the relational erasure: nearly every user-keyed
  * table references it with onDelete: 'cascade' (sessions, accounts, preferences,
- * conversations, desk, notification links, palettes, RAG documents+chunks). Idempotent.
+ * conversations, desk, notification links, palettes, retrieval documents+chunks). Idempotent.
  *
  * FOUR tables do NOT cascade, and each is handled explicitly inside one transaction
  * before the user row goes — a bare DELETE raises 23503 → 500 for any user who ever
@@ -17,7 +17,7 @@
  *   someone else's capability.
  * - `blog.comment.author_id` (RESTRICT — it does NOT cascade) → HARD-DELETED. A
  *   comment is the user's own speech under their own name, so Art 17 takes it.
- * - `rag.llmwiki_page_source.document_id` / `.chunk_id` (RESTRICT) → the user's page
+ * - `retrieval.llmwiki_page_source.document_id` / `.chunk_id` (RESTRICT) → the user's page
  *   sources are deleted explicitly FIRST. This one looks self-solving and is not:
  *   `llmwiki_page` cascades from user and `llmwiki_page_source` cascades from the page,
  *   so the junction rows DO go — but Postgres evaluates a RESTRICT the instant the
@@ -42,7 +42,7 @@
  * - `debugOwnerId` / `pairedAdminUserId` use 'set null': the event survives, the
  *   attribution to a since-deleted admin does not.
  *
- * Postgres CASCADE does not reach Neo4j, so the RAG graph mirror (the user's
+ * Postgres CASCADE does not reach Neo4j, so the retrieval graph mirror (the user's
  * :Chunk/:Entity nodes) is swept separately. The graph sweep is best-effort:
  * an Aura outage must not block the authoritative relational erasure.
  */
@@ -55,12 +55,12 @@ import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { grant } from '$lib/server/db/schema/auth/grant';
 import { comment } from '$lib/server/db/schema/blog/comment';
 import { post } from '$lib/server/db/schema/blog/post';
-import { llmwikiPage } from '$lib/server/db/schema/rag/llmwiki-page';
-import { llmwikiPageSource } from '$lib/server/db/schema/rag/llmwiki-page-source';
+import { llmwikiPage } from '$lib/server/db/schema/retrieval/llmwiki-page';
+import { llmwikiPageSource } from '$lib/server/db/schema/retrieval/llmwiki-page-source';
 import { imageAsset } from '$lib/server/db/schema/showcase/image-metadata';
-import { deleteUserGraph } from '$lib/server/graph/rag/mutations';
+import { deleteUserGraph } from '$lib/server/graph/retrieval/mutations';
 import { BUCKET, s3 } from '$lib/server/store';
-import { deleteImagemetaObject } from '$lib/server/store/showcase/image';
+import { deleteImagemetaObject } from '$lib/server/store/image';
 
 /**
  * Erasure refused: the user is the only configured admin AND owns rows that must be

@@ -1,6 +1,5 @@
 import { desc, eq } from 'drizzle-orm';
 import { parseAnalyticsRange } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import {
 	getAudienceBreakdown,
@@ -15,8 +14,9 @@ import {
 } from '$lib/server/db/analytics/aggregations';
 import { getActiveSessionCount, getPairedSessionCount, getRecentEvents } from '$lib/server/db/analytics/queries';
 import { jobExecution } from '$lib/server/db/schema/jobs';
+import { safeDeferPromise } from '$lib/server/http/defer';
+import { requireAdmin } from '$lib/server/http/guards';
 import { hasActivePairedSession } from '$lib/server/pairing';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
 import type { PageServerLoad } from './$types';
 
 async function getLastCleanupStatus(): Promise<{

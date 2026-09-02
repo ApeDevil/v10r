@@ -4,8 +4,8 @@ import { BUCKET, s3 } from '$lib/server/store';
 import {
 	computePercentage,
 	computeThreshold,
+	type DependencyResult,
 	FREE_TIER_LIMITS,
-	type ProviderResult,
 	type R2Metrics,
 	sanitizeError,
 } from './index';
@@ -90,12 +90,14 @@ async function fetchViaListObjects(): Promise<{ storageBytes: number; objectCoun
 	return { storageBytes, objectCount };
 }
 
-export async function fetchR2Metrics(): Promise<ProviderResult<R2Metrics>> {
+export async function fetchR2Metrics(): Promise<DependencyResult<R2Metrics>> {
 	const start = performance.now();
 
 	try {
 		const analyticsToken = env.CLOUDFLARE_ANALYTICS_TOKEN;
-		const accountId = env.CLOUDFLARE_ACCOUNT_ID;
+		// One Cloudflare account, one env var. A second name for the same id lived here, was set
+		// by nobody, and so sent every call down the slow list-every-object fallback below.
+		const accountId = env.R2_ACCOUNT_ID;
 		const bucket = env.R2_BUCKET_NAME;
 
 		let result: { storageBytes: number; objectCount: number };

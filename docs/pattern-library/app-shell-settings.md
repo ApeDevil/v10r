@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Settings (theme cookie, language, a11y)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A settings hub page covering appearance (theme cookie), language, privacy toggle
 
 ---
 
-_Machine-readable record: `app-shell-settings` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-settings` in `pattern-library/registry.json`._

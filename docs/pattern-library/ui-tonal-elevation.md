@@ -6,7 +6,7 @@ category: "UI Components & Design System"
 
 # Tonal (surface) elevation engine
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ A pure, SSR-safe TypeScript engine that computes each surface's relative depth (
 
 ---
 
-_Machine-readable record: `ui-tonal-elevation` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ui-tonal-elevation` in `pattern-library/registry.json`._

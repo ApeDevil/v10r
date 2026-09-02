@@ -6,10 +6,10 @@
 
 import matter from 'gray-matter';
 import { isLocale, type Locale } from '$lib/i18n/runtime';
+import { SLUG_PATTERN } from '$lib/server/schemas';
 import type { FrontmatterMeta } from './types';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const SLUG_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
 export class FrontmatterError extends Error {
 	readonly path: string;
@@ -39,7 +39,7 @@ export function parseContentFile(text: string, sourcePath: string): ParsedConten
 	}
 
 	const slug = data.slug;
-	if (typeof slug !== 'string' || !SLUG_RE.test(slug)) {
+	if (typeof slug !== 'string' || !SLUG_PATTERN.test(slug)) {
 		throw new FrontmatterError(sourcePath, 'slug', 'must be lowercase kebab-case (a-z, 0-9, hyphens)');
 	}
 

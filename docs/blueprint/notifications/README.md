@@ -9,7 +9,7 @@ The notification system is designed for a **persistent Bun container** as the pr
 | Capability | Container (Primary) | Vercel Serverless |
 |---|---|---|
 | Real-time delivery | SSE + in-memory map | Polling + `invalidate()` |
-| Outbox processing | `setInterval` worker | Vercel cron (`/api/cron/notification-delivery`, daily — Hobby-plan cron limit) |
+| Outbox processing | `setInterval` worker (muted in dev — shared prod DB) | the daily `/api/cron/due` sweep (Hobby-plan cron limit) |
 | PG `LISTEN`/`NOTIFY` | Works (direct connection) | Blocked (pooled HTTP) |
 | Background workers | Native, persistent | Need external service |
 
@@ -68,7 +68,7 @@ Users connect their preferred channels and control which notification types go w
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| **Routing approach** | Outbox + runtime-adaptive worker | Container: direct `setInterval` worker. Vercel: cron sweep. Same outbox table either way. Web push is the exception: synchronous fan-out inside `NotificationService.send()`, no outbox rows — see [routing.md](./routing.md). |
+| **Routing approach** | Outbox + runtime-adaptive worker | Container: direct `setInterval` worker. Vercel: cron sweep. Same outbox table either way. Web push is the exception: synchronous fan-out inside `sendNotification()`, no outbox rows — see [routing.md](./routing.md). |
 | **Telegram delivery** | Raw `fetch()` to Bot API | Zero dependencies for outbound-only notifications. Add grammY only if bidirectional bot commands needed. |
 | **Rate limiting** | Dynamic header parsing | Discord rate limits are not hard-coded, must parse response headers |
 | **Token encryption** | AES-256-GCM + envelope | Industry standard; unique nonce per operation |
@@ -102,7 +102,7 @@ Web push later became the fourth channel and still fit the custom router cheaply
 | Component | Integration |
 |-----------|------------|
 | **In-app notifications** | [../app-shell/notifications.md](../app-shell/notifications.md) - Extends existing system |
-| **Background jobs** | Container: existing job runner (`setInterval`). Vercel: cron (`/api/cron/notification-delivery`). See [routing.md](./routing.md). |
+| **Background jobs** | Container: existing job runner (`setInterval`). Vercel: the daily `/api/cron/due` sweep. See [routing.md](./routing.md). |
 | **Auth** | [../auth.md](../auth.md) - Discord OAuth uses same patterns |
 | **Rate limiting** | [../abuse/rate-limits.md](../abuse/rate-limits.md) - Per-provider limits |
 | **Error handling** | [../error-handling.md](../error-handling.md) - Delivery failure patterns |

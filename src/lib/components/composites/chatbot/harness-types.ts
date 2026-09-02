@@ -3,19 +3,17 @@
  *
  * Imported by `PlanCard.svelte`, `ChatPanel.svelte`, and any other
  * component that needs to read the `message.metadata.harness.*` shape.
+ *
+ * A rendered plan step is `ProposalCardStep` (`$lib/types/turn-trace`) — the same shape the
+ * showcase fixtures build. The server's `ProposedStep` is a different type on purpose: it
+ * carries the `args` the approve-route replays, which never reach the client.
  */
-
-export interface ProposedStep {
-	action: string;
-	tool: string;
-	risk: 'read' | 'create' | 'write' | 'destructive';
-	rationale: string;
-}
+import type { ProposalCardStep } from '$lib/types/turn-trace';
 
 export interface ProposalMetadata {
 	id: string;
 	goal: string;
-	steps: ProposedStep[];
+	steps: ProposalCardStep[];
 	estimatedWrites: number;
 	rollback: string;
 	riskTier: 'low' | 'medium' | 'high';

@@ -20,7 +20,7 @@ import {
 	parseToolResult,
 	splitNextActions,
 	toolCallBody,
-} from '$lib/showcase/ax/demo';
+} from '$lib/showcases/ax/demo';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

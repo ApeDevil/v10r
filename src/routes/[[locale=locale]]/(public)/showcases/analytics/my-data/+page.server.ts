@@ -3,10 +3,10 @@
  * Each data point is grouped by the consent tier that would enable it.
  */
 
+import { CONSENT_COOKIE, SESSION_COOKIE } from '$lib/server/analytics/config';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { classifyUserAgent, geoFromHeaders } from '$lib/server/analytics/enrich';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { ANALYTICS_CONSENT_COOKIE, ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
 import { maskIp } from '$lib/server/privacy';
 import type { PageServerLoad } from './$types';
 
@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ request, cookies, getClientAddress,
 	const acceptLanguage = request.headers.get('accept-language') ?? '';
 	const referrer = request.headers.get('referer') ?? '';
 	const visitorId = await deriveVisitorId(ip, ua);
-	const consentTier = parseConsentTier(cookies.get(ANALYTICS_CONSENT_COOKIE));
+	const consentTier = parseConsentTier(cookies.get(CONSENT_COOKIE));
 	const { device, browser } = classifyUserAgent(ua);
 
 	return {
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ request, cookies, getClientAddress,
 		necessary: {
 			visitorId,
 			path: '/showcases/analytics/my-data',
-			sessionCookie: cookies.get(ANALYTICS_SESSION_COOKIE) ? 'present' : 'not set',
+			sessionCookie: cookies.get(SESSION_COOKIE) ? 'present' : 'not set',
 			country: geoFromHeaders(request.headers) ?? 'not resolved',
 		},
 		analytics: {

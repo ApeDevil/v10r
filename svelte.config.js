@@ -8,6 +8,13 @@ const config = {
 	kit: {
 		adapter: adapter({ runtime: 'nodejs22.x' }),
 
+		// The pattern library is the product, not an implementation detail of any one
+		// transport: `mcp/` (stdio) and `src/lib/server/mcp/` (hosted HTTP) are both
+		// readers of it. It sits outside `src/` because the stdio server runs under bare
+		// Bun in an ephemeral container with no Vite, so it must reach the JSON by
+		// relative path — this alias gives the app the same file without six `../` hops.
+		alias: { $patterns: 'pattern-library' },
+
 		// Deploy-accurate app version: powers `updated` polling (update prompts) and
 		// the service worker's cache names. Vercel injects the commit SHA at build.
 		version: {

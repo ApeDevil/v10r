@@ -6,7 +6,9 @@ export { Button, type ButtonVariants, buttonVariants } from './button';
 export { Calendar } from './calendar';
 export { Carousel, CarouselItem } from './carousel';
 export { default as Checkbox } from './checkbox/Checkbox.svelte';
+export { default as OklchColorInput } from './color-input/OklchColorInput.svelte';
 export { Combobox } from './combobox';
+export { default as ContrastBadge } from './contrast-badge/ContrastBadge.svelte';
 export {
 	Asterism,
 	ConcentricRings,
@@ -27,12 +29,11 @@ export {
 	TickMarks,
 	WaveDivider,
 } from './decorative';
-
 export { default as Dialog } from './dialog/Dialog.svelte';
-
 export { default as Drawer } from './drawer/Drawer.svelte';
 export { default as Input } from './input/Input.svelte';
 export { Kbd } from './kbd';
+export { LogoFooter, LogoHero } from './logo';
 export { default as ModeChip } from './ModeChip.svelte';
 export { Pane, PaneGroup, PaneResizer } from './pane';
 export { Popover } from './popover';

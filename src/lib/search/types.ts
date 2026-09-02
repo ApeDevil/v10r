@@ -10,15 +10,15 @@
  * as `localeFallback: true` (rendered with an "EN" badge). The whole layer is
  * locale-parameterized so authoring native de/ru content later needs no rework.
  */
-export type SearchSurface = 'page' | 'showcase' | 'section' | 'doc' | 'blog';
+import type { Locale } from '$lib/i18n';
 
-export type SearchLocale = 'en' | 'de' | 'ru';
+export type SearchSurface = 'page' | 'showcase' | 'section' | 'doc' | 'blog';
 
 export interface SearchRecord {
 	/** Stable id: `${surface}:${locale}:${path}${anchor ?? ''}`. */
 	id: string;
 	surface: SearchSurface;
-	locale: SearchLocale;
+	locale: Locale;
 	/** EN content shown to a de/ru user → drives the "EN" badge + a small rank penalty. */
 	localeFallback: boolean;
 	title: string;

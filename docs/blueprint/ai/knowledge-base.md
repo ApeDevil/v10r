@@ -8,19 +8,24 @@ How v10r organizes the knowledge its chatbot answers from, and how it retrieves 
 
 ## Terminology
 
-Three names, one of which is not code.
+Two layers, one name each, and the name is the path.
 
 | Name | What it is | Where |
 |------|------------|-------|
-| **rawrag** | The retrieval **engine**: chunk → embed → tiers 1/2/3 → RRF fusion → drill-by-id. The ground truth. | `src/lib/server/rawrag/` |
-| **llmwiki** | The **pointer/connector layer over rawrag**: curated pages (`title + tldr + body + tags`) whose `pointers:` are raw chunk ids. A summary surface, not a separate corpus. | `src/lib/server/llmwiki/` |
-| **"nRAG"** | Umbrella term in docs/memory only — **not a code identifier.** Means "the whole retrieval subsystem." | — |
+| **retrieval** | The **engine**: chunk → embed → tiers 1/2/3 → RRF fusion → drill-by-id. The ground truth. | `src/lib/server/retrieval/` · `retrieval` pgSchema · `/api/retrieval/*` |
+| **llmwiki** | The **pointer layer over it**: curated pages (`title + tldr + body + tags`) whose `pointers:` are source chunk ids. A summary surface, not a separate corpus. | `src/lib/server/llmwiki/` |
+
+The umbrella term "nRAG" is gone. The docs claimed it was not a code identifier while
+fourteen identifiers and one admin nav label used it; the subsystem is now named once, and
+the name is the path.
 
 The user's mental model is exact and worth stating plainly:
 
-> **nRAG = a connector/pointer over raw-RAG.** That *is* the llmwiki design — one curated TLDR per topic, each carrying chunk-id pointers down into the immutable rawrag layer. It is a recognized pattern (multi-vector / doc-summary / parent-doc retrieval), not an invention.
+> **llmwiki = a connector/pointer layer over raw retrieval.** One curated TLDR per topic,
+> each carrying chunk-id pointers down into the immutable chunk layer. It is a recognized
+> pattern (multi-vector / doc-summary / parent-doc retrieval), not an invention.
 
-The model answers from llmwiki TLDRs by default and drills into rawrag chunks only for exact wording or claim verification. llmwiki is the answer surface; rawrag is the audit trail. See [layered-rag.md](./layered-rag.md#layer-split).
+The model answers from llmwiki TLDRs by default and drills into source chunks only for exact wording or claim verification. llmwiki is the answer surface; retrieval is the audit trail. See [layered-rag.md](./layered-rag.md#layer-split).
 
 ---
 
@@ -30,12 +35,12 @@ What actually runs today, what is schema-backed scaffolding, and what is designe
 
 | Piece | Status | Reality |
 |-------|--------|---------|
-| rawrag tier-1 (contextual hybrid vector + BM25) | **BUILT** | The live grounding path — and **the only tier the chatbot reaches** (it requests `tiers:[1]`). |
-| rawrag tier-2 (parent-child) | **BUILT (engine) / not reached by chatbot** | Engine works. The unified ingest door (Phase C step 1) now writes hierarchical parents+children, so tier-2 is *eligible* for converted docs — but the chatbot requests `tiers:[1]` only, so tier-2 stays unexercised until a tier-2 surface (reranker) lands. |
+| retrieval tier-1 (contextual hybrid vector + BM25) | **BUILT** | The live grounding path — and **the only tier the chatbot reaches** (it requests `tiers:[1]`). |
+| retrieval tier-2 (parent-child) | **BUILT (engine) / not reached by chatbot** | Engine works. The unified ingest door (Phase C step 1) now writes hierarchical parents+children, so tier-2 is *eligible* for converted docs — but the chatbot requests `tiers:[1]` only, so tier-2 stays unexercised until a tier-2 surface (reranker) lands. |
 | Unified ingest door (hierarchical docs chunks) | **BUILT 2026-06-25 / partial corpus** | `ingest-docs.ts` reuses the app's pure `planChunks()` → section-parents + paragraph-children. **Groundwork: does not change chatbot answers today** (the chatbot is tier-1-only; flat and hierarchical paragraph-children read identically through tier-1). Conversion partial — 36 of 93 docs as of 2026-06-25 (quota-gated, multi-day; see corpus model below). |
-| rawrag tier-3 (Neo4j graph) | **BUILT (engine) / DORMANT for docs** | Engine works; the docs corpus seeds no entities, so tier-3 returns `[]`. The catalog `:Resource` graph exists but is never queried by retrieval. |
+| retrieval tier-3 (Neo4j graph) | **BUILT (engine) / DORMANT for docs** | Engine works; the docs corpus seeds no entities, so tier-3 returns `[]`. The catalog `:Resource` graph exists but is never queried by retrieval. |
 | RRF fusion (k=60) + drill-by-id | **BUILT** | Live, but cross-tier RRF rarely fires for docs because tiers 2/3 are empty. |
-| **llmwiki search / pointer hydration** | **BUILT (engine) / EMPTY in prod** | `searchLlmwiki` works, but no pages exist — `compile/` + `lint/` are scaffolds (`COMPILE_SCAFFOLD`/`LINT_SCAFFOLD`). Only a per-user hand-seed script creates pages. **So the elegant pointer layer never runs for normal users.** |
+| **llmwiki search / pointer hydration** | **BUILT (engine) / EMPTY in prod** | `searchLlmwiki` works, but no pages exist — `compile/` and `lint/` are not built (see [rag-roadmap.md](./rag-roadmap.md)). Only a per-user hand-seed script creates pages. **So the elegant pointer layer never runs for normal users.** |
 | Relevance-gated system-docs prefetch | **BUILT** | The chatbot's actual safety net today — a parallel tier-1 `retrieve()` over the system-docs corpus. See [layered-rag.md](./layered-rag.md#read-path-chat-hot-path). |
 | Citation verification (`verify.ts`) | **BUILT** | Runs on `onFinish`; assigns quote/paraphrase/drifted per chunk. |
 | Catalog grounding (`search_catalog`, `<catalog-map>`) | **BUILT** | Live. Postgres-only — does not touch the Neo4j catalog graph. |
@@ -63,9 +68,9 @@ Every child carries a **deterministic heading-breadcrumb context prefix** — `$
 | Corpus | Owner | Fed by | Status |
 |--------|-------|--------|--------|
 | `SYSTEM_DOCS` (the chatbot's real KB) | `SYSTEM_DOCS_USER_ID` | `scripts/db/ingest-docs.ts` | Live — hierarchical conversion in progress (36/93 as of 2026-06-25) |
-| Per-user desk files | the real user | `syncDeskFileToRag` (shared kernel) | Live, hierarchical |
+| Per-user desk files | the real user | `syncDeskFileToRetrieval` (shared kernel) | Live, hierarchical |
 
-**The unified ingest door (the two-chunker divergence, resolved 2026-06-25).** The docs corpus was historically fed by a Bun script that re-implemented chunking via the dependency-free `markdown-split.ts` — flat paragraph chunks, bare-title prefix, no parents. As of 2026-06-25, `ingest-docs.ts` reuses the app's pure `planChunks()` (`rawrag/plan.ts`), so both runtimes share one door: it writes section-parents (`embedding = NULL`) + paragraph-children (`parent_id` set, deterministic `"<docTitle> › <deepestHeading>"` breadcrumb prefix). Entities + Neo4j remain app-path-only.
+**The unified ingest door (the two-chunker divergence, resolved 2026-06-25).** The docs corpus was historically fed by a Bun script that re-implemented chunking via the dependency-free `markdown-split.ts` — flat paragraph chunks, bare-title prefix, no parents. As of 2026-06-25, `ingest-docs.ts` reuses the app's pure `planChunks()` (`retrieval/plan.ts`), so both runtimes share one door: it writes section-parents (`embedding = NULL`) + paragraph-children (`parent_id` set, deterministic `"<docTitle> › <deepestHeading>"` breadcrumb prefix). Entities + Neo4j remain app-path-only.
 
 **Conversion is partial and quota-gated — not a defect.** Live state 2026-06-25: **36 of 93 docs hierarchical, 57 still flat.** The Gemini free tier caps embeddings at **1000 `embed_content` requests/day**; the corpus is ~1586 chunks, so a full flat→hierarchical re-ingest spans multiple days. The re-ingest is resume-safe — `INGEST_FORCE=1` / `--force` skips any doc that already has a `level='section'` chunk. **This partial state does not degrade chatbot answers:** the chatbot reaches **tier-1 only**, and tier-1 reads flat and hierarchical paragraph-children identically. Proven 2026-06-25 — a question answered from a still-flat doc (`multi-client-core`, 0 sections / 33 embedded paragraphs) returned a correct, cited answer. Hierarchical chunking is groundwork for future tier-2 surfaces (reranker), **not** the change that corrected the chatbot.
 
@@ -115,7 +120,7 @@ Summaries only — the detail lives in code and in the roadmap.
 
 | Area | Decision |
 |------|----------|
-| **Embedding dimension** | `1536` is DDL-bound (`vector(N)` literal) → stays a **TS constant** (SSOT in `rag-shared/embed-config.ts`, re-exported by `config.ts`). The `rag.embedding_model` row becomes the live **model-identity** registry (provider/task/active) with a `CHECK` guarding agreement. Dimension and identity are split: one is structural, one is data. |
+| **Embedding dimension** | `1536` is DDL-bound (`vector(N)` literal) → stays a **TS constant** (SSOT in `retrieval-shared/embed-config.ts`, re-exported by `config.ts`). The `retrieval.embedding_model` row becomes the live **model-identity** registry (provider/task/active) with a `CHECK` guarding agreement. Dimension and identity are split: one is structural, one is data. |
 | **Owner-aware overview** | `getOverview(ownerIds: string[])` via `inArray` (the precedent `graph/rag/queries.ts` already uses) so a logged-in user loads both their own overview and the system overview. |
 | **Eval store** | New `eval` pgSchema cluster: `golden_item`, `golden_expected_source`, `eval_run`, `eval_result` — one numeric column per RAGAS-style metric. |
 | **Graph `:DEPENDS_ON`** | The catalog graph has only `PART_OF` (containment) → can't answer "what depends on Drizzle?". Earns its keep only with a `:DEPENDS_ON` edge + an `:Entity-[:ABOUT]->:Resource` bridge. `:Entity` and `:Resource` stay separate. |
@@ -147,7 +152,7 @@ The three quick-wins, independently the right foundation. Steps 2 + 3 share one 
 
 | # | Step | Effect | Status |
 |---|------|--------|--------|
-| 1 | **Unify the ingest door** — `ingest-docs.ts` reuses pure Vite-free `planChunks` + `rag-shared/embed-config.ts`. | Writes hierarchical section-parents + paragraph-children. **Groundwork only** — makes tier-2 *eligible*; does not change chatbot answers (chatbot is tier-1-only). Zero query-path change. | BUILT · corpus 36/93 (partial, quota-gated, resume-safe) |
+| 1 | **Unify the ingest door** — `ingest-docs.ts` reuses pure Vite-free `planChunks` + `retrieval-shared/embed-config.ts`. | Writes hierarchical section-parents + paragraph-children. **Groundwork only** — makes tier-2 *eligible*; does not change chatbot answers (chatbot is tier-1-only). Zero query-path change. | BUILT · corpus 36/93 (partial, quota-gated, resume-safe) |
 | 2 | **Embed-retry + loud tracing** — bounded retry/backoff in `embed.ts`; add the missing rejected branch in the orchestrator. | Kills silent ungrounding; a 429 becomes an observable `{step:'embed', status:'error'}`. | BUILT |
 | 3 | **Owner-aware overview + write the system anchor** — `getOverview(ownerIds)`; write the deterministic system-overview row; inject the `<project-overview>` block. | **The load-bearing fix** for "how do I use v10r?". Embed-independent — lands even when embed quota is exhausted. | BUILT · verified |
 
@@ -155,9 +160,9 @@ The three quick-wins, independently the right foundation. Steps 2 + 3 share one 
 
 | Order | Item | Status |
 |-------|------|--------|
-| 4 | **Retrieval-strategy orchestrator split** — extract `rawrag/strategy/chatbot-context.ts` FIRST; it unblocks the eval harness and the reranker slot. | DESIGNED |
+| 4 | **Retrieval-strategy orchestrator split** — extract `retrieval/strategy/chatbot-context.ts` FIRST; it unblocks the eval harness and the reranker slot. | DESIGNED |
 | 5 | **Step-back query-transform + reranker** — both gated on broad-query intent + quota, both with deterministic/identity fallback. | DESIGNED |
-| 6 | **llmwiki compile + recompile job** — auto-generate page TLDR/body/pointers from rawrag chunks; drift→recompile via the existing `source_hash_at_compile` detector. | DESIGNED |
+| 6 | **llmwiki compile + recompile job** — auto-generate page TLDR/body/pointers from source chunks; drift→recompile via the existing `source_hash_at_compile` detector. | DESIGNED |
 | 7 | **lint nightly** — must be scheduled and green **before** llmwiki is promoted to the default answer surface (flat net is the guarantee until then). | DESIGNED |
 | 8 | **eval schema + golden-set harness** — `eval` pgSchema cluster; 202+poll admin endpoints (reuse the `/admin/db` run pattern, Idempotency-Key). | DESIGNED |
 | 9 | **Graph `:DEPENDS_ON` + docs entity tier** — earns tier-3 its keep for multi-hop dependency queries; heavier (needs a Neo4j driver in the script). | DESIGNED |
@@ -178,5 +183,5 @@ The three quick-wins, independently the right foundation. Steps 2 + 3 share one 
 
 - [layered-rag.md](./layered-rag.md) — the two-layer split, read path, tool contracts, catalog grounding, graph tenancy. **The primary RAG doc.**
 - [surfaces.md](./surfaces.md) — chatbot vs deskbot; the one-kernel/two-profiles model.
-- [graph-rag.md](./graph-rag.md) — rawrag internals; the catalog `:Resource` seed; the hybrid pipeline.
+- [graph-rag.md](./graph-rag.md) — retrieval internals; the catalog `:Resource` seed; the hybrid pipeline.
 - [README.md](./README.md) — AI blueprint nav hub.

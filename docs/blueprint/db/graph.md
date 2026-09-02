@@ -28,7 +28,7 @@ No `neo4j-driver` dependency. The graph layer talks to Neo4j over the **HTTP Que
 ```typescript
 // src/lib/server/graph/index.ts
 import { env } from '$env/dynamic/private';
-import { GRAPH_TIMEOUT_MS } from '$lib/server/config';
+import { TIMEOUT_MS } from '$lib/server/graph/config';
 import { classifyError, Neo4jError } from './errors';
 
 /** Derive HTTPS host from NEO4J_URI (neo4j+s://xxx → https://xxx) */
@@ -51,7 +51,7 @@ export async function cypher<T = Record<string, unknown>>(
   options?: { timeoutMs?: number },
 ): Promise<T[]> {
   const url = `${getHttpHost()}/db/${getDatabase()}/query/v2`;
-  const timeoutMs = options?.timeoutMs ?? GRAPH_TIMEOUT_MS;
+  const timeoutMs = options?.timeoutMs ?? TIMEOUT_MS;
 
   const body: Record<string, unknown> = { statement };
   if (parameters && Object.keys(parameters).length > 0) body.parameters = parameters;

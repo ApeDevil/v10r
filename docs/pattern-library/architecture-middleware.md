@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Middleware / 14-stage hook chain (CSRF, headers, guards)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Describes the ordered SvelteKit hook chain in src/hooks.server.ts — security h
 
 ---
 
-_Machine-readable record: `architecture-middleware` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-middleware` in `pattern-library/registry.json`._

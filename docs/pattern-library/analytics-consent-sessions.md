@@ -6,7 +6,7 @@ category: "Analytics"
 
 # Consent-gated sessions (cookieless day-rotating id)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Session identification switches between a cookie-based id under the analytics co
 
 ---
 
-_Machine-readable record: `analytics-consent-sessions` in `mcp/patterns.registry.json`._
+_Machine-readable record: `analytics-consent-sessions` in `pattern-library/registry.json`._

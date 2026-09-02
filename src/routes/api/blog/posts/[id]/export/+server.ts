@@ -1,6 +1,6 @@
 import { stringify } from 'yaml';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, getTagsForPost } from '$lib/server/blog';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
 import type { RequestHandler } from './$types';
 
 /** Export a post as a .md file with YAML frontmatter. */

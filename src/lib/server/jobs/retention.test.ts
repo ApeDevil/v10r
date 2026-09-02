@@ -10,19 +10,12 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	AI_TELEMETRY_RETENTION_DAYS,
-	AUDIT_RETENTION_DAYS,
-	DESK_REVISION_RETENTION_DAYS,
-	DESK_SOFT_DELETE_RETENTION_DAYS,
-	MCP_QUERY_TEXT_RETENTION_DAYS,
-	MCP_TELEMETRY_RETENTION_DAYS,
-} from '$lib/server/config';
 import { adminAuditLog } from '$lib/server/db/schema/admin';
 import { conversation, conversationStep, message } from '$lib/server/db/schema/ai/conversation';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { file, fileRevision } from '$lib/server/db/schema/desk';
 import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
+import { retentionDays } from '$lib/server/retention';
 
 let testClient: PGlite;
 
@@ -82,7 +75,7 @@ describe('deskRetention — never touches a live file', () => {
 				userId: USER_ID,
 				type: 'markdown',
 				name: 'Expired',
-				deletedAt: daysAgo(DESK_SOFT_DELETE_RETENTION_DAYS + 10),
+				deletedAt: daysAgo(retentionDays('desk-trash') + 10),
 			},
 		]);
 
@@ -126,7 +119,7 @@ describe('deskRetention — never touches a live file', () => {
 				userId: USER_ID,
 				fileType: 'markdown',
 				reason: 'overwrite',
-				createdAt: daysAgo(DESK_REVISION_RETENTION_DAYS + 10),
+				createdAt: daysAgo(retentionDays('desk-revisions') + 10),
 			},
 		]);
 
@@ -158,7 +151,7 @@ describe('aiTelemetryRetention — age-caps conversation_step, leaves conversati
 				messageId: 'msg_1',
 				stepIndex: 1,
 				stepType: 'initial',
-				createdAt: daysAgo(AI_TELEMETRY_RETENTION_DAYS + 10),
+				createdAt: daysAgo(retentionDays('ai-telemetry') + 10),
 			},
 		]);
 
@@ -187,7 +180,7 @@ describe('auditLogRetention — age-caps admin.audit_log', () => {
 				action: 'user.ban',
 				actorId: 'admin1',
 				actorEmail: 'a@x.io',
-				occurredAt: daysAgo(AUDIT_RETENTION_DAYS + 10),
+				occurredAt: daysAgo(retentionDays('admin-audit-log') + 10),
 			},
 		]);
 
@@ -223,7 +216,7 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 	}
 
 	it('nulls caller-supplied text at the short window while KEEPING the dimensional signal', async () => {
-		await db.insert(mcpCallLog).values(callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)));
+		await db.insert(mcpCallLog).values(callRow(daysAgo(retentionDays('mcp-call-text') + 1)));
 
 		await mcpTelemetryRetention();
 
@@ -239,7 +232,7 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 	});
 
 	it('leaves a row inside the short window completely untouched', async () => {
-		await db.insert(mcpCallLog).values(callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS - 1)));
+		await db.insert(mcpCallLog).values(callRow(daysAgo(retentionDays('mcp-call-text') - 1)));
 		await mcpTelemetryRetention();
 		const [row] = await db.select().from(mcpCallLog);
 		expect(row.queryText).toBe('kubernetes operator');
@@ -249,7 +242,10 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 	it('deletes the row itself at the long window', async () => {
 		await db
 			.insert(mcpCallLog)
-			.values([callRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS + 1)), callRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS - 1))]);
+			.values([
+				callRow(daysAgo(retentionDays('mcp-call-log') + 1)),
+				callRow(daysAgo(retentionDays('mcp-call-log') - 1)),
+			]);
 
 		await mcpTelemetryRetention();
 
@@ -264,8 +260,8 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 		await db
 			.insert(mcpCallLog)
 			.values([
-				callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)),
-				callRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS + 1)),
+				callRow(daysAgo(retentionDays('mcp-call-text') + 1)),
+				callRow(daysAgo(retentionDays('mcp-call-log') + 1)),
 			]);
 
 		const first = await mcpTelemetryRetention();
@@ -295,8 +291,8 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 		await db
 			.insert(mcpCallLog)
 			.values([
-				privateRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)),
-				callRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)),
+				privateRow(daysAgo(retentionDays('mcp-call-text') + 1)),
+				callRow(daysAgo(retentionDays('mcp-call-text') + 1)),
 			]);
 
 		await mcpTelemetryRetention();
@@ -317,8 +313,8 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 		await db
 			.insert(mcpCallLog)
 			.values([
-				privateRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS + 1)),
-				privateRow(daysAgo(MCP_TELEMETRY_RETENTION_DAYS - 1)),
+				privateRow(daysAgo(retentionDays('mcp-call-log') + 1)),
+				privateRow(daysAgo(retentionDays('mcp-call-log') - 1)),
 			]);
 		await mcpTelemetryRetention();
 		const rows = await db.select().from(mcpCallLog);
@@ -326,7 +322,7 @@ describe('mcpTelemetryRetention — minimises by column before minimising by row
 	});
 
 	it('stays idempotent with an old private row present — it is skipped, not re-counted', async () => {
-		await db.insert(mcpCallLog).values(privateRow(daysAgo(MCP_QUERY_TEXT_RETENTION_DAYS + 1)));
+		await db.insert(mcpCallLog).values(privateRow(daysAgo(retentionDays('mcp-call-text') + 1)));
 		expect(await mcpTelemetryRetention()).toBe(0);
 		expect(await mcpTelemetryRetention()).toBe(0);
 	});

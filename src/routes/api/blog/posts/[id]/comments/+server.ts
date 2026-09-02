@@ -1,8 +1,5 @@
 import * as v from 'valibot';
 import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	CommentOnUnpublishedError,
 	createComment,
@@ -10,6 +7,9 @@ import {
 	listComments,
 	listCommentsQuerySchema,
 } from '$lib/server/blog/comments';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const userRateLimit = createLimiter('ratelimit:comment:user', 5, '1 m');

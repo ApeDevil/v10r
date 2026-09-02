@@ -1,6 +1,4 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
 import {
 	cancelMyPendingRequest,
 	createGrantRequest,
@@ -8,7 +6,9 @@ import {
 	listMyRequests,
 } from '$lib/server/auth/grant-requests';
 import { GRANT_KINDS } from '$lib/server/auth/grants';
-import { guardApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const requestLimit = createLimiter('ratelimit:grant-request:user', 1, '24 h');

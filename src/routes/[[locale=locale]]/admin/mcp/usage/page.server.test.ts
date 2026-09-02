@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const guards = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
-vi.mock('$lib/server/auth/guards', () => guards);
+vi.mock('$lib/server/http/guards', () => guards);
 
 const telemetry = vi.hoisted(() => ({
 	reachable: true,

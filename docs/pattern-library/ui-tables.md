@@ -6,7 +6,7 @@ category: "UI Components & Design System"
 
 # Tables
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A styled table primitive built on the primitives layer for rendering tabular dat
 
 ---
 
-_Machine-readable record: `ui-tables` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ui-tables` in `pattern-library/registry.json`._

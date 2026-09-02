@@ -6,7 +6,7 @@ category: "AI"
 
 # TOON token-efficient context format
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -26,4 +26,4 @@ A compact, TOON-style serialization packs structured context data for LLM prompt
 
 ---
 
-_Machine-readable record: `ai-toon-format` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-toon-format` in `pattern-library/registry.json`._

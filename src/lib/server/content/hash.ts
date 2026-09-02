@@ -1,6 +1,6 @@
 /**
  * Compute SHA-256 hash of arbitrary text content.
- * Used as the canonical content hash for: blog revision idempotency, RAG re-ingest
+ * Used as the canonical content hash for: blog revision idempotency, retrieval re-ingest
  * skip gates, and `content:push` / `content:check` drift detection.
  */
 export async function contentHash(markdown: string): Promise<string> {

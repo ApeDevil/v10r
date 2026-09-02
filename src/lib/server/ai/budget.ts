@@ -2,7 +2,7 @@ import { dev } from '$app/environment';
 import type { Decision } from '$lib/server/abuse';
 import { allowed, denied } from '$lib/server/abuse';
 import { redis } from '$lib/server/cache';
-import { AI_DAILY_TOKEN_CAP } from '$lib/server/config';
+import { DAILY_TOKEN_CAP } from './config';
 
 /**
  * Per-user daily AI token budget.
@@ -13,7 +13,7 @@ import { AI_DAILY_TOKEN_CAP } from '$lib/server/config';
  *
  * v1 caveat: this is a check-then-charge pattern, not pre-charge-then-reconcile.
  * A burst of N parallel requests can each pass the gate before any has
- * charged, so the daily total can overshoot by up to N × AI_MAX_TOKENS before
+ * charged, so the daily total can overshoot by up to N × MAX_TOKENS before
  * the cap engages. Worst-case overshoot is ~$0.20-0.50 (≪ daily-cap dollars),
  * acceptable for v1. Upgrade to atomic pre-charge if abuse data warrants.
  */
@@ -33,7 +33,7 @@ export async function checkUserBudget(userId: string): Promise<Decision> {
 	}
 
 	const used = (await redis.get<number>(dayKey(userId))) ?? 0;
-	if (used >= AI_DAILY_TOKEN_CAP) {
+	if (used >= DAILY_TOKEN_CAP) {
 		return denied('rate-limit', 'Daily AI usage budget reached. Try again tomorrow.', 429, msUntilUtcMidnight());
 	}
 	return allowed;

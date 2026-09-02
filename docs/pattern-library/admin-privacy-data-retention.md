@@ -6,7 +6,7 @@ category: "Admin & Privacy"
 
 # Data retention policy & purge jobs
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Scheduled jobs that enforce data-retention policy by purging stale records on a 
 
 ---
 
-_Machine-readable record: `admin-privacy-data-retention` in `mcp/patterns.registry.json`._
+_Machine-readable record: `admin-privacy-data-retention` in `pattern-library/registry.json`._

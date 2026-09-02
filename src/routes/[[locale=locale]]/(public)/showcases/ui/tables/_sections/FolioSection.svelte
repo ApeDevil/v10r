@@ -8,7 +8,7 @@ import {
 	Row as TableRow,
 } from '$lib/components';
 import { Button } from '$lib/components/primitives';
-import { DEPARTMENTS, type Department, EMPLOYEES, formatDate, formatSalary } from '../_data/mock-data';
+import { DEPARTMENTS, type Department, EMPLOYEES, formatSalary, formatStartDate } from '../_data/mock-data';
 
 let expandedGroups = $state<Set<Department>>(new Set(DEPARTMENTS));
 
@@ -96,7 +96,7 @@ function avgSalary(employees: typeof EMPLOYEES): string {
 										<TableCell class="font-medium">{emp.name}</TableCell>
 										<TableCell>{emp.role}</TableCell>
 										<TableCell class="text-right tabular-nums">{formatSalary(emp.salary)}</TableCell>
-										<TableCell>{formatDate(emp.startDate)}</TableCell>
+										<TableCell>{formatStartDate(emp.startDate)}</TableCell>
 									</TableRow>
 								{/each}
 							{/if}

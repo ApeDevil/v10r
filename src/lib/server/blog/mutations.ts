@@ -16,6 +16,7 @@ import {
 } from '$lib/server/db/schema/blog';
 import { assertOwnedDestination } from '$lib/server/db/shared/folder-tree';
 import { localeRegconfig } from '$lib/server/search/regconfig';
+import type { PostStatus } from '$lib/types/db-enums';
 import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
 
@@ -44,7 +45,7 @@ export async function updatePostMetadata(
 	postId: string,
 	data: {
 		slug?: string;
-		status?: 'draft' | 'published' | 'archived';
+		status?: PostStatus;
 		coverImageId?: string | null;
 		publishedAt?: Date | null;
 		folderId?: string | null;

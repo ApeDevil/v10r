@@ -3,7 +3,7 @@ import VolumeBarChart from '$lib/components/admin/ai/VolumeBarChart.svelte';
 import { Card } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge } from '$lib/components/primitives';
-import type { AiSurface, UnifiedModelUsageRow } from '$lib/schemas/admin/model-usage';
+import type { AiWorkload, UnifiedModelUsageRow } from '$lib/schemas/admin/model-usage';
 
 let { data } = $props();
 
@@ -42,7 +42,7 @@ function relativeTime(iso: string | null): string {
 	return `${Math.floor(hours / 24)}d ago`;
 }
 
-const SURFACE_META: Record<AiSurface, { label: string; icon: string }> = {
+const WORKLOAD_META: Record<AiWorkload, { label: string; icon: string }> = {
 	chat: { label: 'Chatbot', icon: 'i-lucide-message-square' },
 	image: { label: 'Image reader', icon: 'i-lucide-image' },
 };
@@ -164,8 +164,8 @@ const coverageNote = $derived.by(() => {
 						</tr>
 					</thead>
 					<tbody>
-						{#each data.usage as r (r.surface + r.modelId + (r.providerId ?? ''))}
-							{@const meta = SURFACE_META[r.surface]}
+						{#each data.usage as r (r.workload + r.modelId + (r.providerId ?? ''))}
+							{@const meta = WORKLOAD_META[r.workload]}
 							<tr>
 								<td>
 									<Badge variant="secondary">

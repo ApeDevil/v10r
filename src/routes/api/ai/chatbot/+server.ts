@@ -3,13 +3,13 @@
  * See `docs/blueprint/ai/surfaces.md`.
  */
 import { safeParse } from 'valibot';
-import type { SearchLocale } from '$lib/search/types';
+import type { Locale } from '$lib/i18n';
 import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { ChatbotRequestSchema } from '$lib/server/ai/validation';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
-import { apiError, apiValidationError } from '$lib/server/api/response';
-import { isAdmin } from '$lib/server/auth/guards';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { isAdmin } from '$lib/server/http/guards';
+import { apiError, apiValidationError } from '$lib/server/http/response';
 import { resolvePageContext } from '$lib/server/search';
 import type { RequestHandler } from './$types';
 
@@ -33,7 +33,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	// Site-awareness: resolve the client route id to trusted catalog metadata HERE, at the
 	// trust boundary (the raw id never reaches the orchestrator). Miss/dynamic/private → null.
-	const pageContext = resolvePageContext(parsed.output.pageRouteId, (locals.locale ?? 'en') as SearchLocale);
+	const pageContext = resolvePageContext(parsed.output.pageRouteId, (locals.locale ?? 'en') as Locale);
 
 	return orchestrateChat({
 		userId: guard.user.id,

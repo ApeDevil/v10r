@@ -14,12 +14,12 @@ import {
 	IMAGE_CATEGORIES,
 	type ImageAnalysis,
 	imageAnalysisSchema,
-} from '$lib/schemas/showcase/image-metadata';
+} from '$lib/schemas/image-metadata';
 import { getVisionProvider } from '$lib/server/ai';
 import { chargeTokens, checkUserBudget } from '$lib/server/ai/budget';
+import { MAX_TOKENS } from '$lib/server/ai/config';
 import { estimateCost } from '$lib/server/ai/pricing';
-import { AI_MAX_TOKENS } from '$lib/server/config';
-import { getImagemetaBytes } from '$lib/server/store/showcase/image';
+import { getImagemetaBytes } from '$lib/server/store/image';
 import type { ExtractFailureReason, ExtractResult } from './types';
 
 /**
@@ -99,7 +99,7 @@ export async function extractImageMetadata(userId: string, storageKey: string): 
 		const result = await generateText({
 			model,
 			system: SYSTEM,
-			maxOutputTokens: AI_MAX_TOKENS,
+			maxOutputTokens: MAX_TOKENS,
 			maxRetries: 1,
 			abortSignal: AbortSignal.timeout(30_000),
 			output: Output.object({ schema: analysisJsonSchema }),

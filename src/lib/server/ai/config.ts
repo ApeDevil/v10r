@@ -1,11 +1,4 @@
-export {
-	AI_MAX_TOKENS as MAX_TOKENS,
-	AI_RATE_LIMIT_MAX as RATE_LIMIT_MAX,
-	AI_RATE_LIMIT_PREFIX as RATE_LIMIT_PREFIX,
-	AI_RATE_LIMIT_WINDOW as RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
-
-import type { DeskToolScope } from './tools/_types';
+import { DESK_TOOL_SCOPES, type DeskToolScope } from './tools/_types';
 
 /**
  * Agent-loop step budgets (AI SDK v6 `stopWhen: stepCountIs(n)`). Externalized here so
@@ -18,7 +11,9 @@ import type { DeskToolScope } from './tools/_types';
  *   for the plan-propose → execute step.
  */
 export const CHATBOT_MAX_STEPS = 3;
+
 export const DESK_READ_MAX_STEPS = 3;
+
 export const DESK_MUTATE_MAX_STEPS = 5;
 
 /** System prompt for the AI assistant (non-tool mode). */
@@ -69,7 +64,7 @@ const SCOPE_DESCRIPTIONS: Record<DeskToolScope, string> = {
 
 /** Build a <permissions> block listing which tool scopes are enabled/disabled. */
 export function buildPermissionsBlock(scopes: DeskToolScope[]): string {
-	const lines = (['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask'] as const).map(
+	const lines = DESK_TOOL_SCOPES.map(
 		(s) => `- ${SCOPE_DESCRIPTIONS[s]} [${scopes.includes(s) ? 'enabled' : 'disabled'}]`,
 	);
 	return `<permissions>\n${lines.join('\n')}\n</permissions>`;
@@ -113,3 +108,33 @@ Do NOT call desk_propose_plan for:
 
 If the user has already approved a plan in this conversation and you are executing a step from it, proceed directly — do not re-plan.
 </planning>`;
+
+/** Chat endpoint rate limit: requests per window */
+export const RATE_LIMIT_MAX = 20;
+
+/** Chat endpoint rate limit: window duration */
+export const RATE_LIMIT_WINDOW = '60 s';
+
+/** Chat endpoint rate limit: Redis key prefix */
+export const RATE_LIMIT_PREFIX = 'ratelimit:ai:chat';
+
+/** Max tokens for chat responses */
+export const MAX_TOKENS = 2048;
+
+/**
+ * Daily AI token budget per user (input + output).
+ * Caps cost-amplification abuse to ~$1-2/user/day on premium models.
+ * Resets at UTC day boundary.
+ */
+export const DAILY_TOKEN_CAP = 100_000;
+
+export const MAX_CONVERSATIONS_PER_USER = 200;
+
+/** Conversation CRUD rate limit: requests per window */
+export const CONVERSATION_RATE_LIMIT_MAX = 30;
+
+/** Conversation CRUD rate limit: window duration */
+export const CONVERSATION_RATE_LIMIT_WINDOW = '60 s';
+
+/** Conversation CRUD rate limit: Redis key prefix */
+export const CONVERSATION_RATE_LIMIT_PREFIX = 'ratelimit:ai:conversations';

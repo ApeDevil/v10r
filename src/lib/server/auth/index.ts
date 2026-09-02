@@ -5,6 +5,10 @@ import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/a
 import { emailOTP, magicLink, twoFactor } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
+// Use relative import — Better Auth CLI breaks on $lib aliases (Issue #2252)
+import { db } from '../db';
+import { user as userTable } from '../db/schema/auth/_better-auth';
+import { countPasskeys, touchPasskeyLastUsed } from '../db/user/queries';
 import {
 	EMAIL_OTP_EXPIRES_IN,
 	EMAIL_OTP_MAX_ATTEMPTS,
@@ -13,11 +17,7 @@ import {
 	SESSION_EXPIRES_IN,
 	SESSION_UPDATE_AGE,
 	TWO_FACTOR_ISSUER,
-} from '$lib/server/config';
-// Use relative import — Better Auth CLI breaks on $lib aliases (Issue #2252)
-import { db } from '../db';
-import { user as userTable } from '../db/schema/auth/_better-auth';
-import { countPasskeys, touchPasskeyLastUsed } from '../db/user/queries';
+} from './config';
 import { type FactorChangeAction, onFactorChanged } from './factor-changes';
 import { magicLinkTemplate, otpTemplate, sendAuthEmail } from './send-auth-email';
 import { isStepUpFresh, stampStepUp } from './step-up';

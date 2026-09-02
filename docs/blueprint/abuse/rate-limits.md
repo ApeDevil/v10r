@@ -1,13 +1,13 @@
 # Rate Limits
 
-Sliding-window rate limits backed by Upstash Redis. All limiters are created with the `createLimiter` factory from `$lib/server/api/rate-limit.ts` — no global hook limiter, no cookie secrets, no `sveltekit-rate-limiter`.
+Sliding-window rate limits backed by Upstash Redis. All limiters are created with the `createLimiter` factory from `$lib/server/http/rate-limit.ts` — no global hook limiter, no cookie secrets, no `sveltekit-rate-limiter`.
 
 ---
 
 ## `createLimiter` Factory
 
 ```typescript
-import { createLimiter } from '$lib/server/api/rate-limit';
+import { createLimiter } from '$lib/server/http/rate-limit';
 
 const limiter = createLimiter(prefix, max, window);
 // prefix — Redis key namespace (string)
@@ -90,7 +90,7 @@ The email is extracted from the request body via `request.clone().json()` so Bet
 Standard 429 response builder. Used by endpoint handlers when a limiter returns `success: false`:
 
 ```typescript
-import { rateLimitResponse } from '$lib/server/api/rate-limit';
+import { rateLimitResponse } from '$lib/server/http/rate-limit';
 
 const { success, reset } = await limiter.limit(ip);
 if (!success) return rateLimitResponse(reset);

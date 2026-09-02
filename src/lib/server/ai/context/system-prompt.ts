@@ -12,7 +12,6 @@
  * `<desk-layout>`) after. Per-user content lives in the tail so the
  * cached prefix hits across users.
  */
-import type { UIMessage } from 'ai';
 import {
 	buildPermissionsBlock,
 	COMPLETION_BLOCK,
@@ -21,11 +20,9 @@ import {
 	SYSTEM_PROMPT,
 } from '$lib/server/ai/config';
 import type { DeskToolScope } from '$lib/server/ai/tools/_types';
-import type { PipelinePromptEvent } from '$lib/types/pipeline';
+import type { RetrievalPromptEvent } from '$lib/types/retrieval-trace';
 import { escapeXmlAttr, escapeXmlText } from '$lib/utils/xml';
-
-/** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
-export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
+import type { ChatMessage } from '../types';
 
 /** Context data used to assemble the system prompt. */
 export interface SystemPromptInput {
@@ -98,8 +95,8 @@ export function buildPromptAssembledEvent(opts: {
 	contextBlocks: { chunkId: string; tokens: number }[];
 	totalTokens: number;
 	isDevOrAdmin: boolean;
-}): PipelinePromptEvent {
-	const event: PipelinePromptEvent = {
+}): RetrievalPromptEvent {
+	const event: RetrievalPromptEvent = {
 		type: 'pipeline:prompt_assembled',
 		userPrompt: opts.userPrompt,
 		contextBlocks: opts.contextBlocks,

@@ -1,8 +1,8 @@
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { MAX_BLOG_3D_UPLOAD_SIZE, MAX_BLOG_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/config';
 import { SUBKEY_PURPOSES } from '$lib/server/security/subkey';
 import { signTicket, verifyTicket } from '$lib/server/security/ticket';
+import { MAX_BLOG_3D_UPLOAD_SIZE, MAX_BLOG_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '../config';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';
 import type { PresignedUrlResult, UploadResult } from '../types';
@@ -15,10 +15,6 @@ function requireS3() {
 
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'model/gltf-binary'];
 
-/**
- * Generate a presigned PUT URL for direct browser upload.
- * Content-Type is locked into the signature — the client must send the same type.
- */
 /**
  * How long a confirmation ticket stays valid.
  *

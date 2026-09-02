@@ -1,5 +1,5 @@
 /**
- * llmwiki domain errors. Mirrors the rawrag error pattern so the shared
+ * llmwiki domain errors. Mirrors the retrieval error pattern so the shared
  * error-to-status mapper in $lib/server/errors stays consistent.
  */
 

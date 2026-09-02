@@ -182,7 +182,7 @@ src/lib/components/primitives/
 A small home for a few standalone widgets that don't fit the primitive/composite split:
 
 ```
-src/lib/components/ui/
+src/lib/components/primitives/
 ├── ContrastBadge.svelte    # WCAG contrast indicator
 └── OklchColorInput.svelte  # OKLCH color picker input
 ```

@@ -3,7 +3,7 @@
  * recorded as anonymous pageviews, in ANY lane.
  *
  * Three collectors write anonymous pageviews and MUST agree:
- *   1. `$lib/server/analytics/hook.ts`  — full page loads (server navigation)
+ *   1. `$lib/server/analytics/collector.hook.ts`  — full page loads (server navigation)
  *   2. `/api/analytics/journey`         — client-side navigations (SPA beacon)
  *   3. `$lib/analytics/vercel.ts`       — Vercel Web Analytics `beforeSend`
  *

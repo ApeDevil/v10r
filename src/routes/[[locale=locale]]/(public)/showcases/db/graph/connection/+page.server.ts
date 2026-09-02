@@ -1,4 +1,4 @@
-import { verifyConnection } from '$lib/server/graph/showcase/queries';
+import { verifyConnection } from '$lib/server/showcases/graph/queries';
 import type { Actions, PageServerLoad } from './$types';
 
 async function measureConnection() {

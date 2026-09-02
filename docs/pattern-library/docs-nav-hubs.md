@@ -6,7 +6,7 @@ category: "Docs & Agent Experience"
 
 # Docs navigation hubs (README-per-directory convention)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation convention only
 
@@ -23,7 +23,7 @@ An AI-optimized docs tree where every directory's README.md is a navigation hub 
 ## Tests
 
 - `src/lib/server/docs/markdown-urls.test.ts` — Pins every hub URL and H1-title round-trip ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/docs/markdown-urls.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/docs/markdown-urls.test.ts))
-- `src/lib/showcases/docs-mapping.gate.test.ts` — Every showcase docs button must resolve to a published hub entry ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/showcases/docs-mapping.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/showcases/docs-mapping.gate.test.ts))
+- `src/lib/showcases/catalog/docs-mapping.gate.test.ts` — Every showcase docs button must resolve to a published hub entry ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/showcases/catalog/docs-mapping.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/showcases/catalog/docs-mapping.gate.test.ts))
 
 ## Invariants
 
@@ -37,4 +37,4 @@ An AI-optimized docs tree where every directory's README.md is a navigation hub 
 
 ---
 
-_Machine-readable record: `docs-nav-hubs` in `mcp/patterns.registry.json`._
+_Machine-readable record: `docs-nav-hubs` in `pattern-library/registry.json`._

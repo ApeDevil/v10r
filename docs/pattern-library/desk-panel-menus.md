@@ -6,7 +6,7 @@ category: "Desk Workspace"
 
 # Composed panel menus (one array, desktop kebab + mobile sheet)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,13 +22,13 @@ A context-scoped registry where each panel instance registers its command menus,
 
 ## Code
 
-- `src/lib/components/composites/dock/panel-menus.svelte.ts` — Context-scoped registry keyed by panel instance id — never module-level ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/panel-menus.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/panel-menus.svelte.ts))
-- `src/lib/components/composites/dock/compose-menus.ts` — composePanelMenus(): registered menus → Panel floor menu → View menu; drops empty registered menus ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/compose-menus.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/compose-menus.ts))
-- `src/lib/components/composites/dock/view-menu.ts` — buildViewMenu({ structural }) — mobile strips split commands ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/view-menu.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/view-menu.ts))
+- `src/lib/components/desk/panel-menus.state.svelte.ts` — Context-scoped registry keyed by panel instance id — never module-level ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/panel-menus.state.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/panel-menus.state.svelte.ts))
+- `src/lib/components/desk/compose-menus.ts` — composePanelMenus(): registered menus → Panel floor menu → View menu; drops empty registered menus ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/compose-menus.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/compose-menus.ts))
+- `src/lib/components/desk/view-menu.ts` — buildViewMenu({ structural }) — mobile strips split commands ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/view-menu.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/view-menu.ts))
 
 ## Tests
 
-- `src/lib/components/composites/dock/compose-menus.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/compose-menus.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/compose-menus.test.ts))
+- `src/lib/components/desk/compose-menus.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/compose-menus.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/compose-menus.test.ts))
 
 ## Proof
 
@@ -40,4 +40,4 @@ A context-scoped registry where each panel instance registers its command menus,
 
 ---
 
-_Machine-readable record: `desk-panel-menus` in `mcp/patterns.registry.json`._
+_Machine-readable record: `desk-panel-menus` in `pattern-library/registry.json`._

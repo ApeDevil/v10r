@@ -6,7 +6,7 @@ category: "Databases & Storage"
 
 # Graph modeling
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Defines how entities and their relationships are represented as nodes and edges 
 
 ---
 
-_Machine-readable record: `databases-graph-modeling` in `mcp/patterns.registry.json`._
+_Machine-readable record: `databases-graph-modeling` in `pattern-library/registry.json`._

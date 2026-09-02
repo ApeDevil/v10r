@@ -8,9 +8,10 @@
  * → those records keep `localeFallback` (rendered with an "EN" badge).
  */
 
-import type { SearchLocale, SearchRecord } from '$lib/search/types';
-import { type ShowcaseSublink, showcases } from '$lib/showcases/registry';
-import { showcaseSections } from '$lib/showcases/sections';
+import type { Locale } from '$lib/i18n';
+import type { SearchRecord } from '$lib/search/types';
+import { type ShowcaseSublink, showcases } from '$lib/showcases/catalog/registry';
+import { showcaseSections } from '$lib/showcases/catalog/sections';
 import { REDIRECT_HREFS } from './_redirects';
 
 function cardTitleFor(pageHref: string): string {
@@ -25,7 +26,7 @@ function cardTitleFor(pageHref: string): string {
 	return best || 'Showcases';
 }
 
-export function showcaseRecords(locale: SearchLocale): SearchRecord[] {
+export function showcaseRecords(locale: Locale): SearchRecord[] {
 	const fallback = locale !== 'en';
 	const out: SearchRecord[] = [];
 	const seen = new Set<string>();

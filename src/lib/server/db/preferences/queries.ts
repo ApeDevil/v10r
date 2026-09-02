@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../index';
-import { userPreferences } from '../schema/app/user-preferences';
+import { userPreferences } from '../schema/personalization/user-preferences';
 
 /** Read-only preferences fetch (no row creation — for transparency/export surfaces). */
 export async function getPreferences(userId: string) {

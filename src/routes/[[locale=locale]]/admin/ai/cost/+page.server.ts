@@ -1,5 +1,4 @@
 import { buildUnifiedModelUsage } from '$lib/server/ai/usage-summary';
-import { requireAdmin } from '$lib/server/auth/guards';
 import { getModelUsage } from '$lib/server/db/ai/admin-queries';
 import {
 	getImageConversionFunnel,
@@ -7,7 +6,8 @@ import {
 	getImageUsageKpis,
 	getImageVolumeByDay,
 } from '$lib/server/db/ai/image-metadata-queries';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
+import { safeDeferPromise } from '$lib/server/http/defer';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { PageServerLoad } from './$types';
 
 /**

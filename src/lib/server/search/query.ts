@@ -9,15 +9,17 @@
  * prerendered shard and matched in-browser; it is NOT re-run here, so Neon
  * cold-start never blocks instant results.
  */
+
+import type { Locale } from '$lib/i18n';
 import { getLocale, overwriteGetLocale } from '$lib/paraglide/runtime';
-import type { SearchLocale, SearchRecord, SearchResult } from '$lib/search/types';
+import type { SearchRecord, SearchResult } from '$lib/search/types';
 import { searchBlog } from './adapters/blog';
 import { docTitleRecords, searchDocs } from './adapters/docs';
 import { pageRecords } from './adapters/pages';
 import { showcaseRecords } from './adapters/showcases';
 
 export interface SearchContext {
-	locale: SearchLocale;
+	locale: Locale;
 	limit?: number;
 	scope?: 'all' | 'docs' | 'blog';
 }
@@ -55,7 +57,7 @@ export async function searchContent(query: string, ctx: SearchContext): Promise<
 	return lanes.flat();
 }
 
-const indexCache = new Map<SearchLocale, SearchRecord[]>();
+const indexCache = new Map<Locale, SearchRecord[]>();
 
 /**
  * Build the Lane-A static index for one locale (titles only, no bodies).
@@ -65,7 +67,7 @@ const indexCache = new Map<SearchLocale, SearchRecord[]>();
  * Pins the Paraglide locale while resolving nav labels so cached shards carry the
  * right language.
  */
-export function buildSearchIndex(locale: SearchLocale): SearchRecord[] {
+export function buildSearchIndex(locale: Locale): SearchRecord[] {
 	const cached = indexCache.get(locale);
 	if (cached) return cached;
 

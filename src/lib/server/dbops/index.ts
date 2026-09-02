@@ -2,21 +2,20 @@
  * dbops domain — operate (mutating) layer over Neon branches. Public surface.
  */
 export {
-	advanceRun,
-	cancelRun,
-	getRun,
-	listRuns,
-	reapExpiredRuns,
+	advanceOperation,
+	cancelOperation,
+	listOperations,
+	reapExpiredOperations,
 	startOperation,
-} from './core';
+} from './operations';
 export {
+	type BranchOperationKind,
+	type BranchOperationStatus,
+	type BranchOperationTrigger,
 	ConflictError,
 	isTerminal,
 	NotConfiguredError,
+	type PublicBranchOperation,
 	RefusedError,
-	type RunDTO,
-	type RunKind,
-	type RunStatus,
-	type RunTrigger,
 	type StartOperationInput,
 } from './types';

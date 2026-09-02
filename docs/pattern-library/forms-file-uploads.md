@@ -6,7 +6,7 @@ category: "Forms & Validation"
 
 # File uploads (withFiles + Sharp + R2)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -34,4 +34,4 @@ Server-side file upload handling that processes images with Sharp and persists t
 
 ---
 
-_Machine-readable record: `forms-file-uploads` in `mcp/patterns.registry.json`._
+_Machine-readable record: `forms-file-uploads` in `pattern-library/registry.json`._

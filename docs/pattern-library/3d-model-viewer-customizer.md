@@ -6,7 +6,7 @@ category: "3D"
 
 # Full-screen model viewer & customizer (layout reset)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ A full-screen model viewer and GLTF customizer (materials, parts, morph targets,
 
 ---
 
-_Machine-readable record: `3d-model-viewer-customizer` in `mcp/patterns.registry.json`._
+_Machine-readable record: `3d-model-viewer-customizer` in `pattern-library/registry.json`._

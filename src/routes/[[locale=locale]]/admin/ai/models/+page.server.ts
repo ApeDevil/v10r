@@ -1,6 +1,6 @@
 import { getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
 import { buildProviderRegistry, getCooldownResumeAt } from '$lib/server/ai/providers';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { PageServerLoad } from './$types';
 
 /**

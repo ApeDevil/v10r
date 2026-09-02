@@ -14,8 +14,8 @@ import {
 	DEPARTMENTS,
 	type Department,
 	EMPLOYEES,
-	formatDate,
 	formatSalary,
+	formatStartDate,
 	type SortDirection,
 	type SortKey,
 	type Status,
@@ -208,7 +208,7 @@ const columns: { key: SortKey; label: string; align?: 'right' }[] = [
 									<TableCell>
 										<Badge variant={statusVariant(emp.status)}>{emp.status}</Badge>
 									</TableCell>
-									<TableCell>{formatDate(emp.startDate)}</TableCell>
+									<TableCell>{formatStartDate(emp.startDate)}</TableCell>
 								</TableRow>
 							{/each}
 							{#if paginated.length === 0}

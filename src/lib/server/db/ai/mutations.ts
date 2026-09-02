@@ -102,8 +102,6 @@ export async function saveToolCall(data: {
 	result?: Record<string, unknown>;
 	status: 'pending' | 'success' | 'error';
 	errorMessage?: string;
-	entityKind?: string;
-	entityId?: string;
 }) {
 	const id = createId.toolCall();
 	const [row] = await db

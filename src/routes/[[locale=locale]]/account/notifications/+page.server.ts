@@ -1,16 +1,16 @@
-import { NOTIFICATIONS_PAGE_SIZE } from '$lib/server/config';
 import { getNotifications, getUnreadCount } from '$lib/server/db/notifications/queries';
+import { PAGE_SIZE } from '$lib/server/notifications/config';
 import { renderNotification } from '$lib/server/notifications/render-message';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	if (!locals.user) return { notifications: [], unreadCount: 0, page: 1, pageSize: NOTIFICATIONS_PAGE_SIZE };
+	if (!locals.user) return { notifications: [], unreadCount: 0, page: 1, pageSize: PAGE_SIZE };
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const offset = (page - 1) * NOTIFICATIONS_PAGE_SIZE;
+	const offset = (page - 1) * PAGE_SIZE;
 
 	const [notifications, unreadCount] = await Promise.all([
-		getNotifications(locals.user.id, NOTIFICATIONS_PAGE_SIZE, offset),
+		getNotifications(locals.user.id, PAGE_SIZE, offset),
 		getUnreadCount(locals.user.id),
 	]);
 
@@ -28,6 +28,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		})),
 		unreadCount,
 		page,
-		pageSize: NOTIFICATIONS_PAGE_SIZE,
+		pageSize: PAGE_SIZE,
 	};
 };

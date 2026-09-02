@@ -83,36 +83,36 @@ const resourceById = $derived(new Map(data.resources.map((r) => [r.id, r])));
 		</div>
 	</Card>
 
-	<!-- nRAG corpus (summary — full management on the nRAG tab) -->
+	<!-- Retrieval corpus (summary — full management on the Retrieval tab) -->
 	<Card>
 		{#snippet header()}
 			<Cluster justify="between" align="center">
-				<h2 class="text-fluid-lg font-semibold">nRAG Corpus</h2>
-				<a class="tab-link" href={localizeHref('/admin/ai/nrag')}>nRAG &rarr;</a>
+				<h2 class="text-fluid-lg font-semibold">Retrieval Corpus</h2>
+				<a class="tab-link" href={localizeHref('/admin/ai/retrieval')}>Retrieval &rarr;</a>
 			</Cluster>
 		{/snippet}
 
 		<div class="stat-grid">
 			<div class="stat-card">
 				<span class="stat-label">Documents</span>
-				<span class="stat-value">{data.rag.totalDocuments.toLocaleString()}</span>
+				<span class="stat-value">{data.retrieval.totalDocuments.toLocaleString()}</span>
 			</div>
 			<div class="stat-card">
 				<span class="stat-label">Ready</span>
-				<span class="stat-value">{data.rag.readyCount.toLocaleString()}</span>
+				<span class="stat-value">{data.retrieval.readyCount.toLocaleString()}</span>
 			</div>
 			<div class="stat-card stat-card--error">
 				<span class="stat-label">Errors</span>
 				<Cluster gap="2" align="center">
-					<span class="stat-value">{data.rag.errorCount.toLocaleString()}</span>
-					{#if data.rag.errorCount > 0}
+					<span class="stat-value">{data.retrieval.errorCount.toLocaleString()}</span>
+					{#if data.retrieval.errorCount > 0}
 						<Badge variant="error">attention</Badge>
 					{/if}
 				</Cluster>
 			</div>
 			<div class="stat-card">
 				<span class="stat-label">Total Chunks</span>
-				<span class="stat-value">{data.rag.totalChunks.toLocaleString()}</span>
+				<span class="stat-value">{data.retrieval.totalChunks.toLocaleString()}</span>
 			</div>
 		</div>
 	</Card>

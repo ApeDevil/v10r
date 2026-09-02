@@ -2,7 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import { cycleSchema } from '$lib/schemas/showcase/cycle';
-import { executeCycle } from '$lib/server/cycle';
+import { executeCycle } from '$lib/server/showcases/cycle';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

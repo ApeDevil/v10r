@@ -6,47 +6,20 @@ import * as m from '$lib/paraglide/messages';
 let { data } = $props();
 
 interface Row {
-	table: string;
+	dataset: string;
 	icon: string;
 	days: number | null;
 	policy: string;
 	rationale: string;
 }
 
+// Everything the retention schedule governs, plus the datasets it deliberately does not:
+// user-authored content we never expire automatically, and sessions that carry their own
+// deadline. Their absence from the schedule IS the statement about them.
 const rows: Row[] = [
+	...data.retention,
 	{
-		table: 'analytics.events',
-		icon: 'i-lucide-activity',
-		days: data.retention.events,
-		policy: 'Hard DELETE on daily cron',
-		rationale: 'Individual page views, journey transitions. Past this window, only the daily aggregate row survives.',
-	},
-	{
-		table: 'analytics.sessions',
-		icon: 'i-lucide-users',
-		days: data.retention.sessions,
-		policy: 'Hard DELETE on daily cron',
-		rationale:
-			'Per-visit metadata: started_at, last_seen, consent_tier. Same retention as events to keep the join clean.',
-	},
-	{
-		table: 'analytics.daily_page_stats',
-		icon: 'i-lucide-bar-chart-3',
-		days: data.retention.aggregates,
-		policy: 'Hard DELETE on daily cron',
-		rationale:
-			'Pre-aggregated rollups (path / day / count). No individual visitor data — kept longer to draw long-term traffic trends.',
-	},
-	{
-		table: 'analytics.consent_events',
-		icon: 'i-lucide-clipboard-check',
-		days: data.retention.consent,
-		policy: 'Hard DELETE on daily cron',
-		rationale:
-			'Proof of consent (or its withdrawal). 13 months satisfies Art. 7(1) demonstrability without overshooting.',
-	},
-	{
-		table: 'feedback.feedback',
+		dataset: 'feedback.feedback',
 		icon: 'i-lucide-message-square',
 		days: null,
 		policy: 'Manual deletion only',
@@ -54,7 +27,7 @@ const rows: Row[] = [
 			'User-authored content. We have no automatic expiry; you can request removal at any time and the operator deletes the row.',
 	},
 	{
-		table: 'auth.session',
+		dataset: 'auth.session',
 		icon: 'i-lucide-key',
 		days: null,
 		policy: 'Better Auth session expiry',
@@ -126,7 +99,7 @@ const sections = $derived([
 							<td>
 								<span class="table-name">
 									<span class="table-icon {row.icon}" aria-hidden="true"></span>
-									<code>{row.table}</code>
+									<code>{row.dataset}</code>
 								</span>
 							</td>
 							<td><strong class="window">{fmtDays(row.days)}</strong></td>

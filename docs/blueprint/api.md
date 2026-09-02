@@ -230,7 +230,7 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 ### Valibot Schemas
 
 ```typescript
-// src/lib/server/api/schemas.ts
+// src/lib/server/http/schemas.ts
 import * as v from 'valibot';
 
 // Reusable schemas
@@ -257,7 +257,7 @@ export const UpdateItemSchema = v.partial(CreateItemSchema);
 ### Validation Helper
 
 ```typescript
-// src/lib/server/api/validate.ts
+// src/lib/server/http/validate.ts
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 
@@ -307,8 +307,8 @@ export function validateQuery<T extends v.BaseSchema<unknown, unknown, v.BaseIss
 ### Usage
 
 ```typescript
-import { validateBody, validateQuery } from '$lib/server/api/validate';
-import { CreateItemSchema, PaginationSchema } from '$lib/server/api/schemas';
+import { validateBody, validateQuery } from '$lib/server/http/validate';
+import { CreateItemSchema, PaginationSchema } from '$lib/server/http/schemas';
 
 export const GET: RequestHandler = async ({ url }) => {
   const { limit, offset } = validateQuery(url, PaginationSchema);
@@ -568,10 +568,10 @@ export const OPTIONS: RequestHandler = async () => {
 
 ### Standard Response Wrapper
 
-`$lib/server/api/response.ts` exports the envelope helpers. Success is `{ data }`; error is `{ error: { code, message, fields? } }`.
+`$lib/server/http/response.ts` exports the envelope helpers. Success is `{ data }`; error is `{ error: { code, message, fields? } }`.
 
 ```typescript
-// src/lib/server/api/response.ts
+// src/lib/server/http/response.ts
 export function apiOk<T>(data: T, status = 200);      // { data } → 200
 export function apiCreated<T>(data: T);                // { data } → 201
 export function apiNoContent();                        // empty body → 204
@@ -584,7 +584,7 @@ export function apiValidationError(issues);            // Valibot issues → 400
 ### Usage
 
 ```typescript
-import { apiOk, apiError } from '$lib/server/api/response';
+import { apiOk, apiError } from '$lib/server/http/response';
 
 export const GET: RequestHandler = async ({ url }) => {
   const item = await getItem(url.searchParams.get('id'));
@@ -595,11 +595,11 @@ export const GET: RequestHandler = async ({ url }) => {
 
 ### Pagination
 
-`$lib/server/api/pagination.ts` provides both styles. Offset-based: `parsePagination(url)` + `apiPaginated(items, total, params)` → `{ data: { items, pagination: { page, pageSize, total, totalPages } } }`. Cursor-based: `parseLimit`/`parseCursor`/`encodeCursor`/`decodeCursor` + `paginatedResponse(items, limit, cursorFn)` → `{ items, has_more, cursor? }`.
+`$lib/server/http/pagination.ts` provides both styles. Offset-based: `parsePagination(url)` + `apiPaginated(items, total, params)` → `{ data: { items, pagination: { page, pageSize, total, totalPages } } }`. Cursor-based: `parseLimit`/`parseCursor`/`encodeCursor`/`decodeCursor` + `paginatedResponse(items, limit, cursorFn)` → `{ items, has_more, cursor? }`.
 
 ```typescript
-import { parseLimit, parseCursor, paginatedResponse } from '$lib/server/api/pagination';
-import { apiOk } from '$lib/server/api/response';
+import { parseLimit, parseCursor, paginatedResponse } from '$lib/server/http/pagination';
+import { apiOk } from '$lib/server/http/response';
 
 export const GET: RequestHandler = async ({ url }) => {
   const limit = parseLimit(url);
@@ -706,11 +706,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 ## Rate Limiting
 
-Limiters are built with the `createLimiter` factory (sliding window over `@upstash/ratelimit`, backed by Upstash Redis) in `$lib/server/api/rate-limit.ts`. See [abuse/rate-limits.md](./abuse/rate-limits.md) for the full limiter catalog.
+Limiters are built with the `createLimiter` factory (sliding window over `@upstash/ratelimit`, backed by Upstash Redis) in `$lib/server/http/rate-limit.ts`. See [abuse/rate-limits.md](./abuse/rate-limits.md) for the full limiter catalog.
 
 ```typescript
 // src/routes/api/items/+server.ts
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 
 const limiter = createLimiter('rl:items', 30, '1 m');
 

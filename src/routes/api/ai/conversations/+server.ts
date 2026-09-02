@@ -1,19 +1,27 @@
 import { json } from '@sveltejs/kit';
 import { safeParse } from 'valibot';
+import {
+	CONVERSATION_RATE_LIMIT_MAX,
+	CONVERSATION_RATE_LIMIT_PREFIX,
+	CONVERSATION_RATE_LIMIT_WINDOW,
+} from '$lib/server/ai/config';
+import { checkConversationLimit, getConversationQuota } from '$lib/server/ai/conversation-quota';
 import { CreateConversationSchema } from '$lib/server/ai/validation';
-import { parsePagination } from '$lib/server/api/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { checkConversationLimit } from '$lib/server/db/ai/limits';
 import { createConversation } from '$lib/server/db/ai/mutations';
 import type { ConversationSort } from '$lib/server/db/ai/queries';
-import { getConversationStats, listConversations } from '$lib/server/db/ai/queries';
+import { listConversations } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
+import { guardApiUser } from '$lib/server/http/guards';
+import { parsePagination } from '$lib/server/http/pagination';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
-const ratelimit = createLimiter(CONV_RATE_LIMIT_PREFIX, CONV_RATE_LIMIT_MAX, CONV_RATE_LIMIT_WINDOW);
+const ratelimit = createLimiter(
+	CONVERSATION_RATE_LIMIT_PREFIX,
+	CONVERSATION_RATE_LIMIT_MAX,
+	CONVERSATION_RATE_LIMIT_WINDOW,
+);
 
 export const GET: RequestHandler = async ({ url, locals }) => {
 	const guard = guardApiUser(locals);
@@ -29,7 +37,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		const pagination = parsePagination(url);
 		const [{ items: conversations, total }, meta] = await Promise.all([
 			listConversations(user.id, sort, pagination.offset, pagination.pageSize),
-			getConversationStats(user.id),
+			getConversationQuota(user.id),
 		]);
 		return json({
 			data: {

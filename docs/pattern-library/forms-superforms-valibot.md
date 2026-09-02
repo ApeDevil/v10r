@@ -6,7 +6,7 @@ category: "Forms & Validation"
 
 # Superforms + Valibot foundation
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ The default form stack pairing Superforms v2 with Valibot schemas for progressiv
 
 ---
 
-_Machine-readable record: `forms-superforms-valibot` in `mcp/patterns.registry.json`._
+_Machine-readable record: `forms-superforms-valibot` in `pattern-library/registry.json`._

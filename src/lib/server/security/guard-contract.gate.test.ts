@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const SRC = join(process.cwd(), 'src');
-const GUARDS = join(SRC, 'lib', 'server', 'auth', 'guards.ts');
+const GUARDS = join(SRC, 'lib', 'server', 'http', 'guards.ts');
 
 function endpointFiles(): string[] {
 	const routes = join(SRC, 'routes');

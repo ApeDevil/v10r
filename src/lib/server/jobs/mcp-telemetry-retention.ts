@@ -1,7 +1,7 @@
 import { and, isNotNull, lt, ne, or } from 'drizzle-orm';
-import { MCP_QUERY_TEXT_RETENTION_DAYS, MCP_TELEMETRY_RETENTION_DAYS } from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
+import { retentionCutoff } from '$lib/server/retention';
 
 /**
  * Two-speed retention for `mcp.call_log`, in this order so the windows compose:
@@ -36,11 +36,8 @@ import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
  * Returns the number of rows AFFECTED (nulled + deleted), which is what the job runner records.
  */
 export async function mcpTelemetryRetention(): Promise<number> {
-	const textCutoff = new Date();
-	textCutoff.setDate(textCutoff.getDate() - MCP_QUERY_TEXT_RETENTION_DAYS);
-
-	const rowCutoff = new Date();
-	rowCutoff.setDate(rowCutoff.getDate() - MCP_TELEMETRY_RETENTION_DAYS);
+	const textCutoff = retentionCutoff('mcp-call-text');
+	const rowCutoff = retentionCutoff('mcp-call-log');
 
 	// Pass 1 — column-level minimisation. Restricted to rows that still hold something, so a
 	// re-run over an already-clean window updates nothing rather than rewriting the whole range.

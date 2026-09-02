@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Velociraptor (v10r) is a full-stack **pattern library** — proven, high-performance SvelteKit patterns that an AI agent reads and adapts to a new project. Emulation, not cloning. It is simultaneously documentation, a test environment, and a reusable reference. Full goals: `docs/foundation/PRD.md`.
 
-Showcase pages under `(public)/showcases/` are the primary test strategy for UI patterns: each page is documentation, feature test, and copy template at once. If the showcase works, the pattern is proven — and "proven" is a machine-checked `maturity` grade in `mcp/patterns.registry.json` (requires a linked test/showcase + `verifiedAt`; contradictions fail `mcp:validate`).
+Showcase pages under `(public)/showcases/` are the primary test strategy for UI patterns: each page is documentation, feature test, and copy template at once. If the showcase works, the pattern is proven — and "proven" is a machine-checked `maturity` grade in `pattern-library/registry.json` (requires a linked test/showcase + `verifiedAt`; contradictions fail `patterns:validate`).
 
 ### Commands
 
@@ -66,7 +66,7 @@ podman exec v10r bun run db:ingest-docs   # ingest docs/**/*.md into the RAG cor
 Pattern-library pages, MCP excerpts, and the RAG index are **generated**. Never hand-edit `docs/pattern-library/`; rebuild instead:
 
 ```bash
-podman exec v10r bun run refresh          # mcp:validate → patterns:build → mcp:excerpts:build → db:ingest-docs
+podman exec v10r bun run refresh          # patterns:validate → patterns:build → mcp:excerpts:build → db:ingest-docs
 ```
 
 ### Architecture
@@ -89,18 +89,18 @@ Order is load-bearing: `securityHeaders` must be first (auth pins `ipAddressHead
 
 #### The four invariants
 
-Violating these breaks cross-client reuse:
+Violating these breaks cross-client reuse. All four are executable — `src/lib/architecture.gate.test.ts` is the authority, and it ratchets: a new violation fails, and so does an allowance that no longer applies.
 
-1. **No framework imports in domain modules.** No `@sveltejs/kit` or `$app/*` inside `$lib/server/[domain]/`. Narrow exceptions: the `dev`/`building` flags from `$app/environment` in six modules (`auth/step-up.ts`, `auth/revocation.ts`, `ai/budget.ts`, `agents/index.ts`, `jobs/scheduler.ts`, `jobs/delivery-scheduler.ts`), and two `Handle`-typed hook modules (`docs/markdown-hook.ts`, `analytics/hook.ts`).
+1. **No framework imports in domain modules.** If a module under `$lib/server/[domain]/` needs `@sveltejs/kit` or `$app/*`, it is an adapter: move it to `server/http/` (shared toolkit) or name it `*.adapter.ts` / `*.hook.ts` (domain-local). There is no exception list to maintain.
 2. **Date serialization happens in the adapter.** Domains return `Date` objects; the route or tool converts to ISO strings.
 3. **`redirect` / `error` / `fail` / `message` only in adapters.** Domains return `null`, not `error(404)`. AI tools return `{ error: 'safe message' }` — they never throw.
-4. **Domains call down, not across.** Cross-domain access goes through the other domain's `index.ts` barrel only — never into its internals.
+4. **Domains call down, not across.** Cross-domain access goes through the other domain's `index.ts` barrel only — never into its internals. `db/` and `server/http/` are shared sinks, reached by file.
 
 #### Import direction
 
-- `$lib/server/` is server-only **by path** — SvelteKit refuses to bundle it client-side. No runtime guard needed. Never import it from a `.svelte` file or a universal `+page.ts`.
+- `$lib/server/` is server-only **by path** — SvelteKit refuses to bundle it client-side. Never import it from a `.svelte` file or a universal `+page.ts`.
 - `db/` is the sink: it imports no sibling domains. Everything flows toward it.
-- The import graph is a DAG. Drizzle relations are centralized in `db/schema/relations.ts` for exactly this reason.
+- A catalogue that two feature directories both need moves *down* a layer (`$lib/3d`, `$lib/desk`), never sideways.
 
 #### Database layout
 
@@ -109,15 +109,30 @@ Violating these breaks cross-client reuse:
 Reads/writes split into `queries.ts` (no side effects) / `mutations.ts` (explicit intent), in one of two locations:
 
 - **Dominant:** `db/[domain]/` — for incidental CRUD.
-- **Named exceptions:** co-located in `[domain]/` when the query *is* the domain logic — `blog/`, `rawrag/`, `llmwiki/`.
+- **Named exceptions:** co-located in `[domain]/` when the query *is* the domain logic — `blog/`, `retrieval/`, `llmwiki/`.
 
-**Push-only workflow.** No `drizzle/` migrations directory exists. Every `pgSchema()` and `pgEnum()` must be exported through `schema/index.ts` *and* listed in `drizzle.config.ts` `schemaFilter`, or `db:push` silently omits it.
+**Showcase code is separated.** `$lib/server/showcases/[name]/` holds server code that exists only to demonstrate a pattern; deleting a showcase must never break anything outside it. Each showcase spans three like-named directories: `$lib/showcases/[name]/` (shared types), `components/showcases/[name]/` (UI), `server/showcases/[name]/` (server).
+
+**The pattern library is the product.** `pattern-library/registry.json` + `schema.ts` live at the repo root, aliased as `$patterns`; `mcp/` (stdio) and `server/mcp/` (hosted HTTP) are transports over it.
+
+**Policy belongs to its domain.** Every domain keeps its own constants in
+`server/[domain]/config.ts` — there is no shared constants module, and re-introducing one
+is the regression this replaced. A policy leaf is deep-imported by design (the gate exempts
+`*/config.ts`): taking a constant through a barrel would drag that domain's whole
+implementation graph with it.
+
+**Retention is one schedule, not fourteen constants.** `server/retention/schedule.ts` names
+every dataset that ages out, its window, what the sweep does and which job enforces it. The
+cron sweeps read it, the public privacy page renders it, and `retention/schedule.gate.test.ts`
+fails if a sweep hard-codes a window or names a job that does not exist.
+
+**Push-only workflow.** No `drizzle/` migrations directory exists. Every `pgSchema()` must be exported through `schema/index.ts` *and* listed in `drizzle.config.ts` `schemaFilter`, or `db:push` silently omits it. Enums are declared as `<namespace>Schema.enum(...)` and travel with their namespace — there are no bare `pgEnum()` calls.
 
 #### Components
 
-Layer order (leaf → root): `primitives/` (wrap Bits UI) ← `composites/` ← `layout/` + `shell/` ← feature dirs (`blog/`, `chat/`, `editor/`, `viz/`, `3d/`, …). Feature dirs depend downward and **never import each other**.
+Layer order (leaf → root): `primitives/` (wrap Bits UI) ← `composites/` ← `layout/` ← `shell/` + feature dirs (`blog/`, `desk/`, `viz/`, `3d/`, …). Feature dirs depend downward and **never import each other**: when two need the same component it moves *down* a layer.
 
-**The barrel is a bundle-size boundary.** `$lib/components/index.ts` re-exports only `composites`, `layout`, `primitives`. Deliberately excluded and deep-import-only: `viz/` and `3d/` (Chart.js/Three.js), `shell/` (app-specific chrome), and `composites/chatbot` + `composites/info-dialog` (markdown sanitizer). Adding a heavy dependency to a barreled component is a bundle-size regression.
+**The barrel is a bundle-size boundary.** `$lib/components/index.ts` is the cheap surface; anything pulling a heavy or optional dependency (viz engines, Three.js, the markdown sanitizer) or app-specific chrome is deep-import-only. Adding a heavy dependency to a barreled component is a bundle-size regression. The exclusions are asserted in the architecture gate — the prose version of that list had drifted to naming two of fourteen.
 
 **Component-First Rule — never use a raw HTML element when a project component exists.** Raw `<button>`, `<input>`, `<select>`, `<textarea>` bypass the design system. Exceptions: `<input type="hidden">`, `<input type="checkbox">` inside table rows (native indeterminate), `<select>` binding numeric values (the Select component is string-only), and custom interactive regions needing specialized styling.
 
@@ -131,7 +146,7 @@ Global CSS (`uno.css`, `app.css`, fonts) is imported once in the **root** `src/r
 
 #### Routes
 
-`src/routes/[[locale=locale]]/` is the localized tree (`(public)/`, `(dev)/`, `admin/`, `app/`, `auth/`, `desk/`, `pair/`); `src/routes/api/` is the parallel un-localized REST/SSE tree. Auth gates live in `+layout.server.ts` files, not route groups. Route-local private folders use a leading underscore (`_components/`, `_sections/`) — promote to `$lib/components/[layer]/` only when a second route needs them.
+`src/routes/[[locale=locale]]/` is the localized tree (`(public)/`, `(dev)/`, `admin/`, `account/`, `auth/`, `desk/`, `pair/`); `src/routes/api/` is the parallel un-localized REST/SSE tree. Auth gates live in `+layout.server.ts` files, not route groups. Route-local private folders use a leading underscore (`_components/`, `_sections/`) — promote to `$lib/components/[layer]/` only when a second route needs them.
 
 #### Conventions
 
@@ -160,20 +175,35 @@ The prohibition is on the `vr` wrapper, not the work it dispatches: run the cont
 
 Active development, no production users. Never add migration shims, retired-ID filters, version upgrade paths, or deprecation layers — change the code directly.
 
-### Self-Expressive Codebase
+### Self-Expressive Project
 
-The codebase itself should represent the system.
+The project itself should represent the system.
 
-By looking at its folders, modules, types, names, boundaries, and relationships, a developer should be able to understand how the product works and how its concepts relate.
+By looking at the codebase and database—their names, structure, boundaries, schemas, relationships, and constraints—a developer should be able to understand how the product works and how its concepts relate.
 
-**Code should express intent; the codebase should express the system.**
+**Code should express intent; the codebase should express the system; the database should express the domain model.**
 
-Documentation and comments are exceptions, not the primary explanation mechanism. Prefer expressing knowledge through naming, types, structure, boundaries, and APIs.
+Documentation and comments are exceptions, not the primary explanation mechanism.
 
-- **Self-Expressive Code:** A function, type, or module should communicate its purpose without requiring explanatory comments.
-- **System-Reflective Architecture:** The organization and boundaries of the codebase should mirror the product and domain architecture.
-- **Comments Explain Why:** Comments exist for rationale, constraints, invariants, workarounds, and deliberate non-obvious behavior—not to describe what the code does.
-- **One Source of Truth:** A fact should have one authoritative owner. Reference that source instead of duplicating explanations.
+* **Self-Expressive Code:** Functions, types, and modules should communicate their purpose without explanatory comments.
+* **System-Reflective Architecture:** The codebase structure should mirror the product and domain architecture.
+* **Self-Expressive Data Model:** Tables, columns, relationships, and constraints should communicate their meaning directly.
+* **System-Reflective Schema:** The database structure should mirror the domain model and its relationships.
+* **Comments Explain Why:** Comments explain rationale, constraints, invariants, and non-obvious decisions—not what the code already says.
+* **One Source of Truth:** A fact or rule should have one authoritative owner; reference it instead of duplicating it.
+
+**Code expresses behavior. Structure expresses architecture. Schema expresses the domain. Constraints express the rules. Documentation explains the why.**
+
+#### Naming Integrity
+Follow One Name, One Concept. Never reuse the same canonical name for different concepts, and avoid multiple names for the same concept. Before adding a new important name, check the codebase and preserve existing canonical terminology.
+
+`docs/naming.md` is the vocabulary itself — the canonical term per concept, the metaphors
+already spoken for, and the names that cannot move. `src/lib/naming.gate.test.ts` fails on a
+retired term, on a shouted acronym inside a mixed-case name (`AIError`), on an unnamespaced
+i18n key, on a second declaration of a name that already exists, and on a file named for a
+bucket rather than a responsibility (`service.ts`, `helpers.ts`, `utils.ts`, `constants.ts`,
+`shared.ts`, `core.ts`, `handler.ts`, …). Read the doc before inventing a name; add to it when
+you settle one.
 
 ### Acknowledgment
 

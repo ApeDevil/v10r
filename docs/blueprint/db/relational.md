@@ -4,7 +4,7 @@ Drizzle ORM schema for relational data and Better Auth integration.
 
 **Provider:** PostgreSQL via [Neon](../../stack/vendors.md#neon) (serverless) or any PostgreSQL 16+ host.
 
-> **Illustrative template.** The `items` / `tags` / `item_tags` / `files` / `user_settings` tables below are a teaching example, not v10r's schema. The real schema is namespaced into Postgres schemas (14 `pgSchema()` namespaces: `admin`, `ai`, `analytics`, `app`, `auth`, `blog`, `dbops`, `desk`, `feedback`, `jobs`, `notifications`, `rag`, `showcase`, `image`), re-exported via subdirectory folders from `src/lib/server/db/schema/index.ts`, with relations at `src/lib/server/db/schema/relations.ts`. Better Auth tables live on `authSchema = pgSchema('auth')` (e.g. `auth.user`). The **Database Client**, **ID Generation**, and **Migrations** sections reflect the real code.
+> **Illustrative template.** The `items` / `tags` / `item_tags` / `files` / `user_settings` tables below are a teaching example, not v10r's schema. The real schema is namespaced into Postgres schemas (15 `pgSchema()` namespaces: `admin`, `ai`, `analytics`, `app`, `auth`, `blog`, `dbops`, `desk`, `feedback`, `image`, `jobs`, `mcp`, `notifications`, `retrieval`, `showcase`), re-exported via subdirectory folders from `src/lib/server/db/schema/index.ts`. Better Auth tables live on `authSchema = pgSchema('auth')` (e.g. `auth.user`). The **Database Client**, **ID Generation**, and **Migrations** sections reflect the real code.
 
 ## Overview
 
@@ -350,8 +350,15 @@ export const createId = {
 
 ## Relations
 
+> **Not used by v10r.** Drizzle's `relations()` config only powers the `db.query.*` API, and
+> this project never calls it — every read is written with the query builder. A
+> `schema/relations.ts` existed for a long time declaring ~50 relations over half the tables;
+> because nothing executed it, nothing kept it honest, and it was deleted. Relationships are
+> declared where they are enforced: `.references()` on the column. The block below is part of
+> the illustrative template, for projects that do adopt `db.query`.
+
 ```typescript
-// src/lib/server/db/schema/relations.ts
+// schema/relations.ts (illustrative — v10r has no such file)
 import { relations } from 'drizzle-orm';
 import { user, session, account } from './auth/_better-auth';
 import { userProfile } from './auth/profile';
@@ -524,7 +531,6 @@ import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { env } from '$env/dynamic/private';
 import * as schema from './schema';
-import * as relations from './schema/relations';
 
 // Route Pool queries over HTTP fetch instead of WebSocket.
 // Bun's ws implementation mishandles the WebSocket upgrade (HTTP 101).
@@ -533,7 +539,7 @@ neonConfig.poolQueryViaFetch = true;
 
 const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 
-export const db = drizzle(pool, { schema: { ...schema, ...relations } });
+export const db = drizzle(pool, { schema });
 
 export type Database = typeof db;
 ```
@@ -794,7 +800,6 @@ src/lib/server/db/
 ├── index.ts              # DB client export
 ├── id.ts                 # ID generation
 ├── types.ts              # Type inference
-├── relations.ts          # Drizzle relations
 └── schema/
     ├── index.ts          # Re-exports
     ├── _better-auth.ts   # Auto-generated (underscore = generated)
@@ -807,7 +812,7 @@ scripts/
 └── seed.ts               # Seed data
 ```
 
-No `drizzle/` directory — this project is push-only (see [Migrations](#migrations)). The real `schema/` is namespaced into per-domain subdirectories with `relations.ts` alongside (see the illustrative-template note at the top).
+No `drizzle/` directory — this project is push-only (see [Migrations](#migrations)). The real `schema/` is namespaced into per-domain subdirectories (see the illustrative-template note at the top).
 
 ---
 

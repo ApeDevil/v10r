@@ -2,14 +2,13 @@ import { fail } from '@sveltejs/kit';
 import { desc, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import {
-	auditLog,
 	documentVault,
 	networkRegistry,
+	showcaseAuditLog,
 	temporalRecord,
 	typeSpecimen,
 	typeSpecimenHistory,
 } from '$lib/server/db/schema';
-import { checkRowLimit } from '$lib/server/db/showcase/guards';
 import {
 	addTemporalRecord,
 	appendAuditEntry,
@@ -22,6 +21,7 @@ import {
 	updateWithHistory,
 } from '$lib/server/db/showcase/mutations';
 import { reseedShowcase } from '$lib/server/db/showcase/seed';
+import { checkRowLimit } from '$lib/server/showcases/row-limit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async () => {
 				db.select().from(typeSpecimenHistory).orderBy(desc(typeSpecimenHistory.changedAt)),
 				db.select().from(documentVault).where(isNull(documentVault.deletedAt)),
 				db.select().from(documentVault).where(isNotNull(documentVault.deletedAt)),
-				db.select().from(auditLog).orderBy(desc(auditLog.occurredAt)).limit(15),
+				db.select().from(showcaseAuditLog).orderBy(desc(showcaseAuditLog.occurredAt)).limit(15),
 				db.select().from(temporalRecord).orderBy(desc(temporalRecord.validFrom)),
 			],
 		);
@@ -208,7 +208,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'All fields are required.' });
 		}
 
-		const limitError = await checkRowLimit(auditLog);
+		const limitError = await checkRowLimit(showcaseAuditLog);
 		if (limitError) return fail(400, { message: limitError });
 
 		try {

@@ -8,12 +8,12 @@
 
 import {
 	getIdleGapProfile,
-	getLaneCensus,
+	getOriginCensus,
 	getRouteHotPaths,
 	getVitalsByLane,
 	getVitalsTrend,
 	type IdleGapRow,
-	type LaneCensus,
+	type OriginCensus,
 	type RouteHotPath,
 	type VitalTrendPoint,
 } from '$lib/server/db/analytics/perf-queries';
@@ -26,7 +26,7 @@ import {
 	scoreBudget,
 } from './budgets';
 
-export type { IdleGapRow, LaneCensus, RouteHotPath, VitalTrendPoint };
+export type { IdleGapRow, OriginCensus, RouteHotPath, VitalTrendPoint };
 
 export interface FieldVital {
 	metric: string;
@@ -35,7 +35,7 @@ export interface FieldVital {
 	devSamples: number;
 	unknownSamples: number;
 	worstTarget: string | null;
-	/** Null when there is no prod-lane data, or the metric has no budget. */
+	/** Null when there is no prod-origin data, or the metric has no budget. */
 	verdict: BudgetVerdict | null;
 	/** True when the sample count is too small for the percentile to be meaningful. */
 	provisional: boolean;
@@ -67,8 +67,8 @@ export async function getFieldVitals(days: number): Promise<FieldVital[]> {
 	});
 }
 
-export interface LaneHealth {
-	census: LaneCensus[];
+export interface OriginHealth {
+	census: OriginCensus[];
 	total: number;
 	prodShare: number;
 	/**
@@ -78,11 +78,11 @@ export interface LaneHealth {
 	devSamples: number;
 }
 
-export async function getLaneHealth(days: number): Promise<LaneHealth> {
-	const census = await getLaneCensus(days);
+export async function getOriginHealth(days: number): Promise<OriginHealth> {
+	const census = await getOriginCensus(days);
 	const total = census.reduce((sum, row) => sum + row.samples, 0);
-	const prod = census.find((row) => row.lane === 'prod')?.samples ?? 0;
-	const dev = census.find((row) => row.lane === 'dev')?.samples ?? 0;
+	const prod = census.find((row) => row.origin === 'prod')?.samples ?? 0;
+	const dev = census.find((row) => row.origin === 'dev')?.samples ?? 0;
 	return {
 		census,
 		total,

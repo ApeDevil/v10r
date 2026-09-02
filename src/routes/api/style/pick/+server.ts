@@ -13,14 +13,10 @@
 import * as v from 'valibot';
 import { StylePickSchema } from '$lib/schemas/style';
 import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
-import {
-	STYLE_PICK_RATE_LIMIT_MAX,
-	STYLE_PICK_RATE_LIMIT_PREFIX,
-	STYLE_PICK_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { getCustomPaletteById } from '$lib/server/style';
+import { PICK_RATE_LIMIT_MAX, PICK_RATE_LIMIT_PREFIX, PICK_RATE_LIMIT_WINDOW } from '$lib/server/style/config';
 import { saveStyleToDb } from '$lib/server/style/persist';
 import {
 	generateRandomStyle,
@@ -35,7 +31,7 @@ import {
 import { mergeStyleConfig } from '$lib/styles/random/merge';
 import type { RequestHandler } from './$types';
 
-const limiter = createLimiter(STYLE_PICK_RATE_LIMIT_PREFIX, STYLE_PICK_RATE_LIMIT_MAX, STYLE_PICK_RATE_LIMIT_WINDOW);
+const limiter = createLimiter(PICK_RATE_LIMIT_PREFIX, PICK_RATE_LIMIT_MAX, PICK_RATE_LIMIT_WINDOW);
 
 export const POST: RequestHandler = async ({ request, cookies, locals, getClientAddress }) => {
 	// Key per user when we have one so a shared NAT can't lock out a room of

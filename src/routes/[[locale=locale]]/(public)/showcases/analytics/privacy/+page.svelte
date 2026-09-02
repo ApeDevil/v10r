@@ -57,7 +57,7 @@ function daysOld(ts: string | null): number {
 		/>
 		<MetricCard
 			title={m.showcase_analytics_privacy_metric_retention()}
-			value="{data.retentionDays}d"
+			value="{data.eventRetentionDays}d"
 		/>
 	</div>
 
@@ -102,7 +102,7 @@ function daysOld(ts: string | null): number {
 						{m.showcase_analytics_privacy_retention_row_events()}
 					</div>
 					<div class="retention-detail">
-						<strong>{data.retentionDays} days</strong>
+						<strong>{data.eventRetentionDays} days</strong>
 						<span class="retention-note">{m.showcase_analytics_privacy_retention_note_events()}</span>
 					</div>
 				</div>

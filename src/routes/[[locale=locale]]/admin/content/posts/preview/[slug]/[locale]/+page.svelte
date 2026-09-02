@@ -1,6 +1,6 @@
 <script lang="ts">
 import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
-import { Renderer } from '$lib/components/blog';
+import { MarkdownProse } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
 import { Typography } from '$lib/components/primitives';
 import { formatDate } from '$lib/i18n';
@@ -59,7 +59,7 @@ const driftKind = $derived(data.drift.status);
 		</header>
 
 		<div use:hydrateEmbeds={data.embeds ?? []}>
-			<Renderer html={data.html} />
+			<MarkdownProse html={data.html} />
 		</div>
 	</Stack>
 </PageContainer>

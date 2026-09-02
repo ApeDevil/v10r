@@ -6,7 +6,7 @@ category: "Anti-Abuse"
 
 # ALTCHA proof-of-work captcha
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ A self-hosted proof-of-work captcha where the client solves a CPU-bound puzzle a
 
 ---
 
-_Machine-readable record: `anti-abuse-captcha` in `mcp/patterns.registry.json`._
+_Machine-readable record: `anti-abuse-captcha` in `pattern-library/registry.json`._

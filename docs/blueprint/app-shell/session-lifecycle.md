@@ -540,7 +540,7 @@ if (response.status === 401) {
 
 ```typescript
 // Strict limiter on the re-auth endpoint — see ../abuse/rate-limits.md
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 
 const reauthLimiter = createLimiter('rl:auth:reauth', 5, '15 m');
 

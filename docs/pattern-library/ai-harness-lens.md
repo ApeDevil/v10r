@@ -6,7 +6,7 @@ category: "AI"
 
 # Agent-harness audit lens (loop/context/policy/tools)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ A conceptual audit lens (not a module) names which slice — loop, context, poli
 
 ---
 
-_Machine-readable record: `ai-harness-lens` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-harness-lens` in `pattern-library/registry.json`._

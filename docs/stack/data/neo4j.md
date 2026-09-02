@@ -35,10 +35,10 @@ Aura free = **one database**, so a single instance holds two graphs at once:
 
 A public, unauthenticated showcase visitor must never read another user's RAG data. Two guards enforce that:
 
-- **Label-scoping.** Every public showcase query (`src/lib/server/graph/showcase/queries.ts`) is constrained to the four demo labels — no `CALL db.labels()`, no unscoped `MATCH (n)`. A leaked `:Entity` id returns null.
+- **Label-scoping.** Every public showcase query (`src/lib/server/showcases/graph/queries.ts`) is constrained to the four demo labels — no `CALL db.labels()`, no unscoped `MATCH (n)`. A leaked `:Entity` id returns null.
 - **Admin gating.** The arbitrary-Cypher REPL and the reseed action can't be label-constrained, so both are gated behind `isAdmin`.
 
-RAG retrieval paths (`graph/rag/queries.ts` + the rawrag tiers) were already owner-scoped by `ownerId` — no change there.
+RAG retrieval paths (`graph/rag/queries.ts` + the retrieval tiers) were already owner-scoped by `ownerId` — no change there.
 
 **Don't copy this naively.** An emulating project must either run the demo graph on a **separate instance** or replicate the label-scoping. A shared instance with unscoped public queries leaks tenant data.
 

@@ -2,7 +2,7 @@
 
 Final architectural recommendation for integrating AI tool-calling into the Desk workspace. This document resolves disagreements from the multi-agent review and provides a phased implementation plan.
 
-> **Superseded design record (v4-era plan).** This doc captures the original v4 plan; the feature shipped on **AI SDK v6** with a different surface. Read it for rationale, not as the current contract — the live contract is [surfaces.md](./surfaces.md) (deskbot surface, `desk:ask` nRAG, one-door `executeDeskToolCall`, the wired plan gate). What actually shipped:
+> **Superseded design record (v4-era plan).** This doc captures the original v4 plan; the feature shipped on **AI SDK v6** with a different surface. Read it for rationale, not as the current contract — the live contract is [surfaces.md](./surfaces.md) (deskbot surface, `desk:ask` retrieval, one-door `executeDeskToolCall`, the wired plan gate). What actually shipped:
 > - **Per-surface route.** The deskbot client posts to `POST /api/ai/deskbot` (not the old single `/api/ai/chat`, since deleted). The route sets `surface: 'deskbot'`; one `chat-orchestrator.ts` dispatches.
 > - **AI SDK v6** (`ai ^6.0.0`, `@ai-sdk/* ^3.x`). The orchestrator uses `createUIMessageStream` / `createUIMessageStreamResponse` / `toUIMessageStream({ sendStart: false })` / `message-metadata` — not `createDataStreamResponse` / `writeMessageAnnotation` / `toDataStreamResponse`. Step control is `stopWhen`, not `maxSteps`.
 > - **Tool names are `desk_*`-prefixed**: `desk_create_spreadsheet`, `desk_update_cells`, `desk_rename_file`, `desk_update_markdown`, `desk_delete_file`, `desk_create_markdown` (in `tools/desk-*.ts`) — not the `listFiles` / `readFile` / `createFile` / … names proposed below.
@@ -207,11 +207,11 @@ src/lib/server/db/
     tool-mutations.ts        # NEW: persist tool calls
     tool-queries.ts          # NEW: I/O Log query
 
-src/lib/components/composites/dock/
+src/lib/components/desk/
   desk-bus.svelte.ts         # MODIFY: add content channels for AI
   dock.types.ts              # MODIFY: add meta? to PanelDefinition
 
-src/lib/components/chat/
+src/lib/components/desk/panels/bot/
   dispatch-action.ts         # NEW: dispatchDeskAction()
   ChatPanel.svelte           # MODIFY: consume _deskEffect annotations
 ```

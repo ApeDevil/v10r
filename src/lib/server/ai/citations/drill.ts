@@ -1,5 +1,5 @@
 /**
- * Shape drilled rawrag chunks into the client-facing `SourceChunk[]` that the
+ * Shape drilled source chunks into the client-facing `SourceChunk[]` that the
  * chatbot streams on `metadata.sourceChunks`.
  *
  * Pure composition over existing owner-scoped helpers — no new domain logic:
@@ -12,7 +12,7 @@
  */
 
 import type { LlmwikiCitationVerification } from '$lib/server/llmwiki';
-import { fetchChunksByIds } from '$lib/server/rawrag/queries';
+import { fetchChunksByIds } from '$lib/server/retrieval/queries';
 import type { ChunkVerdict, SourceChunk } from '$lib/types/citation';
 
 /** Same pattern used before prompt injection in context/system-prompt.ts. */
@@ -42,7 +42,7 @@ export async function shapeDrilledCitations(
 			documentId: row.documentId,
 			documentTitle: row.documentTitle,
 			content: redactSecrets(row.content),
-			layer: 'rawrag',
+			layer: 'chunks',
 			level: row.level,
 			verdict: toVerdict(verifications.get(id)),
 		});

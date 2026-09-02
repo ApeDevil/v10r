@@ -3,7 +3,7 @@ import { onDestroy, onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
-import { getChartInfraColors, getCSSVar } from '../../_shared/theme-bridge';
+import { getChartInfraColors, getCssVar } from '../../_shared/theme-bridge';
 import type { HeatMapData } from './types';
 
 interface Props {
@@ -60,7 +60,7 @@ function lerp(t: number, a: [number, number, number], b: [number, number, number
 
 function getColorRange(): [[number, number, number], [number, number, number]] {
 	if (colorRange) return [hexToRgb(colorRange[0]), hexToRgb(colorRange[1])];
-	return [hexToRgb(getChartInfraColors().grid), hexToRgb(getCSSVar('chart-1'))];
+	return [hexToRgb(getChartInfraColors().grid), hexToRgb(getCssVar('chart-1'))];
 }
 
 function cells() {
@@ -96,7 +96,7 @@ function draw() {
 	const range = maxV - minV || 1;
 
 	const [lo, hi] = getColorRange();
-	const labelColor = getCSSVar('chart-label') || '#6b7280';
+	const labelColor = getCssVar('chart-label') || '#6b7280';
 
 	// Cells
 	for (let r = 0; r < rows; r++) {

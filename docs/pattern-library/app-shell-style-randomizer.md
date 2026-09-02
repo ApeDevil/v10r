@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Style randomizer (theme × typography × palette)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ Randomizes decorative styling (typography pairing and color palette) on each vis
 
 ---
 
-_Machine-readable record: `app-shell-style-randomizer` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-style-randomizer` in `pattern-library/registry.json`._

@@ -2,14 +2,14 @@ import type { InferSelectModel } from 'drizzle-orm';
 import type { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
 
 /**
- * Re-exported from `db/analytics/constants.ts`, which owns the definitions
+ * Re-exported from `db/analytics/sentinels.ts`, which owns the definitions
  * (db is the allowed downward-import target for domain modules; see
  * docs/codebase-organization.md, Import-direction rule #4).
  */
-export { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/constants';
+export { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/sentinels';
 
 export type AnalyticsEvent = InferSelectModel<typeof events>;
-export type Session = InferSelectModel<typeof sessions>;
+export type AnalyticsSession = InferSelectModel<typeof sessions>;
 export type DailyPageStat = InferSelectModel<typeof dailyPageStats>;
 
 export interface TrafficTrendPoint {

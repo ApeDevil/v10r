@@ -1,9 +1,4 @@
-import type {
-	ConfidenceTier,
-	CostEstimate,
-	ImageAnalysis,
-	MetadataFieldKey,
-} from '$lib/schemas/showcase/image-metadata';
+import type { ConfidenceTier, CostEstimate, ImageAnalysis, MetadataFieldKey } from '$lib/schemas/image-metadata';
 
 /** EXIF/technical fields parsed from the ORIGINAL bytes, before stripping. */
 export interface ExtractedExif {

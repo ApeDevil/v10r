@@ -3,7 +3,7 @@ import type { DocSection } from '$lib/docs/types';
 import { isBlocked, slugify } from '$lib/server/docs/doc-filter';
 import { getEntry } from '$lib/server/docs/manifest';
 import { ROOT_DOCS } from '$lib/server/docs/markdown-urls';
-import { PATTERNS } from '$lib/server/mcp/patterns/data';
+import { PATTERNS } from '$lib/server/patterns';
 
 /**
  * Dead-link gate for the generated pattern surfaces: every docs ref in the

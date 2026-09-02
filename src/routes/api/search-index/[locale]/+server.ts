@@ -7,18 +7,15 @@
  * separate debounced `GET /api/search`.
  */
 import { json } from '@sveltejs/kit';
-import type { SearchLocale } from '$lib/search/types';
+import { isLocale, locales } from '$lib/i18n';
 import { buildSearchIndex } from '$lib/server/search';
 import type { EntryGenerator, RequestHandler } from './$types';
 
 export const prerender = true;
 
-export const entries: EntryGenerator = () => [{ locale: 'en' }, { locale: 'de' }, { locale: 'ru' }];
-
-const LOCALES = new Set<SearchLocale>(['en', 'de', 'ru']);
+export const entries: EntryGenerator = () => locales.map((locale) => ({ locale }));
 
 export const GET: RequestHandler = ({ params }) => {
-	const locale = params.locale as SearchLocale;
-	if (!LOCALES.has(locale)) return json([], { status: 404 });
-	return json(buildSearchIndex(locale));
+	if (!isLocale(params.locale)) return json([], { status: 404 });
+	return json(buildSearchIndex(params.locale));
 };

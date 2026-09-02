@@ -6,7 +6,7 @@ category: "Anti-Abuse"
 
 # Honeypot (hidden field + min fill time)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A no-interaction bot check combining a hidden form field bots tend to fill with 
 
 ---
 
-_Machine-readable record: `anti-abuse-honeypot` in `mcp/patterns.registry.json`._
+_Machine-readable record: `anti-abuse-honeypot` in `pattern-library/registry.json`._

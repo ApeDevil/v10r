@@ -1,10 +1,10 @@
 <script lang="ts">
 import { pushState } from '$app/navigation';
 import { page } from '$app/state';
+import { MODELS, MODELS_BY_ID } from '$lib/3d/models';
 import { SceneCard, ViewerDialog } from '$lib/components/3d';
 import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
-import { MODELS, MODELS_BY_ID } from '$lib/config/models';
 import * as m from '$lib/paraglide/messages';
 
 const activeModel = $derived(page.state.modelId ? MODELS_BY_ID.get(page.state.modelId) : undefined);

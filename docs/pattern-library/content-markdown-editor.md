@@ -6,7 +6,7 @@ category: "Content & Blog"
 
 # Markdown editor (CodeMirror, slash commands)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,7 +22,7 @@ A CodeMirror-based source markdown editor with a slash-command palette that auto
 
 ## Code
 
-- `src/lib/components/editor/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/editor) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/editor))
+- `src/lib/components/desk/panels/editor/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/desk/panels/editor) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/desk/panels/editor))
 
 ## Proof
 
@@ -30,4 +30,4 @@ A CodeMirror-based source markdown editor with a slash-command palette that auto
 
 ---
 
-_Machine-readable record: `content-markdown-editor` in `mcp/patterns.registry.json`._
+_Machine-readable record: `content-markdown-editor` in `pattern-library/registry.json`._

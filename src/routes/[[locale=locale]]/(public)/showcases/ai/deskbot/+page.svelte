@@ -4,15 +4,15 @@ import PlanCard from '$lib/components/composites/chatbot/PlanCard.svelte';
 import { Badge, Button, Typography } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
-import { deskbotPlan } from '$lib/showcase/ai/fixtures/deskbot-plan';
-import { deskbotSentinel } from '$lib/showcase/ai/fixtures/deskbot-sentinel';
+import { deskbotPlan } from '$lib/showcases/ai/fixtures/deskbot-plan';
+import { deskbotSentinel } from '$lib/showcases/ai/fixtures/deskbot-sentinel';
 import ApprovalLifecycle from '../_components/ApprovalLifecycle.svelte';
 import AwarenessPair from '../_components/AwarenessPair.svelte';
 import ContextProbe from '../_components/ContextProbe.svelte';
 import GuardChain from '../_components/GuardChain.svelte';
-import NragProfile from '../_components/NragProfile.svelte';
 import PromptTape from '../_components/PromptTape.svelte';
 import ProvenanceStrip from '../_components/ProvenanceStrip.svelte';
+import RetrievalProfile from '../_components/RetrievalProfile.svelte';
 import StreamAttempts from '../_components/StreamAttempts.svelte';
 import SurfaceFlow from '../_components/SurfaceFlow.svelte';
 import { TracePlayer } from '../_components/surface-flow.state.svelte';
@@ -46,7 +46,7 @@ const sections = [
 	{ id: 'guard', label: m.showcase_ai_sec_guard() },
 	{ id: 'prompt', label: m.showcase_ai_sec_prompt() },
 	{ id: 'probe', label: m.showcase_ai_sec_probe() },
-	{ id: 'nrag', label: m.showcase_ai_sec_nrag() },
+	{ id: 'retrieval', label: m.showcase_ai_sec_retrieval() },
 	{ id: 'tools', label: m.showcase_ai_sec_tools() },
 	{ id: 'approval', label: m.showcase_ai_sec_approval() },
 	{ id: 'stream', label: m.showcase_ai_sec_stream() },
@@ -160,13 +160,13 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 		<ContextProbe surface="deskbot" {signedIn} />
 	</section>
 
-	<section id="nrag" class="section">
+	<section id="retrieval" class="section">
 		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_nrag()}</Typography>
-			<a class="compare" href="{sibling}#nrag">{m.showcase_ai_compare_link({ surface: 'chatbot' })}</a>
+			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_retrieval()}</Typography>
+			<a class="compare" href="{sibling}#retrieval">{m.showcase_ai_compare_link({ surface: 'chatbot' })}</a>
 		</div>
-		<p class="section-claim">{m.showcase_ai_claim_nrag_deskbot()}</p>
-		<NragProfile surface="deskbot" />
+		<p class="section-claim">{m.showcase_ai_claim_retrieval_deskbot()}</p>
+		<RetrievalProfile surface="deskbot" />
 	</section>
 
 	<section id="tools" class="section">

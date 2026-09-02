@@ -26,14 +26,14 @@ import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { isBot } from '$lib/analytics/collect-policy';
 import { normalizeIpKey } from '$lib/server/abuse';
+import { SESSION_COOKIE } from '$lib/server/analytics/config';
 import { verifyConfirmToken } from '$lib/server/analytics/confirm-token';
 import { deriveCookielessSessionId, hasConsent } from '$lib/server/analytics/consent';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent } from '$lib/server/api/response';
-import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
 import { confirmSession } from '$lib/server/db/analytics/mutations';
+import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const ConfirmBody = v.object({
@@ -79,7 +79,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	// Consented cookie session when its read is covered; the cookieless daily id
 	// otherwise — mirroring exactly which session row the hook wrote for this
 	// visitor at each tier.
-	const cookieSid = hasConsent(locals.consentTier, 'analytics') ? cookies.get(ANALYTICS_SESSION_COOKIE) : undefined;
+	const cookieSid = hasConsent(locals.consentTier, 'analytics') ? cookies.get(SESSION_COOKIE) : undefined;
 	const sessionId = cookieSid ?? (await deriveCookielessSessionId(visitorId));
 
 	await confirmSession(sessionId).catch(() => {});

@@ -1,3 +1,4 @@
+import type { ConsentTier } from '$lib/types/db-enums';
 /**
  * Shared types for the live admin activity feed. Importable from both server
  * and client (no runtime code).
@@ -10,6 +11,6 @@ export interface LiveEvent {
 	path: string;
 	device: string | null;
 	country: string | null;
-	consentTier: 'necessary' | 'analytics';
+	consentTier: ConsentTier;
 	isPaired: boolean;
 }

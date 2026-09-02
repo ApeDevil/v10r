@@ -8,7 +8,6 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from '../../src/lib/server/db/schema';
-import * as relations from '../../src/lib/server/db/schema/relations';
 
 neonConfig.poolQueryViaFetch = true;
 
@@ -19,7 +18,7 @@ if (!url) {
 }
 
 export const pool = new Pool({ connectionString: url });
-export const db = drizzle(pool, { schema: { ...schema, ...relations } });
+export const db = drizzle(pool, { schema });
 
 /** R2 helper: returns null when any required env var is missing (push will skip relative-asset uploads). */
 export function createR2(): { s3: S3Client; bucket: string } | null {

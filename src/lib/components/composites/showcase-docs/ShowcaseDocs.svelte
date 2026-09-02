@@ -15,7 +15,7 @@ import { page } from '$app/state';
 import { Button } from '$lib/components/primitives';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
-import { resolveShowcaseDocs } from '$lib/showcases/resolve-docs';
+import { resolveShowcaseDocs } from '$lib/showcases/catalog/resolve-docs';
 
 const entries = $derived(resolveShowcaseDocs(deLocalizeHref(page.url.pathname)));
 </script>

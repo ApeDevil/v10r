@@ -1,5 +1,4 @@
 import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
-import { MAX_CONVERSATIONS_PER_USER } from '$lib/server/config';
 import { db } from '../index';
 import { conversation, message } from '../schema/ai/conversation';
 
@@ -28,7 +27,8 @@ export async function listConversations(userId: string, sort: ConversationSort =
 	return { items, total: countResult?.total ?? 0 };
 }
 
-/** Get aggregate stats for a user's conversation storage. */
+/** Row and token totals for a user's conversations. The quota they are measured against is
+ * `ai` policy, not a property of the data — see `ai/conversation-quota.ts`. */
 export async function getConversationStats(userId: string) {
 	const [row] = await db
 		.select({
@@ -40,9 +40,13 @@ export async function getConversationStats(userId: string) {
 	return {
 		total: row?.total ?? 0,
 		totalTokens: row?.totalTokens ?? 0,
-		limit: MAX_CONVERSATIONS_PER_USER,
-		usagePercent: Math.round(((row?.total ?? 0) / MAX_CONVERSATIONS_PER_USER) * 100),
 	};
+}
+
+/** How many conversations a user currently has. */
+export async function countConversations(userId: string): Promise<number> {
+	const [row] = await db.select({ total: count() }).from(conversation).where(eq(conversation.userId, userId));
+	return row?.total ?? 0;
 }
 
 /** Get a conversation with its messages, auth-scoped */

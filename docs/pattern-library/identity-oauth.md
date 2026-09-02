@@ -6,7 +6,7 @@ category: "Identity & Access"
 
 # OAuth (GitHub, Google)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's 
 
 ---
 
-_Machine-readable record: `identity-oauth` in `mcp/patterns.registry.json`._
+_Machine-readable record: `identity-oauth` in `pattern-library/registry.json`._

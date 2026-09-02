@@ -5,21 +5,20 @@
  * manifest carries name/surface/risk/scope only — no model-facing `description`
  * strings, no input schemas, no prompt text. The server tool factories
  * (`$lib/server/ai/tools/`) derive their meta maps from this list; the public
- * showcase topology (`$lib/showcase/ai/`) projects from it too. One source, no drift.
+ * showcase topology (`$lib/showcases/ai/`) projects from it too. One source, no drift.
  *
- * Follows the `$lib/types/pipeline.ts` precedent: a contract module the server emits
+ * Follows the `$lib/types/retrieval-trace.ts` precedent: a contract module the server emits
  * against and the client renders from.
  */
 
-/** The two product AI surfaces — mirrors the orchestrator's `TurnSurface` discriminant. */
-export type AiSurfaceId = 'chatbot' | 'deskbot';
-
 /**
  * Tool permission scopes the desk client requests. Deskbot-only — the chatbot has no scopes.
- * `desk:ask` is a READ-ONLY grounding scope (deskbot nRAG over the user's own files); it is
+ * `desk:ask` is a READ-ONLY grounding scope (deskbot retrieval over the user's own files); it is
  * NOT a mutating scope and never triggers the plan gate.
  */
-export type DeskToolScope = 'desk:read' | 'desk:write' | 'desk:create' | 'desk:delete' | 'desk:ask';
+export const DESK_TOOL_SCOPES = ['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask'] as const;
+
+export type DeskToolScope = (typeof DESK_TOOL_SCOPES)[number];
 
 /**
  * Risk classification for a tool (surface-neutral). Drives UI gating (plan card vs.
@@ -74,7 +73,7 @@ export type ToolDescriptor =
 export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
 	// ── chatbot: read-only, grounded retrieval tools (no scope) ──
 	{ name: 'get_llmwiki_pages', surface: 'chatbot', risk: 'read' },
-	{ name: 'get_rawrag_chunks', surface: 'chatbot', risk: 'read' },
+	{ name: 'get_source_chunks', surface: 'chatbot', risk: 'read' },
 	{ name: 'search_catalog', surface: 'chatbot', risk: 'read' },
 	{ name: 'search_project_docs', surface: 'chatbot', risk: 'read' },
 	{ name: 'search_pattern_library', surface: 'chatbot', risk: 'read' },

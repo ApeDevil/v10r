@@ -1,5 +1,5 @@
 /**
- * ingest-docs — ingest the project documentation (docs/ **\/*.md) into the rag.*
+ * ingest-docs — ingest the project documentation (docs/ **\/*.md) into the retrieval.*
  * corpus so the chatbot can ground "how does X work" answers in the real docs.
  *
  * Runs INSIDE the v10r container (host has no node_modules):
@@ -8,7 +8,7 @@
  *
  * Design (mirrors scripts/db/seed-llmwiki.ts + scripts/db/catalog-sync.ts):
  *   - Hand-rolls its OWN Neon pool + Gemini embedder from process.env — the app's
- *     rawrag `ingest()` / `embed.ts` import `$lib`/`$env` and cannot run under Bun.
+ *     retrieval `ingest()` / `embed.ts` import `$lib`/`$env` and cannot run under Bun.
  *   - Reuses the Vite-free `planChunks` (the SAME hierarchical section/paragraph
  *     chunker the app `ingest()` uses) + `doc-filter` (relative imports). Replicates
  *     the canonical-path derivation from `src/lib/server/docs/manifest.ts` (Vite-only).
@@ -39,6 +39,7 @@ import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { deriveTitle, isBlocked, parseFrontmatter, slugify } from '../../src/lib/server/docs/doc-filter';
 import { buildOverviewBody } from '../../src/lib/server/docs/overview-body';
+import { planChunks } from '../../src/lib/server/retrieval/plan';
 import {
 	CHUNK_OVERLAP,
 	EMBEDDING_DIMENSIONS,
@@ -46,8 +47,7 @@ import {
 	EMBEDDING_MODEL_ID,
 	PARAGRAPH_CHUNK_TARGET,
 	SECTION_CHUNK_TARGET,
-} from '../../src/lib/server/rag-shared/embed-config';
-import { planChunks } from '../../src/lib/server/rawrag/plan';
+} from '../../src/lib/server/retrieval-shared/embed-config';
 
 neonConfig.poolQueryViaFetch = true;
 
@@ -91,40 +91,40 @@ const DOCS_ROOT = fileURLToPath(new URL('../../docs', import.meta.url));
 
 // Docs that render for humans at /docs but must NOT enter the chatbot corpus —
 // planned-but-unbuilt designs the assistant would otherwise assert as live code.
-const RAG_ONLY_BLOCK = new Set<string>([
+const RETRIEVAL_ONLY_BLOCK = new Set<string>([
 	'docs/blueprint/progressive-revelation.md',
 	'docs/foundation/progressive-revelation.md',
 	// Design record for the persistent/minimizable chatbot. BUILT on dev but uncommitted;
 	// the doc also describes deferred pieces (experimental_resume, citation chips on
-	// resume). Held from RAG until committed + the corpus is re-ingested, to avoid the
+	// resume). Held from the retrieval corpus until committed + the corpus is re-ingested, to avoid the
 	// assistant asserting the deferred pieces as shipped.
 	'docs/blueprint/ai/persistent-chatbot.md',
 	// Aspirational format: @toon-format/toon is not a dependency and nothing imports it.
 	// The doc's encode()-based examples would be asserted as live code by the assistant.
 	'docs/blueprint/ai/toon.md',
 	// Planned-not-built fifth-client blueprint: describes an Expo app + requireApiKey
-	// guard that do not exist. Held from RAG so the assistant doesn't assert them as shipped.
+	// guard that do not exist. Held from the retrieval corpus so the assistant doesn't assert them as shipped.
 	'docs/blueprint/architecture/native-client.md',
 	// Superseded v4-era design record; the desk+AI feature shipped on AI SDK v6 with a
-	// different surface. Kept for /docs rationale, held from RAG to avoid stale-contract answers.
+	// different surface. Kept for /docs rationale, held from the retrieval corpus to avoid stale-contract answers.
 	'docs/blueprint/ai/desk-integration.md',
-	// Planning blueprint: documents the RAG/nRAG "showcase-everything" design, most of which is
+	// Planning blueprint: documents the retrieval "showcase-everything" design, most of which is
 	// DESIGNED-not-built (llmwiki compile, step-back, reranker, eval, :DEPENDS_ON). If ingested the
-	// chatbot would assert these unbuilt features as live. Renders at /docs for humans; held from RAG.
+	// chatbot would assert these unbuilt features as live. Renders at /docs for humans; held from the retrieval corpus.
 	'docs/blueprint/ai/knowledge-base.md',
 	// Companion roadmap to knowledge-base.md: the detailed reranker / step-back / llmwiki-compile
 	// specs. Entirely DESIGNED-not-built (no retrieval source code exists for any of it yet). Same
-	// hazard as the blueprint — held from RAG so the chatbot can't assert these specs as shipped.
+	// hazard as the blueprint — held from the retrieval corpus so the chatbot can't assert these specs as shipped.
 	'docs/blueprint/ai/rag-roadmap.md',
 	// Plan record for the chatbot's site-awareness (Vely knows the current public route — the
 	// chatbot half of location-awareness). DESIGNED-not-built (4-lens cross-pollination, 2026-06-27).
-	// Held from RAG so the chatbot can't assert site-awareness as a live feature. Renders at /docs.
+	// Held from the retrieval corpus so the chatbot can't assert site-awareness as a live feature. Renders at /docs.
 	'docs/blueprint/ai/site-awareness.md',
-	// nRAG Observability redesign for the rag-chat showcase (waterfall + unified trace + tier focus
+	// Retrieval-observability redesign for the rag-chat showcase (waterfall + unified trace + tier focus
 	// filter + Step/Timing views). DESIGNED-not-built (16-agent task force, 2026-06-27); describes a
-	// contract rewrite (startOffsetMs, phase axis, registry) and 6 unfixed bugs. Held from RAG so the
+	// contract rewrite (startOffsetMs, phase axis, registry) and 6 unfixed bugs. Held from the retrieval corpus so the
 	// chatbot can't assert the new observability surface or contract as live. Renders at /docs.
-	'docs/blueprint/ai/nrag-observability.md',
+	'docs/blueprint/ai/retrieval-observability.md',
 ]);
 
 interface DocFile {
@@ -151,7 +151,7 @@ function listMarkdown(dir: string): string[] {
 
 function buildDocFile(absPath: string): DocFile | null {
 	const sourcePath = `docs/${relative(DOCS_ROOT, absPath).split('\\').join('/')}`;
-	if (isBlocked(sourcePath, RAG_ONLY_BLOCK)) return null;
+	if (isBlocked(sourcePath, RETRIEVAL_ONLY_BLOCK)) return null;
 
 	const parts = sourcePath.split('/');
 	const sectionDir = parts[1];
@@ -187,9 +187,9 @@ async function ensurePrereqs() {
 		ON CONFLICT (id) DO NOTHING
 	`);
 	await db.execute(sql`
-		INSERT INTO rag.collection (id, user_id, name, description)
+		INSERT INTO retrieval.collection (id, user_id, name, description)
 		VALUES (${PROJECT_DOCS_COLLECTION_ID}, ${SYSTEM_DOCS_USER_ID}, 'Project Docs',
-			'Project documentation corpus (docs/**/*.md), tier-1 rawrag.')
+			'Project documentation corpus (docs/**/*.md), tier-1 retrieval.')
 		ON CONFLICT (id) DO NOTHING
 	`);
 }
@@ -266,7 +266,7 @@ async function insertDoc(doc: DocFile): Promise<number> {
 	const totalChunks = parents.length + children.length;
 	const totalTokens = parents.reduce((s, p) => s + p.tokenCount, 0) + children.reduce((s, c) => s + c.tokenCount, 0);
 	await db.execute(sql`
-		INSERT INTO rag.document (id, user_id, title, source, source_uri, status, total_chunks, total_tokens, content_hash)
+		INSERT INTO retrieval.document (id, user_id, title, source, source_uri, status, total_chunks, total_tokens, content_hash)
 		VALUES (${docId}, ${SYSTEM_DOCS_USER_ID}, ${doc.title}, 'docs', ${doc.docsPath}, 'ready',
 			${totalChunks}, ${totalTokens}, ${doc.rawHash})
 	`);
@@ -275,7 +275,7 @@ async function insertDoc(doc: DocFile): Promise<number> {
 	// only via a child's tier-2 parent-fetch, never directly in tier-1.
 	for (const p of parents) {
 		await db.execute(sql`
-			INSERT INTO rag.chunk (
+			INSERT INTO retrieval.chunk (
 				id, document_id, user_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
 				embedding_model_id, embedding
 			)
@@ -291,7 +291,7 @@ async function insertDoc(doc: DocFile): Promise<number> {
 	for (let i = 0; i < children.length; i++) {
 		const c = children[i];
 		await db.execute(sql`
-			INSERT INTO rag.chunk (
+			INSERT INTO retrieval.chunk (
 				id, document_id, user_id, parent_id, level, position, content, context_prefix, token_count, content_hash,
 				embedding_model_id, embedding
 			)
@@ -323,10 +323,10 @@ async function writeSystemOverview(files: DocFile[]): Promise<void> {
 	const [embedding] = await embedAll([`${OVERVIEW_TITLE}\n${OVERVIEW_TLDR}\n${OVERVIEW_TAGS.join(' ')}`]);
 
 	await db.execute(sql`
-		DELETE FROM rag.llmwiki_page WHERE kind = 'overview' AND collection_id = ${PROJECT_DOCS_COLLECTION_ID}
+		DELETE FROM retrieval.llmwiki_page WHERE kind = 'overview' AND collection_id = ${PROJECT_DOCS_COLLECTION_ID}
 	`);
 	await db.execute(sql`
-		INSERT INTO rag.llmwiki_page (
+		INSERT INTO retrieval.llmwiki_page (
 			id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,
 			frontmatter, embedding, search_vector, source_hash, source_count,
 			compiled_at, compiled_by_model, stale
@@ -357,7 +357,7 @@ async function main() {
 	// Current active docs corpus, keyed by canonical path.
 	const existing = await db.execute<{ id: string; sourceUri: string; contentHash: string }>(sql`
 		SELECT id, source_uri AS "sourceUri", content_hash AS "contentHash"
-		FROM rag.document WHERE source = 'docs' AND deleted_at IS NULL
+		FROM retrieval.document WHERE source = 'docs' AND deleted_at IS NULL
 	`);
 	const activeByPath = new Map(existing.rows.map((r) => [r.sourceUri, r]));
 
@@ -367,7 +367,7 @@ async function main() {
 	// converted docs from the top — otherwise a >1000-chunk corpus could never finish.
 	const hierarchical = await db.execute<{ sourceUri: string }>(sql`
 		SELECT DISTINCT d.source_uri AS "sourceUri"
-		FROM rag.document d JOIN rag.chunk c ON c.document_id = d.id
+		FROM retrieval.document d JOIN retrieval.chunk c ON c.document_id = d.id
 		WHERE d.source = 'docs' AND d.deleted_at IS NULL AND c.level = 'section'
 	`);
 	const hierarchicalPaths = new Set(hierarchical.rows.map((r) => r.sourceUri));
@@ -393,7 +393,7 @@ async function main() {
 		}
 		if (prior) {
 			// Changed — soft-delete the prior version (forward-safe vs page_source restrict).
-			await db.execute(sql`UPDATE rag.document SET deleted_at = now() WHERE id = ${prior.id}`);
+			await db.execute(sql`UPDATE retrieval.document SET deleted_at = now() WHERE id = ${prior.id}`);
 			updated++;
 		} else {
 			inserted++;
@@ -410,7 +410,7 @@ async function main() {
 	const seenSet = new Set(seen);
 	const stale = existing.rows.filter((r) => !seenSet.has(r.sourceUri));
 	for (const r of stale) {
-		await db.execute(sql`UPDATE rag.document SET deleted_at = now() WHERE id = ${r.id}`);
+		await db.execute(sql`UPDATE retrieval.document SET deleted_at = now() WHERE id = ${r.id}`);
 	}
 
 	await writeSystemOverview(files);

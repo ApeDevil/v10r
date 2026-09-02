@@ -41,7 +41,7 @@ The default spends **nothing**. Reranking is a pure reordering of candidates the
 
 ### (b) The seam
 
-Slots into `retrieve()` **between fusion and context assembly** — exactly where the blueprint's seam diagram places it. In [`src/lib/server/rawrag/index.ts`](../../../src/lib/server/rawrag/index.ts):
+Slots into `retrieve()` **between fusion and context assembly** — exactly where the blueprint's seam diagram places it. In [`src/lib/server/retrieval/index.ts`](../../../src/lib/server/retrieval/index.ts):
 
 - `fuseAndRank(allChunks, opts.maxChunks)` is called at **`index.ts:152`** (today inside the `--- Rank ---` block).
 - Context assembly begins at the `--- Context assembly ---` block (`index.ts:172`).
@@ -49,7 +49,7 @@ Slots into `retrieve()` **between fusion and context assembly** — exactly wher
 The reranker plugs in **between** those. The change to the existing code is to widen the fusion candidate cap (retrieve-wide), rerank, then cap to `maxChunks` (rerank-narrow):
 
 ```ts
-// rawrag/rerank.ts  (NEW — pure module, no chat-orchestrator import, per ARY home rule)
+// retrieval/rerank.ts  (NEW — pure module, no chat-orchestrator import, per ARY home rule)
 export interface RerankOptions {
   /** Final count after reranking. Defaults to the retrieval maxChunks. */
   topN: number;
@@ -97,7 +97,7 @@ Degradation is total and silent-to-the-user: a reranker error reorders nothing a
 
 ### (d) Phase-C dependencies
 
-- **Step 4 (retrieval-strategy extraction).** The reranker needs a slot to live in. Today `retrieve()` is a monolith and the call site is wedged between two emit blocks; extracting `rawrag/strategy/chatbot-context.ts` (Phase C-adjacent, "extract FIRST" per the roadmap) gives the reranker a clean seam. Until that extraction, the reranker can land directly in `retrieve()` at `index.ts:152` — it does not strictly require the split, but the split makes it testable in isolation.
+- **Step 4 (retrieval-strategy extraction).** The reranker needs a slot to live in. Today `retrieve()` is a monolith and the call site is wedged between two emit blocks; extracting `retrieval/strategy/chatbot-context.ts` (Phase C-adjacent, "extract FIRST" per the roadmap) gives the reranker a clean seam. Until that extraction, the reranker can land directly in `retrieve()` at `index.ts:152` — it does not strictly require the split, but the split makes it testable in isolation.
 - **No dependency** on embed-retry or owner-aware overview — the reranker is downstream of fusion and orthogonal to grounding.
 
 ---
@@ -125,10 +125,10 @@ This is the most quota-sensitive of the three, because it spends the **scarce** 
 Slots **before embed** in the chatbot grounding path — it rewrites the query, so it must run before `generateEmbedding`. Two anchors:
 
 - The **broad-query gate** mirrors `shouldGroundFromSystemDocs` at [`chat-orchestrator.ts:347`](../../../src/lib/server/ai/chat-orchestrator.ts). That function already classifies "is this a real question worth grounding?" (length ≥ 12, not a greeting). The step-back gate is a *narrower* sibling: "is this a real question AND a **broad** one?" — broad meaning short-and-general ("how do I…", "what is…", "getting started", "overview of…"), the class that benefits from generalization. Specific questions ("what's the default RRF k?") skip it — generalizing them would hurt.
-- The embed call is `generateEmbedding(query)` at [`rawrag/index.ts:78`](../../../src/lib/server/rawrag/index.ts). In the chatbot path, the query reaching `retrieve()` is `userMsgText` (the `retrieve(userMsgText, …)` call at `chat-orchestrator.ts:617`). Step-back transforms `userMsgText` → a generalized query that is passed as the **retrieval** query, while the original `userMsgText` is retained for the reranker.
+- The embed call is `generateEmbedding(query)` at [`retrieval/index.ts:78`](../../../src/lib/server/retrieval/index.ts). In the chatbot path, the query reaching `retrieve()` is `userMsgText` (the `retrieve(userMsgText, …)` call at `chat-orchestrator.ts:617`). Step-back transforms `userMsgText` → a generalized query that is passed as the **retrieval** query, while the original `userMsgText` is retained for the reranker.
 
 ```ts
-// rawrag/step-back.ts  (NEW — pure module)
+// retrieval/step-back.ts  (NEW — pure module)
 /**
  * For BROAD queries only, return a generalized query that embeds better against
  * high-level overview chunks. Returns null for narrow queries, on cache-or-
@@ -176,9 +176,9 @@ The honesty win is the `fromCache` / `reason:'quota'` distinction — the showca
 
 ## 3. llmwiki auto-compile + recompile loop
 
-Replaces the [`COMPILE_SCAFFOLD`](../../../src/lib/server/llmwiki/compile/index.ts) and [`LINT_SCAFFOLD`](../../../src/lib/server/llmwiki/lint/index.ts) sentinels with a real pipeline that **auto-generates** llmwiki pages from rawrag chunks and keeps them fresh as sources drift. This is the deferred tier-2 of the whole design and **the biggest quota consumer by far** — so its trigger decision is the most consequential quota call in this roadmap.
+Adds `llmwiki/compile/` and `llmwiki/lint/` as a real pipeline (both were placeholder modules exporting a boolean and were deleted — structure that claims a capability the system lacks is worse than no structure) that **auto-generates** llmwiki pages from source chunks and keeps them fresh as sources drift. This is the deferred tier-2 of the whole design and **the biggest quota consumer by far** — so its trigger decision is the most consequential quota call in this roadmap.
 
-**Auto-generated, never hand-curated.** The research is unanimous: hand-curated summary layers rot (someone edits a doc, the curated page lies, and the summary silently hides the true chunk — the [recall-safety-net failure mode](./knowledge-base.md#the-recall-safety-net)). So pages are *compiled from chunks*, not written by hand. A page is one TLDR + body + tags over a cluster of related rawrag chunks, carrying `pointers:` (chunk ids) back down into the immutable rawrag layer. The page is the answer surface; the chunks are the audit trail.
+**Auto-generated, never hand-curated.** The research is unanimous: hand-curated summary layers rot (someone edits a doc, the curated page lies, and the summary silently hides the true chunk — the [recall-safety-net failure mode](./knowledge-base.md#the-recall-safety-net)). So pages are *compiled from chunks*, not written by hand. A page is one TLDR + body + tags over a cluster of related source chunks, carrying `pointers:` (chunk ids) back down into the immutable retrieval layer. The page is the answer surface; the chunks are the audit trail.
 
 ### (a) Quota budget — the big one
 
@@ -202,31 +202,29 @@ Replaces the [`COMPILE_SCAFFOLD`](../../../src/lib/server/llmwiki/compile/index.
 
 Three insertion points, all replacing scaffolds or extending existing detectors:
 
-**Compile** — replace `COMPILE_SCAFFOLD` in [`llmwiki/compile/index.ts`](../../../src/lib/server/llmwiki/compile/index.ts):
+**Compile** — create `llmwiki/compile/index.ts`:
 
 ```ts
-// Replaces `export const COMPILE_SCAFFOLD = true`
 export async function compilePage(
-  sourceChunks: RankedChunk[],   // a cluster of related rawrag chunks (one topic)
+  sourceChunks: RankedChunk[],   // a cluster of related source chunks (one topic)
   kind: LlmwikiPageKind,         // 'page' | 'overview'
 ): Promise<LlmwikiPage>;
 ```
 
-`compilePage` (1) calls chat-gen to synthesize `title + tldr + body + tags` from the chunk cluster, (2) embeds `title+tldr+tags` (1 embedding call, per the [`llmwiki-page.ts`](../../../src/lib/server/db/schema/rag/llmwiki-page.ts) "embedded together, 1536-dim" contract), (3) writes the page row **and** the `llmwiki_page_source` pointer rows. Each pointer row records `source_hash_at_compile = chunk.contentHash` per the [`llmwiki-page-source.ts`](../../../src/lib/server/db/schema/rag/llmwiki-page-source.ts) schema — this is the drift anchor. It also writes `source_count` and the page-level `source_hash` (the source-**set** hash) so the "sources added/removed" drift gap is closed, not just the "source content changed" one. The `search_vector` is app-populated via the `to_tsvector('english', …)` literal (the schema comment at `llmwiki-page.ts:48-57` is explicit that this is NOT a generated column).
+`compilePage` (1) calls chat-gen to synthesize `title + tldr + body + tags` from the chunk cluster, (2) embeds `title+tldr+tags` (1 embedding call, per the [`llmwiki-page.ts`](../../../src/lib/server/db/schema/retrieval/llmwiki-page.ts) "embedded together, 1536-dim" contract), (3) writes the page row **and** the `llmwiki_page_source` pointer rows. Each pointer row records `source_hash_at_compile = chunk.contentHash` per the [`llmwiki-page-source.ts`](../../../src/lib/server/db/schema/retrieval/llmwiki-page-source.ts) schema — this is the drift anchor. It also writes `source_count` and the page-level `source_hash` (the source-**set** hash) so the "sources added/removed" drift gap is closed, not just the "source content changed" one. The `search_vector` is app-populated via the `to_tsvector('english', …)` literal (the schema comment at `llmwiki-page.ts:48-57` is explicit that this is NOT a generated column).
 
 **Drift → recompile** — the READ side exists in [`llmwiki/verify.ts`](../../../src/lib/server/llmwiki/verify.ts); the WRITE side does not:
 
 - **Exists.** `verifyCitations` compares each drilled chunk's current `content_hash` against the recorded `source_hash_at_compile` (comparison at `verify.ts:65`) and returns `driftedChunkIds`. It is the module's only export, and it performs **zero writes**.
 - **Does not exist.** `markPagesStaleForChunks(chunkIds)` — the write-side marker that would flip `stale = true` on every page citing a drifted chunk via the `llmwiki_page_source` junction. It has to be built.
 
-The *substrate* is real, which is why this is a small build rather than a design problem: `llmwiki_page_source.source_hash_at_compile` ([`llmwiki-page-source.ts:33`](../../../src/lib/server/db/schema/rag/llmwiki-page-source.ts)), `llmwiki_page.stale` ([`llmwiki-page.ts:63`](../../../src/lib/server/db/schema/rag/llmwiki-page.ts)), and the partial index `llmwiki_page_stale_idx` (`llmwiki-page.ts:73`) that the drain queue would read.
+The *substrate* is real, which is why this is a small build rather than a design problem: `llmwiki_page_source.source_hash_at_compile` ([`llmwiki-page-source.ts:33`](../../../src/lib/server/db/schema/retrieval/llmwiki-page-source.ts)), `llmwiki_page.stale` ([`llmwiki-page.ts:63`](../../../src/lib/server/db/schema/retrieval/llmwiki-page.ts)), and the partial index `llmwiki_page_stale_idx` (`llmwiki-page.ts:73`) that the drain queue would read.
 
 So the **recompile loop is: ingest → (something flips chunks' hashes) → a drift sweep marks the citing pages stale → the nightly job drains `stale = true` and re-runs `compilePage` for each.** The read-side comparison exists today; what's missing is (1) `markPagesStaleForChunks` itself, (2) a sweep that compares *all* current chunk hashes against recorded ones after an ingest (not just chunks the model happened to drill — `verifyCitations` only covers drilled ids), and (3) the nightly drain. The sweep is a batch SQL join (chunk.content_hash ≠ llmwiki_page_source.source_hash_at_compile) — no LLM cost; only the *recompile* costs quota.
 
-**Lint-nightly gate** — replace `LINT_SCAFFOLD` in [`llmwiki/lint/index.ts`](../../../src/lib/server/llmwiki/lint/index.ts):
+**Lint-nightly gate** — create `llmwiki/lint/index.ts`. This is load-bearing: do not put wiki-first retrieval in front of users until lint runs nightly.
 
 ```ts
-// Replaces `export const LINT_SCAFFOLD = true`
 export async function lintCollection(
   collectionId: string | null,
   userId: string,
@@ -247,7 +245,7 @@ Lint is the **gate before llmwiki is promoted to a default surface**. It runs ni
 ### (d) Phase-C dependencies
 
 - **Step 3 (owner-aware `getOverview` + written system overview)** — hard prerequisite. Compile clusters pages against the overview TOC; without the anchor there is no deterministic topic structure (see seam).
-- **Step 1 (unified ingest door)** — hard prerequisite. Compile generates pages from rawrag chunks; those chunks must be the **hierarchical** ones (parents + children + breadcrumb prefixes) that Phase C step 1 produces. Compiling against today's flat docs chunks would produce thin, context-poor pages. Compile is only worth doing *after* the food is fixed.
+- **Step 1 (unified ingest door)** — hard prerequisite. Compile generates pages from source chunks; those chunks must be the **hierarchical** ones (parents + children + breadcrumb prefixes) that Phase C step 1 produces. Compiling against today's flat docs chunks would produce thin, context-poor pages. Compile is only worth doing *after* the food is fixed.
 - **Step 2 (embed-retry)** — the per-page embedding inherits the hardened `generateEmbeddings`; the nightly batch wants the *generous* retry budget (≥ 6 attempts) since it is off the hot path.
 - **Step 4 (strategy extraction)** — softer dependency; compile lives in `llmwiki/`, not the retrieval strategy module, so it does not strictly block on the split.
 
@@ -288,5 +286,5 @@ The throughline: **reranker before step-back before compile**, because that is i
 
 - [knowledge-base.md](./knowledge-base.md) — the integrating blueprint + the wired-vs-scaffold honesty map. **Read this first.**
 - [layered-rag.md](./layered-rag.md) — the two-layer split, read path, recall-safety-net detail.
-- [graph-rag.md](./graph-rag.md) — rawrag internals the reranker reorders and compile reads from.
+- [graph-rag.md](./graph-rag.md) — retrieval internals the reranker reorders and compile reads from.
 - [README.md](./README.md) — AI blueprint nav hub.

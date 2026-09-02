@@ -6,7 +6,7 @@ category: "Analytics"
 
 # Visitor "my data" transparency
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ An authenticated "Your data" page streams cookie state, live request metadata, a
 
 ---
 
-_Machine-readable record: `analytics-my-data-transparency` in `mcp/patterns.registry.json`._
+_Machine-readable record: `analytics-my-data-transparency` in `pattern-library/registry.json`._

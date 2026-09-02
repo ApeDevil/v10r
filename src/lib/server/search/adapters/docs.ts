@@ -11,8 +11,10 @@
  * when native de/ru markdown is authored later, only the manifest needs a locale
  * dimension; this adapter and the query layer are unchanged.
  */
+
+import type { Locale } from '$lib/i18n';
 import { extractSnippet, scoreRecords, toResult } from '$lib/search/match';
-import type { SearchLocale, SearchRecord, SearchResult } from '$lib/search/types';
+import type { SearchRecord, SearchResult } from '$lib/search/types';
 import { getManifest, getRawMarkdown } from '$lib/server/docs/manifest';
 
 const SECTION_LABEL: Record<string, string> = {
@@ -78,13 +80,13 @@ function buildCorpus(): SearchRecord[] {
 }
 
 /** Static-shard records: title + description, NO body. */
-export function docTitleRecords(locale: SearchLocale): SearchRecord[] {
+export function docTitleRecords(locale: Locale): SearchRecord[] {
 	const fallback = locale !== 'en';
 	return buildCorpus().map((r) => ({ ...r, locale, localeFallback: fallback, body: undefined }));
 }
 
 /** Server lane: full-body lexical search with snippets. */
-export function searchDocs(query: string, locale: SearchLocale, limit = 10): SearchResult[] {
+export function searchDocs(query: string, locale: Locale, limit = 10): SearchResult[] {
 	const fallback = locale !== 'en';
 	return scoreRecords(buildCorpus(), query)
 		.slice(0, limit)

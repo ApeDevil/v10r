@@ -15,10 +15,10 @@
  */
 import { json } from '@sveltejs/kit';
 import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { type BearerCheck, verifyPrivateMcpBearer } from '$lib/server/mcp/auth';
-import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http';
-import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/registry';
+import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http.adapter';
+import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/tools';
 import { buildInfo } from '$lib/server/mcp/server-info';
 import { createMcpObserver, recordMcpGateRejection } from '$lib/server/mcp/telemetry/observer';
 import type { McpServerIdentity } from '$lib/server/mcp/transport';

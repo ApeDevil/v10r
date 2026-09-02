@@ -1,5 +1,5 @@
 import { allToolMeta, chatbotToolMeta, type DeskToolMeta } from '$lib/server/ai/tools';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -11,7 +11,7 @@ import type { PageServerLoad } from './$types';
 
 const NOTES: Record<string, string> = {
 	get_llmwiki_pages: 'Expand wiki pages beyond the TLDR.',
-	get_rawrag_chunks: 'Drill to raw source chunks — verbatim-id rule, max 3/turn.',
+	get_source_chunks: 'Drill to raw source chunks — verbatim-id rule, max 3/turn.',
 	search_catalog: 'Search the ⌘K catalog → canonical paths (CitationChip).',
 	search_project_docs: 'Semantic search over the system-owned docs corpus.',
 	search_pattern_library: 'Search the canonical pattern registry → /docs/pattern-library pages.',

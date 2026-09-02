@@ -1,7 +1,8 @@
-import { getClientIp, ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiOk } from '$lib/server/api/response';
-import { USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW } from '$lib/server/config';
+import { ipLimitKey } from '$lib/server/abuse';
+import { getClientIp } from '$lib/server/http/client-ip';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiOk } from '$lib/server/http/response';
+import { USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW } from '$lib/server/showcases/config';
 import type { RequestHandler } from './$types';
 
 const TAKEN_USERNAMES = ['admin', 'test', 'user', 'root', 'moderator', 'system'];

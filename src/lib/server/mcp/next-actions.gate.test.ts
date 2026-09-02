@@ -62,7 +62,7 @@ describe('next-actions gate (stdio mirror)', () => {
 	});
 
 	it('why-strings stay one short clause on both surfaces', () => {
-		const hosted = readFileSync(join(process.cwd(), 'src', 'lib', 'server', 'mcp', 'patterns', 'registry.ts'), 'utf8');
+		const hosted = readFileSync(join(process.cwd(), 'src', 'lib', 'server', 'mcp', 'patterns', 'tools.ts'), 'utf8');
 		for (const source of [tools, hosted]) {
 			for (const match of source.matchAll(/why: '([^']*)'/g)) {
 				expect(match[1].length, match[1]).toBeLessThanOrEqual(120);

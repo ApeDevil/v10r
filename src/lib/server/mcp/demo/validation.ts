@@ -4,7 +4,7 @@
  * message or unsupported color is rejected before it reaches the database.
  */
 import * as v from 'valibot';
-import { DEMO_COLORS, MAX_MESSAGE_LENGTH } from './constants';
+import { DEMO_COLORS, MAX_MESSAGE_LENGTH } from './config';
 
 /**
  * Message is plain text. We store it raw (never HTML-stripped, so "a < b" survives) and

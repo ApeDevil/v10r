@@ -6,7 +6,7 @@ category: "Databases & Storage"
 
 # Object storage (Cloudflare R2, presigned transfer)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ S3-compatible object storage on Cloudflare R2, accessed via @aws-sdk/client-s3 w
 
 ---
 
-_Machine-readable record: `databases-object-storage` in `mcp/patterns.registry.json`._
+_Machine-readable record: `databases-object-storage` in `pattern-library/registry.json`._

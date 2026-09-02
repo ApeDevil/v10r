@@ -6,7 +6,7 @@ category: "UI Components & Design System"
 
 # Fluid responsive styling (UnoCSS, container queries)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -31,4 +31,4 @@ A UnoCSS-driven mobile-first strategy combining clamp()-based fluid typography/s
 
 ---
 
-_Machine-readable record: `ui-fluid-styling` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ui-fluid-styling` in `pattern-library/registry.json`._

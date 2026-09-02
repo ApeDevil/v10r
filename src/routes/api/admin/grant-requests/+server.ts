@@ -1,6 +1,6 @@
-import { apiOk } from '$lib/server/api/response';
 import { listPendingRequests } from '$lib/server/auth/grant-requests';
-import { guardApiAdmin } from '$lib/server/auth/guards';
+import { guardApiAdmin } from '$lib/server/http/guards';
+import { apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {

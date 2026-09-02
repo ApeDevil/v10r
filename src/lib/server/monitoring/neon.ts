@@ -3,14 +3,14 @@ import { db } from '$lib/server/db';
 import {
 	computePercentage,
 	computeThreshold,
+	type DependencyResult,
 	FREE_TIER_LIMITS,
 	type NeonMetrics,
 	type NeonTableInfo,
-	type ProviderResult,
 	sanitizeError,
 } from './index';
 
-export async function fetchNeonMetrics(): Promise<ProviderResult<NeonMetrics>> {
+export async function fetchNeonMetrics(): Promise<DependencyResult<NeonMetrics>> {
 	const start = performance.now();
 
 	try {

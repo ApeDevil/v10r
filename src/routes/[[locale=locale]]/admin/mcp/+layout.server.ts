@@ -1,4 +1,4 @@
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { LayoutServerLoad } from './$types';
 
 /**

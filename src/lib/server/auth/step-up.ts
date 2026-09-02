@@ -16,7 +16,7 @@
  */
 import { dev } from '$app/environment';
 import { redis } from '$lib/server/cache';
-import { STEPUP_TTL } from '$lib/server/config';
+import { STEPUP_TTL } from './config';
 
 const key = (userId: string) => `stepup:${userId}`;
 

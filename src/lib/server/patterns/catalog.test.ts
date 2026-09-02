@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Registry } from '../mcp/patterns/data';
 import { buildCatalog } from './catalog';
+import type { Registry } from './registry';
 
 const pattern = (id: string, category: string, tier: 'deep' | 'light' = 'light') => ({
 	id,

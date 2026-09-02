@@ -8,7 +8,7 @@ Cross-surface AI-spend monitoring, served on the admin **Cost** tab (`/admin/ai/
 
 ## What it is
 
-`/admin/ai/cost` is the 6th AI admin sub-tab: **Overview · Models · Usage · Cost · nRAG · Tools**. It answers one question — "how many tokens did each model burn across the whole app, and roughly what would that cost?" — without ever implying a real bill.
+`/admin/ai/cost` is the 6th AI admin sub-tab: **Overview · Models · Usage · Cost · Retrieval · Tools**. It answers one question — "how many tokens did each model burn across the whole app, and roughly what would that cost?" — without ever implying a real bill.
 
 The tab holds three things:
 

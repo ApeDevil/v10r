@@ -9,15 +9,15 @@
 
 import * as v from 'valibot';
 import { customPaletteSchema } from '$lib/schemas/app/branding';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { deleteCustomPalette, updateCustomPalette } from '$lib/server/branding/palette-crud';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
+import { deleteCustomPalette, updateCustomPalette } from '$lib/server/style';
 import {
 	PALETTE_WRITE_RATE_LIMIT_MAX,
 	PALETTE_WRITE_RATE_LIMIT_PREFIX,
 	PALETTE_WRITE_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+} from '$lib/server/style/config';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter(

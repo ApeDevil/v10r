@@ -52,7 +52,7 @@ Desktop kebab and mobile commands sheet render the same `composePanelMenus()` ar
 
 ### Cross-Panel Communication (DeskBus)
 
-Typed pub/sub for panels to communicate without direct coupling. Factory + Svelte context pattern in `$lib/components/composites/dock/desk-bus.svelte.ts`.
+Typed pub/sub for panels to communicate without direct coupling. Factory + Svelte context pattern in `$lib/components/desk/desk-bus.svelte.ts`.
 
 Current channels:
 
@@ -126,7 +126,7 @@ Virtual root nodes (`blog/`, `assets/`, `images/`, `data/`) are created by the a
 ### File Structure
 
 ```
-$lib/components/composites/dock/
+$lib/components/desk/
   DockLayout.svelte                 # Root: tree render, focus followers, mobile branch (mobileChrome prop)
   DockNode.svelte / DockLeaf.svelte # Recursive split render / leaf with tab bar + kebab
   DockTabBar.svelte, DockLeafMenu.svelte, DockResizeHandle.svelte, DockDropOverlay.svelte
@@ -136,7 +136,7 @@ $lib/components/composites/dock/
   DockMobileControls.svelte         # Mobile: bottom-right pill (commands | panels+count)
   DockMobilePanelsDrawer.svelte     # Mobile: left drawer — panel types + open instances
   DockMobileCommandsSheet.svelte    # Mobile: bottom sheet rendering composePanelMenus()
-  DockMobileBar.svelte              # Legacy bottom bar (mobileChrome="bar", workbench showcase)
+  DockMobileBar.svelte              # Legacy bottom bar (mobileChrome="bar", dock showcase)
   dock.state.svelte.ts              # Split-tree state, total focus derivation, focusSeq
   dock.operations.ts                # Pure tree math (split/remove/move) — purity-tested
   dock.persistence.ts               # localStorage lane for DockLayoutState
@@ -172,5 +172,5 @@ $lib/components/explorer/
     blog-assets.ts                  # AssetListItem → ExplorerNode
     desk-files.ts                   # FileListItem + FolderListItem → ExplorerNode
 
-$lib/config/desk-panels.ts         # Panel type -> component registry
+$lib/3d/desk-panels.ts         # Panel type -> component registry
 ```

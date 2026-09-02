@@ -1,13 +1,13 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
-import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/config';
-import { checkDocumentLimit } from '$lib/server/db/rag/limits';
-import { RetrievalError } from '$lib/server/rawrag/errors';
-import { ingest } from '$lib/server/rawrag/ingest';
+import { checkDocumentLimit } from '$lib/server/db/retrieval/limits';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiValidationError } from '$lib/server/http/response';
+import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/retrieval/config';
+import { RetrievalError } from '$lib/server/retrieval/errors';
+import { ingest } from '$lib/server/retrieval/ingest';
 import type { IngestEvent } from '$lib/types/ingest-pipeline';
 import type { RequestHandler } from './$types';
 

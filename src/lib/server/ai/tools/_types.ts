@@ -9,6 +9,7 @@
  */
 
 export type { DeskToolMeta, DeskToolScope, ToolDescriptor, ToolMeta, ToolRisk } from '$lib/types/ai-tools';
+export { DESK_TOOL_SCOPES } from '$lib/types/ai-tools';
 
 /** Client-side effect instruction dispatched via writeData() during tool execution. */
 export type DeskEffect =

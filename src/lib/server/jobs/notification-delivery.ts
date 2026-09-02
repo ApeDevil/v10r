@@ -1,17 +1,19 @@
 /**
  * Notification delivery worker — drains the outbox queue.
  *
- * Claims a batch atomically, sends each through its provider, and reports every
+ * Claims a batch atomically, sends each through its channel, and reports every
  * outcome back under the claim's fence token. Also reclaims leases abandoned by a
  * crashed worker. See docs/blueprint/architecture/workers.md.
  */
 
 import { and, eq, inArray } from 'drizzle-orm';
-import { DELIVERY_BATCH_SIZE } from '$lib/server/config';
 import { db } from '$lib/server/db';
-import { userPreferences } from '$lib/server/db/schema/app/user-preferences';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
+import { getChannel } from '$lib/server/notifications/channels';
+import type { DeliveryPayload } from '$lib/server/notifications/channels/types';
+import { DELIVERY_BATCH_SIZE } from '$lib/server/notifications/config';
 import {
 	type ClaimedDelivery,
 	claimDeliveries,
@@ -19,8 +21,6 @@ import {
 	markSent,
 	reclaimStaleDeliveries,
 } from '$lib/server/notifications/outbox';
-import { getProvider } from '$lib/server/notifications/providers';
-import type { DeliveryPayload } from '$lib/server/notifications/providers/types';
 import { renderNotification } from '$lib/server/notifications/render-message';
 
 /** Resolve the recipient address for a given channel + user */
@@ -68,7 +68,7 @@ async function resolveLocales(userIds: string[]): Promise<Map<string, string>> {
 	return new Map(rows.map((r) => [r.userId, r.locale ?? 'en']));
 }
 
-/** Deactivate a channel account the provider told us we can no longer reach. */
+/** Deactivate a channel account the external service told us we can no longer reach. */
 async function deactivateAccount(channel: string, userId: string): Promise<void> {
 	if (channel === 'telegram') {
 		await db
@@ -98,7 +98,7 @@ export async function notificationDelivery(): Promise<number> {
 	// stacking overlapping drains when a batch outlives the 15s scheduler tick
 	// (delivery-scheduler.ts and scheduler.ts both call this in the same process on
 	// persistent platforms). Each stacked run would claim another batch and hold
-	// another set of open provider sockets; dropping the tick is the right
+	// another set of open channel sockets; dropping the tick is the right
 	// backpressure. On Vercel each invocation is a fresh module instance, so this is
 	// a no-op there — which is fine, because there the claim is all that matters.
 	if (draining) return 0;
@@ -119,9 +119,9 @@ export async function notificationDelivery(): Promise<number> {
 
 /** Send one claimed delivery and report its outcome. Throws only on a bug. */
 async function deliverOne(claim: ClaimedDelivery, locale: string): Promise<void> {
-	const provider = getProvider(claim.channel);
-	if (!provider) {
-		await markFailed(claim, 'NO_PROVIDER', `No provider for channel: ${claim.channel}`, false);
+	const channel = getChannel(claim.channel);
+	if (!channel) {
+		await markFailed(claim, 'NO_CHANNEL', `No delivery channel registered: ${claim.channel}`, false);
 		return;
 	}
 
@@ -136,7 +136,7 @@ async function deliverOne(claim: ClaimedDelivery, locale: string): Promise<void>
 	// budget). The subject still renders from the message key either way.
 	const payload: DeliveryPayload = { to: recipient, subject: rendered, body: claim.bodyOverride ?? rendered };
 
-	const result = await provider.send(payload);
+	const result = await channel.send(payload);
 
 	if (result.success) {
 		await markSent(claim, result.providerMessageId);
@@ -170,7 +170,7 @@ async function processDeliveryBatch(): Promise<number> {
 		} catch (err) {
 			// A throw here would otherwise abort the loop and strand every remaining
 			// CLAIMED row in 'processing' until the reaper. renderNotification calls a
-			// Paraglide fn with arbitrary params, and the email/push providers can throw.
+			// Paraglide fn with arbitrary params, and the email/push channels can throw.
 			const message = err instanceof Error ? err.message : String(err);
 			console.error(`[notification-delivery] ${claim.id} (${claim.channel}):`, message);
 			await markFailed(claim, 'WORKER_ERROR', message, true);

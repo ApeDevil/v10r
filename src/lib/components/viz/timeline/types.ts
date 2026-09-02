@@ -1,7 +1,7 @@
 /**
  * Generic, domain-agnostic waterfall (Gantt-style timeline) contract.
  *
- * This module MUST NOT import from `$lib/types/pipeline` (or any domain type) — it is a
+ * This module MUST NOT import from `$lib/types/retrieval-trace` (or any domain type) — it is a
  * reusable viz primitive. Route adapters map their domain rows → `WaterfallRow[]`.
  */
 

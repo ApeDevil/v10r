@@ -5,7 +5,7 @@ import { Alert, Card, FormField } from '$lib/components/composites';
 import { Stack } from '$lib/components/layout';
 import { Button, Checkbox, Input, Spinner, Textarea } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
-import { feedbackSchema } from '$lib/schemas/showcase/advanced';
+import { feedbackFormSchema } from '$lib/schemas/showcase/advanced';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -19,7 +19,7 @@ const {
 	delayed,
 	message: formMessage,
 } = superForm(data.form, {
-	validators: valibotClient(feedbackSchema),
+	validators: valibotClient(feedbackFormSchema),
 	resetForm: true,
 });
 

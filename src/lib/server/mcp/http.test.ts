@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { isAllowedOrigin, mcpMethodNotAllowed, protocolVersionHeaderOk, respondToMcpPost } from './http';
+import { isAllowedOrigin, mcpMethodNotAllowed, protocolVersionHeaderOk, respondToMcpPost } from './http.adapter';
 import { type McpCallObserver, noopMcpObserver, type ToolRegistry } from './types';
 
 const registry: ToolRegistry = {

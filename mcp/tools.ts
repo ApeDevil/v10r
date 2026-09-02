@@ -3,8 +3,8 @@
  * only — no outputSchema/title/annotations, which trigger a Claude Code bug that silently drops
  * the whole server's tool list) and their handlers over the pattern registry.
  */
-import type { PatternRecord, Registry, RegRef } from './registry.ts';
-import { buildById, topoSort } from './registry.ts';
+import type { PatternRecord, Registry, RegRef } from '../pattern-library/schema.ts';
+import { buildById, topoSort } from '../pattern-library/schema.ts';
 import { DEFAULT_LINES, MAX_LINES, readExcerpt } from './security.ts';
 import { validateSnippetStdio } from './snippet.ts';
 
@@ -202,7 +202,7 @@ const LIST_EVERYTHING: NextAction = {
 	why: 'lists every pattern in the library.',
 };
 
-export function tokenize(input: string): string[] {
+export function tokenizePatternQuery(input: string): string[] {
 	return input
 		.toLowerCase()
 		.split(/[^a-z0-9]+/)
@@ -226,7 +226,7 @@ const FIELD_WEIGHTS: Array<[string, number, (p: PatternRecord) => string[]]> = [
 ];
 
 export function scorePatterns(query: string, patterns: PatternRecord[]): Scored[] {
-	const queryTokens = tokenize(query);
+	const queryTokens = tokenizePatternQuery(query);
 	const fullQuery = query.trim().toLowerCase();
 	const results: Scored[] = [];
 	for (const pattern of patterns) {
@@ -234,7 +234,7 @@ export function scorePatterns(query: string, patterns: PatternRecord[]): Scored[
 		const matchedTerms = new Set<string>();
 		const matchedFields = new Set<string>();
 		for (const [field, weight, getter] of FIELD_WEIGHTS) {
-			const fieldTokens = getter(pattern).flatMap(tokenize);
+			const fieldTokens = getter(pattern).flatMap(tokenizePatternQuery);
 			for (const token of queryTokens) {
 				if (fieldTokens.includes(token)) {
 					score += weight;

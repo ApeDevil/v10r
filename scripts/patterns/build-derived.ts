@@ -1,6 +1,6 @@
 /**
  * Build (or verify) the pattern library's generated markdown surfaces from
- * `mcp/patterns.registry.json`:
+ * `pattern-library/registry.json`:
  *
  *   - the README.md Pattern Index region (between the PATTERN-INDEX markers)
  *   - one docs page per pattern under docs/pattern-library/<id>.md (the
@@ -20,7 +20,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { isBlocked, parseFrontmatter } from '../../src/lib/server/docs/doc-filter.ts';
-import { REGISTRY } from '../../src/lib/server/mcp/patterns/data.ts';
+import { REGISTRY } from '../../src/lib/server/patterns/registry.ts';
 import {
 	PATTERN_PAGES_DIR,
 	README_MARKER_END,

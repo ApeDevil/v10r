@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Runtime layers & request flow (7-layer view)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Documents v10r's seven-layer abstraction hierarchy, from tech stack down to code
 
 ---
 
-_Machine-readable record: `architecture-runtime-layers` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-runtime-layers` in `pattern-library/registry.json`._

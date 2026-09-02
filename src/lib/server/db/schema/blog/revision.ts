@@ -4,13 +4,13 @@
  * time. `search_vector` is an app-populated (NOT generated) tsvector written on
  * insert in `createRevision()` with a per-locale `regconfig` — Neon rejects the
  * non-immutable multi-field/per-locale expression in a generated column (42P17),
- * so it mirrors `rag.llmwiki_page`. The GIN index below makes `@@` queries fast.
+ * so it mirrors `retrieval.llmwiki_page`. The GIN index below makes `@@` queries fast.
  */
 
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
-import { tsvector } from '../rag/_custom-types';
+import { tsvector } from '../retrieval/_custom-types';
 import { post } from './post';
 import { blogSchema } from './schema';
 

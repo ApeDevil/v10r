@@ -1,5 +1,5 @@
 /**
- * Performance-observatory queries — real-user telemetry, read with the dev lane
+ * Performance-observatory queries — real-user telemetry, read with the dev origin
  * separated out rather than silently mixed in.
  *
  * Every query here reports the size of what it excluded. That is not decoration:
@@ -10,20 +10,20 @@
 
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { DEV_SCOPE_PATTERN, PROD_SCOPE_MARKER, type TelemetryLane } from '$lib/server/db/analytics/lanes';
+import { DEV_SCOPE_PATTERN, PROD_SCOPE_MARKER, type TelemetryOrigin } from '$lib/server/db/analytics/telemetry-origin';
 import { rowsOf } from '$lib/server/db/rows';
 
 /** Numeric-value guard — `metadata->>'value'` is untyped JSON text. */
 const NUMERIC = '^[0-9]+(\\.[0-9]+)?$';
 
 /**
- * Per-session lane verdict, derived from Svelte scope classes in the attribution
- * targets. Mirrors `classifyLane()` exactly, including dev-wins-over-prod; the
+ * Per-session origin verdict, derived from Svelte scope classes in the attribution
+ * targets. Mirrors `classifyOrigin()` exactly, including dev-wins-over-prod; the
  * shared pattern constants are what keep the two implementations honest.
  */
 function lanesCte(cutoff: Date) {
 	return sql`
-		lanes AS (
+		origins AS (
 			SELECT session_id,
 			       bool_or(metadata->>'target' ~ ${DEV_SCOPE_PATTERN}) AS has_dev,
 			       bool_or(position(${PROD_SCOPE_MARKER} in metadata->>'target') > 0) AS has_prod
@@ -35,7 +35,7 @@ function lanesCte(cutoff: Date) {
 		)`;
 }
 
-const LANE_EXPR = sql`
+const ORIGIN_EXPR = sql`
 	CASE WHEN COALESCE(l.has_dev, false) THEN 'dev'
 	     WHEN COALESCE(l.has_prod, false) THEN 'prod'
 	     ELSE 'unknown' END`;
@@ -44,29 +44,29 @@ function cutoffFor(days: number): Date {
 	return new Date(Date.now() - days * 86400000);
 }
 
-export interface VitalLaneSummary {
+export interface VitalOriginSummary {
 	metric: string;
-	/** p75 over the PROD lane only. Null when the prod lane has no samples. */
+	/** p75 over the PROD origin only. Null when the prod origin has no samples. */
 	p75: number | null;
-	/** Prod-lane sample count — the denominator behind `p75`. */
+	/** Prod-origin sample count — the denominator behind `p75`. */
 	samples: number;
 	/** Excluded as dev-server traffic. Non-zero here means the source gate regressed. */
 	devSamples: number;
 	/** Carried no scope class, so unclassifiable. Excluded, not assumed prod. */
 	unknownSamples: number;
-	/** Element most often blamed, prod lane only. */
+	/** Element most often blamed, prod origin only. */
 	worstTarget: string | null;
 }
 
 /**
- * Web Vitals at p75, split by lane.
+ * Web Vitals at p75, split by origin.
  *
  * p75 rather than the mean because that is how Google scores Core Web Vitals, and
  * because a mean hides the long tail users actually notice. `worstTarget` comes
  * from the attribution build and is what turns "INP is 400ms" into "this button
  * is 400ms" — the difference between a number and something actionable.
  */
-export async function getVitalsByLane(days: number): Promise<VitalLaneSummary[]> {
+export async function getVitalsByLane(days: number): Promise<VitalOriginSummary[]> {
 	const cutoff = cutoffFor(days);
 
 	const rows = await db.execute(sql`
@@ -75,9 +75,9 @@ export async function getVitalsByLane(days: number): Promise<VitalLaneSummary[]>
 			SELECT e.metadata->>'metric' AS metric,
 			       (e.metadata->>'value')::numeric AS value,
 			       e.metadata->>'target' AS target,
-			       ${LANE_EXPR} AS lane
+			       ${ORIGIN_EXPR} AS origin
 			FROM analytics.events e
-			LEFT JOIN lanes l ON l.session_id = e.session_id
+			LEFT JOIN origins l ON l.session_id = e.session_id
 			WHERE e.event_type = 'timing'
 			  AND e.timestamp >= ${cutoff}
 			  AND e.debug_owner_id IS NULL
@@ -87,16 +87,16 @@ export async function getVitalsByLane(days: number): Promise<VitalLaneSummary[]>
 		blame AS (
 			SELECT DISTINCT ON (metric) metric, target
 			FROM samples
-			WHERE lane = 'prod' AND target IS NOT NULL
+			WHERE origin = 'prod' AND target IS NOT NULL
 			GROUP BY metric, target
 			ORDER BY metric, count(*) DESC
 		)
 		SELECT
 			s.metric,
-			percentile_cont(0.75) WITHIN GROUP (ORDER BY s.value) FILTER (WHERE s.lane = 'prod') AS p75,
-			count(*) FILTER (WHERE s.lane = 'prod')::int AS samples,
-			count(*) FILTER (WHERE s.lane = 'dev')::int AS dev_samples,
-			count(*) FILTER (WHERE s.lane = 'unknown')::int AS unknown_samples,
+			percentile_cont(0.75) WITHIN GROUP (ORDER BY s.value) FILTER (WHERE s.origin = 'prod') AS p75,
+			count(*) FILTER (WHERE s.origin = 'prod')::int AS samples,
+			count(*) FILTER (WHERE s.origin = 'dev')::int AS dev_samples,
+			count(*) FILTER (WHERE s.origin = 'unknown')::int AS unknown_samples,
 			(SELECT b.target FROM blame b WHERE b.metric = s.metric) AS worst_target
 		FROM samples s
 		GROUP BY s.metric
@@ -128,7 +128,7 @@ export interface VitalTrendPoint {
 }
 
 /**
- * Daily p75 per metric, prod lane only — a single number cannot show a
+ * Daily p75 per metric, prod origin only — a single number cannot show a
  * regression, and a regression you cannot see is one you ship.
  *
  * Days with no prod samples are absent rather than zero-filled: a zero would
@@ -145,7 +145,7 @@ export async function getVitalsTrend(days: number): Promise<VitalTrendPoint[]> {
 			percentile_cont(0.75) WITHIN GROUP (ORDER BY (e.metadata->>'value')::numeric) AS p75,
 			count(*)::int AS samples
 		FROM analytics.events e
-		LEFT JOIN lanes l ON l.session_id = e.session_id
+		LEFT JOIN origins l ON l.session_id = e.session_id
 		WHERE e.event_type = 'timing'
 		  AND e.timestamp >= ${cutoff}
 		  AND e.debug_owner_id IS NULL
@@ -215,7 +215,7 @@ export async function getIdleGapProfile(days: number): Promise<IdleGapRow[]> {
 			SELECT e.session_id, s.started_at, (e.metadata->>'value')::numeric AS value
 			FROM analytics.events e
 			JOIN analytics.sessions s ON s.id = e.session_id
-			LEFT JOIN lanes l ON l.session_id = e.session_id
+			LEFT JOIN origins l ON l.session_id = e.session_id
 			WHERE e.event_type = 'timing'
 			  AND e.metadata->>'metric' = 'TTFB'
 			  AND e.metadata->>'value' ~ ${NUMERIC}
@@ -274,11 +274,11 @@ export interface RouteHotPath {
 /**
  * Server-rendered pageviews per route, beside crawler hits on the same route.
  *
- * Deliberately counts the SERVER-HOOK lane only, which is what `event_type =
+ * Deliberately counts the SERVER-HOOK path only, which is what `event_type =
  * 'pageview'` with a non-null route resolves to. Client-side SPA navigations
  * never reach the origin, so including them would inflate routes that are cheap
  * to serve and hide the ones paying for a full render. For a performance panel
- * the hook lane is the correct lane, not a limitation of it.
+ * the hook path is the correct one, not a limitation.
  *
  * The bot column is not a footnote. Crawlers run ~50x human volume here, so a
  * route's real render cost is dominated by them, and any capacity decision made
@@ -317,30 +317,30 @@ export async function getRouteHotPaths(days: number, limit = 15): Promise<RouteH
 	}));
 }
 
-export interface LaneCensus {
-	lane: TelemetryLane;
+export interface OriginCensus {
+	origin: TelemetryOrigin;
 	samples: number;
 	sessions: number;
 }
 
 /**
- * How the telemetry corpus splits across lanes.
+ * How the telemetry corpus splits across origins.
  *
  * This is the observatory's self-check. Every other panel filters to the prod
- * lane; this one shows what that filter removed, so a source-side regression
+ * origin; this one shows what that filter removed, so a source-side regression
  * (dev telemetry reaching production again) surfaces as a number going up rather
  * than as percentiles quietly drifting down.
  */
-export async function getLaneCensus(days: number): Promise<LaneCensus[]> {
+export async function getOriginCensus(days: number): Promise<OriginCensus[]> {
 	const cutoff = cutoffFor(days);
 
 	const rows = await db.execute(sql`
 		WITH ${lanesCte(cutoff)}
-		SELECT ${LANE_EXPR} AS lane,
+		SELECT ${ORIGIN_EXPR} AS origin,
 		       count(*)::int AS samples,
 		       count(DISTINCT e.session_id)::int AS sessions
 		FROM analytics.events e
-		LEFT JOIN lanes l ON l.session_id = e.session_id
+		LEFT JOIN origins l ON l.session_id = e.session_id
 		WHERE e.event_type = 'timing'
 		  AND e.timestamp >= ${cutoff}
 		  AND e.debug_owner_id IS NULL
@@ -348,8 +348,8 @@ export async function getLaneCensus(days: number): Promise<LaneCensus[]> {
 		ORDER BY 2 DESC
 	`);
 
-	return rowsOf<{ lane: TelemetryLane; samples: number; sessions: number }>(rows).map((r) => ({
-		lane: r.lane,
+	return rowsOf<{ origin: TelemetryOrigin; samples: number; sessions: number }>(rows).map((r) => ({
+		origin: r.origin,
 		samples: Number(r.samples),
 		sessions: Number(r.sessions),
 	}));

@@ -6,7 +6,7 @@ category: "Jobs & Scheduling"
 
 # Jobs & scheduling (registry, runner, platform-owned cadence)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** Jobs & Scheduling · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — touches deploy config and background execution
 
@@ -52,4 +52,4 @@ A slug→execute job registry with a unified runner; cadence lives entirely in p
 
 ---
 
-_Machine-readable record: `jobs-scheduler` in `mcp/patterns.registry.json`._
+_Machine-readable record: `jobs-scheduler` in `pattern-library/registry.json`._

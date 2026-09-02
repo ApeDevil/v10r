@@ -10,7 +10,7 @@
  */
 import { json } from '@sveltejs/kit';
 import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { type BearerCheck, verifyAdminMcpBearer } from '$lib/server/mcp/auth';
 import {
 	ADMIN_MCP_ACTOR,
@@ -18,7 +18,7 @@ import {
 	ADMIN_STATE_TOOLS,
 	createAdminStateRegistry,
 } from '$lib/server/mcp/demo/tools';
-import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http';
+import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http.adapter';
 import { buildInfo } from '$lib/server/mcp/server-info';
 import { createMcpObserver, recordMcpGateRejection } from '$lib/server/mcp/telemetry/observer';
 import type { McpServerIdentity } from '$lib/server/mcp/transport';

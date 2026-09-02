@@ -1,10 +1,10 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { createPostFolder, listPostFolders } from '$lib/server/blog/post-folders';
 import { FolderNameConflictError } from '$lib/server/db/shared/folder-tree';
+import { guardApiBlogAuthor } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:post-folders', 10, '1 m');

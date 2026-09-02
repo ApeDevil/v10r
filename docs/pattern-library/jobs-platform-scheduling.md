@@ -6,7 +6,7 @@ category: "Jobs & Scheduling"
 
 # Platform scheduling (Vercel cron vs container `setInterval`)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -33,4 +33,4 @@ Cadence is owned entirely by platform config — vercel.json crons hitting /api/
 
 ---
 
-_Machine-readable record: `jobs-platform-scheduling` in `mcp/patterns.registry.json`._
+_Machine-readable record: `jobs-platform-scheduling` in `pattern-library/registry.json`._

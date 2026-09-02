@@ -3,7 +3,7 @@
  *
  * Two measurement contexts live here and are deliberately not merged:
  *
- *   field — real-user telemetry (`observatory.ts`), read with the dev lane
+ *   field — real-user telemetry (`observatory.ts`), read with the dev origin
  *           filtered out and the size of that exclusion reported
  *   lab   — build-time measurements (`snapshot.ts`), committed and gate-asserted
  *
@@ -32,13 +32,13 @@ export {
 	type FieldVital,
 	getFieldVitals,
 	getIdleGapProfile,
-	getLaneHealth,
+	getOriginHealth,
 	getRouteHotPaths,
 	getVitalsTrend,
 	type IdleGapRow,
 	idleGapIsReadable,
-	type LaneCensus,
-	type LaneHealth,
+	type OriginCensus,
+	type OriginHealth,
 	type RouteHotPath,
 	type VitalTrendPoint,
 } from './observatory';

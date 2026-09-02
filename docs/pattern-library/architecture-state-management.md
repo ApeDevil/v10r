@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # State management (Svelte 5 runes)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -27,8 +27,8 @@ Establishes v10r's rune-based state strategy — $state/$derived for component s
 ## Tests
 
 - `src/lib/state/layer-stack.svelte.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/layer-stack.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/layer-stack.svelte.test.ts))
-- `src/lib/state/run-monitor.svelte.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/run-monitor.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/run-monitor.svelte.test.ts))
+- `src/lib/state/branch-operation-monitor.svelte.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/branch-operation-monitor.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/branch-operation-monitor.svelte.test.ts))
 
 ---
 
-_Machine-readable record: `architecture-state-management` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-state-management` in `pattern-library/registry.json`._

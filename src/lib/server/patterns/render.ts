@@ -7,11 +7,11 @@
  *
  * Vite-free leaf (no `$lib`, no `$env`, no `import.meta`): the Bun build script
  * (`scripts/patterns/build-derived.ts`) imports this by relative path, the same
- * contract `doc-filter.ts` and `rawrag/plan.ts` follow. All I/O — reading the
+ * contract `doc-filter.ts` and `retrieval/plan.ts` follow. All I/O — reading the
  * registry, checking doc publication, writing files — belongs to the script;
  * `RenderOpts.isPublishedDoc` injects the one predicate the renderers need.
  */
-import type { PatternRecord, Registry, RegRef } from '../mcp/patterns/data';
+import type { PatternRecord, Registry, RegRef } from './registry';
 
 export interface RenderOpts {
 	/** True when a repo-relative docs path is published (not blocked, not draft). */
@@ -21,16 +21,16 @@ export interface RenderOpts {
 /**
  * Where the generated per-pattern pages live, repo-relative. The directory IS
  * the `pattern-library` docs section: pages surface at /docs/pattern-library/<id>
- * (flat slug = registry id) and flow into /llms.txt and RAG ingest automatically.
+ * (flat slug = registry id) and flow into /llms.txt and retrieval ingest automatically.
  */
 export const PATTERN_PAGES_DIR = 'docs/pattern-library';
 
 export const README_MARKER_START =
-	'<!-- PATTERN-INDEX:START — generated from mcp/patterns.registry.json by scripts/patterns/build-derived.ts; do not edit (bun run patterns:build) -->';
+	'<!-- PATTERN-INDEX:START — generated from pattern-library/registry.json by scripts/patterns/build-derived.ts; do not edit (bun run patterns:build) -->';
 export const README_MARKER_END = '<!-- PATTERN-INDEX:END -->';
 
 const GENERATED_NOTE =
-	'> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.';
+	'> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.';
 
 /** GitHub's heading→anchor algorithm, for the TOC links ("A & B" → "a--b"). */
 export function anchorFor(title: string): string {
@@ -281,7 +281,13 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 		});
 		sections.push('', '## Depends on', '', deps.join('\n'));
 	}
-	sections.push('', '---', '', `_Machine-readable record: \`${pattern.id}\` in \`mcp/patterns.registry.json\`._`, '');
+	sections.push(
+		'',
+		'---',
+		'',
+		`_Machine-readable record: \`${pattern.id}\` in \`pattern-library/registry.json\`._`,
+		'',
+	);
 	return sections.join('\n');
 }
 

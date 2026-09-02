@@ -13,7 +13,7 @@ The project's image strategy: server-side processing for user uploads via Sharp,
 
 The upload path produces a **single** sanitised WebP derivative. Sharp re-encodes the original, bakes in EXIF orientation, strips all metadata, and resizes to one max-dimension cap:
 
-- Resize: `fit: 'inside'`, max `IMAGE_MAX_DIMENSION` (1024px), `withoutEnlargement: true`
+- Resize: `fit: 'inside'`, max `MAX_DIMENSION` (1024px), `withoutEnlargement: true`
 - Encode: WebP at `quality: 82`
 
 There are no named thumbnail/medium/large presets — one derivative per upload.

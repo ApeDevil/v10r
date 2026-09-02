@@ -28,7 +28,7 @@ vi.mock('$lib/server/cache', () => ({
 
 const { encodeEvent, enqueueLocal, notifyUser, registerStream, subscribeUser, unregisterStream, usesPubSub } =
 	await import('./stream');
-const { SSE_MAX_PER_USER } = await import('$lib/server/config');
+const { SSE_MAX_PER_USER } = await import('./config');
 
 /** Minimal stand-in for a ReadableStream controller. */
 function fakeController() {

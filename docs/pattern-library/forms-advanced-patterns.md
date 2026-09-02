@@ -6,7 +6,7 @@ category: "Forms & Validation"
 
 # Advanced (confirm · reset · edit)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ Confirmation-modal submit, reset-after-submit, and edit-with-existing-data patte
 
 ---
 
-_Machine-readable record: `forms-advanced-patterns` in `mcp/patterns.registry.json`._
+_Machine-readable record: `forms-advanced-patterns` in `pattern-library/registry.json`._

@@ -1,15 +1,15 @@
 <script lang="ts">
 import { replaceState } from '$app/navigation';
 import { page } from '$app/state';
-import { ChatPanel } from '$lib/components/chat';
-import type { LayoutNode } from '$lib/components/composites/dock';
-import { DockLayout } from '$lib/components/composites/dock';
-import { AuthorGate, EditorPanel } from '$lib/components/editor';
-import { ExplorerPanel } from '$lib/components/explorer';
-import IOLogPanel from '$lib/components/io-log/IOLogPanel.svelte';
-import { PreviewPanel } from '$lib/components/preview';
-import { SpreadsheetPanel } from '$lib/components/spreadsheet';
-import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/config/desk-panels';
+import type { LayoutNode } from '$lib/components/desk';
+import { DockLayout } from '$lib/components/desk';
+import { ChatPanel } from '$lib/components/desk/panels/bot';
+import { AuthorGate, EditorPanel } from '$lib/components/desk/panels/editor';
+import { ExplorerPanel } from '$lib/components/desk/panels/explorer';
+import IOLogPanel from '$lib/components/desk/panels/io-log/IOLogPanel.svelte';
+import { PreviewPanel } from '$lib/components/desk/panels/preview';
+import { SpreadsheetPanel } from '$lib/components/desk/panels/spreadsheet';
+import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/desk/panels';
 import { getToast } from '$lib/state/toast.svelte';
 
 const toast = getToast();

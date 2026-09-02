@@ -6,7 +6,7 @@ category: "Forms & Validation"
 
 # Multi-step & dynamic (wizard · dynamic · dependent)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ Wizard (per-step schema validation), dynamic array fields, and dependent/cascadi
 
 ---
 
-_Machine-readable record: `forms-multi-step-dynamic` in `mcp/patterns.registry.json`._
+_Machine-readable record: `forms-multi-step-dynamic` in `pattern-library/registry.json`._

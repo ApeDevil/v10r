@@ -6,7 +6,7 @@ category: "Notifications"
 
 # Channel providers (email · Telegram · Discord)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -23,7 +23,7 @@ Email (Resend), Telegram (bot API), and Discord (OAuth2) each implement a common
 
 ## Code
 
-- `src/lib/server/notifications/providers/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/notifications/providers) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/notifications/providers))
+- `src/lib/server/notifications/channels/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/notifications/channels) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/notifications/channels))
 
 ## Proof
 
@@ -31,4 +31,4 @@ Email (Resend), Telegram (bot API), and Discord (OAuth2) each implement a common
 
 ---
 
-_Machine-readable record: `notifications-channels` in `mcp/patterns.registry.json`._
+_Machine-readable record: `notifications-channels` in `pattern-library/registry.json`._

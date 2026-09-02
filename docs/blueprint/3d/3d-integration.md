@@ -8,7 +8,7 @@ How v10r wires Threlte into SvelteKit. For Three.js / Threlte basics (scene grap
 - [Route Structure](#route-structure) - Where 3D pages live
 - [Rendering Strategy](#rendering-strategy) - SSR/prerender off at the layout
 - [Scene Pattern](#scene-pattern) - Canvas + T + useTask in this app
-- [Model Config Registry](#model-config-registry) - `$lib/config/models.ts`
+- [Model Config Registry](#model-config-registry) - `$lib/3d/models.ts`
 - [Components](#components) - `$lib/components/3d/`
 - [Part Explorer](#part-explorer) - opt-in click-to-inspect (sofa)
 - [Asset Pipeline](#asset-pipeline) - GLB assets in `static/models/`
@@ -110,11 +110,11 @@ useTask((delta) => mixer?.update(delta));
 
 ## Model Config Registry
 
-Camera, lights, controls, and render behavior for each model live in **`$lib/config/models.ts`** as a static registry (`Model3D`, `CameraPreset`, `OrbitControlsConfig`, `RenderMode`). Viewer components (`ViewerScene`, `SceneCard`) consume the resolved config; pages pass it in.
+Camera, lights, controls, and render behavior for each model live in **`$lib/3d/models.ts`** as a static registry (`Model3D`, `CameraPreset`, `OrbitControlsConfig`, `RenderMode`). Viewer components (`ViewerScene`, `SceneCard`) consume the resolved config; pages pass it in.
 
 **Scene snippets are NOT referenced from the config.** Pages map a model ID to its scene component at the route level. This avoids a circular dependency and preserves per-route code-splitting (a model's Three.js scene only loads on its own route).
 
-Customizer config (materials, parts, morph targets, presets) lives alongside in `$lib/config/customization.ts`. The click-to-inspect part-explorer registry lives in `$lib/config/parts.ts` — see [Part Explorer](#part-explorer).
+Customizer config (materials, parts, morph targets, presets) lives alongside in `$lib/3d/customization.ts`. The click-to-inspect part-explorer registry lives in `$lib/3d/parts.ts` — see [Part Explorer](#part-explorer).
 
 ## Components
 
@@ -138,7 +138,7 @@ Opt-in click-to-inspect for a model's logical parts (the Glam Velvet Sofa is the
 
 **Opt-in and gated.** Interactivity turns on only when a part registry exists for the model. `ViewerScene` enables `interactivity()` + `CameraControls` (with `fitToBox` fly-to) when `parts?.length`; otherwise it renders the byte-identical `OrbitControls` path with no picking and no parts UI. Every model except the sofa is unchanged. Add a model by adding a `PART_EXPLORERS_BY_MODEL` entry in `parts.ts` — no component edits.
 
-**Registry — `$lib/config/parts.ts`.** Pure, WebGL-free single source of truth. A `PartDef` maps a stable logical id (used for selection state and the `?part=` link) to one or more GLTF mesh-name patterns, a label, a description, example `photos` (src/alt/caption/credit — assets under `static/images/parts/`, licenses in `static/images/parts/ATTRIBUTION.md`), and an optional `customizeHint`. Never key logic on raw artist mesh names — they drift across re-exports and split into `_0`/`_1` primitives, so matching is exact-or-`_N`-prefix tolerant. `resolvePartId` (raycast hit → part id) and `collectPartMeshes` are pure and unit-tested in `parts.test.ts`.
+**Registry — `$lib/3d/parts.ts`.** Pure, WebGL-free single source of truth. A `PartDef` maps a stable logical id (used for selection state and the `?part=` link) to one or more GLTF mesh-name patterns, a label, a description, example `photos` (src/alt/caption/credit — assets under `static/images/parts/`, licenses in `static/images/parts/ATTRIBUTION.md`), and an optional `customizeHint`. Never key logic on raw artist mesh names — they drift across re-exports and split into `_0`/`_1` primitives, so matching is exact-or-`_N`-prefix tolerant. `resolvePartId` (raycast hit → part id) and `collectPartMeshes` are pure and unit-tested in `parts.test.ts`.
 
 **Highlight — `PartHighlightLayer.svelte`.** Visual-only, applied imperatively. Hover = subtle emissive tint. Selection = inverted-hull outline in the theme accent plus every other part ghosted to low opacity (`transparent` toggle needs `needsUpdate` — see the `3d` skill); the selected part itself gets NO emissive, because dark materials wash out under tone mapping. The outline color resolves `--color-primary` via `css-color.ts` (tokens are oklch, which `THREE.Color` can't parse — normalize via 1px canvas `getImageData`) and re-resolves live on `<html>` `class`/`data-palette` mutations, so it tracks light/dark and palette scheme changes. The layer clones each material on first run (so it never mutates the shared cached GLB), captures original state, and restores on destroy. It **never disposes** model materials — `useGltf` caches the GLB and the customizer route shares the same materials. Deliberately not `<Outlines>` (it reparents meshes and drops the GLTF's baked transforms) and not postprocessing (no postprocessing dep is installed). Selection wins over hover; imperative material changes call `invalidate()` for on-demand render mode.
 

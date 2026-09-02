@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { publicPatternRegistry } from '../patterns/registry';
+import { publicPatternRegistry } from '../patterns/tools';
 import { renderReport, validateSnippet } from './engine';
 import { MAX_FINDINGS, MAX_SNIPPET_CHARS, RULE_FIXTURES, SNIPPET_RULES } from './rules';
 

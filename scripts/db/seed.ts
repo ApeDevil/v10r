@@ -8,7 +8,6 @@
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from '../../src/lib/server/db/schema';
-import * as relations from '../../src/lib/server/db/schema/relations';
 import { runSeed } from '../../src/lib/server/db/seed';
 
 neonConfig.poolQueryViaFetch = true;
@@ -20,7 +19,7 @@ if (!NEON_DATABASE_URL_PROD) {
 }
 
 const pool = new Pool({ connectionString: NEON_DATABASE_URL_PROD });
-const db = drizzle(pool, { schema: { ...schema, ...relations } });
+const db = drizzle(pool, { schema });
 
 try {
 	await runSeed(db);

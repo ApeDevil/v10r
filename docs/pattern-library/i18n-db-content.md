@@ -6,7 +6,7 @@ category: "Internationalization (i18n)"
 
 # DB content i18n (JSONB sidecar + `tc()`)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -26,4 +26,4 @@ A source-column plus JSONB-sidecar convention (e.g. name / name_i18n) for transl
 
 ---
 
-_Machine-readable record: `i18n-db-content` in `mcp/patterns.registry.json`._
+_Machine-readable record: `i18n-db-content` in `pattern-library/registry.json`._

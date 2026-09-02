@@ -19,11 +19,11 @@ import { comment } from '$lib/server/db/schema/blog/comment';
 import { post } from '$lib/server/db/schema/blog/post';
 import { publishedRevision } from '$lib/server/db/schema/blog/published-revision';
 import { revision } from '$lib/server/db/schema/blog/revision';
-import { chunk } from '$lib/server/db/schema/rag/chunk';
-import { document } from '$lib/server/db/schema/rag/document';
-import { embeddingModel } from '$lib/server/db/schema/rag/embedding-model';
-import { llmwikiPage } from '$lib/server/db/schema/rag/llmwiki-page';
-import { llmwikiPageSource } from '$lib/server/db/schema/rag/llmwiki-page-source';
+import { chunk } from '$lib/server/db/schema/retrieval/chunk';
+import { document } from '$lib/server/db/schema/retrieval/document';
+import { embeddingModel } from '$lib/server/db/schema/retrieval/embedding-model';
+import { llmwikiPage } from '$lib/server/db/schema/retrieval/llmwiki-page';
+import { llmwikiPageSource } from '$lib/server/db/schema/retrieval/llmwiki-page-source';
 
 let testClient: PGlite;
 
@@ -36,9 +36,9 @@ vi.mock('$lib/server/db', async () => {
 
 // The two best-effort sweeps are out of scope here — and left real they attempt a live
 // Neo4j/R2 connection on every case.
-vi.mock('$lib/server/graph/rag/mutations', () => ({ deleteUserGraph: async () => {} }));
+vi.mock('$lib/server/graph/retrieval/mutations', () => ({ deleteUserGraph: async () => {} }));
 vi.mock('$lib/server/store', () => ({ s3: null, BUCKET: '' }));
-vi.mock('$lib/server/store/showcase/image', () => ({ deleteImagemetaObject: async () => {} }));
+vi.mock('$lib/server/store/image', () => ({ deleteImagemetaObject: async () => {} }));
 
 const { db } = await import('$lib/server/db');
 const { deleteUserData, SoleAdminBlockedError } = await import('./mutations');
@@ -162,9 +162,9 @@ describe('deleteUserData — sole configured admin', () => {
 	});
 });
 
-// the probe: RAG-active user, where the cascade trips its own junction
+// the probe: retrieval-active user, where the cascade trips its own junction
 
-describe('deleteUserData — RAG-active user (llmwiki_page_source RESTRICT)', () => {
+describe('deleteUserData — retrieval-active user (llmwiki_page_source RESTRICT)', () => {
 	it('erases a user with a compiled llmwiki page over their own chunks', async () => {
 		await seedUsers([ADMIN_1, ADMIN_2, AUTHOR]);
 		await db.insert(embeddingModel).values({

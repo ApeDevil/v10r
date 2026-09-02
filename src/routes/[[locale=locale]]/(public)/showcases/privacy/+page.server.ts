@@ -1,9 +1,5 @@
 import { env } from '$env/dynamic/private';
-import {
-	ANALYTICS_AGGREGATE_RETENTION_DAYS,
-	ANALYTICS_RETENTION_DAYS,
-	CONSENT_RETENTION_DAYS,
-} from '$lib/server/config';
+import { retentionDays } from '$lib/server/retention';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -11,10 +7,8 @@ export const load: PageServerLoad = async () => {
 		title: 'Privacy & Your Data',
 		controllerEmail: env.PRIVACY_CONTACT_EMAIL ?? 'privacy@example.com',
 		retention: {
-			events: ANALYTICS_RETENTION_DAYS,
-			sessions: ANALYTICS_RETENTION_DAYS,
-			aggregates: ANALYTICS_AGGREGATE_RETENTION_DAYS,
-			consent: CONSENT_RETENTION_DAYS,
+			events: retentionDays('analytics-events'),
+			consent: retentionDays('consent-events'),
 		},
 	};
 };

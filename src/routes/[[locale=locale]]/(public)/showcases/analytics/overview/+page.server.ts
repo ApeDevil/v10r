@@ -1,6 +1,5 @@
 import { fail } from '@sveltejs/kit';
 import { dev } from '$app/environment';
-import { isAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import {
 	getAudienceBreakdown,
@@ -9,6 +8,7 @@ import {
 	getTrafficTrend,
 } from '$lib/server/db/analytics/aggregations';
 import { reseedAnalytics } from '$lib/server/db/analytics/seed';
+import { isAdmin } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {

@@ -1,5 +1,5 @@
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { MAX_BLOG_ASSETS } from '$lib/server/config';
+import { MAX_BLOG_ASSETS } from '../config';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';
 

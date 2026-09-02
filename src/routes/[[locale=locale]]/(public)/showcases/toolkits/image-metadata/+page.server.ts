@@ -13,10 +13,10 @@ import {
 	METADATA_FIELD_KEYS,
 	PROVENANCE_STATES,
 	type ProvenanceState,
-} from '$lib/schemas/showcase/image-metadata';
+} from '$lib/schemas/image-metadata';
 import { getVisionProvider } from '$lib/server/ai';
 import { ImageMetaError, ingestImage, saveImageMetadata } from '$lib/server/imagemeta';
-import { getImagemetaReadUrl } from '$lib/server/store/showcase/image';
+import { getImagemetaReadUrl } from '$lib/server/store/image';
 import type { Actions, PageServerLoad } from './$types';
 
 /**

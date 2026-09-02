@@ -6,7 +6,7 @@ category: "AI"
 
 # Deskbot approval gate (proposal → approve, plan-gated mutation)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** high — the safety boundary for AI mutation
 
@@ -50,4 +50,4 @@ Write/destructive desk tools never mutate inside the agent loop; they return a r
 
 ---
 
-_Machine-readable record: `deskbot-approval-gate` in `mcp/patterns.registry.json`._
+_Machine-readable record: `deskbot-approval-gate` in `pattern-library/registry.json`._

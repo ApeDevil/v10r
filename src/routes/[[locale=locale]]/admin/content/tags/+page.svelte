@@ -19,9 +19,9 @@ import {
 	Table,
 	Textarea,
 } from '$lib/components/primitives';
-import { ICON_OPTIONS } from '$lib/config/icon-options';
 import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
+import { ICON_OPTIONS } from '$lib/styles/icon-options';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

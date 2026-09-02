@@ -3,7 +3,7 @@ import type { Snippet } from 'svelte';
 import { NavTab, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import * as m from '$lib/paraglide/messages';
-import type { ShowcaseCard } from '$lib/showcases/registry';
+import type { ShowcaseCard } from '$lib/showcases/catalog/registry';
 
 interface Props {
 	/** Registry card — the single source for title/description/breadcrumbs/tabs/aria. */

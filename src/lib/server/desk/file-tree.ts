@@ -8,10 +8,11 @@
 
 import { listAssets, listPosts } from '$lib/server/blog/queries';
 import { listFiles, listFolders } from '$lib/server/db/desk/queries';
+import type { DeskFileType } from '$lib/types/db-enums';
 
 export interface FileTreeNode {
 	name: string;
-	kind: 'folder' | 'spreadsheet' | 'markdown' | 'post' | 'image';
+	kind: 'folder' | DeskFileType | 'post' | 'image';
 	id: string;
 	children?: FileTreeNode[];
 	meta?: string;
@@ -100,7 +101,7 @@ function buildDataTree(
 		const fileNode: FileTreeNode = {
 			id: f.id,
 			name: f.name,
-			kind: f.type as 'spreadsheet' | 'markdown',
+			kind: f.type as DeskFileType,
 		};
 		const parent = f.folderId ? folderMap.get(f.folderId) : undefined;
 		if (parent) {

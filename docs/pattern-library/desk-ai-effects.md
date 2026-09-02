@@ -6,7 +6,7 @@ category: "Desk Workspace"
 
 # AI desk effects (tool results drive the workspace)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,12 +22,12 @@ AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify
 
 ## Code
 
-- `src/lib/components/composites/dock/dispatch-desk-effect.ts` — Effect dispatcher over the EffectActions facade; boolean result per effect ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dispatch-desk-effect.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dispatch-desk-effect.ts))
-- `src/lib/components/composites/dock/io-log.svelte.ts` — I/O Log state — where failed effects surface ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/io-log.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/io-log.svelte.ts))
+- `src/lib/components/desk/dispatch-desk-effect.ts` — Effect dispatcher over the EffectActions facade; boolean result per effect ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dispatch-desk-effect.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dispatch-desk-effect.ts))
+- `src/lib/components/desk/io-log.state.svelte.ts` — I/O Log state — where failed effects surface ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/io-log.state.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/io-log.state.svelte.ts))
 
 ## Tests
 
-- `src/lib/components/composites/dock/dispatch-desk-effect.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dispatch-desk-effect.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dispatch-desk-effect.test.ts))
+- `src/lib/components/desk/dispatch-desk-effect.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dispatch-desk-effect.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dispatch-desk-effect.test.ts))
 
 ## Proof
 
@@ -40,4 +40,4 @@ AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify
 
 ---
 
-_Machine-readable record: `desk-ai-effects` in `mcp/patterns.registry.json`._
+_Machine-readable record: `desk-ai-effects` in `pattern-library/registry.json`._

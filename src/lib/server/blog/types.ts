@@ -1,6 +1,7 @@
 import type { InferSelectModel } from 'drizzle-orm';
 import type { TranslationMap } from '$lib/i18n/translate';
 import type { asset, domain, post, revision, tag } from '$lib/server/db/schema/blog';
+import type { PostStatus } from '$lib/types/db-enums';
 
 export type BlogPost = InferSelectModel<typeof post>;
 export type BlogRevision = InferSelectModel<typeof revision>;
@@ -11,7 +12,7 @@ export type BlogDomain = InferSelectModel<typeof domain>;
 export interface PostListItem {
 	id: string;
 	slug: string;
-	status: 'draft' | 'published' | 'archived';
+	status: PostStatus;
 	authorId: string;
 	authorName: string | null;
 	folderId: string | null;
@@ -83,7 +84,7 @@ export interface TocEntry {
 }
 
 export interface ListPostsOptions {
-	status?: 'draft' | 'published' | 'archived';
+	status?: PostStatus;
 	authorId?: string;
 	domainSlug?: string;
 	tagSlug?: string;

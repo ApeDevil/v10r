@@ -1,10 +1,10 @@
 import { fail } from '@sveltejs/kit';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { CACHE_PAGE_SIZE } from '$lib/server/admin/config';
 import { adminDeleteKey, adminFlushByPrefix, adminInvalidateInProcessCaches } from '$lib/server/cache/admin/mutations';
 import { getAllKeys, getCacheOverview, getInProcessCacheStatus, getKeyDetail } from '$lib/server/cache/admin/queries';
-import { ADMIN_CACHE_PAGE_SIZE } from '$lib/server/config';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
+import { safeDeferPromise } from '$lib/server/http/defer';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 const ALLOWED_FLUSH_PREFIXES = ['showcase:', 'ratelimit:'];
@@ -31,12 +31,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		filters: { prefix, page },
 		keys: safeDeferPromise(
 			getAllKeys(prefix || undefined).then((allKeys) => {
-				const start = (page - 1) * ADMIN_CACHE_PAGE_SIZE;
-				const entries = allKeys.slice(start, start + ADMIN_CACHE_PAGE_SIZE);
+				const start = (page - 1) * CACHE_PAGE_SIZE;
+				const entries = allKeys.slice(start, start + CACHE_PAGE_SIZE);
 				return {
 					entries,
 					total: allKeys.length,
-					totalPages: Math.max(1, Math.ceil(allKeys.length / ADMIN_CACHE_PAGE_SIZE)),
+					totalPages: Math.max(1, Math.ceil(allKeys.length / CACHE_PAGE_SIZE)),
 				};
 			}),
 			{ entries: [], total: 0, totalPages: 1 },

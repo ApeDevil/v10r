@@ -203,9 +203,9 @@ The `authHandler` hook rate-limits every `/api/auth/*` request by client IP, the
 
 ```typescript
 // src/hooks.server.ts
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 
-const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
+const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 const authHandler: Handle = async ({ event, resolve }) => {
   const path = event.url.pathname;
@@ -405,13 +405,13 @@ Complete `hooks.server.ts` with all patterns:
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { auth } from '$lib/server/auth';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { ALLOWED_ORIGINS } from '$env/static/private';
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
 import '$lib/server/jobs/scheduler'; // starts in-process scheduler (container only, no-op on Vercel)
 
 const allowedOrigins = new Set(ALLOWED_ORIGINS?.split(',') ?? []);
-const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
+const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 // 1. Rate limiting — per-route Upstash limiter, keyed on the stamped client IP.
 const rateLimitHandle: Handle = async ({ event, resolve }) => {

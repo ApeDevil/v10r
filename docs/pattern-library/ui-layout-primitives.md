@@ -6,7 +6,7 @@ category: "UI Components & Design System"
 
 # Layout primitives (Stack, Cluster, Surface)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ Structural wrapper components (Stack, Cluster, Surface, PageContainer) that prov
 
 ---
 
-_Machine-readable record: `ui-layout-primitives` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ui-layout-primitives` in `pattern-library/registry.json`._

@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { Model3D } from '$lib/config/models';
-import type { PartDef } from '$lib/config/parts';
+import type { Model3D } from '$lib/3d/models';
+import type { PartDef } from '$lib/3d/parts';
 
 interface Props {
 	model: Model3D;

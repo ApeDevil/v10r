@@ -1,9 +1,9 @@
 import { fail } from '@sveltejs/kit';
 import { count, desc, eq, max, sql } from 'drizzle-orm';
 import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
+import { requireAdmin } from '$lib/server/http/guards';
 import { jobs } from '$lib/server/jobs';
 import { runJob } from '$lib/server/jobs/runner';
 import type { Actions, PageServerLoad } from './$types';

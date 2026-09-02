@@ -1,7 +1,7 @@
 import { getActiveProviderInfo } from '$lib/server/ai';
+import { getProviderStatuses } from '$lib/server/ai/provider-status';
 import { buildProviderQuota } from '$lib/server/ai/quota';
-import { getProviderStatuses } from '$lib/server/ai/showcase/queries';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { LayoutServerLoad } from './$types';
 
 /**

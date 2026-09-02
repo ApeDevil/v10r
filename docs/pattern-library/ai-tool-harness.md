@@ -6,7 +6,7 @@ category: "AI"
 
 # AI tool manifest & harness split (tool defs, risk metadata, registry)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** high — governs what an LLM is allowed to execute
 
@@ -51,4 +51,4 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 
 ---
 
-_Machine-readable record: `ai-tool-harness` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-tool-harness` in `pattern-library/registry.json`._

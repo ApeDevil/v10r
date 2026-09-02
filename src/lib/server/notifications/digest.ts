@@ -22,7 +22,7 @@ import {
 	getOrCreateSettings,
 } from '$lib/server/db/notifications/mutations';
 import { getNotificationsSince } from '$lib/server/db/notifications/queries';
-import { userPreferences } from '$lib/server/db/schema/app/user-preferences';
+import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
 import { createDigestDelivery } from './outbox';
 import { DIGEST_BODY_LIMITS, renderDigest } from './render-message';
 import { channelsForSettings } from './router';

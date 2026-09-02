@@ -7,7 +7,7 @@
  */
 import { json } from '@sveltejs/kit';
 import { isImageId } from '$lib/schemas/showcase/image-kit';
-import { buildImagekitKey, deleteImagekitObject } from '$lib/server/store/showcase/imagekit';
+import { buildImagekitKey, deleteImagekitObject } from '$lib/server/showcases/image-kit/storage';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {

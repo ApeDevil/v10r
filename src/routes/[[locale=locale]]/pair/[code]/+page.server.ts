@@ -24,11 +24,12 @@
  */
 import { fail, redirect } from '@sveltejs/kit';
 import { localizeHref } from '$lib/i18n';
-import { getClientIp, ipLimitKey } from '$lib/server/abuse';
+import { ipLimitKey } from '$lib/server/abuse';
+import { SESSION_COOKIE, SESSION_TIMEOUT_MS } from '$lib/server/analytics/config';
 import { deriveCookielessSessionId, hasConsent } from '$lib/server/analytics/consent';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { createLimiter } from '$lib/server/api/rate-limit';
-import { ANALYTICS_SESSION_COOKIE, ANALYTICS_SESSION_TIMEOUT_MS } from '$lib/server/config';
+import { getClientIp } from '$lib/server/http/client-ip';
+import { createLimiter } from '$lib/server/http/rate-limit';
 import { claimPairingCode, PAIRED_SESSION_TTL_MS, setOwnerCookie, signOwnerCookie } from '$lib/server/pairing';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -61,15 +62,15 @@ export const actions: Actions = {
 		// session only at the analytics tier, the derived cookieless id otherwise.
 		let sessionId: string;
 		if (hasConsent(locals.consentTier, 'analytics')) {
-			const existing = cookies.get(ANALYTICS_SESSION_COOKIE);
+			const existing = cookies.get(SESSION_COOKIE);
 			sessionId = existing ?? `s_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
 			if (!existing) {
-				cookies.set(ANALYTICS_SESSION_COOKIE, sessionId, {
+				cookies.set(SESSION_COOKIE, sessionId, {
 					path: '/',
 					httpOnly: true,
 					secure: true,
 					sameSite: 'lax',
-					maxAge: ANALYTICS_SESSION_TIMEOUT_MS / 1000,
+					maxAge: SESSION_TIMEOUT_MS / 1000,
 				});
 			}
 		} else {

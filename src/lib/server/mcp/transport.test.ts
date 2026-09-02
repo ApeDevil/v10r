@@ -6,7 +6,7 @@ vi.mock('$lib/server/db', () => ({ db: {} }));
 vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 
 const { handleMcpMessage } = await import('./transport');
-const { publicPatternRegistry } = await import('./patterns/registry');
+const { publicPatternRegistry } = await import('./patterns/tools');
 const { adminStateRegistry } = await import('./demo/tools');
 
 const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server' };

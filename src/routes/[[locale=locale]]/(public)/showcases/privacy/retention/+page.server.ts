@@ -1,12 +1,8 @@
 import { desc, eq } from 'drizzle-orm';
-import {
-	ANALYTICS_AGGREGATE_RETENTION_DAYS,
-	ANALYTICS_RETENTION_DAYS,
-	CONSENT_RETENTION_DAYS,
-} from '$lib/server/config';
 import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
-import { safeDeferPromise } from '$lib/server/utils/safe-defer';
+import { safeDeferPromise } from '$lib/server/http/defer';
+import { scheduledRetentionRows } from '$lib/server/showcases/privacy/retention-copy';
 import type { PageServerLoad } from './$types';
 
 async function getLastJobRun(slug: string) {
@@ -29,12 +25,7 @@ async function getLastJobRun(slug: string) {
 export const load: PageServerLoad = async () => {
 	return {
 		title: 'Retention — Admin & Privacy',
-		retention: {
-			events: ANALYTICS_RETENTION_DAYS,
-			sessions: ANALYTICS_RETENTION_DAYS,
-			aggregates: ANALYTICS_AGGREGATE_RETENTION_DAYS,
-			consent: CONSENT_RETENTION_DAYS,
-		},
+		retention: scheduledRetentionRows(),
 		jobs: safeDeferPromise(
 			Promise.all([getLastJobRun('analytics-cleanup'), getLastJobRun('analytics-rollup')]).then(
 				([cleanup, rollup]) => ({ cleanup, rollup }),

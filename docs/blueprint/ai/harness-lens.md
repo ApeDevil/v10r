@@ -20,7 +20,7 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 | Per-request scope step caps | `ai/tools` | `tools/index.ts` — `stepsForScopes` (read-only incl. `desk:ask` = 3, mutation = 5) |
 | Context compaction (fixes AI SDK #9631) | `ai/loop` | `loop/compact.ts` — `compactToolResults` + `resolve_ref` tool |
 | System prompt assembly | `ai/context` | `context/system-prompt.ts` — `buildSystemPrompt`, cache-stable prefix ordering |
-| Retrieval integration | `ai` | `chat-orchestrator.ts` — llmwiki + rawrag pipeline events |
+| Retrieval integration | `ai` | `chat-orchestrator.ts` — llmwiki + retrieval pipeline events |
 | Conversation windowing | `ai/context` | `context/system-prompt.ts` — `windowMessages` |
 | Plan-gating predicate | `ai/policy` | `policy/governor.ts` — `shouldRequirePlan` |
 | Proposal state machine | `db/ai` + `ai/policy` | `db/schema/ai/proposal.ts`, `db/ai/proposals.ts` |

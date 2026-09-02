@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
+import { confirmUpload, generateUploadUrl } from '$lib/server/showcases/store/mutations';
+import { getObjectRange } from '$lib/server/showcases/store/queries';
 import { classifyS3Error } from '$lib/server/store/errors';
-import { confirmUpload, generateUploadUrl } from '$lib/server/store/showcase/mutations';
-import { getObjectRange } from '$lib/server/store/showcase/queries';
 import { formatBytes } from '$lib/server/store/types';
 import type { Actions, PageServerLoad } from './$types';
 

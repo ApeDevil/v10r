@@ -1,10 +1,10 @@
 <script lang="ts">
-import DocLeaf from '$lib/components/docs/DocLeaf.svelte';
+import DocPage from '$lib/components/docs/DocPage.svelte';
 
 let { data } = $props();
 </script>
 
-<DocLeaf
+<DocPage
 	entry={{ title: data.doc.title, description: data.doc.description }}
 	html={data.html}
 	toc={data.toc}

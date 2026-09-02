@@ -1,7 +1,7 @@
 import { getActiveProviderInfo, providerRegistry } from '$lib/server/ai';
 import { getCooldownResumeAt, getUserPreference } from '$lib/server/ai/providers';
-import { apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
+import { guardApiUser } from '$lib/server/http/guards';
+import { apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {

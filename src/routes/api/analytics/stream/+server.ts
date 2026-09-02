@@ -6,8 +6,8 @@
  */
 
 import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { SSE_HEARTBEAT_MS } from '$lib/server/config';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { SSE_HEARTBEAT_MS } from '$lib/server/notifications/config';
 import type { RequestHandler } from './$types';
 
 const connectLimiter = createLimiter('rl:analytics:stream', 10, '1 m');

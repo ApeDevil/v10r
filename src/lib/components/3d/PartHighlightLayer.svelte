@@ -10,7 +10,7 @@ import {
 	MeshStandardMaterial,
 	type Object3D,
 } from 'three';
-import { collectPartMeshes, type PartDef, validateParts } from '$lib/config/parts';
+import { collectPartMeshes, type PartDef, validateParts } from '$lib/3d/parts';
 import { resolveCssColor } from './css-color';
 
 interface Props {

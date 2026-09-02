@@ -20,7 +20,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { getManifest } from '$lib/server/docs/manifest';
-import { showcases } from '../showcases/registry';
+import { showcases } from '../showcases/catalog/registry';
 import { creditGroups, credits } from './registry';
 
 const rootUrl = (rel: string) => fileURLToPath(new URL(`../../../${rel}`, import.meta.url));

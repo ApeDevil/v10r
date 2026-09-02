@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { AttachmentPoint } from '$lib/config/customization';
+import type { AttachmentPoint } from '$lib/3d/customization';
 
 interface Props {
 	points: AttachmentPoint[];

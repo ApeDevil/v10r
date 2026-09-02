@@ -1,10 +1,10 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor, guardAssetOwnership } from '$lib/server/auth/guards';
 import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
 import { getAssetFolder } from '$lib/server/blog/asset-folders';
 import { PatchAssetSchema } from '$lib/server/blog/schemas';
+import { guardApiBlogAuthor, guardAssetOwnership } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
 import { deleteBlogObject, generateBlogDownloadUrl } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
 import type { RequestHandler } from './$types';

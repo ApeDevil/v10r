@@ -6,7 +6,7 @@ category: "Identity & Access"
 
 # Capability grants (request → approve → expire)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -27,8 +27,8 @@ A request-approve-expire workflow where users request a named capability, an adm
 
 ## Tests
 
-- `src/lib/server/auth/guards.test.ts` — Covers grant-based capability checks ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/auth/guards.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/auth/guards.test.ts))
+- `src/lib/server/http/guards.test.ts` — Covers grant-based capability checks ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/guards.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/guards.test.ts))
 
 ---
 
-_Machine-readable record: `identity-capability-grants` in `mcp/patterns.registry.json`._
+_Machine-readable record: `identity-capability-grants` in `pattern-library/registry.json`._

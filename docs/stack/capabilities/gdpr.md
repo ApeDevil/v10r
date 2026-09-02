@@ -8,9 +8,9 @@ A privacy domain (`$lib/server/privacy/`) that is the **single source of truth**
 
 | Right (GDPR Article) | Surface |
 |----------------------|---------|
-| Access — Art 15 | `/account/data` page + `GET /api/me/data` |
-| Portability — Art 20 | `GET /api/me/data/export` (JSON download) |
-| Erasure — Art 17 | `DELETE /api/me` + account-page typed-confirmation form |
+| Access — Art 15 | `/account/data` page + `GET /api/account/data` |
+| Portability — Art 20 | `GET /api/account/data/export` (JSON download) |
+| Erasure — Art 17 | `DELETE /api/account` + account-page typed-confirmation form |
 | Consent — TDDDG §25 / ePrivacy Art 5(3) | Consent banner, consent-gated analytics cookie |
 | Transparency — Art 13 | Login-page "How we handle your data" link |
 
@@ -21,9 +21,9 @@ A privacy domain (`$lib/server/privacy/`) that is the **single source of truth**
 Five surfaces, one definition:
 
 - `/account/data` page load (streamed)
-- `GET /api/me/data`
-- `GET /api/me/data/export`
-- `DELETE /api/me`
+- `GET /api/account/data`
+- `GET /api/account/data/export`
+- `DELETE /api/account`
 
 **Import direction:** the read aggregator (`report.ts` `collectUserData`) reads ONLY from `$lib/server/db` (the import sink) — never from peer domains — keeping it framework-free and reusable by any adapter (page, REST, future AI tool). The erasure mutation (`mutations.ts` `deleteUserData`) additionally imports `deleteUserGraph` from `$lib/server/graph/rag` because Postgres CASCADE cannot reach Neo4j; that is the one sanctioned cross-domain reach in this module.
 
@@ -89,7 +89,7 @@ Some limits are enforced in code; others depend on process outside the app:
 
 The `_v10r_sid` analytics session cookie writes to terminal equipment and is not strictly necessary, so under **TDDDG §25 / ePrivacy Art 5(3)** it requires prior consent.
 
-`analytics/hook.ts` enforces this:
+`analytics/collector.hook.ts` enforces this:
 
 - At `analytics` tier or higher → set/read the `_v10r_sid` cookie as before.
 - At `necessary` tier (or no consent) → touch no cookie, actively delete a stale one from a prior grant, and derive the session id with `deriveCookielessSessionId(visitorId)` = `hash(visitorId + UTC day)` (Plausible/Fathom pattern, rotates at UTC midnight).
@@ -116,7 +116,7 @@ The **confirmation ping** (`/api/analytics/journey/confirm`) is deliberately out
 ## Related
 
 - [../../foundation/user-data.md](../../foundation/user-data.md) - Data category definitions
-- [../../codebase-organization.md](../../codebase-organization.md) - `privacy/` domain location, `api/me/` group
+- [../../codebase-organization.md](../../codebase-organization.md) - where domains live and why
 - [../../system-abstraction.md](../../system-abstraction.md) - privacy as a multi-client core (one aggregator, five surfaces)
 - [../../blueprint/analytics/activation.md](../../blueprint/analytics/activation.md) - analyticsCollector consent gating
 - [../auth/better-auth.md](../auth/better-auth.md) - user-data ownership and cascade

@@ -1,6 +1,6 @@
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiAdmin } from '$lib/server/auth/guards';
 import { CommentNotFoundError, unhideComment } from '$lib/server/blog/comments';
+import { guardApiAdmin } from '$lib/server/http/guards';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params, locals }) => {

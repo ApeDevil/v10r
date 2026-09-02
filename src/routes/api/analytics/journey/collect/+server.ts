@@ -20,14 +20,14 @@ import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
 import { ipLimitKey } from '$lib/server/abuse';
+import { SESSION_COOKIE } from '$lib/server/analytics/config';
 import { hasConsent } from '$lib/server/analytics/consent';
 import { type EventName, isKnownEvent, sanitizeProperties, templateRoute } from '$lib/server/analytics/event-schema';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/api/body';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent } from '$lib/server/api/response';
-import { ANALYTICS_SESSION_COOKIE } from '$lib/server/config';
 import { confirmSession, recordEvents } from '$lib/server/db/analytics/mutations';
+import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 /** Web Vitals metrics we accept. Anything else is not a metric we chart. */
@@ -85,7 +85,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 	const { success, reset } = await limiter.limit(ipLimitKey(ip));
 	if (!success) return rateLimitResponse(reset);
 
-	const sessionId = cookies.get(ANALYTICS_SESSION_COOKIE);
+	const sessionId = cookies.get(SESSION_COOKIE);
 	if (!sessionId) return apiNoContent();
 
 	// Unauthenticated beacon: bound the read rather than parsing whatever arrives.

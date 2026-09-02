@@ -1,11 +1,11 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { apiPaginated, parsePagination } from '$lib/server/api/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import { createSpreadsheetFile } from '$lib/server/db/desk/mutations';
 import { listFiles } from '$lib/server/db/desk/queries';
+import { guardApiUser } from '$lib/server/http/guards';
+import { apiPaginated, parsePagination } from '$lib/server/http/pagination';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:files', 10, '1 m');

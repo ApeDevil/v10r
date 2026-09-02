@@ -5,7 +5,6 @@ import { building } from '$app/environment';
 import { cookieMaxAge, locales, localizeHref, cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import {
-	authDecisionResponse,
 	checkEmailRateLimit,
 	denied,
 	logBlocked,
@@ -13,33 +12,34 @@ import {
 	recordEmailSend,
 	verifyAltcha,
 } from '$lib/server/abuse';
+import { authDecisionResponse } from '$lib/server/abuse/decision.adapter';
+import { analyticsCollector } from '$lib/server/analytics/collector.hook';
+import { CONSENT_COOKIE } from '$lib/server/analytics/config';
 import { parseConsentTier } from '$lib/server/analytics/consent';
-import { analyticsCollector } from '$lib/server/analytics/hook';
-import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '$lib/server/api/body';
-import { createLimiter, isDocumentRequest } from '$lib/server/api/rate-limit';
-import { apiError } from '$lib/server/api/response';
 import { auth } from '$lib/server/auth';
 import { logAdminConfig } from '$lib/server/auth/admin-ids';
+import {
+	CALLBACK_RATE_LIMIT_MAX,
+	CALLBACK_RATE_LIMIT_WINDOW,
+	RATE_LIMIT_MAX,
+	RATE_LIMIT_WINDOW,
+	STEPUP_VERIFY_RATE_LIMIT_MAX,
+	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
+} from '$lib/server/auth/config';
 import { listActiveGrantKinds } from '$lib/server/auth/grants';
 import { isSessionRevoked } from '$lib/server/auth/revocation';
 import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
-import { getCustomPaletteById } from '$lib/server/branding/palette-crud';
-import {
-	ANALYTICS_CONSENT_COOKIE,
-	AUTH_CALLBACK_RATE_LIMIT_MAX,
-	AUTH_CALLBACK_RATE_LIMIT_WINDOW,
-	AUTH_RATE_LIMIT_MAX,
-	AUTH_RATE_LIMIT_WINDOW,
-	HSTS_MAX_AGE,
-	STEPUP_VERIFY_RATE_LIMIT_MAX,
-	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
 // The agent-facing `.md` layer over /docs. Lives in its own
 // module so its tests never import this file's heavy graph (schedulers, auth).
-import { docsMarkdown } from '$lib/server/docs/markdown-hook';
+import { docsMarkdown } from '$lib/server/docs/markdown.hook';
+import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '$lib/server/http/body';
+import { createLimiter, isDocumentRequest } from '$lib/server/http/rate-limit';
+import { apiError } from '$lib/server/http/response';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { platform } from '$lib/server/platform';
+import { HSTS_MAX_AGE } from '$lib/server/security/config';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
+import { getCustomPaletteById } from '$lib/server/style';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -72,7 +72,7 @@ logAdminConfig();
 const ALLOWED_LOCALES = new Set<string>(locales);
 
 /** Upstash rate limiter for auth endpoints */
-const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_RATE_LIMIT_WINDOW);
+const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
 /**
  * Separate, more generous bucket for OAuth callbacks. A callback GET is a
@@ -80,11 +80,7 @@ const authRatelimit = createLimiter('ratelimit:auth', AUTH_RATE_LIMIT_MAX, AUTH_
  * strict bucket let a handful of logins dead-end the browser on raw 429 JSON.
  * Callbacks are protected by Better Auth's one-time state validation.
  */
-const authCallbackRatelimit = createLimiter(
-	'ratelimit:auth-cb',
-	AUTH_CALLBACK_RATE_LIMIT_MAX,
-	AUTH_CALLBACK_RATE_LIMIT_WINDOW,
-);
+const authCallbackRatelimit = createLimiter('ratelimit:auth-cb', CALLBACK_RATE_LIMIT_MAX, CALLBACK_RATE_LIMIT_WINDOW);
 
 /**
  * Per-ACCOUNT limiter for second-factor verification. The per-IP authRatelimit
@@ -618,7 +614,7 @@ const csrfProtection: Handle = async ({ event, resolve }) => {
  *     'necessary'. Lives before routeGuard so admin pages also have a consistent value.
  */
 const consentLoader: Handle = async ({ event, resolve }) => {
-	event.locals.consentTier = parseConsentTier(event.cookies.get(ANALYTICS_CONSENT_COOKIE));
+	event.locals.consentTier = parseConsentTier(event.cookies.get(CONSENT_COOKIE));
 	return resolve(event);
 };
 

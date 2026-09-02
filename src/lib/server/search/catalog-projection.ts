@@ -7,13 +7,13 @@
  * Vite `import.meta.glob`), so it runs unchanged inside a Bun sync script.
  *
  * Node ids are LOCALE-BARE and follow the `SearchRecord` id scheme
- * (`${surface}:${path}${anchor ?? ''}`) so a future RAG soft-pointer
- * (`rag.document.sourceUri`) can reference the same node. Relative imports keep the
+ * (`${surface}:${path}${anchor ?? ''}`) so a future retrieval soft-pointer
+ * (`retrieval.document.sourceUri`) can reference the same node. Relative imports keep the
  * module resolvable both under Vite (app) and Bun (script).
  */
 import type { SearchSurface } from '../../search/types';
-import { type ShowcaseSublink, showcases } from '../../showcases/registry';
-import { showcaseSections } from '../../showcases/sections';
+import { type ShowcaseSublink, showcases } from '../../showcases/catalog/registry';
+import { showcaseSections } from '../../showcases/catalog/sections';
 
 export type ResourceKind = 'domain' | 'module' | 'component' | 'section';
 

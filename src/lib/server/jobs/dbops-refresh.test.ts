@@ -6,13 +6,16 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const startOperation = vi.fn(async (..._a: unknown[]) => ({ run: { id: 'r1', status: 'succeeded' }, replayed: false }));
-const advanceRun = vi.fn();
+const startOperation = vi.fn(async (..._a: unknown[]) => ({
+	operation: { id: 'r1', status: 'succeeded' },
+	replayed: false,
+}));
+const advanceOperation = vi.fn();
 const neonConfigured = vi.fn(() => true);
 
 vi.mock('$lib/server/dbops', () => ({
 	startOperation: (...a: unknown[]) => startOperation(...a),
-	advanceRun: (...a: unknown[]) => advanceRun(...a),
+	advanceOperation: (...a: unknown[]) => advanceOperation(...a),
 	isTerminal: (s: string) => ['succeeded', 'failed', 'canceled'].includes(s),
 	ConflictError: class ConflictError extends Error {},
 }));
@@ -50,7 +53,7 @@ describe('dbopsRefresh — flag gate', () => {
 		expect(startOperation).not.toHaveBeenCalled();
 	});
 
-	it('with the flag on but Neon unconfigured, returns 0 without starting a run', async () => {
+	it('with the flag on but Neon unconfigured, returns 0 without starting an operation', async () => {
 		process.env.DBOPS_AUTO_REFRESH_ENABLED = 'true';
 		neonConfigured.mockReturnValue(false);
 		expect(await dbopsRefresh()).toBe(0);

@@ -2,13 +2,13 @@ import { cypher } from '$lib/server/graph';
 import {
 	computePercentage,
 	computeThreshold,
+	type DependencyResult,
 	FREE_TIER_LIMITS,
 	type Neo4jMetrics,
-	type ProviderResult,
 	sanitizeError,
 } from './index';
 
-export async function fetchNeo4jMetrics(): Promise<ProviderResult<Neo4jMetrics>> {
+export async function fetchNeo4jMetrics(): Promise<DependencyResult<Neo4jMetrics>> {
 	const start = performance.now();
 
 	try {

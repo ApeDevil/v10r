@@ -2,11 +2,11 @@ import { fail } from '@sveltejs/kit';
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import {
-	auditLog,
 	collectionShelf,
 	documentVault,
 	networkRegistry,
 	rangeBooking,
+	showcaseAuditLog,
 	temporalRecord,
 	typeSpecimen,
 } from '$lib/server/db/schema';
@@ -24,7 +24,7 @@ export const load: PageServerLoad = async () => {
 			db.select().from(collectionShelf),
 			db.select().from(networkRegistry),
 			db.select().from(rangeBooking),
-			db.select().from(auditLog).orderBy(sql`occurred_at DESC`),
+			db.select().from(showcaseAuditLog).orderBy(sql`occurred_at DESC`),
 		]);
 
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;

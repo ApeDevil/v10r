@@ -4,7 +4,8 @@
  */
 
 import type { ToolSet } from 'ai';
-import type { SearchLocale, SearchResult } from '$lib/search/types';
+import type { Locale } from '$lib/i18n';
+import type { SearchResult } from '$lib/search/types';
 import { DESK_MUTATE_MAX_STEPS, DESK_READ_MAX_STEPS } from '$lib/server/ai/config';
 import { compactToolResult } from '$lib/server/ai/loop/compact';
 import { TOOL_MANIFEST, type ToolDescriptor } from '$lib/types/ai-tools';
@@ -14,7 +15,7 @@ import { createCreateTools, createDeleteTools } from './desk-create';
 import { createReadTools } from './desk-read';
 import { createWriteTools } from './desk-write';
 import { createGetLlmwikiPagesTool } from './get-llmwiki-pages';
-import { createGetRawragChunksTool, type DrilledChunkSink } from './get-rawrag-chunks';
+import { createGetRetrievalChunksTool, type DrilledChunkSink } from './get-source-chunks';
 import { createProposePlanTool } from './propose-plan';
 import { createResolveRefTool } from './resolve-ref';
 import { type CatalogSink, createSearchCatalogTool } from './search-catalog';
@@ -112,7 +113,7 @@ export function createDeskTools(userId: string, scopes: DeskToolScope[] = [], de
 		Object.assign(tools, createDeleteTools(userId));
 	}
 
-	// desk:ask — read-only nRAG grounding over the user's own files (deskbot nRAG profile).
+	// desk:ask — read-only retrieval grounding over the user's own files (deskbot retrieval profile).
 	if (scopes.includes('desk:ask')) {
 		Object.assign(tools, createAskTools(userId));
 	}
@@ -142,14 +143,14 @@ export function stepsForScopes(scopes: DeskToolScope[]): number {
  * Build the retrieval tool set for a chat turn.
  *
  * Returns both tools plus a `drilledChunks` set populated by any
- * `get_rawrag_chunks` invocation during the turn. Pass that set to
+ * `get_source_chunks` invocation during the turn. Pass that set to
  * `verifyCitations` after `streamText` resolves.
  *
  * Compaction wrapping is applied consistently with desk tools.
  */
 export function buildRetrievalTools(
 	userId: string,
-	locale: SearchLocale,
+	locale: Locale,
 	authCeiling: string | null,
 ): { tools: ToolSet; drilledChunks: Set<string>; surfacedCatalog: Map<string, SearchResult> } {
 	const drilledChunks = new Set<string>();
@@ -170,7 +171,7 @@ export function buildRetrievalTools(
 
 	const raw: ToolSet = {
 		...createGetLlmwikiPagesTool(userId),
-		...createGetRawragChunksTool(userId, sink),
+		...createGetRetrievalChunksTool(userId, sink),
 		...createSearchCatalogTool(locale, authCeiling, catalogSink),
 		// Semantic retrieval over the project docs corpus (system-owned). Feeds the same
 		// catalog sink → docs citations render as chips and pass the surface verifier.
@@ -179,7 +180,7 @@ export function buildRetrievalTools(
 		// same sink → /docs/pattern-library/<id> citations render as chips too.
 		...createSearchPatternLibraryTool(locale, catalogSink),
 		// Compaction escape hatch (AI SDK #9631). Both harnesses apply
-		// wrapToolsWithCompaction below, so a compacted get_rawrag_chunks result yields a
+		// wrapToolsWithCompaction below, so a compacted get_source_chunks result yields a
 		// ref the model can only pull back via resolve_ref — it MUST be registered here too.
 		...createResolveRefTool(),
 	} as ToolSet;

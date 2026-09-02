@@ -1,7 +1,7 @@
 import { count, desc } from 'drizzle-orm';
-import { requireAdmin } from '$lib/server/auth/guards';
 import { db } from '$lib/server/db';
-import { dbopsRun } from '$lib/server/db/schema/dbops/run';
+import { dbopsOperation } from '$lib/server/db/schema/dbops/operation';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { PageServerLoad } from './$types';
 
 const PAGE_SIZE = 25;
@@ -14,8 +14,8 @@ export const load: PageServerLoad = async ({ url, depends, locals }) => {
 	const offset = (page - 1) * PAGE_SIZE;
 
 	const [history, totalResult] = await Promise.all([
-		db.select().from(dbopsRun).orderBy(desc(dbopsRun.createdAt)).limit(PAGE_SIZE).offset(offset),
-		db.select({ total: count() }).from(dbopsRun),
+		db.select().from(dbopsOperation).orderBy(desc(dbopsOperation.createdAt)).limit(PAGE_SIZE).offset(offset),
+		db.select({ total: count() }).from(dbopsOperation),
 	]);
 
 	const total = totalResult[0]?.total ?? 0;

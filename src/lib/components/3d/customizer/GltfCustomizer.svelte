@@ -4,7 +4,7 @@
  * and passes the scene + parser to CustomizerLayer.
  */
 import { useGltf } from '@threlte/extras';
-import type { CustomizationConfig, CustomizationState } from '$lib/config/customization';
+import type { CustomizationConfig, CustomizationState } from '$lib/3d/customization';
 import CustomizerLayer from './CustomizerLayer.svelte';
 
 interface Props {

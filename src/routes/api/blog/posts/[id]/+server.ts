@@ -1,18 +1,19 @@
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/auth/guards';
 import { getLatestRevision, getPostById, getTagsForPost, updatePostMetadata } from '$lib/server/blog';
 import { getPostFolder } from '$lib/server/blog/post-folders';
 import { db } from '$lib/server/db';
 import { domain } from '$lib/server/db/schema/blog';
+import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { SLUG_PATTERN } from '$lib/server/schemas';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:posts:update', 30, '1 m');
 
 const PatchPostSchema = v.object({
-	slug: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200), v.regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/))),
+	slug: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200), v.regex(SLUG_PATTERN))),
 	/** Null moves the post to the blog root (virtual:blog on the client). */
 	folderId: v.optional(v.nullable(v.pipe(v.string(), v.startsWith('pfd_')))),
 });

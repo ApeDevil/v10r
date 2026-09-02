@@ -18,11 +18,11 @@ The manual form is the ground floor: every AI failure mode collapses to a typed 
 
 | Piece | Location | Role |
 |-------|----------|------|
-| Domain core | `src/lib/server/imagemeta/` | Framework-free: ingest, process, extract, persist. Modeled 1:1 on `src/lib/server/cycle/`. |
+| Domain core | `src/lib/server/imagemeta/` | Framework-free: ingest, process, extract, persist. Modeled 1:1 on `src/lib/server/showcases/cycle/`. |
 | Vision resolver | `src/lib/server/ai/providers.ts` | `supportsVision` flag + `resolveVisionProvider()`; exposed as `getVisionProvider()` from `ai/index.ts`. |
 | Price board | `src/lib/server/ai/pricing.ts` | Hand-maintained reference rates (sibling of `provider-limits.ts`). `MODEL_PRICES` + `estimateCost()` → `CostEstimate \| null`. Server-only; never ships to the client. |
-| Canonical schema | `src/lib/schemas/showcase/image-metadata.ts` | One source, three consumers: AI-propose schema + strict save schema + helpers. Also holds the client-safe `AnalyzeUsage` / `CostEstimate` DTO types. |
-| Storage | `src/lib/server/store/showcase/image.ts` | R2 ops under the `showcase/imagemeta/` prefix. |
+| Canonical schema | `src/lib/schemas/image-metadata.ts` | One source, three consumers: AI-propose schema + strict save schema + helpers. Also holds the client-safe `AnalyzeUsage` / `CostEstimate` DTO types. |
+| Storage | `src/lib/server/showcases/store/image.ts` | R2 ops under the `showcase/imagemeta/` prefix. |
 | DB | `src/lib/server/db/schema/showcase/image-metadata.ts` | Dedicated `image` pgSchema: `asset` / `metadata` / `ai_proposal` / `tag` / `metadata_tag`. `ai_proposal` stores token counts (incl. nullable `reasoning_tokens`), never dollars. |
 | Route | `src/routes/[[locale=locale]]/(public)/showcases/toolkits/image-metadata/` | `+page.server.ts` (load + `upload`/`save` actions), `MetadataApprovalDialog.svelte`. Analysis endpoint: `src/routes/api/ai/images/[id]/analyze/+server.ts` (behind `guardAiRequest`, `{ data }/{ error }` envelope, redis idempotency claim). |
 
@@ -158,6 +158,6 @@ The new `image` pgSchema **must** be added to `drizzle.config.ts`'s `schemaFilte
 
 - [image-kit.md](./image-kit.md) — the no-persistence toolkit sibling that bundles this reader's metadata extraction with an AI cropper and embedder; reuses `imagemeta`'s image processing by import.
 - `src/lib/server/imagemeta/` — domain core (extract, process, handlers, types)
-- `src/lib/schemas/showcase/image-metadata.ts` — canonical propose + save schemas
+- `src/lib/schemas/image-metadata.ts` — canonical propose + save schemas
 - [provider-routing.md](./provider-routing.md) — the dual chat/tool resolvers this vision resolver sits beside
 - [../../stack/capabilities/gdpr.md](../../stack/capabilities/gdpr.md) — the privacy report `images` section + GPS opt-in

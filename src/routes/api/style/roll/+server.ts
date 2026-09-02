@@ -4,13 +4,9 @@
  */
 
 import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk } from '$lib/server/api/response';
-import {
-	STYLE_ROLL_RATE_LIMIT_MAX,
-	STYLE_ROLL_RATE_LIMIT_PREFIX,
-	STYLE_ROLL_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk } from '$lib/server/http/response';
+import { ROLL_RATE_LIMIT_MAX, ROLL_RATE_LIMIT_PREFIX, ROLL_RATE_LIMIT_WINDOW } from '$lib/server/style/config';
 import { saveStyleToDb } from '$lib/server/style/persist';
 import {
 	generateRandomStyle,
@@ -23,7 +19,7 @@ import {
 import type { PaletteId, RadiusId, TypographyId } from '$lib/styles/random/types';
 import type { RequestHandler } from './$types';
 
-const limiter = createLimiter(STYLE_ROLL_RATE_LIMIT_PREFIX, STYLE_ROLL_RATE_LIMIT_MAX, STYLE_ROLL_RATE_LIMIT_WINDOW);
+const limiter = createLimiter(ROLL_RATE_LIMIT_PREFIX, ROLL_RATE_LIMIT_MAX, ROLL_RATE_LIMIT_WINDOW);
 
 export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }) => {
 	// Key on the canonical stamped IP (locals.clientIp), not a raw header read, to

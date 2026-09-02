@@ -24,9 +24,9 @@ The answer is not a new architecture layer. Domain modules in `$lib/server/[doma
 │                      DOMAIN MODULES                          │
 │                 $lib/server/[domain]/                         │
 │                                                              │
-│  notifications/    auth/         rawrag/      llmwiki/        │
+│  notifications/    auth/         retrieval/      llmwiki/        │
 │  ├── index.ts      ├── index.ts  ├── index.ts ├── search.ts  │
-│  ├── service.ts    └── guards.ts └── ...      └── ...        │
+│  ├── send.ts       └── guards.ts └── ...      └── ...        │
 │  └── ...                                                     │
 │                                                              │
 │  db/[domain]/                                                │
@@ -60,7 +60,7 @@ This is the actual layout — not a new proposal, but naming what already exists
 src/lib/server/
   notifications/               ← domain module
     index.ts                   ← barrel export (public API)
-    service.ts                 ← multi-step orchestration
+    send.ts                    ← multi-step orchestration
     stream.ts                  ← SSE connection registry
     router.ts                  ← external channel routing
     outbox.ts                  ← delivery scheduling
@@ -70,7 +70,7 @@ src/lib/server/
   auth/
     guards.ts                  ← requireAuth()/requireAdmin() (pages), guardApi*() (endpoints)
     index.ts                   ← Better Auth instance
-  rawrag/
+  retrieval/
     index.ts                   ← retrieve(), formatContextForPrompt()
     chunk.ts / embed.ts        ← chunking + embedding pipeline
     ingest/                    ← ingestion pipeline
@@ -81,7 +81,7 @@ src/lib/server/
     overview.ts / wiki-format.ts / compile/ / lint/
   ai/
     index.ts                   ← provider registry + active model
-    errors.ts                  ← classifyAIError(), AIError
+    errors.ts                  ← classifyAiError(), AiError
     config.ts                  ← prompts, limits, rate limit config
     tools/                     ← AI tool definitions (add as needed)
       notifications.ts         ← tool wrappers for notification domain
@@ -96,7 +96,7 @@ src/lib/server/
     index.ts                   ← ServerError base class
 ```
 
-The `service.ts` layer exists only when orchestration spans multiple infrastructure calls. `NotificationService.send()` justifies it: it calls DB, then SSE, then async external routing. A single DB query does not need a service wrapper.
+An orchestrating module exists only when a call spans multiple infrastructure calls. `sendNotification()` justifies one — DB, then SSE, then async external routing — and it is named for what it does, not `service.ts`. A single DB query needs no wrapper at all.
 
 ---
 
@@ -143,7 +143,7 @@ return {
 `redirect()`, `error()`, `fail()`, `message()`, `setError()` — all route-layer only.
 
 ```typescript
-// src/lib/server/auth/guards.ts — route-facing, fine here
+// src/lib/server/http/guards.ts — route-facing, fine here
 export function requireAuth(locals: App.Locals, returnTo?: string) {
   if (!locals.user || !locals.session) {
     const target = returnTo ? `/auth/login?returnTo=${encodeURIComponent(returnTo)}` : '/auth/login';
@@ -162,10 +162,10 @@ A domain module calls its own DB queries and infrastructure. To use another doma
 
 ```typescript
 // CORRECT — using barrel export
-import { NotificationService } from '$lib/server/notifications'; // index.ts barrel
+import { sendNotification } from '$lib/server/notifications'; // index.ts barrel
 
 // WRONG — reaching into internals
-import { createNotification } from '$lib/server/notifications/service'; // private
+import { createNotification } from '$lib/server/notifications/send'; // private
 ```
 
 ---
@@ -180,10 +180,10 @@ The load function extracts from `event.locals`, calls domain functions, serializ
 // src/routes/account/notifications/+page.server.ts
 export const load: PageServerLoad = async ({ locals, url }) => {
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-  const offset = (page - 1) * NOTIFICATIONS_PAGE_SIZE;
+  const offset = (page - 1) * PAGE_SIZE;
 
   const [notifications, unreadCount] = await Promise.all([
-    getNotifications(locals.user!.id, NOTIFICATIONS_PAGE_SIZE, offset),
+    getNotifications(locals.user!.id, PAGE_SIZE, offset),
     getUnreadCount(locals.user!.id),
   ]);
 
@@ -235,7 +235,7 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import { getNotifications, getUnreadCount } from '$lib/server/db/notifications/queries';
 import { markAsRead, markAllAsRead } from '$lib/server/db/notifications/mutations';
-import { NOTIFICATIONS_PAGE_SIZE } from '$lib/server/config';
+import { PAGE_SIZE } from '$lib/server/notifications/config';
 
 export function createNotificationTools(userId: string) {
   return {
@@ -246,9 +246,9 @@ export function createNotificationTools(userId: string) {
       }),
       execute: async ({ page = 1 }) => {
         try {
-          const offset = (page - 1) * NOTIFICATIONS_PAGE_SIZE;
+          const offset = (page - 1) * PAGE_SIZE;
           const [notifications, unreadCount] = await Promise.all([
-            getNotifications(userId, NOTIFICATIONS_PAGE_SIZE, offset),
+            getNotifications(userId, PAGE_SIZE, offset),
             getUnreadCount(userId),
           ]);
           return {
@@ -344,7 +344,7 @@ export async function notificationCleanup(): Promise<number> {
 When a job sends notifications on behalf of a user, pass an explicit identity string for audit logs:
 
 ```typescript
-await NotificationService.send({
+await sendNotification({
   userId: targetUserId,
   actorId: 'system:scheduler', // system identity for audit trail
   type: 'system',
@@ -352,7 +352,7 @@ await NotificationService.send({
 });
 ```
 
-Jobs register in `src/lib/server/jobs/index.ts`. They're triggered two ways: `scheduler.ts` via `setInterval` (persistent containers), and `src/routes/api/cron/[job]/+server.ts` via HTTP (Vercel cron). Same `runJob()` function handles both — the adapter varies, the job does not.
+Jobs register in `src/lib/server/jobs/index.ts`. They're triggered two ways: `scheduler.ts` via `setInterval` (persistent containers), and `src/routes/api/cron/due/+server.ts` via HTTP (Vercel cron — one daily sweep of everything due, so the database wakes once; `cron/[job]` runs one job by slug). Same `runJob()` function handles both — the adapter varies, the job does not.
 
 ---
 
@@ -395,7 +395,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 Domain functions throw `ServerError` subclasses or return `null`/`boolean`. They never throw raw DB errors or strings.
 
 ```
-Domain layer:   throws ServerError subclasses (DbError, AIError, Neo4jError)
+Domain layer:   throws ServerError subclasses (DbError, AiError, Neo4jError)
                 or returns null / false on not-found / no-op
 
 Route layer:    catches and translates:
@@ -414,9 +414,9 @@ import { classifyDbError } from '$lib/server/db/errors';
 const dbErr = classifyDbError(err);
 return json({ error: dbErr.message }, { status: dbErr.toStatus() });
 
-// AI provider errors → AIError
-import { classifyAIError } from '$lib/server/ai/errors';
-const aiErr = classifyAIError(err);
+// AI provider errors → AiError
+import { classifyAiError } from '$lib/server/ai/errors';
+const aiErr = classifyAiError(err);
 return json({ error: aiErr.message }, { status: aiErrorToStatus(aiErr.kind) });
 
 // Neo4j errors → Neo4jError
@@ -424,7 +424,7 @@ import { classifyNeo4jError } from '$lib/server/graph/errors';
 const graphErr = classifyNeo4jError(err);
 ```
 
-**Safe messages only.** Never expose raw PostgreSQL constraint names (`23505`), provider API key prefixes, or internal error codes in responses. The `classifyDbError` and `classifyAIError` functions normalize these to safe messages before they reach the adapter layer.
+**Safe messages only.** Never expose raw PostgreSQL constraint names (`23505`), provider API key prefixes, or internal error codes in responses. The `classifyDbError` and `classifyAiError` functions normalize these to safe messages before they reach the adapter layer.
 
 **AI tool error contract:**
 
@@ -516,7 +516,7 @@ execute: async ({ page }) => {
 };
 ```
 
-**Rate limit amplification.** One chat request can trigger `maxSteps` tool calls. Each tool call may hit the DB. Rate limit at the chat endpoint level (per user, per minute), not per tool call. `src/lib/server/api/rate-limit.ts` handles this: `createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)`.
+**Rate limit amplification.** One chat request can trigger `maxSteps` tool calls. Each tool call may hit the DB. Rate limit at the chat endpoint level (per user, per minute), not per tool call. `src/lib/server/http/rate-limit.ts` handles this: `createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)`.
 
 **Session revocation mid-stream.** Tool calls inherit auth from the initial request. If a session is revoked after the stream starts, tools continue executing until the stream ends. Better Auth's `cookieCache` (5-minute window) is the tradeoff — it reduces DB lookups but delays revocation propagation. Acceptable for this project; document it explicitly.
 
@@ -534,7 +534,7 @@ When domain modules need data from another domain:
 - **No circular imports.** If A imports from B and B imports from A, extract the shared type to a third module.
 
 ```typescript
-// src/lib/server/notifications/service.ts
+// src/lib/server/notifications/send.ts
 // CORRECT — querying user data for delivery, one read hop
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
@@ -552,7 +552,7 @@ The notification service owns the delivery workflow. It reads the user email it 
 
 **Extract to a domain service** when two concrete consumers (not hypothetical ones) need the same multi-step workflow.
 
-`NotificationService.send()` is the model. It has four concrete consumers:
+`sendNotification()` is the model. It has four concrete consumers:
 1. Routes triggering notifications from user actions
 2. Background jobs sending digests
 3. SSE pushing real-time events
@@ -570,7 +570,7 @@ Extracting was justified because the same three-step sequence (DB insert → SSE
 2. **Create `$lib/server/ai/tools/`** with `notifications.ts` and an `index.ts` registry.
 3. **Wire into the chat endpoint** via `createTools(user.id)` and `maxSteps: 5`.
 4. **Leave simple CRUD routes as-is.** A `+page.server.ts` that calls one query function is already correct. No wrapping needed.
-5. **Extract into `service.ts` only** when the second concrete consumer appears with the same multi-step need.
+5. **Extract an orchestrating module only** when the second concrete consumer appears with the same multi-step need — and name it for the operation (`send.ts`), never `service.ts`.
 
 ---
 
@@ -579,7 +579,7 @@ Extracting was justified because the same three-step sequence (DB insert → SSE
 | Option | Why not |
 |--------|---------|
 | `$lib/server/operations/` directory | Domain colocation is better. Operations are inside their domain, not extracted to a parallel tree. |
-| `op` prefix on functions | `NotificationService.send()` is already unambiguous. Prefixes add noise without clarity. |
+| `op` prefix on functions | `sendNotification()` is already unambiguous. Prefixes add noise without clarity. |
 | Class-based DI containers | 50–200ms cold start penalty on serverless per container initialization. Plain module imports are zero-cost. |
 | CQRS infrastructure | Use the vocabulary (queries vs. mutations as directory names) but skip the infrastructure — no command buses, no event sourcing. |
 | Formal interfaces for single implementations | Hexagonal architecture ceremony without benefit. TypeScript structural typing gives interface-like guarantees without explicit `interface INotificationService`. |

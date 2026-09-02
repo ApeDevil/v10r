@@ -7,8 +7,10 @@
  * `/admin`) can produce a `PageContext`. This is the positive allowlist that fails safe —
  * admin/app/auth routes simply aren't in the index. See `docs/blueprint/ai/site-awareness.md`.
  */
+
+import type { Locale } from '$lib/i18n';
 import { normalizeRouteId } from '$lib/search/route-id';
-import type { SearchLocale, SearchRecord } from '$lib/search/types';
+import type { SearchRecord } from '$lib/search/types';
 import { buildSearchIndex } from './query';
 
 export interface PageContext {
@@ -22,9 +24,9 @@ export interface PageContext {
 
 /** Per-locale memoized path → page-level record map. `buildSearchIndex` is a touch expensive
  *  (pins the Paraglide locale), so we build the lookup once per locale per process. */
-const indexCache = new Map<SearchLocale, Map<string, SearchRecord>>();
+const indexCache = new Map<Locale, Map<string, SearchRecord>>();
 
-function pathIndex(locale: SearchLocale): Map<string, SearchRecord> {
+function pathIndex(locale: Locale): Map<string, SearchRecord> {
 	let map = indexCache.get(locale);
 	if (!map) {
 		map = new Map();
@@ -43,7 +45,7 @@ function pathIndex(locale: SearchLocale): Map<string, SearchRecord> {
  * `[param]` route, or anything not in the public catalog). On `null` the caller injects nothing,
  * seeds nothing, and stores nothing.
  */
-export function resolvePageContext(routeId: string | null | undefined, locale: SearchLocale): PageContext | null {
+export function resolvePageContext(routeId: string | null | undefined, locale: Locale): PageContext | null {
 	const path = normalizeRouteId(routeId);
 	if (!path) return null;
 	const rec = pathIndex(locale).get(path);

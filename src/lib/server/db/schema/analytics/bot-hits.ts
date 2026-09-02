@@ -141,12 +141,11 @@ export const botHits = analyticsSchema.table(
 /**
  * Published crawler IP prefixes, refreshed by the `bot-ranges-refresh` job.
  *
- * Stored as TEXT and cast to `cidr` at comparison time rather than typed as
- * `cidr` in the column. The cast keeps the match in Postgres — `$ip::inet <<=
- * cidr` handles IPv4 and IPv6 containment correctly and is one operator, versus a
- * hand-rolled bitmask matcher in JS that has to get v4-mapped-v6 right. The table
- * holds roughly 750 rows across all operators, so the absence of a GiST index on
- * a native `cidr` column costs nothing measurable.
+ * The source of record for the admin "is verification current" panel and the seed.
+ * The request path does NOT read it: verification runs in JS against a Redis
+ * projection of these rows (`analytics/bot-ranges.ts` → `publishedBotRanges`),
+ * because a per-hit Postgres round trip woke the database on every crawler request.
+ * Stored as TEXT — roughly 750 rows across all operators, nothing to index.
  */
 export const botIpRanges = analyticsSchema.table(
 	'bot_ip_ranges',
@@ -166,4 +165,5 @@ export const botIpRanges = analyticsSchema.table(
 export type BotHitRow = typeof botHits.$inferSelect;
 export type BotHitInsert = typeof botHits.$inferInsert;
 export type BotRangeSource = (typeof botRangeSourceEnum.enumValues)[number];
+export type BotVerification = (typeof botVerificationEnum.enumValues)[number];
 export type BotCategory = (typeof botCategoryEnum.enumValues)[number];

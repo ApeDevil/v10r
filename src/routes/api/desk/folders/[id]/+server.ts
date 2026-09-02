@@ -1,8 +1,5 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import {
 	FolderCycleError,
 	FolderNameConflictError,
@@ -11,6 +8,9 @@ import {
 } from '$lib/server/db/desk/errors';
 import { deleteFolder, moveFolder, renameFolder } from '$lib/server/db/desk/mutations';
 import { getFolder } from '$lib/server/db/desk/queries';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 // Raised from 30/min — drag-drop bursts are legitimate user intent, not abuse.

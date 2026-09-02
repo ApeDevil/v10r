@@ -6,7 +6,7 @@ category: "Admin & Privacy"
 
 # GDPR data transparency (view · export · delete)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -24,7 +24,7 @@ A privacy aggregator that collects everything the app knows about a user into on
 ## Code
 
 - `src/lib/server/privacy/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/privacy) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/privacy))
-- `src/routes/api/me/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/routes/api/me) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/routes/api/me))
+- `src/routes/api/account/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/routes/api/account) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/routes/api/account))
 
 ## Proof
 
@@ -33,4 +33,4 @@ A privacy aggregator that collects everything the app knows about a user into on
 
 ---
 
-_Machine-readable record: `admin-privacy-gdpr` in `mcp/patterns.registry.json`._
+_Machine-readable record: `admin-privacy-gdpr` in `pattern-library/registry.json`._

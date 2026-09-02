@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { createLimiter } from '$lib/server/api/rate-limit';
+import { createLimiter } from '$lib/server/http/rate-limit';
 import { PER_EMAIL_LIMIT_MAX, PER_EMAIL_LIMIT_PREFIX, PER_EMAIL_LIMIT_WINDOW } from '../config';
 import { allowed, denied } from '../decision';
 import type { Decision } from '../types';

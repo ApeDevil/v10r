@@ -45,7 +45,7 @@ export const DIGEST_BODY_LIMITS = { email: 100_000, telegram: 3500, discord: 180
  * Render N notifications as one message.
  *
  * Returns a newline-separated body — `DeliveryPayload` is a single string and
- * every provider already formats one, so the digest stays inside the existing
+ * every channel already formats one, so the digest stays inside the existing
  * contract instead of growing a parallel multi-item path. Overflow is REPORTED
  * in the body ("+N more"), never silently dropped.
  */

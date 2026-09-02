@@ -42,6 +42,6 @@ export function setNotificationContext(initialCount = 0) {
  * Get notification state from context.
  * Use this in child components.
  */
-export function getNotifications() {
+export function getNotificationsState() {
 	return getContext<ReturnType<typeof createNotificationState>>(NOTIFICATION_CTX);
 }

@@ -2,7 +2,7 @@
  * Rule loading for the hosted validate_snippet tool.
  *
  * The rules and their fixtures live in `mcp/snippet-rules.json`, shared with the stdio
- * server the same way `patterns.registry.json` is: one JSON, two runtimes, zero cross-
+ * server the same way `registry.json` is: one JSON, two runtimes, zero cross-
  * imports of `.ts` between `mcp/` and `src/`. The `{{COLOR_TOKENS}}` placeholder in the
  * token-opacity rule is expanded at load time from `src/app.css` (inlined into the
  * bundle via the same `?raw` glob technique as the docs corpus), so the 480 color tokens

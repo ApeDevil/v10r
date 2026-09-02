@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { approveRequest, denyRequest, listPendingRequests } from '$lib/server/auth/grant-requests';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

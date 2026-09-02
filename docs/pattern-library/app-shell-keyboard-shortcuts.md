@@ -6,7 +6,7 @@ category: "App Shell & Navigation"
 
 # Keyboard shortcuts registry + help modal
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -23,7 +23,7 @@ A central registry of global, navigation, and contextual keyboard shortcuts (e.g
 ## Code
 
 - `src/lib/shortcuts/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/shortcuts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/shortcuts))
-- `src/lib/components/shell/ShortcutsModal.svelte` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/shell/ShortcutsModal.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/shell/ShortcutsModal.svelte))
+- `src/lib/components/shell/ShortcutsDialog.svelte` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/shell/ShortcutsDialog.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/shell/ShortcutsDialog.svelte))
 
 ## Proof
 
@@ -31,4 +31,4 @@ A central registry of global, navigation, and contextual keyboard shortcuts (e.g
 
 ---
 
-_Machine-readable record: `app-shell-keyboard-shortcuts` in `mcp/patterns.registry.json`._
+_Machine-readable record: `app-shell-keyboard-shortcuts` in `pattern-library/registry.json`._

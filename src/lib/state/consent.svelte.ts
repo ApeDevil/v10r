@@ -5,13 +5,13 @@
 
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
+import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '$lib/analytics/consent-cookie';
+import type { ConsentTier } from '$lib/types/db-enums';
 import { getCookie, setCookie } from '$lib/utils/cookies';
 
-export type ConsentTier = 'necessary' | 'analytics';
+export type { ConsentTier };
 
 const CONSENT_CTX = Symbol('consent');
-const COOKIE_NAME = 'v10r_consent';
-const COOKIE_MAX_AGE = 15_552_000; // 6 months in seconds
 
 /**
  * Create consent state instance.
@@ -25,7 +25,7 @@ export function createConsentState() {
 	// Read cookie on client (mirrors theme.svelte.ts pattern)
 	$effect(() => {
 		if (!browser) return;
-		const raw = getCookie(COOKIE_NAME);
+		const raw = getCookie(CONSENT_COOKIE);
 		// An unrecognised value (including the retired `full`) leaves tier null, so
 		// the banner reappears and the visitor is asked against the current
 		// description of the processing rather than a stale one.
@@ -54,7 +54,7 @@ export function createConsentState() {
 		setTier(newTier: ConsentTier) {
 			tier = newTier;
 			if (browser) {
-				setCookie(COOKIE_NAME, newTier, { maxAge: COOKIE_MAX_AGE, secure: true });
+				setCookie(CONSENT_COOKIE, newTier, { maxAge: CONSENT_MAX_AGE, secure: true });
 			}
 		},
 
@@ -70,7 +70,7 @@ export function createConsentState() {
 		resetTier() {
 			tier = null;
 			if (browser) {
-				setCookie(COOKIE_NAME, '', { maxAge: 0, secure: true });
+				setCookie(CONSENT_COOKIE, '', { maxAge: 0, secure: true });
 			}
 		},
 	};

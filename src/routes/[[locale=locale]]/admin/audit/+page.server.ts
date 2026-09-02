@@ -1,5 +1,5 @@
 import { getDistinctActions, queryAuditLog } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/auth/guards';
+import { requireAdmin } from '$lib/server/http/guards';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {

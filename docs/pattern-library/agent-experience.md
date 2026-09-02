@@ -6,7 +6,7 @@ category: "Docs & Agent Experience"
 
 # Agent Experience (AX) surfaces
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — read-only derived surfaces; no new state
 
@@ -22,7 +22,7 @@ Five derived surfaces make the repo consumable by coding agents: a root AGENTS.m
 ## Code
 
 - `AGENTS.md` — Universal agent contract at the repo root ([GitHub](https://github.com/ApeDevil/v10r/blob/main/AGENTS.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/AGENTS.md))
-- `src/lib/server/docs/markdown-hook.ts` — The .md layer + Accept: text/markdown negotiation (303 + Vary + no-store) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/docs/markdown-hook.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/docs/markdown-hook.ts))
+- `src/lib/server/docs/markdown.hook.ts` — The .md layer + Accept: text/markdown negotiation (303 + Vary + no-store) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/docs/markdown.hook.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/docs/markdown.hook.ts))
 - `src/lib/server/docs/llms-txt.ts` — /llms.txt built per request from the docs manifest ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/docs/llms-txt.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/docs/llms-txt.ts))
 - `src/lib/server/mcp/snippet/engine.ts` — validate_snippet rule engine (findings are a success; input never echoed) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/mcp/snippet/engine.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/mcp/snippet/engine.ts))
 - `scripts/patterns/build-derived.ts` — Pattern-library generator (README region + per-pattern pages) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/patterns/build-derived.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/patterns/build-derived.ts))
@@ -54,4 +54,4 @@ Five derived surfaces make the repo consumable by coding agents: a root AGENTS.m
 
 ---
 
-_Machine-readable record: `agent-experience` in `mcp/patterns.registry.json`._
+_Machine-readable record: `agent-experience` in `pattern-library/registry.json`._

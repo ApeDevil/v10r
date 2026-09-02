@@ -1,23 +1,19 @@
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
+import { deleteDocument } from '$lib/server/db/retrieval/mutations';
+import { getDocument } from '$lib/server/db/retrieval/queries';
+import { deleteDocumentGraph } from '$lib/server/graph/retrieval/mutations';
 import {
-	API_READ_RATE_LIMIT_MAX,
-	API_READ_RATE_LIMIT_WINDOW,
-	API_WRITE_RATE_LIMIT_MAX,
-	API_WRITE_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
-import { deleteDocument } from '$lib/server/db/rag/mutations';
-import { getDocument } from '$lib/server/db/rag/queries';
-import { deleteDocumentGraph } from '$lib/server/graph/rag/mutations';
+	READ_RATE_LIMIT_MAX,
+	READ_RATE_LIMIT_WINDOW,
+	WRITE_RATE_LIMIT_MAX,
+	WRITE_RATE_LIMIT_WINDOW,
+} from '$lib/server/http/config';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
-const readLimiter = createLimiter('rl:retrieval:documents:read', API_READ_RATE_LIMIT_MAX, API_READ_RATE_LIMIT_WINDOW);
-const deleteLimiter = createLimiter(
-	'rl:retrieval:documents:delete',
-	API_WRITE_RATE_LIMIT_MAX,
-	API_WRITE_RATE_LIMIT_WINDOW,
-);
+const readLimiter = createLimiter('rl:retrieval:documents:read', READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW);
+const deleteLimiter = createLimiter('rl:retrieval:documents:delete', WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const guard = guardApiUser(locals);

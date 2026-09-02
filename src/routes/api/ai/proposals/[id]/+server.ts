@@ -5,11 +5,12 @@
  * when the original POST response to `/approve` was lost. Reading the
  * proposal status is the idempotent recovery path.
  */
-import { apiError, apiOk } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
+
 import { getProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
+import { guardApiUser } from '$lib/server/http/guards';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals }) => {

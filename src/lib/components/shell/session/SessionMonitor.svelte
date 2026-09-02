@@ -13,7 +13,7 @@ import { getModals } from '$lib/state';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import type { Session } from '$lib/state/session.svelte';
 import { setSessionContext } from '$lib/state/session.svelte';
-import SessionExpiryModal from './SessionExpiryModal.svelte';
+import SessionExpiryDialog from './SessionExpiryDialog.svelte';
 import SessionWarningBanner from './SessionWarningBanner.svelte';
 
 type Props = {
@@ -118,7 +118,7 @@ onMount(() => {
 
 <!-- Expiry modal (shown when session expired) -->
 {#if session?.user}
-	<SessionExpiryModal
+	<SessionExpiryDialog
 		email={session.user.email}
 		onSignIn={() => goto(localizeHref('/auth/login'))}
 		onSwitchUser={switchUser}

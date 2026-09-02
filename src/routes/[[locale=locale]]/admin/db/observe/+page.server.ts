@@ -1,12 +1,12 @@
-import { requireAdmin } from '$lib/server/auth/guards';
-import type { ProviderResult } from '$lib/server/monitoring';
+import { requireAdmin } from '$lib/server/http/guards';
+import type { DependencyResult } from '$lib/server/monitoring';
 import { fetchNeo4jMetrics } from '$lib/server/monitoring/neo4j';
 import { fetchNeonMetrics } from '$lib/server/monitoring/neon';
 import { fetchR2Metrics } from '$lib/server/monitoring/r2';
 import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
 import type { Actions, PageServerLoad } from './$types';
 
-function settledToResult<T>(result: PromiseSettledResult<ProviderResult<T>>): ProviderResult<T> {
+function settledToResult<T>(result: PromiseSettledResult<DependencyResult<T>>): DependencyResult<T> {
 	if (result.status === 'fulfilled') return result.value;
 	return {
 		status: 'unavailable',

@@ -6,7 +6,7 @@ category: "Architecture & Request Pipeline"
 
 # Deployment (Vercel serverless, container target planned)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -28,4 +28,4 @@ Covers the deployment setup — Vercel Node.js serverless is the one wired targe
 
 ---
 
-_Machine-readable record: `architecture-deployment` in `mcp/patterns.registry.json`._
+_Machine-readable record: `architecture-deployment` in `pattern-library/registry.json`._

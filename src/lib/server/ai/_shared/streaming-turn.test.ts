@@ -1,6 +1,6 @@
 import type { LanguageModelUsage, UIMessageStreamWriter } from 'ai';
 import { describe, expect, it, vi } from 'vitest';
-import { AIError } from '$lib/server/ai/errors';
+import { AiError } from '$lib/server/ai/errors';
 import {
 	type AttemptFailure,
 	type PumpableTextResult,
@@ -39,7 +39,7 @@ function makeResult(opts: {
 	error?: unknown;
 	onStream?: (o: { sendStart: boolean; sendFinish: boolean }) => void;
 }): PumpableTextResult {
-	const failure = opts.error ?? new AIError('rate_limit', 'quota exceeded', '429');
+	const failure = opts.error ?? new AiError('rate_limit', 'quota exceeded', '429');
 	return {
 		toUIMessageStream(streamOpts: { sendStart: boolean; sendFinish: boolean }) {
 			opts.onStream?.(streamOpts);
@@ -195,7 +195,7 @@ describe('streamTextIntoOpenMessage', () => {
 
 	it('does NOT rotate after a visible part — rethrows and writes NO finish', async () => {
 		const { writer, writes } = makeWriter();
-		const boom = new AIError('rate_limit', 'quota exceeded', '429');
+		const boom = new AiError('rate_limit', 'quota exceeded', '429');
 		const primary = makeResult({ parts: [{ type: 'text-delta', delta: 'partial' }], rejectText: true, error: boom });
 		const secondary = vi.fn(() => makeResult({ parts: [{ type: 'text-delta', delta: 'dupe' }] }));
 		const { hooks, failures } = makeHooks();
@@ -227,7 +227,7 @@ describe('streamTextIntoOpenMessage', () => {
 
 	it("rethrows immediately on kind 'unknown' even with attempts remaining", async () => {
 		const { writer, writes } = makeWriter();
-		const boom = new AIError('unknown', 'tool schema is malformed');
+		const boom = new AiError('unknown', 'tool schema is malformed');
 		const primary = makeResult({ parts: [], rejectText: true, error: boom });
 		const secondary = vi.fn(() => makeResult({ parts: [{ type: 'text-delta', delta: 'never' }] }));
 		const { hooks, failures } = makeHooks();
@@ -276,7 +276,7 @@ describe('streamTextIntoOpenMessage', () => {
 
 	it('does not mark willRetry when every remaining attempt is skipped', async () => {
 		const { writer } = makeWriter();
-		const boom = new AIError('rate_limit', 'quota exceeded', '429');
+		const boom = new AiError('rate_limit', 'quota exceeded', '429');
 		const primary = makeResult({ parts: [], rejectText: true, error: boom });
 		const cooled = vi.fn(() => makeResult({ parts: [] }));
 		const { hooks, failures } = makeHooks({

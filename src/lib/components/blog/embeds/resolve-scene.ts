@@ -5,7 +5,7 @@
  * - Registry ID (e.g., "fox") → looks up MODELS_BY_ID for full Model3D config
  * - R2 path (e.g., "blog/3d/abc.glb") → constructs proxy URL with default config
  */
-import { type CameraPreset, type LightConfig, MODELS_BY_ID, type Model3D, VIEWPORT_DEFAULTS } from '$lib/config/models';
+import { type CameraPreset, type LightConfig, MODELS_BY_ID, type Model3D, VIEWPORT_DEFAULTS } from '$lib/3d/models';
 
 export interface EmbedSceneConfig {
 	camera: CameraPreset;

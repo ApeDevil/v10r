@@ -6,7 +6,10 @@ Analytics is split into lanes that share no identifier and no join key. The sepa
 the load-bearing design decision in the whole subsystem. A third lane — `bot_hits`, for
 declared crawlers — carries **no identifier of any kind** and therefore sits outside the
 identifier wall entirely; it is documented in the schema (`bot-hits.ts`) and on the admin
-bots page.
+bots page. It is also the only lane whose writes do not reach Postgres on the request
+path: a hit is classified and verified in the hook, pushed onto a Redis list, and flushed
+in batches (`bot-hit-buffer.ts`). Crawlers arrive when no human is around, and a per-hit
+INSERT was waking the database ~30 times a night for nothing else.
 
 ```
 ANONYMOUS LANE                        AUTHENTICATED LANE

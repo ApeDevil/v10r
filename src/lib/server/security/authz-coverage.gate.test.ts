@@ -415,7 +415,7 @@ describe('authz coverage — the gate itself', () => {
 		// The blindness this replaces: one regex over the whole file body meant a
 		// guarded GET vouched for an unguarded DELETE beside it.
 		const source = [
-			"import { guardApiUser } from '$lib/server/auth/guards';",
+			"import { guardApiUser } from '$lib/server/http/guards';",
 			'export const GET = async ({ locals }) => guardApiUser(locals);',
 			'export const DELETE = async () => dropEverything();',
 		].join('\n');
@@ -430,7 +430,7 @@ describe('authz coverage — the gate itself', () => {
 		// file imports the guard it uses, so the symbol sat in the preamble of an
 		// unguarded neighbour. Two endpoints were passing on exactly this.
 		const source = [
-			"import { guardApiUser } from '$lib/server/auth/guards';",
+			"import { guardApiUser } from '$lib/server/http/guards';",
 			'export const DELETE = async () => dropEverything();',
 		].join('\n');
 		expect(classify(methodUnits(source)[0].source)).toBeNull();
@@ -441,7 +441,7 @@ describe('authz coverage — the gate itself', () => {
 			'import {',
 			'\tguardApiUser,',
 			'\tguardApiAdmin,',
-			"} from '$lib/server/auth/guards';",
+			"} from '$lib/server/http/guards';",
 			'export const DELETE = async () => dropEverything();',
 		].join('\n');
 		expect(classify(methodUnits(source)[0].source)).toBeNull();

@@ -112,7 +112,7 @@ const sections = $derived([
 			<DiagRow label="Router"><code>src/lib/server/notifications/router.ts</code></DiagRow>
 			<DiagRow label="Outbox"><code>src/lib/server/notifications/outbox.ts</code></DiagRow>
 			<DiagRow label="SSE Stream"><code>src/lib/server/notifications/stream.ts</code></DiagRow>
-			<DiagRow label="Providers"><code>src/lib/server/notifications/providers/</code></DiagRow>
+			<DiagRow label="Providers"><code>src/lib/server/notifications/channels/</code></DiagRow>
 			<DiagRow label="Schema"><code>src/lib/server/db/schema/notifications/</code></DiagRow>
 			<DiagRow label="Settings UI"><code>src/routes/account/notifications/settings/</code></DiagRow>
 		</DiagGrid>

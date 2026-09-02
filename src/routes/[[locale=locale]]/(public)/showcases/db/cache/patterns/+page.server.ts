@@ -10,8 +10,8 @@ import {
 	removeFromSortedSet,
 	setHashField,
 	setString,
-} from '$lib/server/cache/showcase/mutations';
-import { getEntryDetail, getShowcaseStats, listShowcaseEntries } from '$lib/server/cache/showcase/queries';
+} from '$lib/server/showcases/cache/mutations';
+import { getEntryDetail, getShowcaseStats, listShowcaseEntries } from '$lib/server/showcases/cache/queries';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

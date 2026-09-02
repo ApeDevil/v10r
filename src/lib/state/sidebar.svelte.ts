@@ -21,18 +21,18 @@ const BROADCAST_CHANNEL = 'sidebar-width';
 /** Padding constants — explicit design decisions */
 /** Icon padding scales with icon size: 12px at narrow, 16px at wide */
 function iconPadding(expandedWidth: number): number {
-	return Math.round(iconSize(expandedWidth) * 0.67);
+	return Math.round(sidebarIconSize(expandedWidth) * 0.67);
 }
 const RAIL_PADDING = 16; // item → rail (8px each side, matches p-2)
 
 /** Icon size from expanded width, floored at 18px. ALSO MIRRORED in app.html inline script. */
-export function iconSize(expandedWidth: number): number {
+export function sidebarIconSize(expandedWidth: number): number {
 	return Math.max(18, Math.round(18 + (expandedWidth - 160) * (6 / 160)));
 }
 
 /** Item = icon + padding (always square). ALSO MIRRORED in app.html inline script. */
 export function itemSize(expandedWidth: number): number {
-	return iconSize(expandedWidth) + iconPadding(expandedWidth);
+	return sidebarIconSize(expandedWidth) + iconPadding(expandedWidth);
 }
 
 /** Rail = item + padding. ALSO MIRRORED in app.html inline script. */
@@ -78,7 +78,7 @@ export function createSidebarState(initialWidth = 240) {
 			el.style.setProperty('--sidebar-expanded-width', `${state.expandedWidth}px`);
 			el.style.setProperty('--sidebar-rail-width', `${railWidth(state.expandedWidth)}px`);
 			el.style.setProperty('--sidebar-item-size', `${itemSize(state.expandedWidth)}px`);
-			el.style.setProperty('--sidebar-icon-size', `${iconSize(state.expandedWidth)}px`);
+			el.style.setProperty('--sidebar-icon-size', `${sidebarIconSize(state.expandedWidth)}px`);
 		}
 	});
 

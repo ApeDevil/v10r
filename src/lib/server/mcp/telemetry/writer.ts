@@ -19,7 +19,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
+import { type McpCallLogInsert, mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
 import { sanitizeError } from '$lib/server/monitoring';
 
 /** Abandon the insert after this. Mirrors the rate limiter's own decision-deadline shape. */
@@ -27,8 +27,6 @@ const WRITE_DEADLINE_MS = 500;
 
 /** Sentinel so a timeout is distinguishable from a legitimate result rather than inferred. */
 const TIMED_OUT = Symbol('mcp-telemetry-timeout');
-
-export type McpCallLogRow = typeof mcpCallLog.$inferInsert;
 
 /**
  * Describe a failed insert in terms that identify the fault without reprinting the row.
@@ -72,7 +70,7 @@ function describeWriteFailure(cause: unknown): string {
  * best-effort by construction, and a caller that branches on this would be treating usage analytics
  * as an audit trail.
  */
-export async function writeCallLog(row: McpCallLogRow): Promise<boolean> {
+export async function writeCallLog(row: McpCallLogInsert): Promise<boolean> {
 	try {
 		const raced = await Promise.race([
 			db.insert(mcpCallLog).values(row),

@@ -1,11 +1,11 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from '$lib/server/config';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
 import { notifications } from '$lib/server/db/schema/notifications/notifications';
 import { makeNotification, makeUser } from '$lib/server/test/fixtures';
+import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from './config';
 
 let testClient: PGlite;
 
@@ -230,7 +230,7 @@ describe('notification outbox', () => {
 			expect((await row(delivery.id)).status).toBe('dead');
 		});
 
-		it('fails permanently when the provider says it is not retryable', async () => {
+		it('fails permanently when the channel says it is not retryable', async () => {
 			const [delivery] = await createDeliveries(notificationId, ['email']);
 			const [claim] = await claimDeliveries(1);
 

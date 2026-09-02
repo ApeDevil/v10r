@@ -60,7 +60,7 @@ export const customPalettes = appSchema.table('custom_palettes', {
 });
 ```
 
-CRUD lives in `src/lib/server/branding/palette-crud.ts`. Every mutation carries an `AND created_by = :userId` predicate, so a mismatched id simply affects no rows and returns `null` — which is how the endpoints collapse "doesn't exist" and "isn't yours" into a single 404.
+CRUD lives in `src/lib/server/style/palettes.ts`. Every mutation carries an `AND created_by = :userId` predicate, so a mismatched id simply affects no rows and returns `null` — which is how the endpoints collapse "doesn't exist" and "isn't yours" into a single 404.
 
 `countCustomPalettes()` backs `MAX_CUSTOM_PALETTES_PER_USER`. Creation used to be admin-only and so carried no ceiling; open to every account it needs one.
 
@@ -108,11 +108,11 @@ src/lib/styles/random/generator.ts               -- generateRandomStyle, resolve
 src/lib/styles/random/merge.ts                   -- mergeStyleConfig (pure, tested)
 src/lib/styles/random/token-vars.ts              -- token -> CSS var, live preview
 src/lib/styles/random/palette-sanitize.ts        -- injection allowlist
-src/lib/server/branding/palette-crud.ts          -- custom palette CRUD + TTL cache
+src/lib/server/style/palettes.ts          -- custom palette CRUD + TTL cache
 src/lib/server/style/persist.ts                  -- user_preferences mirror
-src/lib/components/branding/StylePicker.svelte   -- the public picker
-src/lib/components/branding/CustomPaletteWorkshop.svelte
-src/lib/components/branding/CustomPaletteEditor.svelte
+src/lib/components/style/StylePicker.svelte   -- the public picker
+src/lib/components/style/CustomPaletteWorkshop.svelte
+src/lib/components/style/CustomPaletteEditor.svelte
 src/routes/api/style/{roll,pick,palettes}/       -- endpoints
 src/routes/[[locale=locale]]/(public)/showcases/shell/style/
 ```

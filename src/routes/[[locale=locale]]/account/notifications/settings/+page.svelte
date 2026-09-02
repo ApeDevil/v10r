@@ -50,11 +50,11 @@ async function enablePush() {
 	pushBusy = false;
 	if (result === 'subscribed') {
 		pushStatus = 'on';
-		toast.success(m.app_notifications_push_enabled_toast());
+		toast.success(m.account_notifications_push_enabled_toast());
 	} else if (result === 'denied') {
 		pushStatus = 'denied';
 	} else {
-		toast.error(m.app_notifications_push_error());
+		toast.error(m.account_notifications_push_error());
 	}
 }
 
@@ -73,11 +73,11 @@ const { form, enhance, submitting, message } = superForm(data.form, {
 
 $effect(() => {
 	if (data.successMessage === 'discord_connected') {
-		toast.success(m.app_notifications_discord_connected_toast());
+		toast.success(m.account_notifications_discord_connected_toast());
 		goto(page.url.pathname, { replaceState: true });
 	}
 	if (data.errorMessage === 'discord_denied') {
-		toast.error(m.app_notifications_discord_denied_toast());
+		toast.error(m.account_notifications_discord_denied_toast());
 		goto(page.url.pathname, { replaceState: true });
 	}
 });
@@ -95,10 +95,10 @@ async function connectTelegram() {
 			window.open(data.deepLink, '_blank');
 		} else {
 			const { error } = await res.json();
-			toast.error(error?.message ?? m.app_notifications_telegram_link_error());
+			toast.error(error?.message ?? m.account_notifications_telegram_link_error());
 		}
 	} catch {
-		toast.error(m.app_notifications_telegram_connect_error());
+		toast.error(m.account_notifications_telegram_connect_error());
 	} finally {
 		connectingTelegram = false;
 	}
@@ -106,24 +106,24 @@ async function connectTelegram() {
 </script>
 
 <Stack gap="5">
-	<h2 class="text-fluid-lg font-semibold">{m.app_notifications_settings_heading()}</h2>
+	<h2 class="text-fluid-lg font-semibold">{m.account_notifications_settings_heading()}</h2>
 
 	<form method="POST" use:enhance>
 		<Stack gap="5">
 			<!-- Email -->
 			<Card>
 				{#snippet header()}
-					<h3 class="text-fluid-base font-semibold">{m.app_notifications_email_heading()}</h3>
-					<p class="text-fluid-sm text-muted mt-1">{m.app_notifications_email_description()}</p>
+					<h3 class="text-fluid-base font-semibold">{m.account_notifications_email_heading()}</h3>
+					<p class="text-fluid-sm text-muted mt-1">{m.account_notifications_email_description()}</p>
 				{/snippet}
 
 				<Stack gap="3">
-					<Switch bind:checked={$form.emailMention} label={m.app_notifications_pref_mention()} size="sm" />
-					<Switch bind:checked={$form.emailComment} label={m.app_notifications_pref_comment()} size="sm" />
-					<Switch bind:checked={$form.emailSystem} label={m.app_notifications_pref_system()} size="sm" />
-					<Switch bind:checked={$form.emailSuccess} label={m.app_notifications_pref_success()} size="sm" />
-					<Switch bind:checked={$form.emailSecurity} label={m.app_notifications_pref_security()} size="sm" />
-					<Switch bind:checked={$form.emailFollow} label={m.app_notifications_pref_follow()} size="sm" />
+					<Switch bind:checked={$form.emailMention} label={m.account_notifications_pref_mention()} size="sm" />
+					<Switch bind:checked={$form.emailComment} label={m.account_notifications_pref_comment()} size="sm" />
+					<Switch bind:checked={$form.emailSystem} label={m.account_notifications_pref_system()} size="sm" />
+					<Switch bind:checked={$form.emailSuccess} label={m.account_notifications_pref_success()} size="sm" />
+					<Switch bind:checked={$form.emailSecurity} label={m.account_notifications_pref_security()} size="sm" />
+					<Switch bind:checked={$form.emailFollow} label={m.account_notifications_pref_follow()} size="sm" />
 				</Stack>
 			</Card>
 
@@ -134,32 +134,32 @@ async function connectTelegram() {
 						<h3 class="text-fluid-base font-semibold">Telegram</h3>
 						{#if data.telegram}
 							<Badge variant={data.telegram.isActive ? 'success' : 'warning'}>
-								{data.telegram.isActive ? m.app_notifications_badge_connected() : m.app_notifications_badge_inactive()}
+								{data.telegram.isActive ? m.account_notifications_badge_connected() : m.account_notifications_badge_inactive()}
 							</Badge>
 						{/if}
 					</Cluster>
 					{#if data.telegram?.telegramUsername}
-						<p class="text-fluid-sm text-muted mt-1">{m.app_notifications_telegram_connected_as({ username: data.telegram.telegramUsername })}</p>
+						<p class="text-fluid-sm text-muted mt-1">{m.account_notifications_telegram_connected_as({ username: data.telegram.telegramUsername })}</p>
 					{/if}
 				{/snippet}
 
 				{#if data.telegram?.isActive}
 					<Stack gap="3">
-						<Switch bind:checked={$form.telegramMention} label={m.app_notifications_pref_mention()} size="sm" />
-						<Switch bind:checked={$form.telegramComment} label={m.app_notifications_pref_comment()} size="sm" />
-						<Switch bind:checked={$form.telegramSystem} label={m.app_notifications_pref_system()} size="sm" />
-						<Switch bind:checked={$form.telegramSecurity} label={m.app_notifications_pref_security()} size="sm" />
+						<Switch bind:checked={$form.telegramMention} label={m.account_notifications_pref_mention()} size="sm" />
+						<Switch bind:checked={$form.telegramComment} label={m.account_notifications_pref_comment()} size="sm" />
+						<Switch bind:checked={$form.telegramSystem} label={m.account_notifications_pref_system()} size="sm" />
+						<Switch bind:checked={$form.telegramSecurity} label={m.account_notifications_pref_security()} size="sm" />
 					</Stack>
 				{:else}
 					<Stack gap="3">
-						<p class="text-fluid-sm text-muted">{m.app_notifications_telegram_description()}</p>
+						<p class="text-fluid-sm text-muted">{m.account_notifications_telegram_description()}</p>
 						<div>
 							<Button type="button" variant="secondary" onclick={connectTelegram} disabled={connectingTelegram}>
-								{connectingTelegram ? m.app_notifications_telegram_generating() : m.app_notifications_telegram_connect()}
+								{connectingTelegram ? m.account_notifications_telegram_generating() : m.account_notifications_telegram_connect()}
 							</Button>
 						</div>
 						{#if telegramDeepLink}
-							<p class="text-fluid-xs text-muted">{m.app_notifications_telegram_link_opened()}</p>
+							<p class="text-fluid-xs text-muted">{m.account_notifications_telegram_link_opened()}</p>
 						{/if}
 					</Stack>
 				{/if}
@@ -172,28 +172,28 @@ async function connectTelegram() {
 						<h3 class="text-fluid-base font-semibold">Discord</h3>
 						{#if data.discord}
 							<Badge variant={data.discord.isActive ? 'success' : 'warning'}>
-								{data.discord.isActive ? m.app_notifications_badge_connected() : m.app_notifications_badge_inactive()}
+								{data.discord.isActive ? m.account_notifications_badge_connected() : m.account_notifications_badge_inactive()}
 							</Badge>
 						{/if}
 					</Cluster>
 					{#if data.discord?.discordUsername}
-						<p class="text-fluid-sm text-muted mt-1">{m.app_notifications_discord_connected_as({ username: data.discord.discordUsername })}</p>
+						<p class="text-fluid-sm text-muted mt-1">{m.account_notifications_discord_connected_as({ username: data.discord.discordUsername })}</p>
 					{/if}
 				{/snippet}
 
 				{#if data.discord?.isActive}
 					<Stack gap="3">
-						<Switch bind:checked={$form.discordMention} label={m.app_notifications_pref_mention()} size="sm" />
-						<Switch bind:checked={$form.discordComment} label={m.app_notifications_pref_comment()} size="sm" />
-						<Switch bind:checked={$form.discordSystem} label={m.app_notifications_pref_system()} size="sm" />
-						<Switch bind:checked={$form.discordSecurity} label={m.app_notifications_pref_security()} size="sm" />
+						<Switch bind:checked={$form.discordMention} label={m.account_notifications_pref_mention()} size="sm" />
+						<Switch bind:checked={$form.discordComment} label={m.account_notifications_pref_comment()} size="sm" />
+						<Switch bind:checked={$form.discordSystem} label={m.account_notifications_pref_system()} size="sm" />
+						<Switch bind:checked={$form.discordSecurity} label={m.account_notifications_pref_security()} size="sm" />
 					</Stack>
 				{:else}
 					<Stack gap="3">
-						<p class="text-fluid-sm text-muted">{m.app_notifications_discord_description()}</p>
+						<p class="text-fluid-sm text-muted">{m.account_notifications_discord_description()}</p>
 						<div>
 							<a href="/api/notifications/discord/authorize" class={buttonVariants({ variant: 'secondary' })}>
-								{m.app_notifications_discord_connect()}
+								{m.account_notifications_discord_connect()}
 							</a>
 						</div>
 					</Stack>
@@ -206,23 +206,23 @@ async function connectTelegram() {
 					<Cluster gap="3">
 						<h3 class="text-fluid-base font-semibold">Push</h3>
 						{#if pushStatus === 'on'}
-							<Badge variant="success">{m.app_notifications_badge_connected()}</Badge>
+							<Badge variant="success">{m.account_notifications_badge_connected()}</Badge>
 						{:else if pushStatus === 'denied'}
-							<Badge variant="warning">{m.app_notifications_badge_inactive()}</Badge>
+							<Badge variant="warning">{m.account_notifications_badge_inactive()}</Badge>
 						{/if}
 					</Cluster>
-					<p class="text-fluid-sm text-muted mt-1">{m.app_notifications_push_description()}</p>
+					<p class="text-fluid-sm text-muted mt-1">{m.account_notifications_push_description()}</p>
 				{/snippet}
 
 				{#if pushStatus === 'on'}
 					<Stack gap="3">
-						<Switch bind:checked={$form.pushMention} label={m.app_notifications_pref_mention()} size="sm" />
-						<Switch bind:checked={$form.pushComment} label={m.app_notifications_pref_comment()} size="sm" />
-						<Switch bind:checked={$form.pushSystem} label={m.app_notifications_pref_system()} size="sm" />
-						<Switch bind:checked={$form.pushSecurity} label={m.app_notifications_pref_security()} size="sm" />
+						<Switch bind:checked={$form.pushMention} label={m.account_notifications_pref_mention()} size="sm" />
+						<Switch bind:checked={$form.pushComment} label={m.account_notifications_pref_comment()} size="sm" />
+						<Switch bind:checked={$form.pushSystem} label={m.account_notifications_pref_system()} size="sm" />
+						<Switch bind:checked={$form.pushSecurity} label={m.account_notifications_pref_security()} size="sm" />
 						<div>
 							<Button type="button" variant="ghost" size="sm" onclick={disablePush} disabled={pushBusy}>
-								{m.app_notifications_push_disable()}
+								{m.account_notifications_push_disable()}
 							</Button>
 						</div>
 					</Stack>
@@ -230,31 +230,31 @@ async function connectTelegram() {
 					<Stack gap="3">
 						<div>
 							<Button type="button" variant="secondary" onclick={enablePush} disabled={pushBusy}>
-								{pushBusy ? m.app_notifications_push_enabling() : m.app_notifications_push_enable()}
+								{pushBusy ? m.account_notifications_push_enabling() : m.account_notifications_push_enable()}
 							</Button>
 						</div>
 					</Stack>
 				{:else if pushStatus === 'ios-needs-install'}
-					<p class="text-fluid-sm text-muted">{m.app_notifications_push_ios_install()}</p>
+					<p class="text-fluid-sm text-muted">{m.account_notifications_push_ios_install()}</p>
 				{:else if pushStatus === 'denied'}
-					<p class="text-fluid-sm text-muted">{m.app_notifications_push_denied()}</p>
+					<p class="text-fluid-sm text-muted">{m.account_notifications_push_denied()}</p>
 				{:else if pushStatus === 'unsupported'}
-					<p class="text-fluid-sm text-muted">{m.app_notifications_push_unsupported()}</p>
+					<p class="text-fluid-sm text-muted">{m.account_notifications_push_unsupported()}</p>
 				{/if}
 			</Card>
 
 			<!-- Digest Frequency -->
 			<Card>
 				{#snippet header()}
-					<h3 class="text-fluid-base font-semibold">{m.app_notifications_digest_heading()}</h3>
+					<h3 class="text-fluid-base font-semibold">{m.account_notifications_digest_heading()}</h3>
 				{/snippet}
 
 				<Stack gap="3">
 					{#each [
-						{ value: 'instant', label: m.app_notifications_digest_instant() },
-						{ value: 'daily', label: m.app_notifications_digest_daily() },
-						{ value: 'weekly', label: m.app_notifications_digest_weekly() },
-						{ value: 'never', label: m.app_notifications_digest_never() },
+						{ value: 'instant', label: m.account_notifications_digest_instant() },
+						{ value: 'daily', label: m.account_notifications_digest_daily() },
+						{ value: 'weekly', label: m.account_notifications_digest_weekly() },
+						{ value: 'never', label: m.account_notifications_digest_never() },
 					] as { value, label }}
 						<label class="radio-row">
 							<input
@@ -272,17 +272,17 @@ async function connectTelegram() {
 			<!-- Quiet Hours -->
 			<Card>
 				{#snippet header()}
-					<h3 class="text-fluid-base font-semibold">{m.app_notifications_quiet_hours_heading()}</h3>
-					<p class="text-fluid-sm text-muted mt-1">{m.app_notifications_quiet_hours_description()}</p>
+					<h3 class="text-fluid-base font-semibold">{m.account_notifications_quiet_hours_heading()}</h3>
+					<p class="text-fluid-sm text-muted mt-1">{m.account_notifications_quiet_hours_description()}</p>
 				{/snippet}
 
 				<Cluster gap="5">
 					<label class="time-field">
-						<span class="text-fluid-sm">{m.app_notifications_quiet_start()}</span>
+						<span class="text-fluid-sm">{m.account_notifications_quiet_start()}</span>
 						<Input type="time" name="quietStart" bind:value={$form.quietStart} />
 					</label>
 					<label class="time-field">
-						<span class="text-fluid-sm">{m.app_notifications_quiet_end()}</span>
+						<span class="text-fluid-sm">{m.account_notifications_quiet_end()}</span>
 						<Input type="time" name="quietEnd" bind:value={$form.quietEnd} />
 					</label>
 				</Cluster>
@@ -290,7 +290,7 @@ async function connectTelegram() {
 
 			<Cluster justify="end">
 				<Button type="submit" disabled={$submitting}>
-					{$submitting ? m.app_notifications_save_saving() : m.app_notifications_save()}
+					{$submitting ? m.account_notifications_save_saving() : m.account_notifications_save()}
 				</Button>
 			</Cluster>
 		</Stack>

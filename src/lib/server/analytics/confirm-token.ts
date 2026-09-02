@@ -28,8 +28,8 @@
  * headless browser.
  */
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { ANALYTICS_CONFIRM_TOKEN_TTL_MS } from '$lib/server/config';
 import { deriveSubkey, SUBKEY_PURPOSES } from '$lib/server/security/subkey';
+import { CONFIRM_TOKEN_TTL_MS } from './config';
 
 /** Tolerated forward drift between the issuing and verifying clock. */
 const MAX_CLOCK_SKEW_MS = 2 * 60 * 1000;
@@ -58,7 +58,7 @@ export function verifyConfirmToken(token: string, visitorId: string): boolean {
 	if (!/^\d{1,16}$/.test(issuedAt) || !/^[0-9a-f]{64}$/.test(givenMac)) return false;
 
 	const age = Date.now() - Number(issuedAt);
-	if (age > ANALYTICS_CONFIRM_TOKEN_TTL_MS) return false;
+	if (age > CONFIRM_TOKEN_TTL_MS) return false;
 	if (age < -MAX_CLOCK_SKEW_MS) return false;
 
 	return timingSafeEqual(Buffer.from(givenMac, 'hex'), Buffer.from(mac(issuedAt, visitorId), 'hex'));

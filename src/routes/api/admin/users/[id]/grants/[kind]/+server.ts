@@ -1,7 +1,7 @@
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiNoContent, apiOk } from '$lib/server/api/response';
 import { GRANT_KINDS, type GrantKind, grantCapability, revokeCapability } from '$lib/server/auth/grants';
-import { guardApiAdmin } from '$lib/server/auth/guards';
+import { guardApiAdmin } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiNoContent, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const adminGrantLimit = createLimiter('ratelimit:admin-grant', 30, '1 m');

@@ -7,7 +7,7 @@
  * partial revert could easily restore a sidebar entry that 404s. This gate is
  * the durable check that the feature stayed gone.
  *
- * Custom palettes are NOT part of this — `server/branding/palette-crud.ts` and
+ * Custom palettes are NOT part of this — `server/style/palettes.ts` and
  * `app.custom_palettes` are live, per-user, and expected to be referenced.
  */
 import { readdirSync, readFileSync } from 'node:fs';

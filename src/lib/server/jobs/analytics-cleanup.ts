@@ -1,11 +1,4 @@
 import { and, isNotNull, isNull, lt, sql } from 'drizzle-orm';
-import {
-	ANALYTICS_AGGREGATE_RETENTION_DAYS,
-	ANALYTICS_RETENTION_DAYS,
-	ANALYTICS_USER_RETENTION_DAYS,
-	BOT_HIT_RETENTION_DAYS,
-	CONSENT_RETENTION_DAYS,
-} from '$lib/server/config';
 import { db } from '$lib/server/db';
 import {
 	botHits,
@@ -16,16 +9,12 @@ import {
 	sessions,
 	userEvents,
 } from '$lib/server/db/schema/analytics';
+import { retentionCutoff } from '$lib/server/retention';
 
 /**
- * Delete expired analytics rows. Per-table retention:
- *   - events + sessions:   ANALYTICS_RETENTION_DAYS      (60d, anonymous lane)
- *   - user_events:         ANALYTICS_USER_RETENTION_DAYS (180d, authenticated lane)
- *   - consent_events:      CONSENT_RETENTION_DAYS        (~13mo, GDPR Art. 7(1))
- *   - bot_hits:            BOT_HIT_RETENTION_DAYS        (180d, no personal data)
- *   - daily_page_stats:    ANALYTICS_AGGREGATE_RETENTION_DAYS (365d, aggregates)
- *   - pairing_codes:       1h after expiry (unconsumed) / 7d after consumption
- *   - paired_admin_user_id: cleared 2h after pairedAt (hard cap)
+ * Delete expired analytics rows. Every window comes from `retention/schedule.ts`;
+ * the pairing-code grace periods below do not, because a pairing code carries its
+ * own `expires_at` — it is garbage collection, not a retention promise.
  *
  * Everything lives in ONE job on purpose. Vercel Hobby rejects any cron that
  * fires more than once a day and fails the WHOLE deployment when it sees one,
@@ -35,17 +24,11 @@ import {
  * Returns the number of deleted anonymous events.
  */
 export async function analyticsCleanup(): Promise<number> {
-	const eventCutoff = new Date();
-	eventCutoff.setDate(eventCutoff.getDate() - ANALYTICS_RETENTION_DAYS);
-
-	const userEventCutoff = new Date();
-	userEventCutoff.setDate(userEventCutoff.getDate() - ANALYTICS_USER_RETENTION_DAYS);
-
-	const consentCutoff = new Date();
-	consentCutoff.setDate(consentCutoff.getDate() - CONSENT_RETENTION_DAYS);
-
-	const botHitCutoff = new Date();
-	botHitCutoff.setDate(botHitCutoff.getDate() - BOT_HIT_RETENTION_DAYS);
+	const eventCutoff = retentionCutoff('analytics-events');
+	const sessionCutoff = retentionCutoff('analytics-sessions');
+	const userEventCutoff = retentionCutoff('analytics-user-events');
+	const consentCutoff = retentionCutoff('consent-events');
+	const botHitCutoff = retentionCutoff('bot-hits');
 
 	const pairingExpiredCutoff = new Date(Date.now() - 60 * 60 * 1000); // 1h
 	const pairingConsumedCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7d
@@ -57,7 +40,7 @@ export async function analyticsCleanup(): Promise<number> {
 		.where(lt(events.timestamp, eventCutoff));
 
 	await db.delete(events).where(lt(events.timestamp, eventCutoff));
-	await db.delete(sessions).where(lt(sessions.startedAt, eventCutoff));
+	await db.delete(sessions).where(lt(sessions.startedAt, sessionCutoff));
 	// Authenticated lane. Ages out on its own longer window; account deletion
 	// erases it immediately via FK cascade, independently of this sweep.
 	await db.delete(userEvents).where(lt(userEvents.timestamp, userEventCutoff));
@@ -74,8 +57,7 @@ export async function analyticsCleanup(): Promise<number> {
 	// months while nothing enforced it — the constant existed, the sweep did not.
 	// The column is a `date` in string mode, so the cutoff is compared as a
 	// calendar date, not a timestamp.
-	const aggregateCutoff = new Date();
-	aggregateCutoff.setDate(aggregateCutoff.getDate() - ANALYTICS_AGGREGATE_RETENTION_DAYS);
+	const aggregateCutoff = retentionCutoff('analytics-aggregates');
 	await db.delete(dailyPageStats).where(lt(dailyPageStats.date, aggregateCutoff.toISOString().slice(0, 10)));
 
 	// Pairing codes: unconsumed past expiry (with grace) OR consumed past 7d.

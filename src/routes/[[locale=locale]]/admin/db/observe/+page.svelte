@@ -16,7 +16,7 @@ import {
 	Tag,
 } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
-import type { ProviderResult, ThresholdLevel } from '$lib/server/monitoring';
+import type { DependencyResult, ThresholdLevel } from '$lib/server/monitoring';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -45,13 +45,15 @@ function thresholdToTagVariant(threshold: ThresholdLevel): 'success' | 'warning'
 	return threshold;
 }
 
-function statusToTagVariant(status: ProviderResult<unknown>['status']): 'success' | 'warning' | 'error' | 'secondary' {
+function statusToTagVariant(
+	status: DependencyResult<unknown>['status'],
+): 'success' | 'warning' | 'error' | 'secondary' {
 	if (status === 'ok') return 'success';
 	if (status === 'error') return 'error';
 	return 'secondary';
 }
 
-function statusLabel(status: ProviderResult<unknown>['status']): string {
+function statusLabel(status: DependencyResult<unknown>['status']): string {
 	if (status === 'ok') return m.admin_db_status_healthy();
 	if (status === 'error') return m.admin_db_status_error();
 	return m.admin_db_status_unavailable();

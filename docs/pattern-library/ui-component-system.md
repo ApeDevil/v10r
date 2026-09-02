@@ -6,7 +6,7 @@ category: "UI Components & Design System"
 
 # Component-first UI system (primitives/composites/layout, CVA, tokens)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 **Category:** UI Components & Design System · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
 
@@ -31,7 +31,7 @@ A layered component system — Bits UI → primitives (styled atoms) → composi
 
 ## Tests
 
-- `src/lib/components/composites/dock/dock.operations.test.ts` — Example colocated component test ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/composites/dock/dock.operations.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/composites/dock/dock.operations.test.ts))
+- `src/lib/components/desk/dock.operations.test.ts` — Example colocated component test ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.operations.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.operations.test.ts))
 
 ## Proof
 
@@ -52,4 +52,4 @@ A layered component system — Bits UI → primitives (styled atoms) → composi
 
 ---
 
-_Machine-readable record: `ui-component-system` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ui-component-system` in `pattern-library/registry.json`._

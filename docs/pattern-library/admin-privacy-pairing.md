@@ -6,7 +6,7 @@ category: "Admin & Privacy"
 
 # Cross-device debug pairing (QR + HMAC cookie)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -30,4 +30,4 @@ A short-lived, single-use pairing code and QR flow that attributes a phone's ano
 
 ---
 
-_Machine-readable record: `admin-privacy-pairing` in `mcp/patterns.registry.json`._
+_Machine-readable record: `admin-privacy-pairing` in `pattern-library/registry.json`._

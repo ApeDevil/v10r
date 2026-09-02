@@ -37,7 +37,7 @@
  * `[kind] message` error part the client already parses, and owns the final-failure cooldown.
  */
 import type { InferUIMessageChunk, LanguageModelUsage, UIMessage, UIMessageStreamWriter } from 'ai';
-import { AIError, classifyAIError } from '$lib/server/ai/errors';
+import { AiError, classifyAiError } from '$lib/server/ai/errors';
 
 /**
  * The slice of a `streamText` result this helper needs. Kept structural (rather than
@@ -83,7 +83,7 @@ export interface TurnHooks {
 
 /**
  * Error kinds worth rotating on. `unknown` is deliberately EXCLUDED: it is the catch-all bucket in
- * `classifyAIError`, so retrying it would burn a second provider's quota on a deterministic bug
+ * `classifyAiError`, so retrying it would burn a second provider's quota on a deterministic bug
  * (bad schema, serialization failure) that the next provider will hit identically.
  * `authentication` and `context_length` are excluded for the same reason.
  */
@@ -131,7 +131,7 @@ export async function streamTextIntoOpenMessage(
 			usage = await result.totalUsage;
 		} catch (err) {
 			lastError = err;
-			const { kind } = classifyAIError(err);
+			const { kind } = classifyAiError(err);
 			const willRetry =
 				visibleParts === 0 && RETRYABLE.has(kind) && (await anyEligible(attempts, i + 1, hooks.isSkipped));
 			await hooks.onAttemptFailure({ providerId: attempt.providerId, error: err, willRetry });
@@ -154,5 +154,5 @@ export async function streamTextIntoOpenMessage(
 
 	// Every attempt was skipped (all providers cooled). Nothing was written to the open message, so
 	// rethrowing lands on the caller's `onError` exactly like a final failure would.
-	throw lastError ?? new AIError('unavailable', 'No AI provider was eligible for this turn.', 'ALL_COOLED');
+	throw lastError ?? new AiError('unavailable', 'No AI provider was eligible for this turn.', 'ALL_COOLED');
 }

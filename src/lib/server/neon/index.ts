@@ -5,9 +5,9 @@
  * (operate) and the admin Mirror route. Never exposes connection strings.
  */
 
+export { fetchBranchStatus } from './branch-status';
 export { hasChildren, type ResolvedTargets, resolveTargets, TargetsError } from './branches';
 export { getBranch, getOperation, listBranches, neonConfigured, restoreBranchFromParent } from './client';
-export { fetchBranchStatus } from './monitor';
 export type {
 	NeonBranch,
 	NeonBranchStatus,

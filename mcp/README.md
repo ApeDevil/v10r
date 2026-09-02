@@ -1,8 +1,14 @@
-# v10r Pattern MCP
+# v10r Pattern MCP — the stdio transport
 
 A read-only MCP server that makes v10r's "emulate, don't clone" contract executable: coding agents query curated pattern cards — docs, code entry points, tests, showcase proof, and the invariants that must hold — instead of grepping the repo.
 
-Interactive showcase: `/showcases/mcp` — registry stats, dependency graph, container architecture, and the protocol handshake, computed live from `patterns.registry.json`. Design rationale: [docs/blueprint/architecture/pattern-mcp.md](../docs/blueprint/architecture/pattern-mcp.md).
+**This directory is a transport, not the product.** The pattern library itself lives in
+[`../pattern-library/`](../pattern-library/): `registry.json` (the records), `schema.ts`
+(their shape and validation rules), `load.ts` (disk read), `validate.ts` (the drift guard).
+The hosted HTTP transport is `src/lib/server/mcp/`, and the app reads the same registry
+through the `$patterns` alias — one record set, three readers.
+
+Interactive showcase: `/showcases/mcp` — registry stats, dependency graph, container architecture, and the protocol handshake, computed live from `registry.json`. Design rationale: [docs/blueprint/architecture/pattern-mcp.md](../docs/blueprint/architecture/pattern-mcp.md).
 
 ## How it works
 
@@ -14,14 +20,16 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 
 | File | Role |
 |---|---|
-| `patterns.registry.json` | The product: the complete two-tier pattern record set — deep emulation cards (invariants + emulation notes) and light index rows — each carrying a machine-checked `maturity` grade (`proven` ⇔ linked test/showcase + `verifiedAt`), plus the `groups`/`categories` taxonomy that orders every generated surface |
 | `server.ts` | Entry: stdio loop, dispatch, lifecycle (exits on stdin EOF / SIGTERM — no orphan containers) |
 | `protocol.ts` | JSON-RPC framing and line buffering |
-| `registry.ts` | Types, structural validation, topological sort |
 | `security.ts` | Path containment (realpath prefix check) + secret denylist + bounded excerpts |
 | `tools.ts` | The six tools |
-| `validate-registry.ts` | Drift guard: every referenced path must exist; DAG check. Wired into `bun run validate` as `mcp:validate` |
+| `snippet.ts` + `snippet-rules.json` | `validate_snippet` rule engine |
+| `public-excerpts.snapshot.json` | Generated excerpt snapshot served by the hosted transport |
 | `server.test.ts` / `smoke.ts` | `bun:test` units / spawned-subprocess handshake test |
+
+The records, their schema, and the drift guard (`bun run patterns:validate`) live in
+[`../pattern-library/`](../pattern-library/).
 
 ## Tools
 
@@ -49,14 +57,14 @@ No clone at all? The same six tools are served over HTTP at `POST https://www.v1
 ```bash
 podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun test /v10r/mcp/       # units
 podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/smoke.ts    # e2e handshake
-podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/validate-registry.ts
+podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/pattern-library/validate.ts
 ```
 
 Vitest/svelte-check don't sweep `mcp/` (tests use `bun:test`); Biome does — keep its style.
 
 ## Adding a pattern
 
-Pick a tier first. A **light** record is an index row: pointers to docs/code/showcase, empty `invariants`/`emulation_notes` (the validator rejects depth on light records). A **deep** record is a full emulation card: `invariants` and `emulation_notes` are required — curate them from the pattern's docs; they are the value the raw repo can't provide. Add the record to `patterns.registry.json` (copy a same-tier sibling's shape; `category` must be one of the root `categories[]` ids) and grade it honestly: `maturity: "proven"` needs at least one `tests`/`showcases` ref plus a `verifiedAt` date (and ideally `verifiedSha`); no proof surface yet means `"implemented"`, design-only means `"planned"`. Then run `bun run mcp:validate` — it fails on any missing path, unregistered showcase route, malformed field, tier violation, maturity/proof contradiction, or dependency cycle. Finally run `bun run patterns:build` (or the full `vr ref` chain) to regenerate the README Pattern Index and the `docs/pattern-library/` pages, and commit them with the registry change.
+Pick a tier first. A **light** record is an index row: pointers to docs/code/showcase, empty `invariants`/`emulation_notes` (the validator rejects depth on light records). A **deep** record is a full emulation card: `invariants` and `emulation_notes` are required — curate them from the pattern's docs; they are the value the raw repo can't provide. Add the record to `registry.json` (copy a same-tier sibling's shape; `category` must be one of the root `categories[]` ids) and grade it honestly: `maturity: "proven"` needs at least one `tests`/`showcases` ref plus a `verifiedAt` date (and ideally `verifiedSha`); no proof surface yet means `"implemented"`, design-only means `"planned"`. Then run `bun run patterns:validate` — it fails on any missing path, unregistered showcase route, malformed field, tier violation, maturity/proof contradiction, or dependency cycle. Finally run `bun run patterns:build` (or the full `vr ref` chain) to regenerate the README Pattern Index and the `docs/pattern-library/` pages, and commit them with the registry change.
 
 ## Also served over HTTP (read-only)
 

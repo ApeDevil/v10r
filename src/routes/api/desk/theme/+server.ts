@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiUser } from '$lib/server/auth/guards';
 import { createDeskPreset, migrateDeskTheme, saveDeskTheme } from '$lib/server/desk';
 import { CreatePresetSchema, MigrateThemeSchema, SaveThemeSchema } from '$lib/server/desk/schemas';
+import { guardApiUser } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:theme', 30, '1 m');

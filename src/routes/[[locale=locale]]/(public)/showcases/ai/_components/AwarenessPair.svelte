@@ -1,10 +1,10 @@
 <script lang="ts">
 import * as m from '$lib/paraglide/messages';
-import type { AiSurfaceId } from '$lib/types/ai-tools';
+import type { AiSurface } from '$lib/types/db-enums';
 
 // Physical size IS the encoding: strip the labels and the claim survives. The
 // asymmetry (thin route label vs. rich desk state) is design, not a parity gap.
-let { surface }: { surface: AiSurfaceId } = $props();
+let { surface }: { surface: AiSurface } = $props();
 </script>
 
 <div class="pair" data-surface={surface}>

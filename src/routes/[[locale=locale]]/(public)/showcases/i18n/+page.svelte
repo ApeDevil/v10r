@@ -70,13 +70,13 @@ const dbContent = {
 };
 
 const sections = $derived([
-	{ id: 'i18n-switcher', label: m.section_switcher() },
-	{ id: 'i18n-messages', label: m.section_messages() },
-	{ id: 'i18n-pluralization', label: m.section_pluralization() },
-	{ id: 'i18n-formatting', label: m.section_formatting() },
-	{ id: 'i18n-content-translation', label: m.section_content_translation() },
-	{ id: 'i18n-error-codes', label: m.section_error_codes() },
-	{ id: 'i18n-type-safety', label: m.section_type_safety() },
+	{ id: 'i18n-switcher', label: m.showcase_i18n_section_switcher() },
+	{ id: 'i18n-messages', label: m.showcase_i18n_section_messages() },
+	{ id: 'i18n-pluralization', label: m.showcase_i18n_section_pluralization() },
+	{ id: 'i18n-formatting', label: m.showcase_i18n_section_formatting() },
+	{ id: 'i18n-content-translation', label: m.showcase_i18n_section_content_translation() },
+	{ id: 'i18n-error-codes', label: m.showcase_i18n_section_error_codes() },
+	{ id: 'i18n-type-safety', label: m.showcase_i18n_section_type_safety() },
 ]);
 </script>
 {#key currentLocale}
@@ -97,12 +97,12 @@ const sections = $derived([
 
 	<!-- Language Switcher -->
 	<section class="demo-section" id="i18n-switcher">
-		<h2>{m.section_switcher()}</h2>
-		<p>{m.locale_strategy()}</p>
+		<h2>{m.showcase_i18n_section_switcher()}</h2>
+		<p>{m.showcase_i18n_locale_strategy()}</p>
 
 		<div class="locale-info">
 			<div class="info-row">
-				<span class="info-label">{m.current_language()}:</span>
+				<span class="info-label">{m.showcase_i18n_current_language()}:</span>
 				<span class="info-value">{LOCALE_NAMES[currentLocale]} ({currentLocale})</span>
 			</div>
 			<div class="info-row">
@@ -131,34 +131,34 @@ const sections = $derived([
 
 	<!-- Translated Messages -->
 	<section class="demo-section" id="i18n-messages">
-		<h2>{m.section_messages()}</h2>
+		<h2>{m.showcase_i18n_section_messages()}</h2>
 
 		<div class="message-demos">
 			<div class="demo-item">
-				<span class="demo-label">m.greeting(&#123; name: 'World' &#125;)</span>
-				<span class="demo-value">{m.greeting({ name: 'World' })}</span>
+				<span class="demo-label">m.showcase_i18n_greeting(&#123; name: 'World' &#125;)</span>
+				<span class="demo-value">{m.showcase_i18n_greeting({ name: 'World' })}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">m.welcome_message()</span>
-				<span class="demo-value">{m.welcome_message()}</span>
+				<span class="demo-label">m.showcase_i18n_welcome_message()</span>
+				<span class="demo-value">{m.showcase_i18n_welcome_message()}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">m.sample_text()</span>
-				<span class="demo-value">{m.sample_text()}</span>
+				<span class="demo-label">m.showcase_i18n_sample_text()</span>
+				<span class="demo-value">{m.showcase_i18n_sample_text()}</span>
 			</div>
 		</div>
 	</section>
 
 	<!-- Pluralization -->
 	<section class="demo-section" id="i18n-pluralization">
-		<h2>{m.section_pluralization()}</h2>
+		<h2>{m.showcase_i18n_section_pluralization()}</h2>
 		<p>ICU MessageFormat handles pluralization rules per language.</p>
 
 		<div class="message-demos">
 			{#each [0, 1, 2, 5, 42] as count}
 				<div class="demo-item">
-					<span class="demo-label">m.items_count(&#123; count: {count} &#125;)</span>
-					<span class="demo-value">{m.items_count({ count } as any)}</span>
+					<span class="demo-label">m.showcase_i18n_items_count(&#123; count: {count} &#125;)</span>
+					<span class="demo-value">{m.showcase_i18n_items_count({ count } as any)}</span>
 				</div>
 			{/each}
 		</div>
@@ -166,36 +166,36 @@ const sections = $derived([
 
 	<!-- Date & Number Formatting -->
 	<section class="demo-section" id="i18n-formatting">
-		<h2>{m.section_formatting()}</h2>
+		<h2>{m.showcase_i18n_section_formatting()}</h2>
 		<p>Formatting uses the browser's <code>Intl</code> API, decoupled from the translation locale.</p>
 
 		<div class="message-demos">
 			<div class="demo-item">
-				<span class="demo-label">{m.formatted_date()}</span>
+				<span class="demo-label">{m.showcase_i18n_formatted_date()}</span>
 				<span class="demo-value">{formatDate(sampleDate, currentLocale)}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">{m.formatted_date()} (long)</span>
+				<span class="demo-label">{m.showcase_i18n_formatted_date()} (long)</span>
 				<span class="demo-value">{formatDate(sampleDate, currentLocale, { dateStyle: 'full' })}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">{m.formatted_number()}</span>
+				<span class="demo-label">{m.showcase_i18n_formatted_number()}</span>
 				<span class="demo-value">{formatNumber(sampleNumber, currentLocale)}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">{m.formatted_currency()} (EUR)</span>
+				<span class="demo-label">{m.showcase_i18n_formatted_currency()} (EUR)</span>
 				<span class="demo-value">{formatCurrency(sampleCurrency, currentLocale, 'EUR')}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">{m.formatted_currency()} (USD)</span>
+				<span class="demo-label">{m.showcase_i18n_formatted_currency()} (USD)</span>
 				<span class="demo-value">{formatCurrency(sampleCurrency, currentLocale, 'USD')}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">{m.formatted_percent()}</span>
+				<span class="demo-label">{m.showcase_i18n_formatted_percent()}</span>
 				<span class="demo-value">{formatPercent(samplePercent, currentLocale)}</span>
 			</div>
 			<div class="demo-item">
-				<span class="demo-label">{m.formatted_relative()}</span>
+				<span class="demo-label">{m.showcase_i18n_formatted_relative()}</span>
 				<span class="demo-value">{formatRelative(pastDate, currentLocale)}</span>
 			</div>
 		</div>
@@ -203,7 +203,7 @@ const sections = $derived([
 
 	<!-- Database Content Translation -->
 	<section class="demo-section" id="i18n-content-translation">
-		<h2>{m.section_content_translation()}</h2>
+		<h2>{m.showcase_i18n_section_content_translation()}</h2>
 		<p>The <code>tc()</code> helper translates JSON fields from the database, falling back through: current locale → English → first available.</p>
 
 		<div class="message-demos">
@@ -220,7 +220,7 @@ const sections = $derived([
 
 	<!-- Error Codes → Localized Messages -->
 	<section class="demo-section" id="i18n-error-codes">
-		<h2>{m.section_error_codes()}</h2>
+		<h2>{m.showcase_i18n_section_error_codes()}</h2>
 		<p>Domain error <em>codes</em> resolve to localized strings via <code>errorMessage(code)</code>.</p>
 
 		<div class="message-demos">
@@ -245,8 +245,8 @@ const sections = $derived([
 
 	<!-- Type Safety -->
 	<section class="demo-section" id="i18n-type-safety">
-		<h2>{m.section_type_safety()}</h2>
-		<p>{m.type_safety_desc()}</p>
+		<h2>{m.showcase_i18n_section_type_safety()}</h2>
+		<p>{m.showcase_i18n_type_safety_desc()}</p>
 	</section>
 
 	<BackLink href="/showcases" label="Showcases" />

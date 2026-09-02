@@ -2,11 +2,11 @@
  * Projection of the pattern registry for the /docs/pattern-library section
  * index — the catalog page every visitor sees. Registry order is preserved
  * (groups → categories → records) and empty categories/groups are omitted, so
- * the page always mirrors `mcp/patterns.registry.json` with zero staleness:
+ * the page always mirrors `pattern-library/registry.json` with zero staleness:
  * unlike the generated per-pattern markdown pages, the catalog needs no
  * `patterns:build` run to be current.
  */
-import { REGISTRY, type Registry } from '../mcp/patterns/data';
+import { REGISTRY, type Registry } from './registry';
 
 export interface CatalogPattern {
 	id: string;

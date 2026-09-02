@@ -1,4 +1,4 @@
-import { listCustomPalettes } from '$lib/server/branding/palette-crud';
+import { listCustomPalettes } from '$lib/server/style';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

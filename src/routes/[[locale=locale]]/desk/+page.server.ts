@@ -3,7 +3,7 @@ import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
 import { cancelMyPendingRequest, createGrantRequest, GrantRequestPendingError } from '$lib/server/auth/grant-requests';
-import { requireAuth } from '$lib/server/auth/guards';
+import { requireAuth } from '$lib/server/http/guards';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = () => ({ title: 'Desk' });

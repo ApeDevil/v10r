@@ -6,7 +6,7 @@ category: "Anti-Abuse"
 
 # Rate limiting (sliding window, fail-closed)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -23,7 +23,7 @@ A sliding-window rate limiter factory backed by Upstash Redis that produces per-
 ## Code
 
 - `src/lib/server/abuse/rate-limit/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/abuse/rate-limit) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/abuse/rate-limit))
-- `src/lib/server/api/rate-limit.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/api/rate-limit.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/api/rate-limit.ts))
+- `src/lib/server/http/rate-limit.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/rate-limit.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/rate-limit.ts))
 
 ## Proof
 
@@ -31,4 +31,4 @@ A sliding-window rate limiter factory backed by Upstash Redis that produces per-
 
 ---
 
-_Machine-readable record: `anti-abuse-rate-limiting` in `mcp/patterns.registry.json`._
+_Machine-readable record: `anti-abuse-rate-limiting` in `pattern-library/registry.json`._

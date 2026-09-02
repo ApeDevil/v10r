@@ -6,7 +6,7 @@ category: "AI"
 
 # Graph RAG pipeline (three tiers, RRF fusion)
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -22,8 +22,8 @@ Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph travers
 
 ## Code
 
-- `src/lib/server/rawrag/tiers/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/rawrag/tiers) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/rawrag/tiers))
-- `src/lib/server/graph/rag/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/graph/rag) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/graph/rag))
+- `src/lib/server/retrieval/tiers/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/retrieval/tiers) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/retrieval/tiers))
+- `src/lib/server/graph/retrieval/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/graph/retrieval) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/graph/retrieval))
 
 ## Proof
 
@@ -31,4 +31,4 @@ Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph travers
 
 ---
 
-_Machine-readable record: `ai-graph-rag` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ai-graph-rag` in `pattern-library/registry.json`._

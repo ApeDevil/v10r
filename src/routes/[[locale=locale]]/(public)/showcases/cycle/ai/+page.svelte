@@ -3,12 +3,12 @@ import type { ActionResult } from '@sveltejs/kit';
 import { enhance } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
 import { Alert, Card, FormField } from '$lib/components/composites';
-import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/cycle';
-import { createCycleState } from '$lib/components/cycle/cycle-state.svelte';
-import type { CycleTrace } from '$lib/components/cycle/types';
 import { Stack } from '$lib/components/layout';
 import { Button, Input, Select, Spinner } from '$lib/components/primitives';
+import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/showcases/cycle';
+import { createCycleState } from '$lib/components/showcases/cycle/cycle.state.svelte';
 import * as m from '$lib/paraglide/messages';
+import type { CycleTrace } from '$lib/showcases/cycle/types';
 
 const cycle = createCycleState('ai');
 let submitting = $state(false);
@@ -64,7 +64,7 @@ function handleSubmit() {
 		{#snippet header()}
 			<h2 class="text-fluid-lg font-semibold">{m.showcase_cycle_ai_card_title()}</h2>
 			<p class="text-fluid-sm text-muted">
-				Watch the full RAG lifecycle: embed → retrieve → rank → context → generate → stream.
+				Watch the full retrieval lifecycle: embed → retrieve → rank → context → generate → stream.
 				<code>generate</code> typically dominates the waterfall — that's the teaching moment.
 			</p>
 		{/snippet}

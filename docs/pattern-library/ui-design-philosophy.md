@@ -6,7 +6,7 @@ category: "UI Components & Design System"
 
 # Design philosophy & three-tier theming
 
-> Generated from `mcp/patterns.registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
@@ -32,4 +32,4 @@ Five content-first, accessibility-driven design principles paired with a three-t
 
 ---
 
-_Machine-readable record: `ui-design-philosophy` in `mcp/patterns.registry.json`._
+_Machine-readable record: `ui-design-philosophy` in `pattern-library/registry.json`._

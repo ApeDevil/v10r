@@ -47,16 +47,16 @@ async function explain(label: string, query: string) {
 await probe('CORPUS SIZE (daty P0 scaling gate)', async () => {
 	const counts = (await sql.query(`
 		SELECT
-			(SELECT count(*) FROM rag.chunk) AS chunks,
-			(SELECT count(*) FROM rag.chunk WHERE embedding IS NOT NULL) AS chunks_embedded,
-			(SELECT count(*) FROM rag.document) AS documents,
-			(SELECT count(*) FROM rag.document WHERE status='ready' AND deleted_at IS NULL) AS docs_ready,
-			(SELECT count(DISTINCT user_id) FROM rag.document) AS distinct_owners
+			(SELECT count(*) FROM retrieval.chunk) AS chunks,
+			(SELECT count(*) FROM retrieval.chunk WHERE embedding IS NOT NULL) AS chunks_embedded,
+			(SELECT count(*) FROM retrieval.document) AS documents,
+			(SELECT count(*) FROM retrieval.document WHERE status='ready' AND deleted_at IS NULL) AS docs_ready,
+			(SELECT count(DISTINCT user_id) FROM retrieval.document) AS distinct_owners
 	`)) as Array<Record<string, number>>;
 	console.table(counts);
 	const byOwner = (await sql.query(`
 		SELECT d.user_id, count(c.id) AS chunks
-		FROM rag.chunk c JOIN rag.document d ON d.id = c.document_id
+		FROM retrieval.chunk c JOIN retrieval.document d ON d.id = c.document_id
 		GROUP BY d.user_id ORDER BY chunks DESC LIMIT 10
 	`)) as Array<Record<string, unknown>>;
 	console.log('Top owners by chunk count:');
@@ -78,10 +78,10 @@ await probe('HNSW INDEX + iterative_scan GUC (daty P0)', async () => {
 });
 
 await probe('TIER-1 VECTOR QUERY — chunk-direct form (daty P0 fix)', async () => {
-	// Mirrors the rewritten rawrag/tiers/contextual.ts: filter chunk.user_id directly
+	// Mirrors the rewritten retrieval/tiers/contextual.ts: filter chunk.user_id directly
 	// (no JOIN), so the HNSW index is usable. Want: Index Scan, not Seq Scan + Sort.
 	const owners = (await sql.query(
-		`SELECT d.user_id, count(c.id) AS n FROM rag.chunk c JOIN rag.document d ON d.id=c.document_id
+		`SELECT d.user_id, count(c.id) AS n FROM retrieval.chunk c JOIN retrieval.document d ON d.id=c.document_id
 		 GROUP BY d.user_id ORDER BY n DESC`,
 	)) as Array<{ user_id: string; n: number }>;
 	const busiest = owners[0]?.user_id;
@@ -94,7 +94,7 @@ await probe('TIER-1 VECTOR QUERY — chunk-direct form (daty P0 fix)', async () 
 		await explain(
 			`chunk-direct, owner=${label}`,
 			`SELECT c.id, c.embedding <=> '${ZERO_VEC}'::vector AS distance
-			 FROM rag.chunk c
+			 FROM retrieval.chunk c
 			 WHERE c.user_id = '${owner}' AND c.embedding IS NOT NULL
 			 ORDER BY c.embedding <=> '${ZERO_VEC}'::vector LIMIT 5`,
 		);

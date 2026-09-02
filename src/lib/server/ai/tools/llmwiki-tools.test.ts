@@ -1,5 +1,5 @@
 /**
- * Unit tests for the llmwiki + rawrag AI tools.
+ * Unit tests for the llmwiki + retrieval AI tools.
  * Exercises: user-scoping (closure is respected, not forged),
  * drilled-chunk sink wiring, input validation, and pointer limits.
  */
@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('$lib/server/db', () => ({ db: {} }));
 
 const fetchChunksByIds = vi.fn();
-vi.mock('$lib/server/rawrag/queries', () => ({
+vi.mock('$lib/server/retrieval/queries', () => ({
 	fetchChunksByIds: (...args: unknown[]) => fetchChunksByIds(...args),
 }));
 
@@ -20,7 +20,7 @@ vi.mock('$lib/server/llmwiki/queries', () => ({
 	getOverview: vi.fn(async () => null),
 }));
 
-const { createGetRawragChunksTool } = await import('./get-rawrag-chunks');
+const { createGetRetrievalChunksTool } = await import('./get-source-chunks');
 const { createGetLlmwikiPagesTool } = await import('./get-llmwiki-pages');
 
 const USER = 'usr_aay';
@@ -29,7 +29,7 @@ function execCtx() {
 	return { toolCallId: 'tc', messages: [], abortSignal: new AbortController().signal };
 }
 
-describe('get_rawrag_chunks tool', () => {
+describe('get_source_chunks tool', () => {
 	// Reset queued mockResolvedValueOnce between tests so unused queues don't
 	// bleed into later tests that DO consume them.
 	beforeEach(() => {
@@ -38,7 +38,7 @@ describe('get_rawrag_chunks tool', () => {
 	});
 
 	it('rejects empty ids array (without touching fetchChunksByIds)', async () => {
-		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
+		const tool = createGetRetrievalChunksTool(USER).get_source_chunks;
 		const result = await tool.execute?.({ ids: [] }, execCtx());
 		expect((result as { error?: string }).error).toBeDefined();
 		expect(fetchChunksByIds).not.toHaveBeenCalled();
@@ -46,7 +46,7 @@ describe('get_rawrag_chunks tool', () => {
 
 	it('passes the closure userId to fetchChunksByIds (not a model-supplied one)', async () => {
 		fetchChunksByIds.mockResolvedValueOnce(new Map([['chk_1', { chunkId: 'chk_1' }]]));
-		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
+		const tool = createGetRetrievalChunksTool(USER).get_source_chunks;
 		await tool.execute?.({ ids: ['chk_1'] }, execCtx());
 		expect(fetchChunksByIds).toHaveBeenCalledWith(['chk_1'], USER);
 	});
@@ -59,14 +59,14 @@ describe('get_rawrag_chunks tool', () => {
 			]),
 		);
 		const recorded: string[] = [];
-		const tool = createGetRawragChunksTool(USER, { record: (ids) => recorded.push(...ids) }).get_rawrag_chunks;
+		const tool = createGetRetrievalChunksTool(USER, { record: (ids) => recorded.push(...ids) }).get_source_chunks;
 		await tool.execute?.({ ids: ['chk_a', 'chk_b'] }, execCtx());
 		expect(recorded.sort()).toEqual(['chk_a', 'chk_b']);
 	});
 
-	it('caps ids to MAX_RAWRAG_TOOL_IDS', async () => {
+	it('caps ids to MAX_SOURCE_CHUNK_TOOL_IDS', async () => {
 		fetchChunksByIds.mockResolvedValueOnce(new Map());
-		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
+		const tool = createGetRetrievalChunksTool(USER).get_source_chunks;
 		const manyIds = Array.from({ length: 30 }, (_, i) => `chk_${i}`);
 		await tool.execute?.({ ids: manyIds }, execCtx());
 		const [idsArg] = fetchChunksByIds.mock.calls[0];
@@ -77,7 +77,7 @@ describe('get_rawrag_chunks tool', () => {
 		fetchChunksByIds.mockResolvedValueOnce(
 			new Map([['chk_a', { chunkId: 'chk_a', documentId: 'd', documentTitle: 'x', content: '' }]]),
 		);
-		const tool = createGetRawragChunksTool(USER).get_rawrag_chunks;
+		const tool = createGetRetrievalChunksTool(USER).get_source_chunks;
 		const result = (await tool.execute?.({ ids: ['chk_a', 'chk_missing'] }, execCtx())) as {
 			chunks: unknown[];
 			missing: string[];

@@ -2,13 +2,13 @@ import { env } from '$env/dynamic/private';
 import {
 	computePercentage,
 	computeThreshold,
+	type DependencyResult,
 	FREE_TIER_LIMITS,
-	type ProviderResult,
 	sanitizeError,
 	type UpstashMetrics,
 } from './index';
 
-export async function fetchUpstashMetrics(): Promise<ProviderResult<UpstashMetrics>> {
+export async function fetchUpstashMetrics(): Promise<DependencyResult<UpstashMetrics>> {
 	const { UPSTASH_MGMT_API_KEY, UPSTASH_EMAIL, UPSTASH_DB_ID } = env;
 
 	if (!UPSTASH_MGMT_API_KEY || !UPSTASH_EMAIL || !UPSTASH_DB_ID) {

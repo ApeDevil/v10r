@@ -24,7 +24,7 @@ vi.mock('$lib/server/db/ai/queries', () => ({
 	getConversation: vi.fn(),
 }));
 
-vi.mock('$lib/server/db/ai/limits', () => ({
+vi.mock('./conversation-quota', () => ({
 	checkConversationLimit: vi.fn(() => null),
 }));
 
@@ -45,7 +45,7 @@ vi.mock('$lib/server/ai/provider-usage', () => ({
 	incrEmbeddingCalls: vi.fn(),
 }));
 
-vi.mock('$lib/server/rawrag', () => ({
+vi.mock('$lib/server/retrieval', () => ({
 	retrieve: vi.fn(),
 	formatContextForPrompt: vi.fn(),
 }));
@@ -79,16 +79,16 @@ vi.mock('$lib/server/llmwiki/wiki-format', () => ({
 }));
 
 vi.mock('$lib/server/llmwiki/config', () => ({
-	MAX_RAWRAG_TOOL_CALLS_PER_TURN: 3,
+	MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN: 3,
 }));
 
 vi.mock('$lib/server/ai/errors', () => ({
-	classifyAIError: vi.fn(() => ({ kind: 'unknown', message: 'Unknown error' })),
+	classifyAiError: vi.fn(() => ({ kind: 'unknown', message: 'Unknown error' })),
 	aiErrorToStatus: vi.fn(() => 500),
-	safeAIMessage: vi.fn((kind: string) => `Error: ${kind}`),
+	safeAiMessage: vi.fn((kind: string) => `Error: ${kind}`),
 	// `_shared/streaming-turn` (imported transitively) constructs this for the
 	// "every provider cooled" path — the mock must expose it or the import throws.
-	AIError: class AIError extends Error {
+	AiError: class AiError extends Error {
 		constructor(
 			public readonly kind: string,
 			message: string,
@@ -136,7 +136,7 @@ const { getMessageText, windowMessages, escapeXmlAttr, buildSystemPrompt } = awa
 const { SYSTEM_PROMPT, DESK_SYSTEM_PROMPT } = await import('./config');
 const mutations = await import('$lib/server/db/ai/mutations');
 const queries = await import('$lib/server/db/ai/queries');
-const limits = await import('$lib/server/db/ai/limits');
+const limits = await import('./conversation-quota');
 const providers = await import('$lib/server/ai');
 const providerRegistry = await import('$lib/server/ai/providers');
 const { DbError } = await import('$lib/server/db/errors');
@@ -526,7 +526,7 @@ describe('orchestrateChat', () => {
 	});
 
 	// Error hygiene: a DB outage inside the orchestrator used to be laundered through
-	// `classifyAIError` (whose substring rules read 'rate'/'token' out of Postgres messages),
+	// `classifyAiError` (whose substring rules read 'rate'/'token' out of Postgres messages),
 	// cooling a healthy provider and burning a fallback turn on something no model can fix.
 	it('surfaces a DbError as a DB envelope — no AI classification, no cooldown', async () => {
 		getActiveProvider.mockReturnValue({ getInstance: () => ({}) } as never);

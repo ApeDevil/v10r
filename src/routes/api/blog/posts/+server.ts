@@ -1,17 +1,14 @@
 import * as v from 'valibot';
-import { createLimiter, rateLimitResponse } from '$lib/server/api/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/api/response';
-import { guardApiBlogAuthor } from '$lib/server/auth/guards';
 import { createPost, isSlugTaken, listPosts } from '$lib/server/blog';
+import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
 import { CreatePostSchema } from '$lib/server/blog/schemas';
-import {
-	BLOG_WRITE_RATE_LIMIT_MAX,
-	BLOG_WRITE_RATE_LIMIT_PREFIX,
-	BLOG_WRITE_RATE_LIMIT_WINDOW,
-} from '$lib/server/config';
+import { guardApiBlogAuthor } from '$lib/server/http/guards';
+import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import type { PostStatus } from '$lib/types/db-enums';
 import type { RequestHandler } from './$types';
 
-const ratelimit = createLimiter(BLOG_WRITE_RATE_LIMIT_PREFIX, BLOG_WRITE_RATE_LIMIT_MAX, BLOG_WRITE_RATE_LIMIT_WINDOW);
+const ratelimit = createLimiter(WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);
 
 /** List posts for current author (all statuses). */
 export const GET: RequestHandler = async ({ url, locals }) => {
@@ -20,7 +17,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 	const { user } = guard;
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const status = url.searchParams.get('status') as 'draft' | 'published' | 'archived' | undefined;
+	const status = url.searchParams.get('status') as PostStatus | undefined;
 	const validStatuses = ['draft', 'published', 'archived'];
 
 	const result = await listPosts({

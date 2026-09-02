@@ -92,10 +92,8 @@ Dev dependencies (`svelte-adapter-bun` is not installed until the container targ
   "framework": "sveltekit",
   "regions": ["iad1"],
   "crons": [
-    {
-      "path": "/api/cron/session-cleanup",
-      "schedule": "0 3 * * *"
-    }
+    { "path": "/api/cron/due", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" }
   ]
 }
 ```
@@ -183,10 +181,8 @@ Same as Node.js deployment, plus one addition to `vercel.json`:
   "bunVersion": "1.x",
   "regions": ["iad1"],
   "crons": [
-    {
-      "path": "/api/cron/session-cleanup",
-      "schedule": "0 3 * * *"
-    }
+    { "path": "/api/cron/due", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" }
   ]
 }
 ```
@@ -415,17 +411,17 @@ Recurring background work runs differently per platform. The same job registry s
 
 | Platform | Trigger | Entry point |
 |----------|---------|-------------|
-| Vercel | HTTP cron via `vercel.json` | `GET /api/cron/[job]` |
+| Vercel | HTTP cron via `vercel.json` | `GET /api/cron/due` once a day (everything due, in registry order); `GET /api/cron/[job]` for `standalone` jobs |
 | Container | `setInterval` in `hooks.server.ts` | Direct function call |
 
 **Platform detection** — `src/lib/server/platform/index.ts` reads `$env/dynamic/private`. If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` map to persistent platforms (`fly`, `railway`). Otherwise it falls through to the default `{ id: 'container', persistent: true }` and the scheduler starts — persistence is the default, not driven by `CONTAINER`.
 
-**Job registry** — `src/lib/server/jobs/index.ts` maps slugs to `execute()` functions. Both trigger paths call the same registry.
+**Job registry** — `src/lib/server/jobs/index.ts` maps slugs to `execute()` functions plus a `cadence`. Both trigger paths call the same registry; `jobsDueOn(date)` is what the daily sweep runs.
 
 ```typescript
 // src/lib/server/jobs/index.ts
 export const jobs: Record<string, Job> = {
-  'session-cleanup': { execute: sessionCleanup },
+  'session-cleanup': { execute: sessionCleanup, cadence: 'daily' },
 };
 ```
 
@@ -448,18 +444,18 @@ export async function myJob(): Promise<number> {
 import { myJob } from './my-job';
 
 export const jobs: Record<string, Job> = {
-  'session-cleanup': { execute: sessionCleanup },
-  'my-job': { execute: myJob },           // add this line
+  'session-cleanup': { execute: sessionCleanup, cadence: 'daily' },
+  'my-job': { execute: myJob, cadence: 'daily' },   // add this line — position = run order
 };
 ```
 
-3. Add a Vercel cron entry (Vercel only):
+3. Nothing else for Vercel: the daily `/api/cron/due` sweep picks it up. Only a job that is too slow for the sweep (external fetches measured in tens of seconds) gets `standalone: true` **and** its own entry:
 
 ```json
 {
   "crons": [
-    { "path": "/api/cron/session-cleanup", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/my-job", "schedule": "0 4 * * *" }
+    { "path": "/api/cron/due", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/my-slow-job", "schedule": "0 5 * * *" }
   ]
 }
 ```

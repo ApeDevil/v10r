@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { DESK_TOOL_SCOPES } from '$lib/types/ai-tools';
 
 const MessageRole = v.picklist(['user', 'assistant']);
 
@@ -53,7 +54,7 @@ const PanelContextEntry = v.object({
 	tokenEstimate: v.optional(v.number()),
 });
 
-const ToolScope = v.picklist(['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask']);
+const ToolScope = v.picklist(DESK_TOOL_SCOPES);
 
 const DeskLayoutEntry = v.object({
 	panelId: v.string(),

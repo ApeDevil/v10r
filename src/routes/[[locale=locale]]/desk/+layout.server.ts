@@ -1,8 +1,9 @@
 import { getMyPendingRequest } from '$lib/server/auth/grant-requests';
 import { consumePendingGrantNotifications, GRANT_KINDS, type GrantKind, hasGrant } from '$lib/server/auth/grants';
-import { requireAuth } from '$lib/server/auth/guards';
 import { getDeskTheme, listDeskPresets } from '$lib/server/db/desk/theme-queries';
 import { getActiveWorkspaceId, listWorkspaces } from '$lib/server/db/desk/workspace-queries';
+import { requireAuth } from '$lib/server/http/guards';
+import { DESK_TOOL_SCOPES, type DeskToolScope } from '$lib/types/ai-tools';
 import type { LayoutServerLoad } from './$types';
 
 /**
@@ -13,14 +14,14 @@ import type { LayoutServerLoad } from './$types';
  * ceiling so users can't toggle on a scope the server will later reject.
  */
 export interface DeskGovernorConfig {
-	permittedScopes: Array<'desk:read' | 'desk:write' | 'desk:create' | 'desk:delete'>;
+	permittedScopes: DeskToolScope[];
 	riskTier: 'low' | 'medium' | 'high';
 	dailyToolBudget: number | null;
 }
 
 function resolveGovernorConfig(_userId: string): DeskGovernorConfig {
 	return {
-		permittedScopes: ['desk:read', 'desk:write', 'desk:create', 'desk:delete'],
+		permittedScopes: [...DESK_TOOL_SCOPES],
 		riskTier: 'medium',
 		dailyToolBudget: null,
 	};

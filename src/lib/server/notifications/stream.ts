@@ -24,8 +24,8 @@
  * `id:` + `Last-Event-ID` is not built.
  */
 import { redis } from '$lib/server/cache';
-import { SSE_MAX_PER_USER } from '$lib/server/config';
 import { platform } from '$lib/server/platform';
+import { SSE_MAX_PER_USER } from './config';
 
 type StreamController = ReadableStreamDefaultController<Uint8Array>;
 
@@ -94,7 +94,7 @@ export function enqueueLocal(userId: string, payload: Uint8Array): void {
  * wherever they are being held.
  *
  * A publish failure is logged and degraded to a local enqueue — it must never
- * propagate, because the caller is `NotificationService.send`, and losing a
+ * propagate, because the caller is `sendNotification`, and losing a
  * live-update frame is not a reason to fail creating the notification.
  */
 export async function notifyUser(userId: string, data: Record<string, unknown>): Promise<void> {

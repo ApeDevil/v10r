@@ -32,8 +32,8 @@ export function onThemeChange(fn: Listener): () => void {
 	};
 }
 
-/** Read a single CSS custom property value (e.g., getCSSVar('chart-1') reads --chart-1) */
-export function getCSSVar(token: string): string {
+/** Read a single CSS custom property value (e.g., getCssVar('chart-1') reads --chart-1) */
+export function getCssVar(token: string): string {
 	if (typeof document === 'undefined') return '#000';
 	return getComputedStyle(document.documentElement).getPropertyValue(`--${token}`).trim();
 }
@@ -41,14 +41,14 @@ export function getCSSVar(token: string): string {
 /** Get the 8-color chart palette from CSS custom properties */
 export function getVizPalette(): string[] {
 	return [
-		getCSSVar('chart-1'),
-		getCSSVar('chart-2'),
-		getCSSVar('chart-3'),
-		getCSSVar('chart-4'),
-		getCSSVar('chart-5'),
-		getCSSVar('chart-6'),
-		getCSSVar('chart-7'),
-		getCSSVar('chart-8'),
+		getCssVar('chart-1'),
+		getCssVar('chart-2'),
+		getCssVar('chart-3'),
+		getCssVar('chart-4'),
+		getCssVar('chart-5'),
+		getCssVar('chart-6'),
+		getCssVar('chart-7'),
+		getCssVar('chart-8'),
 	];
 }
 
@@ -149,10 +149,10 @@ export function cssColorToRgb(color: string, fallback: string): [number, number,
 /** Get chart infrastructure colors */
 export function getChartInfraColors() {
 	return {
-		grid: getCSSVar('chart-grid'),
-		axis: getCSSVar('chart-axis'),
-		label: getCSSVar('chart-label'),
-		bg: getCSSVar('chart-bg'),
-		tooltipBg: getCSSVar('chart-tooltip-bg'),
+		grid: getCssVar('chart-grid'),
+		axis: getCssVar('chart-axis'),
+		label: getCssVar('chart-label'),
+		bg: getCssVar('chart-bg'),
+		tooltipBg: getCssVar('chart-tooltip-bg'),
 	};
 }

@@ -8,9 +8,9 @@ import type { PageData } from './$types';
 let { data }: { data: PageData } = $props();
 
 const LANE_LABEL: Record<string, () => string> = {
-	prod: m.perf_lane_prod,
-	dev: m.perf_lane_dev,
-	unknown: m.perf_lane_unknown,
+	prod: m.perf_origin_prod,
+	dev: m.perf_origin_dev,
+	unknown: m.perf_origin_unknown,
 };
 
 const DEV_TARGET = 'nav.flex-1.overflow-y-auto.p-2.s-Xv7_7mcdkQaC.scrollbar-nav';
@@ -53,11 +53,11 @@ const delta = $derived(
 
 			<Stack gap="2">
 				<div class="sample">
-					<span class="sample-tag dev">{m.perf_lane_dev()}</span>
+					<span class="sample-tag dev">{m.perf_origin_dev()}</span>
 					<code>{DEV_TARGET}</code>
 				</div>
 				<div class="sample">
-					<span class="sample-tag prod">{m.perf_lane_prod()}</span>
+					<span class="sample-tag prod">{m.perf_origin_prod()}</span>
 					<code>{PROD_TARGET}</code>
 				</div>
 			</Stack>
@@ -73,19 +73,19 @@ const delta = $derived(
 				<p class="text-muted text-fluid-sm">{m.showcase_obs_honesty_live_desc()}</p>
 			</Stack>
 
-			{#if data.lanes.total === 0}
+			{#if data.origins.total === 0}
 				<p class="text-muted text-fluid-sm">{m.perf_empty()}</p>
 			{:else}
-				<div class="lane-strip" role="img" aria-label={m.admin_perf_lane_share({ pct: String(data.lanes.prodShare) })}>
-					{#each data.lanes.census as row (row.lane)}
-						<div class="lane-seg lane-{row.lane}" style="flex-grow: {row.samples}"></div>
+				<div class="origin-strip" role="img" aria-label={m.admin_perf_origin_share({ pct: String(data.origins.prodShare) })}>
+					{#each data.origins.census as row (row.origin)}
+						<div class="origin-seg origin-{row.origin}" style="flex-grow: {row.samples}"></div>
 					{/each}
 				</div>
 				<Cluster gap="4" wrap>
-					{#each data.lanes.census as row (row.lane)}
-						<span class="lane-key">
-							<span class="lane-dot lane-{row.lane}" aria-hidden="true"></span>
-							{LANE_LABEL[row.lane]?.() ?? row.lane}
+					{#each data.origins.census as row (row.origin)}
+						<span class="origin-key">
+							<span class="origin-dot origin-{row.origin}" aria-hidden="true"></span>
+							{LANE_LABEL[row.origin]?.() ?? row.origin}
 							<strong>{row.samples}</strong>
 							<span class="text-muted">({m.perf_sessions({ count: row.sessions })})</span>
 						</span>
@@ -178,7 +178,7 @@ const delta = $derived(
 		color: var(--color-success);
 	}
 
-	.lane-strip {
+	.origin-strip {
 		display: flex;
 		height: var(--spacing-2);
 		border-radius: var(--radius-sm);
@@ -186,30 +186,30 @@ const delta = $derived(
 		background: var(--color-surface-2);
 	}
 
-	.lane-seg {
+	.origin-seg {
 		min-width: 2px;
 	}
 
-	.lane-dot {
+	.origin-dot {
 		display: inline-block;
 		width: 0.6rem;
 		height: 0.6rem;
 		border-radius: 50%;
 	}
 
-	.lane-prod {
+	.origin-prod {
 		background: var(--color-success);
 	}
 
-	.lane-dev {
+	.origin-dev {
 		background: var(--color-warning);
 	}
 
-	.lane-unknown {
+	.origin-unknown {
 		background: var(--color-muted);
 	}
 
-	.lane-key {
+	.origin-key {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--spacing-2);
