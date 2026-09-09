@@ -2,6 +2,7 @@
  * Token encryption — AES-256-GCM via Web Crypto API.
  * Storage format: base64(nonce):base64(ciphertext)
  */
+import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 
 /** Obvious non-secrets that must never reach production as a real key. */
@@ -13,10 +14,11 @@ const DUMMY_KEY_PATTERNS = [/^0+$/, /^(?:de)?adbeef/i, /^64-char/i, /^changeme/i
  * `getKey()` only throws when something is actually encrypted, so a misconfigured
  * deployment looked healthy until the first Discord link — and a placeholder key
  * would have "worked" indefinitely while providing no confidentiality at all.
- * Mirrors abuse/config.ts's assertProductionConfig().
+ * Mirrors abuse/config.ts's assertProductionConfig(), including its `dev` gate: an env
+ * var can arrive wrong in the direction that skips the check, a build-mode constant cannot.
  */
 function assertProductionConfig(): void {
-	if (process.env.NODE_ENV !== 'production') return;
+	if (dev) return;
 	const key = env.ENCRYPTION_KEY;
 	if (!key || key.length !== 64) {
 		throw new Error('ENCRYPTION_KEY must be a 64-character hex string (32 bytes) in production.');

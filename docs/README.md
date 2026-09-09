@@ -43,6 +43,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [quick-search/](./blueprint/quick-search/) | Two-lane search, command palette, blog FTS |
 | [security/](./blueprint/security/) | Control topology, the two admin planes, threat model, static-scan gate tests |
 | [testing/](./blueprint/testing/) | Vitest + Claude Chrome extension testing infrastructure |
+| [velocity/](./blueprint/velocity/) | Removing latency: optimistic mutation, preloading, virtualization, cache tiers + SWR + singleflight, deferred tails, bundle quarantine, resilience and deadlines, latency tracing, query budgets, scenario harness, region locality |
 
 ## Stack Areas
 
@@ -55,7 +56,7 @@ Every `stack/` subdirectory, one line each. The per-technology file map lives in
 | [data/](./stack/data/) | PostgreSQL (Neon), Neo4j, Drizzle, R2, Redis |
 | [auth/](./stack/auth/) | Better Auth |
 | [forms/](./stack/forms/) | Valibot, Superforms |
-| [quality/](./stack/quality/) | Biome |
+| [quality/](./stack/quality/) | Biome, performance measurement (field vs lab, targets vs ratchets) |
 | [i18n/](./stack/i18n/) | Paraglide JS |
 | [ops/](./stack/ops/) | Deployment, dev CLI, logging, caching |
 | [ai/](./stack/ai/) | Vercel AI SDK |

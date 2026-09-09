@@ -24,6 +24,7 @@ import { DATACENTER_RANGE_FEEDS } from '$lib/server/analytics/datacenter-ranges'
 import { db } from '$lib/server/db';
 import { botIpRanges } from '$lib/server/db/schema/analytics/bot-hits';
 import { datacenterIpRanges } from '$lib/server/db/schema/analytics/dc-ranges';
+import { type Deadline, startDeadline } from '$lib/server/http/deadline';
 
 /** Generous but finite — these are small static documents on healthy CDNs. */
 const FETCH_TIMEOUT_MS = 10_000;
@@ -36,29 +37,58 @@ const FETCH_TIMEOUT_MS = 10_000;
 const DC_FETCH_TIMEOUT_MS = 30_000;
 const DC_INSERT_CHUNK = 5_000;
 
-async function fetchPrefixes(url: string): Promise<string[]> {
-	const response = await fetch(url, {
-		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-		headers: { accept: 'application/json' },
+/**
+ * Total budget for one run, under the cron route's `maxDuration: 60`.
+ *
+ * The per-fetch timeouts above bound one document; nothing bounded the SUM of them,
+ * and ten feeds at 10–30s each is a worst case comfortably past sixty seconds. What
+ * happened then was not a timeout but a kill: the platform ends the function, the
+ * sources fetched so far are already committed, and the ones that were not appear
+ * nowhere — no failure, no log line, just a job that quietly stopped doing half its
+ * work. Bounding the whole run turns that into the outcome this file already knows
+ * how to produce: the reachable sources refresh, the rest keep their previous rows,
+ * and the runner is told which ones and why.
+ */
+const REFRESH_BUDGET_MS = 50_000;
+
+/**
+ * Budget held back from every fetch for the writes that follow them.
+ *
+ * A run that spent its last millisecond on the final document would have nothing left
+ * to store it with, which is the one way to make bounding the run worse than not
+ * bounding it.
+ */
+const WRITE_RESERVE_MS = 10_000;
+
+async function fetchPrefixes(url: string, deadline: Deadline): Promise<string[]> {
+	// Parsing lives inside the budget too: the timeout only covers the response
+	// HEADERS, and a megabyte body arriving one slow chunk at a time is unbounded
+	// otherwise. The signal aborts the stream, not just the connection.
+	return deadline.child(FETCH_TIMEOUT_MS, { reserveMs: WRITE_RESERVE_MS }).run(async (signal) => {
+		const response = await fetch(url, { signal, headers: { accept: 'application/json' } });
+		if (!response.ok) throw new Error(`${url} → HTTP ${response.status}`);
+		return parsePrefixes(await response.json());
 	});
-	if (!response.ok) throw new Error(`${url} → HTTP ${response.status}`);
-	return parsePrefixes(await response.json());
 }
 
 /** Datacenter feeds parse from raw text — CSV and bare-line formats included. */
-async function fetchDcDocument(url: string): Promise<string> {
-	const response = await fetch(url, { signal: AbortSignal.timeout(DC_FETCH_TIMEOUT_MS) });
-	if (!response.ok) throw new Error(`${url} → HTTP ${response.status}`);
-	return response.text();
+async function fetchDcDocument(url: string, deadline: Deadline): Promise<string> {
+	return deadline.child(DC_FETCH_TIMEOUT_MS, { reserveMs: WRITE_RESERVE_MS }).run(async (signal) => {
+		const response = await fetch(url, { signal });
+		if (!response.ok) throw new Error(`${url} → HTTP ${response.status}`);
+		return response.text();
+	});
 }
 
 export async function botRangesRefresh(): Promise<number> {
 	const failures: string[] = [];
+	// One budget for the run, divided among the feeds, rather than a fresh one each.
+	const deadline = startDeadline(REFRESH_BUDGET_MS);
 
 	for (const feed of BOT_RANGE_FEEDS) {
 		let prefixes: string[];
 		try {
-			const lists = await Promise.all(feed.urls.map(fetchPrefixes));
+			const lists = await Promise.all(feed.urls.map((url) => fetchPrefixes(url, deadline)));
 			// One source can be backed by several documents (OpenAI publishes one per
 			// crawler), and they may overlap. Dedupe before the unique constraint has
 			// to care.
@@ -93,7 +123,7 @@ export async function botRangesRefresh(): Promise<number> {
 	for (const feed of DATACENTER_RANGE_FEEDS) {
 		let prefixes: string[];
 		try {
-			const documents = await Promise.all(feed.urls.map(fetchDcDocument));
+			const documents = await Promise.all(feed.urls.map((url) => fetchDcDocument(url, deadline)));
 			prefixes = [...new Set(documents.flatMap((doc) => feed.parse(doc)))];
 		} catch (err) {
 			failures.push(`${feed.source}: ${err instanceof Error ? err.message : String(err)}`);
@@ -121,6 +151,11 @@ export async function botRangesRefresh(): Promise<number> {
 
 	// Throw AFTER the healthy sources have been written, so a partial outage still
 	// refreshes everything it could and the runner records the failure with detail.
-	if (failures.length > 0) throw new Error(`bot range refresh incomplete — ${failures.join('; ')}`);
+	if (failures.length > 0) {
+		// Say which kind of incomplete it was. "Ran out of budget" and "the feed is down"
+		// need different responses, and the failure list alone reads the same either way.
+		const exhausted = deadline.expired() ? ' (run budget exhausted)' : '';
+		throw new Error(`bot range refresh incomplete${exhausted} — ${failures.join('; ')}`);
+	}
 	return total;
 }

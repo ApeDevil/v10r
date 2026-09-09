@@ -53,7 +53,7 @@ anonymous. Concretely, it would:
 
 Adding a join key between these tables is therefore **not a refactor — it is a change of
 legal position**. `privacy/report.ts` says so in prose; `user-events.ts` enforces it in
-schema; the erasure test in `privacy.test.ts` pins the consequence.
+schema; the erasure test in `privacy.pglite.test.ts` pins the consequence.
 
 ## Which lane claims a request
 

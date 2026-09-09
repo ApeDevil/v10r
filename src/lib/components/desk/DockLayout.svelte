@@ -121,10 +121,13 @@ const persistKey = typeof persist === 'string' ? persist : undefined;
 // svelte-ignore state_referenced_locally
 const saved = persist ? loadDockState(persistKey) : null;
 // svelte-ignore state_referenced_locally
+// Object.hasOwn, not `in`: the saved keys come from localStorage, and `in` finds inherited
+// members — a stored panel id of `constructor` would pass, then spread a *function* (which
+// has no own enumerable properties) and enter mergedPanels as a real key.
 const mergedPanels = saved?.panels
 	? Object.fromEntries(
 			Object.entries(saved.panels)
-				.filter(([id]) => id in initialPanels)
+				.filter(([id]) => Object.hasOwn(initialPanels, id))
 				.map(([id, p]) => [id, { ...p, ...initialPanels[id] }]),
 		)
 	: initialPanels;
@@ -134,7 +137,7 @@ const mergedPanels = saved?.panels
 function pruneAndCollapse(node: LayoutNode, panels: Record<string, PanelDefinition>): LayoutNode {
 	const strip = (n: LayoutNode): LayoutNode => {
 		if (n.type === 'leaf') {
-			const tabs = n.tabs.filter((id) => id in panels);
+			const tabs = n.tabs.filter((id) => Object.hasOwn(panels, id));
 			return { ...n, tabs, activeTab: tabs.includes(n.activeTab) ? n.activeTab : (tabs[0] ?? '') };
 		}
 		return { ...n, children: [strip(n.children[0]), strip(n.children[1])] } as LayoutNode;

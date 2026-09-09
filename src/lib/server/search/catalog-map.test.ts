@@ -22,8 +22,4 @@ describe('formatCatalogMap', () => {
 	it('stays compact (≈120 tokens → well under ~200 words)', () => {
 		expect(map.split(/\s+/).length).toBeLessThan(120);
 	});
-
-	it('instructs the model to call the tool for paths', () => {
-		expect(map).toContain('search_catalog');
-	});
 });

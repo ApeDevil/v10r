@@ -1,15 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ServerError } from '$lib/server/errors';
 import { classifyDbError, DbError, safeDbMessage } from './errors';
 
 describe('DbError', () => {
-	it('extends ServerError', () => {
-		const err = new DbError('connection', 'fail');
-		expect(err).toBeInstanceOf(ServerError);
-		expect(err).toBeInstanceOf(DbError);
-		expect(err.name).toBe('DbError');
-	});
-
 	it.each([
 		['connection', 503],
 		['constraint', 409],

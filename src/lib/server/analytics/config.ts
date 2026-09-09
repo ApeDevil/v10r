@@ -12,6 +12,10 @@ export const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
  * ePrivacy Art 5(3)). Read by both the collector hook and the SPA beacon
  * endpoint, which is why it lives here rather than as a literal in either.
  */
+/**
+ * Distinct from CONSENT_COOKIE by design: sharing one name would make clearing
+ * consent also kill the session.
+ */
 export const SESSION_COOKIE = '_v10r_sid';
 
 /**

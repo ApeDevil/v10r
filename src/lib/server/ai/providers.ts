@@ -3,7 +3,7 @@ import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 import { env } from '$env/dynamic/private';
-import { redis } from '$lib/server/cache';
+import { defineBreaker, resetBreakers } from '$lib/server/resilience';
 
 export interface ProviderEntry {
 	id: string;
@@ -94,61 +94,39 @@ export function getFallbackProviders(registry: ProviderEntry[], activeId: string
 	return registry.filter((p) => p.configured && p.id !== activeId);
 }
 
-// Circuit breaker — cooldown for rate-limited providers
+// Provider cooldown — this domain's use of the general circuit breaker.
 //
-// Stored in Redis so the breaker is shared across serverless instances — an
-// in-process Map would let every cold lambda independently re-trip a provider
-// that another instance already cooled. Falls back to an in-memory Map when
-// Redis is unavailable (dev / tests). All three accessors are async as a result.
+// "Cooldown" stays the AI vocabulary because it is what the surfaces say (the admin
+// models board, the desk provider list, the chat fallback log); `$lib/server/resilience`
+// owns the mechanism, this owns the policy and the words.
+//
+// The breaker's shared-state and fallback behaviour is documented there — including
+// why an unreadable Redis is treated as "still cooled" rather than "fine".
 
-const COOLDOWN_PREFIX = 'ai:cooldown:';
-const cooldowns = new Map<string, number>(); // fallback store when redis is null
+const providerBreaker = defineBreaker({
+	name: 'ai-provider',
+	openForSeconds: 60,
+	// Governs `recordFailure`, which this domain does not call: a provider is cooled only
+	// when it explicitly 429s, because a stream error is usually the request's fault
+	// (bad tool schema, oversized context) and cooling the provider for it would take a
+	// healthy provider out of rotation for everyone.
+	failureThreshold: 3,
+	failureWindowSeconds: 60,
+});
 
 /** Reset the in-memory fallback store. For test cleanup only (no-op against Redis). */
 export function resetCooldowns(): void {
-	cooldowns.clear();
+	resetBreakers();
 }
 
 /** Mark a provider as rate-limited for `durationMs` (default 60s). Non-blocking. */
 export async function markCooldown(providerId: string, durationMs = 60_000): Promise<void> {
-	const resumeAt = Date.now() + durationMs;
-	// Always record the in-memory fallback first, so a Redis write failure can't
-	// silently drop the cooldown and let us keep hammering a 429ing provider.
-	cooldowns.set(providerId, resumeAt);
-	if (redis) {
-		try {
-			await redis.set(`${COOLDOWN_PREFIX}${providerId}`, resumeAt, { px: durationMs });
-		} catch (err) {
-			console.error('[ai:providers] Failed to set cooldown:', err);
-		}
-	}
-}
-
-/** Resolve a provider's cooldown resume time (epoch ms), or null if not cooled. */
-async function cooldownResumeMs(providerId: string): Promise<number | null> {
-	if (redis) {
-		try {
-			const resumeAt = await redis.get<number>(`${COOLDOWN_PREFIX}${providerId}`);
-			if (!resumeAt || Date.now() >= resumeAt) return null;
-			return resumeAt;
-		} catch (err) {
-			console.error('[ai:providers] Failed to read cooldown:', err);
-			// Fall through to the in-memory fallback rather than returning "not cooled"
-			// (fail toward treating the provider as cooled to protect the upstream).
-		}
-	}
-	const resumeAt = cooldowns.get(providerId);
-	if (!resumeAt) return null;
-	if (Date.now() >= resumeAt) {
-		cooldowns.delete(providerId);
-		return null;
-	}
-	return resumeAt;
+	await providerBreaker.trip(providerId, Math.ceil(durationMs / 1000));
 }
 
 /** Check if a provider is currently in cooldown. */
 export async function isCooledDown(providerId: string): Promise<boolean> {
-	return (await cooldownResumeMs(providerId)) !== null;
+	return providerBreaker.isOpen(providerId);
 }
 
 /**
@@ -229,6 +207,6 @@ export function clearUserPreference(userId: string): void {
 
 /** Get the cooldown resume time as ISO string, or null if not cooled down. */
 export async function getCooldownResumeAt(providerId: string): Promise<string | null> {
-	const ms = await cooldownResumeMs(providerId);
-	return ms === null ? null : new Date(ms).toISOString();
+	const { retryAt } = await providerBreaker.state(providerId);
+	return retryAt === null ? null : new Date(retryAt).toISOString();
 }

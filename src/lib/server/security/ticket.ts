@@ -15,11 +15,10 @@
  *
  *  1. **The separator cannot occur inside a field.** base64url's alphabet has
  *     no `.`, so `split('.')` yielding exactly two parts is unambiguous for any
- *     field content whatsoever. `pairing/cookie.ts` deliberately is NOT reused
- *     here: its format is `${userId}.${expMs}.${sig}` verified by a 3-part
- *     split, so any id containing a dot fails to verify. That is safe for the
- *     ids it actually sees and not a property worth inheriting into a general
- *     primitive.
+ *     field content whatsoever. `pairing/cookie.ts` used to carry its own format,
+ *     `${userId}.${expMs}.${sig}` verified by a 3-part split, under which any id
+ *     containing a dot silently failed to verify. It is now built on this module,
+ *     which is what removed that landmine rather than merely avoiding it.
  *
  *  2. **The signature covers the received bytes, not a re-serialization.** We
  *     verify first and `JSON.parse` second, so no canonicalization question

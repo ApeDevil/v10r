@@ -1,6 +1,7 @@
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { env } from '$env/dynamic/private';
+import { queryCensusLogger } from './query-census';
 import * as schema from './schema';
 
 // Route queries over HTTP fetch instead of WebSocket.
@@ -10,6 +11,9 @@ neonConfig.poolQueryViaFetch = true;
 
 const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 
-export const db = drizzle(pool, { schema });
+// `logger` is not logging — it is the only seam Drizzle offers that sees every
+// statement from every domain, including Better Auth's. It counts round trips into
+// whatever census is in scope and does nothing at all when none is.
+export const db = drizzle(pool, { schema, logger: queryCensusLogger });
 
 export type Database = typeof db;

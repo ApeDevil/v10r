@@ -1,148 +1,105 @@
 import { describe, expect, it } from 'vitest';
 import { AiError, aiErrorToStatus, classifyAiError, safeAiMessage } from './errors';
 
+/**
+ * The provider-error classifier.
+ *
+ * `classifyAiError` is one status-then-substring chain and `aiErrorToStatus` is a lookup
+ * table, so both are tested AS tables — the old shape restated each branch as its own
+ * `it()`, which made the two cases that carry real information (the status-over-message
+ * priority, and the fact that nothing leaks a credential) indistinguishable from the
+ * eighteen that restate a `String.includes`.
+ *
+ * The substring rules are deliberately lax — a message merely containing 'rate' or
+ * 'token' is enough. That laxity is why `chat-orchestrator.test.ts` asserts a DbError is
+ * never routed through here: a database failure mentioning 'token' must not be laundered
+ * into an AI rate-limit and trip a provider cooldown.
+ */
+
 describe('classifyAiError', () => {
-	it('passes through existing AiError unchanged', () => {
+	it('passes an existing AiError through unchanged', () => {
 		const original = new AiError('rate_limit', 'slow down', '429');
-		const result = classifyAiError(original);
-		expect(result).toBe(original);
+		expect(classifyAiError(original)).toBe(original);
 	});
 
-	it('classifies status 401 as authentication', () => {
-		const result = classifyAiError({ status: 401, message: 'bad key' });
-		expect(result.kind).toBe('authentication');
-		expect(result.code).toBe('401');
+	it.each([
+		{ label: 'status 401', input: { status: 401, message: 'bad key' }, kind: 'authentication', code: '401' },
+		{ label: 'status 403', input: { status: 403, message: 'forbidden' }, kind: 'authentication' },
+		{ label: 'status 429', input: { status: 429, message: 'too many' }, kind: 'rate_limit', code: '429' },
+		{ label: 'status 404', input: { status: 404, message: 'not found' }, kind: 'model' },
+		{ label: 'code rate_limit_exceeded', input: { code: 'rate_limit_exceeded', message: 'x' }, kind: 'rate_limit' },
+	])('classifies $label as $kind', ({ input, kind, code }) => {
+		const result = classifyAiError(input);
+		expect(result.kind).toBe(kind);
+		if (code) expect(result.code).toBe(code);
 	});
 
-	it('classifies status 403 as authentication', () => {
-		const result = classifyAiError({ status: 403, message: 'forbidden' });
-		expect(result.kind).toBe('authentication');
+	it.each([
+		{ message: 'authentication failed', kind: 'authentication' },
+		{ message: 'rate limit exceeded', kind: 'rate_limit' },
+		{ message: 'model not available', kind: 'model' },
+		{ message: 'context length exceeded', kind: 'context_length', code: 'CONTEXT_LENGTH' },
+		{ message: 'maximum token limit reached', kind: 'context_length' },
+		{ message: 'request timeout', kind: 'timeout', code: 'TIMEOUT' },
+		{ message: 'connect ETIMEDOUT', kind: 'timeout' },
+		{ message: 'fetch failed', kind: 'unavailable', code: 'NETWORK' },
+		{ message: 'connect ECONNREFUSED', kind: 'unavailable' },
+		{ message: 'something weird happened', kind: 'unknown' },
+	])('classifies message "$message" as $kind', ({ message, kind, code }) => {
+		const result = classifyAiError(new Error(message));
+		expect(result.kind).toBe(kind);
+		if (code) expect(result.code).toBe(code);
 	});
 
-	it('classifies "authentication" in message as authentication', () => {
-		const result = classifyAiError(new Error('authentication failed'));
-		expect(result.kind).toBe('authentication');
+	/** Status is checked before the message, so a 429 wins over the word "model". */
+	it('prioritises status over message when the two disagree', () => {
+		expect(classifyAiError({ status: 429, message: 'model rate limited' }).kind).toBe('rate_limit');
 	});
 
-	it('classifies status 429 as rate_limit', () => {
-		const result = classifyAiError({ status: 429, message: 'too many' });
-		expect(result.kind).toBe('rate_limit');
-		expect(result.code).toBe('429');
-	});
-
-	it('classifies "rate" in message as rate_limit', () => {
-		const result = classifyAiError(new Error('rate limit exceeded'));
-		expect(result.kind).toBe('rate_limit');
-	});
-
-	it('classifies code "rate_limit_exceeded" as rate_limit', () => {
-		const result = classifyAiError({ code: 'rate_limit_exceeded', message: 'slow down' });
-		expect(result.kind).toBe('rate_limit');
-	});
-
-	it('classifies status 404 as model', () => {
-		const result = classifyAiError({ status: 404, message: 'not found' });
-		expect(result.kind).toBe('model');
-	});
-
-	it('classifies "model" in message as model', () => {
-		const result = classifyAiError(new Error('model not available'));
-		expect(result.kind).toBe('model');
-	});
-
-	it('classifies "context length" in message as context_length', () => {
-		const result = classifyAiError(new Error('context length exceeded'));
-		expect(result.kind).toBe('context_length');
-		expect(result.code).toBe('CONTEXT_LENGTH');
-	});
-
-	it('classifies "token" in message as context_length', () => {
-		const result = classifyAiError(new Error('maximum token limit reached'));
-		expect(result.kind).toBe('context_length');
-	});
-
-	it('classifies "timeout" in message as timeout', () => {
-		const result = classifyAiError(new Error('request timeout'));
-		expect(result.kind).toBe('timeout');
-		expect(result.code).toBe('TIMEOUT');
-	});
-
-	it('classifies "ETIMEDOUT" in message as timeout', () => {
-		const result = classifyAiError(new Error('connect ETIMEDOUT'));
-		expect(result.kind).toBe('timeout');
-	});
-
-	it('classifies "fetch failed" in message as unavailable', () => {
-		const result = classifyAiError(new Error('fetch failed'));
-		expect(result.kind).toBe('unavailable');
-		expect(result.code).toBe('NETWORK');
-	});
-
-	it('classifies "ECONNREFUSED" in message as unavailable', () => {
-		const result = classifyAiError(new Error('connect ECONNREFUSED'));
-		expect(result.kind).toBe('unavailable');
-	});
-
-	it('classifies unknown errors as unknown', () => {
-		const result = classifyAiError(new Error('something weird happened'));
-		expect(result.kind).toBe('unknown');
-	});
-
-	it('handles non-Error values', () => {
-		const result = classifyAiError('string error');
-		expect(result.kind).toBe('unknown');
-		expect(result.message).toBe('Unknown AI error');
-	});
-
-	it('handles null/undefined', () => {
+	it('degrades non-Error values to unknown rather than throwing', () => {
+		expect(classifyAiError('string error')).toMatchObject({ kind: 'unknown', message: 'Unknown AI error' });
 		expect(classifyAiError(null).kind).toBe('unknown');
 		expect(classifyAiError(undefined).kind).toBe('unknown');
 	});
 
-	it('preserves original error message', () => {
-		const result = classifyAiError(new Error('connect ECONNREFUSED 10.0.0.1:443'));
-		expect(result.message).toBe('connect ECONNREFUSED 10.0.0.1:443');
-	});
-
-	it('preserves code from unknown errors', () => {
-		const result = classifyAiError({ message: 'weird', code: 'CUSTOM_CODE' });
-		expect(result.kind).toBe('unknown');
-		expect(result.code).toBe('CUSTOM_CODE');
-	});
-
-	// Priority: status checks run before message checks
-	it('prioritizes status 429 over "model" in message', () => {
-		const result = classifyAiError({ status: 429, message: 'model rate limited' });
-		expect(result.kind).toBe('rate_limit');
+	it('preserves the original message and any caller code', () => {
+		expect(classifyAiError(new Error('connect ECONNREFUSED 10.0.0.1:443')).message).toBe(
+			'connect ECONNREFUSED 10.0.0.1:443',
+		);
+		expect(classifyAiError({ message: 'weird', code: 'CUSTOM_CODE' })).toMatchObject({
+			kind: 'unknown',
+			code: 'CUSTOM_CODE',
+		});
 	});
 });
 
+const KINDS = ['authentication', 'rate_limit', 'model', 'context_length', 'timeout', 'unavailable', 'unknown'] as const;
+
 describe('safeAiMessage', () => {
-	it('returns user-safe messages for all kinds', () => {
-		const kinds = [
-			'authentication',
-			'rate_limit',
-			'model',
-			'context_length',
-			'timeout',
-			'unavailable',
-			'unknown',
-		] as const;
-		for (const kind of kinds) {
+	it('gives every kind a non-empty message that names no credential', () => {
+		for (const kind of KINDS) {
 			const msg = safeAiMessage(kind);
-			expect(msg).toBeTruthy();
-			// Should not expose provider internals
-			expect(msg).not.toMatch(/api[_-]?key|secret|token/i);
+			expect(msg, kind).toBeTruthy();
+			expect(msg, kind).not.toMatch(/api[_-]?key|secret|token/i);
 		}
 	});
 });
 
 describe('aiErrorToStatus', () => {
-	it('maps authentication → 502', () => expect(aiErrorToStatus('authentication')).toBe(502));
-	it('maps rate_limit → 429', () => expect(aiErrorToStatus('rate_limit')).toBe(429));
-	it('maps model → 502', () => expect(aiErrorToStatus('model')).toBe(502));
-	it('maps context_length → 400', () => expect(aiErrorToStatus('context_length')).toBe(400));
-	it('maps timeout → 504', () => expect(aiErrorToStatus('timeout')).toBe(504));
-	it('maps unavailable → 503', () => expect(aiErrorToStatus('unavailable')).toBe(503));
-	it('maps unknown → 500', () => expect(aiErrorToStatus('unknown')).toBe(500));
+	it.each([
+		{ kind: 'authentication', status: 502 },
+		{ kind: 'rate_limit', status: 429 },
+		{ kind: 'model', status: 502 },
+		{ kind: 'context_length', status: 400 },
+		{ kind: 'timeout', status: 504 },
+		{ kind: 'unavailable', status: 503 },
+		{ kind: 'unknown', status: 500 },
+	] as const)('maps $kind to $status', ({ kind, status }) => {
+		expect(aiErrorToStatus(kind)).toBe(status);
+	});
+
+	it('covers every kind safeAiMessage knows about', () => {
+		// Guards the two tables above from drifting apart when a kind is added.
+		for (const kind of KINDS) expect(typeof aiErrorToStatus(kind)).toBe('number');
+	});
 });

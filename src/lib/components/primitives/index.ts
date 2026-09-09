@@ -54,3 +54,4 @@ export { Toggle } from './toggle';
 export { ToggleGroup } from './toggle-group';
 export { Tooltip } from './tooltip';
 export { Typography } from './typography';
+export { computeWindow, DEFAULT_OVERSCAN, VIRTUALIZE_ABOVE, VirtualList } from './virtual-list';

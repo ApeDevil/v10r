@@ -28,7 +28,7 @@ const EXPIRY_DRIVEN_SWEEPS = ['session-cleanup', 'telegram-token-cleanup'];
 
 describe('retention schedule', () => {
 	it('every rule names a job that exists', () => {
-		const unknown = retentionSchedule.map((r) => r.job).filter((slug) => !(slug in jobs));
+		const unknown = retentionSchedule.map((r) => r.job).filter((slug) => !Object.hasOwn(jobs, slug));
 		expect([...new Set(unknown)]).toEqual([]);
 	});
 

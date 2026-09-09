@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 140 patterns (12 deep cards / 128 index rows) across 21 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 160 patterns (28 deep cards / 132 index rows) across 25 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -208,3 +208,35 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Composed panel menus (one array, desktop kebab + mobile sheet)](./desk-panel-menus.md)
 - [AI desk effects (tool results drive the workspace)](./desk-ai-effects.md)
 - [Explorer panel (unified file tree over N sources)](./desk-explorer.md)
+
+### Interaction Velocity
+
+- [**Optimistic mutation (fold-based rollback, idempotency keys)**](./optimistic-mutation.md)
+- [**Intent-based preloading (six levels over SvelteKit triggers)**](./intent-preloading.md)
+- [**Virtualized rendering (windowing maths split from the component)**](./virtualized-rendering.md)
+- [Idle and speculative work](./velocity-idle-work.md)
+
+### Data Velocity
+
+- [**Hierarchical cache (local → shared → origin, with key scope enforced)**](./hierarchical-cache.md)
+- [**Stale-while-revalidate (and stale-if-error)**](./stale-while-revalidate.md)
+- [**Singleflight / stampede protection (nobody waits on a lock)**](./singleflight.md)
+- [**No-waterfall data loading**](./no-waterfall-loading.md)
+- [Screen read model](./velocity-screen-read-model.md)
+- [**Query budget and N+1 proof (counting is not proving)**](./query-budget.md)
+
+### Runtime Velocity
+
+- [**Critical path / deferred tail**](./critical-path-deferred-tail.md)
+- [**Heavy dependency quarantine (the baseline is the metric)**](./heavy-dependency-quarantine.md)
+- [**Main-thread budget (worker → WASM, each step measured)**](./main-thread-budget.md)
+- [**Resilience policy (breaker, bulkhead, shedding, bounded retry)**](./resilience-policy.md)
+- [Asset delivery pipeline](./velocity-asset-delivery.md)
+- [Compute and data locality](./velocity-compute-locality.md)
+- [**Deadline propagation (one budget, divided)**](./deadline-propagation.md)
+
+### Velocity Measurement
+
+- [**Latency tracing (a v10r span API, Server-Timing as one renderer)**](./latency-tracing.md)
+- [**Performance budget and ratchet (targets aspire, ceilings hold)**](./performance-budget-ratchet.md)
+- [**Performance scenario harness (adverse conditions, committed)**](./scenario-harness.md)

@@ -50,6 +50,19 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Retrieval's admin overview | `RetrievalOverviewStats` / `RETRIEVAL_PAGE_SIZE` | `RAGOverviewStats`, `RAG_PAGE_SIZE` |
 | Reading a CSS custom property at runtime | `getCssVar` | `getCSSVar` |
 | The tabbed chart/data/code demo wrapper | `VizDemoCard` | mcp-local `DemoCard` |
+| A measured segment of one request | `span` (`RequestTiming`, `http/request-timing.ts`) | — |
+| A level in the cache hierarchy | `CacheTier` (`local` / `shared` / `origin`) | `CacheLayer`, `CacheStore` |
+| Work that runs after the response | `deferAfterResponse` (`http/after-response.ts`) | a bare `waitUntil` at each call site |
+| Work streamed inside a response body | `safeDeferPromise` (`http/defer.ts`) | — |
+| A dependency we have stopped calling | `breaker` (`resilience/breaker.ts`); it is **open** when calls are refused | `cooldown` outside the AI domain, `fuse`, `tripwire` |
+| A cap on concurrent calls to one dependency | `bulkhead` (`resilience/bulkhead.ts`) | `pool`, `semaphore`, `throttle` |
+| Refusing optional work under pressure | `shed` (`resilience/shedding.ts`, `admit()` returns a reason) | `drop`, `reject`, `throttle` |
+| The remaining latency budget of a request | `Deadline` (`http/deadline.ts`); slices come from `child()` | `timeout`, `budget` on its own |
+| Counting one request's database round trips | `QueryCensus` (`db/query-census.ts`) | `QueryLog`, `QueryTracker`, `QueryCounter` |
+| The normalized form of a statement | `shape` (`queryShape`) | `fingerprint`, `signature`, `template` |
+| Round trips one operation may make | `QueryBudget` (`db/query-budget.ts`) | `QueryLimit`, `QueryQuota` |
+| One adverse condition, measured | `scenario` (`perf/scenarios.ts`) | `benchmark`, `case`, `situation` |
+| Where each system runs | `LocalityRow` (`perf/locality.ts`) | `RegionMap`, `DeploymentMap` |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 
@@ -60,6 +73,33 @@ Two of these deserve their reasoning spelled out, because the losing name looked
 - **`RetrievalCorpus`, not `RetrievalLayer` or `RetrievalStore`.** The module's own header
   calls these "the four corpora"; `RetrievalStore` was rejected because the type already has
   a `store` field naming the physical table each corpus lives in.
+- **`CacheTier`, not `CacheLayer` or `CacheStore`.** `layer` is spoken for three times over
+  (the seven-layer hierarchy, the component layer order, the z-order stack) and `store/` is
+  R2 object storage. `tier` is already the pattern registry's word for a rung in a graded
+  scale, which is exactly what this is; the two never meet.
+- **`deferAfterResponse` beside `safeDeferPromise`.** Two lifetimes, two names.
+  `safeDeferPromise` keeps a promise alive *inside* a streaming response body;
+  `deferAfterResponse` runs work *after* the response is finished. Both were "deferral" and
+  one file holding both is how a bucket starts.
+- **`cooldown` stays inside the AI domain.** `ai/providers.ts` keeps `markCooldown` /
+  `isCooledDown` because that is the word its surfaces already say — the admin models board,
+  the desk provider list, the chat fallback log. The general mechanism is a `breaker`. One
+  concept, two registers: the domain owns the vocabulary, `resilience/` owns the mechanism.
+- **`Deadline`, not `timeout` or `budget`.** A `timeout` is a duration chosen for one call; a
+  `Deadline` is a point in time the whole request shares, and the difference is the entire
+  pattern. `budget` alone was rejected because `budgets.json` already owns it for performance
+  targets — hence `budgetMs` as a field on a `Deadline`, never a type of its own.
+- **`census`, not `log` or `tracker`.** A census counts a population once and reports totals;
+  it does not retain what it counted. That is exactly the contract — `QueryCensus` keeps shapes
+  and counts, never statements or parameters, so it can sit on every request without becoming
+  a place personal data accumulates. `QueryLog` would promise a record that does not exist.
+- **`shape`, not `fingerprint` or `signature`.** Both rejected names imply an identifier
+  derived by hashing, and would make the collapse of parameter lists look like a collision
+  rather than the deliberate rule it is. A shape is what is left when the values are removed.
+- **`QueryBudget` alongside `budgets.json`.** Same word, same concept, different subject:
+  `budgets.json` budgets *metrics*, `query-budget.ts` budgets *operations*. Keyed by a function
+  name and meaningless without it, which is why it is a separate declaration rather than
+  another section of the same JSON.
 
 ## Words that carry a metaphor
 
@@ -82,6 +122,11 @@ share. Each is spoken for:
 - **`path`** — a file path, a URL path, or a graph path. Not an axis: the retrieval step's
   engine is `engine`, and the retriever that produced a result is `retriever`.
 - **`run`** — a job execution. A Neon branch action is a *branch operation*.
+- **`path`, continued** — "critical path" stays PROSE. In code the three work classes are
+  `criticalWork` / `deferredWork` / `backgroundWork`, because `path` already means a file,
+  URL or graph path.
+- **`tier`** — a rung in a graded scale: a pattern record's depth (`deep`/`light`) and a
+  cache level (`local`/`shared`/`origin`). Not a synonym for layer, lane or surface.
 
 ## Discriminator columns
 
@@ -208,6 +253,12 @@ Flagged by audit, examined, kept:
   value against the Paraglide registry at send time. Renaming the keys would blank every
   notification already in the table. An i18n key is only free to move when nothing persists
   it — check before assuming.
+
+## Names the framework owns
+
+- **Never name a Svelte prop `state`.** It collides with the `$state` rune and fails at
+  compile time with `store_invalid_shape`. Use the thing's own name (`status`, `phase`,
+  `layout`) — the collision is the only reason this generic word is off-limits.
 
 ## Before you add a name
 

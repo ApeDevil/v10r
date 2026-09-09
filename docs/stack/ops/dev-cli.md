@@ -1,7 +1,7 @@
 # Dev CLI (`vr`)
 
 A small, host-clean toolkit for solo-dev ergonomics. `vr` is a **thin bash dispatcher**
-(`bin/vr`) that routes to scripts in `scripts/`. No host runtime required — git runs on
+(`bin/vr`) that routes to scripts in `scripts/vr/`. No host runtime required — git runs on
 the host, everything else (the test gate) runs in a container.
 
 `vr` acts on **the git repo you're standing in**, not on wherever it's installed. Install
@@ -32,6 +32,8 @@ repo you're in.
 | Command | Does |
 |---------|------|
 | `vr ship` / `vr s` | Gate + promote the current branch toward `main` (see below) |
+| `vr ship-local` / `vr sl` | The ship train plus a prebuilt deploy: build in the container after the gate, upload after the push (repos with `DEPLOY_MODE=prebuilt`) |
+| `vr deploy` / `vr dp` | Build + upload the pushed `main` HEAD prebuilt — the retry/redeploy path; `-n` builds only |
 | `vr validate` / `vr v` | Run the full gate (`bun run validate`) in the repo's container; `--build` adds `bun run validate:build` |
 | `vr refresh` / `vr ref` | Refresh derived pattern-library surfaces (`bun run refresh`) in the container |
 | `vr dev` | Start the dev server (`podman compose up`, foreground) |
@@ -80,8 +82,10 @@ Both velociraptor and densho need no `.vrrc` — same `app` service, same `dev`/
 | `main` | refused |
 
 The gate runs `bun run validate` against the **merged** state, not the feature branch
-alone — so `main` is always provably equal to a tested commit. Pushing `main` is what
-triggers the Vercel production deploy (`dev` triggers a preview).
+alone — so `main` is always provably equal to a tested commit. By default pushing `main`
+is what triggers the Vercel production deploy (`dev` triggers a preview). A repo whose
+`.vrrc` sets `DEPLOY_MODE=prebuilt` has that integration switched off and deploys itself —
+see *Prebuilt deploy* below; there `vr s` only pushes, and says so.
 
 Because the target repo is your cwd, `vr s` from inside repo *foo* gates and promotes
 *foo's* `dev → main`. There's no v10r safety rail — the directory you're in decides what
@@ -101,6 +105,53 @@ ff-able. Because the pushes are fast-forwards, not force-pushes, this also works
 delete the feature branch, local **or** remote) · `--yes` (skip the confirm) · a positional
 arg overrides the squash commit message.
 
+## Prebuilt deploy (`vr sl`, `vr deploy`)
+
+For a repo whose production build no longer fits the host's build machine (Densho on
+Vercel Hobby, 2026-09: the same build that takes ~90s in the dev container stalled past
+Vercel's 45-minute limit in 9 of 20 deploys), the repo builds in its own container and
+uploads the Build Output. Opt in per repo with a committed `.vrrc`:
+
+```sh
+DEPLOY_MODE=prebuilt
+VERCEL_ORG_ID=team_…        # identity, not secrets
+VERCEL_PROJECT_ID=prj_…
+# R2_CDN_BASE_URL=https://…  # optional build-time public origin
+```
+
+`VERCEL_TOKEN` is never in the repo — export it in the launching shell, and let the
+repo's `compose.yaml` inherit it **by name** (`environment: - VERCEL_TOKEN`, no value).
+`require_deploy_env` then proves the token and the ids with one request to the project
+endpoint before anything builds — the Vercel CLI would only do that after the build. A
+403 almost always means the shell still exports an old value after a `~/.bashrc` edit:
+`source ~/.bashrc` (or a new terminal) and compare `echo "${VERCEL_TOKEN: -4}"`; a 404 means
+the `.vrrc` ids or the token's scope are wrong.
+`vr` refuses before touching git or podman when either is missing. The token is never
+passed as a `-e KEY=VALUE` argument: podman-compose prints the whole argv when a run
+fails, which leaked a token once. The repo owes two contracts: `bun run build` must write
+`.vercel/output`, and `bun run deploy` must upload it (Densho: `vercel deploy --prebuilt
+--prod`). `vr` forwards `VERCEL=1` + `VERCEL_GIT_COMMIT_SHA` to the build (the container
+mounts no `.git`) and the two ids + the SHA to the deploy.
+
+The Vercel project's **Root Directory must be empty** for this: the CLI resolves it
+against its cwd, which inside the container already *is* the app directory, so `app`
+becomes `/app/app` and the upload refuses. The catch: Vercel reads `vercel.json` from the
+Root Directory, so once it is empty the `git.deploymentEnabled: false` guard must live in a
+`vercel.json` at the **repo root** — otherwise a push builds the repo root (no
+`package.json`) into an empty static deployment and promotes it (Densho, 2026-09-07:
+production 404 until rollback). The app's own `vercel.json` (headers, crons) stays in the
+app directory — but a prebuilt upload never reads it: only `vercel build` would translate
+it, and a framework adapter's `config.json` carries neither crons nor header routes. The
+repo's `bun run build` must copy those keys into `.vercel/output/config.json` itself
+(Densho: `build:vercel-json`); the first CLI deploy went out without its nightly cron and
+its service-worker header until that step existed (2026-09-07).
+
+**Order in `vr sl`:** gate → build → fast-forward `main` → push → upload. A build failure
+rolls back exactly like a gate failure (nothing pushed). An upload failure after the push
+exits non-zero with *"main is pushed but production was NOT updated — retry with: vr
+deploy"*. `--dry-run` gates and builds, then rolls back. `vr deploy` requires a clean tree
+and `HEAD == origin/main`, so production can only ever equal a pushed `main` commit.
+
 ## The gate
 
 `vr validate` — and the gate inside `vr ship` — runs `bun run validate` **inside the
@@ -115,7 +166,7 @@ hard-coded container name:
 `compose ps -q` lists a project's containers in **any** state, so a stopped container is
 still listed. Testing only that the list is non-empty reports "up" for a project that
 exited, and the `exec` then fails with `container state improper`. `container_run` (in
-`scripts/lib.sh` — the one in-container runner the gate and the refresh chain both ride)
+`scripts/vr/lib.sh` — the one in-container runner the gate and the refresh chain both ride)
 therefore asks podman for each id's actual state (`project_running`) rather than
 filtering at the compose layer — podman-compose rejects a service argument to `ps -q`.
 
@@ -176,7 +227,7 @@ in-container with bun's `Script not found "refresh"`.
 
 Zero host dependencies beyond bash (matches the container-first rule), namespaced and
 self-documenting (`vr` with no args lists everything), and versioned in the repo. Grow it
-by adding a `case` branch in `bin/vr` plus a script in `scripts/`. Short aliases follow the
+by adding a `case` branch in `bin/vr` plus a script in `scripts/vr/`. Short aliases follow the
 same convention as the commands they shorten — `s`/`v`/`ref`/`sh`/`u`/`d` are just extra
 patterns on the existing `case` branch, so they're versioned and appear in `vr help` for free.
 </content>

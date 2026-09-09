@@ -10,12 +10,12 @@
  */
 
 import { fail } from '@sveltejs/kit';
-import { waitUntil } from '@vercel/functions';
 import { ipLimitKey } from '$lib/server/abuse';
 import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '$lib/server/analytics/config';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { deriveUaHash, deriveVisitorId } from '$lib/server/analytics/visitor';
 import { recordConsentEvent } from '$lib/server/db/analytics/consent-mutations';
+import { deferAfterResponse } from '$lib/server/http/after-response';
 import { getClientIp } from '$lib/server/http/client-ip';
 import { createLimiter } from '$lib/server/http/rate-limit';
 import type { Actions } from './$types';
@@ -49,21 +49,19 @@ export const actions: Actions = {
 			maxAge: CONSENT_MAX_AGE,
 		});
 
-		// Audit-trail write survives the Vercel response freeze: .catch attached
-		// BEFORE handing to waitUntil (analytics hook pattern).
+		// The cookie is the critical work — it is what the visitor's choice actually
+		// changes. The audit-trail row is its tail.
 		const ua = request.headers.get('user-agent') ?? '';
 		const visitorId = await deriveVisitorId(ip ?? '', ua);
 		const uaHash = await deriveUaHash(ua);
 
-		waitUntil(
+		deferAfterResponse('consent:record', () =>
 			recordConsentEvent({
 				visitorId,
 				action,
 				tierBefore: previousTier,
 				tierAfter: tier,
 				uaHash,
-			}).catch((err) => {
-				console.error('[consent] Failed to record consent event:', err);
 			}),
 		);
 
@@ -86,15 +84,13 @@ export const actions: Actions = {
 			const visitorId = await deriveVisitorId(ip ?? '', ua);
 			const uaHash = await deriveUaHash(ua);
 
-			waitUntil(
+			deferAfterResponse('consent:record-withdrawal', () =>
 				recordConsentEvent({
 					visitorId,
 					action: 'withdraw',
 					tierBefore: previousTier,
 					tierAfter: 'necessary',
 					uaHash,
-				}).catch((err) => {
-					console.error('[consent] Failed to record withdrawal event:', err);
 				}),
 			);
 		}

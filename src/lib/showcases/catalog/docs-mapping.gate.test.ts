@@ -101,26 +101,36 @@ describe('showcase → docs mapping gate', () => {
 	});
 
 	describe('VALIDITY — every docs href resolves to a real, published doc', () => {
-		for (const node of allNodes) {
-			for (const link of node.docs ?? []) {
-				it(`${node.href} → "${link.href}" starts with /docs/`, () => {
-					expect(link.href.startsWith('/docs/'), link.href).toBe(true);
-				});
+		const links = allNodes.flatMap((node) => (node.docs ?? []).map((link) => ({ node, link })));
 
-				it(`${node.href} → "${link.href}" resolves to a published manifest entry (not blocked/draft/missing)`, () => {
-					expect(validDocUrls.has(link.href), `"${link.href}" not found in the published docs manifest`).toBe(true);
-				});
+		it('collects a non-empty set of docs links', () => {
+			expect(links.length).toBeGreaterThan(0);
+		});
 
-				if (link.label !== undefined) {
-					const label = link.label;
-					it(`${node.href} → "${link.href}" label "${label}" is non-empty and <= 3 words`, () => {
-						const trimmed = label.trim();
-						expect(trimmed.length, 'label must not be empty/whitespace').toBeGreaterThan(0);
-						expect(trimmed.split(/\s+/).length, `label "${label}" exceeds 3 words`).toBeLessThanOrEqual(3);
-					});
-				}
-			}
-		}
+		it('every docs href starts with /docs/', () => {
+			const offenders = links
+				.filter(({ link }) => !link.href.startsWith('/docs/'))
+				.map(({ node, link }) => `${node.href} → ${link.href}`);
+			expect(offenders).toEqual([]);
+		});
+
+		it('every docs href resolves to a published manifest entry (not blocked/draft/missing)', () => {
+			const offenders = links
+				.filter(({ link }) => !validDocUrls.has(link.href))
+				.map(({ node, link }) => `${node.href} → ${link.href}`);
+			expect(offenders).toEqual([]);
+		});
+
+		it('every docs label is non-empty and at most 3 words', () => {
+			const offenders = links
+				.filter(({ link }) => link.label !== undefined)
+				.filter(({ link }) => {
+					const trimmed = (link.label as string).trim();
+					return trimmed.length === 0 || trimmed.split(/\s+/).length > 3;
+				})
+				.map(({ node, link }) => `${node.href} → ${link.href} — label ${JSON.stringify(link.label)}`);
+			expect(offenders).toEqual([]);
+		});
 	});
 
 	describe('COVERAGE — every leaf showcase route resolves to >= 1 doc link', () => {
@@ -130,7 +140,7 @@ describe('showcase → docs mapping gate', () => {
 		 * `resolveShowcaseDocs`'s ancestor-fallback guarantees every leaf resolves
 		 * to at least the owning card's docs, even leaves with no `docs` of their
 		 * own. A future leaf under a card that forgets to seed `docs` must fail
-		 * the loop below loudly, NOT get silently swallowed — do not add an entry
+		 * the check below loudly, NOT get silently swallowed — do not add an entry
 		 * here to silence that failure without also verifying the gap is
 		 * intentional.
 		 */
@@ -143,23 +153,19 @@ describe('showcase → docs mapping gate', () => {
 			expect(leaves.length).toBeGreaterThan(0);
 		});
 
-		for (const href of documentedLeaves) {
-			it(`${href} resolves to >= 1 doc link`, () => {
-				expect(resolveShowcaseDocs(href).length).toBeGreaterThanOrEqual(1);
-			});
-		}
-
-		it('UNDOCUMENTED_SHOWCASES is currently empty (every card carries docs)', () => {
-			expect(UNDOCUMENTED_SHOWCASES).toEqual([]);
+		it('every documented leaf resolves to at least one doc link', () => {
+			const offenders = documentedLeaves.filter((href) => resolveShowcaseDocs(href).length < 1);
+			expect(offenders).toEqual([]);
 		});
 
-		it('every entry in UNDOCUMENTED_SHOWCASES (if any) is a real leaf that genuinely resolves to []', () => {
-			for (const href of UNDOCUMENTED_SHOWCASES) {
-				expect(leaves, `"${href}" is not a real leaf href — stale exception entry`).toContain(href);
-				expect(resolveShowcaseDocs(href), `"${href}" now resolves docs — remove it from the exception list`).toEqual(
-					[],
-				);
-			}
+		// Anti-rot, not a tautology: asserting the list is empty would only restate a
+		// literal declared above. This is what fails once somebody DOES add an entry
+		// and the gap later closes.
+		it('every entry in UNDOCUMENTED_SHOWCASES is a real leaf that genuinely resolves to []', () => {
+			const notALeaf = UNDOCUMENTED_SHOWCASES.filter((href) => !leaves.includes(href));
+			const nowResolves = UNDOCUMENTED_SHOWCASES.filter((href) => resolveShowcaseDocs(href).length > 0);
+			expect(notALeaf, 'stale exception entries — not real leaf hrefs').toEqual([]);
+			expect(nowResolves, 'these now resolve docs — remove them from the exception list').toEqual([]);
 		});
 	});
 
@@ -172,17 +178,17 @@ describe('showcase → docs mapping gate', () => {
 			expect(docsBearingNodes.length).toBeGreaterThan(0);
 		});
 
-		for (const node of docsBearingNodes) {
-			const ancestors = docsBearingNodes.filter(
-				(other) => other.seg.length < node.seg.length && other.seg.every((s, i) => s === node.seg[i]),
-			);
-			if (ancestors.length === 0) continue;
-
-			const nearest = ancestors.reduce((a, b) => (b.seg.length > a.seg.length ? b : a));
-
-			it(`${node.href} docs differ from nearest docs-bearing ancestor ${nearest.href}`, () => {
-				expect(node.docsSeq).not.toEqual(nearest.docsSeq);
-			});
-		}
+		it('no node repeats its nearest docs-bearing ancestor exactly', () => {
+			const offenders: string[] = [];
+			for (const node of docsBearingNodes) {
+				const ancestors = docsBearingNodes.filter(
+					(other) => other.seg.length < node.seg.length && other.seg.every((s, i) => s === node.seg[i]),
+				);
+				if (ancestors.length === 0) continue;
+				const nearest = ancestors.reduce((a, b) => (b.seg.length > a.seg.length ? b : a));
+				if (node.docsSeq === nearest.docsSeq) offenders.push(`${node.href} repeats ${nearest.href}`);
+			}
+			expect(offenders).toEqual([]);
+		});
 	});
 });

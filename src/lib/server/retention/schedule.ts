@@ -93,7 +93,7 @@ export const retentionSchedule = [
 
 	// Trash, not files: only rows already soft-deleted by the user age out here. A live
 	// file (`deleted_at IS NULL`) is never touched, which is the guarantee
-	// `retention.test.ts` pins first.
+	// `retention.pglite.test.ts` pins first.
 	{ id: 'desk-trash', dataset: 'desk.file', days: 30, action: 'delete', job: 'desk-retention' },
 	// Undo/version history, pruned purely by age and independently of any file row.
 	{ id: 'desk-revisions', dataset: 'desk.file_revision', days: 90, action: 'delete', job: 'desk-retention' },

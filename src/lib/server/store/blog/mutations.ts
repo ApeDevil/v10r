@@ -1,7 +1,6 @@
 import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { SUBKEY_PURPOSES } from '$lib/server/security/subkey';
-import { signTicket, verifyTicket } from '$lib/server/security/ticket';
+import { SUBKEY_PURPOSES, signTicket, verifyTicket } from '$lib/server/security';
 import { MAX_BLOG_3D_UPLOAD_SIZE, MAX_BLOG_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '../config';
 import { StoreError } from '../errors';
 import { BUCKET, s3 } from '../index';

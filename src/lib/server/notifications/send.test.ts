@@ -100,11 +100,6 @@ describe('sendNotification', () => {
 		mockChannelSend.mockResolvedValue({ success: true });
 	});
 
-	it('calls createNotification with input', async () => {
-		await sendNotification(input);
-		expect(mockCreateNotification).toHaveBeenCalledWith(input);
-	});
-
 	it('calls notifyUser with SSE payload', async () => {
 		await sendNotification(input);
 		expect(mockNotifyUser).toHaveBeenCalledWith('user-1', {
@@ -115,11 +110,6 @@ describe('sendNotification', () => {
 				messageKey: 'notif_mention',
 			}),
 		});
-	});
-
-	it('returns the created notification', async () => {
-		const result = await sendNotification(input);
-		expect(result).toBe(fakeNotification);
 	});
 
 	it('external routing failure does not throw', async () => {

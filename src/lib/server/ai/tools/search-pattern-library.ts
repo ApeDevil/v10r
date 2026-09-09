@@ -75,7 +75,7 @@ export function createSearchPatternLibraryTool(locale: Locale, sink?: CatalogSin
 		search_pattern_library: tool({
 			description:
 				'Look up the canonical v10r PATTERN registry — the curated map of every proven pattern in this ' +
-				'project (136 records: deep cards with invariants/emulation notes, plus index rows). Use it when ' +
+				'project (deep cards with invariants/emulation notes, plus index rows). Use it when ' +
 				'the user asks WHICH pattern covers a capability, what patterns exist, or how to emulate one ' +
 				'(e.g. "which pattern covers rate limiting", "what AI patterns does v10r have"). ' +
 				'To list a whole category pass query "*" with `category`. Cite the returned `path` ' +

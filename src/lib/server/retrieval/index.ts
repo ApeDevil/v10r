@@ -12,6 +12,9 @@ import { escapeXmlText } from '$lib/utils/xml';
 import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 
 export { OVERFETCH_MULTIPLIER, RRF_K } from './config';
+// The wiki layer fuses its pages with the same algorithm and the same constants as the
+// chunk layer it sits on — one implementation, reached through this barrel.
+export { reciprocalRankFusion } from './rank';
 
 import { generateEmbedding } from './embed';
 import { fuseAndRank } from './rank';
@@ -177,11 +180,15 @@ export async function retrieve(
 	const { chunks } = fuseAndRank(allChunks, opts.maxChunks);
 
 	// Entities only populated when tier 3 (graph) ran AND graph chunks actually survived
-	// fusion. Without the `chunks.some(...)` guard this fired a serial Neo4j round-trip on
-	// every tier-3 request even when the graph contributed nothing — a blocking call on the
-	// response path for zero payoff.
+	// fusion. Without this guard a serial Neo4j round-trip fired on every tier-3 request even
+	// when the graph contributed nothing — a blocking call on the response path for zero payoff.
+	//
+	// Provenance is read from the PRE-fusion lists, not from the surviving chunk's own `tier`.
+	// A chunk found by both tier 1 and tier 3 collapses to a single object during fusion, so
+	// whichever copy won would otherwise decide this round-trip.
+	const graphChunkIds = new Set(allChunks.filter((c) => c.tier === 3).map((c) => c.chunkId));
 	const entities =
-		requestedTiers.has(3) && chunks.some((c) => c.tier === 3 || c.source === 'graph')
+		requestedTiers.has(3) && chunks.some((c) => graphChunkIds.has(c.chunkId))
 			? await getGraphEntities(
 					chunks.map((c) => c.chunkId),
 					[opts.userId],

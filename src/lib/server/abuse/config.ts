@@ -1,3 +1,4 @@
+import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 
 export type BotDetectionMode = 'live' | 'dry_run' | 'off';
@@ -34,17 +35,31 @@ const DUMMY_KEY_PATTERNS = [/^test[_-]/i, /^dummy[_-]/i, /^example[_-]/i, /^chan
 /**
  * Fail closed at module load if production config is broken.
  * Caught early by `vite build` and Vercel deploys — never silently misconfigured in prod.
+ *
+ * Gated on `dev` rather than `NODE_ENV` because this check is what stands between
+ * `BOT_DETECTION_MODE=dry_run` — which converts every captcha denial into an allow — and
+ * production. `dev` is Vite's build-mode constant, so a deploy carrying a stray
+ * `NODE_ENV=development` still asserts; an env var is the one signal that can be wrong in
+ * the direction that fails open.
+ *
+ * The three inputs are injectable for the same reason `verifyTicket`'s `now` is: the
+ * assertion runs once at module load, and a module that throws on import cannot be
+ * re-imported under a second configuration, so the policy would otherwise be untestable.
  */
-function assertProductionConfig(): void {
-	if (process.env.NODE_ENV !== 'production') return;
+export function assertProductionConfig(
+	mode: BotDetectionMode = BOT_DETECTION_MODE,
+	hmacKey: string = ALTCHA_HMAC_KEY,
+	isDev: boolean = dev,
+): void {
+	if (isDev) return;
 
-	if (BOT_DETECTION_MODE !== 'live') {
-		throw new Error(`BOT_DETECTION_MODE must be 'live' in production (got '${BOT_DETECTION_MODE}')`);
+	if (mode !== 'live') {
+		throw new Error(`BOT_DETECTION_MODE must be 'live' in production (got '${mode}')`);
 	}
-	if (ALTCHA_HMAC_KEY.length < 32) {
+	if (hmacKey.length < 32) {
 		throw new Error('ALTCHA_HMAC_KEY must be at least 32 characters in production');
 	}
-	if (DUMMY_KEY_PATTERNS.some((rx) => rx.test(ALTCHA_HMAC_KEY))) {
+	if (DUMMY_KEY_PATTERNS.some((rx) => rx.test(hmacKey))) {
 		throw new Error('ALTCHA_HMAC_KEY appears to be a placeholder value');
 	}
 }

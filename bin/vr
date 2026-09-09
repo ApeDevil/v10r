@@ -9,15 +9,18 @@ set -euo pipefail
 # toolkit's scripts. The repo we ACT on is your cwd — resolved by require_repo
 # (from lib.sh), so `vr` works in whatever repo you're standing in.
 SELF="$(readlink -f "${BASH_SOURCE[0]}")"
-# shellcheck source=../scripts/lib.sh
-source "$(dirname "$SELF")/../scripts/lib.sh"
+# shellcheck source=../scripts/vr/lib.sh
+source "$(dirname "$SELF")/../scripts/vr/lib.sh"
 SCRIPTS="$TOOLKIT_DIR"
 
 menu() {
 	cat <<'EOF'
 vr — solo-dev cli (acts on the git repo you're standing in)
 
-  ship, s           gate + promote current branch → main (deploys on push)
+  ship, s           gate + promote current branch → main (the push deploys, unless
+                    the repo's .vrrc sets DEPLOY_MODE=prebuilt)
+  ship-local, sl    ship, then build in the container + upload the prebuilt output
+  deploy, dp        build + upload the pushed main HEAD prebuilt (retry; -n builds only)
   validate, v       run the full gate (bun run validate); --build adds a
                     production build + perf-ratchet check (validate:build)
   refresh, ref      refresh derived surfaces (bun run refresh) in the container
@@ -30,7 +33,7 @@ vr — solo-dev cli (acts on the git repo you're standing in)
 
 Runs against the current repo's compose.yaml + git remote. The container and
 service are read from compose.yaml (zero config). Branch/remote overrides go in a
-committed .vrrc or V10R_* env. Run `vr ship -h` or `vr ref -h` for flags.
+committed .vrrc or V10R_* env. Run `vr ship -h`, `vr deploy -h` or `vr ref -h` for flags.
 EOF
 }
 
@@ -39,6 +42,8 @@ cmd="${1:-help}"
 
 case "$cmd" in
 	ship|s)        exec bash "$SCRIPTS/ship.sh" "$@" ;;
+	ship-local|sl) exec bash "$SCRIPTS/ship.sh" --deploy "$@" ;;
+	deploy|dp)     exec bash "$SCRIPTS/deploy.sh" "$@" ;;
 	validate|v)    exec bash "$SCRIPTS/validate.sh" "$@" ;;
 	refresh|ref)   exec bash "$SCRIPTS/refresh.sh" "$@" ;;
 	dev)           require_repo; exec "${COMPOSE[@]}" up "$@" ;;

@@ -17,7 +17,7 @@ import { analyticsCollector } from '$lib/server/analytics/collector.hook';
 import { CONSENT_COOKIE } from '$lib/server/analytics/config';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { auth } from '$lib/server/auth';
-import { logAdminConfig } from '$lib/server/auth/admin-ids';
+import { isAdminUserId, logAdminConfig } from '$lib/server/auth/admin-ids';
 import {
 	CALLBACK_RATE_LIMIT_MAX,
 	CALLBACK_RATE_LIMIT_WINDOW,
@@ -29,11 +29,15 @@ import {
 import { listActiveGrantKinds } from '$lib/server/auth/grants';
 import { isSessionRevoked } from '$lib/server/auth/revocation';
 import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
+import { REQUEST_QUERY_CEILING } from '$lib/server/db/query-budget';
+import { startQueryCensus } from '$lib/server/db/query-census';
 // The agent-facing `.md` layer over /docs. Lives in its own
 // module so its tests never import this file's heavy graph (schedulers, auth).
 import { docsMarkdown } from '$lib/server/docs/markdown.hook';
 import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '$lib/server/http/body';
+import { startDeadline } from '$lib/server/http/deadline';
 import { createLimiter, isDocumentRequest } from '$lib/server/http/rate-limit';
+import { startRequestTiming, toServerTimingHeader } from '$lib/server/http/request-timing';
 import { apiError } from '$lib/server/http/response';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
 import { platform } from '$lib/server/platform';
@@ -102,6 +106,100 @@ const TWO_FACTOR_VERIFY_PATHS = new Set([
 	'/api/auth/two-factor/verify-backup-code',
 	'/api/auth/two-factor/verify-otp',
 ]);
+
+/**
+ * Request timing — outermost, so `total` really is the whole request.
+ *
+ * It sits ABOVE `securityHeaders` rather than below it because a handler can only
+ * measure what it wraps, and the chain itself is a thing worth measuring: the gap
+ * between `total` and the spans downstream layers recorded IS the middleware cost.
+ * Nothing security-relevant moves as a result — `securityHeaders` still stamps
+ * `locals.clientIp` before any limiter or auth handler reads it, which is the
+ * invariant its position exists to hold (see handle-chain.gate.test.ts).
+ *
+ * `Server-Timing` is readable by any client, so the span breakdown is disclosure:
+ * it maps internal architecture and hands out a timing oracle. Full detail goes only
+ * to callers who already see internals — admins, and devices paired for debugging.
+ * Everyone else gets `total`, which tells them what they could measure anyway.
+ *
+ * Prerendered routes never reach this handler on Vercel: they are served as static
+ * files by the CDN. Coverage is dynamic responses, and the docs say so rather than
+ * implying otherwise.
+ */
+const requestTiming: Handle = async ({ event, resolve }) => {
+	const timing = startRequestTiming();
+	event.locals.timing = timing;
+
+	const response = await resolve(event);
+
+	// Same guard as securityHeaders: a Response.redirect() downstream has IMMUTABLE
+	// headers, and instrumentation must never be the thing that 500s a request.
+	try {
+		const detail = isAdminUserId(event.locals.user?.id) || event.locals.debugOwnerId !== null;
+		const header = toServerTimingHeader(timing, { detail });
+		// The round-trip count is joined to the spans HERE rather than inside
+		// `toServerTimingHeader`, which deliberately knows nothing about the database.
+		// This is the one place both request-scoped recorders are in scope, and "620ms,
+		// and 47 of them were queries" is the pair an admin is actually reading for.
+		// Admin-only, same disclosure rule as the spans themselves.
+		const queries = detail && event.locals.queries ? `, db_queries;desc="${event.locals.queries.count}"` : '';
+		if (header) response.headers.set('Server-Timing', header + queries);
+	} catch {
+		// Deliberately silent: an immutable-header response is a normal shape, and a
+		// log line per redirect would be the noisiest thing in the chain.
+	}
+
+	return response;
+};
+
+/**
+ * Request budget
+ *
+ * Stamps `event.locals.deadline` so every downstream operation can ask how much of
+ * the request's latency budget is LEFT rather than inventing a timeout of its own.
+ * Second in the chain, immediately after timing, because a budget that starts partway
+ * through the pipeline is not the request's budget.
+ *
+ * Stamping it is not enforcing it: nothing downstream is bounded until a leaf actually
+ * takes a `child()` and honours it. See `docs/blueprint/velocity/runtime.md` for which
+ * leaves have, and which are next.
+ */
+const requestDeadline: Handle = async ({ event, resolve }) => {
+	event.locals.deadline = startDeadline();
+	return resolve(event);
+};
+
+/**
+ * Query census
+ *
+ * Counts the database round trips this request makes, at any depth. Third, so the
+ * count includes the session lookup — auth is where a per-request query surprise is
+ * most likely and least visible.
+ *
+ * The count is a TRIPWIRE, not a budget: the ceiling is generous and exists to make
+ * the request that suddenly issues ninety queries say so, instead of surfacing weeks
+ * later as a database bill. Per-operation budgets are asserted where they can be
+ * proved — `src/lib/server/db/query-budget.gate.pglite.test.ts` runs each registered
+ * operation over two data sizes, which is the only place N+1 is provable rather than
+ * suspected.
+ */
+const queryCensus: Handle = async ({ event, resolve }) => {
+	const census = startQueryCensus();
+	event.locals.queries = census;
+
+	const response = await census.run(() => resolve(event));
+
+	if (census.count > REQUEST_QUERY_CEILING) {
+		const worst = census.worst();
+		console.warn(
+			`[query-census] ${event.request.method} ${event.url.pathname} made ${census.count} queries ` +
+				`(ceiling ${REQUEST_QUERY_CEILING})` +
+				(worst ? `; most repeated shape ×${worst.times}: ${worst.shape}` : ''),
+		);
+	}
+
+	return response;
+};
 
 /**
  * Security headers + canonical client IP stamp
@@ -520,18 +618,20 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	// anonymous visitors browse fine. Degrade this request to anonymous instead:
 	// privileges only ever drop, never widen. (Same .catch precedent as the 2FA
 	// path in authHandler.)
-	const sessionData = await auth.api
-		.getSession({
-			headers: event.request.headers,
-		})
-		.catch((err) => {
-			console.error(
-				'[auth] getSession failed — degrading request to anonymous:',
-				err instanceof Error ? err.message : err,
-			);
-			event.locals.authDegraded = true;
-			return null;
-		});
+	const sessionData = await event.locals.timing.span('auth', () =>
+		auth.api
+			.getSession({
+				headers: event.request.headers,
+			})
+			.catch((err) => {
+				console.error(
+					'[auth] getSession failed — degrading request to anonymous:',
+					err instanceof Error ? err.message : err,
+				);
+				event.locals.authDegraded = true;
+				return null;
+			}),
+	);
 
 	event.locals.user = sessionData?.user ?? null;
 	event.locals.session = sessionData?.session ?? null;
@@ -630,15 +730,18 @@ const debugOwnerLoader: Handle = async ({ event, resolve }) => {
 		return resolve(event);
 	}
 	try {
-		const verified = await verifyOwnerCookie(raw);
-		if (verified && verified.expiresAt > Date.now()) {
+		// verifyOwnerCookie owns the expiry check — a ticket past its `expiresAt` is not `ok`.
+		const verified = verifyOwnerCookie(raw);
+		if (verified) {
 			event.locals.debugOwnerId = verified.adminUserId;
 		} else {
 			event.locals.debugOwnerId = null;
 			clearOwnerCookie(event.cookies);
 		}
 	} catch {
-		// PAIRING_SECRET missing or other crypto failure — fail closed, don't crash.
+		// Key material unavailable or other crypto failure — fail closed, don't crash.
+		// deriveSubkey only throws when BETTER_AUTH_SECRET is also missing, which cannot
+		// happen in a served request; this stays as the backstop for that impossibility.
 		event.locals.debugOwnerId = null;
 	}
 	return resolve(event);
@@ -656,6 +759,9 @@ const devRouteGuard: Handle = async ({ event, resolve }) => {
 };
 
 export const handle = sequence(
+	requestTiming,
+	requestDeadline,
+	queryCensus,
 	securityHeaders,
 	bodySizeFloor,
 	stripBaseLocalePrefix,

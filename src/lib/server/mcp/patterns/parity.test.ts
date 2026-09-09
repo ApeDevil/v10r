@@ -22,6 +22,21 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 		expect(hostedToolNames).toHaveLength(6);
 	});
 
+	// Ranking is the other thing that must not diverge: the same query hitting the hosted
+	// and the stdio server should return the same order, and the tokenizer is where that
+	// silently breaks. It already did once — `n+1` split into two discarded characters —
+	// and a fix applied to one copy only would have made the two runtimes disagree about
+	// which pattern answers "N+1".
+	it('tokenizes queries identically in both runtimes', () => {
+		const hostedSource = readFileSync('src/lib/server/mcp/patterns/search.ts', 'utf8');
+		const bodyOf = (source: string) => {
+			const body = /export function tokenizePatternQuery\(input: string\): string\[\] \{([\s\S]*?)\n\}/.exec(source);
+			if (!body) throw new Error('tokenizePatternQuery not found');
+			return body[1];
+		};
+		expect(bodyOf(stdioSource)).toBe(bodyOf(hostedSource));
+	});
+
 	// The tool SET check above cannot catch a field rendered in one runtime's card
 	// but not the other's. Pin the maturity line the same way — by source text —
 	// in both copies of patternCard.

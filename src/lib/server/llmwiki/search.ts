@@ -9,7 +9,7 @@
 
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { OVERFETCH_MULTIPLIER, RRF_K } from '$lib/server/retrieval';
+import { OVERFETCH_MULTIPLIER, reciprocalRankFusion } from '$lib/server/retrieval';
 import { generateEmbedding } from '$lib/server/retrieval/embed';
 import { LLMWIKI_SEARCH_LIMIT, POINTER_CAP } from './config';
 import { LlmwikiError } from './errors';
@@ -23,26 +23,6 @@ export interface RankedPage {
 	tldr: string;
 	tags: string[];
 	score: number;
-}
-
-/** Reciprocal rank fusion across vector + BM25 result lists. Exported for unit tests. */
-export function rrf(lists: RankedPage[][]): RankedPage[] {
-	const scores = new Map<string, RankedPage & { rrfScore: number }>();
-	for (const list of lists) {
-		for (let rank = 0; rank < list.length; rank++) {
-			const page = list[rank];
-			const contribution = 1 / (RRF_K + rank + 1);
-			const existing = scores.get(page.pageId);
-			if (existing) {
-				existing.rrfScore += contribution;
-			} else {
-				scores.set(page.pageId, { ...page, rrfScore: contribution });
-			}
-		}
-	}
-	return Array.from(scores.values())
-		.sort((a, b) => b.rrfScore - a.rrfScore)
-		.map((p) => ({ ...p, score: p.rrfScore }));
 }
 
 async function vectorHits(
@@ -153,7 +133,7 @@ export async function searchLlmwiki(query: string, options: LlmwikiSearchOptions
 		bm25Hits(query, options.userId, options.collectionId, overfetch),
 	]);
 
-	const fused = rrf([vec, bm25]).slice(0, limit);
+	const fused = reciprocalRankFusion([vec, bm25], (page) => page.pageId).slice(0, limit);
 	if (fused.length === 0) return [];
 
 	const pageIds = fused.map((p) => p.pageId);

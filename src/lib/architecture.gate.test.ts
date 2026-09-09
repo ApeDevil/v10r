@@ -10,8 +10,8 @@
  * A rule that only a human re-reading Markdown can check is not an invariant, it is a
  * hope. This file is the executable form.
  *
- * Where the counts stand: framework imports 0 · environment reads 30 · cross-domain deep
- * imports 64 · `db/`-upward imports 4 · mutually-recursive domains 18 · component layer
+ * Where the counts stand: framework imports 0 · environment reads 29 · cross-domain deep
+ * imports 60 · `db/`-upward imports 3 · mutually-recursive domains 18 · component layer
  * inversions 3. The environment axis is newly measured rather than newly broken — `$env`
  * was invisible to this file until it got a rule of its own.
  *
@@ -352,7 +352,9 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
 	'src/lib/server/ai/providers.ts -> $env/dynamic/private',
 	'src/lib/server/auth/index.ts -> $env/dynamic/private',
 	'src/lib/server/auth/send-auth-email.ts -> $env/dynamic/private',
-	'src/lib/server/cache/index.ts -> $env/dynamic/private',
+	// Moved from cache/index.ts, unchanged in kind: the Upstash client was split out of
+	// the barrel so the barrel can re-export the cache modules that need it. Same one read.
+	'src/lib/server/cache/client.ts -> $env/dynamic/private',
 	'src/lib/server/db/index.ts -> $env/dynamic/private',
 	'src/lib/server/docs/loader.ts -> $env/dynamic/public',
 	'src/lib/server/graph/index.ts -> $env/dynamic/private',
@@ -372,7 +374,6 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
 	'src/lib/server/notifications/channels/email.ts -> $env/dynamic/private',
 	'src/lib/server/notifications/channels/telegram.ts -> $env/dynamic/private',
 	'src/lib/server/notifications/channels/web-push.ts -> $env/dynamic/private',
-	'src/lib/server/pairing/cookie.ts -> $env/dynamic/private',
 	'src/lib/server/platform/index.ts -> $env/dynamic/private',
 	'src/lib/server/retrieval/embed.ts -> $env/dynamic/private',
 	'src/lib/server/security/subkey.ts -> $env/dynamic/private',
@@ -381,10 +382,11 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
 ];
 
 /**
- * Six domains still have no `index.ts` at all — `analytics`, `docs`, `mcp`, `retrieval-shared`,
- * `security`, `test` — so for those the rule is not merely broken but unfollowable, and
- * giving them a public surface is the next step. Three of the original nine are done:
- * `schemas` and `style` gained barrels, and `branding` was absorbed into `style`.
+ * Five domains still have no `index.ts` at all — `analytics`, `docs`, `mcp`, `retrieval-shared`,
+ * `test` — so for those the rule is not merely broken but unfollowable, and giving them a
+ * public surface is the next step. Four of the original nine are done: `schemas` and `style`
+ * gained barrels, `branding` was absorbed into `style`, and `security` gained one when the
+ * pairing cookie became its fourth caller — which retired four entries from this list.
  * (`http/` and `showcases/` are excluded: the first is a sink reached by file, the second
  * a container whose subdirectories are the real domains.) The rest reach past a barrel
  * that already exports the symbol.
@@ -404,8 +406,6 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/ai/tools/desk-read.ts -> desk/file-tree',
 	'src/lib/server/ai/tools/get-source-chunks.ts -> retrieval/queries',
 	'src/lib/server/ai/tools/search-pattern-library.ts -> mcp/patterns/search',
-	'src/lib/server/analytics/confirm-token.ts -> security/subkey',
-	'src/lib/server/analytics/visitor.ts -> security/subkey',
 	'src/lib/server/auth/factor-changes.ts -> admin/audit',
 	'src/lib/server/auth/grant-requests.ts -> admin/audit',
 	'src/lib/server/auth/grants.ts -> admin/audit',
@@ -455,8 +455,6 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/showcases/image-kit/embed.ts -> retrieval/embed',
 	'src/lib/server/showcases/image-kit/vision.ts -> ai/budget',
 	'src/lib/server/showcases/image-kit/vision.ts -> ai/pricing',
-	'src/lib/server/store/blog/mutations.ts -> security/subkey',
-	'src/lib/server/store/blog/mutations.ts -> security/ticket',
 ];
 
 /**

@@ -32,6 +32,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 ## Tests
 
 - `src/lib/server/ai/chat-orchestrator.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/chat-orchestrator.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/chat-orchestrator.test.ts))
+- `src/lib/server/ai/context/system-prompt.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/context/system-prompt.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/context/system-prompt.test.ts))
 - `src/lib/server/ai/tool-leak-guard.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/tool-leak-guard.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/tool-leak-guard.test.ts))
 
 ## Proof

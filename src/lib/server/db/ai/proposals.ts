@@ -25,7 +25,7 @@ import { agentProposal, type ProposalExecutionResult, type ProposedToolCall } fr
  * `updatedAt` on this table are already `.defaultNow()`, so `expiresAt` was the
  * odd column out.) Note this is an architectural argument, not a tested one:
  * the PGlite test DB runs in-process and shares the host clock, so no test here
- * can tell the two apart. The shape test in `proposals.test.ts` pins the intent.
+ * can tell the two apart. The shape test in `proposals.pglite.test.ts` pins the intent.
  */
 const notExpired = () => gt(agentProposal.expiresAt, sql`now()`);
 

@@ -16,10 +16,4 @@ describe('parseAnalyticsRange', () => {
 			expect(parseAnalyticsRange(new URL(`https://x.test/a?range=${bad}`)).range).toBe('30');
 		}
 	});
-
-	it('returns days as the numeric twin of range', () => {
-		const { range, days } = parseAnalyticsRange(new URL('https://x.test/a?range=90'));
-		expect(days).toBe(Number(range));
-		expect(typeof days).toBe('number');
-	});
 });

@@ -33,7 +33,6 @@ A shared retrieval retrieve() kernel (embed → tiers → RRF fusion → drill) 
 - `src/lib/server/retrieval/index.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/index.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/index.test.ts))
 - `src/lib/server/retrieval/plan.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/plan.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/plan.test.ts))
 - `src/lib/server/retrieval/rank.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/rank.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/rank.test.ts))
-- `src/lib/server/llmwiki/rrf.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/llmwiki/rrf.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/llmwiki/rrf.test.ts))
 - `src/lib/server/llmwiki/overview.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/llmwiki/overview.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/llmwiki/overview.test.ts))
 
 ## Proof

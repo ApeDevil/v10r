@@ -112,8 +112,8 @@ describe('signTicket / verifyTicket', () => {
 	});
 
 	it('survives field values containing the separator', () => {
-		// The reason this module does not reuse pairing/cookie.ts: that format
-		// splits on '.' across the payload itself, so a dotted value breaks it.
+		// The property that let pairing/cookie.ts move onto this module: its old format
+		// split on '.' across the payload itself, so a dotted value broke verification.
 		const fields = { key: 'blog/a.b.c.png', fileName: 'my.file.name.png' };
 		const check = verifyTicket(PURPOSE, signTicket(PURPOSE, fields, FUTURE));
 		expect(check).toMatchObject({ ok: true, fields });

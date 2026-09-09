@@ -122,6 +122,6 @@ export async function searchContextual(
 	]);
 
 	// Fuse via reciprocal rank fusion
-	const fused = reciprocalRankFusion(vectorHits, bm25Hits);
+	const fused = reciprocalRankFusion([vectorHits, bm25Hits], (chunk) => chunk.chunkId);
 	return fused.slice(0, limit);
 }

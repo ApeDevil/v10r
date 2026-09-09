@@ -2,35 +2,47 @@ import { RRF_K } from './config';
 import type { RankedChunk } from './types';
 
 /**
- * Reciprocal Rank Fusion: combine results from multiple ranked lists.
- * Score = sum(1 / (k + rank)) across all lists containing the chunk.
+ * Reciprocal Rank Fusion: combine several ranked lists into one.
+ * Score = sum(1 / (k + rank)) across every list containing the item.
+ *
+ * Generic over the item because the wiki layer fuses pages by `pageId` while the chunk
+ * layer fuses by `chunkId` — one implementation, two identity functions. `identify` is
+ * the only thing that differed between the two copies this replaces.
+ *
+ * Two properties are load-bearing and were both violated by the previous implementation:
+ *
+ *  1. **Inputs are never mutated.** The map holds the first-seen item by reference and the
+ *     accumulated score beside it; the only write is the spread on the way out. Callers
+ *     group their own arrays into these lists (`fuseAndRank` does), so writing through an
+ *     item here would rewrite the caller's data.
+ *  2. **Metadata is first-seen, not "best".** A duplicate id means the SAME document found
+ *     by two retrievers, so there is no better copy to choose — and a rule that picks one
+ *     is a rule that can be wrong. Anything downstream that needs to know which lists an
+ *     item came from must track that itself, because fusion collapses it.
  */
-export function reciprocalRankFusion(...lists: RankedChunk[][]): RankedChunk[] {
-	const scores = new Map<string, { chunk: RankedChunk; score: number }>();
+export function reciprocalRankFusion<T extends { score: number }>(
+	lists: readonly T[][],
+	identify: (item: T) => string,
+): T[] {
+	const fused = new Map<string, { item: T; score: number }>();
 
 	for (const list of lists) {
 		for (let rank = 0; rank < list.length; rank++) {
-			const chunk = list[rank];
-			const rrfScore = 1 / (RRF_K + rank + 1);
-			const existing = scores.get(chunk.chunkId);
+			const item = list[rank];
+			const contribution = 1 / (RRF_K + rank + 1);
+			const existing = fused.get(identify(item));
 
 			if (existing) {
-				existing.score += rrfScore;
-				// Keep the higher individual score's metadata
-				if (chunk.score > existing.chunk.score) {
-					existing.chunk = { ...chunk, score: existing.score };
-				} else {
-					existing.chunk.score = existing.score;
-				}
+				existing.score += contribution;
 			} else {
-				scores.set(chunk.chunkId, { chunk, score: rrfScore });
+				fused.set(identify(item), { item, score: contribution });
 			}
 		}
 	}
 
-	return Array.from(scores.values())
+	return Array.from(fused.values())
 		.sort((a, b) => b.score - a.score)
-		.map(({ chunk, score }) => ({ ...chunk, score }));
+		.map(({ item, score }) => ({ ...item, score }));
 }
 
 /**
@@ -69,7 +81,10 @@ export function fuseAndRank(allChunks: RankedChunk[], maxChunks: number): { chun
 
 	// Fuse all tier groups
 	const lists = Array.from(tierGroups.values());
-	const fused = lists.length > 1 ? reciprocalRankFusion(...lists) : (lists[0] ?? []).sort((a, b) => b.score - a.score);
+	const fused =
+		lists.length > 1
+			? reciprocalRankFusion(lists, (chunk) => chunk.chunkId)
+			: (lists[0] ?? []).sort((a, b) => b.score - a.score);
 
 	const chunks = deduplicateAndCap(fused, maxChunks);
 

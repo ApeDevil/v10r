@@ -2,12 +2,14 @@
  * Purpose-separated secret derivation.
  *
  * Several subsystems need a MAC key of their own — the analytics visitor hash,
- * the blog upload ticket. Each could take its own required environment
- * variable, but a *required* secret that ships empty is the worst of both
- * worlds: the feature is broken until an operator acts, and the failure mode is
- * whatever the caller wrote in its else-branch. `PAIRING_SECRET` already
- * demonstrates the cost — `pairing/cookie.ts:33` throws when it is unset, and
- * `.env.example` ships it empty, so pairing is off until someone notices.
+ * the blog upload ticket, the debug-owner pairing cookie. Each could take its own
+ * required environment variable, but a *required* secret that ships empty is the
+ * worst of both worlds: the feature is broken until an operator acts, and the
+ * failure mode is whatever the caller wrote in its else-branch. `PAIRING_SECRET`
+ * demonstrated the cost for a year — it shipped empty in `.env.example`, so the
+ * pairing cookie threw on every verification and the feature was silently off. It
+ * is now the OVERRIDE for `pairingOwner` rather than a required input, which is why
+ * that example is written in the past tense: this module absorbed the last of them.
  *
  * Instead, derive from a root that is guaranteed present. `BETTER_AUTH_SECRET`
  * is validated at module load in `auth/index.ts` (throws below 32 chars) and
@@ -28,6 +30,7 @@ export const SUBKEY_PURPOSES = {
 	analyticsVisitor: 'v10r:analytics-visitor:v1',
 	analyticsConfirm: 'v10r:analytics-confirm:v1',
 	blogUploadTicket: 'v10r:blog-upload-ticket:v1',
+	pairingOwner: 'v10r:pairing-owner:v1',
 } as const;
 
 export type SubkeyPurpose = (typeof SUBKEY_PURPOSES)[keyof typeof SUBKEY_PURPOSES];
@@ -37,6 +40,7 @@ const OVERRIDE_VAR: Record<SubkeyPurpose, string> = {
 	[SUBKEY_PURPOSES.analyticsVisitor]: 'ANALYTICS_VISITOR_SALT',
 	[SUBKEY_PURPOSES.analyticsConfirm]: 'ANALYTICS_CONFIRM_SECRET',
 	[SUBKEY_PURPOSES.blogUploadTicket]: 'BLOG_UPLOAD_TICKET_SECRET',
+	[SUBKEY_PURPOSES.pairingOwner]: 'PAIRING_SECRET',
 };
 
 const cache = new Map<SubkeyPurpose, string>();

@@ -10,7 +10,7 @@ import { PATTERNS } from '$lib/server/patterns';
  * registry either resolves to a PUBLISHED manifest entry (so the generated
  * pages/README can link it) or is deliberately unlinkable (blocked doc, dir
  * ref, or a non-docs repo path) — in which case the renderer emits a code span.
- * A ref that would have become a dead `/docs` link on 136 generated pages fails
+ * A ref that would have become a dead `/docs` link on every generated page fails
  * here instead.
  */
 

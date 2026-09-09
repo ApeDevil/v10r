@@ -47,12 +47,13 @@ Admin tests the public site on a real phone without a second login. The phone's 
 Name: `v10r_debug_owner`  
 Attributes: `HttpOnly; Secure; SameSite=Lax; Max-Age=7200` (2h)
 
-Value format: `${adminUserId}.${expiresAtMs}.${hmacHex}`
+Value: a signed ticket — `security/ticket.ts` over `{ adminUserId }`, in the format `base64url(payload).base64url(hmac)`.
 
-- Payload signed with HMAC-SHA256, keyed by `PAIRING_SECRET` env var.
-- Key imported once via Web Crypto `subtle.importKey`, then cached in module scope.
-- Verification uses a constant-time byte comparison (`timingSafeEqual`).
-- `debugOwnerLoader` in `hooks.server.ts` verifies the cookie on every request. If verification fails or the cookie is expired, the cookie is cleared and `event.locals.debugOwnerId` is set to `null`. Failures are caught silently (e.g. missing `PAIRING_SECRET`) — the hook fails closed without crashing.
+- Keyed by the `pairingOwner` subkey, derived from `BETTER_AUTH_SECRET` via HMAC domain separation. `PAIRING_SECRET` is the optional rotation override, not a required input.
+- HMAC-SHA256 via `node:crypto`, verified with `timingSafeEqual`. The signature is checked *before* the payload is parsed, so untrusted structure is never interpreted unauthenticated.
+- Expiry is signed alongside the fields and enforced by `verifyTicket`, so a client cannot extend its own validity.
+- base64url is encoding, not encryption: the admin's user id is readable by anyone who can read the cookie. It is `HttpOnly`, and the cookie grants attribution rather than authority.
+- `debugOwnerLoader` in `hooks.server.ts` verifies the cookie on every request. If verification fails or the cookie is expired, the cookie is cleared and `event.locals.debugOwnerId` is set to `null`. The hook still catches, so any crypto failure fails closed without crashing.
 
 ## Hook chain position
 
@@ -81,14 +82,18 @@ The 2h session cap is a privacy guardrail: admin re-pairs if longer coverage is 
 | Code brute-force | 5-attempt cap + 10-min TTL; cap enforced at DB level (PG CHECK) |
 | Stale attribution | 2h hard cap; cleanup job untags sessions automatically |
 | Admin revokes pairing | `revokePairing()` marks code consumed, untags all sessions for that admin |
-| Phone self-disconnects | `DELETE /api/pair/disconnect` clears `v10r_debug_owner` cookie; future requests fail HMAC |
-| Forged cookie | HMAC-SHA256 + constant-time compare; missing/wrong `PAIRING_SECRET` fails closed |
+| Phone self-disconnects | `POST /api/pair/disconnect` clears `v10r_debug_owner` cookie; future requests fail HMAC |
+| Forged cookie | HMAC-SHA256 + constant-time compare over a purpose-separated subkey; a ticket minted for any other purpose fails the MAC |
 | Admin sees other users' events | By default the live feed shows all recent site traffic and tags paired rows (`isPaired`). The phone-attribution guarantee is the `debug_owner_id` stamping, not a feed restriction. Selecting the `paired` filter restricts the feed to `debug_owner_id = adminUserId`. |
 
-## Required environment variable
+## Environment
+
+No required variable. The signing key is derived from `BETTER_AUTH_SECRET`, which the app already refuses to boot without, so pairing works in any environment that can serve a request at all.
+
+`PAIRING_SECRET` remains available as an optional override when this one key should rotate independently of the auth secret:
 
 ```
-PAIRING_SECRET=<≥32 random bytes, base64-encoded>
+PAIRING_SECRET=<≥32 random bytes, base64-encoded>   # optional
 ```
 
 Generate with:
@@ -96,4 +101,4 @@ Generate with:
 openssl rand -base64 32
 ```
 
-Missing `PAIRING_SECRET` disables the pairing feature (cookie verification throws; `debugOwnerLoader` catches and sets `debugOwnerId = null`). No crash, no pairing.
+Rotating it ends every paired phone session immediately; they re-pair by scanning a new code.

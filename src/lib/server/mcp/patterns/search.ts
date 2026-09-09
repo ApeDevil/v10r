@@ -13,10 +13,17 @@ import { PATTERNS } from '$lib/server/patterns';
 const STOPWORDS = new Set(['the', 'a', 'an', 'of', 'for', 'to', 'and', 'with', 'in', 'on', 'is', 'how', 'what']);
 
 export function tokenizePatternQuery(input: string): string[] {
-	return input
-		.toLowerCase()
-		.split(/[^a-z0-9]+/)
-		.filter((token) => token.length >= 2 && !STOPWORDS.has(token));
+	return (
+		input
+			.toLowerCase()
+			// A `+` BETWEEN two alphanumerics belongs to the term — `n+1`, `cmd+k`. Splitting on
+			// it left two one-character tokens that the length filter then discarded, so the
+			// registry's `n+1` keywords matched nothing and a search for "N+1" returned zero
+			// rows. A spaced `+` is prose conjunction ("Superforms + Valibot") and still splits.
+			.replace(/(?<=[a-z0-9])\+(?=[a-z0-9])/g, 'plus')
+			.split(/[^a-z0-9]+/)
+			.filter((token) => token.length >= 2 && !STOPWORDS.has(token))
+	);
 }
 
 export interface Scored {

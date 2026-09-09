@@ -31,7 +31,7 @@ A layered component system — Bits UI → primitives (styled atoms) → composi
 
 ## Tests
 
-- `src/lib/components/desk/dock.operations.test.ts` — Example colocated component test ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.operations.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.operations.test.ts))
+- `src/lib/components/desk/dock.state.svelte.test.ts` — Example colocated component test ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.state.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.state.svelte.test.ts))
 
 ## Proof
 

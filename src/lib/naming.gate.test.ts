@@ -32,6 +32,12 @@ interface RetiredTerm {
 
 const RETIRED: RetiredTerm[] = [
 	{
+		term: 'CLOUDFLARE_ACCOUNT_ID',
+		use: 'R2_ACCOUNT_ID',
+		allow: ['docs/naming.md'],
+		why: 'the vocabulary doc quotes retired terms by definition',
+	},
+	{
 		term: 'rag-shared',
 		use: 'retrieval-shared',
 		allow: ['docs/naming.md'],
@@ -316,7 +322,7 @@ describe('naming gate', () => {
 			const source = readFileSync(join(ROOT, file), 'utf8');
 			for (const match of source.matchAll(EXPORTED_TYPE)) {
 				const name = match[1];
-				if (name in DUPLICATE_DECLARATIONS_ALLOWED) continue;
+				if (Object.hasOwn(DUPLICATE_DECLARATIONS_ALLOWED, name)) continue;
 				where.set(name, [...(where.get(name) ?? []), file]);
 			}
 		}
@@ -373,7 +379,7 @@ describe('naming gate', () => {
 			if (isFrameworkContract(file)) continue;
 			for (const match of readFileSync(join(ROOT, file), 'utf8').matchAll(EXPORTED_VALUE)) {
 				const name = match[1];
-				if (name in DUPLICATE_VALUES_ALLOWED) continue;
+				if (Object.hasOwn(DUPLICATE_VALUES_ALLOWED, name)) continue;
 				where.set(name, [...(where.get(name) ?? []), file]);
 			}
 		}
@@ -425,16 +431,6 @@ describe('naming gate', () => {
 		expect(offenders, 'the pipeline is `retrieval`').toEqual([]);
 	});
 
-	/** One Cloudflare account, one env var. The second name was read by exactly one module
-	 *  and set by nobody, so its metrics path was unreachable. */
-	it('reads the Cloudflare account id under one name', () => {
-		const offenders = FILES.filter(
-			// naming.md names retired terms by definition.
-			(file) => file !== 'docs/naming.md' && readFileSync(join(ROOT, file), 'utf8').includes('CLOUDFLARE_ACCOUNT_ID'),
-		);
-		expect(offenders, 'use R2_ACCOUNT_ID').toEqual([]);
-	});
-
 	it('gives every i18n key a namespace', () => {
 		const keys = Object.keys(JSON.parse(readFileSync(join(ROOT, 'messages/en.json'), 'utf8')) as object);
 		const offenders = keys.filter((key) => !key.startsWith('$') && !I18N_AREAS.includes(key.split('_')[0]));
@@ -450,10 +446,24 @@ describe('naming gate', () => {
 		expect(offenders, 'db:rename-rag-schema keeps its name: it describes the migration it performs').toEqual([]);
 	});
 });
+describe('test lane naming', () => {
+	/**
+	 * `vitest.config.ts` splits the suite into a fast `unit` lane and a `db` lane purely by
+	 * filename. A database suite that misses the suffix lands in the fast lane, where it
+	 * boots PGlite under a 5s budget and fails as a timeout far from its cause — so the
+	 * mapping is an executable invariant rather than a list somebody maintains.
+	 */
+	it('names every suite that boots a test database *.pglite.test.ts', () => {
+		const offenders = FILES.filter(
+			(file) =>
+				file.endsWith('.test.ts') &&
+				!file.endsWith('.pglite.test.ts') &&
+				readFileSync(join(ROOT, file), 'utf8').includes('createTestDb'),
+		);
+		expect(offenders, 'these belong in the `db` vitest project — rename them *.pglite.test.ts').toEqual([]);
+	});
 
-/** Guards the relative-path assumption the failure messages rely on. */
-describe('naming gate paths', () => {
-	it('reports repo-relative paths', () => {
-		expect(FILES.every((file) => file === relative(ROOT, join(ROOT, file)))).toBe(true);
+	it('finds the pglite suites (guards against a scan that matches nothing)', () => {
+		expect(FILES.filter((f) => f.endsWith('.pglite.test.ts')).length).toBeGreaterThan(10);
 	});
 });

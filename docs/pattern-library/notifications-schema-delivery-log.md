@@ -26,8 +26,8 @@ The multi-channel schema adds per-user channel-connection tables, verification t
 
 ## Tests
 
-- `src/lib/server/notifications/outbox.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/notifications/outbox.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/notifications/outbox.test.ts))
-- `src/lib/server/jobs/notification-delivery.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/notification-delivery.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/notification-delivery.test.ts))
+- `src/lib/server/notifications/outbox.pglite.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/notifications/outbox.pglite.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/notifications/outbox.pglite.test.ts))
+- `src/lib/server/jobs/notification-delivery.pglite.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/notification-delivery.pglite.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/notification-delivery.pglite.test.ts))
 
 ---
 

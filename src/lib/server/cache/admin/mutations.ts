@@ -1,6 +1,6 @@
 import { invalidateAnnouncementCache } from '$lib/server/admin/announcements';
+import { redis } from '../client';
 import { CacheError } from '../errors';
-import { redis } from '../index';
 
 function requireRedis() {
 	if (!redis) throw new CacheError('credentials', 'Redis is not configured');

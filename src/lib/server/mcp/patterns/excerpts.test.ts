@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PATTERNS } from '$lib/server/patterns';
-import { deriveExcerptAllowlist, isFileRef } from './allowlist';
+import { deriveExcerptAllowlist, excerptPath, isFileRef } from './allowlist';
 import { EXCERPT_ALLOWLIST, isAllowlisted, readAllowlistedExcerpt, SNAPSHOT_PATHS } from './excerpts';
 
 describe('EXCERPT_ALLOWLIST', () => {
@@ -17,11 +17,14 @@ describe('EXCERPT_ALLOWLIST', () => {
 	});
 
 	it('derives from DEEP-tier records only — light index refs never grow the snapshot', () => {
+		// `excerptPath` rather than `ref.path`: a ref may carry a `#heading`, and the FILE
+		// is what gets excerpted. Re-implementing that here is precisely the drift this
+		// test exists to catch, so it uses the same helper the derivation does.
 		const deepFilePaths = new Set(
 			PATTERNS.filter((p) => p.tier === 'deep')
 				.flatMap((p) => [...p.docs, ...p.code, ...p.tests, ...p.showcases])
 				.filter((ref) => isFileRef(ref))
-				.map((ref) => ref.path),
+				.map((ref) => excerptPath(ref.path)),
 		);
 		for (const path of EXCERPT_ALLOWLIST) {
 			expect(deepFilePaths.has(path), `${path} is not referenced by any deep record`).toBe(true);
@@ -30,7 +33,7 @@ describe('EXCERPT_ALLOWLIST', () => {
 		const lightOnly = PATTERNS.filter((p) => p.tier === 'light')
 			.flatMap((p) => p.docs)
 			.filter((ref) => isFileRef(ref))
-			.map((ref) => ref.path)
+			.map((ref) => excerptPath(ref.path))
 			.find((path) => !deepFilePaths.has(path));
 		expect(lightOnly).toBeTruthy();
 		if (lightOnly) {

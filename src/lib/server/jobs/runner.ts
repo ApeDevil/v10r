@@ -1,6 +1,6 @@
-import { waitUntil } from '@vercel/functions';
 import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
+import { deferAfterResponse } from '$lib/server/http/after-response';
 import { jobs } from './index';
 
 export type TriggerType = 'cron' | 'scheduler' | 'manual';
@@ -35,15 +35,13 @@ export async function runJob(slug: string, trigger: TriggerType): Promise<JobRes
 	const durationMs = Math.round(performance.now() - t0);
 	const finishedAt = new Date();
 
-	// Fire-and-forget: monitoring failure never masks job outcome. waitUntil
-	// keeps the insert alive past the response — Vercel freezes the instance at
-	// response time, and a FAILED run is exactly the row most likely to be lost.
-	// .catch attached before handing over, so a rejection never surfaces.
-	waitUntil(
+	// Deferred: monitoring failure never masks job outcome, and a FAILED run is
+	// exactly the row most likely to be lost if the instance freezes at response
+	// time. The survival and error rules live in `deferAfterResponse`.
+	deferAfterResponse(`jobs:run-log:${slug}`, () =>
 		db
 			.insert(jobExecution)
-			.values({ jobSlug: slug, status, trigger, startedAt, finishedAt, durationMs, resultCount, errorMessage })
-			.catch((err) => console.error(`[runner] Failed to log ${slug}:`, err)),
+			.values({ jobSlug: slug, status, trigger, startedAt, finishedAt, durationMs, resultCount, errorMessage }),
 	);
 
 	return { slug, status, durationMs, resultCount, errorMessage };

@@ -203,10 +203,17 @@ const LIST_EVERYTHING: NextAction = {
 };
 
 export function tokenizePatternQuery(input: string): string[] {
-	return input
-		.toLowerCase()
-		.split(/[^a-z0-9]+/)
-		.filter((token) => token.length >= 2 && !STOPWORDS.has(token));
+	return (
+		input
+			.toLowerCase()
+			// A `+` BETWEEN two alphanumerics belongs to the term — `n+1`, `cmd+k`. Splitting on
+			// it left two one-character tokens that the length filter then discarded, so the
+			// registry's `n+1` keywords matched nothing and a search for "N+1" returned zero
+			// rows. A spaced `+` is prose conjunction ("Superforms + Valibot") and still splits.
+			.replace(/(?<=[a-z0-9])\+(?=[a-z0-9])/g, 'plus')
+			.split(/[^a-z0-9]+/)
+			.filter((token) => token.length >= 2 && !STOPWORDS.has(token))
+	);
 }
 
 interface Scored {
@@ -354,7 +361,7 @@ function getPattern(args: Record<string, unknown>, registry: Registry): ToolResu
 	const byId = buildById(registry);
 	const pattern = byId.get(id);
 	if (!pattern) {
-		// 136 ids would be ~3 KB of error text — cap the reflection, point at search.
+		// Reflecting every id would be kilobytes of error text — cap it, point at search.
 		const all = registry.patterns.map((entry) => entry.id);
 		const ids = all.slice(0, 20).join(', ');
 		const more = all.length > 20 ? `, … (${all.length} total — search_patterns finds the rest)` : '';

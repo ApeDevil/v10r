@@ -8,7 +8,7 @@
  * page cannot drift apart in construction, which is precisely how the previous
  * two-standards situation arose.
  */
-import { deriveSubkey, SUBKEY_PURPOSES } from '$lib/server/security/subkey';
+import { deriveSubkey, SUBKEY_PURPOSES } from '$lib/server/security';
 import { hashVisitorId } from './consent';
 
 function salt(): string {

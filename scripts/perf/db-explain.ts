@@ -11,8 +11,17 @@
  *
  * Targets NEON_DATABASE_URL_PROD (the real corpus). Each probe is independently
  * try/caught so one failure never aborts the rest.
+ *
+ * It also MEASURES `vector_query_ms`. That budget sat in budgets.json with nothing
+ * producing a number for it, which is the weakest kind of budget — one that can never be
+ * missed. The figure comes free: `EXPLAIN ANALYZE` already reports the executor's own
+ * `Execution Time`, so scoring it costs one regex and burns neither an embedding nor an
+ * extra query. The verdict is REPORTED, not enforced: this probe runs by hand against a
+ * shared serverless database, and a target that fails a build because Neon was cold is a
+ * target nobody keeps.
  */
 import { neon } from '@neondatabase/serverless';
+import { budgets, scoreBudget } from '$lib/server/perf/budgets';
 
 const url = process.env.NEON_DATABASE_URL_PROD;
 if (!url) {
@@ -38,11 +47,30 @@ async function probe(title: string, run: () => Promise<void>) {
 	}
 }
 
-async function explain(label: string, query: string) {
+async function explain(label: string, query: string): Promise<string[]> {
 	console.log(`\n--- ${label} ---`);
 	const rows = (await sql.query(`EXPLAIN (ANALYZE, BUFFERS, VERBOSE) ${query}`)) as Array<Record<string, string>>;
-	for (const r of rows) console.log(`  ${Object.values(r)[0]}`);
+	const plan = rows.map((r) => String(Object.values(r)[0]));
+	for (const line of plan) console.log(`  ${line}`);
+	return plan;
 }
+
+/** The executor's own timing, in ms. `null` when the plan did not report one. */
+function executionMs(plan: string[]): number | null {
+	const line = plan.find((l) => l.startsWith('Execution Time:'));
+	const ms = line ? Number.parseFloat(line.replace('Execution Time:', '')) : Number.NaN;
+	return Number.isFinite(ms) ? ms : null;
+}
+
+/**
+ * A vector query that fell back to a sequential scan is not a slow query, it is an
+ * unused index — and the difference is the whole reason this probe exists.
+ */
+function usedVectorIndex(plan: string[]): boolean {
+	return plan.some((l) => /Index Scan using .*(hnsw|embedding)/i.test(l));
+}
+
+const vectorMeasurements: Array<{ label: string; ms: number; indexed: boolean }> = [];
 
 await probe('CORPUS SIZE (daty P0 scaling gate)', async () => {
 	const counts = (await sql.query(`
@@ -66,7 +94,7 @@ await probe('CORPUS SIZE (daty P0 scaling gate)', async () => {
 await probe('HNSW INDEX + iterative_scan GUC (daty P0)', async () => {
 	const idx = (await sql.query(`
 		SELECT indexname, indexdef FROM pg_indexes
-		WHERE schemaname='rag' AND (indexdef ILIKE '%hnsw%' OR indexdef ILIKE '%ivfflat%')
+		WHERE schemaname='retrieval' AND (indexdef ILIKE '%hnsw%' OR indexdef ILIKE '%ivfflat%')
 	`)) as Array<Record<string, string>>;
 	console.log('Vector indexes:');
 	for (const r of idx) console.log(`  ${r.indexname}: ${r.indexdef}`);
@@ -91,31 +119,19 @@ await probe('TIER-1 VECTOR QUERY — chunk-direct form (daty P0 fix)', async () 
 		['smallest (selective → tests iterative_scan)', smallest],
 	] as const) {
 		if (!owner) continue;
-		await explain(
+		const plan = await explain(
 			`chunk-direct, owner=${label}`,
 			`SELECT c.id, c.embedding <=> '${ZERO_VEC}'::vector AS distance
 			 FROM retrieval.chunk c
 			 WHERE c.user_id = '${owner}' AND c.embedding IS NOT NULL
 			 ORDER BY c.embedding <=> '${ZERO_VEC}'::vector LIMIT 5`,
 		);
+		const ms = executionMs(plan);
+		if (ms !== null) vectorMeasurements.push({ label, ms, indexed: usedVectorIndex(plan) });
 	}
 });
 
-await probe('BRAND_SETTINGS default row (sys Finding 1 severity gate)', async () => {
-	const rows = (await sql.query(`SELECT id, enabled FROM app.brand_settings WHERE id='default'`)) as Array<
-		Record<string, unknown>
-	>;
-	if (!rows.length) {
-		console.log(
-			'  ⚠ NO default row → getBrandConfig() null-cache bug fires a Neon SELECT on EVERY request. sys Finding 1 is LIVE P0.',
-		);
-	} else {
-		console.log(`  default row EXISTS (enabled=${rows[0].enabled}) → null-cache bug is latent, not live.`);
-		console.table(rows);
-	}
-});
-
-await probe('BLOG listPosts revision over-fetch (daty P1)', async () => {
+await probe('BLOG listPosts latest-revision read (query budget: blog.listPosts)', async () => {
 	const counts = (await sql.query(`
 		SELECT (SELECT count(*) FROM blog.post) AS posts,
 		       (SELECT count(*) FROM blog.revision) AS revisions,
@@ -126,12 +142,33 @@ await probe('BLOG listPosts revision over-fetch (daty P1)', async () => {
 	const ids = (await sql.query(`SELECT id FROM blog.post ORDER BY created_at DESC LIMIT 20`)) as Array<{ id: string }>;
 	if (ids.length) {
 		const inList = ids.map((r) => `'${r.id}'`).join(',');
+		// The shape `listPosts` actually issues today. It used to read every revision of
+		// every post and de-duplicate in JS — unbounded in edits × locales — so this probe
+		// exists to confirm the DISTINCT ON form reaches the composite index instead of
+		// sorting the whole table. `query-budget.gate.pglite.test.ts` proves the COUNT is
+		// flat; only a plan can say whether the one query is cheap.
 		await explain(
-			'current: revisions for 20 posts, no LIMIT (app dedups)',
-			`SELECT post_id, title, summary FROM blog.revision
-			 WHERE post_id IN (${inList}) ORDER BY created_at DESC`,
+			'latest revision per post, DISTINCT ON over 20 ids',
+			`SELECT DISTINCT ON (post_id) post_id, title, summary FROM blog.revision
+			 WHERE post_id IN (${inList}) ORDER BY post_id, created_at DESC`,
 		);
 	}
 });
+
+hr('VECTOR QUERY BUDGET (vector_query_ms)');
+if (vectorMeasurements.length === 0) {
+	console.log('  no vector query completed — nothing to score');
+} else {
+	const budget = budgets.vector_query_ms;
+	console.log(`  budget: warn >${budget.warn}ms, fail >${budget.fail}ms — ${budget.note}`);
+	for (const m of vectorMeasurements) {
+		const verdict = scoreBudget('vector_query_ms', m.ms);
+		const index = m.indexed ? 'index scan' : 'NO INDEX SCAN — this is the finding, not the milliseconds';
+		console.log(`  ${verdict.toUpperCase().padEnd(5)} ${m.ms.toFixed(1)}ms  ${m.label}  (${index})`);
+	}
+	// Reported, never enforced — see the header. A hand-run probe against a serverless
+	// database that suspends after five minutes cannot own a build's exit code.
+	console.log('  reported only; nothing here fails a build');
+}
 
 console.log('\nDone.\n');

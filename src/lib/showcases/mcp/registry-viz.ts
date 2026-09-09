@@ -75,6 +75,22 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'retrieval-endpoints': 'Retrieval',
 	'agent-experience': 'Agent AX',
 	'desk-workspace': 'Desk',
+	'optimistic-mutation': 'Optimistic',
+	'intent-preloading': 'Preload',
+	'virtualized-rendering': 'Virtual List',
+	'hierarchical-cache': 'Cache Tiers',
+	'stale-while-revalidate': 'SWR',
+	singleflight: 'Singleflight',
+	'no-waterfall-loading': 'No Waterfall',
+	'critical-path-deferred-tail': 'Deferred Tail',
+	'heavy-dependency-quarantine': 'Bundle Guard',
+	'main-thread-budget': 'Main Thread',
+	'latency-tracing': 'Tracing',
+	'performance-budget-ratchet': 'Budgets',
+	'resilience-policy': 'Resilience',
+	'deadline-propagation': 'Deadline',
+	'query-budget': 'Queries',
+	'scenario-harness': 'Scenarios',
 };
 
 /**

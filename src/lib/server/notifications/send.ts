@@ -6,7 +6,6 @@
  * the single-method wrapper this replaced said nothing the verb does not.
  */
 
-import { waitUntil } from '@vercel/functions';
 import { eq } from 'drizzle-orm';
 import { BRAND_NAME } from '$lib/branding';
 import { db } from '$lib/server/db';
@@ -14,6 +13,7 @@ import { createNotification, getOrCreateSettings } from '$lib/server/db/notifica
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import type { NotificationParams } from '$lib/server/db/schema/notifications/notifications';
 import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
+import { deferAfterResponse } from '$lib/server/http/after-response';
 import { getChannel } from './channels';
 import { createDeliveries } from './outbox';
 import { isQuietNow } from './quiet-hours';
@@ -67,10 +67,9 @@ async function routeExternal(notificationId: string, userId: string, type: Notif
 	// it now, synchronously with routing. Partition it out BEFORE the outbox
 	// cast below, or the cast would silently funnel push into pending rows.
 	if (channels.includes('push')) {
-		// Awaited so the whole send lives inside the waitUntil() envelope in
-		// send() below — a dangling promise here would escape it and get frozen
-		// with the function instance. Caught so a push failure can't block the
-		// outbox insert.
+		// Awaited so the whole send stays inside the deferred envelope send() opens
+		// below — a dangling promise here would escape it and get frozen with the
+		// function instance. Caught so a push failure can't block the outbox insert.
 		await sendPushNow(notificationId, userId, type, locale).catch((err) =>
 			console.error('[notifications] push send failed:', err),
 		);
@@ -126,16 +125,11 @@ async function sendPushNow(notificationId: string, userId: string, type: Notific
 export async function sendNotification(input: SendInput) {
 	const notification = await createNotification(input);
 
-	// Vercel freezes the execution environment once the response returns —
-	// a bare un-awaited promise here is NOT guaranteed to finish (documented
-	// behavior, not a race we control). waitUntil() keeps the outbox insert
-	// and the synchronous push fan-out alive past the response; off-Vercel
-	// (container, tests) it degrades to plain fire-and-forget.
-	//
-	// `notifyUser` is in here for the same reason: on serverless it is a Redis
-	// PUBLISH over the network, so a bare un-awaited call could be frozen
-	// before the request lands.
-	waitUntil(
+	// The notification ROW is the critical work — it is what the caller asked for
+	// and what the UI reads. Delivery is its tail: `notifyUser` is a Redis PUBLISH
+	// over the network on serverless, and `routeExternal` fans out to email and
+	// chat transports. Neither belongs in the caller's wait.
+	deferAfterResponse('notifications:live-notify', () =>
 		notifyUser(input.userId, {
 			type: 'new',
 			notification: {
@@ -146,14 +140,10 @@ export async function sendNotification(input: SendInput) {
 				actionUrl: notification.actionUrl,
 				createdAt: notification.createdAt.toISOString(),
 			},
-		}).catch((err) => console.error('[notifications] live notify failed:', err)),
+		}),
 	);
 
-	waitUntil(
-		routeExternal(notification.id, input.userId, input.type).catch((err) =>
-			console.error('[notifications] routing failed:', err),
-		),
-	);
+	deferAfterResponse('notifications:route-external', () => routeExternal(notification.id, input.userId, input.type));
 
 	return notification;
 }

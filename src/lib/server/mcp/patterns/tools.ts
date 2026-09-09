@@ -306,7 +306,7 @@ function getPattern(args: Record<string, unknown>): ToolResult {
 	const pattern = buildById().get(id);
 	if (!pattern) {
 		// A real-shaped id we do not have is a REGISTRY GAP, not a malformed request.
-		// 136 ids would be ~3 KB of error text — cap the reflection, point at search.
+		// Reflecting every id would be kilobytes of error text — cap it, point at search.
 		const more = PATTERNS.length > 20 ? `, … (${PATTERNS.length} total — search_patterns finds the rest)` : '';
 		return errorResult(
 			`No pattern with id "${id}". Valid ids: ${PATTERNS.slice(0, 20)

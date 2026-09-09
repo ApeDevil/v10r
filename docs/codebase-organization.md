@@ -141,6 +141,20 @@ above it. The full-screen 3D viewer rendered token-less until these were hoisted
 
 ---
 
+## Policy belongs to its domain
+
+Every domain keeps its own constants in `server/[domain]/config.ts`. There is no shared
+constants module — re-introducing one is the regression this replaced. A policy leaf is
+deep-imported by design (the gate exempts `*/config.ts` and `*-config.ts`): taking a constant
+through the domain's barrel would drag that domain's whole implementation graph with it.
+
+Retention is one schedule, not fourteen constants. `server/retention/schedule.ts` names every
+dataset that ages out, its window, what the sweep does and which job enforces it. The cron
+sweeps read it, the public privacy page renders it, and `retention/schedule.gate.test.ts`
+fails if a sweep hard-codes a window or names a job that does not exist.
+
+---
+
 ## Where does a new file go?
 
 1. **Thin adapter?** (handles `fail`/`redirect`/`error`, converts types, no business logic)
@@ -155,7 +169,8 @@ above it. The full-screen 3D viewer rendered token-less until these were hoisted
 7. **A component?** → the lowest layer that all its consumers can reach. Route-local until
    a second route needs it.
 8. **Reactive state?** → app-wide `src/lib/state/`, or co-located with its component.
-9. **A catalogue two features share?** → directly under `src/lib/`, below the component
+9. **A policy constant?** → `server/[domain]/config.ts`. A retention window → `server/retention/schedule.ts`.
+10. **A catalogue two features share?** → directly under `src/lib/`, below the component
    layer (see `$lib/3d`, `$lib/desk`).
 
 ---

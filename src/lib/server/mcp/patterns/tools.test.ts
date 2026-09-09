@@ -64,6 +64,26 @@ describe('publicPatternRegistry.dispatch', () => {
 		expect(textOf(result)).toMatch(/Step 1/);
 	});
 
+	// "Dependency-ordered" is the tool's whole promise, and the title above asserted only
+	// that a Step 1 exists. The velocity family is the first set of records with real
+	// depends_on chains, so it is the first case where a wrong order is visible: an agent
+	// told to build singleflight before the cache tier it locks against would follow it.
+	it('recommend_emulation_plan puts a dependency before the pattern that needs it', () => {
+		const result = publicPatternRegistry.dispatch('recommend_emulation_plan', {
+			capabilities: ['caching', 'singleflight', 'stale-while-revalidate', 'query budget', 'scenario testing'],
+		}) as { content: { text: string }[] };
+		const text = textOf(result);
+		const precedes = (first: string, second: string) => {
+			expect(text).toContain(first);
+			expect(text).toContain(second);
+			expect(text.indexOf(first)).toBeLessThan(text.indexOf(second));
+		};
+		precedes('hierarchical-cache', 'singleflight');
+		precedes('hierarchical-cache', 'stale-while-revalidate');
+		precedes('performance-budget-ratchet', 'query-budget');
+		precedes('performance-budget-ratchet', 'scenario-harness');
+	});
+
 	it('rejects an unknown tool name', () => {
 		const result = publicPatternRegistry.dispatch('drop_tables', {}) as { isError?: boolean };
 		expect(result.isError).toBe(true);

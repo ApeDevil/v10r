@@ -24,6 +24,10 @@ A short-lived, single-use pairing code and QR flow that attributes a phone's ano
 
 - `src/lib/server/pairing/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/pairing) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/pairing))
 
+## Tests
+
+- `src/lib/server/pairing/cookie.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/pairing/cookie.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/pairing/cookie.test.ts))
+
 ## Proof
 
 - [`/pair/[code]`](/pair/[code]) (app route, no showcase)

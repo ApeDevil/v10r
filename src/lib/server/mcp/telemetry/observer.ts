@@ -12,8 +12,9 @@
  *  - The row is BUILT INSIDE the deferred closure. Building it on the hot path is the one real
  *    hazard here: a synchronous throw while serialising an argument would surface as a 500 on a
  *    tool call that actually succeeded.
- *  - `.catch()` is attached BEFORE the promise is handed to `waitUntil`. Attached after, a rejection
- *    becomes an unhandled rejection on an instance that may already be frozen.
+ *  - Deferral goes through `deferAfterResponse`, which owns the survival rule and the
+ *    catch-before-handoff rule — attached after the handoff, a rejection becomes an unhandled
+ *    rejection on an instance that may already be frozen.
  *  - ONE row per POST, written once at the terminating edge — never a "begin" row plus an "end"
  *    UPDATE, where losing the second write leaves rows that look like hangs but were successes.
  *
@@ -23,9 +24,9 @@
  * own current call — only prior ones. That is correct append-only semantics and it removes the
  * read-your-own-writes loop for free. Do not make this await.
  */
-import { waitUntil } from '@vercel/functions';
 import { env } from '$env/dynamic/private';
 import type { McpCallLogInsert } from '$lib/server/db/schema/mcp/call-log';
+import { deferAfterResponse } from '$lib/server/http/after-response';
 import type { McpCallObservation, McpCallObserver } from '../types';
 import { deriveClientKey } from './client-key';
 import { inferOutcome, type McpGateReason, normalizeMethod } from './outcome';
@@ -171,17 +172,13 @@ function extractQuery(args: unknown): unknown {
 export function createMcpObserver(context: McpObserverContext): McpCallObserver {
 	return {
 		observe(observation) {
-			waitUntil(
-				(async () => {
-					// Everything from here runs AFTER the response. A throw while building the row would
-					// otherwise 500 a tool call that already succeeded.
-					const row = buildCallLogRow(observation, context, new Date());
-					if (await overBudget()) return;
-					await writeCallLog(row);
-				})().catch((cause: unknown) => {
-					console.error('[mcp-telemetry] observer failed:', cause instanceof Error ? cause.message : 'unknown');
-				}),
-			);
+			deferAfterResponse('mcp-telemetry:call-log', async () => {
+				// Everything from here runs AFTER the response. A throw while building the row would
+				// otherwise 500 a tool call that already succeeded.
+				const row = buildCallLogRow(observation, context, new Date());
+				if (await overBudget()) return;
+				await writeCallLog(row);
+			});
 		},
 	};
 }
@@ -199,49 +196,45 @@ export function createMcpObserver(context: McpObserverContext): McpCallObserver 
  * construction and are a security signal worth a row.
  */
 export function recordMcpGateRejection(context: McpObserverContext, reason: McpGateReason): void {
-	waitUntil(
-		(async () => {
-			const now = new Date();
-			const row: McpCallLogInsert = {
+	deferAfterResponse('mcp-telemetry:gate-rejection', async () => {
+		const now = new Date();
+		const row: McpCallLogInsert = {
+			surface: context.surface,
+			traffic: classifyTraffic({
+				headers: context.headers,
 				surface: context.surface,
-				traffic: classifyTraffic({
-					headers: context.headers,
-					surface: context.surface,
-					vercelEnv: env.VERCEL_ENV,
-					selfSecret: env.MCP_SELF_TRAFFIC_TOKEN,
-				}),
-				stage: 'gate',
-				outcome: reason,
-				method: null,
-				toolName: null,
-				subject: null,
-				queryText: null,
-				// A rejection row stays dimension-free, matching the "no caller identifier on
-				// rejection rows" doctrine — the CHECK would permit a workspace here; the doctrine
-				// is the reason not to.
-				responseText: null,
-				workspace: null,
-				requestedProtocolVersion: cap(context.headers.get('mcp-protocol-version'), 32),
-				servedProtocolVersion: null,
-				rcHeaders: context.headers.get('mcp-method') !== null,
-				clientFamily: classifyClientFamily(context.headers.get('user-agent')),
-				clientName: null,
-				clientVersion: null,
-				traceId: resolveTraceId(context.body, context.headers),
-				// No caller identifier on a rejection row — see the schema's key-scope CHECK.
-				clientKey: null,
-				registryVersion: cap(context.registryVersion, 32) ?? 'unknown',
-				totalMs: Math.max(0, context.gateMs),
-				gateMs: Math.max(0, context.gateMs),
-				dispatchMs: null,
-				startedAt: now,
-			};
-			if (await overBudget()) return;
-			await writeCallLog(row);
-		})().catch((cause: unknown) => {
-			console.error('[mcp-telemetry] gate record failed:', cause instanceof Error ? cause.message : 'unknown');
-		}),
-	);
+				vercelEnv: env.VERCEL_ENV,
+				selfSecret: env.MCP_SELF_TRAFFIC_TOKEN,
+			}),
+			stage: 'gate',
+			outcome: reason,
+			method: null,
+			toolName: null,
+			subject: null,
+			queryText: null,
+			// A rejection row stays dimension-free, matching the "no caller identifier on
+			// rejection rows" doctrine — the CHECK would permit a workspace here; the doctrine
+			// is the reason not to.
+			responseText: null,
+			workspace: null,
+			requestedProtocolVersion: cap(context.headers.get('mcp-protocol-version'), 32),
+			servedProtocolVersion: null,
+			rcHeaders: context.headers.get('mcp-method') !== null,
+			clientFamily: classifyClientFamily(context.headers.get('user-agent')),
+			clientName: null,
+			clientVersion: null,
+			traceId: resolveTraceId(context.body, context.headers),
+			// No caller identifier on a rejection row — see the schema's key-scope CHECK.
+			clientKey: null,
+			registryVersion: cap(context.registryVersion, 32) ?? 'unknown',
+			totalMs: Math.max(0, context.gateMs),
+			gateMs: Math.max(0, context.gateMs),
+			dispatchMs: null,
+			startedAt: now,
+		};
+		if (await overBudget()) return;
+		await writeCallLog(row);
+	});
 }
 
 /** Cheap guard so a flood cannot turn the log into a storage-exhaustion vector. */

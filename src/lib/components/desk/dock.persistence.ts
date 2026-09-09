@@ -77,11 +77,17 @@ function isValidNode(node: unknown): node is LayoutNode {
 	return false;
 }
 
-/** Remove tabs that reference panels not in the registry */
+/**
+ * Remove tabs that reference panels not in the registry.
+ *
+ * `Object.hasOwn`, not `in`: both the tab ids and the registry come straight out of
+ * `JSON.parse(localStorage)`, and `in` walks the prototype chain — a stored tab named
+ * `toString` or `constructor` would survive the prune and reach the renderer as a function.
+ */
 function pruneInvalidTabs(node: LayoutNode, panels: Record<string, PanelDefinition>): void {
 	if (node.type === 'leaf') {
 		const leaf = node as LeafNode;
-		leaf.tabs = leaf.tabs.filter((id) => id in panels);
+		leaf.tabs = leaf.tabs.filter((id) => Object.hasOwn(panels, id));
 		if (leaf.tabs.length > 0 && !leaf.tabs.includes(leaf.activeTab)) {
 			leaf.activeTab = leaf.tabs[0];
 		}

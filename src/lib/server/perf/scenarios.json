@@ -1,0 +1,69 @@
+{
+	"generatedAt": "2026-09-09T10:34:29.501Z",
+	"sharedTier": false,
+	"results": [
+		{
+			"id": "cold-cache",
+			"condition": "nothing cached — the first caller after a deploy",
+			"originCalls": 1,
+			"outcome": "origin-miss",
+			"latencyMs": 22
+		},
+		{
+			"id": "warm-cache",
+			"condition": "the same read, immediately after — the ordinary case",
+			"originCalls": 0,
+			"outcome": "local-hit",
+			"latencyMs": 0
+		},
+		{
+			"id": "expiry-burst",
+			"condition": "50 callers arrive on the same key the moment it expires",
+			"originCalls": 1,
+			"outcome": "coalesced-50-to-1",
+			"latencyMs": 21
+		},
+		{
+			"id": "slow-dependency",
+			"condition": "a dependency that takes 400ms against a 60ms slice",
+			"originCalls": 1,
+			"outcome": "deadline-exceeded",
+			"latencyMs": 60
+		},
+		{
+			"id": "failing-dependency",
+			"condition": "12 callers against a dependency that is down, breaker threshold 3",
+			"originCalls": 3,
+			"outcome": "open-after-3-of-12",
+			"latencyMs": 2
+		},
+		{
+			"id": "concurrent-load",
+			"condition": "20 simultaneous callers against a pool of 4 with room for 4 more",
+			"originCalls": 8,
+			"outcome": "admitted-8-refused-12",
+			"latencyMs": 41
+		},
+		{
+			"id": "retry-after-transient-failure",
+			"condition": "a dependency that fails twice, then answers",
+			"originCalls": 3,
+			"outcome": "succeeded-on-attempt-3",
+			"latencyMs": 6
+		},
+		{
+			"id": "refusal-not-retried",
+			"condition": "a dependency that refuses — a full bulkhead, not a failure",
+			"originCalls": 1,
+			"outcome": "attempted-1-of-5",
+			"latencyMs": 0
+		},
+		{
+			"id": "shed-under-pressure",
+			"condition": "load at 0.6 with 30ms of budget left",
+			"originCalls": 0,
+			"outcome": "critical:admitted deferred:budget background:load",
+			"latencyMs": 0
+		}
+	]
+}

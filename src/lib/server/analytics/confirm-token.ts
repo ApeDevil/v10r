@@ -28,7 +28,7 @@
  * headless browser.
  */
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { deriveSubkey, SUBKEY_PURPOSES } from '$lib/server/security/subkey';
+import { deriveSubkey, SUBKEY_PURPOSES } from '$lib/server/security';
 import { CONFIRM_TOKEN_TTL_MS } from './config';
 
 /** Tolerated forward drift between the issuing and verifying clock. */

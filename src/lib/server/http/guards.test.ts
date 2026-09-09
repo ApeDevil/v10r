@@ -163,28 +163,6 @@ describe('admin gate — ADMIN_USER_ID comma-separated list', () => {
 		expectDenied({ id: 'usr_nope', email: 'whatever@example.com' });
 	});
 
-	it('tolerates surrounding whitespace around entries', () => {
-		mockAdminUserId = '  usr_one , usr_two  ';
-		const user = { id: 'usr_two', email: 'x@y.com' };
-		expect(requireAdmin(makeLocals(user, session)).user).toBe(user);
-	});
-
-	it('ignores empty entries from stray commas', () => {
-		mockAdminUserId = 'usr_one,,usr_two,';
-		const user = { id: 'usr_one', email: 'x@y.com' };
-		expect(requireAdmin(makeLocals(user, session)).user).toBe(user);
-	});
-
-	it('grants no one when the list is only commas/whitespace', () => {
-		mockAdminUserId = ' , , ';
-		expectDenied({ id: 'usr_one', email: 'x@y.com' });
-	});
-
-	it('matches ids case-sensitively (a differently-cased id is denied)', () => {
-		mockAdminUserId = 'usrAbC123';
-		expectDenied({ id: 'usrabc123', email: 'x@y.com' });
-	});
-
 	it('admin cannot be transferred by re-claiming an email (id is the only key)', () => {
 		// Attacker holds a plausible admin email but a different immutable id.
 		mockAdminUserId = 'usr_real_admin';

@@ -20,12 +20,23 @@ export const SECRET_DENY = [
 	/node_modules/,
 ];
 
+/**
+ * Strip a `#fragment`, matching what `pattern-library/validate.ts` and the links gate
+ * already do. A ref may legitimately point at a heading inside a doc; the FILE is what
+ * gets excerpted, and reading `data.md#singleflight` off disk fails at build time with a
+ * "moved or deleted?" that names a file which is right there.
+ */
+export function excerptPath(path: string): string {
+	return path.split('#')[0];
+}
+
 /** A ref is an excerptable file when it is kind:'file' or an unspecified path with an extension. */
 export function isFileRef(ref: RegRef): boolean {
+	const path = excerptPath(ref.path);
 	if (ref.kind === 'file') return true;
 	if (ref.kind !== undefined) return false; // dir / route / anchor are not excerptable files
-	const last = ref.path.split('/').pop() ?? '';
-	return !ref.path.endsWith('/') && last.includes('.');
+	const last = path.split('/').pop() ?? '';
+	return !path.endsWith('/') && last.includes('.');
 }
 
 /**
@@ -43,8 +54,9 @@ export function deriveExcerptAllowlist(): string[] {
 	for (const pattern of DEEP_PATTERNS) {
 		for (const ref of [...pattern.docs, ...pattern.code, ...pattern.tests, ...pattern.showcases]) {
 			if (!isFileRef(ref)) continue;
-			if (SECRET_DENY.some((rx) => rx.test(ref.path))) continue;
-			allow.add(ref.path);
+			const path = excerptPath(ref.path);
+			if (SECRET_DENY.some((rx) => rx.test(path))) continue;
+			allow.add(path);
 		}
 	}
 	return [...allow].sort();

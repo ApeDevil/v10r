@@ -1,5 +1,13 @@
 # AI Testing Infrastructure
 
+> **Superseded in part.** This document records the original design and the evidence behind
+> it. Three things have since changed and [strategy.md](./strategy.md) is authoritative:
+> the suite is split into `unit` and `db` vitest projects, and the `db` lane restores a PGlite
+> datadir snapshot built once per run rather than calling `pushSchema` per file — `pushSchema`
+> measured 61 ms of a 1,435 ms per-file cost, while `initdb` alone was 840 ms. The automatic
+> Claude Stop hook was also removed; agents run the explicit `bun run validate` gate instead.
+
+
 > **Status: built.** The Vitest + PGlite harness described here exists and works (`vitest.config.ts`, the `createTestDb()` helper in `src/lib/server/test/db.ts`, hundreds of `*.test.ts` files, in-process PGlite Postgres). Schema setup uses `pushSchema` from `drizzle-kit/api` — no migration files, no `drizzle/` directory, no schema-gen step. One piece remains **not built**: the root `AGENTS.md` file (and any CI). Treat that as plan; everything else reflects current code.
 
 This document describes the testing approach — what exists, why, and how.
@@ -269,7 +277,7 @@ export function makeNotification(overrides?: Partial<NotificationInsert>): Notif
 
 ---
 
-## Claude Code Hooks
+## Claude Code edit hook
 
 Hook commands run on the **host machine** (where Claude Code runs). Since all tools live in the container, every command uses `podman exec v10r`.
 
@@ -296,66 +304,6 @@ Runs after every `Edit` or `Write`. Fast (sub-second). Biome only — no tests.
 No path translation needed — Biome runs against `src/` from the container's `/app` workdir.
 
 **Why not run tests here:** Running full tests after every edit causes thrashing. The agent gets failure reports for partially-complete work and starts fixing intermediate states before the feature is done.
-
-### Stop hook — quality gate
-
-Runs when the agent declares completion. Uses a shell script that reads Claude Code's hook input JSON, checks for infinite loop prevention, and runs validation.
-
-```json
-{
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [{
-          "type": "command",
-          "command": ".claude/hooks/stop-gate.sh"
-        }]
-      }
-    ]
-  }
-}
-```
-
-```bash
-#!/bin/bash
-# .claude/hooks/stop-gate.sh
-
-# Read hook input from stdin
-INPUT=$(cat)
-STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active')
-
-# CRITICAL: prevent infinite loop. When stop_hook_active is true,
-# we are already in forced-continuation from a previous block.
-# Allow the agent to stop to avoid looping forever.
-if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
-  exit 0
-fi
-
-# Run full validation inside the container.
-# Uses bash (not sh) for pipefail support — without it,
-# piping to tail swallows the exit code from vitest.
-OUTPUT=$(podman exec v10r bash -c 'set -o pipefail; bun run check && bun biome check . && bun vitest run 2>&1 | tail -80' 2>&1)
-EXIT_CODE=$?
-
-if [ $EXIT_CODE -ne 0 ]; then
-  # Block the stop — feed failure output back to the agent
-  echo "{\"decision\": \"block\", \"reason\": \"Validation failed:\\n${OUTPUT}\"}"
-  exit 0
-fi
-
-# All checks passed — allow stop
-exit 0
-```
-
-**Why `bash -c` not `sh -c`:** POSIX `sh` does not support `set -o pipefail`. Without `pipefail`, `vitest run 2>&1 | tail -80` returns `tail`'s exit code (always 0), silently masking test failures. Using `bash -c` ensures the pipeline returns vitest's exit code.
-
-**Why `stop_hook_active` check:** Claude Code sets `stop_hook_active: true` in the hook input when the agent is already in forced-continuation from a previous block. Without this check, the agent loops infinitely: fail → block → retry → fail → block → ... This is a confirmed issue ([claude-code#10205](https://github.com/anthropics/claude-code/issues/10205)).
-
-**Why JSON output (not exit code 2):** Exit code 2 with stderr is supposed to block the stop, but has a known bug in plugin-installed hooks ([claude-code#10412](https://github.com/anthropics/claude-code/issues/10412)). JSON `{"decision": "block", "reason": "..."}` on stdout with exit 0 is the reliable approach.
-
-**Risk:** If pre-existing failures exist, the agent loops trying to fix them (until stopped by `stop_hook_active`). Fix all pre-existing failures before enabling this hook.
-
-**Container down:** If `v10r` isn't running, `podman exec` fails and the output contains "no such container" — a clear signal, not a confusing test failure.
 
 ### Machine-readable output
 
@@ -575,18 +523,7 @@ describe('getNotifications', () => {
 });
 ```
 
-### Phase 3 — Stop hook
-
-1. Create `.claude/hooks/stop-gate.sh` (see Stop hook section above)
-2. Make it executable: `chmod +x .claude/hooks/stop-gate.sh`
-3. Add Stop hook to `.claude/settings.local.json`
-4. Install `jq` in the container (needed by the hook script to parse JSON input) — or parse with `grep`/`sed` if `jq` is unavailable
-
-Every agent session must pass `podman exec v10r bun run validate` before completing.
-
-Prerequisite: Phase 1 and Phase 2 tests pass cleanly. Never enable the Stop hook with failing tests.
-
-### Phase 4 — Expand coverage
+### Phase 3 — Expand coverage
 
 Priority order based on codebase analysis (highest value first):
 
@@ -631,7 +568,7 @@ Priority order based on codebase analysis (highest value first):
 
 **Svelte 5 state testing note:** All `.svelte.ts` state files in this project use the context factory pattern (`createToastState()`, `createDockState()`, etc.), not module-level `$state` singletons. This means the `flushSync()` requirement for external reactive state does **not** apply — call the factory directly in tests.
 
-### Phase 5 — AGENTS.md and CI
+### Phase 4 — AGENTS.md and CI
 
 1. Write `AGENTS.md` at project root (see template below)
 2. Add `.github/workflows/test.yml` running `vitest run` and `biome check` on PRs
@@ -707,9 +644,6 @@ so test schemas track `src/lib/server/db/schema/` automatically — no regenerat
 | RAG setup SQL lives outside Drizzle schema | `pushSchema` doesn't create tsvector, HNSW, GIN | Separate `client.exec(sql)` after the push, for RAG tests only |
 | `pushSchema` `apply` helper fails on unqualified enums | Schema setup throws | Execute the returned `statementsToExecute` manually; don't call `apply` |
 | Schema-scoped enums fail to resolve under PGlite | `type ... does not exist` during table DDL | `CREATE SCHEMA` statements first, then `SET search_path` across all custom schemas, then the rest |
-| Stop hook `exit 2` ignored in plugin hooks | Hook doesn't block agent | Use JSON output `{"decision": "block"}` with exit 0 ([claude-code#10412](https://github.com/anthropics/claude-code/issues/10412)) |
-| Stop hook infinite loop | Agent never terminates | Check `stop_hook_active` field in hook input ([claude-code#10205](https://github.com/anthropics/claude-code/issues/10205)) |
-| POSIX `sh` lacks `pipefail` | Pipe to `tail` masks exit codes | Use `bash -c` with `set -o pipefail` |
 | PGlite WASM startup + schema push ~200ms–3s | Default 5s test timeout too short | Set `testTimeout: 15_000` in vitest config |
 | Named `node_modules` volume persists across recreations | Stale packages after removal | Use `podman compose down -v` for clean installs |
 | Bun test cannot resolve SvelteKit virtual modules | Tests fail on import | Use Vitest only ([oven-sh/bun#5541](https://github.com/oven-sh/bun/issues/5541), [oven-sh/bun#10712](https://github.com/oven-sh/bun/issues/10712)) |
@@ -743,7 +677,7 @@ so test schemas track `src/lib/server/db/schema/` automatically — no regenerat
 | [PGlite ORM support](https://pglite.dev/docs/orm-support) | Drizzle listed as officially supported |
 | [PGlite Benchmarks](https://pglite.dev/benchmarks) | Query performance data |
 | [Vitest 4.0 release](https://vitest.dev/blog/vitest-4) | Browser Mode now stable, `projects` field |
-| [Claude Code Hooks](https://code.claude.com/docs/en/hooks) | PostToolUse and Stop hook configuration |
+| [Claude Code Hooks](https://code.claude.com/docs/en/hooks) | PostToolUse hook configuration |
 | [Biome CLI](https://biomejs.dev/reference/cli/) | `--reporter json` flag, `--write` flag |
 
 ### Community implementations
@@ -769,8 +703,6 @@ so test schemas track `src/lib/server/db/schema/` automatically — no regenerat
 | [oven-sh/bun#10712](https://github.com/oven-sh/bun/issues/10712) | Bun test cannot handle `$env/dynamic/*` |
 | [oven-sh/bun#15032](https://github.com/oven-sh/bun/issues/15032) | Bun bundler + PGlite WASM errors |
 | [testing-library/svelte#284](https://github.com/testing-library/svelte-testing-library/issues/284) | Svelte 5 support status and gotchas |
-| [claude-code#10205](https://github.com/anthropics/claude-code/issues/10205) | Stop hook infinite loop issue |
-| [claude-code#10412](https://github.com/anthropics/claude-code/issues/10412) | Stop hook exit code bug |
 
 ### Architecture and patterns
 

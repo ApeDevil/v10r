@@ -74,7 +74,7 @@ export async function createDeliveries(notificationId: string, channels: Channel
  *
  * Raw SQL rather than the query builder on purpose: the lock clause must be literal
  * and reviewable. PGlite is single-connection, so a silently-dropped SKIP LOCKED
- * could never be caught by a test — see outbox.test.ts.
+ * could never be caught by a test — see outbox.pglite.test.ts.
  *
  * The join to notifications is safe and saves a per-row SELECT: notification_id is
  * NOT NULL with an ON DELETE CASCADE FK, so a delivery cannot outlive its notification.

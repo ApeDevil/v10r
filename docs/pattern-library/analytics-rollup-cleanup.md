@@ -27,7 +27,7 @@ Two scheduled jobs aggregate yesterday's events into a daily_page_stats table an
 
 ## Tests
 
-- `src/lib/server/jobs/analytics-rollup.test.ts` — Pins the rollup half; the cleanup job shares the registry plumbing ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/analytics-rollup.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/analytics-rollup.test.ts))
+- `src/lib/server/jobs/analytics-rollup.pglite.test.ts` — Pins the rollup half; the cleanup job shares the registry plumbing ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/analytics-rollup.pglite.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/analytics-rollup.pglite.test.ts))
 
 ---
 

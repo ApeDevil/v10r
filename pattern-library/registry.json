@@ -21,6 +21,10 @@
 		{
 			"id": "features",
 			"title": "Features"
+		},
+		{
+			"id": "velocity",
+			"title": "Velocity"
 		}
 	],
 	"categories": [
@@ -128,6 +132,26 @@
 			"id": "desk",
 			"title": "Desk Workspace",
 			"group": "features"
+		},
+		{
+			"id": "velocity-interaction",
+			"title": "Interaction Velocity",
+			"group": "velocity"
+		},
+		{
+			"id": "velocity-data",
+			"title": "Data Velocity",
+			"group": "velocity"
+		},
+		{
+			"id": "velocity-runtime",
+			"title": "Runtime Velocity",
+			"group": "velocity"
+		},
+		{
+			"id": "velocity-measurement",
+			"title": "Velocity Measurement",
+			"group": "velocity"
 		}
 	],
 	"patterns": [
@@ -504,12 +528,15 @@
 			"tier": "light",
 			"title": "Testing infrastructure (Vitest, PGlite isolation)",
 			"category": "architecture",
-			"summary": "Describes the Vitest + PGlite testing harness that runs entirely inside the dev container, giving each test an isolated in-process Postgres instance via drizzle-kit's pushSchema.",
-			"when_to_use": "Reach for it when writing or running tests that need database isolation or want to understand the container execution model.",
-			"capabilities": ["test isolation", "in-process database"],
-			"keywords": ["vitest", "pglite", "testing", "database isolation"],
+			"summary": "Two vitest lanes over one config: a fast `unit` lane and a `db` lane whose files restore a PGlite datadir snapshot built once per run, plus the source-scanning gate tests that ratchet architectural and naming invariants.",
+			"when_to_use": "Reach for it when writing tests that need database isolation, when deciding whether a guarantee earns a test at all, or when adding a gate that scans the source tree.",
+			"capabilities": ["test isolation", "in-process database", "source-scanning gates"],
+			"keywords": ["vitest", "pglite", "testing", "database isolation", "gate tests", "test strategy"],
 			"depends_on": [],
 			"docs": [
+				{
+					"path": "docs/blueprint/testing/strategy.md"
+				},
 				{
 					"path": "docs/blueprint/testing/ai-testing-infrastructure.md"
 				}
@@ -523,12 +550,21 @@
 					"path": "vitest.config.ts"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/architecture.gate.test.ts"
+				},
+				{
+					"path": "src/lib/naming.gate.test.ts"
+				}
+			],
 			"showcases": [],
 			"invariants": [],
 			"emulation_notes": [],
 			"risk": "low — structural pattern, no external services",
-			"maturity": "implemented"
+			"maturity": "proven",
+			"verifiedAt": "2026-09-06",
+			"verifiedSha": "4d097488"
 		},
 		{
 			"id": "architecture-pattern-mcp",
@@ -1214,7 +1250,7 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/components/desk/dock.operations.test.ts",
+					"path": "src/lib/components/desk/dock.state.svelte.test.ts",
 					"note": "Example colocated component test"
 				}
 			],
@@ -3324,7 +3360,11 @@
 					"kind": "dir"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/pairing/cookie.test.ts"
+				}
+			],
 			"showcases": [
 				{
 					"path": "/pair/[code]",
@@ -3582,6 +3622,9 @@
 					"path": "src/lib/server/ai/chat-orchestrator.test.ts"
 				},
 				{
+					"path": "src/lib/server/ai/context/system-prompt.test.ts"
+				},
+				{
 					"path": "src/lib/server/ai/tool-leak-guard.test.ts"
 				}
 			],
@@ -3658,7 +3701,7 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/server/ai/tools/propose-plan.test.ts"
+					"path": "src/lib/server/ai/tools/desk-gated.test.ts"
 				},
 				{
 					"path": "src/lib/server/ai/tools/desk-execute.test.ts"
@@ -3740,9 +3783,6 @@
 					"path": "src/lib/server/retrieval/rank.test.ts"
 				},
 				{
-					"path": "src/lib/server/llmwiki/rrf.test.ts"
-				},
-				{
 					"path": "src/lib/server/llmwiki/overview.test.ts"
 				}
 			],
@@ -3805,9 +3845,6 @@
 				}
 			],
 			"tests": [
-				{
-					"path": "src/lib/server/retrieval/chunk.test.ts"
-				},
 				{
 					"path": "src/lib/server/retrieval/embed.test.ts"
 				}
@@ -4459,7 +4496,7 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/server/jobs/analytics-rollup.test.ts",
+					"path": "src/lib/server/jobs/analytics-rollup.pglite.test.ts",
 					"note": "Pins the rollup half; the cleanup job shares the registry plumbing"
 				}
 			],
@@ -4677,10 +4714,10 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/server/notifications/outbox.test.ts"
+					"path": "src/lib/server/notifications/outbox.pglite.test.ts"
 				},
 				{
-					"path": "src/lib/server/jobs/notification-delivery.test.ts"
+					"path": "src/lib/server/jobs/notification-delivery.pglite.test.ts"
 				}
 			],
 			"showcases": [],
@@ -4731,7 +4768,7 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/server/jobs/retention.test.ts"
+					"path": "src/lib/server/jobs/retention.pglite.test.ts"
 				},
 				{
 					"path": "src/lib/server/jobs/dbops-refresh.test.ts"
@@ -5531,12 +5568,8 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/components/desk/dock.operations.test.ts",
+					"path": "src/lib/components/desk/dock.state.svelte.test.ts",
 					"note": "Tree-op purity"
-				},
-				{
-					"path": "src/lib/components/desk/dock.state.focus.svelte.test.ts",
-					"note": "Total focus derivation, fallback, focusSeq"
 				},
 				{
 					"path": "src/lib/server/desk/schemas.parity.test.ts",
@@ -5792,6 +5825,1147 @@
 			"maturity": "proven",
 			"verifiedAt": "2026-08-20",
 			"verifiedSha": "1a130d67"
+		},
+		{
+			"id": "optimistic-mutation",
+			"tier": "deep",
+			"title": "Optimistic mutation (fold-based rollback, idempotency keys)",
+			"category": "velocity-interaction",
+			"summary": "The confirmed value and the pending intents are stored separately and the UI reads the fold of one over the other, so a failed mutation rolls back exactly — even with later mutations applied on top — and a repeated intent executes once.",
+			"when_to_use": "Use for reversible, predictable actions where failure is uncommon: rename, toggle, reorder, move, favourite. Never for payments, irreversible deletion, or permission changes.",
+			"capabilities": ["optimistic UI", "instant interaction", "rollback", "idempotency", "perceived latency"],
+			"keywords": [
+				"optimistic",
+				"instant",
+				"sluggish",
+				"rollback",
+				"idempotency key",
+				"double-click",
+				"reconcile",
+				"perceived"
+			],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/interaction.md#optimistic-mutation",
+					"note": "The pattern, and what must never go through it"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/state/optimistic.svelte.ts",
+					"note": "OptimisticValue: base + pending intents, folded on read"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/state/optimistic.svelte.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/interaction",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Optimistic UI never silently diverges permanently from canonical state — the confirmed value is stored separately and is only ever replaced by the server's answer.",
+				"Rollback is the removal of one intent from the pending list, never an undo applied in place; later intents stay applied because they are re-folded over the unchanged base.",
+				"`apply` is re-run on every read and must be pure.",
+				"A retried or double-submitted mutation with the same key executes once — the second caller joins the first.",
+				"Security and authorization are never optimistic. The server stays the authority."
+			],
+			"emulation_notes": [
+				"Derive the mutation key from what the intent MEANS (`rename:file-7`), never from when it was issued — a timestamp makes every double-click a distinct intent, which is the thing the key prevents.",
+				"Pass the same key as the request's idempotency header and the duplicate protection extends across the network.",
+				"`mutate` resolves with an outcome object instead of throwing: a fire-and-forget caller that ignores the promise must not produce an unhandled rejection.",
+				"`$effect` never runs under vitest's node environment — unit-test the state machine and prove the reactive wiring in a browser."
+			],
+			"risk": "low — client-side state; the server contract is unchanged",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "intent-preloading",
+			"tier": "deep",
+			"title": "Intent-based preloading (six levels over SvelteKit triggers)",
+			"category": "velocity-interaction",
+			"summary": "A policy layer over the app-wide `data-sveltekit-preload-data=\"hover\"` default, for the two cases the blanket setting gets wrong: routes too expensive to speculate on, and next screens predictable enough that waiting for a hover wastes the idle time.",
+			"when_to_use": "Use when a link's cost or its probability differs from the average — an expensive report gets `code`, a strongly predicted next step gets `code-data` or a programmatic preload.",
+			"capabilities": ["preloading", "prefetch", "speculative navigation", "idle work"],
+			"keywords": ["preload", "prefetch", "hover", "viewport", "navigation", "speculative", "instant", "idle"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/interaction.md#intent-based-preloading",
+					"note": "The six levels and what each is for"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/nav/preload.ts",
+					"note": "PreloadIntent → SvelteKit attributes, preloadNow, preloadOnIdle"
+				},
+				{
+					"path": "src/app.html",
+					"note": "The app-wide hover default this layers over"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/nav/preload.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/interaction",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Preloading is never required for correctness — every call swallows its failures, so a warm cache cannot become load-bearing and let the cold path rot unnoticed.",
+				"Speculation is cancellable or harmless; nothing in the preload path mutates.",
+				"Data never fetches from mere visibility: `viewport` appears only in the code column, because on a page of forty links it would run forty route loads for someone who scrolled past.",
+				"Idle work yields to real user work and is cancellable on unmount."
+			],
+			"emulation_notes": [
+				"The expensive level is `data` — it runs the route's real `load`. `code` is a CDN chunk and costs the server nothing, which is why an uncertain-but-heavy route gets code only.",
+				"`requestIdleCallback` is still missing in Safari; the timeout fallback is late rather than never, which is the right failure for work nobody is waiting on."
+			],
+			"risk": "low — speculative only, never on a correctness path",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "virtualized-rendering",
+			"tier": "deep",
+			"title": "Virtualized rendering (windowing maths split from the component)",
+			"category": "velocity-interaction",
+			"summary": "A long list costs the size of the viewport instead of the size of the data; the windowing arithmetic lives in a pure module so its edge cases are testable without a browser, while the component owns only the effects.",
+			"when_to_use": "Use above roughly 200 rows for tables, trees, explorer lists, timelines, feeds and logs. Below that, windowing adds more complexity than it removes.",
+			"capabilities": ["virtualization", "windowing", "long lists", "large tables"],
+			"keywords": [
+				"virtual list",
+				"windowing",
+				"long list",
+				"ten thousand rows",
+				"scroll",
+				"overscan",
+				"slow scrolling"
+			],
+			"depends_on": ["ui-component-system"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/interaction.md#virtualized-rendering",
+					"note": "Why uniform row height only"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/primitives/virtual-list",
+					"kind": "dir",
+					"note": "Pure `virtual-list.ts` plus the component over it"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/components/primitives/virtual-list/virtual-list.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/interaction",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Hidden items create no DOM or layout cost — the saving is layout and hit-testing, not only node count, which is why a long list gets slower to SCROLL and not merely slower to appear.",
+				"Keyboard navigation and accessibility stay correct: the list owns focus and moves a roving `aria-activedescendant`, because the rows a user would Tab through mostly do not exist.",
+				"Scroll position stays stable — a `scrollTop` past the end clamps instead of stranding the user on a blank screen they cannot scroll out of.",
+				"A spacer carries the full data height so the scrollbar describes the list rather than the rendered window."
+			],
+			"emulation_notes": [
+				"Uniform row height only, on purpose. Variable heights need measurement, a resize observer and a running offset table, and every one of those is a source of scroll jump. A list that needs them is a different pattern, not an option on this one.",
+				"Split the arithmetic from the component: the maths has the edge cases worth pinning and can be tested in a node environment, where the component's effects never run."
+			],
+			"risk": "low — presentational; the data contract is unchanged",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "velocity-idle-work",
+			"tier": "light",
+			"title": "Idle and speculative work",
+			"category": "velocity-interaction",
+			"summary": "Useful non-critical preparation performed after the page is interactive: preloading probable code, hydrating embeds on intersection, and the PWA's idle update toast, which never calls skipWaiting on its own.",
+			"when_to_use": "Use to spend the idle time between the critical render and the next interaction — warming caches, loading probable feature code, preparing indexes.",
+			"capabilities": ["idle work", "speculative preparation", "lazy hydration"],
+			"keywords": ["idle", "requestidlecallback", "speculative", "lazy hydration", "intersection observer"],
+			"depends_on": ["intent-preloading"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/interaction.md#idle-and-speculative-work"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/nav/preload.ts",
+					"note": "preloadOnIdle, with the Safari timeout fallback"
+				},
+				{
+					"path": "src/lib/actions/hydrate-embeds.ts",
+					"note": "Hydrates on intersection rather than on load"
+				}
+			],
+			"tests": [],
+			"showcases": [],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — never on a correctness path",
+			"maturity": "implemented"
+		},
+		{
+			"id": "hierarchical-cache",
+			"tier": "deep",
+			"title": "Hierarchical cache (local → shared → origin, with key scope enforced)",
+			"category": "velocity-data",
+			"summary": "A read walks outward from process memory to Redis to the origin. The policy declares namespace, TTL, stale window and scope, and `cacheKey` refuses both scope mistakes — a per-user key with no owner, and a shared key handed one.",
+			"when_to_use": "Use when reads substantially outnumber writes, the result is expensive and reused, and bounded staleness is acceptable. Not because a cache exists.",
+			"capabilities": ["caching", "cache tiers", "TTL", "cache invalidation", "cache scope"],
+			"keywords": [
+				"cache",
+				"ttl",
+				"redis",
+				"upstash",
+				"memory cache",
+				"invalidation",
+				"stale",
+				"cache key",
+				"slow query"
+			],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/data.md#hierarchical-cache",
+					"note": "The tiers, and key identity as a security boundary"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/cache/tiered.ts",
+					"note": "Policy, key discipline, both tiers, TTL jitter"
+				},
+				{
+					"path": "src/lib/server/cache/client.ts",
+					"note": "The nullable Upstash client every consumer must handle"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/cache/tiered.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/data",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Every cache entry has a declared owner and scope; `cacheKey` throws on a per-user policy with no owner AND on a shared policy handed one — the second is the more dangerous, because it parks a personal value where everyone reads.",
+				"A cache key encodes every input that changes the answer. A key that does not is a data leak, not a performance bug.",
+				"Freshness lives on the policy (`ttl`, `staleFor`), never argued at the call site; `staleFor` defaults to 0 because serving stale is a decision about correctness.",
+				"The local tier is bounded and evicts oldest-used first.",
+				"With no Redis configured every shared read is a miss and every write a no-op — a miss is always correct, only slower."
+			],
+			"emulation_notes": [
+				"Store the freshness horizon INSIDE the envelope rather than relying on Redis TTL: Redis expiry is a floor that reclaims memory, and the envelope has to survive a read from the local tier where no Redis TTL exists.",
+				"Jitter the per-key TTL. Keys written together otherwise expire together, and synchronised expiry is how a cache becomes a stampede.",
+				"Default per-user policies to skipping the local tier: the tier is correct there, but a warm serverless instance accumulates one entry per user it happened to serve."
+			],
+			"risk": "medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "stale-while-revalidate",
+			"tier": "deep",
+			"title": "Stale-while-revalidate (and stale-if-error)",
+			"category": "velocity-data",
+			"summary": "A value past its TTL but inside its stale window is returned immediately and refreshed behind the response; a failing refresh leaves the stale value in place rather than turning a slow dependency into a 500.",
+			"when_to_use": "Use when slightly stale is better than waiting: dashboards, feeds, metadata, public content, aggregate counts. Never for authorization, security state or balances requiring strong consistency.",
+			"capabilities": ["stale-while-revalidate", "stale-if-error", "background refresh", "bounded staleness"],
+			"keywords": ["swr", "stale", "revalidate", "dashboard", "feed", "slow page", "background refresh"],
+			"depends_on": ["hierarchical-cache", "critical-path-deferred-tail"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/data.md#stale-while-revalidate",
+					"note": "The four outcomes and what must never be stale"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/cache/swr.ts",
+					"note": "readThrough: fresh / stale / miss / stale-if-error"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/cache/swr.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/data",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"The staleness window is explicit per policy — a value with no declared window is never served stale.",
+				"Revalidation never blocks the stale response.",
+				"A stale value is never mistaken for authoritative security state.",
+				"A cold miss with a failing origin throws: there is no stale value to fall back to, so the error is the only honest answer."
+			],
+			"emulation_notes": [
+				"Send the background refresh through the platform's after-response mechanism, not a dangling promise: on a serverless host the instance can be frozen the moment the response returns, and a refresh killed halfway leaves the value stale forever with clean logs.",
+				"Only one instance should refresh a shared stale key — combine this with a refresh claim, and note that losing the claim means 'keep serving stale', never 'wait'."
+			],
+			"risk": "medium — the staleness window is a correctness decision, not a tuning knob",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "singleflight",
+			"tier": "deep",
+			"title": "Singleflight / stampede protection (nobody waits on a lock)",
+			"category": "velocity-data",
+			"summary": "Concurrent callers for one key share one execution, and across instances a refresh claim stops N instances refreshing the same stale key N times — but a cold caller never blocks on a lock, so a failed leader can never become an outage.",
+			"when_to_use": "Use for expensive cache rebuilds, external provider calls, AI calls, aggregate queries and read-model refreshes — anything where a synchronised expiry produces simultaneous identical work.",
+			"capabilities": ["singleflight", "request coalescing", "stampede protection", "thundering herd"],
+			"keywords": [
+				"stampede",
+				"thundering herd",
+				"coalesce",
+				"singleflight",
+				"dogpile",
+				"cache expiry",
+				"duplicate work"
+			],
+			"depends_on": ["hierarchical-cache"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/data.md#singleflight--stampede-protection",
+					"note": "Why a cold caller never waits"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/cache/singleflight.ts",
+					"note": "coalesce (in-process) + claimRefresh (cross-instance)"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/cache/singleflight.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/data",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Only equivalent work is coalesced — same key, same intent — and followers receive the leader's result including its rejection, so nobody silently gets a different answer.",
+				"Stampede protection introduces no unbounded waiting: a caller with nothing to serve computes rather than queues.",
+				"Every distributed lock carries an expiry, so a leader that dies blocks the next refresh for a bounded time rather than forever.",
+				"A Redis failure lets the refresh proceed — the alternative is a value ageing with nobody allowed to renew it.",
+				"Coalescing deduplicates, it does not memoize: entries drop on settle."
+			],
+			"emulation_notes": [
+				"The thousand-to-one collapse happens in-process, because a burst lands on an instance rather than on a cluster. The cross-instance claim is the smaller, second-order win.",
+				"Reserve the distributed claim for the refresh path. A lock a cold caller waits on turns a slow dependency into a queue.",
+				"TTL jitter belongs with this pattern even though it lives in the cache module: desynchronising expiry prevents the stampede that coalescing then has to absorb."
+			],
+			"risk": "low — degrades to duplicate work, never to a stall",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "no-waterfall-loading",
+			"tier": "deep",
+			"title": "No-waterfall data loading",
+			"category": "velocity-data",
+			"summary": "Independent operations execute concurrently; sequential waiting requires a real dependency. The same round trips happen either way — only the waiting is removed, which is why the fix is free.",
+			"when_to_use": "Use whenever one request needs several independent resources. Reach for it fourth, after removing the fetch, combining the query, and batching.",
+			"capabilities": ["concurrency", "parallel loading", "N+1 avoidance", "request fan-out"],
+			"keywords": ["waterfall", "sequential", "parallel", "promise.all", "n+1", "slow page", "concurrent", "await"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/data.md#no-waterfall-data-loading",
+					"note": "The ordered strategies; concurrency is fourth, not first"
+				}
+			],
+			"code": [
+				{
+					"path": "src/hooks.server.ts",
+					"note": "sessionPopulate runs the revocation check and grant lookup concurrently"
+				},
+				{
+					"path": "src/lib/server/showcases/velocity/measurements.ts",
+					"note": "The measured serial-vs-parallel comparison"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/showcases/velocity/measurements.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/data",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Independent awaits on latency-sensitive paths do not form accidental waterfalls.",
+				"N+1 access patterns do not exist on hot paths.",
+				"Parallelization stays bounded where fan-out could overload a dependency — `Promise.all` over an unbounded list is a load test aimed at your own database."
+			],
+			"emulation_notes": [
+				"Concurrency is the fourth strategy, not the first: eliminate the fetch, combine into one query, batch equivalent operations, and only then parallelise. A round trip removed beats a round trip parallelised.",
+				"Measure the origin-call count alongside the clock. Parallelising changes the wall time and nothing else; the counts staying equal is the proof that no work was skipped."
+			],
+			"risk": "low — a reordering of awaits, with no contract change",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "velocity-screen-read-model",
+			"tier": "light",
+			"title": "Screen read model",
+			"category": "velocity-data",
+			"summary": "Frequently-read views are served from a purpose-built projection instead of rebuilding the same joins per request — analytics rollups, the Neo4j catalog projection, and the per-locale prerendered search shards.",
+			"when_to_use": "Use when one screen repeatedly needs several tables, counts, permissions and aggregates at once. Not for a screen a direct query already answers.",
+			"capabilities": ["read model", "projection", "denormalization", "dashboard performance"],
+			"keywords": ["read model", "projection", "rollup", "aggregate", "dashboard", "cqrs", "materialized"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/data.md#screen-read-model"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/db/analytics",
+					"kind": "dir",
+					"note": "Rollups the dashboards read instead of scanning events"
+				},
+				{
+					"path": "src/lib/server/search/catalog-projection.ts",
+					"note": "The Neo4j catalog projection"
+				}
+			],
+			"tests": [],
+			"showcases": [],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "medium — a projection that outlives its rebuild path becomes a second source of truth",
+			"maturity": "implemented"
+		},
+		{
+			"id": "query-budget",
+			"tier": "deep",
+			"title": "Query budget and N+1 proof (counting is not proving)",
+			"category": "velocity-data",
+			"summary": "Database round trips counted per request by the driver's own logger, and per operation by a gate that runs each one over two data sizes — because N+1 is a claim about how cost SCALES, which no single request can settle.",
+			"when_to_use": "Use on any user-facing path that touches a datastore, and on every list endpoint without exception.",
+			"capabilities": ["query budget", "N+1 detection", "round-trip counting", "EXPLAIN", "index verification"],
+			"keywords": [
+				"n+1",
+				"query count",
+				"round trip",
+				"explain",
+				"query plan",
+				"index",
+				"slow query",
+				"orm",
+				"hnsw",
+				"budget"
+			],
+			"depends_on": ["performance-budget-ratchet"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/data.md#query-budget-and-hot-query-proof",
+					"note": "Why the runtime census is a tripwire and only the gate is a proof"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/db/query-census.ts",
+					"note": "AsyncLocalStorage-scoped counter fed by Drizzle's logger; shape normalization collapses parameter lists"
+				},
+				{
+					"path": "src/lib/server/db/query-budget.ts",
+					"note": "The registered operations and their measured round-trip budgets"
+				},
+				{
+					"path": "scripts/perf/db-explain.ts",
+					"note": "EXPLAIN ANALYZE over the hot queries; scores vector_query_ms from the executor's own timing"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/db/query-budget.gate.pglite.test.ts",
+					"note": "Two data sizes per operation, plus a deliberately N+1 control"
+				},
+				{
+					"path": "src/lib/server/db/query-census.test.ts"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"N+1 is defined by SCALING, not by repetition: the same statement twice may be two legitimate lookups, and only a second data size can tell them apart.",
+				"A declared budget is the number that was measured on the day it was accepted, never an estimate.",
+				"A registered operation costs the same number of round trips at any row count.",
+				"Instrumentation is free when nobody is counting — outside a census scope the observer is one context lookup and a return.",
+				"The absence of an operation from the registry means nobody measured it, never that it is fine.",
+				"A vector query that fell back to a sequential scan is reported as an unused index, ahead of its milliseconds — the two have different fixes."
+			],
+			"emulation_notes": [
+				"Count at the DRIVER, not at the call sites. An ORM's logger hook is the only seam that sees every statement from every domain, including the session lookup nobody wrote and therefore nobody counts.",
+				"Normalize parameter lists to one shape. `id IN ($1,$2,$3)` and `id IN ($1..$30)` are the same batched read, and a normalizer that told them apart would report every batch as new — exactly backwards, since batching is the fix.",
+				"Count round trips, not milliseconds. A logger that fires before execution has no duration to give, and EXPLAIN ANALYZE answers \"why is this slow\" far better than a wall clock around a network call.",
+				"Put the gate's control inside the gate. A detector that has never caught a failure is not known to work: include one deliberately N+1 access pattern and require the census to catch it.",
+				"Wrap the counter ABOVE authentication in the middleware chain. Auth is the request's least visible query, and a counter that starts below it reports every request as cheaper than it was.",
+				"Keep the per-request ceiling generous. It is a tripwire for the request that suddenly makes ninety queries, not a budget anyone is held to — those are per-operation and asserted where they can be proved."
+			],
+			"risk": "low — measurement and gating only; the runtime census changes no behaviour",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "critical-path-deferred-tail",
+			"tier": "deep",
+			"title": "Critical path / deferred tail",
+			"category": "velocity-runtime",
+			"summary": "Only work the caller's intent depends on runs before the response; analytics, indexing, outbox routing and telemetry run after it through one wrapper that owns the platform's survival rule and the catch-before-handoff rule.",
+			"when_to_use": "Use whenever an operation performs secondary effects before returning. Not for a durable write that must be acknowledged before the response.",
+			"capabilities": ["deferred work", "after-response execution", "fire-and-forget", "background effects"],
+			"keywords": [
+				"defer",
+				"waituntil",
+				"after response",
+				"critical path",
+				"fire and forget",
+				"background",
+				"tail",
+				"slow save"
+			],
+			"depends_on": ["multi-client-core"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#critical-path--deferred-tail",
+					"note": "The two platform facts behind the wrapper"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/http/after-response.ts",
+					"note": "deferAfterResponse — the one place the rules live"
+				},
+				{
+					"path": "src/lib/server/analytics/collector.hook.ts",
+					"note": "The largest consumer: pageviews, bot hits, user events"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/http/after-response.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/data",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Deferred work is never necessary for the correctness of the returned result.",
+				"The `.catch` is attached BEFORE the promise is handed to the platform — attached after, an unhandled rejection can take the serverless process down (SvelteKit #9785).",
+				"Deferred failures are logged, never rethrown: the response is gone and there is nobody to tell.",
+				"Deferred work is idempotent — delivery is at-least-once and the platform may retry the request that spawned it.",
+				"A durable write that must be acknowledged before the response is critical, not deferred."
+			],
+			"emulation_notes": [
+				"On Vercel the execution environment FREEZES when the response returns: a bare un-awaited promise is not merely unordered, it is not guaranteed to run at all. Off-platform the same wrapper degrades to plain fire-and-forget, which is correct there.",
+				"Keep this separate from streaming deferral (`safeDeferPromise`), which keeps a promise alive INSIDE a response body. Two lifetimes, two files — one file holding both is how buckets start.",
+				"Name the deferred work for the effect (`analytics:pageview`), not the mechanism: the label is what someone reads in a failure log at 3am."
+			],
+			"risk": "medium — work moved off the response must be genuinely optional to it",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "heavy-dependency-quarantine",
+			"tier": "deep",
+			"title": "Heavy dependency quarantine (the baseline is the metric)",
+			"category": "velocity-runtime",
+			"summary": "Optional heavyweight capabilities load behind dynamic-import boundaries, and the gated metric is not the route's own size but the shared baseline every other route pays — `baseline_js_kb`, ratcheted with ~3% headroom.",
+			"when_to_use": "Use when a dependency is large, feature-specific, rarely used, browser-only or expensive to initialize — 3D, maps, charts, editors, graph visualization.",
+			"capabilities": ["code splitting", "bundle budget", "dynamic import", "dependency isolation"],
+			"keywords": [
+				"bundle",
+				"large bundle",
+				"code splitting",
+				"dynamic import",
+				"baseline",
+				"tree shaking",
+				"threejs",
+				"chunk"
+			],
+			"depends_on": ["performance-budget-ratchet"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#heavy-dependency-quarantine",
+					"note": "Why the baseline is the number that matters"
+				}
+			],
+			"code": [
+				{
+					"path": "scripts/perf/snapshot.ts",
+					"note": "Walks the Vite manifest import graph and gzips each chunk"
+				},
+				{
+					"path": "src/lib/server/perf/budgets.json",
+					"note": "baseline_js_kb ceiling — the shared cost of every route"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/perf/snapshot.gate.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/observability/budgets",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"An optional heavy capability does not enter the shared baseline without explicit justification.",
+				"Browser-only capabilities stay off SSR paths unless needed.",
+				"The question a bundle review answers is 'did this capability make every OTHER route heavier', not 'is this route big'."
+			],
+			"emulation_notes": [
+				"Watch barrel files: importing a component through a barrel can pull an unrelated heavyweight sibling into everything. v10r imports `CodeBlock` directly for exactly this reason — the composites barrel would drag the markdown sanitizer along.",
+				"The bundle gate must run a PRODUCTION build; a dev-mode build compiles both halves differently and inflates client JS ~9%. Note that v10r's `validate` has no build step — bundle regressions are only caught by `validate:build`."
+			],
+			"risk": "medium — the gate fails a build, which is the point",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "main-thread-budget",
+			"tier": "deep",
+			"title": "Main-thread budget (worker → WASM, each step measured)",
+			"category": "velocity-runtime",
+			"summary": "Expensive browser work moves off the main thread only where measurement justifies it: cheap stays inline, noticeable CPU work goes to a Web Worker, and WASM is reached for last — benchmarked against a line-for-line JS implementation including transfer cost.",
+			"when_to_use": "Use for large parsing, image processing, graph layout, data crunching or expensive editor operations — anything that would otherwise block input and rendering.",
+			"capabilities": ["web workers", "wasm", "compute isolation", "main thread", "responsiveness"],
+			"keywords": ["worker", "wasm", "webassembly", "main thread", "blocking", "jank", "inp", "offload", "rust"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#main-thread-budget--compute-isolation",
+					"note": "The decision hierarchy and what a benchmark must include"
+				},
+				{
+					"path": "docs/blueprint/architecture/workers.md",
+					"note": "The worker implementation"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/workers",
+					"kind": "dir",
+					"note": "Image analysis off the main thread"
+				},
+				{
+					"path": "src/lib/wasm",
+					"kind": "dir",
+					"note": "Vendored Rust kernel, loaded via ?url with explicit init"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/wasm/kernel-parity.test.ts",
+					"note": "The WASM and JS implementations must agree before either is benchmarked"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/workers",
+					"kind": "route"
+				},
+				{
+					"path": "/showcases/wasm",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Heavy compute does not unnecessarily block user input.",
+				"Worker and WASM boundaries are justified by measurement, not by expectation.",
+				"Serialization and transfer costs are inside the benchmark — without them a WASM comparison measures two different problems.",
+				"Parity between the fast implementation and the reference one is proven before speed is claimed."
+			],
+			"emulation_notes": [
+				"Pin the worker output format explicitly (`worker.format: 'es'`); a dev/prod format difference is a trap that only appears in the production build.",
+				"Vendor WASM artifacts rather than building them at install time: the toolchain is a much larger dependency than the output, and the build can run in an ephemeral container instead."
+			],
+			"risk": "medium — a worker boundary is a serialization contract",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "resilience-policy",
+			"tier": "deep",
+			"title": "Resilience policy (breaker, bulkhead, shedding, bounded retry)",
+			"category": "velocity-runtime",
+			"summary": "Four separate decisions about an unhealthy dependency — should we call it, how much of the pool may it hold, is this work worth doing under pressure, and is this failure worth repeating — kept apart because none of them substitutes for another.",
+			"when_to_use": "Use around any dependency that can fail, throttle or slow down: AI providers, Redis, the database, external APIs, object storage.",
+			"capabilities": [
+				"circuit breaker",
+				"bulkhead",
+				"load shedding",
+				"bounded retry",
+				"timeout policy",
+				"fail-open",
+				"fail-closed",
+				"graceful degradation"
+			],
+			"keywords": [
+				"circuit breaker",
+				"bulkhead",
+				"load shedding",
+				"retry",
+				"backoff",
+				"jitter",
+				"fail open",
+				"fail closed",
+				"degradation",
+				"outage",
+				"retry storm",
+				"noisy neighbour",
+				"tail latency",
+				"dependency down"
+			],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#resilience-policy",
+					"note": "Which mechanism answers which question, and why they are separate"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/resilience/breaker.ts",
+					"note": "Shared open-state in Redis with an in-process mirror; no half-open, and why"
+				},
+				{
+					"path": "src/lib/server/resilience/bulkhead.ts",
+					"note": "In-process concurrency compartment that refuses rather than queues without bound"
+				},
+				{
+					"path": "src/lib/server/resilience/",
+					"kind": "dir",
+					"note": "shedding.ts (priority admission) and retry.ts (backoff drawn from the request's budget)"
+				},
+				{
+					"path": "src/lib/server/ai/providers.ts",
+					"note": "The AI domain's use of the breaker — policy and vocabulary here, mechanism in resilience/"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/resilience/breaker.test.ts"
+				},
+				{
+					"path": "src/lib/server/resilience/retry.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/runtime",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Retry storms are impossible: retries draw down the same deadline as the attempt they replace, and every backoff carries full jitter so clients that failed together do not return together.",
+				"Failure of one optional capability does not block unrelated capabilities — that is the bulkhead's only job, and it is why one shared pool is not one.",
+				"Resilience mechanisms are observable: every refusal names its kind, every shed decision returns its reason, and a breaker logs the count and window that opened it.",
+				"Fallback behaviour preserves domain safety. A fallback that widens a permission is not a fallback; degradation may only ever drop privileges.",
+				"A refusal is distinct from a failure. `ResilienceError` means the work never ran, so the caller knows a retry is pointless and a fallback is the only useful response.",
+				"Only idempotent work is retried. The library cannot check this; the call site can, which is why the judgement lives there."
+			],
+			"emulation_notes": [
+				"Keep the four mechanisms as four modules. Every attempt to merge them produces a 'resilient call' wrapper whose defaults are wrong for most call sites and whose behaviour nobody can predict at the one that matters.",
+				"Breaker state belongs in shared storage on serverless — an in-process breaker lets every cold instance independently rediscover the outage, which is the hammering it exists to prevent. Mirror it in memory and write the mirror FIRST, so a failed shared write cannot silently leave the breaker closed.",
+				"Skip the half-open state. The first caller after the window is the probe; a true half-open needs a second lock to admit exactly one request, and a handful of duplicate probes is cheaper than that coordination.",
+				"A bulkhead bounds one instance and no amount of local bookkeeping changes that. Say so where it is defined — the fleet-wide bound is the platform's concurrency setting and the dependency's connection limit.",
+				"Size the queue as a burst absorber, not a backlog. An unbounded queue is latency the caller cannot see and a slower way to exhaust memory.",
+				"Shed by priority against pressure that rises BEFORE capacity is reached. Dropping optional work at half load is how the pool avoids being full for the work that is not optional; critical work is never shed for load alone.",
+				"Fail-open and fail-closed are both wrong somewhere, so make each call site declare which — `http/rate-limit.ts` splits 'slow' from 'down' for exactly this reason."
+			],
+			"risk": "medium — fail-open and fail-closed are both wrong somewhere",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "velocity-asset-delivery",
+			"tier": "light",
+			"title": "Asset delivery pipeline",
+			"category": "velocity-runtime",
+			"summary": "Keeping images and fonts from dominating page load: generated icon sets, an R2-backed image proxy with stale-while-revalidate headers, and a document-weight ceiling that catches inline-SVG bloat.",
+			"when_to_use": "Use wherever media is served — the JavaScript budget usually gets the attention while the bytes are elsewhere.",
+			"capabilities": ["image optimization", "responsive images", "font loading", "CDN delivery"],
+			"keywords": ["image", "avif", "webp", "font", "lazy loading", "cdn", "layout shift", "cls", "assets"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#asset-delivery"
+				}
+			],
+			"code": [
+				{
+					"path": "scripts/pwa/generate-icons.ts",
+					"note": "sharp-generated icon set"
+				},
+				{
+					"path": "src/routes/api/blog/assets/[id]/image/+server.ts",
+					"note": "Published-only image proxy with SWR cache headers"
+				}
+			],
+			"tests": [],
+			"showcases": [],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — delivery concerns only",
+			"maturity": "implemented"
+		},
+		{
+			"id": "velocity-compute-locality",
+			"tier": "light",
+			"title": "Compute and data locality",
+			"category": "velocity-runtime",
+			"summary": "A locality map derived from the environment rather than typed into a table: which region each system runs in, which of them are not observable at all, and the cross-region hops one request actually pays.",
+			"when_to_use": "Use when the architecture contains remote databases, caches, object storage or AI providers — which is to say, almost always on serverless.",
+			"capabilities": ["deployment locality", "region placement", "cross-region latency", "locality probe"],
+			"keywords": ["region", "edge", "locality", "cold start", "cross-region", "latency", "deployment", "round trip"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#compute-and-data-locality",
+					"note": "Why the map is derived, and the open question it raises"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/perf/locality.ts",
+					"note": "Region extraction that keeps the credential it was derived from out of its output"
+				},
+				{
+					"path": "scripts/perf/locality.ts",
+					"note": "bun run perf:locality — the renderer"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/perf/locality.test.ts"
+				}
+			],
+			"showcases": [],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "medium — a locality change is a deployment change",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "deadline-propagation",
+			"tier": "deep",
+			"title": "Deadline propagation (one budget, divided)",
+			"category": "velocity-runtime",
+			"summary": "A latency budget stamped once at the edge, from which every downstream operation takes what is LEFT rather than a fresh window of its own — so the request has a stated bound instead of the sum of independently-chosen timeouts.",
+			"when_to_use": "Use when a request or job calls external APIs, AI providers, distributed services, several databases in sequence, or anything that retries.",
+			"capabilities": ["deadline propagation", "timeout budget", "cancellation", "bounded request latency"],
+			"keywords": [
+				"deadline",
+				"timeout",
+				"budget",
+				"abortsignal",
+				"cancellation",
+				"tail latency",
+				"slow api",
+				"hanging request",
+				"504"
+			],
+			"depends_on": ["resilience-policy"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#deadline-propagation",
+					"note": "Why the clamp in child() is the whole pattern"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/http/deadline.ts",
+					"note": "startDeadline, child() clamping, run() with the pre-race catch"
+				},
+				{
+					"path": "src/lib/server/jobs/bot-ranges-refresh.ts",
+					"note": "Real adoption: ten feeds under one 50s budget instead of ten independent timeouts"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/http/deadline.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/velocity/runtime",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Every timeout value is bounded — there is no operation whose wait is unstated.",
+				"A child operation may not exceed its parent's deadline, whatever it asks for. The clamp is in one place so no call site can opt out of it.",
+				"A retry consumes the same budget as the attempt it replaces. This is the rule that makes retry-plus-timeout composable instead of multiplicative.",
+				"Fallback behaviour is defined per leaf, not inherited. What to return when the budget runs out is domain knowledge.",
+				"A deadline bounds the WAIT, not the work: an operation that ignores its AbortSignal still runs to completion, so its promise must carry a catch before anything races it."
+			],
+			"emulation_notes": [
+				"Stamp the deadline at the outermost edge — first or second in the middleware chain. A budget that starts partway through bounds a subset of the request, and every slice taken from it is then wrong in the one direction that matters.",
+				"`child(maxMs)` grants the SMALLER of what was asked and what is left. That single clamp, and not the timeouts themselves, is what makes the total bound hold.",
+				"`reserveMs` is what stops a leaf from finishing its dependency call with no budget left to use the result. Reserve for the work that happens AFTER the child, not for safety margin.",
+				"Every leaf needs a minimum useful budget. Without one, 'the budget ran out' is a boundary condition — the last call starts with a fraction of a millisecond and is abandoned before it can return.",
+				"Attach the catch to the abandoned work BEFORE racing it. Once the race rejects nothing is listening, and on Vercel an unhandled rejection can take the process down (SvelteKit #9785).",
+				"Adoption is per leaf and incremental. Stamping the budget is cheap; nothing is actually bounded until a leaf takes a child and honours it, so record which leaves have rather than implying coverage."
+			],
+			"risk": "medium — a wrong deadline turns a slow success into a failure",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "latency-tracing",
+			"tier": "deep",
+			"title": "Latency tracing (a v10r span API, Server-Timing as one renderer)",
+			"category": "velocity-measurement",
+			"summary": "Every layer records spans into a request-scoped recorder stamped by the outermost handler; `Server-Timing` renders them for callers who already see internals, and `unattributed` reports the wall-clock time no span claimed.",
+			"when_to_use": "Use anywhere performance matters and a slow response needs to decompose — the request lifecycle, domain operations, databases, caches, external services.",
+			"capabilities": ["tracing", "spans", "server-timing", "latency attribution", "observability"],
+			"keywords": [
+				"tracing",
+				"span",
+				"server-timing",
+				"latency",
+				"slow response",
+				"attribution",
+				"opentelemetry",
+				"profiling"
+			],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/measurement.md#latency-tracing",
+					"note": "Why unattributed is a floor, not a figure"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/http/request-timing.ts",
+					"note": "The span API domain code records into"
+				},
+				{
+					"path": "src/hooks.server.ts",
+					"note": "requestTiming, outermost so `total` is the whole request"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/http/request-timing.test.ts"
+				},
+				{
+					"path": "src/lib/server/security/handle-chain.gate.test.ts",
+					"note": "Pins the tracer outermost and the IP stamp above everything that consumes it"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/observability/overview",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Instrumentation does not materially damage performance — a span is one clock pair and one push, and the span list is capped so instrumenting inside a loop degrades to silence rather than to unbounded memory.",
+				"`unattributed` is a FLOOR, not a figure: concurrent spans overlap, so their durations can sum past the wall clock and the value clamps at zero. A zero means 'spans covered it', never 'nothing was missed'.",
+				"Full span detail is disclosure — it maps internal architecture and hands out a timing oracle — so it goes only to callers who already see internals.",
+				"Span names are sanitized to header tokens; a raw name would inject a delimiter and corrupt every field after it.",
+				"Coverage is stated, not implied: prerendered routes never reach the handler on a CDN-served deployment."
+			],
+			"emulation_notes": [
+				"Own the tracing API and put the vendor behind it. Domain code depends on the shape, so swapping `Server-Timing` for an OpenTelemetry exporter is one adapter, not a migration — and no dependency is needed to start.",
+				"The tracer must be the OUTERMOST middleware or `total` measures a subset, and every 'unattributed' figure derived from it is understated. Where a security handler must be first for its own reasons, prove the ordering in a gate rather than arguing it in a comment.",
+				"Round durations coarsely. Finer resolution is noise at request scale and a sharper clock is a sharper side channel."
+			],
+			"risk": "medium — it sits on every request, and the header is client-readable",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "performance-budget-ratchet",
+			"tier": "deep",
+			"title": "Performance budget and ratchet (targets aspire, ceilings hold)",
+			"category": "velocity-measurement",
+			"summary": "Two thresholds with different jobs: targets are where we want to be and never fail a build, ceilings are the measured value at the moment it was accepted and only ever move down. A gate wired to a target gets muted the afternoon it is added.",
+			"when_to_use": "Use for any deterministic metric worth defending — shared JS, route JS, prerendered document weight, known expensive queries.",
+			"capabilities": ["performance budget", "regression gate", "ratchet", "bundle size"],
+			"keywords": ["budget", "ratchet", "ceiling", "regression", "bundle size", "gate", "web vitals", "target"],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/measurement.md#performance-budget-and-ratchet",
+					"note": "Targets vs ratchets, and the field/lab/dev split"
+				},
+				{
+					"path": "docs/stack/quality/performance.md",
+					"note": "The measurement contexts in full"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/perf/budgets.json",
+					"note": "The single source of truth for both kinds of threshold"
+				},
+				{
+					"path": "src/lib/server/perf/budgets.ts",
+					"note": "Scoring, and why lab and field budgets cannot be shared"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/perf/snapshot.gate.test.ts"
+				},
+				{
+					"path": "src/lib/server/perf/budgets.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/observability/budgets",
+					"kind": "route"
+				},
+				{
+					"path": "/showcases/observability/honesty",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"Targets and regression gates stay distinct — a target may be red today, and saying so is the point.",
+				"Ratchets move down, not up, except through explicit architectural review. Lowering a ceiling is how an improvement gets banked.",
+				"Development measurements are never mixed with lab or production ones.",
+				"A metric is only ratcheted when it is deterministic enough to be reproducible — which is why cold-start time is reported and not gated.",
+				"A lab snapshot from a non-production build is refused rather than scored."
+			],
+			"emulation_notes": [
+				"Give ceilings a few percent of headroom over the measurement. Set exactly at the measured value, one ordinary feature trips the gate — and a gate that fails on ordinary work is a gate that gets muted. The headroom absorbs a feature and deliberately not a heavy dependency.",
+				"Keep the thresholds in ONE file that both the application and the shell probes read. Two copies drift, and the copy that drifts is always the one the gate uses.",
+				"Field and lab budgets for the same metric name are different numbers. Scoring a real-user p75 against a warm-preview budget reports a failure on every healthy deployment."
+			],
+			"risk": "low — measurement and gating only; no runtime behaviour",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
+		},
+		{
+			"id": "scenario-harness",
+			"tier": "deep",
+			"title": "Performance scenario harness (adverse conditions, committed)",
+			"category": "velocity-measurement",
+			"summary": "Representative paths driven under one adverse condition at a time — cold cache, expiry burst, hanging dependency, failing dependency, concurrency, refusal — with the deterministic columns gated and the timings only reported. A system is not proven fast because localhost is fast.",
+			"when_to_use": "Use once the obvious latency work is done and the remaining risk is behaviour under failure and load rather than in the happy path.",
+			"capabilities": ["scenario testing", "load behaviour", "failure testing", "resilience proof"],
+			"keywords": [
+				"scenario",
+				"cold cache",
+				"stampede",
+				"timeout",
+				"load",
+				"concurrency",
+				"harness",
+				"benchmark",
+				"adverse",
+				"degradation"
+			],
+			"depends_on": ["performance-budget-ratchet", "resilience-policy"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/measurement.md#performance-scenario-harness",
+					"note": "The committed run, and which rows of the grid are still empty"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/perf/scenarios.ts",
+					"note": "Nine scenarios against the real mechanisms, plus the committed-run comparison"
+				},
+				{
+					"path": "scripts/perf/scenarios.ts",
+					"note": "The door: spawns the gate in write mode, because the harness needs Vite to resolve $env"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/perf/scenarios.gate.test.ts",
+					"note": "Asserts the deterministic columns against the committed results; also the writer"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"Deterministic and reported columns are kept apart: origin counts and outcomes are asserted, latency never is.",
+				"A scenario that cannot be measured reproducibly is reported, not gated — the same stance that keeps cold-start time off the ratchet list.",
+				"The recorded numbers and the asserted numbers come from one code path, so the committed file cannot describe a run nobody checked.",
+				"The harness runs without the shared cache tier, so a lab measurement never depends on whether a network service was reachable.",
+				"Uncovered conditions are named rather than left blank — a grid with unstated gaps reads as full coverage."
+			],
+			"emulation_notes": [
+				"Split every result into a column a machine can assert and a column only a human can read. Gating latency on a shared runner is how a performance suite becomes a flaky suite and then a deleted one.",
+				"Make one condition adverse per scenario. Two at once produces a number nobody can attribute, which is the failure mode of most load tests.",
+				"Commit the results the way a bundle snapshot is committed. The value is the diff: a behaviour change then arrives as a reviewed line rather than as a number that quietly moved.",
+				"Give the patterns with no demonstrable UI their only proof here. Load shedding's success looks like nothing happening, so a scenario row is what an honest measurement of it actually is.",
+				"Drive the REAL mechanisms. A harness that reimplements the pattern proves the harness works; if the runtime cannot load the real modules, fix the runtime rather than the scope."
+			],
+			"risk": "low — a measurement harness, not runtime code",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-09",
+			"verifiedSha": "921e8266-dirty"
 		}
 	]
 }

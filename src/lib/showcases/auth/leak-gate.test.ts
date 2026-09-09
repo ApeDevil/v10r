@@ -41,35 +41,50 @@ const IPV4_RE = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g;
 
 describe('Identity & Access showcase leak-gate', () => {
 	const files = walk(AUTH_SHOWCASE_DIR).filter((f) => f.endsWith('.svelte') || f.endsWith('.ts'));
+	const rel = (f: string) => f.replace(process.cwd(), '.');
+	const sources = files.map((file) => ({ file, src: readFileSync(file, 'utf8') }));
 
 	it('scans a non-empty route tree', () => {
 		expect(files.length).toBeGreaterThan(0);
 	});
 
 	it('has zero +page.server.ts (no server attack surface)', () => {
-		const serverFiles = files.filter((f) => f.endsWith('+page.server.ts'));
-		expect(serverFiles, `found server loaders: ${serverFiles.join(', ')}`).toEqual([]);
+		expect(files.filter((f) => f.endsWith('+page.server.ts')).map(rel)).toEqual([]);
 	});
 
-	for (const file of files) {
-		describe(file.replace(process.cwd(), '.'), () => {
-			const src = readFileSync(file, 'utf8');
+	// One assertion per RULE, not per file × rule. A failure names every offending path
+	// on one line; the previous shape emitted ~56 cases carrying the same 9 rules.
+	it.each(FORBIDDEN)('no file contains: $label', ({ re }) => {
+		const offenders = sources.filter(({ src }) => re.test(src)).map(({ file }) => rel(file));
+		expect(offenders).toEqual([]);
+	});
 
-			for (const { label, re } of FORBIDDEN) {
-				it(`must not contain: ${label}`, () => {
-					expect(re.test(src), `matched ${re}`).toBe(false);
-				});
-			}
+	it('only references @example.com emails', () => {
+		const offenders = sources.flatMap(({ file, src }) =>
+			(src.match(EMAIL_RE) ?? []).filter((e) => !e.endsWith('@example.com')).map((e) => `${rel(file)} — ${e}`),
+		);
+		expect(offenders).toEqual([]);
+	});
 
-			it('only references @example.com emails', () => {
-				const bad = (src.match(EMAIL_RE) ?? []).filter((e) => !e.endsWith('@example.com'));
-				expect(bad, `non-example emails: ${bad.join(', ')}`).toEqual([]);
-			});
+	it('only references 192.0.2.x (TEST-NET-1) IPs', () => {
+		const offenders = sources.flatMap(({ file, src }) =>
+			(src.match(IPV4_RE) ?? []).filter((ip) => !ip.startsWith('192.0.2.')).map((ip) => `${rel(file)} — ${ip}`),
+		);
+		expect(offenders).toEqual([]);
+	});
 
-			it('only references 192.0.2.x (TEST-NET-1) IPs', () => {
-				const bad = (src.match(IPV4_RE) ?? []).filter((ip) => !ip.startsWith('192.0.2.'));
-				expect(bad, `non-TEST-NET IPs: ${bad.join(', ')}`).toEqual([]);
-			});
-		});
-	}
+	it('the matchers actually fire (guards against a silently dead regex)', () => {
+		const bait = [
+			`import { db } from '$lib/server/db';`,
+			'const v = betterAuthVersion;',
+			'env.BETTER_AUTH_SECRET',
+			'env.ADMIN_USER_ID',
+			'stas-k@gmx.de',
+			"'550e8400-e29b-41d4-a716-446655440000'",
+			"from '$lib/server/db/schema/auth/_better-auth'",
+		];
+		expect(FORBIDDEN.map(({ re }, i) => re.test(bait[i]))).toEqual(FORBIDDEN.map(() => true));
+		expect('a@evil.com'.match(EMAIL_RE)).toEqual(['a@evil.com']);
+		expect('10.0.0.1'.match(IPV4_RE)).toEqual(['10.0.0.1']);
+	});
 });

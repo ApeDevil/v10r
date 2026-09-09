@@ -47,6 +47,9 @@ Get the export name wrong and the adapter writes to the wrong table or silently 
 - Only query *results* are typed — invalid queries still compile.
 - Type-checking slows as the schema grows (5,000+ type instantiations).
 - Relational Queries API has no mutations.
+- `drizzle-kit push` is interactive and re-prompts on a TTY (the `nullsNotDistinct` truncate
+  question re-asks on every push — answer "No"); it cannot be cleanly piped or scripted. Run
+  it from a real terminal.
 
 ## Related
 

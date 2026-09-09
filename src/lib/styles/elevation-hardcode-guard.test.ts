@@ -157,18 +157,20 @@ describe('data-elevation hardcode guard — repo scan', () => {
 	});
 
 	it('the allowlist resolves to real files actually present in the scan', () => {
-		for (const p of ALLOWLIST) {
-			expect(files, `allowlisted path not found on disk: ${p}`).toContain(p);
-		}
+		const missing = [...ALLOWLIST].filter((p) => !files.includes(p));
+		expect(missing, 'allowlisted paths not found on disk').toEqual([]);
 	});
 
-	for (const file of files) {
-		if (isAllowlisted(file)) continue;
+	// One assertion over the whole tree rather than one `it()` per file. The scan is a
+	// single rule; emitting ~520 test cases for it made a failure a needle in 520 green
+	// rows and broke `-t` filtering, since no title could be typed in advance.
+	it('no .svelte file hardcodes a data-elevation literal', () => {
+		const offenders = files
+			.filter((file) => !isAllowlisted(file))
+			.map((file) => ({ file, found: readFileSync(file, 'utf8').match(HARDCODED_ELEVATION_RE)?.[0] }))
+			.filter(({ found }) => found !== undefined)
+			.map(({ file, found }) => `${file.replace(SRC_DIR, 'src')} — ${found}`);
 
-		it(`no hardcoded data-elevation literal in ${file.replace(SRC_DIR, 'src')}`, () => {
-			const src = readFileSync(file, 'utf8');
-			const found = src.match(HARDCODED_ELEVATION_RE)?.[0];
-			expect(found, `found hardcoded literal "${found}" — compute it via useSurface() instead`).toBeUndefined();
-		});
-	}
+		expect(offenders, 'compute the rung via useSurface() instead of hardcoding it').toEqual([]);
+	});
 });

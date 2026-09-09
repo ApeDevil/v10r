@@ -30,8 +30,7 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 
 ## Tests
 
-- `src/lib/components/desk/dock.operations.test.ts` — Tree-op purity ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.operations.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.operations.test.ts))
-- `src/lib/components/desk/dock.state.focus.svelte.test.ts` — Total focus derivation, fallback, focusSeq ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.state.focus.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.state.focus.svelte.test.ts))
+- `src/lib/components/desk/dock.state.svelte.test.ts` — Tree-op purity ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.state.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.state.svelte.test.ts))
 - `src/lib/server/desk/schemas.parity.test.ts` — Gates DockLayoutState ↔ valibot schema key parity ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/desk/schemas.parity.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/desk/schemas.parity.test.ts))
 
 ## Proof

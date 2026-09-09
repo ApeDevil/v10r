@@ -43,21 +43,6 @@ describe('lab snapshot ratchet', () => {
 		expect(Object.keys(ceilings).length).toBeGreaterThan(0);
 	});
 
-	// Ratchets are supposed to be tightened. This does not fail the build — it is
-	// a nudge that appears in test output when a ceiling has gone slack.
-	it('reports ceilings with enough slack to be worth lowering', () => {
-		const slack = checkRatchets().filter((r) => r.slackKb > r.ceiling * 0.1);
-		if (slack.length > 0) {
-			console.info(
-				'Perf ratchets can be tightened:\n' +
-					slack
-						.map((r) => `  ${r.metric}: ${r.value} KB vs ceiling ${r.ceiling} KB (${r.slackKb} KB slack)`)
-						.join('\n'),
-			);
-		}
-		expect(Array.isArray(slack)).toBe(true);
-	});
-
 	it('carries the provenance needed to reproduce it', () => {
 		expect(snapshot.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 		expect(snapshot.metrics.route_count).toBeGreaterThan(0);

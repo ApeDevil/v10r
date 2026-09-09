@@ -25,4 +25,8 @@ export const REDIRECT_HREFS = new Set([
 	'/showcases/ui/components',
 	'/showcases/ui/splits',
 	'/showcases/ui/decorative',
+	'/showcases/velocity',
+	// Missing since the observatory shipped: its `+page.ts` has redirected to
+	// /overview all along, so search has been landing people on a bounce.
+	'/showcases/observability',
 ]);

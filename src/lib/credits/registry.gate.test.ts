@@ -86,58 +86,55 @@ describe('credits registry gate', () => {
 		}
 	});
 
-	describe('PRESENCE — every npm-sourced credit is still a real dependency', () => {
-		for (const entry of credits) {
-			if (entry.source.kind !== 'npm') continue;
-			const pkg = entry.source.pkg;
-			it(`${entry.id} → "${pkg}" is in package.json`, () => {
-				expect(
-					declaredDeps.has(pkg),
-					`"${pkg}" is not in dependencies/devDependencies — remove or update the credit`,
-				).toBe(true);
-			});
-		}
+	// One assertion per RULE over the whole registry, not one `it()` per entry. The five
+	// checks below each collected ~20 cases; a failure now names every offender on one line.
+	const npmEntries = credits.filter((e) => e.source.kind === 'npm');
+
+	it('PRESENCE — every npm-sourced credit is still a real dependency', () => {
+		const offenders = npmEntries
+			.filter((e) => !declaredDeps.has((e.source as { pkg: string }).pkg))
+			.map((e) => `${e.id} → "${(e.source as { pkg: string }).pkg}"`);
+		expect(offenders, 'not in dependencies/devDependencies — remove or update the credit').toEqual([]);
 	});
 
-	describe('LICENSE — displayed SPDX matches installed package metadata', () => {
-		for (const entry of credits) {
-			if (entry.source.kind !== 'npm') continue;
-			const pkg = entry.source.pkg;
-			it(`${entry.id} → "${pkg}" license "${entry.license}"`, () => {
-				expect(entry.license, `npm-sourced entry ${entry.id} must declare a license`).toBeTruthy();
-				const actual = installedLicense(pkg);
-				if (actual === null) return; // not resolvable locally — presence check still holds
-				expect(entry.license, `"${pkg}" ships license "${actual}"`).toBe(actual);
-			});
-		}
+	it('LICENSE — every npm-sourced credit declares a license', () => {
+		expect(npmEntries.filter((e) => !e.license).map((e) => e.id)).toEqual([]);
 	});
 
-	describe('DOCS — every docs href resolves to a published doc', () => {
-		for (const entry of credits) {
-			if (!entry.docs) continue;
-			const href = entry.docs;
-			it(`${entry.id} → "${href}"`, () => {
-				expect(validDocUrls.has(href), `"${href}" not found in the published docs manifest`).toBe(true);
-			});
-		}
+	it('LICENSE — displayed SPDX matches installed package metadata', () => {
+		// `installedLicense` returns null when the package is not resolvable locally; the
+		// PRESENCE check still holds in that case, so those are skipped rather than failed.
+		const offenders = npmEntries
+			.map((e) => ({ e, pkg: (e.source as { pkg: string }).pkg }))
+			.map(({ e, pkg }) => ({ e, pkg, actual: installedLicense(pkg) }))
+			.filter(({ e, actual }) => actual !== null && e.license !== actual)
+			.map(({ e, pkg, actual }) => `${e.id} → "${pkg}" declares "${e.license}" but ships "${actual}"`);
+		expect(offenders).toEqual([]);
 	});
 
-	describe('SHOWCASE — every showcase href is a real showcase-tree node', () => {
-		for (const entry of credits) {
-			if (!entry.showcase) continue;
-			const href = entry.showcase;
-			it(`${entry.id} → "${href}"`, () => {
-				expect(validShowcases.has(href), `"${href}" not found in the showcase registry`).toBe(true);
-			});
-		}
+	it('DOCS — every docs href resolves to a published doc', () => {
+		const offenders = credits.filter((e) => e.docs && !validDocUrls.has(e.docs)).map((e) => `${e.id} → "${e.docs}"`);
+		expect(offenders, 'not found in the published docs manifest').toEqual([]);
 	});
 
-	describe('SERVICES — hosted services claim no license', () => {
-		for (const entry of credits) {
-			if (entry.source.kind !== 'service') continue;
-			it(`${entry.id} has no license string`, () => {
-				expect(entry.license).toBeUndefined();
-			});
-		}
+	it('SHOWCASE — every showcase href is a real showcase-tree node', () => {
+		const offenders = credits
+			.filter((e) => e.showcase && !validShowcases.has(e.showcase))
+			.map((e) => `${e.id} → "${e.showcase}"`);
+		expect(offenders, 'not found in the showcase registry').toEqual([]);
+	});
+
+	it('SERVICES — hosted services claim no license', () => {
+		const offenders = credits
+			.filter((e) => e.source.kind === 'service' && e.license !== undefined)
+			.map((e) => `${e.id} declares "${e.license}"`);
+		expect(offenders).toEqual([]);
+	});
+
+	it('the scans are non-empty (a shrunken registry would pass every check above vacuously)', () => {
+		expect(npmEntries.length).toBeGreaterThan(0);
+		expect(credits.filter((e) => e.docs).length).toBeGreaterThan(0);
+		expect(credits.filter((e) => e.showcase).length).toBeGreaterThan(0);
+		expect(credits.filter((e) => e.source.kind === 'service').length).toBeGreaterThan(0);
 	});
 });

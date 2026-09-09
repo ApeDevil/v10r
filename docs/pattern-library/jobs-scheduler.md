@@ -28,7 +28,7 @@ A slug→execute job registry with a unified runner; cadence lives entirely in p
 
 ## Tests
 
-- `src/lib/server/jobs/retention.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/retention.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/retention.test.ts))
+- `src/lib/server/jobs/retention.pglite.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/retention.pglite.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/retention.pglite.test.ts))
 - `src/lib/server/jobs/dbops-refresh.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/dbops-refresh.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/dbops-refresh.test.ts))
 
 ## Proof

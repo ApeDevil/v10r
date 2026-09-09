@@ -493,6 +493,37 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/velocity',
+		icon: 'i-lucide-zap',
+		title: m.showcase_velocity_title,
+		description: m.showcase_velocity_description,
+		ariaLabel: m.showcase_velocity_aria,
+		domain: 'backend',
+		docs: [{ href: '/docs/blueprint/velocity/principles', label: 'Velocity' }],
+		sublinks: [
+			{
+				label: m.showcase_velocity_tab_overview,
+				href: '/showcases/velocity/overview',
+				docs: [{ href: '/docs/blueprint/velocity/measurement', label: 'Measurement' }],
+			},
+			{
+				label: m.showcase_velocity_tab_interaction,
+				href: '/showcases/velocity/interaction',
+				docs: [{ href: '/docs/blueprint/velocity/interaction', label: 'Interaction' }],
+			},
+			{
+				label: m.showcase_velocity_tab_data,
+				href: '/showcases/velocity/data',
+				docs: [{ href: '/docs/blueprint/velocity/data', label: 'Data' }],
+			},
+			{
+				label: m.showcase_velocity_tab_runtime,
+				href: '/showcases/velocity/runtime',
+				docs: [{ href: '/docs/blueprint/velocity/runtime', label: 'Runtime' }],
+			},
+		],
+	},
+	{
 		href: '/showcases/observability',
 		icon: 'i-lucide-gauge',
 		title: m.showcase_observability_title,

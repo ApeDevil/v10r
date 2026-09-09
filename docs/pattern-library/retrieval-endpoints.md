@@ -28,7 +28,6 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 
 ## Tests
 
-- `src/lib/server/retrieval/chunk.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/chunk.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/chunk.test.ts))
 - `src/lib/server/retrieval/embed.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/embed.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/embed.test.ts))
 
 ## Proof

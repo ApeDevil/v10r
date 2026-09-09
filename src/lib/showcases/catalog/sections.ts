@@ -17,6 +17,93 @@ export interface ShowcaseSection {
 }
 
 export const showcaseSections: ShowcaseSection[] = [
+	// Velocity
+	{
+		pageHref: '/showcases/velocity/overview',
+		anchorId: 'vel-ladder',
+		title: 'Optimization Ladder',
+		keywords: ['performance', 'latency', 'slow', 'order'],
+	},
+	{
+		pageHref: '/showcases/velocity/overview',
+		anchorId: 'vel-classes',
+		title: 'Critical, Deferred, Background',
+		keywords: ['critical path', 'deferred', 'background work'],
+	},
+	{ pageHref: '/showcases/velocity/overview', anchorId: 'vel-built', title: 'What v10r Implements' },
+	{
+		pageHref: '/showcases/velocity/overview',
+		anchorId: 'vel-restraint',
+		title: 'When Not To',
+		keywords: ['restraint', 'complexity', 'over-engineering'],
+	},
+	{
+		pageHref: '/showcases/velocity/interaction',
+		anchorId: 'vel-optimistic',
+		title: 'Optimistic Mutation',
+		keywords: ['instant', 'rollback', 'idempotency', 'sluggish save'],
+	},
+	{
+		pageHref: '/showcases/velocity/interaction',
+		anchorId: 'vel-preload',
+		title: 'Intent Preloading',
+		keywords: ['prefetch', 'hover', 'navigation'],
+	},
+	{
+		pageHref: '/showcases/velocity/interaction',
+		anchorId: 'vel-virtual',
+		title: 'Virtualized Rendering',
+		keywords: ['virtual list', 'windowing', 'long list', 'ten thousand rows'],
+	},
+	{
+		pageHref: '/showcases/velocity/data',
+		anchorId: 'vel-waterfall',
+		title: 'Waterfall vs Parallel',
+		keywords: ['sequential', 'concurrent', 'promise.all'],
+	},
+	{
+		pageHref: '/showcases/velocity/data',
+		anchorId: 'vel-cache',
+		title: 'Cold, Warm, Cached',
+		keywords: ['cache', 'ttl', 'tiers'],
+	},
+	{
+		pageHref: '/showcases/velocity/data',
+		anchorId: 'vel-swr',
+		title: 'Stale While Revalidate',
+		keywords: ['swr', 'stale', 'revalidate', 'background refresh'],
+	},
+	{
+		pageHref: '/showcases/velocity/data',
+		anchorId: 'vel-stampede',
+		title: 'Cache Stampede',
+		keywords: ['singleflight', 'coalesce', 'thundering herd'],
+	},
+	{
+		pageHref: '/showcases/velocity/data',
+		anchorId: 'vel-tail',
+		title: 'Deferred Tail',
+		keywords: ['waituntil', 'after response', 'critical path'],
+	},
+	{
+		pageHref: '/showcases/velocity/runtime',
+		anchorId: 'vel-breaker',
+		title: 'Circuit Breaker',
+		keywords: ['breaker', 'cooldown', 'dependency down', 'outage', 'retry storm'],
+	},
+	{
+		pageHref: '/showcases/velocity/runtime',
+		anchorId: 'vel-bulkhead',
+		title: 'Bulkhead',
+		keywords: ['bulkhead', 'isolation', 'pool', 'noisy neighbour', 'concurrency limit'],
+	},
+	{
+		pageHref: '/showcases/velocity/runtime',
+		anchorId: 'vel-deadline',
+		title: 'Deadline Propagation',
+		keywords: ['deadline', 'timeout budget', 'abortsignal', 'tail latency'],
+	},
+
 	// UI / Menus
 	{
 		pageHref: '/showcases/ui/menus',

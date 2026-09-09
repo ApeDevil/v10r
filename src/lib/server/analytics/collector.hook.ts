@@ -1,5 +1,4 @@
 import type { Handle } from '@sveltejs/kit';
-import { waitUntil } from '@vercel/functions';
 import { building, dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import {
@@ -14,6 +13,7 @@ import {
 import { normalizeIpKey } from '$lib/server/abuse';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import { recordUserEvent } from '$lib/server/db/analytics/user-mutations';
+import { deferAfterResponse } from '$lib/server/http/after-response';
 import { createLimiter } from '$lib/server/http/rate-limit';
 import { classifyBot } from './bot-classify';
 import { bufferBotHit } from './bot-hit-buffer';
@@ -184,15 +184,13 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	// URL under /account is still a miss, and it still costs a write.
 	if (userLane && matchedRoute && served) {
 		const route = templateRoute(event.route?.id ?? null);
-		waitUntil(
+		deferAfterResponse('analytics:user-pageview', () =>
 			recordUserEvent({
 				userId: userLane,
 				surface: 'account',
 				eventType: 'pageview',
 				route,
 				path,
-			}).catch((err) => {
-				console.error('[analytics] Failed to track user event:', err);
 			}),
 		);
 	}
@@ -208,7 +206,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		const identity = classifyBot(botUa);
 		const route = templateRoute(event.route?.id ?? null);
 		const agentSurface = isAgentSurface(path);
-		waitUntil(
+		deferAfterResponse('analytics:bot-hit', () =>
 			bufferBotHit({
 				identity,
 				// Used transiently for the published-range containment test and never
@@ -218,8 +216,6 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 				path,
 				agentSurface,
 				status: response.status,
-			}).catch((err) => {
-				console.error('[analytics] Failed to track bot hit:', err);
 			}),
 		);
 	}
@@ -233,64 +229,58 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		const route = templateRoute(event.route?.id ?? null);
 		// Deferred AFTER resolve — visitor hash + DB writes, no cookie ops here.
 		//
-		// waitUntil() is load-bearing, not decoration: on Vercel the function may be
+		// Deferring is load-bearing, not decoration: on Vercel the function may be
 		// frozen the moment the response is returned, so a bare un-awaited promise
-		// loses an unbounded share of pageviews. Off-Vercel (container, tests) the
-		// @vercel/functions shim degrades to plain fire-and-forget, so no env guard
-		// is needed. The .catch() is attached BEFORE handing the promise over, so a
-		// DB failure can never surface as an unhandled rejection.
-		waitUntil(
-			(async () => {
-				// Rate limit INSIDE the deferred block, never in front of resolve().
-				//
-				// The two writes below are already off the response path, so the only
-				// thing a limiter can protect here is the database — and the only thing
-				// it can cost is analytics rows. Putting the Upstash round trip ahead of
-				// resolve() would move a third network dependency onto TTFB to protect
-				// work that is not on TTFB. Here, a Redis outage degrades collection and
-				// cannot touch page rendering.
-				//
-				// onError: 'open' for the same reason, and it is load-bearing rather than
-				// defensive. createLimiter returns the fail-closed singleton at MODULE
-				// LOAD when Upstash is unconfigured in production — so with the default
-				// policy a missing UPSTASH_* would silently drop 100% of analytics
-				// forever, announced by one console.error at boot, inside a block whose
-				// .catch swallows everything. Failing closed here protects nothing and
-				// deletes the feature.
-				const { success } = await pageviewLimiter.limit(`ip:${normalizeIpKey(ip) ?? ip}`);
-				if (!success) return;
+		// loses an unbounded share of pageviews. `deferAfterResponse` owns that
+		// survival rule and the catch-before-handoff rule with it.
+		deferAfterResponse('analytics:pageview', async () => {
+			// Rate limit INSIDE the deferred block, never in front of resolve().
+			//
+			// The two writes below are already off the response path, so the only
+			// thing a limiter can protect here is the database — and the only thing
+			// it can cost is analytics rows. Putting the Upstash round trip ahead of
+			// resolve() would move a third network dependency onto TTFB to protect
+			// work that is not on TTFB. Here, a Redis outage degrades collection and
+			// cannot touch page rendering.
+			//
+			// onError: 'open' for the same reason, and it is load-bearing rather than
+			// defensive. createLimiter returns the fail-closed singleton at MODULE
+			// LOAD when Upstash is unconfigured in production — so with the default
+			// policy a missing UPSTASH_* would silently drop 100% of analytics
+			// forever, announced by one console.error at boot, inside a block whose
+			// .catch swallows everything. Failing closed here protects nothing and
+			// deletes the feature.
+			const { success } = await pageviewLimiter.limit(`ip:${normalizeIpKey(ip) ?? ip}`);
+			if (!success) return;
 
-				const visitorId = await deriveVisitorId(ip, ua);
-				const sessionId = preSessionId ?? (await deriveCookielessSessionId(visitorId));
-				await Promise.all([
-					recordEvent({
-						sessionId,
-						visitorId,
-						eventType: 'pageview',
-						path,
-						route,
-						referrer,
-						consentTier,
-						debugOwnerId,
-					}),
-					upsertSession({
-						id: sessionId,
-						visitorId,
-						entryPath: path,
-						exitPath: path,
-						country,
-						device,
-						browser,
-						consentTier,
-						pairedAdminUserId: debugOwnerId,
-						debugOwnerId,
-						clientIp: ip,
-					}),
-				]);
-			})().catch((err) => {
-				console.error('[analytics] Failed to track pageview:', err);
-			}),
-		);
+			const visitorId = await deriveVisitorId(ip, ua);
+			const sessionId = preSessionId ?? (await deriveCookielessSessionId(visitorId));
+			await Promise.all([
+				recordEvent({
+					sessionId,
+					visitorId,
+					eventType: 'pageview',
+					path,
+					route,
+					referrer,
+					consentTier,
+					debugOwnerId,
+				}),
+				upsertSession({
+					id: sessionId,
+					visitorId,
+					entryPath: path,
+					exitPath: path,
+					country,
+					device,
+					browser,
+					consentTier,
+					pairedAdminUserId: debugOwnerId,
+					debugOwnerId,
+					clientIp: ip,
+				}),
+			]);
+		});
 	}
 
 	return response;

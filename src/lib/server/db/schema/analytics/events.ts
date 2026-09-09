@@ -24,6 +24,9 @@ export const events = analyticsSchema.table(
 		id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
 		/** Client- or server-generated UUID for idempotent ingestion via the SPA beacon. */
 		eventId: text('event_id'),
+		// Deliberately NOT a foreign key to sessions.id: the beacon can deliver an event
+		// before the session upsert lands, and dropping the event would be worse than an
+		// orphan. The cost is that rollup JOINs under-count when the parent row is absent.
 		sessionId: text('session_id').notNull(),
 		visitorId: text('visitor_id').notNull(),
 		eventType: eventTypeEnum('event_type').notNull(),

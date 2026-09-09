@@ -85,7 +85,7 @@ export const actions: Actions = {
 		}
 
 		const expiresAt = Date.now() + PAIRED_SESSION_TTL_MS;
-		const cookieValue = await signOwnerCookie(result.adminUserId, expiresAt);
+		const cookieValue = signOwnerCookie(result.adminUserId, expiresAt);
 		setOwnerCookie(cookies, cookieValue, expiresAt);
 
 		redirect(303, localizeHref('/'));

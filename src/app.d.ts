@@ -26,8 +26,14 @@ declare global {
 			debugOwnerId: string | null;
 			/** Resolved locale for this request. URL > cookie > baseLocale, validated against ALLOWED_LOCALES. */
 			locale: import('$lib/i18n').Locale;
-			/** Canonical client IP. Stamped in securityHeaders (handler #1) from event.getClientAddress(). NULL during prerender/build. */
+			/** Canonical client IP. Stamped in securityHeaders (handler #2) from event.getClientAddress(). NULL during prerender/build. */
 			clientIp: string | null;
+			/** Span recorder for this request. Stamped by requestTiming (handler #1), so it is always present; every layer records into it and Server-Timing renders it. */
+			timing: import('$lib/server/http/request-timing').RequestTiming;
+			/** Latency budget for this request. Downstream work takes `child()` slices of it, never a fresh timeout. */
+			deadline: import('$lib/server/http/deadline').Deadline;
+			/** Round-trip counter for this request. Stamped by queryCensus (handler #3), so it covers auth's session lookup too. */
+			queries: import('$lib/server/db/query-census').QueryCensus;
 			/** Active capability grants for the authenticated user. Empty array when signed out or no active grants. Populated by populateGrants hook. */
 			grants: import('$lib/server/auth/grants').GrantKind[];
 			/** True when session/grant resolution failed (e.g. Neon outage) and the request was degraded to anonymous. Read by an optional future banner; never gates logic. */

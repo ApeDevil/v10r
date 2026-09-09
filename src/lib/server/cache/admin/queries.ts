@@ -1,8 +1,8 @@
 import { getAnnouncementCacheSize } from '$lib/server/admin/announcements';
 import type { DependencyResult, UpstashMetrics } from '$lib/server/monitoring';
 import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
+import { redis } from '../client';
 import { CacheError } from '../errors';
-import { redis } from '../index';
 import type { CacheEntry, CacheEntryDetail, RedisType } from '../types';
 
 export interface CacheOverview {

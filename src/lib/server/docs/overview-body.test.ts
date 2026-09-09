@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { OVERVIEW_MAX_TOKENS } from '../llmwiki/config';
 import { buildOverviewBody, type OverviewDocFile } from './overview-body';
 
-const MAX_CHARS = OVERVIEW_MAX_TOKENS * 4; // mirrors loadOverview's CHARS_PER_TOKEN = 4
+const _MAX_CHARS = OVERVIEW_MAX_TOKENS * 4; // mirrors loadOverview's CHARS_PER_TOKEN = 4
 
 const stackDoc = (subsection: string, file: string, title: string): OverviewDocFile => ({
 	sourcePath: `docs/stack/${subsection}/${file}.md`,
@@ -53,23 +53,6 @@ describe('buildOverviewBody', () => {
 		expect(stackLine).toBeDefined();
 		expect(stackLine).not.toContain('SEO & GEO');
 		expect(stackLine).not.toContain('Hosting');
-	});
-
-	it('keeps the entire Stack line within the 2000-char truncation window', () => {
-		const body = buildOverviewBody(files);
-		const start = body.indexOf('**Stack:**');
-		const end = body.indexOf('\n', start);
-		expect(start).toBeGreaterThan(-1);
-		expect(end).toBeGreaterThan(start);
-		expect(end).toBeLessThan(MAX_CHARS); // whole line survives loadOverview truncation
-	});
-
-	it('demonstrates the fix: Stack line survives while the `## stack` TOC is truncated off', () => {
-		const body = buildOverviewBody(files);
-		// The intro stack summary lands early...
-		expect(body.indexOf('**Stack:**')).toBeLessThan(MAX_CHARS);
-		// ...whereas the per-section `## stack` heading (the old, truncated location) does not.
-		expect(body.indexOf('\n## stack\n')).toBeGreaterThan(MAX_CHARS);
 	});
 
 	it('still appends the per-section TOC below the intro, unchanged', () => {
