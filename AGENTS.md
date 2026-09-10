@@ -1,65 +1,70 @@
-# AGENTS.md
+# Repository Guidelines
 
-Instructions for AI coding agents working in this repository. Claude Code reads
-`CLAUDE.md` instead, which supersedes this file for Claude.
+Velociraptor (v10r) is a SvelteKit pattern library for adaptation. Claude Code follows
+[CLAUDE.md](CLAUDE.md).
 
-This file carries only the universal contract. Anything stack-specific lives in
-`/docs`; anything Claude-specific lives in `CLAUDE.md`. Do not add a stack table
-here — a second hand-maintained corpus is the failure mode this file avoids.
+## Project Structure
 
-## What this project is
+- `src/routes/`: localized pages under `[[locale=locale]]/`; REST/SSE under `api/`.
+- `src/lib/components/`: reusable UI; `src/lib/state/`: shared rune state.
+- `src/lib/server/`: domains, database schemas/access, and integrations.
+- `static/`: assets; `content/`: authored content; `messages/`: translations.
+- `pattern-library/`: canonical registry; `mcp/`: stdio transport; `scripts/`: tooling.
 
-Velociraptor (v10r) is a full-stack reference and test-sandbox: proven,
-high-performance SvelteKit patterns that an AI agent reads and adapts to a new
-project. Emulation, not cloning. Full goals: `docs/foundation/PRD.md`.
+## Development and Validation
 
-## Non-negotiables
+Run tooling inside the `v10r` Podman container.
+Never run package managers on the host; keep `package.json` and `bun.lock` synchronized.
 
-1. **Container-first.** Never run a package manager on the host machine. All
-   tooling, dependencies and the runtime live in the `v10r` Podman container;
-   add dependencies to `package.json` and install inside the container.
-2. **Component-first.** Never use a raw `<button>`, `<input>`, `<select>` or
-   `<textarea>` when a `$lib/components/` component exists. Exceptions:
-   `<input type="hidden">`, `<input type="checkbox">` inside table rows,
-   `<select>` binding numeric values, and custom interactive regions that need
-   specialized styling.
-3. **No backward compatibility.** Active development, no production users. No
-   migration shims, no compat layers, no deprecation paths — change the code
-   directly.
-4. **Never run a `vr` command on your own initiative.** `vr` is the host-side
-   dev CLI; `vr ship` deploys to production. Run one only when the user
-   explicitly asks for that specific command.
-
-## The gate
-
-```
-bun run validate
+```bash
+podman compose up -d                 # start local development on :5173
+podman exec v10r bun run build       # production build
+podman exec v10r bun run test        # Vitest suites
+podman exec v10r bun run lint        # Biome checks
+podman exec v10r bun run validate    # authoritative gate
 ```
 
-One command (typecheck + biome + tests + registry/i18n/content/quality checks),
-run inside the container. There is no CI pipeline — this gate is the authority.
+The gate includes typechecking, Biome, tests, registry/excerpts, i18n/content, and quality
+checks. No CI pipeline exists. Report failures accurately.
 
-## Finding documentation
+## Architecture and Coding Style
 
-Every documentation directory has a `README.md` navigation hub with a topic
-table. Read the directory README first, use its table to pick the file, then
-read the file. Never grep blindly through `docs/`.
+Keep domains framework-free; adapters own HTTP responses, redirects, and date
+serialization. Never import `$lib/server/` into `.svelte` or universal `+page.ts`.
+Change code directly: no compatibility layers, migration shims, or deprecation paths.
 
-Architecture entry points: `docs/system-abstraction.md` (how the system runs)
-and `docs/codebase-organization.md` (where code lives).
+Follow `biome.json`: tabs, LF, 120-column width, single JS quotes, semicolons, trailing
+commas. Use PascalCase components, kebab-case modules, and `.svelte.ts` for runes.
+Consult [docs/naming.md](docs/naming.md) before introducing names; comments explain why.
+Never name a prop `state`.
 
-## Machine-readable surfaces
+Use existing components instead of raw buttons, inputs, selects, or textareas.
+Exceptions: hidden inputs, table-row checkboxes, numeric selects, and specially styled
+interactive regions. Colors use `src/app.css` tokens.
 
-- `/llms.txt` — curated URL map of the published documentation (absolute URLs).
-- Every published `/docs/**` page also serves raw markdown at the same URL with
-  `.md` appended, and honors `Accept: text/markdown` on the clean URL.
-- `POST https://www.v10r.dev/api/mcp/public` — hosted read-only MCP server
-  (JSON-RPC 2.0 over HTTP): pattern search, curated pattern cards, file
-  excerpts, emulation plans, and a loopable `validate_snippet` checker.
-- `mcp/server.ts` — the same tools as a local stdio MCP server, spawned as an
-  ephemeral Podman container (`mcp/README.md` has the invocation).
+## Testing
 
-## For Claude Code
+Co-locate Vitest `*.test.ts`; database tests use `*.pglite.test.ts` and PGlite.
+Run one file with `podman exec v10r bunx vitest run <path>`.
+MCP uses `bun:test` (`test:mcp`). Test invariants, security, and regressions; verify UI
+through browser showcases. No coverage threshold is configured.
 
-Read `CLAUDE.md` — it carries the agent delegation policy, model selection, and
-the skills policy. This file deliberately does not.
+## Documentation and Generated Files
+
+Start at [docs/README.md](docs/README.md); navigate directory READMEs before topics.
+Never grep blindly through `docs/`. Read `docs/codebase-organization.md` and
+`docs/system-abstraction.md` for architecture. Reference canonical sources; avoid duplicate
+stack documentation.
+
+Never hand-edit generated pattern pages, Paraglide output, MCP excerpts, or retrieval
+indexes. Use `package.json` generators; `refresh` also ingests docs into
+the database. See [mcp/README.md](mcp/README.md) for machine-readable access.
+
+## Commits and Pull Requests
+
+History mixes informal subjects with `feat(scope):` and `refactor(scope):`; prefer
+descriptive subjects. PRs should explain behavior, link relevant issues,
+report validation, and include screenshots for UI changes.
+
+Preserve uncommitted work. Never stage, commit, push, stash, or reset without explicit
+instruction. Run a `vr` command only when specifically requested; `vr ship` deploys.
