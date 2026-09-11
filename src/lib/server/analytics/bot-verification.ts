@@ -16,9 +16,9 @@
  * request path passes `publishedBotRanges` (see `bot-ranges.ts`).
  */
 
+import { normalizeIpForVerification } from '$lib/server/db/analytics/inet';
 import type { BotRangeSource, BotVerification } from '$lib/server/db/schema/analytics/bot-hits';
 import type { BotIdentity } from './bot-classify';
-import { normalizeIpForVerification } from './bot-ranges';
 import { ipInPrefix } from './ip-prefix';
 
 /** Published prefixes for one operator, or null when none are available. */

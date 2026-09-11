@@ -41,7 +41,7 @@ Weights: title=A (highest), summary=B, markdown body=C (lowest). The `cfg` value
 
 ## `localeRegconfig`
 
-`$lib/server/search/regconfig.ts` maps app locales to Postgres FTS configurations:
+`$lib/server/db/regconfig.ts` maps app locales to Postgres FTS configurations:
 
 | Locale | Regconfig |
 |--------|-----------|

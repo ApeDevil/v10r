@@ -3,8 +3,8 @@
  * row-per-locale pattern. Skips silently if no users exist yet.
  * Idempotent.
  */
-import { createHash } from 'node:crypto';
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import { contentHash } from '../content-hash';
 import { user } from '../schema/auth/_better-auth';
 import { domain, post } from '../schema/blog/post';
 import { publishedRevision } from '../schema/blog/published-revision';
@@ -13,8 +13,6 @@ import type { SeedDb } from './index';
 
 const SEED_SLUG = 'i18n-stance-c-demo';
 const SEED_POST_ID = 'pst_seed_i18n_demo';
-
-const hash = (s: string) => createHash('sha256').update(s).digest('hex');
 
 export async function seedBlogRevisions(db: SeedDb) {
 	const firstUser = await db.select({ id: user.id }).from(user).limit(1);
@@ -78,6 +76,7 @@ export async function seedBlogRevisions(db: SeedDb) {
 
 	for (const r of revisions) {
 		const revId = `rev_seed_i18n_demo_${r.locale}`;
+		const markdownHash = await contentHash(r.markdown);
 		await db
 			.insert(revision)
 			.values({
@@ -88,7 +87,7 @@ export async function seedBlogRevisions(db: SeedDb) {
 				summary: r.summary,
 				markdown: r.markdown,
 				locale: r.locale,
-				contentHash: hash(r.markdown),
+				contentHash: markdownHash,
 				authorId,
 			})
 			.onConflictDoUpdate({
@@ -97,7 +96,7 @@ export async function seedBlogRevisions(db: SeedDb) {
 					title: r.title,
 					summary: r.summary,
 					markdown: r.markdown,
-					contentHash: hash(r.markdown),
+					contentHash: markdownHash,
 				},
 			});
 

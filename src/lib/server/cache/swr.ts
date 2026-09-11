@@ -22,7 +22,7 @@
  * returns, and a refresh that is silently killed halfway leaves the value stale
  * forever while the logs stay clean.
  */
-import { deferAfterResponse } from '$lib/server/http/after-response';
+import { deferAfterResponse } from '$lib/server/platform';
 import { claimRefresh, coalesce } from './singleflight';
 import { type CacheKeyParts, type CachePolicy, type CacheTier, cacheKey, readTiered, writeTiered } from './tiered';
 

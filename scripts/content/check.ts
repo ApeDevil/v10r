@@ -31,7 +31,8 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { and, eq, isNull } from 'drizzle-orm';
 import { isLocale, type Locale, locales } from '$lib/i18n/runtime';
-import { contentHash, FrontmatterError, findOrphanedSourcePaths, parseContentFile } from '$lib/server/content';
+import { FrontmatterError, findOrphanedSourcePaths, parseContentFile } from '$lib/server/content';
+import { contentHash } from '$lib/server/db/content-hash';
 import { post, publishedRevision, revision } from '$lib/server/db/schema/blog';
 
 interface Flags {

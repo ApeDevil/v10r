@@ -23,9 +23,10 @@
  * and there is no one left to tell. Because delivery is best-effort and the platform
  * may retry the request that spawned it, deferred work must be idempotent.
  *
- * This is NOT `defer.ts`. That one keeps a *streaming* promise alive inside a
+ * This is NOT `http/defer.ts`. That one keeps a *streaming* promise alive inside a
  * response body; this one runs work after the response is finished. Two lifetimes,
- * two files.
+ * two files — and this one lives with the platform, not the HTTP toolkit, because
+ * the rule it owns is the host's lifecycle, not the request's shape.
  */
 import { waitUntil } from '@vercel/functions';
 

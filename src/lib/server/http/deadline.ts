@@ -23,7 +23,7 @@
  * operation that ignores its `AbortSignal` keeps running to completion somewhere
  * behind the rejection. Its promise is given a `.catch` before the race so that
  * late rejection cannot take the serverless process down (SvelteKit #9785) — the
- * same rule `after-response.ts` follows, for the same reason.
+ * same rule `platform/after-response.ts` follows, for the same reason.
  *
  * A deadline states a bound. Honouring it is still each leaf's job, and every leaf
  * decides for itself what to return when the budget runs out: a fallback, stale data,

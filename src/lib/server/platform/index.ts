@@ -1,6 +1,8 @@
 import { env } from '$env/dynamic/private';
 import type { PlatformInfo } from './types';
 
+export { deferAfterResponse } from './after-response';
+
 function detect(): PlatformInfo {
 	if (env.VERCEL) return { id: 'vercel', persistent: false };
 	if (env.FLY_APP_NAME) return { id: 'fly', persistent: true };

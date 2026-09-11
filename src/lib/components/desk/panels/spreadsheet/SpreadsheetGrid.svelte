@@ -84,15 +84,18 @@ function handleGridKeydown(event: KeyboardEvent) {
 			sheet.moveSelection(event.shiftKey ? -1 : 1, 0);
 			break;
 		default:
-			// Start editing on printable character
+			// Start editing on printable character. The key becomes the draft here, so the
+			// browser must not also insert it: the edit input mounts and takes focus before
+			// this keydown's default action runs, which would type the character twice.
 			if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-				sheet.editValue = event.key;
+				event.preventDefault();
 				sheet.startEditing();
+				sheet.editValue = event.key;
 			}
 	}
 }
 
-function formatDisplay(value: import('./formula').CellValue): string {
+function formatDisplay(value: import('$lib/desk/formula').CellValue): string {
 	if (value === null) return '';
 	if (typeof value === 'number') {
 		return value.toLocaleString();

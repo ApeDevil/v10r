@@ -3,8 +3,8 @@
  */
 
 import { and, eq, isNull, type SQL, sql } from 'drizzle-orm';
-import { normalizeIpForVerification } from '$lib/server/analytics/bot-ranges';
 import { db } from '$lib/server/db';
+import { normalizeIpForVerification } from '$lib/server/db/analytics/inet';
 import { events, sessions } from '$lib/server/db/schema/analytics';
 import type { ConsentTier } from '$lib/types/db-enums';
 

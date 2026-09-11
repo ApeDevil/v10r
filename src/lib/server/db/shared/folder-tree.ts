@@ -5,13 +5,15 @@
  * - the same typed errors so one client error matrix covers all three surfaces
  * - the same cycle-check CTE, parameterized by table
  * - the same PG unique-violation detection for name conflicts
+ * - the same per-owner lock, because every check here is a read that a later write
+ *   depends on (see `lockFolderTree`)
  *
  * The cycle check walks `parent_id` upward from a candidate new parent, scoped
  * by `user_id`, and returns whether the folder being moved appears in its own
  * ancestor chain. Mirrors the server-side recursion, not the client `isCycleMove`.
  */
 import { type SQL, sql } from 'drizzle-orm';
-import type { PgTable } from 'drizzle-orm/pg-core';
+import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
 import { rowsOf } from '$lib/server/db/rows';
 
 export class FolderNotFoundError extends Error {
@@ -83,6 +85,38 @@ export function suggestNextName(name: string): string {
 	const m = name.match(/^(.*) \((\d+)\)$/);
 	if (m) return `${m[1]} (${Number.parseInt(m[2], 10) + 1})`;
 	return `${name} (2)`;
+}
+
+// Serialization
+
+/**
+ * Serialize structural changes to one user's folder tree.
+ *
+ * Every guard here is a read that a later write depends on, and nothing stops a
+ * concurrent request invalidating the answer in between. Two moves that each pass
+ * their own check — A under B, and B under A — commit a cycle belonging to no root.
+ * The damage is not cosmetic: the subtree leaves the Explorer, which renders downward
+ * from the root, and `collectSubtreeIds` never returns against it, because `UNION ALL`
+ * has nothing to stop the walk going round. A recursive delete anywhere in that cycle
+ * then holds its connection open until something else kills it.
+ *
+ * A transaction-scoped advisory lock closes the window, and it has to be taken before
+ * the first read rather than between the check and the write — the whole check-and-act
+ * is the critical section. The key is the qualified table plus the owner, so one user's
+ * tree never waits on another's, and the two folder domains never wait on each other.
+ * A `hashtext` collision costs an unnecessary wait, never a wrong answer.
+ *
+ * Released by commit or rollback. There is no unlock call, deliberately: an early
+ * `return` inside the transaction must not be able to leave the tree unguarded.
+ */
+export async function lockFolderTree(
+	tx: { execute: (q: SQL) => Promise<unknown> },
+	table: PgTable,
+	userId: string,
+): Promise<void> {
+	const { schema, name } = getTableConfig(table);
+	const tree = `${schema ?? 'public'}.${name}`;
+	await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${tree}), hashtext(${userId}))`);
 }
 
 // Cycle-check CTE

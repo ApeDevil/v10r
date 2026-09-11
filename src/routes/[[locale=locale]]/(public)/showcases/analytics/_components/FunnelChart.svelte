@@ -1,6 +1,6 @@
 <script lang="ts">
 import * as m from '$lib/paraglide/messages';
-import type { FunnelStep } from '$lib/server/analytics/types';
+import type { FunnelStep } from '$lib/server/db/analytics/types';
 import { cn } from '$lib/utils/cn';
 
 interface Props {

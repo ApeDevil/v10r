@@ -89,7 +89,7 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 						if (!sheet) return { error: 'Spreadsheet data not found.' };
 						return {
 							file: { id: fileRow.id, name: fileRow.name, type: fileRow.type },
-							content: summarizeCells(sheet.spreadsheet.cells as Record<string, unknown>),
+							content: summarizeCells(sheet.spreadsheet.cells),
 						};
 					}
 

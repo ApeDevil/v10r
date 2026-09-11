@@ -49,12 +49,96 @@ beforeEach(() => {
 });
 
 describe('executeDeskToolCall — replay arg contract', () => {
+	it('passes the read version to AI saves and reports conflicts without retrying stale cells', async () => {
+		mockGetSpreadsheet.mockResolvedValueOnce({ spreadsheet: { cells: { A1: { v: 'kept' } }, version: 7 } });
+		mockUpdateSpreadsheet.mockResolvedValueOnce({ status: 'conflict' });
+		const out = await executeDeskToolCall(ctx(), 'desk_update_cells', {
+			file_id: 'fil_abc',
+			updates: [{ cell: 'B1', value: 'new' }],
+		});
+		expect(mockUpdateSpreadsheet).toHaveBeenCalledExactlyOnceWith(
+			'fil_abc',
+			USER_ID,
+			{
+				cells: { A1: { v: 'kept' }, B1: { v: 'new' } },
+				expectedVersion: 7,
+			},
+			'ai',
+		);
+		expect(out).toMatchObject({ ok: false, errorMessage: expect.stringContaining('changed') });
+	});
+	it('lands a write on the cell it names, whatever case the model used', async () => {
+		mockGetSpreadsheet.mockResolvedValueOnce({ spreadsheet: { cells: { B1: { v: 'old' } }, version: 1 } });
+		mockUpdateSpreadsheet.mockResolvedValueOnce({ status: 'saved', file: { name: 'sheet' } });
+		await executeDeskToolCall(ctx(), 'desk_update_cells', {
+			file_id: 'fil_abc',
+			updates: [
+				{ cell: 'b1', value: 'new' },
+				{ cell: 'c1', value: null },
+			],
+		});
+		expect(mockUpdateSpreadsheet).toHaveBeenCalledExactlyOnceWith(
+			'fil_abc',
+			USER_ID,
+			{ cells: { B1: { v: 'new' } }, expectedVersion: 1 },
+			'ai',
+		);
+	});
+
+	it('refuses an address the sheet cannot show before any write, on update and on create', async () => {
+		mockGetSpreadsheet.mockResolvedValueOnce({ spreadsheet: { cells: {}, version: 0 } });
+		const update = await executeDeskToolCall(ctx(), 'desk_update_cells', {
+			file_id: 'fil_abc',
+			updates: [{ cell: 'AA1', value: 1 }],
+		});
+		expect(update).toMatchObject({ ok: false, errorMessage: expect.stringContaining('"AA1" is not a cell address') });
+		expect(mockUpdateSpreadsheet).not.toHaveBeenCalled();
+
+		const create = await executeDeskToolCall(ctx(), 'desk_create_spreadsheet', {
+			name: 'x',
+			cells: [{ cell: 'total', value: 1 }],
+		});
+		expect(create).toMatchObject({ ok: false, errorMessage: expect.stringContaining('"total" is not a cell address') });
+		expect(mockCreateSpreadsheet).not.toHaveBeenCalled();
+	});
+
 	it('deletes the file when given a real file_id (args reach the mutation verbatim)', async () => {
 		mockDeleteFile.mockResolvedValueOnce({ id: 'fil_abc', name: 'alpha' });
 		const out = await executeDeskToolCall(ctx(), 'desk_delete_file', { file_id: 'fil_abc' });
 		// Replay tags the mutation as AI-originated so the pre-image revision is attributable.
 		expect(mockDeleteFile).toHaveBeenCalledWith('fil_abc', USER_ID, 'ai');
-		expect(out).toEqual({ ok: true, output: { deleted: true, fileId: 'fil_abc', name: 'alpha' } });
+		expect(out).toEqual({
+			ok: true,
+			output: { deleted: true, fileId: 'fil_abc', name: 'alpha' },
+			effects: [{ type: 'desk:refresh_explorer' }],
+		});
+	});
+
+	it('tells the desk what to reload — the gated tools never reach it, so this response must', async () => {
+		mockGetSpreadsheet.mockResolvedValueOnce({ spreadsheet: { cells: {}, version: 3 } });
+		mockUpdateSpreadsheet.mockResolvedValueOnce({ status: 'saved', file: { name: 'sheet' } });
+		const update = await executeDeskToolCall(ctx(), 'desk_update_cells', {
+			file_id: 'fil_abc',
+			updates: [{ cell: 'A1', value: 1 }],
+		});
+		expect(update).toMatchObject({
+			ok: true,
+			effects: [
+				{ type: 'desk:refresh_file', fileId: 'fil_abc' },
+				{ type: 'desk:tab_indicator', fileId: 'fil_abc', panelType: 'spreadsheet', variant: 'modified' },
+			],
+		});
+
+		mockCreateSpreadsheet.mockResolvedValueOnce({ file: { id: 'fil_new', name: 'Budget' } });
+		const create = await executeDeskToolCall(ctx(), 'desk_create_spreadsheet', { name: 'Budget', cells: [] });
+		expect(create).toMatchObject({
+			ok: true,
+			effects: [
+				{ type: 'desk:refresh_explorer' },
+				{ type: 'desk:open_panel', panelType: 'spreadsheet', fileId: 'fil_new', label: 'Budget' },
+				{ type: 'desk:tab_indicator', fileId: 'fil_new', panelType: 'spreadsheet', variant: 'created' },
+			],
+		});
 	});
 
 	it('fails with "File not found." when args are empty — the exact plan-replay bug', async () => {

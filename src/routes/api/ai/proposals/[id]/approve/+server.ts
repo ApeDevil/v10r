@@ -21,7 +21,7 @@
  * DELETE on the same URL rejects a still-pending proposal.
  */
 
-import type { DeskToolScope } from '$lib/server/ai/tools/_types';
+import type { DeskEffect, DeskToolScope } from '$lib/server/ai/tools/_types';
 import { executeDeskToolCall } from '$lib/server/ai/tools/desk-execute';
 import {
 	approveProposal,
@@ -139,6 +139,10 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 		// 5. Run the payload, collect results, transition executed / failed.
 		const results: ProposalExecutionResult['results'] = [];
+		// What the desk must do now that the tools ran — an open panel showing the
+		// file has to reload it. Returned, not persisted: it is instruction for this
+		// response's client, not part of the audit trail.
+		const effects: DeskEffect[] = [];
 		for (const step of proposal.payload) {
 			// Replay under the scopes frozen when the plan was PROPOSED, never
 			// anything supplied on this request — approval must not be able to
@@ -154,6 +158,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			);
 			if (outcome.ok) {
 				results.push({ toolName: step.toolName, ok: true, output: outcome.output });
+				effects.push(...outcome.effects);
 			} else {
 				results.push({
 					toolName: step.toolName,
@@ -171,6 +176,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 					status: 'failed',
 					executionResult: partialResult,
 					failureMessage: outcome.errorMessage,
+					effects,
 				});
 			}
 		}
@@ -182,6 +188,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			id: proposal.id,
 			status: 'executed',
 			executionResult,
+			effects,
 			executedAt: new Date().toISOString(),
 		});
 	} catch (err) {

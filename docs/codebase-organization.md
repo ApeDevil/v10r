@@ -67,7 +67,7 @@ another:
 | | Owns | Read by |
 |---|---|---|
 | `$lib/3d/` | scene, part, and customization registries | the 3D viewer **and** blog scene embeds |
-| `$lib/desk/` | persisted layout shape, panel catalogue, help copy | the Desk UI, the app shell's command palette, **and** the `desk` DB schema |
+| `$lib/desk/` | persisted layout shape, panel catalogue, help copy, the spreadsheet formula evaluator and cell contract | the Desk UI, the app shell's command palette, the `desk` DB schema, **and** the `desk` mutations (every stored sheet is re-derived at the write door) |
 | `$lib/showcases/catalog/` | the showcase card tree and section anchors | the hub, nav, both search lanes, the sitemap, the Neo4j projection |
 
 `$lib/desk/panels.ts` lists the panel types; the directories under
@@ -95,7 +95,13 @@ The test is not "is it SQL" but "would someone reading this domain expect to fin
 `pgSchema()` must be exported through `schema/index.ts` *and* listed in
 `drizzle.config.ts`'s `schemaFilter`, or push silently omits it.
 
-`db/` is the sink: it imports no sibling domain, so the import graph stays acyclic.
+`db/` is the sink: it imports no sibling domain, so the import graph stays acyclic. Its
+root holds the primitives every table's values are made of and no domain owns — `id.ts`,
+`content-hash.ts`, `regconfig.ts`, `errors.ts` — and `db/[domain]/` holds the ones only one
+schema needs (`analytics/inet.ts`, the shape checks before an `::inet` cast). A domain
+that finds `db/` reaching up into it has found one of these in the wrong place. The one
+thing beneath the sink is `server/errors/`: the base class every domain's errors extend,
+with no imports of its own.
 
 ---
 

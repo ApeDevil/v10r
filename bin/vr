@@ -17,8 +17,8 @@ menu() {
 	cat <<'EOF'
 vr — solo-dev cli (acts on the git repo you're standing in)
 
-  ship, s           gate + promote current branch → main (the push deploys, unless
-                    the repo's .vrrc sets DEPLOY_MODE=prebuilt)
+  ship, s           gate (validate + validate:build) + promote current branch → main
+                    (the push deploys, unless the repo's .vrrc sets DEPLOY_MODE=prebuilt)
   ship-local, sl    ship, then build in the container + upload the prebuilt output
   deploy, dp        build + upload the pushed main HEAD prebuilt (retry; -n builds only)
   validate, v       run the full gate (bun run validate); --build adds a

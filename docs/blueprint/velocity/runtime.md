@@ -48,7 +48,7 @@ two files.
   request that spawned it.
 - A durable write that must be acknowledged is critical, not deferred.
 
-**Implementation.** `src/lib/server/http/after-response.ts`, tests in `after-response.test.ts`.
+**Implementation.** `src/lib/server/platform/after-response.ts`, tests in `after-response.test.ts`.
 
 ## Heavy dependency quarantine
 

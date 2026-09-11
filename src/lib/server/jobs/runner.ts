@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { jobExecution } from '$lib/server/db/schema/jobs';
-import { deferAfterResponse } from '$lib/server/http/after-response';
+import { deferAfterResponse } from '$lib/server/platform';
 import { jobs } from './index';
 
 export type TriggerType = 'cron' | 'scheduler' | 'manual';

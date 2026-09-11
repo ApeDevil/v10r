@@ -7,12 +7,12 @@
  * Cell format (sparse, only non-empty cells stored):
  *   { "A1": { v: "Header", t: "text" }, "B2": { v: 42, f: "=SUM(B3:B5)" } }
  *
- * Where:
- *   v = raw value (string | number | null)
- *   f = formula text (optional, omitted if not a formula)
- *   t = format type (optional, omitted for 'auto')
+ * `PersistedCell` in `$lib/desk/spreadsheet-cells.ts` is the shape; the mutations that
+ * write this column re-derive every `v` from its `f` first, so a stored sheet never
+ * disagrees with itself whoever wrote it.
  */
-import { index, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, integer, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
+import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
 import { user } from '../auth/_better-auth';
 import { file } from './file';
 import { deskSchema } from './schema';
@@ -32,9 +32,11 @@ export const spreadsheet = deskSchema.table(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		name: text('name').notNull().default('Untitled'),
 		/** Sparse cell map — only populated cells stored. Key = "A1", Value = { v, f?, t? } */
-		cells: jsonb('cells').notNull().default({}),
+		cells: jsonb('cells').$type<SpreadsheetCells>().notNull().default({}),
 		/** Column metadata: header labels, widths. Key = "A", Value = { label?, width? } */
 		columnMeta: jsonb('column_meta'),
+		/** Optimistic concurrency token shared by UI and AI writers. */
+		version: integer('version').notNull().default(0),
 		/** Soft-delete — kept in sync with `file.deletedAt`. See `file.ts` for rationale. */
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

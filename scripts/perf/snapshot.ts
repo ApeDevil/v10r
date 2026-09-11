@@ -12,14 +12,20 @@
  * ~9% and every verdict with it, so the snapshot records the NODE_ENV it saw and
  * the gate refuses to score anything that does not say `production`.
  *
- *   podman exec -e NODE_ENV=production v10r bun run build
- *   podman exec -e NODE_ENV=production v10r bun run scripts/perf/snapshot.ts
+ * MUST know which source it measured. The container has no git binary, so the
+ * host passes `GIT_SHA` (short SHA, `-dirty` when the tree differs from it); a
+ * write without it is refused rather than recorded as `null`, because a committed
+ * number nobody can reproduce is worse than no number. `vr` sets it on every
+ * container run; by hand:
+ *
+ *   podman exec -e NODE_ENV=production -e GIT_SHA=$(git rev-parse --short HEAD) v10r bun run perf:snapshot
  *
  * --check: measure the build and score it against the budgets.json ceilings
  * WITHOUT touching the committed snapshot.json. This is the `validate:build`
- * leg — a pre-ship build check must not dirty the tree (`vr ship` requires it
- * clean), and the committed snapshot's accepted numbers stay the ratchet
- * baseline until deliberately regenerated.
+ * leg that `vr ship` runs after `validate` — a pre-ship build check must not
+ * dirty the tree (`vr ship` requires it clean), and the committed snapshot's
+ * accepted numbers stay the ratchet baseline until deliberately regenerated.
+ * Provenance is not required here: nothing is written.
  */
 
 import { gzipSync } from 'node:zlib';
@@ -94,9 +100,8 @@ const kb = (bytes: number) => Math.round((bytes / 1024) * 10) / 10;
 /**
  * Provenance for the snapshot. `GIT_SHA` is checked first because the container
  * this runs in has no git binary, so the spawn is only a fallback for running it
- * on a host that does:
- *
- *   podman exec -e NODE_ENV=production -e GIT_SHA=$(git rev-parse --short HEAD) v10r ...
+ * on a host that does. The value may carry a `-dirty` suffix — an honest snapshot
+ * of an uncommitted tree says so rather than naming a commit it does not match.
  */
 function gitSha(): string | null {
 	const fromEnv = process.env.GIT_SHA?.trim();
@@ -203,7 +208,7 @@ async function main() {
 		const over = checks.filter((c) => c.exceeds);
 		for (const c of over) {
 			console.error(
-				`[validate:build] ${c.metric} = ${c.value} exceeds the accepted ceiling ${c.ceiling} (${c.slackKb} KB over).`,
+				`[validate:build] ${c.metric} = ${c.value} exceeds the accepted ceiling ${c.ceiling} (${-c.slackKb} KB over).`,
 			);
 		}
 		if (over.length > 0) {
@@ -216,6 +221,12 @@ async function main() {
 			`[validate:build] OK — ${checks.length} ratchet(s) within ceilings (production build; committed snapshot.json untouched).`,
 		);
 		return;
+	}
+
+	if (!snapshot.gitSha) {
+		console.error('[perf:snapshot] refusing to write a snapshot with no source revision.');
+		console.error('  The container has no git — pass it in: -e GIT_SHA=$(git rev-parse --short HEAD)');
+		process.exit(1);
 	}
 
 	await Bun.write(OUT, `${JSON.stringify(snapshot, null, '\t')}\n`);

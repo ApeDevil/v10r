@@ -271,6 +271,10 @@ async function approveProposal(proposalId: string) {
 			return;
 		}
 		appendIOLog({ source: 'effect', level: 'success', label: 'Plan executed.' });
+		// The gated tools never touched the desk; the replay's effects arrive here
+		// and nowhere else, so an open panel learns about the write from this response.
+		const { data } = (await res.json()) as { data: { effects?: DeskEffect[] } };
+		for (const effect of data.effects ?? []) dispatchDeskEffect(effect);
 		// Resume the conversation with a sentinel so the model sees the result.
 		chat.sendMessage(
 			{ text: `[resumeFromProposalId:${proposalId}]` },

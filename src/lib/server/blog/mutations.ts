@@ -1,8 +1,9 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { TranslationMap } from '$lib/i18n/translate';
-import { contentHash } from '$lib/server/content/hash';
 import { db } from '$lib/server/db';
+import { contentHash } from '$lib/server/db/content-hash';
 import { createId } from '$lib/server/db/id';
+import { localeRegconfig } from '$lib/server/db/regconfig';
 import {
 	asset,
 	assetFolder,
@@ -15,7 +16,6 @@ import {
 	tag,
 } from '$lib/server/db/schema/blog';
 import { assertOwnedDestination } from '$lib/server/db/shared/folder-tree';
-import { localeRegconfig } from '$lib/server/search/regconfig';
 import type { PostStatus } from '$lib/types/db-enums';
 import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';

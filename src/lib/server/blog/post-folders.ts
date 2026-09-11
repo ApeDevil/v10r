@@ -17,6 +17,7 @@ import {
 	FolderNotFoundError,
 	isCycleMove,
 	isUniqueViolation,
+	lockFolderTree,
 	suggestNextName,
 } from '$lib/server/db/shared/folder-tree';
 
@@ -100,33 +101,39 @@ export async function renamePostFolder(id: string, userId: string, name: string)
  * @throws FolderNotFoundError, FolderCycleError, FolderNameConflictError.
  */
 export async function movePostFolder(id: string, userId: string, parentId: string | null) {
-	const [target] = await db
-		.select()
-		.from(postFolder)
-		.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
-		.limit(1);
-	if (!target) throw new FolderNotFoundError(id);
+	return db.transaction(async (tx) => {
+		// Before the first read, not between the check and the write: the cycle check
+		// answers a question a concurrent move can invalidate. See lockFolderTree.
+		await lockFolderTree(tx, postFolder, userId);
 
-	// Destination ownership — isCycleMove's user-scoped seed silently reports
-	// "no cycle" for a foreign parent rather than rejecting it.
-	await assertOwnedDestination(db, postFolder, parentId, userId);
-
-	if (parentId && (await isCycleMove(db, postFolder, id, parentId, userId))) {
-		throw new FolderCycleError(id, parentId);
-	}
-
-	try {
-		const [row] = await db
-			.update(postFolder)
-			.set({ parentId, updatedAt: new Date() })
+		const [target] = await tx
+			.select()
+			.from(postFolder)
 			.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
-			.returning();
-		if (!row) throw new FolderNotFoundError(id);
-		return row;
-	} catch (e) {
-		if (isUniqueViolation(e)) throw new FolderNameConflictError(parentId, target.name, suggestNextName(target.name));
-		throw e;
-	}
+			.limit(1);
+		if (!target) throw new FolderNotFoundError(id);
+
+		// Destination ownership — isCycleMove's user-scoped seed silently reports
+		// "no cycle" for a foreign parent rather than rejecting it.
+		await assertOwnedDestination(tx, postFolder, parentId, userId);
+
+		if (parentId && (await isCycleMove(tx, postFolder, id, parentId, userId))) {
+			throw new FolderCycleError(id, parentId);
+		}
+
+		try {
+			const [row] = await tx
+				.update(postFolder)
+				.set({ parentId, updatedAt: new Date() })
+				.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
+				.returning();
+			if (!row) throw new FolderNotFoundError(id);
+			return row;
+		} catch (e) {
+			if (isUniqueViolation(e)) throw new FolderNameConflictError(parentId, target.name, suggestNextName(target.name));
+			throw e;
+		}
+	});
 }
 
 /**
@@ -142,39 +149,46 @@ export async function deletePostFolder(
 ): Promise<{ id: string; name: string; deletedIds: string[] }> {
 	const { recursive = false } = options;
 
-	const [target] = await db
-		.select()
-		.from(postFolder)
-		.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
-		.limit(1);
-	if (!target) throw new FolderNotFoundError(id);
+	return db.transaction(async (tx) => {
+		// Both branches read the tree and then act on what they read: "is it empty"
+		// and "which ids am I about to cascade away" are stale the moment a
+		// concurrent move lands. See lockFolderTree.
+		await lockFolderTree(tx, postFolder, userId);
 
-	if (!recursive) {
-		const [sub] = await db
-			.select({ n: count() })
+		const [target] = await tx
+			.select()
 			.from(postFolder)
-			.where(and(eq(postFolder.parentId, id), eq(postFolder.userId, userId)));
-		const [posts] = await db
-			.select({ n: count() })
-			.from(post)
-			.where(and(eq(post.folderId, id), eq(post.authorId, userId), isNull(post.deletedAt)));
-		const total = (sub?.n ?? 0) + (posts?.n ?? 0);
-		if (total > 0) throw new FolderNotEmptyError(id, total);
+			.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
+			.limit(1);
+		if (!target) throw new FolderNotFoundError(id);
 
-		const [row] = await db
+		if (!recursive) {
+			const [sub] = await tx
+				.select({ n: count() })
+				.from(postFolder)
+				.where(and(eq(postFolder.parentId, id), eq(postFolder.userId, userId)));
+			const [posts] = await tx
+				.select({ n: count() })
+				.from(post)
+				.where(and(eq(post.folderId, id), eq(post.authorId, userId), isNull(post.deletedAt)));
+			const total = (sub?.n ?? 0) + (posts?.n ?? 0);
+			if (total > 0) throw new FolderNotEmptyError(id, total);
+
+			const [row] = await tx
+				.delete(postFolder)
+				.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
+				.returning();
+			if (!row) throw new FolderNotFoundError(id);
+			return { id: row.id, name: row.name, deletedIds: [row.id] };
+		}
+
+		const deletedIds = await collectSubtreeIds(tx, postFolder, id, userId);
+
+		const [row] = await tx
 			.delete(postFolder)
 			.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
 			.returning();
 		if (!row) throw new FolderNotFoundError(id);
-		return { id: row.id, name: row.name, deletedIds: [row.id] };
-	}
-
-	const deletedIds = await collectSubtreeIds(db, postFolder, id, userId);
-
-	const [row] = await db
-		.delete(postFolder)
-		.where(and(eq(postFolder.id, id), eq(postFolder.userId, userId)))
-		.returning();
-	if (!row) throw new FolderNotFoundError(id);
-	return { id: row.id, name: row.name, deletedIds };
+		return { id: row.id, name: row.name, deletedIds };
+	});
 }

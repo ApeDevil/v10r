@@ -9,9 +9,12 @@
 #   dev             →  validate dev, fast-forward main, push (no squash)
 #   main            →  refused
 #
-# The gate (`bun run validate`) runs inside the v10r container against the *merged*
-# state, so main is always provably equal to a tested commit. Nothing is pushed
-# unless the gate passes; on failure the local merge is rolled back.
+# The gate runs inside the repo's container against the *merged* state, so main is
+# always provably equal to a tested commit: `bun run validate`, then
+# `bun run validate:build` — a production build and the perf ratchet scored against
+# it. The second leg is not optional: two deploys failed on build-only breakage the
+# plain gate cannot see, and a heavy import is invisible in review. Nothing is pushed
+# unless both pass; on failure the local merge is rolled back.
 #
 set -euo pipefail
 source "$(dirname "$(readlink -f "$0")")/lib.sh"
@@ -22,6 +25,8 @@ DRY_RUN=0; KEEP_BRANCH=0; ASSUME_YES=0; DEPLOY_LOCAL=0; MSG=""
 usage() {
 	cat <<'EOF'
 vr ship — gate + promote the current branch toward main (the push is the deploy).
+          The gate is `bun run validate` followed by `bun run validate:build`
+          (production build + perf ratchet); both must pass.
 vr sl   — the same train with --deploy: build in the container after the gate and
           upload the Build Output after the push (repos with DEPLOY_MODE=prebuilt).
 
@@ -65,9 +70,14 @@ confirm() {
 	case "$ans" in [yY]|[yY][eE][sS]) return 0 ;; *) return 1 ;; esac
 }
 
+# `|| return 1` on each leg, not `set -e`: a function called as an `if` condition has
+# errexit suspended inside it, so without the guard a failed validate would fall through
+# to the build and the gate would report the build's verdict as its own.
 gate() {
-	info "Gate: bun run validate"
-	run_validate
+	info "Gate 1/2: bun run validate"
+	run_validate || return 1
+	info "Gate 2/2: bun run validate:build (production build + perf ratchet)"
+	run_validate_build || return 1
 }
 
 build_local() {

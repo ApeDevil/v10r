@@ -3,8 +3,9 @@ import { join } from 'node:path';
 import { error } from '@sveltejs/kit';
 import { isLocale, locales } from '$lib/i18n/runtime';
 import { renderBlogPost } from '$lib/server/blog/pipeline';
-import { contentHash, getPreviewDrift, parseContentFile } from '$lib/server/content';
+import { getPreviewDrift, parseContentFile } from '$lib/server/content';
 import { db } from '$lib/server/db';
+import { contentHash } from '$lib/server/db/content-hash';
 import type { PageServerLoad } from './$types';
 
 /**

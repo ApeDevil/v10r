@@ -10,6 +10,7 @@
  *
  * See `docs/blueprint/ai/surfaces.md` (retrieval: one kernel, two profiles).
  */
+import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
 import { getMarkdownByFileId, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
 import { deleteDocument } from '$lib/server/db/retrieval/mutations';
 import { getDocumentBySourcePath } from '$lib/server/db/retrieval/queries';
@@ -21,10 +22,9 @@ import type { RetrievalResult } from '$lib/server/retrieval/types';
 export const deskSourcePath = (fileId: string) => `desk_file_${fileId}`;
 
 /** Flatten a spreadsheet's sparse cell map into readable `Cell: value` lines. */
-function spreadsheetToText(cells: Record<string, { v?: unknown }> | null): string {
-	if (!cells) return '';
+function spreadsheetToText(cells: SpreadsheetCells): string {
 	return Object.entries(cells)
-		.map(([addr, cell]) => `${addr}: ${cell?.v ?? ''}`)
+		.map(([addr, cell]) => `${addr}: ${cell.v ?? ''}`)
 		.join('\n');
 }
 
@@ -48,7 +48,7 @@ export async function syncDeskFileToRetrieval(
 		const sheet = await getSpreadsheetByFileId(fileId, userId);
 		if (!sheet) return false;
 		title = sheet.file.name;
-		content = spreadsheetToText(sheet.spreadsheet.cells as Record<string, { v?: unknown }> | null);
+		content = spreadsheetToText(sheet.spreadsheet.cells);
 	}
 
 	const sourcePath = deskSourcePath(fileId);

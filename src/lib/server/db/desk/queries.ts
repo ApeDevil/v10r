@@ -64,6 +64,7 @@ export async function getSpreadsheetByFileId(fileId: string, userId: string) {
 				id: spreadsheet.id,
 				cells: spreadsheet.cells,
 				columnMeta: spreadsheet.columnMeta,
+				version: spreadsheet.version,
 			},
 		})
 		.from(file)

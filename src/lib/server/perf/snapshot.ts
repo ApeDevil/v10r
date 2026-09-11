@@ -27,6 +27,7 @@ export interface SnapshotMetrics {
 
 export interface LabSnapshot {
 	generatedAt: string;
+	/** Short SHA the build came from, `-dirty` when the tree differed from it. */
 	gitSha: string | null;
 	nodeEnv: string;
 	metrics: SnapshotMetrics;

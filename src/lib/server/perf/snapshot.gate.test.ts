@@ -45,6 +45,11 @@ describe('lab snapshot ratchet', () => {
 
 	it('carries the provenance needed to reproduce it', () => {
 		expect(snapshot.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+		// A number with no source revision cannot be reproduced or bisected. The
+		// container has no git, so this sat at `null` for two weeks unnoticed.
+		expect(snapshot.gitSha, 'regenerate with -e GIT_SHA=$(git rev-parse --short HEAD)').toMatch(
+			/^[0-9a-f]{7,40}(-dirty)?$/,
+		);
 		expect(snapshot.metrics.route_count).toBeGreaterThan(0);
 		expect(snapshot.metrics.chunk_count).toBeGreaterThan(0);
 	});

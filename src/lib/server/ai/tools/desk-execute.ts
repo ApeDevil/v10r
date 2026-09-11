@@ -12,8 +12,12 @@
  * silently fall behind the live tool set, nor execute something whose cost was
  * never declared.
  *
- * Returns a replay-shaped result. The in-loop tools layer their own `DeskEffect[]`
- * and display fields on top; the replay path uses the raw outcome as-is.
+ * Returns a replay-shaped result: the raw outcome plus the desk effects the client
+ * must dispatch. The in-loop tools carry their effects inside the tool output, but a
+ * gated tool returns `requiresApproval` and never reaches the desk — so this is the
+ * only place a replayed mutation can tell an open panel to refresh. Without it the
+ * panel keeps showing the pre-AI sheet at a stale version, and the user's next edit
+ * is refused as a conflict with a change made on their behalf.
  */
 import {
 	createMarkdownFile,
@@ -24,9 +28,12 @@ import {
 	updateSpreadsheetByFileId,
 } from '$lib/server/db/desk/mutations';
 import { getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
-import type { DeskToolScope } from './_types';
+import type { DeskEffect, DeskToolScope } from './_types';
+import { applyCellUpdates, type CellUpdate } from './cell-updates';
 
-export type DeskExecResult = { ok: true; output: unknown } | { ok: false; output: unknown; errorMessage: string };
+export type DeskExecResult =
+	| { ok: true; output: unknown; effects: DeskEffect[] }
+	| { ok: false; output: unknown; errorMessage: string };
 
 /**
  * Tool names this executor can run. The drift-guard test asserts this set equals
@@ -101,44 +108,88 @@ export async function executeDeskToolCall(
 		switch (toolName) {
 			case 'desk_update_cells': {
 				const fileId = args.file_id as string;
-				const updates = args.updates as { cell: string; value: string | number | null }[];
+				const updates = args.updates as CellUpdate[];
 				const sheet = await getSpreadsheetByFileId(fileId, userId);
 				if (!sheet) return { ok: false, output: null, errorMessage: 'Spreadsheet not found.' };
-				const existingCells = (sheet.spreadsheet.cells ?? {}) as Record<string, unknown>;
-				const mergedCells = { ...existingCells };
-				for (const { cell, value } of updates) {
-					if (value === null) delete mergedCells[cell];
-					else mergedCells[cell] = { v: value };
-				}
-				const result = await updateSpreadsheetByFileId(fileId, userId, { cells: mergedCells }, 'ai');
+				const merged = applyCellUpdates(sheet.spreadsheet.cells, updates);
+				if ('error' in merged) return { ok: false, output: null, errorMessage: merged.error };
+				const result = await updateSpreadsheetByFileId(
+					fileId,
+					userId,
+					{ cells: merged.cells, expectedVersion: sheet.spreadsheet.version },
+					'ai',
+				);
 				if (!result) return { ok: false, output: null, errorMessage: 'Failed to update cells.' };
-				return { ok: true, output: { updated: true, fileId, cellsChanged: updates.length, fileName: result.name } };
+				if (result.status === 'conflict') {
+					return {
+						ok: false,
+						output: null,
+						errorMessage: 'Spreadsheet changed during the update. Read it again before retrying.',
+					};
+				}
+				return {
+					ok: true,
+					output: { updated: true, fileId, cellsChanged: updates.length, fileName: result.file.name },
+					effects: [
+						{ type: 'desk:refresh_file', fileId },
+						{ type: 'desk:tab_indicator', fileId, panelType: 'spreadsheet', variant: 'modified' },
+					],
+				};
 			}
 			case 'desk_rename_file': {
 				const result = await renameFile(args.file_id as string, userId, args.name as string);
 				if (!result) return { ok: false, output: null, errorMessage: 'File not found.' };
-				return { ok: true, output: { renamed: true, fileId: result.id, name: result.name } };
+				return {
+					ok: true,
+					output: { renamed: true, fileId: result.id, name: result.name },
+					effects: [{ type: 'desk:refresh_explorer' }],
+				};
 			}
 			case 'desk_update_markdown': {
 				const result = await updateMarkdownByFileId(args.file_id as string, userId, args.content as string, 'ai');
 				if (!result) return { ok: false, output: null, errorMessage: 'Markdown file not found.' };
-				return { ok: true, output: { updated: true, fileId: result.id, fileName: result.name } };
+				return {
+					ok: true,
+					output: { updated: true, fileId: result.id, fileName: result.name },
+					effects: [
+						{ type: 'desk:refresh_file', fileId: result.id },
+						{ type: 'desk:tab_indicator', fileId: result.id, panelType: 'markdown', variant: 'modified' },
+					],
+				};
 			}
 			case 'desk_create_spreadsheet': {
-				const cells = (args.cells as { cell: string; value: string | number | null }[]) ?? [];
-				const cellMap: Record<string, unknown> = {};
-				for (const { cell, value } of cells) cellMap[cell] = { v: value };
-				const result = await createSpreadsheetFile(userId, args.name as string, cellMap);
-				return { ok: true, output: { created: true, fileId: result.file.id, name: result.file.name } };
+				const initial = applyCellUpdates({}, (args.cells as CellUpdate[]) ?? []);
+				if ('error' in initial) return { ok: false, output: null, errorMessage: initial.error };
+				const result = await createSpreadsheetFile(userId, args.name as string, initial.cells);
+				return {
+					ok: true,
+					output: { created: true, fileId: result.file.id, name: result.file.name },
+					effects: [
+						{ type: 'desk:refresh_explorer' },
+						{ type: 'desk:open_panel', panelType: 'spreadsheet', fileId: result.file.id, label: result.file.name },
+						{ type: 'desk:tab_indicator', fileId: result.file.id, panelType: 'spreadsheet', variant: 'created' },
+					],
+				};
 			}
 			case 'desk_create_markdown': {
 				const result = await createMarkdownFile(userId, args.name as string, args.content as string);
-				return { ok: true, output: { created: true, fileId: result.file.id, name: result.file.name } };
+				return {
+					ok: true,
+					output: { created: true, fileId: result.file.id, name: result.file.name },
+					effects: [
+						{ type: 'desk:refresh_explorer' },
+						{ type: 'desk:tab_indicator', fileId: result.file.id, panelType: 'markdown', variant: 'created' },
+					],
+				};
 			}
 			case 'desk_delete_file': {
 				const result = await deleteFile(args.file_id as string, userId, 'ai');
 				if (!result) return { ok: false, output: null, errorMessage: 'File not found.' };
-				return { ok: true, output: { deleted: true, fileId: result.id, name: result.name } };
+				return {
+					ok: true,
+					output: { deleted: true, fileId: result.id, name: result.name },
+					effects: [{ type: 'desk:refresh_explorer' }],
+				};
 			}
 			default:
 				return { ok: false, output: null, errorMessage: `Unknown tool "${toolName}" in proposal payload.` };

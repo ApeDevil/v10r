@@ -13,7 +13,7 @@ import { createNotification, getOrCreateSettings } from '$lib/server/db/notifica
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import type { NotificationParams } from '$lib/server/db/schema/notifications/notifications';
 import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
-import { deferAfterResponse } from '$lib/server/http/after-response';
+import { deferAfterResponse } from '$lib/server/platform';
 import { getChannel } from './channels';
 import { createDeliveries } from './outbox';
 import { isQuietNow } from './quiet-hours';

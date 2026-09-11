@@ -156,6 +156,10 @@ container_run() {
 	while [ $# -gt 1 ] && [ "$1" = "-e" ]; do
 		env_flags+=(-e "$2"); shift 2
 	done
+	local provenance; provenance="$(git_provenance)"
+	if [ -n "$provenance" ]; then
+		env_flags+=(-e "GIT_SHA=$provenance")
+	fi
 	local svc; svc="$(compose_service)"
 	if project_running; then
 		info "Container up → running via 'compose exec $svc'"
@@ -163,6 +167,21 @@ container_run() {
 	else
 		info "Container not running → ephemeral one-shot (auto-removed)"
 		run_redacted "${COMPOSE[@]}" run --rm -T "${env_flags[@]}" "$svc" "$@"
+	fi
+}
+
+# Which source a container run acts on: short SHA of HEAD, `-dirty` when tracked files
+# differ from it. Every container run carries it as GIT_SHA because the container has no
+# git binary, so nothing inside can answer "what was this built from" — and a committed
+# perf snapshot without that answer is a number nobody can reproduce (the committed one
+# said `null` for two weeks). Empty when there is no HEAD to name.
+git_provenance() {
+	local sha; sha="$(git rev-parse --short HEAD 2>/dev/null)" || return 0
+	[ -n "$sha" ] || return 0
+	if git diff --quiet && git diff --cached --quiet; then
+		printf '%s' "$sha"
+	else
+		printf '%s-dirty' "$sha"
 	fi
 }
 

@@ -11,7 +11,6 @@ export {
 	parseContentFile,
 	serializeContentFile,
 } from './frontmatter';
-export { contentHash } from './hash';
 export {
 	findOrphanedSourcePaths,
 	getSystemAuthor,

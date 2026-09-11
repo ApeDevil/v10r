@@ -67,7 +67,9 @@ describe('ownership predicate', () => {
 		// collectSubtreeIds feeds the audit log and the Neo4j sync, so an unscoped
 		// recursive term made one user's delete emit operations on foreign rows.
 		const source = readFileSync(join(SRC, 'db', 'shared', 'folder-tree.ts'), 'utf8');
-		const recursiveTerms = source.match(/UNION ALL[\s\S]*?\)/g) ?? [];
+		// Code only: a docblock that names `UNION ALL` while explaining a hazard is not a CTE.
+		const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+		const recursiveTerms = code.match(/UNION ALL[\s\S]*?\)/g) ?? [];
 		expect(recursiveTerms.length).toBeGreaterThanOrEqual(2);
 		for (const term of recursiveTerms) {
 			expect(term, 'a recursive CTE term lost its user_id filter').toMatch(/user_id/);

@@ -4,6 +4,7 @@
 import { eq } from 'drizzle-orm';
 import { getActiveProvider } from '$lib/server/ai';
 import { db } from '$lib/server/db';
+import { contentHash } from '$lib/server/db/content-hash';
 import { chunk, document } from '$lib/server/db/schema/retrieval';
 import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '$lib/types/ingest-pipeline';
 import { chunkDocument } from '../chunk';
@@ -18,14 +19,6 @@ import { storeChunkStructure, storeEntitiesAndRelationships } from './graph-stor
 type IngestEmitFn = (event: IngestEvent) => void;
 
 /** Hash content using Web Crypto */
-async function hashContent(content: string): Promise<string> {
-	const data = new TextEncoder().encode(content);
-	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-	return Array.from(new Uint8Array(hashBuffer))
-		.map((b) => b.toString(16).padStart(2, '0'))
-		.join('');
-}
-
 function emit(
 	fn: IngestEmitFn | undefined,
 	step: IngestStepId,
@@ -56,7 +49,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 	// stamps both the Postgres row and every Neo4j chunk/entity for tenant scoping.
 	const ownerId = doc.userId ?? SYSTEM_DOCS_USER_ID;
 
-	const contentHash = await hashContent(doc.content);
+	const documentHash = await contentHash(doc.content);
 
 	// 1. Create document record
 	emit(onEvent, 'insert', 'active');
@@ -70,7 +63,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 		source: doc.sourceType ?? 'text',
 		sourceUri: doc.sourcePath ?? null,
 		status: 'processing',
-		contentHash,
+		contentHash: documentHash,
 	});
 	emit(onEvent, 'insert', 'done', {
 		durationMs: Math.round(performance.now() - insertStart),

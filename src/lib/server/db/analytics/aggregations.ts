@@ -4,6 +4,9 @@
  */
 
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm';
+import { db } from '$lib/server/db';
+import { getBotCategories } from '$lib/server/db/analytics/bot-queries';
+import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/sentinels';
 import type {
 	AudienceBreakdown,
 	AudienceSplit,
@@ -18,10 +21,7 @@ import type {
 	TransitionRow,
 	UserLaneStats,
 	VitalSummary,
-} from '$lib/server/analytics/types';
-import { db } from '$lib/server/db';
-import { getBotCategories } from '$lib/server/db/analytics/bot-queries';
-import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/sentinels';
+} from '$lib/server/db/analytics/types';
 import { rowsOf } from '$lib/server/db/rows';
 import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
 

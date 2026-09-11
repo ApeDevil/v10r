@@ -6,6 +6,7 @@ import { user } from '../schema/auth/_better-auth';
 import { file } from '../schema/desk/file';
 import { folder } from '../schema/desk/folder';
 import { markdown } from '../schema/desk/markdown';
+import { fileRevision } from '../schema/desk/revision';
 import { spreadsheet } from '../schema/desk/spreadsheet';
 
 let testClient: PGlite;
@@ -64,6 +65,30 @@ describe('desk mutations', () => {
 			expect(result.file.type).toBe('spreadsheet');
 			expect(result.file.userId).toBe(USER_A.id);
 			expect(result.spreadsheet.userId).toBe(USER_A.id);
+		});
+
+		it('stores every value re-derived from its formula, whoever wrote it', async () => {
+			// A writer with no grid: the AI hands over stale totals and bare formula text.
+			const { spreadsheet: sheet } = await createSpreadsheetFile(USER_A.id, 'Totals', {
+				a1: { v: 3 },
+				A2: { v: '4' },
+				A3: { v: 99, f: '=SUM(A1:A2)' },
+				A4: { v: '=A3' },
+				A5: { v: '' },
+			});
+			expect(sheet.cells).toEqual({
+				A1: { v: 3 },
+				A2: { v: 4 },
+				A3: { v: 7, f: '=SUM(A1:A2)' },
+				A4: { v: 7, f: '=A3' },
+			});
+		});
+
+		it('refuses a map with a label the sheet cannot address', async () => {
+			await expect(createSpreadsheetFile(USER_A.id, 'Bad', { AA1: { v: 1 } })).rejects.toThrow(
+				'"AA1" is not a cell address',
+			);
+			expect(await db.select().from(file)).toHaveLength(0);
 		});
 
 		it('places file in the specified folder', async () => {
@@ -387,36 +412,122 @@ describe('desk mutations', () => {
 			await new Promise((r) => setTimeout(r, 10));
 
 			const cells = { A1: { v: 'updated' } };
-			const result = await updateSpreadsheetByFileId(fileRow.id, USER_A.id, { cells });
+			const result = await updateSpreadsheetByFileId(fileRow.id, USER_A.id, { cells, expectedVersion: 0 });
 
 			expect(result).not.toBeNull();
-			expect(result?.updatedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+			expect(result?.status).toBe('saved');
+			if (result?.status !== 'saved') throw new Error('Save failed');
+			expect(result.file.updatedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+			expect(result.version).toBe(1);
 
 			// Verify spreadsheet row was updated
 			const [sheetRow] = await db.select().from(spreadsheet).where(eq(spreadsheet.fileId, fileRow.id));
 			expect(sheetRow.cells).toEqual(cells);
 		});
 
+		it('recomputes a stored total when a write changes one of its inputs', async () => {
+			const { file: fileRow } = await createSpreadsheetFile(USER_A.id, 'Budget', {
+				A1: { v: 100 },
+				A2: { v: 50 },
+				A3: { v: 150, f: '=SUM(A1:A2)' },
+			});
+			// The AI write path's merge: the touched cell replaced, the total left as it was.
+			const result = await updateSpreadsheetByFileId(
+				fileRow.id,
+				USER_A.id,
+				{ cells: { A1: { v: 100 }, A2: { v: 75 }, A3: { v: 150, f: '=SUM(A1:A2)' } }, expectedVersion: 0 },
+				'ai',
+			);
+			expect(result?.status).toBe('saved');
+			const [sheetRow] = await db.select().from(spreadsheet).where(eq(spreadsheet.fileId, fileRow.id));
+			expect(sheetRow.cells).toEqual({ A1: { v: 100 }, A2: { v: 75 }, A3: { v: 175, f: '=SUM(A1:A2)' } });
+		});
+
+		it('refuses an unaddressable label before touching the row', async () => {
+			const { file: fileRow } = await createSpreadsheetFile(USER_A.id, 'Narrow', { A1: { v: 1 } });
+			await expect(
+				updateSpreadsheetByFileId(fileRow.id, USER_A.id, { cells: { total: { v: 2 } }, expectedVersion: 0 }),
+			).rejects.toThrow(RangeError);
+			const [sheetRow] = await db.select().from(spreadsheet).where(eq(spreadsheet.fileId, fileRow.id));
+			expect(sheetRow).toMatchObject({ cells: { A1: { v: 1 } }, version: 0 });
+			expect(await db.select().from(fileRevision).where(eq(fileRevision.fileId, fileRow.id))).toHaveLength(0);
+		});
+
 		it('updates file name when provided', async () => {
 			const { file: fileRow } = await createSpreadsheetFile(USER_A.id, 'Old');
 
-			const result = await updateSpreadsheetByFileId(fileRow.id, USER_A.id, { name: 'Renamed' });
+			const result = await updateSpreadsheetByFileId(fileRow.id, USER_A.id, { name: 'Renamed', expectedVersion: 0 });
 
-			expect(result?.name).toBe('Renamed');
+			expect(result?.status === 'saved' && result.file.name).toBe('Renamed');
 		});
 
 		it('returns null when file belongs to different user', async () => {
 			const { file: fileRow } = await createSpreadsheetFile(USER_A.id);
 
 			const result = await updateSpreadsheetByFileId(fileRow.id, USER_B.id, {
+				expectedVersion: 0,
 				cells: { A1: { v: 'x' } },
 			});
 			expect(result).toBeNull();
 		});
 
 		it('returns null when file does not exist', async () => {
-			const result = await updateSpreadsheetByFileId('nonexistent', USER_A.id, { cells: {} });
+			const result = await updateSpreadsheetByFileId('nonexistent', USER_A.id, { cells: {}, expectedVersion: 0 });
 			expect(result).toBeNull();
+		});
+
+		it('rejects stale UI and AI writes without changing content, metadata, or revision history', async () => {
+			const original = { A1: { v: 'original' } };
+			const { file: created } = await createSpreadsheetFile(USER_A.id, 'Original', original);
+			const cells = { A1: { v: 'winner' } };
+			await updateSpreadsheetByFileId(created.id, USER_A.id, { cells, expectedVersion: 0 });
+			for (const source of ['user', 'ai'] as const) {
+				expect(
+					await updateSpreadsheetByFileId(
+						created.id,
+						USER_A.id,
+						{
+							cells: {},
+							name: 'Loser',
+							columnMeta: { A: { width: 9 } },
+							expectedVersion: 0,
+						},
+						source,
+					),
+				).toEqual({ status: 'conflict' });
+			}
+			const [row] = await db.select().from(spreadsheet).where(eq(spreadsheet.fileId, created.id));
+			expect(row).toMatchObject({ cells, version: 1, columnMeta: null });
+			const [metadata] = await db.select().from(file).where(eq(file.id, created.id));
+			expect(metadata.name).toBe('Original');
+			const revisions = await db.select().from(fileRevision).where(eq(fileRevision.fileId, created.id));
+			expect(revisions).toHaveLength(1);
+			expect(revisions[0].cells).toEqual(original);
+		});
+
+		it('accepts the next version, including column-only and empty-sheet saves', async () => {
+			const { file: created } = await createSpreadsheetFile(USER_A.id, 'Sheet', { A1: { v: 1 } });
+			expect(
+				await updateSpreadsheetByFileId(created.id, USER_A.id, {
+					columnMeta: { A: { width: 100 } },
+					expectedVersion: 0,
+				}),
+			).toMatchObject({ status: 'saved', version: 1 });
+			expect(
+				await updateSpreadsheetByFileId(
+					created.id,
+					USER_A.id,
+					{
+						cells: {},
+						expectedVersion: 1,
+					},
+					'ai',
+				),
+			).toMatchObject({ status: 'saved', version: 2 });
+			const [row] = await db.select().from(spreadsheet).where(eq(spreadsheet.fileId, created.id));
+			expect(row).toMatchObject({ cells: {}, version: 2, columnMeta: { A: { width: 100 } } });
+			await deleteFile(created.id, USER_A.id);
+			expect(await updateSpreadsheetByFileId(created.id, USER_A.id, { cells: {}, expectedVersion: 2 })).toBeNull();
 		});
 	});
 

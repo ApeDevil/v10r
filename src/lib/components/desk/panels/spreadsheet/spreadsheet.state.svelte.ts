@@ -5,7 +5,16 @@
  * Formulas evaluated client-side via the formula evaluator.
  */
 
-import { type CellGetter, type CellValue, cellLabel, colLabel, evaluateFormula, parseCellRef } from './formula';
+import { SvelteMap } from 'svelte/reactivity';
+import {
+	type CellValue,
+	cellLabel,
+	colLabel,
+	createGridResolver,
+	isFormulaError,
+	parseCellRef,
+} from '$lib/desk/formula';
+import { persistedCell, rawText, type SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
 
 export interface SpreadsheetCell {
 	/** What the user typed (may be a formula like "=SUM(A1:A3)") */
@@ -27,13 +36,6 @@ export interface SelectionStats {
 	sum: number;
 	count: number;
 	average: number;
-}
-
-/** Persisted cell format (matches JSONB schema) */
-interface PersistedCell {
-	v: string | number | null;
-	f?: string;
-	t?: string;
 }
 
 // Security: credential pattern scanner
@@ -58,13 +60,17 @@ function redactSensitive(value: string): string {
 }
 
 export function createSpreadsheetState(rowCount = 50, colCount = 26) {
-	// Sparse storage: key = "col,row" (0-indexed)
-	let cells = $state(new Map<string, SpreadsheetCell>());
+	// Sparse storage: key = "col,row" (0-indexed). A plain Map is not proxied by `$state`,
+	// so a recalculation that rewrites a dependent cell would leave its `<td>` showing the
+	// old value; SvelteMap makes every `get` a subscription to that key.
+	let cells = $state(new SvelteMap<string, SpreadsheetCell>());
 	let activeCell = $state<{ col: number; row: number } | null>(null);
 	let selectionRange = $state<SelectionRange | null>(null);
 	let editing = $state(false);
 	let editValue = $state('');
 	let dirty = $state(0);
+	let changed: ((cells: SpreadsheetCells) => void) | undefined;
+	let staged: ((cells: SpreadsheetCells | null) => void) | undefined;
 
 	function key(col: number, row: number): string {
 		return `${col},${row}`;
@@ -74,54 +80,37 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		return cells.get(key(col, row));
 	}
 
-	/** Get the evaluated value of a cell (used by formula engine) */
-	const getCellValue: CellGetter = (col: number, row: number): CellValue => {
-		const cell = cells.get(key(col, row));
-		if (!cell) return null;
-		if (cell.error) return cell.error;
-		return cell.value;
-	};
+	function rawAt(col: number, row: number): string | undefined {
+		return cells.get(key(col, row))?.raw;
+	}
 
 	function setCellRaw(col: number, row: number, raw: string): void {
 		const trimmed = raw.trim();
 		if (trimmed === '') {
 			cells.delete(key(col, row));
 		} else {
-			const value = evaluateCell(trimmed, col, row);
-			const error = typeof value === 'string' && value.startsWith('#') ? value : null;
-			cells.set(key(col, row), { raw: trimmed, value, error });
+			// Stored without a value: the pass below is the only writer of evaluated values.
+			cells.set(key(col, row), { raw: trimmed, value: null, error: null });
 		}
-		// Recalculate all formula cells that might depend on this one
 		recalculateAll();
 		dirty++;
+		changed?.(toJSON());
 	}
 
-	function evaluateCell(raw: string, col: number, row: number): CellValue {
-		if (raw.startsWith('=')) {
-			const visiting = new Set([cellLabel(col, row)]);
-			return evaluateFormula(raw, getCellValue, visiting);
-		}
-		// Try number
-		const num = Number(raw);
-		if (!Number.isNaN(num) && raw !== '') return num;
-		return raw;
-	}
-
-	/** Re-evaluate all formula cells */
+	/** Re-evaluate the whole grid in dependency order. */
 	function recalculateAll(): void {
+		const resolve = createGridResolver(rawAt);
 		for (const [k, cell] of cells) {
-			if (cell.raw.startsWith('=')) {
-				const [colStr, rowStr] = k.split(',');
-				const col = parseInt(colStr, 10);
-				const row = parseInt(rowStr, 10);
-				const value = evaluateCell(cell.raw, col, row);
-				const error = typeof value === 'string' && value.startsWith('#') ? value : null;
-				cells.set(k, { ...cell, value, error });
-			}
+			const [colStr, rowStr] = k.split(',');
+			const value = resolve(parseInt(colStr, 10), parseInt(rowStr, 10));
+			// Rewriting an unchanged cell would invalidate its grid subscribers for nothing.
+			if (value === cell.value) continue;
+			cells.set(k, { ...cell, value, error: isFormulaError(value) ? value : null });
 		}
 	}
 
 	function select(col: number, row: number, extend = false): void {
+		commitEdit();
 		if (extend && activeCell) {
 			selectionRange = {
 				startCol: activeCell.col,
@@ -145,16 +134,18 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 
 	function commitEdit(): void {
 		if (!activeCell || !editing) return;
-		setCellRaw(activeCell.col, activeCell.row, editValue);
 		editing = false;
+		setCellRaw(activeCell.col, activeCell.row, editValue);
 	}
 
 	function cancelEdit(): void {
 		editing = false;
 		editValue = '';
+		staged?.(null);
 	}
 
 	function moveSelection(dCol: number, dRow: number): void {
+		commitEdit();
 		if (!activeCell) {
 			activeCell = { col: 0, row: 0 };
 			return;
@@ -227,40 +218,31 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 	});
 
 	/** Serialize to JSONB-compatible sparse map for persistence */
-	function toJSON(): Record<string, PersistedCell> {
-		const result: Record<string, PersistedCell> = {};
+	function toJSON(): SpreadsheetCells {
+		const result: SpreadsheetCells = {};
 		for (const [k, cell] of cells) {
 			const [colStr, rowStr] = k.split(',');
-			const label = cellLabel(parseInt(colStr, 10), parseInt(rowStr, 10));
-			const persisted: PersistedCell = { v: cell.value };
-			if (cell.raw.startsWith('=')) persisted.f = cell.raw;
-			result[label] = persisted;
+			result[cellLabel(parseInt(colStr, 10), parseInt(rowStr, 10))] = persistedCell(cell.raw, cell.value);
 		}
 		return result;
 	}
 
 	/** Load from JSONB sparse map */
-	function fromJSON(data: Record<string, PersistedCell>): void {
-		// Build a new Map and reassign — mutation alone doesn't trigger re-renders
-		// for cells that were read as undefined during the initial render.
-		const next = new Map<string, SpreadsheetCell>();
+	function fromJSON(data: SpreadsheetCells): void {
+		editing = false;
+		// A fresh map, so cells the old sheet had and the new one lacks vanish in one step.
+		const next = new SvelteMap<string, SpreadsheetCell>();
 		for (const [label, persisted] of Object.entries(data)) {
 			const ref = parseCellRef(label.toUpperCase());
 			if (!ref) continue;
-			const raw = persisted.f ?? String(persisted.v ?? '');
-			// Store raw value first; formulas re-evaluated after assignment
-			const value = persisted.f
-				? null
-				: typeof persisted.v === 'number'
-					? persisted.v
-					: evaluateCell(raw, ref.col, ref.row);
-			const error = typeof value === 'string' && value.startsWith('#') ? value : null;
-			next.set(key(ref.col, ref.row), { raw, value, error });
+			// Only the raw text is restored. A stored value is another writer's answer to a
+			// question whose inputs may have changed since — the grid re-derives its own.
+			next.set(key(ref.col, ref.row), { raw: rawText(persisted), value: null, error: null });
 		}
-		// Assign first so getCellValue reads from the populated Map
+		// Assign first so the resolver reads from the populated Map
 		cells = next;
-		// Now recalculate all formulas against the full dataset
 		recalculateAll();
+		dirty++;
 	}
 
 	/**
@@ -365,6 +347,13 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 		},
 		set editValue(v: string) {
 			editValue = v;
+			if (editing && activeCell && staged) {
+				const draft = toJSON();
+				const label = cellLabel(activeCell.col, activeCell.row);
+				if (!v.trim()) delete draft[label];
+				else draft[label] = persistedCell(v, v.startsWith('=') ? null : v);
+				staged(draft);
+			}
 		},
 		get selectionStats() {
 			return selectionStats;
@@ -379,7 +368,14 @@ export function createSpreadsheetState(rowCount = 50, colCount = 26) {
 			return dirty;
 		},
 		getCell,
-		getCellValue,
+		onChange(onChange: typeof changed, onStage: typeof staged) {
+			changed = onChange;
+			staged = onStage;
+		},
+		clear() {
+			fromJSON({});
+			changed?.(toJSON());
+		},
 		setCellRaw,
 		select,
 		startEditing,

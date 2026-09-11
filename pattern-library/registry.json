@@ -5612,7 +5612,7 @@
 			"tier": "light",
 			"title": "Spreadsheet panel (file type, dual-mode)",
 			"category": "desk",
-			"summary": "A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI.",
+			"summary": "A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI, with one formula evaluator shared by the grid and the AI write path so a stored sheet never disagrees with itself.",
 			"when_to_use": "Use when a desk-based workspace needs to support tabular/spreadsheet data alongside markdown documents.",
 			"capabilities": ["spreadsheet grid", "dual-mode panel"],
 			"keywords": ["spreadsheet", "desk", "file registry", "sti"],
@@ -5626,9 +5626,26 @@
 				{
 					"path": "src/lib/components/desk/panels/spreadsheet",
 					"kind": "dir"
+				},
+				{
+					"path": "src/lib/desk/formula.ts",
+					"note": "Expression evaluator + grid resolver (dependency order, per-pass memoization, cycle detection) — below the component layer because the sheet has two writers"
+				},
+				{
+					"path": "src/lib/desk/spreadsheet-cells.ts",
+					"note": "The persisted cell contract and recalculateCells(): every stored value re-derived at the write door, whoever wrote it"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/desk/spreadsheet-cells.test.ts",
+					"note": "Re-derivation, canonical labels, idempotence, refused addresses"
+				},
+				{
+					"path": "src/lib/server/ai/tools/desk-execute.pglite.test.ts",
+					"note": "AI writes an input of a stored formula → desk_read_file reads the recomputed total"
+				}
+			],
 			"showcases": [
 				{
 					"path": "desk",
@@ -6380,7 +6397,7 @@
 			],
 			"code": [
 				{
-					"path": "src/lib/server/http/after-response.ts",
+					"path": "src/lib/server/platform/after-response.ts",
 					"note": "deferAfterResponse — the one place the rules live"
 				},
 				{
@@ -6390,7 +6407,7 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/server/http/after-response.test.ts"
+					"path": "src/lib/server/platform/after-response.test.ts"
 				}
 			],
 			"showcases": [

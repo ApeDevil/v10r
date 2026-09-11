@@ -42,11 +42,12 @@ Bundle weight suits a gate unusually well: invisible in review (a one-line impor
 **Must** be a production build. A dev-mode build compiles both halves differently and inflates client JS ~9%; the snapshot records its `NODE_ENV` and the gate refuses to score anything that does not say `production`.
 
 ```bash
-podman exec -e NODE_ENV=production v10r bun run build
-podman exec -e NODE_ENV=production -e GIT_SHA=$(git rev-parse --short HEAD) v10r bun run scripts/perf/snapshot.ts
+podman exec -e NODE_ENV=production -e GIT_SHA=$(git rev-parse --short HEAD) v10r bun run perf:snapshot
 ```
 
 Note `compose.yaml` sets `NODE_ENV=development`, so the `-e` override is required — without it every local build number is inflated. Vercel sets production itself, so deploys are unaffected.
+
+**Must** name its source. The container has no git binary, so the host passes `GIT_SHA`; the script refuses to write without it rather than record `null` (the committed snapshot carried `null` for two weeks — a number nobody could reproduce or bisect). `vr` sets it on every container run, suffixed `-dirty` when the tree differs from HEAD, and `snapshot.gate.test.ts` rejects a committed snapshot without one.
 
 ## Reading the idle-gap panel
 

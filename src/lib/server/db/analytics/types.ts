@@ -1,12 +1,11 @@
+/**
+ * Row shapes of the analytics rollups — what `aggregations.ts` answers with.
+ *
+ * They sit beside their producer. A result type owned by the `analytics` domain would
+ * have the sink importing upward for a shape only the sink fills in.
+ */
 import type { InferSelectModel } from 'drizzle-orm';
 import type { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
-
-/**
- * Re-exported from `db/analytics/sentinels.ts`, which owns the definitions
- * (db is the allowed downward-import target for domain modules; see
- * docs/codebase-organization.md, Import-direction rule #4).
- */
-export { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/sentinels';
 
 export type AnalyticsEvent = InferSelectModel<typeof events>;
 export type AnalyticsSession = InferSelectModel<typeof sessions>;

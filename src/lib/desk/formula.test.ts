@@ -4,22 +4,20 @@ import {
 	type CellValue,
 	cellLabel,
 	colLabel,
+	createGridResolver,
 	evaluateFormula,
 	expandRange,
+	isFormulaError,
 	parseCellRef,
+	parseLiteral,
 } from './formula';
 
-/** Build a CellGetter from a sparse map of "A1" → value */
+/** Build a CellGetter over a sparse map of "A1" → cell contents. */
 function makeGrid(data: Record<string, CellValue>): CellGetter {
-	return (col, row) => {
-		const key = cellLabel(col, row);
-		const raw = data[key] ?? null;
-		// If the value is a formula, evaluate it recursively
-		if (typeof raw === 'string' && raw.startsWith('=')) {
-			return evaluateFormula(raw, makeGrid(data), new Set([key]));
-		}
-		return raw;
-	};
+	return createGridResolver((col, row) => {
+		const raw = data[cellLabel(col, row)];
+		return raw === undefined || raw === null ? undefined : String(raw);
+	});
 }
 
 // Unit: colLabel / cellLabel
@@ -201,10 +199,15 @@ describe('evaluateFormula', () => {
 		});
 	});
 
-	describe('circular reference detection', () => {
-		test('detects direct circular ref', () => {
-			const circGrid = makeGrid({ A1: '=A1' });
-			expect(evaluateFormula('=A1', circGrid)).toBe('#CIRC!');
+	describe('error propagation', () => {
+		test('an unresolvable input breaks the aggregate that reads it', () => {
+			const broken = makeGrid({ A1: '=A1', A2: 5 });
+			expect(evaluateFormula('=SUM(A1:A2)', broken)).toBe('#CIRC!');
+		});
+
+		test('an unresolvable operand breaks the condition rather than picking a branch', () => {
+			const broken = makeGrid({ A1: '=A1' });
+			expect(evaluateFormula('=IF(A1>1, "yes", "no")', broken)).toBe('#CIRC!');
 		});
 	});
 
@@ -216,5 +219,74 @@ describe('evaluateFormula', () => {
 		test('evaluates quoted string', () => {
 			expect(evaluateFormula('="hello"', grid)).toBe('hello');
 		});
+	});
+});
+
+// Unit: parseLiteral / isFormulaError
+
+describe('parseLiteral', () => {
+	test('numeric text becomes a number', () => expect(parseLiteral('42')).toBe(42));
+	test('negative and decimal text becomes a number', () => expect(parseLiteral('-1.5')).toBe(-1.5));
+	test('non-numeric text stays text', () => expect(parseLiteral('12 apples')).toBe('12 apples'));
+	test('empty text is an empty cell', () => expect(parseLiteral('')).toBeNull());
+});
+
+describe('isFormulaError', () => {
+	test('recognises the sentinels', () => {
+		expect(isFormulaError('#ERROR')).toBe(true);
+		expect(isFormulaError('#CIRC!')).toBe(true);
+	});
+
+	test('text that merely starts with a hash is data', () => {
+		expect(isFormulaError('#1 pick')).toBe(false);
+		expect(isFormulaError('#')).toBe(false);
+	});
+
+	test('values are not errors', () => {
+		expect(isFormulaError(0)).toBe(false);
+		expect(isFormulaError(null)).toBe(false);
+	});
+});
+
+// Unit: createGridResolver
+
+describe('createGridResolver', () => {
+	test('resolves a chain regardless of the order cells are read', () => {
+		const grid = makeGrid({ A1: '=B1', B1: '=C1', C1: 1 });
+		expect([grid(0, 0), grid(1, 0), grid(2, 0)]).toEqual([1, 1, 1]);
+	});
+
+	test('resolves the same chain read from its far end first', () => {
+		const grid = makeGrid({ A1: '=B1', B1: '=C1', C1: 1 });
+		expect([grid(2, 0), grid(1, 0), grid(0, 0)]).toEqual([1, 1, 1]);
+	});
+
+	test('reports a self-reference', () => {
+		expect(makeGrid({ A1: '=A1' })(0, 0)).toBe('#CIRC!');
+	});
+
+	test('reports both cells of an indirect cycle', () => {
+		const grid = makeGrid({ A1: '=B1', B1: '=A1' });
+		expect([grid(0, 0), grid(1, 0)]).toEqual(['#CIRC!', '#CIRC!']);
+	});
+
+	test('reports a cycle that closes through a range', () => {
+		const grid = makeGrid({ A1: '=SUM(B1:B2)', B1: '=A1', B2: 5 });
+		expect([grid(0, 0), grid(1, 0)]).toEqual(['#CIRC!', '#CIRC!']);
+	});
+
+	test('a shared dependency is evaluated once per pass', () => {
+		const reads: string[] = [];
+		const resolve = createGridResolver((col, row) => {
+			const label = cellLabel(col, row);
+			reads.push(label);
+			return { A1: '=SUM(C1,C1)', B1: '=C1', C1: '=1' }[label];
+		});
+		expect([resolve(0, 0), resolve(1, 0)]).toEqual([2, 1]);
+		expect(reads.filter((label) => label === 'C1')).toHaveLength(1);
+	});
+
+	test('an empty cell resolves to null, not zero', () => {
+		expect(makeGrid({})(0, 0)).toBeNull();
 	});
 });

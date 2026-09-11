@@ -15,9 +15,9 @@ import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '$lib/server/analytics/config';
 import { parseConsentTier } from '$lib/server/analytics/consent';
 import { deriveUaHash, deriveVisitorId } from '$lib/server/analytics/visitor';
 import { recordConsentEvent } from '$lib/server/db/analytics/consent-mutations';
-import { deferAfterResponse } from '$lib/server/http/after-response';
 import { getClientIp } from '$lib/server/http/client-ip';
 import { createLimiter } from '$lib/server/http/rate-limit';
+import { deferAfterResponse } from '$lib/server/platform';
 import type { Actions } from './$types';
 
 const limiter = createLimiter('rl:consent:set', 10, '1 h');

@@ -1,17 +1,34 @@
 /**
  * FOLDER-TREE PRIMITIVES — cycle, subtree, and cross-tenant guards on real PGlite.
  *
- * These three helpers are security guards (their docblocks record real prior
- * cross-tenant bugs), and they were untestable until they read driver results
- * through `rowsOf()`: raw `.rows` access is prod-correct on neon-serverless but
- * undefined on pglite, which silently turned cycle detection OFF under test.
- * This suite pins the rowsOf routing as much as the guard semantics.
+ * These helpers are security guards (their docblocks record real prior cross-tenant
+ * bugs), and they were untestable until they read driver results through `rowsOf()`:
+ * raw `.rows` access is prod-correct on neon-serverless but undefined on pglite, which
+ * silently turned cycle detection OFF under test. This suite pins the rowsOf routing as
+ * much as the guard semantics.
+ *
+ * WHAT THIS LANE CANNOT PROVE. `lockFolderTree` exists to make two *concurrent*
+ * transactions take turns, and PGlite is a single connection — a second transaction has
+ * nothing to run on, and a read issued through the pool while one is open deadlocks
+ * against it. So these tests pin the lock's mechanics (acquired, scoped, re-entrant,
+ * released on both exits) and `folder-tree.gate.test.ts` pins that every guarded
+ * mutation takes it before its first read. Contention itself needs two connections to a
+ * real Postgres, and is unverified here.
  */
 import type { PGlite } from '@electric-sql/pglite';
+import { type SQL, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { rowsOf } from '$lib/server/db/rows';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { assetFolder } from '$lib/server/db/schema/blog/asset-folder';
 import { postFolder } from '$lib/server/db/schema/blog/post-folder';
-import { assertOwnedDestination, collectSubtreeIds, FolderNotFoundError, isCycleMove } from './folder-tree';
+import {
+	assertOwnedDestination,
+	collectSubtreeIds,
+	FolderNotFoundError,
+	isCycleMove,
+	lockFolderTree,
+} from './folder-tree';
 
 let testClient: PGlite;
 
@@ -95,5 +112,68 @@ describe('assertOwnedDestination', () => {
 		expect(foreign).toBeInstanceOf(FolderNotFoundError);
 		expect(missing).toBeInstanceOf(FolderNotFoundError);
 		expect((foreign as FolderNotFoundError).code).toBe((missing as FolderNotFoundError).code);
+	});
+});
+
+describe('lockFolderTree', () => {
+	/**
+	 * Advisory locks Postgres is holding right now, by their (classid, objid) key pair.
+	 *
+	 * Takes the executor rather than reaching for `db`: PGlite is one connection, so a
+	 * read issued through the pool while a transaction is open waits for a transaction
+	 * that is waiting for the read. That single connection is also why contention itself
+	 * is out of reach here — see the suite header.
+	 */
+	async function heldKeys(exec: { execute: (q: SQL) => Promise<unknown> }): Promise<string[]> {
+		const rows = rowsOf<{ classid: number; objid: number }>(
+			await exec.execute(sql`SELECT classid, objid FROM pg_locks WHERE locktype = 'advisory'`),
+		);
+		return rows.map((r) => `${r.classid}:${r.objid}`).sort();
+	}
+
+	it('holds a lock for the duration of the transaction and releases it on commit', async () => {
+		const inside = await db.transaction(async (tx) => {
+			await lockFolderTree(tx, postFolder, USER_A);
+			return heldKeys(tx);
+		});
+		expect(inside).toHaveLength(1);
+		// There is no unlock call, so commit is the only thing that frees the tree.
+		expect(await heldKeys(db)).toEqual([]);
+	});
+
+	it('releases the lock when the transaction rolls back', async () => {
+		await expect(
+			db.transaction(async (tx) => {
+				await lockFolderTree(tx, postFolder, USER_A);
+				throw new FolderNotFoundError('f_nope');
+			}),
+		).rejects.toBeInstanceOf(FolderNotFoundError);
+		// A move that throws FolderCycleError must not strand the tree.
+		expect(await heldKeys(db)).toEqual([]);
+	});
+
+	it('is re-entrant, so nesting guarded operations cannot self-deadlock', async () => {
+		await db.transaction(async (tx) => {
+			await lockFolderTree(tx, postFolder, USER_A);
+			await expect(lockFolderTree(tx, postFolder, USER_A)).resolves.toBeUndefined();
+		});
+	});
+
+	it("keys on the owner, so one user's tree never waits on another's", async () => {
+		const keys = await db.transaction(async (tx) => {
+			await lockFolderTree(tx, postFolder, USER_A);
+			await lockFolderTree(tx, postFolder, USER_B);
+			return heldKeys(tx);
+		});
+		expect(keys).toHaveLength(2);
+	});
+
+	it('keys on the table, so the blog and desk trees never wait on each other', async () => {
+		const keys = await db.transaction(async (tx) => {
+			await lockFolderTree(tx, postFolder, USER_A);
+			await lockFolderTree(tx, assetFolder, USER_A);
+			return heldKeys(tx);
+		});
+		expect(keys).toHaveLength(2);
 	});
 });

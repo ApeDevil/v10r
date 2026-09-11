@@ -81,8 +81,9 @@ Both velociraptor and densho need no `.vrrc` — same `app` service, same `dev`/
 | `dev` | **gate** `dev` → fast-forward `main` → push both (no squash) |
 | `main` | refused |
 
-The gate runs `bun run validate` against the **merged** state, not the feature branch
-alone — so `main` is always provably equal to a tested commit. By default pushing `main`
+The gate runs `bun run validate` and then `bun run validate:build` against the **merged**
+state, not the feature branch alone — so `main` is always provably equal to a tested
+commit *and* a commit that builds for production within its perf ceilings. By default pushing `main`
 is what triggers the Vercel production deploy (`dev` triggers a preview). A repo whose
 `.vrrc` sets `DEPLOY_MODE=prebuilt` has that integration switched off and deploys itself —
 see *Prebuilt deploy* below; there `vr s` only pushes, and says so.
@@ -184,9 +185,15 @@ validate` is the contract every repo's gate must provide.
 (`NODE_ENV=production` is baked into the npm script — the compose file pins
 `development`, which inflates client JS ~9%) followed by the perf-ratchet check scored
 against the fresh build. The committed `src/lib/server/perf/snapshot.json` is not
-rewritten, so the tree stays clean for ship. `validate` itself stays build-free and fast;
-run `--build` before shipping — two past deploy failures were build-only breakages the
-plain gate structurally cannot catch.
+rewritten, so the tree stays clean for ship. `validate` itself stays build-free and fast
+for the inner loop; **`vr ship` always runs both legs** — two past deploy failures were
+build-only breakages the plain gate structurally cannot catch, and a heavy import is
+invisible in review. A failed build or a metric past its ceiling blocks the push exactly
+like a failed test: the merge is rolled back and nothing moves.
+
+Every container run also carries `GIT_SHA` (short HEAD, `-dirty` when the tree differs
+from it), because the container has no git binary and the perf snapshot refuses to record
+a number it cannot attribute to a revision.
 
 ## The refresh chain
 

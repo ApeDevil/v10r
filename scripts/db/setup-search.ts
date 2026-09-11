@@ -11,6 +11,7 @@
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { localeRegconfig } from '../../src/lib/server/db/regconfig';
 
 neonConfig.poolQueryViaFetch = true;
 
@@ -23,12 +24,9 @@ if (!url) {
 const pool = new Pool({ connectionString: url });
 const db = drizzle(pool);
 
-// Locale → Postgres regconfig (kept in sync with $lib/server/search/regconfig.ts).
-const LOCALE_CONFIGS: Array<[string, string]> = [
-	['en', 'english'],
-	['de', 'german'],
-	['ru', 'russian'],
-];
+// The same map `createRevision()` writes with — a backfill that stemmed differently
+// from the insert path would silently drop hits for every row it touched.
+const LOCALE_CONFIGS = (['en', 'de', 'ru'] as const).map((loc) => [loc, localeRegconfig(loc)] as const);
 
 async function run() {
 	// 1. Ensure column + GIN index exist (idempotent; push normally does this).

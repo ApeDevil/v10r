@@ -15,7 +15,7 @@ import {
 const run = (id: Parameters<typeof runVelocityMeasurement>[0]) => runVelocityMeasurement(id, startRequestTiming());
 
 vi.mock('$lib/server/cache/client', () => ({ redis: null }));
-vi.mock('$lib/server/http/after-response', () => ({ deferAfterResponse: vi.fn() }));
+vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
 
 describe('isVelocityMeasurementId', () => {
 	it('accepts every declared id and nothing else', () => {

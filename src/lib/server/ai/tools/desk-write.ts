@@ -11,6 +11,7 @@
  */
 import { jsonSchema, tool } from 'ai';
 import { getFile } from '$lib/server/db/desk/queries';
+import type { CellUpdate } from './cell-updates';
 
 // Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
@@ -23,7 +24,7 @@ export function createWriteTools(userId: string) {
 				'The change is queued for the user to approve before it is saved.',
 			inputSchema: jsonSchema<{
 				file_id: string;
-				updates: { cell: string; value: string | number | null }[];
+				updates: CellUpdate[];
 			}>({
 				type: 'object',
 				properties: {
@@ -38,7 +39,10 @@ export function createWriteTools(userId: string) {
 							properties: {
 								cell: { type: 'string', description: 'Cell address like "A1", "B3", "C10".' },
 								value: {
-									description: 'Cell value. String for text, number for numeric, null to clear.',
+									description:
+										'Cell value. String for text, number for numeric, null to clear; a string starting ' +
+										'with "=" is a formula (SUM, AVERAGE, COUNT, MIN, MAX, IF over refs like B2 and ' +
+										'ranges like B2:B9). Formulas that read the cell are recomputed on save.',
 								},
 							},
 							required: ['cell', 'value'],

@@ -21,7 +21,7 @@ import { committedScenarios, compareScenarios, runScenarios, SCENARIO_IDS, type 
 // have Upstash credentials in their environment is two different measurements sharing
 // a name — and every mechanism here has a defined in-process path without it.
 vi.mock('$lib/server/cache/client', () => ({ redis: null }));
-vi.mock('$lib/server/http/after-response', () => ({ deferAfterResponse: vi.fn() }));
+vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
 
 const OUT = join(process.cwd(), 'src', 'lib', 'server', 'perf', 'scenarios.json');
 const WRITING = process.env.PERF_WRITE_SCENARIOS === '1';

@@ -1,18 +1,41 @@
 /**
- * Minimal formula evaluator for the desk spreadsheet panel.
+ * Minimal formula evaluator for desk spreadsheets.
  *
  * Supports: SUM, AVERAGE/AVG, COUNT, MIN, MAX, IF
  * Cell references: A1, B3
  * Ranges: A1:B5, C2:C10
- * Circular detection via visiting set.
  *
- * ~150 lines, zero dependencies.
+ * Expression evaluation is grid-agnostic: every reference is delegated to a `CellGetter`
+ * and this module never learns which cell it is evaluating on behalf of.
+ * `createGridResolver` is the getter that spans a whole grid, and it alone owns
+ * dependency order, per-pass memoization and cycle detection.
+ *
+ * It sits below the component layer because a sheet has two writers — the grid and the
+ * AI tools — and a value one of them stores must be the value the other would compute.
+ * Zero dependencies.
  */
 
 export type CellValue = string | number | null;
 
 /** Function to retrieve a cell's evaluated value by col/row (0-indexed) */
 export type CellGetter = (col: number, row: number) => CellValue;
+
+/** A cell's own text by col/row (0-indexed), or undefined where the grid is empty. */
+export type RawCellGetter = (col: number, row: number) => string | undefined;
+
+/**
+ * What a formula produces when it cannot produce a value.
+ *
+ * Membership, not a leading "#": a cell holding `#1 pick` is data, and treating it as a
+ * failure would both mark it red and poison every aggregate that reads it.
+ */
+export const FORMULA_ERRORS = ['#ERROR', '#CIRC!'] as const;
+
+export type FormulaError = (typeof FORMULA_ERRORS)[number];
+
+export function isFormulaError(value: CellValue): value is FormulaError {
+	return typeof value === 'string' && FORMULA_ERRORS.includes(value as FormulaError);
+}
 
 /** Convert 0-indexed column to letter: 0 → "A", 25 → "Z" */
 export function colLabel(col: number): string {
@@ -54,23 +77,65 @@ export function expandRange(from: string, to: string): { col: number; row: numbe
 	return cells;
 }
 
+/** A cell's own text as a value: numeric text becomes a number, everything else stays text. */
+export function parseLiteral(raw: string): CellValue {
+	if (raw === '') return null;
+	const num = Number(raw);
+	return Number.isNaN(num) ? raw : num;
+}
+
+/**
+ * Build the getter that resolves a whole grid for one recalculation pass.
+ *
+ * Storage order carries no dependency information — a cell's inputs may be stored after
+ * it — so a single sweep reading the previous pass's values reports one generation of
+ * staleness per link in the chain. Every reference is instead resolved depth-first
+ * through this getter and memoized for the pass, and one `visiting` stack spans cell
+ * boundaries so a reference that re-enters a cell still being computed reports #CIRC!
+ * rather than that cell's stale value.
+ */
+export function createGridResolver(getRaw: RawCellGetter): CellGetter {
+	const resolved = new Map<string, CellValue>();
+	const visiting = new Set<string>();
+
+	const resolve: CellGetter = (col, row) => {
+		const label = cellLabel(col, row);
+		// A cell value is never undefined, so this distinguishes "memoized as empty".
+		const memoized = resolved.get(label);
+		if (memoized !== undefined) return memoized;
+
+		const raw = getRaw(col, row);
+		if (raw === undefined) return null;
+		if (!raw.startsWith('=')) return parseLiteral(raw);
+		if (visiting.has(label)) return '#CIRC!';
+
+		visiting.add(label);
+		const value = evaluateFormula(raw, resolve);
+		visiting.delete(label);
+		resolved.set(label, value);
+		return value;
+	};
+
+	return resolve;
+}
+
 /**
  * Evaluate a formula string. Input should start with "=".
- * Returns computed value or an error string prefixed with "#".
+ * Returns computed value or one of FORMULA_ERRORS.
  */
-export function evaluateFormula(expr: string, getCell: CellGetter, visiting: Set<string> = new Set()): CellValue {
+export function evaluateFormula(expr: string, getCell: CellGetter): CellValue {
 	if (!expr.startsWith('=')) return expr;
 	const body = expr.slice(1).trim();
 	if (!body) return '#ERROR';
 
 	try {
-		return evalExpression(body, getCell, visiting);
+		return evalExpression(body, getCell);
 	} catch {
 		return '#ERROR';
 	}
 }
 
-function evalExpression(expr: string, getCell: CellGetter, visiting: Set<string>): CellValue {
+function evalExpression(expr: string, getCell: CellGetter): CellValue {
 	const trimmed = expr.trim();
 	const upper = trimmed.toUpperCase();
 
@@ -80,16 +145,12 @@ function evalExpression(expr: string, getCell: CellGetter, visiting: Set<string>
 		const fn = fnMatch[1];
 		// Extract args preserving original case (skip "FUNC(" and trailing ")")
 		const argsStr = trimmed.slice(fn.length + 1, -1);
-		return evalFunction(fn, argsStr, getCell, visiting);
+		return evalFunction(fn, argsStr, getCell);
 	}
 
 	// Try cell reference: A1 (case-insensitive)
 	const cellRef = parseCellRef(upper);
-	if (cellRef) {
-		const key = cellLabel(cellRef.col, cellRef.row);
-		if (visiting.has(key)) return '#CIRC!';
-		return getCell(cellRef.col, cellRef.row);
-	}
+	if (cellRef) return getCell(cellRef.col, cellRef.row);
 
 	// Try number
 	const num = Number(trimmed);
@@ -103,13 +164,17 @@ function evalExpression(expr: string, getCell: CellGetter, visiting: Set<string>
 	return '#ERROR';
 }
 
-function evalFunction(fn: string, argsStr: string, getCell: CellGetter, visiting: Set<string>): CellValue {
+function evalFunction(fn: string, argsStr: string, getCell: CellGetter): CellValue {
 	if (fn === 'IF') {
-		return evalIf(argsStr, getCell, visiting);
+		return evalIf(argsStr, getCell);
 	}
 
 	// Aggregate functions: resolve all arguments to numeric values
-	const values = resolveArgs(argsStr, getCell, visiting);
+	const values = resolveArgs(argsStr, getCell);
+	// A broken input makes the aggregate broken. Summing around a #CIRC! would answer a
+	// sheet that has no answer, and the reader would have no reason to distrust the number.
+	const failed = values.find(isFormulaError);
+	if (failed) return failed;
 	const nums = values.filter((v): v is number => typeof v === 'number');
 
 	switch (fn) {
@@ -130,7 +195,7 @@ function evalFunction(fn: string, argsStr: string, getCell: CellGetter, visiting
 }
 
 /** Resolve comma-separated args, expanding ranges into individual values */
-function resolveArgs(argsStr: string, getCell: CellGetter, visiting: Set<string>): CellValue[] {
+function resolveArgs(argsStr: string, getCell: CellGetter): CellValue[] {
 	const values: CellValue[] = [];
 
 	for (const arg of splitTopLevel(argsStr)) {
@@ -139,20 +204,14 @@ function resolveArgs(argsStr: string, getCell: CellGetter, visiting: Set<string>
 		// Range: A1:B3 (case-insensitive)
 		const rangeMatch = trimmed.toUpperCase().match(/^([A-Z]\d+):([A-Z]\d+)$/);
 		if (rangeMatch) {
-			const cells = expandRange(rangeMatch[1], rangeMatch[2]);
-			for (const { col, row } of cells) {
-				const key = cellLabel(col, row);
-				if (visiting.has(key)) {
-					values.push('#CIRC!' as CellValue);
-					continue;
-				}
+			for (const { col, row } of expandRange(rangeMatch[1], rangeMatch[2])) {
 				values.push(getCell(col, row));
 			}
 			continue;
 		}
 
 		// Single value/ref/nested expression
-		values.push(evalExpression(trimmed, getCell, visiting));
+		values.push(evalExpression(trimmed, getCell));
 	}
 
 	return values;
@@ -180,7 +239,7 @@ function splitTopLevel(str: string): string[] {
 }
 
 /** Evaluate IF(condition, trueVal, falseVal) */
-function evalIf(argsStr: string, getCell: CellGetter, visiting: Set<string>): CellValue {
+function evalIf(argsStr: string, getCell: CellGetter): CellValue {
 	const parts = splitTopLevel(argsStr);
 	if (parts.length < 3) return '#ERROR';
 
@@ -191,8 +250,12 @@ function evalIf(argsStr: string, getCell: CellGetter, visiting: Set<string>): Ce
 	if (!cmpMatch) return '#ERROR';
 
 	const [, leftExpr, op, rightExpr] = cmpMatch;
-	const left = evalExpression(leftExpr, getCell, visiting);
-	const right = evalExpression(rightExpr, getCell, visiting);
+	const left = evalExpression(leftExpr, getCell);
+	const right = evalExpression(rightExpr, getCell);
+	// An unanswerable condition cannot pick a branch — returning the false branch would
+	// look like a decision the sheet made.
+	const failed = [left, right].find(isFormulaError);
+	if (failed) return failed;
 
 	const leftNum = typeof left === 'number' ? left : Number(left);
 	const rightNum = typeof right === 'number' ? right : Number(right);
@@ -222,5 +285,5 @@ function evalIf(argsStr: string, getCell: CellGetter, visiting: Set<string>): Ce
 			return '#ERROR';
 	}
 
-	return evalExpression(result ? trueStr : falseStr, getCell, visiting);
+	return evalExpression(result ? trueStr : falseStr, getCell);
 }

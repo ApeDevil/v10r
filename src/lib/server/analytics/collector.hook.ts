@@ -13,8 +13,8 @@ import {
 import { normalizeIpKey } from '$lib/server/abuse';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
 import { recordUserEvent } from '$lib/server/db/analytics/user-mutations';
-import { deferAfterResponse } from '$lib/server/http/after-response';
 import { createLimiter } from '$lib/server/http/rate-limit';
+import { deferAfterResponse } from '$lib/server/platform';
 import { classifyBot } from './bot-classify';
 import { bufferBotHit } from './bot-hit-buffer';
 import { CONSENT_COOKIE, SESSION_COOKIE, SESSION_TIMEOUT_MS } from './config';

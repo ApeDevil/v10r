@@ -129,9 +129,12 @@ gate refuses to score anything that does not say `production`. `compose.yaml` se
 `NODE_ENV=development`, so the `-e` override is required locally.
 
 ```bash
-podman exec -e NODE_ENV=production v10r bun run build
-podman exec -e NODE_ENV=production -e GIT_SHA=$(git rev-parse --short HEAD) v10r bun run scripts/perf/snapshot.ts
+podman exec -e NODE_ENV=production -e GIT_SHA=$(git rev-parse --short HEAD) v10r bun run perf:snapshot
 ```
+
+`GIT_SHA` is required, not decorative: the container has no git, and the script refuses to
+write a snapshot it cannot attribute to a revision. `vr` passes it on every container run
+(`-dirty` when the tree differs from HEAD).
 
 **Invariants.**
 

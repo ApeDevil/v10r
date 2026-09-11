@@ -18,10 +18,10 @@ function handleFormulaKeydown(event: KeyboardEvent) {
 
 function handleFormulaInput(event: Event) {
 	const target = event.target as HTMLInputElement;
-	sheet.editValue = target.value;
 	if (!sheet.editing) {
 		sheet.startEditing();
 	}
+	sheet.editValue = target.value;
 }
 </script>
 
@@ -34,6 +34,7 @@ function handleFormulaInput(event: Event) {
 		value={sheet.editing ? sheet.editValue : sheet.activeCellRaw}
 		disabled={!sheet.activeCell}
 		oninput={handleFormulaInput}
+		onblur={() => sheet.commitEdit()}
 		onkeydown={handleFormulaKeydown}
 		onfocus={() => { if (!sheet.editing) sheet.startEditing(); }}
 	/>

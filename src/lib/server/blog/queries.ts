@@ -1,8 +1,8 @@
 import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
+import { localeRegconfig } from '$lib/server/db/regconfig';
 import { user } from '$lib/server/db/schema/auth';
 import { asset, domain, post, postAsset, postTag, publishedRevision, revision, tag } from '$lib/server/db/schema/blog';
-import { localeRegconfig } from '$lib/server/search/regconfig';
 import type {
 	BlogAsset,
 	BlogDomain,

@@ -20,12 +20,12 @@ Only work the caller's intent depends on runs before the response; analytics, in
 
 ## Code
 
-- `src/lib/server/http/after-response.ts` — deferAfterResponse — the one place the rules live ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/after-response.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/after-response.ts))
+- `src/lib/server/platform/after-response.ts` — deferAfterResponse — the one place the rules live ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/platform/after-response.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/platform/after-response.ts))
 - `src/lib/server/analytics/collector.hook.ts` — The largest consumer: pageviews, bot hits, user events ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/analytics/collector.hook.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/analytics/collector.hook.ts))
 
 ## Tests
 
-- `src/lib/server/http/after-response.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/after-response.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/after-response.test.ts))
+- `src/lib/server/platform/after-response.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/platform/after-response.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/platform/after-response.test.ts))
 
 ## Proof
 

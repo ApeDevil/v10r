@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { parseCellRef } from '$lib/desk/formula';
 import {
 	deleteFile,
 	duplicateSpreadsheetFile,
@@ -13,27 +14,38 @@ import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
-/** Constrained cell/meta value — allows primitives and shallow objects, capped by JSON size. */
-const CellValue = v.union([v.string(), v.number(), v.boolean(), v.null()]);
-const CellObject = v.record(v.string(), CellValue);
+/** Constrained meta value — allows primitives and shallow objects, capped by JSON size. */
+const MetaValue = v.union([v.string(), v.number(), v.boolean(), v.null()]);
+const MetaObject = v.record(v.string(), MetaValue);
+/** `PersistedCell`, keyed by an address the grid can show — `recalculateCells` refuses any other. */
+const PersistedCellSchema = v.object({
+	v: v.union([v.string(), v.number(), v.null()]),
+	f: v.optional(v.string()),
+	t: v.optional(v.string()),
+});
+const CellAddress = v.pipe(
+	v.string(),
+	v.check((label) => parseCellRef(label.toUpperCase()) !== null, 'Not a cell address'),
+);
 const MAX_CELLS_JSON = 500_000; // ~500KB max
 
 const limiter = createLimiter('rl:desk:files:mutate', 30, '1 m');
 
 const UpdateFileSchema = v.object({
+	expectedVersion: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
 	folderId: v.optional(v.nullable(v.string())),
 	aiContext: v.optional(v.boolean()),
 	cells: v.optional(
 		v.pipe(
-			v.record(v.string(), CellObject),
+			v.record(CellAddress, PersistedCellSchema),
 			v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Cell data too large'),
 		),
 	),
 	columnMeta: v.optional(
 		v.nullable(
 			v.pipe(
-				v.record(v.string(), CellObject),
+				v.record(v.string(), MetaObject),
 				v.check((v) => JSON.stringify(v).length <= MAX_CELLS_JSON, 'Column meta too large'),
 			),
 		),
@@ -72,7 +84,21 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const parsed = v.safeParse(UpdateFileSchema, body);
 	if (!parsed.success) return apiValidationError(parsed.issues);
 
-	const { name, folderId, aiContext, cells, columnMeta } = parsed.output;
+	const { name, folderId, aiContext, cells, columnMeta, expectedVersion } = parsed.output;
+	const hasCellUpdate = cells !== undefined || columnMeta !== undefined;
+	// Reject before any metadata mutation: a stale content request has no side effects.
+	if (hasCellUpdate) {
+		if (expectedVersion === undefined) return apiError(400, 'version_required', 'expectedVersion is required.');
+		if (folderId !== undefined || aiContext !== undefined) {
+			return apiError(400, 'mixed_update', 'Move and AI context changes must be sent separately from cell changes.');
+		}
+		const result = await updateSpreadsheetByFileId(params.id, user.id, { ...parsed.output, expectedVersion });
+		if (!result) return apiError(404, 'not_found', 'Not found.');
+		if (result.status === 'conflict') {
+			return apiError(409, 'version_conflict', 'Spreadsheet changed elsewhere. Your changes were not saved.');
+		}
+		return apiOk({ file: result.file, version: result.version });
+	}
 
 	// Handle move
 	if (folderId !== undefined) {
@@ -87,16 +113,8 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	}
 
 	// Handle rename (no cell data)
-	const hasCellUpdate = cells !== undefined || columnMeta !== undefined;
 	if (name !== undefined && !hasCellUpdate) {
 		const row = await renameFile(params.id, user.id, name);
-		if (!row) return apiError(404, 'not_found', 'Not found.');
-		return apiOk({ file: row });
-	}
-
-	// Spreadsheet-specific update (cells and/or columnMeta, optionally name)
-	if (hasCellUpdate) {
-		const row = await updateSpreadsheetByFileId(params.id, user.id, parsed.output);
 		if (!row) return apiError(404, 'not_found', 'Not found.');
 		return apiOk({ file: row });
 	}

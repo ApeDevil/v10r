@@ -52,7 +52,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The tabbed chart/data/code demo wrapper | `VizDemoCard` | mcp-local `DemoCard` |
 | A measured segment of one request | `span` (`RequestTiming`, `http/request-timing.ts`) | — |
 | A level in the cache hierarchy | `CacheTier` (`local` / `shared` / `origin`) | `CacheLayer`, `CacheStore` |
-| Work that runs after the response | `deferAfterResponse` (`http/after-response.ts`) | a bare `waitUntil` at each call site |
+| Work that runs after the response | `deferAfterResponse` (`platform/after-response.ts`) | a bare `waitUntil` at each call site |
 | Work streamed inside a response body | `safeDeferPromise` (`http/defer.ts`) | — |
 | A dependency we have stopped calling | `breaker` (`resilience/breaker.ts`); it is **open** when calls are refused | `cooldown` outside the AI domain, `fuse`, `tripwire` |
 | A cap on concurrent calls to one dependency | `bulkhead` (`resilience/bulkhead.ts`) | `pool`, `semaphore`, `throttle` |

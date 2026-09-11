@@ -11,7 +11,7 @@
  * hope. This file is the executable form.
  *
  * Where the counts stand: framework imports 0 · environment reads 29 · cross-domain deep
- * imports 60 · `db/`-upward imports 3 · mutually-recursive domains 18 · component layer
+ * imports 56 · `db/`-upward imports 0 · mutually-recursive domains 3 · component layer
  * inversions 3. The environment axis is newly measured rather than newly broken — `$env`
  * was invisible to this file until it got a rule of its own.
  *
@@ -202,17 +202,32 @@ describe('server domain boundaries', () => {
 		expectRatchet(violations, KNOWN_DEEP_CROSS_DOMAIN_IMPORTS, 'invariant 3 (barrel-only cross-domain)');
 	});
 
-	/** Invariant 4 — `db/` is the sink; everything flows toward it and nothing back out. */
+	/**
+	 * Invariant 4 — `db/` is the sink; everything flows toward it and nothing back out.
+	 *
+	 * One thing sits beneath the sink: `errors/`, the base class every domain's errors
+	 * extend. `DbError` reaching it is not a flow back out — provided `errors/` imports
+	 * nothing of its own, which the second assertion keeps true. Everything else `db/`
+	 * once reached up for — result shapes, a hash, an IP shape check, a locale's
+	 * regconfig — was a primitive that belonged to the sink and now lives in it.
+	 */
 	it('db imports no sibling domain', () => {
 		const violations: string[] = [];
 		for (const edge of serverEdges) {
 			if (!edge.from.startsWith('src/lib/server/db/')) continue;
 			if (!edge.to.startsWith('src/lib/server/')) continue;
 			const to = serverDomain(edge.to);
-			if (to === 'db') continue;
+			if (to === 'db' || to === 'errors') continue;
 			violations.push(`${edge.from} -> ${to}`);
 		}
 		expectRatchet(violations, KNOWN_DB_UPWARD_IMPORTS, 'invariant 4 (db is the sink)');
+	});
+
+	it('errors/ stays beneath the sink', () => {
+		const reaching = serverEdges
+			.filter((edge) => edge.from.startsWith('src/lib/server/errors/') && edge.to.startsWith('src/lib/server/'))
+			.map((edge) => `${edge.from} -> ${edge.specifier}`);
+		expect(reaching, 'errors/ is the floor db/ stands on; it may import nothing from the server tree').toEqual([]);
 	});
 
 	/**
@@ -410,10 +425,6 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/auth/grant-requests.ts -> admin/audit',
 	'src/lib/server/auth/grants.ts -> admin/audit',
 	'src/lib/server/blog/comments/mutations.ts -> admin/audit',
-	'src/lib/server/blog/index.ts -> content/hash',
-	'src/lib/server/blog/mutations.ts -> content/hash',
-	'src/lib/server/blog/mutations.ts -> search/regconfig',
-	'src/lib/server/blog/queries.ts -> search/regconfig',
 	'src/lib/server/cache/admin/mutations.ts -> admin/announcements',
 	'src/lib/server/cache/admin/queries.ts -> admin/announcements',
 	'src/lib/server/cache/admin/queries.ts -> monitoring/upstash',
@@ -458,40 +469,30 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 ];
 
 /**
- * What remains after the 116-constant `server/config.ts` was split into domain-owned
- * policy leaves: `db/analytics` reaching up for types and IP normalisation, and
- * `db/errors` for the shared `ServerError` base.
+ * Empty, and it must stay that way. The last three — `db/analytics` reaching up for its
+ * own result shapes and an IP shape check, `db/errors` for `ServerError` — were resolved
+ * by moving the shapes and the check into the sink and by naming `errors/` the floor
+ * beneath it (invariant 4 above). A `db/` module that needs a domain has found a
+ * primitive that belongs in `db/`, not a reason to reopen this list.
  */
-const KNOWN_DB_UPWARD_IMPORTS: readonly string[] = [
-	'src/lib/server/db/analytics/aggregations.ts -> analytics',
-	'src/lib/server/db/analytics/mutations.ts -> analytics',
-	'src/lib/server/db/errors.ts -> errors',
-];
+const KNOWN_DB_UPWARD_IMPORTS: readonly string[] = [];
 
 /**
- * Eighteen of the server domains are mutually recursive. Removing just the
- * `db ->` back-edges above splits this into a 10-domain and a 3-domain cluster.
+ * The RAG core is one subsystem in three directories, and its directories call each
+ * other: `ai` orchestrates over `retrieval` and `llmwiki`, `llmwiki` searches through
+ * `retrieval`, and `retrieval` reaches back into `ai` twice — `ingest` asks for the
+ * active chat model to write context prefixes and extract entities, and `embed` reports
+ * each embedding call to the provider quota board. Splitting it means injecting the
+ * model into `ingest()` at its three call sites and letting `retrieval` own the
+ * embedding-call counter that `ai/quota` reads — a signature change, not a file move,
+ * so it is recorded rather than done on the way past.
+ *
+ * The fifteen domains that used to ride along in one 18-domain cluster were freed by
+ * four primitive moves: analytics result shapes and the IP shape check into
+ * `db/analytics`, `contentHash` and `localeRegconfig` into `db/`, and
+ * `deferAfterResponse` out of the HTTP toolkit into `platform/`.
  */
-const KNOWN_CYCLIC_DOMAINS: readonly string[] = [
-	'abuse',
-	'admin',
-	'agents',
-	'ai',
-	'analytics',
-	'auth',
-	'blog',
-	'cache',
-	'content',
-	'db',
-	'docs',
-	'graph',
-	'http',
-	'llmwiki',
-	'monitoring',
-	'retrieval',
-	'search',
-	'store',
-];
+const KNOWN_CYCLIC_DOMAINS: readonly string[] = ['ai', 'llmwiki', 'retrieval'];
 
 /**
  * Two composites reaching into `layout/`, and one showcase reaching into `viz/`.

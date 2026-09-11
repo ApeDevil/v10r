@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { deferAfterResponse } from '$lib/server/http/after-response';
+import { deferAfterResponse } from '$lib/server/platform/after-response';
 import { readThrough } from './swr';
 import { clearLocalCache, definePolicy } from './tiered';
 
 vi.mock('./client', () => ({ redis: null }));
 // Captured rather than executed, so a test can decide when the tail runs — which is
 // also the property being asserted: the refresh must NOT be awaited by the caller.
-vi.mock('$lib/server/http/after-response', () => ({ deferAfterResponse: vi.fn() }));
+vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
 
 const deferred = vi.mocked(deferAfterResponse);
 const runDeferred = async () => {

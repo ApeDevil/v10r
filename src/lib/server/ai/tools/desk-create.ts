@@ -13,6 +13,7 @@ import { jsonSchema, tool } from 'ai';
 import { createMarkdownFile, createSpreadsheetFile } from '$lib/server/db/desk/mutations';
 import { getFile } from '$lib/server/db/desk/queries';
 import type { DeskEffect } from './_types';
+import { applyCellUpdates, type CellUpdate } from './cell-updates';
 
 // Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
@@ -24,7 +25,7 @@ export function createCreateTools(userId: string) {
 				'Optionally provide initial cell data as an array of {cell, value} pairs.',
 			inputSchema: jsonSchema<{
 				name: string;
-				cells: { cell: string; value: string | number | null }[];
+				cells: CellUpdate[];
 			}>({
 				type: 'object',
 				properties: {
@@ -40,7 +41,11 @@ export function createCreateTools(userId: string) {
 							type: 'object',
 							properties: {
 								cell: { type: 'string', description: 'Cell address like "A1".' },
-								value: { description: 'Cell value.' },
+								value: {
+									description:
+										'Cell value. String for text, number for numeric; a string starting with "=" is a ' +
+										'formula (SUM, AVERAGE, COUNT, MIN, MAX, IF over refs like B2 and ranges like B2:B9).',
+								},
 							},
 							required: ['cell', 'value'],
 						},
@@ -51,12 +56,10 @@ export function createCreateTools(userId: string) {
 			}),
 			execute: async ({ name, cells }, { abortSignal: _abortSignal }) => {
 				try {
-					const cellMap: Record<string, unknown> = {};
-					for (const { cell, value } of cells) {
-						cellMap[cell] = { v: value };
-					}
+					const initial = applyCellUpdates({}, cells);
+					if ('error' in initial) return initial;
 
-					const result = await createSpreadsheetFile(userId, name, cellMap);
+					const result = await createSpreadsheetFile(userId, name, initial.cells);
 
 					const effects: DeskEffect[] = [
 						{ type: 'desk:refresh_explorer' },

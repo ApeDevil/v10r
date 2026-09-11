@@ -26,7 +26,7 @@
  */
 import { env } from '$env/dynamic/private';
 import type { McpCallLogInsert } from '$lib/server/db/schema/mcp/call-log';
-import { deferAfterResponse } from '$lib/server/http/after-response';
+import { deferAfterResponse } from '$lib/server/platform';
 import type { McpCallObservation, McpCallObserver } from '../types';
 import { deriveClientKey } from './client-key';
 import { inferOutcome, type McpGateReason, normalizeMethod } from './outcome';

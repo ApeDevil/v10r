@@ -1,4 +1,5 @@
 import { and, eq, isNull, like, sql } from 'drizzle-orm';
+import { recalculateCells, type SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
 import { createId } from '../id';
 import { db } from '../index';
 import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
@@ -15,6 +16,7 @@ import {
 	FolderNotFoundError,
 	isCycleMove,
 	isUniqueViolation,
+	lockFolderTree,
 	suggestNextName,
 } from '../shared/folder-tree';
 
@@ -23,14 +25,18 @@ import {
  *
  * `originToolCallId` threads the creator agent action through for blast-radius
  * queries ("which files did this tool call produce?"). NULL for human creates.
+ *
+ * Cells are stored re-derived: the sheet has writers with no grid (the AI tools), and
+ * the value they hand over is only what the sheet would show if every input agrees.
  */
 export async function createSpreadsheetFile(
 	userId: string,
 	name = 'Untitled',
-	cells: Record<string, unknown> = {},
+	cells: SpreadsheetCells = {},
 	folderId: string | null = null,
 	originToolCallId: string | null = null,
 ) {
+	const stored = recalculateCells(cells);
 	return db.transaction(async (tx) => {
 		await assertOwnedDestination(tx, folder, folderId, userId);
 		const fileId = createId.file();
@@ -40,7 +46,7 @@ export async function createSpreadsheetFile(
 			.returning();
 		const [sheetRow] = await tx
 			.insert(spreadsheet)
-			.values({ id: createId.spreadsheet(), fileId, userId, name, cells })
+			.values({ id: createId.spreadsheet(), fileId, userId, name, cells: stored })
 			.returning();
 		return { file: fileRow, spreadsheet: sheetRow };
 	});
@@ -260,35 +266,41 @@ export async function renameFolder(id: string, userId: string, name: string) {
  * @throws FolderNameConflictError on sibling name collision at the new parent.
  */
 export async function moveFolder(id: string, userId: string, parentId: string | null) {
-	const [target] = await db
-		.select()
-		.from(folder)
-		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
-		.limit(1);
-	if (!target) throw new FolderNotFoundError(id);
+	return db.transaction(async (tx) => {
+		// Before the first read, not between the check and the write: the cycle check
+		// answers a question a concurrent move can invalidate. See lockFolderTree.
+		await lockFolderTree(tx, folder, userId);
 
-	// The destination must be the caller's too. isCycleMove alone does NOT cover
-	// this: its seed filters on user_id, so a foreign parentId simply yields an
-	// empty walk, reports "no cycle", and the move proceeds.
-	await assertOwnedDestination(db, folder, parentId, userId);
-
-	// Cycle detection: walk ancestors of new parent, ensure `id` is not among them.
-	if (parentId && (await isCycleMove(db, folder, id, parentId, userId))) {
-		throw new FolderCycleError(id, parentId);
-	}
-
-	try {
-		const [row] = await db
-			.update(folder)
-			.set({ parentId, updatedAt: new Date() })
+		const [target] = await tx
+			.select()
+			.from(folder)
 			.where(and(eq(folder.id, id), eq(folder.userId, userId)))
-			.returning();
-		if (!row) throw new FolderNotFoundError(id);
-		return row;
-	} catch (e) {
-		if (isUniqueViolation(e)) throw new FolderNameConflictError(parentId, target.name, suggestNextName(target.name));
-		throw e;
-	}
+			.limit(1);
+		if (!target) throw new FolderNotFoundError(id);
+
+		// The destination must be the caller's too. isCycleMove alone does NOT cover
+		// this: its seed filters on user_id, so a foreign parentId simply yields an
+		// empty walk, reports "no cycle", and the move proceeds.
+		await assertOwnedDestination(tx, folder, parentId, userId);
+
+		// Cycle detection: walk ancestors of new parent, ensure `id` is not among them.
+		if (parentId && (await isCycleMove(tx, folder, id, parentId, userId))) {
+			throw new FolderCycleError(id, parentId);
+		}
+
+		try {
+			const [row] = await tx
+				.update(folder)
+				.set({ parentId, updatedAt: new Date() })
+				.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+				.returning();
+			if (!row) throw new FolderNotFoundError(id);
+			return row;
+		} catch (e) {
+			if (isUniqueViolation(e)) throw new FolderNameConflictError(parentId, target.name, suggestNextName(target.name));
+			throw e;
+		}
+	});
 }
 
 /**
@@ -310,44 +322,51 @@ export async function deleteFolder(
 ): Promise<{ id: string; name: string; deletedIds: string[] }> {
 	const { recursive = false } = options;
 
-	const [target] = await db
-		.select()
-		.from(folder)
-		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
-		.limit(1);
-	if (!target) throw new FolderNotFoundError(id);
+	return db.transaction(async (tx) => {
+		// Both branches read the tree and then act on what they read: "is it empty"
+		// and "which ids am I about to cascade away" are stale the moment a
+		// concurrent move lands. See lockFolderTree.
+		await lockFolderTree(tx, folder, userId);
 
-	// Non-recursive: enforce empty precondition.
-	if (!recursive) {
-		const [sub] = await db
-			.select({ n: sql<number>`count(*)::int` })
+		const [target] = await tx
+			.select()
 			.from(folder)
-			.where(and(eq(folder.parentId, id), eq(folder.userId, userId)));
-		const [files] = await db
-			.select({ n: sql<number>`count(*)::int` })
-			.from(file)
-			.where(and(eq(file.folderId, id), eq(file.userId, userId), isNull(file.deletedAt)));
-		const total = (sub?.n ?? 0) + (files?.n ?? 0);
-		if (total > 0) throw new FolderNotEmptyError(id, total);
+			.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+			.limit(1);
+		if (!target) throw new FolderNotFoundError(id);
 
-		const [row] = await db
+		// Non-recursive: enforce empty precondition.
+		if (!recursive) {
+			const [sub] = await tx
+				.select({ n: sql<number>`count(*)::int` })
+				.from(folder)
+				.where(and(eq(folder.parentId, id), eq(folder.userId, userId)));
+			const [files] = await tx
+				.select({ n: sql<number>`count(*)::int` })
+				.from(file)
+				.where(and(eq(file.folderId, id), eq(file.userId, userId), isNull(file.deletedAt)));
+			const total = (sub?.n ?? 0) + (files?.n ?? 0);
+			if (total > 0) throw new FolderNotEmptyError(id, total);
+
+			const [row] = await tx
+				.delete(folder)
+				.where(and(eq(folder.id, id), eq(folder.userId, userId)))
+				.returning();
+			if (!row) throw new FolderNotFoundError(id);
+			return { id: row.id, name: row.name, deletedIds: [row.id] };
+		}
+
+		// Recursive: collect the full subtree first so we can return per-node IDs for audit.
+		const deletedIds = await collectSubtreeIds(tx, folder, id, userId);
+
+		// One DELETE — the self-FK ON DELETE CASCADE handles the subtree atomically.
+		const [row] = await tx
 			.delete(folder)
 			.where(and(eq(folder.id, id), eq(folder.userId, userId)))
 			.returning();
 		if (!row) throw new FolderNotFoundError(id);
-		return { id: row.id, name: row.name, deletedIds: [row.id] };
-	}
-
-	// Recursive: collect the full subtree first so we can return per-node IDs for audit.
-	const deletedIds = await collectSubtreeIds(db, folder, id, userId);
-
-	// One DELETE — the self-FK ON DELETE CASCADE handles the subtree atomically.
-	const [row] = await db
-		.delete(folder)
-		.where(and(eq(folder.id, id), eq(folder.userId, userId)))
-		.returning();
-	if (!row) throw new FolderNotFoundError(id);
-	return { id: row.id, name: row.name, deletedIds };
+		return { id: row.id, name: row.name, deletedIds };
+	});
 }
 
 /**
@@ -356,47 +375,62 @@ export async function deleteFolder(
  * Captures a pre-image revision of the current cells/columnMeta BEFORE overwriting
  * (only when content actually changes), so an overwrite is recoverable. `source`
  * attributes the change ('ai' for the deskbot approve-replay, 'user' for the UI).
+ *
+ * Cells are stored re-derived, as in `createSpreadsheetFile`: the grid's own save is
+ * already consistent, an AI save is not until this pass.
  */
 export async function updateSpreadsheetByFileId(
 	fileId: string,
 	userId: string,
-	data: { name?: string; cells?: Record<string, unknown>; columnMeta?: Record<string, unknown> | null },
+	data: {
+		expectedVersion: number;
+		name?: string;
+		cells?: SpreadsheetCells;
+		columnMeta?: Record<string, unknown> | null;
+	},
 	source: RevisionSource = 'user',
 ) {
+	// Before the locks: a map the sheet cannot hold is refused without touching the row.
+	const cells = data.cells === undefined ? undefined : recalculateCells(data.cells);
 	return db.transaction(async (tx) => {
-		// Verify ownership via file table — must not be soft-deleted.
+		// Lock before reading the pre-image: concurrent writers must validate against
+		// the previous committed save, not the snapshot they both initially read.
 		const [fileRow] = await tx
 			.select({ id: file.id })
 			.from(file)
 			.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt)))
-			.limit(1);
+			.limit(1)
+			.for('update');
 		if (!fileRow) return null;
 
+		const [current] = await tx
+			.select()
+			.from(spreadsheet)
+			.where(and(eq(spreadsheet.fileId, fileId), isNull(spreadsheet.deletedAt)))
+			.limit(1)
+			.for('update');
+		if (!current) return null;
+		if (current.version !== data.expectedVersion) return { status: 'conflict' as const };
+
 		const sheetUpdate: Record<string, unknown> = {};
-		if (data.cells !== undefined) sheetUpdate.cells = data.cells;
+		if (cells !== undefined) sheetUpdate.cells = cells;
 		if (data.columnMeta !== undefined) sheetUpdate.columnMeta = data.columnMeta;
 
 		if (Object.keys(sheetUpdate).length > 0) {
 			// Snapshot the pre-image before overwriting content.
-			const [current] = await tx
-				.select({ cells: spreadsheet.cells, columnMeta: spreadsheet.columnMeta })
-				.from(spreadsheet)
-				.where(eq(spreadsheet.fileId, fileId))
-				.limit(1);
-			if (current) {
-				await tx.insert(fileRevision).values({
-					id: createId.deskRevision(),
-					fileId,
-					userId,
-					fileType: 'spreadsheet',
-					cells: current.cells,
-					columnMeta: current.columnMeta ?? null,
-					source,
-					reason: 'overwrite',
-				});
-			}
+			await tx.insert(fileRevision).values({
+				id: createId.deskRevision(),
+				fileId,
+				userId,
+				fileType: 'spreadsheet',
+				cells: current.cells,
+				columnMeta: current.columnMeta ?? null,
+				source,
+				reason: 'overwrite',
+			});
 
 			sheetUpdate.updatedAt = new Date();
+			sheetUpdate.version = current.version + 1;
 			await tx.update(spreadsheet).set(sheetUpdate).where(eq(spreadsheet.fileId, fileId));
 		}
 
@@ -406,7 +440,9 @@ export async function updateSpreadsheetByFileId(
 
 		const [updated] = await tx.update(file).set(fileUpdate).where(eq(file.id, fileId)).returning();
 
-		return updated ?? null;
+		return updated
+			? { status: 'saved' as const, file: updated, version: Number(sheetUpdate.version ?? current.version) }
+			: null;
 	});
 }
 

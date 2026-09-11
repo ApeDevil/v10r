@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
-import { apiFetch } from '$lib/api';
+import { beforeNavigate } from '$app/navigation';
+import { page } from '$app/state';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import {
 	getDeskBus,
@@ -15,6 +16,7 @@ import SpreadsheetFormulaBar from './SpreadsheetFormulaBar.svelte';
 import SpreadsheetGrid from './SpreadsheetGrid.svelte';
 import SpreadsheetStatusBar from './SpreadsheetStatusBar.svelte';
 import { createSpreadsheetState } from './spreadsheet.state.svelte';
+import { getSpreadsheetSession, spreadsheetFileId } from './spreadsheet-session.svelte';
 
 interface Props {
 	panelId: string;
@@ -22,111 +24,76 @@ interface Props {
 
 let { panelId }: Props = $props();
 
-const sheet = createSpreadsheetState();
+let sheet = $state(createSpreadsheetState());
 const dock = getDockContext();
 const panelMenus = getPanelMenus();
 
 /** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. */
-const fileId = $derived(panelId.startsWith('spreadsheet-fil_') ? panelId.replace('spreadsheet-', '') : null);
-
-let saveStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
-let loaded = $state(false);
-
-/** File-mode: load spreadsheet by file ID from desk.file API. */
-async function initFromFile(fId: string) {
-	try {
-		const res = await apiFetch(`/api/desk/files/${fId}`);
-		if (res.ok) {
-			const json = await res.json();
-			const payload = json.data ?? json;
-			const cells = payload.spreadsheet?.cells as
-				| Record<string, { v: string | number | null; f?: string; t?: string }>
-				| undefined;
-			if (cells && Object.keys(cells).length > 0) {
-				sheet.fromJSON(cells);
-			}
-			loaded = true;
-			return;
-		}
-	} catch {
-		// File not found or network error
-	}
-	loaded = true;
-}
-
-// Init on mount (not $effect — setCellRaw writes $state, which would trigger infinite loops)
-onMount(() => {
-	if (fileId) {
-		initFromFile(fileId);
-	} else {
-		// No file — show empty state
-		loaded = true;
-	}
-});
-
+const fileId = $derived(spreadsheetFileId(panelId));
+let session = $state<ReturnType<typeof getSpreadsheetSession>>();
+let save = $state<ReturnType<typeof getSpreadsheetSession>['autosave']['snapshot']>();
 const bus = getDeskBus();
 
-$effect(() => {
-	const fId = fileId;
-	if (!fId) return;
+function flushEdits() {
+	sheet.commitEdit();
+	void session?.autosave.flush();
+}
 
-	return bus.subscribe('ai:refresh_file', async ({ fileId: refreshId }) => {
-		if (refreshId !== fId) return;
-		try {
-			const res = await apiFetch(`/api/desk/files/${fId}`);
-			if (res.ok) {
-				const json = await res.json();
-				const payload = json.data ?? json;
-				const cells = payload.spreadsheet?.cells as
-					| Record<string, { v: string | number | null; f?: string; t?: string }>
-					| undefined;
-				if (cells) {
-					sheet.fromJSON(cells);
-					saveStatus = 'saved';
-					setTimeout(() => {
-						saveStatus = 'idle';
-					}, 2000);
-				}
-			}
-		} catch {
-			saveStatus = 'error';
-		}
+beforeNavigate(({ cancel }) => {
+	flushEdits();
+	// When storage is unavailable, keep the panel alive until save/export succeeds.
+	if (save?.unsaved && save.backupFailed) cancel();
+});
+
+onMount(() => {
+	const userId = page.data.session?.user.id;
+	if (!fileId || !userId) return;
+	const current = getSpreadsheetSession(userId, fileId);
+	session = current;
+	sheet = current.sheet;
+	const unsubscribe = current.autosave.subscribe(() => {
+		save = current.autosave.snapshot;
 	});
-});
-
-// Auto-save (1.5s debounce after cell changes)
-
-let saveTimer: ReturnType<typeof setTimeout>;
-
-$effect(() => {
-	const dirty = sheet.dirty;
-	const fId = fileId;
-	if (!loaded || dirty === 0) return;
-	if (!fId) return;
-
-	clearTimeout(saveTimer);
-	saveTimer = setTimeout(async () => {
-		saveStatus = 'saving';
-		try {
-			const url = `/api/desk/files/${fId}`;
-			const res = await apiFetch(url, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ cells: sheet.toJSON() }),
-			});
-			saveStatus = res.ok ? 'saved' : 'error';
-			if (saveStatus === 'saved') {
-				setTimeout(() => {
-					saveStatus = 'idle';
-				}, 2000);
-			}
-		} catch {
-			saveStatus = 'error';
+	void current.autosave.refresh();
+	const unsubscribeBus = bus.subscribe('ai:refresh_file', ({ fileId: refreshId }) => {
+		if (refreshId === fileId) void current.autosave.refresh();
+	});
+	const leave = (event: BeforeUnloadEvent) => {
+		flushEdits();
+		if (current.autosave.snapshot.unsaved) {
+			event.preventDefault();
+			event.returnValue = '';
 		}
-	}, 1500);
-
-	return () => clearTimeout(saveTimer);
+	};
+	const hidden = () => {
+		if (document.visibilityState === 'hidden') flushEdits();
+	};
+	window.addEventListener('beforeunload', leave);
+	window.addEventListener('pagehide', flushEdits);
+	window.addEventListener('online', flushEdits);
+	document.addEventListener('visibilitychange', hidden);
+	return () => {
+		flushEdits();
+		unsubscribe();
+		unsubscribeBus();
+		window.removeEventListener('beforeunload', leave);
+		window.removeEventListener('pagehide', flushEdits);
+		window.removeEventListener('online', flushEdits);
+		document.removeEventListener('visibilitychange', hidden);
+	};
 });
+
+function downloadDraft() {
+	if (!session) return;
+	const url = URL.createObjectURL(
+		new Blob([JSON.stringify(session.autosave.draft, null, 2)], { type: 'application/json' }),
+	);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = `${fileId}-draft.json`;
+	link.click();
+	setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 // AI Context registration (800ms debounce)
 
@@ -188,7 +155,7 @@ const spreadsheetMenus = $derived<MenuBarMenu[]>([
 				label: 'Clear All',
 				icon: 'i-lucide-trash-2',
 				onSelect: () => {
-					sheet.fromJSON({});
+					if (save?.loaded) sheet.clear();
 				},
 			},
 		],
@@ -202,9 +169,7 @@ $effect(() => {
 </script>
 
 <div class="sheet-panel">
-	{#if !loaded}
-		<!-- loading -->
-	{:else if !fileId}
+	{#if !fileId}
 		<PanelEmptyState
 			icon="i-lucide-sheet"
 			title="No spreadsheet open"
@@ -215,17 +180,45 @@ $effect(() => {
 				Browse files
 			</Button>
 		</PanelEmptyState>
+	{:else if !save?.loaded}
+		<PanelEmptyState icon="i-lucide-sheet" title={save?.error ? 'Could not load spreadsheet' : 'Loading spreadsheet…'}>
+			{#if save?.error}
+				<Button size="sm" onclick={() => session?.autosave.refresh()}>Retry load</Button>
+			{/if}
+		</PanelEmptyState>
 	{:else}
+		<div class="save-status" role="status">
+			{#if save.conflict}
+				<span>Changed elsewhere. Local edits are kept; saving is paused.</span>
+				<Button size="sm" variant="outline" onclick={downloadDraft}>Download local draft</Button>
+				<Button size="sm" variant="outline" onclick={() => session?.autosave.discardAndReload()}>Discard local edits and reload</Button>
+			{:else if save.error}
+				<span>Sync failed. Your edits are still pending.</span>
+				<Button size="sm" variant="outline" onclick={flushEdits}>Retry save</Button>
+			{:else if save.saving}
+				<span>Saving…</span>
+			{:else}
+				<span>{save.unsaved ? 'Unsaved changes' : 'Saved'}</span>
+			{/if}
+			{#if save.backupFailed}
+				<span>Local backup unavailable. Keep this tab open until saved.</span>
+				<Button size="sm" variant="outline" onclick={downloadDraft}>Download local draft</Button>
+			{/if}
+		</div>
+		{#if !save.unsaved && !save.saving && save.recovery.length}
+			<div class="save-status">
+				<span>Recoverable drafts (may belong to another open tab):</span>
+				{#each save.recovery as draft (draft.key)}
+					<Button size="sm" variant="outline" onclick={() => session?.autosave.recover(draft)}>
+						Recover {new Date(draft.updatedAt).toLocaleString()}
+					</Button>
+					<Button size="sm" variant="ghost" onclick={() => session?.autosave.dismiss(draft)}>Dismiss</Button>
+				{/each}
+			</div>
+		{/if}
 		<SpreadsheetFormulaBar {sheet} />
 		<SpreadsheetGrid {sheet} />
 		<SpreadsheetStatusBar stats={sheet.selectionStats} />
-		{#if saveStatus === 'saving'}
-			<div class="save-indicator">Saving...</div>
-		{:else if saveStatus === 'saved'}
-			<div class="save-indicator saved">Saved</div>
-		{:else if saveStatus === 'error'}
-			<div class="save-indicator error">Save failed</div>
-		{/if}
 	{/if}
 </div>
 
@@ -238,21 +231,13 @@ $effect(() => {
 		position: relative;
 	}
 
-	.save-indicator {
-		position: absolute;
-		top: 4px;
-		right: 8px;
-		font-size: 11px;
+	.save-status {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		padding: 4px 8px;
+		font-size: 12px;
 		color: var(--color-muted);
-		pointer-events: none;
-		z-index: 5;
-	}
-
-	.save-indicator.saved {
-		color: var(--color-primary);
-	}
-
-	.save-indicator.error {
-		color: var(--color-error-fg, #ef4444);
 	}
 </style>

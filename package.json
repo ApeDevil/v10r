@@ -56,6 +56,7 @@
 		"content:check": "bun run scripts/content/check.ts --offline",
 		"content:check:db": "bun run scripts/content/check.ts",
 		"validate:build": "NODE_ENV=production bun run build && NODE_ENV=production bun run scripts/perf/snapshot.ts --check",
+		"perf:snapshot": "NODE_ENV=production bun run build && NODE_ENV=production bun run scripts/perf/snapshot.ts",
 		"quality:opacity": "bun run scripts/quality/no-token-opacity.ts",
 		"perf:cold-start": "bash scripts/perf/cold-start.sh",
 		"perf:scenarios": "bun run scripts/perf/scenarios.ts",

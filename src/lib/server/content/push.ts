@@ -20,13 +20,13 @@ import type { Locale } from '$lib/i18n/runtime';
 import { isLocale } from '$lib/i18n/runtime';
 import { getSystemAuthorId } from '$lib/server/auth/admin-ids';
 import { renderBlogPost } from '$lib/server/blog/pipeline';
+import { contentHash } from '$lib/server/db/content-hash';
 import { createId } from '$lib/server/db/id';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { domain, post, publishedRevision, revision } from '$lib/server/db/schema/blog';
 import type { Database } from '$lib/server/db/types';
 import { hasRelativeAssets, uploadReferencedAssets } from './assets';
 import { localeFromFilename, type ParsedContentFile, parseContentFile } from './frontmatter';
-import { contentHash } from './hash';
 import type { PushAction, PushReport } from './types';
 
 export interface PushOptions {
