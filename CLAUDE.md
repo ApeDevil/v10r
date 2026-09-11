@@ -141,7 +141,7 @@ podman exec v10r bun run validate     # typecheck + biome + tests + registry/i18
 ## Acknowledgment
 
 Optimize responses for signal over narration. End every substantive response with a final line
-prefixed **`🗨️TL;DR for Stas🗨️:`** — the outcome in one or two sentences, plus open issues if any.
+prefixed **`⚜️TL;DR for Stas:`** — the outcome in one or two sentences, plus open issues if any.
 In a terminal the bottom of the response is what's on screen when output stops, so this is the
 scan-anchor. Skip it only when the whole response is already one or two sentences. Its presence
 also confirms this file is loaded and in effect.
