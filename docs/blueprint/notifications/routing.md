@@ -301,8 +301,7 @@ src/lib/server/notifications/
 ├── router.ts               # Preference resolution, channel selection
 ├── outbox.ts               # Delivery record management
 ├── stream.ts               # SSE: notifyUser() + connection registry (container only)
-├── crypto.ts               # AES-GCM token encryption (ENCRYPTION_KEY)
-├── health.ts               # Channel health stats
+├── health.ts               # Channel health stats   (token encryption: $lib/server/security/aes-gcm.ts)
 ├── render-message.ts       # Notification → channel message body
 ├── telegram.ts             # Telegram link/verification helpers
 └── providers/

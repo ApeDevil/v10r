@@ -16,24 +16,46 @@ import { neonConfig, Pool } from '@neondatabase/serverless';
 import { embed, embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { EMBEDDING_UNAVAILABLE_MESSAGES, resolveEmbeddingConnection } from '../../src/lib/server/ai/connections';
+import { listProviderConnections } from '../../src/lib/server/db/ai/provider-connections';
+import * as schema from '../../src/lib/server/db/schema';
+import {
+	EMBEDDING_DIMENSIONS,
+	EMBEDDING_MODEL,
+	EMBEDDING_MODEL_ID,
+} from '../../src/lib/server/retrieval-shared/embed-config';
 
 neonConfig.poolQueryViaFetch = true;
 
+const SCRIPT_NAME = 'seed-silly';
 const NEON_DATABASE_URL_PROD = process.env.NEON_DATABASE_URL_PROD;
-const GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 if (!NEON_DATABASE_URL_PROD) {
 	console.error('NEON_DATABASE_URL_PROD not set');
 	process.exit(1);
 }
-if (!GEMINI_KEY) {
-	console.error('GOOGLE_GENERATIVE_AI_API_KEY not set');
-	process.exit(1);
-}
 
 const pool = new Pool({ connectionString: NEON_DATABASE_URL_PROD });
-const db = drizzle(pool);
-const embedModel = createGoogleGenerativeAI({ apiKey: GEMINI_KEY }).embedding('gemini-embedding-001');
-const EMBEDDING_OPTS = { google: { outputDimensionality: 1536 } };
+const db = drizzle(pool, { schema });
+
+// The Google key is the one the administrator saved under Admin → AI → Models, read
+// through the same leaf the app uses so the two can never disagree about whether Google
+// is usable. Only the database URL and ENCRYPTION_KEY still come from the environment.
+const savedConnections = await listProviderConnections(db).catch((err: unknown) => {
+	const reason = err instanceof Error ? err.message : String(err);
+	console.error(
+		'[%s] Could not read the saved AI provider connections (is the ai schema pushed?): %s',
+		SCRIPT_NAME,
+		reason,
+	);
+	process.exit(1);
+});
+const embeddingConnection = await resolveEmbeddingConnection(savedConnections, process.env.ENCRYPTION_KEY ?? null);
+if ('unavailable' in embeddingConnection) {
+	console.error(`[%s] ${EMBEDDING_UNAVAILABLE_MESSAGES[embeddingConnection.unavailable]}`, SCRIPT_NAME);
+	process.exit(1);
+}
+const embedModel = createGoogleGenerativeAI({ apiKey: embeddingConnection.apiKey }).embedding(EMBEDDING_MODEL);
+const EMBEDDING_OPTS = { google: { outputDimensionality: EMBEDDING_DIMENSIONS } };
 
 const hash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);
 const vecLiteral = (v: number[]) => `[${v.join(',')}]`;
@@ -136,7 +158,7 @@ async function insertDocumentAndChunks(userId: string) {
 			)
 			VALUES (
 				${c.id}, ${DOC_ID}, ${userId}, 'paragraph', ${i}, ${c.content}, ${Math.ceil(c.content.length / 4)},
-				${hash(c.content)}, 'google-gemini-embedding-001', ${vecLiteral(chunkEmbeddings[i])}::vector
+				${hash(c.content)}, ${EMBEDDING_MODEL_ID}, ${vecLiteral(chunkEmbeddings[i])}::vector
 			)
 		`);
 	}

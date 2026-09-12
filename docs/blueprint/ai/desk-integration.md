@@ -10,6 +10,7 @@ Final architectural recommendation for integrating AI tool-calling into the Desk
 > - Policy machinery is the governor / proposal layer (see [harness-lens.md](./harness-lens.md)).
 > - **Approval, not inline confirmation.** The Phase-3 inline `ConfirmCard` / `confirm` `DeskEffect` design below did **not** ship. Deskbot **write and destructive** tools (`desk_update_cells`, `desk_rename_file`, `desk_update_markdown`, `desk_delete_file`) never mutate in the agent loop — each returns a `requiresApproval` sentinel that becomes a pending `agent_proposal` (surfaced as a PlanCard); the mutation runs only via `POST /api/ai/proposals/[id]/approve` → `executeDeskToolCall`, recording a real `approvedBy`/`approvedAt`. Reversible creates still mutate in-loop, auto-approved. The old model-minted `confirmed=false → confirmed=true` self-handshake is gone, and even a single-target overwrite or delete is now gated.
 > - **Overwrite/delete recoverability.** `db/desk` captures a pre-image `desk.file_revision` snapshot before an overwrite or delete, so a fat-fingered or prompt-injected overwrite is no longer irrecoverable (capture only — no restore UI yet).
+> - **Approval as of 2026-09-12** (see [surfaces.md](./surfaces.md), one-door rule): plans are validated before a card is shown, every mutation step carries the reviewed baseline it is CASed against at approval, each step's receipt (`agent_proposal_step`) commits in the step's own transaction, and the door leaves a deterministic execution receipt message in the thread instead of a model acknowledgement turn. The `resumeFromProposalId` sentinel described in older notes no longer exists.
 
 ---
 
@@ -118,7 +119,7 @@ type DeskEffect =
 
 **Client consumption:** ChatPanel reads annotations from the streaming response, extracts `_deskEffect` entries, and feeds them to `dispatchDeskAction()`.
 
-**v6 migration path:** When we upgrade to v6, tool results appear as `tool-invocation` parts in `message.parts`. The `_deskEffect` annotations can migrate to tool result metadata. The `dispatchDeskAction` function does not change — it still receives `DeskEffect[]` regardless of transport.
+**As built (AI SDK v5/v6 client):** tool results arrive as `tool-<name>` parts (or `dynamic-tool`) in `message.parts`, with `state` walking `input-streaming → input-available → output-available | output-error`; a settled part's `output.effects` carries the `DeskEffect[]`, which `ChatPanel.svelte` dispatches once per `toolCallId`+`state`. The dispatcher does not care about the transport — it still receives `DeskEffect[]`.
 
 ### 4. Permission Model
 

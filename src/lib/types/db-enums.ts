@@ -31,6 +31,29 @@ export type DateFormat = (typeof DATE_FORMATS)[number];
 export const AI_SURFACES = ['chatbot', 'deskbot'] as const;
 export type AiSurface = (typeof AI_SURFACES)[number];
 
+/**
+ * The proposal state machine (`ai.agent_proposal.status`): `pending → approved → executing →
+ * executed | failed`, with `rejected` and `expired` leaving from `pending`.
+ */
+export const PROPOSAL_STATUSES = [
+	'pending',
+	'approved',
+	'rejected',
+	'executing',
+	'executed',
+	'failed',
+	'expired',
+] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
+
+/** How one executed plan step ended (`ai.agent_proposal_step.kind`). */
+export const PROPOSAL_STEP_KINDS = ['ok', 'failed', 'conflict'] as const;
+export type ProposalStepKind = (typeof PROPOSAL_STEP_KINDS)[number];
+
+/** The AI vendors an administrator can connect. Order is the resolvers' first-configured order. */
+export const AI_PROVIDER_IDS = ['groq', 'openai', 'google'] as const;
+export type AiProviderId = (typeof AI_PROVIDER_IDS)[number];
+
 export const NOTIFICATION_CHANNELS = ['email', 'telegram', 'discord', 'push'] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 

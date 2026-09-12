@@ -3,7 +3,6 @@ import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
 import { createSpreadsheetState } from './spreadsheet.state.svelte';
 import { createSpreadsheetAutosave } from './spreadsheet-autosave';
 import { createSpreadsheetDrafts, type SpreadsheetDraft } from './spreadsheet-drafts';
-import { spreadsheetFileId } from './spreadsheet-session.svelte';
 
 const cells = (v: string) => ({ A1: { v } });
 function deferred<T>() {
@@ -287,11 +286,5 @@ describe('spreadsheet drafts and editing integration', () => {
 		expect(change.mock.lastCall?.[0].B1.f).toBe('=A1');
 		sheet.clear();
 		expect(change).toHaveBeenLastCalledWith({});
-	});
-
-	it('resolves the same file for normal and duplicate panel IDs', () => {
-		expect(spreadsheetFileId('spreadsheet-fil_abc')).toBe('fil_abc');
-		expect(spreadsheetFileId('spreadsheet-fil_abc-123456')).toBe('fil_abc');
-		expect(spreadsheetFileId('spreadsheet')).toBeNull();
 	});
 });

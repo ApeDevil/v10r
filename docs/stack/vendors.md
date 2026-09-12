@@ -101,7 +101,7 @@ We use a **multi-provider architecture** with Vercel AI SDK — chat routes acro
 #### Groq (Chat)
 
 **What:** Ultra-fast LLM inference
-**Technology:** Vercel AI SDK (`@ai-sdk/groq`), model `llama-3.3-70b-versatile`
+**Technology:** Vercel AI SDK (`@ai-sdk/groq`), suggested model `openai/gpt-oss-120b` (the model is set per connection under Admin → AI → Models)
 
 | Feature | Details |
 |---------|---------|
@@ -379,9 +379,7 @@ There are **no local service containers** — dev runs against the same remote s
 
 | Variable | Provider | Purpose |
 |----------|----------|---------|
-| `GROQ_API_KEY` | Groq | Chat API key |
-| `OPENAI_API_KEY` | OpenAI | Chat fallback API key |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Google AI | Chat + embeddings API key |
+| — | Groq / OpenAI / Google AI | Not environment variables: AI provider keys and models are entered under Admin → AI → Models and stored encrypted (`ENCRYPTION_KEY`). See [`blueprint/ai/provider-routing.md`](../blueprint/ai/provider-routing.md#provider-connections). |
 | `NEON_DATABASE_URL_PROD` | Neon | Postgres connection (app's own var, not the ecosystem-standard `DATABASE_URL`) |
 | `NEO4J_URI` | Neo4j Aura | Graph connection |
 | `NEO4J_USERNAME` | Neo4j Aura | Graph auth |

@@ -49,7 +49,7 @@ Each row's `cost` comes from `estimateCost(modelId, tokens)` in [`pricing.ts`](.
 
 ### Partial coverage shows "—", never a fake $0
 
-All three chat/vision models the app can invoke are priced (`gemini-2.5-flash`, `gpt-4o-mini`, `llama-3.3-70b-versatile`). Two things remain permanently unpriced, and both are structural rather than a missing table row:
+All three suggested chat/vision models are priced (`gemini-2.5-flash`, `gpt-4o-mini`, `openai/gpt-oss-120b`); an administrator who points a connection at another model gets "—" for it until a row is added. Two things remain permanently unpriced, and both are structural rather than a missing table row:
 
 - **The `unknown` bucket** — `admin-queries.ts` COALESCEs a NULL `model_id` to the literal `'unknown'`, which can never be a price-table key.
 - **Embeddings** (`gemini-embedding-001`) — these produce **no rows in either usage table**, so `buildUnifiedModelUsage` never sees them. Pricing them needs a new telemetry source, not a `MODEL_PRICES` entry; and `ModelPrice` has no embedding-shaped field (`outputPerMillion` is meaningless for an embedding call).

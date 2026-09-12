@@ -23,9 +23,8 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	deleteFile: vi.fn(),
 }));
 
-const { buildRetrievalTools, chatbotToolMeta, createDeskTools, deskbotToolMeta, stepsForScopes } = await import(
-	'./index'
-);
+const { buildRetrievalTools, chatbotToolMeta, createDeskTools, deskbotToolMeta, LLMWIKI_DRILL_TOOLS, stepsForScopes } =
+	await import('./index');
 const { DESK_EXECUTABLE_TOOLS } = await import('./desk-execute');
 
 const USER_ID = 'usr_test_scope_gating';
@@ -177,14 +176,46 @@ describe('TOOL_MANIFEST drift guard (builders ⇔ derived meta)', () => {
 		expect(emitted).toEqual(Object.keys(deskbotToolMeta).sort());
 	});
 
-	it('buildRetrievalTools emits exactly the chatbot manifest tools', () => {
-		const { tools } = buildRetrievalTools(USER_ID, 'en', null);
+	it('buildRetrievalTools on a wiki-grounded turn emits exactly the chatbot manifest tools', () => {
+		const { tools } = buildRetrievalTools(USER_ID, 'en', null, { llmwiki: true });
 		expect(withoutInfra(Object.keys(tools))).toEqual(Object.keys(chatbotToolMeta).sort());
 	});
 
 	it('deskbot meta carries a gating scope on every tool; chatbot meta carries none', () => {
 		for (const meta of Object.values(deskbotToolMeta)) expect(meta.scope).toBeTruthy();
 		for (const meta of Object.values(chatbotToolMeta)) expect('scope' in meta).toBe(false);
+	});
+});
+
+describe('buildRetrievalTools follows the assembly', () => {
+	// The prompt's "Retrieval rules" name the drill-down pair only when an llmwiki context
+	// block was injected; on an empty wiki a call to either would be a model step spent on
+	// nothing, so the pair is not mounted at all.
+	it('omits exactly the llmwiki drill-down pair when no wiki page grounded the prompt', () => {
+		const grounded = Object.keys(buildRetrievalTools(USER_ID, 'en', null, { llmwiki: true }).tools);
+		const bare = Object.keys(buildRetrievalTools(USER_ID, 'en', null, { llmwiki: false }).tools);
+		expect(grounded.filter((name) => !bare.includes(name)).sort()).toEqual([...LLMWIKI_DRILL_TOOLS].sort());
+		for (const name of LLMWIKI_DRILL_TOOLS) expect(chatbotToolMeta).toHaveProperty(name);
+	});
+
+	// Rows the assembly put in `<catalog-results>` were surfaced this turn exactly like a
+	// `search_catalog` result: the citation verifier and the chips read the same map.
+	it('surfaces the catalog rows the assembly pre-searched, before any tool ran', () => {
+		const row = {
+			id: 'showcase:en:/showcases/auth/authn',
+			surface: 'showcase' as const,
+			title: 'AuthN',
+			path: '/showcases/auth/authn',
+			anchor: null,
+			breadcrumb: ['Identity & Access'],
+			snippet: null,
+			highlight: [],
+			locale: 'en' as const,
+			badge: null,
+			score: 6,
+		};
+		const { surfacedCatalog } = buildRetrievalTools(USER_ID, 'en', null, { llmwiki: false, catalogSeed: [row] });
+		expect(surfacedCatalog.get(row.id)).toBe(row);
 	});
 });
 

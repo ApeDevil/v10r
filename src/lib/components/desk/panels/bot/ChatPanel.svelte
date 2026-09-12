@@ -1,8 +1,18 @@
 <script lang="ts">
-import { Chat } from '@ai-sdk/svelte';
-import { DefaultChatTransport } from 'ai';
-import { onDestroy, untrack } from 'svelte';
-import { CSRF_HEADER } from '$lib/api';
+/**
+ * ChatPanel — the Desk Bot panel: the VIEW over a `DeskBotSession`.
+ *
+ * The session (`desk-bot-session.svelte.ts`) owns the live `Chat`, the conversation id,
+ * every proposal's run and the effects already dispatched; it outlives this component, so
+ * a layout move that remounts the panel changes nothing the user can see. What lives
+ * here is what needs the component tree: the dock and bus the effects act on (lent to
+ * the session as a sink while mounted), the composer, the menus, the copy.
+ *
+ * Permissions, in one place: typing is always allowed; Send waits while a turn streams or
+ * an approval is in flight; Approve/Cancel wait for the same and only exist while the
+ * card is pending; New chat waits for an approval in flight.
+ */
+import { page } from '$app/state';
 import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import type { HarnessMetadata, ProposalMetadata } from '$lib/components/composites/chatbot/harness-types';
@@ -19,14 +29,17 @@ import {
 	getEnabledScopes,
 	getPanelMenus,
 	getWorkspaceContext,
-	markResponseReceived,
 	serializeForRequest,
 } from '$lib/components/desk';
 import { dispatchDeskEffect as dispatchEffect } from '$lib/components/desk/dispatch-desk-effect';
+import { findLeafWithPanel } from '$lib/components/desk/dock.operations';
+import { fileIdOfPanelDefinition, findFilePanel } from '$lib/components/desk/file-panel';
 import * as m from '$lib/paraglide/messages';
-import type { DeskEffect } from '$lib/server/ai/tools/_types';
+import type { TurnError } from '$lib/types/ai-error';
+import type { DeskEffect } from '$lib/types/ai-tools';
+import { CONTEXT_MAX_ENTRIES, DESK_LAYOUT_MAX_PANELS } from '$lib/types/desk-context-limits';
 import BotManagerDialog from './BotManagerDialog.svelte';
-import { chatStateCache } from './chat-state-cache';
+import { type DeskBotSession, type DeskBotSink, getDeskBotSession } from './desk-bot-session.svelte';
 
 interface Props {
 	panelId: string;
@@ -34,11 +47,7 @@ interface Props {
 
 let { panelId }: Props = $props();
 
-// svelte-ignore state_referenced_locally
-const cached = chatStateCache.get(panelId);
-let conversationId: string | undefined = $state(cached?.conversationId);
 let inputValue = $state('');
-let lastErrorKind = $state<string | null>(null);
 let managerOpen = $state(false);
 let managerInitialTab = $state<string | undefined>();
 
@@ -47,169 +56,20 @@ const dock = getDockContext();
 const panelMenus = getPanelMenus();
 const wsState = getWorkspaceContext();
 
-const ERROR_MESSAGES: Record<string, string> = {
-	rate_limit: 'Rate limit reached. Wait a moment and try again.',
-	timeout: 'AI service timed out. Try again.',
-	unavailable: 'AI service is temporarily unavailable.',
-	context_length: 'Message too long. Try a shorter message.',
-	authentication: 'AI authentication failed. Check provider config.',
-	// Visitor-session 401 — DISTINCT from 'authentication' (provider API-key failure).
-	// Set by the transport on response.status, never by the body heuristic, whose
-	// 'authentication' substring match would misroute "Authentication required".
-	unauthorized: m.errors_auth_session_expired(),
-	model: 'AI model unavailable. Try again later.',
-	limit_exceeded: 'Conversation limit reached. Free up space in Storage.',
-};
+/** How long a panel gets to answer `ai:refresh_file` before the log records "not confirmed". */
+const REFRESH_ACK_TIMEOUT_MS = 3_000;
 
-function openManagerToTab(tab?: string) {
-	managerInitialTab = tab;
-	managerOpen = true;
-}
+const userId = $derived(page.data.session?.user?.id as string | undefined);
+const workspaceId = $derived(wsState.active?.id ?? 'default');
 
-/** Parse `[kind] message` format from classified stream errors, or heuristic-match. */
-function classifyErrorMessage(msg: string): { kind: string | null; detail: string } {
-	// Server sends classified errors as "[kind] user-safe message"
-	const bracketMatch = msg.match(/^\[(\w+)]\s*(.+)/);
-	if (bracketMatch) return { kind: bracketMatch[1], detail: bracketMatch[2] };
+let session = $state<DeskBotSession>();
 
-	// Heuristic fallback for unclassified errors
-	const lower = msg.toLowerCase();
-	if (lower.includes('rate') || lower.includes('quota') || lower.includes('429') || lower.includes('too many'))
-		return { kind: 'rate_limit', detail: msg };
-	if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('etimedout'))
-		return { kind: 'timeout', detail: msg };
-	if (lower.includes('unavailable') || lower.includes('503') || lower.includes('fetch failed'))
-		return { kind: 'unavailable', detail: msg };
-	if (lower.includes('context length') || lower.includes('too long') || lower.includes('token'))
-		return { kind: 'context_length', detail: msg };
-	if (lower.includes('401') || lower.includes('403') || lower.includes('authentication'))
-		return { kind: 'authentication', detail: msg };
-	if (lower.includes('model') || lower.includes('404')) return { kind: 'model', detail: msg };
-	return { kind: null, detail: msg };
-}
-
-const chat = new Chat({
-	...(cached?.messages?.length ? { messages: cached.messages as Chat['messages'] } : {}),
-	transport: new DefaultChatTransport({
-		api: '/api/ai/deskbot',
-		headers: CSRF_HEADER,
-		fetch: async (url, init) => {
-			const response = await fetch(url, init);
-			// Session-expiry 401s come from the auth guard, BEFORE the orchestrator —
-			// they never carry X-AI-Error-Kind, so classify on status here.
-			if (response.status === 401) {
-				lastErrorKind = 'unauthorized';
-				appendIOLog({
-					source: 'effect',
-					level: 'error',
-					label: `AI error: ${ERROR_MESSAGES.unauthorized}`,
-					detail: 'unauthorized',
-				});
-			}
-			const id = response.headers.get('X-Conversation-Id');
-			if (id) conversationId = id;
-			const errorKind = response.headers.get('X-AI-Error-Kind');
-			if (errorKind) {
-				lastErrorKind = errorKind;
-				const msg = ERROR_MESSAGES[errorKind] ?? 'Something went wrong.';
-				appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: errorKind });
-			}
-			return response;
-		},
-	}) as Chat['transport'],
-	onFinish: () => {
-		markResponseReceived();
-	},
-});
-
-// Persist state when component is destroyed (panel move / close)
-onDestroy(() => {
-	if (chat.messages.length > 0 || conversationId) {
-		chatStateCache.set(panelId, {
-			conversationId,
-			messages: $state.snapshot(chat.messages) as typeof chat.messages,
-		});
-	}
-});
-
-const isLoading = $derived(chat.status === 'submitted' || chat.status === 'streaming');
-const activeContextCount = $derived(getContextChips().filter((c) => c.status !== 'available').length);
-
-// ── Error classification (stream errors bypass response headers) ──
-
-$effect(() => {
-	const err = chat.error;
-	if (!err) return;
-	if (lastErrorKind) return; // already classified via header
-	const { kind, detail } = classifyErrorMessage(err.message ?? '');
-	if (kind) lastErrorKind = kind;
-	const msg = ERROR_MESSAGES[kind ?? ''] ?? (detail || 'Something went wrong.');
-	untrack(() =>
-		appendIOLog({ source: 'effect', level: 'error', label: `AI error: ${msg}`, detail: kind ?? (detail || 'unknown') }),
-	);
-});
-
-// AI desk effect dispatch
-
-/** Track which tool call IDs we've already dispatched effects for. */
-const processedToolCalls = new Set<string>();
-
-/**
- * Watch assistant messages for settled tool-invocation parts.
- * Extract DeskEffect from tool results and dispatch to desk bus / dock.
- */
-$effect(() => {
-	const messages = chat.messages;
-	if (!messages.length) return;
-
-	const lastMsg = messages[messages.length - 1];
-	if (lastMsg.role !== 'assistant' || !lastMsg.parts) return;
-
-	untrack(() => {
-		for (const part of lastMsg.parts) {
-			if (part.type !== 'tool-invocation') continue;
-			const inv = part as unknown as {
-				toolCallId: string;
-				toolName: string;
-				state: string;
-				output?: { effects?: DeskEffect[]; error?: string };
-			};
-
-			const callKey = `${inv.toolCallId}-${inv.state}`;
-			if (processedToolCalls.has(callKey)) continue;
-			processedToolCalls.add(callKey);
-
-			if (inv.state === 'call') {
-				appendIOLog({
-					source: 'tool-call',
-					toolName: inv.toolName,
-					label: `Calling ${inv.toolName}...`,
-				});
-			} else if (inv.state === 'result') {
-				appendIOLog({
-					source: 'tool-result',
-					toolName: inv.toolName,
-					label: inv.output?.error ? `${inv.toolName} failed` : `${inv.toolName} completed`,
-					level: inv.output?.error ? 'error' : 'success',
-				});
-
-				const effects = inv.output?.effects;
-				if (effects) {
-					for (const effect of effects) {
-						dispatchDeskEffect(effect);
-					}
-				}
-			}
-		}
-	});
-});
-
-/** Extracted to dispatch-desk-effect.ts for testability */
 const effectActions = {
-	focusPanel: (panelId: string) => focusPanel(dock, panelId),
+	focusPanel: (id: string) => focusPanel(dock, id),
 	addPanel: dock.addPanel,
 	updatePanel: dock.updatePanel,
 	publish: bus.publish,
+	findFilePanel: (panelType: string, fileId: string) => findFilePanel(dock.root, dock.panels, panelType, fileId),
 };
 
 function dispatchDeskEffect(effect: DeskEffect) {
@@ -225,10 +85,73 @@ function dispatchDeskEffect(effect: DeskEffect) {
 	}
 }
 
+function awaitFileRefreshed(fileId: string) {
+	return new Promise<{ fileId: string; version: number | null; ok: boolean } | null>((resolve) => {
+		const timer = setTimeout(() => {
+			unsubscribe();
+			resolve(null);
+		}, REFRESH_ACK_TIMEOUT_MS);
+		const unsubscribe = bus.subscribe('ai:file_refreshed', (payload) => {
+			if (payload.fileId !== fileId) return;
+			clearTimeout(timer);
+			unsubscribe();
+			resolve(payload);
+		});
+	});
+}
+
+// The session is looked up on mount (client only) and lent this panel's dock and bus for
+// as long as the panel is mounted. A move remounts the panel; the session does not notice.
+$effect(() => {
+	if (!userId) return;
+	const current = getDeskBotSession(userId, workspaceId, panelId);
+	const sink: DeskBotSink = { dispatchEffect: dispatchDeskEffect, awaitFileRefreshed };
+	session = current;
+	current.attach(sink);
+	return () => current.detach(sink);
+});
+
+const messages = $derived(session?.chat.messages ?? []);
+const isLoading = $derived(session?.isStreaming ?? false);
+const busy = $derived(session?.isBusy ?? false);
+const lastErrorKind = $derived(session?.lastErrorKind ?? null);
+const activeContextCount = $derived(getContextChips().filter((c) => c.status !== 'available').length);
+
+/** One line per failure kind, from the classified kind — never from provider prose. */
+function errorCopy(kind: string | null): string {
+	switch (kind) {
+		case 'rate_limit':
+			return m.ai_chat_error_provider_limited();
+		case 'rate_limited':
+			return m.ai_chat_error_rate_limited();
+		case 'timeout':
+			return m.composites_desk_bot_error_timeout();
+		case 'unavailable':
+			return m.ai_chat_error_unavailable();
+		case 'context_length':
+			return m.composites_desk_bot_error_context_length();
+		case 'authentication':
+			return m.composites_desk_bot_error_authentication();
+		case 'unauthorized':
+			return m.errors_auth_session_expired();
+		case 'model':
+			return m.composites_desk_bot_error_model();
+		case 'limit_exceeded':
+			return m.composites_desk_bot_error_limit_exceeded();
+		default:
+			return m.ai_chat_error_generic();
+	}
+}
+
+function openManagerToTab(tab?: string) {
+	managerInitialTab = tab;
+	managerOpen = true;
+}
+
 let scrollContainer: HTMLDivElement | undefined = $state();
 
 $effect(() => {
-	if (chat.messages.length && scrollContainer) {
+	if (messages.length && scrollContainer) {
 		requestAnimationFrame(() => {
 			if (scrollContainer) {
 				scrollContainer.scrollTop = scrollContainer.scrollHeight;
@@ -238,15 +161,9 @@ $effect(() => {
 });
 
 function startNewChat() {
-	conversationId = undefined;
-	chat.messages = [];
+	session?.newChat();
 	inputValue = '';
-	proposalBusy = {};
-	chatStateCache.delete(panelId);
 }
-
-/** Map of proposalId → in-flight flag, so the PlanCard disables buttons during approve/reject. */
-let proposalBusy = $state<Record<string, boolean>>({});
 
 /** Read the harness metadata the orchestrator streams on assistant messages. */
 function getProposalForMessage(msg: unknown): ProposalMetadata | null {
@@ -254,74 +171,42 @@ function getProposalForMessage(msg: unknown): ProposalMetadata | null {
 	return meta?.proposal ?? null;
 }
 
-async function approveProposal(proposalId: string) {
-	proposalBusy[proposalId] = true;
-	try {
-		const res = await fetch(`/api/ai/proposals/${proposalId}/approve`, {
-			method: 'POST',
-			headers: { ...CSRF_HEADER, 'content-type': 'application/json' },
-			body: '{}',
+/** The open panels as the server's `desk_get_open_panels` reports them — identity only, no content. */
+function deskLayout() {
+	const layout: { panelId: string; fileId?: string; fileType?: string; label: string }[] = [];
+	for (const panel of Object.values(dock.panels)) {
+		if (!findLeafWithPanel(dock.root, panel.id)) continue;
+		const fileId = fileIdOfPanelDefinition(panel) ?? undefined;
+		layout.push({
+			panelId: panel.id,
+			label: panel.label,
+			...(fileId ? { fileId } : {}),
+			...(panel.type === 'spreadsheet' || panel.type === 'markdown' ? { fileType: panel.type } : {}),
 		});
-		if (!res.ok) {
-			appendIOLog({
-				source: 'effect',
-				level: 'error',
-				label: `Plan approval failed: ${res.status}`,
-			});
-			return;
-		}
-		appendIOLog({ source: 'effect', level: 'success', label: 'Plan executed.' });
-		// The gated tools never touched the desk; the replay's effects arrive here
-		// and nowhere else, so an open panel learns about the write from this response.
-		const { data } = (await res.json()) as { data: { effects?: DeskEffect[] } };
-		for (const effect of data.effects ?? []) dispatchDeskEffect(effect);
-		// Resume the conversation with a sentinel so the model sees the result.
-		chat.sendMessage(
-			{ text: `[resumeFromProposalId:${proposalId}]` },
-			{
-				body: {
-					...(conversationId ? { conversationId } : {}),
-					toolScopes: getEnabledScopes(),
-					resumeFromProposalId: proposalId,
-				},
-			},
-		);
-	} catch (err) {
-		appendIOLog({
-			source: 'effect',
-			level: 'error',
-			label: 'Plan approval failed.',
-			detail: err instanceof Error ? err.message : String(err),
-		});
-	} finally {
-		proposalBusy[proposalId] = false;
 	}
-}
-
-async function rejectProposal(proposalId: string) {
-	proposalBusy[proposalId] = true;
-	try {
-		await fetch(`/api/ai/proposals/${proposalId}/approve`, {
-			method: 'DELETE',
-			headers: CSRF_HEADER,
-		});
-		appendIOLog({ source: 'effect', label: 'Plan rejected.' });
-	} finally {
-		proposalBusy[proposalId] = false;
-	}
+	return layout.slice(0, DESK_LAYOUT_MAX_PANELS);
 }
 
 function submitMessage() {
-	if (!inputValue.trim() || isLoading) return;
-	lastErrorKind = null;
-	const context = serializeForRequest();
+	if (!session || !inputValue.trim() || session.isBusy) return;
+	// Flushes every panel's pending context first: the turn carries the edit made a moment ago.
+	const { entries, omitted } = serializeForRequest();
 
-	// Log context reads to I/O log
-	for (const ctx of context) {
+	// Log what the model gets — and what it does not. An omission is a fact about this
+	// turn the user must be able to see, never a silent drop.
+	for (const ctx of entries) {
 		appendIOLog({
 			source: 'context-read',
 			label: `${ctx.panelType}: ${ctx.label}`,
-			detail: `${ctx.content.length} chars`,
+			detail: `${ctx.content.length} chars · ${ctx.contentLevel}${ctx.truncated ? ' · truncated' : ''}${ctx.dirty ? ' · unsaved edits' : ''}`,
+		});
+	}
+	for (const gone of omitted) {
+		appendIOLog({
+			source: 'context-read',
+			level: 'error',
+			label: `${gone.label} not sent`,
+			detail: gone.reason === 'entry_cap' ? `more than ${CONTEXT_MAX_ENTRIES} panels` : 'token budget',
 		});
 	}
 	appendIOLog({ source: 'progress', label: 'Sending message...' });
@@ -329,26 +214,22 @@ function submitMessage() {
 	const text = inputValue;
 	inputValue = '';
 
-	chat.sendMessage(
-		{ text },
-		{
-			body: {
-				...(conversationId ? { conversationId } : {}),
-				...(context.length > 0 ? { panelContext: context } : {}),
-				toolScopes: getEnabledScopes(),
-				...(getActiveProviderId() ? { providerId: getActiveProviderId() } : {}),
-				...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
-			},
-		},
-	);
+	session.submit(text, {
+		...(session.conversationId ? { conversationId: session.conversationId } : {}),
+		...(entries.length > 0 ? { panelContext: entries } : {}),
+		deskLayout: deskLayout(),
+		toolScopes: getEnabledScopes(),
+		...(getActiveProviderId() ? { providerId: getActiveProviderId() } : {}),
+		...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
+	});
 }
 
 const chatMenus = $derived<MenuBarMenu[]>([
 	{
-		label: 'Chat',
+		label: m.composites_desk_bot_menu_chat(),
 		items: [
 			{
-				label: 'New Conversation',
+				label: m.composites_desk_bot_new_conversation(),
 				icon: 'i-lucide-plus',
 				onSelect: startNewChat,
 			},
@@ -365,35 +246,37 @@ $effect(() => {
 <div class="chat-panel-container">
 	<!-- Messages area -->
 	<div bind:this={scrollContainer} class="chat-messages-area">
-		{#if chat.messages.length === 0}
+		{#if messages.length === 0}
 			<div class="chat-empty">
 				<span class="i-lucide-message-circle chat-empty-icon"></span>
-				<p>Ask me anything. I can see your open panels.</p>
+				<p>{m.composites_desk_bot_empty()}</p>
 			</div>
 		{:else}
 			<div class="chat-messages-list">
-				{#each chat.messages as message (message.id)}
+				{#each messages as message (message.id)}
 					<ChatMessage
 						role={message.role as 'user' | 'assistant'}
 						parts={message.parts}
 						catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
 							?.catalogSources}
+						turnError={(message as { metadata?: { turnError?: TurnError } }).metadata?.turnError}
 					/>
-					{#if message.role === 'assistant'}
+					{#if message.role === 'assistant' && session}
 						{@const proposal = getProposalForMessage(message)}
 						{#if proposal}
 							<PlanCard
 								{proposal}
+								run={session.runFor(proposal.id)}
 								streamReady={!isLoading}
-								busy={!!proposalBusy[proposal.id]}
-								onapprove={() => approveProposal(proposal.id)}
-								onreject={() => rejectProposal(proposal.id)}
+								{busy}
+								onapprove={() => session?.approve(proposal.id)}
+								onreject={() => session?.reject(proposal.id)}
 							/>
 						{/if}
 					{/if}
 				{/each}
 
-				{#if isLoading && chat.messages[chat.messages.length - 1]?.role === 'user'}
+				{#if isLoading && messages[messages.length - 1]?.role === 'user'}
 					<div class="chat-typing">
 						<div class="chat-typing-avatar">
 							<span class="i-lucide-bot" style="font-size: 14px;"></span>
@@ -410,14 +293,13 @@ $effect(() => {
 	</div>
 
 	<!-- Error display -->
-	{#if chat.error}
-		{@const { detail } = classifyErrorMessage(chat.error.message ?? '')}
+	{#if session?.chat.error}
 		<div class="chat-error" role="alert" aria-live="polite">
-			<span class="font-medium">Could not get a response.</span>
-			{ERROR_MESSAGES[lastErrorKind ?? ''] ?? (detail || 'Something went wrong. Try again.')}
+			<span class="font-medium">{m.ai_chat_error_heading()}</span>
+			{errorCopy(lastErrorKind)}
 			{#if lastErrorKind === 'limit_exceeded'}
 				<button class="chat-error-action" type="button" onclick={() => openManagerToTab('storage')}>
-					Manage Storage
+					{m.composites_desk_bot_manage_storage()}
 				</button>
 			{/if}
 		</div>
@@ -426,9 +308,10 @@ $effect(() => {
 	<!-- Input -->
 	<ChatInput
 		bind:value={inputValue}
-		loading={isLoading}
+		loading={busy}
 		contextCount={activeContextCount}
 		onsubmit={submitMessage}
+		onstop={isLoading ? () => session?.stop() : undefined}
 		onopensettings={() => openManagerToTab()}
 	/>
 

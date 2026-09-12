@@ -50,14 +50,14 @@ export const MODEL_PRICES: Record<string, ModelPrice> = {
 		verifiedOn: '2026-06-15',
 		note: 'Fallback vision provider. Per-image vision tokens are far higher than Gemini and are counted inside inputTokens by the provider.',
 	},
-	'llama-3.3-70b-versatile': {
-		modelId: 'llama-3.3-70b-versatile',
-		inputPerMillion: 0.59,
-		outputPerMillion: 0.79,
+	'openai/gpt-oss-120b': {
+		modelId: 'openai/gpt-oss-120b',
+		inputPerMillion: 0.15,
+		outputPerMillion: 0.6,
 		confidence: 'documented',
-		sourceUrl: 'https://console.groq.com/docs/models',
-		verifiedOn: '2026-08-10',
-		note: 'Default Groq chat model — text-only, no vision. Our key runs free-tier → real cost $0; this is a reference estimate. Batch API and prompt caching each discount this rate and stack, so a batched cached call bills well under the figure here.',
+		sourceUrl: 'https://console.groq.com/docs/model/openai/gpt-oss-120b',
+		verifiedOn: '2026-09-12',
+		note: 'Suggested Groq chat model (llama-3.3-70b-versatile was retired by Groq in 2026-09) — text-only, no vision; a reasoning model, and Groq counts its reasoning tokens as output. Our key runs free-tier → real cost $0; this is a reference estimate. Batch API and prompt caching each discount this rate and stack.',
 	},
 };
 

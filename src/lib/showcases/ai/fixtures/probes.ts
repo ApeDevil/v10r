@@ -19,13 +19,9 @@ export interface ProbeExample {
 	report: ProbeReport;
 }
 
-const CHATBOT_TOOLS = [
-	'get_llmwiki_pages',
-	'get_source_chunks',
-	'search_catalog',
-	'search_project_docs',
-	'search_pattern_library',
-];
+/** The chatbot's always-on tools; the llmwiki drill-down pair joins them only on a wiki-grounded turn. */
+const CHATBOT_TOOLS = ['search_catalog', 'search_project_docs', 'search_pattern_library'];
+const CHATBOT_TOOLS_WIKI_GROUNDED = ['get_llmwiki_pages', 'get_source_chunks', ...CHATBOT_TOOLS];
 
 const DESKBOT_TOOLS = [
 	'desk_list_files',
@@ -36,6 +32,7 @@ const DESKBOT_TOOLS = [
 	'desk_update_cells',
 	'desk_rename_file',
 	'desk_update_markdown',
+	'desk_edit_markdown',
 	'desk_create_spreadsheet',
 	'desk_create_markdown',
 	'desk_delete_file',
@@ -54,6 +51,7 @@ const chatbotTrivial: ProbeReport = {
 	gates: [
 		{ id: 'ground_docs', fired: false },
 		{ id: 'page_deixis', fired: false },
+		{ id: 'catalog_nav', fired: false },
 	],
 	inventory: CHATBOT_INVENTORY,
 	tools: CHATBOT_TOOLS,
@@ -76,9 +74,10 @@ const chatbotGroundedProbe: ProbeReport = {
 	gates: [
 		{ id: 'ground_docs', fired: true },
 		{ id: 'page_deixis', fired: false },
+		{ id: 'catalog_nav', fired: false },
 	],
 	inventory: CHATBOT_INVENTORY,
-	tools: CHATBOT_TOOLS,
+	tools: CHATBOT_TOOLS_WIKI_GROUNDED,
 	corpora: [
 		{
 			corpus: 'llmwiki',
@@ -102,7 +101,7 @@ const chatbotGroundedProbe: ProbeReport = {
 				{
 					title: 'AI Abuse Controls & Budget',
 					preview:
-						'guardAiRequest single-sources the auth → aiConfigured → rate-limit → daily-budget preamble so per-surface routes stay thin…',
+						'guardAiRequest single-sources the auth → aiConfigured → (rate-limit ∥ daily-budget) preamble so per-surface routes stay thin…',
 					score: 0.781,
 					source: 'vector',
 					tier: '1',
@@ -170,6 +169,7 @@ const chatbotDeixis: ProbeReport = {
 	gates: [
 		{ id: 'ground_docs', fired: true },
 		{ id: 'page_deixis', fired: true },
+		{ id: 'catalog_nav', fired: false },
 	],
 	inventory: CHATBOT_INVENTORY,
 	tools: CHATBOT_TOOLS,

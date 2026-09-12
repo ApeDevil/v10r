@@ -208,7 +208,10 @@ mcp:validate  →  patterns:build  →  mcp:excerpts:build  →  db:ingest-docs
 The ordering is deliberate: fail fast on the cheap registry validation, regenerate the
 pattern-library surfaces (README Pattern Index region + the `docs/pattern-library/`
 section pages) so the ingest sees them, build the deterministic local excerpt snapshot next,
-and leave the slow, quota-bound Neon/Gemini RAG ingest last. The ingest is content-hash
+and leave the slow, quota-bound Neon/Gemini RAG ingest last. The ingest embeds with the
+Google Gemini connection the administrator saved under Admin → AI → Models (decrypted with
+the container's `ENCRYPTION_KEY`); with Google disabled or keyless it stops with a
+secret-free message before touching the corpus. The ingest is content-hash
 idempotent — only changed docs re-embed, so casual re-runs cost a handful of embed
 calls — and interruption-safe: a Ctrl-C (or the daily embed-cap running out) mid-ingest
 just resumes on the next run. `--force` / `-f` sets `INGEST_FORCE=1` for a full

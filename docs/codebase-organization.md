@@ -196,6 +196,12 @@ These are the reasons behind placements that otherwise look arbitrary.
   `retrieval/config.ts` re-exports them so retrieval code has one place to look.
 - **`$lib/showcases/catalog/registry.ts` uses relative imports**, not `$lib`, so it stays
   resolvable from `scripts/db/catalog-sync.ts` under bare Bun.
+- **`ai/connections.ts`, `db/ai/provider-connections.ts` and `security/aes-gcm.ts` are
+  alias-free** for the same reason: the ingest and seed scripts read the administrator's saved
+  Google connection through them by relative path, so the app and the scripts share one
+  reading of "is Google usable" and one ciphertext format. `ai/connections.test.ts` walks
+  the import closure; `security/encryption-key.ts` is where the app, not the scripts, reads
+  `ENCRYPTION_KEY`.
 - **`auth/admin-ids.ts` is deep-imported on purpose**: it is a framework-free leaf that
   exists precisely so callers can avoid constructing the Better Auth instance that
   `auth/index.ts` builds.

@@ -107,6 +107,37 @@ describe('AI mutations', () => {
 			const rows = await db.select().from(message);
 			expect(rows).toHaveLength(0);
 		});
+
+		// A chat turn lands its user message and the empty assistant row the stream backfills
+		// in ONE call: one ownership check, one insert, one `updatedAt` touch.
+		it('lands both rows of a turn in one call, touching updatedAt once', async () => {
+			const conv = await createConversation(USER_A.id);
+			await new Promise((r) => setTimeout(r, 5));
+			await saveMessages(conv.id, USER_A.id, [
+				{ id: 'u-1', role: 'user', content: 'Hello', route: '/showcases' },
+				{ id: 'a-1', role: 'assistant', content: '' },
+			]);
+
+			const rows = await db.select().from(message);
+			expect(rows.map((r) => [r.role, r.content, r.route]).sort()).toEqual([
+				['assistant', '', null],
+				['user', 'Hello', '/showcases'],
+			]);
+			const [after] = await db.select().from(conversation);
+			expect(after.updatedAt.getTime()).toBeGreaterThan(conv.updatedAt.getTime());
+		});
+
+		it('refuses both rows of a turn for a foreign conversation', async () => {
+			const conv = await createConversation(USER_A.id);
+			await saveMessages(conv.id, USER_B.id, [
+				{ id: 'u-1', role: 'user', content: 'Hello' },
+				{ id: 'a-1', role: 'assistant', content: '' },
+			]);
+
+			expect(await db.select().from(message)).toHaveLength(0);
+			const [row] = await db.select().from(conversation);
+			expect(row.updatedAt.getTime()).toBe(conv.updatedAt.getTime());
+		});
 	});
 
 	describe('updateConversationTitle', () => {

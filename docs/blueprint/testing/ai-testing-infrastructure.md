@@ -142,7 +142,7 @@ This project defines 14 custom PostgreSQL schemas (`admin`, `ai`, `analytics`, `
 | Then | `auth` + `ai` | Another cross-schema domain |
 | Last | `auth` + `rag` | Adds pgvector, custom types, post-push SQL |
 
-**Out-of-schema DDL:** `src/lib/server/db/retrieval/setup.ts` contains raw SQL for a generated tsvector column (`search_vector`), an HNSW index (`chunk_embedding_hnsw_idx`), a GIN index on `search_vector`, and a seed row in `embedding_model`. These live outside Drizzle schema definitions and are **not emitted by `pushSchema`**. They require a separate `client.exec(sql)` after the push — only when testing RAG-specific queries.
+**Out-of-schema DDL:** only the seed row in `embedding_model` (`scripts/db/setup-retrieval.ts`, phase 2) lives outside the Drizzle schema. The generated tsvector column (`search_vector`), its GIN index and the HNSW index on `chunk.embedding` are declared in `schema/retrieval/chunk.ts`, so `pushSchema` emits them — a test that needs the seed row inserts it itself.
 
 **Index support:** PGlite supports GiST (for range types), GIN (for tsvector/jsonb), and B-tree indexes natively — no extensions needed. HNSW indexes (pgvector) are theoretically supported but unverified in WASM at scale — functional correctness is expected, not performance parity with native Postgres.
 

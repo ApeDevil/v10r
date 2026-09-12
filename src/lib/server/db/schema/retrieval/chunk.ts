@@ -2,7 +2,7 @@
  * CHUNK — Text segments with embeddings for retrieval.
  * Supports hierarchical parent-child (sentence < paragraph < section),
  * contextual metadata (Anthropic's prepended context approach),
- * full-text search (tsvector via migration), and vector similarity (pgvector HNSW).
+ * full-text search (generated tsvector + GIN), and vector similarity (pgvector HNSW).
  */
 
 import { type SQL, sql } from 'drizzle-orm';
@@ -58,5 +58,14 @@ export const chunk = retrievalSchema.table(
 		index('chunk_embedding_model_idx').on(table.embeddingModelId),
 		index('chunk_children_idx').on(table.parentId, table.position).where(sql`parent_id IS NOT NULL`),
 		index('chunk_search_vector_idx').using('gin', table.searchVector),
+		/**
+		 * Declared HERE, not in a post-push script: `db:push` reconciles indexes against
+		 * this schema and drops the ones it does not know. The script-created copy of
+		 * this index was lost that way, and every system-docs retrieve silently became a
+		 * sequential scan over the whole embedding column — 7.7 s on a cold Neon compute
+		 * (`scripts/perf/db-explain.ts`, 2026-09-11). Cosine ops to match `<=>` in
+		 * `retrieval/tiers/contextual.ts`; pgvector's default m / ef_construction.
+		 */
+		index('chunk_embedding_hnsw_idx').using('hnsw', table.embedding.op('vector_cosine_ops')),
 	],
 );

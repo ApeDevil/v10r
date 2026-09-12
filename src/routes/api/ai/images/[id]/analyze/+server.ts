@@ -40,7 +40,7 @@ function sumKnown(...values: (number | null)[]): number | null {
 export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
 
 export const POST: RequestHandler = async ({ params, locals }) => {
-	// auth → aiConfigured → rate-limit → daily budget: the same four gates every
+	// auth → aiConfigured → rate-limit ∥ daily budget: the same four gates every
 	// AI-spending route passes.
 	const guard = await guardAiRequest(locals);
 	if (guard.response) return guard.response;
@@ -61,7 +61,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 	}
 
 	try {
-		const result = await extractImageMetadata(guard.user.id, img.storageKey);
+		const result = await extractImageMetadata(guard.user.id, img.storageKey, guard.registry);
 
 		if (!result.ok) {
 			return apiError(REASON_STATUS[result.reason], reasonCode(result.reason), result.message);

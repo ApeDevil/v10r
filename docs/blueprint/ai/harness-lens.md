@@ -15,7 +15,10 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 | Tool dispatch & schema-level scope filtering | `ai/tools` | `tools/index.ts` — `createDeskTools(userId, scopes, layout)` |
 | Tool metadata (surface-split) | `ai/tools` | `tools/_types.ts` — surface-neutral `ToolRisk`/`ToolMeta` (chatbot retrieval, no scope) + `DeskToolMeta` (adds `scope`); collections `chatbotToolMeta` / `deskbotToolMeta` / `allToolMeta` in `tools/index.ts` |
 | Desk-mutation SSOT (one-door rule) | `ai/tools` | `tools/desk-execute.ts` — `executeDeskToolCall`: the proposal-approval replay routes every desk mutation through it; `index.test.ts` drift-guards the replay map against the live tool set |
-| Approval gate (risk → proposal) | `ai/policy` + `ai/tools` | `policy/governor.ts` — `requiresApproval(risk)` (`write`/`destructive` gated); write/destructive tools return a `requiresApproval` sentinel instead of mutating |
+| Approval gate (risk → proposal) | `ai/policy` + `ai/tools` | `policy/governor.ts` — `requiresApproval(risk)` (`write`/`destructive` gated); write/destructive tools return a `requiresApproval` sentinel carrying the reviewed baseline (`tools/proposed-target.ts`) instead of mutating |
+| Approval boundary (sentinels → one proposal, loop stop) | `ai/proposals` | `proposals/approval-boundary.ts` — `collectApprovalRequests`, `toCardSteps`, `stoppedAtApproval` |
+| Plan validation | `ai/proposals` + `ai/tools` | `proposals/plan-validation.ts` — `validateProposedPlan` over `tools/desk-mutation-inputs.ts` (one valibot schema per mutation tool, also the model-facing JSON Schema) |
+| Proposal execution (receipts, receipt message) | `ai/proposals` | `proposals/execute-proposal.ts` — `executeProposal`, `proposalOutcome`; receipts in `db/ai/proposals.ts` (`recordProposalStep`, `markInterruptedIfStale`) |
 | Step loop & provider fallback | `ai` | `chat-orchestrator.ts` — `streamText` + `stopWhen` + `tryFallback` (provider fallback & cooldown) |
 | Per-request scope step caps | `ai/tools` | `tools/index.ts` — `stepsForScopes` (read-only incl. `desk:ask` = 3, mutation = 5) |
 | Context compaction (fixes AI SDK #9631) | `ai/loop` | `loop/compact.ts` — `compactToolResults` + `resolve_ref` tool |
@@ -23,12 +26,12 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 | Retrieval integration | `ai` | `chat-orchestrator.ts` — llmwiki + retrieval pipeline events |
 | Conversation windowing | `ai/context` | `context/system-prompt.ts` — `windowMessages` |
 | Plan-gating predicate | `ai/policy` | `policy/governor.ts` — `shouldRequirePlan` |
-| Proposal state machine | `db/ai` + `ai/policy` | `db/schema/ai/proposal.ts`, `db/ai/proposals.ts` |
+| Proposal state machine + step receipts | `db/ai` + `ai/policy` | `db/schema/ai/proposal.ts`, `db/schema/ai/proposal-step.ts`, `db/ai/proposals.ts` |
 | Audit log (scaffolded stub) | `db/ai` | `db/schema/ai/audit-log.ts` |
 
 ## What ships as load-bearing vs. scaffold
 
-**Load-bearing** (exercised on every request): tool dispatch, step loop, provider fallback, compaction, system-prompt assembly, proposals table, `agent_proposals` row writes.
+**Load-bearing** (exercised on every request): tool dispatch, step loop, provider fallback, compaction, system-prompt assembly, proposals table, `agent_proposal` + `agent_proposal_step` row writes.
 
 **Scaffolded stub** (seam visible, one write site, no query UI): `agent_audit_log` — retention policy is a product decision v10r should not make for adopters.
 
@@ -49,7 +52,7 @@ Two distinct mechanisms govern deskbot mutations.
 
 **Planning is soft guidance, not the gate.** `shouldRequirePlan({ mutatingScopeGranted, destructiveIntent })` decides only whether to *instruct* the model to plan first — inject the `<planning>` block so it batches work into one `desk_propose_plan`. It was widened from the old three-condition AND (≥2 tools + ≥2 targets), which let every single-target destructive op skip planning; now any granted-mutating-scope + destructive-intent turn gets the nudge. It no longer decides whether a mutation may run — the `requiresApproval` sentinel does.
 
-The execute path closes the loop. Each `desk_propose_plan` step carries its exact `args`, persisted on the proposal payload; on approval the approve-route replays them step-by-step through `executeDeskToolCall`, short-circuiting on first failure with the partial result kept (no rollback). The resume turn that follows is **read-only** — its desk scopes are filtered to `desk:read`/`desk:ask` so it can only acknowledge, never re-mutate or diverge: approval binds execution.
+The execute path closes the loop. Each `desk_propose_plan` step carries its exact `args` and its **reviewed baseline** (`target`: the file's version / `updatedAt` at proposal time), persisted on the proposal payload after `validateProposedPlan` accepted the plan; on approval `executeProposal` replays them step-by-step through `executeDeskToolCall`, writing a **step receipt** (`agent_proposal_step`) in each step's transaction, refusing a step whose file moved on since review as a `conflict`, and stopping at the first non-`ok` step with the earlier steps kept (no rollback). No model turn follows: the door persists a deterministic **execution receipt message** the model reads as history. Approval binds execution.
 
 Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.file_revision` before mutating (capture only — no restore UI yet).
 
@@ -60,7 +63,7 @@ Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.fi
 | `desk:read` | Silent auto; I/O log only |
 | `desk:create` | Auto with notification; bot-originated writes inherit this tier |
 | `desk:write` on an existing file | Pending proposal → **`PlanCard`**; approve to run (pre-image `desk.file_revision` backs recovery) |
-| `desk:delete` | Pending proposal → **`PlanCard`** with target name; soft delete + `desk.file_revision` back recovery |
+| `desk:delete` | Pending proposal → **`PlanCard`** with target name; soft delete (trash, `desk-trash` retention window) + `desk.file_revision` pre-image — the card says so, never "permanent" |
 | Multi-step destructive batch | One **`PlanCard`** covering all steps — one read, one approval |
 
 ## Reading order for the curious

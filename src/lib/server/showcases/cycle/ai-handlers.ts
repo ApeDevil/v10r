@@ -8,7 +8,7 @@
  */
 
 import { streamText } from 'ai';
-import { getActiveProvider, getActiveProviderInfo } from '$lib/server/ai';
+import { getActiveProvider, getActiveProviderInfo, loadProviderRegistry } from '$lib/server/ai';
 import { db } from '$lib/server/db';
 import { cycleRun } from '$lib/server/db/schema';
 import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
@@ -145,10 +145,13 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 		return finalizeFailure(trace, traceStart, userId, query, 'generate', 'LLM timeout (simulated)');
 	}
 
-	const provider = getActiveProvider(userId);
-	const providerInfo = getActiveProviderInfo(userId);
+	// Settings that cannot be read are the same to this showcase as no provider: the
+	// simulated path is its documented degradation, not an error.
+	const registry = await loadProviderRegistry().catch(() => null);
+	const provider = registry ? getActiveProvider(registry, userId) : null;
+	const providerInfo = registry ? getActiveProviderInfo(registry, userId) : null;
 	let answer = '';
-	let generateDetail: Record<string, unknown> = { simulated: true, reason: 'no provider configured' };
+	let generateDetail: Record<string, unknown> = { simulated: true, reason: 'no provider connected' };
 
 	const model = provider?.getInstance() ?? null;
 	if (model && retrievalOk) {
@@ -183,7 +186,7 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 		}
 	} else {
 		await delay(randomBetween(700, 1200));
-		answer = `(simulated answer to "${query}" — configure an AI provider for real output)`;
+		answer = `(simulated answer to "${query}" — an administrator can connect an AI provider for real output)`;
 	}
 
 	endSpan(genSpan, traceStart, generateDetail);

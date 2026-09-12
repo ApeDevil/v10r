@@ -9,7 +9,9 @@
  * Exactly-once execution is enforced via the `status` state machine + a
  * partial unique index on `proposal_id` where `status IN ('executing',
  * 'executed')`. A retried approval finds the existing "executed" row and
- * returns its cached result instead of re-running the payload.
+ * returns the step receipts (`agent_proposal_step`) instead of re-running
+ * the payload. The per-step record lives in its own table, written inside
+ * the same transaction as the step's desk mutation — see `proposal-step.ts`.
  *
  * See `docs/blueprint/ai/harness-lens.md` for the broader context.
  */
@@ -31,19 +33,33 @@ export const proposalStatusEnum = aiSchema.enum('agent_proposal_status', [
 
 export const proposalRiskTierEnum = aiSchema.enum('agent_proposal_risk_tier', ['low', 'medium', 'high']);
 
+/**
+ * The reviewed baseline of a mutation step: the file the user saw on the PlanCard and
+ * the version it had when the plan was proposed. Replay compares against THIS — never
+ * a fresh read — so an edit made between review and approval surfaces as a conflict
+ * instead of being overwritten by a plan that described an older document. Creates
+ * have no baseline.
+ */
+export type ProposedTarget = {
+	fileId: string;
+	fileType: 'spreadsheet' | 'markdown';
+	name: string;
+	/** `spreadsheet.version` / `markdown.version` at proposal time; null for a rename/delete. */
+	version: number | null;
+	/** `file.updatedAt` at proposal time — the rename/delete baseline. ISO string (jsonb). */
+	updatedAt: string;
+};
+
 /** A single proposed tool call inside a proposal's payload. */
 export type ProposedToolCall = {
 	toolName: string;
 	args: Record<string, unknown>;
+	/** What the step does, as the PlanCard and the receipt say it: `Rename "Q2" → "Q3"`. */
+	action: string;
 	/** Optional model-supplied rationale for this specific step. */
 	rationale?: string;
-};
-
-/** Execution outcome cached on the proposal after a successful run. */
-export type ProposalExecutionResult = {
-	toolCallIds: string[];
-	/** Per-step results, in the order they were executed. */
-	results: Array<{ toolName: string; ok: boolean; output: unknown; errorMessage?: string }>;
+	/** Reviewed baseline; absent for creates. */
+	target?: ProposedTarget;
 };
 
 export const agentProposal = aiSchema.table(
@@ -77,10 +93,12 @@ export const agentProposal = aiSchema.table(
 		approvedBy: text('approved_by').references(() => user.id, { onDelete: 'set null' }),
 		approvedAt: timestamp('approved_at', { withTimezone: true }),
 		rejectedReason: text('rejected_reason'),
-		/** Cached execution result; populated when status transitions to `executed`. */
-		executionResult: jsonb('execution_result').$type<ProposalExecutionResult | null>(),
 		executedAt: timestamp('executed_at', { withTimezone: true }),
-		/** Failure message when status is `failed`. */
+		/**
+		 * Why status is `failed`: the failing step's message, `'conflict'` when a step's
+		 * reviewed baseline no longer matched, or `'interrupted'` when an `executing` row
+		 * outlived its lease (the process died between a step and its terminal transition).
+		 */
 		failureMessage: text('failure_message'),
 		/** Auto-expire pending proposals. Stops stale approvals long after the UI context is gone. */
 		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),

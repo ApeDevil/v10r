@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { parseCellRef } from '$lib/desk/formula';
+import { followAiContextChange } from '$lib/server/ai/deskbot-retrieval';
 import {
 	deleteFile,
 	duplicateSpreadsheetFile,
@@ -8,7 +9,7 @@ import {
 	toggleFileAiContext,
 	updateSpreadsheetByFileId,
 } from '$lib/server/db/desk/mutations';
-import { getFile, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
+import { getFile, getMarkdownByFileId, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
 import { guardApiUser } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
@@ -65,8 +66,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		if (!result) return apiError(404, 'not_found', 'Not found.');
 		return apiOk({ file: result.file, spreadsheet: result.spreadsheet });
 	}
-
-	return apiOk({ file: fileRow });
+	const result = await getMarkdownByFileId(params.id, user.id);
+	if (!result) return apiError(404, 'not_found', 'Not found.');
+	return apiOk({ file: result.file, markdown: result.markdown });
 };
 
 /** Update a file (rename, move, toggle AI context) and/or its detail data. */
@@ -106,10 +108,11 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 		if (!row) return apiError(404, 'not_found', 'Not found.');
 	}
 
-	// Handle AI context toggle
+	// Handle AI context toggle — the retrieval index follows the pin, after the response.
 	if (aiContext !== undefined) {
 		const row = await toggleFileAiContext(params.id, user.id, aiContext);
 		if (!row) return apiError(404, 'not_found', 'Not found.');
+		followAiContextChange(user.id, row.id, row.type, aiContext);
 	}
 
 	// Handle rename (no cell data)
@@ -151,5 +154,7 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 	if (!rlDel) return rateLimitResponse(rlReset);
 	const row = await deleteFile(params.id, user.id);
 	if (!row) return apiError(404, 'not_found', 'Not found.');
+	// A deleted file leaves the bot's index at once, not at the next daily sync.
+	if (row.aiContext) followAiContextChange(user.id, row.id, row.type, false);
 	return apiNoContent();
 };

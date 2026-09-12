@@ -6,10 +6,6 @@ import { createSpreadsheetDrafts } from './spreadsheet-drafts';
 // Populated only on mount, never on the server. Reopening a panel reuses its pending save.
 const sessions = new Map<string, ReturnType<typeof createSession>>();
 
-export function spreadsheetFileId(panelId: string): string | null {
-	return /^spreadsheet-(fil_[a-zA-Z0-9]+)(?:-\d+)?$/.exec(panelId)?.[1] ?? null;
-}
-
 function createSession(userId: string, fileId: string) {
 	const sheet = createSpreadsheetState();
 	const autosave = createSpreadsheetAutosave({

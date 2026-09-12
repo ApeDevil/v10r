@@ -12,6 +12,22 @@
  */
 
 /**
+ * What a completed desk mutation asks the desk UI to do — carried inside an in-loop
+ * tool's output and beside a replayed step's receipt. The desk dispatches it
+ * (`components/desk/dispatch-desk-effect.ts`); the server derives it
+ * (`server/ai/tools/desk-execute.ts` → `effectsForStep`).
+ */
+export type DeskEffect =
+	| { type: 'desk:open_panel'; panelType: string; fileId: string; label: string }
+	| { type: 'desk:refresh_file'; fileId: string }
+	| { type: 'desk:refresh_explorer' }
+	| { type: 'desk:tab_indicator'; fileId: string; panelType: string; variant: 'modified' | 'created' | 'deleted' }
+	| { type: 'desk:notify'; message: string; level: 'info' | 'success' | 'error' }
+	| { type: 'desk:activate_panel'; panelId: string }
+	| { type: 'desk:scroll_to'; panelId: string; target: string }
+	| { type: 'desk:focus_panel'; panelId: string };
+
+/**
  * Tool permission scopes the desk client requests. Deskbot-only — the chatbot has no scopes.
  * `desk:ask` is a READ-ONLY grounding scope (deskbot retrieval over the user's own files); it is
  * NOT a mutating scope and never triggers the plan gate.
@@ -86,6 +102,7 @@ export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
 	{ name: 'desk_update_cells', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
 	{ name: 'desk_rename_file', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
 	{ name: 'desk_update_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
+	{ name: 'desk_edit_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
 	{ name: 'desk_create_spreadsheet', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
 	{ name: 'desk_create_markdown', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
 	{ name: 'desk_delete_file', surface: 'deskbot', risk: 'destructive', scope: 'desk:delete' },

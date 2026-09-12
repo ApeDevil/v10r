@@ -17,7 +17,7 @@ vi.mock('$lib/server/search', () => ({
 	searchContent: mocks.searchContent,
 }));
 
-import { type CatalogSink, createSearchCatalogTool } from './search-catalog';
+import { type CatalogSink, createSearchCatalogTool, searchCatalogRecords } from './search-catalog';
 
 function rec(o: {
 	surface: SearchRecord['surface'];
@@ -155,5 +155,45 @@ describe('search_catalog tool', () => {
 		expect(out.results.map((r) => r.path)).toEqual(['/showcases/button', '/showcases/switch']);
 		expect(out.results.every((r) => r.surface === 'showcase')).toBe(true);
 		expect(mocks.searchContent).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * The search itself — ONE DOOR: the tool's `execute` and the context assembly's navigation
+ * grounding both call it, so the rows put in the prompt before generation are the same
+ * verified rows a tool call would surface.
+ */
+describe('searchCatalogRecords', () => {
+	it('returns the merged, ranked rows themselves and records them into the sink', async () => {
+		mocks.buildSearchIndex.mockReturnValue([
+			rec({ surface: 'showcase', path: '/showcases/auth/authn', title: 'AuthN' }),
+			rec({ surface: 'showcase', path: '/showcases/forms/auth', title: 'Auth' }),
+			rec({ surface: 'doc', path: '/docs/stack/better-auth', title: 'Better Auth' }),
+		]);
+		const captured: SearchResult[] = [];
+		const sink: CatalogSink = { record: (rows) => captured.push(...rows) };
+
+		const rows = await searchCatalogRecords('auth', {
+			locale: 'en',
+			authCeiling: null,
+			surface: 'showcase',
+			limit: 5,
+			sink,
+		});
+
+		// A facet restricts the static lane and skips the server lane entirely.
+		expect(rows.map((r) => r.path)).toEqual(['/showcases/forms/auth', '/showcases/auth/authn']);
+		expect(rows[0]).toMatchObject({ surface: 'showcase', title: 'Auth', score: expect.any(Number) });
+		expect(captured).toEqual(rows);
+		expect(mocks.searchContent).not.toHaveBeenCalled();
+	});
+
+	it('throws when a lane fails — the caller owns the degrade', async () => {
+		mocks.buildSearchIndex.mockReturnValue([rec({ surface: 'doc', path: '/docs/x', title: 'X' })]);
+		mocks.searchContent.mockRejectedValue(new Error('neon down'));
+
+		await expect(searchCatalogRecords('x', { locale: 'en', authCeiling: null, surface: null })).rejects.toThrow(
+			'neon down',
+		);
 	});
 });

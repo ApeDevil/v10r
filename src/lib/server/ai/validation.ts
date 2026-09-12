@@ -1,5 +1,7 @@
 import * as v from 'valibot';
 import { DESK_TOOL_SCOPES } from '$lib/types/ai-tools';
+import { AI_PROVIDER_IDS, DESK_FILE_TYPES } from '$lib/types/db-enums';
+import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES, DESK_LAYOUT_MAX_PANELS } from '$lib/types/desk-context-limits';
 
 const MessageRole = v.picklist(['user', 'assistant']);
 
@@ -45,13 +47,24 @@ const ChatMessageSchema = v.union([
 	}),
 ]);
 
+/**
+ * One panel's context as the desk serializer sends it (`SerializedContext`). The identity
+ * fields tell the prompt which file, at which version, the text describes; the limits are
+ * the shared `desk-context-limits`, so the client cannot build an entry the route refuses.
+ */
 const PanelContextEntry = v.object({
+	panelId: v.optional(v.pipe(v.string(), v.maxLength(200))),
 	panelType: v.string(),
 	label: v.string(),
-	content: v.pipe(v.string(), v.maxLength(16_000)),
+	content: v.pipe(v.string(), v.maxLength(CONTEXT_ENTRY_MAX_CHARS)),
 	status: v.optional(v.picklist(['focused', 'active', 'background'])),
 	contentLevel: v.optional(v.picklist(['full', 'summary', 'title-only'])),
 	tokenEstimate: v.optional(v.number()),
+	truncated: v.optional(v.boolean()),
+	fileId: v.optional(v.pipe(v.string(), v.maxLength(100))),
+	fileType: v.optional(v.picklist(DESK_FILE_TYPES)),
+	version: v.optional(v.pipe(v.number(), v.integer(), v.minValue(0))),
+	dirty: v.optional(v.boolean()),
 });
 
 const ToolScope = v.picklist(DESK_TOOL_SCOPES);
@@ -70,7 +83,7 @@ const DeskLayoutEntry = v.object({
  * `messageId`, …) pass through and unknown keys are dropped rather than 400'd.
  */
 const baseEntries = {
-	providerId: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(20))),
+	providerId: v.optional(v.picklist(AI_PROVIDER_IDS)),
 	messages: v.pipe(v.array(ChatMessageSchema), v.minLength(1), v.maxLength(100)),
 	conversationId: v.optional(v.pipe(v.string(), v.uuid())),
 };
@@ -88,8 +101,8 @@ const PageRouteId = v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/
 /**
  * `POST /api/ai/chatbot` — the read-only, grounded v10r-expert surface. Carries the shared
  * envelope + site-awareness (`pageRouteId`). Accepts NO desk-mutation fields — a chatbot
- * request's parsed output can never carry `toolScopes`/`deskLayout`/`activeWorkspace`/
- * `resumeFromProposalId` into the orchestrator. See `docs/blueprint/ai/surfaces.md`.
+ * request's parsed output can never carry `toolScopes`/`deskLayout`/`activeWorkspace` into
+ * the orchestrator. See `docs/blueprint/ai/surfaces.md`.
  */
 export const ChatbotRequestSchema = v.object({
 	...baseEntries,
@@ -116,11 +129,11 @@ export const ContextProbeRequestSchema = v.object({
  */
 export const DeskRequestSchema = v.object({
 	...baseEntries,
-	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(5))),
+	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(CONTEXT_MAX_ENTRIES))),
 	/** Tool permission scopes — empty or omitted means no tools. */
 	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(5))),
 	/** Current desk layout so AI knows what panels are open. */
-	deskLayout: v.optional(v.pipe(v.array(DeskLayoutEntry), v.maxLength(20))),
+	deskLayout: v.optional(v.pipe(v.array(DeskLayoutEntry), v.maxLength(DESK_LAYOUT_MAX_PANELS))),
 	/** Active workspace name for AI context. */
 	activeWorkspace: v.optional(
 		v.object({
@@ -128,15 +141,6 @@ export const DeskRequestSchema = v.object({
 			name: v.string(),
 		}),
 	),
-	/**
-	 * When present, the chat turn is a "resume after approval" continuation
-	 * of a previously approved `agent_proposal`. The orchestrator looks up
-	 * the proposal's execution result and injects it as a synthetic tool
-	 * result in the model's context instead of re-running the plan.
-	 *
-	 * Sent by the client after hitting `POST /api/ai/proposals/:id/approve`.
-	 */
-	resumeFromProposalId: v.optional(v.string()),
 });
 
 export const CreateConversationSchema = v.object({

@@ -2,7 +2,7 @@
  * Retrieval schema setup — two phases.
  *
  * Phase 1 (pre-push):  pgvector extension — must run BEFORE db:push
- * Phase 2 (post-push): tsvector column, HNSW + GIN indexes, seed data — must run AFTER push
+ * Phase 2 (post-push): the default embedding-model row — must run AFTER push
  *
  * Usage (standalone):
  *   bun run db:retrieval-pre    # phase 1
@@ -40,21 +40,12 @@ async function prePush() {
 }
 
 /**
- * Phase 2: features drizzle-kit can't express.
- *
- * `search_vector` and its GIN index are now declared in the Drizzle schema
- * (`schema/retrieval/chunk.ts`) via `customType('tsvector') + .generatedAlwaysAs()`
- * and `.using('gin', ...)`. Only HNSW (which needs operator-class + `WITH` params)
- * and the embedding-model seed remain here.
+ * Phase 2: seed data only. Every index — including the HNSW index on
+ * `chunk.embedding` — is declared in the Drizzle schema (`schema/retrieval/chunk.ts`),
+ * because `db:push` drops indexes it does not find there: the HNSW index this script
+ * used to create was lost exactly that way.
  */
 async function postPush() {
-	console.log('[retrieval:post] Creating HNSW index on embedding...');
-	await db.execute(sql`
-		CREATE INDEX IF NOT EXISTS chunk_embedding_hnsw_idx
-			ON retrieval.chunk USING hnsw(embedding vector_cosine_ops)
-			WITH (m = 16, ef_construction = 64)
-	`);
-
 	console.log('[retrieval:post] Seeding default embedding model...');
 	await db.execute(sql`
 		INSERT INTO retrieval.embedding_model (id, provider, model_name, dimensions, max_tokens, is_default)

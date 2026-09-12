@@ -1,56 +1,128 @@
 <script lang="ts">
 /**
- * PlanCard — inline approval card for multi-step destructive batches.
+ * PlanCard — inline approval card for a proposed desk mutation plan.
  *
- * Rendered from `message.metadata.harness.proposal` in the chat stream.
- * Not a modal — no focus trap while the stream is still streaming. When
- * the stream closes (the parent signals via `streamReady`), focus shifts
- * to the primary action and an `aria-live` region announces the card.
+ * Rendered from `message.metadata.harness.proposal` in the chat stream, which is always
+ * `pending` on the wire. What happened since is the `run` the desk-bot session keeps per
+ * proposal (`approving` → the server's status, or `unknown` until reconciled) and the
+ * per-step receipts it received: the card renders those deterministically — done, failed,
+ * changed since review, not run — no model has to narrate them.
  *
- * See `docs/blueprint/ai/harness-lens.md` for the harness lens framing
- * and `policy/governor.ts` → `shouldRequirePlan` for the predicate that
- * decides when this card appears.
+ * Not a modal — no focus trap while the stream is still streaming. When the stream
+ * closes (the parent signals via `streamReady`), focus shifts to the primary action and
+ * an `aria-live` region announces the card. Approve and Cancel are disabled while the
+ * turn streams or any approval is in flight (`busy`): a plan may only be decided once it
+ * is complete and nothing else is changing the desk.
+ *
+ * Risk and recovery wording come from the tool the step names (server-derived), never
+ * from model prose. See `docs/blueprint/ai/harness-lens.md`.
  */
+import * as m from '$lib/paraglide/messages';
+import type { ProposalRun, ProposalStepReceipt, ProposalStepRecovery } from '$lib/types/ai-proposal';
 import { cn } from '$lib/utils/cn';
 import type { ProposalMetadata } from './harness-types';
 
 interface Props {
 	proposal: ProposalMetadata;
+	/** The client-side lifecycle of this proposal; absent = still pending on the card. */
+	run?: ProposalRun;
 	/** True once the stream has closed — safe to shift focus to the primary action. */
 	streamReady: boolean;
-	/** True while an approve or reject request is in flight — disables buttons. */
+	/** True while the turn streams or an approval is in flight — disables both actions. */
 	busy: boolean;
 	onapprove: () => void;
 	onreject: () => void;
 }
 
-let { proposal, streamReady, busy, onapprove, onreject }: Props = $props();
+let { proposal, run, streamReady, busy, onapprove, onreject }: Props = $props();
 
 let runButton: HTMLButtonElement | undefined = $state();
+
+const phase = $derived(run?.phase ?? proposal.status);
+const decided = $derived(phase !== 'pending');
 
 $effect(() => {
 	// Only shift focus once the stream has closed. Doing it mid-stream
 	// would hijack the user's reading of pipeline events.
-	if (streamReady && runButton && proposal.status === 'pending') {
+	if (streamReady && runButton && !decided) {
 		runButton.focus();
 	}
 });
 
 const destructiveCount = $derived(proposal.steps.filter((s) => s.risk === 'destructive').length);
-const terminalStatus = $derived(proposal.status !== 'pending' ? proposal.status : null);
+
+const RECOVERY_COPY: Record<ProposalStepRecovery, () => string> = {
+	revision: m.ai_plan_recovery_revision,
+	soft_delete: m.ai_plan_recovery_soft_delete,
+	rename_back: m.ai_plan_recovery_rename_back,
+	none: m.ai_plan_recovery_none,
+};
+
+function receiptFor(index: number): ProposalStepReceipt | undefined {
+	return run?.steps.find((s) => s.stepIndex === index);
+}
+
+/** The per-step verdict once the run has settled; nothing while it is still pending. */
+function stepVerdict(index: number): { text: string; kind: 'ok' | 'failed' | 'conflict' | 'skipped' } | null {
+	if (
+		!run ||
+		run.phase === 'pending' ||
+		run.phase === 'approving' ||
+		run.phase === 'rejected' ||
+		run.phase === 'expired'
+	)
+		return null;
+	const receipt = receiptFor(index);
+	if (!receipt) return run.phase === 'unknown' ? null : { text: m.ai_plan_step_not_run(), kind: 'skipped' };
+	if (receipt.kind === 'ok') {
+		const version = receipt.output?.version;
+		return {
+			text: typeof version === 'number' ? m.ai_plan_step_done_version({ version }) : m.ai_plan_step_done(),
+			kind: 'ok',
+		};
+	}
+	return receipt.kind === 'conflict'
+		? { text: m.ai_plan_step_conflict(), kind: 'conflict' }
+		: { text: `${m.ai_plan_step_failed()}: ${receipt.errorMessage ?? ''}`.trim(), kind: 'failed' };
+}
+
+const statusCopy = $derived.by(() => {
+	switch (phase) {
+		case 'approving':
+			return m.ai_plan_status_approving();
+		case 'approved':
+			return m.ai_plan_status_approved();
+		case 'executing':
+			return m.ai_plan_status_executing();
+		case 'executed':
+			return m.ai_plan_status_executed();
+		case 'failed':
+			if (run?.failureMessage === 'conflict') return m.ai_plan_status_conflict();
+			if (run?.failureMessage === 'interrupted') return m.ai_plan_status_interrupted();
+			return m.ai_plan_status_failed({ reason: run?.failureMessage ?? '' });
+		case 'rejected':
+			return m.ai_plan_status_rejected();
+		case 'expired':
+			return m.ai_plan_status_expired();
+		case 'unknown':
+			return m.ai_plan_status_unknown();
+		default:
+			return '';
+	}
+});
 </script>
 
 <section
 	class="plan-card"
-	class:plan-card-busy={busy}
+	class:plan-card-busy={busy && !decided}
 	role="region"
-	aria-label="Proposed action plan, requires your confirmation"
+	aria-label={m.ai_plan_aria()}
 >
 	<header class="plan-card-header">
 		<span class="i-lucide-list-checks plan-card-icon" aria-hidden="true"></span>
-		<h3 class="plan-card-title">Proposed plan</h3>
+		<h3 class="plan-card-title">{m.ai_plan_title()}</h3>
 		{#if destructiveCount > 0}
-			<span class="plan-card-badge">Permanent: {destructiveCount}</span>
+			<span class="plan-card-badge">{m.ai_plan_destructive_badge({ count: destructiveCount })}</span>
 		{/if}
 	</header>
 
@@ -58,27 +130,40 @@ const terminalStatus = $derived(proposal.status !== 'pending' ? proposal.status 
 
 	<ol class="plan-card-steps">
 		{#each proposal.steps as step, i (i)}
-			<li class={cn('plan-card-step', step.risk === 'destructive' && 'plan-card-step-destructive')}>
+			{@const verdict = stepVerdict(i)}
+			<li
+				class={cn(
+					'plan-card-step',
+					step.risk === 'destructive' && 'plan-card-step-destructive',
+					verdict && `plan-card-step-${verdict.kind}`,
+				)}
+			>
 				<span class="plan-card-step-num">{i + 1}</span>
 				<div class="plan-card-step-body">
 					<span class="plan-card-step-action">{step.action}</span>
+					{#if step.target}
+						<span class="plan-card-step-target">
+							{step.target.version === null
+								? step.target.name
+								: m.ai_plan_target_version({ name: step.target.name, version: step.target.version })}
+						</span>
+					{/if}
 					<span class="plan-card-step-tool">{step.tool}</span>
-					<span class="plan-card-step-rationale">{step.rationale}</span>
-					{#if step.risk === 'destructive'}
-						<span class="plan-card-step-permanent">Permanent</span>
+					{#if step.rationale}
+						<span class="plan-card-step-rationale">{step.rationale}</span>
+					{/if}
+					<span class="plan-card-step-recovery">{RECOVERY_COPY[step.recovery ?? 'none']()}</span>
+					{#if verdict}
+						<span class="plan-card-step-verdict">{verdict.text}</span>
 					{/if}
 				</div>
 			</li>
 		{/each}
 	</ol>
 
-	{#if proposal.rollback}
-		<p class="plan-card-rollback"><strong>Undo:</strong> {proposal.rollback}</p>
-	{/if}
-
-	{#if terminalStatus}
-		<div class="plan-card-status plan-card-status-{terminalStatus}" aria-live="polite">
-			{terminalStatus === 'executed' ? 'Plan executed.' : `Plan ${terminalStatus}.`}
+	{#if decided}
+		<div class="plan-card-status plan-card-status-{phase}" aria-live="polite">
+			{statusCopy}
 		</div>
 	{:else}
 		<div class="plan-card-actions">
@@ -88,7 +173,7 @@ const terminalStatus = $derived(proposal.status !== 'pending' ? proposal.status 
 				disabled={busy}
 				onclick={onreject}
 			>
-				Cancel
+				{m.ai_plan_cancel()}
 			</button>
 			<button
 				type="button"
@@ -97,7 +182,7 @@ const terminalStatus = $derived(proposal.status !== 'pending' ? proposal.status 
 				bind:this={runButton}
 				onclick={onapprove}
 			>
-				{destructiveCount > 0 ? 'Run (includes permanent changes)' : 'Run'}
+				{destructiveCount > 0 ? m.ai_plan_run_destructive() : m.ai_plan_run()}
 			</button>
 		</div>
 	{/if}
@@ -190,17 +275,29 @@ const terminalStatus = $derived(proposal.status !== 'pending' ? proposal.status 
 		font-size: 0.7rem;
 		color: var(--color-muted);
 	}
-	.plan-card-step-permanent {
-		font-size: 0.65rem;
-		font-weight: 700;
-		color: var(--color-error-fg);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
+	.plan-card-step-target {
+		font-size: 0.75rem;
+		color: var(--color-fg);
+		opacity: 0.8;
 	}
-	.plan-card-rollback {
+	.plan-card-step-recovery {
 		font-size: 0.7rem;
 		color: var(--color-muted);
-		margin: 0 0 0.5rem;
+	}
+	.plan-card-step-verdict {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-fg);
+	}
+	.plan-card-step-ok .plan-card-step-verdict {
+		color: var(--color-success-fg, var(--color-primary));
+	}
+	.plan-card-step-failed .plan-card-step-verdict,
+	.plan-card-step-conflict .plan-card-step-verdict {
+		color: var(--color-error-fg);
+	}
+	.plan-card-step-skipped {
+		opacity: 0.6;
 	}
 	.plan-card-actions {
 		display: flex;
@@ -246,10 +343,17 @@ const terminalStatus = $derived(proposal.status !== 'pending' ? proposal.status 
 		color: var(--color-fg);
 	}
 	.plan-card-status-rejected,
-	.plan-card-status-failed,
-	.plan-card-status-expired {
+	.plan-card-status-expired,
+	.plan-card-status-approving,
+	.plan-card-status-approved,
+	.plan-card-status-executing,
+	.plan-card-status-unknown {
 		background-color: color-mix(in srgb, var(--color-muted) 10%, transparent);
 		color: var(--color-muted);
+	}
+	.plan-card-status-failed {
+		background-color: color-mix(in srgb, var(--color-error-fg) 10%, transparent);
+		color: var(--color-fg);
 	}
 
 	/* Narrow widths: full-width stacked actions, primary on top, 44px targets. */

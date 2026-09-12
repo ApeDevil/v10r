@@ -14,7 +14,7 @@ import {
 	PROVENANCE_STATES,
 	type ProvenanceState,
 } from '$lib/schemas/image-metadata';
-import { getVisionProvider } from '$lib/server/ai';
+import { getVisionProvider, loadProviderRegistry } from '$lib/server/ai';
 import { ImageMetaError, ingestImage, saveImageMetadata } from '$lib/server/imagemeta';
 import { getImagemetaReadUrl } from '$lib/server/store/image';
 import type { Actions, PageServerLoad } from './$types';
@@ -55,7 +55,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		title: 'Image Metadata Reader - AI - Showcases',
 		form,
-		aiAvailable: !!getVisionProvider(locals.user.id),
+		aiAvailable: await loadProviderRegistry()
+			.then((registry) => !!getVisionProvider(registry, locals.user?.id))
+			.catch(() => false),
 	};
 };
 

@@ -1,16 +1,17 @@
 import * as v from 'valibot';
-import { getActiveProviderInfo, providerRegistry } from '$lib/server/ai';
+import { getActiveProviderInfo, loadProviderRegistry } from '$lib/server/ai';
 import { clearUserPreference, setUserPreference } from '$lib/server/ai/providers';
 import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
 import { guardApiUser } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { AI_PROVIDER_IDS } from '$lib/types/db-enums';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:ai:providers:switch', 60, '1 m');
 
 const SwitchSchema = v.object({
-	providerId: v.nullable(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(20))),
+	providerId: v.nullable(v.picklist(AI_PROVIDER_IDS)),
 });
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -33,15 +34,23 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	const { providerId } = parsed.output;
 
+	let registry: Awaited<ReturnType<typeof loadProviderRegistry>>;
+	try {
+		registry = await loadProviderRegistry();
+	} catch {
+		return apiError(503, 'ai_unavailable', 'AI settings are unavailable right now.');
+	}
+
 	if (providerId === null) {
 		clearUserPreference(user.id);
 	} else {
-		const provider = providerRegistry.find((p) => p.id === providerId && p.configured);
+		// A preference may only name a provider the administrator has connected and enabled.
+		const provider = registry.entries.find((p) => p.id === providerId && p.configured);
 		if (!provider) return apiError(400, 'invalid_provider', `Provider "${providerId}" is not available.`);
 		setUserPreference(user.id, providerId);
 	}
 
-	const activeInfo = getActiveProviderInfo(user.id);
+	const activeInfo = getActiveProviderInfo(registry, user.id);
 	return apiOk({
 		activeId: activeInfo?.id ?? null,
 		name: activeInfo?.name ?? null,

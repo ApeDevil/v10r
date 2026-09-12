@@ -1,6 +1,6 @@
 import type { ActivityBarItem, PanelDefinition } from './layout.types';
 
-export const DESK_PANEL_TYPES = ['explorer', 'editor', 'preview', 'bot', 'spreadsheet', 'io-log'] as const;
+export const DESK_PANEL_TYPES = ['explorer', 'editor', 'preview', 'bot', 'spreadsheet', 'markdown', 'io-log'] as const;
 
 export type DeskPanelType = (typeof DESK_PANEL_TYPES)[number];
 
@@ -10,6 +10,7 @@ export const DESK_PANELS: Record<string, PanelDefinition> = {
 	preview: { id: 'preview', type: 'preview', label: 'Preview', icon: 'i-lucide-eye', closable: true },
 	bot: { id: 'bot', type: 'bot', label: 'Bot', icon: 'i-lucide-bot', closable: true },
 	spreadsheet: { id: 'spreadsheet', type: 'spreadsheet', label: 'Spreadsheet', icon: 'i-lucide-sheet', closable: true },
+	markdown: { id: 'markdown', type: 'markdown', label: 'Document', icon: 'i-lucide-file-text', closable: true },
 	'io-log': { id: 'io-log', type: 'io-log', label: 'I/O Log', icon: 'i-lucide-activity', closable: true },
 };
 

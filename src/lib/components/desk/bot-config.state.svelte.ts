@@ -22,9 +22,9 @@ import type { DeskToolScope } from '$lib/server/ai/tools/_types';
 /**
  * Scopes the user has explicitly opted into.
  *
- * Read and create are ALWAYS granted when any scope is present — they
- * never appear in this set and can't be toggled off. Write and delete
- * are the only user-facing toggles.
+ * Read and create are ALWAYS granted when any scope is present — they never appear in
+ * this set and can't be toggled off. Write, delete and ask (retrieval over the user's
+ * pinned files — one query embedding per call, so opt-in) are the user-facing toggles.
  */
 let optInScopes = $state(new Set<Exclude<DeskToolScope, 'desk:read' | 'desk:create'>>());
 

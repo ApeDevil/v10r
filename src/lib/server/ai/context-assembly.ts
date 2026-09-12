@@ -2,10 +2,10 @@
  * Chatbot context assembly — the pre-generation half of a chatbot turn.
  *
  * Everything that decides WHAT enters the chatbot's system prompt lives here:
- * the relevance + deixis gates, the single shared query embedding, the parallel
- * llmwiki / system-docs retrieval, and the block-by-block prompt assembly
- * (llmwiki context → project overview → retrieval context → current page →
- * catalog map → tool-degrade note).
+ * the relevance + deixis + navigation gates, the single shared query embedding, the
+ * parallel llmwiki / system-docs / catalog retrieval, and the block-by-block prompt
+ * assembly (llmwiki context → project overview → retrieval context → current page →
+ * catalog results → catalog map → tool-degrade note).
  *
  * ONE DOOR: the chat orchestrator (real turns) and the context-probe endpoint
  * (`/api/ai/context-probe`, the showcase x-ray) both call this function, so the
@@ -14,18 +14,25 @@
  * pipeline:chunks events the orchestrator streams to the client.
  */
 import type { Locale } from '$lib/i18n';
+import { tokenize } from '$lib/search/match';
+import type { SearchResult, SearchSurface } from '$lib/search/types';
 import { formatLlmwikiContext, type LlmwikiHit, loadOverview, searchLlmwiki } from '$lib/server/llmwiki';
 import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
-import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
+import { EMBEDDING_DIMENSIONS, PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
 import { generateEmbedding } from '$lib/server/retrieval/embed';
 import type { RetrievalResult } from '$lib/server/retrieval/types';
 import { formatCatalogMap, type PageContext } from '$lib/server/search';
 import type { ChunkSummary, RetrievalChunksEvent, RetrievalStepEvent } from '$lib/types/retrieval-trace';
+import type { EmbeddingConnection } from './connections';
 import { formatCurrentPageBlock } from './context/system-prompt';
+import { searchCatalogRecords } from './tools/search-catalog';
+import type { DocsSeed } from './tools/search-docs';
 
 /** Production system-docs retrieval profile for a chatbot turn. */
 export const SYSTEM_DOCS_TIERS: (1 | 2 | 3)[] = [1];
 export const SYSTEM_DOCS_MAX_CHUNKS = 4;
+/** Verified catalog rows a navigation question gets before generation (`<catalog-results>`). */
+export const CATALOG_RESULTS_LIMIT = 5;
 
 /**
  * Relevance gate for the chatbot's system-docs prefetch (user choice: relevance-gated,
@@ -56,6 +63,89 @@ export function referencesCurrentPage(text: string): boolean {
 	);
 }
 
+/**
+ * Navigation-intent gate: does the message ask WHERE something lives, or for a link to it?
+ * Such a question is answered by a verified catalog path, which the model could otherwise
+ * only obtain by spending a tool step on `search_catalog` — so the assembly runs that search
+ * itself, before generation, and puts the rows in the prompt. Deterministic; en/de/ru.
+ */
+export function wantsNavigation(text: string): boolean {
+	return /\b(?:where(?:'s| is| are| can i find| do i find)|links? (?:to|for)|(?:give|send|show) me (?:the |a )?(?:link|page|url)|take me to|wo (?:ist|sind|finde ich)|links? zu|zeig(?:e)? mir)\b|где|ссылк|покажи/i.test(
+		text,
+	);
+}
+
+/** A catalog search distilled from a navigation question: the subject, and the kind of surface named. */
+export interface CatalogQuery {
+	query: string;
+	surface: SearchSurface | null;
+}
+
+/** The kind of surface a navigation question names, mapped to the catalog surface it means. */
+const SURFACE_WORDS: Record<string, SearchSurface> = {
+	showcase: 'showcase',
+	showcases: 'showcase',
+	component: 'showcase',
+	components: 'showcase',
+	demo: 'showcase',
+	demos: 'showcase',
+	komponente: 'showcase',
+	компонент: 'showcase',
+	демо: 'showcase',
+	doc: 'doc',
+	docs: 'doc',
+	documentation: 'doc',
+	doku: 'doc',
+	dokumentation: 'doc',
+	документация: 'doc',
+	документацию: 'doc',
+	доки: 'doc',
+	blog: 'blog',
+	post: 'blog',
+	posts: 'blog',
+	article: 'blog',
+	articles: 'blog',
+	artikel: 'blog',
+	beitrag: 'blog',
+	статья: 'blog',
+	статью: 'blog',
+	пост: 'blog',
+};
+
+/** The asking, not the subject: navigation phrasing and function words the matcher must not see. */
+const NAVIGATION_NOISE: ReadonlySet<string> = new Set(
+	(
+		'where is are was the a an to of for in on at about me my i you it this that and or can could do does find ' +
+		'get give go send show take link links url page pages section please how what which want need looking ' +
+		'wo ist sind der die das den dem des ein eine einen einem einer zu zum zur über mir mich ich du sie es und ' +
+		'oder bitte seite seiten zeig zeige zeigen finde finden gibt kann wie was welche welcher welches ' +
+		'где ссылка ссылку ссылки на мне дай дайте покажи покажите найти найду как и или в к у о об про это эта ' +
+		'этот эту страница страницу страницы пожалуйста есть можно хочу нужна нужен'
+	).split(' '),
+);
+
+/**
+ * Distil a navigation question into what the catalog's AND-matcher can answer: every token
+ * is either a surface word (→ the `surface` facet), noise, or part of the subject. "Where is
+ * the auth showcase? Give me the link." → `{ query: 'auth', surface: 'showcase' }`. Null when
+ * no subject is left — the model then reaches for `search_catalog` as before.
+ */
+export function catalogQueryOf(text: string): CatalogQuery | null {
+	let surface: SearchSurface | null = null;
+	const subject: string[] = [];
+	for (const token of tokenize(text)) {
+		const facet = SURFACE_WORDS[token];
+		if (facet) {
+			surface ??= facet;
+			continue;
+		}
+		if (!NAVIGATION_NOISE.has(token)) subject.push(token);
+	}
+	return subject.length > 0 ? { query: subject.join(' '), surface } : null;
+}
+
+const describeError = (reason: unknown) => (reason instanceof Error ? reason.message : String(reason));
+
 /** A pipeline step as authored at a call site — the caller's emit stamps the derived axes. */
 type RawStepInput = Omit<RetrievalStepEvent, 'phase' | 'instanceKey' | 'requestId'> & { instanceKey?: string };
 
@@ -83,6 +173,14 @@ export interface ChatbotContextInput {
 	catalogLocale: Locale;
 	/** Whether retrieval tools are mounted this turn (drives the honest-degrade note). */
 	hasTools: boolean;
+	/** Catalog visibility ceiling (`'admin'` · `'user'` · null = public) for the navigation lane. */
+	authCeiling?: string | null;
+	/**
+	 * The request's already-opened Google connection (`registry.embeddingConnection()`), so
+	 * the turn's embeds spend no second provider-row read. Absent → the embed path reads
+	 * the row itself.
+	 */
+	embeddingConnection?: EmbeddingConnection;
 	/**
 	 * Probe mode: widen the system-docs candidate pool beyond the production cutoff.
 	 * The PROMPT is still assembled from the top `SYSTEM_DOCS_MAX_CHUNKS` only — rank
@@ -102,6 +200,7 @@ export interface AssembledBlock {
 		| 'retrieval-context'
 		| 'current-page'
 		| 'page-abstention'
+		| 'catalog-results'
 		| 'catalog-map'
 		| 'tool-degrade';
 	/** chars/4 estimate of the injected delta (includes glue text). */
@@ -117,12 +216,19 @@ export interface ChatbotContextResult {
 	promptContextBlocks: { chunkId: string; tokens: number }[];
 	/** Did system-docs retrieval return chunks that made it into the prompt? */
 	docsGrounded: boolean;
+	/**
+	 * Did an llmwiki context block enter the prompt? Exactly then the "Retrieval rules" naming
+	 * `get_llmwiki_pages` / `get_source_chunks` are in it, and exactly then those tools mount.
+	 */
+	llmwikiGrounded: boolean;
 	/** The per-query routing decisions, exposed for the probe. */
 	gates: {
 		/** Triviality gate: false → no embed, no retrieval at all this turn. */
 		groundDocs: boolean;
 		/** Deixis gate: the message points at the current page. */
 		wantsPageGrounding: boolean;
+		/** Navigation gate: the message asks where something lives, so the catalog was searched. */
+		wantsNavigation: boolean;
 		/** The actual embed query (page-seeded when the deixis gate fired). */
 		docsQuery: string;
 	};
@@ -132,11 +238,50 @@ export interface ChatbotContextResult {
 	docsCandidates: RetrievalResult['chunks'];
 	/** The chunks that actually entered the prompt (top `SYSTEM_DOCS_MAX_CHUNKS`). */
 	docsChosen: RetrievalResult['chunks'];
+	/** The docs retrieval this turn already paid for — `search_project_docs` reuses it. */
+	docsSeed?: DocsSeed;
+	/** Verified catalog rows put in front of the model (`<catalog-results>`); [] when none. */
+	catalogResults: SearchResult[];
 	/** Block-by-block outline of the assembled prompt (ids + sizes, never bodies). */
 	blocks: AssembledBlock[];
 	/** Per-lane failure messages (a lane can fail while the turn proceeds without it). */
-	errors: { llmwiki?: string; docs?: string };
-	timings: { llmwikiMs?: number; docsMs?: number };
+	errors: { llmwiki?: string; docs?: string; catalog?: string };
+	/**
+	 * Per-lane settle times — each lane's own wall clock, not the barrier's. The wiki and
+	 * docs lanes wait for the shared embed, so `llmwikiMs`/`docsMs` include `embedMs`.
+	 */
+	timings: { embedMs?: number; overviewMs?: number; llmwikiMs?: number; docsMs?: number; catalogMs?: number };
+}
+
+/** A lane's own outcome, written the moment it settles and read after the barrier. */
+interface LaneSettled {
+	ms: number;
+	failed: boolean;
+	error?: unknown;
+}
+
+/**
+ * Stamp a lane's own settle time. The four lanes join at one `Promise.allSettled`
+ * barrier; measuring after the barrier charges the slowest lane's wait to every lane,
+ * which is how a 10 s cold turn read as "everything was slow". The returned promise
+ * settles exactly like the input (a rejection is re-thrown), so consumers chain on it.
+ */
+function settle<T>(p: Promise<T>): { promise: Promise<T>; at: LaneSettled } {
+	const at: LaneSettled = { ms: 0, failed: false };
+	const started = performance.now();
+	const promise = p.then(
+		(value) => {
+			at.ms = Math.round(performance.now() - started);
+			return value;
+		},
+		(error: unknown) => {
+			at.ms = Math.round(performance.now() - started);
+			at.failed = true;
+			at.error = error;
+			throw error;
+		},
+	);
+	return { promise, at };
 }
 
 /**
@@ -150,12 +295,22 @@ export async function assembleChatbotContext(
 	telemetry?: AssemblyTelemetry,
 ): Promise<ChatbotContextResult> {
 	const { userId, userMsgText, baseSystemPrompt, collectionId, pageContext, catalogLocale, hasTools } = input;
+	const { embeddingConnection, authCeiling = null } = input;
 	const emit = telemetry?.emit ?? (() => {});
 	const t0 = telemetry?.t0 ?? performance.now();
 
 	let systemPrompt = baseSystemPrompt;
 	let docsGrounded = false;
+	let llmwikiGrounded = false;
+	let docsSeed: DocsSeed | undefined;
+	let catalogResults: SearchResult[] = [];
 	const wantsPageGrounding = !!pageContext && referencesCurrentPage(userMsgText);
+	// Navigation: a "where is…" question is answered by a verified path. The catalog search
+	// is embedding-free and independent of every other lane, so it runs alongside them and
+	// its rows enter the prompt as `<catalog-results>` — the model answers in one step instead
+	// of spending one on `search_catalog` (and, with the raw sentence, often finding nothing).
+	const navigation = wantsNavigation(userMsgText);
+	const catalogQuery = navigation ? catalogQueryOf(userMsgText) : null;
 	const promptContextBlocks: { chunkId: string; tokens: number }[] = [];
 	const blocks: AssembledBlock[] = [{ id: 'role', tokensEst: Math.ceil(baseSystemPrompt.length / 4), dynamic: false }];
 	const errors: ChatbotContextResult['errors'] = {};
@@ -190,6 +345,10 @@ export async function assembleChatbotContext(
 			status: 'active',
 			startOffsetMs: Math.round(overviewStart - t0),
 		});
+		// Both overview loads are independent of the embed, so they leave first. The
+		// system-owned project map grounds broad questions even with an empty personal wiki.
+		const overviewLane = settle(loadOverview([userId], collectionId));
+		const sysOverviewLane = settle(loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID));
 		const searchStart = performance.now();
 		emit({
 			type: 'pipeline:step',
@@ -210,7 +369,12 @@ export async function assembleChatbotContext(
 		// system-docs error). On the deixis page-grounding path `docsQuery !== userMsgText`,
 		// so retrieve embeds its own page-seeded query independently (in parallel) and does
 		// NOT reuse the shared vector — same two-embed cost as before for that rare case.
-		const sharedEmbedPromise: Promise<number[]> | null = groundDocs ? generateEmbedding(userMsgText) : null;
+		const embedStart = performance.now();
+		const embedLane = groundDocs ? settle(generateEmbedding(userMsgText, { connection: embeddingConnection })) : null;
+		const sharedEmbedPromise: Promise<number[]> | null = embedLane?.promise ?? null;
+		if (groundDocs) {
+			emit({ type: 'pipeline:step', step: 'embed', status: 'active', startOffsetMs: Math.round(embedStart - t0) });
+		}
 		const reuseSharedForDocs = docsQuery === userMsgText;
 
 		// Probe widening — never below the production cutoff; the prompt only ever sees
@@ -242,16 +406,86 @@ export async function assembleChatbotContext(
 							queryEmbedding: emb,
 						}),
 					)
-				: retrieve(docsQuery, { userId: SYSTEM_DOCS_USER_ID, tiers: SYSTEM_DOCS_TIERS, maxChunks: docsPool });
-		const [overviewResult, hitsResult, docsResult, sysOverviewResult] = await Promise.allSettled([
-			loadOverview([userId], collectionId),
-			llmwikiCall,
-			docsCall,
-			// System-owned project map — grounds broad questions even with an empty personal wiki.
-			loadOverview([SYSTEM_DOCS_USER_ID], PROJECT_DOCS_COLLECTION_ID),
+				: retrieve(docsQuery, {
+						userId: SYSTEM_DOCS_USER_ID,
+						tiers: SYSTEM_DOCS_TIERS,
+						maxChunks: docsPool,
+						embeddingConnection,
+					});
+		// The wiki and docs lanes chain on the shared embed, so their settle times INCLUDE the
+		// embed wait; `embedMs` is that wait on its own.
+		const wikiLane = settle(llmwikiCall);
+		const docsLane = settle(docsCall);
+		const catalogStart = performance.now();
+		if (catalogQuery) {
+			emit({ type: 'pipeline:step', step: 'catalog', status: 'active', startOffsetMs: Math.round(catalogStart - t0) });
+		}
+		const catalogLane = catalogQuery
+			? settle(
+					searchCatalogRecords(catalogQuery.query, {
+						locale: catalogLocale,
+						authCeiling,
+						surface: catalogQuery.surface,
+						limit: CATALOG_RESULTS_LIMIT,
+					}),
+				)
+			: null;
+		const [overviewResult, hitsResult, docsResult, sysOverviewResult, catalogResult] = await Promise.allSettled([
+			overviewLane.promise,
+			wikiLane.promise,
+			docsLane.promise,
+			sysOverviewLane.promise,
+			catalogLane?.promise ?? Promise.resolve([] as SearchResult[]),
 		]);
 
-		const overviewMs = Math.round(performance.now() - overviewStart);
+		if (catalogLane && catalogQuery) {
+			timings.catalogMs = catalogLane.at.ms;
+			if (catalogResult.status === 'fulfilled') {
+				catalogResults = catalogResult.value;
+				emit({
+					type: 'pipeline:step',
+					step: 'catalog',
+					status: 'done',
+					durationMs: catalogLane.at.ms,
+					detail: { kind: 'catalog', hits: catalogResults.length, surface: catalogQuery.surface },
+				});
+			} else {
+				errors.catalog = describeError(catalogResult.reason);
+				emit({
+					type: 'pipeline:step',
+					step: 'catalog',
+					status: 'error',
+					durationMs: catalogLane.at.ms,
+					error: errors.catalog,
+				});
+			}
+		}
+
+		// The shared embed settled before either consumer could — its lane closes first.
+		if (embedLane) {
+			timings.embedMs = embedLane.at.ms;
+			emit(
+				embedLane.at.failed
+					? {
+							type: 'pipeline:step',
+							step: 'embed',
+							status: 'error',
+							durationMs: embedLane.at.ms,
+							error: describeError(embedLane.at.error),
+						}
+					: {
+							type: 'pipeline:step',
+							step: 'embed',
+							status: 'done',
+							durationMs: embedLane.at.ms,
+							// No `query`: the trace ships to the client and the text is the user's.
+							detail: { kind: 'embed', dimensions: EMBEDDING_DIMENSIONS, reused: false },
+						},
+			);
+		}
+
+		const overviewMs = Math.max(overviewLane.at.ms, sysOverviewLane.at.ms);
+		timings.overviewMs = overviewMs;
 		if (overviewResult.status === 'fulfilled') {
 			emit({ type: 'pipeline:step', step: 'llmwiki:overview', status: 'done', durationMs: overviewMs });
 		} else {
@@ -264,7 +498,7 @@ export async function assembleChatbotContext(
 			});
 		}
 
-		const searchMs = Math.round(performance.now() - searchStart);
+		const searchMs = wikiLane.at.ms;
 		timings.llmwikiMs = searchMs;
 		if (hitsResult.status === 'fulfilled') {
 			const hits = hitsResult.value;
@@ -328,6 +562,7 @@ Retrieval rules:
 5. If no pointer exists for what the user asked, say so plainly instead of fabricating an ID.
 6. Do not expand pointers preemptively on broad questions.`;
 				pushBlock('llmwiki-context', before, true);
+				llmwikiGrounded = true;
 			}
 			emit({
 				type: 'pipeline:step',
@@ -380,7 +615,7 @@ The <project-overview> above is the canonical high-level map of v10r (a full-sta
 				? docsResult.value.chunks.slice(0, SYSTEM_DOCS_MAX_CHUNKS)
 				: [];
 		if (groundDocs) {
-			const docsMs = Math.round(performance.now() - docsStart);
+			const docsMs = docsLane.at.ms;
 			timings.docsMs = docsMs;
 			if (docsResult.status === 'fulfilled') {
 				emit({
@@ -414,6 +649,7 @@ The <project-overview> above is the canonical high-level map of v10r (a full-sta
 		if (docsResult.status === 'fulfilled' && docsResult.value && chosen.length > 0) {
 			docsCandidates = docsResult.value.chunks;
 			docsChosen = chosen;
+			docsSeed = { query: userMsgText, result: docsResult.value };
 			const docsBlock = formatContextForPrompt({ ...docsResult.value, chunks: chosen });
 			if (docsBlock) {
 				docsGrounded = true;
@@ -427,7 +663,7 @@ The <project-overview> above is the canonical high-level map of v10r (a full-sta
 ${docsBlock}
 </retrieval-context>
 
-The <retrieval-context> above is retrieved from the project's OWN documentation — treat it as authoritative for how and why v10r is built. When you cite a /docs path or link, surface it via \`search_catalog\` (never invent paths).`;
+The <retrieval-context> above is retrieved from the project's OWN documentation — treat it as authoritative for how and why v10r is built. The documentation was already searched for the user's question; call \`search_project_docs\` only for a different topic. When you cite a /docs path or link, surface it via \`search_catalog\` (never invent paths).`;
 				pushBlock('retrieval-context', before, true);
 			}
 		}
@@ -448,6 +684,24 @@ The <retrieval-context> above is retrieved from the project's OWN documentation 
 			systemPrompt = `${systemPrompt}\n\nNo page-specific documentation was retrieved for "${pageContext.title}". Do not fabricate specifics about this page; if the user is asking about it, say plainly you don't have page-specific docs for it, then offer general project knowledge or where to look.`;
 			pushBlock('page-abstention', before, true);
 		}
+	}
+
+	// Navigation grounding — the verified rows the catalog search found for a "where is…"
+	// question, paths verbatim. They count as surfaced this turn (chips + verifier) exactly
+	// like `search_catalog` output; the rule line makes them citable without a tool step.
+	if (catalogResults.length > 0) {
+		const before = systemPrompt.length;
+		const rows = catalogResults.map(
+			(r) => `- [${r.surface}] ${r.title} — ${r.path}${r.anchor ?? ''} (${r.breadcrumb.join(' › ')})`,
+		);
+		systemPrompt = `${systemPrompt}
+
+<catalog-results>
+${rows.join('\n')}
+</catalog-results>
+
+The <catalog-results> above are verified catalog results for this turn: cite their paths exactly as written. Call \`search_catalog\` only if none of them is what the user asked for.`;
+		pushBlock('catalog-results', before, true);
 	}
 
 	// Catalog grounding — always available alongside llmwiki. The search_catalog tool
@@ -484,10 +738,13 @@ NOTE: retrieval tools are unavailable this turn due to provider limits. Do not c
 		systemPrompt,
 		promptContextBlocks,
 		docsGrounded,
-		gates: { groundDocs, wantsPageGrounding, docsQuery },
+		llmwikiGrounded,
+		gates: { groundDocs, wantsPageGrounding, wantsNavigation: navigation, docsQuery },
 		llmwikiHits,
 		docsCandidates,
 		docsChosen,
+		docsSeed,
+		catalogResults,
 		blocks,
 		errors,
 		timings,

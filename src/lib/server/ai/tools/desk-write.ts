@@ -8,10 +8,19 @@
  * and the mutation runs only via the server-verified approve-route replay
  * (`executeDeskToolCall`), which records a genuine `approvedBy`/`approvedAt`.
  * This is why the tools import queries (to validate + label) but never mutations.
+ *
+ * The sentinel carries the REVIEWED BASELINE (`target`): the file's version at the moment
+ * the change was proposed. The orchestrator persists it on the proposal step and the
+ * replay refuses to run against a file that has moved on since — the user approved a
+ * change to the document they saw, not to whatever it became.
  */
-import { jsonSchema, tool } from 'ai';
-import { getFile } from '$lib/server/db/desk/queries';
-import type { CellUpdate } from './cell-updates';
+import { tool } from 'ai';
+import { getMarkdownByFileId } from '$lib/server/db/desk/queries';
+import { DESK_READ_MAX_CHARS } from '../config';
+import { cancelledBefore } from './cancelled';
+import { DESK_MUTATION_INPUTS, toolInputSchema } from './desk-mutation-inputs';
+import { applyMarkdownEdits } from './markdown-edits';
+import { readProposedTarget } from './proposed-target';
 
 // Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
@@ -22,49 +31,21 @@ export function createWriteTools(userId: string) {
 				'Update cells in a spreadsheet. Provide an array of cell updates — ' +
 				'only the specified cells are changed. Other cells remain untouched. ' +
 				'The change is queued for the user to approve before it is saved.',
-			inputSchema: jsonSchema<{
-				file_id: string;
-				updates: CellUpdate[];
-			}>({
-				type: 'object',
-				properties: {
-					file_id: {
-						type: 'string',
-						description: 'Spreadsheet file ID. Get from desk_list_files or desk_read_file.',
-					},
-					updates: {
-						type: 'array',
-						items: {
-							type: 'object',
-							properties: {
-								cell: { type: 'string', description: 'Cell address like "A1", "B3", "C10".' },
-								value: {
-									description:
-										'Cell value. String for text, number for numeric, null to clear; a string starting ' +
-										'with "=" is a formula (SUM, AVERAGE, COUNT, MIN, MAX, IF over refs like B2 and ' +
-										'ranges like B2:B9). Formulas that read the cell are recomputed on save.',
-								},
-							},
-							required: ['cell', 'value'],
-						},
-						description: 'Array of cell updates to apply.',
-					},
-				},
-				required: ['file_id', 'updates'],
-			}),
-			execute: async ({ file_id, updates }, { abortSignal: _abortSignal }) => {
+			inputSchema: toolInputSchema(DESK_MUTATION_INPUTS.desk_update_cells),
+			execute: async ({ file_id, updates }, { abortSignal }) => {
+				const gone = cancelledBefore(abortSignal);
+				if (gone) return gone;
 				try {
-					const fileRow = await getFile(file_id, userId);
-					if (!fileRow) return { error: 'Spreadsheet not found or not accessible.' };
-					if (fileRow.type !== 'spreadsheet') return { error: 'That file is not a spreadsheet.' };
+					const target = await readProposedTarget(userId, file_id);
+					if (!target) return { error: 'Spreadsheet not found or not accessible.' };
+					if (target.fileType !== 'spreadsheet') return { error: 'That file is not a spreadsheet.' };
 
 					// HARD GATE: do not merge/write here. The approve-route replay merges against
 					// the live cell map and persists (with a pre-image revision snapshot).
 					return {
 						requiresApproval: true,
-						action: `Update ${updates.length} cell${updates.length === 1 ? '' : 's'} in "${fileRow.name}"`,
-						fileId: file_id,
-						fileName: fileRow.name,
+						action: `Update ${updates.length} cell${updates.length === 1 ? '' : 's'} in "${target.name}"`,
+						target,
 					};
 				} catch {
 					return { error: 'Failed to prepare cell update.' };
@@ -74,24 +55,18 @@ export function createWriteTools(userId: string) {
 
 		desk_rename_file: tool({
 			description: "Rename a file on the user's desk. The rename is queued for the user to approve first.",
-			inputSchema: jsonSchema<{ file_id: string; name: string }>({
-				type: 'object',
-				properties: {
-					file_id: { type: 'string', description: 'The file ID to rename.' },
-					name: { type: 'string', minLength: 1, maxLength: 200, description: 'New name for the file.' },
-				},
-				required: ['file_id', 'name'],
-			}),
-			execute: async ({ file_id, name }, { abortSignal: _abortSignal }) => {
+			inputSchema: toolInputSchema(DESK_MUTATION_INPUTS.desk_rename_file),
+			execute: async ({ file_id, name }, { abortSignal }) => {
+				const gone = cancelledBefore(abortSignal);
+				if (gone) return gone;
 				try {
-					const fileRow = await getFile(file_id, userId);
-					if (!fileRow) return { error: 'File not found or not accessible.' };
+					const target = await readProposedTarget(userId, file_id);
+					if (!target) return { error: 'File not found or not accessible.' };
 
 					return {
 						requiresApproval: true,
-						action: `Rename "${fileRow.name}" → "${name}"`,
-						fileId: file_id,
-						fileName: fileRow.name,
+						action: `Rename "${target.name}" → "${name}"`,
+						target,
 					};
 				} catch {
 					return { error: 'Failed to prepare rename.' };
@@ -101,41 +76,69 @@ export function createWriteTools(userId: string) {
 
 		desk_update_markdown: tool({
 			description:
-				'Replace the full content of a markdown document. ' +
-				'Use desk_read_file first to see current content. ' +
-				'Provide the complete new markdown (not a diff). ' +
+				'Replace the FULL content of a short markdown document (one that desk_read_file showed whole — ' +
+				`at most ${DESK_READ_MAX_CHARS} characters). Provide the complete new markdown (not a diff). ` +
+				'For a longer document, or for a small change, use desk_edit_markdown. ' +
 				'The overwrite is queued for the user to approve before it is saved.',
-			inputSchema: jsonSchema<{ file_id: string; content: string }>({
-				type: 'object',
-				properties: {
-					file_id: {
-						type: 'string',
-						description: 'Markdown file ID. Get from desk_list_files or desk context.',
-					},
-					content: {
-						type: 'string',
-						maxLength: 50000,
-						description: 'Complete new markdown content to replace the document.',
-					},
-				},
-				required: ['file_id', 'content'],
-			}),
-			execute: async ({ file_id, content }) => {
+			inputSchema: toolInputSchema(DESK_MUTATION_INPUTS.desk_update_markdown),
+			execute: async ({ file_id, content }, { abortSignal }) => {
+				const gone = cancelledBefore(abortSignal);
+				if (gone) return gone;
 				try {
-					const fileRow = await getFile(file_id, userId);
-					if (!fileRow) return { error: 'Markdown file not found or not accessible.' };
-					if (fileRow.type !== 'markdown') return { error: 'That file is not a markdown document.' };
+					const target = await readProposedTarget(userId, file_id);
+					if (!target) return { error: 'Markdown file not found or not accessible.' };
+					if (target.fileType !== 'markdown') return { error: 'That file is not a markdown document.' };
+					const current = await getMarkdownByFileId(file_id, userId);
+					if (current && current.markdown.content.length > DESK_READ_MAX_CHARS) {
+						// The same rule the replay enforces, surfaced here so the model can change course.
+						return {
+							error: `"${target.name}" is ${current.markdown.content.length} characters — longer than one read shows, so a whole-document rewrite would drop text you never saw. Use desk_edit_markdown for targeted changes.`,
+						};
+					}
 
 					// HARD GATE: do not overwrite here. The approve-route replay overwrites and
 					// captures a pre-image revision so the old content stays recoverable.
 					return {
 						requiresApproval: true,
-						action: `Overwrite "${fileRow.name}" (${content.length} chars)`,
-						fileId: file_id,
-						fileName: fileRow.name,
+						action: `Overwrite "${target.name}" (${content.length} chars)`,
+						target,
 					};
 				} catch {
 					return { error: 'Failed to prepare markdown update.' };
+				}
+			},
+		}),
+
+		desk_edit_markdown: tool({
+			description:
+				'Make targeted edits to a markdown document: each edit replaces one exact passage (`find`, which ' +
+				'must occur exactly once — quote enough surrounding text to be unique) with `replace`. Works on ' +
+				'documents of any length and leaves everything else untouched. Read the passage with desk_read_file ' +
+				'first. The edits are queued for the user to approve before they are saved.',
+			inputSchema: toolInputSchema(DESK_MUTATION_INPUTS.desk_edit_markdown),
+			execute: async ({ file_id, edits }, { abortSignal }) => {
+				const gone = cancelledBefore(abortSignal);
+				if (gone) return gone;
+				try {
+					const target = await readProposedTarget(userId, file_id);
+					if (!target) return { error: 'Markdown file not found or not accessible.' };
+					if (target.fileType !== 'markdown') return { error: 'That file is not a markdown document.' };
+					const current = await getMarkdownByFileId(file_id, userId);
+					if (!current) return { error: 'Markdown file not found or not accessible.' };
+					// Check the edits against the document NOW — a passage that is not there, or is there
+					// twice, is the model's to fix before a card is shown, not the replay's to refuse.
+					const edited = applyMarkdownEdits(current.markdown.content, edits);
+					if ('error' in edited) return edited;
+
+					// HARD GATE: do not write here. The approve-route replay applies the edits against
+					// the reviewed version and captures a pre-image revision.
+					return {
+						requiresApproval: true,
+						action: `Edit ${edits.length} passage${edits.length === 1 ? '' : 's'} in "${target.name}"`,
+						target,
+					};
+				} catch {
+					return { error: 'Failed to prepare markdown edit.' };
 				}
 			},
 		}),

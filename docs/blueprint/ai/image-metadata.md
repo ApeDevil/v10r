@@ -63,7 +63,7 @@ review & approve dialog  ← diff table + GPS consent gate
 save action → saveImageMetadata (atomic upsert + tag replace)
 ```
 
-The analyze endpoint lives at `POST /api/ai/images/[id]/analyze` (promoted 2026-08 from a route-local showcase RPC, which had bypassed the shared AI guard). It sits behind `guardAiRequest` (auth → configured → rate-limit → daily budget), returns the repo-wide `{ data } / { error: { code, message } }` envelope, and takes a short redis idempotency claim per `(user, image)` so a duplicate request cannot double-spend vision budget. Failure codes map to HTTP status: `no_provider`→503, `budget`→429, `model_refused`→422, `timeout`→504, `extract_failed`→500.
+The analyze endpoint lives at `POST /api/ai/images/[id]/analyze` (promoted 2026-08 from a route-local showcase RPC, which had bypassed the shared AI guard). It sits behind `guardAiRequest` (auth → configured → rate-limit ∥ daily budget), returns the repo-wide `{ data } / { error: { code, message } }` envelope, and takes a short redis idempotency claim per `(user, image)` so a duplicate request cannot double-spend vision budget. Failure codes map to HTTP status: `no_provider`→503, `budget`→429, `model_refused`→422, `timeout`→504, `extract_failed`→500.
 
 ---
 
@@ -90,7 +90,7 @@ This is not optional defense. The default active provider is registry index 0 (G
 
 | Provider | Model | `supportsVision` |
 |----------|-------|------------------|
-| Groq | llama-3.3-70b-versatile | false (excluded) |
+| Groq | openai/gpt-oss-120b | false (excluded) |
 | OpenAI | gpt-4o-mini | true |
 | Google Gemini | gemini-2.5-flash | true (preferred) |
 

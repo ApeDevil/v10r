@@ -1,4 +1,4 @@
-import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../index';
 import { document } from '../schema/retrieval';
 
@@ -37,6 +37,18 @@ export async function getDocumentBySourcePath(sourceUri: string, userId: string)
 		.where(and(eq(document.sourceUri, sourceUri), eq(document.userId, userId), isNull(document.deletedAt)))
 		.limit(1);
 	return row ?? null;
+}
+
+/**
+ * The origin and index time of the documents behind a set of retrieved chunks — what lets
+ * `desk_search_knowledge` cite the desk file a chunk came from and say how fresh the copy is.
+ */
+export async function listDocumentOrigins(ids: string[], userId: string) {
+	if (ids.length === 0) return [];
+	return db
+		.select({ id: document.id, sourceUri: document.sourceUri, updatedAt: document.updatedAt })
+		.from(document)
+		.where(and(inArray(document.id, ids), eq(document.userId, userId)));
 }
 
 /** List all active `source = 'desk'` documents (the deskbot corpus) for sync reconciliation. */

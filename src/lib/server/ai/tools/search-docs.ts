@@ -14,6 +14,10 @@
  *
  * Complements `search_catalog` (WHERE a surface lives) — this answers HOW/WHY from
  * the doc bodies. Returns nothing (not an error) when the corpus is empty.
+ *
+ * The context assembly has already searched this corpus for the user's message before
+ * the model runs; a call that asks the same question again is answered from that
+ * result (`seed`) without a second embedding — the prompt says so, this is the net.
  */
 
 import { jsonSchema, tool } from 'ai';
@@ -24,6 +28,7 @@ import { db } from '$lib/server/db';
 import { document } from '$lib/server/db/schema/retrieval';
 import { retrieve } from '$lib/server/retrieval';
 import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
+import type { EmbeddingConnection } from '../connections';
 import type { CatalogSink } from './search-catalog';
 
 // Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
@@ -38,7 +43,24 @@ const MAX_LIMIT = 8;
 /** Per-chunk content budget handed to the model (chars). */
 const SNIPPET_CHARS = 600;
 
-export function createSearchDocsTool(locale: Locale, sink?: CatalogSink) {
+/** The assembly's system-docs retrieval for this turn: the user's question and what came back for it. */
+export interface DocsSeed {
+	query: string;
+	result: Awaited<ReturnType<typeof retrieve>>;
+}
+
+export interface SearchDocsToolOptions {
+	/** The request's already-opened Google connection — the tool's embed spends no second row read. */
+	embeddingConnection?: EmbeddingConnection;
+	/** The turn's pre-generation docs retrieval; a tool query equal to its question reuses it. */
+	seed?: DocsSeed;
+}
+
+/** Same question, whatever the casing or spacing — the seed answers it. */
+const sameQuestion = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+export function createSearchDocsTool(locale: Locale, sink?: CatalogSink, options: SearchDocsToolOptions = {}) {
+	const { embeddingConnection, seed } = options;
 	return {
 		search_project_docs: tool({
 			description:
@@ -73,8 +95,12 @@ export function createSearchDocsTool(locale: Locale, sink?: CatalogSink) {
 					const cap = Math.min(Math.max(1, limit ?? DEFAULT_LIMIT), MAX_LIMIT);
 
 					// Tier-1 semantic + lexical retrieval over the SYSTEM-owned docs corpus
-					// (tier 1 is the retrieve() default).
-					const result = await retrieve(q, { userId: SYSTEM_DOCS_USER_ID, maxChunks: cap });
+					// (tier 1 is the retrieve() default) — unless the assembly already ran exactly
+					// this question, whose chunks (its pool, capped here) cost no embedding.
+					const result =
+						seed && sameQuestion(q, seed.query)
+							? { ...seed.result, chunks: seed.result.chunks.slice(0, cap) }
+							: await retrieve(q, { userId: SYSTEM_DOCS_USER_ID, maxChunks: cap, embeddingConnection });
 					if (result.chunks.length === 0) return { results: [] };
 
 					// Resolve each chunk's parent doc → canonical /docs path (the soft-pointer

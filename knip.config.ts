@@ -12,11 +12,17 @@ const config: KnipConfig = {
 	// Entry points Knip can't trace.
 	// mcp/ = standalone Pattern MCP server, spawned by MCP clients outside the app graph.
 	// pattern-library/ = the registry + its schema, read by that server under bare Bun.
-	// The two scripts/ entries are documented manual diagnostics with no package.json script
-	// (docs/stack/data/postgres.md, scripts/perf/README.md). Scripts wired to a package.json
-	// script are already treated as entries, so do NOT broaden this to scripts/**/*.ts —
-	// that would hide genuinely orphaned one-off scripts.
-	entry: ['mcp/*.ts', 'pattern-library/*.ts', 'scripts/db/verify-tx-rollback.ts', 'scripts/perf/db-explain.ts'],
+	// The three scripts/ entries are documented manual diagnostics with no package.json script
+	// (docs/stack/data/postgres.md, scripts/perf/README.md; the tap is pasted into a browser
+	// console). Scripts wired to a package.json script are already treated as entries, so do
+	// NOT broaden this to scripts/**/* — that would hide genuinely orphaned one-off scripts.
+	entry: [
+		'mcp/*.ts',
+		'pattern-library/*.ts',
+		'scripts/db/verify-tx-rollback.ts',
+		'scripts/perf/db-explain.ts',
+		'scripts/perf/vely-turn-tap.js',
+	],
 
 	// Files Knip can't trace through Svelte template imports or re-export chains
 	ignore: [

@@ -343,7 +343,7 @@ async function finishKit() {
 				</Button>
 
 				{#if !data.aiAvailable}
-					<span class="text-fluid-xs text-muted">No vision provider configured — analysis is unavailable.</span>
+					<span class="text-fluid-xs text-muted">No vision-capable AI provider is connected — analysis is unavailable.</span>
 				{:else if !hasImage}
 					<span class="text-fluid-xs text-muted">Upload an image first.</span>
 				{:else if estimate && visionState === 'idle'}

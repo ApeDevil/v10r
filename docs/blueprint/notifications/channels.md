@@ -225,8 +225,8 @@ Before sending notification:
 
 | Requirement | Implementation |
 |-------------|----------------|
-| **Algorithm** | AES-256-GCM (Web Crypto, authenticated encryption) |
-| **Key management** | 64-char hex `ENCRYPTION_KEY` env var (raw 32-byte key, no KMS/KEK) |
+| **Algorithm** | AES-256-GCM (Web Crypto, authenticated encryption) — `$lib/server/security/aes-gcm.ts`, shared with the AI provider keys |
+| **Key management** | 64-char hex `ENCRYPTION_KEY` env var (raw 32-byte key, no KMS/KEK), read once in `security/encryption-key.ts` and passed to the primitive by the caller. Rotating or losing it invalidates every stored credential — Discord tokens *and* AI provider keys |
 | **Nonce** | Unique 96-bit random per encryption (critical!) |
 | **Storage format** | `nonce:ciphertext` (Base64) — GCM auth tag embedded in the ciphertext |
 

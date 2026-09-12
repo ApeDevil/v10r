@@ -7,6 +7,7 @@ import { ChatPanel } from '$lib/components/desk/panels/bot';
 import { AuthorGate, EditorPanel } from '$lib/components/desk/panels/editor';
 import { ExplorerPanel } from '$lib/components/desk/panels/explorer';
 import IOLogPanel from '$lib/components/desk/panels/io-log/IOLogPanel.svelte';
+import { MarkdownPanel } from '$lib/components/desk/panels/markdown';
 import { PreviewPanel } from '$lib/components/desk/panels/preview';
 import { SpreadsheetPanel } from '$lib/components/desk/panels/spreadsheet';
 import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/desk/panels';
@@ -130,6 +131,8 @@ function getPanelType(panelId: string): string | undefined {
 					<ChatPanel {panelId} />
 				{:else if type === 'spreadsheet'}
 					<SpreadsheetPanel {panelId} />
+				{:else if type === 'markdown'}
+					<MarkdownPanel {panelId} />
 				{:else if type === 'io-log'}
 					<IOLogPanel {panelId} />
 				{:else}

@@ -120,7 +120,7 @@ A per-turn cap (`MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN = 3`) is enforced by the o
 2. **Wiki search** — `llmwiki/search.ts` runs hybrid vector (TLDR + title + tags) + BM25 (body) → top-N `LlmwikiHit[]`.
 3. **Pointer hydration** — `llmwiki/queries.ts:hydratePointers` runs a single JOIN, caps pointers per page at `POINTER_CAP=5`, ordered by `weight DESC, chunkId ASC`.
 4. **Prompt encoding** — `llmwiki/wiki-format.ts` (`formatLlmwikiContext`) formats hits + pointers in a compact TOON-ish layout (no external TOON dependency) into a `<llmwiki-hits>` block in the system prompt. See [toon.md](./toon.md).
-5. **Stream** — `streamText` runs with `get_llmwiki_pages` and `get_source_chunks` in the tool set. The model answers from TLDRs by default; calls `get_source_chunks` only for exact wording, quotes, or claim verification.
+5. **Stream** — `streamText` runs with `get_llmwiki_pages` and `get_source_chunks` in the tool set **only when an llmwiki context block entered the prompt** (`assembleChatbotContext` → `llmwikiGrounded` → `buildRetrievalTools({ llmwiki })`); the "Retrieval rules" that name the pair are injected with that block, and on an empty wiki (every fresh user) neither is mounted — a call to either would be a model step spent on nothing. The model answers from TLDRs by default; calls `get_source_chunks` only for exact wording, quotes, or claim verification. The last step the budget allows (`CHATBOT_MAX_STEPS`) runs tool-less (`policy/step-budget.ts`, `answerOnLastStep` via `prepareStep`), so a turn ends in an answer, never on a tool call nothing executes.
 6. **Citation verification** — `onFinish` calls `llmwiki/verify.ts`, which compares drilled chunk IDs against current `chunk.contentHash` and emits an SSE `citations` frame.
 
 ---
@@ -161,6 +161,10 @@ search_catalog({ query: string, surface?: 'page'|'showcase'|'section'|'doc'|'blo
 
 Meta: `searchCatalogToolMeta = { search_catalog: { risk: 'read', scope: 'desk:read' } }`.
 
+### Navigation grounding (`<catalog-results>`)
+
+A question that asks **where** something lives is answered by a verified path — which the model could otherwise only obtain by spending a tool step (and, with the raw sentence as the query, the AND-matcher often found nothing: "Where is the auth showcase?" answered "not found" after three rounds). So the assembly searches first. `wantsNavigation(text)` (deterministic, en/de/ru: "where is", "give me the link", "wo ist", "где", …) gates it; `catalogQueryOf(text)` distils the sentence into what the matcher can answer — surface words become the `surface` facet, navigation phrasing and function words are dropped, the rest is the subject (`"Where is the auth showcase? Give me the link."` → `{ query: 'auth', surface: 'showcase' }`). The search is `searchCatalogRecords` — the same function the tool's `execute` calls (ONE DOOR, `tools/search-catalog.ts`) — run as a fifth lane in parallel with the others (no embedding; `catalog` step in the trace), capped at `CATALOG_RESULTS_LIMIT` rows. The rows enter the prompt as a dynamic `<catalog-results>` block (`[surface] title — path (breadcrumb)`, paths verbatim) with one rule: cite them as written, call `search_catalog` only if none is what was asked. They are handed to `buildRetrievalTools({ catalogSeed })`, so the citation verifier and the chips treat them exactly like tool output. The probe reports the gate as `catalog_nav`.
+
 ### `<catalog-map>` prompt injection
 
 `src/lib/server/search/catalog-map.ts`, `formatCatalogMap(locale)`. A path-free (~120 tok) shape hint injected into the system prompt: per-surface record counts + top breadcrumb group labels. Deliberately path-free — a path-bearing map would let the model answer from the (possibly stale) prompt instead of calling `search_catalog`, bypassing the verifier.
@@ -171,7 +175,7 @@ Meta: `searchCatalogToolMeta = { search_catalog: { risk: 'read', scope: 'desk:re
 
 | Status | Meaning |
 |--------|---------|
-| `exists` | Path was surfaced by `search_catalog` this turn — grounded |
+| `exists` | Path was surfaced this turn — by `search_catalog` or the assembly's `<catalog-results>` — grounded |
 | `drifted` | Real catalog path recalled without surfacing — risky recall |
 | `none` | Looks like an internal route but not in the catalog — hallucination candidate |
 
@@ -187,7 +191,7 @@ The project's own `docs/` markdown is a retrievable corpus. `search_catalog` ans
 
 ### `search_project_docs` tool
 
-`src/lib/server/ai/tools/search-docs.ts`. Mounted by `buildRetrievalTools` alongside `search_catalog`, so it's auto-available whenever the `useLlmwiki` branch runs (always-on for the chatbot).
+`src/lib/server/ai/tools/search-docs.ts`. Mounted by `buildRetrievalTools` alongside `search_catalog`, so it's auto-available whenever the `useLlmwiki` branch runs (always-on for the chatbot). The assembly's own system-docs retrieval (step 0 above) is handed to the tool as its `seed` (`docsSeed` = the user's question + the `RetrievalResult`); the `<retrieval-context>` framing tells the model the docs were already searched for the question, and a call that asks it anyway is answered from the seed — capped, paths resolved, surfaced — without a second embedding.
 
 ```typescript
 search_project_docs({ query: string, limit?: 1–8 })
@@ -275,12 +279,12 @@ podman exec v10r bun run db:ingest-docs
 (Or `vr ref`, which chains this after the MCP registry/excerpt-snapshot steps — see
 [dev-cli.md](../../stack/ops/dev-cli.md).)
 
-- Hand-rolls its own Neon pool + Gemini embedder from `process.env` (the app's `retrieval` modules import `$lib`/`$env` and can't run under bare Bun). Reuses only the Vite-free `splitMarkdown`.
+- Hand-rolls its own Neon pool from `process.env.NEON_DATABASE_URL_PROD` (the app's `retrieval` modules import `$lib`/`$env` and can't run under bare Bun), then reads the **saved Google connection** through the alias-free `db/ai/provider-connections.ts` + `ai/connections.ts` leaves, decrypting with `process.env.ENCRYPTION_KEY` — the same reading the app uses. Google disabled, keyless or undecryptable → secret-free message, exit 1, corpus untouched. Reuses the Vite-free `planChunks`.
 - Enumerates `docs/**/*.md`, importing the blocklist + canonical-path derivation (`isBlocked`, `parseFrontmatter`, `slugify`, `deriveTitle`) from the Vite-free SSOT `src/lib/server/docs/doc-filter.ts` — the same module the `/docs` manifest imports, so there is no manual sync. Only `RAG_ONLY_BLOCK` (docs rendered in `/docs` but withheld from the chatbot) is ingest-local.
 - Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.
 - As of 2026-06-25 it writes hierarchical chunks (section-parents + paragraph-children) via the shared `planChunks()`, making the docs corpus tier-2-*eligible* — partial today (36/93 docs converted, multi-day quota-gated). The chatbot still reads **tier-1 only**. Separately, the llmwiki tier-2 *compiler* (auto-generated wiki pages) remains deferred — a different thing from the parent-child chunks.
 
-> **Free-tier ceilings.** Gemini embeddings cap at ~1000/day (the script paces under ~90/min and backs off on 429). A full corpus re-ingest of all docs can exceed a single day's quota — re-run after the quota resets to finish. Chat **generation** runs on `gemini-2.5-flash` at ~20 calls/day on free tier; once exhausted, grounded chat returns a provider error until reset. Embeddings and chat share the same `GOOGLE_GENERATIVE_AI_API_KEY`, so they draw on one provider quota — the admin quota board counts embedding calls separately because `conversation_step` can't see them ([provider-routing.md](./provider-routing.md)).
+> **Free-tier ceilings.** Gemini embeddings cap at ~1000/day (the script paces under ~90/min and backs off on 429). A full corpus re-ingest of all docs can exceed a single day's quota — re-run after the quota resets to finish. Chat **generation** runs on `gemini-2.5-flash` at ~20 calls/day on free tier; once exhausted, grounded chat returns a provider error until reset. Embeddings and chat share the same saved Google connection, so they draw on one provider quota — the admin quota board counts embedding calls separately because `conversation_step` can't see them ([provider-routing.md](./provider-routing.md)).
 
 ---
 

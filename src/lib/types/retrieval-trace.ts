@@ -23,7 +23,9 @@ export type RetrievalStepId =
 	| 'chunks:drill'
 	| 'llmwiki:verify'
 	/** Coarse retriever for the chatbot branch's parallel tier-1 system-docs retrieve. */
-	| 'system-docs';
+	| 'system-docs'
+	/** The assembly's catalog search on a navigation question (`<catalog-results>`) — no embedding. */
+	| 'catalog';
 
 export type RetrievalStepStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped';
 
@@ -48,6 +50,7 @@ export const PHASE_OF: Record<RetrievalStepId, RetrievalPhase> = {
 	'chunks:drill': 'retrieve',
 	'llmwiki:verify': 'verify',
 	'system-docs': 'retrieve',
+	catalog: 'retrieve',
 };
 
 /**
@@ -92,7 +95,8 @@ export type StepDetail =
 	| GenerateDetail
 	| LlmwikiSearchDetail
 	| LlmwikiVerifyDetail
-	| DrillDetail;
+	| DrillDetail
+	| CatalogDetail;
 
 export interface EmbedDetail {
 	kind: 'embed';
@@ -136,6 +140,27 @@ export interface GenerateDetail {
 	reasoningTokens?: number;
 	/** Prompt-cache read — a SUBSET of inputTokens. */
 	cachedInputTokens?: number;
+	/**
+	 * Orchestrator entry → the `start` frame: conversation resolution, the user + assistant
+	 * row writes, history conversion. Everything the client waits on BEFORE any frame.
+	 */
+	preStreamMs?: number;
+	/** Model steps this turn (1 = no tool round-trip). */
+	steps?: number;
+	/** Per step, ms from the step's start to its first streamed token (text, reasoning or tool input). */
+	firstTokenMs?: number[];
+	/** Tool executions this turn, in call order, with their own execution time. */
+	tools?: { name: string; ms: number }[];
+	/** Post-text work while the message is still open, per stage (absent = stage skipped). */
+	finalize?: { verifyMs?: number; catalogMs?: number; persistMs?: number; budgetMs?: number };
+}
+
+/** The assembly's navigation grounding: how many verified catalog rows entered the prompt. */
+export interface CatalogDetail {
+	kind: 'catalog';
+	hits: number;
+	/** The surface the question named ("…showcase", "…docs"), when it named one. */
+	surface: string | null;
 }
 
 export interface LlmwikiSearchDetail {
@@ -309,6 +334,7 @@ export const RETRIEVAL_STEPS: RetrievalStepDescriptor[] = [
 	{ id: 'llmwiki:context', label: 'Context', phase: 'assemble', engine: 'llmwiki' },
 	{ id: 'generate', label: 'Generate', phase: 'generate', engine: 'both' },
 	{ id: 'chunks:drill', label: 'Drill', phase: 'retrieve', engine: 'llmwiki', retriever: 'llmwiki', dynamic: true },
+	{ id: 'catalog', label: 'Catalog', phase: 'retrieve', engine: 'llmwiki', dynamic: true },
 	{ id: 'llmwiki:verify', label: 'Verify', phase: 'verify', engine: 'llmwiki' },
 ];
 

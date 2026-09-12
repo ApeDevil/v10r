@@ -10,6 +10,7 @@ import {
 	registerPanelContext,
 	updatePanelContext,
 } from '$lib/components/desk';
+import { fileIdOfPanel } from '$lib/components/desk/file-panel';
 import PanelEmptyState from '$lib/components/desk/PanelEmptyState.svelte';
 import { Button, Spinner } from '$lib/components/primitives';
 import type { PostStatus } from '$lib/types/db-enums';
@@ -28,8 +29,8 @@ const bus = getDeskBus();
 const dock = getDockContext();
 const panelMenus = getPanelMenus();
 
-// Extract documentId from panelId (e.g. "editor-pst_abc123" → "pst_abc123")
-const documentId = $derived(panelId.startsWith('editor-') ? panelId.slice(7) : '');
+// The post this editor instance shows ("editor-pst_abc123" or a suffixed second instance).
+const documentId = $derived(panelId.startsWith('editor-') ? (fileIdOfPanel(panelId) ?? '') : '');
 
 // Re-publish content when this editor tab becomes active (so preview follows)
 const isActiveTab = $derived.by(() => {
@@ -311,12 +312,6 @@ const unsubInsert = bus.subscribe('files:insert-image', (payload) => {
 	contentTimer = setTimeout(publishContent, 300);
 });
 
-// Subscribe to AI-triggered file refresh
-const unsubAiRefresh = bus.subscribe('ai:refresh_file', ({ fileId }) => {
-	if (!postId || fileId !== postId) return;
-	// Reload from server — future: re-fetch markdown content
-});
-
 // Register menus for the global MenuBar
 const editorMenus = $derived<MenuBarMenu[]>([
 	{
@@ -389,6 +384,19 @@ function serializeEditorContext(): string {
 	return parts.join('\n');
 }
 
+/** Push the editor's current state to the registry — the debounce's target and the Send-time flush. */
+function pushEditorContext() {
+	clearTimeout(contextTimer2);
+	const content = serializeEditorContext();
+	updatePanelContext(panelId, {
+		label: title || slug || 'Editor',
+		content,
+		tokenEstimate: Math.ceil(content.length / 4),
+		contentType: 'code',
+		dirty: saveState === 'unsaved',
+	});
+}
+
 // Register unconditionally on mount (like SpreadsheetPanel)
 // svelte-ignore state_referenced_locally
 $effect(() => {
@@ -401,6 +409,7 @@ $effect(() => {
 		tokenEstimate: Math.ceil(content.length / 4),
 		updatedAt: Date.now(),
 		contentType: 'code',
+		refresh: pushEditorContext,
 	});
 	return () => {
 		clearTimeout(contextTimer2);
@@ -415,16 +424,9 @@ $effect(() => {
 	void title;
 	void summary;
 	void postId;
+	void saveState;
 	clearTimeout(contextTimer2);
-	contextTimer2 = setTimeout(() => {
-		const content = serializeEditorContext();
-		updatePanelContext(panelId, {
-			label: title || slug || 'Editor',
-			content,
-			tokenEstimate: Math.ceil(content.length / 4),
-			contentType: 'code',
-		});
-	}, 800);
+	contextTimer2 = setTimeout(pushEditorContext, 800);
 });
 
 onDestroy(() => {
@@ -433,7 +435,6 @@ onDestroy(() => {
 	clearTimeout(tagTimer);
 	clearTimeout(confirmTimer);
 	unsubInsert();
-	unsubAiRefresh();
 });
 </script>
 

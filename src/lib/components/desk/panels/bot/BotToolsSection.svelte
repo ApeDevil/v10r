@@ -4,8 +4,9 @@ import Switch from '$lib/components/primitives/switch/Switch.svelte';
 
 /**
  * `desk:read` and `desk:create` are always-on — safe because delete is soft and
- * create's undo path is "delete the file you just created." Only the two
- * genuinely-policy toggles are user-visible.
+ * create's undo path is "delete the file you just created." The policy toggles are
+ * editing, deleting, and searching the files pinned to AI context (`desk:ask` —
+ * off by default: every search spends a query embedding).
  *
  * Consent for destructive actions lives in the per-action approval flow
  * (proposal → PlanCard → approve endpoint), not in this standing dialog.
@@ -34,13 +35,19 @@ const SCOPE_INFO = [
 			{
 				scope: 'desk:write' as const,
 				label: 'Allow editing existing files',
-				description: 'Update spreadsheet cells, rename files, rewrite markdown',
+				description:
+					'Update spreadsheet cells, edit or rewrite documents, rename files — each change waits for your approval',
 			},
 			{
 				scope: 'desk:delete' as const,
 				label: 'Allow deleting files',
-				description: 'Soft-delete files (recoverable from the I/O Log)',
+				description: 'Move files to the trash after your approval (kept 30 days)',
 				destructive: true,
+			},
+			{
+				scope: 'desk:ask' as const,
+				label: 'Search pinned files',
+				description: 'Let the bot search the files you pinned to AI context (one embedding per search)',
 			},
 		],
 	},

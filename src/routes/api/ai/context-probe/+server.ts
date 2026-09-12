@@ -12,20 +12,23 @@
  * (trivial query, empty corpus, missing scope) spend nothing at all.
  *
  * Guarded like every other AI endpoint (`guardAiRequest`: auth → aiConfigured
- * → rate limit → daily budget) — the embedding quota is the scarce resource.
+ * → rate limit ∥ daily budget) — the embedding quota is the scarce resource.
  * The report is client-safe by construction (`$lib/types/context-probe.ts`):
  * ids, counts, scores, and short previews; never prompt bodies.
  */
 import { safeParse } from 'valibot';
 import type { Locale } from '$lib/i18n';
+import type { EmbeddingConnection } from '$lib/server/ai';
 import { buildSystemPromptBlocks } from '$lib/server/ai/context/system-prompt';
 import { assembleChatbotContext, SYSTEM_DOCS_MAX_CHUNKS } from '$lib/server/ai/context-assembly';
 import { DESK_SEARCH_MAX_CHUNKS, retrieveDeskDocs } from '$lib/server/ai/deskbot-retrieval';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { hasDestructiveIntent, shouldRequirePlan } from '$lib/server/ai/policy';
+import { LLMWIKI_DRILL_TOOLS } from '$lib/server/ai/tools';
 import { ContextProbeRequestSchema } from '$lib/server/ai/validation';
 import { countCorpus } from '$lib/server/db/retrieval/queries';
 import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { isAdmin } from '$lib/server/http/guards';
 import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
 import { countPages, LLMWIKI_SEARCH_LIMIT } from '$lib/server/llmwiki';
 import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
@@ -50,6 +53,8 @@ async function probeChatbot(
 	query: string,
 	pageRouteId: string | undefined,
 	locale: Locale,
+	authCeiling: string | null,
+	embeddingConnection: EmbeddingConnection,
 ): Promise<ProbeReport> {
 	// Same trust boundary as the chatbot route: the raw route id resolves against
 	// the public catalog here and is discarded on miss.
@@ -67,6 +72,8 @@ async function probeChatbot(
 			pageContext,
 			catalogLocale: locale,
 			hasTools: true,
+			authCeiling,
+			embeddingConnection,
 			docsCandidatePool: PROBE_CANDIDATE_POOL,
 		}),
 		countPages([userId], null),
@@ -115,12 +122,17 @@ async function probeChatbot(
 		gates: [
 			{ id: 'ground_docs', fired: assembly.gates.groundDocs },
 			{ id: 'page_deixis', fired: assembly.gates.wantsPageGrounding },
+			{ id: 'catalog_nav', fired: assembly.gates.wantsNavigation },
 		],
 		inventory: [
 			{ corpus: 'llmwiki', documents: wikiPages },
 			{ corpus: 'docs', documents: docsCorpus.documents, chunks: docsCorpus.chunks },
 		],
-		tools: TOOL_MANIFEST.filter((t) => t.surface === 'chatbot').map((t) => t.name),
+		// Mirrors `buildRetrievalTools`: the llmwiki drill-down pair exists only on a turn whose
+		// prompt carries an llmwiki context block.
+		tools: TOOL_MANIFEST.filter(
+			(t) => t.surface === 'chatbot' && (assembly.llmwikiGrounded || !LLMWIKI_DRILL_TOOLS.has(t.name)),
+		).map((t) => t.name),
 		corpora: [llmwikiCorpusResult, docsCorpusResult],
 		prompt: {
 			blocks: assembly.blocks.map((b) => ({ id: b.id, tokensEst: b.tokensEst, dynamic: b.dynamic })),
@@ -219,7 +231,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		const report =
 			parsed.output.surface === 'chatbot'
-				? await probeChatbot(guard.user.id, parsed.output.query, parsed.output.pageRouteId, locale)
+				? await probeChatbot(
+						guard.user.id,
+						parsed.output.query,
+						parsed.output.pageRouteId,
+						locale,
+						// The chatbot route's own ceiling rule: the env admin list, never a DB role.
+						isAdmin(locals.user) ? 'admin' : 'user',
+						// Same as a real turn: the embed rides the registry the guard already opened.
+						guard.registry.embeddingConnection(),
+					)
 				: await probeDeskbot(guard.user.id, parsed.output.query, parsed.output.toolScopes);
 		return apiOk(report);
 	} catch (err) {

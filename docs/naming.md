@@ -38,6 +38,13 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | An overlay component | `Dialog` | `*Modal.svelte` |
 | Sending a notification | `sendNotification` | `NotificationService.send` |
 | Crawler hits not yet in Postgres | `bot-hit buffer` (`bufferBotHit` / `flushBotHits`, Redis list) | per-hit `recordBotHit` |
+| The version of a file a plan step was proposed against | `reviewed baseline` (`ProposedTarget`, field `target`) | a live read inside the replay |
+| The durable per-step outcome of an approved plan | `step receipt` (`agent_proposal_step`, `ProposalStepReceipt`) | `executionResult` jsonb |
+| The client-side lifecycle of one proposal | `proposal run` (`ProposalRun`, `ProposalRunPhase`) | `proposalBusy` |
+| The deterministic assistant message an approval leaves in the thread | `execution receipt message` | the `[resumeFromProposalId:…]` resume turn |
+| The step after which a deskbot turn stops for a decision | `approval boundary` (`stoppedAtApproval`) | — |
+| How an approved step is undone | `recovery` (`ProposalStepRecovery`: `revision`/`soft_delete`/`rename_back`/`none`) | model-authored `rollback` text |
+| The database or transaction a domain mutation runs on | `handle` (`DbHandle`) | — |
 | What the daily cron sweep runs | `jobsDueOn` (`/api/cron/due`) | one `vercel.json` entry per job |
 | The MCP demo-state domain module | `mcp/demo/state.ts` | `mcp/demo/service.ts` |
 | The registry of pattern MCP *tools* | `mcp/patterns/tools.ts` | `mcp/patterns/registry.ts` |
@@ -58,11 +65,21 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | A cap on concurrent calls to one dependency | `bulkhead` (`resilience/bulkhead.ts`) | `pool`, `semaphore`, `throttle` |
 | Refusing optional work under pressure | `shed` (`resilience/shedding.ts`, `admit()` returns a reason) | `drop`, `reject`, `throttle` |
 | The remaining latency budget of a request | `Deadline` (`http/deadline.ts`); slices come from `child()` | `timeout`, `budget` on its own |
+| The client having stopped listening to a response | `cancellation` (`startCancellation` in `http/cancellation.ts`: the body's `cancel()` joined with `request.signal`; `TurnHooks.signal`, `onCancellation`) | `abort` (the SDK's word for any fired signal, the timeout included), `disconnect`, `stop` on the server |
 | Counting one request's database round trips | `QueryCensus` (`db/query-census.ts`) | `QueryLog`, `QueryTracker`, `QueryCounter` |
 | The normalized form of a statement | `shape` (`queryShape`) | `fingerprint`, `signature`, `template` |
 | Round trips one operation may make | `QueryBudget` (`db/query-budget.ts`) | `QueryLimit`, `QueryQuota` |
 | One adverse condition, measured | `scenario` (`perf/scenarios.ts`) | `benchmark`, `case`, `situation` |
 | Where each system runs | `LocalityRow` (`perf/locality.ts`) | `RegionMap`, `DeploymentMap` |
+| An administrator's saved credentials + model for one AI vendor | `provider connection` (`ai.provider_connection`, `ProviderEntry` once loaded, `PublicProviderConnection` on the wire) | `AiSettings`, `ProviderConfig`, `ProviderCredentials` |
+| The admin's generation probe against one provider/model | `connection test` (`ai/connection-test.ts`) | `health check`, `ping`, `verifyConnection` (that one is the showcases' backend probe) |
+| An optimistic-concurrency counter on a row | `version` (`mcp.demo_state.version`, `ai.provider_connection.version`) | `revision` — which is a *stored snapshot row* (`blog.revision`, `desk` `fileRevision`), never a counter |
+| AES-256-GCM over a caller-supplied key | `encryptAesGcm` / `decryptAesGcm` (`security/aes-gcm.ts`) | `notifications/crypto.ts` `encrypt`/`decrypt` |
+| Catalog rows put in the prompt before generation for a "where is…" question | `navigation grounding` (`wantsNavigation`, `<catalog-results>`, probe gate `catalog_nav`) | `nav search`, `pre-search`, `catalog prefetch` |
+| What the assembly hands the tools so they do not redo its work | `seed` (`docsSeed`, `catalogSeed` on `RetrievalToolOptions`) | `cache`, `prefetch`, `warm` |
+| The rule that a tool-mounted turn's last allowed step answers | `answerOnLastStep` (`ai/policy/step-budget.ts`) | `finalStepNoTools`, `forceAnswer` |
+| A turn's failure as the client receives it | `error frame` before any content (`aiErrorFrameText`, text `[kind] message`); `turnError` metadata after content (`TurnError` in `$lib/types/ai-error.ts`) | `streamError`, `partialError`, an `error` frame after text |
+| What the status row says the live turn is doing | `turn progress` (`turnProgress` → `retrieving` · `catalog` · `generating`, `awaitingAnswer`; `composites/chatbot/turn-progress.ts`) | `typing indicator`, `loading label`, `phase` (taken by the panel's `open`/`minimized`) |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 
@@ -118,7 +135,8 @@ share. Each is spoken for:
   `layout/Surface.svelte` is the unrelated design-system sense (an elevated plane) and is
   safe because it never meets the other four.
 - **`step`** — always qualified by its pipeline: `RetrievalStepId`, `IngestStepId`,
-  `ProposedStep`, `ProposalCardStep`. A bare `Step` is never right.
+  `ProposedToolCall` (a persisted plan step), `ProposalCardStep` (as the card shows it),
+  `ProposalStepReceipt` (as it ran). A bare `Step` is never right.
 - **`path`** — a file path, a URL path, or a graph path. Not an axis: the retrieval step's
   engine is `engine`, and the retriever that produced a result is `retriever`.
 - **`run`** — a job execution. A Neon branch action is a *branch operation*.

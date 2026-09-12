@@ -8,10 +8,11 @@
  * must never spend quota. Ships absolute ISO timestamps (resetAt, cooldownUntil)
  * for the client to tick locally.
  */
+import { loadProviderRegistry } from '$lib/server/ai';
 import { buildProviderQuota } from '$lib/server/ai/quota';
 import { requireAdmin } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiOk } from '$lib/server/http/response';
+import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 export const config = { runtime: 'nodejs22.x', maxDuration: 10 };
@@ -24,7 +25,12 @@ export const GET: RequestHandler = async ({ locals, setHeaders }) => {
 	const { success, reset } = await limit.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const quota = await buildProviderQuota();
+	let quota: Awaited<ReturnType<typeof buildProviderQuota>>;
+	try {
+		quota = await buildProviderQuota(await loadProviderRegistry());
+	} catch {
+		return apiError(503, 'ai_settings_unavailable', 'AI settings could not be read.');
+	}
 
 	setHeaders({ 'Cache-Control': 'no-store' });
 

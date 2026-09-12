@@ -28,7 +28,17 @@ Exactly one focused panel per dock instance, on every surface. Menus, Vely's pag
 
 ### Desk Effect Contract
 
-AI-driven effects (`dispatch-desk-effect.ts`) receive an `EffectActions` facade (`focusPanel`, `addPanel`, `updatePanel`, `publish`) and return `boolean` — applied or failed. Failures are surfaced in the I/O Log, never swallowed. A desk effect that surfaces a panel leaves it visible without further interaction: `desk:open_panel` focuses an existing instance or adds one, `desk:scroll_to` pre-focuses before publishing, and overlay auto-close (via `focusSeq`) is part of the effect.
+AI-driven effects (`dispatch-desk-effect.ts`) receive an `EffectActions` facade (`focusPanel`, `addPanel`, `updatePanel`, `publish`, `findFilePanel`) and return `boolean` — applied or failed. Failures are surfaced in the I/O Log, never swallowed. A desk effect that surfaces a panel leaves it visible without further interaction: `desk:open_panel` focuses the OPEN instance showing the file (found through `file-panel.ts` — `filePanelId` / `fileIdOfPanel` / `findFilePanel`, the one reader of the `<type>-<fileId>[-<suffix>]` id shape the Explorer mints) or adds one, `desk:scroll_to` pre-focuses before publishing, and overlay auto-close (via `focusSeq`) is part of the effect.
+
+A published `ai:refresh_file` is a request, not a result. The panel showing the file reloads and answers `ai:file_refreshed { fileId, version, ok }` (the spreadsheet after `autosave.refresh()`, the markdown viewer after its load); the bot's session waits for that answer and writes what the panel now shows to the I/O Log — or that no panel answered.
+
+### Desk Bot session
+
+The bot panel (`panels/bot/ChatPanel.svelte`) is the view over a `DeskBotSession` (`panels/bot/desk-bot-session.svelte.ts`, registered in `$lib/state/desk-bot-session-registry.ts`) keyed by user, workspace and panel — the same outlive-the-panel pattern as the spreadsheet session, so a layout move loses neither the live stream nor the record of which tool effects were already dispatched. Approval is a **proposal run** on the session (`approving` → the server's status, `unknown` until `GET /api/ai/proposals/[id]` settles a lost response); the server's execution receipt message joins the thread, and no model turn follows an approval. `SessionMonitor` tears every session down on logout.
+
+### Markdown viewer
+
+`panels/markdown/MarkdownPanel.svelte` is the read-only panel for a desk markdown file: it loads `GET /api/desk/files/[id]` (which answers `{ file, markdown: { content, version } }` for a markdown file), renders with `renderMarkdown`, registers the document as AI context, reloads on `ai:refresh_file` and answers `ai:file_refreshed`. The Explorer opens a desk file in the panel for its TYPE (`openFilePanel`) — before this panel existed every desk file opened as a spreadsheet and a bot-created document had nowhere to be seen. Editing desk markdown stays the bot's job (approved proposals); an editor here is a separate, later decision.
 
 ### Mobile Chrome
 

@@ -11,6 +11,7 @@ import { authClient } from '$lib/auth-client';
 import { localizeHref } from '$lib/i18n';
 import { getModals } from '$lib/state';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
+import { resetDeskBotSessions } from '$lib/state/desk-bot-session-registry';
 import type { Session } from '$lib/state/session.svelte';
 import { setSessionContext } from '$lib/state/session.svelte';
 import SessionExpiryDialog from './SessionExpiryDialog.svelte';
@@ -62,6 +63,7 @@ $effect(() => {
 		// same one-shot intent flag the gate's own sign-in CTA writes.
 		if (chatbotSession.phase !== 'closed') chatbotSession.markReopenIntent();
 		chatbotSession.reset();
+		resetDeskBotSessions();
 		goto(`${localizeHref('/auth/login')}?reason=revoked`);
 	}
 });

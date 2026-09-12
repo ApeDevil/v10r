@@ -111,6 +111,7 @@ Set in Vercel dashboard → Settings → Environment Variables:
 | `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL — enables rate limiting. Without it the limiter passes through in dev and fails closed in prod |
 | `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token (paired with the URL above) |
 | `CRON_SECRET` | Yes | Bearer token for cron endpoints |
+| `ENCRYPTION_KEY` | Yes | 64-char hex (`openssl rand -hex 32`). Seals every stored credential — Discord tokens and the AI provider keys entered under Admin → AI → Models. Placeholders are rejected at boot; losing or rotating it invalidates all of them. AI provider keys themselves are **not** environment variables |
 | `NEON_API_KEY` | If using branch refresh | Neon Management API key — see [data/neon-branch-refresh.md](./data/neon-branch-refresh.md) |
 | `NEON_PROJECT_ID` | If using branch refresh | Neon project id |
 | `NEON_DEV_BRANCH_ID` | If using branch refresh | `br-…` of the dev branch |

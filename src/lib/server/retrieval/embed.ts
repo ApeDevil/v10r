@@ -1,16 +1,29 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
-import { env } from '$env/dynamic/private';
+import { EMBEDDING_UNAVAILABLE_MESSAGES, type EmbeddingConnection, loadEmbeddingConnection } from '$lib/server/ai';
 import { incrEmbeddingCalls } from '$lib/server/ai/provider-usage';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from './config';
 import { RetrievalError } from './errors';
 
-function getEmbeddingModel() {
-	const apiKey = env.GOOGLE_GENERATIVE_AI_API_KEY;
-	if (!apiKey) {
-		throw new RetrievalError('embedding', 'GOOGLE_GENERATIVE_AI_API_KEY is not set for embeddings');
+/**
+ * Embeddings ride the administrator's Google connection. A request that already opened
+ * the provider registry passes that connection in (one row read per request); anything
+ * else — ingest scripts, showcases, a bare `retrieve()` — reads the row fresh, so a key
+ * replaced in the admin form reaches the next embed on every instance. The model stays
+ * `EMBEDDING_MODEL`: stored vectors belong to it, and a different embedding model is a
+ * re-embedding operation, not a setting.
+ */
+async function getEmbeddingModel(supplied?: EmbeddingConnection) {
+	const connection = supplied ?? (await loadEmbeddingConnection());
+	if ('unavailable' in connection) {
+		throw new RetrievalError('embedding', EMBEDDING_UNAVAILABLE_MESSAGES[connection.unavailable]);
 	}
-	return createGoogleGenerativeAI({ apiKey }).embedding(EMBEDDING_MODEL);
+	return createGoogleGenerativeAI({ apiKey: connection.apiKey }).embedding(EMBEDDING_MODEL);
+}
+
+export interface EmbedOptions {
+	/** The request's already-opened Google connection; absent → read the provider row. */
+	connection?: EmbeddingConnection;
 }
 
 // Gemini embeddings are task-type-aware. Queries and documents must be embedded
@@ -27,6 +40,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** The transient Gemini-quota error family worth retrying (matches the ingest script). */
 const RETRYABLE_EMBED_ERROR = /quota|rate|429|RESOURCE_EXHAUSTED/i;
 
+/** Error class + HTTP status for a log line — never the message (it can echo the request). */
+function describeEmbedError(err: unknown): string {
+	if (!(err instanceof Error)) return typeof err;
+	const status = (err as { statusCode?: unknown }).statusCode;
+	return typeof status === 'number' ? `${err.name} ${status}` : err.name;
+}
+
 /**
  * Retry an embedding call on transient quota / rate-limit (429) errors with exponential
  * backoff. Without this a single 429 silently ungrounds an entire chat turn (the only
@@ -34,6 +54,9 @@ const RETRYABLE_EMBED_ERROR = /quota|rate|429|RESOURCE_EXHAUSTED/i;
  * quota family is retried — anything else (e.g. a missing key) fails fast. Budgets are
  * asymmetric: the interactive query path uses a tight budget so a grounded turn can't
  * hang; the batch ingest path can afford to wait out a longer backoff.
+ *
+ * Every failed attempt logs its own elapsed time and error class, so a slow grounded turn
+ * can be read off the server log as "one 8 s attempt" or "two 1 s attempts + backoff".
  */
 async function withEmbedRetry<T>(
 	fn: () => Promise<T>,
@@ -41,15 +64,19 @@ async function withEmbedRetry<T>(
 ): Promise<T> {
 	let lastErr: unknown;
 	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		const started = performance.now();
 		try {
 			return await fn();
 		} catch (err) {
 			lastErr = err;
-			if (attempt === maxAttempts - 1 || !RETRYABLE_EMBED_ERROR.test(String(err))) break;
+			const elapsed = Math.round(performance.now() - started);
+			const attemptLabel = `attempt ${attempt + 1}/${maxAttempts} failed after ${elapsed}ms (${describeEmbedError(err)})`;
+			if (attempt === maxAttempts - 1 || !RETRYABLE_EMBED_ERROR.test(String(err))) {
+				console.warn(`[retrieval:embed] ${attemptLabel} — giving up`);
+				break;
+			}
 			const delay = baseDelayMs * 2 ** attempt;
-			console.warn(
-				`[retrieval:embed] quota/rate error — retrying in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`,
-			);
+			console.warn(`[retrieval:embed] ${attemptLabel} — quota/rate error, retrying in ${delay}ms`);
 			await sleep(delay);
 		}
 	}
@@ -57,15 +84,18 @@ async function withEmbedRetry<T>(
 }
 
 /** Generate a single embedding for a query string. */
-export async function generateEmbedding(text: string): Promise<number[]> {
+export async function generateEmbedding(text: string, options?: EmbedOptions): Promise<number[]> {
 	try {
-		const model = getEmbeddingModel();
+		const model = await getEmbeddingModel(options?.connection);
 		// Interactive path — tight retry budget so a grounded turn can't hang on backoff.
-		const result = await withEmbedRetry(() => embed({ model, value: text, providerOptions: queryEmbeddingOptions }), {
-			maxAttempts: 2,
-			baseDelayMs: 1000,
-		});
-		// One Gemini API call against the shared GOOGLE_GENERATIVE_AI_API_KEY quota
+		// `maxRetries: 0`: the SDK would otherwise retry 429s itself (2 attempts, 2 s + 4 s
+		// backoff) underneath this wrapper — invisible to the attempt log and to the turn's
+		// embed timing, and up to 6 s of silent wait on the answer path. One retry layer.
+		const result = await withEmbedRetry(
+			() => embed({ model, value: text, providerOptions: queryEmbeddingOptions, maxRetries: 0 }),
+			{ maxAttempts: 2, baseDelayMs: 1000 },
+		);
+		// One Gemini API call against the shared Google connection's quota
 		// — invisible to conversation_step, so count it for the quota board. Counted
 		// once per SUCCESSFUL call, never per retry attempt.
 		void incrEmbeddingCalls(1);
@@ -85,7 +115,7 @@ export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
 	if (texts.length === 0) return [];
 
 	try {
-		const model = getEmbeddingModel();
+		const model = await getEmbeddingModel();
 		// Batch / ingest path — generous retry budget; it can afford to wait out a 429.
 		const result = await withEmbedRetry(
 			() => embedMany({ model, values: texts, providerOptions: documentEmbeddingOptions }),

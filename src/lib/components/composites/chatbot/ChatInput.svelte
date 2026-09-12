@@ -4,6 +4,8 @@ import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	value: string;
+	/** A response is in flight. The composer stays typeable (the caret survives the turn);
+	 * Enter and Send are held, and Send becomes Stop when `onstop` is wired. */
 	loading?: boolean;
 	/** Sign-in gate: locks the input WITHOUT the loading spinner (a gated input must
 	 * not look permanently busy). Pair with `signedOutHintId` for screen readers. */
@@ -12,6 +14,8 @@ interface Props {
 	signedOutHintId?: string;
 	contextCount?: number;
 	onsubmit: () => void;
+	/** Abort the in-flight response. Without it the Send button just waits (the desk panel). */
+	onstop?: () => void;
 	onopensettings?: () => void;
 }
 
@@ -22,6 +26,7 @@ let {
 	signedOutHintId,
 	contextCount = 0,
 	onsubmit,
+	onstop,
 	onopensettings,
 }: Props = $props();
 
@@ -84,26 +89,32 @@ $effect(() => {
 		oninput={autoResize}
 		onkeydown={handleKeydown}
 		placeholder="Type a message..."
-		disabled={loading || signedOut}
+		disabled={signedOut}
 		aria-describedby={signedOut ? signedOutHintId : undefined}
 		rows={1}
 		class="chat-textarea flex-1 resize-none rounded-md border border-border px-3 py-2 text-fluid-base text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary"
 	></textarea>
-	<Button
-		variant="primary"
-		size="icon"
-		onclick={onsubmit}
-		disabled={loading || signedOut || !value.trim()}
-		aria-describedby={signedOut ? signedOutHintId : undefined}
-		class="shrink-0"
-		aria-label="Send message"
-	>
-		{#if loading}
-			<span class="i-lucide-loader-2 h-4 w-4 animate-spin"></span>
-		{:else}
-			<span class="i-lucide-send h-4 w-4"></span>
-		{/if}
-	</Button>
+	{#if loading && onstop}
+		<Button variant="primary" size="icon" onclick={onstop} class="shrink-0" aria-label={m.ai_chat_stop()}>
+			<span class="i-lucide-square h-4 w-4"></span>
+		</Button>
+	{:else}
+		<Button
+			variant="primary"
+			size="icon"
+			onclick={onsubmit}
+			disabled={loading || signedOut || !value.trim()}
+			aria-describedby={signedOut ? signedOutHintId : undefined}
+			class="shrink-0"
+			aria-label="Send message"
+		>
+			{#if loading}
+				<span class="i-lucide-loader-2 h-4 w-4 animate-spin"></span>
+			{:else}
+				<span class="i-lucide-send h-4 w-4"></span>
+			{/if}
+		</Button>
+	{/if}
 </div>
 
 <p class="ai-disclosure">{m.ai_disclosure_input_hint()}</p>

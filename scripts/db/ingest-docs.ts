@@ -37,6 +37,9 @@ import { neonConfig, Pool } from '@neondatabase/serverless';
 import { embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { EMBEDDING_UNAVAILABLE_MESSAGES, resolveEmbeddingConnection } from '../../src/lib/server/ai/connections';
+import { listProviderConnections } from '../../src/lib/server/db/ai/provider-connections';
+import * as schema from '../../src/lib/server/db/schema';
 import { deriveTitle, isBlocked, parseFrontmatter, slugify } from '../../src/lib/server/docs/doc-filter';
 import { buildOverviewBody } from '../../src/lib/server/docs/overview-body';
 import { planChunks } from '../../src/lib/server/retrieval/plan';
@@ -64,20 +67,34 @@ const MAX_EMBED_PER_MIN = 90;
 // Resume-safe: skips docs already converted to the hierarchical layout (see main()).
 const FORCE = process.argv.includes('--force') || process.env.INGEST_FORCE === '1';
 
+const SCRIPT_NAME = 'ingest-docs';
 const NEON_DATABASE_URL_PROD = process.env.NEON_DATABASE_URL_PROD;
-const GEMINI_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 if (!NEON_DATABASE_URL_PROD) {
 	console.error('NEON_DATABASE_URL_PROD not set');
 	process.exit(1);
 }
-if (!GEMINI_KEY) {
-	console.error('GOOGLE_GENERATIVE_AI_API_KEY not set');
-	process.exit(1);
-}
 
 const pool = new Pool({ connectionString: NEON_DATABASE_URL_PROD });
-const db = drizzle(pool);
-const embedModel = createGoogleGenerativeAI({ apiKey: GEMINI_KEY }).embedding(EMBEDDING_MODEL);
+const db = drizzle(pool, { schema });
+
+// The Google key is the one the administrator saved under Admin → AI → Models, read
+// through the same leaf the app uses so the two can never disagree about whether Google
+// is usable. Only the database URL and ENCRYPTION_KEY still come from the environment.
+const savedConnections = await listProviderConnections(db).catch((err: unknown) => {
+	const reason = err instanceof Error ? err.message : String(err);
+	console.error(
+		'[%s] Could not read the saved AI provider connections (is the ai schema pushed?): %s',
+		SCRIPT_NAME,
+		reason,
+	);
+	process.exit(1);
+});
+const embeddingConnection = await resolveEmbeddingConnection(savedConnections, process.env.ENCRYPTION_KEY ?? null);
+if ('unavailable' in embeddingConnection) {
+	console.error(`[%s] ${EMBEDDING_UNAVAILABLE_MESSAGES[embeddingConnection.unavailable]}`, SCRIPT_NAME);
+	process.exit(1);
+}
+const embedModel = createGoogleGenerativeAI({ apiKey: embeddingConnection.apiKey }).embedding(EMBEDDING_MODEL);
 const EMBED_OPTS = { google: { outputDimensionality: EMBEDDING_DIMENSIONS, taskType: 'RETRIEVAL_DOCUMENT' } };
 
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');

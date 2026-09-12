@@ -14,6 +14,8 @@ this endpoint?" has no index to consult. This is that index.
 | Session revocation + ban | `$lib/server/auth/revocation.ts`, enforced in `sessionPopulate` |
 | Step-up freshness | `$lib/server/auth/step-up.ts` |
 | Factor-change side effects | `$lib/server/auth/factor-changes.ts` (audit, notify, revoke) |
+| Credentials at rest | `$lib/server/security/aes-gcm.ts` (AES-256-GCM, key supplied by the caller) + `security/encryption-key.ts` (the single `ENCRYPTION_KEY` read). Seals Discord OAuth tokens and the AI provider keys in `ai.provider_connection`; the key never enters the database |
+| AI provider settings | `$lib/server/ai/connection-settings.ts` behind `requireAdmin` on `/admin/ai/models`; `PublicProviderConnection` is the only client-facing shape (`load-leak-gate` refuses `apiKeyCiphertext`); every change audited as `ai.provider.*` |
 | CSRF predicates | `$lib/server/security/csrf.ts` |
 | Redirect-target validation | `$lib/server/security/safe-path.ts` |
 | Response headers | `securityHeaders` in `src/hooks.server.ts` |

@@ -5,7 +5,10 @@
  * with Vitest. The reactive layer in desk-context.svelte.ts delegates to these.
  */
 
+import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES, CONTEXT_TOKEN_BUDGET } from '$lib/types/desk-context-limits';
 import type { ContextChip, ContextStatus, PanelContext } from './desk-context.state.svelte';
+
+export { CONTEXT_TOKEN_BUDGET };
 
 /** How much content is included in the AI prompt for a panel. */
 export type ContentLevel = 'full' | 'summary' | 'title-only';
@@ -13,18 +16,42 @@ export type ContentLevel = 'full' | 'summary' | 'title-only';
 /** Panel status relative to the desk — drives content level and AI awareness. */
 export type PanelStatus = 'focused' | 'active' | 'background';
 
-/** What gets sent to the server in the request body (extended with budget metadata). */
+/**
+ * What gets sent to the server in the request body: the content the model reads plus the
+ * IDENTITY of what it describes — which panel, which file, at which version, saved or not —
+ * so an edit the bot proposes can name its target, and the label the entry carries is
+ * true of the text that was actually sent (`truncated` when it was cut to the entry cap).
+ */
 export interface SerializedContext {
+	panelId: string;
 	panelType: string;
 	label: string;
 	content: string;
 	status: PanelStatus;
 	contentLevel: ContentLevel;
 	tokenEstimate: number;
+	truncated: boolean;
+	fileId?: string;
+	fileType?: 'spreadsheet' | 'markdown';
+	/** The saved version the panel shows, when the file has one. */
+	version?: number;
+	/** The panel holds edits the server has not saved yet. */
+	dirty?: boolean;
 }
 
-/** Max tokens for all panel context combined in a single AI request. */
-export const CONTEXT_TOKEN_BUDGET = 8000;
+/** An active context that did NOT go into the request, and why — shown, never silent. */
+export interface ContextOmission {
+	panelId: string;
+	label: string;
+	reason: 'entry_cap' | 'budget';
+}
+
+export interface SerializedRequestContext {
+	entries: SerializedContext[];
+	omitted: ContextOmission[];
+	/** What the meter shows: the tokens actually sent, not the registry's total. */
+	tokensSent: number;
+}
 
 /** Budget thresholds — fractions of CONTEXT_TOKEN_BUDGET. */
 const COMPACT_THRESHOLD = 0.7;
@@ -63,7 +90,7 @@ export function computeContextChips(
 	focusedPanelId: string | null,
 	pinnedIds: Set<string>,
 	dismissedIds: Set<string>,
-	lastResponseAt: number,
+	lastRequestAt: number,
 ): ContextChip[] {
 	const chips: ContextChip[] = [];
 
@@ -78,7 +105,9 @@ export function computeContextChips(
 			status = 'available';
 		}
 
-		const stale = status !== 'available' && lastResponseAt > 0 && context.updatedAt > lastResponseAt;
+		// Stale = changed since the snapshot the last request was serialized from — a panel that
+		// changed while the answer streamed is stale too, whatever the answer's timing.
+		const stale = status !== 'available' && lastRequestAt > 0 && context.updatedAt > lastRequestAt;
 
 		chips.push({ context, status, stale });
 	}
@@ -143,14 +172,17 @@ export function truncateToTokenBudget(
  *
  * Priority ordering: focused first, then pinned by tokenEstimate ascending.
  * Fills budget greedily: full content until 70%, then summary, then title-only.
- * Always includes the focused panel (at least at title-only).
+ * Always includes the focused panel (at least at title-only). Enforces the request's own
+ * limits — at most `CONTEXT_MAX_ENTRIES` entries, each at most `CONTEXT_ENTRY_MAX_CHARS` —
+ * and reports what it left out, so the meter and the log can say so instead of the route
+ * refusing the whole turn.
  */
 export function budgetAwareSerialize(
 	activeContexts: PanelContext[],
 	focusedPanelId: string | null,
 	budget: number = CONTEXT_TOKEN_BUDGET,
-): SerializedContext[] {
-	if (activeContexts.length === 0) return [];
+): SerializedRequestContext {
+	if (activeContexts.length === 0) return { entries: [], omitted: [], tokensSent: 0 };
 
 	// Sort: focused first, then by tokenEstimate ascending (pack smaller panels first)
 	const sorted = [...activeContexts].sort((a, b) => {
@@ -160,60 +192,67 @@ export function budgetAwareSerialize(
 	});
 
 	let tokensUsed = 0;
-	const result: SerializedContext[] = [];
+	const entries: SerializedContext[] = [];
+	const omitted: ContextOmission[] = [];
 
 	for (const ctx of sorted) {
 		const usageFraction = tokensUsed / budget;
 		const remaining = budget - tokensUsed;
 		const isFocused = ctx.panelId === focusedPanelId;
 
-		let text: string;
-		let level: ContentLevel;
-		let tokens: number;
-
+		if (entries.length >= CONTEXT_MAX_ENTRIES) {
+			omitted.push({ panelId: ctx.panelId, label: ctx.label, reason: 'entry_cap' });
+			continue;
+		}
 		if (remaining <= 0 && !isFocused) {
 			// Budget exhausted, skip non-focused panels
+			omitted.push({ panelId: ctx.panelId, label: ctx.label, reason: 'budget' });
 			continue;
 		}
 
+		let text: string;
+		let level: ContentLevel;
+
 		if (usageFraction >= TITLE_ONLY_THRESHOLD && !isFocused) {
 			// Over 90% — title-only for non-focused
-			const truncated = truncateToTokenBudget(ctx.content, ctx.label, 0);
-			text = truncated.text;
+			text = truncateToTokenBudget(ctx.content, ctx.label, 0).text;
 			level = 'title-only';
-			tokens = estimateTokens(text);
-		} else if (usageFraction >= COMPACT_THRESHOLD) {
-			// Over 70% — try summary first
+		} else if (usageFraction >= COMPACT_THRESHOLD || ctx.tokenEstimate > remaining) {
+			// Over 70%, or content exceeds what is left — summary, then title-only
 			const truncated = truncateToTokenBudget(ctx.content, ctx.label, remaining);
 			text = truncated.text;
 			level = truncated.level;
-			tokens = estimateTokens(text);
 		} else {
-			// Under 70% — try full content
-			if (ctx.tokenEstimate <= remaining) {
-				text = ctx.content;
-				level = 'full';
-				tokens = ctx.tokenEstimate;
-			} else {
-				// Content exceeds remaining — truncate
-				const truncated = truncateToTokenBudget(ctx.content, ctx.label, remaining);
-				text = truncated.text;
-				level = truncated.level;
-				tokens = estimateTokens(text);
-			}
+			text = ctx.content;
+			level = 'full';
 		}
 
+		// The entry cap the route enforces — applied here so the label stays honest.
+		let truncated = level !== 'full';
+		if (text.length > CONTEXT_ENTRY_MAX_CHARS) {
+			text = `${text.slice(0, CONTEXT_ENTRY_MAX_CHARS - 12)}\n[truncated]`;
+			if (level === 'full') level = 'summary';
+			truncated = true;
+		}
+
+		const tokens = estimateTokens(text);
 		tokensUsed += tokens;
 
-		result.push({
+		entries.push({
+			panelId: ctx.panelId,
 			panelType: ctx.panelType,
 			label: ctx.label,
 			content: text,
 			status: isFocused ? 'focused' : 'active',
 			contentLevel: level,
 			tokenEstimate: tokens,
+			truncated,
+			...(ctx.fileId ? { fileId: ctx.fileId } : {}),
+			...(ctx.fileType ? { fileType: ctx.fileType } : {}),
+			...(ctx.version !== undefined ? { version: ctx.version } : {}),
+			...(ctx.dirty !== undefined ? { dirty: ctx.dirty } : {}),
 		});
 	}
 
-	return result;
+	return { entries, omitted, tokensSent: tokensUsed };
 }

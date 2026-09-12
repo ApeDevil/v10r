@@ -306,6 +306,7 @@ export const STEP_LAYER: Record<RetrievalStepId, AiLayerId> = {
 	'chunks:drill': 'retrieval',
 	'llmwiki:verify': 'gate',
 	'system-docs': 'retrieval',
+	catalog: 'retrieval',
 };
 
 /** Registration map: which spine band a tool call lights up. Pinned to the manifest by test. */

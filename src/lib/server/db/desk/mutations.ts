@@ -1,7 +1,7 @@
 import { and, eq, isNull, like, sql } from 'drizzle-orm';
 import { recalculateCells, type SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
 import { createId } from '../id';
-import { db } from '../index';
+import { type DbHandle, db } from '../index';
 import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
 
 /** Who triggered a recoverable content mutation. Threaded into the pre-image snapshot. */
@@ -35,9 +35,10 @@ export async function createSpreadsheetFile(
 	cells: SpreadsheetCells = {},
 	folderId: string | null = null,
 	originToolCallId: string | null = null,
+	handle: DbHandle = db,
 ) {
 	const stored = recalculateCells(cells);
-	return db.transaction(async (tx) => {
+	return handle.transaction(async (tx) => {
 		await assertOwnedDestination(tx, folder, folderId, userId);
 		const fileId = createId.file();
 		const [fileRow] = await tx
@@ -53,8 +54,8 @@ export async function createSpreadsheetFile(
 }
 
 /** Rename a file. Skips soft-deleted rows. */
-export async function renameFile(id: string, userId: string, name: string) {
-	const [row] = await db
+export async function renameFile(id: string, userId: string, name: string, handle: DbHandle = db) {
+	const [row] = await handle
 		.update(file)
 		.set({ name, updatedAt: new Date() })
 		.where(and(eq(file.id, id), eq(file.userId, userId), isNull(file.deletedAt)))
@@ -69,10 +70,10 @@ export async function renameFile(id: string, userId: string, name: string) {
  * (spreadsheet or markdown). Readers filter `deleted_at IS NULL` so the
  * file disappears from every list, tree, and AI tool. There is no restore
  * path — the row stays in place until the `deskRetention` job hard-deletes
- * it after `DESK_SOFT_DELETE_RETENTION_DAYS`.
+ * it after the `desk-trash` retention window.
  */
-export async function deleteFile(id: string, userId: string, source: RevisionSource = 'user') {
-	return db.transaction(async (tx) => {
+export async function deleteFile(id: string, userId: string, source: RevisionSource = 'user', handle: DbHandle = db) {
+	return handle.transaction(async (tx) => {
 		const now = new Date();
 		const [fileRow] = await tx
 			.update(file)
@@ -389,10 +390,11 @@ export async function updateSpreadsheetByFileId(
 		columnMeta?: Record<string, unknown> | null;
 	},
 	source: RevisionSource = 'user',
+	handle: DbHandle = db,
 ) {
 	// Before the locks: a map the sheet cannot hold is refused without touching the row.
 	const cells = data.cells === undefined ? undefined : recalculateCells(data.cells);
-	return db.transaction(async (tx) => {
+	return handle.transaction(async (tx) => {
 		// Lock before reading the pre-image: concurrent writers must validate against
 		// the previous committed save, not the snapshot they both initially read.
 		const [fileRow] = await tx
@@ -453,8 +455,9 @@ export async function createMarkdownFile(
 	content = '',
 	folderId: string | null = null,
 	originToolCallId: string | null = null,
+	handle: DbHandle = db,
 ) {
-	return db.transaction(async (tx) => {
+	return handle.transaction(async (tx) => {
 		await assertOwnedDestination(tx, folder, folderId, userId);
 		const fileId = createId.file();
 		const [fileRow] = await tx
@@ -472,47 +475,75 @@ export async function createMarkdownFile(
 /**
  * Update markdown content by file ID. Touches file updatedAt. Skips soft-deleted.
  *
- * Captures a pre-image revision of the current content BEFORE overwriting so a
- * prompt-injected or accidental overwrite is recoverable. `source` attributes
- * the change ('ai' for the deskbot approve-replay, 'user' for the UI).
+ * The same optimistic-concurrency shape as `updateSpreadsheetByFileId`: the caller names
+ * the `version` it reviewed and the write happens only if that is still the stored one,
+ * under row locks so two writers validate against the last COMMITTED save. Captures a
+ * pre-image revision before overwriting so a prompt-injected or accidental overwrite is
+ * recoverable. `source` attributes the change ('ai' for the deskbot replay, 'user' for the UI).
  */
 export async function updateMarkdownByFileId(
 	fileId: string,
 	userId: string,
-	content: string,
+	data: { content: string; expectedVersion: number },
 	source: RevisionSource = 'user',
+	handle: DbHandle = db,
 ) {
-	return db.transaction(async (tx) => {
-		// Verify ownership via file table — must not be soft-deleted.
+	return handle.transaction(async (tx) => {
 		const [fileRow] = await tx
 			.select({ id: file.id })
 			.from(file)
 			.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt)))
-			.limit(1);
+			.limit(1)
+			.for('update');
 		if (!fileRow) return null;
 
-		// Snapshot the pre-image before overwriting content.
 		const [current] = await tx
-			.select({ content: markdown.content })
+			.select()
 			.from(markdown)
-			.where(eq(markdown.fileId, fileId))
-			.limit(1);
-		if (current) {
-			await tx.insert(fileRevision).values({
-				id: createId.deskRevision(),
-				fileId,
-				userId,
-				fileType: 'markdown',
-				content: current.content,
-				source,
-				reason: 'overwrite',
-			});
-		}
+			.where(and(eq(markdown.fileId, fileId), isNull(markdown.deletedAt)))
+			.limit(1)
+			.for('update');
+		if (!current) return null;
+		if (current.version !== data.expectedVersion) return { status: 'conflict' as const };
 
-		await tx.update(markdown).set({ content, updatedAt: new Date() }).where(eq(markdown.fileId, fileId));
+		// Snapshot the pre-image before overwriting content.
+		await tx.insert(fileRevision).values({
+			id: createId.deskRevision(),
+			fileId,
+			userId,
+			fileType: 'markdown',
+			content: current.content,
+			source,
+			reason: 'overwrite',
+		});
 
-		const [updated] = await tx.update(file).set({ updatedAt: new Date() }).where(eq(file.id, fileId)).returning();
+		const now = new Date();
+		const version = current.version + 1;
+		await tx
+			.update(markdown)
+			.set({ content: data.content, version, updatedAt: now })
+			.where(eq(markdown.fileId, fileId));
+		const [updated] = await tx.update(file).set({ updatedAt: now }).where(eq(file.id, fileId)).returning();
 
-		return updated ?? null;
+		return updated ? { status: 'saved' as const, file: updated, version } : null;
 	});
+}
+
+/**
+ * Lock a file row for the rest of the caller's transaction, but only if it has not
+ * changed since `sinceUpdatedAt` — the reviewed baseline of a rename or delete the
+ * user approved. `changed` means the plan described a file that has since moved on;
+ * the caller reports a conflict instead of applying a stale decision. Must run on the
+ * transaction that performs the mutation, or the lock protects nothing.
+ */
+export async function lockFileIfUnchanged(handle: DbHandle, fileId: string, userId: string, sinceUpdatedAt: Date) {
+	const [row] = await handle
+		.select()
+		.from(file)
+		.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt)))
+		.limit(1)
+		.for('update');
+	if (!row) return null;
+	if (row.updatedAt.getTime() !== sinceUpdatedAt.getTime()) return { status: 'changed' as const };
+	return { status: 'locked' as const, file: row };
 }

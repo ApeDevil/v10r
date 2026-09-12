@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
+import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '$lib/types/desk-context-limits';
 import {
 	ChatbotRequestSchema,
 	ContextProbeRequestSchema,
@@ -69,7 +70,6 @@ describe('ChatbotRequestSchema (read-only grounded surface)', () => {
 			panelContext: [{ panelType: 'spreadsheet', label: 'Budget', content: 'A1: 100' }],
 			deskLayout: [{ panelId: 'p1', label: 'Budget' }],
 			activeWorkspace: { id: 'w1', name: 'Home' },
-			resumeFromProposalId: 'prop_1',
 		});
 		expect(result.success).toBe(true);
 		if (result.success) {
@@ -77,7 +77,6 @@ describe('ChatbotRequestSchema (read-only grounded surface)', () => {
 			expect('panelContext' in result.output).toBe(false);
 			expect('deskLayout' in result.output).toBe(false);
 			expect('activeWorkspace' in result.output).toBe(false);
-			expect('resumeFromProposalId' in result.output).toBe(false);
 		}
 	});
 });
@@ -107,21 +106,41 @@ describe('DeskRequestSchema (mutating operator surface)', () => {
 		expect(result.success).toBe(true);
 	});
 
-	it('rejects panelContext over 5 entries', () => {
-		const panelContext = Array.from({ length: 6 }, (_, i) => ({
+	it('bounds panelContext by the SHARED limits — the client serializer enforces the same numbers', () => {
+		const panelContext = Array.from({ length: CONTEXT_MAX_ENTRIES + 1 }, (_, i) => ({
 			panelType: 'note',
 			label: `Panel ${i}`,
 			content: 'data',
 		}));
 		expect(v.safeParse(DeskRequestSchema, { messages: HELLO, panelContext }).success).toBe(false);
+		const oversized = v.safeParse(DeskRequestSchema, {
+			messages: HELLO,
+			panelContext: [{ panelType: 'note', label: 'x', content: 'x'.repeat(CONTEXT_ENTRY_MAX_CHARS + 1) }],
+		});
+		expect(oversized.success).toBe(false);
+		const atCap = v.safeParse(DeskRequestSchema, {
+			messages: HELLO,
+			panelContext: [{ panelType: 'note', label: 'x', content: 'x'.repeat(CONTEXT_ENTRY_MAX_CHARS) }],
+		});
+		expect(atCap.success).toBe(true);
 	});
 
-	it('rejects panelContext entry content over 16000 chars', () => {
-		const result = v.safeParse(DeskRequestSchema, {
-			messages: HELLO,
-			panelContext: [{ panelType: 'note', label: 'x', content: 'x'.repeat(16_001) }],
-		});
-		expect(result.success).toBe(false);
+	it('accepts the identity fields a serialized entry carries and refuses an unknown file type', () => {
+		const entry = {
+			panelId: 'spreadsheet-fil_a',
+			panelType: 'spreadsheet',
+			label: 'Budget',
+			content: 'A1: 100',
+			truncated: false,
+			fileId: 'fil_a',
+			fileType: 'spreadsheet',
+			version: 3,
+			dirty: true,
+		};
+		expect(v.safeParse(DeskRequestSchema, { messages: HELLO, panelContext: [entry] }).success).toBe(true);
+		expect(
+			v.safeParse(DeskRequestSchema, { messages: HELLO, panelContext: [{ ...entry, fileType: 'pdf' }] }).success,
+		).toBe(false);
 	});
 
 	it('accepts deskLayout with valid entries', () => {
@@ -132,11 +151,10 @@ describe('DeskRequestSchema (mutating operator surface)', () => {
 		expect(result.success).toBe(true);
 	});
 
-	it('accepts activeWorkspace + resumeFromProposalId', () => {
+	it('accepts activeWorkspace', () => {
 		const result = v.safeParse(DeskRequestSchema, {
 			messages: HELLO,
 			activeWorkspace: { id: 'w1', name: 'Home' },
-			resumeFromProposalId: '550e8400-e29b-41d4-a716-446655440000',
 		});
 		expect(result.success).toBe(true);
 	});

@@ -2,27 +2,19 @@
 import CitationChip from '$lib/components/composites/citation/CitationChip.svelte';
 import ConfirmationCard from '$lib/components/composites/citation/ConfirmationCard.svelte';
 import type { CatalogSource, SourceChunk } from '$lib/components/composites/citation/citation-types';
+import * as m from '$lib/paraglide/messages';
+import type { TurnError } from '$lib/types/ai-error';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import ToolCallStatus from './ToolCallStatus.svelte';
+import { isToolPart, TOOL_PHASE, type ToolPart, toolNameOf } from './tool-part';
 
 interface TextPart {
 	type: 'text';
 	text: string;
 }
 
-interface ToolInvocationPart {
-	type: 'tool-invocation';
-	toolInvocation: {
-		toolName: string;
-		toolCallId: string;
-		state: 'call' | 'partial-call' | 'result';
-		args?: unknown;
-		output?: unknown;
-	};
-}
-
-type MessagePart = TextPart | ToolInvocationPart | { type: string };
+type MessagePart = TextPart | ToolPart | { type: string };
 
 interface Props {
 	role: 'user' | 'assistant';
@@ -34,13 +26,15 @@ interface Props {
 	catalogSources?: CatalogSource[];
 	/** Original drilled retrieval chunks — rendered as a "View N sources" evidence affordance. */
 	sourceChunks?: SourceChunk[];
+	/** Why the answer stopped short (streamed on the message when a turn failed after its first words). */
+	turnError?: TurnError;
 	/** Callback when user confirms a destructive AI action */
 	onconfirmaction?: (description: string) => void;
 	/** Open the source-chunk viewer for this message's drilled chunks. */
 	onviewchunks?: (chunks: SourceChunk[]) => void;
 }
 
-let { role, parts, content, catalogSources, sourceChunks, onconfirmaction, onviewchunks }: Props = $props();
+let { role, parts, content, catalogSources, sourceChunks, turnError, onconfirmaction, onviewchunks }: Props = $props();
 
 const isUser = $derived(role === 'user');
 
@@ -91,11 +85,37 @@ function getTextContent(part: MessagePart): string {
 	return 'text' in part ? (part as TextPart).text : '';
 }
 
-function getToolInvocation(part: MessagePart) {
-	return 'toolInvocation' in part ? (part as ToolInvocationPart).toolInvocation : null;
+/** The chatbot's retrieval tools, in the user's language. Desk tools keep ToolCallStatus's own table. */
+const TOOL_LABEL: Record<string, () => string> = {
+	search_catalog: m.ai_chat_tool_search_catalog,
+	search_project_docs: m.ai_chat_tool_search_project_docs,
+	search_pattern_library: m.ai_chat_tool_search_pattern_library,
+	get_llmwiki_pages: m.ai_chat_tool_get_llmwiki_pages,
+	get_source_chunks: m.ai_chat_tool_get_source_chunks,
+};
+
+/**
+ * An assistant frame exists from the stream's first `start` on and stays after a pre-text
+ * failure; with nothing to show, the row is not rendered — the status row and the error box
+ * speak for those states.
+ */
+const hasContent = $derived(
+	displayParts.some((p) => (p.type === 'text' ? !!getTextContent(p) : isToolPart(p))) ||
+		uniqueChunks.length > 0 ||
+		uniqueSources.length > 0 ||
+		!!turnError,
+);
+
+// A turn error is the server's classification of the provider's failure mid-answer, so a
+// rate limit here is the model's, never this user's message rate.
+function turnErrorCopy(error: TurnError): string {
+	if (error.kind === 'rate_limit') return m.ai_chat_error_provider_limited();
+	if (error.kind === 'unavailable' || error.kind === 'timeout') return m.ai_chat_error_unavailable();
+	return m.ai_chat_error_generic();
 }
 </script>
 
+{#if hasContent}
 <div class={cn('chat-message flex gap-3 px-4 py-3', isUser ? 'flex-row-reverse' : 'flex-row')}>
 	<div
 		class={cn(
@@ -124,24 +144,32 @@ function getToolInvocation(part: MessagePart) {
 						{/if}
 					</div>
 				{/if}
-			{:else if part.type === 'tool-invocation'}
-				{@const invocation = getToolInvocation(part)}
-				{#if invocation}
-					<ToolCallStatus
-						toolName={invocation.toolName}
-						phase={invocation.state}
-						output={invocation.output}
+			{:else if isToolPart(part)}
+				{@const toolName = toolNameOf(part)}
+				<ToolCallStatus
+					{toolName}
+					phase={TOOL_PHASE[part.state] ?? 'running'}
+					output={part.output}
+					label={TOOL_LABEL[toolName]?.()}
+				/>
+				{#if part.state === 'output-available' && part.output && typeof part.output === 'object' && 'requiresConfirmation' in part.output}
+					<ConfirmationCard
+						description={(part.output as { description?: string }).description ?? 'Confirm this action?'}
+						onconfirm={() => onconfirmaction?.((part.output as { description?: string }).description ?? '')}
+						onskip={() => {}}
 					/>
-					{#if invocation.state === 'result' && invocation.output && typeof invocation.output === 'object' && 'requiresConfirmation' in invocation.output}
-						<ConfirmationCard
-							description={(invocation.output as { description?: string }).description ?? 'Confirm this action?'}
-							onconfirm={() => onconfirmaction?.((invocation.output as { description?: string }).description ?? '')}
-							onskip={() => {}}
-						/>
-					{/if}
 				{/if}
 			{/if}
 		{/each}
+
+		{#if turnError}
+			<!-- The turn failed after its first words: the text above is what arrived. -->
+			<p class="turn-error text-fluid-xs" role="status">
+				<span class="i-lucide-alert-circle turn-error-icon" aria-hidden="true"></span>
+				<span class="font-medium">{m.ai_chat_error_partial()}</span>
+				{turnErrorCopy(turnError)}
+			</p>
+		{/if}
 
 		{#if !isUser && uniqueChunks.length}
 			<div class="message-sources">
@@ -174,11 +202,28 @@ function getToolInvocation(part: MessagePart) {
 		{/if}
 	</div>
 </div>
+{/if}
 
 <style>
 	.chat-avatar-assistant {
 		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
 		color: var(--color-fg);
+	}
+
+	.turn-error {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		margin: 0;
+		padding: 0.25rem 0.5rem;
+		border-radius: var(--radius-sm, 4px);
+		background-color: color-mix(in srgb, var(--color-error-fg) 10%, transparent);
+		color: var(--color-error-fg);
+	}
+	.turn-error-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		flex-shrink: 0;
 	}
 
 	/* Narrow viewports: bubbles reclaim the width the desktop 80% cap wastes.

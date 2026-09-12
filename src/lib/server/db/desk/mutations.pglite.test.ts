@@ -20,6 +20,7 @@ vi.mock('$lib/server/db', async () => {
 
 const {
 	createSpreadsheetFile,
+	lockFileIfUnchanged,
 	renameFile,
 	deleteFile,
 	moveFile,
@@ -561,32 +562,61 @@ describe('desk mutations', () => {
 	});
 
 	describe('updateMarkdownByFileId', () => {
-		it('updates markdown content and touches file updatedAt', async () => {
+		it('updates markdown content, bumps the version and touches file updatedAt', async () => {
 			const { file: fileRow } = await createMarkdownFile(USER_A.id, 'Doc', 'original');
 			const before = fileRow.updatedAt;
 
 			await new Promise((r) => setTimeout(r, 10));
 
-			const result = await updateMarkdownByFileId(fileRow.id, USER_A.id, '# Updated');
+			const result = await updateMarkdownByFileId(fileRow.id, USER_A.id, { content: '# Updated', expectedVersion: 0 });
 
-			expect(result).not.toBeNull();
-			expect(result?.updatedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+			expect(result?.status).toBe('saved');
+			if (result?.status !== 'saved') return;
+			expect(result.version).toBe(1);
+			expect(result.file.updatedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
 
 			// Verify markdown content was updated
 			const [mdRow] = await db.select().from(markdown).where(eq(markdown.fileId, fileRow.id));
 			expect(mdRow.content).toBe('# Updated');
+			expect(mdRow.version).toBe(1);
+		});
+
+		it('refuses a write against a version that is no longer the stored one', async () => {
+			const { file: fileRow } = await createMarkdownFile(USER_A.id, 'Doc', 'original');
+			await updateMarkdownByFileId(fileRow.id, USER_A.id, { content: 'second', expectedVersion: 0 });
+
+			const stale = await updateMarkdownByFileId(fileRow.id, USER_A.id, { content: 'third', expectedVersion: 0 });
+			expect(stale).toEqual({ status: 'conflict' });
+			const [mdRow] = await db.select().from(markdown).where(eq(markdown.fileId, fileRow.id));
+			expect(mdRow.content).toBe('second');
 		});
 
 		it('returns null when file belongs to different user', async () => {
 			const { file: fileRow } = await createMarkdownFile(USER_A.id);
 
-			const result = await updateMarkdownByFileId(fileRow.id, USER_B.id, 'hijacked');
+			const result = await updateMarkdownByFileId(fileRow.id, USER_B.id, { content: 'hijacked', expectedVersion: 0 });
 			expect(result).toBeNull();
 		});
 
 		it('returns null when file does not exist', async () => {
-			const result = await updateMarkdownByFileId('nonexistent', USER_A.id, 'content');
+			const result = await updateMarkdownByFileId('nonexistent', USER_A.id, { content: 'content', expectedVersion: 0 });
 			expect(result).toBeNull();
+		});
+	});
+
+	describe('lockFileIfUnchanged', () => {
+		it('locks a file at its reviewed updatedAt and reports one that moved on as changed', async () => {
+			const { file: fileRow } = await createMarkdownFile(USER_A.id, 'Doc', 'original');
+
+			const same = await lockFileIfUnchanged(db, fileRow.id, USER_A.id, fileRow.updatedAt);
+			expect(same).toMatchObject({ status: 'locked', file: { id: fileRow.id } });
+
+			await new Promise((r) => setTimeout(r, 5));
+			await renameFile(fileRow.id, USER_A.id, 'Renamed');
+			const moved = await lockFileIfUnchanged(db, fileRow.id, USER_A.id, fileRow.updatedAt);
+			expect(moved).toEqual({ status: 'changed' });
+
+			expect(await lockFileIfUnchanged(db, fileRow.id, USER_B.id, fileRow.updatedAt)).toBeNull();
 		});
 	});
 	//

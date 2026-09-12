@@ -4,7 +4,7 @@
  * Follows the same pattern as spreadsheet: the file registry row (desk.file)
  * provides metadata, this table stores the type-specific content.
  */
-import { index, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
 import { file } from './file';
 import { deskSchema } from './schema';
@@ -22,6 +22,8 @@ export const markdown = deskSchema.table(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		/** Raw markdown content. */
 		content: text('content').notNull().default(''),
+		/** Optimistic concurrency token — the AI replay's reviewed baseline, as on `spreadsheet`. */
+		version: integer('version').notNull().default(0),
 		/** Soft-delete — kept in sync with `file.deletedAt`. See `desk/file.ts` for rationale. */
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

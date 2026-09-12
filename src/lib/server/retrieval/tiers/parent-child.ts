@@ -7,7 +7,8 @@ import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { OVERFETCH_MULTIPLIER } from '../config';
 import { fetchChunksByIds } from '../queries';
-import type { RankedChunk } from '../types';
+import type { DocumentSource, RankedChunk } from '../types';
+import { sourceScope } from './source-scope';
 
 interface ChildHit {
 	chunkId: string;
@@ -20,7 +21,12 @@ interface ChildHit {
 }
 
 /** Search child chunks by vector similarity. */
-async function searchChildren(queryEmbedding: number[], limit: number, userId: string): Promise<ChildHit[]> {
+async function searchChildren(
+	queryEmbedding: number[],
+	limit: number,
+	userId: string,
+	source?: DocumentSource,
+): Promise<ChildHit[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
 	const result = await db.execute<ChildHit>(sql`
@@ -36,6 +42,7 @@ async function searchChildren(queryEmbedding: number[], limit: number, userId: s
 			  AND c.embedding IS NOT NULL
 			  AND c.level = 'paragraph'
 			  AND c.parent_id IS NOT NULL
+			  ${sourceScope(userId, source)}
 			ORDER BY distance
 			LIMIT ${limit}
 		)
@@ -58,9 +65,10 @@ export async function searchParentChild(
 	queryEmbedding: number[],
 	limit: number,
 	userId: string,
+	source?: DocumentSource,
 ): Promise<RankedChunk[]> {
 	const overfetch = limit * OVERFETCH_MULTIPLIER;
-	const childHits = await searchChildren(queryEmbedding, overfetch, userId);
+	const childHits = await searchChildren(queryEmbedding, overfetch, userId, source);
 
 	if (childHits.length === 0) return [];
 

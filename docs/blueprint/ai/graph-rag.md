@@ -749,7 +749,7 @@ export async function getGraphChain() {
   }
 
   const model = new ChatGroq({
-    apiKey: process.env.GROQ_API_KEY,
+    apiKey: process.env.GROQ_API_KEY, // LangChain sample; v10r reads the saved connection instead (provider-routing.md)
     model: 'llama-3.3-70b-versatile',
     temperature: 0,
   });

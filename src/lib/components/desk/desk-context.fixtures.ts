@@ -31,12 +31,19 @@ export function makeRegistry(...panels: PanelContext[]): Map<string, PanelContex
 
 /** Create a mock EffectActions object with vi.fn() stubs.
  *  `panelInTree` controls what focusPanel reports: true = target exists. */
+/**
+ * `panelInTree` plays the open instance of the targeted file: `findFilePanel` returns the
+ * canonical id and `focusPanel` succeeds; with `false` nothing shows the file.
+ */
 export function makeMockActions(vi: { fn: () => Mock }, panelInTree = false): EffectActions {
 	return {
 		focusPanel: vi.fn().mockReturnValue(panelInTree),
 		addPanel: vi.fn(),
 		updatePanel: vi.fn(),
 		publish: vi.fn(),
+		findFilePanel: vi
+			.fn()
+			.mockImplementation((panelType: string, fileId: string) => (panelInTree ? `${panelType}-${fileId}` : null)),
 	};
 }
 

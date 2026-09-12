@@ -23,7 +23,9 @@ import { getGraphEntities, searchGraph } from './tiers/graph';
 import { searchParentChild } from './tiers/parent-child';
 import type { RankedChunk, RetrievalOptions, RetrievalResult } from './types';
 
-const DEFAULT_OPTIONS: Required<Omit<RetrievalOptions, 'collectionId' | 'userId' | 'queryEmbedding'>> = {
+const DEFAULT_OPTIONS: Required<
+	Omit<RetrievalOptions, 'source' | 'userId' | 'queryEmbedding' | 'embeddingConnection'>
+> = {
 	maxChunks: MAX_CONTEXT_CHUNKS,
 	tiers: [1],
 	graphDepth: MAX_GRAPH_HOPS,
@@ -104,7 +106,7 @@ export async function retrieve(
 	const reusedEmbedding = !!opts.queryEmbedding;
 	let queryEmbedding: number[];
 	try {
-		queryEmbedding = opts.queryEmbedding ?? (await generateEmbedding(query));
+		queryEmbedding = opts.queryEmbedding ?? (await generateEmbedding(query, { connection: opts.embeddingConnection }));
 		onEvent &&
 			emit(onEvent, 'embed', 'done', {
 				durationMs: Math.round(performance.now() - embedStart),
@@ -138,10 +140,10 @@ export async function retrieve(
 			let chunks: RankedChunk[];
 			switch (tier) {
 				case 1:
-					chunks = await searchContextual(query, queryEmbedding, opts.maxChunks, opts.userId);
+					chunks = await searchContextual(query, queryEmbedding, opts.maxChunks, opts.userId, opts.source);
 					break;
 				case 2:
-					chunks = await searchParentChild(queryEmbedding, opts.maxChunks, opts.userId);
+					chunks = await searchParentChild(queryEmbedding, opts.maxChunks, opts.userId, opts.source);
 					break;
 				case 3:
 					chunks = await searchGraph(queryEmbedding, opts.maxChunks, opts.graphDepth, opts.userId);

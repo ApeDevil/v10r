@@ -15,11 +15,18 @@ import {
 	streamText,
 	type UIMessage,
 } from 'ai';
+import type { HarnessMetadata } from '$lib/components/composites/chatbot/harness-types';
 import type { Locale } from '$lib/i18n';
 import type { SearchResult } from '$lib/search/types';
-import { getActiveProvider, getActiveProviderInfo, getFallbacksForUser, getToolProvider } from '$lib/server/ai';
+import {
+	getActiveProvider,
+	getActiveProviderInfo,
+	getToolProvider,
+	type ProviderEntry,
+	type ProviderRegistry,
+} from '$lib/server/ai';
 import { chargeTokens } from '$lib/server/ai/budget';
-import { CHATBOT_MAX_STEPS, MAX_TOKENS } from '$lib/server/ai/config';
+import { CHATBOT_GENERATION_OPTIONS, CHATBOT_MAX_STEPS, MAX_TOKENS } from '$lib/server/ai/config';
 import {
 	buildPromptAssembledEvent,
 	buildSystemPrompt,
@@ -27,20 +34,19 @@ import {
 	windowMessages,
 } from '$lib/server/ai/context/system-prompt';
 import { assembleChatbotContext } from '$lib/server/ai/context-assembly';
-import { aiErrorToStatus, classifyAiError, safeAiMessage } from '$lib/server/ai/errors';
-import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
-import { hasDestructiveIntent, shouldRequirePlan } from '$lib/server/ai/policy';
-import { incrProvider429 } from '$lib/server/ai/provider-usage';
-import type { ProviderEntry } from '$lib/server/ai/providers';
-import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import {
-	buildRetrievalTools,
-	createDeskTools,
-	type DeskToolScope,
-	getToolRisk,
-	stepsForScopes,
-} from '$lib/server/ai/tools';
-import type { ChatMessage } from '$lib/server/ai/types';
+	type AiErrorKind,
+	aiErrorFrameText,
+	aiErrorToStatus,
+	classifyAiError,
+	safeAiMessage,
+} from '$lib/server/ai/errors';
+import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
+import { answerOnLastStep, hasDestructiveIntent, shouldRequirePlan } from '$lib/server/ai/policy';
+import { incrProvider429 } from '$lib/server/ai/provider-usage';
+import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
+import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
+import type { ChatMessage, PanelContextEntry } from '$lib/server/ai/types';
 import { isAdminUserId as isAdminUser } from '$lib/server/auth/admin-ids';
 import {
 	createConversation,
@@ -50,14 +56,17 @@ import {
 	saveToolCall,
 	updateMessageContent,
 } from '$lib/server/db/ai/mutations';
-import { createProposal, getProposal } from '$lib/server/db/ai/proposals';
+import { createProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { DbError, safeDbMessage } from '$lib/server/db/errors';
-import type { ProposalExecutionResult, ProposedToolCall } from '$lib/server/db/schema/ai/proposal';
+import { observedQueryCount } from '$lib/server/db/query-census';
+import { type Cancellation, startCancellation } from '$lib/server/http/cancellation';
+import type { Deadline } from '$lib/server/http/deadline';
 import { MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN, verifyCitations } from '$lib/server/llmwiki';
 import { buildSearchIndex, type PageContext } from '$lib/server/search';
 import type { AiSurface } from '$lib/types/db-enums';
 import {
+	type GenerateDetail,
 	type LlmwikiCitationsEvent,
 	PHASE_OF,
 	RETRIEVER_OF,
@@ -74,6 +83,13 @@ import {
 import { verifyCatalogCitations } from './catalog-citations';
 import { shapeDrilledCitations } from './citations/drill';
 import { checkConversationLimit } from './conversation-quota';
+import {
+	collectApprovalRequests,
+	isApprovalSentinel,
+	riskTierOf,
+	stoppedAtApproval,
+	toCardSteps,
+} from './proposals/approval-boundary';
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
 
 /**
@@ -99,32 +115,22 @@ export interface ChatInput {
 	 * to the plain deskbot streaming path.
 	 */
 	surface: AiSurface;
+	/** The provider snapshot the entry guard loaded; every resolution in this turn uses it. */
+	registry: ProviderRegistry;
 	providerId?: string;
 	messages: ChatMessage[];
 	conversationId?: string;
 	/** Optional collection scope for llmwiki search. `null` means global. */
 	llmwikiCollectionId?: string | null;
-	panelContext?: {
-		panelType: string;
-		label: string;
-		content: string;
-		status?: string;
-		contentLevel?: string;
-		tokenEstimate?: number;
-	}[];
+	panelContext?: PanelContextEntry[];
 	toolScopes?: DeskToolScope[];
 	deskLayout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
 	activeWorkspace?: { id: string; name: string };
 	/**
-	 * When set, the caller is resuming a previously approved `agent_proposal`.
-	 * The orchestrator looks up the proposal's cached `executionResult`, injects
-	 * a `<plan-execution-result>` block into the system prompt, strips the
-	 * `[resumeFromProposalId:...]` sentinel from the user message, and skips
-	 * llmwiki/retrieval branches for the turn. Stale or invalid ids degrade
-	 * silently to a normal turn (the user already saw their plan execute —
-	 * a 500 here would be hostile).
+	 * The request's remaining budget, when the route minted one for the whole turn. Every model
+	 * call of the turn is bounded by what it has left minus the finalization reserve.
 	 */
-	resumeFromProposalId?: string;
+	deadline?: Deadline;
 	/** Resolved request locale (server-derived from `event.locals.locale`). Used by `search_catalog`. */
 	locale?: Locale;
 	/** Auth ceiling for catalog visibility (server-derived via `isAdmin()` — never a DB column). */
@@ -136,6 +142,12 @@ export interface ChatInput {
 	 * `<current-page>` block + the deixis-gated retrieval seed. See `site-awareness.md`.
 	 */
 	pageContext?: PageContext | null;
+	/**
+	 * The request's own signal — the platform's word that the client left (Vercel with
+	 * `supportsCancellation`; the Node bridge only for an interrupted body). Joined with the
+	 * response body's `cancel()` into the turn's cancellation (`http/cancellation.ts`).
+	 */
+	signal?: AbortSignal;
 }
 
 interface ChatError {
@@ -176,84 +188,6 @@ export function createOnFinish(conversationId: string | undefined, userId: strin
 	};
 }
 
-/**
- * Format a proposal's cached execution result into a human-readable summary block
- * the model can ingest as `<plan-execution-result>` context on a resume turn.
- */
-function formatExecutionSummary(proposalId: string, result: ProposalExecutionResult | null): string {
-	if (!result || !result.results.length) {
-		return `Plan ${proposalId} executed (no step output recorded).`;
-	}
-	const lines: string[] = [`Plan ${proposalId} executed:`];
-	for (const step of result.results) {
-		if (step.ok) {
-			const out = step.output ? JSON.stringify(step.output) : 'ok';
-			lines.push(`- ${step.toolName} → ok: ${out}`);
-		} else {
-			lines.push(`- ${step.toolName} → FAILED: ${step.errorMessage ?? 'unknown error'}`);
-		}
-	}
-	return lines.join('\n');
-}
-
-/**
- * Resolve a resume-from-proposal turn. Returns `null` if not a resume, or if the
- * lookup/ownership/status checks fail (in which case the orchestrator proceeds
- * as a normal turn — a stale or invalid id should not 500 the user's chat).
- *
- * Mutates `windowedMessages` in place: when the last user message is the
- * `[resumeFromProposalId:X]` sentinel, replaces its text with a clean
- * "I approved the plan." so the persisted log isn't polluted.
- */
-async function resolveResumeContext(
-	userId: string,
-	resumeFromProposalId: string | undefined,
-	existingConvId: string | undefined,
-	windowedMessages: ChatMessage[],
-): Promise<{ summary: string } | null> {
-	if (!resumeFromProposalId) return null;
-	if (!existingConvId) {
-		console.warn('[ai:chat:resume] resumeFromProposalId without conversationId — ignored');
-		return null;
-	}
-
-	const proposal = await getProposal(resumeFromProposalId);
-	if (!proposal) {
-		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} not found`);
-		return null;
-	}
-	if (proposal.conversationId !== existingConvId) {
-		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} belongs to a different conversation`);
-		return null;
-	}
-	const conv = await getConversation(proposal.conversationId, userId);
-	if (!conv) {
-		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} not owned by user`);
-		return null;
-	}
-	if (proposal.status !== 'executed') {
-		console.warn(`[ai:chat:resume] proposal ${resumeFromProposalId} status is ${proposal.status} (need executed)`);
-		return null;
-	}
-
-	// Strip the `[resumeFromProposalId:X]` sentinel from the last user message
-	// so the persisted conversation log shows clean text, not a control marker.
-	const sentinel = `[resumeFromProposalId:${resumeFromProposalId}]`;
-	const cleanText = 'I approved the plan.';
-	const idx = windowedMessages.length - 1;
-	const last = windowedMessages[idx];
-	if (last?.role === 'user' && getMessageText(last) === sentinel) {
-		if ('parts' in last) {
-			const parts = last.parts.map((p) => (p.type === 'text' ? { ...p, text: cleanText } : p));
-			windowedMessages[idx] = { ...last, parts };
-		} else {
-			windowedMessages[idx] = { ...last, content: cleanText };
-		}
-	}
-
-	return { summary: formatExecutionSummary(proposal.id, proposal.executionResult) };
-}
-
 /** Resolve or auto-create the conversation. Returns conversationId or error. */
 async function resolveConversation(
 	userId: string,
@@ -276,6 +210,29 @@ async function resolveConversation(
 	return { conversationId: conv.id };
 }
 
+/** Ceiling for one model call: a provider that has not finished by then is treated as timed out. */
+const MODEL_CALL_TIMEOUT_MS = 30_000;
+
+/**
+ * Time a turn keeps back from its last model call for what has to happen after it: the step
+ * rows, the answer's row, the budget charge, the `finish` frame. A call that used the whole
+ * function budget would leave a streamed answer with no time to persist it.
+ */
+const FINALIZATION_RESERVE_MS = 4_000;
+
+/**
+ * The signal one model call carries: the turn's cancellation (the client left) plus the call's
+ * own ceiling — and, when the route handed one over, the request's remaining budget, so a late
+ * step never runs past the function's own deadline. Minted per call — `AbortSignal.timeout()`
+ * is single-use, so a fallback attempt cannot reuse the primary's.
+ */
+function modelCallSignal(cancellation: Cancellation, deadline?: Deadline): AbortSignal {
+	const ceiling = deadline
+		? deadline.child(MODEL_CALL_TIMEOUT_MS, { reserveMs: FINALIZATION_RESERVE_MS }).signal()
+		: AbortSignal.timeout(MODEL_CALL_TIMEOUT_MS);
+	return AbortSignal.any([cancellation.signal, ceiling]);
+}
+
 /** Attempt streaming with fallback providers on transient errors. */
 async function tryFallback(
 	baseSystemPrompt: string,
@@ -283,26 +240,28 @@ async function tryFallback(
 	conversationId: string | undefined,
 	userId: string,
 	fallbacks: ProviderEntry[],
+	cancellation: Cancellation,
 	wantsTools = false,
 	deskTools?: ReturnType<typeof createDeskTools>,
 	toolScopes?: DeskToolScope[],
+	deadline?: Deadline,
 ): Promise<Response | null> {
 	for (const fallback of fallbacks) {
 		if (await isCooledDown(fallback.id)) continue;
 		// For tool requests, prefer tool-capable providers
-		if (wantsTools && !fallback.supportsTools) continue;
+		if (wantsTools && !fallback.capabilities.tools) continue;
 		try {
 			const fallbackModel = fallback.getInstance();
 			if (!fallbackModel) continue;
 
-			const useTools = wantsTools && fallback.supportsTools && deskTools;
+			const useTools = wantsTools && fallback.capabilities.tools && deskTools;
 			const result = streamText({
 				model: fallbackModel,
 				system: baseSystemPrompt,
 				messages,
 				maxRetries: 0,
 				maxOutputTokens: MAX_TOKENS,
-				abortSignal: AbortSignal.timeout(30_000),
+				abortSignal: modelCallSignal(cancellation, deadline),
 				...(useTools
 					? { tools: deskTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(stepsForScopes(toolScopes ?? [])) }
 					: {}),
@@ -330,7 +289,7 @@ async function tryFallback(
 					return `[${aiErr.kind}] ${safeAiMessage(aiErr.kind)}`;
 				},
 			});
-			return createUIMessageStreamResponse({ stream, headers });
+			return createUIMessageStreamResponse({ stream: cancellation.body(stream), headers });
 		} catch {
 			// try next fallback
 		}
@@ -356,10 +315,10 @@ async function resolveAvailableToolProvider(
 	const ordered: ProviderEntry[] = [];
 	if (preferred) ordered.push(preferred);
 	for (const f of fallbacks) {
-		if (f.supportsTools && !ordered.some((p) => p.id === f.id)) ordered.push(f);
+		if (f.capabilities.tools && !ordered.some((p) => p.id === f.id)) ordered.push(f);
 	}
 	for (const entry of ordered) {
-		if (!entry.configured || !entry.supportsTools) continue;
+		if (!entry.configured || !entry.capabilities.tools) continue;
 		if (await isCooledDown(entry.id)) continue;
 		const instance = entry.getInstance();
 		if (instance) return { provider: entry, model: instance };
@@ -382,13 +341,13 @@ function buildTurnAttempts(
 		{ providerId: primary.providerId, modelId: primary.modelId, run: () => makeStream(primary.model) },
 	];
 	for (const f of fallbacks) {
-		if (requireTools && !f.supportsTools) continue;
-		// `getFallbacksForUser` only excludes the active CHAT provider, so on a tool-routed turn the
-		// primary can appear here — never re-attempt the provider that just failed.
+		if (requireTools && !f.capabilities.tools) continue;
+		// The pool is every configured connection, the primary included — never re-attempt the
+		// provider that just failed.
 		if (attempts.some((a) => a.providerId === f.id)) continue;
 		const instance = f.getInstance();
 		if (!instance) continue;
-		attempts.push({ providerId: f.id, modelId: f.model, run: () => makeStream(instance) });
+		attempts.push({ providerId: f.id, modelId: f.modelId, run: () => makeStream(instance) });
 	}
 	return attempts;
 }
@@ -406,6 +365,10 @@ export async function orchestrateChat(input: ChatInput): Promise<Response> {
 }
 
 async function orchestrateChatInner(input: ChatInput): Promise<Response> {
+	// Pre-stream clock: everything between here and the chatbot's `start` frame is time the
+	// client spends looking at nothing (history conversion, provider resolution, conversation
+	// resolution, the user + assistant row writes).
+	const turnStartedAt = performance.now();
 	const {
 		userId,
 		providerId,
@@ -416,22 +379,19 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		toolScopes,
 		deskLayout,
 		activeWorkspace,
-		resumeFromProposalId,
 		locale,
 		authCeiling,
 		pageContext,
 	} = input;
 	const catalogLocale: Locale = locale ?? 'en';
+	// The client stopping to listen (Stop, a closed tab, a dropped connection) aborts every model
+	// call of the turn; what had streamed by then is persisted, not the answer nobody will read.
+	const cancellation = startCancellation(input.signal);
 
-	// Window conversation history to prevent context overflow in multi-turn chats.
-	// Cloned to a mutable array so resume injection can rewrite the sentinel user message.
-	const windowedMessages = [...windowMessages(rawMessages)];
-
-	// Resume-from-approval: lookup the executed proposal, strip the sentinel from the
-	// user message, and prepare a context block for the system prompt. Returns null on
-	// any failed lookup/ownership/status check (resume turns silently degrade to a normal
-	// turn rather than 500ing the user mid-flow).
-	const resumeContext = await resolveResumeContext(userId, resumeFromProposalId, existingConvId, windowedMessages);
+	// Window conversation history to prevent context overflow in multi-turn chats. An approved
+	// plan's outcome reaches the model the same way as everything else: the approve door
+	// persists a deterministic receipt message the client carries in this history.
+	const windowedMessages = windowMessages(rawMessages);
 
 	// Convert to ModelMessages for streamText compatibility.
 	// Legacy {role, content} messages are wrapped as UIMessages with text parts first.
@@ -443,15 +403,24 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// don't blow the context window before the first step even runs.
 	const messages = compactToolResults(await convertToModelMessages(normalized));
 
-	// Resolve provider dynamically per-request (request override → stored preference → env → first configured)
-	const activeProvider = getActiveProvider(userId, providerId);
-	const activeInfo = getActiveProviderInfo(userId, providerId);
+	// Resolve the provider for this turn against the snapshot the guard loaded
+	// (request override → stored preference → project default → capability order).
+	const { registry } = input;
+	const activeProvider = getActiveProvider(registry, userId, providerId);
+	const activeInfo = getActiveProviderInfo(registry, userId, providerId);
 	const resolvedChatModel = activeProvider?.getInstance() ?? null;
-	const resolvedToolProvider = getToolProvider(userId, providerId);
-	const resolvedFallbacks = getFallbacksForUser(userId, providerId);
+	const resolvedToolProvider = getToolProvider(registry, userId, providerId);
+	// The turn's fallback pool is every configured connection; each consumer drops the one it is
+	// already running on. It is NOT `getFallbacksForUser` (which excludes the *chat* provider —
+	// the registry's first connection): on a tool-routed turn the chat provider is exactly the
+	// one left to rotate to, and excluding it left Google + Groq with no fallback at all.
+	const configuredProviders = registry.entries.filter((p) => p.configured);
 
 	if (!resolvedChatModel) {
-		return Response.json({ error: { code: 'ai_unavailable', message: 'No AI provider configured.' } }, { status: 503 });
+		return Response.json(
+			{ error: { code: 'ai_unavailable', message: 'No AI provider is connected.' } },
+			{ status: 503 },
+		);
 	}
 
 	// Use tool-capable provider when tools requested, fall back to chatModel without tools.
@@ -460,35 +429,28 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// too — otherwise grounding tool calls run on the chat model and silently fail to fire.
 	const wantsTools = !!toolScopes?.length || input.surface === 'chatbot';
 	const availableToolProvider = wantsTools
-		? await resolveAvailableToolProvider(resolvedToolProvider, resolvedFallbacks)
+		? await resolveAvailableToolProvider(resolvedToolProvider, configuredProviders)
 		: null;
 	const hasTools = wantsTools && !!availableToolProvider;
 	const model = availableToolProvider?.model ?? resolvedChatModel;
 	// Desk tools only for actual desk scopes — the llmwiki/retrieval branches set hasTools (to claim
 	// the tool model) but bring their own retrieval tools and pass no desk scopes.
-	// On a resume-from-proposal turn the approved plan has ALREADY executed via the
-	// deterministic approve-route replay — this turn's only job is to acknowledge it.
-	// Strip mutating scopes so the model physically cannot re-run or diverge from the
-	// approved plan: approval binds execution. Read tools stay so it can still verify.
-	const effectiveToolScopes =
-		resumeContext && toolScopes ? toolScopes.filter((s) => s === 'desk:read' || s === 'desk:ask') : toolScopes;
-	const deskTools =
-		hasTools && effectiveToolScopes?.length ? createDeskTools(userId, effectiveToolScopes, deskLayout) : undefined;
+	const deskTools = hasTools && toolScopes?.length ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
 	// Resolved provider/model attribution for per-step telemetry (conversation_step) and for the
 	// stream-error circuit breaker. MUTABLE: the chatbot branch rotates providers mid-turn
 	// (see `streamTextIntoOpenMessage`), and every reader below must attribute the failure/step to
 	// the provider that is actually running, not the one the turn started on.
 	let currentProviderId = hasTools ? (availableToolProvider?.provider.id ?? null) : (activeInfo?.id ?? null);
-	let currentModelId = hasTools ? (availableToolProvider?.provider.model ?? null) : (activeInfo?.model ?? null);
+	let currentModelId = hasTools ? (availableToolProvider?.provider.modelId ?? null) : (activeInfo?.model ?? null);
 	const grantedScopes = toolScopes ?? [];
 	const lastRawMsg = windowedMessages[windowedMessages.length - 1];
 	const userMsgText = lastRawMsg?.role === 'user' ? getMessageText(lastRawMsg) : '';
 
 	// One named dispatch decision. The routes set `input.surface` explicitly; the chatbot
-	// (retrieval) branch additionally requires a fresh user turn — resume turns degrade to
-	// the plain deskbot streaming path. Computed BEFORE conversation resolution so it can
-	// be stamped on the conversation at creation.
-	const isFreshUserTurn = lastRawMsg?.role === 'user' && !!userMsgText && !resumeContext;
+	// (retrieval) branch additionally requires a fresh user turn — any other turn takes the
+	// plain deskbot streaming path. Computed BEFORE conversation resolution so it can be
+	// stamped on the conversation at creation.
+	const isFreshUserTurn = lastRawMsg?.role === 'user' && !!userMsgText;
 	const surface: AiSurface = isFreshUserTurn && input.surface === 'chatbot' ? 'chatbot' : 'deskbot';
 
 	// Plan-before-execute gate (policy/governor.ts)
@@ -506,16 +468,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		destructiveIntent: hasDestructiveIntent(userMsgText),
 	});
 
-	let baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace, requirePlan });
-	if (resumeContext) {
-		baseSystemPrompt = `${baseSystemPrompt}
-
-<plan-execution-result>
-${resumeContext.summary}
-</plan-execution-result>
-
-The user has just approved the plan above and the listed steps were executed. Acknowledge what was done in your reply and continue the conversation. Do NOT call \`desk_propose_plan\` again for the same goal.`;
-	}
+	const baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace, requirePlan });
 
 	// Resolve conversation (pass raw messages for title extraction; stamp the surface on
 	// any newly-created conversation).
@@ -532,50 +485,53 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		conversationId = convResult.conversationId;
 	}
 
-	// Save user message. Site-awareness: stamp the resolved route on the user row (chatbot turns
-	// only; pageContext is null elsewhere) for the per-bubble "asked from" tag — display metadata,
-	// never replayed into a later prompt.
-	if (conversationId && lastRawMsg?.role === 'user' && userMsgText) {
-		await saveMessages(conversationId, userId, [
-			{ id: crypto.randomUUID(), role: 'user', content: userMsgText, route: pageContext?.path ?? null },
-		]);
-	}
+	// The assistant row's id is minted here so the same id opens the client message (`start`
+	// frame), keys the persisted row and is the FK every `conversation_step` of the turn points at.
+	const assistantMsgId = crypto.randomUUID();
 
 	const responseHeaders: Record<string, string> = {};
 	if (conversationId) responseHeaders['X-Conversation-Id'] = conversationId;
 
-	/** Classify a stream error and return a `[kind] user-safe message` string.
-	 *  The client parses the `[kind]` prefix to drive error UI and IO log. */
+	/** Circuit breaker: a rate-limited provider sits out the next turns. */
+	function coolProvider(providerId: string | null, kind: AiErrorKind): void {
+		if (kind !== 'rate_limit' || !providerId) return;
+		void markCooldown(providerId);
+		void incrProvider429(providerId);
+	}
+
+	/** Classify a stream error and return the `[kind] user-safe message` frame text.
+	 *  The desk branch's only failure door: it logs and cools here. (The chatbot branch cools in
+	 *  the streaming helper's `onAttemptFailure`, which sees every failed attempt exactly once.) */
 	function classifyStreamError(error: unknown): string {
 		const aiErr = classifyAiError(error);
 		console.error(`[ai:chat] Stream error [${aiErr.kind}]:`, error);
-
-		// Circuit breaker for rate limits during streaming. This is the FINAL-failure path: the
-		// streaming helper only rethrows once no eligible provider is left, and it cools the
-		// providers it rotated away from itself — so reading the mutable `currentProviderId` here
-		// cools the provider that actually died last, with no double count.
-		if (aiErr.kind === 'rate_limit') {
-			const failedProvider = currentProviderId;
-			if (failedProvider) {
-				void markCooldown(failedProvider);
-				void incrProvider429(failedProvider);
-			}
-		}
-
+		coolProvider(currentProviderId, aiErr.kind);
 		return `[${aiErr.kind}] ${safeAiMessage(aiErr.kind)}`;
 	}
 
 	try {
+		// Both rows of the turn — the user message and the empty assistant row the stream backfills
+		// — land in ONE insert before any frame is written: one ownership check, one `updatedAt`
+		// touch, one round trip instead of two on the pre-stream path. Site-awareness: the resolved
+		// route is stamped on the user row only (chatbot turns; pageContext is null elsewhere) for
+		// the per-bubble "asked from" tag — display metadata, never replayed into a later prompt.
+		// An insert failure still answers with the JSON error below, before any stream exists.
+		if (conversationId) {
+			const rows: Parameters<typeof saveMessages>[2] = [];
+			if (lastRawMsg?.role === 'user' && userMsgText) {
+				rows.push({ id: crypto.randomUUID(), role: 'user', content: userMsgText, route: pageContext?.path ?? null });
+			}
+			rows.push({ id: assistantMsgId, role: 'assistant', content: '' });
+			await saveMessages(conversationId, userId, rows);
+		}
+
 		// chatbot (llmwiki) path — primary answer surface; exposes drill-down tools for retrieval.
-		// Resume turns skip retrieval branches: the model just needs to acknowledge the
-		// executed plan from `<plan-execution-result>`, not re-search for context.
 		if (surface === 'chatbot') {
 			const collectionId = llmwikiCollectionId ?? null;
-			const {
-				tools: retrievalTools,
-				drilledChunks,
-				surfacedCatalog,
-			} = buildRetrievalTools(userId, catalogLocale, authCeiling ?? null);
+			// The Google connection the guard's registry already opened: every embed of this turn
+			// (the shared query vector, a page-seeded retrieve, `search_project_docs`) rides it
+			// instead of reading and decrypting the provider rows again.
+			const embeddingConnection = registry.embeddingConnection();
 			const requestId = crypto.randomUUID();
 
 			const stream = createUIMessageStream({
@@ -586,12 +542,9 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					// FIRST (empty) assistant message to hold that early metadata, then the merge's
 					// own `start` (different id) appends a SECOND. One `start` up front → one message.
 					// Reusing this id for the merged stream (via `sendStart: false`) also makes the
-					// client message id match the persisted DB row.
-					const assistantMsgId = crypto.randomUUID();
-					if (conversationId) {
-						await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
-					}
+					// client message id match the persisted DB row (inserted above, before the stream).
 					writer.write({ type: 'start', messageId: assistantMsgId });
+					const preStreamMs = Math.round(performance.now() - turnStartedAt);
 
 					// Turn t0 — one origin for every step's startOffsetMs (retrieve + generate share it),
 					// so the waterfall renders true parallel overlap. See retrieval-observability.md.
@@ -631,12 +584,25 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						catalogCitations: ReturnType<typeof verifyCatalogCitations>;
 					} | null = null;
 
-					const flush = () => {
+					// Every metadata frame carries the FULL accumulated state (REPLACE semantics on the
+					// client — arrays replace on merge), so a burst of emits — four assembly lanes
+					// settling, the prompt-assembled event, a drill tick — is worth exactly one frame.
+					// `flush` schedules one write per microtask turn; `flushNow` drains it where the
+					// order against other frames matters (before the first model frame, before `finish`).
+					let flushPending = false;
+					const flushNow = () => {
+						if (!flushPending) return;
+						flushPending = false;
 						const meta: Record<string, unknown> = { pipeline: pipelineEvents };
 						if (citationsPayload) Object.assign(meta, citationsPayload);
 						if (sourceChunksPayload) Object.assign(meta, sourceChunksPayload);
 						if (catalogPayload) Object.assign(meta, catalogPayload);
 						writer.write({ type: 'message-metadata', messageMetadata: meta });
+					};
+					const flush = () => {
+						if (flushPending) return;
+						flushPending = true;
+						queueMicrotask(flushNow);
 					};
 					// Step events are authored as raw literals (step/status/offset/detail); this
 					// closure stamps the derived axes (phase/retriever), the stable instanceKey, and the
@@ -670,11 +636,28 @@ The user has just approved the plan above and the listed steps were executed. Ac
 							pageContext: pageContext ?? null,
 							catalogLocale,
 							hasTools,
+							authCeiling: authCeiling ?? null,
+							embeddingConnection,
 						},
 						{ emit, t0 },
 					);
 					systemPrompt = assembly.systemPrompt;
 					promptContextBlocks.push(...assembly.promptContextBlocks);
+
+					// The tool set follows the prompt: the llmwiki drill-down pair mounts only when the
+					// prompt carries an llmwiki context block (the rules naming it), `search_project_docs`
+					// already holds this turn's docs retrieval, and the catalog rows the assembly put in
+					// the prompt are surfaced — citable, verifiable — before the model has run.
+					const {
+						tools: retrievalTools,
+						drilledChunks,
+						surfacedCatalog,
+					} = buildRetrievalTools(userId, catalogLocale, authCeiling ?? null, {
+						llmwiki: assembly.llmwikiGrounded,
+						embeddingConnection,
+						docsSeed: assembly.docsSeed,
+						catalogSeed: assembly.catalogResults,
+					});
 
 					// Prompt assembled — emitted AFTER every context injection (llmwiki + project-overview +
 					// system-docs + current-page + catalog) so `systemPromptTokens` reflects the FULL prompt
@@ -697,38 +680,84 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						status: 'active',
 						startOffsetMs: Math.round(generateStart - t0),
 					});
+					// Set by the final attempt failure; the generate terminal then closes as `error`
+					// with the same timing shape a clean turn gets.
+					let generateFailure: AiErrorKind | null = null;
 
-					// `assistantMsgId` was created + persisted at the top of `execute` (so the
-					// `start` frame can carry it and conversation_step.messageId has a valid FK);
-					// its content is backfilled in onFinish (mirrors the desk branch).
+					// `assistantMsgId` was persisted before the stream (so the `start` frame carries it
+					// and conversation_step.messageId has a valid FK); its content is backfilled in
+					// afterText (mirrors the desk branch).
 					let stepCounter = 0;
 					let lastStepAt = generateStart;
+					// Step rows are written off the step boundary: awaiting the insert inside
+					// `onStepFinish` held the next model call for one DB round trip per step. The
+					// writes are collected and awaited in afterText before the totals are refreshed
+					// from them — they still land inside the stream, before `finish`.
+					const pendingStepWrites: Promise<void>[] = [];
+					// Per-step shape of the generate bar: how long each model call waited for its first
+					// token, and what every tool execution cost. Reset per provider attempt — a rotation
+					// starts the clock over on a fresh request.
+					const firstTokenMs: number[] = [];
+					const toolsRun: { name: string; ms: number }[] = [];
+					let stepsStarted = 0;
+					let stepStartedAt = generateStart;
+					let awaitingFirstToken = true;
 
 					// Tools are SPREAD, not passed unconditionally: when every tool-capable provider is
 					// cooled (`hasTools === false`) the turn must run genuinely tool-less. Mounting
 					// tools on a cooled-out turn is what produced "I searched the catalog…" answers
 					// with zero tool calls behind them. Paired with the honest-degrade NOTE above.
+					// `prepareStep` withholds the tools on the last allowed step, so the budget ends in an
+					// answer rather than on a tool call nothing will execute (`policy/step-budget.ts`).
 					const toolOpts = hasTools
-						? { tools: retrievalTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(CHATBOT_MAX_STEPS) }
+						? {
+								tools: retrievalTools,
+								toolChoice: 'auto' as const,
+								stopWhen: stepCountIs(CHATBOT_MAX_STEPS),
+								prepareStep: answerOnLastStep(CHATBOT_MAX_STEPS),
+							}
 						: {};
 
-					// A fresh `streamText` per attempt — the call fires on invocation and
-					// `AbortSignal.timeout()` is single-use, so a fallback cannot reuse the primary's.
-					const makeStream = (attemptModel: LanguageModel) =>
-						streamText({
+					// A fresh `streamText` per attempt — the call fires on invocation and its signal
+					// (`modelCallSignal`) is single-use, so a fallback cannot reuse the primary's.
+					const makeStream = (attemptModel: LanguageModel) => {
+						// The prompt-assembled + generate-active events precede the first model frame.
+						flushNow();
+						return streamText({
 							model: attemptModel,
 							system: systemPrompt,
 							messages,
 							...toolOpts,
+							providerOptions: CHATBOT_GENERATION_OPTIONS,
 							maxRetries: 0,
 							maxOutputTokens: MAX_TOKENS,
-							abortSignal: AbortSignal.timeout(30_000),
+							abortSignal: modelCallSignal(cancellation, input.deadline),
 							// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
 							// Suppresses the raw markup so the user never reads it; the turn degrades
 							// to empty instead of leaking syntax. See `tool-leak-guard.ts`.
 							experimental_transform: createToolLeakGuard((lead) =>
 								console.warn(`[ai:chat:llmwiki] suppressed textual tool-call leak: ${lead}…`),
 							),
+							experimental_onStepStart: () => {
+								stepsStarted++;
+								stepStartedAt = performance.now();
+								awaitingFirstToken = true;
+							},
+							onChunk: ({ chunk }) => {
+								if (!awaitingFirstToken) return;
+								if (
+									chunk.type === 'text-delta' ||
+									chunk.type === 'reasoning-delta' ||
+									chunk.type === 'tool-input-start' ||
+									chunk.type === 'tool-call'
+								) {
+									awaitingFirstToken = false;
+									firstTokenMs.push(Math.round(performance.now() - stepStartedAt));
+								}
+							},
+							experimental_onToolCallFinish: ({ toolCall, durationMs }) => {
+								toolsRun.push({ name: toolCall.toolName, ms: Math.round(durationMs) });
+							},
 							onStepFinish: async ({
 								toolCalls,
 								toolResults,
@@ -768,14 +797,15 @@ The user has just approved the plan above and the listed steps were executed. Ac
 										});
 									}
 								}
-								// Persist the step so the chatbot's usage shows up in "usage by model".
+								// Persist the step so the chatbot's usage shows up in "usage by model" —
+								// started here, awaited in afterText (see `pendingStepWrites`).
 								if (conversationId) {
 									const stepIndex = stepCounter++;
 									const nowT = performance.now();
 									const durationMs = Math.round(nowT - lastStepAt);
 									lastStepAt = nowT;
-									try {
-										await saveConversationStep({
+									pendingStepWrites.push(
+										saveConversationStep({
 											conversationId,
 											messageId: assistantMsgId,
 											stepIndex,
@@ -786,95 +816,136 @@ The user has just approved the plan above and the listed steps were executed. Ac
 											providerId: currentProviderId,
 											modelId: currentModelId,
 											durationMs,
-										});
-									} catch (err) {
-										console.error('[ai:chat:llmwiki] Failed to persist step:', err);
-									}
+										}).catch((err) => console.error('[ai:chat:llmwiki] Failed to persist step:', err)),
+									);
 								}
 							},
+							// The one place the raw provider error is logged. The trace never carries it:
+							// the streaming helper reports the attempt through `onAttemptFailure`, which
+							// paints the generate terminal with the classified kind.
 							onError: ({ error }) => {
 								console.error('[ai:chat:llmwiki] Stream error:', error);
-								// Terminal for generate — without this a provider 503 / 30s abort leaves the
-								// bar stuck `active` forever. Client also has a finalizeActive() backstop, but
-								// emit here so the error reason is visible.
-								emit({
-									type: 'pipeline:step',
-									step: 'generate',
-									status: 'error',
-									durationMs: Math.round(performance.now() - generateStart),
-									error: error instanceof Error ? error.message : String(error),
-								});
 							},
 						});
+					};
 
 					// Post-text work runs while the assistant message is still OPEN (the streaming helper
 					// closes it with a single `finish` only after this resolves) — so the citation/catalog
 					// metadata flushed here lands on the right message instead of after the `finish` frame.
 					const afterText = async (rawText: string, totalUsage: LanguageModelUsage) => {
+						// The model is done; everything below runs while the message is still open and
+						// is what the client sees as the gap between the last token and `finish`.
+						const generateMs = Math.round(performance.now() - generateStart);
+						const finalize: NonNullable<GenerateDetail['finalize']> = {};
+						const timed = async (stage: keyof typeof finalize, work: () => Promise<void>) => {
+							const from = performance.now();
+							try {
+								await work();
+							} finally {
+								finalize[stage] = Math.round(performance.now() - from);
+							}
+						};
+						try {
+							await finalizeTurn(rawText, totalUsage, timed);
+						} finally {
+							// The generate terminal carries the whole turn's timing shape and is emitted
+							// LAST so the finalize stages are in it — one frame, never a re-send.
+							emit({
+								type: 'pipeline:step',
+								step: 'generate',
+								status: generateFailure ? 'error' : 'done',
+								durationMs: generateMs,
+								...(generateFailure ? { error: generateFailure } : {}),
+								detail: {
+									kind: 'generate',
+									model: activeInfo?.id,
+									inputTokens: totalUsage?.inputTokens,
+									outputTokens: totalUsage?.outputTokens,
+									// Gemini's `thoughtsTokenCount`: the arm of the thinking A/B this turn ran on.
+									reasoningTokens: totalUsage?.outputTokenDetails?.reasoningTokens,
+									preStreamMs,
+									steps: stepsStarted,
+									firstTokenMs: [...firstTokenMs],
+									tools: [...toolsRun],
+									finalize: { ...finalize },
+								},
+							});
+							// One sanitized line per turn: ids, milliseconds and tool names — never text.
+							const { timings } = assembly;
+							const ms = (value: number | undefined) => (value === undefined ? '-' : String(value));
+							console.info(
+								`[ai:chat:timing] requestId=${requestId} preStream=${preStreamMs} embed=${ms(timings.embedMs)} ` +
+									`wiki=${ms(timings.llmwikiMs)} docs=${ms(timings.docsMs)} overview=${ms(timings.overviewMs)} ` +
+									`catalog=${ms(timings.catalogMs)} generate=${generateMs} steps=${stepsStarted} ` +
+									`firstToken=[${firstTokenMs.join(',')}] reasoning=${ms(totalUsage?.outputTokenDetails?.reasoningTokens)} ` +
+									`tools=[${toolsRun.map((t) => `${t.name}:${t.ms}`).join(',')}] ` +
+									`finalize={verify:${ms(finalize.verifyMs)},catalog:${ms(finalize.catalogMs)},` +
+									`persist:${ms(finalize.persistMs)},budget:${ms(finalize.budgetMs)}} ` +
+									`queries=${observedQueryCount() ?? '-'}`,
+							);
+							// The last metadata frame must precede the `finish` the helper writes next.
+							flushNow();
+						}
+					};
+					const finalizeTurn = async (
+						rawText: string,
+						totalUsage: LanguageModelUsage,
+						timed: (stage: keyof NonNullable<GenerateDetail['finalize']>, work: () => Promise<void>) => Promise<void>,
+					) => {
 						// Mirror the stream guard: if the whole turn was a textual tool-call
 						// leak (`<function=…>`), blank it before persistence / citation
 						// verification so the leak isn't saved or counted as an answer.
 						const text = stripTextualToolCall(rawText);
-						emit({
-							type: 'pipeline:step',
-							step: 'generate',
-							status: 'done',
-							durationMs: Math.round(performance.now() - generateStart),
-							detail: {
-								kind: 'generate',
-								model: activeInfo?.id,
-								inputTokens: totalUsage?.inputTokens,
-								outputTokens: totalUsage?.outputTokens,
-							},
-						});
 						try {
 							if (drilledChunks.size > 0) {
-								const verifyStart = performance.now();
-								emit({
-									type: 'pipeline:step',
-									step: 'llmwiki:verify',
-									status: 'active',
-									startOffsetMs: Math.round(verifyStart - t0),
-								});
-								const { verifications, driftedChunkIds } = await verifyCitations({
-									userId,
-									drilledChunkIds: Array.from(drilledChunks),
-									answerText: text,
-								});
-								const verifyMs = Math.round(performance.now() - verifyStart);
-								const verdicts = Array.from(verifications.entries()).map(([chunkId, status]) => ({
-									pageSlug: '',
-									chunkId,
-									status,
-								}));
-								const summary = {
-									total: verdicts.length,
-									quote: verdicts.filter((v) => v.status === 'quote').length,
-									paraphrase: verdicts.filter((v) => v.status === 'paraphrase').length,
-									drifted: verdicts.filter((v) => v.status === 'drifted').length,
-									uncited: verdicts.filter((v) => v.status === 'uncited').length,
-								};
-								emit({
-									type: 'pipeline:step',
-									step: 'llmwiki:verify',
-									status: 'done',
-									durationMs: verifyMs,
-									detail: { kind: 'llmwiki-verify', ...summary },
-								});
-								emit({ type: 'llmwiki:citations', verdicts, summary });
-								// Preserve the existing citations metadata shape for legacy consumers.
-								citationsPayload = {
-									citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
+								await timed('verifyMs', async () => {
+									const verifyStart = performance.now();
+									emit({
+										type: 'pipeline:step',
+										step: 'llmwiki:verify',
+										status: 'active',
+										startOffsetMs: Math.round(verifyStart - t0),
+									});
+									const { verifications, driftedChunkIds } = await verifyCitations({
+										userId,
+										drilledChunkIds: Array.from(drilledChunks),
+										answerText: text,
+									});
+									const verifyMs = Math.round(performance.now() - verifyStart);
+									const verdicts = Array.from(verifications.entries()).map(([chunkId, status]) => ({
+										pageSlug: '',
 										chunkId,
-										verification,
-										tier: 'chunks' as const,
-									})),
-									driftedChunkIds,
-								};
-								sourceChunksPayload = {
-									sourceChunks: await shapeDrilledCitations(userId, Array.from(drilledChunks), verifications),
-								};
-								flush();
+										status,
+									}));
+									const summary = {
+										total: verdicts.length,
+										quote: verdicts.filter((v) => v.status === 'quote').length,
+										paraphrase: verdicts.filter((v) => v.status === 'paraphrase').length,
+										drifted: verdicts.filter((v) => v.status === 'drifted').length,
+										uncited: verdicts.filter((v) => v.status === 'uncited').length,
+									};
+									emit({
+										type: 'pipeline:step',
+										step: 'llmwiki:verify',
+										status: 'done',
+										durationMs: verifyMs,
+										detail: { kind: 'llmwiki-verify', ...summary },
+									});
+									emit({ type: 'llmwiki:citations', verdicts, summary });
+									// Preserve the existing citations metadata shape for legacy consumers.
+									citationsPayload = {
+										citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
+											chunkId,
+											verification,
+											tier: 'chunks' as const,
+										})),
+										driftedChunkIds,
+									};
+									sourceChunksPayload = {
+										sourceChunks: await shapeDrilledCitations(userId, Array.from(drilledChunks), verifications),
+									};
+									flush();
+								});
 							}
 						} catch (err) {
 							console.error('[ai:chat:llmwiki] Verification failed:', err);
@@ -889,52 +960,67 @@ The user has just approved the plan above and the listed steps were executed. Ac
 						// project path the model emitted that search_catalog did not surface this turn.
 						try {
 							if (surfacedCatalog.size > 0) {
-								const surfaced = Array.from(surfacedCatalog.values());
-								const surfacedPaths = new Set(surfaced.map((r) => r.path));
-								const knownPaths = new Set(buildSearchIndex(catalogLocale).map((r) => r.path));
-								const catalogCitations = verifyCatalogCitations(text, surfacedPaths, knownPaths);
-								// Chips: only the surfaces the answer actually references, collapsed to
-								// one chip per unique (path, anchor). Docs retrieval surfaces several
-								// CHUNKS of the same doc → identical paths; the keyed {#each} in
-								// ChatMessage (keyed by path+anchor) would throw each_key_duplicate,
-								// crashing the chip row AND wedging the loading state. Keep best score.
-								const cited = surfaced.filter((r) => text.includes(r.path));
-								const bySurface = new Map<string, (typeof cited)[number]>();
-								for (const r of cited) {
-									const key = `${r.path}\u0000${r.anchor ?? ''}`;
-									const prev = bySurface.get(key);
-									if (!prev || (r.score ?? 0) > (prev.score ?? 0)) bySurface.set(key, r);
-								}
-								catalogPayload = {
-									catalogSources: Array.from(bySurface.values()).map((r) => ({
-										surface: r.surface,
-										title: r.title,
-										path: r.path,
-										anchor: r.anchor,
-										breadcrumb: r.breadcrumb,
-										icon: r.icon,
-										badge: r.badge,
-										locale: r.locale,
-									})),
-									catalogCitations,
-								};
-								flush();
+								await timed('catalogMs', async () => {
+									const surfaced = Array.from(surfacedCatalog.values());
+									const surfacedPaths = new Set(surfaced.map((r) => r.path));
+									const knownPaths = new Set(buildSearchIndex(catalogLocale).map((r) => r.path));
+									const catalogCitations = verifyCatalogCitations(text, surfacedPaths, knownPaths);
+									// Chips: only the surfaces the answer actually references, collapsed to
+									// one chip per unique (path, anchor). Docs retrieval surfaces several
+									// CHUNKS of the same doc → identical paths; the keyed {#each} in
+									// ChatMessage (keyed by path+anchor) would throw each_key_duplicate,
+									// crashing the chip row AND wedging the loading state. Keep best score.
+									const cited = surfaced.filter((r) => text.includes(r.path));
+									const bySurface = new Map<string, (typeof cited)[number]>();
+									for (const r of cited) {
+										const key = `${r.path}\u0000${r.anchor ?? ''}`;
+										const prev = bySurface.get(key);
+										if (!prev || (r.score ?? 0) > (prev.score ?? 0)) bySurface.set(key, r);
+									}
+									catalogPayload = {
+										catalogSources: Array.from(bySurface.values()).map((r) => ({
+											surface: r.surface,
+											title: r.title,
+											path: r.path,
+											anchor: r.anchor,
+											breadcrumb: r.breadcrumb,
+											icon: r.icon,
+											badge: r.badge,
+											locale: r.locale,
+										})),
+										catalogCitations,
+									};
+									flush();
+								});
 							}
 						} catch (err) {
 							console.error('[ai:chat:catalog] Surface-citation verification failed:', err);
 						}
-						// Backfill the pre-created assistant message + refresh cached token totals
-						// (steps were persisted in onStepFinish). Keep charging the Redis budget.
-						if (conversationId) {
-							try {
-								await updateMessageContent(assistantMsgId, text);
-								await refreshConversationTokens(conversationId);
-							} catch (err) {
-								console.error('[ai:chat:llmwiki] Failed to finalize:', err);
-							}
-						}
-						if (totalUsage) {
-							await chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0));
+						// Step rows first (each write logs its own failure): the token totals refreshed
+						// below are summed from them.
+						await Promise.all(pendingStepWrites);
+						// The durable writes — backfill the assistant row, refresh the cached totals,
+						// charge the Redis budget — are independent of each other and run together.
+						// ALL of them are awaited, whatever fails: they must land before `finish`
+						// (a function is frozen once its response completes), and a failed write is
+						// logged, never allowed to cost the user an answer that already streamed.
+						const outcomes = await Promise.allSettled([
+							conversationId
+								? timed('persistMs', async () => {
+										await Promise.all([
+											updateMessageContent(assistantMsgId, text),
+											refreshConversationTokens(conversationId),
+										]);
+									})
+								: Promise.resolve(),
+							totalUsage
+								? timed('budgetMs', () =>
+										chargeTokens(userId, (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0)),
+									)
+								: Promise.resolve(),
+						]);
+						for (const outcome of outcomes) {
+							if (outcome.status === 'rejected') console.error('[ai:chat:llmwiki] Failed to finalize:', outcome.reason);
 						}
 					};
 					// Current-turn provider rotation: primary first, then every configured fallback that
@@ -942,7 +1028,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					// tool-incapable provider (which would silently answer without ever searching).
 					const attempts = buildTurnAttempts(
 						{ providerId: currentProviderId, modelId: currentModelId, model },
-						resolvedFallbacks,
+						configuredProviders,
 						makeStream,
 						hasTools,
 					);
@@ -950,50 +1036,81 @@ The user has just approved the plan above and the listed steps were executed. Ac
 					// Pump text into the open message, run afterText, then close — citation/catalog/persist
 					// metadata flushes BEFORE the finish frame (fixes the empty-answer / answer⟷trace desync).
 					await streamTextIntoOpenMessage(writer, attempts, afterText, {
+						signal: cancellation.signal,
 						isSkipped: (id) => (id ? isCooledDown(id) : Promise.resolve(false)),
+						// The client left: the helper persists what streamed (through `afterText`) and
+						// closes the message; nothing is cooled and no error frame is written.
+						onCancellation: ({ providerId: cancelledId, contentParts }) => {
+							console.info(
+								`[ai:chat:llmwiki] turn cancelled by the client requestId=${requestId} provider=${cancelledId ?? 'unknown'} contentParts=${contentParts}`,
+							);
+						},
 						onAttemptStart: (attempt) => {
 							// Re-point step telemetry at the provider actually running this attempt.
 							currentProviderId = attempt.providerId;
 							currentModelId = attempt.modelId;
+							firstTokenMs.length = 0;
+							toolsRun.length = 0;
+							stepsStarted = 0;
+							stepStartedAt = performance.now();
+							awaitingFirstToken = true;
 						},
 						onAttemptFailure: async ({ providerId: failedId, error, willRetry }: AttemptFailure) => {
-							const aiErr = classifyAiError(error);
+							const { kind } = classifyAiError(error);
 							console.error(
-								`[ai:chat:llmwiki] attempt failed provider=${failedId ?? 'unknown'} kind=${aiErr.kind} willRetry=${willRetry}:`,
-								error,
+								`[ai:chat:llmwiki] attempt failed provider=${failedId ?? 'unknown'} kind=${kind} willRetry=${willRetry}`,
 							);
-							// Retry-path cooldown only. A FINAL failure rethrows into classifyStreamError,
-							// which owns the cooldown for it — cooling here too would double-count the 429.
-							if (!willRetry) return;
-							if (aiErr.kind === 'rate_limit' && failedId) {
-								void markCooldown(failedId);
-								void incrProvider429(failedId);
+							// Every failed attempt lands here exactly once — retry or final — so this is
+							// the chatbot turn's one cooldown door; the stream's `onError` only formats.
+							coolProvider(failedId, kind);
+							if (willRetry) {
+								// Re-open the generate bar so the waterfall shows the turn recovering onto
+								// the next provider.
+								emit({
+									type: 'pipeline:step',
+									step: 'generate',
+									status: 'active',
+									startOffsetMs: Math.round(generateStart - t0),
+								});
+								return;
 							}
-							// streamText's own onError already painted the generate bar `error`; re-open it
-							// so the waterfall shows the turn recovering onto the next provider.
+							// Final: the generate terminal closes as `error` with the classified kind —
+							// never the provider's prose. Drained now, before the helper closes the message
+							// (a partial answer) or the stream ends on the error frame.
+							generateFailure = kind;
 							emit({
 								type: 'pipeline:step',
 								step: 'generate',
-								status: 'active',
-								startOffsetMs: Math.round(generateStart - t0),
+								status: 'error',
+								durationMs: Math.round(performance.now() - generateStart),
+								error: kind,
 							});
+							flushNow();
 						},
 					});
 				},
-				onError: classifyStreamError,
+				// A failure that left the message empty rethrows out of the helper to here: the ONE
+				// `[kind] message` error frame the client parses. The attempt was logged and cooled
+				// by the hook; a turn no provider could take (every one cooled) only passes here.
+				onError: (error) => {
+					const text = aiErrorFrameText(error);
+					console.warn(`[ai:chat:llmwiki] turn ended on an error frame requestId=${requestId} ${text.split(' ')[0]}`);
+					return text;
+				},
 			});
-			return createUIMessageStreamResponse({ stream, headers: responseHeaders });
+			return createUIMessageStreamResponse({ stream: cancellation.body(stream), headers: responseHeaders });
 		}
 
-		// deskbot (non-retrieval) path — the surface === 'deskbot' fallthrough. Also handles
-		// resume turns and any non-fresh turn. Wrapped in createUIMessageStream for classified
-		// error handling.
-		const assistantMsgId = crypto.randomUUID();
-		if (conversationId) {
-			await saveMessages(conversationId, userId, [{ id: assistantMsgId, role: 'assistant', content: '' }]);
-		}
+		// deskbot (non-retrieval) path — the surface === 'deskbot' fallthrough, which also
+		// takes any non-fresh turn. Streams through the same helper as the chatbot: one open
+		// message, provider rotation before the first content part, a classified error frame
+		// when nothing reached the client. The assistant row (`assistantMsgId`) is already
+		// persisted above.
 		let stepCounter = 0;
 		let lastStepAt = performance.now();
+		// Step rows are written off the step boundary (see the chatbot branch) and awaited in
+		// afterText before the totals are refreshed from them.
+		const pendingStepWrites: Promise<void>[] = [];
 
 		/**
 		 * Harness metadata accumulator — per SVEY's gotcha, `message-metadata`
@@ -1001,247 +1118,213 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		 * the full accumulated object. The retrieval path already does this for
 		 * pipeline events; here we do the same for `harness.proposal` events.
 		 */
-		type HarnessMetadata = {
-			proposal?: {
-				id: string;
-				goal: string;
-				steps: unknown[];
-				estimatedWrites: number;
-				rollback: string;
-				riskTier: 'low' | 'medium' | 'high';
-				status: 'pending';
-			};
-		};
 		const harnessMetadata: HarnessMetadata = {};
 
 		const stream = createUIMessageStream({
 			execute: async ({ writer }) => {
-				// biome-ignore lint/suspicious/noExplicitAny: conditional tool spread confuses TS inference
-				const streamOpts: Record<string, any> = {
-					model,
-					system: baseSystemPrompt,
-					messages,
-					maxRetries: 0,
-					maxOutputTokens: MAX_TOKENS,
-					abortSignal: AbortSignal.timeout(30_000),
-					// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
-					// The desk branch routes to the SAME tool-capable provider as the chatbot
-					// branch (which already guards at the llmwiki stream), so without this a
-					// Groq-routed desk turn leaks raw tool-call markup into the UI.
-					experimental_transform: createToolLeakGuard((lead) =>
-						console.warn(`[ai:chat:desk] suppressed textual tool-call leak: ${lead}…`),
-					),
-				};
-				if (deskTools) {
-					streamOpts.tools = deskTools;
-					streamOpts.toolChoice = 'auto';
-					streamOpts.stopWhen = stepCountIs(stepsForScopes(toolScopes ?? []));
-					// Compaction deliberately does NOT hook `prepareStep`: AI SDK #9631 silently
-					// drops message mutations returned from it. It runs at tool-execute time via
-					// `wrapToolsWithCompaction` inside `createDeskTools`, with the whole request
-					// inside a `runWithCompaction` context (below) so refs resolve consistently.
-				}
+				// One assistant message, opened here with the persisted row's id (see the chatbot
+				// branch): the client's message id is the DB's, and the proposal metadata written
+				// from `onStepFinish` lands inside the message the helper keeps open.
+				writer.write({ type: 'start', messageId: assistantMsgId });
+
 				type ToolResultRecord = {
 					toolName: string;
 					input?: unknown;
 					output?: unknown;
 				};
-				streamOpts.onStepFinish = async ({
+				const onStepFinish = async ({
 					toolResults,
 					usage,
 				}: {
 					toolResults?: ToolResultRecord[];
-					usage?: { inputTokens: number; outputTokens: number };
+					usage?: { inputTokens?: number; outputTokens?: number };
 				}) => {
 					if (!conversationId) return;
 					const currentStep = stepCounter++;
 
-					const toolCallIds: string[] = [];
-					// Single-op approval accumulator: write/destructive desk tools return a
-					// `requiresApproval` sentinel instead of mutating; collect them and flush ONE
-					// pending proposal per step (below).
-					const pendingApproval: ProposedToolCall[] = [];
-					if (toolResults) {
-						for (const tr of toolResults) {
-							try {
-								const hasError = tr.output && typeof tr.output === 'object' && 'error' in tr.output;
-								const saved = await saveToolCall({
-									messageId: assistantMsgId,
-									toolName: tr.toolName,
-									args: (tr.input ?? {}) as Record<string, unknown>,
-									result: (tr.output ?? {}) as Record<string, unknown>,
-									status: hasError ? 'error' : 'success',
-									errorMessage: hasError ? String((tr.output as { error: string }).error) : undefined,
-								});
-								toolCallIds.push(saved.id);
+					const results = toolResults ?? [];
 
-								// HARD-GATE sentinel: a write/destructive desk tool refused to mutate in-loop
-								// and asked for approval. Queue it for a single-op proposal. Args come from the
-								// tool CALL input (tr.input), which — unlike the output — is never compaction-wrapped.
-								const gatedOut = tr.output as { requiresApproval?: boolean; action?: string } | undefined;
-								if (gatedOut?.requiresApproval === true) {
-									pendingApproval.push({
-										toolName: tr.toolName,
-										args: (tr.input ?? {}) as Record<string, unknown>,
-										rationale: gatedOut.action ?? tr.toolName,
-									});
-								}
-
-								// Plan-before-execute interception: if the model called
-								// `desk_propose_plan`, persist an `agent_proposal` row and
-								// emit a `harness.proposal` metadata event so the client
-								// can render a PlanCard. The stream's natural termination
-								// (via `stopWhen` + the model's own "awaiting_approval"
-								// response) closes the loop without extra machinery.
-								if (tr.toolName === 'desk_propose_plan' && !hasError) {
-									try {
-										const input = (tr.input ?? {}) as {
-											goal: string;
-											steps: Array<{
-												action: string;
-												tool: string;
-												risk: string;
-												rationale: string;
-												args?: Record<string, unknown>;
-											}>;
-											estimated_writes: number;
-											rollback: string;
-										};
-										const proposal = await createProposal({
-											conversationId,
-											messageId: assistantMsgId,
-											// Freeze the grant the plan was proposed under. The approve route
-											// replays these, never scopes sent with the approval request.
-											grantedScopes,
-											riskTier: input.steps.some((s) => s.risk === 'destructive') ? 'high' : 'medium',
-											payload: input.steps.map((s) => ({
-												toolName: s.tool,
-												// Carry the model's per-step args so the approve-route replay can
-												// actually execute the approved plan (empty args → "File not found").
-												args: s.args ?? {},
-												rationale: s.rationale,
-											})),
-											rationale: input.goal,
-										});
-										harnessMetadata.proposal = {
-											id: proposal.id,
-											goal: input.goal,
-											steps: input.steps,
-											estimatedWrites: input.estimated_writes,
-											rollback: input.rollback,
-											riskTier: proposal.riskTier,
-											status: 'pending',
-										};
-										// Always write the full accumulated object — metadata REPLACES on client.
-										writer.write({
-											type: 'message-metadata',
-											messageMetadata: { harness: harnessMetadata },
-										});
-									} catch (err) {
-										console.error('[ai:chat] Failed to persist proposal:', err);
-									}
-								}
-							} catch (err) {
-								console.error('[ai:chat] Failed to persist tool call:', err);
-							}
-						}
-					}
-
-					// Flush the single-op approval gate: ONE pending proposal for all write/destructive
-					// tool calls this step, reusing the SAME infra as desk_propose_plan (createProposal →
-					// PlanCard → POST /api/ai/proposals/[id]/approve). The mutation runs ONLY via that
-					// approve-route replay, which records a genuine approvedBy/approvedAt — never here.
-					// `!harnessMetadata.proposal` yields to an explicit desk_propose_plan in the same step.
-					if (pendingApproval.length > 0 && conversationId && !harnessMetadata.proposal) {
+					// The approval boundary. A gated tool or `desk_propose_plan` asked for approval:
+					// persist the proposal FIRST — it is the one write the user is about to act on —
+					// then stream the card. `stopWhen` ends the loop after this step, so a turn has
+					// at most one proposal; a second request would only ever come from a step the
+					// loop already stopped before.
+					const approval = collectApprovalRequests(results);
+					let proposalPersisted = approval.steps.length === 0;
+					if (approval.steps.length > 0 && !harnessMetadata.proposal) {
+						const goal = approval.goal ?? approval.steps.map((s) => s.action).join('; ');
 						try {
-							const goal = pendingApproval.map((s) => s.rationale ?? s.toolName).join('; ');
-							const anyDestructive = pendingApproval.some((s) => getToolRisk(s.toolName) === 'destructive');
 							const proposal = await createProposal({
 								conversationId,
 								messageId: assistantMsgId,
-								// Freeze the grant the plan was proposed under — see above.
+								// Freeze the grant the plan was proposed under. The approve route
+								// replays these, never scopes sent with the approval request.
 								grantedScopes,
-								riskTier: anyDestructive ? 'high' : 'medium',
-								payload: pendingApproval,
+								riskTier: riskTierOf(approval.steps),
+								payload: approval.steps,
 								rationale: goal,
 							});
 							harnessMetadata.proposal = {
 								id: proposal.id,
 								goal,
-								steps: pendingApproval.map((s) => ({
-									action: s.rationale ?? s.toolName,
-									tool: s.toolName,
-									risk: getToolRisk(s.toolName) ?? 'write',
-									rationale: s.rationale ?? '',
-									args: s.args,
-								})),
-								estimatedWrites: pendingApproval.length,
-								rollback: 'Recoverable from desk file revision history (restore for deletes).',
+								steps: toCardSteps(approval.steps),
+								estimatedWrites: approval.steps.length,
 								riskTier: proposal.riskTier,
 								status: 'pending',
 							};
-							writer.write({ type: 'message-metadata', messageMetadata: { harness: harnessMetadata } });
+							proposalPersisted = true;
 						} catch (err) {
-							console.error('[ai:chat] Failed to persist single-op approval proposal:', err);
+							console.error('[ai:chat] Failed to persist proposal:', err);
+							// No card without a row: a card the approve route cannot find would be
+							// a promise nobody keeps. The tool records below carry the failure too.
+							harnessMetadata.proposalError = {
+								message: 'The plan could not be saved for approval. Nothing was changed.',
+							};
 						}
+						// Always write the full accumulated object — metadata REPLACES on client.
+						writer.write({ type: 'message-metadata', messageMetadata: { harness: harnessMetadata } });
 					}
+
+					// The tool records and the step row are telemetry the next model call must not wait
+					// for: they start now and are awaited in `afterText` (the proposal above was awaited —
+					// the user acts on it). The step row carries the tool-call ids, so it follows them.
+					const toolCallSaves = results.map((tr) => {
+						const output = tr.output && typeof tr.output === 'object' ? (tr.output as Record<string, unknown>) : {};
+						const hasError = 'error' in output;
+						const orphanedSentinel = !proposalPersisted && isApprovalSentinel(tr.output);
+						return saveToolCall({
+							messageId: assistantMsgId,
+							toolName: tr.toolName,
+							args: (tr.input ?? {}) as Record<string, unknown>,
+							result: output,
+							status: hasError || orphanedSentinel ? 'error' : 'success',
+							errorMessage: hasError
+								? String(output.error)
+								: orphanedSentinel
+									? 'Approval request lost: the proposal could not be persisted.'
+									: undefined,
+						})
+							.then((saved) => saved.id)
+							.catch((err) => {
+								console.error('[ai:chat] Failed to persist tool call:', err);
+								return null;
+							});
+					});
 
 					const deskNowT = performance.now();
 					const deskDurationMs = Math.round(deskNowT - lastStepAt);
 					lastStepAt = deskNowT;
-					try {
-						await saveConversationStep({
-							conversationId,
-							messageId: assistantMsgId,
-							stepIndex: currentStep,
-							stepType: currentStep === 0 ? 'initial' : 'tool-result',
-							surface,
-							inputTokens: usage?.inputTokens ?? 0,
-							outputTokens: usage?.outputTokens ?? 0,
-							toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
-							providerId: currentProviderId,
-							modelId: currentModelId,
-							durationMs: deskDurationMs,
-						});
-					} catch (err) {
-						console.error('[ai:chat] Failed to persist step:', err);
-					}
+					pendingStepWrites.push(
+						Promise.all(toolCallSaves)
+							.then((ids) => {
+								const toolCallIds = ids.filter((id): id is string => id !== null);
+								return saveConversationStep({
+									conversationId,
+									messageId: assistantMsgId,
+									stepIndex: currentStep,
+									stepType: currentStep === 0 ? 'initial' : 'tool-result',
+									surface,
+									inputTokens: usage?.inputTokens ?? 0,
+									outputTokens: usage?.outputTokens ?? 0,
+									toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
+									providerId: currentProviderId,
+									modelId: currentModelId,
+									durationMs: deskDurationMs,
+								});
+							})
+							.catch((err) => console.error('[ai:chat] Failed to persist step:', err)),
+					);
 				};
-				streamOpts.onFinish = async ({
-					text,
-					totalUsage,
-				}: {
-					text?: string;
-					totalUsage?: { inputTokens: number; outputTokens: number };
-				}) => {
-					if (conversationId && text) {
-						await updateMessageContent(assistantMsgId, text);
-					}
-					if (conversationId) {
-						try {
-							await refreshConversationTokens(conversationId);
-						} catch {
-							/* non-critical */
-						}
-					}
-					if (totalUsage) {
-						console.info('[ai:chat] totalUsage:', {
-							inputTokens: totalUsage.inputTokens,
-							outputTokens: totalUsage.outputTokens,
-						});
-					}
-				};
-				streamOpts.onError = ({ error }: { error: unknown }) => {
-					console.error('[ai:chat] Inner stream error:', error);
-				};
-				const result = streamText(streamOpts as Parameters<typeof streamText>[0]);
 
-				result.consumeStream();
-				writer.merge(result.toUIMessageStream());
+				const maxSteps = stepsForScopes(toolScopes ?? []);
+				const makeStream = (attemptModel: LanguageModel) =>
+					streamText({
+						model: attemptModel,
+						system: baseSystemPrompt,
+						messages,
+						maxRetries: 0,
+						maxOutputTokens: MAX_TOKENS,
+						abortSignal: modelCallSignal(cancellation, input.deadline),
+						// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
+						// The desk branch routes to the SAME tool-capable provider as the chatbot
+						// branch (which already guards at the llmwiki stream), so without this a
+						// Groq-routed desk turn leaks raw tool-call markup into the UI.
+						experimental_transform: createToolLeakGuard((lead) =>
+							console.warn(`[ai:chat:desk] suppressed textual tool-call leak: ${lead}…`),
+						),
+						...(deskTools
+							? {
+									tools: deskTools,
+									toolChoice: 'auto' as const,
+									// Two ways the loop ends: the scope's step budget, or the approval boundary —
+									// the step that asked for approval is the turn's last, so the model never
+									// narrates an "awaiting approval" the card already says and never queues a
+									// second plan. The last budgeted step runs tool-less so it ends on an answer.
+									stopWhen: [stepCountIs(maxSteps), stoppedAtApproval],
+									prepareStep: answerOnLastStep(maxSteps),
+									// Compaction deliberately does NOT hook `prepareStep`: AI SDK #9631 silently
+									// drops message mutations returned from it. It runs at tool-execute time via
+									// `wrapToolsWithCompaction` inside `createDeskTools`, with the whole request
+									// inside a `runWithCompaction` context so refs resolve consistently.
+								}
+							: {}),
+						onStepFinish,
+					});
+
+				// The durable tail of a finished (or cut) turn: the step rows first — the totals
+				// refreshed below are summed from them — then the answer's row, the totals and the
+				// budget charge together. A cut turn arrives here with the partial text the client
+				// received and unknown usage, so it is stored but not charged.
+				const afterText = async (text: string, totalUsage: LanguageModelUsage) => {
+					await Promise.all(pendingStepWrites);
+					if (!conversationId) return;
+					const tokens = (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0);
+					const outcomes = await Promise.allSettled([
+						text ? updateMessageContent(assistantMsgId, text) : Promise.resolve(),
+						refreshConversationTokens(conversationId),
+						tokens > 0 ? chargeTokens(userId, tokens) : Promise.resolve(),
+					]);
+					for (const outcome of outcomes) {
+						if (outcome.status === 'rejected') console.error('[ai:chat:desk] Failed to finalize:', outcome.reason);
+					}
+				};
+
+				// Current-turn provider rotation: primary first, then every configured fallback that
+				// can still serve this turn. A desk turn never rotates once a tool has run — the
+				// helper pins the attempt at its first content part, and a tool part is one.
+				const attempts = buildTurnAttempts(
+					{ providerId: currentProviderId, modelId: currentModelId, model },
+					configuredProviders,
+					makeStream,
+					hasTools,
+				);
+				await streamTextIntoOpenMessage(writer, attempts, afterText, {
+					signal: cancellation.signal,
+					isSkipped: (id) => (id ? isCooledDown(id) : Promise.resolve(false)),
+					onCancellation: ({ providerId: cancelledId, contentParts }) => {
+						console.info(
+							`[ai:chat:desk] turn cancelled by the client provider=${cancelledId ?? 'unknown'} contentParts=${contentParts} steps=${stepCounter}`,
+						);
+					},
+					onAttemptStart: (attempt) => {
+						// Re-point step telemetry at the provider actually running this attempt.
+						currentProviderId = attempt.providerId;
+						currentModelId = attempt.modelId;
+					},
+					onAttemptFailure: async ({ providerId: failedId, error, willRetry }: AttemptFailure) => {
+						const { kind } = classifyAiError(error);
+						console.error(
+							`[ai:chat:desk] attempt failed provider=${failedId ?? 'unknown'} kind=${kind} willRetry=${willRetry}`,
+						);
+						// Every failed attempt lands here exactly once — retry or final — so this is the
+						// desk turn's one cooldown door; the stream's `onError` only formats.
+						coolProvider(failedId, kind);
+					},
+				});
 			},
 			onError: classifyStreamError,
 		});
-		return createUIMessageStreamResponse({ stream, headers: responseHeaders });
+		return createUIMessageStreamResponse({ stream: cancellation.body(stream), headers: responseHeaders });
 	} catch (err) {
 		// Error hygiene: a DB failure is NOT an AI failure. `classifyAiError`'s substring rules
 		// ('rate' → rate_limit, 'token' → context_length) cheerfully mislabel Postgres messages,
@@ -1256,15 +1339,7 @@ The user has just approved the plan above and the listed steps were executed. Ac
 		}
 
 		const aiErr = classifyAiError(err);
-
-		// Circuit breaker: cooldown the provider that just failed with rate limit
-		if (aiErr.kind === 'rate_limit') {
-			const failedProvider = currentProviderId;
-			if (failedProvider) {
-				void markCooldown(failedProvider);
-				void incrProvider429(failedProvider);
-			}
-		}
+		coolProvider(currentProviderId, aiErr.kind);
 
 		// `unknown` is deliberately NOT in this allowlist: it is `classifyAiError`'s catch-all, so
 		// falling back on it spent a second provider's quota re-running deterministic bugs (bad
@@ -1275,18 +1350,18 @@ The user has just approved the plan above and the listed steps were executed. Ac
 			// toolset and contaminate the surface. A chatbot turn falls back tool-less on any
 			// provider: ungrounded but honest.
 			const isDeskTurn = !!toolScopes?.length;
-			const fallbackTools = isDeskTurn
-				? (deskTools ?? createDeskTools(userId, effectiveToolScopes ?? toolScopes, deskLayout))
-				: undefined;
+			const fallbackTools = isDeskTurn ? (deskTools ?? createDeskTools(userId, toolScopes, deskLayout)) : undefined;
 			const fallbackResponse = await tryFallback(
 				baseSystemPrompt,
 				messages,
 				conversationId,
 				userId,
-				resolvedFallbacks,
+				configuredProviders.filter((p) => p.id !== currentProviderId),
+				cancellation,
 				isDeskTurn,
 				fallbackTools,
 				toolScopes,
+				input.deadline,
 			);
 			if (fallbackResponse) return fallbackResponse;
 		}

@@ -1,5 +1,6 @@
 import { neonConfig, Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { drizzle, type NeonQueryResultHKT } from 'drizzle-orm/neon-serverless';
+import type { PgDatabase } from 'drizzle-orm/pg-core';
 import { env } from '$env/dynamic/private';
 import { queryCensusLogger } from './query-census';
 import * as schema from './schema';
@@ -17,3 +18,12 @@ const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 export const db = drizzle(pool, { schema, logger: queryCensusLogger });
 
 export type Database = typeof db;
+
+/**
+ * What a domain mutation runs on: the database itself, or the transaction a caller
+ * already holds. `PgTransaction` extends `PgDatabase`, so a `handle.transaction(...)`
+ * inside a mutation nests as a SAVEPOINT when the caller passed its transaction and
+ * opens a real one otherwise — the mutation's body is the same either way. This is
+ * how a proposal step's desk mutation and its receipt commit together.
+ */
+export type DbHandle = PgDatabase<NeonQueryResultHKT, typeof schema>;

@@ -10,8 +10,8 @@
  * A rule that only a human re-reading Markdown can check is not an invariant, it is a
  * hope. This file is the executable form.
  *
- * Where the counts stand: framework imports 0 · environment reads 29 · cross-domain deep
- * imports 56 · `db/`-upward imports 0 · mutually-recursive domains 3 · component layer
+ * Where the counts stand: framework imports 0 · environment reads 26 · cross-domain deep
+ * imports 57 · `db/`-upward imports 0 · mutually-recursive domains 3 · component layer
  * inversions 3. The environment axis is newly measured rather than newly broken — `$env`
  * was invisible to this file until it got a rule of its own.
  *
@@ -364,7 +364,6 @@ const KNOWN_FRAMEWORK_IMPORTS: readonly string[] = [];
  */
 const KNOWN_ENV_IMPORTS: readonly string[] = [
 	'src/lib/server/abuse/config.ts -> $env/dynamic/private',
-	'src/lib/server/ai/providers.ts -> $env/dynamic/private',
 	'src/lib/server/auth/index.ts -> $env/dynamic/private',
 	'src/lib/server/auth/send-auth-email.ts -> $env/dynamic/private',
 	// Moved from cache/index.ts, unchanged in kind: the Upstash client was split out of
@@ -383,16 +382,17 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
 	'src/lib/server/monitoring/upstash.ts -> $env/dynamic/private',
 	'src/lib/server/neon/branches.ts -> $env/dynamic/private',
 	'src/lib/server/neon/client.ts -> $env/dynamic/private',
-	'src/lib/server/notifications/crypto.ts -> $env/dynamic/private',
 	'src/lib/server/notifications/health.ts -> $env/dynamic/private',
 	'src/lib/server/notifications/channels/discord.ts -> $env/dynamic/private',
 	'src/lib/server/notifications/channels/email.ts -> $env/dynamic/private',
 	'src/lib/server/notifications/channels/telegram.ts -> $env/dynamic/private',
 	'src/lib/server/notifications/channels/web-push.ts -> $env/dynamic/private',
 	'src/lib/server/platform/index.ts -> $env/dynamic/private',
-	'src/lib/server/retrieval/embed.ts -> $env/dynamic/private',
+	// The one read of ENCRYPTION_KEY. It replaced notifications/crypto.ts's read when the
+	// AES-GCM primitive became caller-keyed so the bare-Bun ingest scripts can decrypt the
+	// stored AI provider connection; the app threads the key in from here.
+	'src/lib/server/security/encryption-key.ts -> $env/dynamic/private',
 	'src/lib/server/security/subkey.ts -> $env/dynamic/private',
-	'src/lib/server/showcases/image-kit/embed.ts -> $env/dynamic/private',
 	'src/lib/server/store/index.ts -> $env/dynamic/private',
 ];
 
@@ -413,6 +413,10 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/agents/render.ts -> blog/pipeline',
 	'src/lib/server/ai/chat-orchestrator.ts -> auth/admin-ids',
 	'src/lib/server/ai/citations/drill.ts -> retrieval/queries',
+	// `ai/connections.ts` is reached by the bare-Bun ingest scripts; the security barrel
+	// would drag `subkey.ts`'s `$env` read in behind it, so it takes the caller-keyed
+	// AES-GCM leaf by file — the same reason `auth/admin-ids` is deep-imported.
+	'src/lib/server/ai/connections.ts -> security/aes-gcm',
 	'src/lib/server/ai/context-assembly.ts -> retrieval/embed',
 	'src/lib/server/ai/context-assembly.ts -> retrieval/types',
 	'src/lib/server/ai/deskbot-retrieval.ts -> retrieval/ingest',

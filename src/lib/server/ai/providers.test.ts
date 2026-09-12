@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ProviderEntry } from './providers';
+import type { AiProviderId } from '$lib/types/db-enums';
+import type { ProviderEntry, ProviderRegistry } from './connections';
 import {
 	clearUserPreference,
 	getCooldownResumeAt,
+	getFallbackProviders,
 	getUserPreference,
 	isCooledDown,
 	markCooldown,
@@ -18,25 +20,32 @@ import {
 // the provider for the running app and leak across test runs).
 vi.mock('$lib/server/cache', () => ({ redis: null }));
 
-function makeEntry(overrides: Partial<ProviderEntry> & { id: string }): ProviderEntry {
+function makeEntry(overrides: Partial<ProviderEntry> & { id: AiProviderId }): ProviderEntry {
 	return {
 		name: overrides.id,
+		enabled: true,
+		keyStatus: 'ready',
 		configured: true,
-		model: `${overrides.id}-model`,
-		envVar: `${overrides.id.toUpperCase()}_KEY`,
-		supportsTools: true,
-		supportsVision: true,
+		modelId: `${overrides.id}-model`,
+		capabilities: { tools: true, vision: true, recognized: true },
+		isDefault: false,
+		version: 1,
+		updatedAt: null,
+		updatedBy: null,
 		getInstance: () => null,
 		...overrides,
 	};
 }
 
+function makeRegistry(entries: ProviderEntry[], defaultProviderId: AiProviderId | null = null): ProviderRegistry {
+	return { entries, defaultProviderId, degraded: false, embeddingConnection: () => ({ unavailable: 'disabled' }) };
+}
+
 const groq = makeEntry({ id: 'groq' });
 const openai = makeEntry({ id: 'openai' });
 const google = makeEntry({ id: 'google' });
-const unconfigured = makeEntry({ id: 'unconfigured', configured: false });
 
-const registry = [groq, openai, google, unconfigured];
+const registry = makeRegistry([groq, openai, google]);
 
 describe('user preferences', () => {
 	beforeEach(() => {
@@ -68,99 +77,94 @@ describe('user preferences', () => {
 });
 
 describe('resolveActiveProvider', () => {
-	it('returns first configured when no preference', () => {
-		const result = resolveActiveProvider(registry);
-		expect(result?.id).toBe('groq');
+	it('honours a configured preference', () => {
+		expect(resolveActiveProvider(registry, 'openai')?.id).toBe('openai');
 	});
 
-	it('respects user preference over default order', () => {
-		const result = resolveActiveProvider(registry, 'openai');
-		expect(result?.id).toBe('openai');
+	it('falls through an unconfigured preference to the project default', () => {
+		const disabledOpenai = makeEntry({ id: 'openai', enabled: false, configured: false });
+		const withDefault = makeRegistry([groq, disabledOpenai, google], 'google');
+		expect(resolveActiveProvider(withDefault, 'openai')?.id).toBe('google');
 	});
 
-	it('falls back to default when preference is unconfigured', () => {
-		const result = resolveActiveProvider(registry, 'unconfigured');
-		// unconfigured provider has configured: false, so it should fall back
-		expect(result?.id).toBe('groq');
+	it('uses the project default before registry order', () => {
+		expect(resolveActiveProvider(makeRegistry([groq, openai, google], 'google'))?.id).toBe('google');
 	});
 
-	it('falls back when preference is unknown', () => {
-		const result = resolveActiveProvider(registry, 'nonexistent');
-		expect(result?.id).toBe('groq');
+	it('falls back to the first configured entry when there is no default', () => {
+		expect(resolveActiveProvider(registry)?.id).toBe('groq');
 	});
 
-	it('returns null for empty registry', () => {
-		const result = resolveActiveProvider([]);
-		expect(result).toBeNull();
+	it('skips an entry whose key did not decrypt', () => {
+		const brokenGroq = makeEntry({ id: 'groq', keyStatus: 'undecryptable', configured: false });
+		expect(resolveActiveProvider(makeRegistry([brokenGroq, openai]))?.id).toBe('openai');
 	});
 
-	it('returns null when no provider configured', () => {
-		const result = resolveActiveProvider([unconfigured]);
-		expect(result).toBeNull();
+	it('returns null when nothing is configured', () => {
+		expect(resolveActiveProvider(makeRegistry([]))).toBeNull();
+		expect(resolveActiveProvider(makeRegistry([makeEntry({ id: 'groq', configured: false })]))).toBeNull();
+	});
+});
+
+describe('getFallbackProviders', () => {
+	it('excludes the active provider and unconfigured entries', () => {
+		const disabled = makeEntry({ id: 'google', enabled: false, configured: false });
+		expect(getFallbackProviders(makeRegistry([groq, openai, disabled]), 'groq').map((p) => p.id)).toEqual(['openai']);
 	});
 });
 
 describe('resolveToolProvider', () => {
-	it('returns a tool-capable provider', () => {
-		const result = resolveToolProvider(registry);
-		expect(result).not.toBeNull();
-		expect(result?.supportsTools).toBe(true);
+	const textOnlyGroq = makeEntry({ id: 'groq', capabilities: { tools: false, vision: false, recognized: false } });
+
+	it('prefers OpenAI over Google without a preference or default', () => {
+		expect(resolveToolProvider(registry)?.id).toBe('openai');
 	});
 
-	it('respects user preference for tool provider', () => {
-		const result = resolveToolProvider(registry, 'google');
-		expect(result?.id).toBe('google');
+	it('uses the project default when it can call tools', () => {
+		expect(resolveToolProvider(makeRegistry([groq, openai, google], 'google'))?.id).toBe('google');
 	});
 
-	it('skips non-tool-capable provider preference', () => {
-		const noTools = makeEntry({ id: 'notool', supportsTools: false });
-		const reg = [noTools, openai, google];
-		const result = resolveToolProvider(reg, 'notool');
-		// Should fall back to a tool-capable provider
-		expect(result?.supportsTools).toBe(true);
+	it('ignores a default whose model is not trusted with tools', () => {
+		expect(resolveToolProvider(makeRegistry([textOnlyGroq, openai, google], 'groq'))?.id).toBe('openai');
 	});
 
-	it('returns null when no tool-capable provider exists', () => {
-		const noTools = makeEntry({ id: 'notool', supportsTools: false });
-		const result = resolveToolProvider([noTools]);
-		expect(result).toBeNull();
+	it('honours a tool-capable preference', () => {
+		expect(resolveToolProvider(registry, 'google')?.id).toBe('google');
+	});
+
+	it('ignores a preference for an unrecognized model', () => {
+		expect(resolveToolProvider(makeRegistry([textOnlyGroq, openai]), 'groq')?.id).toBe('openai');
+	});
+
+	it('returns null when no configured model can call tools', () => {
+		expect(resolveToolProvider(makeRegistry([textOnlyGroq]))).toBeNull();
 	});
 });
 
 describe('resolveVisionProvider', () => {
-	const groqNoVision = makeEntry({ id: 'groq', supportsVision: false });
-	const visionRegistry = [groqNoVision, openai, google, unconfigured];
+	const textOnlyGroq = makeEntry({ id: 'groq', capabilities: { tools: true, vision: false, recognized: true } });
 
-	it('never returns a non-vision provider (Groq excluded)', () => {
-		const result = resolveVisionProvider(visionRegistry);
-		expect(result?.id).not.toBe('groq');
-		expect(result?.supportsVision).toBe(true);
+	it('prefers Google over OpenAI', () => {
+		expect(resolveVisionProvider(makeRegistry([textOnlyGroq, openai, google]))?.id).toBe('google');
 	});
 
-	it('prefers Google over OpenAI by default', () => {
-		const result = resolveVisionProvider(visionRegistry);
-		expect(result?.id).toBe('google');
+	it('never returns a text-only model, even as the preference or default', () => {
+		expect(resolveVisionProvider(makeRegistry([textOnlyGroq, openai], 'groq'), 'groq')?.id).toBe('openai');
+		expect(resolveVisionProvider(makeRegistry([textOnlyGroq]))).toBeNull();
 	});
 
-	it('falls back to OpenAI when Google is unconfigured', () => {
-		const googleOff = makeEntry({ id: 'google', configured: false });
-		const result = resolveVisionProvider([groqNoVision, openai, googleOff]);
-		expect(result?.id).toBe('openai');
+	it('drops vision when an administrator switches a vendor to a text-only model', () => {
+		const textOnlyOpenai = makeEntry({
+			id: 'openai',
+			modelId: 'some-text-model',
+			capabilities: { tools: false, vision: false, recognized: false },
+		});
+		expect(resolveVisionProvider(makeRegistry([textOnlyOpenai, google]))?.id).toBe('google');
+		expect(resolveVisionProvider(makeRegistry([textOnlyOpenai]))).toBeNull();
 	});
 
-	it('respects a vision-capable user preference', () => {
-		const result = resolveVisionProvider(visionRegistry, 'openai');
-		expect(result?.id).toBe('openai');
-	});
-
-	it('ignores a preference for a non-vision provider', () => {
-		const result = resolveVisionProvider(visionRegistry, 'groq');
-		expect(result?.id).toBe('google');
-	});
-
-	it('returns null when no vision provider is configured', () => {
-		const result = resolveVisionProvider([groqNoVision]);
-		expect(result).toBeNull();
+	it('honours a vision-capable preference', () => {
+		expect(resolveVisionProvider(registry, 'openai')?.id).toBe('openai');
 	});
 });
 

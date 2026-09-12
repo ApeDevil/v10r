@@ -2,8 +2,8 @@
  * tool-leak-guard — a `streamText` transform that suppresses *textual* tool-call
  * markup from ever reaching the user.
  *
- * Why this exists: Groq's `llama-3.3-70b-versatile` (our only configured tool
- * provider when just `GROQ_API_KEY` is set) probabilistically emits a tool call
+ * Why this exists: Groq's llama models (the only tool provider when Groq is the
+ * sole connection an administrator has enabled) probabilistically emit a tool call
  * as plain assistant TEXT instead of a structured `tool_calls` field — e.g. the
  * whole turn streams back as:
  *

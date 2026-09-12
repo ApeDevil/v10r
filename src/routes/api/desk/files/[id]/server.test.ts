@@ -9,7 +9,11 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	deleteFile: vi.fn(),
 	duplicateSpreadsheetFile: vi.fn(),
 }));
-vi.mock('$lib/server/db/desk/queries', () => ({ getFile: vi.fn(), getSpreadsheetByFileId: vi.fn() }));
+vi.mock('$lib/server/db/desk/queries', () => ({
+	getFile: vi.fn(),
+	getMarkdownByFileId: vi.fn(),
+	getSpreadsheetByFileId: vi.fn(),
+}));
 vi.mock('$lib/server/http/guards', () => ({ guardApiUser: () => ({ user: { id: 'user' } }) }));
 vi.mock('$lib/server/http/rate-limit', () => ({
 	createLimiter: () => ({ limit: async () => ({ success: true }) }),

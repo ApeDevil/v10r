@@ -3,14 +3,17 @@ import {
 	CONTEXT_TOKEN_BUDGET,
 	dismissContext,
 	getContextChips,
-	getTokenEstimate,
+	getRequestPreview,
 	pinContext,
 	restoreContext,
 } from '$lib/components/desk';
 import Switch from '$lib/components/primitives/switch/Switch.svelte';
+import * as m from '$lib/paraglide/messages';
 
 const chips = $derived(getContextChips());
-const totalTokens = $derived(getTokenEstimate());
+// The meter describes the request, not the registry: what the next turn would send.
+const preview = $derived(getRequestPreview());
+const totalTokens = $derived(preview.tokensSent);
 const budget = CONTEXT_TOKEN_BUDGET;
 const fillPercent = $derived(Math.min(100, Math.round((totalTokens / budget) * 100)));
 const fillLevel = $derived<'normal' | 'warning' | 'error'>(
@@ -83,6 +86,12 @@ function truncateContent(content: string): { text: string; totalLines: number; t
 			~{formatTokens(totalTokens)} / {formatTokens(budget)} tokens
 		</span>
 	</div>
+	{#if preview.omitted.length > 0}
+		<p class="omitted-note" role="status">
+			{m.composites_desk_bot_context_omitted({ count: preview.omitted.length })}
+			{preview.omitted.map((o) => o.label).join(', ')}
+		</p>
+	{/if}
 
 	{#if chips.length === 0}
 		<div class="empty-state">
@@ -180,6 +189,12 @@ function truncateContent(content: string): { text: string; totalLines: number; t
 		font-size: 10px;
 		color: var(--color-muted);
 		white-space: nowrap;
+	}
+
+	.omitted-note {
+		margin: 4px 0 0;
+		font-size: 11px;
+		color: var(--color-warning-fg, var(--color-muted));
 	}
 
 	.token-label.warning {

@@ -50,6 +50,29 @@ describe('retrieve', () => {
 	});
 
 	/**
+	 * The corpus boundary inside a tenant: a caller's `source` reaches both vector tiers, and
+	 * a caller that names none gets the unscoped queries the chatbot relies on.
+	 */
+	describe('source scope', () => {
+		it('threads the requested source into tiers 1 and 2', async () => {
+			await retrieve('budget', { userId: 'u1', tiers: [1, 2], source: 'desk' });
+			expect(mockSearchContextual).toHaveBeenCalledWith('budget', expect.any(Array), expect.any(Number), 'u1', 'desk');
+			expect(mockSearchParentChild).toHaveBeenCalledWith(expect.any(Array), expect.any(Number), 'u1', 'desk');
+		});
+
+		it('leaves the tiers unscoped when no source is named', async () => {
+			await retrieve('budget', { userId: 'u1', tiers: [1] });
+			expect(mockSearchContextual).toHaveBeenCalledWith(
+				'budget',
+				expect.any(Array),
+				expect.any(Number),
+				'u1',
+				undefined,
+			);
+		});
+	});
+
+	/**
 	 * The other half of the `embed_calls_per_turn` budget. The chatbot embeds the user
 	 * message once and hands the vector to both consumers (proved in
 	 * `ai/context-assembly.test.ts`); this is the consumer keeping its side of it. A

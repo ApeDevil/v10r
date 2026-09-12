@@ -8,12 +8,15 @@
  * Exactly-once execution is enforced by the partial unique index on
  * `agent_proposal` at schema level — concurrent `markExecuting` calls
  * for the same proposal collide there. Readers handle the collision by
- * reading the existing row instead of racing.
+ * reading the existing row instead of racing. What each step did is the
+ * `agent_proposal_step` receipt, written in the step's own transaction.
  */
-import { and, eq, gt, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, lt, sql } from 'drizzle-orm';
+import type { ProposalStepKind } from '$lib/types/db-enums';
 import { createId } from '../id';
-import { db } from '../index';
-import { agentProposal, type ProposalExecutionResult, type ProposedToolCall } from '../schema/ai/proposal';
+import { type DbHandle, db } from '../index';
+import { agentProposal, type ProposedToolCall } from '../schema/ai/proposal';
+import { agentProposalStep } from '../schema/ai/proposal-step';
 
 /**
  * The time bound on consent, as a SQL predicate.
@@ -30,6 +33,13 @@ import { agentProposal, type ProposalExecutionResult, type ProposedToolCall } fr
 const notExpired = () => gt(agentProposal.expiresAt, sql`now()`);
 
 const DEFAULT_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes — stale proposals auto-expire
+
+/**
+ * How long an `executing` row may go without a heartbeat before it is presumed dead.
+ * The approve route's function has a 60 s ceiling and touches the row between steps,
+ * so a row silent for twice that was interrupted — its receipts say which steps ran.
+ */
+export const EXECUTION_LEASE_MS = 120_000;
 
 export interface CreateProposalInput {
 	conversationId: string;
@@ -175,37 +185,99 @@ export async function markExecuting(id: string) {
 	return row ?? null;
 }
 
-/** Transition `executing → executed` with cached result for idempotent retries. */
-export async function markExecuted(id: string, result: ProposalExecutionResult) {
+/** Transition `executing → executed`. The per-step record is already in `agent_proposal_step`. */
+export async function markExecuted(id: string) {
 	const now = new Date();
 	const [row] = await db
 		.update(agentProposal)
-		.set({
-			status: 'executed',
-			executionResult: result,
-			executedAt: now,
-			updatedAt: now,
-		})
+		.set({ status: 'executed', executedAt: now, updatedAt: now })
 		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'executing')))
 		.returning();
 	return row ?? null;
 }
 
 /**
- * Transition `executing → failed`. Persists any partial execution result so the
- * audit trail reflects which steps actually ran before the failure (the approve
- * route executes sequentially with no rollback — earlier mutations stick).
+ * Transition `executing → failed`. The steps that did run keep their receipts (the
+ * replay is sequential with no rollback — earlier mutations stick); `message` names
+ * why the plan stopped: the failing step's error, `'conflict'`, or `'interrupted'`.
  */
-export async function markFailed(id: string, message: string, partialResult?: ProposalExecutionResult) {
+export async function markFailed(id: string, message: string) {
 	const [row] = await db
 		.update(agentProposal)
-		.set({
-			status: 'failed',
-			failureMessage: message,
-			executionResult: partialResult ?? null,
-			updatedAt: new Date(),
-		})
+		.set({ status: 'failed', failureMessage: message, updatedAt: new Date() })
 		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'executing')))
 		.returning();
 	return row ?? null;
+}
+
+/**
+ * Heartbeat for a running execution: bumps `updatedAt` so `markInterruptedIfStale`
+ * can tell a slow plan from a dead one.
+ */
+export async function touchExecuting(id: string) {
+	await db
+		.update(agentProposal)
+		.set({ updatedAt: new Date() })
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'executing')));
+}
+
+/**
+ * Heal an `executing` row whose process died between a step and its terminal
+ * transition: once the lease has lapsed it becomes `failed('interrupted')`. Lazy, like
+ * `markExpiredIfPending` — it runs when someone next reads the proposal, and the step
+ * receipts already say exactly which mutations committed, so nothing is re-run.
+ */
+export async function markInterruptedIfStale(id: string, leaseMs = EXECUTION_LEASE_MS) {
+	const [row] = await db
+		.update(agentProposal)
+		.set({ status: 'failed', failureMessage: 'interrupted', updatedAt: new Date() })
+		.where(
+			and(
+				eq(agentProposal.id, id),
+				eq(agentProposal.status, 'executing'),
+				lt(agentProposal.updatedAt, new Date(Date.now() - leaseMs)),
+			),
+		)
+		.returning();
+	return row ?? null;
+}
+
+export interface ProposalStepReceiptInput {
+	proposalId: string;
+	stepIndex: number;
+	toolName: string;
+	kind: ProposalStepKind;
+	output: unknown;
+	errorMessage?: string;
+	createdFileId?: string;
+}
+
+/**
+ * Write one step's receipt. Runs on the caller's transaction — the same one that
+ * performed the step's desk mutation — so the two commit together. A second execution
+ * of the same `(proposal, step)` collides on the primary key and rolls back with it.
+ */
+export async function recordProposalStep(handle: DbHandle, input: ProposalStepReceiptInput) {
+	const [row] = await handle
+		.insert(agentProposalStep)
+		.values({
+			proposalId: input.proposalId,
+			stepIndex: input.stepIndex,
+			toolName: input.toolName,
+			kind: input.kind,
+			output: input.output ?? null,
+			errorMessage: input.errorMessage ?? null,
+			createdFileId: input.createdFileId ?? null,
+		})
+		.returning();
+	return row;
+}
+
+/** The receipts a proposal has so far, in execution order. */
+export async function listProposalSteps(proposalId: string) {
+	return db
+		.select()
+		.from(agentProposalStep)
+		.where(eq(agentProposalStep.proposalId, proposalId))
+		.orderBy(asc(agentProposalStep.stepIndex));
 }

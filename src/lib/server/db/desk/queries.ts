@@ -1,6 +1,6 @@
-import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm';
 import type { DeskFileType } from '$lib/types/db-enums';
-import { db } from '../index';
+import { type DbHandle, db } from '../index';
 import { file, folder, markdown, spreadsheet } from '../schema/desk';
 
 // Soft-delete note
@@ -37,6 +37,42 @@ export async function listFiles(userId: string, type?: string, offset = 0, limit
 	return { items, total: countResult?.total ?? 0 };
 }
 
+/**
+ * Files whose name contains `query`, case-insensitively, across ALL the user's files —
+ * the desk bot's `desk_search_files`. A search that only looked at the newest page could
+ * not find an older file the user asked for by name. Newest first, bounded by `limit`.
+ */
+export async function searchFiles(
+	userId: string,
+	query: string,
+	options: { type?: DeskFileType; limit?: number } = {},
+) {
+	const escaped = query.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+	const conditions = [eq(file.userId, userId), isNull(file.deletedAt), ilike(file.name, `%${escaped}%`)];
+	if (options.type) conditions.push(eq(file.type, options.type));
+	const where = and(...conditions);
+	const limit = Math.min(Math.max(options.limit ?? 20, 1), 50);
+	const [items, [countResult]] = await Promise.all([
+		db
+			.select({ id: file.id, type: file.type, name: file.name, folderId: file.folderId, updatedAt: file.updatedAt })
+			.from(file)
+			.where(where)
+			.orderBy(desc(file.updatedAt))
+			.limit(limit),
+		db.select({ total: count() }).from(file).where(where),
+	]);
+	return { items, total: countResult?.total ?? 0 };
+}
+
+/** The live `updatedAt` of a set of files — one query, for freshness checks against an index. */
+export async function listFileTimestamps(userId: string, ids: string[]) {
+	if (ids.length === 0) return [];
+	return db
+		.select({ id: file.id, name: file.name, updatedAt: file.updatedAt })
+		.from(file)
+		.where(and(inArray(file.id, ids), eq(file.userId, userId), isNull(file.deletedAt)));
+}
+
 /** Get a single file with ownership check. Excludes soft-deleted. */
 export async function getFile(id: string, userId: string) {
 	const [row] = await db
@@ -47,9 +83,13 @@ export async function getFile(id: string, userId: string) {
 	return row ?? null;
 }
 
-/** Get a spreadsheet by its file ID (joined). Excludes soft-deleted on both sides. */
-export async function getSpreadsheetByFileId(fileId: string, userId: string) {
-	const [row] = await db
+/**
+ * Get a spreadsheet by its file ID (joined). Excludes soft-deleted on both sides. Reads on
+ * the caller's `handle` when it already holds a transaction — a read on the module `db`
+ * from inside one would wait for that transaction on a single-connection database.
+ */
+export async function getSpreadsheetByFileId(fileId: string, userId: string, handle: DbHandle = db) {
+	const [row] = await handle
 		.select({
 			file: {
 				id: file.id,
@@ -74,9 +114,9 @@ export async function getSpreadsheetByFileId(fileId: string, userId: string) {
 	return row ?? null;
 }
 
-/** Get a markdown document by its file ID (joined). Excludes soft-deleted on both sides. */
-export async function getMarkdownByFileId(fileId: string, userId: string) {
-	const [row] = await db
+/** Get a markdown document by its file ID (joined). Excludes soft-deleted on both sides. Reads on `handle` like `getSpreadsheetByFileId`. */
+export async function getMarkdownByFileId(fileId: string, userId: string, handle: DbHandle = db) {
+	const [row] = await handle
 		.select({
 			file: {
 				id: file.id,
@@ -90,6 +130,7 @@ export async function getMarkdownByFileId(fileId: string, userId: string) {
 			markdown: {
 				id: markdown.id,
 				content: markdown.content,
+				version: markdown.version,
 			},
 		})
 		.from(file)

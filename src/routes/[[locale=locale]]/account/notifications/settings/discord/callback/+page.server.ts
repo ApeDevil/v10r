@@ -3,7 +3,7 @@ import { env } from '$env/dynamic/private';
 import { localizeHref } from '$lib/i18n';
 import { db } from '$lib/server/db';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { encrypt } from '$lib/server/notifications/crypto';
+import { encryptAesGcm, getEncryptionKey } from '$lib/server/security';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals, cookies }) => {
@@ -66,8 +66,9 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 	const discordUser = await userRes.json();
 
 	// Encrypt tokens
-	const encAccessToken = await encrypt(tokens.access_token);
-	const encRefreshToken = await encrypt(tokens.refresh_token);
+	const encryptionKey = getEncryptionKey();
+	const encAccessToken = await encryptAesGcm(tokens.access_token, encryptionKey);
+	const encRefreshToken = await encryptAesGcm(tokens.refresh_token, encryptionKey);
 	const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
 	// Upsert Discord account

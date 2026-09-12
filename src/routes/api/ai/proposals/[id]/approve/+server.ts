@@ -7,35 +7,31 @@
  * **Idempotency**: `proposalId` IS the idempotency key. The partial unique
  * index on `agent_proposal` (see `db/schema/ai/proposal.ts`) ensures at most
  * one row is simultaneously in `executing` or `executed` state. Concurrent
- * approvals find the existing row and return its cached result.
+ * approvals find the existing row and answer from its step receipts.
  *
- * Flow:
+ * Flow — this handler is the adapter; `executeProposal` is the work:
  *   1. Auth + ownership check (conversation must belong to caller).
- *   2. Transition `pending → approved`. If already approved/executed, read
- *      the existing row and return its state.
- *   3. Transition `approved → executing` (may collide if racing).
- *   4. Run the payload tool calls via the desk domain modules (same path
- *      the in-loop tool `execute` functions use — multi-client core rule).
- *   5. Transition `executing → executed` or `failed` with the cached result.
+ *   2. Heal a stale `executing` row (process died mid-plan) into `failed`.
+ *   3. Terminal rows answer with their receipts; an in-flight row is a 409 carrying
+ *      the receipts so far.
+ *   4. Transition `pending → approved`, then `approved → executing` (may collide).
+ *   5. `executeProposal` — receipts in the mutations' transactions, receipt message.
  *
  * DELETE on the same URL rejects a still-pending proposal.
  */
 
-import type { DeskEffect, DeskToolScope } from '$lib/server/ai/tools/_types';
-import { executeDeskToolCall } from '$lib/server/ai/tools/desk-execute';
+import { executeProposal, proposalOutcome } from '$lib/server/ai/proposals/execute-proposal';
 import {
 	approveProposal,
 	getProposal,
 	getProposalWithExpiry,
-	markExecuted,
 	markExecuting,
 	markExpiredIfPending,
-	markFailed,
+	markInterruptedIfStale,
 	rejectProposal,
 } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import type { ProposalExecutionResult } from '$lib/server/db/schema/ai/proposal';
 import { guardApiUser } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiError, apiOk } from '$lib/server/http/response';
@@ -79,23 +75,21 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 	try {
 		// 1. Load the proposal and verify ownership via the parent conversation.
-		const proposal = await getProposal(params.id);
+		let proposal = await getProposal(params.id);
 		if (!proposal) return apiError(404, 'not_found', 'Proposal not found.');
 
 		const conv = await getConversation(proposal.conversationId, user.id);
 		if (!conv) return apiError(404, 'not_found', 'Proposal not found.');
 
-		// 2. Idempotency: if the proposal has already been executed, return
-		//    the cached result. If it's executing/failed/rejected/expired,
-		//    surface the current state instead of re-running.
-		if (proposal.status === 'executed') {
-			return apiOk({
-				id: proposal.id,
-				status: 'executed',
-				executionResult: proposal.executionResult,
-				executedAt: proposal.executedAt,
-			});
-		}
+		// 2. A row still `executing` long after its last heartbeat was interrupted; its
+		//    receipts already say which steps ran.
+		if (proposal.status === 'executing') proposal = (await markInterruptedIfStale(proposal.id)) ?? proposal;
+
+		// 3. Terminal and in-flight rows never re-run anything. `executed` answers with its
+		//    receipts and their effects (a retried approval still has to refresh the desk);
+		//    the others are refusals — the client reads `GET /api/ai/proposals/[id]` for
+		//    the receipts behind them.
+		if (proposal.status === 'executed') return apiOk(await proposalOutcome(proposal));
 		if (proposal.status === 'executing') {
 			return apiError(
 				409,
@@ -107,7 +101,7 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			return apiError(409, `proposal_${proposal.status}`, `Proposal is ${proposal.status} and cannot be executed.`);
 		}
 
-		// 3. Transition pending → approved (no-op if already approved). The
+		// 4. Transition pending → approved (no-op if already approved). The
 		//    expiry bound lives in that statement's predicate, not here — a
 		//    check on the row we read at step 1 would be a TOCTOU window.
 		if (proposal.status === 'pending') {
@@ -115,82 +109,23 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			if (!approved) return await explainRefusedApproval(proposal.id);
 		}
 
-		// 4. Transition approved → executing. Partial unique index protects
-		//    us from concurrent executors.
+		// Transition approved → executing. Partial unique index protects
+		// us from concurrent executors.
 		const claimed = await markExecuting(proposal.id);
 		if (!claimed) {
 			// Someone else claimed it between our `approveProposal` and here —
 			// or the window closed between approval and execution, which is why
 			// `markExecuting` carries the expiry bound too. Re-read and report.
 			const fresh = await getProposalWithExpiry(proposal.id);
-			if (fresh?.proposal.status === 'executed') {
-				return apiOk({
-					id: fresh.proposal.id,
-					status: 'executed',
-					executionResult: fresh.proposal.executionResult,
-					executedAt: fresh.proposal.executedAt,
-				});
-			}
+			if (fresh?.proposal.status === 'executed') return apiOk(await proposalOutcome(fresh.proposal));
 			if (fresh?.proposal.status === 'approved' && fresh.isExpired) {
 				return apiError(409, 'proposal_expired', 'This proposal expired before it ran. Ask again to get a fresh one.');
 			}
 			return apiError(409, 'proposal_in_flight', 'Proposal is already executing.');
 		}
 
-		// 5. Run the payload, collect results, transition executed / failed.
-		const results: ProposalExecutionResult['results'] = [];
-		// What the desk must do now that the tools ran — an open panel showing the
-		// file has to reload it. Returned, not persisted: it is instruction for this
-		// response's client, not part of the audit trail.
-		const effects: DeskEffect[] = [];
-		for (const step of proposal.payload) {
-			// Replay under the scopes frozen when the plan was PROPOSED, never
-			// anything supplied on this request — approval must not be able to
-			// widen the grant the user reviewed.
-			const outcome = await executeDeskToolCall(
-				{
-					userId: user.id,
-					scopes: (proposal.grantedScopes ?? []) as DeskToolScope[],
-					actor: 'proposal-replay',
-				},
-				step.toolName,
-				step.args,
-			);
-			if (outcome.ok) {
-				results.push({ toolName: step.toolName, ok: true, output: outcome.output });
-				effects.push(...outcome.effects);
-			} else {
-				results.push({
-					toolName: step.toolName,
-					ok: false,
-					output: outcome.output,
-					errorMessage: outcome.errorMessage,
-				});
-				// Short-circuit on first failure — the plan is a sequence, not a batch.
-				// Persist the partial results (earlier steps already mutated — there is no
-				// rollback) so the proposal's audit trail isn't lost to a bare message.
-				const partialResult: ProposalExecutionResult = { toolCallIds: [], results };
-				await markFailed(proposal.id, outcome.errorMessage, partialResult);
-				return apiOk({
-					id: proposal.id,
-					status: 'failed',
-					executionResult: partialResult,
-					failureMessage: outcome.errorMessage,
-					effects,
-				});
-			}
-		}
-
-		const executionResult: ProposalExecutionResult = { toolCallIds: [], results };
-		await markExecuted(proposal.id, executionResult);
-
-		return apiOk({
-			id: proposal.id,
-			status: 'executed',
-			executionResult,
-			effects,
-			executedAt: new Date().toISOString(),
-		});
+		// 5. Run it.
+		return apiOk(await executeProposal(claimed, user.id));
 	} catch (err) {
 		const dbErr = classifyDbError(err);
 		return apiError(dbErr.toStatus(), dbErr.kind, safeDbMessage(dbErr.kind));

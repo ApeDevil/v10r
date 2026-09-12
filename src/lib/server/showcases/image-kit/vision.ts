@@ -22,7 +22,7 @@ import {
 	type VisionResponse,
 	visionIsEmpty,
 } from '$lib/schemas/showcase/image-kit';
-import { getVisionProvider } from '$lib/server/ai';
+import { getVisionProvider, loadProviderRegistry, type ProviderRegistry } from '$lib/server/ai';
 import { chargeTokens, checkUserBudget } from '$lib/server/ai/budget';
 import { MAX_TOKENS } from '$lib/server/ai/config';
 import { estimateCost } from '$lib/server/ai/pricing';
@@ -116,10 +116,18 @@ export async function runVision(userId: string, bytes: Uint8Array): Promise<Visi
 		return { ok: false, reason: 'budget', message: budget.reason };
 	}
 
-	const provider = getVisionProvider(userId);
+	// An unreadable settings table reads as "no provider" here: the showcase's failure
+	// envelope is the honest surface for it, and nothing else in the run depends on it.
+	let registry: ProviderRegistry | null = null;
+	try {
+		registry = await loadProviderRegistry();
+	} catch {
+		registry = null;
+	}
+	const provider = registry ? getVisionProvider(registry, userId) : null;
 	const model = provider?.getInstance() ?? null;
 	if (!provider || !model) {
-		return { ok: false, reason: 'no_provider', message: 'No vision-capable AI provider is configured.' };
+		return { ok: false, reason: 'no_provider', message: 'No vision-capable AI provider is connected.' };
 	}
 
 	let width = 0;
@@ -190,14 +198,14 @@ export async function runVision(userId: string, bytes: Uint8Array): Promise<Visi
 			cropNote: a.crop.note,
 			usage: {
 				providerId: provider.id,
-				modelId: provider.model,
+				modelId: provider.modelId,
 				inputTokens,
 				outputTokens,
 				reasoningTokens,
 				totalTokens: sumKnown(inputTokens, outputTokens),
 				durationMs: Math.round(performance.now() - start),
 			},
-			cost: estimateCost(provider.model, { inputTokens, outputTokens, reasoningTokens }),
+			cost: estimateCost(provider.modelId, { inputTokens, outputTokens, reasoningTokens }),
 		};
 	} catch (err) {
 		const message = err instanceof Error ? err.message : 'Vision analysis failed.';

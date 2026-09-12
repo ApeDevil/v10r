@@ -30,9 +30,17 @@ if (!url) {
 }
 const sql = neon(url);
 
-// Synthetic 1536-d query vector. Plan SHAPE is independent of the literal values,
-// so we avoid burning a Gemini embedding just to read a query plan.
-const ZERO_VEC = `[${new Array(1536).fill(0).join(',')}]`;
+/**
+ * The query vector is a stored embedding (any chunk's), never a Gemini call. The plan
+ * SHAPE would survive a synthetic vector, but the milliseconds would not: cosine
+ * distance to the zero vector is NaN, which turns an HNSW walk into a random one.
+ */
+async function queryVector(): Promise<string> {
+	const rows = (await sql.query(
+		`SELECT embedding::text AS v FROM retrieval.chunk WHERE embedding IS NOT NULL LIMIT 1`,
+	)) as Array<{ v: string }>;
+	return rows[0]?.v ?? `[${new Array(1536).fill(0).join(',')}]`;
+}
 
 function hr(title: string) {
 	console.log(`\n${'='.repeat(72)}\n${title}\n${'='.repeat(72)}`);
@@ -66,11 +74,19 @@ function executionMs(plan: string[]): number | null {
  * A vector query that fell back to a sequential scan is not a slow query, it is an
  * unused index — and the difference is the whole reason this probe exists.
  */
-function usedVectorIndex(plan: string[]): boolean {
-	return plan.some((l) => /Index Scan using .*(hnsw|embedding)/i.test(l));
+/**
+ * How the planner reached the rows. A vector-index walk is the plan the non-selective owner
+ * needs; for an owner with a handful of chunks the planner rightly prefers the `user_id`
+ * btree plus an in-memory sort (pgvector's iterative scan is for the middle ground), so
+ * only a sequential scan is the finding.
+ */
+function accessPathOf(plan: string[]): 'vector index' | 'owner index + sort' | 'SEQ SCAN' {
+	if (plan.some((l) => /Index Scan using .*(hnsw|embedding)/i.test(l))) return 'vector index';
+	if (plan.some((l) => /Index Scan using chunk_user_idx/.test(l))) return 'owner index + sort';
+	return 'SEQ SCAN';
 }
 
-const vectorMeasurements: Array<{ label: string; ms: number; indexed: boolean }> = [];
+const vectorMeasurements: Array<{ label: string; ms: number; path: ReturnType<typeof accessPathOf> }> = [];
 
 await probe('CORPUS SIZE (daty P0 scaling gate)', async () => {
 	const counts = (await sql.query(`
@@ -114,6 +130,7 @@ await probe('TIER-1 VECTOR QUERY — chunk-direct form (daty P0 fix)', async () 
 	)) as Array<{ user_id: string; n: number }>;
 	const busiest = owners[0]?.user_id;
 	const smallest = owners[owners.length - 1]?.user_id;
+	const vec = await queryVector();
 	for (const [label, owner] of [
 		['busiest (non-selective)', busiest],
 		['smallest (selective → tests iterative_scan)', smallest],
@@ -121,14 +138,41 @@ await probe('TIER-1 VECTOR QUERY — chunk-direct form (daty P0 fix)', async () 
 		if (!owner) continue;
 		const plan = await explain(
 			`chunk-direct, owner=${label}`,
-			`SELECT c.id, c.embedding <=> '${ZERO_VEC}'::vector AS distance
+			`SELECT c.id, c.embedding <=> '${vec}'::vector AS distance
 			 FROM retrieval.chunk c
 			 WHERE c.user_id = '${owner}' AND c.embedding IS NOT NULL
-			 ORDER BY c.embedding <=> '${ZERO_VEC}'::vector LIMIT 5`,
+			 ORDER BY c.embedding <=> '${vec}'::vector LIMIT 5`,
 		);
 		const ms = executionMs(plan);
-		if (ms !== null) vectorMeasurements.push({ label, ms, indexed: usedVectorIndex(plan) });
+		if (ms !== null) vectorMeasurements.push({ label, ms, path: accessPathOf(plan) });
 	}
+});
+
+await probe('DESKBOT VECTOR QUERY — the source-scoped lane (retrieval/tiers/source-scope.ts)', async () => {
+	// The deskbot's `desk_search_knowledge` adds a semi-join on `retrieval.document` to the
+	// tier-1 shape above (`source = 'desk' AND deleted_at IS NULL`). The chatbot lane is the
+	// unscoped query; this one has to keep the index walk too, or every desk search pays a
+	// sequential scan the chatbot never sees.
+	const owners = (await sql.query(
+		`SELECT d.user_id, count(c.id) AS n FROM retrieval.chunk c JOIN retrieval.document d ON d.id=c.document_id
+		 WHERE d.source = 'desk' AND d.deleted_at IS NULL GROUP BY d.user_id ORDER BY n DESC LIMIT 1`,
+	)) as Array<{ user_id: string; n: number }>;
+	const owner = owners[0]?.user_id;
+	if (!owner) {
+		console.log('  no desk documents ingested — nothing to explain');
+		return;
+	}
+	const vec = await queryVector();
+	const plan = await explain(
+		'desk-scoped, busiest desk owner',
+		`SELECT c.id, c.embedding <=> '${vec}'::vector AS distance
+		 FROM retrieval.chunk c
+		 WHERE c.user_id = '${owner}' AND c.embedding IS NOT NULL
+		   AND c.document_id IN (SELECT d.id FROM retrieval.document d WHERE d.user_id = '${owner}' AND d.source = 'desk' AND d.deleted_at IS NULL)
+		 ORDER BY c.embedding <=> '${vec}'::vector LIMIT 10`,
+	);
+	const ms = executionMs(plan);
+	if (ms !== null) vectorMeasurements.push({ label: 'desk-scoped lane', ms, path: accessPathOf(plan) });
 });
 
 await probe('BLOG listPosts latest-revision read (query budget: blog.listPosts)', async () => {
@@ -163,8 +207,8 @@ if (vectorMeasurements.length === 0) {
 	console.log(`  budget: warn >${budget.warn}ms, fail >${budget.fail}ms — ${budget.note}`);
 	for (const m of vectorMeasurements) {
 		const verdict = scoreBudget('vector_query_ms', m.ms);
-		const index = m.indexed ? 'index scan' : 'NO INDEX SCAN — this is the finding, not the milliseconds';
-		console.log(`  ${verdict.toUpperCase().padEnd(5)} ${m.ms.toFixed(1)}ms  ${m.label}  (${index})`);
+		const path = m.path === 'SEQ SCAN' ? 'SEQ SCAN — this is the finding, not the milliseconds' : m.path;
+		console.log(`  ${verdict.toUpperCase().padEnd(5)} ${m.ms.toFixed(1)}ms  ${m.label}  (${path})`);
 	}
 	// Reported, never enforced — see the header. A hand-run probe against a serverless
 	// database that suspends after five minutes cannot own a build's exit code.

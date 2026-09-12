@@ -19,10 +19,12 @@ export interface ProbeGate {
 	 *                    NO retrieval ran at all (greetings/acks short-circuit).
 	 * - `page_deixis`  — chatbot site-awareness gate: the message points at the current
 	 *                    page, so the embed query was seeded with the page title/breadcrumb.
+	 * - `catalog_nav`  — chatbot navigation gate: the message asks where something lives, so
+	 *                    the catalog was searched before generation (`<catalog-results>`).
 	 * - `require_plan` — deskbot governor: the `<planning>` block was injected because a
 	 *                    mutating scope is granted AND the phrasing signals destruction.
 	 */
-	id: 'ground_docs' | 'page_deixis' | 'require_plan';
+	id: 'ground_docs' | 'page_deixis' | 'catalog_nav' | 'require_plan';
 	fired: boolean;
 	/** Named boolean inputs behind the verdict (e.g. `destructiveIntent`). */
 	inputs?: Record<string, boolean>;
@@ -79,7 +81,10 @@ export interface ProbeReport {
 	gates: ProbeGate[];
 	/** What exists (per corpus) before any choosing happens. */
 	inventory: ProbeCorpusInventory[];
-	/** Tool names mounted for this surface/scope set — static per turn, never per query. */
+	/**
+	 * Tool names mounted for this turn — by surface and scope, plus the chatbot's llmwiki
+	 * drill-down pair only when a wiki page grounded the prompt.
+	 */
 	tools: string[];
 	/** What each corpus did for this query. */
 	corpora: ProbeCorpusResult[];

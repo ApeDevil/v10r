@@ -12,9 +12,11 @@ import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { layerStack } from '$lib/state/layer-stack.svelte';
 import { useSurface } from '$lib/styles/elevation';
+import { type AiErrorKind, parseAiErrorKind, type TurnError } from '$lib/types/ai-error';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
 import ChatMessage from './ChatMessage.svelte';
+import { awaitingAnswer, turnProgress } from './turn-progress';
 
 interface Conversation {
 	id: string;
@@ -45,6 +47,38 @@ let viewerChunks = $state<SourceChunk[]>([]);
 const isDesktop = new MediaQuery('(min-width: 768px)', true);
 
 const isLoading = $derived(session.isStreaming);
+
+// Honest progress: the status row stays up until the first word arrives (the assistant frame
+// opens ~0.5 s in; the answer's first token comes seconds later) and names what the turn is
+// doing from the trace the server streams on the message.
+const messages = $derived(session.chat?.messages ?? []);
+const showStatusRow = $derived(isLoading && awaitingAnswer(messages));
+const statusLabel = $derived.by(() => {
+	const progress = turnProgress(messages[messages.length - 1]);
+	if (progress === 'generating') return m.ai_chat_status_thinking();
+	if (progress === 'catalog') return m.ai_chat_status_catalog();
+	if (progress === 'retrieving') return m.ai_chat_status_docs();
+	return null;
+});
+
+// The turn's failure, if any: a mid-stream `error` frame reaches the session's `onError`
+// (`lastError`); a refused request lands on `chat.error`. Both carry either the server's
+// `[kind] message` frame text or a wire body with an error CODE (rate_limited /
+// ai_unavailable) — digits kept OR'd for transport-level failures.
+const errorText = $derived(session.lastError ?? session.chat?.error?.message ?? null);
+function errorKindOf(text: string): AiErrorKind | null {
+	const kind = parseAiErrorKind(text);
+	if (kind) return kind;
+	if (text.includes('rate_limited') || text.includes('429')) return 'rate_limit';
+	if (text.includes('ai_unavailable') || text.includes('503')) return 'unavailable';
+	return null;
+}
+// A `[kind]`-prefixed text is the server's classification of a PROVIDER failure (the
+// model's 429, not this user's); the guard's own refusal comes as a wire code instead.
+// The two rate limits get different words: only one of them is the user's doing.
+function rateLimitCopy(text: string): string {
+	return parseAiErrorKind(text) === 'rate_limit' ? m.ai_chat_error_provider_limited() : m.ai_chat_error_rate_limited();
+}
 
 // Site-awareness disclosure: the human label of the page Vely is currently aware of.
 // Null on private/unknown routes → the chip hides (the honest "not reading this page" signal).
@@ -304,8 +338,7 @@ function submitMessage() {
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<!-- Messages -->
 			<div bind:this={scrollContainer} class="flex-1 overflow-y-auto">
-				{#if session.chat && session.chat.messages.length > 0}
-					{@const messages = session.chat.messages}
+				{#if messages.length > 0}
 					<div class="flex flex-col gap-1 py-2">
 						{#each messages as message (message.id)}
 							<ChatMessage
@@ -315,19 +348,25 @@ function submitMessage() {
 									.metadata?.catalogSources}
 								sourceChunks={(message as { metadata?: { sourceChunks?: SourceChunk[] } }).metadata
 									?.sourceChunks}
+								turnError={(message as { metadata?: { turnError?: TurnError } }).metadata?.turnError}
 								onviewchunks={openChunks}
 							/>
 						{/each}
 
-						{#if isLoading && messages[messages.length - 1]?.role === 'user'}
-							<div class="flex items-center gap-3 px-4 py-3">
+						{#if showStatusRow}
+							<div class="flex items-center gap-3 px-4 py-3" role="status" aria-live="polite">
 								<div class="chatbot-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
 									<span class="i-lucide-bot h-4 w-4"></span>
 								</div>
-								<div class="chatbot-typing flex gap-1">
-									<span class="chatbot-dot"></span>
-									<span class="chatbot-dot"></span>
-									<span class="chatbot-dot"></span>
+								<div class="chatbot-typing flex items-center gap-2">
+									<span class="flex gap-1">
+										<span class="chatbot-dot"></span>
+										<span class="chatbot-dot"></span>
+										<span class="chatbot-dot"></span>
+									</span>
+									{#if statusLabel}
+										<span class="text-fluid-xs text-muted">{statusLabel}</span>
+									{/if}
 								</div>
 							</div>
 						{/if}
@@ -384,15 +423,13 @@ function submitMessage() {
 						</a>
 					</div>
 				{/if}
-			{:else if session.chat?.error}
-				{@const errMsg = session.chat.error.message ?? ''}
-				<!-- Wire bodies carry error CODES, not status digits (rate_limited /
-				     ai_unavailable); digits kept OR'd for mid-stream provider errors. -->
+			{:else if errorText}
+				{@const kind = errorKindOf(errorText)}
 				<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
 					<span class="font-medium">{m.ai_chat_error_heading()}</span>
-					{#if errMsg.includes('rate_limited') || errMsg.includes('429')}
-						{m.ai_chat_error_rate_limited()}
-					{:else if errMsg.includes('ai_unavailable') || errMsg.includes('503')}
+					{#if kind === 'rate_limit'}
+						{rateLimitCopy(errorText)}
+					{:else if kind === 'unavailable' || kind === 'timeout'}
 						{m.ai_chat_error_unavailable()}
 					{:else}
 						{m.ai_chat_error_generic()}
@@ -436,6 +473,7 @@ function submitMessage() {
 				signedOut={gated}
 				signedOutHintId="vely-signin-hint"
 				onsubmit={submitMessage}
+				onstop={() => session.stop()}
 			/>
 		</div>
 	</div>

@@ -25,6 +25,7 @@ const {
 	getSpreadsheetByFileId,
 	getMarkdownByFileId,
 	getAiContextFiles,
+	searchFiles,
 } = await import('./queries');
 const { db } = await import('$lib/server/db');
 
@@ -71,6 +72,47 @@ describe('desk queries', () => {
 
 			const result = await getFile(f.id, USER_B.id);
 			expect(result).toBeNull();
+		});
+	});
+
+	describe('searchFiles', () => {
+		it("finds a file older than the newest page, case-insensitively, by kind, and never another user's", async () => {
+			const rows = Array.from({ length: 55 }, (_, i) =>
+				makeFile({
+					userId: USER_A.id,
+					name: `Routine ${i}`,
+					type: 'markdown',
+					updatedAt: new Date(Date.now() - (i + 10) * 60_000),
+				}),
+			);
+			await db.insert(file).values([
+				...rows,
+				makeFile({
+					userId: USER_A.id,
+					name: 'Q1 Budget',
+					type: 'spreadsheet',
+					updatedAt: new Date(Date.now() - 100 * 60_000),
+				}),
+				makeFile({
+					userId: USER_A.id,
+					name: 'Q1 budget notes',
+					type: 'markdown',
+					updatedAt: new Date(Date.now() - 101 * 60_000),
+				}),
+				makeFile({ userId: USER_B.id, name: 'Q1 Budget (B)', type: 'spreadsheet' }),
+			]);
+
+			// The newest 50 do not contain it; the search still does.
+			expect((await listFiles(USER_A.id)).items.some((f) => f.name === 'Q1 Budget')).toBe(false);
+			const all = await searchFiles(USER_A.id, 'q1 budget');
+			expect(all.total).toBe(2);
+			expect(all.items.map((f) => f.name)).toEqual(['Q1 Budget', 'Q1 budget notes']);
+
+			const sheets = await searchFiles(USER_A.id, 'budget', { type: 'spreadsheet' });
+			expect(sheets.items.map((f) => f.name)).toEqual(['Q1 Budget']);
+
+			// LIKE metacharacters in the query are literal.
+			expect((await searchFiles(USER_A.id, '%')).total).toBe(0);
 		});
 	});
 

@@ -13,7 +13,8 @@
  * review discipline (same principle as `$lib/types/ai-tools.ts`).
  */
 
-import type { AiSurface } from '$lib/types/db-enums';
+import type { AiSurface, ProposalStatus } from '$lib/types/db-enums';
+import type { ProposalCardTarget, ProposalStepRecovery } from './ai-proposal';
 import type { RetrievalStepStatus, RetrievalTraceStep } from './retrieval-trace';
 
 /**
@@ -111,14 +112,18 @@ export interface PromptOutline {
 
 /**
  * One proposed step as the PlanCard renders it — the canonical client-side shape, read by
- * `composites/chatbot/harness-types.ts` too. The server's `ProposedStep` carries an extra
- * `args` object for the approve-route replay; it never crosses to the client.
+ * `composites/chatbot/harness-types.ts` too. The server's `ProposedToolCall` carries the
+ * `args` object the approve replay runs; it never crosses to the client. `risk` and
+ * `recovery` are server-derived from the tool, never model-authored.
  */
 export interface ProposalCardStep {
 	action: string;
 	tool: string;
 	risk: 'read' | 'create' | 'write' | 'destructive';
 	rationale: string;
+	recovery: ProposalStepRecovery;
+	/** The reviewed file, for update/rename/delete steps. */
+	target?: ProposalCardTarget;
 }
 
 /**
@@ -132,9 +137,8 @@ export interface ProposalCardData {
 	goal: string;
 	steps: ProposalCardStep[];
 	estimatedWrites: number;
-	rollback: string;
 	riskTier: 'low' | 'medium' | 'high';
-	status: 'pending' | 'approved' | 'executed' | 'rejected' | 'failed' | 'expired';
+	status: ProposalStatus;
 }
 
 /** The approval slice of a deskbot turn — the one-door rule as playback state. */

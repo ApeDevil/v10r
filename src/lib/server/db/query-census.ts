@@ -103,6 +103,11 @@ export function startQueryCensus(): QueryCensus {
 	return viewOf({ total: 0, shapes: new Map() });
 }
 
+/** Round trips the census in scope has seen so far — undefined when nobody is counting. */
+export function observedQueryCount(): number | undefined {
+	return scope.getStore()?.total;
+}
+
 /** Record one round trip against the census in scope. A no-op when nobody is counting. */
 export function observeQuery(statement: string): void {
 	const recorder = scope.getStore();

@@ -9,6 +9,7 @@ import type { SearchResult } from '$lib/search/types';
 import { DESK_MUTATE_MAX_STEPS, DESK_READ_MAX_STEPS } from '$lib/server/ai/config';
 import { compactToolResult } from '$lib/server/ai/loop/compact';
 import { TOOL_MANIFEST, type ToolDescriptor } from '$lib/types/ai-tools';
+import type { EmbeddingConnection } from '../connections';
 import type { DeskLayoutEntry, DeskToolMeta, DeskToolScope, ToolMeta, ToolRisk } from './_types';
 import { createAskTools } from './desk-ask';
 import { createCreateTools, createDeleteTools } from './desk-create';
@@ -19,7 +20,7 @@ import { createGetRetrievalChunksTool, type DrilledChunkSink } from './get-sourc
 import { createProposePlanTool } from './propose-plan';
 import { createResolveRefTool } from './resolve-ref';
 import { type CatalogSink, createSearchCatalogTool } from './search-catalog';
-import { createSearchDocsTool } from './search-docs';
+import { createSearchDocsTool, type DocsSeed } from './search-docs';
 import { createSearchPatternLibraryTool } from './search-pattern-library';
 
 // The declarative tool registry now lives in the client-safe `$lib/types/ai-tools.ts`
@@ -70,7 +71,7 @@ function wrapToolsWithCompaction(tools: ToolSet): ToolSet {
 	for (const [name, toolDef] of Object.entries(tools)) {
 		const def = toolDef as Record<string, unknown>;
 		const originalExecute = def.execute as ((...args: unknown[]) => Promise<unknown>) | undefined;
-		if (!originalExecute) {
+		if (!originalExecute || COMPACTION_EXEMPT_TOOLS.has(name)) {
 			wrapped[name] = toolDef;
 			continue;
 		}
@@ -84,6 +85,14 @@ function wrapToolsWithCompaction(tools: ToolSet): ToolSet {
 	}
 	return wrapped as ToolSet;
 }
+
+/**
+ * Tools whose output must reach the loop verbatim. `resolve_ref` returns the full value
+ * behind a ref — compacting it again would hand the model a new ref for the same value,
+ * forever. `desk_propose_plan` returns the approval sentinel the orchestrator persists
+ * as the proposal; a compacted plan would approve a 400-character preview of itself.
+ */
+const COMPACTION_EXEMPT_TOOLS: ReadonlySet<string> = new Set(['resolve_ref', 'desk_propose_plan']);
 
 /** Read-only desk scopes — neither gates the plan loop nor counts toward the mutation step budget. */
 const READONLY_SCOPES: ReadonlySet<DeskToolScope> = new Set(['desk:read', 'desk:ask']);
@@ -122,7 +131,7 @@ export function createDeskTools(userId: string, scopes: DeskToolScope[] = [], de
 	// enabled. The governor's `shouldRequirePlan` predicate decides whether to
 	// actually *instruct* the model to use it via the `<planning>` prompt block.
 	if (hasMutatingScope(scopes)) {
-		Object.assign(tools, createProposePlanTool());
+		Object.assign(tools, createProposePlanTool(userId));
 	}
 
 	// Always register resolve_ref when any tool is available — it's the escape hatch
@@ -140,11 +149,32 @@ export function stepsForScopes(scopes: DeskToolScope[]): number {
 }
 
 /**
- * Build the retrieval tool set for a chat turn.
+ * The llmwiki drill-down pair. Mounted only on a turn whose prompt carries an llmwiki
+ * context block: the "Retrieval rules" that name these tools are injected with that block,
+ * and on an empty wiki (every fresh user) a call to either is a model step spent on nothing.
+ */
+export const LLMWIKI_DRILL_TOOLS: ReadonlySet<string> = new Set(['get_llmwiki_pages', 'get_source_chunks']);
+
+/** What this turn's context assembly established, and therefore what the tool set is. */
+export interface RetrievalToolOptions {
+	/** The prompt carries an llmwiki context block → the drill-down pair mounts. */
+	llmwiki: boolean;
+	/** The request's already-opened Google connection — tool embeds spend no second row read. */
+	embeddingConnection?: EmbeddingConnection;
+	/** The assembly's docs retrieval, so `search_project_docs` never re-embeds the same question. */
+	docsSeed?: DocsSeed;
+	/** Catalog rows the assembly already surfaced (`<catalog-results>`) — citable this turn. */
+	catalogSeed?: SearchResult[];
+}
+
+/**
+ * Build the retrieval tool set for a chat turn, after the context assembly: what mounts and
+ * what the tools already know both follow from what the prompt carries.
  *
- * Returns both tools plus a `drilledChunks` set populated by any
- * `get_source_chunks` invocation during the turn. Pass that set to
- * `verifyCitations` after `streamText` resolves.
+ * Returns the tools plus a `drilledChunks` set populated by any `get_source_chunks`
+ * invocation during the turn (pass it to `verifyCitations` after `streamText` resolves) and
+ * the `surfacedCatalog` rows — seeded with the assembly's own results — that ground the
+ * citation chips and the surface verifier.
  *
  * Compaction wrapping is applied consistently with desk tools.
  */
@@ -152,7 +182,9 @@ export function buildRetrievalTools(
 	userId: string,
 	locale: Locale,
 	authCeiling: string | null,
+	options: RetrievalToolOptions,
 ): { tools: ToolSet; drilledChunks: Set<string>; surfacedCatalog: Map<string, SearchResult> } {
+	const { llmwiki, embeddingConnection, docsSeed, catalogSeed } = options;
 	const drilledChunks = new Set<string>();
 	const sink: DrilledChunkSink = {
 		record(ids) {
@@ -160,22 +192,23 @@ export function buildRetrievalTools(
 		},
 	};
 
-	// Live, deduped view of catalog rows the model surfaced this turn — read after
-	// the stream resolves to ground citation chips + the surface-citation verifier.
+	// Live, deduped view of catalog rows surfaced this turn — read after the stream
+	// resolves to ground citation chips + the surface-citation verifier. Rows the assembly
+	// put in front of the model before generation count exactly like tool results.
 	const surfacedCatalog = new Map<string, SearchResult>();
 	const catalogSink: CatalogSink = {
 		record(rows) {
 			for (const r of rows) surfacedCatalog.set(r.id, r);
 		},
 	};
+	if (catalogSeed) catalogSink.record(catalogSeed);
 
 	const raw: ToolSet = {
-		...createGetLlmwikiPagesTool(userId),
-		...createGetRetrievalChunksTool(userId, sink),
+		...(llmwiki ? { ...createGetLlmwikiPagesTool(userId), ...createGetRetrievalChunksTool(userId, sink) } : {}),
 		...createSearchCatalogTool(locale, authCeiling, catalogSink),
 		// Semantic retrieval over the project docs corpus (system-owned). Feeds the same
 		// catalog sink → docs citations render as chips and pass the surface verifier.
-		...createSearchDocsTool(locale, catalogSink),
+		...createSearchDocsTool(locale, catalogSink, { embeddingConnection, seed: docsSeed }),
 		// The canonical pattern registry (same data both MCP runtimes serve). Feeds the
 		// same sink → /docs/pattern-library/<id> citations render as chips too.
 		...createSearchPatternLibraryTool(locale, catalogSink),

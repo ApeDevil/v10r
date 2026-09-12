@@ -12,8 +12,8 @@
  */
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
-import { env } from '$env/dynamic/private';
 import type { EmbedNeighbor } from '$lib/schemas/showcase/image-kit';
+import { loadEmbeddingConnection } from '$lib/server/ai';
 import { incrEmbeddingCalls } from '$lib/server/ai/provider-usage';
 import { generateEmbedding, generateEmbeddings } from '$lib/server/retrieval/embed';
 import { EMBEDDING_MODEL } from '$lib/server/retrieval-shared/embed-config';
@@ -71,10 +71,10 @@ export async function embedCaptionText(text: string): Promise<EmbedRun> {
 
 /** Embed the actual image (multimodal, off by default). Throws on failure; the RPC isolates it. */
 export async function embedImage(bytes: Uint8Array, mimeType: string): Promise<EmbedRun> {
-	const apiKey = env.GOOGLE_GENERATIVE_AI_API_KEY;
-	if (!apiKey) throw new Error('no_provider');
+	const connection = await loadEmbeddingConnection();
+	if ('unavailable' in connection) throw new Error('no_provider');
 
-	const model = createGoogleGenerativeAI({ apiKey }).embedding(MULTIMODAL_MODEL);
+	const model = createGoogleGenerativeAI({ apiKey: connection.apiKey }).embedding(MULTIMODAL_MODEL);
 	const base64 = Buffer.from(bytes).toString('base64');
 	const result = await embed({
 		model,

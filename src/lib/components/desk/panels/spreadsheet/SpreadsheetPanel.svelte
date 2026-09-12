@@ -10,13 +10,14 @@ import {
 	registerPanelContext,
 	updatePanelContext,
 } from '$lib/components/desk';
+import { fileIdOfPanel } from '$lib/components/desk/file-panel';
 import PanelEmptyState from '$lib/components/desk/PanelEmptyState.svelte';
 import { Button } from '$lib/components/primitives';
 import SpreadsheetFormulaBar from './SpreadsheetFormulaBar.svelte';
 import SpreadsheetGrid from './SpreadsheetGrid.svelte';
 import SpreadsheetStatusBar from './SpreadsheetStatusBar.svelte';
 import { createSpreadsheetState } from './spreadsheet.state.svelte';
-import { getSpreadsheetSession, spreadsheetFileId } from './spreadsheet-session.svelte';
+import { getSpreadsheetSession } from './spreadsheet-session.svelte';
 
 interface Props {
 	panelId: string;
@@ -28,8 +29,8 @@ let sheet = $state(createSpreadsheetState());
 const dock = getDockContext();
 const panelMenus = getPanelMenus();
 
-/** File-mode: panelId is "spreadsheet-fil_xxx" → extract fileId. */
-const fileId = $derived(spreadsheetFileId(panelId));
+/** File-mode: panelId is "spreadsheet-fil_xxx" (or a suffixed second instance) → its fileId. */
+const fileId = $derived(fileIdOfPanel(panelId));
 let session = $state<ReturnType<typeof getSpreadsheetSession>>();
 let save = $state<ReturnType<typeof getSpreadsheetSession>['autosave']['snapshot']>();
 const bus = getDeskBus();
@@ -55,8 +56,12 @@ onMount(() => {
 		save = current.autosave.snapshot;
 	});
 	void current.autosave.refresh();
-	const unsubscribeBus = bus.subscribe('ai:refresh_file', ({ fileId: refreshId }) => {
-		if (refreshId === fileId) void current.autosave.refresh();
+	const unsubscribeBus = bus.subscribe('ai:refresh_file', async ({ fileId: refreshId }) => {
+		if (refreshId !== fileId) return;
+		await current.autosave.refresh();
+		// The bot's log records what the sheet now shows, not that a refresh was requested.
+		const { error, conflict } = current.autosave.snapshot;
+		bus.publish('ai:file_refreshed', { fileId, version: current.autosave.draft.version, ok: !error && !conflict });
 	});
 	const leave = (event: BeforeUnloadEvent) => {
 		flushEdits();
@@ -95,7 +100,8 @@ function downloadDraft() {
 	setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// AI Context registration (800ms debounce)
+// AI Context registration. Updates are debounced for idle typing, but the registry can
+// pull the current state at Send (`refresh`), so a turn sent right after an edit carries it.
 
 let contextTimer: ReturnType<typeof setTimeout>;
 // Plain variable (not $state) — only used as a guard flag within this component
@@ -104,17 +110,32 @@ let contextRegistered = false;
 /** Derive the sheet name from the dock panel label (falls back to 'Sheet'). */
 const sheetName = $derived(dock.panels[panelId]?.label || 'Sheet');
 
-// Register once on mount. untrack prevents re-running when sheet state changes.
-// svelte-ignore state_referenced_locally
-$effect(() => {
-	const ctx = untrack(() => sheet.serializeContext(sheetName));
-	const cleanup = registerPanelContext({
-		panelId,
-		panelType: 'spreadsheet',
+/** What the bot may know about this sheet right now: content plus the file it is. */
+function currentContext() {
+	const ctx = sheet.serializeContext(sheetName);
+	return {
 		label: ctx.label,
 		content: ctx.content,
 		tokenEstimate: ctx.tokenEstimate,
 		updatedAt: Date.now(),
+		...(fileId ? { fileId, fileType: 'spreadsheet' as const } : {}),
+		...(session ? { version: session.autosave.draft.version, dirty: session.autosave.snapshot.unsaved } : {}),
+	};
+}
+
+function pushContext() {
+	clearTimeout(contextTimer);
+	if (contextRegistered) updatePanelContext(panelId, currentContext());
+}
+
+// Register once on mount. untrack prevents re-running when sheet state changes.
+// svelte-ignore state_referenced_locally
+$effect(() => {
+	const cleanup = registerPanelContext({
+		panelId,
+		panelType: 'spreadsheet',
+		...untrack(currentContext),
+		refresh: pushContext,
 	});
 	contextRegistered = true;
 	return () => {
@@ -130,21 +151,12 @@ $effect(() => {
 	const _active = sheet.activeCell;
 	const _range = sheet.selectionRange;
 	const _dirty = sheet.dirty;
+	const _saved = save?.unsaved;
 
 	if (!contextRegistered) return;
 
 	clearTimeout(contextTimer);
-	contextTimer = setTimeout(() => {
-		const ctx = sheet.serializeContext(sheetName);
-		updatePanelContext(panelId, {
-			label: ctx.label,
-			content: ctx.content,
-			tokenEstimate: ctx.tokenEstimate,
-			updatedAt: Date.now(),
-		});
-	}, 800);
-
-	return () => clearTimeout(contextTimer);
+	contextTimer = setTimeout(pushContext, 800);
 });
 
 const spreadsheetMenus = $derived<MenuBarMenu[]>([

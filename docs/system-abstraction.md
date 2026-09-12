@@ -388,7 +388,7 @@ Individual files inside a module or component folder. Private by default; public
 
 **Error classes and classifiers**: `ServerError` → `DbError` / `AiError` / `Neo4jError` / `LlmwikiError`; `classifyDbError` / `classifyAiError` / `classifyNeo4jError`; `safeDbMessage` / `safeAiMessage`.
 
-**Provider resolution** (`ai/providers.ts`): `getActiveProvider` / `getToolProvider` resolves in order: request override → user preference → env → first configured. Circuit breaker: `markCooldown` / `isCooledDown` (60-second window), Redis-backed (`ai:cooldown:{id}`) so it is cross-instance and async.
+**Provider resolution** (`ai/index.ts` over `ai/providers.ts`): every AI operation starts with `loadProviderRegistry()` — the administrator's saved connections (`ai.provider_connection`, keys decrypted under `ENCRYPTION_KEY`) — and `getActiveProvider` / `getToolProvider` / `getVisionProvider` resolve against that snapshot in order: request override → user preference → project default → capability order → first connected. Nothing is read from the environment. Circuit breaker: `markCooldown` / `isCooledDown` (60-second window), Redis-backed (`breaker:ai-provider:{id}`) so it is cross-instance and async.
 
 **AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `get-source-chunks`, `get-llmwiki-pages`, `resolve-ref`, `search-catalog`, `search-docs`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
 
@@ -502,7 +502,7 @@ These gaps make the blueprint-to-code mapping imperfect. They are recorded here,
 
 1. **No notification AI tool implemented.** `multi-client-core.md` uses `createNotificationTools` / `markNotificationRead` as its flagship example. `ai/tools/` currently holds desk, llmwiki, retrieval, propose-plan, and resolve-ref tools. Multi-client reuse for notifications is real for UI, REST, and jobs — not yet for AI.
 
-2. **Daily token budget is enforced.** `chargeTokens` records daily AI spend to Redis in `onFinish`; the entry-gate `checkUserBudget` (`ai/budget.ts`) now runs in the shared `guardAiRequest` (`ai/guard.ts`) before `orchestrateChat`, rejecting once the day's spend exceeds the cap. (It was previously called nowhere — recorded but unenforced.)
+2. **Daily token budget is enforced.** `chargeTokens` records daily AI spend to Redis once the model is done (the chatbot's post-text stage, the deskbot's `onFinish`); the entry-gate `checkUserBudget` (`ai/budget.ts`) now runs in the shared `guardAiRequest` (`ai/guard.ts`) before `orchestrateChat`, rejecting once the day's spend exceeds the cap. (It was previously called nowhere — recorded but unenforced.)
 
 3. **`notification-delivery` drains on every platform.** It is registered in the jobs registry (`jobs/index.ts`) and due daily inside the `/api/cron/due` sweep (Vercel Hobby rejects sub-daily crons at deploy time) — on Vercel that sweep is what drains pending Telegram / Discord / email deliveries. On persistent platforms the 15-second `delivery-scheduler` `setInterval` still owns it; the cron never fires there. Web push bypasses the outbox entirely — it is partitioned out before `createDeliveries` runs and sent synchronously inside `sendNotification()`, alongside in-app SSE. (It previously had no serverless trigger and was absent from the registry, so deliveries queued as `pending` and never drained on Vercel.)
 

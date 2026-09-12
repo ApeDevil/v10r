@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '$lib/types/desk-context-limits';
 import { makePanelContext, makeRegistry, SAMPLES } from './desk-context.fixtures';
 import {
 	budgetAwareSerialize,
@@ -160,55 +161,90 @@ describe('truncateToTokenBudget', () => {
 });
 
 describe('budgetAwareSerialize', () => {
-	it('returns empty array for empty input', () => {
-		expect(budgetAwareSerialize([], null)).toEqual([]);
+	it('returns an empty request for empty input', () => {
+		expect(budgetAwareSerialize([], null)).toEqual({ entries: [], omitted: [], tokensSent: 0 });
 	});
 
 	it('returns full content when all fits within budget', () => {
 		const p = makePanelContext({ panelId: 'p1', content: 'small', tokenEstimate: 2 });
-		const result = budgetAwareSerialize([p], 'p1', CONTEXT_TOKEN_BUDGET);
-		expect(result).toHaveLength(1);
-		expect(result[0].contentLevel).toBe('full');
-		expect(result[0].content).toBe('small');
-		expect(result[0].status).toBe('focused');
+		const { entries } = budgetAwareSerialize([p], 'p1', CONTEXT_TOKEN_BUDGET);
+		expect(entries).toHaveLength(1);
+		expect(entries[0].contentLevel).toBe('full');
+		expect(entries[0].content).toBe('small');
+		expect(entries[0].status).toBe('focused');
+		expect(entries[0].truncated).toBe(false);
+	});
+
+	it('carries the panel and file identity the prompt and a proposal need', () => {
+		const p = makePanelContext({
+			panelId: 'spreadsheet-fil_a',
+			content: 'A1: 1',
+			fileId: 'fil_a',
+			fileType: 'spreadsheet',
+			version: 4,
+			dirty: true,
+		});
+		const { entries } = budgetAwareSerialize([p], 'spreadsheet-fil_a');
+		expect(entries[0]).toMatchObject({
+			panelId: 'spreadsheet-fil_a',
+			fileId: 'fil_a',
+			fileType: 'spreadsheet',
+			version: 4,
+			dirty: true,
+		});
 	});
 
 	it('focused panel appears first regardless of token size', () => {
 		const small = makePanelContext({ panelId: 'small', content: 'a', tokenEstimate: 1 });
 		const big = makePanelContext({ panelId: 'big', content: 'x'.repeat(100), tokenEstimate: 25 });
-		const result = budgetAwareSerialize([small, big], 'big', CONTEXT_TOKEN_BUDGET);
-		expect(result[0].status).toBe('focused');
-		expect(result[0].label).toBe(big.label);
+		const { entries } = budgetAwareSerialize([small, big], 'big', CONTEXT_TOKEN_BUDGET);
+		expect(entries[0].status).toBe('focused');
+		expect(entries[0].label).toBe(big.label);
 	});
 
 	it('assigns summary level when budget crosses 70% threshold', () => {
 		// Budget = 100 tokens. First panel uses 75 (over 70%)
 		const big = makePanelContext({ panelId: 'big', content: 'x'.repeat(300), tokenEstimate: 75 });
 		const small = makePanelContext({ panelId: 'small', content: 'y'.repeat(200), tokenEstimate: 50 });
-		const result = budgetAwareSerialize([big, small], 'big', 100);
+		const { entries } = budgetAwareSerialize([big, small], 'big', 100);
 		// First panel should be full (it's focused and fills first)
-		expect(result[0].contentLevel).toBe('full');
+		expect(entries[0].contentLevel).toBe('full');
 		// Second panel should be summary or title-only (budget is tight)
-		expect(['summary', 'title-only']).toContain(result[1].contentLevel);
+		expect(['summary', 'title-only']).toContain(entries[1].contentLevel);
+		expect(entries[1].truncated).toBe(true);
 	});
 
 	it('always includes focused panel even when budget is very small', () => {
 		const big = makePanelContext({ panelId: 'big', content: 'x'.repeat(1000), tokenEstimate: 250 });
-		const result = budgetAwareSerialize([big], 'big', 10);
-		expect(result).toHaveLength(1);
+		const { entries } = budgetAwareSerialize([big], 'big', 10);
+		expect(entries).toHaveLength(1);
 		// Should be included at some level
-		expect(result[0].status).toBe('focused');
+		expect(entries[0].status).toBe('focused');
 	});
 
-	it('skips non-focused panels when budget is exhausted', () => {
+	it('reports a non-focused panel the budget left out instead of dropping it silently', () => {
 		const focused = makePanelContext({ panelId: 'f', label: 'Focused', content: 'x'.repeat(400), tokenEstimate: 100 });
 		const extra = makePanelContext({ panelId: 'e', label: 'Extra', content: 'y'.repeat(400), tokenEstimate: 100 });
-		const result = budgetAwareSerialize([focused, extra], 'f', 100);
-		// Focused fills the entire budget, extra should be excluded or title-only
-		const extraEntry = result.find((r) => r.label === 'Extra');
-		if (extraEntry) {
-			expect(extraEntry.contentLevel).toBe('title-only');
-		}
+		const { entries, omitted } = budgetAwareSerialize([focused, extra], 'f', 100);
+		expect(entries.map((e) => e.label)).toEqual(['Focused']);
+		expect(omitted).toEqual([{ panelId: 'e', label: 'Extra', reason: 'budget' }]);
+	});
+
+	it('caps the entries at the request limit and names the panels beyond it', () => {
+		const panels = Array.from({ length: CONTEXT_MAX_ENTRIES + 2 }, (_, i) =>
+			makePanelContext({ panelId: `p${i}`, label: `P${i}`, content: 'x', tokenEstimate: 1 }),
+		);
+		const { entries, omitted } = budgetAwareSerialize(panels, 'p0');
+		expect(entries).toHaveLength(CONTEXT_MAX_ENTRIES);
+		expect(omitted.map((o) => o.reason)).toEqual(['entry_cap', 'entry_cap']);
+	});
+
+	it('cuts an entry to the per-entry cap and labels it — the route would refuse a longer one', () => {
+		const huge = makePanelContext({ panelId: 'h', content: 'z'.repeat(CONTEXT_ENTRY_MAX_CHARS * 2) });
+		const { entries } = budgetAwareSerialize([huge], 'h', 100_000);
+		expect(entries[0].content.length).toBeLessThanOrEqual(CONTEXT_ENTRY_MAX_CHARS);
+		expect(entries[0].content.endsWith('[truncated]')).toBe(true);
+		expect(entries[0]).toMatchObject({ contentLevel: 'summary', truncated: true });
 	});
 
 	it('does not mutate the input array', () => {
@@ -220,11 +256,12 @@ describe('budgetAwareSerialize', () => {
 		expect(input).toEqual(inputCopy);
 	});
 
-	it('marks non-focused entries as active status', () => {
+	it('marks non-focused entries as active status and sums the tokens actually sent', () => {
 		const f = makePanelContext({ panelId: 'f', content: 'a', tokenEstimate: 1 });
 		const p = makePanelContext({ panelId: 'p', content: 'b', tokenEstimate: 1 });
-		const result = budgetAwareSerialize([f, p], 'f', CONTEXT_TOKEN_BUDGET);
-		expect(result[0].status).toBe('focused');
-		expect(result[1].status).toBe('active');
+		const { entries, tokensSent } = budgetAwareSerialize([f, p], 'f', CONTEXT_TOKEN_BUDGET);
+		expect(entries[0].status).toBe('focused');
+		expect(entries[1].status).toBe('active');
+		expect(tokensSent).toBe(2);
 	});
 });

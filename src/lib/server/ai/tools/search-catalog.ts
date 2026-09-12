@@ -13,6 +13,11 @@
  * them. The optional `sink` records the full surfaced rows so the orchestrator can
  * (a) ground citation chips and (b) run the surface verifier. No `userId` needed:
  * the catalog is project-global and visibility is governed by `authCeiling`.
+ *
+ * ONE DOOR: `searchCatalogRecords` is the search itself — the tool's `execute` and the
+ * context assembly's navigation grounding (`<catalog-results>`, which answers "where is…"
+ * before the model spends a step asking) both call it, so a path surfaced either way is
+ * the same verified row.
  */
 
 import { jsonSchema, tool } from 'ai';
@@ -73,6 +78,80 @@ function scopeFor(surface: SearchSurface | null | undefined): 'all' | 'docs' | '
 	return 'all';
 }
 
+export interface CatalogSearchOptions {
+	locale: Locale;
+	authCeiling: string | null;
+	/** Restrict to one surface; `null` searches all of them. */
+	surface: SearchSurface | null;
+	/** Result cap; browse mode clamps it to `BROWSE_LIMIT`. */
+	limit?: number;
+	sink?: CatalogSink;
+}
+
+/**
+ * Search the catalog: static lane (titles, the only lane carrying `authScope`) merged with
+ * the server lane (doc bodies + live blog FTS) exactly as the palette and `/search` merge
+ * them; a blank or list-all query browses the static index instead. Surfaced rows are
+ * recorded into `sink`. Throws when a lane fails — callers own the degrade.
+ */
+export async function searchCatalogRecords(query: string, options: CatalogSearchOptions): Promise<SearchResult[]> {
+	const { locale, authCeiling, surface, limit, sink } = options;
+	const q = query.trim();
+	const scopes = allowedScopes(authCeiling);
+
+	// Static lane — page/showcase/section/doc titles, the only lane carrying authScope.
+	const records = buildSearchIndex(locale).filter(
+		(r) => scopes.has(r.authScope) && (!surface || r.surface === surface),
+	);
+
+	// Browse / enumerate mode — empty query or a list-all token (e.g. "*").
+	// The keyword matcher scores by substring overlap and would return nothing
+	// for "*", so we bypass match() AND the FTS lane and return the static index
+	// directly (filtered by scope + surface), sliced to the browse cap. This is
+	// what answers "what showcases/pages/docs does this project have?".
+	if (isBrowseIntent(q)) {
+		const browseCap = Math.min(Math.max(1, limit ?? BROWSE_LIMIT), BROWSE_LIMIT);
+		// Project records to the wire `SearchResult` shape (score 0 — browse is
+		// unranked) so the sink + projection match the keyword path exactly.
+		const browsed = records.slice(0, browseCap).map((r) => toResult(r, 0));
+		sink?.record(browsed);
+		return browsed;
+	}
+
+	const cap = Math.min(Math.max(1, limit ?? DEFAULT_LIMIT), MAX_LIMIT);
+	const staticHits = match(records, q, cap);
+
+	// Server lane — doc bodies + live blog FTS (snippets). Skipped for page/showcase/section.
+	const needsServer = surface === null || surface === 'doc' || surface === 'blog';
+	const serverHits = needsServer ? await searchContent(q, { locale, limit: cap, scope: scopeFor(surface) }) : [];
+
+	// Merge: server hit wins (richer snippet), mirroring the palette/`/search` merge.
+	const byKey = new Map<string, SearchResult>();
+	for (const r of staticHits) byKey.set(dedupeKey(r), r);
+	for (const r of serverHits) byKey.set(dedupeKey(r), r);
+
+	const merged = Array.from(byKey.values())
+		.sort((a, b) => b.score - a.score)
+		.slice(0, cap);
+
+	sink?.record(merged);
+	return merged;
+}
+
+/** The wire shape the model reads — the surfaced row minus the client-only fields. */
+function toToolResult(r: SearchResult) {
+	return {
+		surface: r.surface,
+		title: r.title,
+		path: r.path,
+		anchor: r.anchor,
+		breadcrumb: r.breadcrumb,
+		snippet: r.snippet ? r.snippet.slice(0, 140) : null,
+		icon: r.icon,
+		badge: r.badge,
+	};
+}
+
 export function createSearchCatalogTool(locale: Locale, authCeiling: string | null, sink?: CatalogSink) {
 	return {
 		search_catalog: tool({
@@ -85,7 +164,7 @@ export function createSearchCatalogTool(locale: Locale, authCeiling: string | nu
 				'to list ("showcase", "page", "doc", "blog", "section"); omit `surface` to list across all kinds. ' +
 				'This is the SAME index that powers the site search palette. ' +
 				'Use ONLY to find WHERE something lives — do NOT use it to explain how something works ' +
-				'internally (use get_llmwiki_pages for that). Only cite paths this tool returns; never invent one.',
+				'internally (search_project_docs does that). Only cite paths this tool returns; never invent one.',
 			inputSchema: jsonSchema<ToolInput>({
 				type: 'object',
 				additionalProperties: false,
@@ -115,72 +194,9 @@ export function createSearchCatalogTool(locale: Locale, authCeiling: string | nu
 			}),
 			execute: async ({ query, surface, limit }) => {
 				try {
-					const q = typeof query === 'string' ? query.trim() : '';
-					const scopes = allowedScopes(authCeiling);
-					const wantSurface = surface ?? null;
-
-					// Static lane — page/showcase/section/doc titles, the only lane carrying authScope.
-					const records = buildSearchIndex(locale).filter(
-						(r) => scopes.has(r.authScope) && (!wantSurface || r.surface === wantSurface),
-					);
-
-					// Browse / enumerate mode — empty query or a list-all token (e.g. "*").
-					// The keyword matcher scores by substring overlap and would return nothing
-					// for "*", so we bypass match() AND the FTS lane and return the static index
-					// directly (filtered by scope + surface), sliced to the browse cap. This is
-					// what answers "what showcases/pages/docs does this project have?".
-					if (isBrowseIntent(q)) {
-						const browseCap = Math.min(Math.max(1, limit ?? BROWSE_LIMIT), BROWSE_LIMIT);
-						// Project records to the wire `SearchResult` shape (score 0 — browse is
-						// unranked) so the sink + projection match the keyword path exactly.
-						const browsed = records.slice(0, browseCap).map((r) => toResult(r, 0));
-						sink?.record(browsed);
-						return {
-							results: browsed.map((r) => ({
-								surface: r.surface,
-								title: r.title,
-								path: r.path,
-								anchor: r.anchor,
-								breadcrumb: r.breadcrumb,
-								snippet: r.snippet ? r.snippet.slice(0, 140) : null,
-								icon: r.icon,
-								badge: r.badge,
-							})),
-						};
-					}
-
-					const cap = Math.min(Math.max(1, limit ?? DEFAULT_LIMIT), MAX_LIMIT);
-					const staticHits = match(records, q, cap);
-
-					// Server lane — doc bodies + live blog FTS (snippets). Skipped for page/showcase/section.
-					const needsServer = wantSurface === null || wantSurface === 'doc' || wantSurface === 'blog';
-					const serverHits = needsServer
-						? await searchContent(q, { locale, limit: cap, scope: scopeFor(wantSurface) })
-						: [];
-
-					// Merge: server hit wins (richer snippet), mirroring the palette/`/search` merge.
-					const byKey = new Map<string, SearchResult>();
-					for (const r of staticHits) byKey.set(dedupeKey(r), r);
-					for (const r of serverHits) byKey.set(dedupeKey(r), r);
-
-					const merged = Array.from(byKey.values())
-						.sort((a, b) => b.score - a.score)
-						.slice(0, cap);
-
-					sink?.record(merged);
-
-					return {
-						results: merged.map((r) => ({
-							surface: r.surface,
-							title: r.title,
-							path: r.path,
-							anchor: r.anchor,
-							breadcrumb: r.breadcrumb,
-							snippet: r.snippet ? r.snippet.slice(0, 140) : null,
-							icon: r.icon,
-							badge: r.badge,
-						})),
-					};
+					const q = typeof query === 'string' ? query : '';
+					const results = await searchCatalogRecords(q, { locale, authCeiling, surface: surface ?? null, limit, sink });
+					return { results: results.map(toToolResult) };
 				} catch (err) {
 					console.error('[ai:tool:search_catalog] failed:', err instanceof Error ? err.message : err);
 					return { results: [], error: 'Catalog search failed.' };

@@ -1,7 +1,8 @@
 import { getProviderUsageToday } from '$lib/server/db/ai/admin-queries';
+import type { ProviderRegistry } from './connections';
 import { type LimitConfidence, PROVIDER_LIMITS, type ResetKind } from './provider-limits';
 import { readProviderRedisUsage } from './provider-usage';
-import { buildProviderRegistry, getCooldownResumeAt } from './providers';
+import { getCooldownResumeAt } from './providers';
 
 /**
  * Single source of truth for the admin "Provider Resources & Limits" board.
@@ -16,7 +17,10 @@ import { buildProviderRegistry, getCooldownResumeAt } from './providers';
  *
  * HONESTY: usage is never presented as exact. `requestsToday` is a lower bound
  * (shared key, failed calls, embeddings on a separate path), so `remaining` is an
- * upper bound and `usageSource` is 'estimated' whenever we have any count.
+ * upper bound and `usageSource` is 'estimated' whenever we have any count. And the
+ * documented ceilings were read for specific models: when an administrator points a
+ * connection at a model outside `verifiedModels`, the numbers are withheld rather than
+ * inherited, because nobody has checked them for that model.
  */
 
 export type UsageSource = 'estimated' | 'unknown';
@@ -38,6 +42,8 @@ export interface ProviderQuota {
 	verifiedOn: string;
 	sourceUrl: string;
 	note?: string;
+	/** False when the connection's model is not one the documented ceilings were read for. */
+	limitsVerified: boolean;
 	// ── Observed usage today (our own, lower bound) ──
 	requestsToday: number;
 	tokensToday: number;
@@ -70,15 +76,16 @@ function nextMidnightInTz(timeZone: string): string {
 	return new Date(now.getTime() + secondsUntilMidnight * 1000).toISOString();
 }
 
-/** Assemble the per-provider quota board. Never throws on a Redis/limit miss. */
-export async function buildProviderQuota(): Promise<ProviderQuota[]> {
-	const registry = buildProviderRegistry();
+/** Assemble the per-provider quota board over a loaded registry. Never throws on a Redis/limit miss. */
+export async function buildProviderQuota(registry: ProviderRegistry): Promise<ProviderQuota[]> {
 	const usageRows = await getProviderUsageToday();
 	const usageByProvider = new Map(usageRows.map((r) => [r.provider, r]));
 
 	return Promise.all(
-		registry.map(async (p): Promise<ProviderQuota> => {
-			const limit = PROVIDER_LIMITS[p.id];
+		registry.entries.map(async (p): Promise<ProviderQuota> => {
+			const documented = PROVIDER_LIMITS[p.id];
+			const limitsVerified = documented?.verifiedModels.includes(p.modelId) ?? false;
+			const limit = limitsVerified ? documented : undefined;
 			const sqlUsage = usageByProvider.get(p.id);
 			const redisUsage = await readProviderRedisUsage(p.id);
 			const cooldownUntil = await getCooldownResumeAt(p.id);
@@ -96,7 +103,7 @@ export async function buildProviderQuota(): Promise<ProviderQuota[]> {
 				id: p.id,
 				name: p.name,
 				configured: p.configured,
-				model: p.model,
+				model: p.modelId,
 				rpd,
 				rpm: limit?.rpm ?? null,
 				tpm: limit?.tpm ?? null,
@@ -105,8 +112,13 @@ export async function buildProviderQuota(): Promise<ProviderQuota[]> {
 				resetTimezone: limit?.resetTimezone ?? null,
 				resetAt,
 				verifiedOn: limit?.verifiedOn ?? '',
-				sourceUrl: limit?.sourceUrl ?? '',
-				note: limit?.note,
+				sourceUrl: documented?.sourceUrl ?? '',
+				note: limitsVerified
+					? limit?.note
+					: documented
+						? `Documented ceilings were read for ${documented.verifiedModels.join(', ')}, not for ${p.modelId}; nothing is assumed for this model.`
+						: undefined,
+				limitsVerified,
 				requestsToday,
 				tokensToday: sqlUsage?.tokens ?? 0,
 				embeddingsToday: redisUsage.embeddings,

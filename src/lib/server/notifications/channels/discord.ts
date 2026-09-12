@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
 import { db } from '$lib/server/db';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { decrypt, encrypt } from '../crypto';
+import { decryptAesGcm, encryptAesGcm, getEncryptionKey } from '$lib/server/security';
 import type { DeliveryChannel, DeliveryPayload, DeliveryResult } from './types';
 
 export class DiscordChannel implements DeliveryChannel {
@@ -106,7 +106,7 @@ export async function refreshDiscordTokens(accountId: string): Promise<boolean> 
 	if (!clientId || !clientSecret) return false;
 
 	try {
-		const refreshToken = await decrypt(account.refreshToken);
+		const refreshToken = await decryptAesGcm(account.refreshToken, getEncryptionKey());
 
 		const res = await fetch('https://discord.com/api/v10/oauth2/token', {
 			method: 'POST',
@@ -128,8 +128,9 @@ export async function refreshDiscordTokens(accountId: string): Promise<boolean> 
 		}
 
 		const tokens = await res.json();
-		const encAccessToken = await encrypt(tokens.access_token);
-		const encRefreshToken = await encrypt(tokens.refresh_token);
+		const encryptionKey = getEncryptionKey();
+		const encAccessToken = await encryptAesGcm(tokens.access_token, encryptionKey);
+		const encRefreshToken = await encryptAesGcm(tokens.refresh_token, encryptionKey);
 		const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 
 		await db

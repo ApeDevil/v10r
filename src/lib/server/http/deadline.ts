@@ -118,10 +118,14 @@ function deadlineFrom(expiresAt: number, budgetMs: number): Deadline {
 				return await Promise.race([
 					running,
 					new Promise<never>((_, reject) => {
+						// Whole milliseconds, rounded UP: the timer floors a fractional delay and
+						// `remainingMs()` does not, so a budget of 18.7 ms fired at 18 ms rejected
+						// with the deadline still reporting 0.7 ms left — an expired run whose
+						// deadline said it had not expired (flaky `retryWithin` budget test).
 						timer = setTimeout(() => {
 							controller.abort(expired);
 							reject(expired);
-						}, budget);
+						}, Math.ceil(budget));
 					}),
 				]);
 			} finally {

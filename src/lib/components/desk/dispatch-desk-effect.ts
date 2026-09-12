@@ -12,8 +12,9 @@
  */
 
 import type { PanelDefinition } from '$lib/desk/layout.types';
-import type { DeskEffect } from '$lib/server/ai/tools/_types';
+import type { DeskEffect } from '$lib/types/ai-tools';
 import type { DeskEvents } from './desk-bus.svelte';
+import { filePanelId } from './file-panel';
 
 /** Callback interface for effect dispatch — abstracts dock/bus calls. */
 export interface EffectActions {
@@ -22,6 +23,12 @@ export interface EffectActions {
 	addPanel: (panel: PanelDefinition) => void;
 	updatePanel: (panelId: string, partial: Partial<PanelDefinition>) => void;
 	publish: <K extends keyof DeskEvents>(channel: K, payload: DeskEvents[K]) => void;
+	/**
+	 * The id of the OPEN panel of this type showing this file, or null. The Explorer mints
+	 * suffixed ids for second instances, so an effect must ask rather than assume — an
+	 * assumed id opened a file that was already on screen a second time.
+	 */
+	findFilePanel: (panelType: string, fileId: string) => string | null;
 }
 
 /**
@@ -35,17 +42,16 @@ export function dispatchDeskEffect(effect: DeskEffect, actions: EffectActions): 
 
 	switch (effect.type) {
 		case 'desk:open_panel': {
-			const panelId = `${effect.panelType}-${effect.fileId}`;
-			if (!actions.focusPanel(panelId)) {
-				// addPanel focuses the insertion leaf, so the new panel surfaces too.
-				actions.addPanel({
-					id: panelId,
-					type: effect.panelType,
-					label: effect.label,
-					closable: true,
-					meta: { fileId: effect.fileId },
-				});
-			}
+			const open = actions.findFilePanel(effect.panelType, effect.fileId);
+			if (open) return actions.focusPanel(open);
+			// addPanel focuses the insertion leaf, so the new panel surfaces too.
+			actions.addPanel({
+				id: filePanelId(effect.panelType, effect.fileId),
+				type: effect.panelType,
+				label: effect.label,
+				closable: true,
+				meta: { fileId: effect.fileId },
+			});
 			return true;
 		}
 		case 'desk:refresh_file':
@@ -54,11 +60,12 @@ export function dispatchDeskEffect(effect: DeskEffect, actions: EffectActions): 
 		case 'desk:refresh_explorer':
 			actions.publish('ai:refresh_explorer', {} as Record<string, never>);
 			return true;
-		case 'desk:tab_indicator':
-			actions.updatePanel(`${effect.panelType}-${effect.fileId}`, {
-				indicator: effect.variant === 'modified' ? 'ai-modified' : undefined,
-			});
+		case 'desk:tab_indicator': {
+			const open = actions.findFilePanel(effect.panelType, effect.fileId);
+			// A file with no open panel has no tab to mark; that is not a failure.
+			if (open) actions.updatePanel(open, { indicator: effect.variant === 'modified' ? 'ai-modified' : undefined });
 			return true;
+		}
 		case 'desk:notify':
 			actions.publish('ai:notify', { message: effect.message, level: effect.level });
 			return true;

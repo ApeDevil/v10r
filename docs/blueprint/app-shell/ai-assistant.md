@@ -120,41 +120,65 @@ src/lib/
 ├─────────────────────────────────────────────────────┤
 │                                                     │
 │  ┌─────────────────────────────────────────────┐   │
-│  │ 👤 How do I create a new project?           │   │
+│  │ 👤 Where is the auth showcase?              │   │
 │  └─────────────────────────────────────────────┘   │
 │                                                     │
-│  ┌─────────────────────────────────────────────┐   │
-│  │ 🤖 To create a new project...               │   │
-│  │    ▌                                        │   │
-│  │    (streaming cursor)                       │   │
-│  └─────────────────────────────────────────────┘   │
+│  🤖 ● ● ●  Reading the catalog…                    │
 │                                                     │
 ├─────────────────────────────────────────────────────┤
-│  [Message input...            ] [■ Stop]           │
+│  [Type the next question…      ] [■ Stop]          │
 └─────────────────────────────────────────────────────┘
 ```
 
+**The status row is honest about the wait.** An assistant frame exists from the stream's
+`start` on (~0.5 s in); the first word comes seconds later, after retrieval and the model's
+first step. `Chatbot.svelte` keeps the row up while `awaitingAnswer(messages)` — the last
+message is the user's, or the assistant's frame holds no text yet — and labels it from the
+trace the server streams on the message (`turnProgress` in `composites/chatbot/turn-progress.ts`):
+the most recently started step that is still `active` → "Searching the docs…" (any retrieval
+lane), "Reading the catalog…" (`catalog`), "Thinking…" (`generate`). Tool calls the model makes
+render as their own rows (`ToolCallStatus` over the SDK's `tool-<name>` parts: pending →
+running → done | failed), so a two-step turn reads as a sequence, not a pause.
+
+**The composer stays usable.** The textarea is never disabled by a turn (only by the sign-in
+gate), so the caret survives the answer and the next question can be typed while it streams.
+Send becomes **Stop** (`chatbotSession.stop()` → the SDK aborts the fetch; received tokens stay);
+Enter and a second Send are held until the turn ends — one turn in flight (`submit()` refuses
+while `isStreaming`).
+
+**Stop stops the model, not just the fetch.** The dropped connection reaches the server as the
+turn's *cancellation* (`startCancellation`, `$lib/server/http/cancellation.ts`: the response
+body's `cancel()` — what the Node bridge calls when the socket closes — joined with the
+platform's `request.signal`). Every model call of the turn carries it, so the provider stops
+streaming instead of running on to its 30 s timeout. What had reached the client is persisted
+as the message's content (charged as unknown usage — the SDK only totals a finished step), so
+the conversation resumes with the partial answer the user saw; nothing is cooled and no error
+frame is written. Stop during retrieval, before the model was called, never calls it — an
+aborted request still counts against a per-day quota. One runtime caveat: the dev container runs
+Vite under Bun, whose `node:http` never reports the dropped socket to the response, so in dev a
+Stop still reaches only the client; on Node (adapter-node, Vercel's Node runtime) the model
+stops — see `http/cancellation.ts`.
+
 ### Error States
 
-| State | UI | Recovery |
-|-------|-----|----------|
-| **Rate limited** | "Slow down! Try again in X seconds" | Auto-enable after cooldown |
-| **Network error** | "Connection lost. Retrying..." | Auto-retry with backoff |
-| **AI provider error** | "Something went wrong. Try again?" | Manual retry button |
-| **Context too long** | "Conversation too long. Start fresh?" | Clear history button |
+The server never lets provider prose reach the client. Every failure is classified
+(`classifyAiError` — by the provider's HTTP status for an `APICallError`, never by its message)
+and arrives in one of two shapes, decided by whether the answer had started:
 
-```svelte
-<!-- Error display pattern -->
-{#if error}
-  <div class="chat-error" role="alert">
-    <span class="i-lucide-alert-circle" />
-    <p>{error.message}</p>
-    {#if error.retryable}
-      <button onclick={retry}>Try again</button>
-    {/if}
-  </div>
-{/if}
-```
+| When it failed | What the client gets | UI |
+|---|---|---|
+| **Before any content** (a 429 on the first token, every provider cooled, a 30 s abort) | exactly one `error` frame, text `[kind] user-safe message` | the error box under the thread ("Could not get a response." + copy per kind); the empty assistant frame is not rendered |
+| **After content** (the stream cut mid-answer, the 30 s timeout) | the message closes normally: `message-metadata { turnError: { kind, message } }`, then `finish`; the partial text is persisted as received | the partial text stays; an inline "The answer stopped early." note under it |
+| **Refused before the stream** (guard: 401 / 429 / budget) | a JSON body `{ error: { code, message } }` on `chat.error` | the sign-in gate (401) or the error box, worded from the code |
+
+`chatbotSession.lastError` holds the frame text the SDK reports through `onError`; the panel
+reads it before `chat.error`, parses the `[kind]` prefix (`parseAiErrorKind`,
+`$lib/types/ai-error.ts`) and words the box itself — the user-safe server text is a fallback for
+other clients, not what Vely shows. Both are cleared by the next send and by a new chat.
+
+An `error` frame after content is never sent: the client would drop the partial answer on it
+(`ai` #7562). The rule and its rotation semantics live in
+`src/lib/server/ai/_shared/streaming-turn.ts`.
 
 ---
 

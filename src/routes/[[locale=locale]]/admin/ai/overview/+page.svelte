@@ -54,12 +54,12 @@ const resourceById = $derived(new Map(data.resources.map((r) => [r.id, r])));
 
 		<div class="provider-list">
 			{#each data.providers as provider}
-				{@const res = resourceById.get(provider.id)}
+				{@const res = resourceById.get(provider.provider)}
 				<div class="provider-row">
 					<Cluster gap="2" align="center">
 						<span class="health-dot health-dot--{provider.configured ? 'success' : 'secondary'}"></span>
 						<span class="provider-name">{provider.name}</span>
-						{#if data.activeProvider?.id === provider.id}
+						{#if data.activeProvider?.id === provider.provider}
 							<Badge variant="success">Active</Badge>
 						{/if}
 					</Cluster>
@@ -73,9 +73,9 @@ const resourceById = $derived(new Map(data.resources.map((r) => [r.id, r])));
 								<span class="headroom muted">no daily cap</span>
 							{/if}
 						{/if}
-						<code class="provider-model">{provider.model}</code>
+						<code class="provider-model">{provider.modelId}</code>
 						<Badge variant={provider.configured ? 'success' : 'secondary'}>
-							{provider.configured ? 'Configured' : 'Not configured'}
+							{provider.configured ? 'Connected' : provider.enabled ? 'Enabled, no usable key' : 'Not connected'}
 						</Badge>
 					</Cluster>
 				</div>

@@ -27,6 +27,8 @@ interface ProviderQuota {
 	verifiedOn: string;
 	sourceUrl: string;
 	note?: string;
+	/** False when the connection's model is not one the documented ceilings were read for. */
+	limitsVerified: boolean;
 	requestsToday: number;
 	tokensToday: number;
 	embeddingsToday: number;
@@ -113,14 +115,20 @@ function isLow(p: ProviderQuota): boolean {
 								<span class="sub">{p.rpm}/min</span>
 							{/if}
 							<span class="meta">
-								{#if p.rpdConfidence === 'estimated'}
+								{#if !p.limitsVerified}
+									<Badge variant="warning">unverified for {p.model}</Badge>
+								{:else if p.rpdConfidence === 'estimated'}
 									<Badge variant="warning">estimated</Badge>
 								{:else if p.rpdConfidence === 'documented'}
 									<Badge variant="secondary">documented</Badge>
 								{:else}
 									<Badge variant="secondary">unknown</Badge>
 								{/if}
-								<span class="verified" title={p.note ?? ''}>verified {p.verifiedOn}</span>
+								{#if p.limitsVerified}
+									<span class="verified" title={p.note ?? ''}>verified {p.verifiedOn}</span>
+								{:else}
+									<span class="verified" title={p.note ?? ''}>no ceilings assumed</span>
+								{/if}
 							</span>
 						</td>
 
@@ -164,7 +172,7 @@ function isLow(p: ProviderQuota): boolean {
 
 						<td aria-live="polite">
 							{#if !p.configured}
-								<span class="muted">not configured</span>
+								<span class="muted">not connected</span>
 							{:else if secs > 0}
 								<Badge variant="warning">Cooling · {secs}s</Badge>
 							{:else if p.resetAt}

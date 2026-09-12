@@ -228,8 +228,10 @@ Then in a browser, against real data:
 
 ## Not needed
 
-- **`db:retrieval-pre` / `db:retrieval-post`** — the pgvector extension and the HNSW index already
-  exist and moved with the schema in step 1.
+- **`db:retrieval-pre` / `db:retrieval-post`** — the pgvector extension moved with the schema in
+  step 1. The HNSW index did **not** survive (found missing 2026-09-11: `db:push` drops indexes the
+  schema does not declare); it is now declared in `schema/retrieval/chunk.ts` and the next
+  `db:push` created it (pushed and verified 2026-09-12: cold docs lane 7.7 s → 0.4 s).
 - **`db:search-backfill`** — no search-vector column changed; `retrieval.chunk.search_vector`
   is a generated column that travelled with the rename.
 - **`db:neo4j-setup`** — no Neo4j constraint or index was renamed.
@@ -247,3 +249,41 @@ podman exec v10r bun run db:ingest-docs    # re-embed the renamed docs — 59 do
 
 The `db:catalog-sync` half of this is covered by step 4 and is done: `/showcases/ui/workbench`
 → `/showcases/ui/dock` is live in the Neo4j `:Resource` projection.
+
+## Also pending, from the AI plans (Vely performance + deskbot improvement, 2026-09-11/12)
+
+Both plans are built, gated and browser-checked; their root-level records were deleted on
+2026-09-12. What they left open, so it has a home:
+
+**Decisions**
+- `EXECUTION_LEASE_MS` for an interrupted proposal execution: 120 s as built, against the
+  route's 60 s `maxDuration` (`src/lib/server/ai/proposals/execute-proposal.ts`).
+- Whether the read-only desk `MarkdownPanel` later becomes editable (changes what a
+  context entry's `dirty` means for markdown).
+- PlanCard retention wording names the windows (30 d / 90 d) — keep in step with
+  `retention/schedule.ts`, or say "for a limited time".
+- Vercel region pin (`fra1`, Neon is eu-central-1) — then one measurement run against the
+  deployment.
+- Gemini thinking on chatbot turns — a one-line flip in `ai/config.ts`, ships only on an
+  accepted A/B.
+- Tool omission for a user without a wiki (the prompt says so; product choice).
+- Cancellation on Vercel: `adapter-vercel` 6.3.4 cannot set `supportsCancellation` — check
+  the deployment first (a Stop mid-answer; the `turn cancelled by the client` log line),
+  patch `.vc-config.json` post-build, or accept that on Vercel a Stop stops the client only.
+- Groq as the fallback: its free tier (8 k TPM) cannot finish a grounded or multi-step turn —
+  Dev tier, a smaller model for the fallback, or accept "stopped early" on grounded turns.
+- Measurement budget: Gemini paid tier vs 20 req/day pacing.
+
+**Gated work, not started**
+- `@ai-sdk/svelte` 3.0.167 → 4.0.146 (`bun add` in the container, restart for the
+  frozen-lockfile check, drop the `as Chat['transport']` casts, `validate:build` for the
+  number, browser pass incl. rehydration and minimize) — removes the nested `ai` 5 copy,
+  ~15–20 KB gzipped off `$lib/state/chat-client.ts`'s chunk.
+- Client markdown coalescing in `ChatMessage.svelte` — only if a long answer on a 400 px
+  viewport shows long tasks.
+
+**Measurements still owed** (quota-bound; `scripts/perf/README.md` → "Paired runs")
+- Paired before/after numbers on the chatbot and desk fixtures.
+- Mobile-width browser pass and a Stop mid-answer on the chatbot (the desk Stop was
+  exercised: the client stops, the server runs on under the Bun dev container).
+- The thinking A/B above.

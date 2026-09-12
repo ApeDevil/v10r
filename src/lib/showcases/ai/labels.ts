@@ -91,6 +91,7 @@ export const LANE_LABELS: Record<string, LabelFn> = {
 export const PROBE_GATE_LABELS: Record<ProbeGate['id'], { name: LabelFn; gloss: LabelFn }> = {
 	ground_docs: { name: m.showcase_ai_probe_gate_ground, gloss: m.showcase_ai_probe_gate_ground_gloss },
 	page_deixis: { name: m.showcase_ai_probe_gate_deixis, gloss: m.showcase_ai_probe_gate_deixis_gloss },
+	catalog_nav: { name: m.showcase_ai_probe_gate_catalog, gloss: m.showcase_ai_probe_gate_catalog_gloss },
 	require_plan: { name: m.showcase_ai_probe_gate_plan, gloss: m.showcase_ai_probe_gate_plan_gloss },
 };
 

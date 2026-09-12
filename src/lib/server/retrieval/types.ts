@@ -1,3 +1,5 @@
+import type { EmbeddingConnection } from '$lib/server/ai';
+
 /** A retrieved chunk with relevance metadata */
 export interface RankedChunk {
 	chunkId: string;
@@ -31,7 +33,12 @@ export interface RetrievalOptions {
 	maxChunks?: number;
 	tiers?: (1 | 2 | 3)[];
 	graphDepth?: number;
-	collectionId?: string;
+	/**
+	 * Restrict to documents of one source (`'desk'`, `'docs'`, …). The `user_id` filter is
+	 * the tenant boundary; this is the CORPUS boundary inside a tenant — the deskbot must not
+	 * answer from the same user's web uploads. Absent = every source the user owns.
+	 */
+	source?: DocumentSource;
 	/** Fusion strategy when multiple tiers run. 'rrf' forces fusion; 'none' skips it. */
 	fusion?: 'none' | 'rrf';
 	/**
@@ -42,14 +49,23 @@ export interface RetrievalOptions {
 	 * The keyword/BM25 path still keys off the `query` string; only the dense vector is reused.
 	 */
 	queryEmbedding?: number[];
+	/**
+	 * The request's already-opened Google connection for the query embed (the guard's
+	 * registry carries it). Absent → `generateEmbedding` reads the provider row itself.
+	 * Irrelevant when `queryEmbedding` is supplied.
+	 */
+	embeddingConnection?: EmbeddingConnection;
 }
+
+/** Where a retrieval document came from — mirrors `retrieval.document.source`. */
+export type DocumentSource = 'upload' | 'web' | 'text' | 'api' | 'catalog' | 'docs' | 'desk';
 
 /** Input for the ingestion pipeline */
 export interface IngestableDocument {
 	title: string;
 	content: string;
 	sourcePath?: string;
-	sourceType?: 'upload' | 'web' | 'text' | 'api' | 'docs' | 'desk';
+	sourceType?: Exclude<DocumentSource, 'catalog'>;
 	userId?: string;
 }
 

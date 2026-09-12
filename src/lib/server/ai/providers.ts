@@ -1,97 +1,73 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createGroq } from '@ai-sdk/groq';
-import { createOpenAI } from '@ai-sdk/openai';
-import type { LanguageModel } from 'ai';
-import { env } from '$env/dynamic/private';
+/**
+ * Provider resolution — which connection serves a given turn — plus the AI domain's
+ * breaker policy and the per-user preference.
+ *
+ * Every resolver takes the `ProviderRegistry` an operation loaded at its start (see
+ * `index.ts`); nothing here reads configuration on its own, so one operation never sees
+ * two different snapshots. Precedence is the same for all three resolvers:
+ * explicit preference → the administrator's project default → the capability order.
+ */
+
 import { defineBreaker, resetBreakers } from '$lib/server/resilience';
+import type { AiProviderId } from '$lib/types/db-enums';
+import type { ProviderEntry, ProviderRegistry } from './connections';
 
-export interface ProviderEntry {
-	id: string;
-	name: string;
-	configured: boolean;
-	model: string;
-	envVar: string;
-	/** Whether this provider reliably supports tool calling. */
-	supportsTools: boolean;
-	/** Whether this provider's model accepts image input (vision). */
-	supportsVision: boolean;
-	getInstance: () => LanguageModel | null;
-}
-
-const PROVIDER_CONFIGS: {
-	id: string;
-	name: string;
-	model: string;
-	envVar: string;
-	supportsTools: boolean;
-	supportsVision: boolean;
-	factory: (apiKey: string) => LanguageModel;
-}[] = [
-	{
-		id: 'groq',
-		name: 'Groq',
-		model: 'llama-3.3-70b-versatile',
-		envVar: 'GROQ_API_KEY',
-		supportsTools: true, // Llama can drift in long multi-turn, but our stepCountIs(3) bounds it
-		supportsVision: false, // text-only llama-3.3 — must never receive an image part
-		factory: (apiKey) => createGroq({ apiKey })('llama-3.3-70b-versatile'),
-	},
-	{
-		id: 'openai',
-		name: 'OpenAI',
-		model: 'gpt-4o-mini',
-		envVar: 'OPENAI_API_KEY',
-		supportsTools: true, // Most reliable for tool calling
-		supportsVision: true, // gpt-4o-mini accepts image input
-		factory: (apiKey) => createOpenAI({ apiKey })('gpt-4o-mini'),
-	},
-	{
-		id: 'google',
-		name: 'Google Gemini',
-		model: 'gemini-2.5-flash',
-		envVar: 'GOOGLE_GENERATIVE_AI_API_KEY',
-		supportsTools: true, // Works but known issues with optional arrays
-		supportsVision: true, // gemini-2.5-flash is natively multimodal
-		factory: (apiKey) => createGoogleGenerativeAI({ apiKey })('gemini-2.5-flash'),
-	},
-];
-
-/** Build provider registry from environment variables */
-export function buildProviderRegistry(): ProviderEntry[] {
-	return PROVIDER_CONFIGS.map((config) => {
-		const apiKey = env[config.envVar] ?? '';
-		const configured = apiKey.length > 0;
-
-		return {
-			id: config.id,
-			name: config.name,
-			configured,
-			model: config.model,
-			envVar: config.envVar,
-			supportsTools: config.supportsTools,
-			supportsVision: config.supportsVision,
-			getInstance: () => (configured ? config.factory(apiKey) : null),
-		};
-	});
-}
-
-/** Resolve which provider to use: user preference → AI_PROVIDER env var → first configured */
-export function resolveActiveProvider(registry: ProviderEntry[], preference?: string | null): ProviderEntry | null {
+function preferred(
+	pool: ProviderEntry[],
+	registry: ProviderRegistry,
+	preference?: string | null,
+): ProviderEntry | null {
 	if (preference) {
-		const match = registry.find((p) => p.id === preference && p.configured);
+		const match = pool.find((p) => p.id === preference);
 		if (match) return match;
 	}
-	const envPref = env.AI_PROVIDER ?? '';
-	if (envPref) {
-		const match = registry.find((p) => p.id === envPref && p.configured);
+	if (registry.defaultProviderId) {
+		const match = pool.find((p) => p.id === registry.defaultProviderId);
 		if (match) return match;
 	}
-	return registry.find((p) => p.configured) ?? null;
+	return null;
 }
 
-/** Get other configured providers as fallbacks */
-export function getFallbackProviders(registry: ProviderEntry[], activeId: string): ProviderEntry[] {
-	return registry.filter((p) => p.configured && p.id !== activeId);
+function firstOf(pool: ProviderEntry[], order: readonly AiProviderId[]): ProviderEntry | null {
+	for (const id of order) {
+		const match = pool.find((p) => p.id === id);
+		if (match) return match;
+	}
+	return pool[0] ?? null;
+}
+
+/** Chat-only turns: preference → project default → first configured (registry order). */
+export function resolveActiveProvider(registry: ProviderRegistry, preference?: string | null): ProviderEntry | null {
+	const pool = registry.entries.filter((p) => p.configured);
+	return preferred(pool, registry, preference) ?? pool[0] ?? null;
+}
+
+/** Other configured providers, for fallback rotation. */
+export function getFallbackProviders(registry: ProviderRegistry, activeId: string): ProviderEntry[] {
+	return registry.entries.filter((p) => p.configured && p.id !== activeId);
+}
+
+/**
+ * Tool-calling turns: preference → project default → OpenAI > Google > others, over the
+ * providers whose *model* is known to emit structured tool calls.
+ */
+export function resolveToolProvider(registry: ProviderRegistry, preference?: string | null): ProviderEntry | null {
+	const pool = registry.entries.filter((p) => p.configured && p.capabilities.tools);
+	return preferred(pool, registry, preference) ?? firstOf(pool, ['openai', 'google']);
+}
+
+/**
+ * Image input: preference → project default → Google > OpenAI, over the providers whose
+ * model accepts image parts.
+ *
+ * This filter is load-bearing: a text-only model would silently receive a blind image
+ * and hallucinate. Image extraction MUST route through here, never through
+ * resolveActiveProvider.
+ */
+export function resolveVisionProvider(registry: ProviderRegistry, preference?: string | null): ProviderEntry | null {
+	const pool = registry.entries.filter((p) => p.configured && p.capabilities.vision);
+	// Gemini first: cheaper + larger context + native multimodal.
+	return preferred(pool, registry, preference) ?? firstOf(pool, ['google', 'openai']);
 }
 
 // Provider cooldown — this domain's use of the general circuit breaker.
@@ -129,63 +105,22 @@ export async function isCooledDown(providerId: string): Promise<boolean> {
 	return providerBreaker.isOpen(providerId);
 }
 
-/**
- * Resolve a provider that supports tool calling.
- * User preference → AI_PROVIDER → OpenAI > Google > others.
- */
-export function resolveToolProvider(registry: ProviderEntry[], preference?: string | null): ProviderEntry | null {
-	const toolProviders = registry.filter((p) => p.configured && p.supportsTools);
-	if (preference) {
-		const match = toolProviders.find((p) => p.id === preference);
-		if (match) return match;
-	}
-	const envProvider = env.AI_PROVIDER ?? '';
-	if (envProvider) {
-		const envMatch = toolProviders.find((p) => p.id === envProvider);
-		if (envMatch) return envMatch;
-	}
-	const preferred = ['openai', 'google'];
-	for (const id of preferred) {
-		const match = toolProviders.find((p) => p.id === id);
-		if (match) return match;
-	}
-	return toolProviders[0] ?? null;
-}
-
-/**
- * Resolve a provider that supports vision (image input).
- * User preference → AI_PROVIDER → Google > OpenAI. Groq is hard-excluded (text-only).
- *
- * This filter is load-bearing: the default active provider is registry index 0
- * (Groq), which would silently receive a blind image and hallucinate. Image
- * extraction MUST route through here, never through resolveActiveProvider.
- */
-export function resolveVisionProvider(registry: ProviderEntry[], preference?: string | null): ProviderEntry | null {
-	const visionProviders = registry.filter((p) => p.configured && p.supportsVision);
-	if (preference) {
-		const match = visionProviders.find((p) => p.id === preference);
-		if (match) return match;
-	}
-	const envProvider = env.AI_PROVIDER ?? '';
-	if (envProvider) {
-		const envMatch = visionProviders.find((p) => p.id === envProvider);
-		if (envMatch) return envMatch;
-	}
-	// Gemini first: cheaper + larger context + native multimodal; gpt-4o-mini as fallback.
-	const preferred = ['google', 'openai'];
-	for (const id of preferred) {
-		const match = visionProviders.find((p) => p.id === id);
-		if (match) return match;
-	}
-	return visionProviders[0] ?? null;
+/** Get the cooldown resume time as ISO string, or null if not cooled down. */
+export async function getCooldownResumeAt(providerId: string): Promise<string | null> {
+	const { retryAt } = await providerBreaker.state(providerId);
+	return retryAt === null ? null : new Date(retryAt).toISOString();
 }
 
 // ── User provider preferences (in-memory, resets on server restart) ──
+//
+// A preference names a provider; whether it is honoured is decided at resolution time
+// against the registry, so disabling a provider in the admin form retires every stored
+// preference for it without touching this map.
 
 const MAX_PREFERENCES = 10_000;
 const userPreferences = new Map<string, string>();
 
-/** Get a user's preferred provider ID, or null for server default. */
+/** Get a user's preferred provider ID, or null for the project default. */
 export function getUserPreference(userId: string): string | null {
 	return userPreferences.get(userId) ?? null;
 }
@@ -200,13 +135,7 @@ export function setUserPreference(userId: string, providerId: string): void {
 	userPreferences.set(userId, providerId);
 }
 
-/** Clear a user's preference (revert to server default). */
+/** Clear a user's preference (revert to the project default). */
 export function clearUserPreference(userId: string): void {
 	userPreferences.delete(userId);
-}
-
-/** Get the cooldown resume time as ISO string, or null if not cooled down. */
-export async function getCooldownResumeAt(providerId: string): Promise<string | null> {
-	const { retryAt } = await providerBreaker.state(providerId);
-	return retryAt === null ? null : new Date(retryAt).toISOString();
 }

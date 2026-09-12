@@ -52,6 +52,7 @@ const FORBIDDEN: Array<{ re: RegExp; why: string }> = [
 	{ re: /\bsession:\s*locals\.session\b/, why: 'returns the raw session (it carries the token)' },
 	{ re: /\.\.\.locals\.session\b/, why: 'spreads the raw session (it carries the token)' },
 	{ re: /\b(passwordHash|sessionToken)\b/, why: 'references a secret field' },
+	{ re: /\bapiKeyCiphertext\b/, why: 'references a stored credential envelope (use publicProviderConnection())' },
 ];
 
 /**

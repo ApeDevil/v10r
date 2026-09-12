@@ -15,7 +15,7 @@ import {
 	type ImageAnalysis,
 	imageAnalysisSchema,
 } from '$lib/schemas/image-metadata';
-import { getVisionProvider } from '$lib/server/ai';
+import { getVisionProvider, type ProviderRegistry } from '$lib/server/ai';
 import { chargeTokens, checkUserBudget } from '$lib/server/ai/budget';
 import { MAX_TOKENS } from '$lib/server/ai/config';
 import { estimateCost } from '$lib/server/ai/pricing';
@@ -75,16 +75,20 @@ const analysisJsonSchema = jsonSchema<ImageAnalysis>({
 	},
 });
 
-export async function extractImageMetadata(userId: string, storageKey: string): Promise<ExtractResult> {
+export async function extractImageMetadata(
+	userId: string,
+	storageKey: string,
+	registry: ProviderRegistry,
+): Promise<ExtractResult> {
 	const budget = await checkUserBudget(userId);
 	if (!budget.allowed) {
 		return { ok: false, reason: 'budget', message: budget.reason };
 	}
 
-	const provider = getVisionProvider(userId);
+	const provider = getVisionProvider(registry, userId);
 	const model = provider?.getInstance() ?? null;
 	if (!provider || !model) {
-		return { ok: false, reason: 'no_provider', message: 'No vision-capable AI provider is configured.' };
+		return { ok: false, reason: 'no_provider', message: 'No vision-capable AI provider is connected.' };
 	}
 
 	let bytes: Uint8Array;
@@ -144,12 +148,12 @@ export async function extractImageMetadata(userId: string, storageKey: string): 
 			ok: true,
 			analysis,
 			providerId: provider.id,
-			modelId: provider.model,
+			modelId: provider.modelId,
 			inputTokens,
 			outputTokens,
 			reasoningTokens,
 			durationMs: Math.round(performance.now() - start),
-			cost: estimateCost(provider.model, { inputTokens, outputTokens, reasoningTokens }),
+			cost: estimateCost(provider.modelId, { inputTokens, outputTokens, reasoningTokens }),
 		};
 	} catch (err) {
 		const message = err instanceof Error ? err.message : 'Vision analysis failed.';

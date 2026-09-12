@@ -28,10 +28,13 @@ const {
 	createProposal,
 	getProposal,
 	getProposalWithExpiry,
+	listProposalSteps,
 	markExecuted,
 	markExecuting,
 	markExpiredIfPending,
 	markFailed,
+	markInterruptedIfStale,
+	recordProposalStep,
 	rejectProposal,
 } = await import('./proposals');
 const { db } = await import('$lib/server/db');
@@ -69,7 +72,7 @@ describe('proposal lifecycle', () => {
 			conversationId,
 			messageId,
 			riskTier: 'high',
-			payload: [{ toolName: 'desk_delete_file', args: { file_id: 'fil_1' } }],
+			payload: [{ toolName: 'desk_delete_file', args: { file_id: 'fil_1' }, action: 'step' }],
 			rationale: 'Delete stale drafts',
 		});
 		expect(proposal.id).toMatch(/^prp_/);
@@ -82,7 +85,7 @@ describe('proposal lifecycle', () => {
 		const proposal = await createProposal({
 			conversationId,
 			messageId,
-			payload: [{ toolName: 't', args: {} }],
+			payload: [{ toolName: 't', args: {}, action: 'step' }],
 		});
 		const first = await approveProposal(proposal.id, USER_A.id);
 		expect(first?.status).toBe('approved');
@@ -97,7 +100,7 @@ describe('proposal lifecycle', () => {
 		const proposal = await createProposal({
 			conversationId,
 			messageId,
-			payload: [{ toolName: 't', args: {} }],
+			payload: [{ toolName: 't', args: {}, action: 'step' }],
 		});
 		const rejected = await rejectProposal(proposal.id, 'user_said_no');
 		expect(rejected?.status).toBe('rejected');
@@ -111,7 +114,7 @@ describe('proposal lifecycle', () => {
 		const proposal = await createProposal({
 			conversationId,
 			messageId,
-			payload: [{ toolName: 't', args: {} }],
+			payload: [{ toolName: 't', args: {}, action: 'step' }],
 		});
 		await approveProposal(proposal.id, USER_A.id);
 
@@ -128,33 +131,84 @@ describe('proposal lifecycle', () => {
 		expect(current?.status).toBe('executing');
 	});
 
-	it('transitions executing → executed with cached result', async () => {
+	it('transitions executing → executed; what ran is the step receipts', async () => {
 		const proposal = await createProposal({
 			conversationId,
 			messageId,
-			payload: [{ toolName: 'desk_rename_file', args: { file_id: 'fil_1', name: 'x' } }],
+			payload: [{ toolName: 'desk_rename_file', args: { file_id: 'fil_1', name: 'x' }, action: 'step' }],
 		});
 		await approveProposal(proposal.id, USER_A.id);
 		await markExecuting(proposal.id);
-
-		const executed = await markExecuted(proposal.id, {
-			toolCallIds: ['tcl_1'],
-			results: [{ toolName: 'desk_rename_file', ok: true, output: { renamed: true } }],
+		await recordProposalStep(db, {
+			proposalId: proposal.id,
+			stepIndex: 0,
+			toolName: 'desk_rename_file',
+			kind: 'ok',
+			output: { renamed: true },
 		});
+
+		const executed = await markExecuted(proposal.id);
 		expect(executed?.status).toBe('executed');
 		expect(executed?.executedAt).not.toBeNull();
-		expect(executed?.executionResult?.results).toHaveLength(1);
 
-		// Cached result survives a re-read — this is the idempotency path.
-		const cached = await getProposal(proposal.id);
-		expect(cached?.executionResult?.results?.[0]?.ok).toBe(true);
+		// The receipts survive a re-read — this is the idempotency path.
+		const steps = await listProposalSteps(proposal.id);
+		expect(steps).toHaveLength(1);
+		expect(steps[0]).toMatchObject({ stepIndex: 0, kind: 'ok', output: { renamed: true } });
+	});
+
+	it('refuses a second receipt for the same step — a step executes at most once', async () => {
+		const proposal = await createProposal({
+			conversationId,
+			messageId,
+			payload: [{ toolName: 'desk_rename_file', args: { file_id: 'fil_1', name: 'x' }, action: 'step' }],
+		});
+		await approveProposal(proposal.id, USER_A.id);
+		await markExecuting(proposal.id);
+		const receipt = {
+			proposalId: proposal.id,
+			stepIndex: 0,
+			toolName: 'desk_rename_file',
+			kind: 'ok' as const,
+			output: {},
+		};
+		await recordProposalStep(db, receipt);
+		await expect(recordProposalStep(db, receipt)).rejects.toThrow();
+		expect(await listProposalSteps(proposal.id)).toHaveLength(1);
+	});
+
+	it('heals an executing row that outlived its lease into failed(interrupted), receipts intact', async () => {
+		const proposal = await createProposal({
+			conversationId,
+			messageId,
+			payload: [
+				{ toolName: 'desk_rename_file', args: { file_id: 'fil_1', name: 'x' }, action: 'one' },
+				{ toolName: 'desk_delete_file', args: { file_id: 'fil_2' }, action: 'two' },
+			],
+		});
+		await approveProposal(proposal.id, USER_A.id);
+		await markExecuting(proposal.id);
+		await recordProposalStep(db, {
+			proposalId: proposal.id,
+			stepIndex: 0,
+			toolName: 'desk_rename_file',
+			kind: 'ok',
+			output: {},
+		});
+
+		// Fresh heartbeat: not stale, nothing happens.
+		expect(await markInterruptedIfStale(proposal.id)).toBeNull();
+		// A lease of zero: the row is stale the moment it is read.
+		const healed = await markInterruptedIfStale(proposal.id, 0);
+		expect(healed).toMatchObject({ status: 'failed', failureMessage: 'interrupted' });
+		expect(await listProposalSteps(proposal.id)).toHaveLength(1);
 	});
 
 	it('transitions executing → failed and stores the failure message', async () => {
 		const proposal = await createProposal({
 			conversationId,
 			messageId,
-			payload: [{ toolName: 't', args: {} }],
+			payload: [{ toolName: 't', args: {}, action: 'step' }],
 		});
 		await approveProposal(proposal.id, USER_A.id);
 		await markExecuting(proposal.id);
@@ -168,10 +222,10 @@ describe('proposal lifecycle', () => {
 		const proposal = await createProposal({
 			conversationId,
 			messageId,
-			payload: [{ toolName: 't', args: {} }],
+			payload: [{ toolName: 't', args: {}, action: 'step' }],
 		});
 		// Skip approved → executing entirely — invalid path.
-		const result = await markExecuted(proposal.id, { toolCallIds: [], results: [] });
+		const result = await markExecuted(proposal.id);
 		expect(result).toBeNull();
 
 		const current = await db.select().from(agentProposal).where(eq(agentProposal.id, proposal.id));
@@ -211,7 +265,7 @@ describe('proposal lifecycle', () => {
 			const proposal = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 'desk_delete_file', args: { file_id: 'fil_1' } }],
+				payload: [{ toolName: 'desk_delete_file', args: { file_id: 'fil_1' }, action: 'step' }],
 				expiresInMs: EXPIRED,
 			});
 			expect(await approveProposal(proposal.id, USER_A.id)).toBeNull();
@@ -221,7 +275,7 @@ describe('proposal lifecycle', () => {
 			const proposal = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 'desk_delete_file', args: { file_id: 'fil_1' } }],
+				payload: [{ toolName: 'desk_delete_file', args: { file_id: 'fil_1' }, action: 'step' }],
 				expiresInMs: EXPIRED,
 			});
 			await approveProposal(proposal.id, USER_A.id);
@@ -240,7 +294,7 @@ describe('proposal lifecycle', () => {
 			const proposal = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 't', args: {} }],
+				payload: [{ toolName: 't', args: {}, action: 'step' }],
 				expiresInMs: 60_000,
 			});
 			await approveProposal(proposal.id, USER_A.id);
@@ -257,7 +311,7 @@ describe('proposal lifecycle', () => {
 			const proposal = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 't', args: {} }],
+				payload: [{ toolName: 't', args: {}, action: 'step' }],
 				expiresInMs: 15 * 60 * 1000,
 			});
 			expect((await approveProposal(proposal.id, USER_A.id))?.status).toBe('approved');
@@ -268,13 +322,13 @@ describe('proposal lifecycle', () => {
 			const stale = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 't', args: {} }],
+				payload: [{ toolName: 't', args: {}, action: 'step' }],
 				expiresInMs: EXPIRED,
 			});
 			const fresh = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 't', args: {} }],
+				payload: [{ toolName: 't', args: {}, action: 'step' }],
 				expiresInMs: 60_000,
 			});
 			expect((await getProposalWithExpiry(stale.id))?.isExpired).toBe(true);
@@ -286,7 +340,7 @@ describe('proposal lifecycle', () => {
 			const stale = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 't', args: {} }],
+				payload: [{ toolName: 't', args: {}, action: 'step' }],
 				expiresInMs: EXPIRED,
 			});
 			expect((await markExpiredIfPending(stale.id))?.status).toBe('expired');
@@ -296,7 +350,7 @@ describe('proposal lifecycle', () => {
 			const live = await createProposal({
 				conversationId,
 				messageId,
-				payload: [{ toolName: 't', args: {} }],
+				payload: [{ toolName: 't', args: {}, action: 'step' }],
 				expiresInMs: 60_000,
 			});
 			expect(await markExpiredIfPending(live.id)).toBeNull();

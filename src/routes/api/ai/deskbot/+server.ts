@@ -7,6 +7,7 @@ import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
 import { guardAiRequest } from '$lib/server/ai/guard';
 import { DeskRequestSchema } from '$lib/server/ai/validation';
 import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { startDeadline } from '$lib/server/http/deadline';
 import { isAdmin } from '$lib/server/http/guards';
 import { apiError, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
@@ -14,6 +15,14 @@ import type { RequestHandler } from './$types';
 // Node runtime + extended duration: an LLM stream routinely outlives the Vercel
 // serverless default (~10-15s), which would silently truncate the answer mid-stream.
 export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
+/**
+ * The turn's own budget, under the function's ceiling above: every model call is bounded by
+ * what is left of it (minus the orchestrator's finalization reserve), so a late step is cut
+ * with time to persist the answer rather than by the platform with none. The hook's default
+ * request deadline (10 s) is for ordinary routes, not a streamed model turn.
+ */
+const TURN_BUDGET_MS = 55_000;
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const guard = await guardAiRequest(locals);
@@ -31,10 +40,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	return orchestrateChat({
 		userId: guard.user.id,
+		registry: guard.registry,
 		surface: 'deskbot',
 		providerId: parsed.output.providerId,
 		messages: parsed.output.messages as Parameters<typeof orchestrateChat>[0]['messages'],
 		conversationId: parsed.output.conversationId,
+		signal: request.signal,
+		deadline: startDeadline(TURN_BUDGET_MS),
 		panelContext: parsed.output.panelContext,
 		/**
 		 * Client-declared, and deliberately so — but be clear about what it is.
@@ -55,7 +67,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		toolScopes: parsed.output.toolScopes,
 		deskLayout: parsed.output.deskLayout,
 		activeWorkspace: parsed.output.activeWorkspace,
-		resumeFromProposalId: parsed.output.resumeFromProposalId,
 		locale: locals.locale,
 		// Derived from the env admin list, never a DB column — `user.role` used to
 		// feed this, which quietly made catalog visibility a second privilege plane.

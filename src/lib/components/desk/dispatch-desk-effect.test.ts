@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DeskEffect } from '$lib/server/ai/tools/_types';
+import type { DeskEffect } from '$lib/types/ai-tools';
 import { makeMockActions } from './desk-context.fixtures';
 import { dispatchDeskEffect } from './dispatch-desk-effect';
 
 describe('dispatchDeskEffect', () => {
-	it('desk:open_panel adds panel when focusPanel reports it absent', () => {
+	it('desk:open_panel adds panel when no open panel shows the file', () => {
 		const actions = makeMockActions(vi, false);
 		const effect: DeskEffect = {
 			type: 'desk:open_panel',
@@ -14,7 +14,8 @@ describe('dispatchDeskEffect', () => {
 		};
 		expect(dispatchDeskEffect(effect, actions)).toBe(true);
 
-		expect(actions.focusPanel).toHaveBeenCalledWith('spreadsheet-f1');
+		expect(actions.findFilePanel).toHaveBeenCalledWith('spreadsheet', 'f1');
+		expect(actions.focusPanel).not.toHaveBeenCalled();
 		expect(actions.addPanel).toHaveBeenCalledWith({
 			id: 'spreadsheet-f1',
 			type: 'spreadsheet',
@@ -24,8 +25,9 @@ describe('dispatchDeskEffect', () => {
 		});
 	});
 
-	it('desk:open_panel focuses existing panel instead of adding', () => {
+	it('desk:open_panel focuses the open instance instead of adding — whatever id the Explorer minted', () => {
 		const actions = makeMockActions(vi, true);
+		(actions.findFilePanel as ReturnType<typeof vi.fn>).mockReturnValue('spreadsheet-f1-1725000000000');
 		const effect: DeskEffect = {
 			type: 'desk:open_panel',
 			panelType: 'spreadsheet',
@@ -34,7 +36,7 @@ describe('dispatchDeskEffect', () => {
 		};
 		expect(dispatchDeskEffect(effect, actions)).toBe(true);
 
-		expect(actions.focusPanel).toHaveBeenCalledWith('spreadsheet-f1');
+		expect(actions.focusPanel).toHaveBeenCalledWith('spreadsheet-f1-1725000000000');
 		expect(actions.addPanel).not.toHaveBeenCalled();
 	});
 
@@ -64,8 +66,8 @@ describe('dispatchDeskEffect', () => {
 		expect(actions.publish).toHaveBeenCalledWith('ai:refresh_explorer', expect.anything());
 	});
 
-	it('desk:tab_indicator updates panel with ai-modified', () => {
-		const actions = makeMockActions(vi);
+	it('desk:tab_indicator updates the open panel with ai-modified', () => {
+		const actions = makeMockActions(vi, true);
 		dispatchDeskEffect(
 			{ type: 'desk:tab_indicator', fileId: 'f1', panelType: 'spreadsheet', variant: 'modified' },
 			actions,
@@ -75,10 +77,21 @@ describe('dispatchDeskEffect', () => {
 	});
 
 	it('desk:tab_indicator clears indicator for non-modified variant', () => {
-		const actions = makeMockActions(vi);
+		const actions = makeMockActions(vi, true);
 		dispatchDeskEffect({ type: 'desk:tab_indicator', fileId: 'f1', panelType: 'editor', variant: 'created' }, actions);
 
 		expect(actions.updatePanel).toHaveBeenCalledWith('editor-f1', { indicator: undefined });
+	});
+
+	it('desk:tab_indicator with no open panel marks nothing and is still applied', () => {
+		const actions = makeMockActions(vi, false);
+		expect(
+			dispatchDeskEffect(
+				{ type: 'desk:tab_indicator', fileId: 'f1', panelType: 'editor', variant: 'modified' },
+				actions,
+			),
+		).toBe(true);
+		expect(actions.updatePanel).not.toHaveBeenCalled();
 	});
 
 	it('desk:notify publishes to bus with level', () => {

@@ -23,10 +23,11 @@ import {
 	computeContextChips,
 	type PanelStatus,
 	type SerializedContext,
+	type SerializedRequestContext,
 } from './desk-context.pure';
 
 // Re-export pure types so existing consumers keep working
-export type { ContentLevel, PanelStatus, SerializedContext };
+export type { ContentLevel, PanelStatus, SerializedContext, SerializedRequestContext };
 export { CONTEXT_TOKEN_BUDGET };
 
 /** What a panel publishes as its AI-visible state */
@@ -42,6 +43,19 @@ export interface PanelContext {
 	updatedAt: number;
 	/** Content type hint for viewer rendering in Bot Manager */
 	contentType?: 'structured' | 'code' | 'plaintext';
+	/** The desk file the panel shows, so a proposed edit can name its target. */
+	fileId?: string;
+	fileType?: 'spreadsheet' | 'markdown';
+	/** The saved version the panel shows, when the file has one. */
+	version?: number;
+	/** The panel holds edits the server has not saved yet. */
+	dirty?: boolean;
+	/**
+	 * Bring `content` up to date NOW. Panels debounce their updates; `serializeForRequest`
+	 * calls this first, so a turn sent right after an edit carries the edit — not the
+	 * snapshot from 800 ms ago.
+	 */
+	refresh?: () => void;
 }
 
 export type ContextStatus = 'implicit' | 'pinned' | 'available';
@@ -71,8 +85,8 @@ let dismissedIds = $state(new Set<string>());
 /** The currently focused panel — drives implicit context */
 let focusedPanelId = $state<string | null>(null);
 
-/** Timestamp of the last AI response — drives staleness detection */
-let lastResponseAt = $state(0);
+/** When the last request's context was serialized — a change after it is a stale chip. */
+let lastRequestAt = $state(0);
 
 /**
  * Coalesce multiple registry mutations within the same microtask into
@@ -178,19 +192,14 @@ export function restoreContext(panelId: string): void {
 	dismissedIds = next;
 }
 
-/** Record when the last AI response was received (resets staleness) */
-export function markResponseReceived(): void {
-	lastResponseAt = Date.now();
-}
-
 /**
  * All context entries with their status and staleness.
- * Reactive via registryVersion + focusedPanelId + pinnedIds + lastResponseAt.
+ * Reactive via registryVersion + focusedPanelId + pinnedIds + lastRequestAt.
  * Delegates to pure function for testability.
  */
 const contextChips = $derived.by((): ContextChip[] => {
 	void registryVersion;
-	return computeContextChips(registry, focusedPanelId, pinnedIds, dismissedIds, lastResponseAt);
+	return computeContextChips(registry, focusedPanelId, pinnedIds, dismissedIds, lastRequestAt);
 });
 
 /**
@@ -217,7 +226,30 @@ export function getTokenEstimate(): number {
 	return tokenEstimate;
 }
 
-/** Serialize active contexts for the API request body with budget awareness */
-export function serializeForRequest(): SerializedContext[] {
-	return budgetAwareSerialize(activeContexts, focusedPanelId, CONTEXT_TOKEN_BUDGET);
+/**
+ * What the NEXT request would carry, as the registry stands: the meter shows the tokens
+ * that would be sent and the entries that would be left out — not the registry's total,
+ * which the budget and the entry cap never see.
+ */
+const requestPreview = $derived.by(
+	(): SerializedRequestContext => budgetAwareSerialize(activeContexts, focusedPanelId),
+);
+
+export function getRequestPreview(): SerializedRequestContext {
+	return requestPreview;
+}
+
+/**
+ * Serialize active contexts for the API request body with budget awareness.
+ *
+ * Flushes every active panel first (`refresh`), then reads the registry directly rather
+ * than the derived list — `updatePanelContext` replaces the entry object synchronously
+ * while the version bump that re-derives waits for a microtask. The snapshot time is
+ * recorded here, so a chip goes stale the moment its panel changes after Send.
+ */
+export function serializeForRequest(): SerializedRequestContext {
+	for (const ctx of activeContexts) ctx.refresh?.();
+	const fresh = computeActiveContexts(registry, focusedPanelId, pinnedIds, dismissedIds);
+	lastRequestAt = Date.now();
+	return budgetAwareSerialize(fresh, focusedPanelId, CONTEXT_TOKEN_BUDGET);
 }

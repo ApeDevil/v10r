@@ -205,6 +205,30 @@ describe('buildSystemPrompt', () => {
 		expect(result).toContain('</desk-context>');
 	});
 
+	it('names the file, its version and its truncation on <panel> — what a proposed edit targets', () => {
+		const result = buildSystemPrompt({
+			toolScopes: ['desk:read'],
+			panelContext: [
+				{
+					panelId: 'spreadsheet-fil_a',
+					panelType: 'spreadsheet',
+					label: 'Budget',
+					content: 'A1: 100',
+					fileId: 'fil_a',
+					fileType: 'spreadsheet',
+					version: 3,
+					truncated: true,
+					dirty: true,
+				},
+			],
+		});
+		expect(result).toContain(' file_id="fil_a"');
+		expect(result).toContain(' file_type="spreadsheet"');
+		expect(result).toContain(' version="3"');
+		expect(result).toContain(' truncated="true"');
+		expect(result).toContain(' unsaved_edits="true"');
+	});
+
 	it('includes status and contentLevel as attributes on <panel> when provided', () => {
 		const result = buildSystemPrompt({
 			toolScopes: ['desk:read'],

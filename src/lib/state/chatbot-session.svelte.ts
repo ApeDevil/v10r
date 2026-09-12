@@ -22,6 +22,7 @@
  * session-expiry (aborts the stream, drops the instance, clears the resume pointer).
  */
 import type { Chat } from '@ai-sdk/svelte';
+import { untrack } from 'svelte';
 import { browser } from '$app/environment';
 import { CSRF_HEADER } from '$lib/api';
 
@@ -67,6 +68,10 @@ class ChatbotSession {
 	 * Never derived from `chat.error.message`: the SDK stores the raw response body
 	 * text there, which carries no status. */
 	gate = $state<'ok' | 'auth_required'>('ok');
+	/** The last stream error's text (`[kind] message` from the server, or the transport's own),
+	 * kept here because the SDK reports a mid-stream `error` frame through `onError` — the
+	 * panel reads this before `chat.error`. Cleared by the next send and by a new chat. */
+	lastError = $state<string | null>(null);
 
 	#userId: string | undefined;
 	#loadingChat = false;
@@ -80,11 +85,20 @@ class ChatbotSession {
 
 	/** AppShell hands us the live session user id (for the resume pointer + guard). */
 	setUser(id: string | undefined): void {
+		const signedIn = !!id && id !== this.#userId;
 		this.#userId = id;
 		this.gate = id ? 'ok' : 'auth_required';
 		// Login can return via client-side goto (passkey/OTP), so the live instance —
-		// and a stale 401 error on it — can survive sign-in; drop it with the gate.
-		if (id) this.chat?.clearError();
+		// and a stale 401 error on it — can survive sign-in; drop it once, on that
+		// transition. Untracked: the caller is an `$effect`, and `clearError()` reads
+		// `chat.status` — tracked, the effect re-ran on every status change and wiped each
+		// turn's error the moment it appeared (the "empty bubble, no error box" defect).
+		if (signedIn) {
+			untrack(() => {
+				this.chat?.clearError();
+				this.lastError = null;
+			});
+		}
 	}
 
 	/** Lazily construct the live `Chat` (client-only, idempotent). Pulls the heavy
@@ -95,11 +109,28 @@ class ChatbotSession {
 		if (this.#loadingChat) return null;
 		this.#loadingChat = true;
 		try {
-			const [{ Chat }, { DefaultChatTransport }] = await Promise.all([import('@ai-sdk/svelte'), import('ai')]);
+			const { Chat, DefaultChatTransport } = await import('./chat-client');
 			const chat = new Chat({
+				onError: (error) => {
+					this.lastError = error.message;
+				},
 				transport: new DefaultChatTransport({
 					api: '/api/ai/chatbot',
 					headers: CSRF_HEADER,
+					// The server never reads a message's `metadata` — the retrieval trace, citation
+					// verdicts and catalog chips it streamed back on earlier turns — yet the default
+					// body re-uploads all of it with every turn, ~7 KB per prior turn for the life of
+					// the thread. Send each message's identity and parts; the rest of the body is
+					// exactly the transport's default.
+					prepareSendMessagesRequest: ({ body, messages, id, trigger, messageId }) => ({
+						body: {
+							...body,
+							id,
+							trigger,
+							messageId,
+							messages: messages.map(({ metadata: _metadata, ...message }) => message),
+						},
+					}),
 					fetch: async (url, init) => {
 						const response = await fetch(url, init);
 						// Typed auth signal: the only place the real status exists — by the
@@ -159,6 +190,7 @@ class ChatbotSession {
 		this.conversationId = undefined;
 		if (chat) chat.messages = [];
 		this.answerReady = false;
+		this.lastError = null;
 		this.#clearPointer();
 	}
 
@@ -170,11 +202,20 @@ class ChatbotSession {
 		if (!browser) return;
 		const route = routeId; // frozen by the caller; never re-read across the await below
 		const chat = await this.ensureChat();
-		if (!chat) return;
+		// One turn in flight: the composer stays typeable while an answer streams, so the
+		// refusal lives here, not in a disabled textarea.
+		if (!chat || this.isStreaming) return;
+		this.lastError = null;
 		const body: Record<string, unknown> = {};
 		if (this.conversationId) body.conversationId = this.conversationId;
 		if (route) body.pageRouteId = route;
 		chat.sendMessage({ text }, { body });
+	}
+
+	/** Abort the in-flight response (the composer's Stop). The tokens received so far stay. */
+	stop(): void {
+		if (!browser) return;
+		void this.chat?.stop();
 	}
 
 	/** Adopt an existing conversation from the history list. */
@@ -209,6 +250,7 @@ class ChatbotSession {
 		// anonymous visitor who closes and reopens must land back on the gate.
 		this.gate = this.#userId ? 'ok' : 'auth_required';
 		this.conversationId = undefined;
+		this.lastError = null;
 		this.chat?.stop?.();
 		this.chat = null;
 		this.#stopWatcher?.();

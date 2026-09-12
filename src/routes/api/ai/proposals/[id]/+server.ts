@@ -1,12 +1,14 @@
 /**
- * GET /api/ai/proposals/[id] — fetch the current status of a proposal.
+ * GET /api/ai/proposals/[id] — the current outcome of a proposal.
  *
- * Used by the client to poll after a flaky network or a page reload,
- * when the original POST response to `/approve` was lost. Reading the
- * proposal status is the idempotent recovery path.
+ * The client's recovery path: after a lost `/approve` response, a 409, a remount or a
+ * reload it reads the status and the step receipts here instead of approving again.
+ * Answers the same `ProposalOutcome` shape as the approve route, receipts and effects
+ * included, so a panel can still reload the file a completed step changed.
  */
 
-import { getProposal } from '$lib/server/db/ai/proposals';
+import { proposalOutcome } from '$lib/server/ai/proposals/execute-proposal';
+import { getProposal, markExpiredIfPending, markInterruptedIfStale } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import { guardApiUser } from '$lib/server/http/guards';
@@ -19,25 +21,19 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	const { user } = guard;
 
 	try {
-		const proposal = await getProposal(params.id);
+		let proposal = await getProposal(params.id);
 		if (!proposal) return apiError(404, 'not_found', 'Proposal not found.');
 
 		// Ownership check — user must own the parent conversation.
 		const conv = await getConversation(proposal.conversationId, user.id);
 		if (!conv) return apiError(404, 'not_found', 'Proposal not found.');
 
-		return apiOk({
-			id: proposal.id,
-			status: proposal.status,
-			riskTier: proposal.riskTier,
-			payload: proposal.payload,
-			rationale: proposal.rationale,
-			approvedAt: proposal.approvedAt,
-			executedAt: proposal.executedAt,
-			executionResult: proposal.executionResult,
-			failureMessage: proposal.failureMessage,
-			expiresAt: proposal.expiresAt,
-		});
+		// Reads heal what time has settled: a pending row past its window is `expired`, an
+		// executing row past its lease is `failed('interrupted')` — with its receipts intact.
+		if (proposal.status === 'pending') proposal = (await markExpiredIfPending(proposal.id)) ?? proposal;
+		if (proposal.status === 'executing') proposal = (await markInterruptedIfStale(proposal.id)) ?? proposal;
+
+		return apiOk(await proposalOutcome(proposal));
 	} catch (err) {
 		const dbErr = classifyDbError(err);
 		return apiError(dbErr.toStatus(), dbErr.kind, safeDbMessage(dbErr.kind));

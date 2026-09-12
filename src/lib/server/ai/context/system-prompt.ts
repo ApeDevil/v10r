@@ -20,20 +20,14 @@ import {
 	SYSTEM_PROMPT,
 } from '$lib/server/ai/config';
 import type { DeskToolScope } from '$lib/server/ai/tools/_types';
+import { CONTEXT_ENTRY_MAX_CHARS } from '$lib/types/desk-context-limits';
 import type { RetrievalPromptEvent } from '$lib/types/retrieval-trace';
 import { escapeXmlAttr, escapeXmlText } from '$lib/utils/xml';
-import type { ChatMessage } from '../types';
+import type { ChatMessage, PanelContextEntry } from '../types';
 
 /** Context data used to assemble the system prompt. */
 export interface SystemPromptInput {
-	panelContext?: {
-		panelType: string;
-		label: string;
-		content: string;
-		status?: string;
-		contentLevel?: string;
-		tokenEstimate?: number;
-	}[];
+	panelContext?: PanelContextEntry[];
 	toolScopes?: DeskToolScope[];
 	deskLayout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
 	activeWorkspace?: { id: string; name: string };
@@ -192,19 +186,30 @@ export function buildSystemPromptBlocks(input: SystemPromptInput): SystemPromptB
 	}
 
 	if (panelContext?.length) {
+		// The entry cap is the client serializer's and the route schema's (`desk-context-limits`);
+		// the slice here can no longer fire on a valid request and exists so an oversized entry
+		// could never reach the prompt through any other caller.
 		const sanitized = panelContext.map((pc) => ({
 			...pc,
-			content: pc.content.replace(/(?:sk-|ghp_|AKIA|Bearer\s)\S+/gi, '[REDACTED]').slice(0, 8000),
+			content: pc.content.replace(/(?:sk-|ghp_|AKIA|Bearer\s)\S+/gi, '[REDACTED]').slice(0, CONTEXT_ENTRY_MAX_CHARS),
 		}));
 		const deskBlock = sanitized
 			.map((pc) => {
 				const statusAttr = pc.status ? ` status="${escapeXmlAttr(pc.status)}"` : '';
 				const levelAttr = pc.contentLevel ? ` level="${escapeXmlAttr(pc.contentLevel)}"` : '';
+				// The identity attributes are what a proposed edit names: the file, and the version
+				// the model read — `truncated` says the text is not the whole file, `dirty` that the
+				// panel holds edits the server has not saved.
+				const fileAttr = pc.fileId ? ` file_id="${escapeXmlAttr(pc.fileId)}"` : '';
+				const kindAttr = pc.fileType ? ` file_type="${escapeXmlAttr(pc.fileType)}"` : '';
+				const versionAttr = pc.version !== undefined ? ` version="${pc.version}"` : '';
+				const truncatedAttr = pc.truncated ? ' truncated="true"' : '';
+				const dirtyAttr = pc.dirty ? ' unsaved_edits="true"' : '';
 				// Content is escaped like every sibling value. Unescaped, a desk file
 				// containing `</panel></desk-context>` closes the block early and the
 				// rest of that file reads as prompt rather than data — to a model
 				// holding desk:write / desk:delete tools.
-				return `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}"${statusAttr}${levelAttr}>\n${escapeXmlText(pc.content)}\n</panel>`;
+				return `<panel type="${escapeXmlAttr(pc.panelType)}" label="${escapeXmlAttr(pc.label)}"${statusAttr}${levelAttr}${fileAttr}${kindAttr}${versionAttr}${truncatedAttr}${dirtyAttr}>\n${escapeXmlText(pc.content)}\n</panel>`;
 			})
 			.join('\n');
 		blocks.push({ id: 'desk-context', text: `<desk-context>\n${deskBlock}\n</desk-context>` });

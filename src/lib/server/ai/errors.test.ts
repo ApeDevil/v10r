@@ -1,5 +1,6 @@
+import { APICallError, NoOutputGeneratedError } from 'ai';
 import { describe, expect, it } from 'vitest';
-import { AiError, aiErrorToStatus, classifyAiError, safeAiMessage } from './errors';
+import { AiError, aiErrorFrameText, aiErrorToStatus, classifyAiError, safeAiMessage } from './errors';
 
 /**
  * The provider-error classifier.
@@ -10,16 +11,56 @@ import { AiError, aiErrorToStatus, classifyAiError, safeAiMessage } from './erro
  * priority, and the fact that nothing leaks a credential) indistinguishable from the
  * eighteen that restate a `String.includes`.
  *
- * The substring rules are deliberately lax — a message merely containing 'rate' or
- * 'token' is enough. That laxity is why `chat-orchestrator.test.ts` asserts a DbError is
- * never routed through here: a database failure mentioning 'token' must not be laundered
- * into an AI rate-limit and trip a provider cooldown.
+ * The SDK's own errors are classified by what they know, never by their prose: an
+ * `APICallError` by the provider's status, a `NoOutputGeneratedError` as `unknown` — its
+ * "gene-rate-d" once matched the rate-limit substring, so every pre-text failure cooled the
+ * provider and told the user "Too many AI requests". The remaining substring rules are still
+ * lax ('token' is enough), which is why `chat-orchestrator.test.ts` asserts a DbError is never
+ * routed through here.
  */
+
+const apiCall = (statusCode: number | undefined, message = 'provider prose') =>
+	new APICallError({ message, url: 'https://provider.example/v1', requestBodyValues: {}, statusCode });
 
 describe('classifyAiError', () => {
 	it('passes an existing AiError through unchanged', () => {
 		const original = new AiError('rate_limit', 'slow down', '429');
 		expect(classifyAiError(original)).toBe(original);
+	});
+
+	it.each([
+		{ status: 401, kind: 'authentication' },
+		{ status: 403, kind: 'authentication' },
+		{ status: 429, kind: 'rate_limit' },
+		{ status: 404, kind: 'model' },
+		{ status: 408, kind: 'timeout' },
+		{ status: 500, kind: 'unavailable' },
+		{ status: 503, kind: 'unavailable' },
+	])('classifies an APICallError $status as $kind by status alone', ({ status, kind }) => {
+		// The message is the provider's prose and would mislead every substring rule.
+		const result = classifyAiError(apiCall(status, 'model rate limited by authentication timeout'));
+		expect(result.kind).toBe(kind);
+		expect(result.code).toBe(String(status));
+	});
+
+	it('falls back to the message for an APICallError status the table does not know', () => {
+		expect(classifyAiError(apiCall(400, 'The input token count exceeds the maximum')).kind).toBe('context_length');
+		expect(classifyAiError(apiCall(400, 'Invalid JSON payload')).kind).toBe('unknown');
+		expect(classifyAiError(apiCall(undefined, 'fetch failed')).kind).toBe('unavailable');
+	});
+
+	it('classifies "No output generated" as unknown — the cause was reported elsewhere', () => {
+		const result = classifyAiError(
+			new NoOutputGeneratedError({ message: 'No output generated. Check the stream for errors.' }),
+		);
+		expect(result.kind).toBe('unknown');
+	});
+
+	it('needs the phrase "rate limit", not the letters r-a-t-e', () => {
+		expect(classifyAiError(new Error('rate limit exceeded')).kind).toBe('rate_limit');
+		expect(classifyAiError(new Error('Rate-limited, retry later')).kind).toBe('rate_limit');
+		expect(classifyAiError(new Error('No output generated.')).kind).toBe('unknown');
+		expect(classifyAiError(new Error('the operation was accurate')).kind).toBe('unknown');
 	});
 
 	it.each([
@@ -74,6 +115,15 @@ describe('classifyAiError', () => {
 });
 
 const KINDS = ['authentication', 'rate_limit', 'model', 'context_length', 'timeout', 'unavailable', 'unknown'] as const;
+
+describe('aiErrorFrameText', () => {
+	it('is the `[kind] safe message` line — the provider prose never reaches the client', () => {
+		const text = aiErrorFrameText(apiCall(429, 'You exceeded your current quota. Retry in 33.5s.'));
+		expect(text).toBe('[rate_limit] The AI provider is over its limit right now. Please try again in a minute.');
+		expect(text).not.toContain('quota');
+		expect(aiErrorFrameText('not even an Error')).toBe('[unknown] An unexpected AI error occurred.');
+	});
+});
 
 describe('safeAiMessage', () => {
 	it('gives every kind a non-empty message that names no credential', () => {

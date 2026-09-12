@@ -2,7 +2,7 @@
  * Ingestion pipeline: document → chunks → embeddings → Postgres + Neo4j.
  */
 import { eq } from 'drizzle-orm';
-import { getActiveProvider } from '$lib/server/ai';
+import { getActiveProvider, loadProviderRegistry } from '$lib/server/ai';
 import { db } from '$lib/server/db';
 import { contentHash } from '$lib/server/db/content-hash';
 import { chunk, document } from '$lib/server/db/schema/retrieval';
@@ -42,7 +42,10 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 		throw new RetrievalError('ingestion', 'Document content is empty');
 	}
 
-	const chatModel = getActiveProvider()?.getInstance() ?? null;
+	// Contextual chunk prefixes are optional: no readable connection means plain chunks,
+	// never a failed ingest.
+	const registry = await loadProviderRegistry().catch(() => null);
+	const chatModel = registry ? (getActiveProvider(registry)?.getInstance() ?? null) : null;
 
 	// Ownership is mandatory: user uploads carry doc.userId; system-generated
 	// corpora (docs/catalog) fall back to the reserved system owner. This id

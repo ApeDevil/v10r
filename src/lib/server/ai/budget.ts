@@ -8,8 +8,8 @@ import { DAILY_TOKEN_CAP } from './config';
  * Per-user daily AI token budget.
  *
  * `checkUserBudget` runs at request entry (cheap GET); rejects if today's
- * spend already exceeds the cap. `chargeTokens` runs in `streamText.onFinish`
- * to record actuals.
+ * spend already exceeds the cap. `chargeTokens` runs once the model is done
+ * (the orchestrator's post-text stage) to record actuals.
  *
  * v1 caveat: this is a check-then-charge pattern, not pre-charge-then-reconcile.
  * A burst of N parallel requests can each pass the gate before any has
@@ -42,8 +42,9 @@ export async function checkUserBudget(userId: string): Promise<Decision> {
 export async function chargeTokens(userId: string, tokens: number): Promise<void> {
 	if (!redis || tokens <= 0) return;
 	const key = dayKey(userId);
-	await redis.incrby(key, tokens);
-	await redis.expire(key, TTL_SECONDS);
+	// One round trip for the increment and the TTL that retires the key with its day —
+	// this runs on the answer path, between the last token and `finish`.
+	await redis.pipeline().incrby(key, tokens).expire(key, TTL_SECONDS).exec();
 }
 
 function msUntilUtcMidnight(): number {

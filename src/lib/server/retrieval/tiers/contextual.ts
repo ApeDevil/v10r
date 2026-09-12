@@ -6,7 +6,8 @@ import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { OVERFETCH_MULTIPLIER } from '../config';
 import { reciprocalRankFusion } from '../rank';
-import type { RankedChunk } from '../types';
+import type { DocumentSource, RankedChunk } from '../types';
+import { sourceScope } from './source-scope';
 
 interface VectorRow {
 	chunkId: string;
@@ -27,7 +28,12 @@ interface BM25Row {
 }
 
 /** Search chunks by vector cosine similarity. */
-async function vectorSearch(queryEmbedding: number[], limit: number, userId: string): Promise<RankedChunk[]> {
+async function vectorSearch(
+	queryEmbedding: number[],
+	limit: number,
+	userId: string,
+	source?: DocumentSource,
+): Promise<RankedChunk[]> {
 	const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
 	// HNSW-friendly shape: filter + order on the chunk row only (so the index is
@@ -44,6 +50,7 @@ async function vectorSearch(queryEmbedding: number[], limit: number, userId: str
 			FROM retrieval.chunk c
 			WHERE c.user_id = ${userId}
 			  AND c.embedding IS NOT NULL
+			  ${sourceScope(userId, source)}
 			ORDER BY distance
 			LIMIT ${limit}
 		)
@@ -70,7 +77,12 @@ async function vectorSearch(queryEmbedding: number[], limit: number, userId: str
 }
 
 /** Search chunks by BM25 full-text search. */
-async function fullTextSearch(query: string, limit: number, userId: string): Promise<RankedChunk[]> {
+async function fullTextSearch(
+	query: string,
+	limit: number,
+	userId: string,
+	source?: DocumentSource,
+): Promise<RankedChunk[]> {
 	const result = await db.execute<BM25Row>(sql`
 		WITH ranked AS (
 			SELECT
@@ -82,6 +94,7 @@ async function fullTextSearch(query: string, limit: number, userId: string): Pro
 			FROM retrieval.chunk c
 			WHERE c.user_id = ${userId}
 			  AND c.search_vector @@ plainto_tsquery('english', ${query})
+			  ${sourceScope(userId, source)}
 			ORDER BY rank DESC
 			LIMIT ${limit}
 		)
@@ -113,12 +126,13 @@ export async function searchContextual(
 	queryEmbedding: number[],
 	limit: number,
 	userId: string,
+	source?: DocumentSource,
 ): Promise<RankedChunk[]> {
 	const overfetch = limit * OVERFETCH_MULTIPLIER;
 
 	const [vectorHits, bm25Hits] = await Promise.all([
-		vectorSearch(queryEmbedding, overfetch, userId),
-		fullTextSearch(query, overfetch, userId),
+		vectorSearch(queryEmbedding, overfetch, userId, source),
+		fullTextSearch(query, overfetch, userId, source),
 	]);
 
 	// Fuse via reciprocal rank fusion

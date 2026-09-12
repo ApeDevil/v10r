@@ -3,7 +3,8 @@ import { onMount, untrack } from 'svelte';
 import { apiFetch } from '$lib/api';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import type { PanelDefinition } from '$lib/components/desk';
-import { getDeskBus, getDockContext, getPanelMenus } from '$lib/components/desk';
+import { focusPanel, getDeskBus, getDockContext, getPanelMenus } from '$lib/components/desk';
+import { filePanelId } from '$lib/components/desk/file-panel';
 import { Button, Spinner } from '$lib/components/primitives';
 import { dataRootNode } from './adapters';
 import type { ContextMenuCallbacks } from './context-menu-items';
@@ -85,7 +86,7 @@ function openNode(node: ExplorerNode) {
 		}
 		case 'desk-file': {
 			const f = node.sourceData as unknown as FileListItem;
-			openSpreadsheet(f);
+			openFilePanel(f);
 			break;
 		}
 	}
@@ -109,15 +110,7 @@ function openInNewPanel(node: ExplorerNode) {
 		}
 		case 'desk-file': {
 			const f = node.sourceData as unknown as FileListItem;
-			const panel: PanelDefinition = {
-				id: `spreadsheet-${f.id}-${ts}`,
-				type: 'spreadsheet',
-				label: f.name,
-				icon: 'i-lucide-sheet',
-				closable: true,
-			};
-			dock.addPanel(panel);
-			bus.publish('spreadsheet:open', { fileId: f.id, name: f.name });
+			openFilePanel(f, `-${ts}`);
 			break;
 		}
 	}
@@ -170,7 +163,7 @@ async function handleNewFolder(node: ExplorerNode) {
 }
 
 async function handleNewSpreadsheet(node: ExplorerNode) {
-	await dispatchNewSpreadsheet(explorerState, node, actionContext, openSpreadsheet);
+	await dispatchNewSpreadsheet(explorerState, node, actionContext, openFilePanel);
 }
 
 let moveToDialogSource = $state<ExplorerNode | null>(null);
@@ -232,17 +225,25 @@ function selectAsset(a: AssetListItem) {
 	}
 }
 
-function openSpreadsheet(f: FileListItem) {
-	const panelId = `spreadsheet-${f.id}`;
+/**
+ * Open a desk file in the panel for its TYPE — a document in the markdown viewer, a sheet in
+ * the spreadsheet panel. `suffix` mints a second instance (Open in new panel); without it the
+ * canonical id is reused, so a file already open is focused rather than opened twice.
+ */
+function openFilePanel(f: FileListItem, suffix = '') {
+	const panelType = f.type === 'markdown' ? 'markdown' : 'spreadsheet';
+	const panelId = `${filePanelId(panelType, f.id)}${suffix}`;
+	if (!suffix && focusPanel(dock, panelId)) return;
 	const panel: PanelDefinition = {
 		id: panelId,
-		type: 'spreadsheet',
+		type: panelType,
 		label: f.name,
-		icon: 'i-lucide-sheet',
+		icon: f.type === 'markdown' ? 'i-lucide-file-text' : 'i-lucide-sheet',
 		closable: true,
+		meta: { fileId: f.id },
 	};
 	dock.addPanel(panel);
-	bus.publish('spreadsheet:open', { fileId: f.id, name: f.name });
+	if (panelType === 'spreadsheet') bus.publish('spreadsheet:open', { fileId: f.id, name: f.name });
 }
 
 function insertAsset(a: AssetListItem) {
