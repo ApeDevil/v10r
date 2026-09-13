@@ -171,8 +171,8 @@ All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it f
 │                      DOMAIN MODULES                          │
 │                 $lib/server/[domain]/                         │
 │                                                              │
-│  notifications/    auth/         retrieval/      llmwiki/        │
-│  ├── index.ts      ├── index.ts  ├── index.ts ├── search.ts  │
+│  notifications/    auth/         retrieval/      graph/          │
+│  ├── index.ts      ├── index.ts  ├── index.ts ├── index.ts   │
 │  ├── service.ts    └── guards.ts └── ...      └── ...        │
 │  └── ...                                                     │
 │                                                              │
@@ -197,7 +197,7 @@ All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it f
 
 **Server/client boundary**: the `$lib/server/` path itself. SvelteKit refuses to bundle it client-side. No runtime guard is needed; the path is the boundary.
 
-**Error spine**: `ServerError` base class (`src/lib/server/errors/index.ts`) with `kind` / `toStatus()` / `toJSON()`. Subclasses: `DbError` (maps PG SQLSTATE → safe message + HTTP status), `AiError`, `Neo4jError`, `LlmwikiError`. Each adapter translates: REST endpoints return `apiError(status, kind, safeMessage)`; AI stream tools return structured error objects (never throw); form actions use `fail()`; jobs capture into `JobResult`. Safe messages only — no PG codes, constraint names, or API-key prefixes reach the client.
+**Error spine**: `ServerError` base class (`src/lib/server/errors/index.ts`) with `kind` / `toStatus()` / `toJSON()`. Subclasses: `DbError` (maps PG SQLSTATE → safe message + HTTP status), `AiError`, `Neo4jError`. Each adapter translates: REST endpoints return `apiError(status, kind, safeMessage)`; AI stream tools return structured error objects (never throw); form actions use `fail()`; jobs capture into `JobResult`. Safe messages only — no PG codes, constraint names, or API-key prefixes reach the client.
 
 ---
 
@@ -214,7 +214,7 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | Desk (AI workspace) | `desk/` | `/api/desk/*` (files, folders, spreadsheets, theme, workspaces) | `store/`, `branding/` | `desk/+layout.server.ts` |
 | Blog | `(public)/blog/` | `/api/blog/*` (posts, comments, tags, assets, domains, folders, feed.xml) | `blog/`, `content/` | Capability-gated authoring |
 | AI Assistant | — | `/api/ai/*` (chat, conversations, proposals, providers) | `ai/` | Session-gated |
-| RAG / Retrieval | — | `/api/retrieval/*` (documents, graph, ingest, search, stats) | `retrieval/`, `llmwiki/`, `graph/` | Admin-gated |
+| RAG / Retrieval | — | `/api/retrieval/*` (documents, graph, ingest, search, stats) | `retrieval/`, `graph/` | Admin-gated |
 | Notifications | — | `/api/notifications/*` (stream SSE, telegram, discord, read-all) | `notifications/` | Session-gated |
 | Analytics | — | `/api/analytics/*` (journey beacon, stream) | `analytics/` | Consent-tiered |
 | Privacy (GDPR) | `account/data` (transparency mirror) | `/api/account/*` (data, data/export, DELETE) | `privacy/` | Session-gated; per-endpoint rate limits (10/5/3 per min) |
@@ -240,7 +240,6 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | `retrieval/` | 18 | Three-tier retrieval pipeline (tiers/, ingest/) |
 | `notifications/` | 17 | Send, stream (SSE), route, outbox, channel providers |
 | `blog/` | 16 | Posts, comments, tags, assets, feed |
-| `llmwiki/` | 14 | Hybrid vector+BM25 wiki search, compile, lint |
 | `jobs/` | 25 | Runner, scheduler, delivery-scheduler (both muted in dev), 20 registered jobs with a `cadence` |
 | `store/` | 12 | R2 object storage — uploads, presigned URLs, per-namespace budgets |
 | `cache/` | 9 | Upstash Redis wrappers |
@@ -382,15 +381,15 @@ Individual files inside a module or component folder. Private by default; public
 
 **Services** — multi-step orchestration warranting extraction: `sendNotification()` (DB insert → SSE push → async channel routing).
 
-**Domain functions** — the shared call site for all adapters: `getNotifications`, `markAsRead`, `retrieve` (retrieval), `searchLlmwiki`, `getCustomPaletteById`.
+**Domain functions** — the shared call site for all adapters: `getNotifications`, `markAsRead`, `retrieve` (retrieval), `getCorpusMap`, `getCustomPaletteById`.
 
 **Read/write seam**: `queries.ts` contains reads with no side effects; `mutations.ts` contains writes with explicit intent. This split is a naming convention, not a CQRS infrastructure.
 
-**Error classes and classifiers**: `ServerError` → `DbError` / `AiError` / `Neo4jError` / `LlmwikiError`; `classifyDbError` / `classifyAiError` / `classifyNeo4jError`; `safeDbMessage` / `safeAiMessage`.
+**Error classes and classifiers**: `ServerError` → `DbError` / `AiError` / `Neo4jError`; `classifyDbError` / `classifyAiError` / `classifyNeo4jError`; `safeDbMessage` / `safeAiMessage`.
 
 **Provider resolution** (`ai/index.ts` over `ai/providers.ts`): every AI operation starts with `loadProviderRegistry()` — the administrator's saved connections (`ai.provider_connection`, keys decrypted under `ENCRYPTION_KEY`) — and `getActiveProvider` / `getToolProvider` / `getVisionProvider` resolve against that snapshot in order: request override → user preference → project default → capability order → first connected. Nothing is read from the environment. Circuit breaker: `markCooldown` / `isCooledDown` (60-second window), Redis-backed (`breaker:ai-provider:{id}`) so it is cross-instance and async.
 
-**AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `get-source-chunks`, `get-llmwiki-pages`, `resolve-ref`, `search-catalog`, `search-docs`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
+**AI tools** (`ai/tools/`): `desk-read`, `desk-write`, `propose-plan`, `resolve-ref`, `search-catalog`, `search-docs`, `search-pattern-library`. All are thin wrappers that return structured data and never throw — tools return error objects; the LLM reads them.
 
 **Catalog grounding** (`ai/catalog-citations.ts`, `ai/tool-leak-guard.ts`): post-stream surface-citation verifier and Groq/llama textual-tool-call leak guard. See [blueprint/ai/provider-routing.md](./blueprint/ai/provider-routing.md).
 
@@ -461,7 +460,7 @@ Data flows down. Responses bubble up the same chain. The `event.locals` bus is t
 
 | Infrastructure | Used by |
 |---------------|---------|
-| PostgreSQL / Neon | All CRUD; RAG tiers 1–2; llmwiki search; analytics; job logs; grants; conversations |
+| PostgreSQL / Neon | All CRUD; RAG tiers 1–2; corpus map; analytics; job logs; grants; conversations |
 | Neo4j / Aura (Bolt) | RAG tier-3 graph expansion only |
 | Upstash Redis | Rate-limit; AI daily budget; Better Auth secondary storage |
 | Cloudflare R2 (S3 API) | Blog media, avatars |
@@ -500,7 +499,7 @@ Nine end-to-end flows have been traced through the system:
 
 These gaps make the blueprint-to-code mapping imperfect. They are recorded here, not concealed, so the doc remains trustworthy.
 
-1. **No notification AI tool implemented.** `multi-client-core.md` uses `createNotificationTools` / `markNotificationRead` as its flagship example. `ai/tools/` currently holds desk, llmwiki, retrieval, propose-plan, and resolve-ref tools. Multi-client reuse for notifications is real for UI, REST, and jobs — not yet for AI.
+1. **No notification AI tool implemented.** `multi-client-core.md` uses `createNotificationTools` / `markNotificationRead` as its flagship example. `ai/tools/` currently holds desk, retrieval search, propose-plan, and resolve-ref tools. Multi-client reuse for notifications is real for UI, REST, and jobs — not yet for AI.
 
 2. **Daily token budget is enforced.** `chargeTokens` records daily AI spend to Redis once the model is done (the chatbot's post-text stage, the deskbot's `onFinish`); the entry-gate `checkUserBudget` (`ai/budget.ts`) now runs in the shared `guardAiRequest` (`ai/guard.ts`) before `orchestrateChat`, rejecting once the day's spend exceeds the cap. (It was previously called nowhere — recorded but unenforced.)
 

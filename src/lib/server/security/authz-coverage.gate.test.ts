@@ -126,8 +126,6 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
  */
 const PUBLIC_SURFACES: Record<string, string> = {
 	// ── Non-/api endpoints ────────────────────────────────────────────────────
-	'[[locale=locale]]/(dev)/llmwiki-probe/+server.ts':
-		'Dev-only probe: devRouteGuard 404s any /(dev)/ route outside import.meta.env.DEV, so it does not exist in production. It reads an arbitrary userId from the query string and must never be given a production route.',
 	'[[locale=locale]]/(public)/blog/feed.xml/+server.ts':
 		'Public RSS feed. Reads listPublishedPostsForFeed, so drafts are unreachable by construction.',
 	'llms.txt/+server.ts':

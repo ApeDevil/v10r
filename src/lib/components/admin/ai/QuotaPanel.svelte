@@ -7,7 +7,7 @@ import { Badge } from '$lib/components/primitives';
  * Provider Resources & Limits board. Table-primary and honesty-first: documented
  * ceilings (with a confidence flag + last-verified date), our own *estimated*
  * logged usage (a lower bound), the truthful Gemini-specific signals (embedding
- * calls + 429s that conversation_step can't see), and live availability.
+ * calls + 429s that model_call can't see), and live availability.
  *
  * Client-safe local type — mirrors the serialized `ProviderQuota` from the loader
  * (never imports the server module).

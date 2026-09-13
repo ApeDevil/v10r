@@ -74,9 +74,14 @@ export const retentionSchedule = [
 		job: 'analytics-cleanup',
 	},
 
-	// Admin cost/usage views read this, so the window is long; the rows are telemetry,
-	// not conversation content.
-	{ id: 'ai-telemetry', dataset: 'ai.conversation_step', days: 180, action: 'delete', job: 'ai-telemetry-retention' },
+	// The turn trace holds conversation content — prompt bodies, the history outline, tool
+	// I/O — so it is minimised by COLUMN first (the `mcp.call_log` pattern): the bodies go at
+	// 30 days, the outline (usage, provider, timings, what was considered and cited) stays
+	// until the row goes. The admin cost/usage views read the outline, so the row window is long.
+	{ id: 'ai-turn-bodies', dataset: 'ai.turn', days: 30, action: 'redact', job: 'ai-telemetry-retention' },
+	{ id: 'ai-turns', dataset: 'ai.turn', days: 180, action: 'delete', job: 'ai-telemetry-retention' },
+	{ id: 'ai-model-calls', dataset: 'ai.model_call', days: 180, action: 'delete', job: 'ai-telemetry-retention' },
+	{ id: 'ai-tool-calls', dataset: 'ai.tool_call', days: 180, action: 'delete', job: 'ai-telemetry-retention' },
 
 	// Append-only growth table → bound it, but keep a long (compliance-ish) window.
 	{ id: 'admin-audit-log', dataset: 'admin.audit_log', days: 365, action: 'delete', job: 'audit-log-retention' },

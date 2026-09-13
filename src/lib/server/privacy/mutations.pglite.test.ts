@@ -1,9 +1,8 @@
 /**
- * Art 17 erasure against the FOUR foreign keys that do NOT cascade.
+ * Art 17 erasure against the THREE foreign keys that do NOT cascade.
  *
  * A bare `DELETE FROM auth.user` raises 23503 for any user who ever wrote a post,
- * issued a grant, commented, or had an llmwiki page compiled — i.e. for every admin
- * and most real users. These tests pin the reassign-then-delete transaction that
+ * issued a grant or commented — i.e. for every admin and most real users. These tests pin the reassign-then-delete transaction that
  * makes erasure actually complete, and the one case where it must REFUSE instead.
  *
  * Real PGlite (not mocks) so the actual RESTRICT/CASCADE evaluation order is exercised —
@@ -20,10 +19,10 @@ import { post } from '$lib/server/db/schema/blog/post';
 import { publishedRevision } from '$lib/server/db/schema/blog/published-revision';
 import { revision } from '$lib/server/db/schema/blog/revision';
 import { chunk } from '$lib/server/db/schema/retrieval/chunk';
+import { collection } from '$lib/server/db/schema/retrieval/collection';
+import { corpusMap } from '$lib/server/db/schema/retrieval/corpus-map';
 import { document } from '$lib/server/db/schema/retrieval/document';
 import { embeddingModel } from '$lib/server/db/schema/retrieval/embedding-model';
-import { llmwikiPage } from '$lib/server/db/schema/retrieval/llmwiki-page';
-import { llmwikiPageSource } from '$lib/server/db/schema/retrieval/llmwiki-page-source';
 
 let testClient: PGlite;
 
@@ -53,13 +52,13 @@ const AUTHOR = 'usr_author';
 
 /** Delete children before parents — the RESTRICT FKs under test block a plain user wipe. */
 async function wipe() {
-	await db.delete(llmwikiPageSource);
 	await db.delete(comment);
 	await db.delete(publishedRevision);
 	await db.delete(revision);
 	await db.delete(post);
 	await db.delete(grant);
-	await db.delete(llmwikiPage);
+	await db.delete(corpusMap);
+	await db.delete(collection);
 	await db.delete(chunk);
 	await db.delete(document);
 	await db.delete(embeddingModel);
@@ -162,10 +161,10 @@ describe('deleteUserData — sole configured admin', () => {
 	});
 });
 
-// the probe: retrieval-active user, where the cascade trips its own junction
+// the probe: retrieval-active user — every retrieval row cascades from the user
 
-describe('deleteUserData — retrieval-active user (llmwiki_page_source RESTRICT)', () => {
-	it('erases a user with a compiled llmwiki page over their own chunks', async () => {
+describe('deleteUserData — retrieval-active user', () => {
+	it('erases a user with a collection, its corpus map and their own chunks', async () => {
 		await seedUsers([ADMIN_1, ADMIN_2, AUTHOR]);
 		await db.insert(embeddingModel).values({
 			id: 'emb_1',
@@ -192,31 +191,20 @@ describe('deleteUserData — retrieval-active user (llmwiki_page_source RESTRICT
 			contentHash: 'ch1',
 			embeddingModelId: 'emb_1',
 		});
-		await db.insert(llmwikiPage).values({
-			id: 'lwp_1',
+		await db.insert(collection).values({ id: 'col_1', userId: AUTHOR, name: 'Notes' });
+		await db.insert(corpusMap).values({
+			id: 'map_1',
 			userId: AUTHOR,
-			slug: 'notes',
-			title: 'Notes',
-			tldr: 'tldr',
-			tldrHash: 'th1',
-			body: 'page body',
-			sourceHash: 'sh1',
-			compiledByModel: 'gemini-flash',
-		});
-		// The junction is the trap: it cascades from the PAGE but RESTRICTs the CHUNK and the
-		// DOCUMENT, both of which the user cascade also reaches.
-		await db.insert(llmwikiPageSource).values({
-			llmwikiPageId: 'lwp_1',
-			chunkId: 'chk_1',
-			documentId: 'doc_1',
-			sourceHashAtCompile: 'ch1',
+			collectionId: 'col_1',
+			title: 'Notes map',
+			body: 'map body',
 		});
 
 		await expect(deleteUserData(AUTHOR)).resolves.toBeUndefined();
 
 		expect(await db.select().from(user).where(eq(user.id, AUTHOR))).toHaveLength(0);
-		expect(await db.select().from(llmwikiPageSource)).toHaveLength(0);
-		expect(await db.select().from(llmwikiPage)).toHaveLength(0);
+		expect(await db.select().from(corpusMap)).toHaveLength(0);
+		expect(await db.select().from(collection)).toHaveLength(0);
 		expect(await db.select().from(chunk)).toHaveLength(0);
 		expect(await db.select().from(document)).toHaveLength(0);
 	});

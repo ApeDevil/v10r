@@ -411,19 +411,14 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
  */
 const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/agents/render.ts -> blog/pipeline',
-	'src/lib/server/ai/chat-orchestrator.ts -> auth/admin-ids',
-	'src/lib/server/ai/citations/drill.ts -> retrieval/queries',
 	// `ai/connections.ts` is reached by the bare-Bun ingest scripts; the security barrel
 	// would drag `subkey.ts`'s `$env` read in behind it, so it takes the caller-keyed
 	// AES-GCM leaf by file — the same reason `auth/admin-ids` is deep-imported.
 	'src/lib/server/ai/connections.ts -> security/aes-gcm',
-	'src/lib/server/ai/context-assembly.ts -> retrieval/embed',
-	'src/lib/server/ai/context-assembly.ts -> retrieval/types',
 	'src/lib/server/ai/deskbot-retrieval.ts -> retrieval/ingest',
 	'src/lib/server/ai/deskbot-retrieval.ts -> retrieval/types',
 	'src/lib/server/ai/guard.ts -> abuse/decision.adapter',
 	'src/lib/server/ai/tools/desk-read.ts -> desk/file-tree',
-	'src/lib/server/ai/tools/get-source-chunks.ts -> retrieval/queries',
 	'src/lib/server/ai/tools/search-pattern-library.ts -> mcp/patterns/search',
 	'src/lib/server/auth/factor-changes.ts -> admin/audit',
 	'src/lib/server/auth/grant-requests.ts -> admin/audit',
@@ -456,7 +451,6 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/jobs/notification-delivery.ts -> notifications/channels/types',
 	'src/lib/server/jobs/notification-delivery.ts -> notifications/render-message',
 	'src/lib/server/jobs/notification-digest.ts -> notifications/digest',
-	'src/lib/server/llmwiki/search.ts -> retrieval/embed',
 	'src/lib/server/mcp/demo/state.ts -> admin/audit',
 	'src/lib/server/privacy/mutations.ts -> auth/admin-ids',
 	'src/lib/server/privacy/mutations.ts -> graph/retrieval/mutations',
@@ -482,21 +476,21 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 const KNOWN_DB_UPWARD_IMPORTS: readonly string[] = [];
 
 /**
- * The RAG core is one subsystem in three directories, and its directories call each
- * other: `ai` orchestrates over `retrieval` and `llmwiki`, `llmwiki` searches through
- * `retrieval`, and `retrieval` reaches back into `ai` twice — `ingest` asks for the
- * active chat model to write context prefixes and extract entities, and `embed` reports
- * each embedding call to the provider quota board. Splitting it means injecting the
- * model into `ingest()` at its three call sites and letting `retrieval` own the
- * embedding-call counter that `ai/quota` reads — a signature change, not a file move,
+ * The retrieval core is one subsystem in two directories that call each other: `ai`
+ * orchestrates over `retrieval`, and `retrieval` reaches back into `ai` twice — `ingest`
+ * asks for the active chat model to write context prefixes and extract entities, and
+ * `embed` reports each embedding call to the provider quota board. Splitting it means
+ * injecting the model into `ingest()` at its three call sites and letting `retrieval` own
+ * the embedding-call counter that `ai/quota` reads — a signature change, not a file move,
  * so it is recorded rather than done on the way past.
  *
  * The fifteen domains that used to ride along in one 18-domain cluster were freed by
  * four primitive moves: analytics result shapes and the IP shape check into
  * `db/analytics`, `contentHash` and `localeRegconfig` into `db/`, and
- * `deferAfterResponse` out of the HTTP toolkit into `platform/`.
+ * `deferAfterResponse` out of the HTTP toolkit into `platform/`. The cluster's third
+ * member, the wiki pointer layer, was retired outright (docs/ai-ref-plan.md, Phase 4).
  */
-const KNOWN_CYCLIC_DOMAINS: readonly string[] = ['ai', 'llmwiki', 'retrieval'];
+const KNOWN_CYCLIC_DOMAINS: readonly string[] = ['ai', 'retrieval'];
 
 /**
  * Two composites reaching into `layout/`, and one showcase reaching into `viz/`.

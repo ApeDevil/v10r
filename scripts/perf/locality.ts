@@ -9,9 +9,10 @@
  * is only the renderer.
  *
  * Run it inside a Vercel function and the compute row fills in from `VERCEL_REGION`. Run
- * it locally and that row honestly says it cannot know, which is the point: the function
- * region is a project setting that lives outside this repository, and nothing in the
- * codebase can tell you where the code runs.
+ * it locally and that row honestly says it cannot know: `svelte.config.js` declares the
+ * region (`regions: ['fra1']`, next to Neon's eu-central-1), and only a running function
+ * can confirm the deployment honours it — measured 2026-09-13, before the declaration,
+ * every function ran in `iad1` (`x-vercel-id: fra1::iad1::…`).
  */
 import { CRITICAL_PATH_HOPS, describeLocality } from '$lib/server/perf/locality';
 
@@ -33,17 +34,17 @@ for (const hop of CRITICAL_PATH_HOPS) {
 const unknown = rows.filter((r) => r.region === null).length;
 console.log(`\n${rows.length - unknown} of ${rows.length} regions are observable from here.`);
 
-// The question this map exists to raise. Two blocking hops per request means the
-// compute-to-data distance is paid twice on every page, so a compute region nobody has
-// checked against a data region we CAN see is the highest-value thing on the list.
+// The question this map exists to keep answered. Two blocking hops per request means the
+// compute-to-data distance is paid twice on every page, so the compute region must be checked
+// against a data region we CAN see — in situ, where `VERCEL_REGION` is set.
 const compute = rows.find((r) => r.system.startsWith('compute'));
 const data = rows.find((r) => r.provider === 'Neon');
 if (compute?.region === null && data?.region) {
 	console.log(
-		`\nOpen question: the database is in ${data.region} and the function region is unknown from here.\n` +
-			'Vercel defaults new projects to iad1 (us-east-1); if that is still the setting, every\n' +
-			'blocking hop above crosses an ocean. Check the Vercel project, then either move the\n' +
-			'functions or record the decision — an accidental region is the failure this map is for.\n',
+		`\nThe database is in ${data.region}; svelte.config.js declares the functions for fra1. Only a\n` +
+			'running function can confirm the deployment honours that — read `x-vercel-id` on a\n' +
+			'response (edge::function::id) or run this probe in situ. An accidental region is the\n' +
+			'failure this map is for.\n',
 	);
 } else {
 	console.log('');

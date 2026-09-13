@@ -13,11 +13,11 @@ import {
 	type ModelMessage,
 	stepCountIs,
 	streamText,
+	type ToolSet,
 	type UIMessage,
 } from 'ai';
 import type { HarnessMetadata } from '$lib/components/composites/chatbot/harness-types';
 import type { Locale } from '$lib/i18n';
-import type { SearchResult } from '$lib/search/types';
 import {
 	getActiveProvider,
 	getActiveProviderInfo,
@@ -26,14 +26,8 @@ import {
 	type ProviderRegistry,
 } from '$lib/server/ai';
 import { chargeTokens } from '$lib/server/ai/budget';
-import { CHATBOT_GENERATION_OPTIONS, CHATBOT_MAX_STEPS, MAX_TOKENS } from '$lib/server/ai/config';
-import {
-	buildPromptAssembledEvent,
-	buildSystemPrompt,
-	getMessageText,
-	windowMessages,
-} from '$lib/server/ai/context/system-prompt';
-import { assembleChatbotContext } from '$lib/server/ai/context-assembly';
+import { CHATBOT_GENERATION_OPTIONS, MAX_TOKENS } from '$lib/server/ai/config';
+import { getMessageText, windowMessages } from '$lib/server/ai/context/history';
 import {
 	type AiErrorKind,
 	aiErrorFrameText,
@@ -42,47 +36,38 @@ import {
 	safeAiMessage,
 } from '$lib/server/ai/errors';
 import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
-import { answerOnLastStep, hasDestructiveIntent, shouldRequirePlan } from '$lib/server/ai/policy';
+import { answerOnLastStep } from '$lib/server/ai/policy';
+import { estimateTurnTokens, fitsTokenMinute } from '$lib/server/ai/provider-limits';
 import { incrProvider429 } from '$lib/server/ai/provider-usage';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
-import { buildRetrievalTools, createDeskTools, type DeskToolScope, stepsForScopes } from '$lib/server/ai/tools';
+import type { DeskToolScope } from '$lib/server/ai/tools';
 import type { ChatMessage, PanelContextEntry } from '$lib/server/ai/types';
-import { isAdminUserId as isAdminUser } from '$lib/server/auth/admin-ids';
 import {
 	createConversation,
 	refreshConversationTokens,
-	saveConversationStep,
 	saveMessages,
-	saveToolCall,
 	updateMessageContent,
 } from '$lib/server/db/ai/mutations';
 import { createProposal } from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { DbError, safeDbMessage } from '$lib/server/db/errors';
 import { observedQueryCount } from '$lib/server/db/query-census';
+import { deskCorpusState } from '$lib/server/db/retrieval/queries';
+import type { StoredMessagePart } from '$lib/server/db/schema/ai/conversation';
 import { type Cancellation, startCancellation } from '$lib/server/http/cancellation';
 import type { Deadline } from '$lib/server/http/deadline';
-import { MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN, verifyCitations } from '$lib/server/llmwiki';
-import { buildSearchIndex, type PageContext } from '$lib/server/search';
+import { holdOpenUntil } from '$lib/server/platform';
+import type { PageContext } from '$lib/server/search';
 import type { AiSurface } from '$lib/types/db-enums';
-import {
-	type GenerateDetail,
-	type LlmwikiCitationsEvent,
-	PHASE_OF,
-	RETRIEVER_OF,
-	type RetrievalChunksEvent,
-	type RetrievalPromptEvent,
-	type RetrievalStepEvent,
-} from '$lib/types/retrieval-trace';
+import type { ToolExecutionRecord, TurnAwareness, TurnTimings } from '$lib/types/turn-trace';
 import {
 	type AttemptFailure,
 	type PumpableTextResult,
 	streamTextIntoOpenMessage,
 	type TurnAttempt,
 } from './_shared/streaming-turn';
-import { verifyCatalogCitations } from './catalog-citations';
-import { shapeDrilledCitations } from './citations/drill';
 import { checkConversationLimit } from './conversation-quota';
+import { composeTurn, identityBlock, PROFILES, type TurnComposition, type TurnInput } from './profile';
 import {
 	collectApprovalRequests,
 	isApprovalSentinel,
@@ -91,6 +76,8 @@ import {
 	toCardSteps,
 } from './proposals/approval-boundary';
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
+import { traceModelCalls } from './trace/model-call-middleware';
+import { createTurnRecorder, historyChars } from './trace/recorder';
 
 /**
  * Which AI surface a turn belongs to — the explicit dispatch discriminant.
@@ -98,14 +85,28 @@ import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
  * - `deskbot`  — the in-desk operator: agentic, mutating, plan-gated UI parity.
  */
 
+/** The catalog visibility ceiling as the trace records it — never a free string. */
+function awarenessCeiling(authCeiling: string | null | undefined): TurnAwareness['authCeiling'] {
+	return authCeiling === 'admin' ? 'admin' : authCeiling === 'user' ? 'user' : null;
+}
+
 /**
- * A `pipeline:step` event as authored at a call site. The emit closures stamp the
- * derived axes (`phase` via PHASE_OF, `lane` via RETRIEVER_OF), the stable `instanceKey`,
- * and the turn `requestId`, so literals stay terse and can't drift from the registry.
+ * The assistant message's parts as a reloaded thread renders them: the tool calls the answer
+ * was built on (the SDK's `tool-<name>` part shape, `output-available`), then the text.
+ * Rebuilt from the trace rather than captured from the wire — the streaming helper pumps the
+ * SDK's parts through without assembling a message.
  */
-type RawStepInput = Omit<RetrievalStepEvent, 'phase' | 'instanceKey' | 'requestId'> & {
-	instanceKey?: string;
-};
+function storedParts(text: string, toolExecutions: readonly ToolExecutionRecord[]): StoredMessagePart[] | null {
+	const parts: StoredMessagePart[] = toolExecutions.map((exec) => ({
+		type: `tool-${exec.toolName}`,
+		toolCallId: exec.toolCallId,
+		state: exec.status === 'error' ? 'output-error' : 'output-available',
+		input: exec.input ?? {},
+		...(exec.status === 'error' ? { errorText: exec.errorMessage ?? 'error' } : { output: exec.output ?? {} }),
+	}));
+	if (text) parts.push({ type: 'text', text });
+	return parts.length > 0 ? parts : null;
+}
 
 export interface ChatInput {
 	userId: string;
@@ -120,8 +121,6 @@ export interface ChatInput {
 	providerId?: string;
 	messages: ChatMessage[];
 	conversationId?: string;
-	/** Optional collection scope for llmwiki search. `null` means global. */
-	llmwikiCollectionId?: string | null;
 	panelContext?: PanelContextEntry[];
 	toolScopes?: DeskToolScope[];
 	deskLayout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
@@ -157,8 +156,8 @@ interface ChatError {
 	message: string;
 }
 
-// System-prompt assembly, message windowing, and XML escape helpers live in
-// `src/lib/server/ai/context/system-prompt.ts`.
+// The system prompt is the surface's profile (`ai/profile/`); the history helpers are
+// `ai/context/history.ts`.
 
 /** Persist assistant message after stream finishes; charge token budget. */
 export function createOnFinish(conversationId: string | undefined, userId: string) {
@@ -214,6 +213,14 @@ async function resolveConversation(
 const MODEL_CALL_TIMEOUT_MS = 30_000;
 
 /**
+ * How long a burst of trace changes is collected before one `message-metadata` frame carries
+ * them all. Each frame is the whole snapshot, so a per-change frame would send it dozens of
+ * times per turn; the explicit drains (before the first model frame, before `finish`) keep
+ * the order against other frames exact regardless of this window.
+ */
+const METADATA_FLUSH_MS = 16;
+
+/**
  * Time a turn keeps back from its last model call for what has to happen after it: the step
  * rows, the answer's row, the budget charge, the `finish` frame. A call that used the whole
  * function budget would leave a streamed answer with no time to persist it.
@@ -235,15 +242,15 @@ function modelCallSignal(cancellation: Cancellation, deadline?: Deadline): Abort
 
 /** Attempt streaming with fallback providers on transient errors. */
 async function tryFallback(
-	baseSystemPrompt: string,
+	systemPrompt: string,
 	messages: ModelMessage[],
 	conversationId: string | undefined,
 	userId: string,
 	fallbacks: ProviderEntry[],
 	cancellation: Cancellation,
 	wantsTools = false,
-	deskTools?: ReturnType<typeof createDeskTools>,
-	toolScopes?: DeskToolScope[],
+	deskTools?: ToolSet,
+	stepBudget = 1,
 	deadline?: Deadline,
 ): Promise<Response | null> {
 	for (const fallback of fallbacks) {
@@ -257,14 +264,12 @@ async function tryFallback(
 			const useTools = wantsTools && fallback.capabilities.tools && deskTools;
 			const result = streamText({
 				model: fallbackModel,
-				system: baseSystemPrompt,
+				system: systemPrompt,
 				messages,
 				maxRetries: 0,
 				maxOutputTokens: MAX_TOKENS,
 				abortSignal: modelCallSignal(cancellation, deadline),
-				...(useTools
-					? { tools: deskTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(stepsForScopes(toolScopes ?? [])) }
-					: {}),
+				...(useTools ? { tools: deskTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(stepBudget) } : {}),
 				onFinish: createOnFinish(conversationId, userId),
 				onError: ({ error }) => {
 					console.error('[ai:chat:fallback] Stream error:', error);
@@ -336,6 +341,7 @@ function buildTurnAttempts(
 	fallbacks: ProviderEntry[],
 	makeStream: (model: LanguageModel) => PumpableTextResult,
 	requireTools: boolean,
+	turnTokens: number,
 ): TurnAttempt[] {
 	const attempts: TurnAttempt[] = [
 		{ providerId: primary.providerId, modelId: primary.modelId, run: () => makeStream(primary.model) },
@@ -345,6 +351,12 @@ function buildTurnAttempts(
 		// The pool is every configured connection, the primary included — never re-attempt the
 		// provider that just failed.
 		if (attempts.some((a) => a.providerId === f.id)) continue;
+		// A fallback whose per-minute ceiling cannot carry this turn would stop early on its
+		// second step; the primary is the user's choice and is tried regardless.
+		if (!fitsTokenMinute(f.id, f.modelId, turnTokens)) {
+			console.info(`[ai:chat] fallback ${f.id} left out: ~${turnTokens} tokens exceed its per-minute ceiling`);
+			continue;
+		}
 		const instance = f.getInstance();
 		if (!instance) continue;
 		attempts.push({ providerId: f.id, modelId: f.modelId, run: () => makeStream(instance) });
@@ -374,7 +386,6 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		providerId,
 		messages: rawMessages,
 		conversationId: existingConvId,
-		llmwikiCollectionId,
 		panelContext,
 		toolScopes,
 		deskLayout,
@@ -423,25 +434,6 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		);
 	}
 
-	// Use tool-capable provider when tools requested, fall back to chatModel without tools.
-	// The llmwiki + retrieval retrieval branches attach their own tools (search_catalog, llmwiki/
-	// retrieval drill-down) even without desk scopes, so they must route to the tool-capable model
-	// too — otherwise grounding tool calls run on the chat model and silently fail to fire.
-	const wantsTools = !!toolScopes?.length || input.surface === 'chatbot';
-	const availableToolProvider = wantsTools
-		? await resolveAvailableToolProvider(resolvedToolProvider, configuredProviders)
-		: null;
-	const hasTools = wantsTools && !!availableToolProvider;
-	const model = availableToolProvider?.model ?? resolvedChatModel;
-	// Desk tools only for actual desk scopes — the llmwiki/retrieval branches set hasTools (to claim
-	// the tool model) but bring their own retrieval tools and pass no desk scopes.
-	const deskTools = hasTools && toolScopes?.length ? createDeskTools(userId, toolScopes, deskLayout) : undefined;
-	// Resolved provider/model attribution for per-step telemetry (conversation_step) and for the
-	// stream-error circuit breaker. MUTABLE: the chatbot branch rotates providers mid-turn
-	// (see `streamTextIntoOpenMessage`), and every reader below must attribute the failure/step to
-	// the provider that is actually running, not the one the turn started on.
-	let currentProviderId = hasTools ? (availableToolProvider?.provider.id ?? null) : (activeInfo?.id ?? null);
-	let currentModelId = hasTools ? (availableToolProvider?.provider.modelId ?? null) : (activeInfo?.model ?? null);
 	const grantedScopes = toolScopes ?? [];
 	const lastRawMsg = windowedMessages[windowedMessages.length - 1];
 	const userMsgText = lastRawMsg?.role === 'user' ? getMessageText(lastRawMsg) : '';
@@ -449,26 +441,32 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// One named dispatch decision. The routes set `input.surface` explicitly; the chatbot
 	// (retrieval) branch additionally requires a fresh user turn — any other turn takes the
 	// plain deskbot streaming path. Computed BEFORE conversation resolution so it can be
-	// stamped on the conversation at creation.
+	// stamped on the conversation at creation. The surface's profile is what the turn is
+	// composed from: its identity, its capabilities, its tools.
 	const isFreshUserTurn = lastRawMsg?.role === 'user' && !!userMsgText;
 	const surface: AiSurface = isFreshUserTurn && input.surface === 'chatbot' ? 'chatbot' : 'deskbot';
+	const profile = PROFILES[surface];
+	// The desk corpus's state decides whether `desk_search_knowledge` is mounted at all; read
+	// once per desk turn, alongside the provider and conversation resolution below.
+	const deskCorpus =
+		surface === 'deskbot' && grantedScopes.includes('desk:ask') ? deskCorpusState(userId) : Promise.resolve(undefined);
 
-	// Plan-before-execute gate (policy/governor.ts)
-	// Pre-turn estimate of whether this is a destructive, multi-capability, multi-target
-	// desk turn that must produce a plan first. Wiring it is what makes the `<planning>`
-	// block inject and `desk_propose_plan` reachable. Deliberately conservative and
-	// tunable; it activates more as the deskbot grows structural tools. Chatbot turns have
-	// no mutating scopes → false. "Structural" (create/delete) is the destructive surface;
-	// in-place content writes (desk:write) are not.
-	const hasMutatingScopeGranted = grantedScopes.some(
-		(s) => s === 'desk:write' || s === 'desk:create' || s === 'desk:delete',
-	);
-	const requirePlan = shouldRequirePlan({
-		mutatingScopeGranted: hasMutatingScopeGranted,
-		destructiveIntent: hasDestructiveIntent(userMsgText),
-	});
-
-	const baseSystemPrompt = buildSystemPrompt({ panelContext, toolScopes, deskLayout, activeWorkspace, requirePlan });
+	// Use the tool-capable provider when the profile mounts tools, fall back to the chat model
+	// without them. The chatbot brings its retrieval tools on every turn, so it routes to the
+	// tool-capable model too — otherwise grounding tool calls run on the chat model and
+	// silently fail to fire.
+	const wantsTools = profile.wantsTools({ scopes: grantedScopes });
+	const availableToolProvider = wantsTools
+		? await resolveAvailableToolProvider(resolvedToolProvider, configuredProviders)
+		: null;
+	const hasTools = wantsTools && !!availableToolProvider;
+	const model = availableToolProvider?.model ?? resolvedChatModel;
+	// Resolved provider/model attribution for the trace's model calls and for the
+	// stream-error circuit breaker. MUTABLE: the chatbot branch rotates providers mid-turn
+	// (see `streamTextIntoOpenMessage`), and every reader below must attribute the failure/step to
+	// the provider that is actually running, not the one the turn started on.
+	let currentProviderId = hasTools ? (availableToolProvider?.provider.id ?? null) : (activeInfo?.id ?? null);
+	let currentModelId = hasTools ? (availableToolProvider?.provider.modelId ?? null) : (activeInfo?.model ?? null);
 
 	// Resolve conversation (pass raw messages for title extraction; stamp the surface on
 	// any newly-created conversation).
@@ -486,11 +484,47 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	}
 
 	// The assistant row's id is minted here so the same id opens the client message (`start`
-	// frame), keys the persisted row and is the FK every `conversation_step` of the turn points at.
+	// frame), keys the persisted row and keys the turn trace every `model_call` points at.
 	const assistantMsgId = crypto.randomUUID();
+	const requestId = crypto.randomUUID();
+
+	// The turn's one trace author. Every branch below reports to it; the client receives its
+	// snapshot on each metadata frame and the owner reads the persisted trace back by message id.
+	const recorder = createTurnRecorder({
+		conversationId: conversationId ?? null,
+		messageId: assistantMsgId,
+		surface,
+		requestId,
+		userId,
+		t0: turnStartedAt,
+	});
+	// What the turn brings to the profile — the awareness is recorded when the turn is composed.
+	const turn: TurnInput = {
+		userId,
+		userMsgText,
+		locale: catalogLocale,
+		authCeiling: awarenessCeiling(authCeiling),
+		hasTools,
+		toolsCooled: wantsTools && !availableToolProvider,
+		// The Google connection the guard's registry already opened: every embed of this turn
+		// (the shared query vector, a page-seeded retrieve, `search_project_docs`) rides it
+		// instead of reading and decrypting the provider rows again.
+		embeddingConnection: registry.embeddingConnection(),
+		pageContext: pageContext ?? null,
+		scopes: grantedScopes,
+		deskCorpus: await deskCorpus,
+		panelContext,
+		deskLayout,
+		activeWorkspace,
+		onCompacted: (name, compaction) => recorder.compacted(name, compaction),
+	};
+	const promptHistoryChars = historyChars(recorder.history(messages, rawMessages.length - windowedMessages.length));
 
 	const responseHeaders: Record<string, string> = {};
 	if (conversationId) responseHeaders['X-Conversation-Id'] = conversationId;
+	// The desk turn's composition, kept outside the try so the catch's fallback can reuse its
+	// prompt and tools; a chatbot turn composes inside its stream.
+	let deskComposition: TurnComposition | undefined;
 
 	/** Circuit breaker: a rate-limited provider sits out the next turns. */
 	function coolProvider(providerId: string | null, kind: AiErrorKind): void {
@@ -525,19 +559,15 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 			await saveMessages(conversationId, userId, rows);
 		}
 
-		// chatbot (llmwiki) path — primary answer surface; exposes drill-down tools for retrieval.
+		// chatbot path — primary answer surface: Vely, composed from the chatbot profile.
 		if (surface === 'chatbot') {
-			const collectionId = llmwikiCollectionId ?? null;
-			// The Google connection the guard's registry already opened: every embed of this turn
-			// (the shared query vector, a page-seeded retrieve, `search_project_docs`) rides it
-			// instead of reading and decrypting the provider rows again.
-			const embeddingConnection = registry.embeddingConnection();
-			const requestId = crypto.randomUUID();
-
+			// Set once the assistant message is closed (or the stream ended on an error frame):
+			// no trace change may write a metadata frame after that.
+			let closed = false;
 			const stream = createUIMessageStream({
 				execute: async ({ writer }) => {
 					// Open the assistant message frame BEFORE any `message-metadata` write.
-					// This branch emits pipeline metadata before the merged text stream's own
+					// This branch emits trace metadata before the merged text stream's own
 					// `start`; without an explicit leading `start` the v6 client materializes a
 					// FIRST (empty) assistant message to hold that early metadata, then the merge's
 					// own `start` (different id) appends a SECOND. One `start` up front → one message.
@@ -545,162 +575,42 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					// client message id match the persisted DB row (inserted above, before the stream).
 					writer.write({ type: 'start', messageId: assistantMsgId });
 					const preStreamMs = Math.round(performance.now() - turnStartedAt);
+					recorder.timing({ preStreamMs });
 
-					// Turn t0 — one origin for every step's startOffsetMs (retrieve + generate share it),
-					// so the waterfall renders true parallel overlap. See retrieval-observability.md.
-					const t0 = performance.now();
-
-					let systemPrompt = baseSystemPrompt;
-					let toolCallCount = 0;
-					// Gate the full prompt TEXT to dev builds OR real admins (ADMIN_USER_ID); never the
-					// token counts. Was DEV-only, so admins saw nothing in prod.
-					const isDevOrAdmin = !!import.meta.env?.DEV || isAdminUser(userId);
-
-					type AnyLlmwikiEvent =
-						| RetrievalStepEvent
-						| RetrievalChunksEvent
-						| RetrievalPromptEvent
-						| LlmwikiCitationsEvent;
-					const pipelineEvents: AnyLlmwikiEvent[] = [];
-					// Enumerable context blocks injected into the system prompt (llmwiki pages + system-docs
-					// chunks) for the Tokens-pane per-block breakdown. The honest aggregate (Context = the
-					// full injected delta) is computed at emit time, after the prompt is fully assembled.
-					const promptContextBlocks: { chunkId: string; tokens: number }[] = [];
-					// Mirror retrieval's citations extra payload so existing consumers still read it.
-					let citationsPayload: {
-						citations: Array<{ chunkId: string; verification: string; tier: 'chunks' }>;
-						driftedChunkIds: string[];
-					} | null = null;
-					// Evidence chips: the original drilled chunks (content + verdict + level)
-					// the floating chatbot renders as a "View N sources" affordance.
-					let sourceChunksPayload: {
-						sourceChunks: Awaited<ReturnType<typeof shapeDrilledCitations>>;
-					} | null = null;
-					// Catalog chips (surfaces the answer linked to) + surface-citation verdicts.
-					let catalogPayload: {
-						catalogSources: Array<
-							Pick<SearchResult, 'surface' | 'title' | 'path' | 'anchor' | 'breadcrumb' | 'icon' | 'badge' | 'locale'>
-						>;
-						catalogCitations: ReturnType<typeof verifyCatalogCitations>;
-					} | null = null;
-
-					// Every metadata frame carries the FULL accumulated state (REPLACE semantics on the
-					// client — arrays replace on merge), so a burst of emits — four assembly lanes
-					// settling, the prompt-assembled event, a drill tick — is worth exactly one frame.
-					// `flush` schedules one write per microtask turn; `flushNow` drains it where the
-					// order against other frames matters (before the first model frame, before `finish`).
+					// Every metadata frame carries the FULL trace snapshot (the client deep-merges
+					// objects and REPLACES arrays, so every key is always present), so a burst of
+					// recorder changes — four assembly lanes settling, a tool finishing — is worth
+					// exactly one frame. `flush` schedules one write per burst; `flushNow` drains it
+					// where the order against other frames matters (before the first model frame,
+					// before `finish`). Nothing is written once the message is closed — a frame after
+					// `finish` would open a second, empty message on the client.
 					let flushPending = false;
 					const flushNow = () => {
-						if (!flushPending) return;
+						if (!flushPending || closed) return;
 						flushPending = false;
-						const meta: Record<string, unknown> = { pipeline: pipelineEvents };
-						if (citationsPayload) Object.assign(meta, citationsPayload);
-						if (sourceChunksPayload) Object.assign(meta, sourceChunksPayload);
-						if (catalogPayload) Object.assign(meta, catalogPayload);
-						writer.write({ type: 'message-metadata', messageMetadata: meta });
+						writer.write({ type: 'message-metadata', messageMetadata: { trace: recorder.snapshot() } });
 					};
 					const flush = () => {
-						if (flushPending) return;
+						if (flushPending || closed) return;
 						flushPending = true;
-						queueMicrotask(flushNow);
+						setTimeout(flushNow, METADATA_FLUSH_MS);
 					};
-					// Step events are authored as raw literals (step/status/offset/detail); this
-					// closure stamps the derived axes (phase/retriever), the stable instanceKey, and the
-					// turn requestId so every literal stays terse and can't drift from PHASE_OF/RETRIEVER_OF.
-					const emit = (event: RawStepInput | RetrievalChunksEvent | RetrievalPromptEvent | LlmwikiCitationsEvent) => {
-						if (event.type === 'pipeline:step') {
-							pipelineEvents.push({
-								...event,
-								phase: PHASE_OF[event.step],
-								instanceKey: event.instanceKey ?? event.step,
-								retriever: event.retriever ?? RETRIEVER_OF[event.step],
-								requestId,
-							});
-						} else {
-							event.requestId = requestId;
-							pipelineEvents.push(event);
-						}
-						flush();
-					};
+					recorder.subscribe(flush);
 
-					// ONE DOOR: the gates → shared embed → llmwiki/system-docs retrieval → block
-					// assembly all live in context-assembly.ts, shared verbatim with the
-					// /api/ai/context-probe endpoint (the showcase x-ray) so the probe cannot
-					// drift from production. Telemetry streams through this turn's `emit`.
-					const assembly = await assembleChatbotContext(
-						{
-							userId,
-							userMsgText,
-							baseSystemPrompt,
-							collectionId,
-							pageContext: pageContext ?? null,
-							catalogLocale,
-							hasTools,
-							authCeiling: authCeiling ?? null,
-							embeddingConnection,
-						},
-						{ emit, t0 },
-					);
-					systemPrompt = assembly.systemPrompt;
-					promptContextBlocks.push(...assembly.promptContextBlocks);
-
-					// The tool set follows the prompt: the llmwiki drill-down pair mounts only when the
-					// prompt carries an llmwiki context block (the rules naming it), `search_project_docs`
-					// already holds this turn's docs retrieval, and the catalog rows the assembly put in
-					// the prompt are surfaced — citable, verifiable — before the model has run.
-					const {
-						tools: retrievalTools,
-						drilledChunks,
-						surfacedCatalog,
-					} = buildRetrievalTools(userId, catalogLocale, authCeiling ?? null, {
-						llmwiki: assembly.llmwikiGrounded,
-						embeddingConnection,
-						docsSeed: assembly.docsSeed,
-						catalogSeed: assembly.catalogResults,
-					});
-
-					// Prompt assembled — emitted AFTER every context injection (llmwiki + project-overview +
-					// system-docs + current-page + catalog) so `systemPromptTokens` reflects the FULL prompt
-					// and the injected context is attributed to "Context", not "prompt overhead". `totalTokens`
-					// is the whole injected delta (full prompt − base); `contextBlocks` enumerates what it can.
-					emit(
-						buildPromptAssembledEvent({
-							userPrompt: userMsgText,
-							systemPrompt,
-							contextBlocks: promptContextBlocks,
-							totalTokens: Math.ceil(Math.max(0, systemPrompt.length - baseSystemPrompt.length) / 4),
-							isDevOrAdmin,
-						}),
-					);
+					// ONE DOOR: the profile composes the turn — every capability's rule, the grounding
+					// lanes under one shared embed, the prompt block by block, the tools that follow from
+					// what the prompt carries. What it decided and built lands on the recorder.
+					const composition = await composeTurn(profile, turn, recorder);
+					const { systemPrompt, tools, stepBudget } = composition;
 
 					const generateStart = performance.now();
-					emit({
-						type: 'pipeline:step',
-						step: 'generate',
-						status: 'active',
-						startOffsetMs: Math.round(generateStart - t0),
-					});
-					// Set by the final attempt failure; the generate terminal then closes as `error`
-					// with the same timing shape a clean turn gets.
+					// Set by the final attempt failure: the turn closes as `error` with the same
+					// timing shape a clean turn gets.
 					let generateFailure: AiErrorKind | null = null;
 
 					// `assistantMsgId` was persisted before the stream (so the `start` frame carries it
-					// and conversation_step.messageId has a valid FK); its content is backfilled in
-					// afterText (mirrors the desk branch).
-					let stepCounter = 0;
-					let lastStepAt = generateStart;
-					// Step rows are written off the step boundary: awaiting the insert inside
-					// `onStepFinish` held the next model call for one DB round trip per step. The
-					// writes are collected and awaited in afterText before the totals are refreshed
-					// from them — they still land inside the stream, before `finish`.
-					const pendingStepWrites: Promise<void>[] = [];
-					// Per-step shape of the generate bar: how long each model call waited for its first
-					// token, and what every tool execution cost. Reset per provider attempt — a rotation
-					// starts the clock over on a fresh request.
-					const firstTokenMs: number[] = [];
-					const toolsRun: { name: string; ms: number }[] = [];
+					// and the trace has a valid FK); its content is backfilled in afterText.
 					let stepsStarted = 0;
-					let stepStartedAt = generateStart;
 					let awaitingFirstToken = true;
 
 					// Tools are SPREAD, not passed unconditionally: when every tool-capable provider is
@@ -711,20 +621,23 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					// answer rather than on a tool call nothing will execute (`policy/step-budget.ts`).
 					const toolOpts = hasTools
 						? {
-								tools: retrievalTools,
+								tools,
 								toolChoice: 'auto' as const,
-								stopWhen: stepCountIs(CHATBOT_MAX_STEPS),
-								prepareStep: answerOnLastStep(CHATBOT_MAX_STEPS),
+								stopWhen: stepCountIs(stepBudget),
+								prepareStep: answerOnLastStep(stepBudget),
 							}
 						: {};
+					const blockIds = () => composition.blocks.map((b) => b.id);
 
 					// A fresh `streamText` per attempt — the call fires on invocation and its signal
 					// (`modelCallSignal`) is single-use, so a fallback cannot reuse the primary's.
 					const makeStream = (attemptModel: LanguageModel) => {
-						// The prompt-assembled + generate-active events precede the first model frame.
+						// The assembly's trace precedes the first model frame.
 						flushNow();
 						return streamText({
-							model: attemptModel,
+							// The middleware records each provider request as it leaves (prompt hash,
+							// history count, tools with schemas); the hooks below record its answer.
+							model: traceModelCalls(attemptModel, recorder, { blockIds }),
 							system: systemPrompt,
 							messages,
 							...toolOpts,
@@ -736,11 +649,10 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 							// Suppresses the raw markup so the user never reads it; the turn degrades
 							// to empty instead of leaking syntax. See `tool-leak-guard.ts`.
 							experimental_transform: createToolLeakGuard((lead) =>
-								console.warn(`[ai:chat:llmwiki] suppressed textual tool-call leak: ${lead}…`),
+								console.warn(`[ai:chat:chatbot] suppressed textual tool-call leak: ${lead}…`),
 							),
 							experimental_onStepStart: () => {
 								stepsStarted++;
-								stepStartedAt = performance.now();
 								awaitingFirstToken = true;
 							},
 							onChunk: ({ chunk }) => {
@@ -752,91 +664,54 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 									chunk.type === 'tool-call'
 								) {
 									awaitingFirstToken = false;
-									firstTokenMs.push(Math.round(performance.now() - stepStartedAt));
+									recorder.firstToken();
 								}
 							},
-							experimental_onToolCallFinish: ({ toolCall, durationMs }) => {
-								toolsRun.push({ name: toolCall.toolName, ms: Math.round(durationMs) });
+							experimental_onToolCallFinish: (event) => {
+								const { toolCall, durationMs } = event;
+								recorder.tool({
+									toolCallId: toolCall.toolCallId,
+									toolName: toolCall.toolName,
+									input: toolCall.input,
+									durationMs,
+									...(event.success
+										? { output: event.output, status: 'success' as const }
+										: {
+												status: 'error' as const,
+												errorMessage: event.error instanceof Error ? event.error.message : String(event.error),
+											}),
+								});
 							},
-							onStepFinish: async ({
-								toolCalls,
-								toolResults,
-								usage,
-							}: {
-								toolCalls?: Array<{ toolName: string; args?: { ids?: string[] } }>;
-								toolResults?: Array<{ toolName: string; result?: { chunks?: unknown[] } }>;
-								usage?: { inputTokens?: number; outputTokens?: number };
-							}) => {
-								if (toolCalls) {
-									for (let i = 0; i < toolCalls.length; i++) {
-										const tc = toolCalls[i];
-										if (tc.toolName !== 'get_source_chunks') continue;
-										const callIndex = toolCallCount as 0 | 1 | 2;
-										toolCallCount++;
-										if (toolCallCount > MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN) {
-											console.warn(
-												`[ai:chat:llmwiki] get_source_chunks called ${toolCallCount} times, cap is ${MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN}`,
-											);
-										}
-										const idsRequested = tc.args?.ids?.length ?? 0;
-										const chunksReturned = toolResults?.[i]?.result?.chunks?.length ?? 0;
-										emit({
-											type: 'pipeline:step',
-											step: 'chunks:drill',
-											// Unique per drill so the waterfall keys 0–3 distinct ticks (avoids each_key_duplicate).
-											instanceKey: `drill#${callIndex}`,
-											status: 'done',
-											// Point tick nested by time inside the generate bar (we don't measure per-tool latency).
-											startOffsetMs: Math.round(performance.now() - t0),
-											detail: {
-												kind: 'drill',
-												callIndex: callIndex <= 2 ? callIndex : 2,
-												idsRequested,
-												chunksReturned,
-											},
-										});
-									}
-								}
-								// Persist the step so the chatbot's usage shows up in "usage by model" —
-								// started here, awaited in afterText (see `pendingStepWrites`).
-								if (conversationId) {
-									const stepIndex = stepCounter++;
-									const nowT = performance.now();
-									const durationMs = Math.round(nowT - lastStepAt);
-									lastStepAt = nowT;
-									pendingStepWrites.push(
-										saveConversationStep({
-											conversationId,
-											messageId: assistantMsgId,
-											stepIndex,
-											stepType: stepIndex === 0 ? 'initial' : 'tool-result',
-											surface,
-											inputTokens: usage?.inputTokens ?? 0,
-											outputTokens: usage?.outputTokens ?? 0,
-											providerId: currentProviderId,
-											modelId: currentModelId,
-											durationMs,
-										}).catch((err) => console.error('[ai:chat:llmwiki] Failed to persist step:', err)),
-									);
-								}
+							onStepFinish: (step) => {
+								recorder.callEnd({
+									stepIndex: step.stepNumber,
+									usage: step.usage,
+									finishReason: step.finishReason,
+									responseId: step.response?.id,
+									responseModel: step.response?.modelId,
+									textChars: step.text?.length ?? 0,
+									toolCalls: (step.toolCalls ?? []).map((tc) => ({ toolCallId: tc.toolCallId, toolName: tc.toolName })),
+									warnings: step.warnings?.map((w) => ('message' in w ? String(w.message) : w.type)),
+								});
 							},
 							// The one place the raw provider error is logged. The trace never carries it:
 							// the streaming helper reports the attempt through `onAttemptFailure`, which
-							// paints the generate terminal with the classified kind.
+							// records the classified kind.
 							onError: ({ error }) => {
-								console.error('[ai:chat:llmwiki] Stream error:', error);
+								console.error('[ai:chat:chatbot] Stream error:', error);
 							},
 						});
 					};
 
 					// Post-text work runs while the assistant message is still OPEN (the streaming helper
-					// closes it with a single `finish` only after this resolves) — so the citation/catalog
+					// closes it with a single `finish` only after this resolves) — so the citation
 					// metadata flushed here lands on the right message instead of after the `finish` frame.
 					const afterText = async (rawText: string, totalUsage: LanguageModelUsage) => {
 						// The model is done; everything below runs while the message is still open and
 						// is what the client sees as the gap between the last token and `finish`.
 						const generateMs = Math.round(performance.now() - generateStart);
-						const finalize: NonNullable<GenerateDetail['finalize']> = {};
+						recorder.timing({ generateMs });
+						const finalize: NonNullable<TurnTimings['finalize']> = {};
 						const timed = async (stage: keyof typeof finalize, work: () => Promise<void>) => {
 							const from = performance.now();
 							try {
@@ -846,172 +721,62 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 							}
 						};
 						try {
-							await finalizeTurn(rawText, totalUsage, timed);
+							await finalizeTurn(rawText, totalUsage, finalize, timed);
 						} finally {
-							// The generate terminal carries the whole turn's timing shape and is emitted
-							// LAST so the finalize stages are in it — one frame, never a re-send.
-							emit({
-								type: 'pipeline:step',
-								step: 'generate',
-								status: generateFailure ? 'error' : 'done',
-								durationMs: generateMs,
-								...(generateFailure ? { error: generateFailure } : {}),
-								detail: {
-									kind: 'generate',
-									model: activeInfo?.id,
-									inputTokens: totalUsage?.inputTokens,
-									outputTokens: totalUsage?.outputTokens,
-									// Gemini's `thoughtsTokenCount`: the arm of the thinking A/B this turn ran on.
-									reasoningTokens: totalUsage?.outputTokenDetails?.reasoningTokens,
-									preStreamMs,
-									steps: stepsStarted,
-									firstTokenMs: [...firstTokenMs],
-									tools: [...toolsRun],
-									finalize: { ...finalize },
-								},
+							recorder.timing({ finalize: { ...finalize } });
+							if (generateFailure) recorder.outcome('error', generateFailure);
+							else if (cancellation.signal.aborted) recorder.outcome('cancelled');
+							else recorder.attemptEnd('ok');
+							// The trace is written after the answer's own row so the turn joins a
+							// backfilled message, and before `finish` so the function is still alive;
+							// the cached totals are summed from its model-call rows, so they follow it.
+							await timed('persistMs', async () => {
+								await recorder.persist();
+								if (conversationId) await refreshConversationTokens(conversationId);
 							});
+							recorder.timing({ finalize: { ...finalize } });
 							// One sanitized line per turn: ids, milliseconds and tool names — never text.
-							const { timings } = assembly;
+							const recorded = recorder.trace();
 							const ms = (value: number | undefined) => (value === undefined ? '-' : String(value));
+							const laneMs = recorded.grounding.map((g) => `${g.id}:${ms(g.ms)}`).join(',');
 							console.info(
-								`[ai:chat:timing] requestId=${requestId} preStream=${preStreamMs} embed=${ms(timings.embedMs)} ` +
-									`wiki=${ms(timings.llmwikiMs)} docs=${ms(timings.docsMs)} overview=${ms(timings.overviewMs)} ` +
-									`catalog=${ms(timings.catalogMs)} generate=${generateMs} steps=${stepsStarted} ` +
-									`firstToken=[${firstTokenMs.join(',')}] reasoning=${ms(totalUsage?.outputTokenDetails?.reasoningTokens)} ` +
-									`tools=[${toolsRun.map((t) => `${t.name}:${t.ms}`).join(',')}] ` +
-									`finalize={verify:${ms(finalize.verifyMs)},catalog:${ms(finalize.catalogMs)},` +
+								`[ai:chat:timing] requestId=${requestId} preStream=${preStreamMs} embed=${ms(composition.embedMs)} ` +
+									`lanes=[${laneMs}] generate=${generateMs} steps=${stepsStarted} ` +
+									`firstToken=[${(recorded.timings.firstTokenMs ?? []).join(',')}] reasoning=${ms(totalUsage?.outputTokenDetails?.reasoningTokens)} ` +
+									`tools=[${recorded.toolExecutions.map((t) => `${t.toolName}:${t.durationMs ?? '-'}`).join(',')}] ` +
+									`finalize={catalog:${ms(finalize.catalogMs)},` +
 									`persist:${ms(finalize.persistMs)},budget:${ms(finalize.budgetMs)}} ` +
 									`queries=${observedQueryCount() ?? '-'}`,
 							);
 							// The last metadata frame must precede the `finish` the helper writes next.
 							flushNow();
+							closed = true;
 						}
 					};
 					const finalizeTurn = async (
 						rawText: string,
 						totalUsage: LanguageModelUsage,
-						timed: (stage: keyof NonNullable<GenerateDetail['finalize']>, work: () => Promise<void>) => Promise<void>,
+						finalize: NonNullable<TurnTimings['finalize']>,
+						timed: (stage: keyof NonNullable<TurnTimings['finalize']>, work: () => Promise<void>) => Promise<void>,
 					) => {
 						// Mirror the stream guard: if the whole turn was a textual tool-call
 						// leak (`<function=…>`), blank it before persistence / citation
 						// verification so the leak isn't saved or counted as an answer.
 						const text = stripTextualToolCall(rawText);
-						try {
-							if (drilledChunks.size > 0) {
-								await timed('verifyMs', async () => {
-									const verifyStart = performance.now();
-									emit({
-										type: 'pipeline:step',
-										step: 'llmwiki:verify',
-										status: 'active',
-										startOffsetMs: Math.round(verifyStart - t0),
-									});
-									const { verifications, driftedChunkIds } = await verifyCitations({
-										userId,
-										drilledChunkIds: Array.from(drilledChunks),
-										answerText: text,
-									});
-									const verifyMs = Math.round(performance.now() - verifyStart);
-									const verdicts = Array.from(verifications.entries()).map(([chunkId, status]) => ({
-										pageSlug: '',
-										chunkId,
-										status,
-									}));
-									const summary = {
-										total: verdicts.length,
-										quote: verdicts.filter((v) => v.status === 'quote').length,
-										paraphrase: verdicts.filter((v) => v.status === 'paraphrase').length,
-										drifted: verdicts.filter((v) => v.status === 'drifted').length,
-										uncited: verdicts.filter((v) => v.status === 'uncited').length,
-									};
-									emit({
-										type: 'pipeline:step',
-										step: 'llmwiki:verify',
-										status: 'done',
-										durationMs: verifyMs,
-										detail: { kind: 'llmwiki-verify', ...summary },
-									});
-									emit({ type: 'llmwiki:citations', verdicts, summary });
-									// Preserve the existing citations metadata shape for legacy consumers.
-									citationsPayload = {
-										citations: Array.from(verifications.entries()).map(([chunkId, verification]) => ({
-											chunkId,
-											verification,
-											tier: 'chunks' as const,
-										})),
-										driftedChunkIds,
-									};
-									sourceChunksPayload = {
-										sourceChunks: await shapeDrilledCitations(userId, Array.from(drilledChunks), verifications),
-									};
-									flush();
-								});
-							}
-						} catch (err) {
-							console.error('[ai:chat:llmwiki] Verification failed:', err);
-							emit({
-								type: 'pipeline:step',
-								step: 'llmwiki:verify',
-								status: 'error',
-								error: err instanceof Error ? err.message : String(err),
-							});
-						}
-						// Surface-citation verification — ground the citation chips and flag any
-						// project path the model emitted that search_catalog did not surface this turn.
-						try {
-							if (surfacedCatalog.size > 0) {
-								await timed('catalogMs', async () => {
-									const surfaced = Array.from(surfacedCatalog.values());
-									const surfacedPaths = new Set(surfaced.map((r) => r.path));
-									const knownPaths = new Set(buildSearchIndex(catalogLocale).map((r) => r.path));
-									const catalogCitations = verifyCatalogCitations(text, surfacedPaths, knownPaths);
-									// Chips: only the surfaces the answer actually references, collapsed to
-									// one chip per unique (path, anchor). Docs retrieval surfaces several
-									// CHUNKS of the same doc → identical paths; the keyed {#each} in
-									// ChatMessage (keyed by path+anchor) would throw each_key_duplicate,
-									// crashing the chip row AND wedging the loading state. Keep best score.
-									const cited = surfaced.filter((r) => text.includes(r.path));
-									const bySurface = new Map<string, (typeof cited)[number]>();
-									for (const r of cited) {
-										const key = `${r.path}\u0000${r.anchor ?? ''}`;
-										const prev = bySurface.get(key);
-										if (!prev || (r.score ?? 0) > (prev.score ?? 0)) bySurface.set(key, r);
-									}
-									catalogPayload = {
-										catalogSources: Array.from(bySurface.values()).map((r) => ({
-											surface: r.surface,
-											title: r.title,
-											path: r.path,
-											anchor: r.anchor,
-											breadcrumb: r.breadcrumb,
-											icon: r.icon,
-											badge: r.badge,
-											locale: r.locale,
-										})),
-										catalogCitations,
-									};
-									flush();
-								});
-							}
-						} catch (err) {
-							console.error('[ai:chat:catalog] Surface-citation verification failed:', err);
-						}
-						// Step rows first (each write logs its own failure): the token totals refreshed
-						// below are summed from them.
-						await Promise.all(pendingStepWrites);
-						// The durable writes — backfill the assistant row, refresh the cached totals,
-						// charge the Redis budget — are independent of each other and run together.
-						// ALL of them are awaited, whatever fails: they must land before `finish`
-						// (a function is frozen once its response completes), and a failed write is
-						// logged, never allowed to cost the user an answer that already streamed.
+						// The capabilities verify the answer: the catalog's paths (surfaced → cited; a
+						// path nothing surfaced → `unsurfaced`). Each stage is timed under the
+						// capability that ran it.
+						const verified = await composition.verify(text);
+						if (verified.stages.catalog !== undefined) finalize.catalogMs = verified.stages.catalog;
+						// The durable writes — backfill the assistant row (text + the parts a reload
+						// renders), charge the Redis budget — are independent of each other and run
+						// together. ALL of them are awaited, whatever fails: they must land before
+						// `finish` (a function is frozen once its response completes), and a failed
+						// write is logged, never allowed to cost the user an answer that already streamed.
+						// The trace and the cached totals follow in `afterText`, once the answer row exists.
 						const outcomes = await Promise.allSettled([
 							conversationId
-								? timed('persistMs', async () => {
-										await Promise.all([
-											updateMessageContent(assistantMsgId, text),
-											refreshConversationTokens(conversationId),
-										]);
-									})
+								? updateMessageContent(assistantMsgId, text, storedParts(text, recorder.trace().toolExecutions))
 								: Promise.resolve(),
 							totalUsage
 								? timed('budgetMs', () =>
@@ -1020,7 +785,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 								: Promise.resolve(),
 						]);
 						for (const outcome of outcomes) {
-							if (outcome.status === 'rejected') console.error('[ai:chat:llmwiki] Failed to finalize:', outcome.reason);
+							if (outcome.status === 'rejected') console.error('[ai:chat:chatbot] Failed to finalize:', outcome.reason);
 						}
 					};
 					// Current-turn provider rotation: primary first, then every configured fallback that
@@ -1031,94 +796,89 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 						configuredProviders,
 						makeStream,
 						hasTools,
+						estimateTurnTokens(systemPrompt.length + promptHistoryChars, hasTools ? 2 : 1),
 					);
 
-					// Pump text into the open message, run afterText, then close — citation/catalog/persist
+					// Pump text into the open message, run afterText, then close — citation/persist
 					// metadata flushes BEFORE the finish frame (fixes the empty-answer / answer⟷trace desync).
-					await streamTextIntoOpenMessage(writer, attempts, afterText, {
+					// The same promise is handed to the platform: a client disconnect must not take the
+					// function down before the cancelled turn's tail has persisted what streamed.
+					const streamed = streamTextIntoOpenMessage(writer, attempts, afterText, {
 						signal: cancellation.signal,
 						isSkipped: (id) => (id ? isCooledDown(id) : Promise.resolve(false)),
 						// The client left: the helper persists what streamed (through `afterText`) and
 						// closes the message; nothing is cooled and no error frame is written.
 						onCancellation: ({ providerId: cancelledId, contentParts }) => {
+							recorder.attemptEnd('cancelled', { contentParts });
 							console.info(
-								`[ai:chat:llmwiki] turn cancelled by the client requestId=${requestId} provider=${cancelledId ?? 'unknown'} contentParts=${contentParts}`,
+								`[ai:chat:chatbot] turn cancelled by the client requestId=${requestId} provider=${cancelledId ?? 'unknown'} contentParts=${contentParts}`,
 							);
 						},
 						onAttemptStart: (attempt) => {
-							// Re-point step telemetry at the provider actually running this attempt.
+							// Re-point attribution at the provider actually running this attempt.
 							currentProviderId = attempt.providerId;
 							currentModelId = attempt.modelId;
-							firstTokenMs.length = 0;
-							toolsRun.length = 0;
 							stepsStarted = 0;
-							stepStartedAt = performance.now();
 							awaitingFirstToken = true;
+							recorder.attemptStart({ providerId: attempt.providerId, modelId: attempt.modelId });
 						},
 						onAttemptFailure: async ({ providerId: failedId, error, willRetry }: AttemptFailure) => {
 							const { kind } = classifyAiError(error);
 							console.error(
-								`[ai:chat:llmwiki] attempt failed provider=${failedId ?? 'unknown'} kind=${kind} willRetry=${willRetry}`,
+								`[ai:chat:chatbot] attempt failed provider=${failedId ?? 'unknown'} kind=${kind} willRetry=${willRetry}`,
 							);
 							// Every failed attempt lands here exactly once — retry or final — so this is
 							// the chatbot turn's one cooldown door; the stream's `onError` only formats.
 							coolProvider(failedId, kind);
-							if (willRetry) {
-								// Re-open the generate bar so the waterfall shows the turn recovering onto
-								// the next provider.
-								emit({
-									type: 'pipeline:step',
-									step: 'generate',
-									status: 'active',
-									startOffsetMs: Math.round(generateStart - t0),
-								});
-								return;
-							}
-							// Final: the generate terminal closes as `error` with the classified kind —
-							// never the provider's prose. Drained now, before the helper closes the message
+							recorder.attemptEnd(willRetry ? 'rotated' : 'failed', { errorKind: kind });
+							if (willRetry) return;
+							// Final: the turn closes as `error` with the classified kind — never the
+							// provider's prose. Drained now, before the helper closes the message
 							// (a partial answer) or the stream ends on the error frame.
 							generateFailure = kind;
-							emit({
-								type: 'pipeline:step',
-								step: 'generate',
-								status: 'error',
-								durationMs: Math.round(performance.now() - generateStart),
-								error: kind,
-							});
+							recorder.outcome('error', kind);
 							flushNow();
 						},
 					});
+					holdOpenUntil(streamed);
+					await streamed;
+					closed = true;
 				},
 				// A failure that left the message empty rethrows out of the helper to here: the ONE
 				// `[kind] message` error frame the client parses. The attempt was logged and cooled
 				// by the hook; a turn no provider could take (every one cooled) only passes here.
+				// The trace is still written: a turn that failed is a turn the owner can inspect.
 				onError: (error) => {
 					const text = aiErrorFrameText(error);
-					console.warn(`[ai:chat:llmwiki] turn ended on an error frame requestId=${requestId} ${text.split(' ')[0]}`);
+					console.warn(`[ai:chat:chatbot] turn ended on an error frame requestId=${requestId} ${text.split(' ')[0]}`);
+					closed = true;
+					recorder.outcome('error', classifyAiError(error).kind);
+					void recorder.persist();
 					return text;
 				},
 			});
 			return createUIMessageStreamResponse({ stream: cancellation.body(stream), headers: responseHeaders });
 		}
 
-		// deskbot (non-retrieval) path — the surface === 'deskbot' fallthrough, which also
-		// takes any non-fresh turn. Streams through the same helper as the chatbot: one open
-		// message, provider rotation before the first content part, a classified error frame
-		// when nothing reached the client. The assistant row (`assistantMsgId`) is already
-		// persisted above.
+		// deskbot path — the surface === 'deskbot' fallthrough, which also takes any non-fresh
+		// turn. Streams through the same helper as the chatbot: one open message, provider
+		// rotation before the first content part, a classified error frame when nothing reached
+		// the client. The assistant row (`assistantMsgId`) is already persisted above. The desk
+		// profile has no retrieval lane, so the composition is ready before the stream opens.
+		deskComposition = await composeTurn(profile, turn, recorder);
+		const { systemPrompt, tools: deskTools, stepBudget: maxSteps } = deskComposition;
+		const hasDeskTools = Object.keys(deskTools).length > 0;
 		let stepCounter = 0;
-		let lastStepAt = performance.now();
-		// Step rows are written off the step boundary (see the chatbot branch) and awaited in
-		// afterText before the totals are refreshed from them.
-		const pendingStepWrites: Promise<void>[] = [];
 
 		/**
 		 * Harness metadata accumulator — per SVEY's gotcha, `message-metadata`
 		 * events REPLACE (not merge) on the client, so every write must include
-		 * the full accumulated object. The retrieval path already does this for
-		 * pipeline events; here we do the same for `harness.proposal` events.
+		 * the full accumulated object. The chatbot path already does this for the
+		 * trace snapshot; here we do the same for `harness.proposal` events.
 		 */
 		const harnessMetadata: HarnessMetadata = {};
+		// See the chatbot branch: no metadata frame once the message is closed.
+		let closed = false;
 
 		const stream = createUIMessageStream({
 			execute: async ({ writer }) => {
@@ -1126,23 +886,45 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 				// branch): the client's message id is the DB's, and the proposal metadata written
 				// from `onStepFinish` lands inside the message the helper keeps open.
 				writer.write({ type: 'start', messageId: assistantMsgId });
+				recorder.timing({ preStreamMs: Math.round(performance.now() - turnStartedAt) });
+
+				// The desk client reads `harness` only; the trace snapshot rides on the same frames
+				// so a desk turn is inspectable like a chatbot turn. Batched per microtask like
+				// the chatbot's, drained before `finish`.
+				let flushPending = false;
+				const flushNow = () => {
+					if (!flushPending || closed) return;
+					flushPending = false;
+					writer.write({
+						type: 'message-metadata',
+						messageMetadata: { harness: harnessMetadata, trace: recorder.snapshot() },
+					});
+				};
+				const flush = () => {
+					if (flushPending || closed) return;
+					flushPending = true;
+					setTimeout(flushNow, METADATA_FLUSH_MS);
+				};
+				recorder.subscribe(flush);
 
 				type ToolResultRecord = {
+					toolCallId: string;
 					toolName: string;
 					input?: unknown;
 					output?: unknown;
 				};
-				const onStepFinish = async ({
-					toolResults,
-					usage,
-				}: {
+				const onStepFinish = async (step: {
+					stepNumber?: number;
+					toolCalls?: Array<{ toolCallId: string; toolName: string }>;
 					toolResults?: ToolResultRecord[];
-					usage?: { inputTokens?: number; outputTokens?: number };
+					usage?: LanguageModelUsage;
+					finishReason?: string;
+					text?: string;
+					warnings?: Array<{ type: string; message?: string }>;
+					response?: { id?: string; modelId?: string };
 				}) => {
-					if (!conversationId) return;
 					const currentStep = stepCounter++;
-
-					const results = toolResults ?? [];
+					const results = step.toolResults ?? [];
 
 					// The approval boundary. A gated tool or `desk_propose_plan` asked for approval:
 					// persist the proposal FIRST — it is the one write the user is about to act on —
@@ -1151,7 +933,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					// loop already stopped before.
 					const approval = collectApprovalRequests(results);
 					let proposalPersisted = approval.steps.length === 0;
-					if (approval.steps.length > 0 && !harnessMetadata.proposal) {
+					if (conversationId && approval.steps.length > 0 && !harnessMetadata.proposal) {
 						const goal = approval.goal ?? approval.steps.map((s) => s.action).join('; ');
 						try {
 							const proposal = await createProposal({
@@ -1173,6 +955,8 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 								status: 'pending',
 							};
 							proposalPersisted = true;
+							recorder.proposal(proposal.id);
+							recorder.outcome('awaiting_decision');
 						} catch (err) {
 							console.error('[ai:chat] Failed to persist proposal:', err);
 							// No card without a row: a card the approve route cannot find would be
@@ -1182,77 +966,61 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 							};
 						}
 						// Always write the full accumulated object — metadata REPLACES on client.
-						writer.write({ type: 'message-metadata', messageMetadata: { harness: harnessMetadata } });
+						flushPending = true;
+						flushNow();
 					}
 
-					// The tool records and the step row are telemetry the next model call must not wait
-					// for: they start now and are awaited in `afterText` (the proposal above was awaited —
-					// the user acts on it). The step row carries the tool-call ids, so it follows them.
-					const toolCallSaves = results.map((tr) => {
+					// The tool executions of this step: the hook below already timed them; here each
+					// gets its status — an error the tool returned, or an approval request the
+					// proposal row could not be written for.
+					for (const tr of results) {
 						const output = tr.output && typeof tr.output === 'object' ? (tr.output as Record<string, unknown>) : {};
 						const hasError = 'error' in output;
-						const orphanedSentinel = !proposalPersisted && isApprovalSentinel(tr.output);
-						return saveToolCall({
-							messageId: assistantMsgId,
+						const sentinel = isApprovalSentinel(tr.output);
+						const orphanedSentinel = !proposalPersisted && sentinel;
+						recorder.tool({
+							toolCallId: tr.toolCallId,
 							toolName: tr.toolName,
-							args: (tr.input ?? {}) as Record<string, unknown>,
-							result: output,
-							status: hasError || orphanedSentinel ? 'error' : 'success',
+							input: tr.input ?? {},
+							output: tr.output,
+							status: hasError || orphanedSentinel ? 'error' : sentinel ? 'requires_approval' : 'success',
 							errorMessage: hasError
 								? String(output.error)
 								: orphanedSentinel
 									? 'Approval request lost: the proposal could not be persisted.'
 									: undefined,
-						})
-							.then((saved) => saved.id)
-							.catch((err) => {
-								console.error('[ai:chat] Failed to persist tool call:', err);
-								return null;
-							});
-					});
+						});
+					}
 
-					const deskNowT = performance.now();
-					const deskDurationMs = Math.round(deskNowT - lastStepAt);
-					lastStepAt = deskNowT;
-					pendingStepWrites.push(
-						Promise.all(toolCallSaves)
-							.then((ids) => {
-								const toolCallIds = ids.filter((id): id is string => id !== null);
-								return saveConversationStep({
-									conversationId,
-									messageId: assistantMsgId,
-									stepIndex: currentStep,
-									stepType: currentStep === 0 ? 'initial' : 'tool-result',
-									surface,
-									inputTokens: usage?.inputTokens ?? 0,
-									outputTokens: usage?.outputTokens ?? 0,
-									toolCallIds: toolCallIds.length > 0 ? toolCallIds : undefined,
-									providerId: currentProviderId,
-									modelId: currentModelId,
-									durationMs: deskDurationMs,
-								});
-							})
-							.catch((err) => console.error('[ai:chat] Failed to persist step:', err)),
-					);
+					recorder.callEnd({
+						stepIndex: step.stepNumber ?? currentStep,
+						usage: step.usage,
+						finishReason: step.finishReason,
+						responseId: step.response?.id,
+						responseModel: step.response?.modelId,
+						textChars: step.text?.length ?? 0,
+						toolCalls: (step.toolCalls ?? []).map((tc) => ({ toolCallId: tc.toolCallId, toolName: tc.toolName })),
+						warnings: step.warnings?.map((w) => w.message ?? w.type),
+					});
 				};
 
-				const maxSteps = stepsForScopes(toolScopes ?? []);
+				const blockIds = () => deskComposition?.blocks.map((b) => b.id) ?? [];
 				const makeStream = (attemptModel: LanguageModel) =>
 					streamText({
-						model: attemptModel,
-						system: baseSystemPrompt,
+						model: traceModelCalls(attemptModel, recorder, { blockIds }),
+						system: systemPrompt,
 						messages,
 						maxRetries: 0,
 						maxOutputTokens: MAX_TOKENS,
 						abortSignal: modelCallSignal(cancellation, input.deadline),
 						// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
 						// The desk branch routes to the SAME tool-capable provider as the chatbot
-						// branch (which already guards at the llmwiki stream), so without this a
+						// branch (which already guards at the chatbot stream), so without this a
 						// Groq-routed desk turn leaks raw tool-call markup into the UI.
 						experimental_transform: createToolLeakGuard((lead) =>
 							console.warn(`[ai:chat:desk] suppressed textual tool-call leak: ${lead}…`),
 						),
-						...(deskTools
+						...(hasDeskTools
 							? {
 									tools: deskTools,
 									toolChoice: 'auto' as const,
@@ -1264,29 +1032,56 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 									prepareStep: answerOnLastStep(maxSteps),
 									// Compaction deliberately does NOT hook `prepareStep`: AI SDK #9631 silently
 									// drops message mutations returned from it. It runs at tool-execute time via
-									// `wrapToolsWithCompaction` inside `createDeskTools`, with the whole request
-									// inside a `runWithCompaction` context so refs resolve consistently.
+									// `wrapToolsWithCompaction` in the composition, with the whole request inside
+									// a `runWithCompaction` context so refs resolve consistently.
 								}
 							: {}),
+						experimental_onToolCallFinish: (event) => {
+							recorder.tool({
+								toolCallId: event.toolCall.toolCallId,
+								toolName: event.toolCall.toolName,
+								input: event.toolCall.input,
+								durationMs: event.durationMs,
+								...(event.success
+									? {}
+									: { errorMessage: event.error instanceof Error ? event.error.message : String(event.error) }),
+							});
+						},
 						onStepFinish,
 					});
 
-				// The durable tail of a finished (or cut) turn: the step rows first — the totals
-				// refreshed below are summed from them — then the answer's row, the totals and the
-				// budget charge together. A cut turn arrives here with the partial text the client
-				// received and unknown usage, so it is stored but not charged.
+				// The durable tail of a finished (or cut) turn: the answer's row (text + parts), the
+				// trace, then the totals (summed from the trace's model calls) and the budget charge.
+				// A cut turn arrives here with the partial text the client received and unknown
+				// usage, so it is stored but not charged.
 				const afterText = async (text: string, totalUsage: LanguageModelUsage) => {
-					await Promise.all(pendingStepWrites);
-					if (!conversationId) return;
+					if (cancellation.signal.aborted) recorder.outcome('cancelled');
+					else if (recorder.trace().attempts.at(-1)?.outcome === 'started') recorder.attemptEnd('ok');
+					// The capabilities' verifiers: the desk chunks the search tool surfaced join the
+					// trace as the `desk` source's items.
+					await deskComposition?.verify(text);
+					if (!conversationId) {
+						flushNow();
+						closed = true;
+						return;
+					}
 					const tokens = (totalUsage.inputTokens ?? 0) + (totalUsage.outputTokens ?? 0);
+					const persisted = await Promise.allSettled([
+						text || recorder.trace().toolExecutions.length
+							? updateMessageContent(assistantMsgId, text, storedParts(text, recorder.trace().toolExecutions))
+							: Promise.resolve(),
+						recorder.persist(),
+					]);
 					const outcomes = await Promise.allSettled([
-						text ? updateMessageContent(assistantMsgId, text) : Promise.resolve(),
 						refreshConversationTokens(conversationId),
 						tokens > 0 ? chargeTokens(userId, tokens) : Promise.resolve(),
 					]);
-					for (const outcome of outcomes) {
+					for (const outcome of [...persisted, ...outcomes]) {
 						if (outcome.status === 'rejected') console.error('[ai:chat:desk] Failed to finalize:', outcome.reason);
 					}
+					// The last metadata frame precedes the `finish` the helper writes next.
+					flushNow();
+					closed = true;
 				};
 
 				// Current-turn provider rotation: primary first, then every configured fallback that
@@ -1297,19 +1092,22 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					configuredProviders,
 					makeStream,
 					hasTools,
+					estimateTurnTokens(systemPrompt.length + promptHistoryChars, hasTools ? 2 : 1),
 				);
-				await streamTextIntoOpenMessage(writer, attempts, afterText, {
+				const streamed = streamTextIntoOpenMessage(writer, attempts, afterText, {
 					signal: cancellation.signal,
 					isSkipped: (id) => (id ? isCooledDown(id) : Promise.resolve(false)),
 					onCancellation: ({ providerId: cancelledId, contentParts }) => {
+						recorder.attemptEnd('cancelled', { contentParts });
 						console.info(
 							`[ai:chat:desk] turn cancelled by the client provider=${cancelledId ?? 'unknown'} contentParts=${contentParts} steps=${stepCounter}`,
 						);
 					},
 					onAttemptStart: (attempt) => {
-						// Re-point step telemetry at the provider actually running this attempt.
+						// Re-point attribution at the provider actually running this attempt.
 						currentProviderId = attempt.providerId;
 						currentModelId = attempt.modelId;
+						recorder.attemptStart({ providerId: attempt.providerId, modelId: attempt.modelId });
 					},
 					onAttemptFailure: async ({ providerId: failedId, error, willRetry }: AttemptFailure) => {
 						const { kind } = classifyAiError(error);
@@ -1319,10 +1117,22 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 						// Every failed attempt lands here exactly once — retry or final — so this is the
 						// desk turn's one cooldown door; the stream's `onError` only formats.
 						coolProvider(failedId, kind);
+						recorder.attemptEnd(willRetry ? 'rotated' : 'failed', { errorKind: kind });
+						if (!willRetry) recorder.outcome('error', kind);
 					},
 				});
+				// Same as the chatbot: the cancelled turn's tail must outlive the disconnect.
+				holdOpenUntil(streamed);
+				await streamed;
+				closed = true;
 			},
-			onError: classifyStreamError,
+			onError: (error) => {
+				// A turn no provider could take is still a recorded turn.
+				closed = true;
+				recorder.outcome('error', classifyAiError(error).kind);
+				void recorder.persist();
+				return classifyStreamError(error);
+			},
 		});
 		return createUIMessageStreamResponse({ stream: cancellation.body(stream), headers: responseHeaders });
 	} catch (err) {
@@ -1346,21 +1156,20 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		// tool schema, serialization failure) that every provider fails identically.
 		if (['unavailable', 'timeout', 'rate_limit'].includes(aiErr.kind)) {
 			// Per-surface fallback. Only a genuine DESK turn (real desk scopes) may mount desk
-			// tools — calling createDeskTools with undefined scopes would mount an empty/wrong
-			// toolset and contaminate the surface. A chatbot turn falls back tool-less on any
-			// provider: ungrounded but honest.
+			// tools, and only the ones its composition mounted — a throw before the composition
+			// leaves a tool-less fallback. A chatbot turn falls back tool-less on any provider:
+			// ungrounded but honest, on the identity block alone.
 			const isDeskTurn = !!toolScopes?.length;
-			const fallbackTools = isDeskTurn ? (deskTools ?? createDeskTools(userId, toolScopes, deskLayout)) : undefined;
 			const fallbackResponse = await tryFallback(
-				baseSystemPrompt,
+				deskComposition?.systemPrompt ?? identityBlock(profile.identity),
 				messages,
 				conversationId,
 				userId,
 				configuredProviders.filter((p) => p.id !== currentProviderId),
 				cancellation,
 				isDeskTurn,
-				fallbackTools,
-				toolScopes,
+				isDeskTurn ? deskComposition?.tools : undefined,
+				deskComposition?.stepBudget,
 				input.deadline,
 			);
 			if (fallbackResponse) return fallbackResponse;

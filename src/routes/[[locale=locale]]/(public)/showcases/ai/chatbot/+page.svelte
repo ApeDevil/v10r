@@ -1,185 +1,140 @@
 <script lang="ts">
-import { LinkCard, NavSection } from '$lib/components/composites';
-import { Badge, Button, Typography } from '$lib/components/primitives';
+import { untrack } from 'svelte';
+import { NavSection } from '$lib/components/composites';
+import { answerTextOf, traceOf } from '$lib/components/composites/chatbot/turn-progress';
+import { Typography } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { chatbotGrounded } from '$lib/showcases/ai/fixtures/chatbot-grounded';
-import { liveTurnTrace } from '$lib/showcases/ai/replay';
+import { guardPassed, spineOf } from '$lib/showcases/ai/inspector';
+import { toolCounts } from '$lib/showcases/ai/topology';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import AwarenessPair from '../_components/AwarenessPair.svelte';
-import ContextProbe from '../_components/ContextProbe.svelte';
+import ChatbotExample from '../_components/ChatbotExample.svelte';
 import GuardChain from '../_components/GuardChain.svelte';
 import PromptTape from '../_components/PromptTape.svelte';
-import ProvenanceStrip from '../_components/ProvenanceStrip.svelte';
+import ProvenanceBadge from '../_components/ProvenanceBadge.svelte';
+import ReferenceSection from '../_components/ReferenceSection.svelte';
 import RetrievalProfile from '../_components/RetrievalProfile.svelte';
 import StreamAttempts from '../_components/StreamAttempts.svelte';
 import SurfaceFlow from '../_components/SurfaceFlow.svelte';
-import { TracePlayer } from '../_components/surface-flow.state.svelte';
 import ToolMatrix from '../_components/ToolMatrix.svelte';
-import TraceControls from '../_components/TraceControls.svelte';
+import TurnInspector from '../_components/TurnInspector.svelte';
+import TurnSourcePicker from '../_components/TurnSourcePicker.svelte';
+import { TurnInspectorState } from '../_components/turn-inspector.state.svelte';
 import VerifyChain from '../_components/VerifyChain.svelte';
 
 let { data } = $props();
 const signedIn = $derived(!!data.session);
 
-const player = new TracePlayer(chatbotGrounded);
-$effect(() => () => player.destroy());
+// The reading order: ask → read the answer → explore the turn graph → open its content →
+// read the implementation. ONE turn drives the graph and every reference section below it:
+// the committed fixture, or — signed in — the turn the visitor just asked above, followed
+// from its streamed snapshot to its persisted trace. No second run, no mirrored outline.
+const inspector = new TurnInspectorState('chatbot', [chatbotGrounded]);
+const turn = $derived(inspector.current);
+const spine = $derived(turn ? spineOf(turn.trace) : null);
+const guard = guardPassed();
 
-// Live source: observe the Vely singleton — the page never mounts a second chat
-// instance. When the visitor runs a real turn in Vely, its pipeline metadata can
-// drive the SAME viewer as the fixture (one viewer, two sources).
-type PipelineMeta = { pipeline?: { type: string }[] };
-const livePipeline = $derived((chatbotSession.chat?.messages.at(-1)?.metadata as PipelineMeta | undefined)?.pipeline);
-let source = $state<'recorded' | 'live'>('recorded');
-const trace = $derived(source === 'live' && livePipeline ? liveTurnTrace(livePipeline) : player.trace);
+// The thread's last message, reported on every change (a streamed frame replaces the
+// message's metadata, so this re-runs per frame); the state decides what to do with it.
+$effect(() => {
+	const messages = chatbotSession.chat?.messages ?? [];
+	const last = messages.at(-1);
+	const before = messages.at(-2);
+	const trace = traceOf(last);
+	const conversationId = chatbotSession.conversationId;
+	untrack(() =>
+		inspector.observeThread({
+			conversationId,
+			messageId: last?.id,
+			role: last?.role,
+			trace,
+			question: before?.role === 'user' ? answerTextOf(before) : '',
+			answer: answerTextOf(last),
+		}),
+	);
+});
 
 const sections = [
-	{ id: 'spine', label: m.showcase_ai_sec_spine() },
-	{ id: 'guard', label: m.showcase_ai_sec_guard() },
-	{ id: 'prompt', label: m.showcase_ai_sec_prompt() },
-	{ id: 'probe', label: m.showcase_ai_sec_probe() },
-	{ id: 'retrieval', label: m.showcase_ai_sec_retrieval() },
-	{ id: 'tools', label: m.showcase_ai_sec_tools() },
-	{ id: 'verify', label: m.showcase_ai_sec_verify() },
-	{ id: 'stream', label: m.showcase_ai_sec_stream() },
-	{ id: 'awareness', label: m.showcase_ai_sec_awareness() },
+	{ id: 'example', label: m.showcase_ai_sec_example() },
+	{ id: 'orchestration', label: m.showcase_ai_sec_graph() },
+	{ id: 'implementation', label: m.showcase_ai_sec_implementation() },
 ];
 
+const counts = toolCounts();
 const sibling = localizeHref('/showcases/ai/deskbot');
 </script>
 
 <div class="page">
-	<p class="claim">{m.showcase_ai_claim_chatbot()}</p>
-	<dl class="facts">
-		<div><dt>{m.showcase_ai_fact_route()}</dt><dd><code>POST /api/ai/chatbot</code></dd></div>
-		<div><dt>{m.showcase_ai_fact_client()}</dt><dd><code>Chatbot.svelte</code> · Vely</dd></div>
-		<div><dt>{m.showcase_ai_fact_mode()}</dt><dd>{m.showcase_ai_fact_mode_chatbot()}</dd></div>
-	</dl>
-
 	<NavSection {sections} />
 
-	<section id="spine" class="section">
-		<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_spine()}</Typography>
-		<div class="viewer">
-			<div class="viewer-bar">
-				<ProvenanceStrip source={trace.source} recordedAt={chatbotGrounded.provenance.recordedAt} />
-				{#if livePipeline}
-					<div class="source-toggle" role="group">
-						<Button
-							variant={source === 'recorded' ? 'secondary' : 'ghost'}
-							size="sm"
-							onclick={() => (source = 'recorded')}>{m.showcase_ai_src_recorded()}</Button
-						>
-						<Button
-							variant={source === 'live' ? 'secondary' : 'ghost'}
-							size="sm"
-							onclick={() => (source = 'live')}>{m.showcase_ai_src_live()}</Button
-						>
-					</div>
-				{/if}
-			</div>
-			<SurfaceFlow surface="chatbot" {trace} />
-			{#if source === 'recorded'}
-				<TraceControls {player} />
-				{#if trace.answerText}
-					<div class="answer">
-						<span class="answer-label">{m.showcase_ai_answer_label()}</span>
-						<p>{trace.answerText}</p>
-					</div>
-				{/if}
-			{/if}
-			<div class="door">
-				<Button variant="primary" onclick={() => chatbotSession.open()}>
-					<span class="i-lucide-message-circle h-4 w-4" aria-hidden="true"></span>
-					{m.showcase_ai_door_vely()}
-				</Button>
-				<p class="door-note">{m.showcase_ai_door_note_quota()}</p>
-			</div>
-		</div>
-	</section>
-
-	<section id="guard" class="section">
+	<section id="example" class="section">
+		<!-- One row: the heading, what the reader is looking at, and the one sentence that says why. -->
 		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_guard()}</Typography>
-			<Badge variant="secondary">{m.showcase_ai_shared_badge()}</Badge>
-			<a class="compare" href="{sibling}#guard">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
+			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_example()}</Typography>
+			<ProvenanceBadge
+				source={signedIn ? 'live' : chatbotGrounded.provenance.kind}
+				gloss={signedIn ? m.showcase_ai_example_live_label() : m.showcase_ai_example_authored_label()}
+			/>
 		</div>
-		<p class="section-claim">{m.showcase_ai_claim_guard()}</p>
-		<GuardChain guard={trace.guard} />
+		<ChatbotExample {signedIn} fixture={chatbotGrounded} />
 	</section>
 
-	<section id="prompt" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_prompt()}</Typography>
-			<a class="compare" href="{sibling}#prompt">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_prompt_chatbot()}</p>
-		<PromptTape surface="chatbot" prompt={trace.prompt} />
+	<section id="orchestration" class="section">
+		<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_graph()}</Typography>
+		<p class="section-claim">{m.showcase_ai_claim_orchestration_chatbot()}</p>
+		<TurnSourcePicker {inspector} {signedIn} />
+		<TurnInspector {inspector} />
 	</section>
 
-	<section id="probe" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_probe()}</Typography>
-			<a class="compare" href="{sibling}#probe">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_probe_chatbot()}</p>
-		<ContextProbe surface="chatbot" {signedIn} />
-	</section>
+	<section id="implementation" class="section">
+		<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_implementation()}</Typography>
+		<p class="section-claim">{m.showcase_ai_claim_chatbot({ n: String(counts.chatbot) })}</p>
 
-	<section id="retrieval" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_retrieval()}</Typography>
-			<a class="compare" href="{sibling}#retrieval">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_retrieval_chatbot()}</p>
-		<RetrievalProfile surface="chatbot" />
-	</section>
+		<ReferenceSection id="spine" title={m.showcase_ai_sec_spine()}>
+			<dl class="facts">
+				<div><dt>{m.showcase_ai_fact_route()}</dt><dd><code>POST /api/ai/chatbot</code></dd></div>
+				<div><dt>{m.showcase_ai_fact_client()}</dt><dd><code>Chatbot.svelte</code> · Vely</dd></div>
+				<div><dt>{m.showcase_ai_fact_mode()}</dt><dd>{m.showcase_ai_fact_mode_chatbot()}</dd></div>
+			</dl>
+			<SurfaceFlow surface="chatbot" statuses={spine} />
+			<p class="note">{m.showcase_ai_door_note_quota()}</p>
+		</ReferenceSection>
 
-	<section id="tools" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_tools()}</Typography>
-			<a class="compare" href="{sibling}#tools">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_tools_chatbot()}</p>
-		<ToolMatrix surface="chatbot" />
-	</section>
+		<ReferenceSection id="guard" title={m.showcase_ai_sec_guard()} claim={m.showcase_ai_claim_guard()} shared compare="{sibling}#guard">
+			<GuardChain {guard} />
+		</ReferenceSection>
 
-	<section id="verify" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_verify()}</Typography>
-			<a class="compare" href="{sibling}#approval">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_verify()}</p>
-		<VerifyChain />
-	</section>
+		<ReferenceSection id="prompt" title={m.showcase_ai_sec_prompt()} claim={m.showcase_ai_claim_prompt_chatbot()} compare="{sibling}#prompt">
+			<PromptTape surface="chatbot" blocks={turn?.trace.blocks ?? []} />
+		</ReferenceSection>
 
-	<section id="stream" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_stream()}</Typography>
-			<Badge variant="secondary">{m.showcase_ai_shared_badge()}</Badge>
-			<a class="compare" href="{sibling}#stream">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_stream()}</p>
-		<StreamAttempts surface="chatbot" />
-	</section>
+		<ReferenceSection id="retrieval" title={m.showcase_ai_sec_retrieval()} claim={m.showcase_ai_claim_retrieval_chatbot()} compare="{sibling}#retrieval">
+			<RetrievalProfile surface="chatbot" />
+		</ReferenceSection>
 
-	<section id="awareness" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_awareness()}</Typography>
-			<a class="compare" href="{sibling}#awareness">{m.showcase_ai_compare_link({ surface: 'deskbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_awareness_chatbot()}</p>
-		<AwarenessPair surface="chatbot" />
-	</section>
+		<ReferenceSection
+			id="tools"
+			title={m.showcase_ai_sec_tools()}
+			claim={m.showcase_ai_claim_tools_chatbot({ n: String(counts.chatbot), offered: String(counts.chatbot + 1) })}
+			compare="{sibling}#tools"
+		>
+			<ToolMatrix surface="chatbot" />
+		</ReferenceSection>
 
-	<footer class="sibling-card">
-		<LinkCard
-			href="/showcases/ai/deskbot"
-			icon="i-lucide-panels-top-left"
-			title={m.showcase_ai_tab_deskbot()}
-			description={m.showcase_ai_sibling_deskbot()}
-		/>
-	</footer>
+		<ReferenceSection id="verify" title={m.showcase_ai_sec_verify()} claim={m.showcase_ai_claim_verify()} compare="{sibling}#approval">
+			<VerifyChain />
+		</ReferenceSection>
+
+		<ReferenceSection id="stream" title={m.showcase_ai_sec_stream()} claim={m.showcase_ai_claim_stream()} shared compare="{sibling}#stream">
+			<StreamAttempts surface="chatbot" />
+		</ReferenceSection>
+
+		<ReferenceSection id="awareness" title={m.showcase_ai_sec_awareness()} claim={m.showcase_ai_claim_awareness_chatbot()} compare="{sibling}#awareness">
+			<AwarenessPair surface="chatbot" />
+		</ReferenceSection>
+	</section>
 </div>
 
 <style>
@@ -187,14 +142,15 @@ const sibling = localizeHref('/showcases/ai/deskbot');
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-5);
+		/* The example is the point of the page: the section nav sits close above it. */
+		--section-nav-gap: var(--spacing-4);
 	}
 
-	.claim {
-		margin: 0;
-		font-size: var(--text-fluid-lg);
-		color: var(--color-fg);
-		line-height: 1.5;
-		max-width: 60ch;
+	.section-head {
+		display: flex;
+		align-items: baseline;
+		gap: var(--spacing-3) var(--spacing-4);
+		flex-wrap: wrap;
 	}
 
 	.facts {
@@ -234,19 +190,13 @@ const sibling = localizeHref('/showcases/ai/deskbot');
 		gap: var(--spacing-3);
 	}
 
-	.section-head {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
-		flex-wrap: wrap;
-	}
-
 	.section :global(.section-title) {
 		font-size: var(--text-fluid-xl);
 		margin: 0;
 	}
 
-	.section-claim {
+	.section-claim,
+	.note {
 		margin: 0;
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
@@ -254,69 +204,7 @@ const sibling = localizeHref('/showcases/ai/deskbot');
 		max-width: 70ch;
 	}
 
-	.compare {
-		margin-left: auto;
+	.note {
 		font-size: var(--text-fluid-xs);
-		color: var(--color-primary);
-		white-space: nowrap;
-	}
-
-	.viewer {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-4);
-		padding: var(--spacing-4);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-	}
-
-	.viewer-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--spacing-3);
-		flex-wrap: wrap;
-	}
-
-	.source-toggle {
-		display: flex;
-		gap: var(--spacing-1);
-	}
-
-	.answer {
-		padding: var(--spacing-3);
-		border: 1px dashed var(--color-border);
-		border-radius: var(--radius-md);
-	}
-
-	.answer-label {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-	}
-
-	.answer p {
-		margin: var(--spacing-1) 0 0 0;
-		font-size: var(--text-fluid-sm);
-		line-height: 1.6;
-		color: var(--color-fg);
-	}
-
-	.door {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
-		flex-wrap: wrap;
-		padding-top: var(--spacing-2);
-		border-top: 1px solid var(--color-border);
-	}
-
-	.door-note {
-		margin: 0;
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-	}
-
-	.sibling-card {
-		max-width: 24rem;
 	}
 </style>

@@ -17,14 +17,9 @@
  *   someone else's capability.
  * - `blog.comment.author_id` (RESTRICT — it does NOT cascade) → HARD-DELETED. A
  *   comment is the user's own speech under their own name, so Art 17 takes it.
- * - `retrieval.llmwiki_page_source.document_id` / `.chunk_id` (RESTRICT) → the user's page
- *   sources are deleted explicitly FIRST. This one looks self-solving and is not:
- *   `llmwiki_page` cascades from user and `llmwiki_page_source` cascades from the page,
- *   so the junction rows DO go — but Postgres evaluates a RESTRICT the instant the
- *   referenced row is deleted rather than deferring it to the end of the cascade, and
- *   the same user delete also cascades into `document`→`chunk`. Whichever branch
- *   Postgres walks first wins: observed failure is `document_id` (23503), before the
- *   junction's own cascade has run. Delete order is load-bearing; hence the pre-delete.
+ *
+ * Everything under `retrieval.*` (documents, chunks, collections, corpus maps) cascades
+ * from the user row; a RESTRICT junction that once needed a pre-delete here is gone.
  *
  * Reassignment needs a destination. When the erasing user is the ONLY configured
  * admin there is nobody to hand the rows to, and silently deleting a third party's
@@ -48,15 +43,13 @@
  */
 
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { eq, inArray } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { getAdminUserIds } from '$lib/server/auth/admin-ids';
 import { db } from '$lib/server/db';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { grant } from '$lib/server/db/schema/auth/grant';
 import { comment } from '$lib/server/db/schema/blog/comment';
 import { post } from '$lib/server/db/schema/blog/post';
-import { llmwikiPage } from '$lib/server/db/schema/retrieval/llmwiki-page';
-import { llmwikiPageSource } from '$lib/server/db/schema/retrieval/llmwiki-page-source';
 import { imageAsset } from '$lib/server/db/schema/showcase/image-metadata';
 import { deleteUserGraph } from '$lib/server/graph/retrieval/mutations';
 import { BUCKET, s3 } from '$lib/server/store';
@@ -143,17 +136,6 @@ export async function deleteUserData(userId: string): Promise<void> {
 
 		// The user's own speech — RESTRICT, so it must go explicitly. GDPR-correct: hard delete.
 		await tx.delete(comment).where(eq(comment.authorId, userId));
-
-		// Break the llmwiki junction's RESTRICT before the user cascade reaches document/chunk.
-		const pages = await tx.select({ id: llmwikiPage.id }).from(llmwikiPage).where(eq(llmwikiPage.userId, userId));
-		if (pages.length > 0) {
-			await tx.delete(llmwikiPageSource).where(
-				inArray(
-					llmwikiPageSource.llmwikiPageId,
-					pages.map((p) => p.id),
-				),
-			);
-		}
 
 		await tx.delete(user).where(eq(user.id, userId));
 	});

@@ -475,7 +475,7 @@ export const showcaseSections: ShowcaseSection[] = [
 	},
 	{ pageHref: '/showcases/ax', anchorId: 'ax-agents', title: 'AGENTS.md', keywords: ['agent contract'] },
 
-	// ── AI surfaces (chatbot + deskbot) — identical anchor set, deliberate ──
+	// ── AI surfaces (chatbot + deskbot) — both open the turn inspector; the rest is shared ──
 	{
 		pageHref: '/showcases/ai/chatbot',
 		anchorId: 'spine',
@@ -496,15 +496,15 @@ export const showcaseSections: ShowcaseSection[] = [
 	},
 	{
 		pageHref: '/showcases/ai/chatbot',
-		anchorId: 'probe',
-		title: 'Context Orchestration Probe',
-		keywords: ['probe', 'x-ray', 'grounding', 'available', 'chosen', 'static', 'dynamic'],
+		anchorId: 'orchestration',
+		title: 'Turn Inspector',
+		keywords: ['turn', 'trace', 'inspector', 'grounding', 'available', 'considered', 'included', 'cited', 'x-ray'],
 	},
 	{
 		pageHref: '/showcases/ai/chatbot',
 		anchorId: 'retrieval',
 		title: 'Retrieval Profile',
-		keywords: ['rag', 'retrieval', 'tiers', 'llmwiki', 'corpus'],
+		keywords: ['rag', 'retrieval', 'tiers', 'corpus', 'map'],
 	},
 	{
 		pageHref: '/showcases/ai/chatbot',
@@ -534,7 +534,13 @@ export const showcaseSections: ShowcaseSection[] = [
 		pageHref: '/showcases/ai/deskbot',
 		anchorId: 'spine',
 		title: 'Request Spine',
-		keywords: ['flow', 'agent loop', 'trace', 'replay'],
+		keywords: ['flow', 'agent loop', 'trace', 'x-ray'],
+	},
+	{
+		pageHref: '/showcases/ai/deskbot',
+		anchorId: 'orchestration',
+		title: 'Turn Inspector',
+		keywords: ['turn', 'trace', 'inspector', 'proposal', 'receipts', 'desk context', 'x-ray'],
 	},
 	{
 		pageHref: '/showcases/ai/deskbot',
@@ -547,12 +553,6 @@ export const showcaseSections: ShowcaseSection[] = [
 		anchorId: 'prompt',
 		title: 'Prompt Assembly',
 		keywords: ['desk context', 'escaping', 'permissions', 'injection'],
-	},
-	{
-		pageHref: '/showcases/ai/deskbot',
-		anchorId: 'probe',
-		title: 'Context Orchestration Probe',
-		keywords: ['probe', 'plan governor', 'desk corpus', 'scopes', 'grounding'],
 	},
 	{
 		pageHref: '/showcases/ai/deskbot',

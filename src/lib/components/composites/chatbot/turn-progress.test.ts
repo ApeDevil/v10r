@@ -1,16 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { awaitingAnswer, type PipelineEvents, type StreamedMessage, turnProgress } from './turn-progress';
+import type { GroundingItem } from '$lib/types/turn-trace';
+import {
+	awaitingAnswer,
+	citedCatalogSources,
+	inspectTurnPath,
+	type StreamedMessage,
+	type TraceMetadata,
+	turnProgress,
+} from './turn-progress';
 
-const step = (step: string, status: string, instanceKey?: string) => ({
-	type: 'pipeline:step',
-	step,
-	status,
-	instanceKey,
-});
-const assistant = (pipeline?: PipelineEvents): StreamedMessage => ({
+const assistant = (trace?: TraceMetadata): StreamedMessage => ({
 	role: 'assistant',
 	parts: [],
-	metadata: pipeline ? { pipeline } : undefined,
+	metadata: trace ? { trace } : undefined,
+});
+
+const catalogItem = (path: string, state: GroundingItem['state'], anchor: string | null = null): GroundingItem => ({
+	id: `showcase:en:${path}${anchor ?? ''}`,
+	kind: 'catalog',
+	title: path,
+	rank: 0,
+	state,
+	path,
+	catalog: { surface: 'showcase', anchor, breadcrumb: ['Identity'], badge: null, locale: 'en' },
 });
 
 describe('awaitingAnswer', () => {
@@ -34,44 +46,92 @@ describe('awaitingAnswer', () => {
 });
 
 describe('turnProgress', () => {
-	it('is null before the first metadata frame, once every step has settled, and for a user message', () => {
+	it('is null before the first metadata frame, on an empty trace, and for a user message', () => {
 		expect(turnProgress(undefined)).toBeNull();
 		expect(turnProgress(assistant())).toBeNull();
-		expect(turnProgress(assistant([]))).toBeNull();
-		expect(turnProgress(assistant([step('embed', 'active'), step('embed', 'done')]))).toBeNull();
-		expect(turnProgress({ role: 'user', parts: [], metadata: { pipeline: [step('embed', 'active')] } })).toBeNull();
+		expect(turnProgress(assistant({}))).toBeNull();
+		expect(
+			turnProgress({
+				role: 'user',
+				parts: [],
+				metadata: { trace: { activations: [{ id: 'project-docs', active: true }] } },
+			}),
+		).toBeNull();
 	});
 
-	it('names the most recently started step that is still active', () => {
-		const lanes: PipelineEvents = [
-			step('embed', 'active'),
-			step('system-docs', 'active'),
-			step('catalog', 'active'),
-			step('embed', 'done'),
-		];
-		// catalog started last and is still active.
-		expect(turnProgress(assistant(lanes))).toBe('catalog');
-		expect(turnProgress(assistant([...lanes, step('catalog', 'done')]))).toBe('retrieving');
+	it('reads retrieving once a rule has been decided, catalog while navigation grounding is out', () => {
+		expect(turnProgress(assistant({ activations: [{ id: 'project-docs', active: true }] }))).toBe('retrieving');
+		const navigation: TraceMetadata = {
+			activations: [
+				{ id: 'project-docs', active: true },
+				{ id: 'navigation', active: true },
+			],
+		};
+		expect(turnProgress(assistant(navigation))).toBe('catalog');
+		expect(
+			turnProgress(assistant({ ...navigation, grounding: [{ id: 'catalog', ran: true, items: [], ms: 12 }] })),
+		).toBe('retrieving');
+	});
+
+	it('reads generating from the first provider attempt on, whatever the sources say', () => {
 		expect(
 			turnProgress(
-				assistant([...lanes, step('catalog', 'done'), step('system-docs', 'done'), step('generate', 'active')]),
+				assistant({
+					activations: [{ id: 'navigation', active: true }],
+					attempts: [{ attemptIndex: 0, providerId: 'google', modelId: 'gemini', outcome: 'started' }],
+				}),
 			),
 		).toBe('generating');
 	});
+});
 
-	it('keys dynamic steps by instance so a finished drill does not shadow the live generate', () => {
-		expect(
-			turnProgress(
-				assistant([
-					step('generate', 'active'),
-					step('chunks:drill', 'done', 'drill#0'),
-					step('chunks:drill', 'done', 'drill#1'),
-				]),
-			),
-		).toBe('generating');
+describe('citedCatalogSources', () => {
+	it('returns the cited catalog rows as chips, never included-only ones, deduped by path + anchor', () => {
+		const trace: TraceMetadata = {
+			grounding: [
+				{
+					id: 'catalog',
+					ran: true,
+					items: [catalogItem('/showcases/auth', 'cited'), catalogItem('/showcases/forms', 'included')],
+				},
+				{
+					id: 'project-docs',
+					ran: true,
+					items: [
+						catalogItem('/showcases/auth', 'cited'),
+						catalogItem('/docs/blueprint/auth', 'cited', '#sessions'),
+						{ id: 'chk_1', kind: 'chunk', title: 'Auth', rank: 0, state: 'cited' },
+					],
+				},
+			],
+		};
+		expect(citedCatalogSources(trace).map((s) => `${s.path}${s.anchor ?? ''}`)).toEqual([
+			'/showcases/auth',
+			'/docs/blueprint/auth#sessions',
+		]);
+		expect(citedCatalogSources(null)).toEqual([]);
+	});
+});
+
+describe('inspectTurnPath', () => {
+	const finished: TraceMetadata = { attempts: [{ attemptIndex: 0, providerId: 'p', modelId: 'm', outcome: 'ok' }] };
+	const running: TraceMetadata = { attempts: [{ attemptIndex: 0, providerId: 'p', modelId: 'm', outcome: 'started' }] };
+
+	it("links a finished assistant turn to its surface's inspector with both ids in the query", () => {
+		expect(inspectTurnPath('chatbot', 'cnv_1', { ...assistant(finished), id: 'msg_1' })).toBe(
+			'/showcases/ai/chatbot?conversation=cnv_1&turn=msg_1#orchestration',
+		);
+		expect(inspectTurnPath('deskbot', 'cnv_1', { ...assistant(finished), id: 'msg_1' })).toBe(
+			'/showcases/ai/deskbot?conversation=cnv_1&turn=msg_1#orchestration',
+		);
 	});
 
-	it('ignores events that are not steps', () => {
-		expect(turnProgress(assistant([{ type: 'pipeline:chunks' }, step('llmwiki:search', 'active')]))).toBe('retrieving');
+	it('links nothing while the turn runs, before a conversation exists, or for a user message', () => {
+		expect(inspectTurnPath('chatbot', 'cnv_1', { ...assistant(running), id: 'msg_1' })).toBeNull();
+		expect(inspectTurnPath('chatbot', undefined, { ...assistant(finished), id: 'msg_1' })).toBeNull();
+		expect(inspectTurnPath('chatbot', 'cnv_1', { ...assistant(), id: 'msg_1' })).toBeNull();
+		expect(
+			inspectTurnPath('chatbot', 'cnv_1', { id: 'u1', role: 'user', parts: [], metadata: { trace: finished } }),
+		).toBeNull();
 	});
 });

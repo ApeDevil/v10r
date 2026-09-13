@@ -1,6 +1,6 @@
 # Harness Lens
 
-*"Harness" is a lens we use to audit the bot's post-prompt-dispatch machinery — not a module. If you're looking for the harness, read `ai/loop`, `ai/context`, `ai/policy`, and `ai/tools` together.*
+*"Harness" is a lens we use to audit the bot's post-prompt-dispatch machinery — not a module. If you're looking for the harness, read `ai/profile`, `ai/capabilities`, `ai/loop`, `ai/policy`, and `ai/tools` together.*
 
 ## What the term means here
 
@@ -12,7 +12,7 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 
 | Primitive | Owning slice | File |
 |---|---|---|
-| Tool dispatch & schema-level scope filtering | `ai/tools` | `tools/index.ts` — `createDeskTools(userId, scopes, layout)` |
+| Tool dispatch & schema-level scope filtering | `ai/profile` + `ai/capabilities` | `profile/profile.ts` — `composeTurn` mounts each active capability's `tools()`; a desk capability activates only when its scope is granted (`capabilities/desk-scope.ts`) |
 | Tool metadata (surface-split) | `ai/tools` | `tools/_types.ts` — surface-neutral `ToolRisk`/`ToolMeta` (chatbot retrieval, no scope) + `DeskToolMeta` (adds `scope`); collections `chatbotToolMeta` / `deskbotToolMeta` / `allToolMeta` in `tools/index.ts` |
 | Desk-mutation SSOT (one-door rule) | `ai/tools` | `tools/desk-execute.ts` — `executeDeskToolCall`: the proposal-approval replay routes every desk mutation through it; `index.test.ts` drift-guards the replay map against the live tool set |
 | Approval gate (risk → proposal) | `ai/policy` + `ai/tools` | `policy/governor.ts` — `requiresApproval(risk)` (`write`/`destructive` gated); write/destructive tools return a `requiresApproval` sentinel carrying the reviewed baseline (`tools/proposed-target.ts`) instead of mutating |
@@ -20,12 +20,12 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 | Plan validation | `ai/proposals` + `ai/tools` | `proposals/plan-validation.ts` — `validateProposedPlan` over `tools/desk-mutation-inputs.ts` (one valibot schema per mutation tool, also the model-facing JSON Schema) |
 | Proposal execution (receipts, receipt message) | `ai/proposals` | `proposals/execute-proposal.ts` — `executeProposal`, `proposalOutcome`; receipts in `db/ai/proposals.ts` (`recordProposalStep`, `markInterruptedIfStale`) |
 | Step loop & provider fallback | `ai` | `chat-orchestrator.ts` — `streamText` + `stopWhen` + `tryFallback` (provider fallback & cooldown) |
-| Per-request scope step caps | `ai/tools` | `tools/index.ts` — `stepsForScopes` (read-only incl. `desk:ask` = 3, mutation = 5) |
-| Context compaction (fixes AI SDK #9631) | `ai/loop` | `loop/compact.ts` — `compactToolResults` + `resolve_ref` tool |
-| System prompt assembly | `ai/context` | `context/system-prompt.ts` — `buildSystemPrompt`, cache-stable prefix ordering |
-| Retrieval integration | `ai` | `chat-orchestrator.ts` — llmwiki + retrieval pipeline events |
-| Conversation windowing | `ai/context` | `context/system-prompt.ts` — `windowMessages` |
-| Plan-gating predicate | `ai/policy` | `policy/governor.ts` — `shouldRequirePlan` |
+| Per-request scope step caps | `ai/profile` | `profile/deskbot.ts` — `stepBudget` (read-only incl. `desk:ask` = 3, mutation = 5); `profile/chatbot.ts` = 3 |
+| Context compaction (fixes AI SDK #9631) | `ai/loop` + `ai/capabilities` | `loop/compact.ts` — `compactToolResults`; `capabilities/compaction.ts` — `wrapToolsWithCompaction` + the `resolve_ref` tool |
+| System prompt assembly | `ai/profile` | `profile/profile.ts` — `composeTurn`: identity → guidance → stable grounding ‖ awareness → dynamic grounding → guides (cache order); see [profiles.md](./profiles.md) |
+| Retrieval integration | `ai/capabilities` | the chatbot's grounding lanes — `project-docs.ts`, `project-map.ts`, `navigation.ts` — run in parallel under `composeTurn`'s shared query embedding |
+| Conversation windowing | `ai/context` | `context/history.ts` — `windowMessages` |
+| Plan-gating predicate | `ai/capabilities` | `capabilities/desk-plan.ts` — `shouldRequirePlan` decides the `<planning>` guide |
 | Proposal state machine + step receipts | `db/ai` + `ai/policy` | `db/schema/ai/proposal.ts`, `db/schema/ai/proposal-step.ts`, `db/ai/proposals.ts` |
 | Audit log (scaffolded stub) | `db/ai` | `db/schema/ai/audit-log.ts` |
 
@@ -50,7 +50,7 @@ Two distinct mechanisms govern deskbot mutations.
 
 **The hard gate is at the tool layer.** A deskbot **write or destructive** tool (`desk_update_cells`, `desk_rename_file`, `desk_update_markdown`, `desk_delete_file`) never mutates in the agent loop — its `execute` validates the target and returns a `requiresApproval` sentinel. `requiresApproval(risk)` in `policy/governor.ts` is the single rule: `write`/`destructive` gated, `read`/`create` not (creates are reversible via soft delete, so they mutate in-loop, auto-approved). The orchestrator turns the sentinel into a pending `agent_proposal` (PlanCard); the mutation runs **only** via the approve-route replay through `executeDeskToolCall` (the one-door SSOT), which records a real `approvedBy`/`approvedAt`. Even a single-target overwrite or delete is gated — the old self-serve `confirmed: boolean` two-phase handshake (which the model could satisfy itself) is gone.
 
-**Planning is soft guidance, not the gate.** `shouldRequirePlan({ mutatingScopeGranted, destructiveIntent })` decides only whether to *instruct* the model to plan first — inject the `<planning>` block so it batches work into one `desk_propose_plan`. It was widened from the old three-condition AND (≥2 tools + ≥2 targets), which let every single-target destructive op skip planning; now any granted-mutating-scope + destructive-intent turn gets the nudge. It no longer decides whether a mutation may run — the `requiresApproval` sentinel does.
+**Planning is soft guidance, not the gate.** `shouldRequirePlan({ mutatingScopeGranted, destructiveIntent })` (the `desk-plan` capability's rule) decides only whether to *instruct* the model to plan first — inject the `<planning>` guide so it batches work into one `desk_propose_plan`. It was widened from the old three-condition AND (≥2 tools + ≥2 targets), which let every single-target destructive op skip planning; now any granted-mutating-scope + destructive-intent turn gets the nudge. It no longer decides whether a mutation may run — the `requiresApproval` sentinel does.
 
 The execute path closes the loop. Each `desk_propose_plan` step carries its exact `args` and its **reviewed baseline** (`target`: the file's version / `updatedAt` at proposal time), persisted on the proposal payload after `validateProposedPlan` accepted the plan; on approval `executeProposal` replays them step-by-step through `executeDeskToolCall`, writing a **step receipt** (`agent_proposal_step`) in each step's transaction, refusing a step whose file moved on since review as a `conflict`, and stopping at the first non-`ok` step with the earlier steps kept (no rollback). No model turn follows: the door persists a deterministic **execution receipt message** the model reads as history. Approval binds execution.
 
@@ -69,8 +69,8 @@ Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.fi
 ## Reading order for the curious
 
 1. `tools/_types.ts` — the risk vocabulary
-2. `tools/index.ts` — schema-level scope filtering + `stepsForScopes` (load-bearing seam)
+2. `profile/profile.ts` + `profile/deskbot.ts` — what a turn is composed from: scope-gated capabilities, the step budget (load-bearing seam)
 3. `chat-orchestrator.ts` — the step loop + `tryFallback`
-4. `loop/compact.ts` — the #9631 workaround
-5. `policy/governor.ts` — the approval gate (`requiresApproval`) + plan-gating predicate (`shouldRequirePlan`)
+4. `loop/compact.ts` + `capabilities/compaction.ts` — the #9631 workaround
+5. `policy/governor.ts` — the approval gate (`requiresApproval`); `capabilities/desk-plan.ts` — the plan-gating predicate (`shouldRequirePlan`)
 6. `db/schema/ai/proposal.ts` — the proposal state machine

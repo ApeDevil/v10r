@@ -5,9 +5,8 @@ import type { RankedChunk } from './types';
  * Reciprocal Rank Fusion: combine several ranked lists into one.
  * Score = sum(1 / (k + rank)) across every list containing the item.
  *
- * Generic over the item because the wiki layer fuses pages by `pageId` while the chunk
- * layer fuses by `chunkId` — one implementation, two identity functions. `identify` is
- * the only thing that differed between the two copies this replaces.
+ * Generic over the item: the chunk layer fuses by `chunkId`, and `identify` is the only
+ * thing a second, differently keyed consumer would need to supply.
  *
  * Two properties are load-bearing and were both violated by the previous implementation:
  *

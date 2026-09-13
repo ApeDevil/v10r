@@ -4,11 +4,11 @@
  * Imported by `PlanCard.svelte`, `ChatPanel.svelte`, and any other
  * component that needs to read the `message.metadata.harness.*` shape.
  *
- * A rendered plan step is `ProposalCardStep` (`$lib/types/turn-trace`) — the same shape the
+ * A rendered plan step is `ProposalCardStep` (`$lib/types/ai-proposal`) — the same shape the
  * showcase fixtures build. The server's `ProposedToolCall` is a different type on purpose: it
  * carries the `args` the approve replay runs, which never reach the client.
  */
-import type { ProposalCardData } from '$lib/types/turn-trace';
+import type { ProposalCardData } from '$lib/types/ai-proposal';
 
 /**
  * The card the orchestrator streams on the assistant message. `status` is always

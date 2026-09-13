@@ -12,9 +12,10 @@ import { escapeXmlText } from '$lib/utils/xml';
 import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 
 export { OVERFETCH_MULTIPLIER, RRF_K } from './config';
-// The wiki layer fuses its pages with the same algorithm and the same constants as the
-// chunk layer it sits on — one implementation, reached through this barrel.
-export { reciprocalRankFusion } from './rank';
+// The query embedding is the engine's own door for its consumers (the chatbot profile's
+// shared per-turn vector), so no consumer reaches into `embed.ts` by file.
+export { generateEmbedding } from './embed';
+export type { RankedChunk, RetrievalResult } from './types';
 
 import { generateEmbedding } from './embed';
 import { fuseAndRank } from './rank';
@@ -99,7 +100,7 @@ export async function retrieve(
 	const requestedTiers = new Set(opts.tiers);
 
 	// Reuse a caller-supplied vector when present (lets a chatbot turn embed the user
-	// message ONCE and share it with both this retrieve and the llmwiki search). The
+	// message ONCE and share it across every lane and tool that retrieves). The
 	// 'done' event still fires — marked `reused` — so the pipeline trace stays intact.
 	const embedStart = performance.now();
 	onEvent && emit(onEvent, 'embed', 'active', { startOffsetMs: Math.round(embedStart - emitOrigin) });
@@ -297,18 +298,28 @@ const MAX_CONTEXT_CHARS = 16_000;
  * prompt is for, and neither measure substitutes for the other.
  */
 export function formatContextForPrompt(result: RetrievalResult, maxChars = MAX_CONTEXT_CHARS): string {
-	if (result.chunks.length === 0) return '';
+	return formatContextChunks(result.chunks.slice(0, contextChunkCut(result, maxChars)));
+}
 
-	const parts: string[] = [];
+/**
+ * How many of the result's chunks, in rank order, fit the prompt's size cap — the index at
+ * which `formatContextForPrompt` stops. Equal to `chunks.length` when nothing is cut; the
+ * turn trace records the cut so a dropped chunk shows as considered, not included.
+ */
+export function contextChunkCut(result: RetrievalResult, maxChars = MAX_CONTEXT_CHARS): number {
 	let totalLen = 0;
-
 	for (let i = 0; i < result.chunks.length; i++) {
-		const c = result.chunks[i];
-		const part = `[${i + 1}] ${escapeXmlText(c.documentTitle)}\n${escapeXmlText(c.content)}`;
-		if (totalLen + part.length > maxChars) break;
-		parts.push(part);
-		totalLen += part.length;
+		totalLen += formatContextChunk(result.chunks[i], i).length;
+		if (totalLen > maxChars) return i;
 	}
+	return result.chunks.length;
+}
 
-	return parts.join('\n\n---\n\n').replace(CREDENTIAL_RE, '[REDACTED]');
+function formatContextChunk(c: RetrievalResult['chunks'][number], index: number): string {
+	return `[${index + 1}] ${escapeXmlText(c.documentTitle)}\n${escapeXmlText(c.content)}`;
+}
+
+function formatContextChunks(chunks: RetrievalResult['chunks']): string {
+	if (chunks.length === 0) return '';
+	return chunks.map(formatContextChunk).join('\n\n---\n\n').replace(CREDENTIAL_RE, '[REDACTED]');
 }

@@ -112,7 +112,7 @@ Combine vector similarity with graph traversal for best results:
 
 > **Illustrative only — not the shipped code.** The snippets below (Implementation, Entity Linking, Community Detection, LangChain.js Integration) are a reference design, not the live pipeline. Concrete deltas from reality:
 > - The live API surface is `generateText` + `Output.object(jsonSchema(...))` (AI SDK v6) — `generateObject` is deprecated. Provider resolution is `getActiveProvider` / `getVisionProvider` from `ai/index.ts`, not a `providers.chat` / `providers.embeddings` object.
-> - Embeddings are Google Gemini `gemini-embedding-001` (see `config.ts`), not `mistral-embed`. The system prompt is `SYSTEM_PROMPT` from `config.ts`, not `aiConfig.systemPrompt` / `aiConfig.models.chat`.
+> - Embeddings are Google Gemini `gemini-embedding-001` (see `config.ts`), not `mistral-embed`. The system prompt is composed from the surface's profile (`ai/profile/`), not `aiConfig.systemPrompt` / `aiConfig.models.chat`.
 > - `@toon-format/toon`, `nanoid`, and `@langchain/*` are **not** dependencies. LangChain.js is not used.
 > - Live graph queries live in `graph/rag/queries.ts` — tenant-scoped `:Chunk` / `:Entity` nodes keyed by `ownerId`, not the `:Document` / `:Entity {name}` model shown here. See the Tenancy note below the Performance section and [layered-rag.md](./layered-rag.md#graph-tenancy-neo4j).
 

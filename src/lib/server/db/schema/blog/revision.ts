@@ -3,8 +3,8 @@
  * Revisions are never modified, only created. Rendered HTML is cached at save
  * time. `search_vector` is an app-populated (NOT generated) tsvector written on
  * insert in `createRevision()` with a per-locale `regconfig` — Neon rejects the
- * non-immutable multi-field/per-locale expression in a generated column (42P17),
- * so it mirrors `retrieval.llmwiki_page`. The GIN index below makes `@@` queries fast.
+ * non-immutable multi-field/per-locale expression in a generated column (42P17).
+ * The GIN index below makes `@@` queries fast.
  */
 
 import { sql } from 'drizzle-orm';

@@ -25,6 +25,7 @@ import type { Chat } from '@ai-sdk/svelte';
 import { untrack } from 'svelte';
 import { browser } from '$app/environment';
 import { CSRF_HEADER } from '$lib/api';
+import type { TurnSummary } from '$lib/types/turn-trace';
 
 export type ChatPhase = 'closed' | 'open' | 'minimized';
 
@@ -44,14 +45,43 @@ interface StoredMessage {
 	id: string;
 	role: string;
 	content: string;
+	/** The assistant message's parts as streamed (tool parts included); null on older rows. */
+	parts?: { type: string }[] | null;
 }
 
-function toUiMessages(rows: StoredMessage[]): ChatMessages {
-	return rows.map((m) => ({
-		id: m.id,
-		role: m.role,
-		parts: [{ type: 'text' as const, text: m.content }],
-	})) as unknown as ChatMessages;
+/** What `GET /api/ai/conversations/[id]` answers: the rows plus one summary per recorded turn. */
+export interface StoredConversation {
+	messages: StoredMessage[];
+	turns?: TurnSummary[];
+}
+
+/**
+ * Rehydrate a stored thread into the SDK's message shape. A recorded turn's summary rides on
+ * its assistant message as `metadata.trace` — the same key the live stream fills — so the
+ * citation chips render on reload exactly as they did live.
+ */
+function toUiMessages(conversation: StoredConversation): ChatMessages {
+	const turns = new Map((conversation.turns ?? []).map((t) => [t.messageId, t]));
+	return conversation.messages.map((m) => {
+		const turn = turns.get(m.id);
+		return {
+			id: m.id,
+			role: m.role,
+			parts: m.parts?.length ? m.parts : [{ type: 'text' as const, text: m.content }],
+			...(turn
+				? {
+						metadata: {
+							trace: {
+								outcome: turn.outcome,
+								activations: turn.activations,
+								citations: turn.citations,
+								grounding: turn.cited.length ? [{ id: 'catalog', ran: true, items: turn.cited }] : [],
+							},
+						},
+					}
+				: {}),
+		};
+	}) as unknown as ChatMessages;
 }
 
 class ChatbotSession {
@@ -72,6 +102,13 @@ class ChatbotSession {
 	 * kept here because the SDK reports a mid-stream `error` frame through `onError` — the
 	 * panel reads this before `chat.error`. Cleared by the next send and by a new chat. */
 	lastError = $state<string | null>(null);
+	/**
+	 * A page shows the thread in place of the dock (the chatbot showcase's example): the
+	 * dock and the bubble stay out of the way, `open()` readies the thread without docking
+	 * it, and a finished answer is read on the page, not flagged unread. A host fact, not a
+	 * thread state — `reset()` leaves it alone and the host's release clears it.
+	 */
+	embedded = $state(false);
 
 	#userId: string | undefined;
 	#loadingChat = false;
@@ -153,10 +190,21 @@ class ChatbotSession {
 		}
 	}
 
-	/** Open (or restore) the panel; loads the instance and, if resuming, its messages. */
+	/** A page renders the live thread itself. Returns the release the host calls on unmount. */
+	attachEmbeddedHost(): () => void {
+		this.embedded = true;
+		return () => {
+			this.embedded = false;
+		};
+	}
+
+	/**
+	 * Open (or restore) the panel; loads the instance and, if resuming, its messages. With an
+	 * embedded host on the page the thread is readied in place and the dock stays closed.
+	 */
 	async open(): Promise<void> {
 		if (!browser) return;
-		this.phase = 'open';
+		if (!this.embedded) this.phase = 'open';
 		this.answerReady = false;
 		const chat = await this.ensureChat();
 		if (chat) await this.#resumeMessagesIfNeeded(chat);
@@ -175,7 +223,7 @@ class ChatbotSession {
 
 	/** Ctrl+J: closed→open, open→minimized, minimized→open. Never destroys. */
 	toggle(): void {
-		if (this.phase === 'open') this.minimize();
+		if (this.phase === 'open' && !this.embedded) this.minimize();
 		else void this.open();
 	}
 
@@ -210,6 +258,9 @@ class ChatbotSession {
 		if (this.conversationId) body.conversationId = this.conversationId;
 		if (route) body.pageRouteId = route;
 		chat.sendMessage({ text }, { body });
+		// A thread started on an embedding page is alive once the visitor leaves it: parked,
+		// so the sidebar indicator and the bubble offer it back.
+		if (this.embedded && this.phase === 'closed') this.phase = 'minimized';
 	}
 
 	/** Abort the in-flight response (the composer's Stop). The tokens received so far stay. */
@@ -219,11 +270,11 @@ class ChatbotSession {
 	}
 
 	/** Adopt an existing conversation from the history list. */
-	async adoptConversation(id: string, rows: StoredMessage[]): Promise<void> {
+	async adoptConversation(id: string, conversation: StoredConversation): Promise<void> {
 		const chat = await this.ensureChat();
 		if (!chat) return;
 		this.conversationId = id;
-		chat.messages = toUiMessages(rows);
+		chat.messages = toUiMessages(conversation);
 		this.answerReady = false;
 		this.#persistPointer();
 	}
@@ -270,21 +321,22 @@ class ChatbotSession {
 				return;
 			}
 			const { data } = await res.json();
-			chat.messages = toUiMessages(data.messages ?? []);
+			chat.messages = toUiMessages({ messages: data.messages ?? [], turns: data.turns ?? [] });
 		} catch {
 			// keep the (empty) live thread; the pointer survives for a later retry
 		}
 	}
 
-	/** Flag `answerReady` when a stream finishes while the panel isn't open. Runs in a
-	 * standalone effect scope so it works with no component mounted (cross-group). */
+	/** Flag `answerReady` when a stream finishes while the panel isn't open (and no page is
+	 * showing the thread). Runs in a standalone effect scope so it works with no component
+	 * mounted (cross-group). */
 	#watchStream(): void {
 		this.#stopWatcher?.();
 		this.#stopWatcher = $effect.root(() => {
 			let prev: string | undefined;
 			$effect(() => {
 				const status = this.chat?.status;
-				if (prev === 'streaming' && status === 'ready' && this.phase !== 'open') {
+				if (prev === 'streaming' && status === 'ready' && this.phase !== 'open' && !this.embedded) {
 					this.answerReady = true;
 				}
 				prev = status;

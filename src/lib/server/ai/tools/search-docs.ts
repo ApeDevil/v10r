@@ -87,7 +87,7 @@ export function createSearchDocsTool(locale: Locale, sink?: CatalogSink, options
 				},
 				required: ['query'],
 			}),
-			execute: async ({ query, limit }) => {
+			execute: async ({ query, limit }, { toolCallId }) => {
 				try {
 					const q = typeof query === 'string' ? query.trim() : '';
 					if (!q) return { results: [], error: 'query must be a non-empty string' };
@@ -139,7 +139,7 @@ export function createSearchDocsTool(locale: Locale, sink?: CatalogSink, options
 						};
 					});
 
-					if (surfaced.length > 0) sink?.record(surfaced);
+					if (surfaced.length > 0) sink?.record(surfaced, toolCallId);
 
 					return { results };
 				} catch (err) {

@@ -1,7 +1,8 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { createId } from '../id';
+import type { TurnTrace } from '$lib/types/turn-trace';
 import { db } from '../index';
-import { conversation, conversationStep, message, type RetrievalEvent, toolCall } from '../schema/ai/conversation';
+import { conversation, message, type StoredMessagePart } from '../schema/ai/conversation';
+import { modelCall, toolCall, turn } from '../schema/ai/turn';
 
 /** Create a new conversation. `surface` is stamped once here from the orchestrator's
  *  resolved surface (chatbot/deskbot); omitted for the non-persisted rag-demo. */
@@ -81,9 +82,15 @@ export async function saveMessages(
 	});
 }
 
-/** Update message content (used to backfill pre-inserted assistant messages). */
-export async function updateMessageContent(messageId: string, content: string) {
-	await db.update(message).set({ content }).where(eq(message.id, messageId));
+/**
+ * Backfill a pre-inserted assistant message with the answer as streamed: its text and, when the
+ * turn produced any, its parts (tool parts included) — what a reloaded thread renders.
+ */
+export async function updateMessageContent(messageId: string, content: string, parts?: StoredMessagePart[] | null) {
+	await db
+		.update(message)
+		.set(parts === undefined ? { content } : { content, parts })
+		.where(eq(message.id, messageId));
 }
 
 /** Update conversation title and touch updatedAt. Auth-scoped. */
@@ -94,59 +101,107 @@ export async function updateConversationTitle(id: string, userId: string, title:
 		.where(and(eq(conversation.id, id), eq(conversation.userId, userId)));
 }
 
-/** Persist a tool call record. */
-export async function saveToolCall(data: {
-	messageId: string;
-	toolName: string;
-	args: Record<string, unknown>;
-	result?: Record<string, unknown>;
-	status: 'pending' | 'success' | 'error';
-	errorMessage?: string;
-}) {
-	const id = createId.toolCall();
-	const [row] = await db
-		.insert(toolCall)
-		.values({ id, ...data })
-		.returning();
-	return row;
-}
+/**
+ * Persist a turn's trace in one transaction: the `ai.turn` row, one `ai.model_call` row per
+ * provider request and one `ai.tool_call` row per tool execution. Insert-only — a turn is
+ * written once, when it finishes (`onConflictDoNothing` makes a retried flush a no-op).
+ * Auth-scoped through the conversation: a trace never lands on a thread the user does not own.
+ */
+export async function saveTurnTrace(trace: TurnTrace, userId: string): Promise<void> {
+	if (!trace.conversationId) return;
+	const conversationId = trace.conversationId;
+	await db.transaction(async (tx) => {
+		const [conv] = await tx
+			.select({ id: conversation.id })
+			.from(conversation)
+			.where(and(eq(conversation.id, conversationId), eq(conversation.userId, userId)))
+			.limit(1);
+		if (!conv) return;
 
-/** Persist a conversation step (one per AI SDK step). */
-export async function saveConversationStep(data: {
-	conversationId: string;
-	messageId: string;
-	stepIndex: number;
-	stepType: 'initial' | 'tool-result' | 'continue';
-	inputTokens: number;
-	outputTokens: number;
-	toolCallIds?: string[];
-	providerId?: string | null;
-	modelId?: string | null;
-	durationMs?: number | null;
-	retrievalEvents?: RetrievalEvent[] | null;
-	/** Denormalized surface for per-surface usage analytics (chatbot/deskbot). */
-	surface?: 'chatbot' | 'deskbot' | null;
-}) {
-	const id = createId.conversationStep();
-	await db.insert(conversationStep).values({
-		id,
-		...data,
-		toolCallIds: data.toolCallIds ?? null,
-		providerId: data.providerId ?? null,
-		modelId: data.modelId ?? null,
-		durationMs: data.durationMs ?? null,
-		retrievalEvents: data.retrievalEvents ?? null,
-		surface: data.surface ?? null,
+		await tx
+			.insert(turn)
+			.values({
+				messageId: trace.messageId,
+				conversationId,
+				userId,
+				surface: trace.surface,
+				requestId: trace.requestId,
+				profileVersion: trace.profileVersion,
+				outcome: trace.outcome,
+				errorKind: trace.errorKind,
+				timings: trace.timings,
+				awareness: trace.awareness,
+				activations: trace.activations,
+				blocks: trace.blocks,
+				grounding: trace.grounding,
+				history: trace.history,
+				toolset: trace.toolset,
+				attempts: trace.attempts,
+				citations: trace.citations,
+				proposalId: trace.proposalId,
+			})
+			.onConflictDoNothing();
+
+		if (trace.modelCalls.length > 0) {
+			await tx
+				.insert(modelCall)
+				.values(
+					trace.modelCalls.map((call) => ({
+						id: call.id,
+						conversationId,
+						messageId: trace.messageId,
+						attemptIndex: call.attemptIndex,
+						stepIndex: call.stepIndex,
+						surface: trace.surface,
+						inputTokens: call.inputTokens,
+						outputTokens: call.outputTokens,
+						providerId: call.providerId,
+						modelId: call.modelId,
+						durationMs: call.durationMs,
+						startOffsetMs: call.startOffsetMs ?? null,
+						request: call.request,
+						response: call.response,
+						outcome: call.outcome,
+					})),
+				)
+				.onConflictDoNothing();
+		}
+
+		if (trace.toolExecutions.length > 0) {
+			await tx
+				.insert(toolCall)
+				.values(
+					trace.toolExecutions.map((exec) => ({
+						id: exec.id,
+						messageId: trace.messageId,
+						modelCallId: exec.modelCallId ?? null,
+						toolCallId: exec.toolCallId,
+						toolName: exec.toolName,
+						ordinal: exec.ordinal,
+						args: (exec.input && typeof exec.input === 'object' ? exec.input : { value: exec.input }) as Record<
+							string,
+							unknown
+						>,
+						result: exec.output ?? null,
+						status: exec.status,
+						errorMessage: exec.errorMessage ?? null,
+						durationMs: exec.durationMs ?? null,
+						startOffsetMs: exec.startOffsetMs ?? null,
+						compaction: exec.compaction ?? null,
+					})),
+				)
+				.onConflictDoNothing();
+		}
 	});
 }
 
-/** Recalculate cached token totals on a conversation from its steps. */
+/** Recalculate cached token totals on a conversation from its model calls. */
 export async function refreshConversationTokens(conversationId: string) {
 	await db
 		.update(conversation)
 		.set({
-			totalInputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.inputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
-			totalOutputTokens: sql`(SELECT COALESCE(SUM(${conversationStep.outputTokens}), 0) FROM ${conversationStep} WHERE ${conversationStep.conversationId} = ${conversationId})`,
+			totalInputTokens: sql`(SELECT COALESCE(SUM(${modelCall.inputTokens}), 0) FROM ${modelCall} WHERE ${modelCall.conversationId} = ${conversationId})`,
+			totalOutputTokens: sql`(SELECT COALESCE(SUM(${modelCall.outputTokens}), 0) FROM ${modelCall} WHERE ${modelCall.conversationId} = ${conversationId})`,
 			updatedAt: new Date(),
 		})
 		.where(eq(conversation.id, conversationId));

@@ -27,7 +27,6 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Which retriever produced a result | `RetrieverId` (field `retriever`) | `RetrieverLane` (field `lane`) |
 | Which corpus a chunk came from | `RetrievalCorpus` | `RetrievalLayer` |
 | Which build emitted a telemetry sample | `TelemetryOrigin` | `TelemetryLane` |
-| Which corpus a context probe searched | `ProbeCorpus` | `ProbeLane` |
 | Anonymous vs authenticated analytics | `lane` | — |
 | A sanitized client-facing projection | `Public<Concept>` | `<Concept>DTO` |
 | The member area | `account` | `app`, `me` |
@@ -75,11 +74,44 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The admin's generation probe against one provider/model | `connection test` (`ai/connection-test.ts`) | `health check`, `ping`, `verifyConnection` (that one is the showcases' backend probe) |
 | An optimistic-concurrency counter on a row | `version` (`mcp.demo_state.version`, `ai.provider_connection.version`) | `revision` — which is a *stored snapshot row* (`blog.revision`, `desk` `fileRevision`), never a counter |
 | AES-256-GCM over a caller-supplied key | `encryptAesGcm` / `decryptAesGcm` (`security/aes-gcm.ts`) | `notifications/crypto.ts` `encrypt`/`decrypt` |
-| Catalog rows put in the prompt before generation for a "where is…" question | `navigation grounding` (`wantsNavigation`, `<catalog-results>`, probe gate `catalog_nav`) | `nav search`, `pre-search`, `catalog prefetch` |
+| Catalog rows put in the prompt before generation for a "where is…" question | `navigation grounding` (`wantsNavigation`, `<catalog-results>`, the `navigation` capability) | `nav search`, `pre-search`, `catalog prefetch` |
 | What the assembly hands the tools so they do not redo its work | `seed` (`docsSeed`, `catalogSeed` on `RetrievalToolOptions`) | `cache`, `prefetch`, `warm` |
 | The rule that a tool-mounted turn's last allowed step answers | `answerOnLastStep` (`ai/policy/step-budget.ts`) | `finalStepNoTools`, `forceAnswer` |
 | A turn's failure as the client receives it | `error frame` before any content (`aiErrorFrameText`, text `[kind] message`); `turnError` metadata after content (`TurnError` in `$lib/types/ai-error.ts`) | `streamError`, `partialError`, an `error` frame after text |
 | What the status row says the live turn is doing | `turn progress` (`turnProgress` → `retrieving` · `catalog` · `generating`, `awaitingAnswer`; `composites/chatbot/turn-progress.ts`) | `typing indicator`, `loading label`, `phase` (taken by the panel's `open`/`minimized`) |
+| One user message and the assistant message it produced | `turn` (`ai.turn`, keyed by the assistant `message_id`) | `exchange`, `round`, `request` (an HTTP request, or a provider request) |
+| The recorded account of a turn — live-partial, persisted, or a recorded demo | `turn trace` (`TurnTrace`, `TurnTraceSnapshot`, `$lib/types/turn-trace.ts`; `createTurnRecorder` in `ai/trace/recorder.ts` is its one author) | `pipeline events`, `telemetry` (the usage columns alone), `probe` (a second run) |
+| One provider request of a turn (attempt × step) | `model call` (`ai.model_call`, `ModelCallRecord`, `callStart`/`callEnd`) | `conversation_step`, `conversationStep`, bare `step` |
+| One tool `execute` of a turn | `tool execution` (`ToolExecutionRecord`; the row stays `ai.tool_call`) | `tool run`, `invocation` |
+| One provider of the turn's rotation, tried in order | `attempt` (`AttemptRecord`, `attemptStart`/`attemptEnd`; `streaming-turn.ts` `TurnAttempt`) | `retry`, `fallback` on its own |
+| What the assistant is told about the user's situation (page, desk panels, layout, workspace, granted scopes, locale, visibility ceiling) | `awareness` (`TurnAwareness`; site-awareness and desk-awareness are its two surface profiles) | `environment` (collides with `$env` and the runtime environment), `context` on its own |
+| Retrieved or indexed material a turn draws on | `grounding` (`GroundingSource` per corpus/index, `GroundingItem` per candidate, `GroundingSourceId`) | `knowledge`, `evidence`, `lane` per corpus |
+| Where an item stands relative to the answer | `TurnItemState`: `available` → `considered` → `included` → `executed` → `cited` — inclusion never claims influence | `used`, `relevant`, `chosen` |
+| The showcase section that opens one recorded turn | `turn inspector` (`/showcases/ai/{chatbot,deskbot}#orchestration`, `TurnInspector.svelte`, `TurnTree`/`TurnItemDetail`/`TurnSourcePicker`, the pure projection `$lib/showcases/ai/inspector.ts`) | `probe`, `x-ray`, `galaxy`, `context orchestration` (the old second-run section), `replay`/`TracePlayer` (the retired frame scrubber) |
+| The proposal a deskbot turn stopped on, as its owner reads it back | `turn proposal` (`TurnProposal` on the trace's read side, resolved by `proposalId` through `resolveTurnProposal`; the inspector's `proposal` group) | `plan` on its own (the model's `desk_propose_plan` input), `approval` (the door, not the record) |
+| One turn as the inspector reads it — the trace plus the question, the answer and the profile | `InspectedTurn` | `TurnFixture`, `ReplayTurn` |
+| Where a shown turn came from | `provenance` (`TurnProvenance.kind`: `authored` · `recorded` · `live`; rendered by `ProvenanceBadge` — one chip and, where the reader is owed it, one sentence of gloss (`showcase_ai_prov_*`); never inferred) | `source` on its own (the spine's old `recorded`/`live` flag), `demo`, a `mode chip` for a turn |
+| Renaming every id of a recorded turn to a `demo_` id before it becomes a fixture | `scrubTurn` (`$lib/showcases/ai/inspector.ts`; the recording script and the fixture test share it) | `anonymize`, `sanitize`, `redact` (the retention pass that empties bodies) |
+| The upper description of one surface's assistant: identity + capabilities | `profile` (`AssistantProfile`, `ai/profile/<surface>.ts`, `PROFILES` by surface); its client-safe projection is the `profile manifest` (`AssistantProfileManifest`, `GET /api/ai/profiles/[surface]`) | `persona`, `agent config`, `system prompt` for the whole |
+| Who an assistant is and the rules it always follows — the `<role>` + `<instructions>` block | `identity` (`AssistantIdentity`, `identityBlock()`; the shared tail is `shared-rules.ts`) | `SYSTEM_PROMPT`, `DESK_SYSTEM_PROMPT`, `persona` |
+| One thing an assistant can do — tools, when-to-use guidance, activation rule, grounding lane, guide, verifier | `capability` (`AssistantCapability`, `ai/capabilities/<id>.ts`, `CapabilityId`; `TOOL_MANIFEST` names each tool's) | `skill`, `plugin`, `feature`, `tool group` |
+| A capability's cache-stable when-to-use text vs. its on-demand detail | `guidance` (the `<id>-guidance` block, present whenever the capability is active) vs. `guide` (injected when its rule fires: `planning`, `page-abstention`, `tool-degrade`) | `instructions` for either (that is the identity's tag), `hint`, `tail` |
+| Composing one turn from a profile: activations → grounding lanes → prompt in cache order → tools → step budget | `composeTurn` (`ai/profile/profile.ts`; `TurnInput` in, `TurnComposition` out, `TurnState` shared by the capabilities) | `assembleChatbotContext`, `buildSystemPrompt`, `buildSystemPromptBlocks`, `createDeskTools`, `buildRetrievalTools`, `stepsForScopes` |
+| A per-turn rule that decided what the turn could do | `activation` (`Activation` with `id: CapabilityId` — a capability's `activates(turn)` verdict; a lane may revise it) | `ActivationId`, `gate` (the approval gate keeps that word), `flag` |
+| One block of the assembled system prompt, with its text | `PromptBlock` (`id` from the one `PromptBlockId` union, `capability` = its owner, `section`: identity · guidance · grounding · awareness · guide, `stable`) | `AssembledBlock`, `SystemPromptBlock`, `PromptOutline` (viewer-only, retiring with the spine viewer) |
+| A deterministic fact tying the answer to a grounding item | `citation` (`CitationRecord`, `match`: path · quote · provider_source · unsurfaced) | `verdict` (kept inside `verifyCatalogCitations`), `reference`, `paraphrase` (the hash-verified match of the retired wiki verifier) |
+| The three-column picture of one turn — sources, context and model calls, tools — drawn from recorded relations only | `turn graph` (`TurnGraph`, `turnGraph()`, `$lib/showcases/ai/turn-graph.ts` — the projection; `turn-graph-layout.ts` — its geometry; `TurnGraphCanvas` / `TurnGraphList` / `TurnGraphCard` / `TurnGraphGroupNode` under the AI showcase's `_components/turn-graph/`) | `map`, `galaxy`, `x-ray`, `flow` on its own |
+| One of the turn graph's three fixed columns | `column` (`TurnGraphColumn`: `sources` · `context` · `tools`) | `layer`, `lane`, `swimlane` |
+| What an edge of the turn graph stands for | `TurnGraphEdgeKind`: `containment` (where a record sits) vs. the data-flow kinds `inclusion` · `request` · `execution` · `result` · `citation` | `link`, `relation` on its own, `invocation` |
+| A turn-graph node drawn with its visible members inside it | `group` (`TurnGraphLayout.groups`, `TurnGraphGroupNode`; a card's `variant`: `card` · `header` · `row`) | `frame` (a stream frame), `container`, `cluster` |
+| Where a turn-graph edge travels so it crosses no card | `gutter` (the space between two columns), `track` (one vertical run in a gutter), `rail` (a column's shared line for its own edges), `detour` (the run beneath the columns) — `routeEdges`, `EdgeRoute` | `lane` (retrieval and analytics own it), `channel`, `bus` in code |
+| A page that shows the Vely thread in place of the dock | `embedded host` (`chatbotSession.embedded`, `attachEmbeddedHost()`; the chatbot showcase's `ChatbotExample`) | `inline chat`, `panel mode`, a fourth `ChatPhase` |
+| The conversation projection the dock and the embedded host share | `ChatThread` (`composites/chatbot/ChatThread.svelte`) — the dock around it stays `Chatbot` | `ChatView`, `MessageList` |
+| The inspector tracking the thread's newest turn | `follow` (`TurnInspectorState.follow`, `followLatest()`, `observeThread()`) | `auto-select`, `live mode`, `sync` |
+| Where the live turn stands on the inspector | `InspectorStatus`: `recorded` · `idle` · `streaming` · `loading` · `ready` · `error` | `state` (the rune), `phase` (the panel's) |
+| The tool calls whose results a provider request carried | `toolResultIds` (`ModelCallRequest`) — absent means not recorded, empty means none | `historyCount` as a proxy, `toolResults` |
+| A chunk's place in its document, as a turn records it | `chunkPlace()` (`ai/capabilities/chunk-place.ts`): `parentId` · `level` (`ChunkLevel`) · `position` · `contentHash` · `path`; `retriever` (`RetrieverId`) per item, `retrievers` per source | `ancestry`, `depth` (a number), `tiers` on the source, `lineage` |
+| The deterministic, ingest-built map of one collection's corpus — what it covers, without loading it | `corpus map` (`retrieval.corpus_map`, `getCorpusMap` / `countCorpusMaps` in `db/retrieval/queries.ts`; the chatbot's is the `project-map` capability, injected as `<project-overview>`) | `llmwiki` (the LLM-compiled pointer layer, retired 2026-09-12 — it had no writer and every fresh user's wiki was empty), `llmwiki_page`, `overview page`, `LlmwikiPage`, `loadOverview`, `get_llmwiki_pages`, `get_source_chunks` |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 
@@ -125,7 +157,7 @@ share. Each is spoken for:
 
 - **`lane`** — the two documented two-lane product models (analytics: anonymous vs
   authenticated; search: static vs server) and nothing else. Retrieval uses `RetrieverId`,
-  telemetry uses `TelemetryOrigin`, probes use `ProbeCorpus`.
+  telemetry uses `TelemetryOrigin`, the trace uses `GroundingSourceId`.
 - **`layer`** — the seven-layer abstraction hierarchy, the component layer order, and the UI
   z-order stack (`state/layer-stack.svelte.ts`). Not a retrieval or AI-pipeline term.
 - **`surface`** — which part of the product something belongs to. `ai_surface`,
@@ -145,6 +177,15 @@ share. Each is spoken for:
   URL or graph path.
 - **`tier`** — a rung in a graded scale: a pattern record's depth (`deep`/`light`) and a
   cache level (`local`/`shared`/`origin`). Not a synonym for layer, lane or surface.
+- **`capability`** — a shared word, one concept, three subjects, always qualified:
+  `ModelCapabilities` (what a **model** can do), the product capabilities under
+  `docs/stack/capabilities/`, and `AssistantCapability` (what an **assistant** can do — the
+  unit a profile is composed from, `ai/capabilities/`). A bare `Capability` is never right.
+- **`profile`** — the per-surface variant of a shared thing: an *assistant* profile
+  (`AssistantProfile`, the top), the *retrieval* profile (which corpus and tiers a surface
+  asks the shared kernel for) and the *location-awareness* profile (site- vs desk-awareness)
+  are the same word because each is one surface's reading of one mechanism; the last two are
+  now capabilities inside the first.
 
 ## Discriminator columns
 
@@ -152,7 +193,7 @@ Three words, three jobs. The schema already follows this in most tables; new tab
 
 | Column | Means | Examples |
 |---|---|---|
-| `kind` | This row is a fundamentally different *shape* of thing | `auth.grant.kind`, `retrieval.llmwiki_page.kind` |
+| `kind` | This row is a fundamentally different *shape* of thing | `auth.grant.kind`, `ai.agent_proposal_step.kind`, `dbops.operation.kind` |
 | `type` | A closed classification of an otherwise uniform row | `notifications.type`, `desk.file.type` |
 | `category` | Taxonomy or grouping, often user-visible | `analytics.bot_hits.category`, pattern-registry `category` |
 

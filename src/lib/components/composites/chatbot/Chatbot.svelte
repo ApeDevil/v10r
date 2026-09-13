@@ -2,21 +2,15 @@
 import { MediaQuery } from 'svelte/reactivity';
 import { page } from '$app/state';
 import { apiFetch } from '$lib/api';
-import ChunkView from '$lib/components/composites/citation/ChunkView.svelte';
-import type { CatalogSource, SourceChunk } from '$lib/components/composites/citation/citation-types';
-import { Button } from '$lib/components/primitives/button';
-import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { layerStack } from '$lib/state/layer-stack.svelte';
 import { useSurface } from '$lib/styles/elevation';
-import { type AiErrorKind, parseAiErrorKind, type TurnError } from '$lib/types/ai-error';
 import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
-import ChatMessage from './ChatMessage.svelte';
-import { awaitingAnswer, turnProgress } from './turn-progress';
+import ChatThread from './ChatThread.svelte';
 
 interface Conversation {
 	id: string;
@@ -25,7 +19,8 @@ interface Conversation {
 }
 
 // The live thread lives in the module singleton (survives minimize + cross-group
-// AppShell remount). This component is a pure projection of it.
+// AppShell remount). This component is the DOCK around it — header, history, composer;
+// the conversation itself is `ChatThread`, shared with the chatbot showcase's example.
 const session = chatbotSession;
 
 // Relative elevation — the docked assistant panel sits one rung above the page plane.
@@ -38,47 +33,9 @@ let pendingDeleteId: string | null = $state(null);
 let inputValue = $state('');
 
 let panelEl: HTMLElement | undefined = $state();
-let scrollContainer: HTMLDivElement | undefined = $state();
-
-// Source-chunk viewer: one Drawer instance, opened with the clicked message's drilled
-// chunks. Responsive: side panel on desktop, bottom sheet on mobile.
-let viewerOpen = $state(false);
-let viewerChunks = $state<SourceChunk[]>([]);
 const isDesktop = new MediaQuery('(min-width: 768px)', true);
 
 const isLoading = $derived(session.isStreaming);
-
-// Honest progress: the status row stays up until the first word arrives (the assistant frame
-// opens ~0.5 s in; the answer's first token comes seconds later) and names what the turn is
-// doing from the trace the server streams on the message.
-const messages = $derived(session.chat?.messages ?? []);
-const showStatusRow = $derived(isLoading && awaitingAnswer(messages));
-const statusLabel = $derived.by(() => {
-	const progress = turnProgress(messages[messages.length - 1]);
-	if (progress === 'generating') return m.ai_chat_status_thinking();
-	if (progress === 'catalog') return m.ai_chat_status_catalog();
-	if (progress === 'retrieving') return m.ai_chat_status_docs();
-	return null;
-});
-
-// The turn's failure, if any: a mid-stream `error` frame reaches the session's `onError`
-// (`lastError`); a refused request lands on `chat.error`. Both carry either the server's
-// `[kind] message` frame text or a wire body with an error CODE (rate_limited /
-// ai_unavailable) — digits kept OR'd for transport-level failures.
-const errorText = $derived(session.lastError ?? session.chat?.error?.message ?? null);
-function errorKindOf(text: string): AiErrorKind | null {
-	const kind = parseAiErrorKind(text);
-	if (kind) return kind;
-	if (text.includes('rate_limited') || text.includes('429')) return 'rate_limit';
-	if (text.includes('ai_unavailable') || text.includes('503')) return 'unavailable';
-	return null;
-}
-// A `[kind]`-prefixed text is the server's classification of a PROVIDER failure (the
-// model's 429, not this user's); the guard's own refusal comes as a wire code instead.
-// The two rate limits get different words: only one of them is the user's doing.
-function rateLimitCopy(text: string): string {
-	return parseAiErrorKind(text) === 'rate_limit' ? m.ai_chat_error_provider_limited() : m.ai_chat_error_rate_limited();
-}
 
 // Site-awareness disclosure: the human label of the page Vely is currently aware of.
 // Null on private/unknown routes → the chip hides (the honest "not reading this page" signal).
@@ -95,21 +52,6 @@ const loginHref = $derived(
 	`${localizeHref('/auth/login')}?returnTo=${encodeURIComponent(page.url.pathname + page.url.search)}`,
 );
 
-function openChunks(chunks: SourceChunk[]) {
-	viewerChunks = chunks;
-	viewerOpen = true;
-}
-
-// Auto-scroll to the latest message (only while visibly open).
-$effect(() => {
-	const len = session.chat?.messages.length ?? 0;
-	if (len && scrollContainer && session.phase === 'open') {
-		requestAnimationFrame(() => {
-			if (scrollContainer) scrollContainer.scrollTop = scrollContainer.scrollHeight;
-		});
-	}
-});
-
 // Load the history list when the panel opens. Gated: the sign-in gate's
 // contract is that the failing request never fires — an anonymous visitor
 // opening the panel must not emit a known-401 to /api/ai/conversations.
@@ -124,25 +66,6 @@ $effect(() => {
 	}
 });
 
-// Minimize when the user follows one of Vely's links (same-tab, primary-button,
-// same-origin) so the destination page renders unobstructed. Fired synchronously
-// BEFORE navigation; we do NOT preventDefault — SvelteKit's <a> nav proceeds. Attached
-// as a real listener (not an inline handler) to keep the messages container a plain,
-// non-interactive scroll region.
-function onMessagesClick(e: MouseEvent) {
-	if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-	const a = (e.target as HTMLElement | null)?.closest('a[href]') as HTMLAnchorElement | null;
-	if (!a || a.target === '_blank' || a.origin !== location.origin) return;
-	session.minimize();
-}
-
-$effect(() => {
-	const el = scrollContainer;
-	if (!el) return;
-	el.addEventListener('click', onMessagesClick);
-	return () => el.removeEventListener('click', onMessagesClick);
-});
-
 // The mobile bottom sheet behaves modally (covers the page) — register it as a
 // dismissal layer. The desktop dock is a persistent workspace panel and never registers.
 $effect(() => {
@@ -152,10 +75,9 @@ $effect(() => {
 	}
 });
 
-// Esc minimizes (never destroys) when focus is inside the open panel. If the sources
-// drawer is open, leave it to the drawer's own Esc handling.
+// Esc minimizes (never destroys) when focus is inside the open panel.
 function onWindowKeydown(e: KeyboardEvent) {
-	if (e.key !== 'Escape' || viewerOpen) return;
+	if (e.key !== 'Escape') return;
 	if (session.phase !== 'open' || !panelEl?.contains(document.activeElement)) return;
 	// The mobile sheet is a registered dismissal layer — yield to anything stacked above.
 	if (!isDesktop.current && !layerStack.wasTop('chatbot-sheet')) return;
@@ -182,7 +104,7 @@ async function loadConversation(conv: Conversation) {
 		const res = await fetch(`/api/ai/conversations/${conv.id}`);
 		if (!res.ok) return;
 		const { data } = await res.json();
-		await session.adoptConversation(conv.id, data.messages);
+		await session.adoptConversation(conv.id, data);
 		showSidebar = false;
 	} catch {
 		// silently fail
@@ -334,108 +256,10 @@ function submitMessage() {
 			</div>
 		{/if}
 
-		<!-- Chat area -->
+		<!-- Chat area. Minimize when the user follows one of Vely's links so the destination
+		     page renders unobstructed (the thread reports the click before navigation). -->
 		<div class="flex flex-1 flex-col overflow-hidden">
-			<!-- Messages -->
-			<div bind:this={scrollContainer} class="flex-1 overflow-y-auto">
-				{#if messages.length > 0}
-					<div class="flex flex-col gap-1 py-2">
-						{#each messages as message (message.id)}
-							<ChatMessage
-								role={message.role as 'user' | 'assistant'}
-								parts={message.parts}
-								catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } })
-									.metadata?.catalogSources}
-								sourceChunks={(message as { metadata?: { sourceChunks?: SourceChunk[] } }).metadata
-									?.sourceChunks}
-								turnError={(message as { metadata?: { turnError?: TurnError } }).metadata?.turnError}
-								onviewchunks={openChunks}
-							/>
-						{/each}
-
-						{#if showStatusRow}
-							<div class="flex items-center gap-3 px-4 py-3" role="status" aria-live="polite">
-								<div class="chatbot-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-									<span class="i-lucide-bot h-4 w-4"></span>
-								</div>
-								<div class="chatbot-typing flex items-center gap-2">
-									<span class="flex gap-1">
-										<span class="chatbot-dot"></span>
-										<span class="chatbot-dot"></span>
-										<span class="chatbot-dot"></span>
-									</span>
-									{#if statusLabel}
-										<span class="text-fluid-xs text-muted">{statusLabel}</span>
-									{/if}
-								</div>
-							</div>
-						{/if}
-					</div>
-				{:else if gated}
-					<!-- Pre-emptive sign-in gate: the discovery surface stays open, the failing
-					     request never fires. Lock icon (not message-circle) so the state reads
-					     "action needed", not "no messages yet". -->
-					<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-						<span class="i-lucide-lock h-10 w-10 text-muted"></span>
-						<p class="text-fluid-sm text-fg">{m.ai_chat_signin_gate()}</p>
-						<Button
-							variant="primary"
-							size="lg"
-							class="w-full max-w-xs justify-center"
-							href={loginHref}
-							onclick={() => session.markReopenIntent()}
-						>
-							{m.ai_chat_signin_action()}
-						</Button>
-						<!-- AI Act Art. 50(1) first-interaction disclosure — kept in the gated
-						     state too; the obligation doesn't wait for sign-in. -->
-						<div class="mt-1 max-w-xs rounded-md border border-border px-3 py-2 text-left">
-							<p class="text-fluid-sm text-fg">{m.ai_disclosure_notice()}</p>
-							<p class="mt-1 text-fluid-xs text-muted">{m.ai_disclosure_no_personal_data()}</p>
-						</div>
-					</div>
-				{:else}
-					<div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-						<span class="i-lucide-message-circle h-10 w-10 text-muted"></span>
-						<p class="text-fluid-sm text-muted">{m.ai_chat_empty_prompt()}</p>
-						<!-- AI Act Art. 50(1) first-interaction disclosure. Deliberately NOT
-						     text-muted micro-copy: the obligation is to inform "clearly and
-						     distinguishably", and the Commission Guidelines call out tiny,
-						     low-contrast text as failing that. Keep it text-fg and boxed. -->
-						<div class="mt-1 max-w-xs rounded-md border border-border px-3 py-2 text-left">
-							<p class="text-fluid-sm text-fg">{m.ai_disclosure_notice()}</p>
-							<p class="mt-1 text-fluid-xs text-muted">{m.ai_disclosure_no_personal_data()}</p>
-						</div>
-					</div>
-				{/if}
-			</div>
-
-			<!-- Sign-in / error display. Gate precedence: a live 401 sets BOTH the gate and
-			     chat.error, so the auth branch must win. With no messages the empty-state
-			     gate already carries the CTA; this alert covers only a thread that lost its
-			     session mid-conversation (anon users can never have messages). -->
-			{#if gated}
-				{#if (session.chat?.messages.length ?? 0) > 0}
-					<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
-						<span class="font-medium">{m.errors_auth_session_expired()}</span>
-						<a class="underline" href={loginHref} onclick={() => session.markReopenIntent()}>
-							{m.ai_chat_signin_action()}
-						</a>
-					</div>
-				{/if}
-			{:else if errorText}
-				{@const kind = errorKindOf(errorText)}
-				<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
-					<span class="font-medium">{m.ai_chat_error_heading()}</span>
-					{#if kind === 'rate_limit'}
-						{rateLimitCopy(errorText)}
-					{:else if kind === 'unavailable' || kind === 'timeout'}
-						{m.ai_chat_error_unavailable()}
-					{:else}
-						{m.ai_chat_error_generic()}
-					{/if}
-				</div>
-			{/if}
+			<ChatThread visible={session.phase === 'open'} onfollowlink={() => session.minimize()} />
 
 			<!-- Gated: the chip slot carries a real, focusable sign-in link — it doubles as
 			     the aria-describedby target for the disabled input below. The site-awareness
@@ -479,29 +303,9 @@ function submitMessage() {
 	</div>
 </aside>
 
-<!-- Source-chunk viewer (one instance). Side panel on desktop, bottom sheet on mobile. -->
-<Drawer bind:open={viewerOpen} side={isDesktop.current ? 'right' : 'bottom'} title="Sources">
-	<div class="flex flex-col gap-3">
-		{#each viewerChunks as chunk (chunk.chunkId)}
-			<ChunkView {chunk} />
-		{/each}
-	</div>
-</Drawer>
-
 <style>
 	.chatbot-icon-btn:hover {
 		background-color: color-mix(in srgb, var(--color-muted) 15%, transparent);
-	}
-
-	.chatbot-avatar {
-		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
-		color: var(--color-fg);
-	}
-
-	.chatbot-error {
-		background-color: color-mix(in srgb, var(--color-error-fg) 10%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-error-fg) 20%, transparent);
-		color: var(--color-error-fg);
 	}
 
 	.chatbot-sidebar {
@@ -518,29 +322,5 @@ function submitMessage() {
 
 	.chatbot-delete-btn:focus-visible {
 		opacity: 1;
-	}
-
-	/* Typing indicator dots */
-	.chatbot-typing {
-		padding: 8px 12px;
-		border-radius: 8px;
-		background-color: color-mix(in srgb, var(--color-muted) 12%, transparent);
-	}
-
-	.chatbot-dot {
-		display: block;
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background-color: var(--color-muted);
-		animation: chatbot-bounce 1.4s infinite ease-in-out both;
-	}
-
-	.chatbot-dot:nth-child(1) { animation-delay: -0.32s; }
-	.chatbot-dot:nth-child(2) { animation-delay: -0.16s; }
-
-	@keyframes chatbot-bounce {
-		0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-		40% { transform: scale(1); opacity: 1; }
 	}
 </style>

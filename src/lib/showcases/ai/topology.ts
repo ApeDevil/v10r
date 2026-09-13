@@ -5,9 +5,11 @@
  * Conventions (per `$lib/showcases/mcp/registry-viz.ts`):
  * - Pure data + pure functions. No `$lib/server/*`, no `$env/*`, no Paraglide —
  *   human copy lives in `./labels.ts`; this module ships ids and refs only.
- * - Everything here is either mirrored from published sources (`TOOL_MANIFEST`,
- *   `RETRIEVAL_STEPS`) or hand-mirrored and PINNED by `topology.drift.test.ts`
- *   (proposal states/transitions, step budgets, guard stages, prompt blocks).
+ * - Everything here is either mirrored from a published source (`TOOL_MANIFEST`) or
+ *   hand-mirrored and PINNED by `topology.drift.test.ts` (proposal states/transitions,
+ *   step budgets, guard stages). Per-turn facts are not mirrored at all: both pages
+ *   render a turn's own persisted `TurnTrace` (`$lib/types/turn-trace.ts`) through the
+ *   inspector projection (`./inspector.ts`).
  *
  * AI_TOPOLOGY_VERSION is a drift signal for the tests and the page footer — NOT a
  * compat mechanism. Nothing may branch on it (no-backward-compat house rule).
@@ -15,10 +17,50 @@
 
 import { type DeskToolScope, TOOL_MANIFEST, type ToolRisk } from '$lib/types/ai-tools';
 import type { AiSurface } from '$lib/types/db-enums';
-import type { RetrievalStepId } from '$lib/types/retrieval-trace';
-import type { AiLayerId, GuardStageId, PromptBlockId } from '$lib/types/turn-trace';
+import type { RetrievalStepStatus } from '$lib/types/retrieval-trace';
 
 export const AI_TOPOLOGY_VERSION = 1;
+
+/**
+ * Per-turn runtime status vocabulary — `RetrievalStepStatus` plus `not-taken`.
+ *
+ * `skipped` means the ENGINE declined (e.g. relevance gate); `not-taken` means a
+ * HUMAN declined — a proposal rejected or left to expire. Rendering that arm as
+ * `skipped` would claim the system decided, which inverts the deskbot page's central
+ * claim. Orthogonal to the BUILD axis (`live | dormant | planned` on the static
+ * topology): a dormant layer simply never leaves `pending`.
+ */
+export type TraceStatus = RetrievalStepStatus | 'not-taken';
+
+/** Spine layer identifiers — the bands of the `SurfaceFlow` stack, in request order. */
+export type AiLayerId =
+	| 'client'
+	| 'route'
+	| 'guard'
+	| 'orchestrator'
+	| 'compaction'
+	| 'prompt'
+	| 'retrieval'
+	| 'harness'
+	| 'gate'
+	| 'stream'
+	| 'persist';
+
+/** The four `guardAiRequest()` stages, in execution order. */
+export type GuardStageId = 'auth' | 'configured' | 'rate-limit' | 'budget';
+
+/**
+ * Per-turn state of one guard stage. The guard is pre-stream and emits nothing on
+ * success — the absence of an error IS the pass signal, so a live trace derives
+ * these purely from the HTTP outcome (status + `error.code`).
+ */
+export interface GuardStageState {
+	id: GuardStageId;
+	status: TraceStatus;
+	/** Set only on the stage that rejected the request. */
+	httpStatus?: number;
+	code?: string;
+}
 
 /** BUILD axis — mirrors the repo's wired-vs-scaffold honesty map (knowledge-base.md). */
 export type AiBuildStatus = 'live' | 'dormant' | 'planned';
@@ -108,7 +150,7 @@ export const AI_LAYERS: readonly AiLayer[] = [
 		surfaces: ['chatbot', 'deskbot'],
 		status: 'live',
 		shape: 'single',
-		source: 'src/lib/server/ai/context/system-prompt.ts',
+		source: 'src/lib/server/ai/profile/profile.ts',
 		doc: '/docs/blueprint/ai/site-awareness',
 	},
 	{
@@ -142,7 +184,7 @@ export const AI_LAYERS: readonly AiLayer[] = [
 		shape: 'branch',
 		source: 'src/lib/server/ai/chat-orchestrator.ts',
 		sourceBySurface: {
-			chatbot: 'src/lib/server/ai/citations/drill.ts',
+			chatbot: 'src/lib/server/ai/capabilities/catalog.ts',
 			deskbot: 'src/routes/api/ai/proposals/[id]/approve/+server.ts',
 		},
 		doc: '/docs/blueprint/ai/harness-lens',
@@ -210,38 +252,6 @@ export const GUARD_STAGES: readonly GuardStageDescriptor[] = [
 	{ id: 'budget', check: 'checkUserBudget(user.id)', httpStatus: 429, code: 'rate_limited' },
 ];
 
-/** One band of the prompt tape. `conditional` names the gating predicate verbatim. */
-export interface PromptBlockDescriptor {
-	id: PromptBlockId;
-	conditional?: string;
-	/** True for blocks above the cache boundary (stable prefix, prompt-cache friendly). */
-	cacheStable: boolean;
-}
-
-/**
- * Emission order per surface — mirrored from `buildSystemPrompt()` (`context/system-prompt.ts`),
- * the prompt constants (`ai/config.ts`), and the orchestrator's inline
- * `<project-overview>` / `<catalog-map>` / `<current-page>` injection. Pinned by text-scan.
- */
-export const PROMPT_BLOCKS: Record<AiSurface, readonly PromptBlockDescriptor[]> = {
-	chatbot: [
-		{ id: 'role', cacheStable: true },
-		{ id: 'completion', cacheStable: true, conditional: 'hasTools' },
-		{ id: 'project-overview', cacheStable: true },
-		{ id: 'catalog-map', cacheStable: true },
-		{ id: 'current-page', cacheStable: false, conditional: 'pageRouteId' },
-	],
-	deskbot: [
-		{ id: 'role', cacheStable: true },
-		{ id: 'completion', cacheStable: true, conditional: 'hasTools' },
-		{ id: 'planning', cacheStable: true, conditional: 'shouldRequirePlan' },
-		{ id: 'permissions', cacheStable: false },
-		{ id: 'workspace', cacheStable: false, conditional: 'activeWorkspace' },
-		{ id: 'desk-context', cacheStable: false, conditional: 'panelContext' },
-		{ id: 'desk-layout', cacheStable: false, conditional: 'deskLayout' },
-	],
-};
-
 /** Step budgets — mirrored literals, pinned to `ai/config.ts` by the drift test. */
 export const STEP_BUDGETS = {
 	chatbot: 3,
@@ -287,32 +297,6 @@ export function toolCounts(): { chatbot: number; deskbot: number; union: number;
 	const deskbot = TOOL_MANIFEST.filter((d) => d.surface === 'deskbot').length;
 	return { chatbot, deskbot, union: chatbot + deskbot, shared: 0 };
 }
-
-/**
- * Registration map: which spine band a firing pipeline step lights up.
- * Exhaustive Record — a new `RetrievalStepId` is a compile error (the `PHASE_OF` technique).
- */
-export const STEP_LAYER: Record<RetrievalStepId, AiLayerId> = {
-	embed: 'retrieval',
-	'tier-1': 'retrieval',
-	'tier-2': 'retrieval',
-	'tier-3': 'retrieval',
-	rank: 'retrieval',
-	context: 'prompt',
-	generate: 'stream',
-	'llmwiki:overview': 'retrieval',
-	'llmwiki:search': 'retrieval',
-	'llmwiki:context': 'prompt',
-	'chunks:drill': 'retrieval',
-	'llmwiki:verify': 'gate',
-	'system-docs': 'retrieval',
-	catalog: 'retrieval',
-};
-
-/** Registration map: which spine band a tool call lights up. Pinned to the manifest by test. */
-export const TOOL_LAYER: Record<string, AiLayerId> = Object.fromEntries(
-	TOOL_MANIFEST.map((d) => [d.name, d.surface === 'chatbot' ? 'retrieval' : 'harness'] as const),
-);
 
 /** Proposal lifecycle states — mirrored from `proposalStatusEnum`, order included; pinned. */
 export const PROPOSAL_STATES = [

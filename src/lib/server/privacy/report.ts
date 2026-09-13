@@ -32,6 +32,7 @@ import { and, count, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { getPreferences } from '$lib/server/db/preferences';
 import { conversation } from '$lib/server/db/schema/ai/conversation';
+import { turn } from '$lib/server/db/schema/ai/turn';
 import { userEvents } from '$lib/server/db/schema/analytics';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { comment } from '$lib/server/db/schema/blog/comment';
@@ -92,7 +93,7 @@ export interface PersonalDataReport {
 	 * not inline in this summary — claiming Art-20 portability for a tally would
 	 * be a false claim about what the user actually received.
 	 */
-	ai: Section<{ conversationCount: number; totalTokens: number }>;
+	ai: Section<{ conversationCount: number; turnCount: number; totalTokens: number }>;
 	/** Counts only — see the note on `ai`. */
 	desk: Section<{ workspaceCount: number; fileCount: number }>;
 	notifications: Section<{ telegramLinked: boolean; discordLinked: boolean }>;
@@ -249,14 +250,19 @@ export async function collectUserData(
 		}),
 		// portable: false — a count is not the data. See the `ai` field comment.
 		settle('consent', false, async () => {
-			const [row] = await db
-				.select({
-					value: count(),
-					totalTokens: sql<number>`COALESCE(SUM(${conversation.totalInputTokens} + ${conversation.totalOutputTokens}), 0)`,
-				})
-				.from(conversation)
-				.where(eq(conversation.userId, userId));
-			return { conversationCount: row?.value ?? 0, totalTokens: row?.totalTokens ?? 0 };
+			const [[row], [turns]] = await Promise.all([
+				db
+					.select({
+						value: count(),
+						totalTokens: sql<number>`COALESCE(SUM(${conversation.totalInputTokens} + ${conversation.totalOutputTokens}), 0)`,
+					})
+					.from(conversation)
+					.where(eq(conversation.userId, userId)),
+				// Each recorded turn holds the prompt as assembled and the tool I/O for 30 days
+				// (`ai-turn-bodies`), then its outline — worth counting as its own tally.
+				db.select({ value: count() }).from(turn).where(eq(turn.userId, userId)),
+			]);
+			return { conversationCount: row?.value ?? 0, turnCount: turns?.value ?? 0, totalTokens: row?.totalTokens ?? 0 };
 		}),
 		settle('consent', false, async () => {
 			const [workspaceCount, fileCount] = await Promise.all([

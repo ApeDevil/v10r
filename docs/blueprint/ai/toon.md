@@ -2,7 +2,7 @@
 
 Compact serialization format optimized for LLM input. Reduces tokens by 30-60% compared to JSON.
 
-> **Status: aspirational — not yet adopted.** `@toon-format/toon` is **not** a project dependency (not in `package.json`, not installed). No code imports `encode` / `decode`. The live prompt encoding is a hand-rolled "TOON-ish" layout in `src/lib/server/llmwiki/wiki-format.ts` (`formatHitsForPrompt` / `formatLlmwikiContext`) with no external TOON library — the header comment notes the library "can be swapped later once `@toon-format/toon` is pinned." The `encode()`-based examples below illustrate the format, not the codebase as it stands today.
+> **Status: aspirational — not adopted.** `@toon-format/toon` is **not** a project dependency (not in `package.json`, not installed). No code in the repo encodes TOON today: the retrieval context blocks (`<retrieval-context>`, `<catalog-results>`, `<project-overview>`) are plain text formatted by their capabilities, and the hand-rolled "TOON-ish" wiki formatter went with the retired pointer layer (2026-09-12). The `encode()`-based examples below illustrate the format only.
 
 ---
 
@@ -51,7 +51,7 @@ users[2]{id,name,role}:
 "@toon-format/toon": "^0.x"
 ```
 
-Until then, prompt encoding stays hand-rolled in `wiki-format.ts`. See [development-environment.md](../../foundation/development-environment.md) for the installation workflow.
+Until then, prompt context stays plain text. See [development-environment.md](../../foundation/development-environment.md) for the installation workflow.
 
 ---
 

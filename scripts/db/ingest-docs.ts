@@ -6,7 +6,7 @@
  *
  *   podman exec -it v10r bun run scripts/db/ingest-docs.ts
  *
- * Design (mirrors scripts/db/seed-llmwiki.ts + scripts/db/catalog-sync.ts):
+ * Design (mirrors scripts/db/catalog-sync.ts):
  *   - Hand-rolls its OWN Neon pool + Gemini embedder from process.env — the app's
  *     retrieval `ingest()` / `embed.ts` import `$lib`/`$env` and cannot run under Bun.
  *   - Reuses the Vite-free `planChunks` (the SAME hierarchical section/paragraph
@@ -24,8 +24,8 @@
  * Produces hierarchical parent(section)+child(paragraph) chunks so retrieval tier-1
  * (hybrid vector+BM25) AND tier-2 (parent-child) both work for the docs corpus, with
  * deterministic heading-breadcrumb context prefixes (per-chunk LLM contextual-prep is
- * deferred — it can't fit the chat-gen quota). The llmwiki page compiler and the
- * tier-3 entity graph are still deferred for docs.
+ * deferred — it can't fit the chat-gen quota). The tier-3 entity graph is still deferred
+ * for docs. The corpus map (`retrieval.corpus_map`) is rebuilt on every run.
  */
 
 import { createHash } from 'node:crypto';
@@ -126,10 +126,10 @@ const RETRIEVAL_ONLY_BLOCK = new Set<string>([
 	// different surface. Kept for /docs rationale, held from the retrieval corpus to avoid stale-contract answers.
 	'docs/blueprint/ai/desk-integration.md',
 	// Planning blueprint: documents the retrieval "showcase-everything" design, most of which is
-	// DESIGNED-not-built (llmwiki compile, step-back, reranker, eval, :DEPENDS_ON). If ingested the
+	// DESIGNED-not-built (step-back, reranker, eval, :DEPENDS_ON). If ingested the
 	// chatbot would assert these unbuilt features as live. Renders at /docs for humans; held from the retrieval corpus.
 	'docs/blueprint/ai/knowledge-base.md',
-	// Companion roadmap to knowledge-base.md: the detailed reranker / step-back / llmwiki-compile
+	// Companion roadmap to knowledge-base.md: the detailed reranker / step-back
 	// specs. Entirely DESIGNED-not-built (no retrieval source code exists for any of it yet). Same
 	// hazard as the blueprint — held from the retrieval corpus so the chatbot can't assert these specs as shipped.
 	'docs/blueprint/ai/rag-roadmap.md',
@@ -137,11 +137,6 @@ const RETRIEVAL_ONLY_BLOCK = new Set<string>([
 	// chatbot half of location-awareness). DESIGNED-not-built (4-lens cross-pollination, 2026-06-27).
 	// Held from the retrieval corpus so the chatbot can't assert site-awareness as a live feature. Renders at /docs.
 	'docs/blueprint/ai/site-awareness.md',
-	// Retrieval-observability redesign for the rag-chat showcase (waterfall + unified trace + tier focus
-	// filter + Step/Timing views). DESIGNED-not-built (16-agent task force, 2026-06-27); describes a
-	// contract rewrite (startOffsetMs, phase axis, registry) and 6 unfixed bugs. Held from the retrieval corpus so the
-	// chatbot can't assert the new observability surface or contract as live. Renders at /docs.
-	'docs/blueprint/ai/retrieval-observability.md',
 ]);
 
 interface DocFile {
@@ -323,43 +318,23 @@ async function insertDoc(doc: DocFile): Promise<number> {
 	return totalChunks;
 }
 
-const SYSTEM_OVERVIEW_ID = 'lwp_docs_overview';
-const OVERVIEW_TITLE = 'Velociraptor (v10r) — Documentation Map';
-const OVERVIEW_TLDR =
-	'High-level map of v10r, a full-stack reference & test-sandbox. Lists the documentation corpus by section (foundation, blueprint, stack) so broad questions can find the right area, then drill into a specific doc.';
-const OVERVIEW_TAGS = ['overview', 'v10r', 'docs'];
+const PROJECT_MAP_ID = 'map_project_docs';
+const PROJECT_MAP_TITLE = 'Velociraptor (v10r) — Documentation Map';
 
 /**
- * Write the system-owned overview page — the high-level anchor the chatbot injects for
- * broad questions ("what is v10r", "how do I use it"). Deterministic body (no LLM), one
- * embedding. Idempotent: the partial unique index keys on (collection_id) WHERE
- * kind='overview', so any prior overview for this collection is replaced first.
+ * Write the project docs corpus map — the high-level anchor the chatbot injects as
+ * `<project-overview>` for broad questions ("what is v10r", "how do I use it"). A
+ * deterministic body (no LLM, no embedding): one row per collection, replaced in place.
  */
-async function writeSystemOverview(files: DocFile[]): Promise<void> {
+async function writeProjectMap(files: DocFile[]): Promise<void> {
 	const body = buildOverviewBody(files);
-	const [embedding] = await embedAll([`${OVERVIEW_TITLE}\n${OVERVIEW_TLDR}\n${OVERVIEW_TAGS.join(' ')}`]);
-
 	await db.execute(sql`
-		DELETE FROM retrieval.llmwiki_page WHERE kind = 'overview' AND collection_id = ${PROJECT_DOCS_COLLECTION_ID}
+		INSERT INTO retrieval.corpus_map (id, user_id, collection_id, title, body, built_at)
+		VALUES (${PROJECT_MAP_ID}, ${SYSTEM_DOCS_USER_ID}, ${PROJECT_DOCS_COLLECTION_ID}, ${PROJECT_MAP_TITLE}, ${body}, now())
+		ON CONFLICT (collection_id) DO UPDATE
+			SET id = EXCLUDED.id, user_id = EXCLUDED.user_id, title = EXCLUDED.title, body = EXCLUDED.body, built_at = now()
 	`);
-	await db.execute(sql`
-		INSERT INTO retrieval.llmwiki_page (
-			id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,
-			frontmatter, embedding, search_vector, source_hash, source_count,
-			compiled_at, compiled_by_model, stale
-		)
-		VALUES (
-			${SYSTEM_OVERVIEW_ID}, ${SYSTEM_DOCS_USER_ID}, ${PROJECT_DOCS_COLLECTION_ID}, 'overview', 'overview',
-			${OVERVIEW_TITLE}, ${OVERVIEW_TLDR}, ${sha256(OVERVIEW_TLDR)}, ${body},
-			${`{${OVERVIEW_TAGS.join(',')}}`}::text[], '{}'::jsonb,
-			${vecLiteral(embedding)}::vector,
-			to_tsvector('english',
-				${OVERVIEW_TITLE} || ' ' || ${OVERVIEW_TLDR} || ' ' || ${body} || ' ' || ${OVERVIEW_TAGS.join(' ')}
-			),
-			${sha256(body)}, ${files.length}, now(), 'ingest-docs', false
-		)
-	`);
-	console.log(`[ingest-docs] system overview page written (${files.length} docs mapped).`);
+	console.log(`[ingest-docs] project docs corpus map written (${files.length} docs mapped).`);
 }
 
 async function main() {
@@ -430,7 +405,7 @@ async function main() {
 		await db.execute(sql`UPDATE retrieval.document SET deleted_at = now() WHERE id = ${r.id}`);
 	}
 
-	await writeSystemOverview(files);
+	await writeProjectMap(files);
 
 	console.log(
 		`[ingest-docs] Done. ${inserted} new, ${updated} updated, ${skipped} unchanged, ` +

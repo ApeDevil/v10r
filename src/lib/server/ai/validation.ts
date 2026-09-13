@@ -110,19 +110,6 @@ export const ChatbotRequestSchema = v.object({
 });
 
 /**
- * `POST /api/ai/context-probe` — the showcase context x-ray (`/showcases/ai/*#probe`).
- * Runs the SAME gates + retrieval + prompt assembly as a real turn (shared modules)
- * but never calls the LLM. `toolScopes` only shapes the deskbot report (which tools
- * mount, whether the plan governor fires) — the probe cannot execute anything.
- */
-export const ContextProbeRequestSchema = v.object({
-	surface: v.picklist(['chatbot', 'deskbot']),
-	query: v.pipe(v.string(), v.minLength(1), v.maxLength(2000)),
-	pageRouteId: PageRouteId,
-	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(5))),
-});
-
-/**
  * `POST /api/ai/deskbot` — the in-desk operator surface (agentic, mutating, plan-gated).
  * Carries the shared envelope + the desk-mutation fields. Accepts NO retrieval/site
  * fields. See `docs/blueprint/ai/surfaces.md`.

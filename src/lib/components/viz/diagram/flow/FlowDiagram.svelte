@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { Edge, Node, NodeTypes } from '@xyflow/svelte';
+import type { DefaultEdgeOptions, Edge, EdgeTypes, FitViewOptions, Node, NodeTypes } from '@xyflow/svelte';
 import type { Component } from 'svelte';
 import { onMount } from 'svelte';
 import { cn } from '$lib/utils/cn';
@@ -9,9 +9,36 @@ interface Props {
 	nodes: Node[];
 	edges: Edge[];
 	nodeTypes?: NodeTypes;
+	edgeTypes?: EdgeTypes;
 	fitView?: boolean;
+	fitViewOptions?: FitViewOptions;
 	nodesDraggable?: boolean;
 	nodesConnectable?: boolean;
+	/** Reader settings — the defaults are Svelte Flow's own, so a diagram is unchanged unless it asks. */
+	elementsSelectable?: boolean;
+	nodesFocusable?: boolean;
+	preventScrolling?: boolean;
+	zoomOnScroll?: boolean;
+	panOnScroll?: boolean;
+	zoomOnDoubleClick?: boolean;
+	minZoom?: number;
+	maxZoom?: number;
+	defaultEdgeOptions?: DefaultEdgeOptions;
+	/**
+	 * Controlled selection: when defined, the `selected` flag of every node follows it and
+	 * the flow's own selection is switched off — a click, Enter/Space on a focused node,
+	 * Escape and a click on the pane report through `onselect`. A node with
+	 * `selectable: false` stays a bystander.
+	 */
+	selectedId?: string | null;
+	onselect?: (id: string | null) => void;
+	/** A CSS height (`min(60vh, 640px)`, `32rem`, a number of px); absent keeps the 400px rule. */
+	height?: number | string;
+	/** Refit the viewport whenever this changes (a structural change: nodes added, the canvas resized). */
+	fitKey?: unknown;
+	/** The flow's controls, or which of their buttons to show (`showZoom`, `showFitView`, `showLock`); `false` hides them. */
+	controls?: boolean | { showZoom?: boolean; showFitView?: boolean; showLock?: boolean };
+	background?: boolean;
 	aspect?: ChartContainerVariants['aspect'];
 	ariaLabel?: string;
 	class?: string;
@@ -21,9 +48,26 @@ let {
 	nodes: nodesProp,
 	edges: edgesProp,
 	nodeTypes: nodeTypesProp,
+	edgeTypes,
 	fitView = true,
+	fitViewOptions,
 	nodesDraggable = true,
 	nodesConnectable = false,
+	elementsSelectable = true,
+	nodesFocusable = true,
+	preventScrolling = true,
+	zoomOnScroll = true,
+	panOnScroll = false,
+	zoomOnDoubleClick = true,
+	minZoom = 0.5,
+	maxZoom = 2,
+	defaultEdgeOptions,
+	selectedId,
+	onselect,
+	height,
+	fitKey,
+	controls = true,
+	background = true,
 	aspect = 'auto',
 	ariaLabel = 'Flow diagram',
 	class: className,
@@ -33,26 +77,76 @@ let internalNodes = $state.raw<Node[]>([]);
 let internalEdges = $state.raw<Edge[]>([]);
 let ready = $state(false);
 
+const controlled = $derived(selectedId !== undefined);
+const heightStyle = $derived(height === undefined ? undefined : typeof height === 'number' ? `${height}px` : height);
+
+// Controlled selection reads the gestures itself and never lets the flow's store select:
+// its selection-change signal keeps bookkeeping between evaluations and echoed a node the
+// parent had just cleared back as selected. The gestures are the ones the flow would read —
+// a click, Enter/Space on a focused node, Escape, a click on the pane (`onnodeclick` never
+// fires for the keyboard, so the key handler reads the node element's own id).
+const selectableIds = $derived(new Set(nodesProp.filter((n) => n.selectable !== false).map((n) => n.id)));
+
+function report(id: string | null) {
+	if (id !== selectedId) onselect?.(id);
+}
+
+function onNodeClick({ node }: { node: Node }) {
+	if (controlled && selectableIds.has(node.id)) report(node.id);
+}
+
+function onPaneClick() {
+	if (controlled) report(null);
+}
+
+function onKeyDown(event: KeyboardEvent) {
+	if (!controlled) return;
+	if (event.key === 'Escape') {
+		report(null);
+		return;
+	}
+	if (event.key !== 'Enter' && event.key !== ' ') return;
+	const target = event.target as HTMLElement;
+	if (target.closest('button, a, input, textarea, select, [contenteditable]')) return;
+	const id = target.closest<HTMLElement>('.svelte-flow__node')?.dataset.id;
+	if (!id || !selectableIds.has(id)) return;
+	event.preventDefault();
+	report(id);
+}
+
 // Dynamically loaded components (avoid SSR import of @xyflow/svelte)
 let SvelteFlow: Component<Record<string, unknown>> | undefined = $state();
 let Background: Component<Record<string, unknown>> | undefined = $state();
 let Controls: Component<Record<string, unknown>> | undefined = $state();
+let FlowFit: Component<{ fitKey: unknown; options?: FitViewOptions }> | undefined = $state();
 let mergedNodeTypes = $state<NodeTypes>({});
 
 $effect(() => {
-	internalNodes = nodesProp;
+	internalNodes = controlled
+		? nodesProp.map((n) => ({
+				...n,
+				selected: n.id === selectedId,
+				selectable: false,
+				class: cn(n.class, selectableIds.has(n.id) && 'flow-selectable'),
+			}))
+		: nodesProp;
 });
 $effect(() => {
 	internalEdges = edgesProp;
 });
 
 onMount(async () => {
-	const [xyflow, flowNodeModule] = await Promise.all([import('@xyflow/svelte'), import('./FlowNode.svelte')]);
+	const [xyflow, flowNodeModule, flowFitModule] = await Promise.all([
+		import('@xyflow/svelte'),
+		import('./FlowNode.svelte'),
+		import('./FlowFit.svelte'),
+	]);
 	await import('@xyflow/svelte/dist/style.css');
 
 	SvelteFlow = xyflow.SvelteFlow;
 	Background = xyflow.Background;
 	Controls = xyflow.Controls;
+	FlowFit = flowFitModule.default;
 
 	const defaultNodeTypes = { flow: flowNodeModule.default } as NodeTypes;
 	mergedNodeTypes = nodeTypesProp ? { ...defaultNodeTypes, ...nodeTypesProp } : defaultNodeTypes;
@@ -61,7 +155,7 @@ onMount(async () => {
 });
 </script>
 
-<figure class={cn(chartContainerVariants({ aspect }), 'diagram-container', className)}>
+<figure class={cn(chartContainerVariants({ aspect }), 'diagram-container', className)} style:height={heightStyle}>
 	<figcaption class="sr-only">{ariaLabel}</figcaption>
 
 	{#if !ready || !SvelteFlow || !Background || !Controls}
@@ -81,18 +175,42 @@ onMount(async () => {
 			<span class="sr-only">Loading flow diagram</span>
 		</div>
 	{:else}
-		<div class="flow-wrapper visible">
+		<div class="flow-wrapper visible" class:controlled>
 			<SvelteFlow
 				nodes={internalNodes}
 				edges={internalEdges}
 				nodeTypes={mergedNodeTypes}
+				{edgeTypes}
 				{fitView}
+				{fitViewOptions}
 				{nodesDraggable}
 				{nodesConnectable}
+				elementsSelectable={controlled ? false : elementsSelectable}
+				{nodesFocusable}
+				{preventScrolling}
+				{zoomOnScroll}
+				{panOnScroll}
+				{zoomOnDoubleClick}
+				{minZoom}
+				{maxZoom}
+				{defaultEdgeOptions}
+				selectionKey={controlled ? null : undefined}
+				multiSelectionKey={controlled ? null : undefined}
+				deleteKey={controlled ? null : undefined}
+				onnodeclick={controlled ? onNodeClick : undefined}
+				onpaneclick={controlled ? onPaneClick : undefined}
+				onkeydown={controlled ? onKeyDown : undefined}
 				proOptions={{ hideAttribution: true }}
 			>
-				<Background />
-				<Controls />
+				{#if background}
+					<Background />
+				{/if}
+				{#if controls}
+					<Controls {...(typeof controls === 'object' ? controls : {})} />
+				{/if}
+				{#if fitKey !== undefined && FlowFit}
+					<FlowFit {fitKey} options={fitViewOptions} />
+				{/if}
 			</SvelteFlow>
 		</div>
 	{/if}
@@ -206,5 +324,10 @@ onMount(async () => {
 	.flow-wrapper :global(.svelte-flow__handle) {
 		width: 8px;
 		height: 8px;
+	}
+
+	/* The flow marks its own selectable nodes; controlled ones are marked by the wrapper. */
+	.flow-wrapper.controlled :global(.svelte-flow__node.flow-selectable) {
+		cursor: pointer;
 	}
 </style>

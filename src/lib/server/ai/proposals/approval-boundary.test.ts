@@ -78,9 +78,17 @@ describe('toCardSteps / riskTierOf', () => {
 				risk: 'destructive',
 				rationale: '',
 				recovery: 'soft_delete',
+				retentionDays: 30,
 				target: { fileId: 'fil_1', fileType: 'markdown', name: 'Notes', version: 3 },
 			},
-			{ action: 'Create "n"', tool: 'desk_create_spreadsheet', risk: 'create', rationale: '', recovery: 'none' },
+			{
+				action: 'Create "n"',
+				tool: 'desk_create_spreadsheet',
+				risk: 'create',
+				rationale: '',
+				recovery: 'none',
+				retentionDays: null,
+			},
 		]);
 		expect(riskTierOf([{ toolName: 'desk_delete_file', args: {}, action: 'd' }])).toBe('high');
 		expect(riskTierOf([{ toolName: 'desk_rename_file', args: {}, action: 'r' }])).toBe('medium');

@@ -393,11 +393,13 @@ half that decides whether a region is worth moving.
 | blocking | function → Neo4j Aura | Graph tier only, and only when a graph-sourced chunk survived fusion |
 | async | browser → R2 | Assets fetched directly by the browser, never through a function |
 
-**The open question this map raises.** The database is in `eu-central-1` and the function region
-is a Vercel project setting that appears nowhere in this repository — `vercel.json` sets no
-`regions` key, so the project default applies, and Vercel defaults new projects to `iad1`. If
-that is still the setting, every blocking hop above crosses an ocean, twice per page. The probe
-prints this as an open question rather than asserting an answer it cannot see.
+**The question this map raised, answered.** The database is in `eu-central-1`; until
+2026-09-13 the function region was a Vercel project setting that appeared nowhere in this
+repository, and measured (`x-vercel-id: fra1::iad1::…`) it was the default `iad1` — every
+blocking hop above crossed an ocean, twice per page. The region is now declared in
+`svelte.config.js` (adapter `regions: ['fra1']`; route-level `config` exports merge over it), so
+the repository says where the code runs and only the deployment can contradict it. The probe
+still reads `VERCEL_REGION` in situ rather than asserting the declaration.
 
 **Invariants.**
 

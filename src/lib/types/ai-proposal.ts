@@ -25,6 +25,41 @@ export interface ProposalCardTarget {
 	version: number | null;
 }
 
+/**
+ * One proposed step as the PlanCard renders it — the canonical client-side shape, read by
+ * `composites/chatbot/harness-types.ts` and the showcase fixtures. The server's
+ * `ProposedToolCall` carries the `args` object the approve replay runs; it never crosses
+ * to the client. `risk` and `recovery` are server-derived from the tool, never model-authored.
+ */
+export interface ProposalCardStep {
+	action: string;
+	tool: string;
+	risk: 'read' | 'create' | 'write' | 'destructive';
+	rationale: string;
+	recovery: ProposalStepRecovery;
+	/**
+	 * How long the data the recovery leans on is kept — the retention schedule's window for
+	 * the previous revision or the soft-deleted row; null when nothing is retained.
+	 */
+	retentionDays: number | null;
+	/** The reviewed file, for update/rename/delete steps. */
+	target?: ProposalCardTarget;
+}
+
+/**
+ * PlanCard payload — what the orchestrator streams as `message.metadata.harness.proposal`
+ * and what the showcase renders the REAL `PlanCard.svelte` from. `status` is always
+ * `pending` on the wire; in fixtures every value is authored fiction (`demo_` ids).
+ */
+export interface ProposalCardData {
+	id: string;
+	goal: string;
+	steps: ProposalCardStep[];
+	estimatedWrites: number;
+	riskTier: 'low' | 'medium' | 'high';
+	status: ProposalStatus;
+}
+
 /** One executed step's durable outcome — `ai.agent_proposal_step` as the client sees it. */
 export interface ProposalStepReceipt {
 	stepIndex: number;

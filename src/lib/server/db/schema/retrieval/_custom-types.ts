@@ -32,9 +32,9 @@ export const vector = (dimensions: number) =>
  *
  * Two usage modes exist in the codebase, both write-via-SQL (never `toDriver`):
  *  - `retrieval.chunk` uses a single-config `GENERATED ALWAYS` expression (immutable, allowed).
- *  - `retrieval.llmwiki_page` and `blog.revision` are app-populated on insert with a
- *    multi-field / per-locale `to_tsvector(regconfig, …)` expression, because Neon
- *    rejects non-immutable generated expressions (SQLSTATE 42P17).
+ *  - `blog.revision` is app-populated on insert with a per-locale
+ *    `to_tsvector(regconfig, …)` expression, because Neon rejects non-immutable
+ *    generated expressions (SQLSTATE 42P17).
  * Reads return the raw tsvector text; queries use `@@`, not the column value itself.
  */
 export const tsvector = customType<{ data: string; driverData: string }>({

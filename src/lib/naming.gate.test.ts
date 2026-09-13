@@ -46,29 +46,14 @@ const RETIRED: RetiredTerm[] = [
 	{
 		term: 'nRAG',
 		use: 'retrieval',
-		allow: ['docs/naming.md', 'docs/Ref-ToDo.md', 'docs/blueprint/ai/knowledge-base.md'],
+		allow: ['docs/naming.md', 'docs/blueprint/ai/knowledge-base.md'],
 		why: 'naming.md quotes it; Ref-ToDo records the Neo4j label rename; knowledge-base.md is the retirement record',
 	},
-	{
-		term: 'RetrieverLane',
-		use: 'RetrieverId',
-		allow: ['docs/naming.md', 'docs/blueprint/ai/retrieval-observability.md'],
-		why: 'naming.md quotes retired terms; the observability doc carries a dated rename note',
-	},
+	{ term: 'RetrieverLane', use: 'RetrieverId', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{ term: 'TelemetryLane', use: 'TelemetryOrigin', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{ term: 'ProbeLane', use: 'ProbeCorpus', allow: ['docs/naming.md'], why: 'quoted as retired' },
-	{
-		term: 'RetrievalLayer',
-		use: 'RetrievalCorpus',
-		allow: ['docs/naming.md', 'docs/blueprint/ai/retrieval-observability.md'],
-		why: 'naming.md quotes retired terms; the observability doc carries a dated rename note',
-	},
-	{
-		term: 'PIPELINE_REGISTRY',
-		use: 'RETRIEVAL_STEPS',
-		allow: ['docs/blueprint/ai/retrieval-observability.md', 'docs/blueprint/ai/README.md'],
-		why: 'design records quoting the pre-rename contract; both carry the new name beside it',
-	},
+	{ term: 'RetrievalLayer', use: 'RetrievalCorpus', allow: ['docs/naming.md'], why: 'quoted as retired' },
+	{ term: 'PIPELINE_REGISTRY', use: 'RETRIEVAL_STEPS', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{ term: 'NotificationProvider', use: 'DeliveryChannel', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{
 		term: 'NotificationService',
@@ -79,8 +64,92 @@ const RETIRED: RetiredTerm[] = [
 	{
 		term: 'workbench',
 		use: 'dock',
-		allow: ['docs/naming.md', 'docs/Ref-ToDo.md'],
+		allow: ['docs/naming.md'],
 		why: 'naming.md quotes retired terms; Ref-ToDo explains why the Neo4j projection must be re-run',
+	},
+	{
+		term: 'conversation_step',
+		use: 'model_call',
+		allow: ['docs/naming.md', 'scripts/db/rename-conversation-step.ts', 'docs/blueprint/ai/turn-trace.md'],
+		why: 'naming.md quotes retired terms; the plan and the trace doc record the rename; the rename script is the DDL that performs it',
+	},
+	{
+		term: 'conversationStep',
+		use: 'modelCall',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the rename',
+	},
+	// The profile refactor (Phase 2 of docs/ai-ref-plan.md): a turn is composed from its
+	// surface's profile; the old assemblers and factories have one successor.
+	{
+		term: 'assembleChatbotContext',
+		use: 'composeTurn',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	{
+		term: 'buildSystemPrompt',
+		use: 'composeTurn',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	{
+		term: 'createDeskTools',
+		use: "the deskbot capabilities' tools()",
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	{
+		term: 'buildRetrievalTools',
+		use: "the chatbot capabilities' tools()",
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	{
+		term: 'stepsForScopes',
+		use: 'profile.stepBudget',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	{
+		term: 'DESK_SYSTEM_PROMPT',
+		use: 'DESKBOT_PROFILE.identity',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	// The showcase's second-run "context orchestration" probe: the turn inspector opens
+	// persisted turns instead.
+	{
+		term: 'ContextProbeRequestSchema',
+		use: 'the turn inspector over GET /api/ai/conversations/[id]/turns/[messageId]',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	{
+		term: 'ProbeReport',
+		use: 'InspectedTurn',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	{
+		term: 'PROMPT_BLOCKS',
+		use: "a turn's recorded blocks (TurnTrace.blocks)",
+		allow: ['docs/naming.md', 'docs/blueprint/ai/turn-trace.md', 'docs/blueprint/ai/profiles.md'],
+		why: 'naming.md quotes retired terms; the plan and the two design records say what replaced the mirror',
+	},
+	{
+		term: 'liveTurnTrace',
+		use: 'TurnInspectorState.inspect',
+		allow: ['docs/naming.md'],
+		why: 'naming.md quotes retired terms; the plan records the refactor',
+	},
+	// The llmwiki pointer layer (Phase 4 of docs/ai-ref-plan.md, decision D2): it had no
+	// writer, and the one row it served is the corpus map.
+	{
+		term: 'llmwiki',
+		use: 'corpus map (retrieval.corpus_map, the project-map capability)',
+		allow: ['docs/naming.md', 'docs/blueprint/ai/knowledge-base.md', 'scripts/db/rename-llmwiki-page.ts'],
+		why: 'naming.md quotes retired terms; the plan, Ref-ToDo and knowledge-base.md are the retirement record; the rename script is the DDL that performs the retirement',
 	},
 ];
 

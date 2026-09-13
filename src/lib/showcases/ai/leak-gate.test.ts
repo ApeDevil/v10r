@@ -3,7 +3,10 @@
  *
  * Scans the client-bundled showcase modules (`$lib/showcases/ai`) and the public route
  * tree (`showcases/ai/**`) for anything that must never reach a public page:
- * server imports, prompt bodies, abuse thresholds, real UUIDs, real emails.
+ * server imports, the live prompt constants (the recorded fixture carries prompt TEXT on
+ * purpose — decision D1 of `docs/ai-ref-plan.md` — but never imports the constant, which
+ * would make the page a second source of truth), abuse thresholds, real ids (UUIDs and the
+ * `{prefix}_{12 hex}` ids `createId` mints), provider-key shapes, real emails.
  * Also asserts the zero-server invariant: no `+page.server.ts` anywhere under
  * `showcases/ai/` — both pages render entirely from client-safe projections.
  *
@@ -54,12 +57,19 @@ const FORBIDDEN: { label: string; re: RegExp }[] = [
 	// Import syntax only — fixture ANSWER TEXT may legitimately mention the path
 	// (the recorded turn teaches the leak-gate pattern itself).
 	{ label: 'server import ($lib/server)', re: /(?:from\s+['"]|import\s*\(\s*['"])\$lib\/server\b/ },
-	{ label: 'prompt body constant', re: /\b(SYSTEM_PROMPT|DESK_SYSTEM_PROMPT|COMPLETION_BLOCK|PLANNING_BLOCK)\s*[,)=]/ },
+	{
+		label: 'prompt body constant',
+		re: /\b(COMPLETION_GUIDANCE|PLANNING_GUIDE|DATA_BOUNDARY_RULE|CHATBOT_PROFILE|DESKBOT_PROFILE)\s*[,)=]/,
+	},
 	{ label: 'abuse threshold', re: /\b(RATE_LIMIT_MAX|RATE_LIMIT_WINDOW|DAILY_TOKEN_CAP)\b/ },
 	{
 		label: 'real UUID (fixtures must use demo_ ids)',
 		re: /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
 	},
+	// `createId` mints `{prefix}_{12 hex}`; a recorded turn's row ids look exactly like this
+	// until `scrubTurn` renames them.
+	{ label: 'real row id ({prefix}_{12 hex} — scrubTurn renames these)', re: /\b[a-z]{2,4}_[0-9a-f]{12}\b/ },
+	{ label: 'provider key shape', re: /\b(AIza[0-9A-Za-z_-]{30,}|gsk_[0-9A-Za-z]{20,}|sk-[0-9A-Za-z_-]{20,})\b/ },
 	{ label: 'personal email', re: /stas-k@gmx\.de/ },
 ];
 
@@ -97,12 +107,14 @@ describe('ai showcase leak gate', () => {
 	it('the matchers actually fire (guards against a silently dead regex)', () => {
 		const bait = [
 			`import { x } from '$lib/server/ai/config';`,
-			`const SYSTEM_PROMPT = 'you are';`,
+			`const PLANNING_GUIDE = 'you are';`,
 			`if (n > RATE_LIMIT_MAX) return;`,
 			`const id = '550e8400-e29b-41d4-a716-446655440000';`,
+			`messageId: 'msg_a8f3e1b2c4d9'`,
+			`key: 'AIzaSyD-abcdefghijklmnopqrstuvwxyz0123456789'`,
 			`contact stas-k@gmx.de`,
 		];
-		expect(FORBIDDEN.map(({ re }, i) => re.test(bait[i]))).toEqual([true, true, true, true, true]);
+		expect(FORBIDDEN.map(({ re }, i) => re.test(bait[i]))).toEqual(FORBIDDEN.map(() => true));
 		expect([...'a@evil.com'.matchAll(EMAIL_RE)].map((m) => m[0])).toEqual(['a@evil.com']);
 	});
 });

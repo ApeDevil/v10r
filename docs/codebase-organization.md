@@ -86,8 +86,8 @@ Reads and writes split into `queries.ts` / `mutations.ts`, in one of two places:
 
 - **Default — `db/[domain]/`**, for incidental CRUD.
 - **Co-located in `[domain]/`** when the query *is* the domain logic and cannot be
-  meaningfully separated from it — retrieval ranking (`retrieval/`), hybrid search
-  (`llmwiki/`), post rendering (`blog/`).
+  meaningfully separated from it — retrieval ranking (`retrieval/`), post rendering
+  (`blog/`).
 
 The test is not "is it SQL" but "would someone reading this domain expect to find it here".
 

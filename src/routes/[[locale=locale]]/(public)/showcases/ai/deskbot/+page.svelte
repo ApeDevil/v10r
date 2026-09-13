@@ -1,51 +1,42 @@
 <script lang="ts">
-import { LinkCard, NavSection } from '$lib/components/composites';
-import PlanCard from '$lib/components/composites/chatbot/PlanCard.svelte';
+import { NavSection } from '$lib/components/composites';
 import { Badge, Button, Typography } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { deskbotPlan } from '$lib/showcases/ai/fixtures/deskbot-plan';
 import { deskbotSentinel } from '$lib/showcases/ai/fixtures/deskbot-sentinel';
+import { guardPassed, spineOf } from '$lib/showcases/ai/inspector';
 import ApprovalLifecycle from '../_components/ApprovalLifecycle.svelte';
 import AwarenessPair from '../_components/AwarenessPair.svelte';
-import ContextProbe from '../_components/ContextProbe.svelte';
 import GuardChain from '../_components/GuardChain.svelte';
 import PromptTape from '../_components/PromptTape.svelte';
-import ProvenanceStrip from '../_components/ProvenanceStrip.svelte';
 import RetrievalProfile from '../_components/RetrievalProfile.svelte';
 import StreamAttempts from '../_components/StreamAttempts.svelte';
 import SurfaceFlow from '../_components/SurfaceFlow.svelte';
-import { TracePlayer } from '../_components/surface-flow.state.svelte';
 import ToolMatrix from '../_components/ToolMatrix.svelte';
-import TraceControls from '../_components/TraceControls.svelte';
+import TurnInspector from '../_components/TurnInspector.svelte';
+import TurnSourcePicker from '../_components/TurnSourcePicker.svelte';
+import { TurnInspectorState } from '../_components/turn-inspector.state.svelte';
 
 let { data } = $props();
 const signedIn = $derived(!!data.session);
 
-// Two recorded turns, two claims: the plan halt (the visitor IS the human in the
-// one-door rule) and the sentinel denial (the tool refused before anyone was asked).
-const players = {
-	plan: new TracePlayer(deskbotPlan),
-	sentinel: new TracePlayer(deskbotSentinel),
-} as const;
-let fixtureId = $state<keyof typeof players>('plan');
-const player = $derived(players[fixtureId]);
-const trace = $derived(player.trace);
-$effect(() => () => {
-	players.plan.destroy();
-	players.sentinel.destroy();
-});
-
-function pickFixture(id: keyof typeof players) {
-	players[id === 'plan' ? 'sentinel' : 'plan'].pause();
-	fixtureId = id;
-}
+// ONE turn drives the page: one of the two recorded turns — the plan halt (approved and run,
+// receipts and all) and the sentinel denial (the tool refused before anyone was asked) — or
+// a desk turn of the visitor's own, read from its persisted trace. The spine, the guard
+// chain, the prompt tape and the lifecycle all render the same `TurnTrace` the inspector
+// opens — no second run, no replayed frames.
+const inspector = new TurnInspectorState('deskbot', [deskbotPlan, deskbotSentinel]);
+const turn = $derived(inspector.current);
+const spine = $derived(turn ? spineOf(turn.trace) : null);
+const proposal = $derived(turn?.trace.proposal ?? null);
+const guard = guardPassed();
 
 const sections = [
 	{ id: 'spine', label: m.showcase_ai_sec_spine() },
+	{ id: 'orchestration', label: m.showcase_ai_sec_orchestration() },
 	{ id: 'guard', label: m.showcase_ai_sec_guard() },
 	{ id: 'prompt', label: m.showcase_ai_sec_prompt() },
-	{ id: 'probe', label: m.showcase_ai_sec_probe() },
 	{ id: 'retrieval', label: m.showcase_ai_sec_retrieval() },
 	{ id: 'tools', label: m.showcase_ai_sec_tools() },
 	{ id: 'approval', label: m.showcase_ai_sec_approval() },
@@ -69,59 +60,7 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 	<section id="spine" class="section">
 		<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_spine()}</Typography>
 		<div class="viewer">
-			<div class="viewer-bar">
-				<ProvenanceStrip source="recorded" recordedAt={player.replay.provenance.recordedAt} />
-				<div class="source-toggle" role="group">
-					<Button
-						variant={fixtureId === 'plan' ? 'secondary' : 'ghost'}
-						size="sm"
-						onclick={() => pickFixture('plan')}>plan-then-approve</Button
-					>
-					<Button
-						variant={fixtureId === 'sentinel' ? 'secondary' : 'ghost'}
-						size="sm"
-						onclick={() => pickFixture('sentinel')}>sentinel-denial</Button
-					>
-				</div>
-			</div>
-			<p class="prompt-line"><code>»</code> {player.replay.prompt}</p>
-			<SurfaceFlow surface="deskbot" {trace} />
-			<TraceControls {player} />
-
-			{#if player.halted && trace.proposal}
-				<!-- The one-door rule, felt: playback stopped, and the next frame is YOUR call.
-				     Nothing mutates either way — the workspace is fiction. -->
-				<div class="halt">
-					<p class="halt-hint">
-						<span class="i-lucide-hand h-4 w-4" aria-hidden="true"></span>
-						{m.showcase_ai_halt_hint()}
-					</p>
-					<PlanCard
-						proposal={trace.proposal.card}
-						streamReady={true}
-						busy={false}
-						onapprove={() => player.decide('approved')}
-						onreject={() => player.decide('rejected')}
-					/>
-				</div>
-			{:else if trace.proposal?.decision}
-				<div class="halt-done">
-					<Badge variant={trace.proposal.decision === 'approved' ? 'success' : 'secondary'}>
-						{trace.proposal.decision}
-					</Badge>
-					<Button variant="ghost" size="sm" onclick={() => player.rearm()}>
-						{m.showcase_ai_halt_rearm()}
-					</Button>
-				</div>
-			{/if}
-
-			{#if trace.answerText}
-				<div class="answer">
-					<span class="answer-label">{m.showcase_ai_answer_label()}</span>
-					<p>{trace.answerText}</p>
-				</div>
-			{/if}
-
+			<SurfaceFlow surface="deskbot" statuses={spine} halted={proposal?.status === 'pending'} />
 			<div class="door">
 				<Button variant="primary" href={localizeHref('/desk')}>
 					<span class="i-lucide-panels-top-left h-4 w-4" aria-hidden="true"></span>
@@ -132,6 +71,16 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 		</div>
 	</section>
 
+	<section id="orchestration" class="section">
+		<div class="section-head">
+			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_orchestration()}</Typography>
+			<a class="compare" href="{sibling}#orchestration">{m.showcase_ai_compare_link({ surface: 'chatbot' })}</a>
+		</div>
+		<p class="section-claim">{m.showcase_ai_claim_orchestration_deskbot()}</p>
+		<TurnSourcePicker {inspector} {signedIn} />
+		<TurnInspector {inspector} />
+	</section>
+
 	<section id="guard" class="section">
 		<div class="section-head">
 			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_guard()}</Typography>
@@ -139,7 +88,7 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 			<a class="compare" href="{sibling}#guard">{m.showcase_ai_compare_link({ surface: 'chatbot' })}</a>
 		</div>
 		<p class="section-claim">{m.showcase_ai_claim_guard()}</p>
-		<GuardChain guard={trace.guard} />
+		<GuardChain {guard} />
 	</section>
 
 	<section id="prompt" class="section">
@@ -148,16 +97,7 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 			<a class="compare" href="{sibling}#prompt">{m.showcase_ai_compare_link({ surface: 'chatbot' })}</a>
 		</div>
 		<p class="section-claim">{m.showcase_ai_claim_prompt_deskbot()}</p>
-		<PromptTape surface="deskbot" prompt={trace.prompt} />
-	</section>
-
-	<section id="probe" class="section">
-		<div class="section-head">
-			<Typography variant="h2" as="h2" class="section-title">{m.showcase_ai_sec_probe()}</Typography>
-			<a class="compare" href="{sibling}#probe">{m.showcase_ai_compare_link({ surface: 'chatbot' })}</a>
-		</div>
-		<p class="section-claim">{m.showcase_ai_claim_probe_deskbot()}</p>
-		<ContextProbe surface="deskbot" {signedIn} />
+		<PromptTape surface="deskbot" blocks={turn?.trace.blocks ?? []} />
 	</section>
 
 	<section id="retrieval" class="section">
@@ -184,7 +124,7 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 			<a class="compare" href="{sibling}#verify">{m.showcase_ai_compare_link({ surface: 'chatbot' })}</a>
 		</div>
 		<p class="section-claim">{m.showcase_ai_claim_approval()}</p>
-		<ApprovalLifecycle proposal={trace.proposal} />
+		<ApprovalLifecycle current={proposal?.status ?? null} />
 	</section>
 
 	<section id="stream" class="section">
@@ -205,15 +145,6 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 		<p class="section-claim">{m.showcase_ai_claim_awareness_deskbot()}</p>
 		<AwarenessPair surface="deskbot" />
 	</section>
-
-	<footer class="sibling-card">
-		<LinkCard
-			href="/showcases/ai/chatbot"
-			icon="i-lucide-message-circle"
-			title={m.showcase_ai_tab_chatbot()}
-			description={m.showcase_ai_sibling_chatbot()}
-		/>
-	</footer>
 </div>
 
 <style>
@@ -304,65 +235,6 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 		border-radius: var(--radius-lg);
 	}
 
-	.viewer-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--spacing-3);
-		flex-wrap: wrap;
-	}
-
-	.source-toggle {
-		display: flex;
-		gap: var(--spacing-1);
-	}
-
-	.prompt-line {
-		margin: 0;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-fg);
-	}
-
-	.halt {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-2);
-	}
-
-	.halt-hint {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		margin: 0;
-		font-size: var(--text-fluid-sm);
-		color: var(--color-warning);
-		font-weight: 600;
-	}
-
-	.halt-done {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-	}
-
-	.answer {
-		padding: var(--spacing-3);
-		border: 1px dashed var(--color-border);
-		border-radius: var(--radius-md);
-	}
-
-	.answer-label {
-		font-size: var(--text-fluid-xs);
-		color: var(--color-muted);
-	}
-
-	.answer p {
-		margin: var(--spacing-1) 0 0 0;
-		font-size: var(--text-fluid-sm);
-		line-height: 1.6;
-		color: var(--color-fg);
-	}
-
 	.door {
 		display: flex;
 		align-items: center;
@@ -376,9 +248,5 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 		margin: 0;
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
-	}
-
-	.sibling-card {
-		max-width: 24rem;
 	}
 </style>

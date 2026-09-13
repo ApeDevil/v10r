@@ -1,33 +1,18 @@
 <script lang="ts">
 import * as m from '$lib/paraglide/messages';
-import { PROMPT_BLOCKS } from '$lib/showcases/ai/topology';
+import { BLOCK_TAGS } from '$lib/showcases/ai/labels';
 import type { AiSurface } from '$lib/types/db-enums';
-import type { PromptOutline } from '$lib/types/turn-trace';
+import type { PromptBlock } from '$lib/types/turn-trace';
 
-// An ordered band stack (HTML, not SVG) with the cache boundary drawn as a rule.
-// Block NAMES and estimated counts only — bodies never reach this page (the
-// PromptOutline type physically cannot carry them).
-let { surface, prompt = null }: { surface: AiSurface; prompt?: PromptOutline | null } = $props();
+// An ordered band stack (HTML, not SVG) over the blocks a turn's trace recorded — the
+// prompt as it was sent, in the composer's cache order, with the cache boundary drawn
+// where the first per-request block starts. Sizes are the recorded `chars`, never an
+// estimate; a block that carries its text opens inline.
+let { surface, blocks }: { surface: AiSurface; blocks: readonly PromptBlock[] } = $props();
 
-const blocks = PROMPT_BLOCKS[surface];
-const boundaryIndex = blocks.findIndex((b) => !b.cacheStable);
-
-const BLOCK_TAGS: Record<string, string> = {
-	role: surface === 'deskbot' ? 'DESK_SYSTEM_PROMPT' : 'SYSTEM_PROMPT',
-	completion: '<completion>',
-	planning: '<planning>',
-	permissions: '<permissions>',
-	workspace: 'workspace sentence',
-	'desk-context': '<desk-context>',
-	'desk-layout': '<desk-layout>',
-	'project-overview': '<project-overview>',
-	'current-page': '<current-page>',
-	'catalog-map': '<catalog-map>',
-};
-
-function tokensFor(id: string): number | undefined {
-	return prompt?.blocks.find((b) => b.id === id)?.tokensEst;
-}
+const boundaryIndex = $derived(blocks.findIndex((b) => !b.stable));
+const totalChars = $derived(blocks.reduce((n, b) => n + b.chars, 0));
+const fmt = (n: number) => n.toLocaleString();
 </script>
 
 <div class="tape">
@@ -37,22 +22,29 @@ function tokensFor(id: string): number | undefined {
 				<span>{m.showcase_ai_prompt_cache_boundary()}</span>
 			</div>
 		{/if}
-		<div class="band" data-conditional={!!block.conditional}>
-			<code class="tag">{BLOCK_TAGS[block.id] ?? block.id}</code>
-			{#if block.conditional}
-				<code class="predicate">⟨{block.conditional}⟩</code>
+		<details class="band" data-section={block.section}>
+			<summary>
+				<code class="tag">{BLOCK_TAGS[block.id] ?? block.id}</code>
+				{#if block.capability}
+					<code class="capability">{block.capability}</code>
+				{/if}
+				<span class="section">{block.section}</span>
+				<span class="chars">{m.showcase_ai_orch_chars({ n: fmt(block.chars) })}</span>
+			</summary>
+			{#if block.text}
+				<pre class="text">{block.text}</pre>
+			{:else}
+				<p class="withheld">{m.showcase_ai_orch_no_body()}</p>
 			{/if}
-			{#if tokensFor(block.id) !== undefined}
-				<span class="tokens">~{tokensFor(block.id)} tok</span>
-			{/if}
-		</div>
+		</details>
 	{/each}
-	{#if prompt}
-		<p class="est">
-			<span class="i-lucide-info h-3.5 w-3.5" aria-hidden="true"></span>
-			{m.showcase_ai_prompt_est_badge()}{#if prompt.totalTokensEst}&nbsp;· ~{prompt.totalTokensEst} tok{/if}
-		</p>
+	{#if blocks.length === 0}
+		<p class="withheld">{m.showcase_ai_prompt_no_blocks()}</p>
 	{/if}
+	<p class="total">
+		<span class="i-lucide-info h-3.5 w-3.5" aria-hidden="true"></span>
+		{m.showcase_ai_prompt_total({ blocks: fmt(blocks.length), chars: fmt(totalChars) })}
+	</p>
 	{#if surface === 'deskbot'}
 		<p class="escape-note">
 			<span class="i-lucide-shield-alert h-4 w-4" aria-hidden="true"></span>
@@ -69,18 +61,28 @@ function tokensFor(id: string): number | undefined {
 	}
 
 	.band {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-		flex-wrap: wrap;
-		padding: var(--spacing-2) var(--spacing-3);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-sm);
 		background: var(--color-bg);
 	}
 
-	/* Conditional bands are dashed with their predicate named — they vanish with it. */
-	.band[data-conditional='true'] {
+	.band summary {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-2);
+		flex-wrap: wrap;
+		padding: var(--spacing-2) var(--spacing-3);
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.band summary::-webkit-details-marker {
+		display: none;
+	}
+
+	/* The guides and the awareness blocks are per-request: dashed, they vanish with their rule. */
+	.band[data-section='guide'],
+	.band[data-section='awareness'] {
 		border-style: dashed;
 	}
 
@@ -90,15 +92,36 @@ function tokensFor(id: string): number | undefined {
 		color: var(--color-fg);
 	}
 
-	.predicate {
+	.capability,
+	.section {
 		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 	}
 
-	.tokens {
+	.chars {
 		margin-left: auto;
 		font-size: var(--text-fluid-xs);
 		font-variant-numeric: tabular-nums;
+		color: var(--color-muted);
+	}
+
+	.text {
+		margin: 0;
+		padding: var(--spacing-3);
+		border-top: 1px solid var(--color-border);
+		max-height: 24rem;
+		overflow: auto;
+		font-size: var(--text-fluid-xs);
+		line-height: 1.5;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+		color: var(--color-fg);
+	}
+
+	.withheld {
+		margin: 0;
+		padding: var(--spacing-2) var(--spacing-3);
+		font-size: var(--text-fluid-xs);
 		color: var(--color-muted);
 	}
 
@@ -118,7 +141,7 @@ function tokensFor(id: string): number | undefined {
 		border-top: 2px dashed color-mix(in srgb, var(--color-warning) 60%, transparent);
 	}
 
-	.est {
+	.total {
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-1);

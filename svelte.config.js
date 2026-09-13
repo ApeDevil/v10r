@@ -6,7 +6,11 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		adapter: adapter({ runtime: 'nodejs22.x' }),
+		// `fra1`: the functions sit next to the database. Neon runs in eu-central-1, and until
+		// 2026-09-13 every function ran in Vercel's default `iad1` (measured: `x-vercel-id:
+		// fra1::iad1::…`), so each query crossed the Atlantic. Route-level `config` exports
+		// merge over these defaults, so the region holds for the AI routes too.
+		adapter: adapter({ runtime: 'nodejs22.x', regions: ['fra1'] }),
 
 		// The pattern library is the product, not an implementation detail of any one
 		// transport: `mcp/` (stdio) and `src/lib/server/mcp/` (hosted HTTP) are both

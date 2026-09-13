@@ -11,7 +11,7 @@ let { data } = $props();
 const toast = getToast();
 
 const pipelineCounts = $derived({
-	llmwiki: data.llmwiki.totalPages,
+	map: data.overview.totalMaps,
 	chunks: data.coverage.totalChunks,
 	docs: data.bySource.find((s) => s.source === 'docs')?.count ?? 0,
 	catalog: data.bySource.find((s) => s.source === 'catalog')?.count ?? 0,
@@ -125,30 +125,9 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 				<span class="stat-label">Collections</span>
 				<span class="stat-value">{data.overview.totalCollections}</span>
 			</div>
-		</div>
-	</Card>
-
-	<!-- LLM-Wiki Health -->
-	<Card>
-		{#snippet header()}
-			<Cluster gap="2" align="center">
-				<span class="i-lucide-book-marked h-5 w-5"></span>
-				<h2 class="text-fluid-lg font-semibold">LLM-Wiki Health</h2>
-			</Cluster>
-		{/snippet}
-
-		<div class="stat-grid">
 			<div class="stat-card">
-				<span class="stat-label">Pages</span>
-				<span class="stat-value">{data.llmwiki.totalPages}</span>
-			</div>
-			<div class="stat-card">
-				<span class="stat-label">Overview / Content</span>
-				<span class="stat-value">{data.llmwiki.overviewPages} / {data.llmwiki.contentPages}</span>
-			</div>
-			<div class="stat-card">
-				<span class="stat-label">Stale</span>
-				<span class="stat-value">{data.llmwiki.stalePages}</span>
+				<span class="stat-label">Corpus maps</span>
+				<span class="stat-value">{data.overview.totalMaps}</span>
 			</div>
 		</div>
 	</Card>

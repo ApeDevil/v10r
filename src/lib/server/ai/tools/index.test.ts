@@ -1,241 +1,35 @@
 /**
- * Tests for createDeskTools scope gating.
- *
- * The factory assembles tool objects based on granted scopes.
- * DB modules are mocked — we only test which tools are returned, not their execute().
+ * The manifest-derived meta maps: one entry per manifest tool of each surface, the scope
+ * invariant (deskbot tools carry one, chatbot tools never), the risk lookup. What the
+ * profiles mount from the same manifest is `profile/profile.test.ts`.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { TOOL_MANIFEST } from '$lib/types/ai-tools';
+import { allToolMeta, chatbotToolMeta, deskbotToolMeta, getToolRisk } from './index';
 
-// Mock the DB connection so modules can import without NEON_DATABASE_URL_PROD
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/db/desk/queries', () => ({
-	listFiles: vi.fn(),
-	getFile: vi.fn(),
-	getSpreadsheetByFileId: vi.fn(),
-	getMarkdownByFileId: vi.fn(),
-}));
-vi.mock('$lib/server/db/desk/mutations', () => ({
-	updateSpreadsheetByFileId: vi.fn(),
-	updateMarkdownByFileId: vi.fn(),
-	renameFile: vi.fn(),
-	createSpreadsheetFile: vi.fn(),
-	createMarkdownFile: vi.fn(),
-	deleteFile: vi.fn(),
-}));
-
-const { buildRetrievalTools, chatbotToolMeta, createDeskTools, deskbotToolMeta, LLMWIKI_DRILL_TOOLS, stepsForScopes } =
-	await import('./index');
-const { DESK_EXECUTABLE_TOOLS } = await import('./desk-execute');
-
-const USER_ID = 'usr_test_scope_gating';
-
-describe('createDeskTools scope gating', () => {
-	it('returns no tools for empty scopes', () => {
-		const tools = createDeskTools(USER_ID, []);
-		expect(Object.keys(tools)).toHaveLength(0);
-	});
-
-	it('returns only read tools for ["desk:read"]', () => {
-		const tools = createDeskTools(USER_ID, ['desk:read']);
-		const keys = Object.keys(tools);
-		expect(keys).toContain('desk_list_files');
-		expect(keys).toContain('desk_read_file');
-		expect(keys).toContain('desk_search_files');
-		expect(keys).not.toContain('desk_update_cells');
-		expect(keys).not.toContain('desk_rename_file');
-		expect(keys).not.toContain('desk_create_spreadsheet');
-		expect(keys).not.toContain('desk_create_markdown');
-		expect(keys).not.toContain('desk_delete_file');
-	});
-
-	it('returns read + write tools for ["desk:write"]', () => {
-		const tools = createDeskTools(USER_ID, ['desk:write']);
-		const keys = Object.keys(tools);
-		expect(keys).toContain('desk_list_files');
-		expect(keys).toContain('desk_read_file');
-		expect(keys).toContain('desk_search_files');
-		expect(keys).toContain('desk_update_cells');
-		expect(keys).toContain('desk_rename_file');
-		expect(keys).not.toContain('desk_create_spreadsheet');
-		expect(keys).not.toContain('desk_delete_file');
-	});
-
-	it('returns read + create tools for ["desk:create"]', () => {
-		const tools = createDeskTools(USER_ID, ['desk:create']);
-		const keys = Object.keys(tools);
-		expect(keys).toContain('desk_list_files');
-		expect(keys).toContain('desk_create_spreadsheet');
-		expect(keys).toContain('desk_create_markdown');
-		expect(keys).not.toContain('desk_update_cells');
-		expect(keys).not.toContain('desk_delete_file');
-	});
-
-	it('returns read + delete tools for ["desk:delete"]', () => {
-		const tools = createDeskTools(USER_ID, ['desk:delete']);
-		const keys = Object.keys(tools);
-		expect(keys).toContain('desk_list_files');
-		expect(keys).toContain('desk_delete_file');
-		expect(keys).not.toContain('desk_update_cells');
-		expect(keys).not.toContain('desk_create_spreadsheet');
-	});
-
-	it('returns read + ask (retrieval) tool for ["desk:ask"], without mounting the plan tool', () => {
-		const tools = createDeskTools(USER_ID, ['desk:ask']);
-		const keys = Object.keys(tools);
-		expect(keys).toContain('desk_search_knowledge');
-		// desk:ask is read-only — it must NOT pull in the plan-before-execute primitive.
-		expect(keys).not.toContain('desk_propose_plan');
-		expect(keys).not.toContain('desk_update_cells');
-		expect(keys).not.toContain('desk_delete_file');
-	});
-
-	it('does not include desk_search_knowledge without desk:ask scope', () => {
-		const tools = createDeskTools(USER_ID, ['desk:write']);
-		expect(Object.keys(tools)).not.toContain('desk_search_knowledge');
-	});
-
-	it('returns all tools for all scopes', () => {
-		const tools = createDeskTools(USER_ID, ['desk:read', 'desk:write', 'desk:create', 'desk:delete']);
-		const keys = Object.keys(tools);
-		expect(keys).toContain('desk_list_files');
-		expect(keys).toContain('desk_read_file');
-		expect(keys).toContain('desk_search_files');
-		expect(keys).toContain('desk_update_cells');
-		expect(keys).toContain('desk_rename_file');
-		expect(keys).toContain('desk_create_spreadsheet');
-		expect(keys).toContain('desk_create_markdown');
-		expect(keys).toContain('desk_delete_file');
-	});
-
-	it('each tool object has an execute function', () => {
-		const tools = createDeskTools(USER_ID, ['desk:read', 'desk:write', 'desk:create', 'desk:delete']);
-		for (const [name, t] of Object.entries(tools)) {
-			expect(typeof (t as Record<string, unknown>).execute, `${name}.execute should be a function`).toBe('function');
-		}
-	});
-
-	it('each tool object has a description string', () => {
-		const tools = createDeskTools(USER_ID, ['desk:read']);
-		for (const [name, t] of Object.entries(tools)) {
-			const tool = t as Record<string, unknown>;
-			expect(typeof tool.description, `${name}.description should be a string`).toBe('string');
-			expect((tool.description as string).length, `${name}.description should be non-empty`).toBeGreaterThan(0);
-		}
-	});
-
-	it('includes desk_get_open_panels when any scope is enabled', () => {
-		const tools = createDeskTools(USER_ID, ['desk:read']);
-		expect(Object.keys(tools)).toContain('desk_get_open_panels');
-	});
-
-	it('includes desk_update_markdown with desk:write scope', () => {
-		const tools = createDeskTools(USER_ID, ['desk:write']);
-		expect(Object.keys(tools)).toContain('desk_update_markdown');
-	});
-
-	it('does not include desk_update_markdown without desk:write scope', () => {
-		const tools = createDeskTools(USER_ID, ['desk:read']);
-		expect(Object.keys(tools)).not.toContain('desk_update_markdown');
-	});
-});
-
-describe('one-door: desk-execute drift guard', () => {
-	// Mutating deskbot tools (risk !== 'read'); excludes desk_propose_plan (read) and
-	// resolve_ref (not in the meta registry — compaction infra, never replayed).
-	const mutatingDeskTools = Object.entries(deskbotToolMeta)
-		.filter(([, meta]) => meta.risk !== 'read')
-		.map(([name]) => name);
-
-	it('every mutating deskbot tool has a replay executor case', () => {
-		for (const name of mutatingDeskTools) {
-			expect(
-				DESK_EXECUTABLE_TOOLS as readonly string[],
-				`${name} is a mutating desk tool but missing from DESK_EXECUTABLE_TOOLS — proposal replay would silently fail`,
-			).toContain(name);
-		}
-	});
-
-	it('every executor tool is a known mutating deskbot tool (no orphan cases)', () => {
-		for (const name of DESK_EXECUTABLE_TOOLS) {
-			const meta = deskbotToolMeta[name];
-			expect(meta, `${name} is in DESK_EXECUTABLE_TOOLS but not in deskbotToolMeta`).toBeDefined();
-			expect(meta.risk, `${name} executor maps to a non-mutating tool`).not.toBe('read');
-		}
-	});
-});
-
-describe('TOOL_MANIFEST drift guard (builders ⇔ derived meta)', () => {
-	// `resolve_ref` is compaction infra (AI SDK #9631), intentionally absent from the manifest
-	// and both meta maps — filter it out of the emitted sets before comparing.
-	const withoutInfra = (names: string[]) => names.filter((n) => n !== 'resolve_ref').sort();
-
-	it('createDeskTools (all scopes) emits exactly the deskbot manifest tools', () => {
-		const emitted = withoutInfra(
-			Object.keys(createDeskTools(USER_ID, ['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask'])),
+describe('TOOL_MANIFEST ⇔ derived meta', () => {
+	it("projects each surface's manifest entries, nothing else", () => {
+		expect(Object.keys(chatbotToolMeta).sort()).toEqual(
+			TOOL_MANIFEST.filter((d) => d.surface === 'chatbot')
+				.map((d) => d.name)
+				.sort(),
 		);
-		expect(emitted).toEqual(Object.keys(deskbotToolMeta).sort());
-	});
-
-	it('buildRetrievalTools on a wiki-grounded turn emits exactly the chatbot manifest tools', () => {
-		const { tools } = buildRetrievalTools(USER_ID, 'en', null, { llmwiki: true });
-		expect(withoutInfra(Object.keys(tools))).toEqual(Object.keys(chatbotToolMeta).sort());
+		expect(Object.keys(deskbotToolMeta).sort()).toEqual(
+			TOOL_MANIFEST.filter((d) => d.surface === 'deskbot')
+				.map((d) => d.name)
+				.sort(),
+		);
+		expect(Object.keys(allToolMeta)).toHaveLength(TOOL_MANIFEST.length);
 	});
 
 	it('deskbot meta carries a gating scope on every tool; chatbot meta carries none', () => {
 		for (const meta of Object.values(deskbotToolMeta)) expect(meta.scope).toBeTruthy();
 		for (const meta of Object.values(chatbotToolMeta)) expect('scope' in meta).toBe(false);
 	});
-});
 
-describe('buildRetrievalTools follows the assembly', () => {
-	// The prompt's "Retrieval rules" name the drill-down pair only when an llmwiki context
-	// block was injected; on an empty wiki a call to either would be a model step spent on
-	// nothing, so the pair is not mounted at all.
-	it('omits exactly the llmwiki drill-down pair when no wiki page grounded the prompt', () => {
-		const grounded = Object.keys(buildRetrievalTools(USER_ID, 'en', null, { llmwiki: true }).tools);
-		const bare = Object.keys(buildRetrievalTools(USER_ID, 'en', null, { llmwiki: false }).tools);
-		expect(grounded.filter((name) => !bare.includes(name)).sort()).toEqual([...LLMWIKI_DRILL_TOOLS].sort());
-		for (const name of LLMWIKI_DRILL_TOOLS) expect(chatbotToolMeta).toHaveProperty(name);
-	});
-
-	// Rows the assembly put in `<catalog-results>` were surfaced this turn exactly like a
-	// `search_catalog` result: the citation verifier and the chips read the same map.
-	it('surfaces the catalog rows the assembly pre-searched, before any tool ran', () => {
-		const row = {
-			id: 'showcase:en:/showcases/auth/authn',
-			surface: 'showcase' as const,
-			title: 'AuthN',
-			path: '/showcases/auth/authn',
-			anchor: null,
-			breadcrumb: ['Identity & Access'],
-			snippet: null,
-			highlight: [],
-			locale: 'en' as const,
-			badge: null,
-			score: 6,
-		};
-		const { surfacedCatalog } = buildRetrievalTools(USER_ID, 'en', null, { llmwiki: false, catalogSeed: [row] });
-		expect(surfacedCatalog.get(row.id)).toBe(row);
-	});
-});
-
-describe('stepsForScopes', () => {
-	it('returns 3 for read-only scopes', () => {
-		expect(stepsForScopes(['desk:read'])).toBe(3);
-	});
-
-	it('returns 5 when any mutation scope is present', () => {
-		expect(stepsForScopes(['desk:read', 'desk:write'])).toBe(5);
-		expect(stepsForScopes(['desk:create'])).toBe(5);
-		expect(stepsForScopes(['desk:delete'])).toBe(5);
-	});
-
-	it('returns 3 for empty scopes', () => {
-		expect(stepsForScopes([])).toBe(3);
-	});
-
-	it('returns 3 for desk:ask (read-only retrieval grounding, not a mutation)', () => {
-		expect(stepsForScopes(['desk:ask'])).toBe(3);
-		expect(stepsForScopes(['desk:read', 'desk:ask'])).toBe(3);
+	it('answers the risk of a manifest tool and nothing for compaction infra', () => {
+		expect(getToolRisk('desk_delete_file')).toBe('destructive');
+		expect(getToolRisk('search_catalog')).toBe('read');
+		expect(getToolRisk('resolve_ref')).toBeUndefined();
 	});
 });

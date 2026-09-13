@@ -100,8 +100,8 @@ export function followAiContextChange(
 }
 
 /**
- * Production cutoff for `desk_search_knowledge` — exported so the context probe
- * reports (and marks) the real chosen-set boundary instead of a hardcoded copy.
+ * Production cutoff for `desk_search_knowledge` — exported so the turn trace records the
+ * real chosen-set boundary instead of a hardcoded copy.
  */
 export const DESK_SEARCH_MAX_CHUNKS = 5;
 

@@ -1,12 +1,7 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '$lib/types/desk-context-limits';
-import {
-	ChatbotRequestSchema,
-	ContextProbeRequestSchema,
-	CreateConversationSchema,
-	DeskRequestSchema,
-} from './validation';
+import { ChatbotRequestSchema, CreateConversationSchema, DeskRequestSchema } from './validation';
 
 const HELLO = [{ role: 'user' as const, content: 'Hello' }];
 
@@ -233,50 +228,5 @@ describe('CreateConversationSchema', () => {
 
 	it('rejects title over 200 chars', () => {
 		expect(v.safeParse(CreateConversationSchema, { title: 'x'.repeat(201) }).success).toBe(false);
-	});
-});
-
-describe('ContextProbeRequestSchema (showcase context x-ray)', () => {
-	it('accepts a chatbot probe with pageRouteId', () => {
-		const result = v.safeParse(ContextProbeRequestSchema, {
-			surface: 'chatbot',
-			query: 'How does the guard chain work?',
-			pageRouteId: '/[[locale=locale]]/(public)/showcases/ai/chatbot',
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it('accepts a deskbot probe with toolScopes', () => {
-		const result = v.safeParse(ContextProbeRequestSchema, {
-			surface: 'deskbot',
-			query: 'Delete all completed rows from every sheet',
-			toolScopes: ['desk:read', 'desk:delete'],
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it('rejects an unknown surface', () => {
-		expect(v.safeParse(ContextProbeRequestSchema, { surface: 'rag-demo', query: 'x' }).success).toBe(false);
-	});
-
-	it('rejects an empty query', () => {
-		expect(v.safeParse(ContextProbeRequestSchema, { surface: 'chatbot', query: '' }).success).toBe(false);
-	});
-
-	it('rejects a query over 2000 chars', () => {
-		expect(v.safeParse(ContextProbeRequestSchema, { surface: 'chatbot', query: 'x'.repeat(2001) }).success).toBe(false);
-	});
-
-	it('rejects a pageRouteId with breakout chars', () => {
-		expect(
-			v.safeParse(ContextProbeRequestSchema, { surface: 'chatbot', query: 'hi there', pageRouteId: '/a"b' }).success,
-		).toBe(false);
-	});
-
-	it('rejects invalid toolScopes values', () => {
-		expect(
-			v.safeParse(ContextProbeRequestSchema, { surface: 'deskbot', query: 'hi there', toolScopes: ['desk:root'] })
-				.success,
-		).toBe(false);
 	});
 });

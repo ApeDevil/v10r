@@ -2,11 +2,18 @@
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { BUILD_LABELS, LANE_LABELS, LAYER_NAMES, layerRole, STATUS_LABELS } from '$lib/showcases/ai/labels';
+import type { AiLayerId, TraceStatus } from '$lib/showcases/ai/topology';
 import { AI_LAYERS, type AiLayer, STEP_BUDGETS } from '$lib/showcases/ai/topology';
 import type { AiSurface } from '$lib/types/db-enums';
-import type { AiLayerId, TraceStatus, TurnTrace } from '$lib/types/turn-trace';
 
-let { surface, trace = null }: { surface: AiSurface; trace?: TurnTrace | null } = $props();
+// `statuses` is the per-band status of ONE turn — derived from its persisted trace
+// (`spineOf`) — or null for the resting diagram. `halted` lights the approval replay stack
+// while the turn's proposal is still pending a decision.
+let {
+	surface,
+	statuses = null,
+	halted = false,
+}: { surface: AiSurface; statuses?: Partial<Record<AiLayerId, TraceStatus>> | null; halted?: boolean } = $props();
 
 const layers = AI_LAYERS.filter((l) => l.surfaces.includes(surface));
 
@@ -29,7 +36,7 @@ function onSummaryKeydown(event: KeyboardEvent, index: number) {
 }
 
 function statusOf(id: AiLayerId): TraceStatus | undefined {
-	return trace?.layers[id];
+	return statuses?.[id];
 }
 
 const STATUS_ICON: Record<TraceStatus, string> = {
@@ -50,8 +57,6 @@ function loopCap(): string {
 		? `stepCountIs(${STEP_BUDGETS.chatbot})`
 		: `stepCountIs(${STEP_BUDGETS.deskRead} · ${STEP_BUDGETS.deskMutate})`;
 }
-
-const halted = $derived(trace?.outcome?.kind === 'awaiting_decision');
 </script>
 
 <!-- The "request is here now" particle: SMIL dots riding the rail segment of the
@@ -87,14 +92,14 @@ const halted = $derived(trace?.outcome?.kind === 'awaiting_decision');
 					onkeydown={(e) => onSummaryKeydown(e, i)}
 					onfocus={() => (focusIndex = i)}
 				>
-					{#if trace}
+					{#if statuses}
 						<span class="glyph {STATUS_ICON[status ?? 'pending']}" aria-hidden="true"></span>
 					{/if}
 					<span class="name">{LAYER_NAMES[layer.id]()}</span>
 					{#if layer.shape === 'loop'}
 						<code class="chip">× {loopCap()}</code>
 					{/if}
-					{#if trace && status}
+					{#if statuses && status}
 						<span class="status-text">{STATUS_LABELS[status]()}</span>
 					{:else}
 						<span class="role">{layerRole(layer.id, surface)}</span>

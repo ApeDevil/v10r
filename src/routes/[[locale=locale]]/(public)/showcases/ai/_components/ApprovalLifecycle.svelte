@@ -1,14 +1,14 @@
 <script lang="ts">
 import * as m from '$lib/paraglide/messages';
 import { PROPOSAL_STATES, PROPOSAL_TRANSITIONS, type ProposalState } from '$lib/showcases/ai/topology';
-import type { ProposalRunState } from '$lib/types/turn-trace';
 
 // A genuine state machine, mirrored from the pg enum + the approve route and pinned
 // by drift tests. Failure paths are the point: TTL in SQL, no rollback, frozen scopes.
-let { proposal = null }: { proposal?: ProposalRunState | null } = $props();
+// `current` is where the turn's proposal stands as read back — null for a turn without one.
+let { current = null }: { current?: ProposalState | null } = $props();
 
 function isCurrent(state: ProposalState): boolean {
-	return proposal?.card.status === state;
+	return current === state;
 }
 
 function transitionsFrom(state: ProposalState) {

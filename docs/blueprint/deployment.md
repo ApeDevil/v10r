@@ -85,12 +85,20 @@ Dev dependencies (`svelte-adapter-bun` is not installed until the container targ
 3. **Build command:** `bun run build` (default)
 4. **Output directory:** `.vercel/output` (auto-configured)
 
+### Function region
+
+The functions run in `fra1`, declared as the adapter default in `svelte.config.js`
+(`adapter({ runtime: 'nodejs22.x', regions: ['fra1'] })`) — next to Neon in `eu-central-1`, so
+the two blocking database hops of a request stay in one region. Route-level `config` exports
+(`maxDuration` on the AI routes) merge over the defaults and keep the region. Before the
+declaration the deployment ran on Vercel's default `iad1` (measured 2026-09-13 from
+`x-vercel-id: fra1::iad1::…`); `x-vercel-id` reads `edge::function::id` and is the check.
+
 ### vercel.json
 
 ```json
 {
   "framework": "sveltekit",
-  "regions": ["iad1"],
   "crons": [
     { "path": "/api/cron/due", "schedule": "0 3 * * *" },
     { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" }
@@ -180,7 +188,6 @@ Same as Node.js deployment, plus one addition to `vercel.json`:
 {
   "framework": "sveltekit",
   "bunVersion": "1.x",
-  "regions": ["iad1"],
   "crons": [
     { "path": "/api/cron/due", "schedule": "0 3 * * *" },
     { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" }
@@ -214,8 +221,7 @@ If issues arise, simply remove the `bunVersion` line:
 
 ```json
 {
-  "framework": "sveltekit",
-  "regions": ["iad1"]
+  "framework": "sveltekit"
 }
 ```
 
@@ -771,9 +777,9 @@ koyeb service logs <service-name> --follow
 /
 ├── Dockerfile              # Koyeb container build
 ├── .dockerignore           # Docker build exclusions
-├── vercel.json             # Vercel configuration (crons, regions)
+├── vercel.json             # Vercel configuration (crons)
 ├── compose.yaml            # Local dev (sets CONTAINER=1)
-├── svelte.config.js        # Adapter selection
+├── svelte.config.js        # Adapter selection, function region
 └── src/
     ├── hooks.server.ts     # Imports scheduler (bare import activates it)
     ├── lib/server/

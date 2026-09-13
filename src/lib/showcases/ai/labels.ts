@@ -9,10 +9,18 @@
 
 import type { LabelFn } from '$lib/nav/types';
 import * as m from '$lib/paraglide/messages';
-import type { ProbeCorpus, ProbeCorpusResult, ProbeGate } from '$lib/types/context-probe';
 import type { AiSurface } from '$lib/types/db-enums';
-import type { AiLayerId, GuardStageId, TraceStatus } from '$lib/types/turn-trace';
-import type { AiBuildStatus } from './topology';
+import type { ChunkLevel, PromptBlockId, TurnItemState, TurnOutcome } from '$lib/types/turn-trace';
+import type { InspectorGroupId } from './inspector';
+import {
+	type AiBuildStatus,
+	type AiLayerId,
+	type GuardStageId,
+	STEP_BUDGETS,
+	type TraceStatus,
+	toolCounts,
+} from './topology';
+import type { TurnGraphColumn, TurnGraphEdgeKind, TurnGraphNodeKind } from './turn-graph';
 
 /** Display name per spine layer. */
 export const LAYER_NAMES: Record<AiLayerId, LabelFn> = {
@@ -44,7 +52,12 @@ const ROLE_LINES: Partial<Record<AiLayerId, LabelFn>> = {
 const ROLE_LINES_BY_SURFACE: Partial<Record<AiLayerId, Record<AiSurface, LabelFn>>> = {
 	client: { chatbot: m.showcase_ai_role_client_chatbot, deskbot: m.showcase_ai_role_client_deskbot },
 	retrieval: { chatbot: m.showcase_ai_role_retrieval_chatbot, deskbot: m.showcase_ai_role_retrieval_deskbot },
-	harness: { chatbot: m.showcase_ai_role_harness_chatbot, deskbot: m.showcase_ai_role_harness_deskbot },
+	// Counts come from the manifest and the config, never from prose.
+	harness: {
+		chatbot: () =>
+			m.showcase_ai_role_harness_chatbot({ n: String(toolCounts().chatbot), steps: String(STEP_BUDGETS.chatbot) }),
+		deskbot: m.showcase_ai_role_harness_deskbot,
+	},
 	gate: { chatbot: m.showcase_ai_role_gate_chatbot, deskbot: m.showcase_ai_role_gate_deskbot },
 };
 
@@ -87,24 +100,117 @@ export const LANE_LABELS: Record<string, LabelFn> = {
 	'tier-3': m.showcase_ai_retrieval_retriever_t3,
 };
 
-/** Context-probe gate names + one-line glosses. */
-export const PROBE_GATE_LABELS: Record<ProbeGate['id'], { name: LabelFn; gloss: LabelFn }> = {
-	ground_docs: { name: m.showcase_ai_probe_gate_ground, gloss: m.showcase_ai_probe_gate_ground_gloss },
-	page_deixis: { name: m.showcase_ai_probe_gate_deixis, gloss: m.showcase_ai_probe_gate_deixis_gloss },
-	catalog_nav: { name: m.showcase_ai_probe_gate_catalog, gloss: m.showcase_ai_probe_gate_catalog_gloss },
-	require_plan: { name: m.showcase_ai_probe_gate_plan, gloss: m.showcase_ai_probe_gate_plan_gloss },
+/**
+ * The turn inspector's groups — the five states in commitment order, plus the awareness the
+ * turn ran under and, on the deskbot, the proposal it stopped on.
+ */
+export const GROUP_LABELS: Record<InspectorGroupId, LabelFn> = {
+	available: m.showcase_ai_orch_group_available,
+	awareness: m.showcase_ai_orch_group_awareness,
+	considered: m.showcase_ai_orch_group_considered,
+	prompt: m.showcase_ai_orch_group_prompt,
+	calls: m.showcase_ai_orch_group_calls,
+	proposal: m.showcase_ai_orch_group_proposal,
+	cited: m.showcase_ai_orch_group_cited,
 };
 
-/** Context-probe corpus display names (corpus, not tier). */
-export const PROBE_LANE_LABELS: Record<ProbeCorpus, LabelFn> = {
-	llmwiki: m.showcase_ai_probe_corpus_llmwiki,
-	docs: m.showcase_ai_probe_corpus_docs,
-	desk: m.showcase_ai_probe_corpus_desk,
+/** One sentence per group: what being in it claims, and what it does not. */
+export const GROUP_GLOSSES: Record<InspectorGroupId, LabelFn> = {
+	available: m.showcase_ai_orch_group_available_gloss,
+	awareness: m.showcase_ai_orch_group_awareness_gloss,
+	considered: m.showcase_ai_orch_group_considered_gloss,
+	prompt: m.showcase_ai_orch_group_prompt_gloss,
+	calls: m.showcase_ai_orch_group_calls_gloss,
+	proposal: m.showcase_ai_orch_group_proposal_gloss,
+	cited: m.showcase_ai_orch_group_cited_gloss,
 };
 
-/** Why a corpus didn't run — each reason is a different honesty claim. */
-export const PROBE_SKIP_LABELS: Record<NonNullable<ProbeCorpusResult['skippedReason']>, LabelFn> = {
-	gated_off: m.showcase_ai_probe_skip_gated,
-	scope_off: m.showcase_ai_probe_skip_scope,
-	empty_corpus: m.showcase_ai_probe_skip_empty,
+/** The five item states (`TurnItemState`) as chips — text, never colour alone. */
+export const STATE_LABELS: Record<TurnItemState, LabelFn> = {
+	available: m.showcase_ai_orch_state_available,
+	considered: m.showcase_ai_orch_state_considered,
+	included: m.showcase_ai_orch_state_included,
+	executed: m.showcase_ai_orch_state_executed,
+	cited: m.showcase_ai_orch_state_cited,
+};
+
+export const OUTCOME_LABELS: Record<TurnOutcome, LabelFn> = {
+	ok: m.showcase_ai_orch_outcome_ok,
+	error: m.showcase_ai_orch_outcome_error,
+	cancelled: m.showcase_ai_orch_outcome_cancelled,
+	awaiting_decision: m.showcase_ai_orch_outcome_awaiting,
+};
+
+/**
+ * How each prompt block shows on the page: its XML tag where it has one, else what the
+ * block is. Identifiers, untranslated — the tape and the inspector share this one map.
+ */
+export const BLOCK_TAGS: Record<PromptBlockId, string> = {
+	role: '<role> + <instructions>',
+	'completion-guidance': '<completion>',
+	'project-map-guidance': 'project-map guidance',
+	'project-docs-guidance': 'project-docs guidance',
+	'catalog-guidance': 'catalog guidance',
+	'navigation-guidance': 'navigation guidance',
+	'pattern-library-guidance': 'pattern-library guidance',
+	'desk-awareness-guidance': 'desk-awareness guidance',
+	'desk-files-guidance': 'desk-files guidance',
+	'desk-edit-guidance': 'desk-edit guidance',
+	'desk-create-guidance': 'desk-create guidance',
+	'desk-ask-guidance': 'desk-ask guidance',
+	'desk-plan-guidance': 'desk-plan guidance',
+	'project-overview': '<project-overview>',
+	'catalog-map': '<catalog-map>',
+	permissions: '<permissions>',
+	workspace: 'workspace sentence',
+	'desk-context': '<desk-context>',
+	'desk-layout': '<desk-layout>',
+	'current-page': '<current-page>',
+	'retrieval-context': '<retrieval-context>',
+	'catalog-results': '<catalog-results>',
+	planning: '<planning>',
+	'page-abstention': 'page abstention note',
+	'tool-degrade': 'tool-degrade NOTE',
+};
+
+/** The turn graph's three columns. */
+export const COLUMN_LABELS: Record<TurnGraphColumn, LabelFn> = {
+	sources: m.showcase_ai_graph_col_sources,
+	context: m.showcase_ai_graph_col_context,
+	tools: m.showcase_ai_graph_col_tools,
+};
+
+/** What kind of record a graph card is — the word before the record's own name. */
+export const KIND_LABELS: Record<TurnGraphNodeKind, LabelFn> = {
+	source: m.showcase_ai_graph_kind_source,
+	document: m.showcase_ai_graph_kind_document,
+	parent: m.showcase_ai_graph_kind_parent,
+	item: m.showcase_ai_graph_kind_item,
+	omitted: m.showcase_ai_graph_kind_omitted,
+	prompt: m.showcase_ai_graph_kind_prompt,
+	block: m.showcase_ai_graph_kind_block,
+	boundary: m.showcase_ai_graph_kind_boundary,
+	history: m.showcase_ai_graph_kind_history,
+	call: m.showcase_ai_graph_kind_call,
+	answer: m.showcase_ai_graph_kind_answer,
+	proposal: m.showcase_ai_graph_kind_proposal,
+	toolset: m.showcase_ai_graph_kind_toolset,
+	tool: m.showcase_ai_graph_kind_tool,
+};
+
+/** The recorded relation an edge stands for, as a verb phrase between its two ends. */
+export const EDGE_KIND_LABELS: Record<TurnGraphEdgeKind, LabelFn> = {
+	containment: m.showcase_ai_graph_edge_containment,
+	inclusion: m.showcase_ai_graph_edge_inclusion,
+	request: m.showcase_ai_graph_edge_request,
+	execution: m.showcase_ai_graph_edge_execution,
+	result: m.showcase_ai_graph_edge_result,
+	citation: m.showcase_ai_graph_edge_citation,
+};
+
+/** A chunk's rung in its document. */
+export const LEVEL_LABELS: Record<ChunkLevel, LabelFn> = {
+	section: m.showcase_ai_graph_level_section,
+	paragraph: m.showcase_ai_graph_level_paragraph,
+	sentence: m.showcase_ai_graph_level_sentence,
 };

@@ -11,6 +11,8 @@ interface Props {
 	description?: string;
 	breadcrumbs?: Breadcrumb[];
 	sticky?: boolean;
+	/** Less padding above and below, and less room beneath — the page below it is the point. */
+	compact?: boolean;
 	/** Bindable rendered height (px) — lets sticky consumers set scroll-margin offsets. */
 	headerHeight?: number;
 	class?: string;
@@ -22,6 +24,7 @@ let {
 	description,
 	breadcrumbs = [],
 	sticky = false,
+	compact = false,
 	headerHeight = $bindable(0),
 	class: className,
 	children,
@@ -37,7 +40,7 @@ const processedBreadcrumbs = $derived(
 </script>
 
 <header
-	class="page-header {sticky ? 'sticky' : ''} {className || ''}"
+	class="page-header {sticky ? 'sticky' : ''} {compact ? 'compact' : ''} {className || ''}"
 	bind:clientHeight={headerHeight}
 >
 	{#if breadcrumbs.length > 0}
@@ -83,6 +86,15 @@ const processedBreadcrumbs = $derived(
 		margin: calc(-1 * var(--spacing-7)) calc(-1 * var(--spacing-7)) var(--spacing-7) calc(-1 * var(--spacing-7));
 		width: calc(100% + var(--spacing-7) * 2);
 		box-sizing: border-box;
+	}
+
+	.page-header.compact {
+		padding: var(--spacing-5) var(--spacing-7) var(--spacing-4);
+		margin-bottom: var(--spacing-4);
+	}
+
+	.page-header.compact .breadcrumbs {
+		margin-bottom: var(--spacing-3);
 	}
 
 	.page-header.sticky {

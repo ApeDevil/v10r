@@ -88,3 +88,27 @@ export const PROVIDER_LIMITS: Record<string, ProviderLimit> = {
 		note: 'Tier-1 entry limits for gpt-4o-mini. No fixed daily cap (rolling 24h window); limits scale with account tier.',
 	},
 };
+
+/** The prompt-size estimate the whole AI domain shares: 4 chars ≈ 1 token (`windowMessages`). */
+export const CHARS_PER_TOKEN = 4;
+
+/**
+ * A turn's footprint against a per-minute token ceiling: the prompt is re-sent on every
+ * step, so a tool-mounted turn — a search step, then the answer — sends it at least twice.
+ */
+export function estimateTurnTokens(promptChars: number, steps: number): number {
+	return Math.ceil((promptChars / CHARS_PER_TOKEN) * steps);
+}
+
+/**
+ * Whether a connection's per-minute token ceiling can carry a turn of `turnTokens`. A
+ * fallback that cannot fit the request is no fallback — it 429s on the second step and the
+ * answer stops early — so the rotation leaves it out. Nothing is known about a provider
+ * without an entry, a `tpm: null` ceiling, or a model the numbers were not read for, and
+ * unknown never blocks.
+ */
+export function fitsTokenMinute(providerId: string, modelId: string, turnTokens: number): boolean {
+	const limit = PROVIDER_LIMITS[providerId];
+	if (!limit || limit.tpm === null || !limit.verifiedModels.includes(modelId)) return true;
+	return limit.tpm >= turnTokens;
+}

@@ -14,10 +14,13 @@ interface Props {
 	containerClass?: string;
 	/** Extra class on the children wrapper div */
 	wrapperClass?: string;
+	/** A tighter header and less room above the content — for a showcase whose first section is the point. */
+	compact?: boolean;
 	children: Snippet;
 }
 
-let { card, width = 'default', containerClass = 'py-7', wrapperClass, children }: Props = $props();
+let { card, width = 'default', containerClass = 'py-7', wrapperClass, compact = false, children }: Props = $props();
+const wrapperPadding = $derived(compact ? 'pt-3' : 'pt-6');
 
 const title = card.title();
 const description = card.description();
@@ -31,7 +34,7 @@ const ariaLabel = (card.ariaLabel ?? card.title)();
 </script>
 
 <PageContainer {width} class={containerClass}>
-	<PageHeader {title} {description} {breadcrumbs}>
+	<PageHeader {title} {description} {breadcrumbs} {compact}>
 		<ShowcaseDocs />
 	</PageHeader>
 
@@ -39,7 +42,7 @@ const ariaLabel = (card.ariaLabel ?? card.title)();
 		<NavTab {tabs} {ariaLabel} />
 	{/if}
 
-	<div class={wrapperClass ? `pt-6 ${wrapperClass}` : 'pt-6'}>
+	<div class={wrapperClass ? `${wrapperPadding} ${wrapperClass}` : wrapperPadding}>
 		{@render children()}
 	</div>
 </PageContainer>

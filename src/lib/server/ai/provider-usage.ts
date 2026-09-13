@@ -1,9 +1,9 @@
 import { redis } from '$lib/server/cache';
 
 /**
- * Per-provider daily usage signals that `conversation_step` can't capture.
+ * Per-provider daily usage signals that `model_call` can't capture.
  *
- * `conversation_step` records one row per *successful* AI SDK step, so it's the
+ * `model_call` records one row per provider request the SDK finished, so it's the
  * system of record for request/token counts (see getProviderUsageToday). But two
  * quota-relevant signals never reach it:
  *   - 429s / rate-limit trips: the request errored before a step finished.

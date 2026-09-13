@@ -1,7 +1,7 @@
 <script lang="ts">
 import { GUARD_LABELS } from '$lib/showcases/ai/labels';
+import type { GuardStageState } from '$lib/showcases/ai/topology';
 import { GUARD_STAGES } from '$lib/showcases/ai/topology';
-import type { GuardStageState } from '$lib/types/turn-trace';
 
 // Byte-identical on both pages, deliberately — the guard is shared mechanism.
 // A chain with side-exits, not a flowchart with diamonds: nothing re-joins.

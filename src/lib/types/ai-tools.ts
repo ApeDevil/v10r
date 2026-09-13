@@ -1,15 +1,19 @@
 /**
  * AI tool manifest — the client-safe contract for the two AI surfaces' tool harnesses.
  *
- * Pure data + types, ZERO imports. Safe for the client bundle BY CONSTRUCTION: the
- * manifest carries name/surface/risk/scope only — no model-facing `description`
+ * Pure data + types, type-only imports. Safe for the client bundle BY CONSTRUCTION: the
+ * manifest carries name/surface/risk/scope/capability only — no model-facing `description`
  * strings, no input schemas, no prompt text. The server tool factories
  * (`$lib/server/ai/tools/`) derive their meta maps from this list; the public
- * showcase topology (`$lib/showcases/ai/`) projects from it too. One source, no drift.
+ * showcase topology (`$lib/showcases/ai/`) projects from it too; the capability that
+ * mounts each tool (`$lib/server/ai/capabilities/`) is pinned to it by a drift test.
+ * One source, no drift.
  *
  * Follows the `$lib/types/retrieval-trace.ts` precedent: a contract module the server emits
  * against and the client renders from.
  */
+
+import type { CapabilityId } from './assistant-profile';
 
 /**
  * What a completed desk mutation asks the desk UI to do — carried inside an in-loop
@@ -62,14 +66,22 @@ export interface DeskToolMeta extends ToolMeta {
 
 /**
  * One entry in the declarative tool registry (`TOOL_MANIFEST` below) — the single source
- * of truth for a tool's surface + risk (+ gating scope for deskbot). The derived meta maps
- * (`chatbotToolMeta`/`deskbotToolMeta`/`allToolMeta` in `$lib/server/ai/tools/`) are
- * projected from this, so they can't drift from the manifest. Chatbot tools carry no
- * scope; deskbot tools always do — enforced by this discriminated union.
+ * of truth for a tool's surface + risk + owning capability (+ gating scope for deskbot).
+ * The derived meta maps (`chatbotToolMeta`/`deskbotToolMeta`/`allToolMeta` in
+ * `$lib/server/ai/tools/`) are projected from this, so they can't drift from the manifest.
+ * Chatbot tools carry no scope; deskbot tools always do — enforced by this discriminated
+ * union.
  */
 export type ToolDescriptor =
-	| { name: string; surface: 'chatbot'; risk: ToolRisk }
-	| { name: string; surface: 'deskbot'; risk: ToolRisk; scope: DeskToolScope };
+	| { name: string; surface: 'chatbot'; risk: ToolRisk; capability: CapabilityId }
+	| { name: string; surface: 'deskbot'; risk: ToolRisk; scope: DeskToolScope; capability: CapabilityId };
+
+/**
+ * The one human label of a tool — the status row's verb ("Searching the catalog") — is the
+ * i18n message under this key, in every locale. Derived from the name so no second map can
+ * drift; `tool-label.gate.test.ts` proves every key exists.
+ */
+export const toolLabelKey = (toolName: string) => `ai_tool_${toolName}`;
 
 /**
  * The one declarative tool registry — the single source of truth for every tool's
@@ -77,37 +89,47 @@ export type ToolDescriptor =
  * DERIVED from this list, so a new tool can't drift out of sync with its meta: add one
  * entry here and the chatbot/deskbot/union maps pick it up automatically.
  *
- * The tool *factories* deliberately stay in `buildRetrievalTools` / `createDeskTools`
- * (`$lib/server/ai/tools/index.ts`) rather than living on each descriptor — their
- * signatures are heterogeneous (per-turn sinks for retrieval, scope-gated batch assembly
- * + deskLayout for desk), so a uniform `factory` field would force an awkward, riskier
- * shape for no correctness gain. Instead the builders are locked to this manifest by the
- * drift-guard test in `tools/index.test.ts`, which asserts each builder's emitted tool
- * set matches the manifest names for its surface. `resolve_ref` is intentionally absent —
- * it is compaction infra (AI SDK #9631), never surfaced as a metered/replayable tool.
+ * The tool *factories* stay in `$lib/server/ai/tools/*` and are mounted by the capability
+ * each entry names (`$lib/server/ai/capabilities/*`) — their signatures are heterogeneous
+ * (per-turn sinks for retrieval, scope + deskLayout for desk), so a uniform `factory` field
+ * would force an awkward shape for no correctness gain. The capabilities are locked to this
+ * manifest by the drift-guard test in `profile/profile.test.ts`, which asserts each
+ * profile's emitted tool set matches the manifest names for its surface, capability by
+ * capability. `resolve_ref` is intentionally absent — it is compaction infra (AI SDK
+ * #9631), never surfaced as a metered/replayable tool.
  */
 export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
 	// ── chatbot: read-only, grounded retrieval tools (no scope) ──
-	{ name: 'get_llmwiki_pages', surface: 'chatbot', risk: 'read' },
-	{ name: 'get_source_chunks', surface: 'chatbot', risk: 'read' },
-	{ name: 'search_catalog', surface: 'chatbot', risk: 'read' },
-	{ name: 'search_project_docs', surface: 'chatbot', risk: 'read' },
-	{ name: 'search_pattern_library', surface: 'chatbot', risk: 'read' },
+	{ name: 'search_catalog', surface: 'chatbot', risk: 'read', capability: 'catalog' },
+	{ name: 'search_project_docs', surface: 'chatbot', risk: 'read', capability: 'project-docs' },
+	{ name: 'search_pattern_library', surface: 'chatbot', risk: 'read', capability: 'pattern-library' },
 	// ── deskbot: scope-gated UI-parity tools ──
-	{ name: 'desk_list_files', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_read_file', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_file_tree', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_search_files', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_get_open_panels', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
-	{ name: 'desk_update_cells', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
-	{ name: 'desk_rename_file', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
-	{ name: 'desk_update_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
-	{ name: 'desk_edit_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write' },
-	{ name: 'desk_create_spreadsheet', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
-	{ name: 'desk_create_markdown', surface: 'deskbot', risk: 'create', scope: 'desk:create' },
-	{ name: 'desk_delete_file', surface: 'deskbot', risk: 'destructive', scope: 'desk:delete' },
-	{ name: 'desk_search_knowledge', surface: 'deskbot', risk: 'read', scope: 'desk:ask' },
-	// desk_propose_plan is a read-risk primitive gated with the base read scope; it is
-	// mounted whenever a mutating scope is present (see createDeskTools).
-	{ name: 'desk_propose_plan', surface: 'deskbot', risk: 'read', scope: 'desk:read' },
+	{ name: 'desk_list_files', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
+	{ name: 'desk_read_file', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
+	{ name: 'desk_file_tree', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
+	{ name: 'desk_search_files', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
+	{ name: 'desk_get_open_panels', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
+	{ name: 'desk_update_cells', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
+	{ name: 'desk_rename_file', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
+	{ name: 'desk_update_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
+	{ name: 'desk_edit_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
+	{
+		name: 'desk_create_spreadsheet',
+		surface: 'deskbot',
+		risk: 'create',
+		scope: 'desk:create',
+		capability: 'desk-create',
+	},
+	{ name: 'desk_create_markdown', surface: 'deskbot', risk: 'create', scope: 'desk:create', capability: 'desk-create' },
+	{
+		name: 'desk_delete_file',
+		surface: 'deskbot',
+		risk: 'destructive',
+		scope: 'desk:delete',
+		capability: 'desk-delete',
+	},
+	{ name: 'desk_search_knowledge', surface: 'deskbot', risk: 'read', scope: 'desk:ask', capability: 'desk-ask' },
+	// desk_propose_plan is a read-risk primitive gated with the base read scope; its
+	// capability mounts it whenever a mutating scope is granted.
+	{ name: 'desk_propose_plan', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-plan' },
 ];

@@ -1,10 +1,8 @@
 /**
  * Reciprocal rank fusion and the tier-grouping wrapper over it.
  *
- * `reciprocalRankFusion` is generic because the wiki layer fuses pages by `pageId` and the
- * chunk layer fuses chunks by `chunkId`; both shapes are exercised below, which is what the
- * separate `llmwiki/rrf.test.ts` used to do behind two `vi.mock` calls it only needed because
- * the duplicate implementation shared a file with `search.ts`'s database imports.
+ * `reciprocalRankFusion` is generic over the key it fuses by; the chunk layer fuses by
+ * `chunkId`, and a second, page-keyed shape is exercised below to keep it that way.
  */
 import { describe, expect, it } from 'vitest';
 import { RRF_K } from './config';

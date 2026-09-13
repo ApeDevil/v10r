@@ -1,53 +1,48 @@
-import { allToolMeta, chatbotToolMeta, type DeskToolMeta } from '$lib/server/ai/tools';
+import { PROFILES } from '$lib/server/ai/profile';
+import { profileCapabilities } from '$lib/server/ai/profile/manifest';
+import { chatbotToolMeta, type DeskToolMeta, deskbotToolMeta } from '$lib/server/ai/tools';
 import { requireAdmin } from '$lib/server/http/guards';
 import type { PageServerLoad } from './$types';
 
 /**
- * Tool topology — derived at load time from the SAME per-surface tool-meta registries
- * the orchestrator imports (single source of truth; the table can't drift from the real
- * tool set). BRANCH is membership in `chatbotToolMeta` (retrieval) vs `deskbotToolMeta`
- * (desk); only desk tools carry a `scope`.
+ * Tool topology — derived at load time from the two profiles the orchestrator composes
+ * turns from (single source of truth; the table can't drift from the real tool set): each
+ * capability's tools with the description the model receives, the risk/scope meta from the
+ * manifest, the step budget from the profile. BRANCH is the profile's surface.
  */
-
-const NOTES: Record<string, string> = {
-	get_llmwiki_pages: 'Expand wiki pages beyond the TLDR.',
-	get_source_chunks: 'Drill to raw source chunks — verbatim-id rule, max 3/turn.',
-	search_catalog: 'Search the ⌘K catalog → canonical paths (CitationChip).',
-	search_project_docs: 'Semantic search over the system-owned docs corpus.',
-	search_pattern_library: 'Search the canonical pattern registry → /docs/pattern-library pages.',
-	desk_list_files: 'List files in the desk workspace.',
-	desk_read_file: 'Read a desk file.',
-	desk_file_tree: 'Desk file tree.',
-	desk_search_files: 'Search desk file contents.',
-	desk_get_open_panels: 'Inspect currently open desk panels.',
-	desk_rename_file: 'Rename a desk file.',
-	desk_update_markdown: 'Edit a markdown document.',
-	desk_update_cells: 'Edit spreadsheet cells.',
-	desk_create_markdown: 'Create a markdown document.',
-	desk_create_spreadsheet: 'Create a spreadsheet.',
-	desk_delete_file: 'Delete a desk file.',
-	desk_propose_plan: 'Plan-before-execute (governor-gated when a mutating scope is on).',
-};
 
 const RISK_ORDER: Record<string, number> = { read: 0, create: 1, write: 2, destructive: 3 };
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
+	const viewer = { userId: locals.user?.id ?? '', locale: locals.locale ?? 'en', authCeiling: 'admin' as const };
+	const [chatbot, deskbot] = await Promise.all([
+		profileCapabilities(PROFILES.chatbot, viewer),
+		profileCapabilities(PROFILES.deskbot, viewer),
+	]);
 
-	const tools = Object.entries(allToolMeta).map(([name, meta]) => {
-		const branch: 'retrieval' | 'desk' = name in chatbotToolMeta ? 'retrieval' : 'desk';
-		const scope = (meta as Partial<DeskToolMeta>).scope;
-		const mutating = branch === 'desk' && scope !== 'desk:read';
-		return {
-			name,
-			branch,
-			risk: meta.risk,
-			scope: scope ?? null,
-			scopeLabel: branch === 'retrieval' ? 'always-on' : (scope ?? ''),
-			stepBudget: branch === 'retrieval' ? 3 : mutating ? 5 : 3,
-			note: NOTES[name] ?? '',
-		};
-	});
+	const tools = [
+		...chatbot.capabilities.flatMap((c) =>
+			c.tools.map((t) => ({ tool: t, capability: c, branch: 'retrieval' as const })),
+		),
+		...deskbot.capabilities.flatMap((c) => c.tools.map((t) => ({ tool: t, capability: c, branch: 'desk' as const }))),
+	]
+		.filter(({ tool }) => tool.name in chatbotToolMeta || tool.name in deskbotToolMeta)
+		.map(({ tool, capability, branch }) => {
+			const meta = branch === 'retrieval' ? chatbotToolMeta[tool.name] : deskbotToolMeta[tool.name];
+			const scope = (meta as Partial<DeskToolMeta>).scope;
+			const mutating = branch === 'desk' && scope !== 'desk:read';
+			return {
+				name: tool.name,
+				branch,
+				capability: capability.id,
+				risk: meta.risk,
+				scope: scope ?? null,
+				scopeLabel: branch === 'retrieval' ? 'always-on' : (scope ?? ''),
+				stepBudget: branch === 'retrieval' ? 3 : mutating ? 5 : 3,
+				note: tool.description,
+			};
+		});
 
 	tools.sort((a, b) => {
 		if (a.branch !== b.branch) return a.branch === 'retrieval' ? -1 : 1;

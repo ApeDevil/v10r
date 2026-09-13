@@ -83,7 +83,7 @@ and calls `session.submit(text, routeId)`. `submit()` freezes it into a local **
 after the await would capture the *new* page). The singleton never imports `$app/state` —
 the component hands it a plain string (adapters-in, domain-pure).
 
-Body: `{ …conversationId, useLlmwiki: true, routeId }`. Per-turn snapshot, immutable once
+Body: `{ …conversationId, routeId }`. Per-turn snapshot, immutable once
 the POST serializes → mid-stream navigation cannot mutate an in-flight turn.
 
 ### 2. The wire — `{ routeId }` only
@@ -123,9 +123,10 @@ struct does. **Miss → inject nothing, seed nothing, store nothing, show no chi
 
 ### 4. Inject — passive `<current-page>` block (always-on when resolved, ~35 tokens)
 
-In the chatbot branch's grounding assembly, a pure `formatCurrentPageBlock(entry)` in
-`system-prompt.ts`, XML-escaped (`escapeXmlAttr`, defense-in-depth on server-owned text),
-in the **variable tail** (never the cache-stable prefix):
+The `site-awareness` capability (`ai/capabilities/site-awareness.ts`) contributes a pure
+`formatCurrentPageBlock(entry)` as its awareness block, XML-escaped (`escapeXmlAttr`,
+defense-in-depth on server-owned text), in the **variable tail** (never the cache-stable
+prefix):
 
 ```
 <current-page route="/showcases/forms" kind="domain">
@@ -181,7 +182,7 @@ catalog strings. Two reasons:
    maximally-wrong seed can only re-rank chunks the user is **already** authorized to see.
 
 **Enforce as a type:** only a `RouteContext` value produced by the server resolver may
-reach `generateEmbedding`/`buildSystemPrompt`. Raw client strings must be structurally
+reach `generateEmbedding`/`composeTurn`. Raw client strings must be structurally
 incapable of getting there. **Any future proposal to feed DOM/selected-text into the
 prompt or embed query is a fresh High finding** and must go back through a security pass —
 it is *not* covered by this concession.
@@ -267,7 +268,7 @@ One additive column (decision #2):
 ai.message.route  text  NULL   -- the resolved, allowlisted route key only (e.g. "/showcases/forms")
 ```
 
-- Stamped **only** on the **user** message in `saveMessages`. Not on `conversation_step`
+- Stamped **only** on the **user** message in `saveMessages`. Not on `model_call`
   (that table is assistant-keyed per-step telemetry — wrong grain).
 - Stores the **server-resolved key**, never the client string, never a URL/params/query,
   never ids. The bubble label is **derived at render** from the key via the `$lib`
@@ -304,8 +305,7 @@ emit it, but it already contained the user's raw message — public page-title t
 | `src/lib/server/ai/validation.ts` | `pageRouteId` field + regex |
 | `src/routes/api/ai/chatbot/+server.ts` | Call `resolvePageContext`, pass resolved struct into `orchestrateChat` |
 | `src/lib/server/search/` | New pure `resolvePageContext` (normalize → memoized catalog `Map` → authCeiling filter) |
-| `src/lib/server/ai/chat-orchestrator.ts` | Inject `<current-page>` (chatbot branch); deixis-gated query seed; abstention block on empty chunks |
-| `src/lib/server/ai/context/system-prompt.ts` | `formatCurrentPageBlock` + `escapeXmlAttr` |
+| `src/lib/server/ai/capabilities/site-awareness.ts` | The capability: `referencesCurrentPage` (the deixis rule), `pageSeededQuery`, `formatCurrentPageBlock` (the `<current-page>` awareness block), the abstention guide on empty chunks |
 | `src/lib/server/db/schema/ai/conversation.ts` | nullable `ai.message.route` column; stamp in `saveMessages` |
 
 ## Provenance

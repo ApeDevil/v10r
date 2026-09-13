@@ -551,7 +551,7 @@ export const showcases: ShowcaseCard[] = [
 				href: '/showcases/ai/chatbot',
 				docs: [
 					{ href: '/docs/blueprint/ai/layered-rag', label: 'Layered RAG' },
-					{ href: '/docs/blueprint/ai/retrieval-observability', label: 'Retrieval Observability' },
+					{ href: '/docs/blueprint/ai/turn-trace', label: 'Turn Trace' },
 				],
 			},
 			{
@@ -559,7 +559,7 @@ export const showcases: ShowcaseCard[] = [
 				href: '/showcases/ai/deskbot',
 				docs: [
 					{ href: '/docs/blueprint/ai/harness-lens', label: 'Harness Lens' },
-					{ href: '/docs/blueprint/ai/desk-integration', label: 'Desk Integration' },
+					{ href: '/docs/blueprint/ai/turn-trace', label: 'Turn Trace' },
 				],
 			},
 		],

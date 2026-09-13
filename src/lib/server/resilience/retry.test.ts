@@ -84,6 +84,9 @@ describe('the budget', () => {
 	});
 
 	it('does not sleep past the deadline to reach an attempt it cannot make', async () => {
+		// Full jitter draws from [0, capped): pinned, or one run in ~250 rolls a delay that
+		// fits the budget and retries for real.
+		vi.spyOn(Math, 'random').mockReturnValue(0.5);
 		const deadline = startDeadline(40);
 		const work = vi.fn(async () => {
 			throw new Error('down');

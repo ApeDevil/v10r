@@ -17,7 +17,7 @@ import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
 import type { HarnessMetadata, ProposalMetadata } from '$lib/components/composites/chatbot/harness-types';
 import PlanCard from '$lib/components/composites/chatbot/PlanCard.svelte';
-import type { CatalogSource } from '$lib/components/composites/citation/citation-types';
+import { citedCatalogSources, inspectTurnPath, traceOf } from '$lib/components/composites/chatbot/turn-progress';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import {
 	appendIOLog,
@@ -34,6 +34,7 @@ import {
 import { dispatchDeskEffect as dispatchEffect } from '$lib/components/desk/dispatch-desk-effect';
 import { findLeafWithPanel } from '$lib/components/desk/dock.operations';
 import { fileIdOfPanelDefinition, findFilePanel } from '$lib/components/desk/file-panel';
+import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import type { TurnError } from '$lib/types/ai-error';
 import type { DeskEffect } from '$lib/types/ai-tools';
@@ -254,12 +255,13 @@ $effect(() => {
 		{:else}
 			<div class="chat-messages-list">
 				{#each messages as message (message.id)}
+					{@const inspectPath = inspectTurnPath('deskbot', session?.conversationId, message)}
 					<ChatMessage
 						role={message.role as 'user' | 'assistant'}
 						parts={message.parts}
-						catalogSources={(message as { metadata?: { catalogSources?: CatalogSource[] } }).metadata
-							?.catalogSources}
+						catalogSources={citedCatalogSources(traceOf(message))}
 						turnError={(message as { metadata?: { turnError?: TurnError } }).metadata?.turnError}
+						inspectHref={inspectPath && localizeHref(inspectPath)}
 					/>
 					{#if message.role === 'assistant' && session}
 						{@const proposal = getProposalForMessage(message)}

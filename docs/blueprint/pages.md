@@ -523,13 +523,13 @@ Cache layer showcase. Three sub-pages covering connection, ephemeral keys, and c
 
 ### /showcases/ai
 
-Architecture x-ray of the two AI surfaces (see [ai/surfaces.md](./ai/surfaces.md)). Two sibling pages with an identical 8-anchor skeleton (`#spine #guard #prompt #retrieval #tools #verify|#approval #stream #awareness`), driven by recorded trace fixtures — fully readable signed-out, zero `+page.server.ts` (leak-gate enforced).
+Architecture x-ray of the two AI surfaces (see [ai/surfaces.md](./ai/surfaces.md)). Two sibling pages with a shared 9-anchor skeleton (`#spine #orchestration #guard #prompt #retrieval #tools #verify|#approval #stream #awareness`); `#orchestration` is the turn inspector ([ai/turn-trace.md](./ai/turn-trace.md)) — a real turn opened up (the committed fixtures signed-out, the viewer's own turns signed in; "Inspect this turn" on an answer deep-links to it). Fully readable signed-out, zero `+page.server.ts` (leak-gate enforced).
 
 | Tests | Stack |
 |-------|-------|
-| Recorded trace playback | Pure `reduceTurn` reducer, seekable scrubber |
+| Turn inspector (both surfaces) | Persisted `TurnTrace` → pure projection (`inspector.ts`), APG treeview + detail pane + `Waterfall` timeline; owner-guarded turn/profile routes; the deskbot adds the proposal and its receipts as nodes |
 | Manifest-derived tool matrix | `TOOL_MANIFEST` (`$lib/types/ai-tools.ts`), drift tests |
-| Interactive approval halt | Real `PlanCard` at the deskbot fixture's one-door stop |
+| Proposal lifecycle | The pg enum + approve-route transitions mirrored and pinned; the recorded turn's proposal lights its current state |
 
 **Sub-pages:**
 

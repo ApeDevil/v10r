@@ -31,7 +31,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [3d/](./blueprint/3d/) | Threlte integration, copy-paste quick-reference templates |
 | [abuse/](./blueprint/abuse/) | ALTCHA captcha, honeypot, rate limits, AI token budget |
 | [admin/](./blueprint/admin/) | Cross-device debug pairing (QR flow, HMAC cookie) |
-| [ai/](./blueprint/ai/) | AI assistant, layered RAG (llmwiki + retrieval), provider routing, TOON format |
+| [ai/](./blueprint/ai/) | AI assistant, grounded retrieval (kernel + corpus map), provider routing, TOON format |
 | [analytics/](./blueprint/analytics/) | Two-lane model (anonymous vs authenticated), consent gating, LIA + DPIA screening, client telemetry, rollups |
 | [app-shell/](./blueprint/app-shell/) | Layout, sidebar, navigation, toasts, session lifecycle, settings |
 | [architecture/](./blueprint/architecture/) | Multi-client core (hexagonal), background jobs, workers (Web Worker + claim-based queue worker), native-client seam |

@@ -37,6 +37,11 @@ import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiError, apiOk } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
+// The run's ceiling, declared here rather than inherited from the project's default: a
+// plan is executed inside this request, step by step, and `EXECUTION_LEASE_MS` reasons
+// about the gap between two heartbeats — never about a run that outlives the function.
+export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
+
 // Proposal execution runs desk mutations; cap per-user throughput. Idempotency
 // caps repeat-execution of one proposal, but not a flood of distinct proposals.
 const executeLimiter = createLimiter('rl:ai:proposal:execute', 20, '1 m');

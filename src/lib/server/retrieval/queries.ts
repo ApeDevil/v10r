@@ -1,11 +1,10 @@
 /**
- * Shared read helpers for retrieval content.
- * Extracted from tier-specific inline SQL so they can be reused by
- * retrieval tiers, the llmwiki layer, and AI tools (get-source-chunks).
+ * Shared read helpers for retrieval content — the tiers that fold parents and graph
+ * neighbours back into a result read chunk bodies by id through here.
  */
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import type { ChunkLevel } from '$lib/types/citation';
+import type { chunkLevelEnum } from '$lib/server/db/schema/retrieval';
 
 /** A raw chunk with its document context. */
 export type RawChunkRow = {
@@ -14,7 +13,7 @@ export type RawChunkRow = {
 	documentTitle: string;
 	content: string;
 	/** Granularity of the chunk (sentence/paragraph/section). */
-	level: ChunkLevel;
+	level: (typeof chunkLevelEnum.enumValues)[number];
 };
 
 /**

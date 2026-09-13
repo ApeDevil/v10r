@@ -1,7 +1,7 @@
 /**
- * overview-body — pure builder for the system-overview anchor body.
+ * overview-body — pure builder for the project docs corpus map's body.
  *
- * The overview is the high-level "map" the chatbot injects as <project-overview> for broad
+ * The map is the high-level overview the chatbot injects as <project-overview> for broad
  * questions ("what is v10r", "which stack does it use"). Deterministic, no LLM.
  *
  * Extracted from scripts/db/ingest-docs.ts (which imports it back) so it is unit-testable
@@ -9,11 +9,11 @@
  * (env validation + process.exit, main() auto-run) and cannot be imported into a test.
  * Same Vite-free, dependency-light arrangement as the sibling doc-filter.ts.
  *
- * TRUNCATION CONTRACT: loadOverview() (src/lib/server/llmwiki/overview.ts) slices the body
- * to OVERVIEW_MAX_TOKENS * CHARS_PER_TOKEN (= 500 * 4 = 2000) chars before injection. The
- * intro paragraph and the **Stack:** line therefore live at the TOP of the body, ahead of
- * the per-section table of contents, so they always survive truncation. The huge `blueprint`
- * TOC below them may be cut — that is fine, but the stack summary must not be.
+ * TRUNCATION CONTRACT: loadProjectMap() (src/lib/server/ai/capabilities/project-map.ts)
+ * slices the body to PROJECT_MAP_MAX_CHARS (ai/config.ts, 2000) before injection. The intro
+ * paragraph and the **Stack:** line therefore live at the TOP of the body, ahead of the
+ * per-section table of contents, so they always survive the cut. The huge `blueprint` TOC
+ * below them may be lost — that is fine, but the stack summary must not be.
  */
 
 /**

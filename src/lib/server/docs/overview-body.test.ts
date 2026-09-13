@@ -1,17 +1,15 @@
 /**
- * Unit tests for buildOverviewBody — the deterministic system-overview anchor body.
+ * Unit tests for buildOverviewBody — the deterministic body of the project docs corpus map.
  *
- * The load-bearing guard is the **Stack:** line. loadOverview() truncates the body to
- * OVERVIEW_MAX_TOKENS * CHARS_PER_TOKEN (= 2000) chars before injecting it into the chat
- * system prompt. The stack summary therefore has to land in the FIRST 2000 chars — ahead of
- * the large per-section TOC — or the chatbot can no longer answer "which stack does v10r
- * use?" (the original grounding bug). These tests pin that invariant.
+ * The load-bearing guard is the **Stack:** line. loadProjectMap() cuts the body to
+ * PROJECT_MAP_MAX_CHARS (2000) before injecting it into the chat system prompt. The stack
+ * summary therefore has to land in the FIRST 2000 chars — ahead of the large per-section
+ * TOC — or the chatbot can no longer answer "which stack does v10r use?" (the original
+ * grounding bug). These tests pin that invariant.
  */
 import { describe, expect, it } from 'vitest';
-import { OVERVIEW_MAX_TOKENS } from '../llmwiki/config';
+import { PROJECT_MAP_MAX_CHARS } from '$lib/server/ai/config';
 import { buildOverviewBody, type OverviewDocFile } from './overview-body';
-
-const _MAX_CHARS = OVERVIEW_MAX_TOKENS * 4; // mirrors loadOverview's CHARS_PER_TOKEN = 4
 
 const stackDoc = (subsection: string, file: string, title: string): OverviewDocFile => ({
 	sourcePath: `docs/stack/${subsection}/${file}.md`,
@@ -41,9 +39,11 @@ const files: OverviewDocFile[] = [
 ];
 
 describe('buildOverviewBody', () => {
-	it('emits a Stack line derived from the core stack-section doc titles', () => {
+	it('emits a Stack line derived from the core stack-section doc titles, inside the prompt cut', () => {
 		const body = buildOverviewBody(files);
-		expect(body).toContain('**Stack:** Better Auth · Bun · Drizzle · SvelteKit · UnoCSS');
+		const stack = '**Stack:** Better Auth · Bun · Drizzle · SvelteKit · UnoCSS';
+		expect(body).toContain(stack);
+		expect(body.indexOf(stack) + stack.length).toBeLessThan(PROJECT_MAP_MAX_CHARS);
 	});
 
 	it('excludes capability/ops subsections from the Stack line', () => {

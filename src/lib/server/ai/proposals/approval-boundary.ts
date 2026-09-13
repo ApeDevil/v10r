@@ -10,8 +10,9 @@
  */
 import type { StopCondition, ToolSet } from 'ai';
 import type { ProposedTarget, ProposedToolCall } from '$lib/server/db/schema/ai/proposal';
+import { type RetentionRuleId, retentionDays } from '$lib/server/retention';
+import type { ProposalCardStep, ProposalStepRecovery } from '$lib/types/ai-proposal';
 import { TOOL_MANIFEST, type ToolRisk } from '$lib/types/ai-tools';
-import type { ProposalCardStep } from '$lib/types/turn-trace';
 import { type DeskExecutableTool, TOOL_RECOVERY } from '../tools/desk-execute';
 
 /** One approval the model asked for — a step of the proposal to be. */
@@ -77,25 +78,41 @@ export function collectApprovalRequests(toolResults: readonly ToolResultLike[]):
 
 const riskOf = (toolName: string): ToolRisk => TOOL_MANIFEST.find((d) => d.name === toolName)?.risk ?? 'write';
 
+/**
+ * The retention rule each recovery leans on: the card names the window the schedule
+ * enforces, so the number on the card and the job that deletes on it share one owner.
+ */
+const RECOVERY_RETENTION: Record<ProposalStepRecovery, RetentionRuleId | null> = {
+	revision: 'desk-revisions',
+	soft_delete: 'desk-trash',
+	rename_back: null,
+	none: null,
+};
+
 /** The card's view of the steps — risk and recovery from the tool, never from the model. */
 export function toCardSteps(steps: readonly ApprovalRequest[]): ProposalCardStep[] {
-	return steps.map((s) => ({
-		action: s.action,
-		tool: s.toolName,
-		risk: riskOf(s.toolName),
-		rationale: s.rationale ?? '',
-		recovery: TOOL_RECOVERY[s.toolName as DeskExecutableTool] ?? 'none',
-		...(s.target
-			? {
-					target: {
-						fileId: s.target.fileId,
-						fileType: s.target.fileType,
-						name: s.target.name,
-						version: s.target.version,
-					},
-				}
-			: {}),
-	}));
+	return steps.map((s) => {
+		const recovery = TOOL_RECOVERY[s.toolName as DeskExecutableTool] ?? 'none';
+		const rule = RECOVERY_RETENTION[recovery];
+		return {
+			action: s.action,
+			tool: s.toolName,
+			risk: riskOf(s.toolName),
+			rationale: s.rationale ?? '',
+			recovery,
+			retentionDays: rule === null ? null : retentionDays(rule),
+			...(s.target
+				? {
+						target: {
+							fileId: s.target.fileId,
+							fileType: s.target.fileType,
+							name: s.target.name,
+							version: s.target.version,
+						},
+					}
+				: {}),
+		};
+	});
 }
 
 export const riskTierOf = (steps: readonly ApprovalRequest[]): 'medium' | 'high' =>

@@ -1,7 +1,7 @@
 import { count, desc, eq, isNull, sql, sum } from 'drizzle-orm';
 import { db } from '../index';
 import { user } from '../schema/auth/_better-auth';
-import { chunk, collection, document } from '../schema/retrieval';
+import { chunk, collection, corpusMap, document } from '../schema/retrieval';
 
 export interface RetrievalOverviewStats {
 	totalDocuments: number;
@@ -12,6 +12,8 @@ export interface RetrievalOverviewStats {
 	totalChunks: number;
 	totalTokens: number;
 	totalCollections: number;
+	/** Collections with a corpus map — the deterministic overview the chatbot injects. */
+	totalMaps: number;
 }
 
 export interface DocumentAdminView {
@@ -37,7 +39,7 @@ export interface CollectionAdminView {
 }
 
 export async function getRetrievalOverviewStats(): Promise<RetrievalOverviewStats> {
-	const [docStats, chunkStats, collCount] = await Promise.all([
+	const [docStats, chunkStats, collCount, mapCount] = await Promise.all([
 		db
 			.select({
 				total: count(),
@@ -52,6 +54,7 @@ export async function getRetrievalOverviewStats(): Promise<RetrievalOverviewStat
 			.where(isNull(document.deletedAt)),
 		db.select({ total: count() }).from(chunk),
 		db.select({ total: count() }).from(collection).where(isNull(collection.deletedAt)),
+		db.select({ total: count() }).from(corpusMap),
 	]);
 
 	const ds = docStats[0];
@@ -64,6 +67,7 @@ export async function getRetrievalOverviewStats(): Promise<RetrievalOverviewStat
 		totalChunks: chunkStats[0]?.total ?? 0,
 		totalTokens: Number(ds?.totalTokensSum ?? 0),
 		totalCollections: collCount[0]?.total ?? 0,
+		totalMaps: mapCount[0]?.total ?? 0,
 	};
 }
 

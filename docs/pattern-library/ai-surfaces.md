@@ -24,6 +24,8 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 - `src/lib/server/ai/guard.ts` — guardAiRequest() — the one shared gate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/guard.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/guard.ts))
 - `src/lib/server/ai/chat-orchestrator.ts` — Chatbot orchestration ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/chat-orchestrator.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/chat-orchestrator.ts))
+- `src/lib/server/ai/profile/` — One profile per surface — identity + capabilities, composed per turn by composeTurn() ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/ai/profile) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/ai/profile))
+- `src/lib/server/ai/capabilities/` — One file per capability: its tools, guidance, activation rule, grounding lane, guide, verifier ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/ai/capabilities) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/ai/capabilities))
 - `src/lib/server/ai/deskbot-retrieval.ts` — Deskbot retrieval side ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/deskbot-retrieval.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/deskbot-retrieval.ts))
 - `src/routes/api/ai/chatbot/+server.ts` — Chatbot route adapter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/ai/chatbot/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/ai/chatbot/+server.ts))
 - `src/routes/api/ai/deskbot/+server.ts` — Deskbot route adapter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/ai/deskbot/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/ai/deskbot/+server.ts))
@@ -32,7 +34,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 ## Tests
 
 - `src/lib/server/ai/chat-orchestrator.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/chat-orchestrator.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/chat-orchestrator.test.ts))
-- `src/lib/server/ai/context/system-prompt.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/context/system-prompt.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/context/system-prompt.test.ts))
+- `src/lib/server/ai/profile/profile.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/profile/profile.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/profile/profile.test.ts))
 - `src/lib/server/ai/tool-leak-guard.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/tool-leak-guard.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/tool-leak-guard.test.ts))
 
 ## Proof

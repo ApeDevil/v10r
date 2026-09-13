@@ -3,7 +3,7 @@
  * mutation goes through: the in-loop creates and the proposal-approval replay
  * (`executeProposal`) alike.
  *
- * The in-loop path is gated differently: `createDeskTools` only assembles the
+ * The in-loop path is gated differently: the deskbot profile only mounts the
  * tools whose scope was granted, so an ungranted tool is never callable. This
  * module is the replay equivalent and must enforce the same thing itself, or
  * approval becomes the weaker of the two doors for the identical mutation.

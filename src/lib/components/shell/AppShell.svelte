@@ -64,7 +64,8 @@ $effect(() => {
 
 // The chatbot is docked as a right-hand column on desktop while open; reflow main so
 // the panel never overlaps content. Mobile uses a bottom sheet (no horizontal reflow).
-const chatDocked = $derived(chatbotSession.phase === 'open');
+// A page that embeds the thread (the chatbot showcase) takes the dock's place.
+const chatDocked = $derived(chatbotSession.phase === 'open' && !chatbotSession.embedded);
 
 // Hand the singleton the live user id (resume pointer + cross-user guard + sign-in
 // gate). Reactive, not onMount-only: client-side logout (signOutAndFlush →
@@ -226,8 +227,9 @@ const searchItems = $derived<CommandPaletteItem[]>([
 />
 
 <!-- AI assistant chatbot: persistent, minimizable, non-modal. Stays mounted while the
-	thread is alive (open|minimized); the live Chat lives in the chatbot-session singleton. -->
-{#if ChatbotComponent && chatbotSession.phase !== 'closed'}
+	thread is alive (open|minimized) and no page shows it in place; the live Chat lives in
+	the chatbot-session singleton. -->
+{#if ChatbotComponent && chatbotSession.phase !== 'closed' && !chatbotSession.embedded}
 	<svelte:component this={ChatbotComponent} />
 {/if}
 

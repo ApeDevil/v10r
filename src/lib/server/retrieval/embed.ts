@@ -49,8 +49,8 @@ function describeEmbedError(err: unknown): string {
 
 /**
  * Retry an embedding call on transient quota / rate-limit (429) errors with exponential
- * backoff. Without this a single 429 silently ungrounds an entire chat turn (the only
- * embed call funnels both the llmwiki search and the system-docs retrieve). Only the
+ * backoff. Without this a single 429 silently ungrounds an entire chat turn (the one
+ * shared embed call funnels every grounding lane of the turn). Only the
  * quota family is retried — anything else (e.g. a missing key) fails fast. Budgets are
  * asymmetric: the interactive query path uses a tight budget so a grounded turn can't
  * hang; the batch ingest path can afford to wait out a longer backoff.
@@ -96,7 +96,7 @@ export async function generateEmbedding(text: string, options?: EmbedOptions): P
 			{ maxAttempts: 2, baseDelayMs: 1000 },
 		);
 		// One Gemini API call against the shared Google connection's quota
-		// — invisible to conversation_step, so count it for the quota board. Counted
+		// — invisible to model_call, so count it for the quota board. Counted
 		// once per SUCCESSFUL call, never per retry attempt.
 		void incrEmbeddingCalls(1);
 		return result.embedding;

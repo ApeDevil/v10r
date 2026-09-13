@@ -104,7 +104,7 @@ export function createSearchPatternLibraryTool(locale: Locale, sink?: CatalogSin
 				},
 				required: ['query'],
 			}),
-			execute: async ({ query, category, limit }) => {
+			execute: async ({ query, category, limit }, { toolCallId }) => {
 				try {
 					const q = typeof query === 'string' ? query.trim() : '';
 					const cap = Math.min(Math.max(1, limit ?? DEFAULT_LIMIT), MAX_LIMIT);
@@ -119,12 +119,18 @@ export function createSearchPatternLibraryTool(locale: Locale, sink?: CatalogSin
 					// Browse/enumerate: registry order (deep-first within category by construction).
 					if (q === '' || BROWSE_TOKENS.has(q.toLowerCase())) {
 						const browsed = pool.slice(0, cap);
-						sink?.record(browsed.map((pattern) => toSinkRow(pattern, locale, 0)));
+						sink?.record(
+							browsed.map((pattern) => toSinkRow(pattern, locale, 0)),
+							toolCallId,
+						);
 						return { results: browsed.map(toRow), total: pool.length };
 					}
 
 					const scored = scorePatterns(q, pool).slice(0, cap);
-					sink?.record(scored.map((hit) => toSinkRow(hit.pattern, locale, hit.score)));
+					sink?.record(
+						scored.map((hit) => toSinkRow(hit.pattern, locale, hit.score)),
+						toolCallId,
+					);
 					return { results: scored.map((hit) => toRow(hit.pattern)) };
 				} catch (err) {
 					console.error('[ai:tool:search_pattern_library] failed:', err instanceof Error ? err.message : err);

@@ -222,7 +222,7 @@ function isBusy(provider: string, kind: 'save' | 'test' | 'remove'): boolean {
 		<Alert variant="error" description={m.admin_ai_models_encryption_missing()} />
 	{/if}
 	{#if noneConnected}
-		<Alert variant="info" description={m.showcase_ai_probe_err_unavailable()} />
+		<Alert variant="info" description={m.admin_ai_models_none_connected()} />
 	{/if}
 
 	<!-- Provider connections -->

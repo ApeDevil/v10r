@@ -16,7 +16,7 @@
  */
 export const SYSTEM_DOCS_USER_ID = 'system-docs';
 
-/** Reserved llmwiki collection holding the project-documentation corpus. */
+/** Reserved collection holding the project-documentation corpus (and its corpus map). */
 export const PROJECT_DOCS_COLLECTION_ID = 'project-docs';
 
 /** Maximum chunks injected into prompt context */

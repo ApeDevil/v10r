@@ -3,12 +3,11 @@ import * as m from '$lib/paraglide/messages';
 
 // The chatbot's trust gate: post-stream citation verification. The parallel slot on
 // the deskbot page is ApprovalLifecycle — one question ("what makes this surface
-// trustworthy?"), two answers.
-const VERDICTS = [
-	{ id: 'quote', icon: 'i-lucide-quote', tone: 'success' },
-	{ id: 'paraphrase', icon: 'i-lucide-repeat', tone: 'success' },
-	{ id: 'drifted', icon: 'i-lucide-git-compare', tone: 'warning' },
-	{ id: 'uncited', icon: 'i-lucide-file-question', tone: 'error' },
+// trustworthy?"), two answers. Matches are string facts, never causal claims.
+const MATCHES = [
+	{ id: 'path', icon: 'i-lucide-link', tone: 'success' },
+	{ id: 'unsurfaced · known', icon: 'i-lucide-git-compare', tone: 'warning' },
+	{ id: 'unsurfaced', icon: 'i-lucide-file-question', tone: 'error' },
 ] as const;
 </script>
 
@@ -19,16 +18,16 @@ const VERDICTS = [
 			<span class="gloss">stream closes — the answer text is final</span>
 		</li>
 		<li class="step">
-			<code>verifyCitations(answer, drilledChunks)</code>
-			<span class="gloss">every cited source is checked against the chunks the model actually drilled this turn</span>
+			<code>composition.verify(answer)</code>
+			<span class="gloss">every project path the answer names is matched against the rows this turn surfaced — the catalog lane's <code>&lt;catalog-results&gt;</code> and the search tools' results</span>
 		</li>
 		<li class="step">
-			<code>llmwiki:citations</code>
+			<code>trace.citations</code>
 			<span class="gloss">{m.showcase_ai_verify_chips()}</span>
 		</li>
 	</ol>
 	<ul class="verdicts" aria-label={m.showcase_ai_sec_verify()}>
-		{#each VERDICTS as v (v.id)}
+		{#each MATCHES as v (v.id)}
 			<li class="verdict" data-tone={v.tone}>
 				<span class="{v.icon} verdict-icon" aria-hidden="true"></span>
 				<code>{v.id}</code>

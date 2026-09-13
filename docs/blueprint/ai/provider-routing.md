@@ -48,7 +48,7 @@ different one is a re-embedding operation, not a setting.
 environment fallback. The admin page itself renders without a working provider or table so an
 operator can always reach the form.
 
-**Bare-Bun scripts** (`scripts/db/ingest-docs.ts`, `seed-llmwiki.ts`, `seed-silly.ts`) read the
+**Bare-Bun scripts** (`scripts/db/ingest-docs.ts`, `seed-silly.ts`) read the
 same saved Google connection through `db/ai/provider-connections.ts` + `ai/connections.ts` by
 relative path (both are alias-free; `ai/connections.test.ts` walks the closure), decrypting with
 `process.env.ENCRYPTION_KEY`. Missing or unusable configuration prints a secret-free reason and
@@ -79,12 +79,13 @@ enabled, decrypts, and has the capability the turn needs; otherwise it falls thr
 ## `wantsTools` — what triggers the tool provider
 
 ```typescript
-const wantsTools = !!toolScopes?.length || !!useLlmwiki || !!useRetrieval;
+const wantsTools = profile.wantsTools({ scopes: grantedScopes });
+// chatbot: () => true · deskbot: (turn) => turn.scopes.length > 0
 ```
 
-Previously only desk `toolScopes` triggered the tool provider. The llmwiki and retrieval retrieval branches now also set `wantsTools` because they attach their own retrieval tools (`get_llmwiki_pages`, `get_source_chunks`, `search_catalog`). Without the tool provider, those tool calls silently fail to fire.
+The profile decides. The deskbot wants tools only when a desk scope is granted. The chatbot wants them on every turn because it mounts `search_catalog`, `search_project_docs` and `search_pattern_library` — without the tool provider, those tool calls silently fail to fire.
 
-Separately, `deskTools` is only built when there are actual desk scopes — retrieval branches claim the tool model but bring their own tools and pass no desk scopes.
+Separately, `deskTools` is only built when there are actual desk scopes — the chatbot claims the tool model but brings its own tools and passes no desk scopes.
 
 ---
 
@@ -92,7 +93,7 @@ Separately, `deskTools` is only built when there are actual desk scopes — retr
 
 `markCooldown(providerId, durationMs = 60_000)` / `isCooledDown(providerId)` / `getCooldownResumeAt(providerId)` in `providers.ts`. Rate-limited providers cool down for 60 seconds. Tripped through one door per branch in the orchestrator (`coolProvider`): the chatbot branch cools from the streaming helper's `onAttemptFailure`, which fires exactly once per failed attempt with the provider's own error (retry or final); the desk branch and the pre-stream `catch` cool from their classified error. The kind comes from `classifyAiError`, which reads an `APICallError`'s **status** (429 → `rate_limit`, 401/403 → `authentication`, 404 → `model`, 408 → `timeout`, 5xx → `unavailable`) and classifies the SDK's generic `NoOutputGeneratedError` as `unknown` — never by substring, so a model 404 or a bad tool schema no longer cools the provider as a rate limit.
 
-**What a model call carries.** Every `streamText` of a turn (primary, rotated fallback, pre-stream fallback, desk) is given `modelCallSignal(cancellation)`: the turn's cancellation — the client stopped listening (`http/cancellation.ts`: the response body's `cancel()` joined with `request.signal`) — plus its own 30 s `AbortSignal.timeout`, minted per call because a timeout signal is single-use. The SDK answers a fired signal with an `abort` part; the streaming helper reads it as one of two things. The turn's cancellation: no rotation, no error frame, no cooldown — what streamed is persisted, `onCancellation` logs it. Any other abort is the call's own deadline: a `timeout` failure, rotated before content, `turnError` after it. A Stop is therefore never mistaken for a provider fault, and a provider that needs 30 s for a first token still rotates. A stream that closes cleanly with **no content at all** (Gemini 2.5 Flash answers some tool-mounted turns with `finishReason: stop` and nothing in it) is the third shape: an `EMPTY_ANSWER` failure of kind `unavailable`, rotated like any content-less failure — never a silent empty message.
+**What a model call carries.** Every `streamText` of a turn (primary, rotated fallback, pre-stream fallback, desk) is given `modelCallSignal(cancellation)`: the turn's cancellation — the client stopped listening (`http/cancellation.ts`: the response body's `cancel()` joined with `request.signal`) — plus its own 30 s `AbortSignal.timeout`, minted per call because a timeout signal is single-use. The SDK answers a fired signal with an `abort` part; the streaming helper reads it as one of two things. The turn's cancellation: no rotation, no error frame, no cooldown — what streamed is persisted, `onCancellation` logs it. Any other abort is the call's own deadline: a `timeout` failure, rotated before content, `turnError` after it. A Stop is therefore never mistaken for a provider fault, and a provider that needs 30 s for a first token still rotates. On Vercel the platform door only opens for a function deployed with `supportsCancellation` (`vercel.json` `functions`, Node runtime; adapter-vercel 6.3.4 does not write it) — and a function so deployed is *terminated* on disconnect, so both streamed turns hand their in-flight promise to `holdOpenUntil` (`platform/hold-open.ts`, `waitUntil`) and the cancelled turn's tail — persist what streamed, charge what usage reports — survives the disconnect. Without the flag the signal never fires there: the client stops, the server runs to completion and the trace says `ok`; a client-only stop is not a `cancelled` outcome and needs its own state before it can be one. A stream that closes cleanly with **no content at all** (Gemini 2.5 Flash answers some tool-mounted turns with `finishReason: stop` and nothing in it) is the third shape: an `EMPTY_ANSWER` failure of kind `unavailable`, rotated like any content-less failure — never a silent empty message.
 
 Storage is Redis via `resilience/breaker.ts` (key `breaker:ai-provider:{id}`), so the three functions are **async** and the breaker is **cross-instance** — a cooldown set by one serverless instance is honored by all, and survives cold starts. (It was previously an in-process `Map`, per-instance, reset on restart.)
 
@@ -101,7 +102,7 @@ Storage is Redis via `resilience/breaker.ts` (key `breaker:ai-provider:{id}`), s
 - `markCooldown` **always** writes the in-memory map (not only when Redis is null), so a cooldown is recorded even if the Redis write later fails.
 - `cooldownResumeMs` consults the in-memory map on a Redis **read** error — it fails toward "cooled" rather than treating an unreachable Redis as "available". A provider that just rate-limited us is not retried just because the breaker's backing store hiccupped.
 
-A turn's fallback pool is every configured connection minus the one the turn is already on — not "everything but the chat provider": a tool-routed turn starts on Google while the chat provider is the registry's first connection (Groq), and excluding it left Google + Groq with no rotation at all. Rotation (`streamTextIntoOpenMessage` for the chatbot, `tryFallback()` for the desk) skips any cooled-down provider and skips non-tool-capable providers when the turn mounts tools.
+A turn's fallback pool is every configured connection minus the one the turn is already on — not "everything but the chat provider": a tool-routed turn starts on Google while the chat provider is the registry's first connection (Groq), and excluding it left Google + Groq with no rotation at all. Rotation (`streamTextIntoOpenMessage` for the chatbot, `tryFallback()` for the desk) skips any cooled-down provider and skips non-tool-capable providers when the turn mounts tools. It also leaves out a fallback whose per-minute token ceiling cannot carry the turn (`fitsTokenMinute`, `provider-limits.ts`): the prompt is re-sent on every step, so a tool-mounted turn is sized at two steps (`estimateTurnTokens`), and Groq's free tier (8 K TPM) cannot finish a grounded turn it would 429 on step two — a predictable "stopped early" is no fallback. The rule only applies to a model whose ceiling was verified (`verifiedModels`); an unknown ceiling never blocks, and the primary is the user's choice and is always tried.
 
 ---
 
@@ -138,10 +139,10 @@ Three inputs, served by `buildProviderQuota(registry)` in `quota.ts` (single sou
 | Input | Source | Meaning |
 |-------|--------|---------|
 | Documented ceilings | `provider-limits.ts` (`PROVIDER_LIMITS`) | Hand-maintained static rpd/rpm/tpm per provider, each with `rpdConfidence`, `verifiedOn`, and `sourceUrl`. Rots — editors bump `verifiedOn` on re-check. |
-| Estimated usage | `getProviderUsageToday()` (`conversation_step` `COUNT(*)` for the UTC day) + Redis daily counters | A **lower bound**, not exact. Counters track the two quota signals `conversation_step` can't see: 429 hits and embedding calls. |
+| Estimated usage | `getProviderUsageToday()` (`model_call` `COUNT(*)` for the UTC day) + Redis daily counters | A **lower bound**, not exact. Counters track the two quota signals `model_call` can't see: 429 hits and embedding calls. |
 | Live signals | Circuit-breaker cooldown state | Truthful "rate-limited now" flag. |
 
-**Embeddings share the Google connection.** `gemini-embedding-001` (`retrieval/embed.ts`) uses the same saved Google key as Gemini chat, so it consumes the same provider quota but is invisible to `conversation_step`. Counted separately in Redis so the board reflects it.
+**Embeddings share the Google connection.** `gemini-embedding-001` (`retrieval/embed.ts`) uses the same saved Google key as Gemini chat, so it consumes the same provider quota but is invisible to `model_call`. Counted separately in Redis so the board reflects it.
 
 **Ceilings are per model.** `PROVIDER_LIMITS` records which model ids its numbers were read for (`verifiedModels`); when the administrator points a connection at another model the board withholds the ceilings (`limitsVerified: false`) rather than letting a new model inherit an old one's quota as if checked. Unknown models likewise show unknown pricing in the cost views.
 
@@ -155,7 +156,7 @@ A `createUIMessageStream` branch that writes `message-metadata` (live pipeline-v
 
 **The rule:** there must be exactly one `start` per turn, written before any metadata.
 
-Pattern used in the `useLlmwiki` and `useRetrieval` branches:
+Pattern used by the chatbot branch (first found on the retired `useLlmwiki` / `useRetrieval` request-flag branches):
 
 ```typescript
 execute: async ({ writer }) => {
@@ -171,7 +172,7 @@ Bonus: reusing `assistantMsgId` for the merged stream makes the client message i
 | Where metadata is written | Result |
 |---------------------------|--------|
 | Before the merge, no leading `start` | Split — empty duplicate bubble |
-| After an explicit leading `start` | One message (the `useLlmwiki` / `useRetrieval` fix) |
+| After an explicit leading `start` | One message (the chatbot branch) |
 | Inside `onStepFinish` (after the stream's own `start`) | One message (the desk branch — always correct) |
 
 `tryFallback` (merge-only, no metadata) and the desk/non-retrieval branches were always correct — they write no metadata before the merge, or write it after `start` via `onStepFinish`.
@@ -184,7 +185,7 @@ Bonus: reusing `assistantMsgId` for the merged stream makes the client message i
 |----------|--------------|----------------------|
 | Chat-only (no tools) | Chat model (any configured) | N/A |
 | Desk tools only | Tool provider (OpenAI → Google → others) | Reliable |
-| `useLlmwiki` / `useRetrieval` (catalog + RAG tools) | Tool provider (OpenAI → Google → others) | Reliable |
+| Chatbot turn (catalog + docs + pattern-library search tools) | Tool provider (OpenAI → Google → others) | Reliable |
 | Only Groq configured, tool turn | Groq (only option) | `tool-leak-guard` suppresses drift; no reliable grounding |
 | Groq on cooldown, OpenAI available | OpenAI | Reliable |
 

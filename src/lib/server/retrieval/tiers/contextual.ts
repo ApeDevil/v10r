@@ -4,27 +4,42 @@
  */
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
+import type { ChunkLevel } from '$lib/types/turn-trace';
 import { OVERFETCH_MULTIPLIER } from '../config';
 import { reciprocalRankFusion } from '../rank';
 import type { DocumentSource, RankedChunk } from '../types';
 import { sourceScope } from './source-scope';
 
-interface VectorRow {
+/** The columns both searches carry beside the score: the chunk's place in its document. */
+interface ChunkRow {
 	chunkId: string;
 	documentId: string;
 	documentTitle: string;
 	content: string;
-	distance: number;
+	parentId: string | null;
+	level: ChunkLevel;
+	position: number;
+	contentHash: string;
+	sourceUri: string | null;
 	[key: string]: unknown;
 }
 
-interface BM25Row {
-	chunkId: string;
-	documentId: string;
-	documentTitle: string;
-	content: string;
+interface VectorRow extends ChunkRow {
+	distance: number;
+}
+
+interface BM25Row extends ChunkRow {
 	rank: number;
-	[key: string]: unknown;
+}
+
+function placeOf(row: ChunkRow): Pick<RankedChunk, 'parentId' | 'level' | 'position' | 'contentHash' | 'sourceUri'> {
+	return {
+		parentId: row.parentId,
+		level: row.level,
+		position: Number(row.position),
+		contentHash: row.contentHash,
+		sourceUri: row.sourceUri,
+	};
 }
 
 /** Search chunks by vector cosine similarity. */
@@ -46,6 +61,10 @@ async function vectorSearch(
 				c.document_id,
 				c.context_prefix,
 				c.content,
+				c.parent_id,
+				c.level,
+				c.position,
+				c.content_hash,
 				c.embedding <=> ${embeddingStr}::vector AS distance
 			FROM retrieval.chunk c
 			WHERE c.user_id = ${userId}
@@ -59,6 +78,11 @@ async function vectorSearch(
 			r.document_id AS "documentId",
 			d.title AS "documentTitle",
 			COALESCE(r.context_prefix || E'\n' || r.content, r.content) AS content,
+			r.parent_id AS "parentId",
+			r.level AS level,
+			r.position AS position,
+			r.content_hash AS "contentHash",
+			d.source_uri AS "sourceUri",
 			r.distance AS distance
 		FROM ranked r
 		JOIN retrieval.document d ON d.id = r.document_id
@@ -73,6 +97,7 @@ async function vectorSearch(
 		score: 1 - Number(row.distance), // cosine distance → similarity
 		source: 'vector' as const,
 		tier: 1 as const,
+		...placeOf(row),
 	}));
 }
 
@@ -90,6 +115,10 @@ async function fullTextSearch(
 				c.document_id,
 				c.context_prefix,
 				c.content,
+				c.parent_id,
+				c.level,
+				c.position,
+				c.content_hash,
 				ts_rank_cd(c.search_vector, plainto_tsquery('english', ${query})) AS rank
 			FROM retrieval.chunk c
 			WHERE c.user_id = ${userId}
@@ -103,6 +132,11 @@ async function fullTextSearch(
 			r.document_id AS "documentId",
 			d.title AS "documentTitle",
 			COALESCE(r.context_prefix || E'\n' || r.content, r.content) AS content,
+			r.parent_id AS "parentId",
+			r.level AS level,
+			r.position AS position,
+			r.content_hash AS "contentHash",
+			d.source_uri AS "sourceUri",
 			r.rank AS rank
 		FROM ranked r
 		JOIN retrieval.document d ON d.id = r.document_id
@@ -117,6 +151,7 @@ async function fullTextSearch(
 		score: Number(row.rank),
 		source: 'bm25' as const,
 		tier: 1 as const,
+		...placeOf(row),
 	}));
 }
 

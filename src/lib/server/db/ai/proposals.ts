@@ -36,8 +36,11 @@ const DEFAULT_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes — stale proposals auto
 
 /**
  * How long an `executing` row may go without a heartbeat before it is presumed dead.
- * The approve route's function has a 60 s ceiling and touches the row between steps,
- * so a row silent for twice that was interrupted — its receipts say which steps ran.
+ * The lease is PER STEP, not per run: `executeProposal` touches the row after every step,
+ * so a live run is never mis-marked unless one step stalls this long, and a marked run is
+ * never re-run — `markInterruptedIfStale` heals lazily on the next read, and the receipts
+ * say which steps committed. Twice the approve route's declared 60 s ceiling (its
+ * `config.maxDuration`): no step can be silent that long and still be running.
  */
 export const EXECUTION_LEASE_MS = 120_000;
 

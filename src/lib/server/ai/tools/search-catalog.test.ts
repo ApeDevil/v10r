@@ -57,8 +57,11 @@ function result(o: { surface: SearchResult['surface']; path: string; title: stri
 
 type ToolArgs = { query: string; surface?: SearchRecord['surface'] | null; limit?: number };
 // biome-ignore lint/suspicious/noExplicitAny: invoking the AI SDK tool's execute directly in a unit test
-function exec(tool: any, args: ToolArgs) {
-	return tool.search_catalog.execute(args, {}) as Promise<{ results: Array<Record<string, unknown>>; error?: string }>;
+function exec(tool: any, args: ToolArgs, options: { toolCallId?: string } = {}) {
+	return tool.search_catalog.execute(args, options) as Promise<{
+		results: Array<Record<string, unknown>>;
+		error?: string;
+	}>;
 }
 
 beforeEach(() => {
@@ -118,14 +121,21 @@ describe('search_catalog tool', () => {
 		expect(mocks.searchContent).not.toHaveBeenCalled();
 	});
 
-	it('records surfaced rows into the sink', async () => {
+	it('records surfaced rows into the sink, attributed to the tool call that surfaced them', async () => {
 		mocks.buildSearchIndex.mockReturnValue([rec({ surface: 'showcase', path: '/showcases/button', title: 'Button' })]);
 		const captured: SearchResult[] = [];
-		const sink: CatalogSink = { record: (rows) => captured.push(...rows) };
+		const calls: Array<string | undefined> = [];
+		const sink: CatalogSink = {
+			record: (rows, toolCallId) => {
+				captured.push(...rows);
+				calls.push(toolCallId);
+			},
+		};
 
-		await exec(createSearchCatalogTool('en', 'public', sink), { query: 'button' });
+		await exec(createSearchCatalogTool('en', 'public', sink), { query: 'button' }, { toolCallId: 'call_1' });
 
 		expect(captured.map((r) => r.path)).toContain('/showcases/button');
+		expect(calls).toEqual(['call_1']);
 	});
 
 	it('never throws — returns an error envelope when a lane fails', async () => {

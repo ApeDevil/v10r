@@ -1,7 +1,7 @@
 /**
  * The bounds of what a deskbot turn may carry as panel context — ONE declaration for the
  * client serializer (`components/desk/desk-context.pure.ts`), the request schema
- * (`server/ai/validation.ts`) and the prompt builder (`server/ai/context/system-prompt.ts`).
+ * (`server/ai/validation.ts`) and the desk-awareness capability (`server/ai/capabilities/desk-awareness.ts`).
  * With three copies the client once accepted six pinned panels the route refused, and the
  * prompt cut an entry the client had labelled `full`.
  */

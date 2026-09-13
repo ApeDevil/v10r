@@ -21,7 +21,7 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 
 ## Code
 
-- `src/lib/server/ai/tools/index.ts` — The manifest: chatbotToolMeta/deskbotToolMeta/allToolMeta maps + stepsForScopes ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/tools/index.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/tools/index.ts))
+- `src/lib/server/ai/tools/index.ts` — The manifest-derived meta maps: chatbotToolMeta/deskbotToolMeta/allToolMeta ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/tools/index.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/tools/index.ts))
 - `src/lib/server/ai/tools/_types.ts` — Risk vocabulary: ToolRisk = read|create|write|destructive; ToolMeta ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/tools/_types.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/tools/_types.ts))
 - `src/lib/server/ai/policy/governor.ts` — requiresApproval(risk) + shouldRequirePlan ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/policy/governor.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/policy/governor.ts))
 - `src/lib/server/ai/tool-leak-guard.ts` — Guard against tool/surface leakage ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/tool-leak-guard.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/tool-leak-guard.ts))
@@ -38,7 +38,7 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 
 - Risk-tiered approval gates, not per-tool needsApproval flags — approval fatigue is reproducible; the tier rule is the working pattern.
 - executeDeskToolCall is the single door for mutating tool execution (one SSOT).
-- stepsForScopes caps agent steps per scope (read-only including desk:ask = 3, mutation = 5).
+- The profile's stepBudget caps agent steps per scope (read-only including desk:ask = 3, mutation = 5).
 
 ## Emulation notes
 

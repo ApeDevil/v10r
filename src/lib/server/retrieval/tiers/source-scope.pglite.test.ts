@@ -103,6 +103,20 @@ describe('sourceScope in the tier SQL', () => {
 		expect(docs).toEqual(new Set(['doc_desk1', 'doc_desk2', 'doc_upload', 'doc_gone']));
 	});
 
+	it('tier 1 carries each hit’s place in its document — parent, level, position, hash, source uri', async () => {
+		const hits = await searchContextual('budget total', QUERY, 10, OWNER.id, 'desk');
+		const child = hits.find((h) => h.chunkId === 'chk_desk1');
+		expect(child).toMatchObject({
+			parentId: 'chk_desk1_parent',
+			level: 'paragraph',
+			position: 1,
+			contentHash: 'cc_desk1',
+			sourceUri: 'desk_file_desk1',
+		});
+		const parent = hits.find((h) => h.chunkId === 'chk_desk1_parent');
+		expect(parent).toMatchObject({ parentId: null, level: 'section', position: 0, contentHash: 'pc_desk1' });
+	});
+
 	it("tier 2 scoped to 'desk' returns only desk parents", async () => {
 		const hits = await searchParentChild(QUERY, 10, OWNER.id, 'desk');
 		const docs = new Set(hits.map((h) => h.documentId));

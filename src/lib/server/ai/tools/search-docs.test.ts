@@ -80,22 +80,30 @@ describe('search_project_docs', () => {
 		};
 		mocks.docRows = [
 			{ id: 'd1', sourceUri: '/docs/blueprint/ai/layered-rag' },
-			{ id: 'd2', sourceUri: '/docs/blueprint/ai/retrieval-observability' },
+			{ id: 'd2', sourceUri: '/docs/blueprint/ai/turn-trace' },
 		];
 		const surfaced: Array<{ path: string }> = [];
-		const { search_project_docs } = createSearchDocsTool('en', { record: (rows) => surfaced.push(...rows) }, { seed });
+		const calls: Array<string | undefined> = [];
+		const { search_project_docs } = createSearchDocsTool(
+			'en',
+			{
+				record: (rows, toolCallId) => {
+					surfaced.push(...rows);
+					calls.push(toolCallId);
+				},
+			},
+			{ seed },
+		);
 
 		const out = await exec(search_project_docs, { query: '  how does the retrieval pipeline work?', limit: 2 });
 
 		expect(mocks.retrieve).not.toHaveBeenCalled();
 		expect(out.results.map((r: { path: string | null }) => r.path)).toEqual([
 			'/docs/blueprint/ai/layered-rag',
-			'/docs/blueprint/ai/retrieval-observability',
+			'/docs/blueprint/ai/turn-trace',
 		]);
-		expect(surfaced.map((r) => r.path)).toEqual([
-			'/docs/blueprint/ai/layered-rag',
-			'/docs/blueprint/ai/retrieval-observability',
-		]);
+		expect(surfaced.map((r) => r.path)).toEqual(['/docs/blueprint/ai/layered-rag', '/docs/blueprint/ai/turn-trace']);
+		expect(calls).toEqual(['t']);
 	});
 
 	it('retrieves once — over the request connection — for a different question', async () => {

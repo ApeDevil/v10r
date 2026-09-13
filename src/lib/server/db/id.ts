@@ -40,8 +40,8 @@ export const createId = {
 	deskRevision: () => `drv_${shortId()}`,
 	/** AI tool call: tcl_a8f3e1b2c4d9 */
 	toolCall: () => `tcl_${shortId()}`,
-	/** AI conversation step: stp_a8f3e1b2c4d9 */
-	conversationStep: () => `stp_${shortId()}`,
+	/** AI model call (one provider request of a turn): mcl_a8f3e1b2c4d9 */
+	modelCall: () => `mcl_${shortId()}`,
 	/** Agent proposal (plan-before-execute): prp_a8f3e1b2c4d9 */
 	agentProposal: () => `prp_${shortId()}`,
 	/** Desk workspace: wsp_a8f3e1b2c4d9 */

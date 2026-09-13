@@ -1,10 +1,10 @@
 /**
- * Retrieval observability contract — the per-turn trace events the retrieval pipeline
- * emits, plus the unified client-side trace step model the rag-chat showcase renders.
+ * Retrieval observability contract — the per-turn trace events the retrieval kernel
+ * (`retrieve()`) emits, plus the step model the deskbot showcase's recorded turns replay.
  *
- * Three ORTHOGONAL axes describe a step/chunk (see docs/blueprint/ai/retrieval-observability.md):
- *   - STAGE     `RetrievalPhase`  temporal phase — the Timing waterfall lays out by this
- *   - RETRIEVER `RetrieverId`     which retriever produced it — the Paths panel groups by this
+ * Three ORTHOGONAL axes describe a step/chunk:
+ *   - STAGE     `RetrievalPhase`  temporal phase — a waterfall lays out by this
+ *   - RETRIEVER `RetrieverId`     which retriever produced it
  *   - CORPUS    `RetrievalCorpus` which corpus (in $lib/types/retrieval-corpora.ts)
  */
 
@@ -17,22 +17,20 @@ export type RetrievalStepId =
 	| 'rank'
 	| 'context'
 	| 'generate'
-	| 'llmwiki:overview'
-	| 'llmwiki:search'
-	| 'llmwiki:context'
-	| 'chunks:drill'
-	| 'llmwiki:verify'
-	/** Coarse retriever for the chatbot branch's parallel tier-1 system-docs retrieve. */
+	/** Coarse retriever for the chatbot's parallel tier-1 system-docs retrieve. */
 	| 'system-docs'
 	/** The assembly's catalog search on a navigation question (`<catalog-results>`) — no embedding. */
 	| 'catalog';
 
 export type RetrievalStepStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped';
 
-/** STAGE axis — the temporal phase a step belongs to. The waterfall groups bars by this. */
-/** Which retrieval engine a step belongs to — the registry is filtered by this. */
-export type RetrievalEngine = 'chunks' | 'llmwiki' | 'both';
+/**
+ * Which engine a step belongs to — the registry is filtered by this: the retrieval kernel's
+ * own steps (`chunks`), the chatbot's turn composition (`compose`), or both.
+ */
+export type RetrievalEngine = 'chunks' | 'compose' | 'both';
 
+/** STAGE axis — the temporal phase a step belongs to. The waterfall groups bars by this. */
 export type RetrievalPhase = 'embed' | 'retrieve' | 'fuse' | 'assemble' | 'generate' | 'verify';
 
 /** Exhaustive step → phase map. A missing key is a compile error (invalid-state-unrepresentable). */
@@ -44,59 +42,26 @@ export const PHASE_OF: Record<RetrievalStepId, RetrievalPhase> = {
 	rank: 'fuse',
 	context: 'assemble',
 	generate: 'generate',
-	'llmwiki:overview': 'retrieve',
-	'llmwiki:search': 'retrieve',
-	'llmwiki:context': 'assemble',
-	'chunks:drill': 'retrieve',
-	'llmwiki:verify': 'verify',
 	'system-docs': 'retrieve',
 	catalog: 'retrieve',
 };
 
-/**
- * Shared per-PHASE color map for retrieval trace views (waterfall bars, legend, step list).
- * Phase is the temporal axis the waterfall lays out by — coloring by phase keeps the
- * legend a true color key. Design tokens only (chart hues are theme-aware + distinct).
- * Third member of the phase-axis family beside PHASE_OF/RETRIEVER_OF, same exhaustive-Record
- * discipline. Human copy for phases (the old PHASE_GLOSS) lives in the i18n label layer.
- */
-export const PHASE_COLORS: Record<RetrievalPhase, string> = {
-	embed: 'var(--color-primary)',
-	retrieve: 'var(--chart-3)',
-	fuse: 'var(--chart-7)',
-	assemble: 'var(--chart-1)',
-	generate: 'var(--chart-4)',
-	verify: 'var(--chart-5)',
-};
-
 /** RETRIEVER axis — which retriever produced a step's/chunk's results (tierChunks keys). */
-export type RetrieverId = 'tier-1' | 'tier-2' | 'tier-3' | 'llmwiki';
+export type RetrieverId = 'tier-1' | 'tier-2' | 'tier-3';
 
 /** Per-retriever provenance; distinguishes the retrievers that folded into one chunk. */
-export type RetrieverKind = 'vector' | 'bm25' | 'parentChild' | 'graph' | 'llmwiki';
+export type RetrieverKind = 'vector' | 'bm25' | 'parentChild' | 'graph';
 
 /** Step → retriever (only retrieve-phase steps have one). */
 export const RETRIEVER_OF: Partial<Record<RetrievalStepId, RetrieverId>> = {
 	'tier-1': 'tier-1',
 	'tier-2': 'tier-2',
 	'tier-3': 'tier-3',
-	'llmwiki:overview': 'llmwiki',
-	'llmwiki:search': 'llmwiki',
-	'chunks:drill': 'llmwiki',
 	'system-docs': 'tier-1',
 };
 
 /** Step-specific metadata (discriminated union) */
-export type StepDetail =
-	| EmbedDetail
-	| TierDetail
-	| RankDetail
-	| ContextDetail
-	| GenerateDetail
-	| LlmwikiSearchDetail
-	| LlmwikiVerifyDetail
-	| DrillDetail
-	| CatalogDetail;
+export type StepDetail = EmbedDetail | TierDetail | RankDetail | ContextDetail | GenerateDetail | CatalogDetail;
 
 export interface EmbedDetail {
 	kind: 'embed';
@@ -152,7 +117,7 @@ export interface GenerateDetail {
 	/** Tool executions this turn, in call order, with their own execution time. */
 	tools?: { name: string; ms: number }[];
 	/** Post-text work while the message is still open, per stage (absent = stage skipped). */
-	finalize?: { verifyMs?: number; catalogMs?: number; persistMs?: number; budgetMs?: number };
+	finalize?: { catalogMs?: number; persistMs?: number; budgetMs?: number };
 }
 
 /** The assembly's navigation grounding: how many verified catalog rows entered the prompt. */
@@ -163,38 +128,13 @@ export interface CatalogDetail {
 	surface: string | null;
 }
 
-export interface LlmwikiSearchDetail {
-	kind: 'llmwiki-search';
-	hits: number;
-	vectorHits: number;
-	bm25Hits: number;
-	pointersHydrated: number;
-	rrfK: number;
-}
-
-export interface LlmwikiVerifyDetail {
-	kind: 'llmwiki-verify';
-	total: number;
-	quote: number;
-	paraphrase: number;
-	drifted: number;
-	uncited: number;
-}
-
-export interface DrillDetail {
-	kind: 'drill';
-	callIndex: 0 | 1 | 2;
-	idsRequested: number;
-	chunksReturned: number;
-}
-
 /** Event emitted by the instrumented retrieval pipeline */
 export interface RetrievalStepEvent {
 	type: 'pipeline:step';
 	step: RetrievalStepId;
 	/** Closed STAGE discriminant — the viz groups by this, never by string-matching `step`. */
 	phase: RetrievalPhase;
-	/** Stable per-instance key (= step, except dynamic drills → `drill#${n}`). */
+	/** Stable per-instance key (= step, except dynamic steps → `${step}#${n}`). */
 	instanceKey: string;
 	/** Retriever for retrieve-phase steps; absent otherwise. */
 	retriever?: RetrieverId;
@@ -215,9 +155,6 @@ export type ChunkDisposition =
 	| 'rrf_threshold'
 	| 'graph_expansion'
 	| 'parent_promoted'
-	| 'pointer-only'
-	| 'drilled-cited'
-	| 'drilled-uncited'
 	// drops
 	| 'below_top_k'
 	| 'rrf_cutoff';
@@ -232,7 +169,7 @@ export interface ChunkSummary {
 	score: number;
 	/** Primary (winning) retriever. */
 	source: RetrieverKind;
-	tier: 1 | 2 | 3 | 'llmwiki';
+	tier: 1 | 2 | 3;
 	survived: boolean;
 	/** Per-retriever raw scores — keys are the canonical multi-source signal. */
 	retrieverScores?: Partial<Record<RetrieverKind, number>>;
@@ -269,33 +206,10 @@ export interface RetrievalPromptEvent {
 	requestId?: string;
 }
 
-/** Citation verdict for a single drilled chunk (or pointer-only page). */
-export type LlmwikiCitationStatus = 'quote' | 'paraphrase' | 'drifted' | 'uncited' | 'none';
-
-export interface LlmwikiCitationVerdict {
-	pageSlug: string;
-	chunkId: string | null;
-	status: LlmwikiCitationStatus;
-}
-
-/** Terminal event emitted once verifyCitations resolves (post-stream). */
-export interface LlmwikiCitationsEvent {
-	type: 'llmwiki:citations';
-	verdicts: LlmwikiCitationVerdict[];
-	summary: {
-		total: number;
-		quote: number;
-		paraphrase: number;
-		drifted: number;
-		uncited: number;
-	};
-	requestId?: string;
-}
-
-/** Unified per-step UI state (chunks + llmwiki). The waterfall + step list render these. */
+/** Unified per-step UI state (kernel + composition). The waterfall + step list render these. */
 export interface RetrievalTraceStep {
 	id: RetrievalStepId;
-	/** Stable list key — `id`, except dynamic drills → `drill#${ordinal}`. */
+	/** Stable list key — `id`, except dynamic steps → `${id}#${ordinal}`. */
 	instanceKey: string;
 	label: string;
 	phase: RetrievalPhase;
@@ -316,11 +230,11 @@ export interface RetrievalStepDescriptor {
 	phase: RetrievalPhase;
 	engine: RetrievalEngine;
 	retriever?: RetrieverId;
-	/** Appended dynamically per occurrence (drill); not seeded as pending. */
+	/** Appended dynamically per occurrence; not seeded as pending. */
 	dynamic?: boolean;
 }
 
-/** Single registry replacing PIPELINE_STEPS + LLMWIKI_STEPS. Filtered by `engine`. */
+/** The one step registry, filtered by `engine`. */
 export const RETRIEVAL_STEPS: RetrievalStepDescriptor[] = [
 	{ id: 'embed', label: 'Embed', phase: 'embed', engine: 'chunks' },
 	{ id: 'tier-1', label: 'Vector', phase: 'retrieve', engine: 'chunks', retriever: 'tier-1' },
@@ -328,32 +242,7 @@ export const RETRIEVAL_STEPS: RetrievalStepDescriptor[] = [
 	{ id: 'tier-3', label: 'Entity Graph', phase: 'retrieve', engine: 'chunks', retriever: 'tier-3' },
 	{ id: 'rank', label: 'Rank', phase: 'fuse', engine: 'chunks' },
 	{ id: 'context', label: 'Context', phase: 'assemble', engine: 'chunks' },
-	{ id: 'llmwiki:overview', label: 'Overview', phase: 'retrieve', engine: 'llmwiki', retriever: 'llmwiki' },
-	{ id: 'llmwiki:search', label: 'Wiki Search', phase: 'retrieve', engine: 'llmwiki', retriever: 'llmwiki' },
-	{ id: 'system-docs', label: 'System Docs', phase: 'retrieve', engine: 'llmwiki', retriever: 'tier-1' },
-	{ id: 'llmwiki:context', label: 'Context', phase: 'assemble', engine: 'llmwiki' },
+	{ id: 'system-docs', label: 'System Docs', phase: 'retrieve', engine: 'compose', retriever: 'tier-1' },
 	{ id: 'generate', label: 'Generate', phase: 'generate', engine: 'both' },
-	{ id: 'chunks:drill', label: 'Drill', phase: 'retrieve', engine: 'llmwiki', retriever: 'llmwiki', dynamic: true },
-	{ id: 'catalog', label: 'Catalog', phase: 'retrieve', engine: 'llmwiki', dynamic: true },
-	{ id: 'llmwiki:verify', label: 'Verify', phase: 'verify', engine: 'llmwiki' },
+	{ id: 'catalog', label: 'Catalog', phase: 'retrieve', engine: 'compose', dynamic: true },
 ];
-
-/** Honest token-breakdown panel model (derived in the trace state, not a wire type). */
-export interface TokenBreakdown {
-	/** Real provider usage (generate). */
-	inputTokensReal?: number;
-	outputTokensReal?: number;
-	reasoningTokensReal?: number;
-	cachedInputTokensReal?: number;
-	embedTokensReal?: number;
-	/** System-prompt size — chars/4 estimate (incl. injected context), NOT a provider count. */
-	systemPromptTokensEst?: number;
-	/** chars/4 estimate. */
-	contextTokensEst: number;
-	/** systemPromptTokensEst − contextTokensEst (context lives inside the system prompt). */
-	baseSystemApprox?: number;
-	/** inputTokensReal − systemPromptTokensEst (≈ user + history + tool scaffold). */
-	promptOverheadApprox?: number;
-	/** Forces the UI to badge context as an estimate. */
-	contextIsEstimate: true;
-}

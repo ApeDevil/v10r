@@ -24,8 +24,8 @@ The answer is not a new architecture layer. Domain modules in `$lib/server/[doma
 │                      DOMAIN MODULES                          │
 │                 $lib/server/[domain]/                         │
 │                                                              │
-│  notifications/    auth/         retrieval/      llmwiki/        │
-│  ├── index.ts      ├── index.ts  ├── index.ts ├── search.ts  │
+│  notifications/    auth/         retrieval/      graph/          │
+│  ├── index.ts      ├── index.ts  ├── index.ts ├── index.ts   │
 │  ├── send.ts       └── guards.ts └── ...      └── ...        │
 │  └── ...                                                     │
 │                                                              │
@@ -74,15 +74,10 @@ src/lib/server/
     index.ts                   ← retrieve(), formatContextForPrompt()
     chunk.ts / embed.ts        ← chunking + embedding pipeline
     ingest/                    ← ingestion pipeline
-  llmwiki/
-    search.ts                  ← hybrid vector+BM25 wiki search
-    queries.ts                 ← hydratePointers
-    verify.ts                  ← citation verification
-    overview.ts / wiki-format.ts / compile/ / lint/
   ai/
     index.ts                   ← provider registry + active model
     errors.ts                  ← classifyAiError(), AiError
-    config.ts                  ← prompts, limits, rate limit config
+    config.ts                  ← limits, rate limit config (prompts live in profile/)
     tools/                     ← AI tool definitions (add as needed)
       notifications.ts         ← tool wrappers for notification domain
       index.ts                 ← tool registry
@@ -317,7 +312,7 @@ import { createTools } from '$lib/server/ai/tools';
 
 const result = streamText({
   model: chatModel,
-  system: SYSTEM_PROMPT,
+  system: systemPrompt, // composed from the surface's profile
   messages,
   maxTokens: MAX_TOKENS,
   tools: createTools(user.id),

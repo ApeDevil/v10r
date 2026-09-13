@@ -18,7 +18,7 @@
  * from model prose. See `docs/blueprint/ai/harness-lens.md`.
  */
 import * as m from '$lib/paraglide/messages';
-import type { ProposalRun, ProposalStepReceipt, ProposalStepRecovery } from '$lib/types/ai-proposal';
+import type { ProposalCardStep, ProposalRun, ProposalStepReceipt, ProposalStepRecovery } from '$lib/types/ai-proposal';
 import { cn } from '$lib/utils/cn';
 import type { ProposalMetadata } from './harness-types';
 
@@ -51,11 +51,15 @@ $effect(() => {
 
 const destructiveCount = $derived(proposal.steps.filter((s) => s.risk === 'destructive').length);
 
-const RECOVERY_COPY: Record<ProposalStepRecovery, () => string> = {
-	revision: m.ai_plan_recovery_revision,
-	soft_delete: m.ai_plan_recovery_soft_delete,
-	rename_back: m.ai_plan_recovery_rename_back,
-	none: m.ai_plan_recovery_none,
+// A revision or a soft-deleted row is RETAINED for the schedule's window, not restorable
+// from the app (there is no restore path yet) — the copy says exactly that, with the
+// window the server read from the retention schedule. Only rename-back and delete-the-new
+// file are actions the user can take.
+const RECOVERY_COPY: Record<ProposalStepRecovery, (step: ProposalCardStep) => string> = {
+	revision: (step) => m.ai_plan_recovery_revision({ days: String(step.retentionDays ?? 0) }),
+	soft_delete: (step) => m.ai_plan_recovery_soft_delete({ days: String(step.retentionDays ?? 0) }),
+	rename_back: () => m.ai_plan_recovery_rename_back(),
+	none: () => m.ai_plan_recovery_none(),
 };
 
 function receiptFor(index: number): ProposalStepReceipt | undefined {
@@ -152,7 +156,7 @@ const statusCopy = $derived.by(() => {
 					{#if step.rationale}
 						<span class="plan-card-step-rationale">{step.rationale}</span>
 					{/if}
-					<span class="plan-card-step-recovery">{RECOVERY_COPY[step.recovery ?? 'none']()}</span>
+					<span class="plan-card-step-recovery">{RECOVERY_COPY[step.recovery ?? 'none'](step)}</span>
 					{#if verdict}
 						<span class="plan-card-step-verdict">{verdict.text}</span>
 					{/if}

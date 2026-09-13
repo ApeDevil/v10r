@@ -312,9 +312,10 @@ relying on it; add the userId-stamped pointer guard in `ensureChat` as defense i
 - **`experimental_resume`** (true mid-stream resume after a *hard reload*) — needs a
   server-side resumable-stream registry; the orchestrator has no streamId store today.
   Phase 2-future, not this work.
-- **Citation chips on a reloaded thread** — `GET /api/ai/conversations/[id]` returns
-  text-only parts, so `catalogSources` / `sourceChunks` chips are absent after a reload
-  (the *live* thread keeps them). Fixing needs the endpoint to return parts+metadata.
+- **Citation chips on a reloaded thread** — at build time `GET /api/ai/conversations/[id]`
+  returned text-only parts, so `catalogSources` chips were absent after a reload (the *live*
+  thread kept them). Resolved by the turn trace ([turn-trace.md](./turn-trace.md)): the route
+  now returns parts + turn summaries.
 - **Desk `ChatPanel` convergence** onto this singleton model — separate surface,
   separate lifecycle; leave as-is.
 

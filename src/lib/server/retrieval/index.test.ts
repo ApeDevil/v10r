@@ -75,7 +75,7 @@ describe('retrieve', () => {
 	/**
 	 * The other half of the `embed_calls_per_turn` budget. The chatbot embeds the user
 	 * message once and hands the vector to both consumers (proved in
-	 * `ai/context-assembly.test.ts`); this is the consumer keeping its side of it. A
+	 * `ai/profile/chatbot.test.ts`); this is the consumer keeping its side of it. A
 	 * shared vector that gets re-embedded here is a shared vector in name only, and the
 	 * cost — one extra Gemini call against a ~1000/day ceiling — is invisible until the
 	 * quota board runs dry.

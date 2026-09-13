@@ -8,6 +8,6 @@ let { children }: { children: Snippet } = $props();
 const card = getShowcaseCard('/showcases/ai');
 </script>
 
-<ShowcaseLayout {card} width="wide" containerClass="pt-7">
+<ShowcaseLayout {card} width="wide" containerClass="pt-7" compact>
 	{@render children()}
 </ShowcaseLayout>

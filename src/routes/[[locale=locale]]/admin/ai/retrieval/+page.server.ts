@@ -10,7 +10,6 @@ import {
 	getErrorDocuments,
 	getRetrievalOverviewStats,
 } from '$lib/server/db/retrieval/admin-queries';
-import { getLlmwikiAdminStats } from '$lib/server/db/retrieval/llmwiki-admin-queries';
 import { getRetrievalGraphStats } from '$lib/server/graph/retrieval/queries';
 import { safeDeferPromise } from '$lib/server/http/defer';
 import { requireAdmin } from '$lib/server/http/guards';
@@ -25,11 +24,10 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	// Neo4j (Aura) is a separate connection — an Aura timeout must never 500 the
 	// Postgres-backed page, so the graph stat degrades to null inside the parallel
-	// wave (its rejection is caught locally and can't fail the other five reads).
-	const [overview, errorDocs, llmwiki, bySource, coverage, graph] = await Promise.all([
+	// wave (its rejection is caught locally and can't fail the other four reads).
+	const [overview, errorDocs, bySource, coverage, graph] = await Promise.all([
 		getRetrievalOverviewStats(),
 		getErrorDocuments(),
-		getLlmwikiAdminStats(),
 		getDocumentsBySource(),
 		getChunkCoverage(),
 		getRetrievalGraphStats([user.id, SYSTEM_DOCS_USER_ID])
@@ -44,7 +42,6 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		title: 'Retrieval',
 		overview,
 		errorDocs,
-		llmwiki,
 		bySource,
 		coverage,
 		graph,

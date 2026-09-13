@@ -46,10 +46,24 @@ const COPY: Record<RetentionRuleId, RetentionCopy> = {
 		rationale:
 			'Pre-aggregated rollups (path / day / count). No individual visitor data, so they outlive the events they summarise.',
 	},
-	'ai-telemetry': {
+	'ai-turn-bodies': {
+		icon: 'i-lucide-eraser',
+		rationale:
+			'The prompt as assembled, the history outline, the tool definitions and each tool result are blanked first; what the turn considered, included and cited stays as ids and sizes.',
+	},
+	'ai-turns': {
 		icon: 'i-lucide-cpu',
 		rationale:
-			'Per-step model, token and duration telemetry behind the cost views. The conversations and messages themselves are untouched by this sweep.',
+			'The turn record itself — outcome, timings, provider attempts, citations. The conversations and messages are untouched by this sweep.',
+	},
+	'ai-model-calls': {
+		icon: 'i-lucide-cpu',
+		rationale: 'Per-request model, token and duration telemetry behind the cost views.',
+	},
+	'ai-tool-calls': {
+		icon: 'i-lucide-wrench',
+		rationale:
+			'Which tools each turn ran, with their arguments and outcome (the results themselves leave with the bodies).',
 	},
 	'admin-audit-log': {
 		icon: 'i-lucide-scroll-text',

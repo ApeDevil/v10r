@@ -1,10 +1,11 @@
 /**
- * Silly-topic llmwiki seed — a "retrieval vs hallucination" canary.
+ * Silly-topic retrieval seed — a "retrieval vs hallucination" canary.
  *
  * Inserts an absurd fictional topic ("Quorblaxian Cheese Rituals of the Moon
- * Moons") with made-up numeric constants that an LLM could not have memorised.
- * If a chat answer quotes these specific constants, retrieval is working.
- * If it "invents" something else, retrieval is not reaching the model.
+ * Moons") with made-up numeric constants that an LLM could not have memorised, as one
+ * user-owned document with three embedded chunks. If a chat answer quotes these specific
+ * constants, retrieval is working. If it "invents" something else, retrieval is not
+ * reaching the model.
  *
  * Run inside the v10r container:
  *   podman exec -it v10r bun run scripts/db/seed-silly.ts <userId>
@@ -13,7 +14,7 @@
 import { createHash } from 'node:crypto';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { neonConfig, Pool } from '@neondatabase/serverless';
-import { embed, embedMany } from 'ai';
+import { embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { EMBEDDING_UNAVAILABLE_MESSAGES, resolveEmbeddingConnection } from '../../src/lib/server/ai/connections';
@@ -62,9 +63,6 @@ const vecLiteral = (v: number[]) => `[${v.join(',')}]`;
 
 const DOC_ID = 'doc_silly_quorblax';
 const CHK_IDS = ['chk_silly_constants', 'chk_silly_stewards', 'chk_silly_schedule'];
-const PAGE_OVERVIEW = 'lwp_silly_overview';
-const PAGE_RITUALS = 'lwp_silly_rituals';
-const PAGE_STEWARDS = 'lwp_silly_stewards';
 
 const CHUNKS = [
 	{
@@ -84,35 +82,6 @@ const CHUNKS = [
 	},
 ];
 
-const OVERVIEW_TEXT = {
-	slug: 'overview',
-	title: 'Quorblaxian Cheese Rituals — Primer',
-	tldr: 'A short map of the Quorblaxian Cheese Ritual: its sacred constants, the four Cheese-Stewards, and the schedule of the ceremony on the Moon Moons of Krzzt.',
-	body: '# Quorblaxian Cheese Rituals — Primer\n\nThis collection documents the Quorblaxian Cheese Ritual, a wholly fictional but fully specified ceremony practised on the Moon Moons of Krzzt. It covers sacred constants, the four Cheese-Stewards, and the schedule. Each page carries pointers to the underlying source chunk.',
-	tags: ['quorblax', 'cheese', 'ritual', 'moon-moons', 'overview'],
-};
-
-const PAGES = [
-	{
-		id: PAGE_RITUALS,
-		slug: 'quorblax-sacred-constants',
-		title: 'Quorblaxian Sacred Constants',
-		tldr: 'Key Quorblaxian constants: ritual codified 3,247,291 BQE; rotation constant 7.42069 pi; 13 counter-clockwise rotations; 881 fortnights aged on 7th Moon Moon of Krzzt.',
-		body: '# Quorblaxian Sacred Constants\n\nThe Quorblaxian Cheese Ritual was first codified in 3,247,291 BQE. Its sacred rotation constant is exactly 7.42069 pi. The wheel of Flarnish cheese must rotate precisely 13 times counter-clockwise before consumption. The cheese is aged in moonlit caverns on the 7th Moon Moon of Krzzt for 881 fortnights.',
-		tags: ['quorblax', 'constants', 'ritual'],
-		chunkId: CHK_IDS[0],
-	},
-	{
-		id: PAGE_STEWARDS,
-		slug: 'four-cheese-stewards',
-		title: 'The Four Cheese-Stewards',
-		tldr: 'The four Quorblaxian Cheese-Stewards, in precedence: Brthllyx the Unmelted, Gvvn of the Southern Rind, Xzmoth Curdwalker, and Plorp the Lesser. Each carries a Whorlstaff of petrified whey.',
-		body: '# The Four Cheese-Stewards\n\nThere are exactly four Cheese-Stewards of the Quorblaxian order. In precedence:\n\n1. **Brthllyx the Unmelted**\n2. **Gvvn of the Southern Rind**\n3. **Xzmoth Curdwalker**\n4. **Plorp the Lesser**\n\nEach steward carries a Whorlstaff carved from petrified whey and recites the Litany of the 412 Molds at every rotation ceremony.',
-		tags: ['quorblax', 'stewards', 'order'],
-		chunkId: CHK_IDS[1],
-	},
-];
-
 async function resolveUserId(): Promise<string> {
 	const cliUser = process.argv[2];
 	if (cliUser) return cliUser;
@@ -122,11 +91,6 @@ async function resolveUserId(): Promise<string> {
 	return id;
 }
 
-async function embedOne(text: string): Promise<number[]> {
-	const r = await embed({ model: embedModel, value: text, providerOptions: EMBEDDING_OPTS });
-	return r.embedding;
-}
-
 async function embedMany_(texts: string[]): Promise<number[][]> {
 	const r = await embedMany({ model: embedModel, values: texts, providerOptions: EMBEDDING_OPTS });
 	return r.embeddings;
@@ -134,8 +98,6 @@ async function embedMany_(texts: string[]): Promise<number[][]> {
 
 async function deleteExisting() {
 	console.log('[seed:silly] Removing previous fixture rows...');
-	await db.execute(sql`DELETE FROM retrieval.llmwiki_page_source WHERE llmwiki_page_id LIKE 'lwp_silly_%'`);
-	await db.execute(sql`DELETE FROM retrieval.llmwiki_page WHERE id LIKE 'lwp_silly_%'`);
 	await db.execute(sql`DELETE FROM retrieval.chunk WHERE id LIKE 'chk_silly_%'`);
 	await db.execute(sql`DELETE FROM retrieval.document WHERE id = ${DOC_ID}`);
 }
@@ -164,89 +126,13 @@ async function insertDocumentAndChunks(userId: string) {
 	}
 }
 
-async function insertLlmwikiPages(userId: string) {
-	console.log('[seed:silly] Inserting overview + wiki pages...');
-
-	const overviewEmbed = await embedOne(
-		`${OVERVIEW_TEXT.title}\n${OVERVIEW_TEXT.tldr}\n${OVERVIEW_TEXT.tags.join(' ')}`,
-	);
-	await db.execute(sql`
-		INSERT INTO retrieval.llmwiki_page (
-			id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,
-			frontmatter, embedding, search_vector, source_hash, source_count,
-			compiled_at, compiled_by_model, stale
-		)
-		VALUES (
-			${PAGE_OVERVIEW}, ${userId}, NULL, ${OVERVIEW_TEXT.slug}, 'overview',
-			${OVERVIEW_TEXT.title}, ${OVERVIEW_TEXT.tldr}, ${hash(OVERVIEW_TEXT.tldr)},
-			${OVERVIEW_TEXT.body}, ${`{${OVERVIEW_TEXT.tags.join(',')}}`}::text[], '{}'::jsonb,
-			${vecLiteral(overviewEmbed)}::vector,
-			to_tsvector('english',
-				${OVERVIEW_TEXT.title} || ' ' || ${OVERVIEW_TEXT.tldr} || ' ' ||
-				${OVERVIEW_TEXT.body} || ' ' || ${OVERVIEW_TEXT.tags.join(' ')}
-			),
-			${hash(OVERVIEW_TEXT.body)}, 0, now(), 'seed', false
-		)
-		ON CONFLICT DO NOTHING
-	`);
-
-	const pageEmbeds = await embedMany_(PAGES.map((p) => `${p.title}\n${p.tldr}\n${p.tags.join(' ')}`));
-	for (let i = 0; i < PAGES.length; i++) {
-		const p = PAGES[i];
-		await db.execute(sql`
-			INSERT INTO retrieval.llmwiki_page (
-				id, user_id, collection_id, slug, kind, title, tldr, tldr_hash, body, tags,
-				frontmatter, embedding, search_vector, source_hash, source_count,
-				compiled_at, compiled_by_model, stale
-			)
-			VALUES (
-				${p.id}, ${userId}, NULL, ${p.slug}, 'page',
-				${p.title}, ${p.tldr}, ${hash(p.tldr)},
-				${p.body}, ${`{${p.tags.join(',')}}`}::text[], '{}'::jsonb,
-				${vecLiteral(pageEmbeds[i])}::vector,
-				to_tsvector('english',
-					${p.title} || ' ' || ${p.tldr} || ' ' ||
-					${p.body} || ' ' || ${p.tags.join(' ')}
-				),
-				${hash(p.body)}, 1, now(), 'seed', false
-			)
-		`);
-	}
-}
-
-async function insertPageSources() {
-	console.log('[seed:silly] Linking pages to source chunks...');
-	for (const p of PAGES) {
-		const chunkContent = CHUNKS.find((c) => c.id === p.chunkId)?.content ?? '';
-		await db.execute(sql`
-			INSERT INTO retrieval.llmwiki_page_source (
-				llmwiki_page_id, chunk_id, document_id, weight, source_hash_at_compile
-			)
-			VALUES (${p.id}, ${p.chunkId}, ${DOC_ID}, 1.0, ${hash(chunkContent)})
-		`);
-	}
-
-	// RITUALS page also cross-cites schedule chunk at lower weight so we exercise pointer ordering.
-	const scheduleChunk = CHUNKS[2];
-	await db.execute(sql`
-		INSERT INTO retrieval.llmwiki_page_source (
-			llmwiki_page_id, chunk_id, document_id, weight, source_hash_at_compile
-		)
-		VALUES (${PAGE_RITUALS}, ${scheduleChunk.id}, ${DOC_ID}, 0.4, ${hash(scheduleChunk.content)})
-	`);
-}
-
 async function main() {
 	const userId = await resolveUserId();
 	console.log(`[seed:silly] Seeding for user ${userId}`);
 	await deleteExisting();
 	await insertDocumentAndChunks(userId);
-	await insertLlmwikiPages(userId);
-	await insertPageSources();
-	console.log(`[seed:silly] Done. 1 doc, ${CHUNKS.length} chunks, ${PAGES.length + 1} wiki pages.`);
-	console.log(
-		`[seed:silly] Try: "what is the sacred rotation constant of the Quorblaxian cheese ritual?" with mode=llmwiki.`,
-	);
+	console.log(`[seed:silly] Done. 1 doc, ${CHUNKS.length} chunks.`);
+	console.log('[seed:silly] Try: "what is the sacred rotation constant of the Quorblaxian cheese ritual?"');
 	await pool.end();
 }
 

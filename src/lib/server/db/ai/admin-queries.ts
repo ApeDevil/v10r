@@ -1,6 +1,7 @@
 import { count, desc, eq, gte, sql } from 'drizzle-orm';
 import { db } from '../index';
-import { conversation, conversationStep, message } from '../schema/ai/conversation';
+import { conversation, message } from '../schema/ai/conversation';
+import { modelCall } from '../schema/ai/turn';
 import { user } from '../schema/auth/_better-auth';
 
 export interface AiOverviewStats {
@@ -167,14 +168,14 @@ export interface ModelUsageRow {
 	 *  Cost tab can show it and so cost is derived per (model, provider). */
 	providerId: string | null;
 	/** Nullable so an unreported-usage group propagates null → estimateCost renders "—",
-	 *  not a false $0. In practice conversation_step tokens default 0, so these are numbers. */
+	 *  not a false $0. In practice model_call tokens default 0, so these are numbers. */
 	inputTokens: number | null;
 	outputTokens: number | null;
 	steps: number;
 }
 
 /**
- * Per-model token usage over `days`, from `conversation_step`, grouped by (model, provider).
+ * Per-model token usage over `days`, from `model_call`, grouped by (model, provider).
  * Pre-capture rows (and the fallback path) have a NULL model → bucketed as 'unknown'.
  * Empty result = no steps captured yet (render an "instrumentation pending" state, never a
  * fake 0). Consumed by the cross-surface Cost tab via buildUnifiedModelUsage.
@@ -186,18 +187,16 @@ export async function getModelUsage(days = 30): Promise<ModelUsageRow[]> {
 
 	const rows = await db
 		.select({
-			model: sql<string>`COALESCE(${conversationStep.modelId}, 'unknown')`,
-			providerId: conversationStep.providerId,
-			inputTokens: sql<number | null>`SUM(${conversationStep.inputTokens})`,
-			outputTokens: sql<number | null>`SUM(${conversationStep.outputTokens})`,
+			model: sql<string>`COALESCE(${modelCall.modelId}, 'unknown')`,
+			providerId: modelCall.providerId,
+			inputTokens: sql<number | null>`SUM(${modelCall.inputTokens})`,
+			outputTokens: sql<number | null>`SUM(${modelCall.outputTokens})`,
 			steps: count(),
 		})
-		.from(conversationStep)
-		.where(gte(conversationStep.createdAt, since))
-		.groupBy(sql`COALESCE(${conversationStep.modelId}, 'unknown')`, conversationStep.providerId)
-		.orderBy(
-			desc(sql`SUM(COALESCE(${conversationStep.inputTokens}, 0) + COALESCE(${conversationStep.outputTokens}, 0))`),
-		);
+		.from(modelCall)
+		.where(gte(modelCall.createdAt, since))
+		.groupBy(sql`COALESCE(${modelCall.modelId}, 'unknown')`, modelCall.providerId)
+		.orderBy(desc(sql`SUM(COALESCE(${modelCall.inputTokens}, 0) + COALESCE(${modelCall.outputTokens}, 0))`));
 
 	return rows.map((r) => ({
 		model: r.model,
@@ -216,7 +215,7 @@ export interface ProviderUsageToday {
 }
 
 /**
- * Today's (UTC) per-provider request + token usage from `conversation_step`.
+ * Today's (UTC) per-provider request + token usage from `model_call`.
  *
  * `requests` counts one row per *successful* step, which is ≈ one provider API
  * call against its RPD ceiling. It's a LOWER BOUND: 429'd/aborted calls never
@@ -230,13 +229,13 @@ export async function getProviderUsageToday(): Promise<ProviderUsageToday[]> {
 
 	const rows = await db
 		.select({
-			provider: sql<string>`COALESCE(${conversationStep.providerId}, 'unknown')`,
+			provider: sql<string>`COALESCE(${modelCall.providerId}, 'unknown')`,
 			requests: count(),
-			tokens: sql<number>`COALESCE(SUM(${conversationStep.inputTokens} + ${conversationStep.outputTokens}), 0)`,
+			tokens: sql<number>`COALESCE(SUM(${modelCall.inputTokens} + ${modelCall.outputTokens}), 0)`,
 		})
-		.from(conversationStep)
-		.where(gte(conversationStep.createdAt, startOfDay))
-		.groupBy(sql`COALESCE(${conversationStep.providerId}, 'unknown')`);
+		.from(modelCall)
+		.where(gte(modelCall.createdAt, startOfDay))
+		.groupBy(sql`COALESCE(${modelCall.providerId}, 'unknown')`);
 
 	return rows.map((r) => ({
 		provider: r.provider,

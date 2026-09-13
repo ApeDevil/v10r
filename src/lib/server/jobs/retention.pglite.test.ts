@@ -11,7 +11,8 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminAuditLog } from '$lib/server/db/schema/admin';
-import { conversation, conversationStep, message } from '$lib/server/db/schema/ai/conversation';
+import { conversation, message } from '$lib/server/db/schema/ai/conversation';
+import { modelCall, toolCall, turn } from '$lib/server/db/schema/ai/turn';
 import { user } from '$lib/server/db/schema/auth/_better-auth';
 import { file, fileRevision } from '$lib/server/db/schema/desk';
 import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
@@ -130,38 +131,107 @@ describe('deskRetention — never touches a live file', () => {
 	});
 });
 
-// ai-telemetry-retention: age-cap, parents untouched
+// ai-telemetry-retention: redact bodies, then age-cap rows; parents untouched
 
-describe('aiTelemetryRetention — age-caps conversation_step, leaves conversation/message', () => {
-	it('deletes steps past the window, keeps recent, and never touches the parent rows', async () => {
+describe('aiTelemetryRetention — redacts turn bodies at 30 d, deletes rows at 180 d, leaves conversation/message', () => {
+	const turnRow = (messageId: string, createdAt: Date) => ({
+		messageId,
+		conversationId: 'conv_1',
+		userId: USER_ID,
+		surface: 'chatbot' as const,
+		requestId: `req_${messageId}`,
+		profileVersion: 'sys:1',
+		outcome: 'ok' as const,
+		timings: {},
+		awareness: { locale: 'en', authCeiling: null },
+		activations: [],
+		blocks: [{ id: 'role' as const, section: 'identity' as const, text: 'You are Vely.', chars: 13, stable: true }],
+		grounding: [],
+		history: { messages: [], droppedMessages: 0 },
+		toolset: [],
+		attempts: [],
+		citations: [],
+		createdAt,
+	});
+
+	it('nulls the bodies past the redact window, deletes past the row window, never touches the parent rows', async () => {
 		await db.insert(conversation).values({ id: 'conv_1', userId: USER_ID, title: 'T' });
-		await db.insert(message).values({ id: 'msg_1', conversationId: 'conv_1', role: 'user', content: 'hi' });
-		await db.insert(conversationStep).values([
+		await db.insert(message).values([
+			{ id: 'msg_recent', conversationId: 'conv_1', role: 'assistant', content: 'a' },
+			{ id: 'msg_aged', conversationId: 'conv_1', role: 'assistant', content: 'b' },
+			{ id: 'msg_old', conversationId: 'conv_1', role: 'assistant', content: 'c' },
+		]);
+		const aged = daysAgo(retentionDays('ai-turn-bodies') + 10);
+		const old = daysAgo(retentionDays('ai-turns') + 10);
+		await db
+			.insert(turn)
+			.values([turnRow('msg_recent', daysAgo(1)), turnRow('msg_aged', aged), turnRow('msg_old', old)]);
+		const request = { systemHash: 'sys:1', blockIds: ['role' as const], historyCount: 1, toolsOffered: [] };
+		await db.insert(modelCall).values([
 			{
-				id: 'step_recent',
+				id: 'mcl_recent',
 				conversationId: 'conv_1',
-				messageId: 'msg_1',
+				messageId: 'msg_recent',
 				stepIndex: 0,
-				stepType: 'initial',
+				request,
 				createdAt: daysAgo(1),
 			},
+			{ id: 'mcl_aged', conversationId: 'conv_1', messageId: 'msg_aged', stepIndex: 0, request, createdAt: aged },
+			{ id: 'mcl_old', conversationId: 'conv_1', messageId: 'msg_old', stepIndex: 0, request, createdAt: old },
+		]);
+		await db.insert(toolCall).values([
 			{
-				id: 'step_old',
-				conversationId: 'conv_1',
-				messageId: 'msg_1',
-				stepIndex: 1,
-				stepType: 'initial',
-				createdAt: daysAgo(retentionDays('ai-telemetry') + 10),
+				id: 'tcl_aged',
+				messageId: 'msg_aged',
+				toolCallId: 'call_1',
+				toolName: 'search_catalog',
+				args: {},
+				result: { rows: 1 },
+				status: 'success',
+				createdAt: aged,
+			},
+			{
+				id: 'tcl_old',
+				messageId: 'msg_old',
+				toolCallId: 'call_2',
+				toolName: 'search_catalog',
+				args: {},
+				result: { rows: 1 },
+				status: 'success',
+				createdAt: old,
 			},
 		]);
 
-		const deleted = await aiTelemetryRetention();
+		const affected = await aiTelemetryRetention();
 
-		expect(deleted).toBe(1);
-		const steps = (await db.select({ id: conversationStep.id }).from(conversationStep)).map((r) => r.id);
-		expect(steps).toEqual(['step_recent']);
+		// 2 turns scrubbed (aged + old, both past the redact window) + 1 tool call + 1 model call + 1 turn deleted.
+		expect(affected).toBe(5);
+		const turns = await db.select().from(turn).orderBy(turn.messageId);
+		expect(turns.map((t) => t.messageId)).toEqual(['msg_aged', 'msg_recent']);
+		const agedTurn = turns.find((t) => t.messageId === 'msg_aged');
+		expect(agedTurn?.blocks).toBeNull();
+		expect(agedTurn?.history).toBeNull();
+		expect(agedTurn?.redactedAt).not.toBeNull();
+		// The outline survives the redact pass.
+		expect(agedTurn?.outcome).toBe('ok');
+		expect(turns.find((t) => t.messageId === 'msg_recent')?.blocks).toHaveLength(1);
+		const calls = await db.select().from(modelCall).orderBy(modelCall.id);
+		expect(calls.map((c) => c.id)).toEqual(['mcl_aged', 'mcl_recent']);
+		expect(calls.find((c) => c.id === 'mcl_aged')?.request).toBeNull();
+		expect(calls.find((c) => c.id === 'mcl_recent')?.request).toEqual(request);
+		const tools = await db.select().from(toolCall);
+		expect(tools.map((t) => t.id)).toEqual(['tcl_aged']);
+		expect(tools[0]?.result).toBeNull();
 		expect(await db.select().from(conversation)).toHaveLength(1);
-		expect(await db.select().from(message)).toHaveLength(1);
+		expect(await db.select().from(message)).toHaveLength(3);
+	});
+
+	it('is idempotent: a second run over a scrubbed window affects nothing', async () => {
+		await db.insert(conversation).values({ id: 'conv_1', userId: USER_ID, title: 'T' });
+		await db.insert(message).values({ id: 'msg_aged', conversationId: 'conv_1', role: 'assistant', content: 'b' });
+		await db.insert(turn).values(turnRow('msg_aged', daysAgo(retentionDays('ai-turn-bodies') + 10)));
+		expect(await aiTelemetryRetention()).toBe(1);
+		expect(await aiTelemetryRetention()).toBe(0);
 	});
 });
 

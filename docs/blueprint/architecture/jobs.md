@@ -216,7 +216,7 @@ Four scheduled jobs enforce data-retention windows. Most hard-delete rows past a
 | Job | Trims | Window |
 |-----|-------|--------|
 | `desk-retention` | Soft-deleted desk files (cascades to spreadsheet + markdown bodies); prunes `file_revision` history | `DESK_SOFT_DELETE_RETENTION_DAYS` (30d) for files; 90d for revisions |
-| `ai-telemetry-retention` | `ai.conversation_step` rows | 180d |
+| `ai-telemetry-retention` | `ai.turn` / `ai.model_call` / `ai.tool_call`: pass 1 nulls the bodies (prompt blocks, history outline, tool definitions, request outline, tool results); pass 2 deletes the rows | 30d (redact) / 180d (delete) |
 | `audit-log-retention` | `admin.audit_log` rows | 365d |
 | `mcp-telemetry-retention` | `mcp.call_log`: pass 1 nulls `query_text` + `trace_id`; pass 2 deletes the row | 30d (scrub) / 90d (delete), effectively 30–37d / 90–97d |
 | `analytics-cleanup` | also trims `analytics.bot_hits` (bot lane) | `BOT_HIT_RETENTION_DAYS` (180d) — longer than the human lane because the table holds no identifier at all |

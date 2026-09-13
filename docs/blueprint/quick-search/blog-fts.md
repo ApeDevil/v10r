@@ -22,7 +22,7 @@ Neon/Postgres rejects a multi-field, per-locale `to_tsvector(...)` expression in
 
 Additionally, `drizzle-kit push` silently ignores expression changes to generated columns, so even if you work around the Neon rejection, schema drift goes undetected.
 
-The solution mirrors `rag.llmwiki_page`: populate `search_vector` in application code on every insert.
+The solution: populate `search_vector` in application code on every insert. `blog.revision` is the one app-populated tsvector in the schema — `retrieval.chunk` uses a single-config generated column, which Neon allows.
 
 ## App-Populated on Insert
 

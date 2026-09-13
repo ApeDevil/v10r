@@ -13,6 +13,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { TurnTrace, TurnTraceSnapshot } from '$lib/types/turn-trace';
 
 // Mocks (hoisted before dynamic imports)
 
@@ -39,14 +40,15 @@ const streamRun = vi.hoisted(() => ({
 	/** The `abortSignal` the last mocked model call was given. */
 	signal: undefined as AbortSignal | undefined,
 	/** The tool results the mocked model's one step reports to `onStepFinish`. */
-	toolResults: [] as Array<{ toolName: string; input?: unknown; output?: unknown }>,
+	toolResults: [] as Array<{ toolCallId: string; toolName: string; input?: unknown; output?: unknown }>,
+	/** Whether the mocked model's step runs the one `search_catalog` tool (the chatbot's shape). */
+	toolFinish: true,
 }));
 
 vi.mock('$lib/server/db/ai/mutations', () => ({
 	createConversation: vi.fn(() => ({ id: 'conv-new' })),
 	saveMessages: vi.fn(),
-	saveToolCall: vi.fn(),
-	saveConversationStep: vi.fn(),
+	saveTurnTrace: vi.fn(),
 	updateMessageContent: vi.fn(),
 	refreshConversationTokens: vi.fn(),
 }));
@@ -85,22 +87,28 @@ vi.mock('$lib/server/ai/budget', () => ({
 }));
 
 vi.mock('$lib/server/retrieval', () => ({
-	retrieve: vi.fn(),
-	formatContextForPrompt: vi.fn(),
+	generateEmbedding: vi.fn(async () => []),
+	retrieve: vi.fn(async () => ({ chunks: [], totalFound: 0 })),
+	formatContextForPrompt: vi.fn(() => ''),
+	contextChunkCut: (result: { chunks: unknown[] }) => result.chunks.length,
 }));
 
-vi.mock('$lib/server/ai/tools', () => ({
-	createDeskTools: vi.fn(() => ({})),
-	stepsForScopes: vi.fn(() => 5),
-	// Mirrors the real factory's one observable contract for these tests: rows the assembly
-	// pre-searched are surfaced before any tool runs.
-	buildRetrievalTools: vi.fn(
-		(_userId: string, _locale: string, _ceiling: string | null, options?: { catalogSeed?: Array<{ id: string }> }) => ({
-			tools: {},
-			drilledChunks: new Set<string>(),
-			surfacedCatalog: new Map((options?.catalogSeed ?? []).map((row) => [row.id, row])),
-		}),
-	),
+// The profiles mount the real tool factories; their DB modules are mocked so the modules
+// import without a connection — no tool's `execute` runs in these tests.
+vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('$lib/server/db/desk/queries', () => ({
+	listFiles: vi.fn(),
+	getFile: vi.fn(),
+	getSpreadsheetByFileId: vi.fn(),
+	getMarkdownByFileId: vi.fn(),
+}));
+vi.mock('$lib/server/db/desk/mutations', () => ({
+	updateSpreadsheetByFileId: vi.fn(),
+	updateMarkdownByFileId: vi.fn(),
+	renameFile: vi.fn(),
+	createSpreadsheetFile: vi.fn(),
+	createMarkdownFile: vi.fn(),
+	deleteFile: vi.fn(),
 }));
 
 vi.mock('$lib/server/search', () => ({
@@ -109,24 +117,9 @@ vi.mock('$lib/server/search', () => ({
 	searchContent: vi.fn(async () => []),
 }));
 
-vi.mock('$lib/server/llmwiki/overview', () => ({
-	loadOverview: vi.fn(async () => null),
-}));
-
-vi.mock('$lib/server/llmwiki/search', () => ({
-	searchLlmwiki: vi.fn(async () => []),
-}));
-
-vi.mock('$lib/server/llmwiki/verify', () => ({
-	verifyCitations: vi.fn(async () => ({ verifications: new Map(), driftedChunkIds: [] })),
-}));
-
-vi.mock('$lib/server/llmwiki/wiki-format', () => ({
-	formatLlmwikiContext: vi.fn(() => ''),
-}));
-
-vi.mock('$lib/server/llmwiki/config', () => ({
-	MAX_SOURCE_CHUNK_TOOL_CALLS_PER_TURN: 3,
+vi.mock('$lib/server/db/retrieval/queries', async (importOriginal) => ({
+	...(await importOriginal<typeof import('$lib/server/db/retrieval/queries')>()),
+	getCorpusMap: vi.fn(async () => null),
 }));
 
 vi.mock('$lib/server/ai/errors', () => ({
@@ -152,14 +145,24 @@ vi.mock('$lib/server/ai/errors', () => ({
 	},
 }));
 
-vi.mock('ai', () => ({
+vi.mock('ai', async (importOriginal) => ({
+	// The real `tool()`/`jsonSchema()` for the factories the profiles mount; the streaming
+	// surface below is the mock.
+	...(await importOriginal<typeof import('ai')>()),
 	// One text step with one tool execution: enough to drive every timing hook the chatbot
 	// branch registers (step start, first chunk, tool finish, step finish) without a provider.
 	streamText: vi.fn((opts: Record<string, (event: unknown) => unknown>) => {
 		streamRun.signal = opts.abortSignal as unknown as AbortSignal | undefined;
 		opts.experimental_onStepStart?.({ stepNumber: 0 });
 		opts.onChunk?.({ chunk: { type: 'text-delta', id: 't1', text: streamRun.answer } });
-		opts.experimental_onToolCallFinish?.({ toolCall: { toolName: 'search_catalog' }, durationMs: 12.4, success: true });
+		if (streamRun.toolFinish) {
+			opts.experimental_onToolCallFinish?.({
+				toolCall: { toolCallId: 'call_1', toolName: 'search_catalog', input: { query: 'auth' } },
+				durationMs: 12.4,
+				success: true,
+				output: { results: [] },
+			});
+		}
 		streamRun.stepFinish = opts.onStepFinish?.({
 			toolCalls: [],
 			toolResults: streamRun.toolResults,
@@ -248,6 +251,7 @@ vi.mock('ai', () => ({
 			new Response(stream ?? null, { status: 200, headers }),
 	),
 	stepCountIs: vi.fn(() => () => false),
+	wrapLanguageModel: vi.fn(({ model }: { model: unknown }) => model),
 }));
 
 // Dynamic imports (resolved after vi.mock hoisting)
@@ -262,7 +266,18 @@ const providerRegistry = await import('$lib/server/ai/providers');
 const { DbError } = await import('$lib/server/db/errors');
 
 const saveMessages = mutations.saveMessages as ReturnType<typeof vi.fn>;
-const saveConversationStep = mutations.saveConversationStep as ReturnType<typeof vi.fn>;
+const saveTurnTrace = mutations.saveTurnTrace as ReturnType<typeof vi.fn>;
+
+/** The trace snapshot on the last metadata frame written. */
+const lastTrace = () =>
+	(
+		streamRun.writes.filter((f) => f.type === 'message-metadata').at(-1) as {
+			messageMetadata: { trace: TurnTraceSnapshot };
+		}
+	).messageMetadata.trace;
+
+/** The trace handed to `saveTurnTrace` on its last call. */
+const persistedTrace = () => saveTurnTrace.mock.calls.at(-1)?.[0] as TurnTrace;
 const updateMessageContent = mutations.updateMessageContent as ReturnType<typeof vi.fn>;
 const refreshConversationTokens = mutations.refreshConversationTokens as ReturnType<typeof vi.fn>;
 const createConversation = mutations.createConversation as ReturnType<typeof vi.fn>;
@@ -417,19 +432,20 @@ describe('chatbot turn timing', () => {
 		checkConversationLimit.mockReset().mockResolvedValue(null as never);
 		createConversation.mockReset().mockResolvedValue({ id: 'conv-new' } as never);
 		saveMessages.mockReset().mockResolvedValue(undefined as never);
-		saveConversationStep.mockReset().mockResolvedValue(undefined as never);
+		saveTurnTrace.mockReset().mockResolvedValue(undefined as never);
 		updateMessageContent.mockReset().mockResolvedValue(undefined as never);
 		refreshConversationTokens.mockReset().mockResolvedValue(undefined as never);
 		(chargeTokens as ReturnType<typeof vi.fn>).mockClear();
 		streamRun.onWrite = undefined;
+		streamRun.toolFinish = true;
 	});
 
 	/**
-	 * The generate terminal is the one frame that carries the turn's timing shape — what the
-	 * client waited for before any frame, per-step first-token latency, tool execution cost,
-	 * and the post-text stages between the last token and `finish`. It is emitted once, last.
+	 * The last metadata frame carries the turn's whole timing shape — what the client waited
+	 * for before any frame, per-call first-token latency, tool execution cost, the post-text
+	 * stages between the last token and `finish` — and the outcome. It precedes `finish`.
 	 */
-	it('stamps the generate terminal with pre-stream, step and finalize timings, once, before finish', async () => {
+	it('stamps the trace with pre-stream, call and finalize timings, and closes it before finish', async () => {
 		const response = await orchestrateChat(chatbotInput);
 		expect(response.status).toBe(200);
 		await streamRun.done;
@@ -438,32 +454,41 @@ describe('chatbot turn timing', () => {
 		expect(frames[0]).toMatchObject({ type: 'start' });
 		expect(frames.at(-1)).toEqual({ type: 'finish' });
 
-		const lastMeta = frames.filter((f) => f.type === 'message-metadata').at(-1) as {
-			messageMetadata: { pipeline: Array<Record<string, unknown>> };
-		};
-		const generateDone = lastMeta.messageMetadata.pipeline.filter(
-			(e) => e.type === 'pipeline:step' && e.step === 'generate' && e.status === 'done',
-		);
-		expect(generateDone).toHaveLength(1);
-		expect(generateDone[0].detail).toMatchObject({
-			kind: 'generate',
-			model: 'google',
-			inputTokens: 10,
-			outputTokens: 5,
-			// Gemini's thoughtsTokenCount — the thinking A/B's discriminator, on every trace.
-			reasoningTokens: 3,
-			steps: 1,
-			firstTokenMs: [expect.any(Number)],
-			tools: [{ name: 'search_catalog', ms: 12 }],
-			finalize: { persistMs: expect.any(Number), budgetMs: expect.any(Number) },
+		const trace = lastTrace();
+		expect(trace.outcome).toBe('ok');
+		expect(trace.timings.preStreamMs).toBeGreaterThanOrEqual(0);
+		expect(trace.timings.generateMs).toBeGreaterThanOrEqual(0);
+		expect(trace.timings.firstTokenMs).toEqual([expect.any(Number)]);
+		expect(trace.timings.finalize).toEqual({
+			catalogMs: expect.any(Number),
+			persistMs: expect.any(Number),
+			budgetMs: expect.any(Number),
 		});
-		const detail = generateDone[0].detail as { preStreamMs: number; finalize: Record<string, number> };
-		expect(detail.preStreamMs).toBeGreaterThanOrEqual(0);
-		// Nothing was drilled or surfaced, so those stages did not run — absent, not zero.
-		expect(detail.finalize).not.toHaveProperty('verifyMs');
-		expect(detail.finalize).not.toHaveProperty('catalogMs');
-		// The terminal is the last pipeline event: nothing is emitted after it but `finish`.
-		expect(lastMeta.messageMetadata.pipeline.at(-1)).toBe(generateDone[0]);
+		// The catalog stage always runs: the answer's paths are checked even when nothing was surfaced.
+		expect(trace.attempts).toEqual([
+			{ attemptIndex: 0, providerId: 'google', modelId: 'gemini-2.5-flash', outcome: 'ok' },
+		]);
+		expect(trace.modelCalls).toEqual([
+			expect.objectContaining({
+				attemptIndex: 0,
+				stepIndex: 0,
+				providerId: 'google',
+				inputTokens: 10,
+				outputTokens: 5,
+				outcome: 'ok',
+			}),
+		]);
+		expect(trace.toolExecutions).toEqual([
+			expect.objectContaining({ toolCallId: 'call_1', toolName: 'search_catalog', durationMs: 12, status: 'success' }),
+		]);
+		// Bodies never ride the wire: the snapshot withholds block text and tool I/O.
+		expect(trace.bodies).toBe('persisted');
+		expect(JSON.stringify(trace)).not.toContain('"text"');
+		expect(JSON.stringify(trace)).not.toContain('"output"');
+		// The last metadata frame is followed only by `finish`.
+		expect(frames.indexOf(frames.filter((f) => f.type === 'message-metadata').at(-1) as Record<string, unknown>)).toBe(
+			frames.length - 2,
+		);
 	});
 });
 
@@ -491,11 +516,12 @@ describe('chatbot turn persistence and framing', () => {
 		checkConversationLimit.mockReset().mockResolvedValue(null as never);
 		createConversation.mockReset().mockResolvedValue({ id: 'conv-new' } as never);
 		saveMessages.mockReset().mockResolvedValue(undefined as never);
-		saveConversationStep.mockReset().mockResolvedValue(undefined as never);
+		saveTurnTrace.mockReset().mockResolvedValue(undefined as never);
 		updateMessageContent.mockReset().mockResolvedValue(undefined as never);
 		refreshConversationTokens.mockReset().mockResolvedValue(undefined as never);
 		(chargeTokens as ReturnType<typeof vi.fn>).mockClear();
 		streamRun.onWrite = undefined;
+		streamRun.toolFinish = true;
 		streamRun.writes = [];
 		streamRun.answer = 'Hi';
 	});
@@ -520,84 +546,103 @@ describe('chatbot turn persistence and framing', () => {
 		expect(streamRun.writes[0]).toEqual({ type: 'start', messageId: rows[1].id });
 	});
 
-	it('writes step rows off the step boundary, but every write lands before finish', async () => {
-		let stepLanded = false;
-		saveConversationStep.mockImplementation(
+	it('writes the trace once, after the answer row, with the totals refreshed from it, all before finish', async () => {
+		let traceLanded = false;
+		saveTurnTrace.mockImplementation(
 			() =>
 				new Promise<void>((resolve) =>
 					setTimeout(() => {
-						stepLanded = true;
+						traceLanded = true;
 						resolve();
 					}, 20),
 				),
 		);
-		let stepLandedAtRefresh: boolean | undefined;
-		refreshConversationTokens.mockImplementation(async () => {
-			stepLandedAtRefresh = stepLanded;
+		let answerRowAtTrace: boolean | undefined;
+		saveTurnTrace.mockImplementation(async () => {
+			answerRowAtTrace = updateMessageContent.mock.calls.length > 0;
+			await new Promise<void>((resolve) => setTimeout(resolve, 20));
+			traceLanded = true;
 		});
-		let stepLandedAtFinish: boolean | undefined;
+		let traceLandedAtRefresh: boolean | undefined;
+		refreshConversationTokens.mockImplementation(async () => {
+			traceLandedAtRefresh = traceLanded;
+		});
+		let traceLandedAtFinish: boolean | undefined;
 		streamRun.onWrite = (frame) => {
-			if (frame.type === 'finish') stepLandedAtFinish = stepLanded;
+			if (frame.type === 'finish') traceLandedAtFinish = traceLanded;
 		};
 
 		await orchestrateChat(chatbotInput);
-		// The step boundary did not wait for the insert: onStepFinish resolved while it was in flight.
+		// The step boundary never waits for a write: onStepFinish resolved with nothing in flight.
 		await streamRun.stepFinish;
-		expect(stepLanded).toBe(false);
+		expect(traceLanded).toBe(false);
 		await streamRun.done;
 
-		expect(saveConversationStep).toHaveBeenCalledTimes(1);
-		// …but the totals were refreshed from a row that existed, and `finish` came after it.
-		expect(stepLandedAtRefresh).toBe(true);
-		expect(stepLandedAtFinish).toBe(true);
+		expect(saveTurnTrace).toHaveBeenCalledTimes(1);
+		expect(saveTurnTrace).toHaveBeenCalledWith(expect.objectContaining({ conversationId: 'conv-new' }), 'user-1');
+		expect(answerRowAtTrace).toBe(true);
+		// …the totals were refreshed from rows that existed, and `finish` came after them.
+		expect(traceLandedAtRefresh).toBe(true);
+		expect(traceLandedAtFinish).toBe(true);
 	});
 
-	it('runs the three durable writes of finalize together and still writes finish when one fails', async () => {
+	it('runs the durable writes of finalize together and still writes finish when one fails', async () => {
 		updateMessageContent.mockRejectedValueOnce(new Error('write failed') as never);
 
 		await orchestrateChat(chatbotInput);
 		await streamRun.done;
 
-		expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Hi');
+		expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Hi', [
+			expect.objectContaining({ type: 'tool-search_catalog', toolCallId: 'call_1', state: 'output-available' }),
+			{ type: 'text', text: 'Hi' },
+		]);
 		expect(refreshConversationTokens).toHaveBeenCalledWith('conv-new');
 		expect(chargeTokens).toHaveBeenCalledWith('user-1', 15);
 		expect(streamRun.writes.at(-1)).toEqual({ type: 'finish' });
 	});
 
-	it('coalesces bursts of pipeline events into one metadata frame, the last carrying everything', async () => {
+	it('coalesces bursts of trace changes into one metadata frame, the last carrying everything', async () => {
 		await orchestrateChat(chatbotInput);
 		await streamRun.done;
 
-		const metaFrames = streamRun.writes.filter((f) => f.type === 'message-metadata') as Array<{
-			messageMetadata: { pipeline: Array<{ type: string; step?: string; status?: string }> };
-		}>;
-		const pipeline = metaFrames.at(-1)?.messageMetadata.pipeline ?? [];
-		// Every emit used to be its own frame; the assembly alone emits several per await.
-		expect(pipeline.length).toBeGreaterThan(metaFrames.length);
+		const metaFrames = streamRun.writes.filter((f) => f.type === 'message-metadata');
+		// The assembly alone changes the recorder many times per await; each burst is one frame.
 		expect(metaFrames.length).toBeLessThanOrEqual(4);
-		// Replace semantics: the final frame carries the whole turn, first event included.
-		expect(pipeline[0]).toMatchObject({ type: 'pipeline:step', step: 'llmwiki:overview', status: 'active' });
-		expect(pipeline.at(-1)).toMatchObject({ step: 'generate', status: 'done' });
+		// Replace semantics: the final frame carries the whole turn — every source, the attempt.
+		const trace = lastTrace();
+		expect(trace.grounding.map((g) => g.id).sort()).toEqual(['catalog', 'project-docs', 'project-map']);
+		expect(trace.activations.find((a) => a.id === 'completion')).toEqual({ id: 'completion', active: true });
+		expect(trace.attempts.at(-1)?.outcome).toBe('ok');
 		// The last frame precedes `finish`.
 		expect(streamRun.writes.indexOf(metaFrames.at(-1) as Record<string, unknown>)).toBe(streamRun.writes.length - 2);
 	});
 
-	it('builds the tool set after the assembly, from what it established, over the registry’s connection', async () => {
-		const tools = await import('$lib/server/ai/tools');
-		const buildRetrievalTools = tools.buildRetrievalTools as ReturnType<typeof vi.fn>;
-		buildRetrievalTools.mockClear();
+	it('mounts the chatbot profile’s tools from what the composition established', async () => {
+		const ai = await import('ai');
+		const streamText = ai.streamText as ReturnType<typeof vi.fn>;
+		streamText.mockClear();
 
 		await orchestrateChat(chatbotInput);
 		await streamRun.done;
 
-		// An empty wiki (the mocked context block is '') mounts no drill-down pair; nothing was
-		// retrieved or pre-searched, so the tools inherit no seed.
-		expect(buildRetrievalTools).toHaveBeenCalledWith('user-1', 'en', null, {
-			llmwiki: false,
-			embeddingConnection: { apiKey: 'request-key' },
-			docsSeed: undefined,
-			catalogSeed: [],
-		});
+		const opts = streamText.mock.calls[0][0] as { tools: Record<string, unknown>; system: string };
+		expect(Object.keys(opts.tools).sort()).toEqual(
+			['resolve_ref', 'search_catalog', 'search_pattern_library', 'search_project_docs'].sort(),
+		);
+		expect(opts.system).toContain('You are Vely');
+		expect(
+			persistedTrace()
+				.toolset.map((t) => t.name)
+				.sort(),
+		).toEqual(Object.keys(opts.tools).sort());
+		expect(persistedTrace().blocks.map((b) => b.id)).toEqual([
+			'role',
+			'completion-guidance',
+			'project-docs-guidance',
+			'catalog-guidance',
+			'pattern-library-guidance',
+			'catalog-map',
+		]);
 	});
 });
 
@@ -630,11 +675,12 @@ describe('chatbot turn steps', () => {
 		checkConversationLimit.mockReset().mockResolvedValue(null as never);
 		createConversation.mockReset().mockResolvedValue({ id: 'conv-new' } as never);
 		saveMessages.mockReset().mockResolvedValue(undefined as never);
-		saveConversationStep.mockReset().mockResolvedValue(undefined as never);
+		saveTurnTrace.mockReset().mockResolvedValue(undefined as never);
 		updateMessageContent.mockReset().mockResolvedValue(undefined as never);
 		refreshConversationTokens.mockReset().mockResolvedValue(undefined as never);
 		(chargeTokens as ReturnType<typeof vi.fn>).mockClear();
 		streamRun.onWrite = undefined;
+		streamRun.toolFinish = true;
 		streamRun.writes = [];
 		streamRun.answer = 'Hi';
 		const search = await import('$lib/server/search');
@@ -670,10 +716,8 @@ describe('chatbot turn steps', () => {
 	it('grounds a navigation question before generation, so the cited path verifies without a tool call', async () => {
 		const search = await import('$lib/server/search');
 		(search.buildSearchIndex as ReturnType<typeof vi.fn>).mockReturnValue([authn]);
-		const tools = await import('$lib/server/ai/tools');
-		const buildRetrievalTools = tools.buildRetrievalTools as ReturnType<typeof vi.fn>;
-		buildRetrievalTools.mockClear();
 		streamRun.answer = 'The auth showcase is at /showcases/auth/authn.';
+		streamRun.toolFinish = false;
 
 		await orchestrateChat({
 			userId: 'user-1',
@@ -684,28 +728,24 @@ describe('chatbot turn steps', () => {
 		});
 		await streamRun.done;
 
-		const [, , ceiling, options] = buildRetrievalTools.mock.calls[0] as [
-			string,
-			string,
-			string | null,
-			{ catalogSeed: Array<{ path: string }> },
-		];
-		expect(ceiling).toBe('user');
-		expect(options.catalogSeed.map((r) => r.path)).toEqual(['/showcases/auth/authn']);
-
-		const lastMeta = streamRun.writes.filter((f) => f.type === 'message-metadata').at(-1) as {
-			messageMetadata: {
-				pipeline: Array<{ type: string; step?: string; status?: string; detail?: { tools?: unknown[] } }>;
-				catalogSources: Array<{ path: string }>;
-				catalogCitations: { verdicts: Array<{ path: string; status: string }> };
-			};
-		};
-		expect(lastMeta.messageMetadata.catalogCitations.verdicts).toEqual([
-			{ path: '/showcases/auth/authn', status: 'exists' },
+		const trace = lastTrace();
+		expect(trace.awareness.authCeiling).toBe('user');
+		expect(trace.activations).toContainEqual({ id: 'navigation', active: true });
+		const catalog = trace.grounding.find((g) => g.id === 'catalog');
+		expect(catalog).toMatchObject({ ran: true, ms: expect.any(Number) });
+		// The row the assembly put in the prompt, and the answer named: included → cited.
+		expect(catalog?.items).toEqual([
+			expect.objectContaining({
+				id: authn.id,
+				state: 'cited',
+				blockId: 'catalog-results',
+				path: '/showcases/auth/authn',
+			}),
 		]);
-		expect(lastMeta.messageMetadata.catalogSources.map((r) => r.path)).toEqual(['/showcases/auth/authn']);
-		const catalogStep = lastMeta.messageMetadata.pipeline.filter((e) => e.step === 'catalog');
-		expect(catalogStep.map((e) => e.status)).toEqual(['active', 'done']);
+		expect(trace.citations).toEqual([
+			{ itemId: authn.id, source: 'catalog', match: 'path', path: '/showcases/auth/authn' },
+		]);
+		expect(trace.toolExecutions).toEqual([]);
 	});
 });
 
@@ -733,24 +773,18 @@ describe('chatbot turn failure', () => {
 		checkConversationLimit.mockReset().mockResolvedValue(null as never);
 		createConversation.mockReset().mockResolvedValue({ id: 'conv-new' } as never);
 		saveMessages.mockReset().mockResolvedValue(undefined as never);
-		saveConversationStep.mockReset().mockResolvedValue(undefined as never);
+		saveTurnTrace.mockReset().mockResolvedValue(undefined as never);
 		updateMessageContent.mockReset().mockResolvedValue(undefined as never);
 		refreshConversationTokens.mockReset().mockResolvedValue(undefined as never);
 		markCooldown.mockReset();
 		streamRun.onWrite = undefined;
+		streamRun.toolFinish = true;
 		streamRun.writes = [];
 		streamRun.answer = 'Hi';
 		streamRun.failure = undefined;
 		streamRun.failOnce = false;
 		streamRun.hold = false;
 	});
-
-	const pipelineOf = () =>
-		(
-			streamRun.writes.filter((f) => f.type === 'message-metadata').at(-1) as {
-				messageMetadata: { pipeline: Array<{ step?: string; status?: string; error?: string }> };
-			}
-		).messageMetadata.pipeline;
 
 	/**
 	 * A tool-routed turn starts on Google while the registry's first connection (Groq) is the
@@ -781,12 +815,18 @@ describe('chatbot turn failure', () => {
 		expect(types.filter((t) => t === 'finish')).toHaveLength(1);
 		expect(markCooldown).toHaveBeenCalledTimes(1);
 		expect(markCooldown).toHaveBeenCalledWith('google');
-		const generate = pipelineOf().filter((e) => e.step === 'generate');
-		expect(generate.at(-1)).toMatchObject({ status: 'done' });
+		const trace = lastTrace();
+		expect(trace.outcome).toBe('ok');
+		expect(trace.attempts).toEqual([
+			expect.objectContaining({ attemptIndex: 0, providerId: 'google', outcome: 'rotated', errorKind: 'rate_limit' }),
+			expect.objectContaining({ attemptIndex: 1, providerId: 'groq', modelId: 'openai/gpt-oss-120b', outcome: 'ok' }),
+		]);
 		await streamRun.stepFinish;
-		expect(saveConversationStep).toHaveBeenCalledWith(
-			expect.objectContaining({ providerId: 'groq', modelId: 'openai/gpt-oss-120b' }),
-		);
+		expect(persistedTrace().modelCalls.at(-1)).toMatchObject({
+			attemptIndex: 1,
+			providerId: 'groq',
+			modelId: 'openai/gpt-oss-120b',
+		});
 	});
 
 	/**
@@ -810,8 +850,12 @@ describe('chatbot turn failure', () => {
 		expect(streamRun.writes.at(-1)).toEqual({ type: 'error', errorText: '[rate_limit] frame' });
 		expect(JSON.stringify(streamRun.writes)).not.toContain('quota');
 
-		const generate = pipelineOf().filter((e) => e.step === 'generate');
-		expect(generate.at(-1)).toMatchObject({ status: 'error', error: 'rate_limit' });
+		const trace = lastTrace();
+		expect(trace.outcome).toBe('error');
+		expect(trace.errorKind).toBe('rate_limit');
+		expect(trace.attempts.at(-1)).toMatchObject({ providerId: 'google', outcome: 'failed', errorKind: 'rate_limit' });
+		// A failed turn is still a recorded turn.
+		expect(persistedTrace()).toMatchObject({ outcome: 'error', errorKind: 'rate_limit' });
 
 		expect(markCooldown).toHaveBeenCalledTimes(1);
 		expect(markCooldown).toHaveBeenCalledWith('google');
@@ -824,11 +868,7 @@ describe('chatbot turn failure', () => {
 		await streamRun.done;
 
 		expect(streamRun.writes.at(-1)).toEqual({ type: 'error', errorText: '[unknown] frame' });
-		expect(
-			pipelineOf()
-				.filter((e) => e.step === 'generate')
-				.at(-1),
-		).toMatchObject({ status: 'error', error: 'unknown' });
+		expect(lastTrace()).toMatchObject({ outcome: 'error', errorKind: 'unknown' });
 		expect(markCooldown).not.toHaveBeenCalled();
 	});
 });
@@ -855,12 +895,13 @@ describe('chatbot turn cancellation', () => {
 		checkConversationLimit.mockReset().mockResolvedValue(null as never);
 		createConversation.mockReset().mockResolvedValue({ id: 'conv-new' } as never);
 		saveMessages.mockReset().mockResolvedValue(undefined as never);
-		saveConversationStep.mockReset().mockResolvedValue(undefined as never);
+		saveTurnTrace.mockReset().mockResolvedValue(undefined as never);
 		updateMessageContent.mockReset().mockResolvedValue(undefined as never);
 		refreshConversationTokens.mockReset().mockResolvedValue(undefined as never);
 		(chargeTokens as ReturnType<typeof vi.fn>).mockReset();
 		markCooldown.mockReset();
 		streamRun.onWrite = undefined;
+		streamRun.toolFinish = true;
 		streamRun.writes = [];
 		streamRun.answer = 'Half an answer';
 		streamRun.failure = undefined;
@@ -891,9 +932,11 @@ describe('chatbot turn cancellation', () => {
 		expect(types.at(-1)).toBe('finish');
 		expect(JSON.stringify(streamRun.writes)).not.toContain('turnError');
 
-		expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Half an answer');
+		expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Half an answer', expect.any(Array));
 		expect(chargeTokens).toHaveBeenCalledWith('user-1', 0);
 		expect(markCooldown).not.toHaveBeenCalled();
+		expect(persistedTrace()).toMatchObject({ outcome: 'cancelled' });
+		expect(persistedTrace().attempts.at(-1)).toMatchObject({ outcome: 'cancelled', contentParts: 1 });
 	});
 
 	it("the platform's request signal is the other door to the same cancellation", async () => {
@@ -909,7 +952,7 @@ describe('chatbot turn cancellation', () => {
 		await streamRun.done;
 
 		expect(streamRun.signal?.aborted).toBe(true);
-		expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Half an answer');
+		expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Half an answer', expect.any(Array));
 		expect(streamRun.writes.at(-1)).toEqual({ type: 'finish' });
 	});
 
@@ -930,7 +973,9 @@ describe('chatbot turn cancellation', () => {
 
 		request.abort();
 		await streamRun.done;
-		await vi.waitFor(() => expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Half an answer'));
+		await vi.waitFor(() =>
+			expect(updateMessageContent).toHaveBeenCalledWith(expect.any(String), 'Half an answer', expect.any(Array)),
+		);
 
 		expect(streamRun.signal?.aborted).toBe(true);
 		expect(markCooldown).not.toHaveBeenCalled();
@@ -979,10 +1024,9 @@ describe('desk turn streaming', () => {
 		checkConversationLimit.mockReset().mockResolvedValue(null as never);
 		createConversation.mockReset().mockResolvedValue({ id: 'conv-new' } as never);
 		saveMessages.mockReset().mockResolvedValue(undefined as never);
-		saveConversationStep.mockReset().mockResolvedValue(undefined as never);
+		saveTurnTrace.mockReset().mockResolvedValue(undefined as never);
 		updateMessageContent.mockReset().mockResolvedValue(undefined as never);
 		refreshConversationTokens.mockReset().mockResolvedValue(undefined as never);
-		(mutations.saveToolCall as ReturnType<typeof vi.fn>).mockReset().mockResolvedValue({ id: 'tcl_1' } as never);
 		(chargeTokens as ReturnType<typeof vi.fn>).mockReset();
 		markCooldown.mockReset();
 		const proposals = await import('$lib/server/db/ai/proposals');
@@ -990,6 +1034,7 @@ describe('desk turn streaming', () => {
 			.mockReset()
 			.mockResolvedValue({ id: 'prp_1', riskTier: 'medium' } as never);
 		streamRun.onWrite = undefined;
+		streamRun.toolFinish = true;
 		streamRun.writes = [];
 		streamRun.answer = 'Done';
 		streamRun.failure = undefined;
@@ -997,6 +1042,8 @@ describe('desk turn streaming', () => {
 		streamRun.hold = false;
 		streamRun.signal = undefined;
 		streamRun.toolResults = [];
+		// A desk turn runs the tools its step reports, never the chatbot's search.
+		streamRun.toolFinish = false;
 	});
 
 	it('opens one message with the DB row id, closes it with one finish, and charges the budget', async () => {
@@ -1010,13 +1057,31 @@ describe('desk turn streaming', () => {
 		const start = streamRun.writes[0] as { messageId?: string };
 		const [, , rows] = saveMessages.mock.calls[0] as [string, string, Array<{ id: string; role: string }>];
 		expect(rows.find((r) => r.role === 'assistant')?.id).toBe(start.messageId);
-		expect(updateMessageContent).toHaveBeenCalledWith(start.messageId, 'Done');
+		expect(updateMessageContent).toHaveBeenCalledWith(start.messageId, 'Done', expect.any(Array));
 		expect(chargeTokens).toHaveBeenCalledWith('user-1', 15);
+		// The desk turn's trace carries the composed prompt blocks and every capability's verdict.
+		const trace = persistedTrace();
+		expect(trace.surface).toBe('deskbot');
+		expect(trace.blocks.map((b) => b.id)).toEqual([
+			'role',
+			'completion-guidance',
+			'desk-awareness-guidance',
+			'desk-files-guidance',
+			'desk-edit-guidance',
+			'desk-plan-guidance',
+			'permissions',
+		]);
+		expect(trace.activations).toContainEqual({ id: 'desk-plan', active: true });
+		expect(trace.activations).toContainEqual({ id: 'desk-delete', active: false, reason: 'scope_off' });
+		expect(trace.blocks.some((b) => b.id === 'planning')).toBe(false);
+		expect(trace.toolset.map((t) => t.name)).toContain('desk_propose_plan');
+		expect(trace.awareness.scopes).toEqual(['desk:read', 'desk:write']);
 	});
 
 	it('writes the proposal card inside the open message, from a gated sentinel, with server-derived risk', async () => {
 		streamRun.toolResults = [
 			{
+				toolCallId: 'call_u1',
 				toolName: 'desk_update_cells',
 				input: { file_id: 'fil_a', updates: [{ cell: 'A1', value: 1 }] },
 				output: { requiresApproval: true, action: 'Update 1 cell in "Budget"', target },
@@ -1050,6 +1115,11 @@ describe('desk turn streaming', () => {
 				],
 			}),
 		);
+		// The proposal is a trace item: the turn stopped for a decision, on this proposal.
+		expect(persistedTrace()).toMatchObject({ outcome: 'awaiting_decision', proposalId: 'prp_1' });
+		expect(persistedTrace().toolExecutions).toEqual([
+			expect.objectContaining({ toolCallId: 'call_u1', toolName: 'desk_update_cells', status: 'requires_approval' }),
+		]);
 	});
 
 	it('shows no card when the proposal row could not be written, and marks the tool record', async () => {
@@ -1057,6 +1127,7 @@ describe('desk turn streaming', () => {
 		(proposals.createProposal as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('db down'));
 		streamRun.toolResults = [
 			{
+				toolCallId: 'call_d1',
 				toolName: 'desk_delete_file',
 				input: { file_id: 'fil_a' },
 				output: { requiresApproval: true, action: 'Delete "Budget"', target },
@@ -1070,9 +1141,9 @@ describe('desk turn streaming', () => {
 			| undefined;
 		expect(frame?.messageMetadata.harness.proposal).toBeUndefined();
 		expect(frame?.messageMetadata.harness.proposalError?.message).toContain('could not be saved');
-		expect(mutations.saveToolCall).toHaveBeenCalledWith(
+		expect(persistedTrace().toolExecutions).toEqual([
 			expect.objectContaining({ status: 'error', errorMessage: expect.stringContaining('could not be persisted') }),
-		);
+		]);
 	});
 
 	it('rotates a pre-content 429 onto the other configured connection and finishes there', async () => {
@@ -1087,10 +1158,31 @@ describe('desk turn streaming', () => {
 		expect(types.filter((t) => t === 'finish')).toHaveLength(1);
 		expect(markCooldown).toHaveBeenCalledTimes(1);
 		expect(markCooldown).toHaveBeenCalledWith('google');
-		await vi.waitFor(() => expect(saveConversationStep).toHaveBeenCalled());
-		expect(saveConversationStep).toHaveBeenLastCalledWith(
-			expect.objectContaining({ providerId: 'groq', modelId: 'openai/gpt-oss-120b', toolCallIds: undefined }),
-		);
+		await vi.waitFor(() => expect(saveTurnTrace).toHaveBeenCalled());
+		expect(persistedTrace().modelCalls.at(-1)).toMatchObject({
+			attemptIndex: 1,
+			providerId: 'groq',
+			modelId: 'openai/gpt-oss-120b',
+		});
+		expect(persistedTrace().toolExecutions).toEqual([]);
+	});
+
+	it('leaves a fallback out whose per-minute ceiling the turn exceeds — no fallback beats a predictable stop', async () => {
+		streamRun.failure = { kind: 'rate_limit', message: 'quota' };
+		streamRun.failOnce = true;
+		// Groq's verified free tier carries 8K tokens a minute; a 20K-char history sent twice
+		// (the tool step and the answer) is ~10K, so the rotation has nowhere honest to go.
+		const { convertToModelMessages } = await import('ai');
+		vi.mocked(convertToModelMessages).mockResolvedValueOnce([{ role: 'user', content: 'x'.repeat(20_000) }]);
+
+		await orchestrateChat(input);
+		await streamRun.done;
+
+		const types = streamRun.writes.map((f) => f.type);
+		expect(types).toContain('error');
+		expect(markCooldown).toHaveBeenCalledWith('google');
+		await vi.waitFor(() => expect(saveTurnTrace).toHaveBeenCalled());
+		expect(persistedTrace().attempts.map((a) => a.providerId)).toEqual(['google']);
 	});
 
 	it('the step that asks for approval is the last one: the stop condition names it', async () => {

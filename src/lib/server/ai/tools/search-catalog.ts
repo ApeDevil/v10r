@@ -28,9 +28,12 @@ import { buildSearchIndex, searchContent } from '$lib/server/search';
 
 // Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
-/** Side-channel that captures the full `SearchResult` rows surfaced this turn. */
+/**
+ * Side-channel that captures the full `SearchResult` rows surfaced this turn — with the
+ * tool call that returned them when a tool did the surfacing (a lane records without one).
+ */
 export interface CatalogSink {
-	record(rows: SearchResult[]): void;
+	record(rows: SearchResult[], toolCallId?: string): void;
 }
 
 interface ToolInput {
@@ -86,6 +89,8 @@ export interface CatalogSearchOptions {
 	/** Result cap; browse mode clamps it to `BROWSE_LIMIT`. */
 	limit?: number;
 	sink?: CatalogSink;
+	/** The tool call running this search, so the sink can attribute the rows to it. */
+	toolCallId?: string;
 }
 
 /**
@@ -95,7 +100,7 @@ export interface CatalogSearchOptions {
  * recorded into `sink`. Throws when a lane fails — callers own the degrade.
  */
 export async function searchCatalogRecords(query: string, options: CatalogSearchOptions): Promise<SearchResult[]> {
-	const { locale, authCeiling, surface, limit, sink } = options;
+	const { locale, authCeiling, surface, limit, sink, toolCallId } = options;
 	const q = query.trim();
 	const scopes = allowedScopes(authCeiling);
 
@@ -114,7 +119,7 @@ export async function searchCatalogRecords(query: string, options: CatalogSearch
 		// Project records to the wire `SearchResult` shape (score 0 — browse is
 		// unranked) so the sink + projection match the keyword path exactly.
 		const browsed = records.slice(0, browseCap).map((r) => toResult(r, 0));
-		sink?.record(browsed);
+		sink?.record(browsed, toolCallId);
 		return browsed;
 	}
 
@@ -134,7 +139,7 @@ export async function searchCatalogRecords(query: string, options: CatalogSearch
 		.sort((a, b) => b.score - a.score)
 		.slice(0, cap);
 
-	sink?.record(merged);
+	sink?.record(merged, toolCallId);
 	return merged;
 }
 
@@ -192,10 +197,17 @@ export function createSearchCatalogTool(locale: Locale, authCeiling: string | nu
 				},
 				required: ['query'],
 			}),
-			execute: async ({ query, surface, limit }) => {
+			execute: async ({ query, surface, limit }, { toolCallId }) => {
 				try {
 					const q = typeof query === 'string' ? query : '';
-					const results = await searchCatalogRecords(q, { locale, authCeiling, surface: surface ?? null, limit, sink });
+					const results = await searchCatalogRecords(q, {
+						locale,
+						authCeiling,
+						surface: surface ?? null,
+						limit,
+						sink,
+						toolCallId,
+					});
 					return { results: results.map(toToolResult) };
 				} catch (err) {
 					console.error('[ai:tool:search_catalog] failed:', err instanceof Error ? err.message : err);

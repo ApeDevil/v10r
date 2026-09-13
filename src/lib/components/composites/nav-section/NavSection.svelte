@@ -149,7 +149,8 @@ function scrollToSection(id: string) {
 		background: var(--color-bg);
 		border-bottom: 1px solid transparent;
 		margin-inline: calc(-1 * var(--spacing-4));
-		margin-bottom: var(--spacing-8);
+		/* A page whose first section is the point pulls the nav closer with `--section-nav-gap`. */
+		margin-bottom: var(--section-nav-gap, var(--spacing-8));
 		padding: 0 var(--spacing-4);
 		transition:
 			border-color var(--duration-fast),

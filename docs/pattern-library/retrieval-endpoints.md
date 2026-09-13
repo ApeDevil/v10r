@@ -17,7 +17,6 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 ## Docs
 
 - [docs/blueprint/ai/knowledge-base.md](/docs/blueprint/ai/knowledge-base) — The ingest door pattern ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/knowledge-base.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/knowledge-base.md))
-- [docs/blueprint/ai/retrieval-observability.md](/docs/blueprint/ai/retrieval-observability) — Observability over the pipeline ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/retrieval-observability.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/retrieval-observability.md))
 
 ## Code
 
@@ -47,7 +46,7 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 
 ## Depends on
 
-- [Layered RAG (llmwiki pointer layer over a retrieval kernel)](/docs/pattern-library/layered-rag)
+- [Grounded retrieval with a corpus map](/docs/pattern-library/layered-rag)
 
 ---
 

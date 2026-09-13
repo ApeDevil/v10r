@@ -12,13 +12,23 @@ import { createSearchPatternLibraryTool } from './search-pattern-library';
 type ToolArgs = { query: string; category?: string; limit?: number };
 
 // biome-ignore lint/suspicious/noExplicitAny: invoking the AI SDK tool's execute directly in a unit test
-function exec(toolSet: any, args: ToolArgs): Promise<any> {
-	return toolSet.search_pattern_library.execute(args, {});
+function exec(toolSet: any, args: ToolArgs, options: { toolCallId?: string } = {}): Promise<any> {
+	return toolSet.search_pattern_library.execute(args, options);
 }
 
-function collectingSink(): { sink: CatalogSink; rows: SearchResult[] } {
+function collectingSink(): { sink: CatalogSink; rows: SearchResult[]; calls: Array<string | undefined> } {
 	const rows: SearchResult[] = [];
-	return { sink: { record: (r) => rows.push(...r) }, rows };
+	const calls: Array<string | undefined> = [];
+	return {
+		sink: {
+			record: (r, toolCallId) => {
+				rows.push(...r);
+				calls.push(toolCallId);
+			},
+		},
+		rows,
+		calls,
+	};
 }
 
 describe('search_pattern_library', () => {
@@ -79,6 +89,20 @@ describe('search_pattern_library', () => {
 		const de = collectingSink();
 		await exec(createSearchPatternLibraryTool('de', de.sink), { query: 'background jobs cron', limit: 2 });
 		expect(de.rows[0].badge).toBe('en-fallback');
+	});
+
+	it('attributes the surfaced rows to the tool call that ran the search — browse and ranked alike', async () => {
+		const ranked = collectingSink();
+		await exec(
+			createSearchPatternLibraryTool('en', ranked.sink),
+			{ query: 'background jobs cron' },
+			{ toolCallId: 'call_9' },
+		);
+		expect(ranked.calls).toEqual(['call_9']);
+
+		const browsed = collectingSink();
+		await exec(createSearchPatternLibraryTool('en', browsed.sink), { query: '*' }, { toolCallId: 'call_10' });
+		expect(browsed.calls).toEqual(['call_10']);
 	});
 
 	it('returns empty results (not an error) for a no-match query', async () => {

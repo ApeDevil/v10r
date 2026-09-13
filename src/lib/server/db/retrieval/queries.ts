@@ -1,6 +1,6 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db } from '../index';
-import { document } from '../schema/retrieval';
+import { corpusMap, document } from '../schema/retrieval';
 
 /** List documents for a user (active only, newest first). */
 export async function listDocuments(userId: string, offset = 0, limit = 50) {
@@ -80,9 +80,30 @@ export async function countDocuments(userId: string): Promise<number> {
 
 /**
  * Searchable corpus size for one owner, optionally narrowed to one source kind —
- * the context-probe's "available" side. Counts only `ready` documents (those
+ * the profile manifest's grounding inventory. Counts only `ready` documents (those
  * whose chunks are embedded and therefore retrievable).
  */
+/**
+ * Whether a user's desk corpus can answer a search right now: nothing opted into AI
+ * context (`none`), documents present but none searchable yet — the desk sync still has
+ * them `pending`/`processing` (`indexing`) — or at least one `ready` document. A document
+ * in `error` is as good as absent. One aggregate over the user's own rows; a desk holds a
+ * handful, never a scan.
+ */
+export type DeskCorpusState = 'none' | 'indexing' | 'ready';
+
+export async function deskCorpusState(userId: string): Promise<DeskCorpusState> {
+	const [row] = await db
+		.select({
+			ready: sql<boolean>`coalesce(bool_or(${document.status} = 'ready'), false)`,
+			indexing: sql<boolean>`coalesce(bool_or(${document.status} in ('pending', 'processing')), false)`,
+		})
+		.from(document)
+		.where(and(eq(document.userId, userId), eq(document.source, 'desk'), isNull(document.deletedAt)));
+	if (row?.ready) return 'ready';
+	return row?.indexing ? 'indexing' : 'none';
+}
+
 export async function countCorpus(
 	userId: string,
 	source?: 'upload' | 'web' | 'text' | 'api' | 'catalog' | 'docs' | 'desk',
@@ -102,4 +123,35 @@ export async function countCorpus(
 			),
 		);
 	return { documents: row?.documents ?? 0, chunks: row?.chunks ?? 0 };
+}
+
+/** A corpus map as a prompt or an inspector reads it. */
+export interface CorpusMapRow {
+	id: string;
+	title: string;
+	body: string;
+	builtAt: Date;
+}
+
+/**
+ * The map of one collection's corpus, for the owners the reader may see — `[user.id]` for
+ * the user's own, `[SYSTEM_DOCS_USER_ID]` for the project docs. Scoping by owner set rather
+ * than one user is what lets the chatbot inject the system map for a signed-in user.
+ */
+export async function getCorpusMap(ownerIds: string[], collectionId: string): Promise<CorpusMapRow | null> {
+	const [row] = await db
+		.select({ id: corpusMap.id, title: corpusMap.title, body: corpusMap.body, builtAt: corpusMap.builtAt })
+		.from(corpusMap)
+		.where(and(inArray(corpusMap.userId, ownerIds), eq(corpusMap.collectionId, collectionId)))
+		.limit(1);
+	return row ?? null;
+}
+
+/** Whether a collection has a map at all — the profile manifest's inventory, no body read. */
+export async function countCorpusMaps(ownerIds: string[], collectionId: string): Promise<number> {
+	const [row] = await db
+		.select({ total: count() })
+		.from(corpusMap)
+		.where(and(inArray(corpusMap.userId, ownerIds), eq(corpusMap.collectionId, collectionId)));
+	return row?.total ?? 0;
 }

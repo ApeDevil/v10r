@@ -456,7 +456,7 @@ Indexes: `(post_id, created_at DESC)`, `(post_id, locale, created_at DESC)`, `(p
 
 **search_vector**: plain `tsvector` column, app-populated in `createRevision()`. On insert, `localeRegconfig(locale)` selects the Postgres FTS configuration (`english` / `german` / `russian` / `simple`) and builds a weighted vector: title=A, summary=B, markdown=C. The GIN index (`blog_revision_search_vector_idx`) makes `@@` queries fast.
 
-A `GENERATED ALWAYS AS … STORED` column was ruled out because Neon rejects the non-immutable per-locale `to_tsvector(regconfig, …)` expression with **SQLSTATE 42P17**. Additionally, `drizzle-kit push` silently ignores expression changes to generated columns. The same pattern applies to `rag.llmwiki_page`.
+A `GENERATED ALWAYS AS … STORED` column was ruled out because Neon rejects the non-immutable per-locale `to_tsvector(regconfig, …)` expression with **SQLSTATE 42P17**. Additionally, `drizzle-kit push` silently ignores expression changes to generated columns. `blog.revision` is the one app-populated tsvector in the schema — `retrieval.chunk` uses a single-config generated column, which Neon allows.
 
 Setup and backfill: `bun run db:search-backfill` adds the column and index with `IF NOT EXISTS` guards and backfills any existing revisions.
 

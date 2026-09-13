@@ -2,38 +2,19 @@
 /**
  * One row per tool call the assistant makes — what it is doing while the user waits, and
  * whether it worked. `phase` is the UI vocabulary; the mapping from the SDK's tool-part
- * `state` lives in ChatMessage.
+ * `state` lives in ChatMessage, the label in `tool-label.ts`.
  */
 interface Props {
-	toolName: string;
+	/** The tool's localized label (`toolLabel()` — the manifest's one human label). */
+	label: string;
 	/** Not named `state` — that collides with the `$state` rune. */
 	phase: 'pending' | 'running' | 'done' | 'error';
 	/** The tool's output; a `done` call whose output carries an `error` envelope failed too. */
 	output?: unknown;
-	/** Display label for the tool (the chatbot passes its localized names); falls back to the desk table, then the name. */
-	label?: string;
 }
 
-let { toolName, phase, output, label }: Props = $props();
+let { label, phase, output }: Props = $props();
 
-const TOOL_LABELS: Record<string, string> = {
-	desk_list_files: 'Listing files',
-	desk_read_file: 'Reading file',
-	desk_search_files: 'Searching files',
-	desk_file_tree: 'Reading file tree',
-	desk_get_open_panels: 'Checking open panels',
-	desk_search_knowledge: 'Searching pinned files',
-	desk_update_cells: 'Updating cells',
-	desk_update_markdown: 'Rewriting document',
-	desk_edit_markdown: 'Editing document',
-	desk_rename_file: 'Renaming file',
-	desk_create_spreadsheet: 'Creating spreadsheet',
-	desk_create_markdown: 'Creating document',
-	desk_delete_file: 'Deleting file',
-	desk_propose_plan: 'Proposing a plan',
-};
-
-const text = $derived(label ?? TOOL_LABELS[toolName] ?? toolName);
 const failed = $derived(
 	phase === 'error' || (phase === 'done' && output != null && typeof output === 'object' && 'error' in output),
 );
@@ -42,13 +23,13 @@ const failed = $derived(
 <div class="tool-status">
 	{#if phase === 'pending' || phase === 'running'}
 		<span class="i-lucide-loader-2 tool-icon tool-spin"></span>
-		<span class="tool-label">{text}...</span>
+		<span class="tool-label">{label}...</span>
 	{:else if failed}
 		<span class="i-lucide-alert-circle tool-icon tool-error"></span>
-		<span class="tool-label tool-error">{text} failed</span>
+		<span class="tool-label tool-error">{label} failed</span>
 	{:else}
 		<span class="i-lucide-check-circle tool-icon tool-success"></span>
-		<span class="tool-label">{text}</span>
+		<span class="tool-label">{label}</span>
 	{/if}
 </div>
 

@@ -1,12 +1,13 @@
 <script lang="ts">
 import CitationChip from '$lib/components/composites/citation/CitationChip.svelte';
 import ConfirmationCard from '$lib/components/composites/citation/ConfirmationCard.svelte';
-import type { CatalogSource, SourceChunk } from '$lib/components/composites/citation/citation-types';
+import type { CatalogSource } from '$lib/components/composites/citation/citation-types';
 import * as m from '$lib/paraglide/messages';
 import type { TurnError } from '$lib/types/ai-error';
 import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import ToolCallStatus from './ToolCallStatus.svelte';
+import { toolLabel } from './tool-label';
 import { isToolPart, TOOL_PHASE, type ToolPart, toolNameOf } from './tool-part';
 
 interface TextPart {
@@ -24,17 +25,15 @@ interface Props {
 	content?: string;
 	/** Grounded catalog surfaces the assistant referenced — rendered as citation chips. */
 	catalogSources?: CatalogSource[];
-	/** Original drilled retrieval chunks — rendered as a "View N sources" evidence affordance. */
-	sourceChunks?: SourceChunk[];
 	/** Why the answer stopped short (streamed on the message when a turn failed after its first words). */
 	turnError?: TurnError;
+	/** Where the finished turn opens in the turn inspector — set once its trace has persisted. */
+	inspectHref?: string | null;
 	/** Callback when user confirms a destructive AI action */
 	onconfirmaction?: (description: string) => void;
-	/** Open the source-chunk viewer for this message's drilled chunks. */
-	onviewchunks?: (chunks: SourceChunk[]) => void;
 }
 
-let { role, parts, content, catalogSources, sourceChunks, turnError, onconfirmaction, onviewchunks }: Props = $props();
+let { role, parts, content, catalogSources, turnError, inspectHref = null, onconfirmaction }: Props = $props();
 
 const isUser = $derived(role === 'user');
 
@@ -58,22 +57,6 @@ const uniqueSources = $derived.by((): CatalogSource[] => {
 	return out;
 });
 
-/**
- * Dedupe evidence chunks by chunkId — the drill can return the same chunk
- * across steps, and a keyed list would otherwise throw each_key_duplicate.
- */
-const uniqueChunks = $derived.by((): SourceChunk[] => {
-	if (!sourceChunks?.length) return [];
-	const seen = new Set<string>();
-	const out: SourceChunk[] = [];
-	for (const c of sourceChunks) {
-		if (seen.has(c.chunkId)) continue;
-		seen.add(c.chunkId);
-		out.push(c);
-	}
-	return out;
-});
-
 /** Resolve display parts: prefer parts array, fall back to wrapping content as a text part */
 const displayParts = $derived.by((): MessagePart[] => {
 	if (parts?.length) return parts;
@@ -85,15 +68,6 @@ function getTextContent(part: MessagePart): string {
 	return 'text' in part ? (part as TextPart).text : '';
 }
 
-/** The chatbot's retrieval tools, in the user's language. Desk tools keep ToolCallStatus's own table. */
-const TOOL_LABEL: Record<string, () => string> = {
-	search_catalog: m.ai_chat_tool_search_catalog,
-	search_project_docs: m.ai_chat_tool_search_project_docs,
-	search_pattern_library: m.ai_chat_tool_search_pattern_library,
-	get_llmwiki_pages: m.ai_chat_tool_get_llmwiki_pages,
-	get_source_chunks: m.ai_chat_tool_get_source_chunks,
-};
-
 /**
  * An assistant frame exists from the stream's first `start` on and stays after a pre-text
  * failure; with nothing to show, the row is not rendered — the status row and the error box
@@ -101,7 +75,6 @@ const TOOL_LABEL: Record<string, () => string> = {
  */
 const hasContent = $derived(
 	displayParts.some((p) => (p.type === 'text' ? !!getTextContent(p) : isToolPart(p))) ||
-		uniqueChunks.length > 0 ||
 		uniqueSources.length > 0 ||
 		!!turnError,
 );
@@ -146,12 +119,7 @@ function turnErrorCopy(error: TurnError): string {
 				{/if}
 			{:else if isToolPart(part)}
 				{@const toolName = toolNameOf(part)}
-				<ToolCallStatus
-					{toolName}
-					phase={TOOL_PHASE[part.state] ?? 'running'}
-					output={part.output}
-					label={TOOL_LABEL[toolName]?.()}
-				/>
+				<ToolCallStatus label={toolLabel(toolName)} phase={TOOL_PHASE[part.state] ?? 'running'} output={part.output} />
 				{#if part.state === 'output-available' && part.output && typeof part.output === 'object' && 'requiresConfirmation' in part.output}
 					<ConfirmationCard
 						description={(part.output as { description?: string }).description ?? 'Confirm this action?'}
@@ -169,15 +137,6 @@ function turnErrorCopy(error: TurnError): string {
 				<span class="font-medium">{m.ai_chat_error_partial()}</span>
 				{turnErrorCopy(turnError)}
 			</p>
-		{/if}
-
-		{#if !isUser && uniqueChunks.length}
-			<div class="message-sources">
-				<button type="button" class="sources-btn" onclick={() => onviewchunks?.(uniqueChunks)}>
-					<span class="i-lucide-file-text sources-icon" aria-hidden="true"></span>
-					View {uniqueChunks.length} source{uniqueChunks.length === 1 ? '' : 's'}
-				</button>
-			</div>
 		{/if}
 
 		{#if !isUser && uniqueSources.length}
@@ -199,6 +158,14 @@ function turnErrorCopy(error: TurnError): string {
 					{/each}
 				</div>
 			</div>
+		{/if}
+
+		{#if !isUser && inspectHref}
+			<!-- The turn's own recorded account, one click away — the showcase opens the persisted trace. -->
+			<a class="inspect-turn" href={inspectHref}>
+				<span class="i-lucide-scan-search inspect-turn-icon" aria-hidden="true"></span>
+				{m.ai_chat_inspect_turn()}
+			</a>
 		{/if}
 	</div>
 </div>
@@ -243,6 +210,27 @@ function turnErrorCopy(error: TurnError): string {
 	.related-surfaces {
 		margin-top: 0.25rem;
 	}
+
+	.inspect-turn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		align-self: flex-start;
+		margin-top: 0.125rem;
+		font-size: 0.6875rem;
+		color: var(--color-muted);
+		text-decoration: none;
+	}
+
+	.inspect-turn:hover {
+		color: var(--color-primary);
+		text-decoration: underline;
+	}
+
+	.inspect-turn-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+	}
 	.related-label {
 		display: block;
 		margin-bottom: 0.25rem;
@@ -255,34 +243,6 @@ function turnErrorCopy(error: TurnError): string {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.375rem;
-	}
-
-	.message-sources {
-		margin-top: 0.25rem;
-	}
-	.sources-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.375rem;
-		padding: 0.375rem 0.625rem;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-		color: var(--color-primary);
-		font-size: 0.75rem;
-		font-weight: 500;
-		cursor: pointer;
-	}
-	.sources-btn:hover {
-		background-color: color-mix(in srgb, var(--color-primary) 14%, transparent);
-	}
-	.sources-btn:focus-visible {
-		outline: none;
-		box-shadow: 0 0 0 2px var(--color-primary);
-	}
-	.sources-icon {
-		width: 0.875rem;
-		height: 0.875rem;
 	}
 
 	.chat-bubble-user {
@@ -309,8 +269,13 @@ function turnErrorCopy(error: TurnError): string {
 	.chat-prose :global(h2) { font-size: 1.15em; }
 	.chat-prose :global(h3) { font-size: 1.05em; }
 
+	/* A host that reads the answer at page width asks for more room with the two knobs. */
+	.chat-prose {
+		line-height: var(--chat-prose-leading, 1.5);
+	}
+
 	.chat-prose :global(p) {
-		margin-bottom: 0.5em;
+		margin-bottom: var(--chat-prose-paragraph-gap, 0.5em);
 	}
 
 	.chat-prose :global(p:last-child) {
@@ -344,7 +309,7 @@ function turnErrorCopy(error: TurnError): string {
 	.chat-prose :global(ul),
 	.chat-prose :global(ol) {
 		padding-left: 1.5em;
-		margin-bottom: 0.5em;
+		margin-bottom: var(--chat-prose-paragraph-gap, 0.5em);
 	}
 
 	.chat-prose :global(ul) { list-style: disc; }

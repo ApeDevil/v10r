@@ -4,11 +4,14 @@ import { Badge } from '$lib/components/primitives';
 export interface ToolRow {
 	name: string;
 	branch: 'retrieval' | 'desk';
+	/** The capability of the profile that mounts it. */
+	capability: string;
 	risk: 'read' | 'create' | 'write' | 'destructive';
 	/** Desk tools carry their gating scope; chatbot (retrieval) tools are scopeless → null. */
 	scope: string | null;
 	scopeLabel: string;
 	stepBudget: number;
+	/** The description the model receives — the one owner of what the tool is for. */
 	note: string;
 }
 
@@ -52,15 +55,17 @@ const riskMeta: Record<ToolRow['risk'], { icon: string; variant: 'secondary' | '
 				<thead>
 					<tr>
 						<th scope="col">Tool</th>
+						<th scope="col">Capability</th>
 						<th scope="col">Risk</th>
 						<th scope="col">Mounts</th>
-						<th scope="col">Notes</th>
+						<th scope="col">Description</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#each retrievalTools as t (t.name)}
 						<tr>
 							<td><code class="tool-name">{t.name}</code></td>
+							<td><code class="scope">{t.capability}</code></td>
 							<td>{@render riskBadge(t.risk)}</td>
 							<td><span class="muted">{t.scopeLabel}</span></td>
 							<td class="note">{t.note}</td>
@@ -76,23 +81,25 @@ const riskMeta: Record<ToolRow['risk'], { icon: string; variant: 'secondary' | '
 		<h3 class="group-title">
 			<span class="i-lucide-panel-top h-4 w-4" aria-hidden="true"></span>
 			Desk tools
-			<span class="group-sub">scope-gated via <code>createDeskTools</code> · step budget 3 (read) / 5 (mutation)</span>
+			<span class="group-sub">scope-gated by the deskbot profile's capabilities · step budget 3 (read) / 5 (mutation)</span>
 		</h3>
 		<div class="table-wrap" tabindex="0" aria-label="Desk tools">
 			<table class="data-table">
 				<thead>
 					<tr>
 						<th scope="col">Tool</th>
+						<th scope="col">Capability</th>
 						<th scope="col">Scope</th>
 						<th scope="col">Risk</th>
 						<th scope="col">Steps</th>
-						<th scope="col">Notes</th>
+						<th scope="col">Description</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#each deskTools as t (t.name)}
 						<tr>
 							<td><code class="tool-name">{t.name}</code></td>
+							<td><code class="scope">{t.capability}</code></td>
 							<td><code class="scope">{t.scope}</code></td>
 							<td>{@render riskBadge(t.risk)}</td>
 							<td><code class="muted">{t.stepBudget}</code></td>

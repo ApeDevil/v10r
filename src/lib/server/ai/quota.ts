@@ -11,7 +11,7 @@ import { getCooldownResumeAt } from './providers';
  * `load()` (SSR first-paint) and `GET /api/admin/ai/quota` (live poll), so the
  * contract can't drift between them:
  *   - documented ceilings      → static `PROVIDER_LIMITS` (rots; carries verifiedOn)
- *   - observed requests/tokens  → SQL over `conversation_step` (today, UTC; lower bound)
+ *   - observed requests/tokens  → SQL over `model_call` (today, UTC; lower bound)
  *   - 429s + embedding calls    → Redis counters (signals the SQL aggregate can't see)
  *   - availability             → the Redis-backed circuit breaker
  *

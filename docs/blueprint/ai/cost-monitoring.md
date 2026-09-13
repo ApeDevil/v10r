@@ -28,7 +28,7 @@ Two telemetry tables feed the usage table, and they stay independent:
 
 | Surface | Table | Counts a "call" as |
 |---------|-------|--------------------|
-| `chat` | `ai.conversation_step` | a step |
+| `chat` | `ai.model_call` | a provider request (attempt × step) |
 | `image` | `image.ai_proposal` | an analysis |
 
 The merge is **app-layer, never SQL**. `buildUnifiedModelUsage(chatRows, imageRows)` in `src/lib/server/ai/usage-summary.ts` is the only place that knows both tables exist — no `UNION`, no DB view, no shared schema. Each surface keeps its own query module; the seam is one pure function.

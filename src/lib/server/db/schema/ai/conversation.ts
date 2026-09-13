@@ -1,11 +1,12 @@
 /**
- * AI CONVERSATION — Chat history + tool call tracking + step-level usage.
+ * AI CONVERSATION — the thread and its messages.
  *
  * Tables:
- *   ai.conversation       — top-level chat, scoped to user
- *   ai.message            — individual messages (user / assistant / system / tool)
- *   ai.tool_call          — tool invocations with polymorphic entity refs
- *   ai.conversation_step  — one row per AI SDK step (usage, retrieval events)
+ *   ai.conversation  — top-level chat, scoped to user
+ *   ai.message       — individual messages (user / assistant / system / tool)
+ *
+ * What happened while an assistant message was produced — the turn trace — lives in
+ * `./turn.ts` (`ai.turn` → `ai.model_call` → `ai.tool_call`), keyed by the message.
  */
 import { index, integer, jsonb, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from '../auth/_better-auth';
@@ -14,28 +15,15 @@ export const aiSchema = pgSchema('ai');
 
 export const messageRoleEnum = aiSchema.enum('message_role', ['user', 'assistant', 'system', 'tool']);
 
-export const toolCallStatusEnum = aiSchema.enum('tool_call_status', ['pending', 'success', 'error']);
-
-export const stepTypeEnum = aiSchema.enum('step_type', ['initial', 'tool-result', 'continue']);
-
 /** Which AI surface a conversation belongs to. See `docs/blueprint/ai/surfaces.md`. */
 export const aiSurfaceEnum = aiSchema.enum('ai_surface', ['chatbot', 'deskbot']);
 
-/** Structured context entry attached to a message. */
-export type MessageContext = {
-	entityKind: string;
-	entityId: string;
-	label: string;
-	tokenEstimate: number;
-};
-
-/** Retrieval pipeline event recorded per step. */
-export type RetrievalEvent = {
-	tier: 1 | 2 | 3;
-	status: 'success' | 'error' | 'skipped';
-	chunkCount: number;
-	durationMs: number;
-};
+/**
+ * An assistant message's parts as the AI SDK client holds them (text, tool and reasoning
+ * parts). Stored so a reloaded thread renders the tool calls the answer was built on, not
+ * just its text. Shape owned by the SDK (`UIMessagePart`); never read by the server.
+ */
+export type StoredMessagePart = { type: string } & Record<string, unknown>;
 
 export const conversation = aiSchema.table(
 	'conversation',
@@ -51,9 +39,9 @@ export const conversation = aiSchema.table(
 		 * Null on rows created before this dimension existed.
 		 */
 		surface: aiSurfaceEnum('surface'),
-		/** Cached total input tokens across all steps. Recalculated on each turn. */
+		/** Cached total input tokens across all model calls. Recalculated on each turn. */
 		totalInputTokens: integer('total_input_tokens').notNull().default(0),
-		/** Cached total output tokens across all steps. Recalculated on each turn. */
+		/** Cached total output tokens across all model calls. Recalculated on each turn. */
 		totalOutputTokens: integer('total_output_tokens').notNull().default(0),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -71,11 +59,11 @@ export const message = aiSchema.table(
 		role: messageRoleEnum('role').notNull(),
 		content: text('content').notNull(),
 		/**
-		 * Structured context snapshot when message was sent.
-		 * Array of { entityKind, entityId, label, tokenEstimate }.
-		 * Null for non-desk messages.
+		 * The assistant message's parts as streamed (text + tool parts), backfilled with
+		 * `content` when the turn finishes. Null on user rows and on assistant rows whose
+		 * turn ended before any part reached the client.
 		 */
-		context: jsonb('context').$type<MessageContext[] | null>(),
+		parts: jsonb('parts').$type<StoredMessagePart[] | null>(),
 		/**
 		 * Site-awareness: the resolved, allowlisted public route this turn was asked from
 		 * (e.g. `/showcases/forms`) — the chatbot's location-awareness stamp. Server-resolved
@@ -88,75 +76,4 @@ export const message = aiSchema.table(
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [index('message_conv_created_idx').on(table.conversationId, table.createdAt)],
-);
-
-export const toolCall = aiSchema.table(
-	'tool_call',
-	{
-		id: text('id').primaryKey(),
-		messageId: text('message_id')
-			.notNull()
-			.references(() => message.id, { onDelete: 'cascade' }),
-		/** AI SDK tool name (e.g. 'desk_list_files', 'desk_update_cells'). */
-		toolName: text('tool_name').notNull(),
-		/** Arguments passed to the tool, as provided by the model. */
-		args: jsonb('args').notNull().$type<Record<string, unknown>>(),
-		/** Summarized result (kept under 500 tokens). Null while pending. */
-		result: jsonb('result').$type<Record<string, unknown>>(),
-		status: toolCallStatusEnum('status').notNull().default('pending'),
-		/** Error message when status = 'error'. */
-		errorMessage: text('error_message'),
-		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-	},
-	(table) => [index('tool_call_message_idx').on(table.messageId)],
-);
-
-/**
- * One row per AI SDK step within a conversation turn.
- * Captures what onStepFinish provides: step type, token usage,
- * tool calls made, and retrieval pipeline events.
- *
- * The live I/O Log in the UI is ephemeral client state.
- * This table enables historical replay and token usage dashboards.
- */
-export const conversationStep = aiSchema.table(
-	'conversation_step',
-	{
-		id: text('id').primaryKey(),
-		conversationId: text('conversation_id')
-			.notNull()
-			.references(() => conversation.id, { onDelete: 'cascade' }),
-		/** The user message that triggered this turn. */
-		messageId: text('message_id')
-			.notNull()
-			.references(() => message.id, { onDelete: 'cascade' }),
-		/** Step index within the turn (0-based). */
-		stepIndex: integer('step_index').notNull(),
-		/** AI SDK step type. */
-		stepType: stepTypeEnum('step_type').notNull(),
-		/** Denormalized surface (from the parent conversation) so per-surface usage is a
-		 *  plain GROUP BY with no join. Null on rows predating the surface dimension. */
-		surface: aiSurfaceEnum('surface'),
-		/** Input tokens consumed in this step. */
-		inputTokens: integer('input_tokens').notNull().default(0),
-		/** Output tokens produced in this step. */
-		outputTokens: integer('output_tokens').notNull().default(0),
-		/** Resolved provider id for this step ('groq' | 'openai' | 'google'). Null on pre-capture rows. */
-		providerId: text('provider_id'),
-		/** Resolved model id for this step (e.g. 'gpt-4o-mini'). Null on pre-capture rows. */
-		modelId: text('model_id'),
-		/** Wall-clock duration of this step in ms. Null when not measured. */
-		durationMs: integer('duration_ms'),
-		/** Retrieval pipeline events. Null when no retrieval was performed. */
-		retrievalEvents: jsonb('retrieval_events').$type<RetrievalEvent[] | null>(),
-		/** Tool call IDs invoked during this step (denormalized for fast lookup). */
-		toolCallIds: jsonb('tool_call_ids').$type<string[] | null>(),
-		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-	},
-	(table) => [
-		index('conv_step_conv_msg_idx').on(table.conversationId, table.messageId),
-		index('conv_step_model_idx').on(table.modelId, table.createdAt),
-		index('conv_step_provider_idx').on(table.providerId, table.createdAt),
-		index('conv_step_surface_idx').on(table.surface, table.createdAt),
-	],
 );

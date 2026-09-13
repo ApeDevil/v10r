@@ -10,7 +10,7 @@ import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { cn } from '$lib/utils/cn';
 </script>
 
-{#if chatbotSession.phase === 'minimized'}
+{#if chatbotSession.phase === 'minimized' && !chatbotSession.embedded}
 	<button
 		type="button"
 		class="vely-bubble fab-keyboard-hide fixed right-[var(--fab-right-1)] z-fab h-[var(--fab-size)] w-[var(--fab-size)] rounded-full border border-border bg-surface-3 text-fg shadow-lg"
