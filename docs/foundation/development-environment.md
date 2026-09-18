@@ -2,12 +2,12 @@
 
 ## Container-First Development
 
-This project runs entirely in a Podman container. The host machine only needs Podman installed - all other tools (Bun, dependencies, build tools) live inside the container.
+This project runs entirely in a Podman container. The host machine only needs Podman installed - all other tools (Bun, Node 22, dependencies, build tools) live inside the container. Which engine runs what: `docs/stack/core/bun.md`.
 
 ```
 Host Machine          Container (v10r)
 ┌─────────────┐      ┌──────────────────────┐
-│  Podman     │ ───► │  Bun runtime         │
+│  Podman     │ ───► │  Bun + Node 22       │
 │  (only)     │      │  node_modules        │
 │             │      │  Build tools         │
 └─────────────┘      └──────────────────────┘

@@ -98,7 +98,10 @@ function deadlineFrom(expiresAt: number, budgetMs: number): Deadline {
 			return deadlineFrom(performance.now() + allowed, allowed);
 		},
 
-		signal: () => AbortSignal.timeout(remainingMs()),
+		// Whole milliseconds: Node's `AbortSignal.timeout()` throws RangeError on the fraction
+		// `performance.now()` carries (Bun accepts it, which is how this reached production).
+		// Ceil, never floor — a signal must not fire before the deadline it stands for.
+		signal: () => AbortSignal.timeout(Math.ceil(remainingMs())),
 
 		async run(work) {
 			const budget = remainingMs();

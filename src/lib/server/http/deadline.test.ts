@@ -84,6 +84,21 @@ describe('run', () => {
 		expect(work).not.toHaveBeenCalled();
 	});
 
+	it('mints its signal with whole milliseconds, rounded up', () => {
+		// Bun accepts a fractional timeout; Node throws RangeError. `performance.now()` is
+		// fractional, so only an integer argument keeps the gate honest on either engine.
+		const timeout = vi.spyOn(AbortSignal, 'timeout');
+		try {
+			startDeadline(2_000).signal();
+			const [ms] = timeout.mock.calls[0] ?? [];
+			expect(Number.isInteger(ms)).toBe(true);
+			expect(ms).toBeGreaterThanOrEqual(1_999);
+			expect(ms).toBeLessThanOrEqual(2_000);
+		} finally {
+			timeout.mockRestore();
+		}
+	});
+
 	it('aborts the signal it handed the work', async () => {
 		let observed: AbortSignal | undefined;
 		await expect(

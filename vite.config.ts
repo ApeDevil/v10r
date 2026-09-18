@@ -33,7 +33,10 @@ export default defineConfig({
 			// Paraglide writes to its outdir during buildStart and re-emits when SSR
 			// resolves messages.js — chokidar would otherwise treat those as user
 			// edits and fire spurious (ssr) page reload events ~5s after ready.
-			ignored: ['**/src/lib/paraglide/**'],
+			// Build output is a polling cost, never an edit: `.vercel/` alone holds ~16k
+			// files after a `validate:build`, and under Node every poll is a threadpool
+			// stat — with them watched, the dev server saturated libuv and never listened.
+			ignored: ['**/src/lib/paraglide/**', '**/.vercel/**', '**/.svelte-kit/output/**'],
 		},
 		// HMR multiplexed over the main HTTP port (5173). Previously was on a separate
 		// port 24678, which in Chrome + Podman port-forwarding caused WebSocket

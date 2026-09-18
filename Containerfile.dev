@@ -3,6 +3,15 @@
 
 FROM docker.io/oven/bun:1.3.12
 
+# Node 22 ahead of Bun's `node` shim: the oven/bun image appends its shim directory LAST on
+# PATH, so a real /usr/local/bin/node is what every `#!/usr/bin/env node` CLI (vite, vitest,
+# svelte-check, paraglide-js) resolves to. Two reasons: the gate and the dev server then run
+# on the engine Vercel runs, and Bun's JSC parallel-GC use-after-free (open upstream across
+# 1.3–1.4, takes svelte-check/vite down at multi-GB heaps) cannot fail a green tree. Bun stays
+# the package manager and the runner for scripts/*.ts. The heap cap Node needs for the client
+# build is set in compose.yaml (NODE_OPTIONS).
+COPY --from=docker.io/library/node:22 /usr/local/bin/node /usr/local/bin/node
+
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
