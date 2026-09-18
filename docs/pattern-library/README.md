@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 160 patterns (28 deep cards / 132 index rows) across 25 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 161 patterns (29 deep cards / 132 index rows) across 26 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -208,6 +208,10 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Composed panel menus (one array, desktop kebab + mobile sheet)](./desk-panel-menus.md)
 - [AI desk effects (tool results drive the workspace)](./desk-ai-effects.md)
 - [Explorer panel (unified file tree over N sources)](./desk-explorer.md)
+
+### External Integrations
+
+- [**Name check (resilient multi-source fan-out)**](./name-check.md)
 
 ### Interaction Velocity
 

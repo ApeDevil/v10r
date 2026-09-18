@@ -584,4 +584,17 @@ export const showcaseSections: ShowcaseSection[] = [
 		title: 'Desk-Awareness',
 		keywords: ['panels', 'desk context', 'location'],
 	},
+	// Name check
+	{
+		pageHref: '/showcases/name-check',
+		anchorId: 'nc-check',
+		title: 'Check a name',
+		keywords: ['brand', 'trademark', 'company name', 'domain', 'conflict', 'clearance'],
+	},
+	{
+		pageHref: '/showcases/name-check',
+		anchorId: 'nc-coverage',
+		title: 'Search coverage',
+		keywords: ['registries searched', 'euipo', 'gleif', 'rdap', 'manual review'],
+	},
 ];

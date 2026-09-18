@@ -121,6 +121,36 @@ const categories: DataCategory[] = [
 		],
 	},
 	{
+		id: 'name-check',
+		icon: 'i-lucide-search-check',
+		title: 'A name you check',
+		when: 'Only when you submit the /showcases/name-check form or call /api/name-check.',
+		basis: { article: 'Art. 6(1)(f)', label: 'Legitimate interest (answering your query)' },
+		rows: [
+			{
+				field: 'query',
+				type: 'string (2–80)',
+				example: 'Velora',
+				note: 'Sent to the registries below and to the web-search provider, then discarded. Never written to a database or a log line; a sha256 of the normalised name keys a cache for 24 hours (1 hour for domain rows).',
+			},
+			{
+				field: 'territory / category',
+				type: 'enum',
+				example: 'de / software',
+				note: 'Selects which registries are asked and how relevance is graded. Not stored.',
+			},
+			{
+				field: 'ip bucket',
+				type: 'ip:<address> (v6 masked to /64)',
+				note: 'Rate-limit key only, in Redis for the 60-second window. Never joined to the query.',
+			},
+		],
+		notes: [
+			'Recipients of the name: EUIPO (EU trade mark register), GLEIF (LEI index), the RDAP servers of the domain registries for the generated variants (Verisign, PIR, Google, DENIC, …), and the configured web-search provider (Tavily or Brave). Manual-only registries receive nothing — you follow the link yourself.',
+			'Honeypot + minimum-fill-time + rate limit + per-source daily quotas bound what one visitor can spend; a source that is unavailable is reported as such, never silently skipped.',
+		],
+	},
+	{
 		id: 'auth',
 		icon: 'i-lucide-key',
 		title: 'Account data (if you sign in)',
@@ -144,8 +174,8 @@ const categories: DataCategory[] = [
 	<header class="lede">
 		<h2>{m.showcase_privacy_data_heading()}</h2>
 		<p>
-			Four categories. The first applies to every visitor; the others only kick in when you explicitly opt in,
-			send feedback, or sign in.
+			Five categories. The first applies to every visitor; the others only kick in when you explicitly opt in,
+			send feedback, check a name, or sign in.
 		</p>
 	</header>
 

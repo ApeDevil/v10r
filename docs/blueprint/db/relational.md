@@ -4,7 +4,7 @@ Drizzle ORM schema for relational data and Better Auth integration.
 
 **Provider:** PostgreSQL via [Neon](../../stack/vendors.md#neon) (serverless) or any PostgreSQL 16+ host.
 
-> **Illustrative template.** The `items` / `tags` / `item_tags` / `files` / `user_settings` tables below are a teaching example, not v10r's schema. The real schema is namespaced into Postgres schemas (15 `pgSchema()` namespaces: `admin`, `ai`, `analytics`, `app`, `auth`, `blog`, `dbops`, `desk`, `feedback`, `image`, `jobs`, `mcp`, `notifications`, `retrieval`, `showcase`), re-exported via subdirectory folders from `src/lib/server/db/schema/index.ts`. Better Auth tables live on `authSchema = pgSchema('auth')` (e.g. `auth.user`). The **Database Client**, **ID Generation**, and **Migrations** sections reflect the real code.
+> **Illustrative template.** The `items` / `tags` / `item_tags` / `files` / `user_settings` tables below are a teaching example, not v10r's schema. The real schema is namespaced into Postgres schemas (16 `pgSchema()` namespaces: `admin`, `ai`, `analytics`, `app`, `auth`, `blog`, `dbops`, `desk`, `feedback`, `image`, `jobs`, `mcp`, `name_check`, `notifications`, `retrieval`, `showcase`), re-exported via subdirectory folders from `src/lib/server/db/schema/index.ts`. Better Auth tables live on `authSchema = pgSchema('auth')` (e.g. `auth.user`). The **Database Client**, **ID Generation**, and **Migrations** sections reflect the real code.
 
 ## Overview
 

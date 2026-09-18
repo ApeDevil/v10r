@@ -81,6 +81,7 @@ export const adminNavGroups: AdminNavGroup[] = [
 			{ label: m.admin_nav_cache, href: '/admin/cache', icon: 'i-lucide-hard-drive' },
 			{ label: m.admin_nav_mcp, href: '/admin/mcp', icon: 'i-lucide-plug-zap' },
 			{ label: m.admin_nav_mcp_usage, href: '/admin/mcp/usage', icon: 'i-lucide-activity' },
+			{ label: m.admin_nav_name_check, href: '/admin/name-check', icon: 'i-lucide-search-check' },
 		],
 	},
 ];

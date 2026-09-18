@@ -54,6 +54,10 @@ export type ProposalStepKind = (typeof PROPOSAL_STEP_KINDS)[number];
 export const AI_PROVIDER_IDS = ['groq', 'openai', 'google'] as const;
 export type AiProviderId = (typeof AI_PROVIDER_IDS)[number];
 
+/** The external vendors an administrator can connect for the name check (`name_check.source_connection`). */
+export const NAME_SOURCE_VENDORS = ['euipo', 'tavily', 'brave'] as const;
+export type NameSourceVendor = (typeof NAME_SOURCE_VENDORS)[number];
+
 export const NOTIFICATION_CHANNELS = ['email', 'telegram', 'discord', 'push'] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 

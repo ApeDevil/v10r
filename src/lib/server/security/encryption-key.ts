@@ -1,12 +1,13 @@
 /**
  * The one place the app reads `ENCRYPTION_KEY`.
  *
- * Everything sealed with it — Discord OAuth tokens, AI provider API keys — is only as
- * recoverable as this value, and the database cannot protect its own key, so it stays in
- * deployment secrets and is threaded into `aes-gcm.ts` by the caller. Replacing or
- * losing it invalidates every stored credential: Discord accounts must be re-linked and
- * provider keys re-entered through the admin form. Ordinary key replacement (a new API
- * key for the same provider) never touches this value.
+ * Everything sealed with it — Discord OAuth tokens, AI provider API keys, name-check
+ * vendor secrets — is only as recoverable as this value, and the database cannot protect
+ * its own key, so it stays in deployment secrets and is threaded into `aes-gcm.ts` by the
+ * caller. Replacing or losing it invalidates every stored credential: Discord accounts
+ * must be re-linked and provider keys and vendor secrets re-entered through their admin
+ * forms. Ordinary key replacement (a new API key for the same vendor) never touches this
+ * value.
  *
  * Fail at boot, not at first use: outside `dev` the key is validated at import, so a
  * misconfigured deployment cannot look healthy until the first encrypt. Mirrors

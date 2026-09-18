@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decryptAesGcm, EncryptionError, encryptAesGcm, parseEncryptionKey } from './aes-gcm';
+import { decryptAesGcm, EncryptionError, encryptAesGcm, openSecret, parseEncryptionKey } from './aes-gcm';
 
 const KEY = '3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f';
 const OTHER_KEY = 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90';
@@ -49,5 +49,14 @@ describe('aes-gcm', () => {
 		expect(() => parseEncryptionKey('0'.repeat(64))).toThrow(/placeholder/);
 		expect(() => parseEncryptionKey(`deadbeef${'1'.repeat(56)}`)).toThrow(/placeholder/);
 		expect(parseEncryptionKey(KEY)).toHaveLength(32);
+	});
+
+	it('openSecret answers none / ready / undecryptable instead of throwing', async () => {
+		const stored = await encryptAesGcm('tvly-example', KEY);
+		await expect(openSecret(null, KEY)).resolves.toEqual({ plaintext: null, status: 'none' });
+		await expect(openSecret(stored, KEY)).resolves.toEqual({ plaintext: 'tvly-example', status: 'ready' });
+		await expect(openSecret(stored, OTHER_KEY)).resolves.toEqual({ plaintext: null, status: 'undecryptable' });
+		await expect(openSecret(stored, null)).resolves.toEqual({ plaintext: null, status: 'undecryptable' });
+		await expect(openSecret('not-an-envelope', KEY)).resolves.toEqual({ plaintext: null, status: 'undecryptable' });
 	});
 });

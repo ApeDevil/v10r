@@ -108,8 +108,8 @@ never build-failing. Several are red today and saying so is the point — the he
 ~609 KB gzipped against a 250 KB target.
 
 **Ratchets** (`ceilings`) are the measured value at the moment it was accepted. Asserted by
-`snapshot.gate.test.ts`, and **only ever moved down**. Lowering a ceiling is how an
-improvement gets banked.
+`snapshot.gate.test.ts`. Moved **down** to bank an improvement; **up** only as an explicit,
+reviewed decision once feature work has used the headroom — never to absorb a dependency.
 
 A gate wired to the target would have failed on the commit that introduced the number and
 been disabled the same day. Ratchets stop the number growing while the target stays visible

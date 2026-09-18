@@ -28,6 +28,12 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Which corpus a chunk came from | `RetrievalCorpus` | `RetrievalLayer` |
 | Which build emitted a telemetry sample | `TelemetryOrigin` | `TelemetryLane` |
 | Anonymous vs authenticated analytics | `lane` | — |
+| The brand-name pre-screen | `name check` (`server/name-check/`, `/showcases/name-check`, `/api/name-check`, `showcase_name_check_*`) | `clearance`, `brand search`, `viability` |
+| One upstream the name check asks | `NameSource` (`name-check/sources/*.ts`) | `adapter` (that is `*.adapter.ts`), bare `source` |
+| What a name source found | `NameMatch`, discriminated on `kind` (`trademark` · `company` · `domain` · `web`) | `sourceType`, `hit`, `result` |
+| How far each name source got | `NameCheckCoverage` (`NameCoverageStatus`) | `availability`, `health` |
+| The evidence summary of a name check | `NameConflictSignal` (`level` + `reasons`) | `risk score`, `verdict`, `safety` |
+| A record's origin vs the user's scope | `jurisdiction` (on `NameMatch`) vs `territory` (on the query) | `region`, `market` |
 | A sanitized client-facing projection | `Public<Concept>` | `<Concept>DTO` |
 | The member area | `account` | `app`, `me` |
 | Which engine a retrieval step belongs to | `engine` (`RetrievalEngine`) | the step's `path` field |
@@ -71,9 +77,12 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | One adverse condition, measured | `scenario` (`perf/scenarios.ts`) | `benchmark`, `case`, `situation` |
 | Where each system runs | `LocalityRow` (`perf/locality.ts`) | `RegionMap`, `DeploymentMap` |
 | An administrator's saved credentials + model for one AI vendor | `provider connection` (`ai.provider_connection`, `ProviderEntry` once loaded, `PublicProviderConnection` on the wire) | `AiSettings`, `ProviderConfig`, `ProviderCredentials` |
-| The admin's generation probe against one provider/model | `connection test` (`ai/connection-test.ts`) | `health check`, `ping`, `verifyConnection` (that one is the showcases' backend probe) |
-| An optimistic-concurrency counter on a row | `version` (`mcp.demo_state.version`, `ai.provider_connection.version`) | `revision` — which is a *stored snapshot row* (`blog.revision`, `desk` `fileRevision`), never a counter |
+| An administrator's saved credentials for one external name-check vendor | `source connection` (`name_check.source_connection`, `NameSourceConnection` once opened, `PublicNameSourceConnection` on the wire) | `provider connection` (that is the AI one), `NameCheckSettings`, `SourceCredentials` |
+| One external company behind a name source | `vendor` (`NameSourceVendor` = `euipo` · `tavily` · `brave`; `webSearchVendor` picks one) | `provider` (an AI model vendor, exactly one thing) |
+| The admin's probe of one saved or draft connection | `connection test` (`ai/connection-test.ts` for a provider/model, `name-check/connection-test.ts` for a vendor) | `health check`, `ping`, `verifyConnection` (that one is the showcases' backend probe) |
+| An optimistic-concurrency counter on a row | `version` (`mcp.demo_state.version`, `ai.provider_connection.version`, `name_check.source_connection.version`) | `revision` — which is a *stored snapshot row* (`blog.revision`, `desk` `fileRevision`), never a counter |
 | AES-256-GCM over a caller-supplied key | `encryptAesGcm` / `decryptAesGcm` (`security/aes-gcm.ts`) | `notifications/crypto.ts` `encrypt`/`decrypt` |
+| A sealed secret's state under the current `ENCRYPTION_KEY` | `KeyStatus` `none` · `ready` · `undecryptable` (`openSecret` in `security/aes-gcm.ts`; one declaration for every table that holds an envelope) | `SecretStatus`, `keyState` |
 | Catalog rows put in the prompt before generation for a "where is…" question | `navigation grounding` (`wantsNavigation`, `<catalog-results>`, the `navigation` capability) | `nav search`, `pre-search`, `catalog prefetch` |
 | What the assembly hands the tools so they do not redo its work | `seed` (`docsSeed`, `catalogSeed` on `RetrievalToolOptions`) | `cache`, `prefetch`, `warm` |
 | The rule that a tool-mounted turn's last allowed step answers | `answerOnLastStep` (`ai/policy/step-budget.ts`) | `finalStepNoTools`, `forceAnswer` |

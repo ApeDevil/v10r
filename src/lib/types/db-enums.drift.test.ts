@@ -13,6 +13,7 @@ import { consentTierEnum } from '$lib/server/db/schema/analytics/events';
 import { commentStatusEnum } from '$lib/server/db/schema/blog/comment';
 import { postStatusEnum } from '$lib/server/db/schema/blog/post';
 import { fileTypeEnum } from '$lib/server/db/schema/desk/file';
+import { nameSourceVendorEnum } from '$lib/server/db/schema/name-check/source-connection';
 import { notificationChannelEnum } from '$lib/server/db/schema/notifications/deliveries';
 import { notificationTypeEnum } from '$lib/server/db/schema/notifications/notifications';
 import { dateFormatEnum, displayDensityEnum, themeEnum } from '$lib/server/db/schema/personalization/user-preferences';
@@ -24,6 +25,7 @@ import {
 	DATE_FORMATS,
 	DESK_FILE_TYPES,
 	DISPLAY_DENSITIES,
+	NAME_SOURCE_VENDORS,
 	NOTIFICATION_CHANNELS,
 	NOTIFICATION_TYPES,
 	POST_STATUSES,
@@ -46,6 +48,7 @@ const MIRRORS: ReadonlyArray<[string, readonly string[], readonly string[]]> = [
 	['notifications.notification_type', NOTIFICATION_TYPES, notificationTypeEnum.enumValues],
 	['analytics.consent_tier', CONSENT_TIERS, consentTierEnum.enumValues],
 	['desk.file_type', DESK_FILE_TYPES, fileTypeEnum.enumValues],
+	['name_check.name_source_vendor', NAME_SOURCE_VENDORS, nameSourceVendorEnum.enumValues],
 ];
 
 describe('client mirrors of database enums', () => {

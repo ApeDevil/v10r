@@ -112,6 +112,7 @@ The **confirmation ping** (`/api/analytics/journey/confirm`) is deliberately out
 - **AI conversations** are counted in the report (count + token total) but not yet individually exportable or selectively deletable; full erasure removes them via cascade.
 - **Backups** must eventually purge deleted data — out of scope for the in-app cascade.
 - **Vendor DPAs / SCCs** (AI providers, Neon, R2) are an operational obligation, not enforced in code. See [../vendors.md](../vendors.md).
+- **Name-check upstreams** — `/showcases/name-check` sends the typed name to EUIPO, GLEIF, the domain registries' RDAP servers and the configured web-search provider (Art. 6(1)(f)). The name is never stored or logged; a sha256 of it keys a 24 h cache. Disclosed on `/showcases/privacy/data`; providers in [../vendors.md](../vendors.md#name-check-sources).
 
 ## Related
 

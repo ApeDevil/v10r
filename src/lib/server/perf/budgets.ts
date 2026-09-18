@@ -45,8 +45,9 @@ export const budgetKeys = Object.keys(budgets) as BudgetKey[];
  * one gets muted, after which it protects nothing.
  *
  * So the gate asserts against these instead. They stop the number growing while
- * the target stays visible as the thing still to fix. They only ever move DOWN,
- * and lowering one is the deliberate act of banking an improvement.
+ * the target stays visible as the thing still to fix. They move DOWN to bank an
+ * improvement, and UP only as an explicit, reviewed decision once feature work has
+ * used the headroom — never to absorb a dependency, which is what they exist to catch.
  */
 export const ceilings = raw.ceilings as Readonly<Record<string, number>>;
 

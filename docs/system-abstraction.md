@@ -288,7 +288,7 @@ const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
 export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 ```
 
-**Push-only workflow**: only `db:push` is used; no migrations directory exists. Every `pgSchema()` must be exported through `schema/index.ts` AND listed in `drizzle.config.ts` `schemaFilter` (15 namespaces: admin, showcase, image, auth, ai, retrieval, jobs, mcp, notifications, analytics, personalization, blog, dbops, desk, feedback) or `db:push` silently omits it. Enums are `<namespace>Schema.enum(...)` and travel with their namespace.
+**Push-only workflow**: only `db:push` is used; no migrations directory exists. Every `pgSchema()` must be exported through `schema/index.ts` AND listed in `drizzle.config.ts` `schemaFilter` (16 namespaces: admin, showcase, image, auth, ai, retrieval, jobs, mcp, name_check, notifications, analytics, personalization, blog, dbops, desk, feedback) or `db:push` silently omits it. Enums are `<namespace>Schema.enum(...)` and travel with their namespace.
 
 ### Client-side modules
 

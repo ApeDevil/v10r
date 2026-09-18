@@ -91,6 +91,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'deadline-propagation': 'Deadline',
 	'query-budget': 'Queries',
 	'scenario-harness': 'Scenarios',
+	'name-check': 'Name Check',
 };
 
 /**

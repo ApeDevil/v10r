@@ -8,6 +8,7 @@ export * from './desk';
 export * from './feedback';
 export * from './jobs';
 export * from './mcp';
+export * from './name-check';
 export * from './notifications';
 export * from './personalization';
 export * from './retrieval';

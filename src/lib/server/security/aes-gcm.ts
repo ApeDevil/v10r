@@ -2,8 +2,9 @@
  * Authenticated encryption for stored credentials — AES-256-GCM via Web Crypto.
  *
  * Storage format: `base64(nonce):base64(ciphertext‖tag)` with a 12-byte random nonce.
- * Two tables hold envelopes in this format — Discord OAuth tokens and AI provider API
- * keys — so the format is a stored contract: changing it means re-encrypting both.
+ * Three tables hold envelopes in this format — Discord OAuth tokens, AI provider API keys
+ * (`ai.provider_connection`) and name-check vendor secrets (`name_check.source_connection`)
+ * — so the format is a stored contract: changing it means re-encrypting all of them.
  *
  * The key is an argument, never read here. `encryption-key.ts` is the one module that
  * takes it from the environment; the bare-Bun ingest scripts take it from `process.env`
@@ -109,5 +110,28 @@ export async function decryptAesGcm(stored: string, keyHex: string): Promise<str
 			'decrypt_failed',
 			'Stored ciphertext could not be decrypted with the current ENCRYPTION_KEY.',
 		);
+	}
+}
+
+/** Where a stored secret stands: `undecryptable` means an envelope exists but the current key cannot open it. */
+export type KeyStatus = 'none' | 'ready' | 'undecryptable';
+
+/**
+ * Open a stored envelope for a caller that must keep going without it. Every table that
+ * holds one asks the same three-way question — nothing stored, opened, or stored but
+ * unreadable under this deployment's key — and the answer decides a status, never an
+ * exception: a key rotated without re-entering the secrets is a configuration fault the
+ * admin page has to be able to show.
+ */
+export async function openSecret(
+	ciphertext: string | null | undefined,
+	keyHex: string | null,
+): Promise<{ plaintext: string | null; status: KeyStatus }> {
+	if (!ciphertext) return { plaintext: null, status: 'none' };
+	if (!keyHex) return { plaintext: null, status: 'undecryptable' };
+	try {
+		return { plaintext: await decryptAesGcm(ciphertext, keyHex), status: 'ready' };
+	} catch {
+		return { plaintext: null, status: 'undecryptable' };
 	}
 }

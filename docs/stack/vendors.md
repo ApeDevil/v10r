@@ -34,6 +34,10 @@ All external services used by Velociraptor. This separates **what technology** w
 | Background Jobs | Own registry: `setInterval` in containers, HTTP crons on Vercel | **None** (in-repo) | — |
 | Notifications | Own router + outbox | **None** (in-repo) | — |
 | Push | Web Push (VAPID) | **`web-push`** (library, no vendor) | Easy |
+| Trade mark search | REST + RSQL | **EUIPO** (official API, registered app) | Medium — the only automated trade mark source |
+| Company search | JSON:API | **GLEIF** (LEI index, keyless) | Easy |
+| Domain lookup | RDAP | **Registries** — Verisign, PIR, Google, DENIC pilot, … via IANA bootstrap | — |
+| Web usage search | REST | **Tavily** / **Brave** (provider seam) | Easy |
 
 No image-generation or audio/STT provider is wired — [ai/ai-sdk.md](./ai/ai-sdk.md) is the source of truth for the AI provider set.
 
@@ -59,6 +63,11 @@ No image-generation or audio/STT provider is wired — [ai/ai-sdk.md](./ai/ai-sd
 | **Neo4j Aura** | 200K nodes, 400K relationships | $65/mo | Free tier is generous |
 | **Resend** | 100 emails/day (3K/mo) | $20/mo | 50K emails/mo |
 | **Vercel Analytics** | Included | - | Cookieless, no extra cost |
+| **EUIPO** | Plan-based, approval required | — | Trade mark search API; sandbox and production apps approved separately |
+| **GLEIF** | Unlimited, 60 req/min | — | Open data (CC0); the name check caps itself at 1,000/day |
+| **RDAP registries** | Free, per-registry fair use | — | DENIC's `.de` server is a pilot with no service level |
+| **Tavily** | 1,000 credits/mo, no card | $30/mo (4,000) | Web-usage lane; the name check caps itself at 30 searches/day |
+| **Brave Search** | $5/mo credit (card required) | $5 per 1,000 | Fallback web-usage provider |
 
 **Estimated total at free tier:** $0/mo
 **Estimated at ~10K MAU:** $50-150/mo (depends on usage patterns)
@@ -78,6 +87,10 @@ No image-generation or audio/STT provider is wired — [ai/ai-sdk.md](./ai/ai-sd
 | **Upstash** | Yes | Yes | Yes (EU) | Yes |
 | **Neo4j Aura** | Yes | Yes | Yes | Yes |
 | **Resend** | Yes | Yes | No | In progress |
+| **EUIPO** | EU agency (Alicante) | n/a — public register | Yes | n/a |
+| **GLEIF** | Yes (Swiss foundation, public data) | n/a — public register | Yes (Basel/Frankfurt) | n/a |
+| **Tavily** | Yes | Yes | No (US) | Yes |
+| **Brave Search** | Yes | Yes | No (US) | Yes |
 
 All providers have Data Processing Agreements (DPAs) available. See [gdpr.md](./capabilities/gdpr.md) for compliance checklist.
 
@@ -347,6 +360,31 @@ We use a **multi-provider architecture** with Vercel AI SDK — chat routes acro
 
 ---
 
+### Name-check sources
+
+**Purpose**: `/showcases/name-check` sends the typed name to public registries and one web
+search provider and returns what they hold (`docs/blueprint/name-check.md`).
+
+- **EUIPO** — the EU trade mark register's official API. OAuth 2.0 client credentials from
+  an app registered on `dev.euipo.europa.eu`; subscription approval takes days. The
+  production hosts are the defaults; a Sandbox-portal app uses the `api-sandbox` /
+  `auth-sandbox` hosts, so both are part of the saved connection. Public register data;
+  the query is the only thing sent.
+- **GLEIF** — the Global LEI index, keyless, CC0. Coverage is LEI holders only.
+- **RDAP registries** — resolved per TLD from `https://data.iana.org/rdap/dns.json`; `.de`
+  goes to DENIC's public pilot server. The domain name is the only thing sent.
+- **Tavily / Brave** — web search for commercial use of the name. The exact phrase is the
+  query. Tavily is preferred (free allowance, no card); Brave is the metered fallback.
+
+Credentials for all three are **source connections** an administrator saves under
+**Admin → Name check** (`/admin/name-check`), sealed under `ENCRYPTION_KEY` in
+`name_check.source_connection` — nothing for this feature is read from `.env`.
+- **Not queried, linked only**: DPMA (contract + fee for DPMAconnectPlus; scraping
+  forbidden), TMview, WIPO, USPTO, Handelsregister, OpenCorporates.
+
+**Data handling**: the name is never logged or stored; Redis holds a 24 h cache keyed by
+its sha256. Disclosed on `/showcases/privacy/data`.
+
 ### Capabilities served without a vendor
 
 | Capability | How it works instead | Where |
@@ -380,6 +418,7 @@ There are **no local service containers** — dev runs against the same remote s
 | Variable | Provider | Purpose |
 |----------|----------|---------|
 | — | Groq / OpenAI / Google AI | Not environment variables: AI provider keys and models are entered under Admin → AI → Models and stored encrypted (`ENCRYPTION_KEY`). See [`blueprint/ai/provider-routing.md`](../blueprint/ai/provider-routing.md#provider-connections). |
+| — | EUIPO / Tavily / Brave | Not environment variables: name-check vendor credentials are entered under Admin → Name check and stored encrypted (`ENCRYPTION_KEY`). See [`blueprint/name-check.md`](../blueprint/name-check.md#source-connections). |
 | `NEON_DATABASE_URL_PROD` | Neon | Postgres connection (app's own var, not the ecosystem-standard `DATABASE_URL`) |
 | `NEO4J_URI` | Neo4j Aura | Graph connection |
 | `NEO4J_USERNAME` | Neo4j Aura | Graph auth |

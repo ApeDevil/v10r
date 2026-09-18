@@ -96,6 +96,8 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
 	'showcases/check-username/+server.ts': 'Fixed word list, no database access.',
 	'showcases/velocity/+server.ts':
 		'Runs one Velocity measurement — in-process arithmetic, setTimeout sleeps and the $lib/server/cache modules. No database, no user data, no caller-supplied key reaches a store: the measurement id is checked against a closed list. IP-rate-limited BEFORE the sleeps so the deliberate latency cannot amplify function-time cost.',
+	'name-check/+server.ts':
+		"Anonymous by design: a public brand-name pre-screen. IP-rate-limited BEFORE any upstream call; each external source has a daily quota, a breaker and a deadline. The one table read is the administrator's source connections (opened server-side, never returned); nothing is written but a cache keyed by a sha256 of the normalised name; no user data.",
 	'analytics/journey/+server.ts': 'sendBeacon ingest; cannot set headers. Origin-checked, consent-gated, rate-limited.',
 	'analytics/journey/collect/+server.ts': 'Same beacon contract as its parent, plus an allowlist and a limiter.',
 	'analytics/journey/confirm/+server.ts':
@@ -211,6 +213,10 @@ const PUBLIC_SURFACES: Record<string, string> = {
 		'Anonymous upload and listing demo. Every key path goes through assertShowcaseKey, which pins the public showcase namespace and refuses the private per-user prefixes sharing it.',
 	'[[locale=locale]]/(public)/showcases/db/storage/transfer/+page.server.ts':
 		'Presigned-URL and ranged-read demo. Keys go through assertShowcaseKey; the TTL and the byte range are both clamped server-side.',
+
+	// ── Showcase: name check ──────────────────────────────────────────────────
+	'[[locale=locale]]/(public)/showcases/name-check/+page.server.ts':
+		"Anonymous form action running the same checkName() as /api/name-check: honeypot, then IP limiter, then a fan-out to external registries under per-source quotas and deadlines. Reads only the administrator's source connections, stores nothing but hashed-name cache keys, no user data.",
 };
 
 const METHOD_RE = /^export\s+(?:const|async\s+function|function)\s+(GET|POST|PUT|PATCH|DELETE)\b/gm;

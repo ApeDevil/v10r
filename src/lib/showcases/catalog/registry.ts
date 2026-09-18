@@ -524,6 +524,15 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/name-check',
+		icon: 'i-lucide-search-check',
+		title: m.showcase_name_check_title,
+		description: m.showcase_name_check_description,
+		ariaLabel: m.showcase_name_check_aria,
+		domain: 'backend',
+		docs: [{ href: '/docs/blueprint/name-check', label: 'Name Check' }],
+	},
+	{
 		href: '/showcases/observability',
 		icon: 'i-lucide-gauge',
 		title: m.showcase_observability_title,

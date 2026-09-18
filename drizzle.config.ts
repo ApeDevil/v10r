@@ -19,6 +19,7 @@ export default defineConfig({
 		'retrieval',
 		'jobs',
 		'mcp',
+		'name_check',
 		'notifications',
 		'analytics',
 		'personalization',

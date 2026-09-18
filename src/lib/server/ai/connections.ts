@@ -18,7 +18,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 import { AI_PROVIDER_IDS, type AiProviderId } from '../../types/db-enums';
 import type { ProviderConnectionRow } from '../db/schema/ai/provider-connection';
-import { decryptAesGcm } from '../security/aes-gcm';
+import { type KeyStatus, openSecret } from '../security/aes-gcm';
 import { capabilitiesFor, type ModelCapabilities } from './model-capabilities';
 
 export const PROVIDER_LABELS: Record<AiProviderId, string> = {
@@ -33,9 +33,6 @@ export const SUGGESTED_MODEL_IDS: Record<AiProviderId, string> = {
 	openai: 'gpt-4o-mini',
 	google: 'gemini-2.5-flash',
 };
-
-/** `undecryptable` means a key is stored but the current ENCRYPTION_KEY cannot open it. */
-export type KeyStatus = 'none' | 'ready' | 'undecryptable';
 
 export interface ProviderEntry {
 	id: AiProviderId;
@@ -84,13 +81,8 @@ async function openKey(
 	row: ProviderConnectionRow | undefined,
 	encryptionKey: string | null,
 ): Promise<{ apiKey: string | null; keyStatus: KeyStatus }> {
-	if (!row?.apiKeyCiphertext) return { apiKey: null, keyStatus: 'none' };
-	if (!encryptionKey) return { apiKey: null, keyStatus: 'undecryptable' };
-	try {
-		return { apiKey: await decryptAesGcm(row.apiKeyCiphertext, encryptionKey), keyStatus: 'ready' };
-	} catch {
-		return { apiKey: null, keyStatus: 'undecryptable' };
-	}
+	const { plaintext, status } = await openSecret(row?.apiKeyCiphertext, encryptionKey);
+	return { apiKey: plaintext, keyStatus: status };
 }
 
 /**
