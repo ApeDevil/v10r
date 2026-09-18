@@ -232,7 +232,7 @@
 	"admin_name_check_test_note": "Ein Test führt eine echte Suche aus und zählt gegen das Kontingent des Anbieters.",
 	"admin_name_check_saved_at": "Gespeichert",
 	"admin_name_check_web_order_note": "Die Web-Nutzung sucht mit dem ersten aktivierten Anbieter in dieser Reihenfolge: Tavily, dann Brave Search.",
-	"admin_name_check_vendor_note_euipo": "Die offizielle API des EU-Markenregisters. App auf dev.euipo.europa.eu registrieren; die Freigabe dauert Tage.",
+	"admin_name_check_vendor_note_euipo": "Die offizielle API des EU-Markenregisters. App auf dev.euipo.europa.eu registrieren; die Produktionsfreigabe verlangt Ausweisdokumente per E-Mail, kostenlos. Die Sandbox antwortet mit Beispieldaten — gut für diesen Test, nicht für echte Prüfungen.",
 	"admin_name_check_vendor_note_tavily": "Web-Nutzungssuche. Kostenloses Monatskontingent, keine Karte nötig.",
 	"admin_name_check_vendor_note_brave": "Web-Nutzungssuche, kostenpflichtig. Nur genutzt, solange Tavily nicht aktiviert ist.",
 	"admin_name_check_saved": "Verbindung zu {name} gespeichert.",

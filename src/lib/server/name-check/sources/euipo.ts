@@ -11,8 +11,10 @@
  * manual link, never to a wrong answer.
  *
  * Two RSQL queries per check: the name as a contained verbal element, and a prefix of it,
- * so "Velor*" surfaces "Veloro" for the similarity engine to grade. Without credentials
- * the source reports `credentials_missing`; the check still runs everything else.
+ * so "Velor*" surfaces "Veloro" for the similarity engine to grade. A name with spaces
+ * travels as a quoted literal (`=="*zalando lounge*"`) — unquoted, the gateway rejects the
+ * query and the whole trade mark lane went `unavailable`. Without credentials the source
+ * reports `credentials_missing`; the check still runs everything else.
  */
 import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
 import { NameSourceError } from '../errors';
@@ -116,11 +118,16 @@ function rsqlTerm(value: string): string {
 	return value.replace(/[^\p{L}\p{N} ]+/gu, '').trim();
 }
 
+/** A term with spaces must be a quoted RSQL literal; `rsqlTerm` guarantees it holds no quote. */
+function containedLiteral(term: string): string {
+	return term.includes(' ') ? `"*${term}*"` : `*${term}*`;
+}
+
 /** The queries one check sends — exported so the tests can pin them. */
 export function euipoQueries(canonical: string, compact: string): string[] {
 	const term = rsqlTerm(canonical);
 	if (!term) return [];
-	const queries = [`wordMarkSpecification.verbalElement==*${term}*`];
+	const queries = [`wordMarkSpecification.verbalElement==${containedLiteral(term)}`];
 	const prefix = rsqlTerm(compact).slice(0, Math.max(4, compact.length - 1));
 	if (prefix.length >= 4 && prefix !== compact) queries.push(`wordMarkSpecification.verbalElement==${prefix}*`);
 	return queries;

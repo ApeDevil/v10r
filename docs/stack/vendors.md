@@ -63,7 +63,7 @@ No image-generation or audio/STT provider is wired — [ai/ai-sdk.md](./ai/ai-sd
 | **Neo4j Aura** | 200K nodes, 400K relationships | $65/mo | Free tier is generous |
 | **Resend** | 100 emails/day (3K/mo) | $20/mo | 50K emails/mo |
 | **Vercel Analytics** | Included | - | Cookieless, no extra cost |
-| **EUIPO** | Plan-based, approval required | — | Trade mark search API; sandbox and production apps approved separately |
+| **EUIPO** | Plan-based; production approval = identity documents by e-mail, no fee, no card | — | Trade mark search API; the Sandbox app answers from sample data, production from the register |
 | **GLEIF** | Unlimited, 60 req/min | — | Open data (CC0); the name check caps itself at 1,000/day |
 | **RDAP registries** | Free, per-registry fair use | — | DENIC's `.de` server is a pilot with no service level |
 | **Tavily** | 1,000 credits/mo, no card | $30/mo (4,000) | Web-usage lane; the name check caps itself at 30 searches/day |
@@ -366,13 +366,16 @@ We use a **multi-provider architecture** with Vercel AI SDK — chat routes acro
 search provider and returns what they hold (`docs/blueprint/name-check.md`).
 
 - **EUIPO** — the EU trade mark register's official API. OAuth 2.0 client credentials from
-  an app registered on `dev.euipo.europa.eu`; subscription approval takes days. The
+  an app registered on `dev.euipo.europa.eu`; a production subscription is approved after
+  identity documents reach `docs.apiplatform@euipo.europa.eu` (no fee, no card). The
   production hosts are the defaults; a Sandbox-portal app uses the `api-sandbox` /
-  `auth-sandbox` hosts, so both are part of the saved connection. Public register data;
-  the query is the only thing sent.
+  `auth-sandbox` hosts, so both are part of the saved connection — and answers from a
+  sample register, so it proves the connection, not a name. Public register data; the
+  query is the only thing sent.
 - **GLEIF** — the Global LEI index, keyless, CC0. Coverage is LEI holders only.
 - **RDAP registries** — resolved per TLD from `https://data.iana.org/rdap/dns.json`; `.de`
-  goes to DENIC's public pilot server. The domain name is the only thing sent.
+  goes to DENIC's public pilot server, `.io` to Identity Digital's, `.ch` to SWITCH's, none
+  of which the bootstrap lists. The domain name is the only thing sent.
 - **Tavily / Brave** — web search for commercial use of the name. The exact phrase is the
   query. Tavily is preferred (free allowance, no card); Brave is the metered fallback.
 

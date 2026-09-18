@@ -3,10 +3,11 @@
  * honest "lookup unavailable" everywhere else.
  *
  * The IANA bootstrap file maps a TLD to its RDAP server and is cached for a day with a
- * static copy as the fallback; `.de` is added by hand because DENIC's pilot server is
- * public but not yet listed. `.eu` has no RDAP at all, so its row reports only what the
- * DNS says: delegated name servers mean "in use — likely registered", their absence means
- * "unknown", because an undelegated domain can still be somebody's.
+ * static copy as the fallback; `.de`, `.io` and `.ch` are added by hand because their
+ * registries run public RDAP servers the bootstrap does not list. `.eu` has no RDAP at
+ * all, so its row reports only what the DNS says: delegated name servers mean "in use —
+ * likely registered", their absence means "unknown", because an undelegated domain can
+ * still be somebody's.
  *
  * Answers: 200 → registered, 404 → not registered, anything else → unknown. A registered
  * domain is a fact about the domain, never about the trade mark — the report keeps them
@@ -21,14 +22,14 @@ import type { DomainDraft, NameSource, NameSourceContext } from '../name-source'
 
 export const RDAP_BOOTSTRAP_URL = 'https://data.iana.org/rdap/dns.json';
 
-/** The bootstrap as of 2026-09-09 — what the check uses when IANA is unreachable. */
+/** The bootstrap as of 2026-09-16 — what the check uses when IANA is unreachable. */
 export const RDAP_STATIC_BOOTSTRAP: Readonly<Record<string, string>> = {
 	com: 'https://rdap.verisign.com/com/v1/',
 	net: 'https://rdap.verisign.com/net/v1/',
 	org: 'https://rdap.publicinterestregistry.org/rdap/',
 	app: 'https://pubapi.registry.google/rdap/',
 	dev: 'https://pubapi.registry.google/rdap/',
-	ai: 'https://rdap.nic.ai/',
+	ai: 'https://rdap.identitydigital.services/rdap/',
 	info: 'https://rdap.nic.info/',
 	biz: 'https://rdap.nic.biz/',
 	uk: 'https://rdap.nominet.uk/uk/',
@@ -36,9 +37,15 @@ export const RDAP_STATIC_BOOTSTRAP: Readonly<Record<string, string>> = {
 	nl: 'https://rdap.sidn.nl/',
 };
 
-/** Public servers the bootstrap does not list. DENIC's is a pilot without a service level. */
+/**
+ * Public servers the bootstrap (2026-09-16) does not list; each answered 200 for a
+ * registered name and 404 for a free one on 2026-09-18. DENIC's is a pilot without a
+ * service level; `.io` moved to Identity Digital's shared server; SWITCH runs `.ch`.
+ */
 export const RDAP_OVERRIDES: Readonly<Record<string, string>> = {
 	de: 'https://rdap.denic.de/',
+	io: 'https://rdap.identitydigital.services/rdap/',
+	ch: 'https://rdap.nic.ch/',
 };
 
 /** TLDs with no RDAP server where a DNS delegation is the best public evidence. */
@@ -98,6 +105,7 @@ function registeredAtOf(domain: RdapDomain): string | null {
 function lookupUrl(domain: string, tld: string): string {
 	if (tld === 'de') return 'https://www.denic.de/en/webwhois/';
 	if (tld === 'eu') return 'https://whois.eurid.eu/en/';
+	if (tld === 'ch') return 'https://www.nic.ch/whois/';
 	return `https://lookup.icann.org/en/lookup?name=${encodeURIComponent(domain)}`;
 }
 

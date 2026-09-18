@@ -70,10 +70,10 @@ POST /api/name-check ──────────┘        │  per source: t
 
 | Source | Kind | Access | What a miss means |
 |---|---|---|---|
-| EUIPO (`sources/euipo.ts`) | trademark | Official API; OAuth2 client credentials + `X-IBM-Client-Id`, saved as a source connection. Hosts are part of the connection because the Sandbox portal runs on its own `api-sandbox` / `auth-sandbox` hosts; the production hosts are the defaults. Two RSQL queries: contained term and prefix. | No EU trade mark or EU-designating international mark matched. |
+| EUIPO (`sources/euipo.ts`) | trademark | Official API; OAuth2 client credentials + `X-IBM-Client-Id`, saved as a source connection. Hosts are part of the connection because the Sandbox portal runs on its own `api-sandbox` / `auth-sandbox` hosts; the production hosts are the defaults. The Sandbox answers from EUIPO's *sample* register (a frozen snapshot with synthetic rows, not aligned with production) — right for the admin connection test, wrong for real answers. Production access is free: identity documents (passport/ID, or ID plus a company-register excerpt) e-mailed to `docs.apiplatform@euipo.europa.eu`; the Conditions of Use permit showing results publicly. Two RSQL queries: contained term (quoted when the name has spaces) and prefix. | No EU trade mark or EU-designating international mark matched. |
 | GLEIF (`sources/gleif.ts`) | company | Keyless JSON:API; full-text + fuzzy completions; 60 req/min. | No **LEI holder** by that name. Most companies have no LEI — this is a signal, not a register. |
-| RDAP (`sources/rdap.ts`) | domain | IANA bootstrap (cached 24 h, static fallback), DENIC's pilot server for `.de` by override, DNS delegation as evidence for `.eu` (no RDAP), `lookup_unavailable` for the rest. 200 → registered, 404 → not registered, else unknown. | The domain is not registered at that registry. Says nothing about a mark. |
-| Web (`sources/web.ts`) | web | Vendor seam: the first connected of Tavily then Brave, else `credentials_missing`. Exact-phrase query, ten hits, graded on host label and title. | Nothing on the web's first page used the name. |
+| RDAP (`sources/rdap.ts`) | domain | IANA bootstrap (cached 24 h, static fallback); public servers the bootstrap omits by override — DENIC's pilot for `.de`, Identity Digital for `.io`, SWITCH for `.ch`; DNS delegation as evidence for `.eu` (no RDAP); `lookup_unavailable` for the rest. 200 → registered, 404 → not registered, else unknown. | The domain is not registered at that registry. Says nothing about a mark. |
+| Web (`sources/web.ts`) | web | Vendor seam: the first connected of Tavily then Brave, else `credentials_missing`. Exact-phrase query — Tavily additionally with `exact_match`, so pages merely *about* similar names do not count, and a German boost (`country`) for the German territory — ten hits, graded on host label and title. | Nothing on the web's first page used the name. |
 | DPMA, TMview, WIPO, USPTO, Handelsregister, OpenCorporates (`sources/manual.ts`) | trademark / company | Manual links only: no API, a paid contract, or terms that forbid scripted access. | Not searched. The coverage row says so. |
 
 Every source declares `manualUrl()` and the coverage table shows it on every row — the
@@ -91,7 +91,7 @@ A source that cannot answer becomes a coverage row, never an error response
   opens it for five; a 429 trips it for `Retry-After`.
 - `takeDailyQuota` (`quota.ts`): per-source counters in Redis, sized to the free tiers in
   `config.ts` (`DAILY_QUOTA`). Fails open — the counter protects a bill, not a boundary.
-- `defineBulkhead` per source (8 slots for RDAP's nine lookups, 4 elsewhere).
+- `defineBulkhead` per source (8 slots for RDAP's ten lookups, 4 elsewhere).
 - `deadline.child(SOURCE_CEILING_MS)` inside the request's own budget: the fan-out takes
   8 s of the 10 s hook budget and holds 700 ms back for the response.
 

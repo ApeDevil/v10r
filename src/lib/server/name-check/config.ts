@@ -24,8 +24,15 @@ export const RESULT_TTL_SECONDS = 24 * 60 * 60;
 export const DOMAIN_TTL_SECONDS = 60 * 60;
 export const RDAP_BOOTSTRAP_TTL_SECONDS = 24 * 60 * 60;
 
-/** Domain variants generated from the compact name. */
-export const DOMAIN_TLDS = ['com', 'de', 'eu', 'net', 'org', 'io', 'app', 'dev', 'ai'] as const;
+/** Domain variants generated from the compact name. `.ch` sits with `.de` and `.eu`: the German-speaking market. */
+export const DOMAIN_TLDS = ['com', 'de', 'eu', 'ch', 'net', 'org', 'io', 'app', 'dev', 'ai'] as const;
+
+/**
+ * Sent on every upstream call. Keyless registries tier or refuse anonymous clients
+ * (crates.io 403s, Wikimedia throttles, IANA and GLEIF ask); the string names this page
+ * so an operator on the other side can find us — and never carries the name being checked.
+ */
+export const SOURCE_USER_AGENT = 'v10r-name-check/1 (+https://www.v10r.dev/showcases/name-check)';
 
 /**
  * Upstream calls per source per UTC day, across the whole deployment.
@@ -52,7 +59,7 @@ export const MAX_BODY_BYTES = 8 * 1024;
 /** Three failures in two minutes opens a source for five — the fan-out keeps its budget for the others. */
 export const BREAKER = { failureThreshold: 3, failureWindowSeconds: 120, openForSeconds: 300 } as const;
 export const BULKHEAD = { maxConcurrent: 4, maxQueued: 4 } as const;
-/** The domain source runs nine lookups of its own. */
+/** The domain source runs ten lookups of its own. */
 export const RDAP_BULKHEAD = { maxConcurrent: 8, maxQueued: 8 } as const;
 
 /**

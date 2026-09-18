@@ -16,6 +16,14 @@ describe('euipoQueries', () => {
 		expect(euipoQueries('nix', 'nix')).toEqual(['wordMarkSpecification.verbalElement==*nix*']);
 		expect(euipoQueries('a==b;c', 'abc')).toEqual(['wordMarkSpecification.verbalElement==*abc*']);
 	});
+
+	it('quotes a multi-word term, which RSQL otherwise rejects', () => {
+		expect(euipoQueries('zalando lounge', 'zalandolounge')).toEqual([
+			'wordMarkSpecification.verbalElement=="*zalando lounge*"',
+			'wordMarkSpecification.verbalElement==zalandoloung*',
+		]);
+		expect(euipoQueries('a "b" c', 'abc')).toEqual(['wordMarkSpecification.verbalElement=="*a b c*"']);
+	});
 });
 
 describe('toEuipoDrafts', () => {

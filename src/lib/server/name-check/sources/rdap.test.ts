@@ -41,6 +41,8 @@ describe('bootstrap', () => {
 
 	it('lets a hand override win, then the live file, then the static copy', () => {
 		expect(rdapBaseFor('de', {})).toBe('https://rdap.denic.de/');
+		expect(rdapBaseFor('io', {})).toBe('https://rdap.identitydigital.services/rdap/');
+		expect(rdapBaseFor('ch', {})).toBe('https://rdap.nic.ch/');
 		expect(rdapBaseFor('com', { com: 'https://live.example/' })).toBe('https://live.example/');
 		expect(rdapBaseFor('org', {})).toBe(RDAP_STATIC_BOOTSTRAP.org);
 		expect(rdapBaseFor('eu', {})).toBeNull();
@@ -49,8 +51,10 @@ describe('bootstrap', () => {
 
 describe('rdapSource.search', () => {
 	it('maps 200, 404 and errors to registration statuses and uses DNS evidence for .eu', async () => {
+		const urls: string[] = [];
 		const fetchImpl: typeof fetch = async (input) => {
 			const url = String(input);
+			urls.push(url);
 			if (url.endsWith('/rdap/dns.json')) return Response.json(BOOTSTRAP);
 			if (url.includes('velora.com')) {
 				return Response.json({
@@ -78,8 +82,11 @@ describe('rdapSource.search', () => {
 		expect(byDomain['velora.net']?.kind === 'domain' && byDomain['velora.net'].registration).toBe('not_registered');
 		expect(byDomain['velora.de']?.kind === 'domain' && byDomain['velora.de'].registration).toBe('unknown');
 		expect(byDomain['velora.eu']?.kind === 'domain' && byDomain['velora.eu'].registration).toBe('dns_records');
-		// .io has no server in this bootstrap, in the overrides, or in the static copy.
-		expect(byDomain['velora.io']?.kind === 'domain' && byDomain['velora.io'].registration).toBe('lookup_unavailable');
+		// .io and .ch are absent from this bootstrap and answered by the overrides.
+		expect(byDomain['velora.io']?.kind === 'domain' && byDomain['velora.io'].registration).toBe('not_registered');
+		expect(byDomain['velora.ch']?.kind === 'domain' && byDomain['velora.ch'].registration).toBe('not_registered');
+		expect(urls).toContain('https://rdap.identitydigital.services/rdap/domain/velora.io');
+		expect(urls).toContain('https://rdap.nic.ch/domain/velora.ch');
 		expect(rows?.every((row) => row.aliases[0] === 'velora')).toBe(true);
 	});
 

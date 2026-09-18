@@ -232,7 +232,7 @@
 	"admin_name_check_test_note": "A test runs one real search and counts against the vendor's allowance.",
 	"admin_name_check_saved_at": "Saved",
 	"admin_name_check_web_order_note": "Web usage searches with the first enabled vendor in this order: Tavily, then Brave Search.",
-	"admin_name_check_vendor_note_euipo": "The EU trade mark register's official API. Register an app on dev.euipo.europa.eu; subscription approval takes days.",
+	"admin_name_check_vendor_note_euipo": "The EU trade mark register's official API. Register an app on dev.euipo.europa.eu; a production subscription needs identity documents by e-mail, no fee. The Sandbox answers from sample data — fine for this test, not for real checks.",
 	"admin_name_check_vendor_note_tavily": "Web usage search. A free monthly allowance, no card required.",
 	"admin_name_check_vendor_note_brave": "Web usage search, metered. Used only while Tavily is not enabled.",
 	"admin_name_check_saved": "{name} connection saved.",

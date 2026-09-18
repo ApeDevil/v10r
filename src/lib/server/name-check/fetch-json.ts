@@ -1,11 +1,12 @@
 /**
  * The one outbound HTTP call the sources make.
  *
- * Small on purpose: an `accept` header, a bounded JSON parse, and a status mapped to
- * exactly one `NameSourceError` kind — 429 honours `Retry-After` so the breaker can be
- * tripped rather than inferred. Nothing here logs a URL or a body: both carry the name
- * the user typed, and the privacy rule is that it never reaches a log line.
+ * Small on purpose: an `accept` header, an identifying `user-agent`, a bounded JSON parse,
+ * and a status mapped to exactly one `NameSourceError` kind — 429 honours `Retry-After` so
+ * the breaker can be tripped rather than inferred. Nothing here logs a URL or a body: both
+ * carry the name the user typed, and the privacy rule is that it never reaches a log line.
  */
+import { SOURCE_USER_AGENT } from './config';
 import { NameSourceError } from './errors';
 
 export interface JsonRequest {
@@ -38,7 +39,7 @@ export async function fetchJson<T>(request: JsonRequest): Promise<JsonResponse<T
 	try {
 		response = await request.fetch(request.url, {
 			method: request.method ?? 'GET',
-			headers: { accept: 'application/json', ...request.headers },
+			headers: { accept: 'application/json', 'user-agent': SOURCE_USER_AGENT, ...request.headers },
 			body: request.body,
 			signal: request.signal,
 		});

@@ -8,7 +8,7 @@
  * exact phrase; hits are graded by the similarity engine on their host label and title,
  * so "velora.io — Velora" surfaces and a page that merely mentions the word does not.
  */
-import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
+import { NAME_CHECK_TERRITORIES, type NameCheckTerritory } from '$lib/schemas/name-check';
 import { NameSourceError } from '../errors';
 import { fetchJson } from '../fetch-json';
 import type { NameSource, NameSourceContext, NameSourceCredentials, WebDraft } from '../name-source';
@@ -71,12 +71,28 @@ export function toWebDrafts(hits: readonly WebSearchHit[]): WebDraft[] {
 	return drafts;
 }
 
-async function searchTavily(phrase: string, apiKey: string, ctx: NameSourceContext): Promise<WebSearchHit[]> {
+/** Tavily's `country` boost takes a lowercase country name; only the German territory maps to one. */
+const TAVILY_COUNTRY: Partial<Record<NameCheckTerritory, string>> = { de: 'germany' };
+
+async function searchTavily(
+	phrase: string,
+	territory: NameCheckTerritory,
+	apiKey: string,
+	ctx: NameSourceContext,
+): Promise<WebSearchHit[]> {
 	const response = await fetchJson<TavilyResponse>({
 		url: 'https://api.tavily.com/search',
 		method: 'POST',
 		headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-		body: JSON.stringify({ query: phrase, max_results: RESULT_COUNT, search_depth: 'basic', include_answer: false }),
+		body: JSON.stringify({
+			query: phrase,
+			max_results: RESULT_COUNT,
+			search_depth: 'basic',
+			include_answer: false,
+			// Without this Tavily answers semantically: pages *about* similar names count as usage.
+			exact_match: true,
+			...(TAVILY_COUNTRY[territory] ? { country: TAVILY_COUNTRY[territory] } : {}),
+		}),
 		signal: ctx.signal,
 		fetch: ctx.fetch,
 	});
@@ -107,7 +123,7 @@ export const webSource: NameSource = {
 		const phrase = `"${query.raw}"`;
 		const vendor = webSearchVendor(ctx.credentials);
 		if (vendor === 'tavily' && ctx.credentials.tavilyApiKey) {
-			return toWebDrafts(await searchTavily(phrase, ctx.credentials.tavilyApiKey, ctx));
+			return toWebDrafts(await searchTavily(phrase, query.territory, ctx.credentials.tavilyApiKey, ctx));
 		}
 		if (vendor === 'brave' && ctx.credentials.braveApiKey) {
 			return toWebDrafts(await searchBrave(phrase, ctx.credentials.braveApiKey, ctx));
