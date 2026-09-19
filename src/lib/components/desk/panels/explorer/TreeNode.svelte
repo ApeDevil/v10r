@@ -1,9 +1,11 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive, DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+import { trackCommand } from '$lib/analytics/telemetry';
 import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
+	contextMenuShortcutVariants,
 } from '$lib/components/composites/context-menu';
 import {
 	dropdownMenuContentVariants,
@@ -90,6 +92,8 @@ function handleRenameKeydown(e: KeyboardEvent) {
 }
 
 function handleMenuAction(action: string) {
+	// Action id, not the node's label — the label is the person's file name.
+	trackCommand('context-menu', `Explorer › ${action}`);
 	if (action === 'rename') {
 		// Delay so Bits UI context menu focus management completes before input renders
 		setTimeout(() => treeState.startRename(node.id), 0);
@@ -360,7 +364,11 @@ const descendantCount = $derived(node.isFolder ? treeState.countDescendants(node
 							onclick={() => handleMenuAction(item.action)}
 						>
 							<span class="{item.icon} ctx-icon"></span>
-							{item.label}
+							<span class="flex-1">{item.label}</span>
+							<!-- Key hints are pointer-projection talk; the touch kebab above renders none. -->
+							{#if item.shortcut}
+								<span class={contextMenuShortcutVariants()}>{item.shortcut}</span>
+							{/if}
 						</ContextMenuPrimitive.Item>
 					{/if}
 				{/each}

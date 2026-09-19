@@ -1,11 +1,12 @@
 <script lang="ts">
 import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+import { trackCommand } from '$lib/analytics/telemetry';
 import {
 	dropdownMenuContentVariants,
 	dropdownMenuItemVariants,
 	dropdownMenuSeparatorVariants,
 } from '$lib/components/composites/dropdown-menu/dropdown-menu';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import type { MenuBarItem, MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { elevationAttr, useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 
@@ -18,6 +19,14 @@ let { menus }: Props = $props();
 // Relative elevation — the menu sits one rung above its trigger's plane; the sub-menu is one
 // rung above the menu (never a skip).
 const s = useSurface();
+
+// The one dispatch site for this projection — the command_invoked evidence
+// (consent-gated, label only) is recorded here, beside the action, never inside it.
+function run(menu: MenuBarMenu, item: MenuBarItem) {
+	if (!item.onSelect) return;
+	trackCommand('menu', `${menu.label} › ${item.label}`);
+	item.onSelect();
+}
 </script>
 
 <DropdownMenuPrimitive.Root>
@@ -54,7 +63,7 @@ const s = useSurface();
 									checked={item.checked ?? false}
 									disabled={item.disabled}
 									class={dropdownMenuItemVariants()}
-									onclick={() => item.onSelect?.()}
+									onclick={() => run(menu, item)}
 								>
 									{#if item.icon}
 										<span class={cn(item.icon, 'h-3.5 w-3.5')}></span>
@@ -68,7 +77,7 @@ const s = useSurface();
 								<DropdownMenuPrimitive.Item
 									disabled={item.disabled}
 									class={cn(dropdownMenuItemVariants(), item.destructive && 'dock-menu-item-destructive')}
-									onclick={() => item.onSelect?.()}
+									onclick={() => run(menu, item)}
 								>
 									{#if item.icon}
 										<span class={cn(item.icon, 'h-3.5 w-3.5')}></span>

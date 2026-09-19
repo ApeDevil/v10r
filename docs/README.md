@@ -37,7 +37,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [architecture/](./blueprint/architecture/) | Multi-client core (hexagonal), background jobs, workers (Web Worker + claim-based queue worker), native-client seam |
 | [data/](./blueprint/data/) | Drizzle schema workflow, Neon dev-branch refresh from prod |
 | [db/](./blueprint/db/) | Relational + graph database patterns, polyglot freshness |
-| [design/](./blueprint/design/) | Design tokens, tonal elevation, styling techniques, component layer system |
+| [design/](./blueprint/design/) | Design tokens, tonal elevation, styling techniques, component layer system, Explosive Discovery (nested-depth review heuristic) |
 | [desk/](./blueprint/desk/) | Dock workspace, focus architecture, mobile chrome, Explorer, spreadsheet panel |
 | [notifications/](./blueprint/notifications/) | External channel delivery — routing, Telegram/Discord/email, settings, schema |
 | [quick-search/](./blueprint/quick-search/) | Two-lane search, command palette, blog FTS |

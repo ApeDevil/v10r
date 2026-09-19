@@ -37,11 +37,11 @@ The collector feeds **two lanes**; see [two-lane-model.md](./two-lane-model.md) 
 - The endpoint verifies the token, resolves the same session id the hook used at the caller's tier (consented cookie, else the cookieless daily id), and sets `human_confirmed_at`. Journey and telemetry batches confirm redundantly.
 - Dashboards headline CONFIRMED sessions; unconfirmed traffic is reported alongside (never merged, never deleted), ranked by `ip_class`. The initial `enter` navigation is no longer enqueued by the SPA beacon — that page load is the server hook's row, and both client and server now enforce it (the double count this fixed produced 72 duplicate pairs in one week).
 
-**Authenticated lane** — `/account/*` only, and only when a session exists:
+**Authenticated lane** — `/account/*` and `/desk/*`, and only when a session exists:
 
-- `analytics.user_events` — keyed by `user_id`, FK-cascading to `auth.user`.
+- `analytics.user_events` — keyed by `user_id`, FK-cascading to `auth.user`; `user_surface` says which area (`account` · `desk`).
 
-`/admin` and `/desk` are recorded by **neither** lane. Eligibility is decided in one place, `analytics/collect-policy.ts`, which both the server hook and the SPA beacon import — they previously disagreed, and client-side navigations into authenticated areas leaked into the anonymous lane as a result.
+`/admin` is recorded by **neither** lane. Eligibility is decided in one place, `analytics/collect-policy.ts`, which the server hook and both beacon endpoints import — they previously disagreed, and client-side navigations into authenticated areas leaked into the anonymous lane as a result.
 
 Deferred writes are wrapped in `waitUntil()` from `@vercel/functions`. This is load-bearing rather than decorative: on Vercel the function may be frozen the moment the response is returned, so a bare un-awaited promise silently loses an unbounded share of events.
 
@@ -78,7 +78,7 @@ Two bounds:
 - **Path templating at write time.** `route` stores `/blog/[slug]`, derived from SvelteKit's `event.route.id`. Aggregates group by `route`, so publishing more content cannot degrade the dashboards. `path` stays raw for detail views.
 - **Declared value domains.** Enums, length caps, and integer ranges per property. Out-of-range integers are clamped rather than dropped — an outlier is still a real observation.
 
-Allowed events: `rage_click`, `dead_click`, `scroll_depth`, `form_abandon`, `engagement`, `outbound_click`. `form_abandon` records which field was last touched and **never its content** — that is the line between behavioural data and potentially Art 9 data.
+Allowed events: `rage_click`, `dead_click`, `scroll_depth`, `form_abandon`, `engagement`, `command_invoked`. `form_abandon` records which field was last touched and **never its content** — that is the line between behavioural data and potentially Art 9 data. `command_invoked` records a UI command label and the door it came through (`menu` · `sheet` · `shortcut` · `palette` · `context-menu` · `bar`) — the evidence a menu review needs (which rows are daily, whether the expert path is used); the label is a closed vocabulary from the composed menus, never a search query or a file name. Nearly all of these come from `/desk`, so they land in the **authenticated** lane and are read by `getCommandUsage()` on `/admin/analytics/human` (the *Commands* card).
 
 ## Client telemetry
 

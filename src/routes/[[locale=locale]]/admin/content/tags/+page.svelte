@@ -242,6 +242,7 @@ function handleDeleteDomainEnhance() {
 						<span class="i-lucide-plus h-4 w-4 mr-1"></span>
 						{m.admin_tags_new_domain()}
 					</Button>
+					<!-- One Refresh per page: invalidateAll() reloads both cards. -->
 					<Button variant="ghost" size="sm" onclick={() => invalidateAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 						{m.admin_action_refresh()}
@@ -310,10 +311,6 @@ function handleDeleteDomainEnhance() {
 					<Button variant="outline" size="sm" onclick={() => openTagModal()}>
 						<span class="i-lucide-plus h-4 w-4 mr-1"></span>
 						{m.admin_tags_new_category()}
-					</Button>
-					<Button variant="ghost" size="sm" onclick={() => invalidateAll()}>
-						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
-						{m.admin_action_refresh()}
 					</Button>
 				</Cluster>
 			</Cluster>

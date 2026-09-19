@@ -97,7 +97,7 @@ export { createDockState, type DockState, getDockContext, setDockContext } from 
 export { appendIOLog, clearIOLog, getIOLogEntries, type IOLogEntry, type IOLogSource } from './io-log.state.svelte';
 export { default as PanelEmptyState } from './PanelEmptyState.svelte';
 export {
-	closeCurrent,
+	duplicatePanel,
 	focusPanel,
 	openOrCycle,
 	splitFocused,
@@ -116,7 +116,7 @@ export {
 	type ProviderInfo,
 	switchProvider,
 } from './provider-preference.state.svelte';
-export { buildViewMenu, type ViewMenuActions } from './view-menu';
+export { buildViewMenu, PREFERENCES_SHORTCUT, type ViewMenuInput } from './view-menu';
 export { buildWorkspacesFromServer, loadWorkspaceStore, saveWorkspaceStore } from './workspace.persistence';
 export {
 	createWorkspaceState,

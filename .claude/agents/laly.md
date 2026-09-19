@@ -68,6 +68,7 @@ Works-on-both-viewports > No overflow > No wasted space > Density & rhythm > Pol
 | Fluid-type a11y | `clamp()` with px floor/ceiling + `vw` middle, max < 2× min (WCAG 1.4.4) | both | Grep |
 | Container-query misuse | `@container` on a grid item itself; custom property inside `@container` condition | both | Grep + Read |
 | Density mismatch | mobile spacing scaled verbatim to desktop (or reverse); rhythm broken across the seam | both | Read |
+| Compressed projection | mobile renders the desktop menu tree verbatim (hover sub-menus on touch) or silently drops commands the desktop has; see `.claude/skills/uxy-explosive-discovery/SKILL.md` | narrow | Read — hand-off uxy |
 
 # Thresholds (authoritative quick reference)
 

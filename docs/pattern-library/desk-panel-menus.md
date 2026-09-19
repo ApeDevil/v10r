@@ -24,7 +24,7 @@ A context-scoped registry where each panel instance registers its command menus,
 
 - `src/lib/components/desk/panel-menus.state.svelte.ts` — Context-scoped registry keyed by panel instance id — never module-level ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/panel-menus.state.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/panel-menus.state.svelte.ts))
 - `src/lib/components/desk/compose-menus.ts` — composePanelMenus(): registered menus → Panel floor menu → View menu; drops empty registered menus ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/compose-menus.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/compose-menus.ts))
-- `src/lib/components/desk/view-menu.ts` — buildViewMenu({ structural }) — mobile strips split commands ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/view-menu.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/view-menu.ts))
+- `src/lib/components/desk/view-menu.ts` — buildViewMenu(actions) — desktop-only; the mobile sheet composes without it (the panels drawer projects View on touch) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/view-menu.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/view-menu.ts))
 
 ## Tests
 

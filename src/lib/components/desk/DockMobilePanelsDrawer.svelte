@@ -1,12 +1,16 @@
 <script lang="ts">
 /**
  * Mobile Activity bar — a modal LEFT drawer listing panel types (same items,
- * same order as the desktop bar), with open instances as indented child rows.
+ * same order as the desktop bar), with open instances as indented child rows,
+ * then the workspaces (the desktop bar's numbered zone) — switching swaps the
+ * persisted desktop tree, which mobile only ever projects, so it is the one
+ * workspace verb touch gets; rename/duplicate/delete stay a desktop right-click.
  *
  * Tap = show + dismiss, always — never the desktop bar's close-all-of-type
  * toggle (structural, data-destroying). Closing is explicit per instance and
- * routes through requestClose (unsaved-work confirm).
+ * routes through the dock's unsaved-close guard.
  */
+import { trackCommand } from '$lib/analytics/telemetry';
 import { Drawer } from '$lib/components/primitives';
 import type { ActivityBarItem } from '$lib/desk/layout.types';
 import * as m from '$lib/paraglide/messages';
@@ -16,6 +20,8 @@ import { getDeskSettings } from './desk-settings.state.svelte';
 import { getDockContext } from './dock.state.svelte';
 import { getDockMobile } from './dock-mobile.state.svelte';
 import { focusPanel, openOrCycle } from './panel-actions';
+import { getWorkspaceContext } from './workspace.state.svelte';
+import { MAX_WORKSPACES } from './workspace.types';
 
 interface Props {
 	items: ActivityBarItem[];
@@ -29,6 +35,7 @@ const dock = getDockContext();
 const mobile = getDockMobile();
 const deskSettings = getDeskSettings();
 const modals = getModals();
+const workspace = getWorkspaceContext();
 
 const instancesByType = $derived(
 	openPanelIds.reduce<Record<string, string[]>>((acc, id) => {
@@ -41,13 +48,28 @@ const instancesByType = $derived(
 	}, {}),
 );
 
-function selectType(panelType: string) {
-	openOrCycle(dock, items, panelType);
+// The drawer is the mobile projection of the activity bar and of View's toggle
+// rows; recorded under the same names so one command aggregates across doors.
+function selectType(item: ActivityBarItem) {
+	trackCommand('bar', `View › Toggle ${item.label}`);
+	openOrCycle(dock, items, item.panelType);
 	mobile.close();
 }
 
 function selectInstance(panelId: string) {
 	focusPanel(dock, panelId);
+	mobile.close();
+}
+
+function selectWorkspace(id: string) {
+	workspace.switchTo(id);
+	mobile.close();
+}
+
+// The desktop popover asks for a name; on touch the default name is enough —
+// renaming is a desktop right-click away and the layout is what matters here.
+function createWorkspace() {
+	void workspace.createWorkspace(`Workspace ${workspace.workspaces.length + 1}`);
 	mobile.close();
 }
 </script>
@@ -69,7 +91,7 @@ function selectInstance(panelId: string) {
 						type="button"
 						class={cn('type-row', !isOpen && 'closed')}
 						aria-label={isOpen ? `${item.label} (${instances.length})` : `${item.label} — ${m.composites_dock_mobile_open_new()}`}
-						onclick={() => selectType(item.panelType)}
+						onclick={() => selectType(item)}
 					>
 						<span class={cn(item.icon, 'row-icon')} aria-hidden="true"></span>
 						<span class="row-label">{item.label}</span>
@@ -101,7 +123,7 @@ function selectInstance(panelId: string) {
 												type="button"
 												class="instance-close"
 												aria-label={m.composites_dock_mobile_close_instance({ label: panel.label })}
-												onclick={() => mobile.requestClose(id)}
+												onclick={() => dock.requestClose(id)}
 											>
 												<span class="i-lucide-x" aria-hidden="true"></span>
 											</button>
@@ -114,6 +136,42 @@ function selectInstance(panelId: string) {
 				</li>
 			{/each}
 		</ul>
+
+		<section class="workspace-section" aria-labelledby="mobile-workspaces-heading">
+			<h3 id="mobile-workspaces-heading" class="section-heading">{m.composites_dock_mobile_workspaces()}</h3>
+			<ul class="panel-list">
+				{#each workspace.workspaces as ws, i (ws.id)}
+					{@const isActive = ws.id === workspace.activeId}
+					<li>
+						<button
+							type="button"
+							class="type-row workspace-row"
+							class:active={isActive}
+							aria-current={isActive ? 'true' : undefined}
+							onclick={() => selectWorkspace(ws.id)}
+						>
+							<span class="workspace-num" aria-hidden="true">{i + 1}</span>
+							<span class="row-label">{ws.name}</span>
+							{#if isActive}
+								<span class="i-lucide-check row-open-hint" aria-hidden="true"></span>
+							{/if}
+						</button>
+					</li>
+				{/each}
+				{#if workspace.workspaces.length < MAX_WORKSPACES}
+					<li>
+						<button type="button" class="type-row closed" onclick={createWorkspace}>
+							<span class="i-lucide-plus row-icon" aria-hidden="true"></span>
+							<span class="row-label">
+								{workspace.workspaces.length === 0
+									? m.composites_dock_mobile_workspace_save_layout()
+									: m.composites_dock_mobile_workspace_new()}
+							</span>
+						</button>
+					</li>
+				{/if}
+			</ul>
+		</section>
 
 		<div class="drawer-footer">
 			<button
@@ -131,6 +189,7 @@ function selectInstance(panelId: string) {
 				type="button"
 				class="footer-row"
 				onclick={() => {
+					trackCommand('bar', 'View › Desk Preferences…');
 					mobile.close();
 					deskSettings.openDialog();
 				}}
@@ -300,6 +359,45 @@ function selectInstance(panelId: string) {
 
 	.instance-dot.dot-ai-active {
 		background: var(--color-primary);
+	}
+
+	.workspace-section {
+		margin-top: var(--spacing-3);
+		padding-top: var(--spacing-2);
+		border-top: 1px solid var(--color-border);
+	}
+
+	.section-heading {
+		margin: 0;
+		padding: var(--spacing-1) var(--spacing-2);
+		font-size: var(--text-fluid-xs);
+		font-weight: 600;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: var(--color-muted);
+	}
+
+	.workspace-row.active {
+		color: var(--color-primary);
+		font-weight: 600;
+	}
+
+	/* Same numbered-square idiom as the desktop bar, at row-icon size. */
+	.workspace-num {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		flex-shrink: 0;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-border);
+		font-size: var(--text-fluid-xs);
+		font-weight: 600;
+	}
+
+	.workspace-row.active .workspace-num {
+		border-color: var(--color-primary);
 	}
 
 	.drawer-footer {

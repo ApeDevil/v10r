@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Command as CommandPrimitive, Dialog } from 'bits-ui';
 import { goto } from '$app/navigation';
+import { trackCommand } from '$lib/analytics/telemetry';
 import { Kbd } from '$lib/components/primitives';
 import { localizeHref } from '$lib/i18n/runtime';
 import { layerStack } from '$lib/state/layer-stack.svelte';
@@ -133,6 +134,8 @@ function close() {
 
 function handleSelect(item: CommandPaletteItem) {
 	close();
+	// Command rows are a closed vocabulary; search hits are content and are not recorded.
+	if (COMMAND_TYPES.has(item.type)) trackCommand('palette', `${item.type} › ${item.label}`);
 	if (item.href) {
 		goto(item.href);
 	} else if (item.action) {

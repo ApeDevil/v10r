@@ -4,8 +4,10 @@
  * They sit beside their producer. A result type owned by the `analytics` domain would
  * have the sink importing upward for a shape only the sink fills in.
  */
+
 import type { InferSelectModel } from 'drizzle-orm';
 import type { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
+import type { CommandVia } from '$lib/types/journey-events';
 
 export type AnalyticsEvent = InferSelectModel<typeof events>;
 export type AnalyticsSession = InferSelectModel<typeof sessions>;
@@ -167,4 +169,15 @@ export interface UserLaneStats {
 	activeUsers: number;
 	events: number;
 	topRoutes: { route: string; count: number }[];
+}
+
+/**
+ * One command's usage, split by door. `command` is the menu-review vocabulary
+ * ("View › Toggle Explorer"); the `via` counts say whether the expert path
+ * (shortcut, palette) is used beside the discovery path (menu, sheet, bar).
+ */
+export interface CommandUsage {
+	command: string;
+	total: number;
+	byVia: Partial<Record<CommandVia, number>>;
 }

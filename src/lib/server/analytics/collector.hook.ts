@@ -8,7 +8,7 @@ import {
 	isBrowserNavigation,
 	isExcludedPath,
 	isPrefetch,
-	isUserLanePath,
+	userLaneSurface,
 } from '$lib/analytics/collect-policy';
 import { normalizeIpKey } from '$lib/server/abuse';
 import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
@@ -155,15 +155,16 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	// not engage — the auth cookie is already strictly necessary under TDDDG
 	// §25(2) Nr.2 — and processing rests on Art 6(1)(b)/(f). This is disclosed
 	// under Art 13, not consented to under Art 6(1)(a).
+	const userSurface = userLaneSurface(path);
 	const userLane =
 		!building &&
 		!devMuted &&
 		event.request.method === 'GET' &&
-		isUserLanePath(path) &&
+		userSurface &&
 		!path.includes('.') &&
 		!isPrefetch(event.request.headers) &&
 		event.locals.user?.id
-			? event.locals.user.id
+			? { userId: event.locals.user.id, surface: userSurface }
 			: null;
 
 	const response = await resolve(event);
@@ -186,8 +187,8 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		const route = templateRoute(event.route?.id ?? null);
 		deferAfterResponse('analytics:user-pageview', () =>
 			recordUserEvent({
-				userId: userLane,
-				surface: 'account',
+				userId: userLane.userId,
+				surface: userLane.surface,
 				eventType: 'pageview',
 				route,
 				path,

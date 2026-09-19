@@ -10,6 +10,7 @@ import { proposalStatusEnum } from '$lib/server/db/schema/ai/proposal';
 import { proposalStepKindEnum } from '$lib/server/db/schema/ai/proposal-step';
 import { aiProviderEnum } from '$lib/server/db/schema/ai/provider-connection';
 import { consentTierEnum } from '$lib/server/db/schema/analytics/events';
+import { userSurfaceEnum } from '$lib/server/db/schema/analytics/user-events';
 import { commentStatusEnum } from '$lib/server/db/schema/blog/comment';
 import { postStatusEnum } from '$lib/server/db/schema/blog/post';
 import { fileTypeEnum } from '$lib/server/db/schema/desk/file';
@@ -32,6 +33,7 @@ import {
 	PROPOSAL_STATUSES,
 	PROPOSAL_STEP_KINDS,
 	THEMES,
+	USER_SURFACES,
 } from './db-enums';
 
 const MIRRORS: ReadonlyArray<[string, readonly string[], readonly string[]]> = [
@@ -47,6 +49,7 @@ const MIRRORS: ReadonlyArray<[string, readonly string[], readonly string[]]> = [
 	['notifications.notification_channel', NOTIFICATION_CHANNELS, notificationChannelEnum.enumValues],
 	['notifications.notification_type', NOTIFICATION_TYPES, notificationTypeEnum.enumValues],
 	['analytics.consent_tier', CONSENT_TIERS, consentTierEnum.enumValues],
+	['analytics.user_surface', USER_SURFACES, userSurfaceEnum.enumValues],
 	['desk.file_type', DESK_FILE_TYPES, fileTypeEnum.enumValues],
 	['name_check.name_source_vendor', NAME_SOURCE_VENDORS, nameSourceVendorEnum.enumValues],
 ];

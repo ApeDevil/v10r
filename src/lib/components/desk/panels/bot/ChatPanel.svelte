@@ -225,6 +225,9 @@ function submitMessage() {
 	});
 }
 
+// The Bot Manager rides the menu as well as the input's gear icon: the icon is
+// the promoted quick path, the menu is where the kebab, the sheet, the matcher
+// and About can name it.
 const chatMenus = $derived<MenuBarMenu[]>([
 	{
 		label: m.composites_desk_bot_menu_chat(),
@@ -233,6 +236,12 @@ const chatMenus = $derived<MenuBarMenu[]>([
 				label: m.composites_desk_bot_new_conversation(),
 				icon: 'i-lucide-plus',
 				onSelect: startNewChat,
+			},
+			{ type: 'separator' },
+			{
+				label: m.composites_desk_bot_manager_menu(),
+				icon: 'i-lucide-settings-2',
+				onSelect: () => openManagerToTab(),
 			},
 		],
 	},

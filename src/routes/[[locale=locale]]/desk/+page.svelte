@@ -23,16 +23,23 @@ const serverWorkspaces = $derived(page.data.deskWorkspaces ?? []);
 const serverActiveWorkspaceId = $derived(page.data.deskActiveWorkspaceId ?? null);
 
 // ?open=<type> ensures + focuses a panel type; ?panel=<id> deep-links to a
-// specific instance (silent no-op on unknown ids).
+// specific instance (silent no-op on unknown ids); ?post=<pst_…> opens the
+// editor for that post (the door from the admin posts list).
 let openPanel = $derived(page.url.searchParams.get('open'));
 let focusPanelId = $derived(page.url.searchParams.get('panel'));
+// Only a well-formed post id becomes a panel — `editor-<junk>` would be a panel no reader can name a document for.
+let openPostId = $derived.by(() => {
+	const id = page.url.searchParams.get('post');
+	return id && /^pst_[A-Za-z0-9]+$/.test(id) ? id : null;
+});
 
 // Clean URL params after they're consumed. `replaceState`, not `goto`: a
 // cosmetic URL edit must not re-run loads or fire after/beforeNavigate
 // (which would e.g. auto-close the sidebar drawer). Deferred a macrotask so
 // DockLayout's param effects observe the values before they vanish.
 $effect(() => {
-	if (!page.url.searchParams.has('open') && !page.url.searchParams.has('panel')) return;
+	if (!page.url.searchParams.has('open') && !page.url.searchParams.has('panel') && !page.url.searchParams.has('post'))
+		return;
 	const timer = setTimeout(() => replaceState(page.url.pathname, page.state ?? {}), 0);
 	return () => clearTimeout(timer);
 });
@@ -99,6 +106,7 @@ function getPanelType(panelId: string): string | undefined {
 		persist="desk-layout"
 		{openPanel}
 		{focusPanelId}
+		{openPostId}
 		{authenticated}
 		{serverTheme}
 		{serverPresets}

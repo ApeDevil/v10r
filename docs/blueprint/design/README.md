@@ -35,6 +35,10 @@ Bad:  All options visible at once
 Good: Primary actions visible, secondary in menus/dropdowns
 ```
 
+When a menu, toolbar or page offers more than ~5 ± 2 simultaneous choices, review it with
+[explosive-discovery.md](./explosive-discovery.md) — directions over lists, context
+promotion, one hierarchy per device projection, an expert path beside every discovery path.
+
 ### 4. Responsive by Default
 
 Every component works on every screen. No "desktop-only" features.
@@ -456,6 +460,7 @@ docs/blueprint/
 - [tokens.md](./tokens.md) - Concrete token values and scales
 - [styling.md](./styling.md) - UnoCSS, fluid techniques, container queries
 - [components.md](./components.md) - Component architecture, patterns, and showcase catalog coverage (meta-chrome exception)
+- [explosive-discovery.md](./explosive-discovery.md) - Nested Depth: the review heuristic for dense menus and pages (choice trigger, context promotion, projections, the five-part review output)
 - [app-shell/](../app-shell/README.md) - Layout structure and navigation
 
 ---

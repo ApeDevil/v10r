@@ -14,17 +14,26 @@
  * property key is stripped — see `analytics/event-schema.ts`. A client cannot
  * widen the schema by sending more, which is what keeps `GROUP BY` cardinality
  * bounded no matter what ends up calling this.
+ *
+ * Two lanes, decided per event by `collect-policy.ts` exactly as the server hook
+ * decides page views: an event from a user-lane path (`/account`, `/desk`) of a
+ * signed-in user is written to `analytics.user_events` under their id — no
+ * consent tier, no visitor hash, no session cookie (`user-events.ts` explains
+ * why the ePrivacy gate does not engage there); everything else takes the
+ * anonymous lane, which refuses without consent and drops excluded paths. A
+ * batch may carry both: the SPA beacon flushes across navigations.
  */
 import * as v from 'valibot';
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
+import { isBot, isExcludedPath, userLaneSurface } from '$lib/analytics/collect-policy';
 import { ipLimitKey } from '$lib/server/abuse';
 import { SESSION_COOKIE } from '$lib/server/analytics/config';
 import { hasConsent } from '$lib/server/analytics/consent';
 import { type EventName, isKnownEvent, sanitizeProperties, templateRoute } from '$lib/server/analytics/event-schema';
 import { deriveVisitorId } from '$lib/server/analytics/visitor';
 import { confirmSession, recordEvents } from '$lib/server/db/analytics/mutations';
+import { recordUserEvents } from '$lib/server/db/analytics/user-mutations';
 import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiError, apiNoContent } from '$lib/server/http/response';
@@ -74,19 +83,12 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		return apiError(403, 'forbidden', 'Cross-origin beacon rejected');
 	}
 
-	if (!hasConsent(locals.consentTier, 'analytics')) {
-		return apiNoContent();
-	}
-
 	const ua = request.headers.get('user-agent') ?? '';
 	if (isBot(ua)) return apiNoContent();
 
 	const ip = locals.clientIp ?? getClientAddress();
 	const { success, reset } = await limiter.limit(ipLimitKey(ip));
 	if (!success) return rateLimitResponse(reset);
-
-	const sessionId = cookies.get(SESSION_COOKIE);
-	if (!sessionId) return apiNoContent();
 
 	// Unauthenticated beacon: bound the read rather than parsing whatever arrives.
 	const read = await readJsonBounded(request, MAX_BEACON_BODY_BYTES);
@@ -101,10 +103,7 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		return apiError(400, 'invalid_payload', 'Collect batch failed validation');
 	}
 
-	const visitorId = await deriveVisitorId(ip, ua);
-
 	const rows = parsed.output.events
-		.filter((evt) => !isExcludedPath(evt.path))
 		.map((evt): CollectRow | null => {
 			if (evt.kind === 'timing') {
 				// A performance sample. The metric name is closed, and the value is
@@ -140,41 +139,79 @@ export const POST: RequestHandler = async ({ request, cookies, getClientAddress,
 		})
 		.filter((row): row is NonNullable<typeof row> => row !== null);
 
-	if (rows.length === 0) return apiNoContent();
+	// Lane split. A user-lane path without a signed-in user is nobody's: it is
+	// excluded from the anonymous lane by the same predicate, so it drops.
+	const userId = locals.user?.id ?? null;
+	const userRows = userId
+		? rows.flatMap((row) => {
+				const surface = userLaneSurface(row.path);
+				return surface ? [{ row, surface }] : [];
+			})
+		: [];
+	const anonRows = rows.filter((row) => !isExcludedPath(row.path));
 
-	// A telemetry batch is JS corroboration too — redundancy for a lost confirm
-	// ping. Awaited alongside the batch insert rather than fired bare: on Vercel an
-	// un-awaited promise is killable the instant the 204 is returned, which silently
-	// undercounted confirmed visitors on this lane. Its sibling endpoint
-	// (journey/confirm) always awaited; this one now matches.
-	//
-	// One batched INSERT instead of one per event — with poolQueryViaFetch each
-	// statement is its own HTTPS request to Neon, so a 50-event batch was 50 round
-	// trips from a single invocation.
-	await Promise.all([
-		confirmSession(sessionId).catch(() => {}),
-		recordEvents(
-			rows.map((row) => ({
-				eventId: row.eventId,
-				sessionId,
-				visitorId,
-				eventType: row.eventType,
-				path: row.path,
-				// Templated here, not stored verbatim. The client sends SvelteKit's raw
-				// `page.route.id` (`/[[locale=locale]]/(public)/docs/[...slug]`) while the
-				// server hook stores `templateRoute()` output (`/docs/[...slug]`) — same
-				// column, two formats, so every per-route aggregate was silently split
-				// across two keys. Measured at 738 client-verbatim rows against 1005
-				// templated ones. `templateRoute` is idempotent, so applying it here is
-				// safe whichever format arrives.
-				route: templateRoute(row.route),
-				metadata: row.metadata,
-				consentTier: locals.consentTier,
-				debugOwnerId: locals.debugOwnerId ?? null,
-				occurredAt: new Date(row.occurredAt),
-			})),
-		).catch(() => {}),
-	]);
+	const writes: Promise<unknown>[] = [];
+
+	if (userId && userRows.length > 0) {
+		writes.push(
+			recordUserEvents(
+				userRows.map(({ row, surface }) => ({
+					eventId: row.eventId,
+					userId,
+					surface,
+					eventType: row.eventType,
+					route: templateRoute(row.route),
+					path: row.path,
+					metadata: row.metadata,
+					occurredAt: new Date(row.occurredAt),
+				})),
+			).catch(() => {}),
+		);
+	}
+
+	// The anonymous lane keeps its two gates: the consent tier, re-checked on the
+	// server because the client's copy can lag a withdrawal, and the session
+	// cookie the tier controls.
+	const sessionId = cookies.get(SESSION_COOKIE);
+	if (anonRows.length > 0 && hasConsent(locals.consentTier, 'analytics') && sessionId) {
+		const visitorId = await deriveVisitorId(ip, ua);
+
+		// A telemetry batch is JS corroboration too — redundancy for a lost confirm
+		// ping. Awaited alongside the batch insert rather than fired bare: on Vercel an
+		// un-awaited promise is killable the instant the 204 is returned, which silently
+		// undercounted confirmed visitors on this lane. Its sibling endpoint
+		// (journey/confirm) always awaited; this one now matches.
+		//
+		// One batched INSERT instead of one per event — with poolQueryViaFetch each
+		// statement is its own HTTPS request to Neon, so a 50-event batch was 50 round
+		// trips from a single invocation.
+		writes.push(
+			confirmSession(sessionId).catch(() => {}),
+			recordEvents(
+				anonRows.map((row) => ({
+					eventId: row.eventId,
+					sessionId,
+					visitorId,
+					eventType: row.eventType,
+					path: row.path,
+					// Templated here, not stored verbatim. The client sends SvelteKit's raw
+					// `page.route.id` (`/[[locale=locale]]/(public)/docs/[...slug]`) while the
+					// server hook stores `templateRoute()` output (`/docs/[...slug]`) — same
+					// column, two formats, so every per-route aggregate was silently split
+					// across two keys. Measured at 738 client-verbatim rows against 1005
+					// templated ones. `templateRoute` is idempotent, so applying it here is
+					// safe whichever format arrives.
+					route: templateRoute(row.route),
+					metadata: row.metadata,
+					consentTier: locals.consentTier,
+					debugOwnerId: locals.debugOwnerId ?? null,
+					occurredAt: new Date(row.occurredAt),
+				})),
+			).catch(() => {}),
+		);
+	}
+
+	await Promise.all(writes);
 
 	return apiNoContent();
 };

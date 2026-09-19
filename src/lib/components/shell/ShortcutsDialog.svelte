@@ -14,7 +14,9 @@ let { class: className }: Props = $props();
 
 const modals = getModals();
 
-const shortcutsByCategory = $derived(getShortcutsByCategory());
+// The registry is a plain Map; snapshot it each time the dialog opens so
+// shortcuts registered after mount (the desk's, while /desk is up) are listed.
+const shortcutsByCategory = $derived(modals.isOpen('shortcuts') ? getShortcutsByCategory() : null);
 
 let modalRef: HTMLElement | undefined = $state();
 
@@ -53,7 +55,7 @@ function handleKeydown(e: KeyboardEvent) {
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if modals.isOpen('shortcuts')}
+{#if modals.isOpen('shortcuts') && shortcutsByCategory}
 	<div class="backdrop" onclick={handleBackdropClick} role="presentation">
 		<div
 			bind:this={modalRef}
@@ -111,6 +113,22 @@ function handleKeydown(e: KeyboardEvent) {
 						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Actions</h3>
 						<dl class="grid gap-2 m-0">
 							{#each shortcutsByCategory.actions as shortcut}
+								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
+									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
+									<dd class="m-0">
+										<Kbd keys={formatShortcut(shortcut.keys)} size="md" />
+									</dd>
+								</div>
+							{/each}
+						</dl>
+					</section>
+				{/if}
+
+				{#if shortcutsByCategory.desk.length > 0}
+					<section class="flex flex-col gap-3">
+						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Desk</h3>
+						<dl class="grid gap-2 m-0">
+							{#each shortcutsByCategory.desk as shortcut}
 								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
 									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
 									<dd class="m-0">

@@ -1,28 +1,31 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
+import { trackCommand } from '$lib/analytics/telemetry';
 import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
+	contextMenuShortcutVariants,
 } from '$lib/components/composites/context-menu';
-import { InfoDialog } from '$lib/components/composites/info-dialog';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { DESK_PANEL_HELP } from '$lib/desk/help';
 import type { LeafNode } from '$lib/desk/layout.types';
 import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
+import { CLOSE_PANEL_SHORTCUT } from './compose-menus';
 import DockLeafMenu from './DockLeafMenu.svelte';
 import { getDeskSettings } from './desk-settings.state.svelte';
 import { getDockContext } from './dock.state.svelte';
+import { duplicatePanel } from './panel-actions';
+import { PREFERENCES_SHORTCUT } from './view-menu';
 
 interface Props {
 	leaf: LeafNode;
+	/** The composed array for this leaf's active tab (compose-menus.ts) — rendered as-is. */
 	menus?: MenuBarMenu[];
-	panelType?: string | null;
 	class?: string;
 }
 
-let { leaf, menus = [], panelType = null, class: className }: Props = $props();
+let { leaf, menus = [], class: className }: Props = $props();
 
 const dock = getDockContext();
 const deskSettings = getDeskSettings();
@@ -30,30 +33,27 @@ const deskSettings = getDeskSettings();
 // Relative elevation — one rung above the surface that owns the trigger.
 const s = useSurface();
 
-let helpOpen = $state(false);
-
-const panelHelp = $derived(panelType ? (DESK_PANEL_HELP[panelType as keyof typeof DESK_PANEL_HELP] ?? null) : null);
-
-const menusWithHelp = $derived.by(() => {
-	if (!panelHelp) return menus;
-	const helpMenu: MenuBarMenu = {
-		label: 'Help',
-		items: [
-			{
-				label: `About ${panelHelp.title}`,
-				icon: 'i-lucide-info',
-				onSelect: () => {
-					helpOpen = true;
-				},
-			},
-		],
-	};
-	return [...menus, helpMenu];
-});
-
 function handleClose(e: MouseEvent, panelId: string) {
 	e.stopPropagation();
-	dock.closePanel(panelId);
+	dock.requestClose(panelId);
+}
+
+/** Close every tab of this leaf except `keepPanelId`, one guard prompt for the batch. */
+function closeOthers(keepPanelId: string) {
+	dock.requestClosePanels(
+		leaf.tabs.filter((id) => id !== keepPanelId),
+		() => dock.closeOtherPanels(leaf.id, keepPanelId),
+	);
+}
+
+function closeAll() {
+	dock.requestClosePanels(leaf.tabs, () => dock.closeAllPanels(leaf.id));
+}
+
+/** The tab's right-click is a door too: recorded like the explorer's, by row label. */
+function runTabCommand(label: string, run: () => void) {
+	trackCommand('context-menu', `Tab › ${label}`);
+	run();
 }
 
 let dragId = $state<string | null>(null);
@@ -226,14 +226,14 @@ function removeGhost() {
 									aria-label="Close {panel.label}"
 									tabindex={-1}
 									onclick={(e) => handleClose(e, panelId)}
-									onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); dock.closePanel(panelId); } }}
+									onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); dock.requestClose(panelId); } }}
 								>
 									<span class="i-lucide-x"></span>
 								</span>
 							{/if}
-							{#if isActive && menusWithHelp.length > 0}
+							{#if isActive && menus.length > 0}
 								<span data-menu-btn class="dock-tab-menu-wrap">
-									<DockLeafMenu menus={menusWithHelp} />
+									<DockLeafMenu {menus} />
 								</span>
 							{/if}
 						</button>
@@ -242,24 +242,27 @@ function removeGhost() {
 
 				<ContextMenuPrimitive.Portal>
 					<ContextMenuPrimitive.Content {...s.attrs} class={contextMenuContentVariants()} collisionPadding={8}>
+						<!-- Shared rows print the chord of the declaration they mirror: Close ↔ the floor's
+						     Close Panel, Preferences ↔ View's row. Close Others / Close All are this pane's own. -->
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
-							onclick={() => dock.closePanel(panelId)}
+							onclick={() => runTabCommand('Close', () => dock.requestClose(panelId))}
 						>
 							<span class="i-lucide-x ctx-icon"></span>
-							Close
+							<span class="flex-1">Close</span>
+							<span class={contextMenuShortcutVariants()}>{CLOSE_PANEL_SHORTCUT}</span>
 						</ContextMenuPrimitive.Item>
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
 							disabled={leaf.tabs.length <= 1}
-							onclick={() => dock.closeOtherPanels(leaf.id, panelId)}
+							onclick={() => runTabCommand('Close Others', () => closeOthers(panelId))}
 						>
 							<span class="i-lucide-x-circle ctx-icon"></span>
 							Close Others
 						</ContextMenuPrimitive.Item>
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
-							onclick={() => dock.closeAllPanels(leaf.id)}
+							onclick={() => runTabCommand('Close All', closeAll)}
 						>
 							<span class="i-lucide-x-square ctx-icon"></span>
 							Close All
@@ -267,20 +270,14 @@ function removeGhost() {
 						<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
-							onclick={() => dock.addPanel(
-								{ id: `${panel.type}-${Date.now()}`, type: panel.type, label: panel.label, icon: panel.icon, closable: true },
-								{ leafId: leaf.id, zone: 'right' },
-							)}
+							onclick={() => runTabCommand('Split Right', () => duplicatePanel(dock, panelId, 'right'))}
 						>
 							<span class="i-lucide-columns-2 ctx-icon"></span>
 							Split Right
 						</ContextMenuPrimitive.Item>
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
-							onclick={() => dock.addPanel(
-								{ id: `${panel.type}-${Date.now()}`, type: panel.type, label: panel.label, icon: panel.icon, closable: true },
-								{ leafId: leaf.id, zone: 'bottom' },
-							)}
+							onclick={() => runTabCommand('Split Down', () => duplicatePanel(dock, panelId, 'bottom'))}
 						>
 							<span class="i-lucide-rows-2 ctx-icon"></span>
 							Split Down
@@ -288,10 +285,11 @@ function removeGhost() {
 						<ContextMenuPrimitive.Separator class={contextMenuSeparatorVariants()} />
 						<ContextMenuPrimitive.Item
 							class={contextMenuItemVariants()}
-							onclick={() => deskSettings.openDialog()}
+							onclick={() => runTabCommand('Preferences…', () => deskSettings.openDialog())}
 						>
 							<span class="i-lucide-settings ctx-icon"></span>
-							Preferences…
+							<span class="flex-1">Preferences…</span>
+							<span class={contextMenuShortcutVariants()}>{PREFERENCES_SHORTCUT}</span>
 						</ContextMenuPrimitive.Item>
 					</ContextMenuPrimitive.Content>
 				</ContextMenuPrimitive.Portal>
@@ -300,18 +298,6 @@ function removeGhost() {
 	{/each}
 	</div>
 </div>
-
-{#if panelHelp}
-	<InfoDialog
-		bind:open={helpOpen}
-		noTrigger
-		title={panelHelp.title}
-		description={panelHelp.description}
-		icon={panelHelp.icon}
-		ariaLabel="About {panelHelp.title}"
-		doc={{ name: panelHelp.title, notes: panelHelp.notes }}
-	/>
-{/if}
 
 <style>
 	.dock-tab-bar {

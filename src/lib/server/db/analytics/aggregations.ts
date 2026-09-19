@@ -10,6 +10,7 @@ import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/sentin
 import type {
 	AudienceBreakdown,
 	AudienceSplit,
+	CommandUsage,
 	ConsentSplit,
 	FrictionSignal,
 	FunnelStep,
@@ -24,6 +25,7 @@ import type {
 } from '$lib/server/db/analytics/types';
 import { rowsOf } from '$lib/server/db/rows';
 import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
+import { COMMAND_VIA, type CommandVia } from '$lib/types/journey-events';
 
 function daysAgo(n: number): string {
 	const d = new Date();
@@ -596,6 +598,38 @@ export async function getUserLaneStats(days: number): Promise<UserLaneStats> {
 		events: Number(row?.events ?? 0),
 		topRoutes: topRoutes.map((r) => ({ route: r.route, count: Number(r.count) })),
 	};
+}
+
+/**
+ * Which commands people run, and through which door. The evidence a menu review
+ * needs (`docs/blueprint/design/explosive-discovery.md`, §19): a row that is
+ * daily belongs flat, a chord nobody presses is a false expert path. Reads the
+ * identified lane — the desk is where commands live and it is authenticated.
+ */
+export async function getCommandUsage(days: number, limit = 30): Promise<CommandUsage[]> {
+	const cutoff = new Date(Date.now() - days * 86400000);
+
+	const rows = await db.execute<{ command: string; via: string; count: number }>(sql`
+		SELECT
+			metadata->>'command' AS command,
+			metadata->>'via' AS via,
+			count(*)::int AS count
+		FROM analytics.user_events
+		WHERE event_type = 'action'
+		  AND timestamp >= ${cutoff}
+		  AND metadata->>'event' = 'command_invoked'
+		GROUP BY 1, 2
+	`);
+
+	const byCommand = new Map<string, CommandUsage>();
+	for (const r of rowsOf<{ command: string; via: string; count: number }>(rows)) {
+		const entry = byCommand.get(r.command) ?? { command: r.command, total: 0, byVia: {} };
+		const count = Number(r.count);
+		entry.total += count;
+		if ((COMMAND_VIA as readonly string[]).includes(r.via)) entry.byVia[r.via as CommandVia] = count;
+		byCommand.set(r.command, entry);
+	}
+	return [...byCommand.values()].sort((a, b) => b.total - a.total).slice(0, limit);
 }
 
 // Data age stats (for privacy page)

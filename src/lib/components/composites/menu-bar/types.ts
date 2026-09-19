@@ -6,7 +6,10 @@ export interface MenuBarItem {
 	/** CSS icon class (e.g., 'i-lucide-copy') */
 	icon?: string;
 	checked?: boolean;
-	/** Destructive command: danger styling; touch surfaces add an inline confirm step. */
+	/**
+	 * Destructive command: danger styling on every projection. Styling only —
+	 * a command whose mistake cannot be undone confirms in its own handler.
+	 */
 	destructive?: boolean;
 	onSelect?: () => void;
 }

@@ -196,6 +196,16 @@ function submitHiddenForm(action: string, postId: string) {
 								<td class="time-cell" title={p.updatedAt}>{relativeTime(p.updatedAt)}</td>
 								<td>
 									<Cluster gap="1">
+										<!-- The continuation door: the list is the overview, the desk editor is
+										     the action. A real link, so middle-click opens a second desk. File-managed
+										     posts are edited in their file — their door is the preview badge. -->
+										{#if !p.sourcePath}
+											<Button href="/desk?post={p.id}" variant="outline" size="sm">
+												<span class="i-lucide-pen-line h-4 w-4 mr-1"></span>
+												{m.admin_action_edit()}
+											</Button>
+										{/if}
+
 										{#if p.status === 'draft'}
 											<form
 												method="POST"

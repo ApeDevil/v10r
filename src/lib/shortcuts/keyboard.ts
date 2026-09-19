@@ -33,7 +33,7 @@ export function initKeyboardHandler(): () => void {
 
 		// Try to match single combo (e.g., 'mod+k')
 		const shortcut = findShortcutByKeys(keyString);
-		if (shortcut) {
+		if (shortcut?.action) {
 			event.preventDefault();
 			shortcut.action();
 		}
@@ -124,7 +124,7 @@ function handleSequence(keyString: string, event: KeyboardEvent) {
 	const sequenceString = sequenceKeys.join(' ');
 	const shortcut = findShortcutByKeys(sequenceString);
 
-	if (shortcut) {
+	if (shortcut?.action) {
 		// Match found - execute and reset
 		event.preventDefault();
 		shortcut.action();

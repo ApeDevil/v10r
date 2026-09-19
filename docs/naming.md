@@ -121,6 +121,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The tool calls whose results a provider request carried | `toolResultIds` (`ModelCallRequest`) — absent means not recorded, empty means none | `historyCount` as a proxy, `toolResults` |
 | A chunk's place in its document, as a turn records it | `chunkPlace()` (`ai/capabilities/chunk-place.ts`): `parentId` · `level` (`ChunkLevel`) · `position` · `contentHash` · `path`; `retriever` (`RetrieverId`) per item, `retrievers` per source | `ancestry`, `depth` (a number), `tiers` on the source, `lineage` |
 | The deterministic, ingest-built map of one collection's corpus — what it covers, without loading it | `corpus map` (`retrieval.corpus_map`, `getCorpusMap` / `countCorpusMaps` in `db/retrieval/queries.ts`; the chatbot's is the `project-map` capability, injected as `<project-overview>`) | `llmwiki` (the LLM-compiled pointer layer, retired 2026-09-12 — it had no writer and every fresh user's wiki was empty), `llmwiki_page`, `overview page`, `LlmwikiPage`, `loadOverview`, `get_llmwiki_pages`, `get_source_chunks` |
+| The review heuristic for a menu, toolbar or page that offers too many simultaneous choices — and the structure it recommends | `Explosive Discovery` (the heuristic: `docs/blueprint/design/explosive-discovery.md`, registry `ui-explosive-discovery`, skill `uxy-explosive-discovery`); `Nested Depth` (the structure: directions that narrow intent, detail on entry) | — (`progressive disclosure` stays the design *principle* in `design/README.md`; `Progressive Revelation` is a different, planned feature — never a synonym) |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 
@@ -158,6 +159,13 @@ Two of these deserve their reasoning spelled out, because the losing name looked
   `budgets.json` budgets *metrics*, `query-budget.ts` budgets *operations*. Keyed by a function
   name and meaningless without it, which is why it is a separate declaration rather than
   another section of the same JSON.
+- **`Explosive Discovery`, beside `progressive disclosure` and `Progressive Revelation`.**
+  Three names, three concepts, on purpose. *Progressive disclosure* is the design principle
+  (show what is needed now). *Explosive Discovery* is the review heuristic that says how to
+  structure the rest — directions, context promotion, one hierarchy per device, an advisory
+  five-part output. *Progressive Revelation* is a planned feature that gates content by
+  journey stage. Nothing is retired: the gate has nothing to catch; the risk is conflation,
+  and the doc's first callout carries it.
 
 ## Words that carry a metaphor
 
@@ -195,6 +203,14 @@ share. Each is spoken for:
   asks the shared kernel for) and the *location-awareness* profile (site- vs desk-awareness)
   are the same word because each is one surface's reading of one mechanism; the last two are
   now capabilities inside the first.
+- **`depth`** — in code, an elevation rung (`useSurface().depth`, `elevationAttr(depth + 1)`).
+  A chunk's place is its `level` (`ChunkLevel`); a pattern record's is its `tier`. "Nested
+  Depth" is prose — the name of the shape a menu hierarchy takes — and never a field.
+- **`path`, once more** — "discovery path" and "expert path" are PROSE, like "critical path".
+  Code names the mechanism: a `shortcut` on a menu item, a palette item, a `recent` entry.
+- **`budget`, once more** — "choice budget" is prose for a review trigger (~5±2 simultaneous
+  choices). There is no `choiceBudget` constant, by design: the number is a reason to look,
+  never a limit to enforce.
 
 ## Discriminator columns
 

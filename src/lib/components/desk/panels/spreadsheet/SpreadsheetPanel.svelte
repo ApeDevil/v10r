@@ -2,6 +2,7 @@
 import { onMount, untrack } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { page } from '$app/state';
+import { ConfirmDialog } from '$lib/components/composites/confirm-dialog';
 import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import {
 	getDeskBus,
@@ -159,6 +160,10 @@ $effect(() => {
 	contextTimer = setTimeout(pushContext, 800);
 });
 
+// Clear All wipes every cell with no undo and autosaves the empty grid: the one
+// desk row where a confirm is cheaper than the mistake.
+let confirmClear = $state(false);
+
 const spreadsheetMenus = $derived<MenuBarMenu[]>([
 	{
 		label: 'Sheet',
@@ -166,8 +171,10 @@ const spreadsheetMenus = $derived<MenuBarMenu[]>([
 			{
 				label: 'Clear All',
 				icon: 'i-lucide-trash-2',
+				destructive: true,
+				disabled: !save?.loaded,
 				onSelect: () => {
-					if (save?.loaded) sheet.clear();
+					confirmClear = true;
 				},
 			},
 		],
@@ -179,6 +186,21 @@ $effect(() => {
 	return panelMenus.register(panelId, { menuBar: spreadsheetMenus });
 });
 </script>
+
+<ConfirmDialog
+	bind:open={confirmClear}
+	title="Clear every cell?"
+	description="{sheetName} keeps no history — the emptied sheet is saved as-is."
+	destructive
+	confirmLabel="Clear All"
+	onconfirm={() => {
+		confirmClear = false;
+		sheet.clear();
+	}}
+	oncancel={() => {
+		confirmClear = false;
+	}}
+/>
 
 <div class="sheet-panel">
 	{#if !fileId}

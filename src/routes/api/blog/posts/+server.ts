@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import { createPost, isSlugTaken, listPosts } from '$lib/server/blog';
 import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
+import { getPostFolder } from '$lib/server/blog/post-folders';
 import { CreatePostSchema } from '$lib/server/blog/schemas';
 import { guardApiBlogAuthor } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
@@ -50,6 +51,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const taken = await isSlugTaken(parsed.output.slug);
 	if (taken) return apiError(409, 'slug_taken', 'Slug already taken');
 
-	const post = await createPost(user.id, { slug: parsed.output.slug });
+	// Clean 404 for a foreign or missing folder instead of the domain's ownership throw.
+	if (parsed.output.folderId) {
+		const folder = await getPostFolder(parsed.output.folderId, user.id);
+		if (!folder) return apiError(404, 'folder_not_found', 'Target folder not found.');
+	}
+
+	const post = await createPost(user.id, { slug: parsed.output.slug, folderId: parsed.output.folderId ?? null });
 	return apiCreated({ post });
 };

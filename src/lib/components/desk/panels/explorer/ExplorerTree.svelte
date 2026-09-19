@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { ContextMenuCallbacks } from './context-menu-items';
+import { type ContextMenuCallbacks, treeKeyOf } from './context-menu-items';
 import type { ExplorerState } from './explorer.state.svelte';
 import type { ExplorerNode } from './node';
 import TreeNode from './TreeNode.svelte';
@@ -30,7 +30,7 @@ function currentIndex(visible: ExplorerNode[]): number {
 
 function handleTreeKeydown(e: KeyboardEvent) {
 	// Rename/escape passthrough first.
-	if (e.key === 'F2' && explorerState.selectedId) {
+	if (e.key === treeKeyOf('rename') && explorerState.selectedId) {
 		const node = explorerState.getNode(explorerState.selectedId);
 		if (node?.capabilities.has('rename')) {
 			e.preventDefault();
@@ -109,9 +109,9 @@ function handleTreeKeydown(e: KeyboardEvent) {
 			callbacks.onOpen?.(current);
 			return;
 		}
-		case 'm':
-		case 'M': {
-			// Panel-scoped shortcut: open "Move to…" for the focused node.
+		default: {
+			// Panel-scoped key declared on the "Move to…" item: open the dialog for the focused node.
+			if (e.key.toUpperCase() !== treeKeyOf('moveRequest')) return;
 			if (e.ctrlKey || e.metaKey || e.altKey) return;
 			if (!current.capabilities.has('move')) return;
 			e.preventDefault();

@@ -52,6 +52,25 @@ The `×` button is the only gesture that ends a thread. Esc/minimize keep it ali
 | `⌘Enter` / `Ctrl+Enter` | Submit form | When form is focused |
 | `Escape` | Cancel/close form modal | In modal forms |
 
+### Desk Shortcuts (While `/desk` Is Mounted)
+
+The desk dispatches its own chords: `DeskShortcuts` matches keyboard events against the same
+`composePanelMenus()` array the panel kebab renders (`Ctrl+W` on the Panel floor's *Close
+Panel*, `Ctrl+Shift+E/P` on the View menu, panel-registered chords such as `Ctrl+S`), plus
+`Ctrl+Alt+1–9` for workspaces. How the shell learns them is *display-only*: the desk registers
+each chord with `dispatch: false` under the `desk` category while mounted, the `?` dialog
+lists them under **Desk**, and the shell handler never fires them — one chord, one
+dispatcher. Each panel's *About* dialog shows the same chords, derived from the same array
+(`shortcutTableMarkdown`). Panel-scoped keys that are not chords — the Explorer's `F2`
+(rename) and `M` (move to…) — are declared on their context-menu items
+(`context-menu-items.ts`) and shown beside them on the pointer projection; the tree's
+keydown reads the declaration (`treeKeyOf`). The View toggles' chords are declared on the
+activity-bar items (`$lib/desk/panels.ts`) — the bar tooltip and the View row read the same
+field. Desk chords fire from inside the editor's textarea too (the matcher has no
+"not while editing" guard; every chord is a modifier chord and the array is per focused
+panel), which is why no panel may declare a chord the browser owns in a text field. On the
+mobile projection the View chords do not exist, like the View menu.
+
 ---
 
 ## Shortcuts Help Modal

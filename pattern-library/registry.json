@@ -1329,6 +1329,112 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
+			"id": "ui-explosive-discovery",
+			"tier": "deep",
+			"title": "Explosive Discovery — nested depth for dense menus and pages",
+			"category": "ui",
+			"summary": "A review heuristic, not a rule: when a menu, toolbar or page offers more than ~5 ± 2 simultaneous choices, structure capability as directions that narrow intent (Overview → Direction → Context → Action → Detail), promote actions by context, keep an expert path beside every discovery path, and project one semantic hierarchy per device. The desk's panel menus embody it: one composed array rendered as desktop sub-menus and as a flat mobile sheet, with shortcuts declared on the same items.",
+			"when_to_use": "Reviewing or designing any menu, toolbar, context menu, sidebar or command surface that has grown past a handful of unrelated actions — and deciding whether the answer is grouping, context promotion, a shortcut, or leaving it flat.",
+			"capabilities": [
+				"choice-load review",
+				"semantic action grouping",
+				"context promotion",
+				"discovery and expert paths",
+				"per-viewport menu projection"
+			],
+			"keywords": [
+				"explosive discovery",
+				"nested depth",
+				"progressive disclosure",
+				"menus",
+				"kebab",
+				"overflow",
+				"command palette",
+				"shortcuts",
+				"context menu",
+				"mobile projection",
+				"ux review"
+			],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/design/explosive-discovery.md",
+					"note": "The heuristic: objective, choice trigger, context first, projections, review signals, output shape, invariants"
+				},
+				{
+					"path": "docs/blueprint/design/README.md",
+					"note": "Design principle 3 (progressive disclosure) — what this heuristic refines"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/desk/compose-menus.ts",
+					"note": "One composed menu array for every projection; the Panel floor menu promotes Switch-to / Close-others only when siblings exist"
+				},
+				{
+					"path": "src/lib/components/desk/view-menu.ts",
+					"note": "The dock-level View menu, desktop-only: the mobile sheet and the keyboard matcher below the breakpoint compose with viewMenu: null because the panels drawer already projects those commands on touch — a projection rule, not a second menu. Its toggle rows derive from the activity-bar items that declare a chord, so bar tooltip and menu row are one declaration"
+				},
+				{
+					"path": "src/lib/components/desk/DockLeafMenu.svelte",
+					"note": "Desktop projection: kebab → one sub-menu per direction"
+				},
+				{
+					"path": "src/lib/components/desk/DockMobileCommandsDrawer.svelte",
+					"note": "Mobile projection: the same array as flat titled sections (hover sub-menus are hostile to touch)"
+				},
+				{
+					"path": "src/lib/components/desk/DeskShortcuts.svelte",
+					"note": "Expert path derived from the discovery path: shortcuts matched against the composed menus, never a parallel table — and matched inside the editor's textarea, where the chord is needed"
+				},
+				{
+					"path": "src/lib/components/desk/panels/explorer/context-menu-items.ts",
+					"note": "Capability-gated builder — availability ≠ visibility; groups Open → AI context → Edit → Type-specific → Create → Destructive and omits empty groups"
+				},
+				{
+					"path": "src/lib/components/composites/selection-bar",
+					"kind": "dir",
+					"note": "Context promotion: a toolbar that exists only while a selection does"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/components/desk/compose-menus.test.ts",
+					"note": "Pins the projection invariants (View appended only where a projection passes one; the floor menu is never empty; the About table derives from the array) — not the heuristic's UX efficacy"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/desk",
+					"kind": "approute",
+					"note": "Open a panel's kebab on desktop, then the ⋮ commands sheet on a phone: same commands, two projections"
+				},
+				{
+					"path": "/showcases/ui/menus",
+					"kind": "route",
+					"note": "The forms a direction can take: dropdown, context menu, menu bar, overflow, selection bar, command palette"
+				}
+			],
+			"invariants": [
+				"Availability is not visibility: the capability model stays explicit (what can be done) and the page decides what to show now; hiding never removes a capability from the model.",
+				"Every projection (desktop, mobile, keyboard) renders the same composed capability set — only the arrangement differs; a command present on one and absent on another is a bug, not an adaptation.",
+				"Every discovery path has an expert path — a shortcut, palette entry or recent — declared beside the menu item, never in a second table that can drift.",
+				"Context promotion is temporary: an action surfaced by state (selection, dirty, siblings) returns to its depth when the state ends.",
+				"~5 ± 2 simultaneous primary choices is a review trigger, never a limit; a flat list stays flat when it is familiar, scannable, repeated, or a comparison."
+			],
+			"emulation_notes": [
+				"Build the menu as data first — one pure compose function over registered menus plus a floor menu — then render each projection from that array; test the projection rules (what mobile strips) in the pure function, not in components.",
+				"Gate items by a capability Set on the object and let the builder omit empty groups; the menu never learns node types.",
+				"Declare `shortcut` on the menu item and match keyboard events against the same array; never register the same commands in a second global table.",
+				"Nest by narrowing intent (Place → When / Where / Map), never because a menu is long; a 'More' bucket of leftovers is the anti-pattern the heuristic exists to catch.",
+				"Review with the five-part output (Observation / Reasoning / Opportunity / Possible Direction / Trade-off) and its advisory language; a finding is mandatory only when another requirement makes it so."
+			],
+			"risk": "low — a review heuristic and pure composition code; no persistence, no external services",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-18",
+			"verifiedSha": "b9287328-dirty"
+		},
+		{
 			"id": "ui-design-tokens",
 			"tier": "light",
 			"title": "Design tokens (breakpoints, fluid type/space, z-index)",
@@ -5808,7 +5914,7 @@
 				},
 				{
 					"path": "src/lib/components/desk/view-menu.ts",
-					"note": "buildViewMenu({ structural }) — mobile strips split commands"
+					"note": "buildViewMenu(actions) — desktop-only; the mobile sheet composes without it (the panels drawer projects View on touch)"
 				}
 			],
 			"tests": [

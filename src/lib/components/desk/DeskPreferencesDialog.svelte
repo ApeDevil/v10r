@@ -1,14 +1,34 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
+import { Button, ToggleGroup } from '$lib/components/primitives';
 import OklchColorInput from '$lib/components/primitives/color-input/OklchColorInput.svelte';
 import Dialog from '$lib/components/primitives/dialog/Dialog.svelte';
 import Tabs from '$lib/components/primitives/tabs/Tabs.svelte';
+import type { ActivityBarPosition } from '$lib/desk/layout.types';
 import { DESK_PANEL_TYPES, DESK_PANELS } from '$lib/desk/panels';
 import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 import { getDeskSettings } from './desk-settings.state.svelte';
+import { getDockContext } from './dock.state.svelte';
+
+interface Props {
+	/** The mobile projection has no activity bar — its position row is desktop-only. */
+	desktop: boolean;
+}
+
+let { desktop }: Props = $props();
 
 const settings = getDeskSettings();
+const dock = getDockContext();
+
+// Activity-bar position is LAYOUT state (persisted with the workspace, not the
+// theme draft), so it applies as soon as it is picked — the row says so. Same
+// options as the bar's own right-click menu, which stays the expert path.
+const BAR_POSITIONS = $derived<{ value: ActivityBarPosition; label: string; icon: string }[]>([
+	{ value: 'left', label: m.composites_dock_position_left(), icon: 'i-lucide-panel-left' },
+	{ value: 'right', label: m.composites_dock_position_right(), icon: 'i-lucide-panel-right' },
+	{ value: 'top', label: m.composites_dock_position_top(), icon: 'i-lucide-panel-top' },
+	{ value: 'bottom', label: m.composites_dock_position_bottom(), icon: 'i-lucide-panel-bottom' },
+]);
 
 let presetName = $state('');
 
@@ -53,6 +73,17 @@ function typeColor(panelType: string): string {
 
 {#snippet workspaceTab()}
 	<div class="settings-section">
+		{#if desktop}
+			<div class="layout-row">
+				<span class="layout-label">{m.composites_dock_activity_bar_position()}</span>
+				<ToggleGroup
+					items={BAR_POSITIONS}
+					size="sm"
+					bind:value={() => dock.activityBarPosition, (v) => { if (v) dock.setActivityBarPosition(v as ActivityBarPosition); }}
+				/>
+				<span class="layout-hint">{m.composites_desk_prefs_applies_immediately()}</span>
+			</div>
+		{/if}
 		<OklchColorInput
 			label={m.composites_desk_prefs_color_shell()}
 			value={wsColor('shellBg')}
@@ -183,6 +214,27 @@ function typeColor(panelType: string): string {
 
 	.reset-row {
 		margin-top: 0.5rem;
+	}
+
+	.layout-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 0.75rem;
+		padding-bottom: 0.75rem;
+		margin-bottom: 0.75rem;
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.layout-label {
+		font-size: var(--text-fluid-sm);
+		font-weight: 500;
+		color: var(--color-fg);
+	}
+
+	.layout-hint {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
 	}
 
 	.panel-type-section {

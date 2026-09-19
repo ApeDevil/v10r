@@ -55,10 +55,10 @@ Floating chrome is **viewport chrome**: the controls pill (like the shell FAB an
 |---------|-----------|---------|
 | Open-panel tab strip (top, 44px, scrollable) | `DockMobileTabs` | tap → `focusPanel` |
 | Commands region of the pill (`⋮`) | `DockMobileControls` | bottom sheet with the focused panel's composed menus (`DockMobileCommandsSheet`) |
-| Panels region of the pill (icon + count) | `DockMobileControls` | left drawer, `min(85vw, 320px)`: panel types + open instances (`DockMobilePanelsDrawer`) |
+| Panels region of the pill (icon + count) | `DockMobileControls` | left drawer, `min(85vw, 320px)`: panel types + open instances, then workspaces (switch, create) — the mobile projection of the desktop activity bar (`DockMobilePanelsDrawer`) |
 | App menu | shell `SidebarFab` | untouched — the pill sits left of it via the `--fab-*` slot tokens in `app.css` |
 
-Desktop kebab and mobile commands sheet render the same `composePanelMenus()` array (registered menus → dock-supplied Panel floor menu → View menu) — a difference between the two is a bug. The mobile View menu strips structural commands (Split Right/Down). The pill hides while the soft keyboard is open (`data-keyboard='open'` on `<html>`, published by `$lib/state/visual-viewport.svelte.ts`).
+Desktop kebab, mobile commands sheet and the keyboard matcher (`DeskShortcuts`) consume the same `composePanelMenus()` array (registered menus → dock-supplied Panel floor menu → View menu, separators normalised once there) — a difference between the three is a bug. View's toggle rows are derived from the activity-bar items that declare a `shortcut` (`DESK_ACTIVITY_BAR_ITEMS` in `$lib/desk/panels.ts`; the bar's tooltip prints the same chord), so a toggle chord has one declaration. The matcher has no "not while editing" guard: the editor's text is a textarea and that is where Ctrl+S, Ctrl+, and Ctrl+Shift+X matter — every desk chord is a modifier chord and the array is composed per focused panel, so a plain key can never be taken from a field; the constraint this leaves is never to declare a chord the browser owns in a text field. The tab's right-click menu is leaf-scoped (Close Others / Close All) and prints the shared chords it mirrors (`CLOSE_PANEL_SHORTCUT`, `PREFERENCES_SHORTCUT`); its Split and View's Split both mint through `duplicatePanel()`, which keeps a file panel's file. Every command door — kebab, sheet, chord, palette, context menus, the activity bar and its drawer — records `command_invoked` (`trackCommand`), which lands in the authenticated analytics lane and is read on `/admin/analytics/human`. The floor menu is the panel's own home: switch instance, `Close Panel` (Ctrl+W), `About <panel>`; the host lends only the About dialog, whose shortcut table is derived from the same array (`shortcutTableMarkdown`) — `$lib/desk/help.ts` holds prose only. The View menu is dock-level and desktop-only: the mobile sheet and, below the breakpoint, the keyboard matcher pass `viewMenu: null`, because the panels drawer already projects every View command on touch (show-or-open per type, Preferences) and the structural toggle/split verbs must never reach a touch surface — not from a hardware keyboard either. Desk Preferences hides its activity-bar row on that projection for the same reason. Every close route on both projections asks the dock's unsaved-close guard first (`dock.requestClose` / `requestClosePanels`, one confirm per batch); `closePanel` is the raw operation. While the desk is mounted its chords are also listed, display-only, under "Desk" in the shell's `shift+/` dialog. The pill hides while the soft keyboard is open (`data-keyboard='open'` on `<html>`, published by `$lib/state/visual-viewport.svelte.ts`).
 
 ### Cross-Panel Communication (DeskBus)
 
@@ -144,15 +144,15 @@ $lib/components/desk/
   DockMobileView.svelte             # Keep-alive panel stack + empty-state recovery grid
   DockMobileTabs.svelte             # Mobile: top tab strip of open instances
   DockMobileControls.svelte         # Mobile: bottom-right pill (commands | panels+count)
-  DockMobilePanelsDrawer.svelte     # Mobile: left drawer — panel types + open instances
-  DockMobileCommandsSheet.svelte    # Mobile: bottom sheet rendering composePanelMenus()
+  DockMobilePanelsDrawer.svelte     # Mobile: left drawer — panel types + open instances + workspaces
+  DockMobileCommandsDrawer.svelte   # Mobile: bottom sheet rendering composePanelMenus()
   DockMobileBar.svelte              # Legacy bottom bar (mobileChrome="bar", dock showcase)
   dock.state.svelte.ts              # Split-tree state, total focus derivation, focusSeq
   dock.operations.ts                # Pure tree math (split/remove/move) — purity-tested
   dock.persistence.ts               # localStorage lane for DockLayoutState
   dock.types.ts                     # DockNode/DockLayoutState types
-  panel-actions.ts                  # focusPanel/openOrCycle/closeCurrent — the single focus writer
-  panel-menus.svelte.ts             # Context-scoped per-instance menu registry
+  panel-actions.ts                  # focusPanel/openOrCycle/togglePanelType — the single focus writer
+  panel-menus.state.svelte.ts       # Context-scoped per-instance menu registry
   compose-menus.ts / view-menu.ts   # composePanelMenus() + buildViewMenu() shared desktop/mobile
   dock-mobile.state.svelte.ts       # Mobile surface discriminator ('panels'|'commands'|null)
   desk-bus.svelte.ts                # DeskBus with DeskEvents interface

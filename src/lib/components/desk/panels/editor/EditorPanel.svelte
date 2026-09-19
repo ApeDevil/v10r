@@ -13,6 +13,7 @@ import {
 import { fileIdOfPanel } from '$lib/components/desk/file-panel';
 import PanelEmptyState from '$lib/components/desk/PanelEmptyState.svelte';
 import { Button, Spinner } from '$lib/components/primitives';
+import { isLocale, localizeHref } from '$lib/i18n';
 import type { PostStatus } from '$lib/types/db-enums';
 import MarkdownSource from './MarkdownSource.svelte';
 import MetadataDrawer from './MetadataDrawer.svelte';
@@ -312,6 +313,10 @@ const unsubInsert = bus.subscribe('files:insert-image', (payload) => {
 	contentTimer = setTimeout(publishContent, 300);
 });
 
+function openInNewTab(path: string) {
+	window.open(isLocale(locale) ? localizeHref(path, { locale }) : localizeHref(path), '_blank', 'noopener');
+}
+
 // Register menus for the global MenuBar
 const editorMenus = $derived<MenuBarMenu[]>([
 	{
@@ -363,6 +368,23 @@ const editorMenus = $derived<MenuBarMenu[]>([
 						...(status !== 'published'
 							? [{ label: 'Publish...', icon: 'i-lucide-globe', onSelect: startPublishConfirm }]
 							: [{ label: 'Update...', icon: 'i-lucide-globe', onSelect: startPublishConfirm }]),
+						// The step after publishing is seeing the page; before it, the draft's
+						// server-rendered preview. A new tab — the desk stays where it is.
+						...(status === 'published'
+							? [
+									{
+										label: 'Open Published Page',
+										icon: 'i-lucide-external-link',
+										onSelect: () => openInNewTab(`/blog/${slug}`),
+									},
+								]
+							: [
+									{
+										label: 'Open Draft Preview',
+										icon: 'i-lucide-external-link',
+										onSelect: () => openInNewTab(`/admin/content/posts/preview/${slug}/${locale}`),
+									},
+								]),
 					],
 				} satisfies MenuBarMenu,
 			]
@@ -475,7 +497,6 @@ onDestroy(() => {
 
 		<MarkdownSource
 			bind:value={markdown}
-			onsave={save}
 			oninput={handleContentChange}
 		/>
 

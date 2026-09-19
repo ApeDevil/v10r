@@ -6,6 +6,8 @@ const MAX_MARKDOWN_SIZE = 500_000;
 
 export const CreatePostSchema = v.object({
 	slug: SlugParam,
+	/** Omit or null for the blog root (virtual:blog on the client). */
+	folderId: v.optional(v.nullable(v.pipe(v.string(), v.startsWith('pfd_')))),
 });
 
 export const CreateRevisionSchema = v.object({

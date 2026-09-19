@@ -5,7 +5,7 @@ import { browser } from '$app/environment';
 import { goto, invalidateAll } from '$app/navigation';
 import { authClient } from '$lib/auth-client';
 import { Altcha } from '$lib/components/composites';
-import { Button, Input, Spinner } from '$lib/components/primitives';
+import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 import { authErrorMessage, errorMessage } from '$lib/errors';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
@@ -48,6 +48,29 @@ const OTP_MARKER_KEY = 'v10r:pending-otp';
 const OTP_MARKER_TTL_MS = 10 * 60 * 1000;
 
 let pendingOtp = $state<PendingOtp | null>(null);
+
+// Remembered choice: the method this browser last signed in with gets a
+// "Last used" badge — never a reorder, the install-mode arrangement above
+// decides which group is primary. Written when a method is STARTED
+// successfully (link/code sent, OAuth redirect issued, passkey resolved); a
+// method, not an identity, so a shared device leaks nothing worth guarding.
+type LoginMethod = 'magic-link' | 'otp' | 'github' | 'google' | 'passkey';
+const LOGIN_METHODS: readonly LoginMethod[] = ['magic-link', 'otp', 'github', 'google', 'passkey'];
+const LAST_METHOD_KEY = 'v10r:last-login-method';
+
+let lastMethod = $state<LoginMethod | null>(null);
+
+function rememberMethod(method: LoginMethod) {
+	try {
+		localStorage.setItem(LAST_METHOD_KEY, method);
+	} catch {}
+}
+
+function forgetMethod() {
+	try {
+		localStorage.removeItem(LAST_METHOD_KEY);
+	} catch {}
+}
 
 function resumeOtp() {
 	if (!pendingOtp) return;
@@ -92,6 +115,7 @@ async function handleMagicLink() {
 			// The emailed link completes in the browser, not necessarily in this
 			// window (installed PWA) — let the wake-time revalidation pick it up.
 			setAuthPendingMarker();
+			rememberMethod('magic-link');
 			flowState = 'magic-link-sent';
 		}
 	} catch {
@@ -126,6 +150,7 @@ async function handleOtp() {
 					JSON.stringify({ email: email.trim(), returnTo: data.returnTo, sentAt: Date.now() } satisfies PendingOtp),
 				);
 			} catch {}
+			rememberMethod('otp');
 			const params = new URLSearchParams({
 				email: email.trim(),
 				returnTo: data.returnTo,
@@ -146,6 +171,9 @@ async function handleOAuth(provider: 'github' | 'google') {
 	// In an installed PWA the OAuth round trip completes in the system browser —
 	// the marker lets the wake-time revalidation refresh this window's session.
 	setAuthPendingMarker();
+	// The redirect leaves this page before anything after `await` runs, so the
+	// choice is remembered up front and forgotten again on a reported error.
+	rememberMethod(provider);
 	try {
 		const result = await authClient.signIn.social({
 			provider,
@@ -154,11 +182,13 @@ async function handleOAuth(provider: 'github' | 'google') {
 		if (result?.error) {
 			// signIn.social reports rate limiting (429) via result.error, not throw.
 			clearAuthPendingMarker();
+			forgetMethod();
 			error = authErrorMessage(result.error, () => errorMessage('INTERNAL'));
 			loadingProvider = null;
 		}
 	} catch (err) {
 		clearAuthPendingMarker();
+		forgetMethod();
 		error = err instanceof Error ? err.message : errorMessage('INTERNAL');
 		loadingProvider = null;
 	}
@@ -180,6 +210,7 @@ async function handlePasskey() {
 				error = result.error.message ?? m.auth_login_passkey_failed();
 			}
 		} else {
+			rememberMethod('passkey');
 			// Refresh the shared root-layout `session` (it is reused across a
 			// client-side nav, so the shell would otherwise stay logged-out).
 			await invalidateAll();
@@ -195,6 +226,13 @@ async function handlePasskey() {
 }
 
 onMount(() => {
+	try {
+		const remembered = localStorage.getItem(LAST_METHOD_KEY);
+		if (remembered && (LOGIN_METHODS as readonly string[]).includes(remembered)) {
+			lastMethod = remembered as LoginMethod;
+		}
+	} catch {}
+
 	// Restore an interrupted OTP flow (fresh marker only).
 	try {
 		const raw = localStorage.getItem(OTP_MARKER_KEY);
@@ -221,6 +259,7 @@ onMount(() => {
 			.passkey({ autoFill: true })
 			.then(async (result) => {
 				if (result && !result.error) {
+					rememberMethod('passkey');
 					await invalidateAll();
 					goto(localizeHref(data.returnTo));
 				}
@@ -231,6 +270,12 @@ onMount(() => {
 	});
 });
 </script>
+{#snippet lastUsed(method: LoginMethod)}
+	{#if lastMethod === method}
+		<Badge variant="secondary" class="ml-2">{m.auth_login_last_used()}</Badge>
+	{/if}
+{/snippet}
+
 {#snippet passkeyButton()}
 	<div class="login-actions">
 		<Button
@@ -246,6 +291,7 @@ onMount(() => {
 				<span class="i-lucide-fingerprint text-xl mr-3" aria-hidden="true"></span>
 			{/if}
 			{m.auth_login_passkey()}
+			{@render lastUsed('passkey')}
 		</Button>
 	</div>
 {/snippet}
@@ -324,6 +370,7 @@ onMount(() => {
 								<span class="i-lucide-hash text-base mr-2" aria-hidden="true"></span>
 							{/if}
 							{m.auth_login_send_code()}
+							{@render lastUsed('otp')}
 						</Button>
 					</div>
 					<Button
@@ -339,6 +386,7 @@ onMount(() => {
 							<span class="i-lucide-link text-base mr-2" aria-hidden="true"></span>
 						{/if}
 						{m.auth_login_magic_link()}
+						{@render lastUsed('magic-link')}
 					</Button>
 					<p class="standalone-caveat">{m.auth_login_standalone_magic_link_caveat()}</p>
 				{:else}
@@ -356,6 +404,7 @@ onMount(() => {
 								<span class="i-lucide-link text-base mr-2" aria-hidden="true"></span>
 							{/if}
 							{m.auth_login_magic_link()}
+							{@render lastUsed('magic-link')}
 						</Button>
 
 						<Button
@@ -371,6 +420,7 @@ onMount(() => {
 								<span class="i-lucide-hash text-base mr-2" aria-hidden="true"></span>
 							{/if}
 							{m.auth_login_send_code()}
+							{@render lastUsed('otp')}
 						</Button>
 					</div>
 				{/if}
@@ -403,6 +453,7 @@ onMount(() => {
 						<span class="i-lucide-github text-xl mr-3" aria-hidden="true"></span>
 					{/if}
 					GitHub
+					{@render lastUsed('github')}
 				</Button>
 
 				<Button
@@ -420,6 +471,7 @@ onMount(() => {
 						</svg>
 					{/if}
 					Google
+					{@render lastUsed('google')}
 				</Button>
 			</div>
 

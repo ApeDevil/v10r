@@ -17,6 +17,13 @@
  * - **Scroll depth**, bucketed to quartiles. A continuous value would be both
  *   higher cardinality and marginally more identifying, for no extra insight.
  * - **Uncaught errors**, message only.
+ * - **Commands invoked**, with the door they came through (menu, mobile sheet,
+ *   shortcut, palette, context menu, activity bar). The only evidence that can
+ *   settle a menu review: which rows are daily, whether the expert path is used
+ *   at all. The command is a UI label from a closed vocabulary — never content.
+ *   Nearly all of these come from the desk, an authenticated area, so they
+ *   travel the identified lane (`analytics.user_events`) and are read on
+ *   `/admin/analytics/human` — the anonymous lane refuses `/desk` paths.
  *
  * ## What it deliberately does NOT collect
  *
@@ -38,6 +45,8 @@
  */
 
 import { browser, dev } from '$app/environment';
+import type { CommandVia } from '$lib/types/journey-events';
+import { userLaneSurface } from './collect-policy';
 import { beacon } from './transport';
 
 const ENDPOINT = '/api/analytics/journey/collect';
@@ -57,41 +66,82 @@ interface QueuedEvent {
 	occurredAt: string;
 }
 
+/**
+ * Which lane an event is bound for, decided at push time from the same
+ * predicate the server applies (`collect-policy.ts`): a signed-in user on a
+ * user-lane path (`/account`, `/desk`) writes to the identified lane, which the
+ * consent banner does not govern; everything else is anonymous-lane and waits
+ * on consent. Kept beside the event so a withdrawal can drop exactly the rows
+ * it covers and nothing else.
+ */
+type Lane = 'anon' | 'user';
+
 let initialized = false;
-let queue: QueuedEvent[] = [];
+let queue: (QueuedEvent & { lane: Lane })[] = [];
 let hasConsent = false;
+let signedIn = false;
 /** Supplied by the app; lets the module read the current templated route. */
 let routeOf: () => string = () => '(unknown)';
 
+function laneOf(path: string): Lane {
+	return signedIn && userLaneSurface(path) ? 'user' : 'anon';
+}
+
 function push(kind: QueuedEvent['kind'], name: string, extra: Partial<QueuedEvent> = {}): void {
-	if (!hasConsent) return;
+	// `initialized` is the dev gate (see initTelemetry): callers outside this
+	// module — trackCommand — must not queue on a dev server either.
+	if (!initialized) return;
+	const path = location.pathname;
+	const lane = laneOf(path);
+	if (lane === 'anon' && !hasConsent) return;
 	queue.push({
 		eventId: crypto.randomUUID(),
 		kind,
 		name,
-		path: location.pathname,
+		path,
 		route: routeOf(),
 		occurredAt: new Date().toISOString(),
 		...extra,
+		lane,
 	});
 	if (queue.length >= MAX_BATCH) flush();
+}
+
+/** Anonymous-lane rows exist only while consent holds; user-lane rows always. */
+function dropUnconsented(): void {
+	if (!hasConsent) queue = queue.filter((evt) => evt.lane === 'user');
 }
 
 function flush(): void {
 	// Re-checked here, not only at push time: consent can be withdrawn while
 	// events sit in the queue, and those must never be delivered.
-	if (!hasConsent) {
-		queue = [];
-		return;
-	}
+	dropUnconsented();
 	if (queue.length === 0) return;
-	beacon(ENDPOINT, { events: queue.splice(0, MAX_BATCH) });
+	beacon(ENDPOINT, { events: queue.splice(0, MAX_BATCH).map(({ lane: _lane, ...evt }) => evt) });
+}
+
+/**
+ * A command a person ran, and the door it came through. Call from the place
+ * that dispatches — the composed-menu hosts, the shortcut matcher, the palette,
+ * a context menu — with the UI label ("View › Toggle Explorer"), never content.
+ */
+export function trackCommand(via: CommandVia, command: string): void {
+	push('action', 'command_invoked', { props: { via, command: command.slice(0, 60) } });
+}
+
+/**
+ * Called by the app with the session state. A signed-in user's events on a
+ * user-lane path go to the identified lane regardless of the banner — the
+ * server applies the same rule and refuses anything else for that path.
+ */
+export function setTelemetrySession(active: boolean): void {
+	signedIn = active;
 }
 
 /** Called by the app whenever the consent tier changes. */
 export function setTelemetryConsent(granted: boolean): void {
-	if (!granted && hasConsent) queue = []; // withdrawal drops anything buffered
 	hasConsent = granted;
+	dropUnconsented(); // withdrawal drops what the banner covered; user-lane rows stay
 }
 
 async function initVitals(): Promise<void> {

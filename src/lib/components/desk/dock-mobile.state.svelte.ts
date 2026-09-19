@@ -5,20 +5,18 @@
  * One `surface` discriminator makes the panels drawer and the commands sheet
  * mutually exclusive by construction; getter/setter pairs let bits Drawers
  * `bind:open` directly (proven pattern: modals.svelte.ts + AppShell).
+ * Closing a panel is not mobile business: the unsaved-close guard lives on the
+ * dock (`dock.requestClose`) so both projections confirm the same way.
  */
 
 import { getContext, setContext } from 'svelte';
-import type { PanelDefinition } from '$lib/desk/layout.types';
-import type { DockState } from './dock.state.svelte';
 
 const DOCK_MOBILE_CTX = Symbol('dock-mobile');
 
 type MobileSurface = 'panels' | 'commands' | null;
 
-export function createDockMobileState(dock: DockState) {
+export function createDockMobileState() {
 	let surface = $state<MobileSurface>(null);
-	/** Panel awaiting an unsaved-close confirmation (null = no pending confirm). */
-	let pendingClose = $state<PanelDefinition | null>(null);
 
 	return {
 		get panelsOpen() {
@@ -41,40 +39,13 @@ export function createDockMobileState(dock: DockState) {
 		close() {
 			surface = null;
 		},
-
-		get pendingClose() {
-			return pendingClose;
-		},
-		/**
-		 * Close a panel, gating unsaved work behind a confirm dialog. Undo can
-		 * restore the panel shell but not a destroyed buffer — hence confirm,
-		 * not just the undo toast.
-		 */
-		requestClose(panelId: string) {
-			const panel = dock.panels[panelId];
-			if (!panel) return;
-			if (panel.indicator === 'unsaved') {
-				pendingClose = panel;
-				return;
-			}
-			dock.closePanel(panelId);
-		},
-		confirmPendingClose() {
-			if (pendingClose) {
-				dock.closePanel(pendingClose.id);
-				pendingClose = null;
-			}
-		},
-		cancelPendingClose() {
-			pendingClose = null;
-		},
 	};
 }
 
 export type DockMobileState = ReturnType<typeof createDockMobileState>;
 
-export function setDockMobileContext(dock: DockState): DockMobileState {
-	const state = createDockMobileState(dock);
+export function setDockMobileContext(): DockMobileState {
+	const state = createDockMobileState();
 	setContext(DOCK_MOBILE_CTX, state);
 	return state;
 }

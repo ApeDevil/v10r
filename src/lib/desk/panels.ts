@@ -14,8 +14,20 @@ export const DESK_PANELS: Record<string, PanelDefinition> = {
 	'io-log': { id: 'io-log', type: 'io-log', label: 'I/O Log', icon: 'i-lucide-activity', closable: true },
 };
 
+/**
+ * The two panels a writer opens and closes around the editor get a chord; the
+ * rest are opened from a file or once per session (review #13). One
+ * declaration — the bar tooltip, the View menu, the keyboard matcher, the About
+ * table and the shift+/ dialog all read it from the item.
+ */
+const PANEL_TOGGLE_SHORTCUTS: Partial<Record<DeskPanelType, string>> = {
+	explorer: 'Ctrl+Shift+E',
+	preview: 'Ctrl+Shift+P',
+};
+
 export const DESK_ACTIVITY_BAR_ITEMS: ActivityBarItem[] = Object.values(DESK_PANELS).map((p) => ({
 	panelType: p.type,
 	icon: p.icon ?? '',
 	label: p.label,
+	shortcut: PANEL_TOGGLE_SHORTCUTS[p.type as DeskPanelType],
 }));

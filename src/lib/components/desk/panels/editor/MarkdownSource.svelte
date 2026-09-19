@@ -1,18 +1,13 @@
 <script lang="ts">
+// No Ctrl+S here: the desk matcher (DeskShortcuts) fires the File › Save row
+// from inside the textarea, so the chord has one declaration and obeys the
+// menu's gating (no Save row while saved → no redundant revision).
 interface Props {
 	value: string;
-	onsave?: () => void;
 	oninput?: (value: string) => void;
 }
 
-let { value = $bindable(''), onsave, oninput }: Props = $props();
-
-function handleKeydown(e: KeyboardEvent) {
-	if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-		e.preventDefault();
-		onsave?.();
-	}
-}
+let { value = $bindable(''), oninput }: Props = $props();
 
 function handleInput(e: Event) {
 	const target = e.target as HTMLTextAreaElement;
@@ -63,7 +58,6 @@ function handleDrop(e: DragEvent) {
 		class="source-textarea"
 		{value}
 		oninput={handleInput}
-		onkeydown={handleKeydown}
 		ondragover={handleDragOver}
 		ondrop={handleDrop}
 		placeholder="Start writing markdown..."

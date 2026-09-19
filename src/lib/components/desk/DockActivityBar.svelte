@@ -1,5 +1,6 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
+import { trackCommand } from '$lib/analytics/telemetry';
 import { contextMenuContentVariants, contextMenuItemVariants } from '$lib/components/composites/context-menu';
 import type { ActivityBarItem, ActivityBarPosition } from '$lib/desk/layout.types';
 import * as m from '$lib/paraglide/messages';
@@ -9,6 +10,7 @@ import { getDeskSettings } from './desk-settings.state.svelte';
 import { hasPanelType } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
 import { togglePanelType } from './panel-actions';
+import { PREFERENCES_SHORTCUT } from './view-menu';
 import WorkspaceZone from './WorkspaceZone.svelte';
 
 interface Props {
@@ -39,8 +41,15 @@ function isTypeInLayout(panelType: string): boolean {
 }
 
 // Desktop toggle semantics (close-all-of-type / add) — shared via panel-actions.
+// Recorded under the View row's name so one command aggregates across its doors.
 function handleClick(item: ActivityBarItem) {
+	trackCommand('bar', `View › Toggle ${item.label}`);
 	togglePanelType(dock, item.panelType, item.label, item.icon);
+}
+
+/** The chord is declared on the item; the tooltip is where the bar prints it. */
+function tooltip(item: ActivityBarItem): string {
+	return item.shortcut ? `${item.label} — ${item.shortcut}` : item.label;
 }
 </script>
 
@@ -58,7 +67,8 @@ function handleClick(item: ActivityBarItem) {
 					{@const active = isTypeInLayout(item.panelType)}
 					<button
 						class={cn('dock-activity-btn', active && 'active')}
-						title={item.label}
+						title={tooltip(item)}
+						aria-label={tooltip(item)}
 						aria-pressed={active}
 						onclick={() => handleClick(item)}
 					>
@@ -69,8 +79,12 @@ function handleClick(item: ActivityBarItem) {
 					<WorkspaceZone />
 					<button
 						class="dock-activity-btn"
-						title={m.composites_desk_prefs_title()}
-						onclick={() => deskSettings.openDialog()}
+						title="{m.composites_desk_prefs_title()} — {PREFERENCES_SHORTCUT}"
+						aria-label="{m.composites_desk_prefs_title()} — {PREFERENCES_SHORTCUT}"
+						onclick={() => {
+							trackCommand('bar', 'View › Desk Preferences…');
+							deskSettings.openDialog();
+						}}
 					>
 						<span class={cn('dock-activity-icon', 'i-lucide-settings')}></span>
 					</button>

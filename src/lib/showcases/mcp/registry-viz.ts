@@ -67,6 +67,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'docs-nav-hubs': 'Docs Hubs',
 	'pattern-index': 'Pattern Index',
 	'ui-component-system': 'UI System',
+	'ui-explosive-discovery': 'Discovery',
 	'jobs-scheduler': 'Jobs',
 	'ai-tool-harness': 'Tool Harness',
 	'ai-surfaces': 'AI Surfaces',

@@ -10,6 +10,7 @@ import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
 import { getFormattingLocale } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
+import { COMMAND_VIA } from '$lib/types/journey-events';
 import { formatDuration } from '$lib/utils/format-duration';
 import type { PageProps } from './$types';
 
@@ -499,6 +500,41 @@ const ranges = [
 		</Card>
 	</div>
 
+	<!-- Commands: the menu-review evidence (which rows are daily, is the expert path used) -->
+	<Card>
+		{#snippet header()}
+			<Stack gap="1">
+				<h2 class="text-fluid-lg font-semibold">{m.admin_analytics_commands_title()}</h2>
+				<p class="text-muted text-fluid-xs">{m.admin_analytics_commands_description()}</p>
+			</Stack>
+		{/snippet}
+		{#await data.commands}
+			<Skeleton variant="rectangular" height="160px" />
+		{:then commands}
+			{#if commands.length === 0}
+				<p class="text-muted text-fluid-sm">{m.admin_analytics_commands_empty()}</p>
+			{:else}
+				<div class="friction-list">
+					{#each commands as c (c.command)}
+						<div class="command-row">
+							<code class="friction-target">{c.command}</code>
+							<Cluster gap="1" class="command-doors">
+								{#each COMMAND_VIA as via (via)}
+									{#if c.byVia[via]}
+										<Tag variant={via === 'shortcut' || via === 'palette' ? 'success' : 'secondary'} label="{via} {c.byVia[via]}" />
+									{/if}
+								{/each}
+							</Cluster>
+							<span class="friction-count">{c.total}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		{:catch}
+			<p class="text-muted text-fluid-sm">{m.admin_analytics_commands_empty()}</p>
+		{/await}
+	</Card>
+
 	<!-- Live Activity Feed -->
 	<LiveFeed initialEvents={data.recentEvents} bind:pairedActive />
 </Stack>
@@ -830,6 +866,16 @@ const ranges = [
 	.friction-row {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr) auto;
+		align-items: center;
+		gap: var(--spacing-3);
+		padding: var(--spacing-2) var(--spacing-3);
+		border-radius: var(--radius-md);
+		background: var(--color-subtle);
+	}
+
+	.command-row {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto auto;
 		align-items: center;
 		gap: var(--spacing-3);
 		padding: var(--spacing-2) var(--spacing-3);

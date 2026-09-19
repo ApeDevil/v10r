@@ -59,6 +59,11 @@ export interface ActivityBarItem {
 	panelType: string;
 	icon: string;
 	label: string;
+	/**
+	 * The chord that toggles this type, declared once here: the bar prints it in
+	 * the tooltip and the View menu derives a `Toggle <label>` row from it.
+	 */
+	shortcut?: string;
 }
 
 /** Serializable layout for persistence */

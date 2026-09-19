@@ -24,7 +24,8 @@ import {
 	splitLeaf,
 } from './dock.operations';
 import { createDockState } from './dock.state.svelte';
-import { closeCurrent, focusPanel, openOrCycle, togglePanelType } from './panel-actions';
+import { fileIdOfPanel } from './file-panel';
+import { duplicatePanel, focusPanel, openOrCycle, splitFocused, togglePanelType } from './panel-actions';
 
 function leaf(id: string, tabs: string[], activeTab?: string): LeafNode {
 	return { type: 'leaf', id, tabs, activeTab: activeTab ?? tabs[0] ?? '' };
@@ -570,14 +571,6 @@ describe('panel-actions', () => {
 		expect(Object.values(state.panels).filter((p) => p.type === 'preview')).toHaveLength(1);
 	});
 
-	it('closeCurrent closes the focused panel', () => {
-		const state = makeTwoLeafState();
-		focusPanel(state, 'p2');
-		closeCurrent(state);
-		expect(state.panels.p2).toBeDefined(); // definition survives for undo
-		expect(state.focusedPanelId).toBe('p3'); // sibling surfaces
-	});
-
 	it('togglePanelType closes all instances of an open type (desktop semantics)', () => {
 		const state = makeTwoLeafState();
 		const editorIds = Object.values(state.panels)
@@ -594,6 +587,53 @@ describe('panel-actions', () => {
 	});
 });
 
+describe('unsaved-close guard', () => {
+	function unsavedState() {
+		return createDockState(leaf('l1', ['p1', 'p2', 'p3'], 'p1'), {
+			p1: { ...panel('p1'), indicator: 'unsaved' },
+			p2: panel('p2'),
+			p3: { ...panel('p3'), indicator: 'unsaved' },
+		});
+	}
+
+	it('closes a saved panel immediately and holds an unsaved one behind a confirm', () => {
+		const state = unsavedState();
+		state.requestClose('p2');
+		expect(state.pendingClose).toBeNull();
+		expect(collectLeaves(state.root)[0].tabs).toEqual(['p1', 'p3']);
+
+		state.requestClose('p1');
+		expect(state.pendingClose?.panels.map((p) => p.id)).toEqual(['p1']);
+		expect(collectLeaves(state.root)[0].tabs).toEqual(['p1', 'p3']);
+
+		state.cancelPendingClose();
+		expect(state.pendingClose).toBeNull();
+		expect(collectLeaves(state.root)[0].tabs).toEqual(['p1', 'p3']);
+
+		state.requestClose('p1');
+		state.confirmPendingClose();
+		expect(state.pendingClose).toBeNull();
+		expect(collectLeaves(state.root)[0].tabs).toEqual(['p3']);
+	});
+
+	it('prompts once for a batch, listing only the unsaved panels, then runs the whole close', () => {
+		const state = unsavedState();
+		state.requestClosePanels(['p1', 'p2', 'p3'], () => state.closeAllPanels('l1'));
+		expect(state.pendingClose?.panels.map((p) => p.id)).toEqual(['p1', 'p3']);
+		state.confirmPendingClose();
+		expect(collectLeaves(state.root)[0].tabs).toEqual([]);
+	});
+
+	it('togglePanelType asks the guard before closing a type (the activity bar can hit an unsaved editor)', () => {
+		const state = unsavedState();
+		togglePanelType(state, 'editor');
+		expect(state.pendingClose?.panels.map((p) => p.id)).toEqual(['p1', 'p3']);
+		expect(collectLeaves(state.root)[0].tabs).toEqual(['p1', 'p2', 'p3']);
+		state.confirmPendingClose();
+		expect(collectLeaves(state.root)[0].tabs).toEqual([]);
+	});
+});
+
 describe('onPanelClosed hook', () => {
 	it('fires with the closed definition on every close path', () => {
 		const closed: string[] = [];
@@ -603,5 +643,31 @@ describe('onPanelClosed hook', () => {
 		state.closePanel('p1');
 		state.closeAllPanels('l1');
 		expect(closed).toEqual(['p1', 'p2']);
+	});
+});
+
+describe('duplicatePanel', () => {
+	it('splits a file panel into a twin that names the same file, in the zone beside its leaf', () => {
+		const state = createDockState(leaf('l1', ['editor-pst_abc'], 'editor-pst_abc'), {
+			'editor-pst_abc': { ...panel('editor-pst_abc'), meta: { fileId: 'pst_abc' } },
+		});
+		duplicatePanel(state, 'editor-pst_abc', 'right');
+		const leaves = collectLeaves(state.root);
+		expect(leaves).toHaveLength(2);
+		const twinId = leaves[1].tabs[0];
+		// The suffixed form fileIdOfPanel reads — the twin loads the same post, not an empty editor.
+		expect(twinId).toMatch(/^editor-pst_abc-\d+$/);
+		expect(fileIdOfPanel(twinId)).toBe('pst_abc');
+		expect(state.panels[twinId]?.meta).toEqual({ fileId: 'pst_abc' });
+		expect(state.panels[twinId]?.label).toBe('Panel editor-pst_abc');
+	});
+
+	it('gives a non-file panel a plain typed id, and splitFocused acts on the focused panel', () => {
+		const state = createDockState(leaf('l1', ['p1'], 'p1'), { p1: panel('p1', 'explorer') }, 'left', 'l1');
+		splitFocused(state, 'bottom');
+		const leaves = collectLeaves(state.root);
+		expect(leaves).toHaveLength(2);
+		expect(leaves[1].tabs[0]).toMatch(/^explorer-\d+$/);
+		expect(fileIdOfPanel(leaves[1].tabs[0])).toBeNull();
 	});
 });

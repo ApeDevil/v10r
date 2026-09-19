@@ -114,8 +114,9 @@ function getPanelSummary(ws: Workspace): string {
 								{...ctxProps}
 								role="tab"
 								aria-selected={ws.id === workspace.activeId}
+								aria-haspopup="menu"
 								aria-label="Workspace {i + 1}: {ws.name}"
-								title={ws.name}
+								title="{ws.name} — right-click for rename, duplicate, reorder, delete"
 								class={cn('dock-activity-btn dock-ws-btn', ws.id === workspace.activeId && 'active')}
 								onclick={() => workspace.switchTo(ws.id)}
 							>

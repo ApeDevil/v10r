@@ -23,6 +23,13 @@ interface Props {
 
 let { items, label, forceExpanded, children }: Props = $props();
 
+/** A heading row opens each run of children that share a group (the registry keeps runs contiguous). */
+function startsGroup(index: number): boolean {
+	const group = items[index]?.group;
+	return !!group && (index === 0 || items[index - 1]?.group !== group);
+}
+const groupHeadingCount = $derived(items.filter((_, index) => startsGroup(index)).length);
+
 // Relative elevation — one rung above the sidebar plane the flyout hangs off (use:portal moves
 // the DOM node to body, but the component tree stays, so context resolves correctly).
 const s = useSurface();
@@ -48,9 +55,10 @@ function updatePosition() {
 	top = rect.top;
 
 	// Collision: adjust if flyout would go off bottom
-	// Estimate flyout height: header (~36px) + separator (~9px) + items * 36px + padding (8px)
+	// Estimate flyout height: header (~36px) + separator (~9px) + items * 36px
+	// + group headings * 28px + padding (8px)
 	const headerHeight = forceExpanded ? 0 : 45;
-	const estimatedHeight = headerHeight + items.length * 36 + 8;
+	const estimatedHeight = headerHeight + items.length * 36 + groupHeadingCount * 28 + 8;
 	const maxTop = window.innerHeight - estimatedHeight - 8;
 	if (top > maxTop) {
 		top = Math.max(8, maxTop);
@@ -242,6 +250,11 @@ function portal(node: HTMLElement) {
 		{/if}
 
 		{#each items as item, index}
+			{#if item.group && startsGroup(index)}
+				<div class={cn('flyout-group px-3 pb-1 text-[0.65rem] font-semibold text-muted uppercase tracking-wide', index === 0 ? 'pt-1' : 'pt-2')} role="presentation">
+					{item.group()}
+				</div>
+			{/if}
 			<NavLink
 				href={localizeHref(item.href)}
 				active={isActive(item.href)}

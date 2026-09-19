@@ -10,6 +10,7 @@
 import type { ActivityBarItem } from '$lib/desk/layout.types';
 import { collectLeaves, findLeafWithPanel, hasPanelType, nextPanelOfType } from './dock.operations';
 import type { DockState } from './dock.state.svelte';
+import { fileIdOfPanelDefinition, filePanelId } from './file-panel';
 
 /**
  * Make `panelId` THE focused panel: activate it on its real leaf and focus
@@ -41,12 +42,6 @@ export function openOrCycle(dock: DockState, items: ActivityBarItem[], panelType
 	dock.ensurePanelType(panelType, item?.label, item?.icon);
 }
 
-/** Close the currently focused panel, if any. */
-export function closeCurrent(dock: DockState): void {
-	const id = dock.focusedPanelId;
-	if (id) dock.closePanel(id);
-}
-
 /**
  * Desktop toggle semantics: close ALL panels of the type when any is open,
  * else add one. STRUCTURAL — never wire this to a mobile surface; mobile
@@ -54,11 +49,12 @@ export function closeCurrent(dock: DockState): void {
  */
 export function togglePanelType(dock: DockState, panelType: string, label?: string, icon?: string): void {
 	if (hasPanelType(dock.root, panelType, dock.panels)) {
-		for (const leaf of collectLeaves(dock.root)) {
-			for (const tabId of leaf.tabs) {
-				if (dock.panels[tabId]?.type === panelType) dock.closePanel(tabId);
-			}
-		}
+		const ids = collectLeaves(dock.root)
+			.flatMap((leaf) => leaf.tabs)
+			.filter((tabId) => dock.panels[tabId]?.type === panelType);
+		dock.requestClosePanels(ids, () => {
+			for (const tabId of ids) dock.closePanel(tabId);
+		});
 		return;
 	}
 	dock.addPanel({
@@ -70,15 +66,34 @@ export function togglePanelType(dock: DockState, panelType: string, label?: stri
 	});
 }
 
-/** Split the focused leaf by duplicating the focused panel's type into a new pane. */
-export function splitFocused(dock: DockState, zone: 'right' | 'bottom'): void {
-	const panelId = dock.focusedPanelId;
-	const leafId = dock.focusedLeafId;
-	if (!panelId || !leafId) return;
+/**
+ * A second instance of `panelId` in a new pane beside its leaf. A file panel
+ * keeps its file: the twin's id is the suffixed form `fileIdOfPanel` reads
+ * (`<type>-<fileId>-<ts>`) and `meta` is copied — every panel that resolves its
+ * document from the id (editor, document, spreadsheet) then loads the same one.
+ * The ONLY minting site for a twin: View's Split and the tab menu's Split both
+ * come here.
+ */
+export function duplicatePanel(dock: DockState, panelId: string, zone: 'right' | 'bottom'): void {
 	const panel = dock.panels[panelId];
-	if (!panel) return;
+	const leaf = findLeafWithPanel(dock.root, panelId);
+	if (!panel || !leaf) return;
+	const fileId = fileIdOfPanelDefinition(panel);
+	const stem = fileId ? filePanelId(panel.type, fileId) : panel.type;
 	dock.addPanel(
-		{ id: `${panel.type}-${Date.now()}`, type: panel.type, label: panel.label, icon: panel.icon, closable: true },
-		{ leafId, zone },
+		{
+			id: `${stem}-${Date.now()}`,
+			type: panel.type,
+			label: panel.label,
+			icon: panel.icon,
+			closable: true,
+			...(panel.meta ? { meta: { ...panel.meta } } : {}),
+		},
+		{ leafId: leaf.id, zone },
 	);
+}
+
+/** View › Split: duplicate the focused panel into a new pane. */
+export function splitFocused(dock: DockState, zone: 'right' | 'bottom'): void {
+	if (dock.focusedPanelId) duplicatePanel(dock, dock.focusedPanelId, zone);
 }

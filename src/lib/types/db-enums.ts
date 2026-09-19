@@ -67,5 +67,13 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 export const CONSENT_TIERS = ['necessary', 'analytics'] as const;
 export type ConsentTier = (typeof CONSENT_TIERS)[number];
 
+/**
+ * Which authenticated area an `analytics.user_events` row came from. Bounded on
+ * purpose: a surface joins this list when a product decision puts it in the
+ * identified lane (`docs/blueprint/analytics/two-lane-model.md`).
+ */
+export const USER_SURFACES = ['account', 'desk'] as const;
+export type UserSurface = (typeof USER_SURFACES)[number];
+
 export const DESK_FILE_TYPES = ['spreadsheet', 'markdown'] as const;
 export type DeskFileType = (typeof DESK_FILE_TYPES)[number];

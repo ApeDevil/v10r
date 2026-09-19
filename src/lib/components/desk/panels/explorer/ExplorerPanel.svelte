@@ -45,6 +45,8 @@ let selectedAsset = $state<AssetListItem | null>(null);
 let showNewPostForm = $state(false);
 let slugInput = $state('');
 let creating = $state(false);
+/** The blog folder the next post lands in — the context the form was opened from; null = blog root. */
+let newPostFolder = $state<ExplorerNode | null>(null);
 
 // Hidden file inputs
 let uploadInput: HTMLInputElement;
@@ -184,6 +186,7 @@ const menuCallbacks: ContextMenuCallbacks = {
 	onCopyUrl: handleCopyUrl,
 	onNewFolder: handleNewFolder,
 	onNewSpreadsheet: handleNewSpreadsheet,
+	onNewPost: handleNewPost,
 	onMoveRequest(node) {
 		moveToDialogSource = node;
 	},
@@ -257,6 +260,22 @@ function insertAsset(a: AssetListItem) {
 	});
 }
 
+/** Open the slug form anchored on `node`'s blog folder (a post anchors on its parent; null = root). */
+function handleNewPost(node: ExplorerNode | null) {
+	newPostFolder = blogFolderOf(node);
+	showNewPostForm = true;
+}
+
+/** The blog folder a node stands in: the folder itself, a post's parent folder, or null (root). */
+function blogFolderOf(node: ExplorerNode | null): ExplorerNode | null {
+	if (!node) return null;
+	if (node.source === 'blog-folder') return node;
+	if (node.source === 'blog-post' && node.parentId && !node.parentId.startsWith('virtual:')) {
+		return explorerState.getNode(node.parentId) ?? null;
+	}
+	return null;
+}
+
 async function createNewPost() {
 	const slug = slugInput.trim();
 	if (!slug) return;
@@ -266,7 +285,7 @@ async function createNewPost() {
 		const res = await apiFetch('/api/blog/posts', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ slug }),
+			body: JSON.stringify({ slug, folderId: newPostFolder?.id ?? null }),
 		});
 		const body = await res.json().catch(() => ({}));
 		if (!res.ok) throw new Error(body.message || 'Failed to create post');
@@ -347,9 +366,22 @@ async function handleImportChange(e: Event) {
 }
 
 /** Infer the target node for MenuBar folder/spreadsheet creation from current selection. */
+function selectedNode(): ExplorerNode | null {
+	return explorerState.selectedId ? (explorerState.getNode(explorerState.selectedId) ?? null) : null;
+}
+
 function inferSelectedAnchor(): ExplorerNode {
-	const sel = explorerState.selectedId ? explorerState.getNode(explorerState.selectedId) : null;
-	return sel ?? dataRootNode();
+	return selectedNode() ?? dataRootNode();
+}
+
+/** The data folder a spreadsheet lands in: the selected data folder, a data file's parent, else the data root. */
+function dataAnchor(): ExplorerNode {
+	const sel = selectedNode();
+	if (sel?.source === 'desk-folder') return sel;
+	if (sel?.source === 'desk-file' && sel.parentId && !sel.parentId.startsWith('virtual:')) {
+		return explorerState.getNode(sel.parentId) ?? dataRootNode();
+	}
+	return dataRootNode();
 }
 
 // Register menus for the global MenuBar
@@ -357,15 +389,21 @@ const explorerMenus = $derived<MenuBarMenu[]>([
 	{
 		label: 'File',
 		items: [
+			// Every create command lands in the selected context (the folder context menu
+			// does the same); the File menu only adds the "no selection" fallback.
 			{
 				label: 'New Post',
 				icon: 'i-lucide-plus',
 				shortcut: 'Ctrl+N',
 				onSelect: () => {
-					showNewPostForm = !showNewPostForm;
+					if (showNewPostForm) {
+						showNewPostForm = false;
+						return;
+					}
+					handleNewPost(selectedNode());
 				},
 			},
-			{ label: 'New Spreadsheet', icon: 'i-lucide-sheet', onSelect: () => handleNewSpreadsheet(dataRootNode()) },
+			{ label: 'New Spreadsheet', icon: 'i-lucide-sheet', onSelect: () => handleNewSpreadsheet(dataAnchor()) },
 			{ label: 'New Folder', icon: 'i-lucide-folder-plus', onSelect: () => handleNewFolder(inferSelectedAnchor()) },
 			{ type: 'separator' },
 			{ label: 'Import Markdown...', icon: 'i-lucide-file-up', onSelect: handleImportClick },
@@ -430,6 +468,11 @@ $effect(() => {
 	{#if showNewPostForm}
 		<form class="new-post-form" onsubmit={(e) => { e.preventDefault(); createNewPost(); }}>
 			<label class="sr-only" for="new-post-slug">Post slug</label>
+			{#if newPostFolder}
+				<span class="new-post-target" title="Created in {newPostFolder.label}">
+					<span class="i-lucide-folder"></span>{newPostFolder.label}
+				</span>
+			{/if}
 			<input
 				id="new-post-slug"
 				type="text"
@@ -545,6 +588,18 @@ $effect(() => {
 
 	.slug-input::placeholder {
 		color: var(--color-muted);
+	}
+
+	.new-post-target {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		max-width: 40%;
+		font-size: 11px;
+		color: var(--color-muted);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.explorer-error {

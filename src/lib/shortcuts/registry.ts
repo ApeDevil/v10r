@@ -3,14 +3,20 @@
  * Central store for all registered shortcuts.
  */
 
-export type ShortcutCategory = 'global' | 'navigation' | 'actions';
+export type ShortcutCategory = 'global' | 'navigation' | 'actions' | 'desk';
 
 export interface Shortcut {
 	id: string;
 	keys: string; // e.g., 'mod+k', 'g h', 'shift+?'
 	description: string;
 	category: ShortcutCategory;
-	action: () => void;
+	/**
+	 * `false` lists the chord in the shortcuts dialog without dispatching it:
+	 * another handler owns the keystroke (the desk matches its chords against its
+	 * own composed menus), and two dispatchers for one chord would fire twice.
+	 */
+	dispatch?: false;
+	action?: () => void;
 }
 
 // Active shortcuts registry
@@ -39,6 +45,7 @@ export function getShortcutsByCategory(): Record<ShortcutCategory, Shortcut[]> {
 		global: [],
 		navigation: [],
 		actions: [],
+		desk: [],
 	};
 
 	for (const shortcut of shortcuts.values()) {
@@ -49,13 +56,15 @@ export function getShortcutsByCategory(): Record<ShortcutCategory, Shortcut[]> {
 }
 
 /**
- * Find shortcut by key combination.
+ * Find the dispatchable shortcut for a key combination. Display-only entries
+ * (`dispatch: false`) never match — their owner handles the keystroke.
  *
  * @param keys - Normalized key string (e.g., 'mod+k')
  * @returns Matching shortcut or undefined
  */
 export function findShortcutByKeys(keys: string): Shortcut | undefined {
 	for (const shortcut of shortcuts.values()) {
+		if (shortcut.dispatch === false) continue;
 		if (normalizeKeys(shortcut.keys) === normalizeKeys(keys)) {
 			return shortcut;
 		}

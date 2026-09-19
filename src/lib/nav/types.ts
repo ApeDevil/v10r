@@ -5,6 +5,12 @@ export type LabelFn = () => string;
 export interface NavChild {
 	href: string;
 	label: LabelFn;
+	/**
+	 * The direction this child belongs to. Consecutive children sharing a group
+	 * render under one heading row in the flyout and the drawer accordion — rows
+	 * stay rows, nothing nests, so a long list becomes scannable without a click.
+	 */
+	group?: LabelFn;
 }
 
 export interface NavItem {

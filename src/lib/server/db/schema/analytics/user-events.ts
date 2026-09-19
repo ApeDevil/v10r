@@ -40,8 +40,14 @@ import { index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm
 import { user } from '../auth/_better-auth';
 import { analyticsSchema, eventTypeEnum } from './events';
 
-/** Which authenticated area produced the event. Bounded on purpose. */
-export const userSurfaceEnum = analyticsSchema.enum('user_surface', ['account']);
+/**
+ * Which authenticated area produced the event. Bounded on purpose; mirrored for
+ * the client in `$lib/types/db-enums.ts` (`USER_SURFACES`, drift-tested).
+ * `desk` joined on 2026-09-18 so the desk's `command_invoked` events — the
+ * evidence a menu review runs on — have a lane that does not need a consent
+ * tier (`collect-policy.ts` decides the path, `journey/collect` writes here).
+ */
+export const userSurfaceEnum = analyticsSchema.enum('user_surface', ['account', 'desk']);
 
 export const userEvents = analyticsSchema.table(
 	'user_events',

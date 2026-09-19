@@ -74,6 +74,11 @@ function isActive(href: string): boolean {
 {#if open}
 	<div bind:this={accordionRef} class={cn('nav-accordion flex flex-col gap-[0.125rem] py-1 pl-[2.5rem] overflow-hidden origin-top motion-reduce:animate-none', className)} role="menu" aria-label="Submenu">
 		{#each items as item, index}
+			{#if item.group && (index === 0 || items[index - 1]?.group !== item.group)}
+				<div class={cn('px-3 pb-1 text-[0.65rem] font-semibold text-muted uppercase tracking-wide', index === 0 ? 'pt-1' : 'pt-2')} role="presentation">
+					{item.group()}
+				</div>
+			{/if}
 			<NavLink
 				href={localizeHref(item.href)}
 				active={isActive(item.href)}

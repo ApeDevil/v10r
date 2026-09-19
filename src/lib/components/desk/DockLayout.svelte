@@ -30,6 +30,7 @@ import { collapseEmptyLeaves, collectPanelIds, findNode } from './dock.operation
 import { loadDockState, saveDockState } from './dock.persistence';
 import { setDockContext } from './dock.state.svelte';
 import { setDockMobileContext } from './dock-mobile.state.svelte';
+import { filePanelId, findFilePanel } from './file-panel';
 import { focusPanel } from './panel-actions';
 import { setPanelMenusContext } from './panel-menus.state.svelte';
 import { buildWorkspacesFromServer, loadWorkspaceStore, saveWorkspaceStore } from './workspace.persistence';
@@ -45,6 +46,12 @@ interface Props {
 	openPanel?: string | null;
 	/** Focus an existing panel INSTANCE by id (e.g. from ?panel=). Silent no-op if unknown. */
 	focusPanelId?: string | null;
+	/**
+	 * Open (or focus, if already open) the editor for a blog post by id (e.g. from
+	 * ?post=) — the continuation door from a posts list into the desk. The editor
+	 * reads its document from the canonical `editor-<postId>` panel id.
+	 */
+	openPostId?: string | null;
 	/**
 	 * How the compact (<768px) chrome is placed relative to the dock box.
 	 *  'floating' — open-panels tab strip on top + a floating controls pill
@@ -96,6 +103,7 @@ let {
 	persist = false,
 	openPanel,
 	focusPanelId = null,
+	openPostId = null,
 	mobileChrome = 'floating',
 	authenticated = false,
 	serverTheme = null,
@@ -157,6 +165,7 @@ const dock = setDockContext(restoredRoot, mergedPanels, saved?.activityBarPositi
 	// The closure runs post-init, so referencing `dock` here is safe. Restore is
 	// a plain re-add (closePanel keeps the definition in the registry).
 	onPanelClosed: (panel) => onPanelClosed?.(panel, () => dock.addPanel(panel)),
+	activityBarItems,
 });
 
 // Panel menu registry — context-scoped so two DockLayouts never share one.
@@ -164,7 +173,7 @@ const panelMenus = setPanelMenusContext();
 
 // Mobile chrome state (surface discriminator + unsaved-close confirm) —
 // context-scoped for the same reason.
-const mobile = setDockMobileContext(dock);
+const mobile = setDockMobileContext();
 
 // Overlay auto-close: every focus REQUEST (tab tap, drawer row, ?open=, AI
 // effect — focusSeq counts repeats too) surfaces a panel, and closing whatever
@@ -470,6 +479,30 @@ $effect(() => {
 	const id = focusPanelId;
 	untrack(() => focusPanel(dock, id));
 });
+
+// Open the editor for a post via prop (e.g. from ?post=): the same path the
+// Explorer's Open takes and the bot's `desk:open_panel` effect — focus the open
+// instance, else add the canonical `editor-<postId>` panel (addPanel focuses).
+$effect(() => {
+	if (!openPostId) return;
+	const postId = openPostId;
+	untrack(() => {
+		const open = findFilePanel(dock.root, dock.panels, 'editor', postId);
+		if (open) {
+			focusPanel(dock, open);
+			return;
+		}
+		const def = initialPanels.editor;
+		dock.addPanel({
+			id: filePanelId('editor', postId),
+			type: 'editor',
+			label: def?.label ?? 'Editor',
+			icon: def?.icon,
+			closable: true,
+			meta: { fileId: postId },
+		});
+	});
+});
 </script>
 
 <div
@@ -477,8 +510,8 @@ $effect(() => {
 	class="dock-layout {className ?? ''}"
 	data-bar-position={isDesktop.current ? dock.activityBarPosition : 'mobile'}
 >
-	<DeskShortcuts />
-	<DeskPreferencesDialog />
+	<DeskShortcuts desktop={isDesktop.current} />
+	<DeskPreferencesDialog desktop={isDesktop.current} />
 
 	{#if isDesktop.current}
 		{#if activityBarItems && activityBarItems.length > 0}
@@ -507,19 +540,23 @@ $effect(() => {
 				visibleId={mobileVisibleId}
 			/>
 			<DockMobileCommandsDrawer openPanelIds={mobileOpenIds} visibleId={mobileVisibleId} />
-			<ConfirmDialog
-				bind:open={() => mobile.pendingClose !== null, (value) => { if (!value) mobile.cancelPendingClose(); }}
-				title={m.composites_dock_mobile_unsaved_close_title()}
-				description={mobile.pendingClose
-					? m.composites_dock_mobile_unsaved_close_desc({ label: mobile.pendingClose.label })
-					: undefined}
-				destructive
-				confirmLabel={m.composites_dock_mobile_unsaved_close_confirm()}
-				onconfirm={() => mobile.confirmPendingClose()}
-				oncancel={() => mobile.cancelPendingClose()}
-			/>
 		{/if}
 	{/if}
+
+	<!-- Unsaved-close confirm — one dialog for every close route on both projections. -->
+	<ConfirmDialog
+		bind:open={() => dock.pendingClose !== null, (value) => { if (!value) dock.cancelPendingClose(); }}
+		title={m.composites_dock_unsaved_close_title()}
+		description={dock.pendingClose
+			? dock.pendingClose.panels.length === 1
+				? m.composites_dock_unsaved_close_desc({ label: dock.pendingClose.panels[0].label })
+				: m.composites_dock_unsaved_close_desc_many({ count: dock.pendingClose.panels.length })
+			: undefined}
+		destructive
+		confirmLabel={m.composites_dock_unsaved_close_confirm()}
+		onconfirm={() => dock.confirmPendingClose()}
+		oncancel={() => dock.cancelPendingClose()}
+	/>
 </div>
 
 <style>

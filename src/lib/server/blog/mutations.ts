@@ -21,13 +21,23 @@ import { renderBlogPost } from './pipeline';
 import type { BlogAsset, BlogDomain, BlogPost, BlogRevision, BlogTag } from './types';
 
 /** Create a new blog post (draft). */
-export async function createPost(authorId: string, data: { slug: string }): Promise<BlogPost> {
+/**
+ * `folderId` is a caller-supplied FK: the destination is ownership-checked
+ * for the same reason as `updatePostMetadata`, so a post can never be created
+ * inside another user's folder tree.
+ */
+export async function createPost(
+	authorId: string,
+	data: { slug: string; folderId?: string | null },
+): Promise<BlogPost> {
+	if (data.folderId) await assertOwnedDestination(db, postFolder, data.folderId, authorId);
 	const [row] = await db
 		.insert(post)
 		.values({
 			id: createId.post(),
 			slug: data.slug,
 			authorId,
+			folderId: data.folderId ?? null,
 		})
 		.returning();
 	return row;

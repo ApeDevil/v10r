@@ -2,7 +2,7 @@
 import { LinkCard } from '$lib/components';
 import { BackLink, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
-import * as m from '$lib/paraglide/messages';
+import { DOCS_SECTIONS } from '$lib/docs/sections';
 </script>
 <PageContainer width="wide" class="pt-7">
 	<PageHeader
@@ -11,37 +11,11 @@ import * as m from '$lib/paraglide/messages';
 		breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Docs' }]}
 	/>
 
+	<!-- Same list as the Docs flyout (nav.ts) — one source, two projections. -->
 	<nav class="docs-nav">
-		<LinkCard
-			href="/docs/pattern-library"
-			icon="i-lucide-library"
-			title="Pattern Library"
-			description="The product in one page: every proven pattern with its purpose, the code that implements it, and the showcase that proves it."
-		/>
-		<LinkCard
-			href="/docs/foundation"
-			icon="i-lucide-compass"
-			title="Foundation"
-			description="Understand why this project exists before touching a line of code."
-		/>
-		<LinkCard
-			href="/docs/stack"
-			icon="i-lucide-layers"
-			title="Stack"
-			description="Every tool, why it was chosen, and how to use it."
-		/>
-		<LinkCard
-			href="/docs/blueprint"
-			icon="i-lucide-map"
-			title="Blueprint"
-			description="Cross-cutting patterns: auth, data, notifications, AI, deployment."
-		/>
-		<LinkCard
-			href="/docs/programming"
-			icon="i-lucide-users-round"
-			title={m.docs_card_agents_title()}
-			description={m.docs_card_agents_description()}
-		/>
+		{#each DOCS_SECTIONS as section (section.href)}
+			<LinkCard href={section.href} icon={section.icon} title={section.title()} description={section.description()} />
+		{/each}
 	</nav>
 
 	<BackLink href="/" label="Home" />

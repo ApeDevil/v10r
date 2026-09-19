@@ -7,7 +7,7 @@ import { afterNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';
 import { initConfirmPing } from '$lib/analytics/confirm-ping';
 import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
-import { initTelemetry, setTelemetryConsent, telemetryOnNavigate } from '$lib/analytics/telemetry';
+import { initTelemetry, setTelemetryConsent, setTelemetrySession, telemetryOnNavigate } from '$lib/analytics/telemetry';
 import { setVercelAnalyticsConsent } from '$lib/analytics/vercel';
 import { BRAND_NAME } from '$lib/branding';
 import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
@@ -67,6 +67,12 @@ $effect(() => {
 	const analyticsConsent = consent.tier === 'analytics';
 	setTelemetryConsent(analyticsConsent);
 	setVercelAnalyticsConsent(analyticsConsent);
+});
+
+// The identified lane (/account, /desk) is governed by the session, not the
+// banner — same predicate as the server's collect-policy.
+$effect(() => {
+	setTelemetrySession(data.session !== null);
 });
 
 // Close out the previous page's engagement window on SPA navigation.

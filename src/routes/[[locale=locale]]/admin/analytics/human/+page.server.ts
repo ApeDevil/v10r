@@ -3,6 +3,7 @@ import { parseAnalyticsRange } from '$lib/server/admin';
 import { db } from '$lib/server/db';
 import {
 	getAudienceBreakdown,
+	getCommandUsage,
 	getConsentSplit,
 	getFrictionSignals,
 	getOverviewMetrics,
@@ -105,5 +106,6 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		}),
 		friction: safeDeferPromise(getFrictionSignals(days, 12), []),
 		userLane: safeDeferPromise(getUserLaneStats(days), { activeUsers: 0, events: 0, topRoutes: [] }),
+		commands: safeDeferPromise(getCommandUsage(days, 20), []),
 	};
 };

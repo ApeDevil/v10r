@@ -4,6 +4,10 @@
  * Groups: Open → AI Context → Edit → Type-specific → Create → Destructive.
  * Items only appear if the node's capabilities include the matching action.
  * Empty groups are omitted.
+ *
+ * A tree key (F2, M) is declared ON its item, so the right-click projection can
+ * show it and ExplorerTree's keydown reads the same declaration (`treeKeyOf`) —
+ * one place to change a key, nothing to keep in sync.
  */
 import type { ExplorerNode, NodeCapability } from './node';
 
@@ -12,6 +16,8 @@ export interface MenuItemDef {
 	label: string;
 	icon: string;
 	action: string;
+	/** Tree key that runs this action on the focused node (shown on the pointer projection). */
+	shortcut?: string;
 	destructive?: boolean;
 }
 
@@ -33,6 +39,7 @@ export interface ContextMenuCallbacks {
 	onCopyUrl?: (node: ExplorerNode) => void;
 	onNewFolder?: (node: ExplorerNode) => void;
 	onNewSpreadsheet?: (node: ExplorerNode) => void;
+	onNewPost?: (node: ExplorerNode) => void;
 	/** Open the "Move to…" dialog for a node. */
 	onMoveRequest?: (node: ExplorerNode) => void;
 	/** Commit a move (drag-drop or dialog confirm). */
@@ -44,6 +51,7 @@ type CapabilityItemDef = {
 	label: string | ((node: ExplorerNode) => string);
 	icon: string | ((node: ExplorerNode) => string);
 	action: string;
+	shortcut?: string;
 	destructive?: boolean;
 };
 
@@ -69,8 +77,8 @@ const GROUPS: CapabilityItemDef[][] = [
 	],
 	// Group 3: Edit
 	[
-		{ capability: 'rename', label: 'Rename', icon: 'i-lucide-pencil', action: 'rename' },
-		{ capability: 'move', label: 'Move to…', icon: 'i-lucide-folder-input', action: 'moveRequest' },
+		{ capability: 'rename', label: 'Rename', icon: 'i-lucide-pencil', action: 'rename', shortcut: 'F2' },
+		{ capability: 'move', label: 'Move to…', icon: 'i-lucide-folder-input', action: 'moveRequest', shortcut: 'M' },
 		{ capability: 'duplicate', label: 'Duplicate', icon: 'i-lucide-copy', action: 'duplicate' },
 	],
 	// Group 4: Type-specific
@@ -84,10 +92,12 @@ const GROUPS: CapabilityItemDef[][] = [
 		},
 		{ capability: 'copy-url', label: 'Copy URL', icon: 'i-lucide-link', action: 'copyUrl' },
 	],
-	// Group 5: Create (folder nodes only)
+	// Group 5: Create (folder nodes only) — every create capability a folder
+	// declares has a row here, so the folder itself is the context the new item lands in.
 	[
 		{ capability: 'new-folder', label: 'New Folder', icon: 'i-lucide-folder-plus', action: 'newFolder' },
 		{ capability: 'new-spreadsheet', label: 'New Spreadsheet', icon: 'i-lucide-sheet', action: 'newSpreadsheet' },
+		{ capability: 'new-post', label: 'New Post', icon: 'i-lucide-plus', action: 'newPost' },
 	],
 	// Group 6: Destructive
 	[{ capability: 'delete', label: 'Delete', icon: 'i-lucide-trash-2', action: 'delete', destructive: true }],
@@ -106,6 +116,7 @@ export function buildContextMenuItems(node: ExplorerNode): MenuEntry[] {
 				label: typeof def.label === 'function' ? def.label(node) : def.label,
 				icon: typeof def.icon === 'function' ? def.icon(node) : def.icon,
 				action: def.action,
+				shortcut: def.shortcut,
 				destructive: def.destructive,
 			});
 		}
@@ -117,6 +128,16 @@ export function buildContextMenuItems(node: ExplorerNode): MenuEntry[] {
 	}
 
 	return items;
+}
+
+/** The tree key declared for `action` (e.g. `treeKeyOf('rename') === 'F2'`), or null. */
+export function treeKeyOf(action: string): string | null {
+	for (const group of GROUPS) {
+		for (const def of group) {
+			if (def.action === action) return def.shortcut ?? null;
+		}
+	}
+	return null;
 }
 
 /** Dispatch a menu action to the appropriate callback. */
@@ -133,6 +154,7 @@ export function dispatchMenuAction(action: string, node: ExplorerNode, callbacks
 		copyUrl: 'onCopyUrl',
 		newFolder: 'onNewFolder',
 		newSpreadsheet: 'onNewSpreadsheet',
+		newPost: 'onNewPost',
 		moveRequest: 'onMoveRequest',
 	};
 	const key = map[action];

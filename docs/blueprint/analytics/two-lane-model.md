@@ -62,15 +62,20 @@ Decided in one place, `analytics/collect-policy.ts`, so the two collection paths
 | Path | Lane | Note |
 |---|---|---|
 | `/`, `/blog/*`, `/showcases/*` … | anonymous | Public surfaces |
-| `/account/*` | authenticated | Only when a session exists |
+| `/account/*` | authenticated | Only when a session exists; `user_surface = account` |
+| `/desk/*` | authenticated | Only when a session exists; `user_surface = desk`. Joined on 2026-09-18 so the desk's `command_invoked` events (the menu-review evidence) have a lane — page views ride along |
 | `/admin/*` | neither | Operator's own usage — high volume, no insight |
-| `/desk/*` | neither | Authenticated, excluded by decision |
 | `/api/*`, `/_app/*`, `*.ico` | neither | Not pages |
 | Bots, prefetch, prerender | neither | Not visitors |
 
-A path is eligible for **exactly one** lane. Both the server hook and the SPA beacon endpoint
-import the same predicates — they previously disagreed, and client-side navigations into
-`/admin` and `/account` leaked into the anonymous lane as a result.
+A path is eligible for **exactly one** lane, and a prefix rule is a path-segment rule
+(`/desk` claims `/desk/…`, never `/desktop`). Both the server hook and the two beacon
+endpoints import the same predicates — they previously disagreed, and client-side navigations
+into `/admin` and `/account` leaked into the anonymous lane as a result. The telemetry beacon
+(`journey/collect`) splits one batch per event: a signed-in user's rows from a user-lane path
+go to `analytics.user_events` with no consent check; the rest take the anonymous gates. The
+client mirrors the rule (`telemetry.ts` tags each queued event with its lane) so a consent
+withdrawal drops exactly the anonymous rows and nothing else.
 
 ## The ePrivacy question
 

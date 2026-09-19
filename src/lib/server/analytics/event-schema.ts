@@ -14,6 +14,8 @@
  * Adding an event is deliberate: add it here, with its allowed keys.
  */
 
+import { COMMAND_VIA } from '$lib/types/journey-events';
+
 /** Bounded value domains. `enum` is the strongest — it also bounds cardinality. */
 type PropertySpec =
 	| { kind: 'enum'; values: readonly string[] }
@@ -60,6 +62,14 @@ export const EVENT_SPECS = {
 		properties: {
 			seconds: { kind: 'int', min: 0, max: 3600 },
 			maxScroll: { kind: 'int', min: 0, max: 100 },
+		},
+	},
+	command_invoked: {
+		description:
+			'A command a person ran, and through which door — menu, mobile sheet, keyboard shortcut, command palette, context menu or the activity bar. Answers "is the expert path used?" and "which rows are daily?" for menu reviews; the command is a UI label from a closed vocabulary (never content, never a search query).',
+		properties: {
+			via: { kind: 'enum', values: COMMAND_VIA },
+			command: { kind: 'string', maxLength: 60 },
 		},
 	},
 } as const satisfies Record<string, EventSpec>;

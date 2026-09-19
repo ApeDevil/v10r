@@ -18,6 +18,8 @@
  * server-only about it.
  */
 
+import type { UserSurface } from '$lib/types/db-enums';
+
 /**
  * Locale segments Paraglide may prefix onto any path (`/de/account`).
  *
@@ -163,29 +165,48 @@ const BOT_UA_RE = new RegExp(BOT_UA_PATTERNS.map((p) => p.replace(/[.*+?^${}()|[
  */
 export function isExcludedPath(path: string): boolean {
 	const unprefixed = stripLocalePrefix(path);
-	if (EXCLUDED_PREFIXES.some((prefix) => unprefixed.startsWith(prefix))) return true;
+	if (EXCLUDED_PREFIXES.some((prefix) => startsWithSegment(unprefixed, prefix))) return true;
 	return unprefixed.includes('.');
+}
+
+/** `/desk` and `/desk/…`, never `/desktop` — a prefix rule is a path-segment rule. */
+function startsWithSegment(path: string, prefix: string): boolean {
+	if (prefix.endsWith('/')) return path.startsWith(prefix);
+	return path === prefix || path.startsWith(`${prefix}/`);
 }
 
 /**
  * Route prefixes recorded in the AUTHENTICATED lane (`analytics.user_events`),
- * keyed by user id rather than by a visitor hash.
+ * keyed by user id rather than by a visitor hash, and the `user_surface` each
+ * one is stored under.
  *
  * `/admin` is excluded on purpose: it is the operator's own usage, which is high
- * volume and near-zero insight. `/desk` is excluded by decision, not by law.
+ * volume and near-zero insight. `/desk` was excluded by decision until
+ * 2026-09-18; it joined so the desk's `command_invoked` events — which menu rows
+ * are daily, whether the expert path is used — have a lane that needs no
+ * consent tier. Its page views ride along.
  */
-const USER_LANE_PREFIXES = ['/account'] as const;
+const USER_LANE_SURFACES: readonly (readonly [prefix: string, surface: UserSurface])[] = [
+	['/account', 'account'],
+	['/desk', 'desk'],
+] as const;
 
 /**
- * True when an authenticated request belongs in the user lane.
+ * The user-lane surface a path belongs to, or null when it belongs to no lane
+ * or to the anonymous one.
  *
  * These paths are ALSO in `EXCLUDED_PREFIXES`, and that is the design: a path is
  * eligible for exactly one lane. Anonymous collection refuses it; user
  * collection claims it, but only when a session is actually present.
  */
-export function isUserLanePath(path: string): boolean {
+export function userLaneSurface(path: string): UserSurface | null {
 	const unprefixed = stripLocalePrefix(path);
-	return USER_LANE_PREFIXES.some((prefix) => unprefixed.startsWith(prefix));
+	return USER_LANE_SURFACES.find(([prefix]) => startsWithSegment(unprefixed, prefix))?.[1] ?? null;
+}
+
+/** True when an authenticated request belongs in the user lane. */
+export function isUserLanePath(path: string): boolean {
+	return userLaneSurface(path) !== null;
 }
 
 /** True when the User-Agent looks like a crawler, preview bot, or headless probe. */

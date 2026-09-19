@@ -86,7 +86,7 @@ const modals = getModals();
 			onSelect={(panelType) => openOrCycle(dock, items, panelType)}
 			onShowPanel={(panelId) => focusPanel(dock, panelId)}
 			onCloseCurrent={() => {
-				if (visibleId) dock.closePanel(visibleId);
+				if (visibleId) dock.requestClose(visibleId);
 			}}
 			onOpenPreferences={() => deskSettings.openDialog()}
 			onOpenSearch={() => modals.open('quickSearch')}

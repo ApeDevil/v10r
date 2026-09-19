@@ -14,8 +14,10 @@
  */
 
 import type { PGlite } from '@electric-sql/pglite';
+import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { consentEvents, events, sessions } from '$lib/server/db/schema/analytics';
+import { consentEvents, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
+import { user } from '$lib/server/db/schema/auth/_better-auth';
 import type { ConsentTier } from '$lib/types/db-enums';
 
 // DB setup (PGlite)
@@ -55,12 +57,20 @@ process.env.ANALYTICS_DEV_TRACKING = 'true';
 const { db } = await import('$lib/server/db');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { deriveVisitorId, deriveUaHash } = await import('./visitor');
-const { isBot, isBrowserNavigation, isExcludedPath, isPrefetch, isUserLanePath, stripLocalePrefix, LOCALE_SEGMENTS } =
-	await import('$lib/analytics/collect-policy');
+const {
+	isBot,
+	isBrowserNavigation,
+	isExcludedPath,
+	isPrefetch,
+	isUserLanePath,
+	stripLocalePrefix,
+	userLaneSurface,
+	LOCALE_SEGMENTS,
+} = await import('$lib/analytics/collect-policy');
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
-const { getAudienceBreakdown } = await import('$lib/server/db/analytics/aggregations');
+const { getAudienceBreakdown, getCommandUsage } = await import('$lib/server/db/analytics/aggregations');
 const { analyticsCollector } = await import('./collector.hook');
 const { analyticsCleanup } = await import('$lib/server/jobs/analytics-cleanup');
 const { CONSENT_COOKIE } = await import('./config');
@@ -272,6 +282,10 @@ describe('isExcludedPath', () => {
 		expect(isExcludedPath(path)).toBe(true);
 	});
 
+	it.each(['/desktop', '/accounts', '/administer'])('admits %s — a prefix rule is a segment rule', (path) => {
+		expect(isExcludedPath(path)).toBe(false);
+	});
+
 	it.each(['/api/analytics/journey', '/_app/immutable/chunk.js'])('excludes the internal path %s', (path) => {
 		expect(isExcludedPath(path)).toBe(true);
 	});
@@ -313,15 +327,26 @@ describe('stripLocalePrefix', () => {
 	});
 });
 
-describe('isUserLanePath', () => {
-	it.each(['/account', '/account/security', '/de/account', '/ru/account/data'])('claims %s', (path) => {
-		// A path is eligible for exactly one lane. /account is refused by the
-		// anonymous lane above and claimed here, in every locale.
+describe('isUserLanePath / userLaneSurface', () => {
+	it.each([
+		['/account', 'account'],
+		['/account/security', 'account'],
+		['/de/account', 'account'],
+		['/ru/account/data', 'account'],
+		// The desk joined the identified lane on 2026-09-18 so its command_invoked
+		// events have somewhere to land; the anonymous lane still refuses it above.
+		['/desk', 'desk'],
+		['/de/desk', 'desk'],
+	])('claims %s as %s', (path, surface) => {
+		// A path is eligible for exactly one lane: refused by the anonymous lane
+		// above and claimed here, in every locale, under its own surface.
 		expect(isUserLanePath(path)).toBe(true);
+		expect(userLaneSurface(path)).toBe(surface);
 	});
 
-	it.each(['/admin', '/desk', '/blog', '/de/blog'])('refuses %s', (path) => {
+	it.each(['/admin', '/blog', '/de/blog', '/deskto'])('refuses %s', (path) => {
 		expect(isUserLanePath(path)).toBe(false);
+		expect(userLaneSurface(path)).toBeNull();
 	});
 });
 
@@ -842,6 +867,117 @@ describe('journey endpoint — navigationType filter', () => {
 		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
 		await POST(makeJourneyEvent(batch) as any);
 		expect(await db.select().from(events)).toHaveLength(1);
+	});
+});
+
+// 4e. collect endpoint — one batch, two lanes
+
+describe("collect endpoint — a signed-in user's desk events take the identified lane", () => {
+	const USER_ID = 'usr_collect_lane_1';
+
+	function makeCollectEvent(batch: unknown, opts: { signedIn: boolean; consent: 'necessary' | 'analytics' }) {
+		const jar = new Map<string, string>(opts.consent === 'analytics' ? [['_v10r_sid', 's_collectlane12345']] : []);
+		return {
+			url: new URL('https://example.com/api/analytics/journey/collect'),
+			request: new Request('https://example.com/api/analytics/journey/collect', {
+				method: 'POST',
+				body: JSON.stringify(batch),
+				headers: { 'content-type': 'application/json', 'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101' },
+			}),
+			cookies: { get: (n: string) => jar.get(n) },
+			getClientAddress: () => '203.0.113.9',
+			locals: {
+				consentTier: opts.consent,
+				clientIp: '203.0.113.9',
+				user: opts.signedIn ? { id: USER_ID } : null,
+			},
+		};
+	}
+
+	const command = (path: string, route: string, via: string, cmd: string) => ({
+		eventId: crypto.randomUUID(),
+		kind: 'action',
+		name: 'command_invoked',
+		path,
+		route,
+		props: { via, command: cmd },
+		occurredAt: new Date().toISOString(),
+	});
+
+	beforeEach(async () => {
+		await flushDeferred();
+		await db.delete(userEvents);
+		await db.delete(events);
+		await db.delete(sessions);
+		await db.delete(user).where(eq(user.id, USER_ID));
+		await db.insert(user).values({ id: USER_ID, name: 'Lane Tester', email: 'lane@example.com' });
+	});
+
+	it('routes /desk rows to user_events under the user id and public rows to the anonymous lane', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
+		const batch = {
+			events: [
+				command('/desk', '/desk', 'menu', 'File › Save'),
+				command('/desk', '/desk', 'shortcut', 'File › Save'),
+				command('/docs', '/docs', 'palette', 'panel › Explorer'),
+			],
+		};
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		const response = await POST(makeCollectEvent(batch, { signedIn: true, consent: 'analytics' }) as any);
+		expect(response.status).toBe(204);
+
+		const identified = await db.select().from(userEvents);
+		expect(identified).toHaveLength(2);
+		expect(identified.every((r) => r.userId === USER_ID && r.surface === 'desk' && r.eventType === 'action')).toBe(
+			true,
+		);
+		expect(identified[0].metadata).toEqual({ event: 'command_invoked', via: 'menu', command: 'File › Save' });
+
+		const anonymous = await db.select().from(events);
+		expect(anonymous).toHaveLength(1);
+		expect(anonymous[0].path).toBe('/docs');
+		// The wall: no visitor hash on the identified side, no user id on the anonymous side.
+		expect(Object.keys(identified[0])).not.toContain('visitorId');
+		expect(Object.keys(anonymous[0])).not.toContain('userId');
+	});
+
+	it('needs no consent tier for the identified lane, and still refuses the anonymous one without it', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
+		const batch = {
+			events: [command('/desk', '/desk', 'bar', 'View › Toggle Explorer'), command('/blog', '/blog', 'palette', 'x')],
+		};
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(makeCollectEvent(batch, { signedIn: true, consent: 'necessary' }) as any);
+		expect(await db.select().from(userEvents)).toHaveLength(1);
+		expect(await db.select().from(events)).toHaveLength(0);
+	});
+
+	it('drops /desk rows from a signed-out client — excluded from the anonymous lane, unclaimed by the identified one', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
+		const batch = { events: [command('/desk', '/desk', 'menu', 'File › Save')] };
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(makeCollectEvent(batch, { signedIn: false, consent: 'analytics' }) as any);
+		expect(await db.select().from(userEvents)).toHaveLength(0);
+		expect(await db.select().from(events)).toHaveLength(0);
+	});
+
+	it('getCommandUsage groups the identified lane by command and door, most used first', async () => {
+		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
+		const batch = {
+			events: [
+				command('/desk', '/desk', 'menu', 'File › Save'),
+				command('/desk', '/desk', 'shortcut', 'File › Save'),
+				command('/desk', '/desk', 'shortcut', 'File › Save'),
+				command('/desk', '/desk', 'bar', 'View › Toggle Explorer'),
+			],
+		};
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await POST(makeCollectEvent(batch, { signedIn: true, consent: 'necessary' }) as any);
+		const usage = await getCommandUsage(7);
+		expect(usage).toEqual([
+			{ command: 'File › Save', total: 3, byVia: { menu: 1, shortcut: 2 } },
+			{ command: 'View › Toggle Explorer', total: 1, byVia: { bar: 1 } },
+		]);
 	});
 });
 

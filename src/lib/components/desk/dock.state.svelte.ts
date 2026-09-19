@@ -5,6 +5,7 @@
 
 import { getContext, setContext } from 'svelte';
 import type {
+	ActivityBarItem,
 	ActivityBarPosition,
 	DragState,
 	DropTarget,
@@ -28,9 +29,15 @@ import {
 const DOCK_CTX = Symbol('dock');
 const MAX_DEPTH = 4;
 
-export interface DockStateHooks {
+export interface DockStateOptions {
 	/** Fires after a panel leaves the tree (any close path). Host wires undo UX. */
 	onPanelClosed?: (panel: PanelDefinition) => void;
+	/**
+	 * What the activity bar offers — the host's panel types with their toggle
+	 * chords. Held here so the View menu (DockLeaf, DeskShortcuts) derives its
+	 * toggle rows from the same list the bar renders, without prop drilling.
+	 */
+	activityBarItems?: ActivityBarItem[];
 }
 
 export function createDockState(
@@ -38,8 +45,9 @@ export function createDockState(
 	initialPanels: Record<string, PanelDefinition>,
 	initialBarPosition: ActivityBarPosition = 'left',
 	initialFocusedLeafId: string | null = null,
-	hooks: DockStateHooks = {},
+	options: DockStateOptions = {},
 ) {
+	const activityBarItems: ActivityBarItem[] = options.activityBarItems ?? [];
 	let root = $state<LayoutNode>(initialRoot);
 	let panels = $state<Record<string, PanelDefinition>>({ ...initialPanels });
 	let dragState = $state<DragState | null>(null);
@@ -92,7 +100,7 @@ export function createDockState(
 		// Don't remove from panels registry — allows re-adding via activity bar
 		// (and makes onPanelClosed undo a plain addPanel of the same definition).
 		const closed = panels[panelId];
-		if (closed) hooks.onPanelClosed?.(closed);
+		if (closed) options.onPanelClosed?.(closed);
 	}
 
 	function movePanel(panelId: string, target: DropTarget): void {
@@ -286,6 +294,41 @@ export function createDockState(
 		}
 	}
 
+	// Unsaved-close guard — EVERY interactive close route on both projections
+	// (tab ✕, tab context menu, Panel floor row / Ctrl+W, activity-bar toggle,
+	// mobile drawer ✕, mobile sheet) asks here first; `closePanel` stays the raw
+	// operation for the confirm itself, undo and AI effects. Undo restores a
+	// closed panel's shell, never a destroyed buffer — hence a confirm whenever a
+	// panel about to close carries `indicator === 'unsaved'`.
+	let pendingClose = $state<{ panels: PanelDefinition[]; close: () => void } | null>(null);
+
+	/** Run `close` now, or hold it behind a confirm when any of `panelIds` is unsaved. */
+	function requestClosePanels(panelIds: string[], close: () => void): void {
+		const unsaved = panelIds
+			.map((id) => panels[id])
+			.filter((p): p is PanelDefinition => !!p && p.indicator === 'unsaved');
+		if (unsaved.length === 0) {
+			close();
+			return;
+		}
+		pendingClose = { panels: unsaved, close };
+	}
+
+	function requestClose(panelId: string): void {
+		if (!panels[panelId]) return;
+		requestClosePanels([panelId], () => closePanel(panelId));
+	}
+
+	function confirmPendingClose(): void {
+		const pending = pendingClose;
+		pendingClose = null;
+		pending?.close();
+	}
+
+	function cancelPendingClose(): void {
+		pendingClose = null;
+	}
+
 	return {
 		get root() {
 			return root;
@@ -299,6 +342,8 @@ export function createDockState(
 		get activityBarPosition() {
 			return activityBarPosition;
 		},
+		/** What the activity bar offers (host-supplied); View derives its toggle rows from it. */
+		activityBarItems,
 		/** Effective focused leaf id (total — falls back to the first non-empty leaf). */
 		get focusedLeafId() {
 			return resolveFocusedLeaf()?.id ?? null;
@@ -311,11 +356,19 @@ export function createDockState(
 		get focusSeq() {
 			return focusSeq;
 		},
+		/** Panels awaiting an unsaved-close confirmation, with the close they gate. */
+		get pendingClose() {
+			return pendingClose;
+		},
 
 		activateTab,
 		closePanel,
 		closeOtherPanels,
 		closeAllPanels,
+		requestClose,
+		requestClosePanels,
+		confirmPendingClose,
+		cancelPendingClose,
 		movePanel,
 		addPanel,
 		removePanel,
@@ -351,9 +404,9 @@ export function setDockContext(
 	initialPanels: Record<string, PanelDefinition>,
 	initialBarPosition?: ActivityBarPosition,
 	initialFocusedLeafId?: string | null,
-	hooks?: DockStateHooks,
+	options?: DockStateOptions,
 ): DockState {
-	const state = createDockState(initialRoot, initialPanels, initialBarPosition, initialFocusedLeafId ?? null, hooks);
+	const state = createDockState(initialRoot, initialPanels, initialBarPosition, initialFocusedLeafId ?? null, options);
 	setContext(DOCK_CTX, state);
 	return state;
 }

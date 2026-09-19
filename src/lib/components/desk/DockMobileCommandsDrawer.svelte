@@ -3,26 +3,29 @@
  * Active panel's commands as a bottom sheet — flat titled sections, zero
  * nesting (desktop's hover Sub-menus are touch-hostile). Renders the SAME
  * composed array as the desktop kebab (composePanelMenus): registered menus +
- * the dock's floor menu + the non-structural View menu (+ Help).
+ * the dock's floor menu (close, switch, about). No View section: its commands
+ * are dock-level and the panels drawer projects them on touch — a row per
+ * panel type (show-or-open, never the desktop's close-all-of-type toggle) and
+ * a Preferences row — so the sheet stays "this panel's commands".
  *
  * Row rules: plain rows dismiss (action deferred a microtask so a follow-up
  * surface never fights this sheet's focus-trap teardown); checkbox rows stay
  * open (toggles are done in runs); disabled rows are dimmed, never hidden;
  * shortcut hints are keyboard talk and don't render here.
  */
+import { trackCommand } from '$lib/analytics/telemetry';
 import { InfoDialog } from '$lib/components/composites/info-dialog';
 import type { MenuBarItem, MenuBarMenu } from '$lib/components/composites/menu-bar/types';
 import { Drawer } from '$lib/components/primitives';
 import { DESK_PANEL_HELP } from '$lib/desk/help';
+import type { DeskPanelType } from '$lib/desk/panels';
 import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
-import { collectTypeInstances, composePanelMenus } from './compose-menus';
-import { getDeskSettings } from './desk-settings.state.svelte';
+import { collectTypeInstances, composePanelMenus, shortcutTableMarkdown } from './compose-menus';
 import { getDockContext } from './dock.state.svelte';
 import { getDockMobile } from './dock-mobile.state.svelte';
-import { focusPanel, togglePanelType } from './panel-actions';
+import { focusPanel } from './panel-actions';
 import { getPanelMenus } from './panel-menus.state.svelte';
-import { buildViewMenu } from './view-menu';
 
 interface Props {
 	openPanelIds: string[];
@@ -34,82 +37,50 @@ let { openPanelIds, visibleId }: Props = $props();
 const dock = getDockContext();
 const mobile = getDockMobile();
 const panelMenus = getPanelMenus();
-const deskSettings = getDeskSettings();
 
 const panel = $derived(visibleId ? (dock.panels[visibleId] ?? null) : null);
-const panelHelp = $derived(panel ? (DESK_PANEL_HELP[panel.type as keyof typeof DESK_PANEL_HELP] ?? null) : null);
+const panelHelp = $derived(panel ? (DESK_PANEL_HELP[panel.type as DeskPanelType] ?? null) : null);
 let helpOpen = $state(false);
 
-const viewMenu = $derived<MenuBarMenu>(
-	buildViewMenu({
-		// Mobile is non-structural: no split commands (persisted tree shape untouched).
-		structural: false,
-		actions: {
-			togglePanelType: (panelType) => togglePanelType(dock, panelType),
-			splitFocused: () => {},
-			closeFocusedPanel: () => {
-				if (visibleId) mobile.requestClose(visibleId);
-			},
-			openPreferences: () => deskSettings.openDialog(),
-		},
-	}),
-);
-
-const menus = $derived<MenuBarMenu[]>([
-	...(visibleId
+const menus = $derived<MenuBarMenu[]>(
+	visibleId
 		? composePanelMenus({
 				registered: panelMenus.getMenus(visibleId).menuBar,
 				panel,
 				instances: collectTypeInstances(openPanelIds, dock.panels, panel?.type),
-				viewMenu,
+				viewMenu: null,
 				actions: {
 					focusPanel: (panelId) => focusPanel(dock, panelId),
-					// Route through requestClose so unsaved work gets a confirm.
-					closePanel: (panelId) => mobile.requestClose(panelId),
+					closePanel: (panelId) => dock.requestClose(panelId),
+					closePanels: (panelIds) =>
+						dock.requestClosePanels(panelIds, () => {
+							for (const id of panelIds) dock.closePanel(id);
+						}),
 				},
-			})
-		: [viewMenu]),
-	...(panelHelp
-		? [
-				{
-					label: 'Help',
-					items: [
-						{
-							label: `About ${panelHelp.title}`,
-							icon: 'i-lucide-info',
-							onSelect: () => {
+				help: panelHelp
+					? {
+							title: panelHelp.title,
+							open: () => {
 								helpOpen = true;
 							},
-						},
-					],
-				} satisfies MenuBarMenu,
-			]
-		: []),
-]);
+						}
+					: null,
+			})
+		: [],
+);
 
-/** Drop dangling/duplicate separators (conditional spreads routinely emit them). */
-function visibleItems(items: MenuBarItem[]): MenuBarItem[] {
-	const out: MenuBarItem[] = [];
-	for (const item of items) {
-		if (item.type === 'separator') {
-			if (out.length === 0 || out[out.length - 1].type === 'separator') continue;
-		}
-		out.push(item);
-	}
-	while (out.length > 0 && out[out.length - 1].type === 'separator') out.pop();
-	return out;
-}
-
-function runItem(item: MenuBarItem) {
-	if (item.disabled) return;
+function runItem(menu: MenuBarMenu, item: MenuBarItem) {
+	if (item.disabled || !item.onSelect) return;
+	trackCommand('sheet', `${menu.label} › ${item.label}`);
 	if (item.type === 'checkbox') {
-		item.onSelect?.();
+		item.onSelect();
 		return;
 	}
 	// Close first, act a microtask later: this sheet's focus-trap teardown must
 	// finish before a follow-up surface (preferences, help, confirm) grabs focus.
 	mobile.close();
-	queueMicrotask(() => item.onSelect?.());
+	const select = item.onSelect;
+	queueMicrotask(() => select());
 }
 </script>
 
@@ -122,35 +93,32 @@ function runItem(item: MenuBarItem) {
 >
 	<div class="commands-sheet">
 		{#each menus as menu (menu.label)}
-			{@const items = visibleItems(menu.items)}
-			{#if items.length > 0}
-				<section class="menu-section">
-					<h3 class="section-heading">{menu.label}</h3>
-					{#each items as item, i (i)}
-						{#if item.type === 'separator'}
-							<hr class="section-separator" />
-						{:else}
-							<button
-								type="button"
-								class={cn('command-row', item.destructive && 'destructive')}
-								disabled={item.disabled}
-								aria-disabled={item.disabled || undefined}
-								aria-pressed={item.type === 'checkbox' ? (item.checked ?? false) : undefined}
-								onclick={() => runItem(item)}
-							>
-								{#if item.icon}<span class={cn(item.icon, 'command-icon')} aria-hidden="true"></span>{/if}
-								<span class="command-label">{item.label}</span>
-								{#if item.type === 'checkbox'}
-									<span
-										class={cn('i-lucide-check command-check', !item.checked && 'invisible')}
-										aria-hidden="true"
-									></span>
-								{/if}
-							</button>
-						{/if}
-					{/each}
-				</section>
-			{/if}
+			<section class="menu-section">
+				<h3 class="section-heading">{menu.label}</h3>
+				{#each menu.items as item, i (i)}
+					{#if item.type === 'separator'}
+						<hr class="section-separator" />
+					{:else}
+						<button
+							type="button"
+							class={cn('command-row', item.destructive && 'destructive')}
+							disabled={item.disabled}
+							aria-disabled={item.disabled || undefined}
+							aria-pressed={item.type === 'checkbox' ? (item.checked ?? false) : undefined}
+							onclick={() => runItem(menu, item)}
+						>
+							{#if item.icon}<span class={cn(item.icon, 'command-icon')} aria-hidden="true"></span>{/if}
+							<span class="command-label">{item.label}</span>
+							{#if item.type === 'checkbox'}
+								<span
+									class={cn('i-lucide-check command-check', !item.checked && 'invisible')}
+									aria-hidden="true"
+								></span>
+							{/if}
+						</button>
+					{/if}
+				{/each}
+			</section>
 		{/each}
 	</div>
 </Drawer>
@@ -163,7 +131,7 @@ function runItem(item: MenuBarItem) {
 		description={panelHelp.description}
 		icon={panelHelp.icon}
 		ariaLabel={panelHelp.title}
-		doc={{ name: panelHelp.title, notes: panelHelp.notes }}
+		doc={{ name: panelHelp.title, notes: `${panelHelp.notes}\n\n${shortcutTableMarkdown(menus)}` }}
 	/>
 {/if}
 
