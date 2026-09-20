@@ -8,7 +8,6 @@ let { data } = $props();
 	entry={data.entry}
 	html={data.html}
 	toc={data.toc}
-	sourceUrl={data.sourceUrl}
 	breadcrumbs={[
 		{ label: 'Home', href: '/' },
 		{ label: 'Docs', href: '/docs' },

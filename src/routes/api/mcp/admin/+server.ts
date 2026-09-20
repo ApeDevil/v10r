@@ -5,8 +5,8 @@
  * failed credential can't be brute-forced at full throughput. Missing/invalid/misconfigured
  * credentials fail with 401/503 and never fall back to public behavior. GET → 405 (SSE
  * unsupported) with no auth and no tool metadata, so there is no bearer-guessing path outside
- * the rate-limited POST. It is handed only `adminStateRegistry`; the public pattern tools are
- * not reachable here.
+ * the rate-limited POST. It is handed only the admin state registry; the public pattern tools
+ * are not reachable here.
  */
 import { json } from '@sveltejs/kit';
 import { normalizeIpKey } from '$lib/server/abuse';

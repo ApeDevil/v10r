@@ -50,8 +50,6 @@ export interface RetrievalOptions {
 	 * answer from the same user's web uploads. Absent = every source the user owns.
 	 */
 	source?: DocumentSource;
-	/** Fusion strategy when multiple tiers run. 'rrf' forces fusion; 'none' skips it. */
-	fusion?: 'none' | 'rrf';
 	/**
 	 * Precomputed query embedding (RETRIEVAL_QUERY task type, EMBEDDING_DIMENSIONS dims).
 	 * When provided, the vector tiers reuse it INSTEAD of calling generateEmbedding —
@@ -69,14 +67,14 @@ export interface RetrievalOptions {
 }
 
 /** Where a retrieval document came from — mirrors `retrieval.document.source`. */
-export type DocumentSource = 'upload' | 'web' | 'text' | 'api' | 'catalog' | 'docs' | 'desk';
+export type DocumentSource = 'upload' | 'web' | 'text' | 'api' | 'docs' | 'desk';
 
 /** Input for the ingestion pipeline */
 export interface IngestableDocument {
 	title: string;
 	content: string;
 	sourcePath?: string;
-	sourceType?: Exclude<DocumentSource, 'catalog'>;
+	sourceType?: DocumentSource;
 	userId?: string;
 }
 
@@ -93,7 +91,7 @@ export interface RawChunk {
 	id: string;
 	content: string;
 	contextPrefix?: string;
-	level: 'sentence' | 'paragraph' | 'section';
+	level: 'paragraph' | 'section';
 	position: number;
 	tokenCount: number;
 	contentHash: string;

@@ -27,8 +27,9 @@ agent reads and adapts to a new project. Emulation, not cloning. What it is: `RE
   only in adapters, domains call down not across (barrels only) — are executable in
   `src/lib/architecture.gate.test.ts`. Read `docs/codebase-organization.md` before any
   structural or cross-cutting change.
-- **Self-expressive project and naming integrity.** See the section below; it applies to
-  every name, file, table and comment you write.
+- **Self-expressive project and naming integrity.** The principle is
+  `docs/foundation/self-expressive-project.md`; the credo and the naming rule are in the
+  section below. They apply to every name, file, table and comment you write.
 - **Component-first.** Never use a raw `<button>`, `<input>`, `<select>` or `<textarea>` when
   a `$lib/components/` component exists. Exceptions: `docs/blueprint/design/components.md`.
 - **No backward compatibility.** Active development, no production users. No migration shims,
@@ -38,24 +39,12 @@ agent reads and adapts to a new project. Emulation, not cloning. What it is: `RE
 
 ## Self-expressive project
 
-The project itself should represent the system. By looking at the codebase and database —
-their names, structure, boundaries, schemas, relationships and constraints — a developer
-should understand how the product works and how its concepts relate. Documentation and
-comments are exceptions, not the primary explanation mechanism.
-
-- **Self-expressive code:** functions, types and modules communicate their purpose without
-  explanatory comments.
-- **System-reflective architecture:** the codebase structure mirrors the product and domain
-  architecture.
-- **Self-expressive data model:** tables, columns, relationships and constraints communicate
-  their meaning directly; the database structure mirrors the domain model.
-- **Comments explain why:** rationale, constraints, invariants and non-obvious decisions —
-  never what the code already says.
-- **One source of truth:** a fact or rule has one authoritative owner; reference it instead
-  of duplicating it.
-
 **Code expresses behavior. Structure expresses architecture. Schema expresses the domain.
 Constraints express the rules. Documentation explains the why.**
+
+The principle, its five facets, the rationale and the gates that enforce it:
+`docs/foundation/self-expressive-project.md`. Read it before a change that adds a name, a
+file, a table, a rule or a comment.
 
 ### Naming integrity
 

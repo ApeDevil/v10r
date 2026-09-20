@@ -116,7 +116,7 @@ Per-page header inside the main content area. **Not a global header** — each p
 ## Usage
 
 ```svelte
-<!-- src/routes/[[locale=locale]]/account/projects/[id]/+page.svelte -->
+<!-- Illustrative page — compare src/routes/[[locale=locale]]/admin/feedback/[id]/+page.svelte -->
 <script>
   import { PageHeader } from '$lib/components/composites';
   import { Button, DropdownMenu } from '$lib/components/primitives';
@@ -141,16 +141,6 @@ Per-page header inside the main content area. **Not a global header** — each p
 </PageHeader>
 
 <!-- Page content below -->
-```
-
----
-
-## Sticky Option
-
-For long pages, pass the `sticky` prop. PageHeader applies its own `position: sticky` styling:
-
-```svelte
-<PageHeader title="Dashboard" sticky />
 ```
 
 ---

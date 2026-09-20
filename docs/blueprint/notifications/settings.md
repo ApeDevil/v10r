@@ -18,7 +18,7 @@ Frontend architecture for channel connections and notification settings manageme
         └── +page.server.ts       # Exchange code, store tokens, redirect
 ```
 
-There is no `telegram/callback` route — Telegram links via the bot webhook plus polling of `/api/notifications/telegram/status`.
+There is no `telegram/callback` route — Telegram links via `/api/notifications/telegram/connect` plus the bot webhook (`/api/webhooks/telegram`).
 
 ---
 

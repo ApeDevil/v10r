@@ -14,7 +14,7 @@
  * Pure — no `$lib/server/*`, no `$env/*`, no Paraglide, no `@xyflow`.
  */
 
-import type { TurnGraph, TurnGraphColumn, TurnGraphEdge, TurnGraphNode, TurnGraphNodeKind } from './turn-graph';
+import type { TurnGraph, TurnGraphColumn, TurnGraphNode, TurnGraphNodeKind } from './turn-graph';
 
 export const COLUMN_WIDTH = 272;
 export const GUTTER_WIDTH = 104;
@@ -259,18 +259,6 @@ export function routeEdges(visible: TurnGraph, layout: TurnGraphLayout): Map<str
 		}
 	});
 	return routes;
-}
-
-/** Which side an edge leaves and enters — the route's handles, for a caller without the layout. */
-export function edgeHandles(
-	edge: TurnGraphEdge,
-	columnOf: (id: string) => TurnGraphColumn,
-): { sourceHandle: TurnGraphSourceHandle; targetHandle: TurnGraphTargetHandle } {
-	const from = COLUMN_ORDER.indexOf(columnOf(edge.source));
-	const to = COLUMN_ORDER.indexOf(columnOf(edge.target));
-	if (from < to) return { sourceHandle: 'r-out', targetHandle: 'l-in' };
-	if (from > to) return { sourceHandle: 'l-out', targetHandle: 'r-in' };
-	return { sourceHandle: 'l-out', targetHandle: 'l-in' };
 }
 
 export interface Point {

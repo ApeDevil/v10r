@@ -8,5 +8,3 @@ import * as v from 'valibot';
 export const startOperationSchema = v.object({
 	kind: v.optional(v.picklist(['reset_from_parent']), 'reset_from_parent'),
 });
-
-export type StartOperationForm = v.InferOutput<typeof startOperationSchema>;

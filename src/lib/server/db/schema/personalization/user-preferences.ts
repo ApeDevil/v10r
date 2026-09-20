@@ -27,7 +27,6 @@ export const userPreferences = personalizationSchema.table('user_preferences', {
 
 	// Accessibility
 	reduceMotion: boolean('reduce_motion').notNull().default(false),
-	highContrast: boolean('high_contrast').notNull().default(false),
 
 	// Style randomizer
 	paletteId: text('palette_id'),

@@ -52,6 +52,5 @@ export const file = deskSchema.table(
 		index('desk_file_ai_context_idx')
 			.on(table.userId)
 			.where(sql`${table.aiContext} = true AND ${table.deletedAt} IS NULL`),
-		index('desk_file_origin_tool_call_idx').on(table.originToolCallId),
 	],
 );

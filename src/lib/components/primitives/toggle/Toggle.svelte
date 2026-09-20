@@ -11,19 +11,12 @@ interface Props extends ToggleVariants {
 	children: Snippet;
 }
 
-let {
-	pressed = $bindable(false),
-	disabled = false,
-	variant = 'default',
-	size = 'md',
-	class: className,
-	children,
-}: Props = $props();
+let { pressed = $bindable(false), disabled = false, variant = 'default', class: className, children }: Props = $props();
 </script>
 
 <TogglePrimitive.Root bind:pressed {disabled}>
 	{#snippet child({ props })}
-		<button {...props} class={cn('toggle', toggleVariants({ variant, size }), className)}>
+		<button {...props} class={cn('toggle', toggleVariants({ variant }), className)}>
 			{@render children()}
 		</button>
 	{/snippet}

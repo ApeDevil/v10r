@@ -21,7 +21,6 @@ import type {
 	TrafficTrendPoint,
 	TransitionRow,
 	UserLaneStats,
-	VitalSummary,
 } from '$lib/server/db/analytics/types';
 import { rowsOf } from '$lib/server/db/rows';
 import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
@@ -479,57 +478,6 @@ export async function getExitPages(days: number, limit = 10): Promise<PageCount[
 		.groupBy(sql`coalesce(${sessions.exitPath}, ${sessions.entryPath})`)
 		.orderBy(desc(sql`count(*)`))
 		.limit(limit);
-}
-
-/**
- * Web Vitals at the 75th percentile, with the element most often blamed.
- *
- * p75 rather than the mean, deliberately: Google scores CWV at p75, and the mean
- * hides precisely the long tail of slow interactions that users actually notice.
- * `worstTarget` comes from the attribution build — it is what turns "INP is
- * 400ms" into "this button is 400ms", which is the difference between a number
- * and something you can act on.
- */
-export async function getWebVitals(days: number): Promise<VitalSummary[]> {
-	const cutoff = new Date(Date.now() - days * 86400000);
-
-	const rows = await db.execute<{ metric: string; p75: number; samples: number; worst_target: string | null }>(sql`
-		WITH samples AS (
-			SELECT
-				metadata->>'metric' AS metric,
-				(metadata->>'value')::numeric AS value,
-				metadata->>'target' AS target
-			FROM analytics.events
-			WHERE event_type = 'timing'
-			  AND timestamp >= ${cutoff}
-			  AND debug_owner_id IS NULL
-			  AND metadata->>'metric' IS NOT NULL
-			  AND metadata->>'value' ~ '^[0-9]+(\\.[0-9]+)?$'
-		),
-		blame AS (
-			SELECT DISTINCT ON (metric) metric, target
-			FROM samples
-			WHERE target IS NOT NULL
-			GROUP BY metric, target
-			ORDER BY metric, count(*) DESC
-		)
-		SELECT
-			s.metric,
-			percentile_cont(0.75) WITHIN GROUP (ORDER BY s.value) AS p75,
-			count(*)::int AS samples,
-			b.target AS worst_target
-		FROM samples s
-		LEFT JOIN blame b ON b.metric = s.metric
-		GROUP BY s.metric, b.target
-		ORDER BY s.metric
-	`);
-
-	return rowsOf<{ metric: string; p75: number; samples: number; worst_target: string | null }>(rows).map((r) => ({
-		metric: r.metric,
-		p75: Math.round(Number(r.p75) * 1000) / 1000,
-		samples: Number(r.samples),
-		worstTarget: r.worst_target,
-	}));
 }
 
 /**

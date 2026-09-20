@@ -5,7 +5,6 @@
  * Usage:
  *   bun run content:push                          # push every slug under content/blog/
  *   bun run content:push <slug> [<slug> ...]      # push specific slugs
- *   bun run content:push --all
  *   bun run content:push --dry-run                # report what would change
  *   bun run content:push --json                   # NDJSON output (one action per line) + summary
  *
@@ -21,16 +20,14 @@ import { createR2, db, pool } from './_db';
 interface CliFlags {
 	dryRun: boolean;
 	json: boolean;
-	all: boolean;
 }
 
 function parseArgs(argv: string[]): { slugs: string[]; flags: CliFlags } {
 	const slugs: string[] = [];
-	const flags: CliFlags = { dryRun: false, json: false, all: false };
+	const flags: CliFlags = { dryRun: false, json: false };
 	for (const arg of argv) {
 		if (arg === '--dry-run') flags.dryRun = true;
 		else if (arg === '--json') flags.json = true;
-		else if (arg === '--all') flags.all = true;
 		else if (arg.startsWith('--')) {
 			console.error(`unknown flag: ${arg}`);
 			process.exit(1);

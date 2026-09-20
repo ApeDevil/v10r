@@ -50,7 +50,6 @@ type RawBranch = {
 	parent_id?: string | null;
 	created_at: string;
 	updated_at: string;
-	current_state: string;
 	logical_size?: number | null;
 };
 
@@ -68,7 +67,6 @@ function toBranch(raw: RawBranch): NeonBranch {
 		parentId: raw.parent_id ?? null,
 		createdAt: raw.created_at,
 		updatedAt: raw.updated_at,
-		currentState: raw.current_state,
 		logicalSize: raw.logical_size ?? null,
 	};
 }

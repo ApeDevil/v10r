@@ -57,16 +57,8 @@ process.env.ANALYTICS_DEV_TRACKING = 'true';
 const { db } = await import('$lib/server/db');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { deriveVisitorId, deriveUaHash } = await import('./visitor');
-const {
-	isBot,
-	isBrowserNavigation,
-	isExcludedPath,
-	isPrefetch,
-	isUserLanePath,
-	stripLocalePrefix,
-	userLaneSurface,
-	LOCALE_SEGMENTS,
-} = await import('$lib/analytics/collect-policy');
+const { isBot, isBrowserNavigation, isExcludedPath, isPrefetch, stripLocalePrefix, userLaneSurface, LOCALE_SEGMENTS } =
+	await import('$lib/analytics/collect-policy');
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
@@ -327,7 +319,7 @@ describe('stripLocalePrefix', () => {
 	});
 });
 
-describe('isUserLanePath / userLaneSurface', () => {
+describe('userLaneSurface', () => {
 	it.each([
 		['/account', 'account'],
 		['/account/security', 'account'],
@@ -340,12 +332,10 @@ describe('isUserLanePath / userLaneSurface', () => {
 	])('claims %s as %s', (path, surface) => {
 		// A path is eligible for exactly one lane: refused by the anonymous lane
 		// above and claimed here, in every locale, under its own surface.
-		expect(isUserLanePath(path)).toBe(true);
 		expect(userLaneSurface(path)).toBe(surface);
 	});
 
 	it.each(['/admin', '/blog', '/de/blog', '/deskto'])('refuses %s', (path) => {
-		expect(isUserLanePath(path)).toBe(false);
 		expect(userLaneSurface(path)).toBeNull();
 	});
 });
@@ -823,12 +813,12 @@ describe('journey endpoint — navigationType filter', () => {
 		};
 	}
 
-	const spaEvent = (path: string, navigationType?: 'enter' | 'spa') => ({
+	const spaEvent = (path: string, navigationType: 'enter' | 'spa') => ({
 		eventId: crypto.randomUUID(),
 		path,
 		referrer: null,
 		occurredAt: new Date().toISOString(),
-		...(navigationType ? { navigationType } : {}),
+		navigationType,
 	});
 
 	beforeEach(async () => {
@@ -859,14 +849,6 @@ describe('journey endpoint — navigationType filter', () => {
 		expect(response.status).toBe(204);
 		expect(await db.select().from(events)).toHaveLength(0);
 		expect(await db.select().from(sessions)).toHaveLength(0);
-	});
-
-	it('a field-less event (pre-field client) still records — optional means optional', async () => {
-		const { POST } = await import('../../../routes/api/analytics/journey/+server');
-		const batch = { events: [spaEvent('/blog')] };
-		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
-		await POST(makeJourneyEvent(batch) as any);
-		expect(await db.select().from(events)).toHaveLength(1);
 	});
 });
 
@@ -1457,7 +1439,7 @@ describe('analyticsCleanup — functional behaviour', () => {
 			},
 			{
 				visitorId: 'v_cccccccccccc0002',
-				action: 'withdraw',
+				action: 'change',
 				tierBefore: 'analytics',
 				tierAfter: 'necessary',
 				timestamp: insideWindow,

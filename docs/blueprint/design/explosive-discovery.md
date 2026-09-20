@@ -9,11 +9,11 @@ It is a way of reasoning, not a compliance framework. Nothing here fails a gate,
 restructuring, or turns a number into a design-system constraint. A finding is mandatory only
 when some *other* requirement — accessibility, a product rule — makes it so.
 
-> **Not Progressive Revelation.** [ProgRev](../../foundation/progressive-revelation.md)
-> (planned) gates *content* by journey stage over time. Explosive Discovery structures
-> *choices* on one page at one moment. Both refine design principle 3,
-> [Progressive Disclosure](./README.md#3-progressive-disclosure) — this document is its
-> review method.
+> **The principle lives in
+> [foundation/explosive-discovery.md](../../foundation/explosive-discovery.md)** — its two axes
+> (choices on one page at one moment; content across a user's journey), invariants and
+> anti-goals. This document is the review method for the depth axis, refining design principle
+> 3, [Progressive Disclosure](./README.md#3-progressive-disclosure).
 
 The shape it looks for:
 
@@ -284,5 +284,5 @@ The desired result is not minimalism for its own sake.
 - [app-shell/navigation.md](../app-shell/navigation.md) — the split nav button: one direction per top-level item, subpages on entry
 - [app-shell/keyboard-shortcuts.md](../app-shell/keyboard-shortcuts.md) — the shell's expert paths
 - [quick-search/architecture.md](../quick-search/architecture.md) — the command palette as a discovery *and* expert path
-- [foundation/progressive-revelation.md](../../foundation/progressive-revelation.md) — the planned journey-stage feature this is *not*
+- [foundation/explosive-discovery.md](../../foundation/explosive-discovery.md) — the principle this method reviews against: two axes, invariants, accessibility
 - `.claude/skills/uxy-explosive-discovery/SKILL.md` — the review procedure agents follow

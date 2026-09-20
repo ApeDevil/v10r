@@ -1,14 +1,7 @@
 import { ServerError } from '$lib/server/errors';
 
-export type RetrievalErrorKind =
-	| 'embedding'
-	| 'storage'
-	| 'graph'
-	| 'ingestion'
-	| 'not_found'
-	| 'limit_exceeded'
-	| 'timeout'
-	| 'unknown';
+/** The two failures the pipeline raises: the embedding provider, and an ingest that cannot proceed. */
+export type RetrievalErrorKind = 'embedding' | 'ingestion';
 
 export class RetrievalError extends ServerError {
 	constructor(
@@ -33,19 +26,7 @@ export function retrievalErrorToStatus(kind: RetrievalErrorKind): number {
 	switch (kind) {
 		case 'embedding':
 			return 502;
-		case 'storage':
-			return 500;
-		case 'graph':
-			return 502;
 		case 'ingestion':
 			return 422;
-		case 'not_found':
-			return 404;
-		case 'limit_exceeded':
-			return 403;
-		case 'timeout':
-			return 504;
-		default:
-			return 500;
 	}
 }

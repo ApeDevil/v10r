@@ -3,7 +3,7 @@
  * Central store for all registered shortcuts.
  */
 
-export type ShortcutCategory = 'global' | 'navigation' | 'actions' | 'desk';
+export type ShortcutCategory = 'global' | 'navigation' | 'desk';
 
 export interface Shortcut {
 	id: string;
@@ -44,7 +44,6 @@ export function getShortcutsByCategory(): Record<ShortcutCategory, Shortcut[]> {
 	const byCategory: Record<ShortcutCategory, Shortcut[]> = {
 		global: [],
 		navigation: [],
-		actions: [],
 		desk: [],
 	};
 

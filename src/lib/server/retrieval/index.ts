@@ -1,17 +1,7 @@
-import {
-	type ChunkSummary,
-	PHASE_OF,
-	RETRIEVER_OF,
-	type RetrievalChunksEvent,
-	type RetrievalPromptEvent,
-	type RetrievalStepEvent,
-	type RetrieverId,
-	type StepDetail,
-} from '$lib/types/retrieval-trace';
+import type { RetrievalStepEvent, StepDetail } from '$lib/types/retrieval-trace';
 import { escapeXmlText } from '$lib/utils/xml';
 import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 
-export { OVERFETCH_MULTIPLIER, RRF_K } from './config';
 // The query embedding is the engine's own door for its consumers (the chatbot profile's
 // shared per-turn vector), so no consumer reaches into `embed.ts` by file.
 export { generateEmbedding } from './embed';
@@ -30,53 +20,17 @@ const DEFAULT_OPTIONS: Required<
 	maxChunks: MAX_CONTEXT_CHUNKS,
 	tiers: [1],
 	graphDepth: MAX_GRAPH_HOPS,
-	fusion: 'rrf',
 };
 
-type EmitFn = (event: RetrievalStepEvent | RetrievalChunksEvent | RetrievalPromptEvent) => void;
-
-function toSummary(
-	chunk: RankedChunk,
-	survived: boolean,
-	extras?: { rrfRank?: number; rrfContribution?: number; dispositionReason?: ChunkSummary['dispositionReason'] },
-): ChunkSummary {
-	const retrieverScores: ChunkSummary['retrieverScores'] = {};
-	if (chunk.source === 'vector' || chunk.source === 'bm25') retrieverScores[chunk.source] = chunk.score;
-	else if (chunk.tier === 2) retrieverScores.parentChild = chunk.score;
-	else if (chunk.tier === 3 || chunk.source === 'graph') retrieverScores.graph = chunk.score;
-
-	return {
-		chunkId: chunk.chunkId,
-		documentId: chunk.documentId,
-		documentTitle: chunk.documentTitle,
-		contentPreview: chunk.content.slice(0, 200),
-		contentLength: chunk.content.length,
-		score: Math.round(chunk.score * 1000) / 1000,
-		source: chunk.source,
-		tier: chunk.tier,
-		survived,
-		retrieverScores,
-		rrfRank: extras?.rrfRank,
-		rrfContribution: extras?.rrfContribution,
-		dispositionReason: extras?.dispositionReason,
-	};
-}
+type EmitFn = (event: RetrievalStepEvent) => void;
 
 function emit(
 	fn: EmitFn,
 	step: RetrievalStepEvent['step'],
 	status: RetrievalStepEvent['status'],
-	extra?: { startOffsetMs?: number; durationMs?: number; error?: string; detail?: StepDetail },
+	extra?: { durationMs?: number; error?: string; detail?: StepDetail },
 ) {
-	fn({
-		type: 'pipeline:step',
-		step,
-		phase: PHASE_OF[step],
-		instanceKey: step,
-		retriever: RETRIEVER_OF[step],
-		status,
-		...extra,
-	});
+	fn({ type: 'pipeline:step', step, status, ...extra });
 }
 
 /**
@@ -86,24 +40,16 @@ function emit(
  * When `onEvent` is provided, emits pipeline events at each step
  * for real-time UI feedback. When absent, runs the same flow silently.
  */
-export async function retrieve(
-	query: string,
-	options: RetrievalOptions,
-	onEvent?: EmitFn,
-	/** Turn t0 (orchestrator-owned). Step offsets are measured against it so the
-	 *  whole turn — retrieve + generate — shares one origin. Defaults to retrieval start. */
-	t0?: number,
-): Promise<RetrievalResult> {
+export async function retrieve(query: string, options: RetrievalOptions, onEvent?: EmitFn): Promise<RetrievalResult> {
 	const opts = { ...DEFAULT_OPTIONS, ...options };
 	const start = performance.now();
-	const emitOrigin = t0 ?? start;
 	const requestedTiers = new Set(opts.tiers);
 
 	// Reuse a caller-supplied vector when present (lets a chatbot turn embed the user
 	// message ONCE and share it across every lane and tool that retrieves). The
 	// 'done' event still fires — marked `reused` — so the pipeline trace stays intact.
 	const embedStart = performance.now();
-	onEvent && emit(onEvent, 'embed', 'active', { startOffsetMs: Math.round(embedStart - emitOrigin) });
+	onEvent && emit(onEvent, 'embed', 'active');
 	const reusedEmbedding = !!opts.queryEmbedding;
 	let queryEmbedding: number[];
 	try {
@@ -122,20 +68,11 @@ export async function retrieve(
 		throw err;
 	}
 
-	// Skip events for unused tiers
-	if (onEvent) {
-		for (const t of [1, 2, 3] as const) {
-			if (!requestedTiers.has(t)) {
-				emit(onEvent, `tier-${t}`, 'skipped');
-			}
-		}
-	}
-
 	// Run requested tiers in parallel
 	const tierPromises = opts.tiers.map(async (tier) => {
 		const stepId = `tier-${tier}` as const;
 		const tierStart = performance.now();
-		onEvent && emit(onEvent, stepId, 'active', { startOffsetMs: Math.round(tierStart - emitOrigin) });
+		onEvent && emit(onEvent, stepId, 'active');
 
 		try {
 			let chunks: RankedChunk[];
@@ -178,7 +115,7 @@ export async function retrieve(
 	const tierResults = await Promise.all(tierPromises);
 
 	const rankStart = performance.now();
-	onEvent && emit(onEvent, 'rank', 'active', { startOffsetMs: Math.round(rankStart - emitOrigin) });
+	onEvent && emit(onEvent, 'rank', 'active');
 	const allChunks = tierResults.flat();
 	const { chunks } = fuseAndRank(allChunks, opts.maxChunks);
 
@@ -209,7 +146,7 @@ export async function retrieve(
 		});
 
 	const ctxStart = performance.now();
-	onEvent && emit(onEvent, 'context', 'active', { startOffsetMs: Math.round(ctxStart - emitOrigin) });
+	onEvent && emit(onEvent, 'context', 'active');
 	const tokenEstimate = chunks.reduce((sum, c) => sum + Math.ceil(c.content.length / 4), 0);
 	onEvent &&
 		emit(onEvent, 'context', 'done', {
@@ -220,51 +157,6 @@ export async function retrieve(
 				chunkCount: chunks.length,
 			},
 		});
-
-	if (onEvent) {
-		const survivedIds = new Set(chunks.map((c) => c.chunkId));
-		const rrfRankById = new Map<string, number>();
-		for (let idx = 0; idx < chunks.length; idx++) {
-			rrfRankById.set(chunks[idx].chunkId, idx + 1);
-		}
-		const multiTier = opts.tiers.length > 1;
-		const defaultReason: ChunkSummary['dispositionReason'] = multiTier ? 'rrf_threshold' : 'top_k';
-		const dropReason: ChunkSummary['dispositionReason'] = multiTier ? 'rrf_cutoff' : 'below_top_k';
-
-		const tierChunks: Partial<Record<RetrieverId, ChunkSummary[]>> = {};
-		for (let i = 0; i < opts.tiers.length; i++) {
-			const tier = opts.tiers[i];
-			const tierResult = tierResults[i];
-			tierChunks[`tier-${tier}` as RetrieverId] = tierResult.map((c) =>
-				toSummary(c, survivedIds.has(c.chunkId), {
-					rrfRank: rrfRankById.get(c.chunkId),
-					rrfContribution: survivedIds.has(c.chunkId) ? c.score : undefined,
-					dispositionReason: survivedIds.has(c.chunkId) ? defaultReason : dropReason,
-				}),
-			);
-		}
-		onEvent({
-			type: 'pipeline:chunks',
-			tierChunks,
-			rankedChunks: allChunks
-				.filter((c) => survivedIds.has(c.chunkId))
-				.sort((a, b) => b.score - a.score)
-				.map((c) =>
-					toSummary(c, true, {
-						rrfRank: rrfRankById.get(c.chunkId),
-						rrfContribution: c.score,
-						dispositionReason: defaultReason,
-					}),
-				),
-			contextChunks: chunks.map((c) =>
-				toSummary(c, true, {
-					rrfRank: rrfRankById.get(c.chunkId),
-					rrfContribution: c.score,
-					dispositionReason: defaultReason,
-				}),
-			),
-		});
-	}
 
 	return {
 		chunks,

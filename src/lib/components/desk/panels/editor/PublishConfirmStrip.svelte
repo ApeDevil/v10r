@@ -39,14 +39,14 @@ function handleKeyDown(e: KeyboardEvent) {
 		gap: 8px;
 		padding: 6px 12px;
 		border-bottom: 1px solid var(--color-border);
-		border-left: 3px solid var(--color-warning, #f59e0b);
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 5%, var(--color-bg));
+		border-left: 3px solid var(--color-warning);
+		background: color-mix(in srgb, var(--color-warning) 5%, var(--color-bg));
 		font-size: 13px;
 	}
 
 	.strip-icon {
 		font-size: 14px;
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 		flex-shrink: 0;
 	}
 

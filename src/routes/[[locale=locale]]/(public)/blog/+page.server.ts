@@ -30,7 +30,6 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	return {
 		title: 'Blog',
 		posts,
-		total,
 		page,
 		totalPages: Math.ceil(total / PAGE_SIZE),
 		localeFallback,

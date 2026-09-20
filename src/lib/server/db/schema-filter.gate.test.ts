@@ -6,6 +6,10 @@
  * "relation does not exist" against production. CLAUDE.md has warned about this in prose
  * since the beginning; the rename of `rag` → `retrieval` is what proved prose insufficient,
  * because the schema was updated and the filter was not.
+ *
+ * This file lives one level ABOVE `schema/`: drizzle-kit loads every top-level file of the
+ * schema directory as schema (non-recursively), and vitest 4's CommonJS entry throws when
+ * required that way — a test inside `schema/` breaks `db:push` itself.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';

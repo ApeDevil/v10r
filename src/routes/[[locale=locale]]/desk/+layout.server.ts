@@ -1,31 +1,9 @@
 import { getMyPendingRequest } from '$lib/server/auth/grant-requests';
-import { consumePendingGrantNotifications, GRANT_KINDS, type GrantKind, hasGrant } from '$lib/server/auth/grants';
+import { consumePendingGrantNotifications, type GrantKind, hasGrant } from '$lib/server/auth/grants';
 import { getDeskTheme, listDeskPresets } from '$lib/server/db/desk/theme-queries';
 import { getActiveWorkspaceId, listWorkspaces } from '$lib/server/db/desk/workspace-queries';
 import { requireAuth } from '$lib/server/http/guards';
-import { DESK_TOOL_SCOPES, type DeskToolScope } from '$lib/types/ai-tools';
 import type { LayoutServerLoad } from './$types';
-
-/**
- * Governor config shape prefetched for the desk session.
- *
- * Feeds the bot-config UI and the desk tool scope-gating (a deskbot capability mounts its
- * tools only when its scope is granted) — the UI ceiling matches the server ceiling so
- * users can't toggle on a scope the server will later reject.
- */
-export interface DeskGovernorConfig {
-	permittedScopes: DeskToolScope[];
-	riskTier: 'low' | 'medium' | 'high';
-	dailyToolBudget: number | null;
-}
-
-function resolveGovernorConfig(_userId: string): DeskGovernorConfig {
-	return {
-		permittedScopes: [...DESK_TOOL_SCOPES],
-		riskTier: 'medium',
-		dailyToolBudget: null,
-	};
-}
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const { user } = requireAuth(locals, url.pathname);
@@ -64,7 +42,6 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			updatedAt: w.updatedAt.toISOString(),
 		})),
 		deskActiveWorkspaceId: activeWorkspaceId,
-		governorConfig: resolveGovernorConfig(user.id),
 		blogAuthor: {
 			granted: isBlogAuthor,
 			pendingRequest: pendingRequest ? { id: pendingRequest.id, requestedAt: pendingRequest.requestedAt } : null,
@@ -72,6 +49,3 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		justGrantedKinds: justGrantedKinds as GrantKind[],
 	};
 };
-
-// Ensure GRANT_KINDS import survives tree-shaking checks.
-export const _grantKinds = GRANT_KINDS;

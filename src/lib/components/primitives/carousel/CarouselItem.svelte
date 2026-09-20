@@ -1,16 +1,16 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { cn } from '$lib/utils/cn';
-import { type CarouselItemVariants, carouselItemVariants } from './carousel';
+import { carouselItemVariants } from './carousel';
 
-interface Props extends CarouselItemVariants {
+interface Props {
 	children: Snippet;
 	class?: string;
 }
 
-let { children, orientation = 'horizontal', class: className }: Props = $props();
+let { children, class: className }: Props = $props();
 </script>
 
-<div class={cn(carouselItemVariants({ orientation }), className)} role="listitem">
+<div class={cn(carouselItemVariants(), className)} role="listitem">
 	{@render children()}
 </div>

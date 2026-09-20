@@ -232,7 +232,7 @@ export async function markFailed(
  * If the process died in between — SIGKILL, Vercel maxDuration, unhandled throw —
  * nothing else will ever move it. `attempted_at` is stamped at claim and never
  * touched afterwards, so `attempted_at < now() - lease` is precisely "claimed and
- * never reported back". (COALESCE to created_at defends against any legacy row.)
+ * never reported back".
  *
  * Does NOT bump attempts — the attempt was already counted at claim time. Because a
  * RE-claim bumps it, the zombie's late markSent/markFailed can no longer match its
@@ -263,8 +263,7 @@ export async function reclaimStaleDeliveries(): Promise<number> {
 		})
 		.where(
 			sql`${notificationDeliveries.status} = 'processing'
-			    AND coalesce(${notificationDeliveries.attemptedAt}, ${notificationDeliveries.createdAt})
-			        < now() - make_interval(secs => ${leaseSecs})`,
+			    AND ${notificationDeliveries.attemptedAt} < now() - make_interval(secs => ${leaseSecs})`,
 		)
 		.returning({ id: notificationDeliveries.id });
 

@@ -24,8 +24,6 @@ export class FrontmatterError extends Error {
 export interface ParsedContentFile {
 	frontmatter: FrontmatterMeta;
 	body: string;
-	/** The raw frontmatter object as `gray-matter` returned it (for round-trip writes). */
-	rawFrontmatter: Record<string, unknown>;
 }
 
 /** Parse a markdown file's text into typed frontmatter + body. Throws on schema violations. */
@@ -90,7 +88,7 @@ export function parseContentFile(text: string, sourcePath: string): ParsedConten
 		...(sourceContentHash !== undefined && { sourceContentHash }),
 	};
 
-	return { frontmatter: meta, body: parsed.content, rawFrontmatter: data };
+	return { frontmatter: meta, body: parsed.content };
 }
 
 /** Locale inferred from the filename (`en.md` → 'en'). Returns null if not a known locale. */

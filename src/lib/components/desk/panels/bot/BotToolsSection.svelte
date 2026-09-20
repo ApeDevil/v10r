@@ -144,7 +144,7 @@ const SCOPE_INFO = [
 
 	.warning-icon {
 		font-size: 14px;
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 	}
 
 	.scope-desc {
@@ -152,24 +152,4 @@ const SCOPE_INFO = [
 		color: var(--color-muted);
 	}
 
-	.confirm-strip {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		padding: 8px 12px;
-		border-radius: var(--radius-md);
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 8%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 20%, transparent);
-	}
-
-	.confirm-text {
-		font-size: 12px;
-		color: var(--color-warning, #f59e0b);
-	}
-
-	.confirm-actions {
-		display: flex;
-		gap: 8px;
-		justify-content: flex-end;
-	}
 </style>

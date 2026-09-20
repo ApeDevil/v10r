@@ -224,8 +224,5 @@ export function createAdminStateRegistry(actor: DemoActor = ADMIN_MCP_ACTOR): To
 	return { tools: ADMIN_STATE_TOOLS, dispatch };
 }
 
-/** Default admin registry (machine actor, no request IP). */
-export const adminStateRegistry: ToolRegistry = createAdminStateRegistry();
-
 export const ADMIN_MCP_INSTRUCTIONS =
 	'Authenticated admin control surface for the v10r MCP demo state shown on /admin/mcp. get_mcp_page_state to read; set_mcp_page_message / set_mcp_page_color to change the two visible values; reset_mcp_page_state to restore seed values; get_mcp_page_history for recent changes. Every write is validated and versioned, and is audited on a best-effort basis (an audit failure is logged but does not roll back the change). No other capabilities are exposed.';

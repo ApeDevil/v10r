@@ -152,10 +152,3 @@ export async function* streamAuditLogCsv(filters: AuditLogFilters = {}): AsyncGe
 		cursor = { occurredAt: last.occurredAt, id: last.id };
 	}
 }
-
-/** Buffer the full CSV export into a string (small exports / tests). */
-export async function exportAuditLogCsv(filters: AuditLogFilters = {}): Promise<string> {
-	let out = '';
-	for await (const chunk of streamAuditLogCsv(filters)) out += chunk;
-	return out.replace(/\n$/, '');
-}

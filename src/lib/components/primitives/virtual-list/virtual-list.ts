@@ -49,7 +49,7 @@ export const DEFAULT_OVERSCAN = 4;
  * Below this, virtualization costs more than it saves.
  *
  * Not a hard limit — a caller may still virtualize a shorter list — but the number
- * the showcase and the docs point at when asking whether it is worth the complexity
+ * the docs point at when asking whether it is worth the complexity
  * at all. Two hundred rows of plain text render fine.
  */
 export const VIRTUALIZE_ABOVE = 200;

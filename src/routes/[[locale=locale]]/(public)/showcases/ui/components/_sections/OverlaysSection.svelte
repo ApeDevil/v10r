@@ -67,11 +67,10 @@ let tabValue = $state('account');
 			<div class="info-dialog-demo">
 				<InfoDialog title="Feature Overview" description="What the Info Dialog can do">
 					<div class="info-demo-content">
-						<h4 class="info-demo-heading">Three Content Modes</h4>
+						<h4 class="info-demo-heading">Two Content Modes</h4>
 						<ul class="info-demo-list">
 							<li><strong>Children</strong> — simple snippet content (this example)</li>
 							<li><strong>Doc</strong> — structured component documentation with props, source, and notes tabs</li>
-							<li><strong>Sections</strong> — custom tabbed content via InfoSection[]</li>
 						</ul>
 						<p class="info-demo-text">
 							Use it anywhere: showcases, app features, process documentation, contextual help.

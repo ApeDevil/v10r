@@ -38,13 +38,6 @@ export interface PostListItem {
 	}[];
 }
 
-export interface PostDetail extends BlogPost {
-	author: { id: string; name: string; email: string; image: string | null } | null;
-	latestRevision: BlogRevision | null;
-	domain: BlogDomain | null;
-	tags: BlogTag[];
-}
-
 export interface PublishedPost {
 	id: string;
 	slug: string;

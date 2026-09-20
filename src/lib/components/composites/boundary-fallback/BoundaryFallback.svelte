@@ -44,7 +44,7 @@ let { title = m.composites_boundary_fallback_title(), description, minHeight, re
 
 	.boundary-icon {
 		font-size: 1.5rem;
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 		margin-bottom: var(--spacing-3);
 	}
 

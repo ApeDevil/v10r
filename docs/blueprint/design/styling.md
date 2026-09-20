@@ -223,23 +223,6 @@ Built into `presetUno` - no extra preset needed. Custom container sizes come fro
 </article>
 ```
 
-### Custom Container Sizes (Optional)
-
-```ts
-// uno.config.ts
-export default defineConfig({
-  theme: {
-    containers: {
-      xs: '320px',
-      sm: '384px',
-      md: '448px',
-      lg: '512px',
-      xl: '576px',
-    }
-  }
-})
-```
-
 ### Named Containers
 
 For nested contexts:

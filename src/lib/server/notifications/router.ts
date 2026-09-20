@@ -2,7 +2,6 @@
  * Notification router — determines which channels a notification should be delivered to
  * based on user settings and notification type.
  */
-import { getOrCreateSettings } from '$lib/server/db/notifications/mutations';
 
 type NotificationType = 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow';
 
@@ -22,8 +21,8 @@ type RoutableSettings = Record<string, unknown> & {
 };
 
 /**
- * Pure channel selection. Split out from `routeToChannels` so a caller that has
- * already loaded the settings row does not pay for a second read.
+ * Pure channel selection over an already-loaded settings row — the callers (send, digest)
+ * hold the row, so this never reads the database.
  *
  * SECURITY ALERTS ALWAYS DELIVER. `type === 'security'` bypasses the per-type
  * email toggle, the global mute, and the digest suppression alike. Checking
@@ -49,13 +48,13 @@ export function channelsForSettings(settings: RoutableSettings, type: Notificati
 		channels.push('email');
 	}
 
-	// Telegram routing (Phase 3 will extend settings with telegram columns)
+	// Telegram routing
 	const telegramKey = `telegram${type.charAt(0).toUpperCase() + type.slice(1)}`;
 	if (telegramKey in settings && settings[telegramKey] === true) {
 		channels.push('telegram');
 	}
 
-	// Discord routing (Phase 4 will extend settings with discord columns)
+	// Discord routing
 	const discordKey = `discord${type.charAt(0).toUpperCase() + type.slice(1)}`;
 	if (discordKey in settings && settings[discordKey] === true) {
 		channels.push('discord');
@@ -69,10 +68,4 @@ export function channelsForSettings(settings: RoutableSettings, type: Notificati
 	}
 
 	return channels;
-}
-
-export async function routeToChannels(userId: string, type: NotificationType): Promise<string[]> {
-	const settings = await getOrCreateSettings(userId);
-	if (!settings) return [];
-	return channelsForSettings(settings, type);
 }

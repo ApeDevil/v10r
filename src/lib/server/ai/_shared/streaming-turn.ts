@@ -1,6 +1,6 @@
 /**
  * Shared streaming-turn frame ordering + current-turn provider rotation for the
- * chatbot + rag-demo surfaces.
+ * chatbot and deskbot surfaces.
  *
  * ## Frame ordering (the original contract)
  *
@@ -20,10 +20,10 @@
  *
  * ## Provider rotation (why `attempts`, not one result)
  *
- * The three streaming branches return their `Response` synchronously, so the orchestrator's outer
- * `try/catch` (which holds `tryFallback`) is UNREACHABLE for stream-phase errors, so a provider 429
- * on the first token would end the turn with a bare error part and an empty persisted row. This
- * helper therefore owns the rotation for the CURRENT turn: it takes a list of lazily-started
+ * Both streaming branches return their `Response` synchronously, so the orchestrator's outer
+ * `try/catch` is UNREACHABLE for stream-phase errors: a provider 429 on the first token would
+ * otherwise end the turn with a bare error part and an empty persisted row. This helper
+ * therefore owns the rotation for the CURRENT turn: it takes a list of lazily-started
  * attempts (`[primary, ...fallbacks]`) and re-pumps the next provider into the SAME open message.
  *
  * That is only frame-order safe because of one rule: **an attempt may only be rotated away from

@@ -13,7 +13,7 @@ import {
 	getTrafficTrend,
 	getUserLaneStats,
 } from '$lib/server/db/analytics/aggregations';
-import { getActiveSessionCount, getPairedSessionCount, getRecentEvents } from '$lib/server/db/analytics/queries';
+import { getRecentEvents } from '$lib/server/db/analytics/queries';
 import { jobExecution } from '$lib/server/db/schema/jobs';
 import { safeDeferPromise } from '$lib/server/http/defer';
 import { requireAdmin } from '$lib/server/http/guards';
@@ -47,23 +47,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const { range, days } = parseAnalyticsRange(url);
 
 	// Eager: headline stats + consent breakdown + cleanup status + live-feed seed
-	const [
-		overview,
-		consentSplit,
-		lastCleanup,
-		rollupLatestDate,
-		recentEvents,
-		activeSessions,
-		pairedSessions,
-		pairedActive,
-	] = await Promise.all([
+	const [overview, consentSplit, lastCleanup, rollupLatestDate, recentEvents, pairedActive] = await Promise.all([
 		getOverviewMetrics(days),
 		getConsentSplit(days),
 		getLastCleanupStatus(),
 		getRollupFreshness(),
 		getRecentEvents({ adminUserId: user.id, sinceId: 0, filter: 'all', limit: 50 }),
-		getActiveSessionCount(),
-		getPairedSessionCount(user.id),
 		hasActivePairedSession(user.id),
 	]);
 
@@ -85,8 +74,6 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		rollupLatestDate,
 		rollupStale,
 		recentEvents,
-		activeSessions,
-		pairedSessions,
 		pairedActive,
 		// Deferred: chart + table data (streams in)
 		composition: safeDeferPromise(getTrafficComposition(days), {

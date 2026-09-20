@@ -4,9 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 export const chartContainerVariants = cva('relative w-full', {
 	variants: {
 		aspect: {
-			video: 'aspect-video',
 			square: 'aspect-square',
-			wide: 'aspect-[21/9]',
 			chart: 'aspect-[3/2]',
 			auto: '',
 		},

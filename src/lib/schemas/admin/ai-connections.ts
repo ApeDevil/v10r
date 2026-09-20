@@ -35,10 +35,8 @@ const version = v.pipe(
 const enabled = v.boolean('Enabled must be on or off.');
 
 export const providerConnectionSaveSchema = v.object({ provider, enabled, modelId, apiKey, version });
-export type ProviderConnectionSaveForm = v.InferOutput<typeof providerConnectionSaveSchema>;
 
 export const providerConnectionTestSchema = v.object({ provider, modelId, apiKey });
-export type ProviderConnectionTestForm = v.InferOutput<typeof providerConnectionTestSchema>;
 
 export const providerKeyRemoveSchema = v.object({ provider, version });
 
@@ -47,4 +45,3 @@ export const AUTOMATIC_DEFAULT = 'automatic';
 const defaultChoice = v.picklist([AUTOMATIC_DEFAULT, ...AI_PROVIDER_IDS], 'Unknown provider.');
 
 export const defaultProviderSchema = v.object({ provider: defaultChoice, expectedCurrentDefault: defaultChoice });
-export type DefaultProviderForm = v.InferOutput<typeof defaultProviderSchema>;

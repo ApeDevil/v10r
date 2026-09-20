@@ -106,7 +106,7 @@ export async function deskCorpusState(userId: string): Promise<DeskCorpusState> 
 
 export async function countCorpus(
 	userId: string,
-	source?: 'upload' | 'web' | 'text' | 'api' | 'catalog' | 'docs' | 'desk',
+	source?: 'upload' | 'web' | 'text' | 'api' | 'docs' | 'desk',
 ): Promise<{ documents: number; chunks: number }> {
 	const [row] = await db
 		.select({

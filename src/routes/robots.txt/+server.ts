@@ -14,8 +14,6 @@ export const GET: RequestHandler = async () => {
 			'Allow: /',
 			'Disallow: /api/',
 			'Disallow: /account/',
-			'Disallow: /de/app/',
-			'Disallow: /ru/app/',
 			'',
 			// The Impressum is deliberately NOT disallowed for general crawlers.
 			// It serves `X-Robots-Tag: noindex` — and a crawler that is blocked from
@@ -58,8 +56,6 @@ export const GET: RequestHandler = async () => {
 			// to everything `*` is kept out of.
 			'Disallow: /api/',
 			'Disallow: /account/',
-			'Disallow: /de/app/',
-			'Disallow: /ru/app/',
 			'Disallow: /impressum',
 			'Disallow: /de/impressum',
 			'Disallow: /ru/impressum',

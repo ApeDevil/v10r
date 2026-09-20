@@ -16,7 +16,6 @@ let {
 	pressed = $bindable(false),
 	icon,
 	variant = 'default',
-	size = 'md',
 	disabled = false,
 	class: className,
 }: Props = $props();
@@ -26,7 +25,7 @@ let {
 	{#snippet child({ props })}
 		<button
 			{...props}
-			class={cn('tag-selectable', tagSelectableVariants({ variant, size }), className)}
+			class={cn('tag-selectable', tagSelectableVariants({ variant }), className)}
 		>
 			{#if pressed}
 				<span class="i-lucide-check check-icon" aria-hidden="true"></span>

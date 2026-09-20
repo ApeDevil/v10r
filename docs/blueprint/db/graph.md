@@ -399,6 +399,8 @@ seedGraph();
 
 ## API Integration
 
+> **Illustrative.** There is no `/api/graph/features` route and no `showcases/[slug]` loader; the shipped graph doors are `/api/retrieval/graph/*` and the showcase pages under `showcases/db/graph/`.
+
 ```typescript
 // src/routes/api/graph/features/+server.ts
 import { json } from '@sveltejs/kit';

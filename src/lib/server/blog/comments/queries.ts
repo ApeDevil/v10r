@@ -30,8 +30,6 @@ interface ListParams {
 	limit?: number;
 	/** Caller's userId — controls visibility of hidden comments to their author. */
 	viewerId?: string;
-	/** True when the caller is admin — they see hidden + removed too. */
-	includeHidden?: boolean;
 }
 
 interface ListResult {
@@ -61,10 +59,10 @@ function decodeCursor(cursor: string): { createdAt: Date; id: string } | null {
  * - Public viewer: status='visible' only (hidden comments fully absent).
  * - Signed-in viewer: their own hidden/removed comments are included with
  *   status preserved so the UI can render the muted "moderated" state.
- * - Admin (includeHidden): everything.
+ * - Admin moderation reads through `listForModeration`, not here.
  */
 export async function listComments(params: ListParams): Promise<ListResult> {
-	const { postId, locale, cursor, viewerId, includeHidden } = params;
+	const { postId, locale, cursor, viewerId } = params;
 	const limit = Math.min(params.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
 
 	const conds: (SQL | undefined)[] = [
@@ -73,13 +71,11 @@ export async function listComments(params: ListParams): Promise<ListResult> {
 		isNull(comment.deletedAt),
 	];
 
-	if (!includeHidden) {
-		if (viewerId) {
-			// visible OR (own AND any status)
-			conds.push(or(eq(comment.status, 'visible'), eq(comment.authorId, viewerId)));
-		} else {
-			conds.push(eq(comment.status, 'visible'));
-		}
+	if (viewerId) {
+		// visible OR (own AND any status)
+		conds.push(or(eq(comment.status, 'visible'), eq(comment.authorId, viewerId)));
+	} else {
+		conds.push(eq(comment.status, 'visible'));
 	}
 
 	if (cursor) {

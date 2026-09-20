@@ -15,16 +15,14 @@ describe('renderNotification', () => {
 });
 
 describe('renderDigest', () => {
-	it('subjects the count and lists one bullet per item', () => {
-		const { subject, body } = renderDigest([item('notif_mention'), item('notif_comment')], 'en');
-		expect(subject).toContain('2');
+	it('lists one bullet per item', () => {
+		const { body } = renderDigest([item('notif_mention'), item('notif_comment')], 'en');
 		expect(body.split('•')).toHaveLength(3); // intro + 2 items
 	});
 
 	it('renders in the recipient locale', () => {
 		const en = renderDigest([item('notif_mention')], 'en');
 		const de = renderDigest([item('notif_mention')], 'de');
-		expect(de.subject).not.toBe(en.subject);
 		expect(de.body).not.toBe(en.body);
 	});
 

@@ -22,7 +22,6 @@ $effect(() => {
 	status={page.status}
 	message={page.error?.message}
 	errorId={page.error?.errorId}
-	context="showcase"
 >
 	<div class="moved">
 		<h2 bind:this={heading} tabindex="-1" class="moved-h">

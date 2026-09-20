@@ -46,7 +46,6 @@ export interface Palette {
 	id: PaletteId;
 	name: string;
 	description: string;
-	highContrast?: boolean;
 	/** Analogous hue offset for accent derivation (-60 to +60 degrees) */
 	accentOffset: number;
 	light: PaletteColors;

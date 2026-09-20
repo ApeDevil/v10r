@@ -108,22 +108,6 @@ function handleKeydown(e: KeyboardEvent) {
 					</section>
 				{/if}
 
-				{#if shortcutsByCategory.actions.length > 0}
-					<section class="flex flex-col gap-3">
-						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Actions</h3>
-						<dl class="grid gap-2 m-0">
-							{#each shortcutsByCategory.actions as shortcut}
-								<div class="flex items-center justify-between gap-4 p-2 rounded-sm transition-bg duration-normal hover:bg-fg-alpha motion-reduce:transition-none">
-									<dt class="flex-1 m-0 font-normal text-fg">{shortcut.description}</dt>
-									<dd class="m-0">
-										<Kbd keys={formatShortcut(shortcut.keys)} size="md" />
-									</dd>
-								</div>
-							{/each}
-						</dl>
-					</section>
-				{/if}
-
 				{#if shortcutsByCategory.desk.length > 0}
 					<section class="flex flex-col gap-3">
 						<h3 class="text-sm font-semibold uppercase tracking-wider text-muted m-0">Desk</h3>

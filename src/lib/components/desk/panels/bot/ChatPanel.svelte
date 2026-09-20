@@ -373,9 +373,9 @@ $effect(() => {
 		padding: 8px 12px;
 		border-radius: var(--radius-md);
 		font-size: 12px;
-		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 10%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-error-fg, #ef4444) 20%, transparent);
-		color: var(--color-error-fg, #ef4444);
+		background: color-mix(in srgb, var(--color-error-fg) 10%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-error-fg) 20%, transparent);
+		color: var(--color-error-fg);
 	}
 
 	.chat-error-action {
@@ -384,7 +384,7 @@ $effect(() => {
 		padding: 0;
 		border: none;
 		background: none;
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 		font-size: 12px;
 		font-weight: 600;
 		text-decoration: underline;

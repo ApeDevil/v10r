@@ -202,27 +202,27 @@ describe('composeTurn', () => {
 			t0: performance.now(),
 		});
 		const composed = await composeTurn(CHATBOT_PROFILE, turn(), recorder);
-		const byId = new Map(composed.activations.map((a) => [a.id, a]));
+		const byId = new Map([...composed.state.activations.values()].map((a) => [a.id, a]));
 		expect(byId.get('completion')).toEqual({ id: 'completion', active: true });
 		expect(byId.get('navigation')).toEqual({ id: 'navigation', active: false, reason: 'no_intent' });
 		expect(byId.get('site-awareness')).toEqual({ id: 'site-awareness', active: false, reason: 'no_page' });
 		// The map lane found no corpus map.
 		expect(byId.get('project-map')).toEqual({ id: 'project-map', active: false, reason: 'empty_corpus' });
-		expect(recorder.trace().activations).toEqual(composed.activations);
+		expect(recorder.trace().activations).toEqual([...composed.state.activations.values()]);
 		expect(recorder.trace().blocks.map((b) => b.id)).toEqual(composed.blocks.map((b) => b.id));
 		expect(recorder.trace().awareness).toEqual({ locale: 'en', authCeiling: null, page: null });
 	});
 
 	it("records a source as skipped when its capability did not activate, with the rule's reason", async () => {
 		const composed = await composeTurn(DESKBOT_PROFILE, turn({ scopes: ['desk:read'] }));
-		expect(composed.grounding.find((g) => g.id === 'desk')).toEqual({
+		expect(composed.state.grounding.get('desk')).toEqual({
 			id: 'desk',
 			ran: false,
 			skippedReason: 'scope_off',
 			items: [],
 		});
 		const noNavigation = await composeTurn(CHATBOT_PROFILE, turn());
-		expect(noNavigation.grounding.find((g) => g.id === 'catalog')).toMatchObject({
+		expect(noNavigation.state.grounding.get('catalog')).toMatchObject({
 			ran: false,
 			skippedReason: 'gated_off',
 		});
@@ -233,12 +233,12 @@ describe('composeTurn', () => {
 		expect(Object.keys(composed.tools)).toEqual([]);
 		expect(composed.blocks.map((b) => b.id)).not.toContain('completion-guidance');
 		expect(composed.blocks.at(-1)).toMatchObject({ id: 'tool-degrade', capability: 'completion' });
-		const reasons = Object.fromEntries(composed.activations.map((a) => [a.id, a.reason]));
+		const reasons = Object.fromEntries([...composed.state.activations.values()].map((a) => [a.id, a.reason]));
 		expect(reasons.completion).toBe('providers_cooled');
 		expect(reasons['pattern-library']).toBe('providers_cooled');
 		// The catalog map and the docs prefetch still ground the answer.
 		expect(composed.blocks.map((b) => b.id)).toContain('catalog-map');
-		expect(composed.activations.find((a) => a.id === 'project-docs')?.active).toBe(true);
+		expect(composed.state.activations.get('project-docs')?.active).toBe(true);
 	});
 
 	it('keeps the stable prefix identical across turns of one profile, whatever the question', async () => {

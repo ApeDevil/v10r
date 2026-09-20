@@ -450,7 +450,7 @@ Start with modules that have zero external dependencies — no DB, no mocks, max
 4. `$lib/schemas/showcase/` — Valibot schema rules. Test with `v.safeParse()`. The `realtimeSchema` password-confirm cross-field validation is the most interesting.
 
 ```typescript
-// src/lib/server/errors/index.test.ts
+// Illustrative — `server/errors/index.ts` has no dedicated test today; its behaviour is covered through the adapters that throw ServerError
 import { describe, expect, it } from 'vitest';
 import { ServerError } from './index';
 
@@ -502,7 +502,7 @@ Goal: verify the full pipeline works end-to-end. Claude Code (host) runs `podman
 - **Unsupported types under PGlite:** load the needed extension via the `extensions` option (e.g. `vector`) before running DDL that references the type.
 
 ```typescript
-// src/lib/server/db/notifications/queries.test.ts
+// Illustrative — the shipped equivalent is src/lib/server/db/notifications/queries.pglite.test.ts (PGlite lane)
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeUser, makeNotification } from '$lib/server/test/fixtures';
 

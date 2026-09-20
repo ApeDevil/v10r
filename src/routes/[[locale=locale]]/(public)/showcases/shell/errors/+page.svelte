@@ -196,7 +196,7 @@ function handleReset() {
 
 	.demo-widget-icon {
 		font-size: 1.5rem;
-		color: var(--color-success, #22c55e);
+		color: var(--color-success);
 	}
 
 	.demo-widget-text {

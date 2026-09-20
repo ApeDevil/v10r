@@ -271,15 +271,6 @@ const categories: DataCategory[] = [
 		line-height: 1.6;
 	}
 
-	.lede code {
-		font-family: ui-monospace, monospace;
-		font-size: 0.92em;
-		padding: 0.1em 0.35em;
-		border-radius: var(--radius-sm);
-		background: var(--color-subtle);
-		color: var(--color-fg);
-	}
-
 	.anchor-nav {
 		display: flex;
 		flex-wrap: wrap;

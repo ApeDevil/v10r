@@ -1,12 +1,7 @@
 <script lang="ts">
 import { ToggleGroup as ToggleGroupPrimitive } from 'bits-ui';
 import { cn } from '$lib/utils/cn';
-import {
-	type ToggleGroupItemVariants,
-	type ToggleGroupVariants,
-	toggleGroupItemVariants,
-	toggleGroupVariants,
-} from './toggle-group';
+import { type ToggleGroupItemVariants, toggleGroupItemVariants, toggleGroupVariants } from './toggle-group';
 
 interface ToggleGroupItem {
 	value: string;
@@ -15,111 +10,54 @@ interface ToggleGroupItem {
 	disabled?: boolean;
 }
 
-interface Props extends ToggleGroupVariants, ToggleGroupItemVariants {
-	type?: 'single' | 'multiple';
-	value?: string | string[];
+interface Props extends ToggleGroupItemVariants {
+	value?: string;
 	items: ToggleGroupItem[];
 	disabled?: boolean;
 	class?: string;
 }
 
-let {
-	type = 'single',
-	value = $bindable(),
-	items,
-	variant = 'default',
-	size = 'md',
-	orientation = 'horizontal',
-	disabled = false,
-	class: className,
-}: Props = $props();
+let { value = $bindable(''), items, size = 'md', disabled = false, class: className }: Props = $props();
 
-// Default value depends on type — can't reference type in $bindable() default
-// svelte-ignore state_referenced_locally
-if (value === undefined) {
-	value = type === 'single' ? '' : [];
-}
-
-// Determine border radius classes based on position and orientation
-function getItemClasses(index: number, isHorizontal: boolean) {
+// Border radius by position: the first and last items close the pill.
+function getItemClasses(index: number) {
 	const isFirst = index === 0;
 	const isLast = index === items.length - 1;
-
-	if (isHorizontal) {
-		if (isFirst && isLast) return 'rounded-md';
-		if (isFirst) return 'rounded-l-md border-r-0';
-		if (isLast) return 'rounded-r-md';
-		return 'border-r-0';
-	} else {
-		if (isFirst && isLast) return 'rounded-md';
-		if (isFirst) return 'rounded-t-md border-b-0';
-		if (isLast) return 'rounded-b-md';
-		return 'border-b-0';
-	}
+	if (isFirst && isLast) return 'rounded-md';
+	if (isFirst) return 'rounded-l-md border-r-0';
+	if (isLast) return 'rounded-r-md';
+	return 'border-r-0';
 }
-
-const isHorizontal = $derived(orientation === 'horizontal');
 </script>
 
-{#if type === 'single'}
-	<ToggleGroupPrimitive.Root value={value as string} onValueChange={(v: string) => value = v} {disabled} type="single">
-		{#snippet child({ props })}
-			<div
-				{...props}
-				class={cn('toggle-group', toggleGroupVariants({ orientation }), className)}
-			>
-				{#each items as item, index}
-					<ToggleGroupPrimitive.Item value={item.value} disabled={item.disabled || disabled}>
-						{#snippet child({ props: itemProps })}
-							<button
-								{...itemProps}
-								class={cn(
-									'toggle-group-item',
-									toggleGroupItemVariants({ variant, size }),
-									getItemClasses(index, isHorizontal)
-								)}
-							>
-								{#if item.icon}
-									<span class="mr-2">{item.icon}</span>
-								{/if}
-								{item.label || item.value}
-							</button>
-						{/snippet}
-					</ToggleGroupPrimitive.Item>
-				{/each}
-			</div>
-		{/snippet}
-	</ToggleGroupPrimitive.Root>
-{:else}
-	<ToggleGroupPrimitive.Root value={value as string[]} onValueChange={(v: string[]) => value = v} {disabled} type="multiple">
-		{#snippet child({ props })}
-			<div
-				{...props}
-				class={cn('toggle-group', toggleGroupVariants({ orientation }), className)}
-			>
-				{#each items as item, index}
-					<ToggleGroupPrimitive.Item value={item.value} disabled={item.disabled || disabled}>
-						{#snippet child({ props: itemProps })}
-							<button
-								{...itemProps}
-								class={cn(
-									'toggle-group-item',
-									toggleGroupItemVariants({ variant, size }),
-									getItemClasses(index, isHorizontal)
-								)}
-							>
-								{#if item.icon}
-									<span class="mr-2">{item.icon}</span>
-								{/if}
-								{item.label || item.value}
-							</button>
-						{/snippet}
-					</ToggleGroupPrimitive.Item>
-				{/each}
-			</div>
-		{/snippet}
-	</ToggleGroupPrimitive.Root>
-{/if}
+<ToggleGroupPrimitive.Root value={value} onValueChange={(v: string) => value = v} {disabled} type="single">
+	{#snippet child({ props })}
+		<div
+			{...props}
+			class={cn('toggle-group', toggleGroupVariants(), className)}
+		>
+			{#each items as item, index}
+				<ToggleGroupPrimitive.Item value={item.value} disabled={item.disabled || disabled}>
+					{#snippet child({ props: itemProps })}
+						<button
+							{...itemProps}
+							class={cn(
+								'toggle-group-item',
+								toggleGroupItemVariants({ size }),
+								getItemClasses(index)
+							)}
+						>
+							{#if item.icon}
+								<span class="mr-2">{item.icon}</span>
+							{/if}
+							{item.label || item.value}
+						</button>
+					{/snippet}
+				</ToggleGroupPrimitive.Item>
+			{/each}
+		</div>
+	{/snippet}
+</ToggleGroupPrimitive.Root>
 
 <style>
 	/* State-based styling — UnoCSS can't extract data-[state=*] from .ts files */

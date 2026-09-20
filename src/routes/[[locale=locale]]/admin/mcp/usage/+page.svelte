@@ -314,7 +314,7 @@ const totalCalls = $derived(data.unavailable ? 0 : data.health.external + data.h
 		{/if}
 
 		<!-- CARD 2 — tool quality. Only meaningful once something has failed. -->
-		{#if data.tools.some((t) => t.empty + t.invalidArgs + t.notFound + t.threw + t.uninstrumented > 0)}
+		{#if data.tools.some((t) => t.empty + t.invalidArgs + t.notFound + t.threw > 0)}
 			<Card>
 				{#snippet header()}
 					<h3 class="text-fluid-md font-semibold">Tool outcomes</h3>
@@ -338,16 +338,6 @@ const totalCalls = $derived(data.unavailable ? 0 : data.health.external + data.h
 						</tbody>
 					</table>
 				</div>
-				{#snippet footer()}
-					{#if data.tools.some((t) => t.uninstrumented > 0)}
-						<!-- Not a caller problem: a handler returned isError without a diag, so some call site
-						     is uninstrumented and its rows are landing in a bucket that means "unknown". -->
-						<Badge variant="warning">
-							{data.tools.reduce((n, t) => n + t.uninstrumented, 0)} unclassified tool errors — an errorResult
-							call site is missing its reason
-						</Badge>
-					{/if}
-				{/snippet}
 			</Card>
 		{/if}
 

@@ -5,7 +5,7 @@ import { conversation, message, type StoredMessagePart } from '../schema/ai/conv
 import { modelCall, toolCall, turn } from '../schema/ai/turn';
 
 /** Create a new conversation. `surface` is stamped once here from the orchestrator's
- *  resolved surface (chatbot/deskbot); omitted for the non-persisted rag-demo. */
+ *  resolved surface (chatbot/deskbot); tests that never stream leave it unset. */
 export async function createConversation(userId: string, title?: string, surface?: 'chatbot' | 'deskbot') {
 	const [row] = await db
 		.insert(conversation)
@@ -91,14 +91,6 @@ export async function updateMessageContent(messageId: string, content: string, p
 		.update(message)
 		.set(parts === undefined ? { content } : { content, parts })
 		.where(eq(message.id, messageId));
-}
-
-/** Update conversation title and touch updatedAt. Auth-scoped. */
-export async function updateConversationTitle(id: string, userId: string, title: string) {
-	await db
-		.update(conversation)
-		.set({ title, updatedAt: new Date() })
-		.where(and(eq(conversation.id, id), eq(conversation.userId, userId)));
 }
 
 /**

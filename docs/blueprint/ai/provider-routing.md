@@ -146,7 +146,7 @@ Three inputs, served by `buildProviderQuota(registry)` in `quota.ts` (single sou
 
 **Ceilings are per model.** `PROVIDER_LIMITS` records which model ids its numbers were read for (`verifiedModels`); when the administrator points a connection at another model the board withholds the ceilings (`limitsVerified: false`) rather than letting a new model inherit an old one's quota as if checked. Unknown models likewise show unknown pricing in the cost views.
 
-Served at `GET /api/admin/ai/quota` (admin-guarded, `no-store`, own rate-limit bucket; never makes a real generation call). Surfaced as `QuotaPanel.svelte` on the admin Models tab plus a headroom strip on Overview.
+Assembled by `buildProviderQuota()` in the admin AI layout load (never makes a real generation call). Surfaced as `QuotaPanel.svelte` on the admin Models tab plus a headroom strip on Overview.
 
 ---
 
@@ -175,7 +175,7 @@ Bonus: reusing `assistantMsgId` for the merged stream makes the client message i
 | After an explicit leading `start` | One message (the chatbot branch) |
 | Inside `onStepFinish` (after the stream's own `start`) | One message (the desk branch — always correct) |
 
-`tryFallback` (merge-only, no metadata) and the desk/non-retrieval branches were always correct — they write no metadata before the merge, or write it after `start` via `onStepFinish`.
+The rotation in `_shared/streaming-turn.ts` (merge-only, no metadata) and the desk/non-retrieval branches were always correct — they write no metadata before the merge, or write it after `start` via `onStepFinish`.
 
 ---
 

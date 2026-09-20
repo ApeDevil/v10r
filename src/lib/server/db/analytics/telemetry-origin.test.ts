@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { classifyOrigin, classifyTarget, DEV_SCOPE_PATTERN, PROD_SCOPE_MARKER } from './telemetry-origin';
+import { DEV_SCOPE_PATTERN, PROD_SCOPE_MARKER } from './telemetry-origin';
+
+const DEV_SCOPE_RE = new RegExp(DEV_SCOPE_PATTERN);
+const isProd = (target: string) => target.includes(PROD_SCOPE_MARKER);
 
 /** Real targets sampled from 30 days of live telemetry. */
 const DEV_TARGETS = [
@@ -17,59 +20,30 @@ const PROD_TARGETS = [
 
 const UNSCOPED_TARGETS = ['html.dark>body', 'div.absolute.h-full.opacity-50.right-0.top-0.w-[100px]'];
 
-describe('classifyTarget', () => {
-	it.each(DEV_TARGETS)('classifies a dev scope class: %s', (target) => {
-		expect(classifyTarget(target)).toBe('dev');
+describe('DEV_SCOPE_PATTERN — the SQL discriminator, compiled as the same JS regex', () => {
+	it.each(DEV_TARGETS)('matches a dev-build scope class: %s', (target) => {
+		expect(DEV_SCOPE_RE.test(target)).toBe(true);
+		expect(isProd(target)).toBe(false);
 	});
 
-	it.each(PROD_TARGETS)('classifies a prod scope class: %s', (target) => {
-		expect(classifyTarget(target)).toBe('prod');
+	it.each(PROD_TARGETS)('does not match a prod-build target: %s', (target) => {
+		expect(DEV_SCOPE_RE.test(target)).toBe(false);
+		expect(isProd(target)).toBe(true);
 	});
 
-	it.each(UNSCOPED_TARGETS)('returns null when no scope class is present: %s', (target) => {
-		expect(classifyTarget(target)).toBeNull();
+	it.each(UNSCOPED_TARGETS)('matches neither marker on an unscoped target: %s', (target) => {
+		expect(DEV_SCOPE_RE.test(target)).toBe(false);
+		expect(isProd(target)).toBe(false);
 	});
 
-	it('returns null for absent input rather than throwing', () => {
-		expect(classifyTarget(null)).toBeNull();
-		expect(classifyTarget(undefined)).toBeNull();
-		expect(classifyTarget('')).toBeNull();
-	});
-
-	// The whole discriminator collapses if the dev pattern also matches `svelte-`,
-	// since every prod sample would then be filtered out as dev and the observatory
-	// would show an empty prod lane on a perfectly healthy deployment.
 	it('never mistakes the prod prefix for a dev scope class', () => {
-		expect(classifyTarget('div.svelte-1abc2d')).toBe('prod');
-		expect(classifyTarget('div.svelte-abcdefghijkl')).toBe('prod');
+		expect(DEV_SCOPE_RE.test('div.svelte-1abc2d')).toBe(false);
+		expect(DEV_SCOPE_RE.test('div.svelte-abcdefghijkl')).toBe(false);
 	});
 
 	it('requires a boundary before the dev prefix, so arbitrary class text does not match', () => {
-		expect(classifyTarget('div.things-abcdefghijkl')).toBeNull();
-		expect(classifyTarget('div.class-with-s-inside')).toBeNull();
-	});
-});
-
-describe('classifyOrigin', () => {
-	it('reports prod when only prod markers appear', () => {
-		expect(classifyOrigin(PROD_TARGETS)).toBe('prod');
-	});
-
-	it('reports dev when only dev markers appear', () => {
-		expect(classifyOrigin(DEV_TARGETS)).toBe('dev');
-	});
-
-	// Conservative direction: a dev marker proves a developer's browser was
-	// involved; a prod marker only proves one component came from a prod build.
-	it('reports dev when a session mixes both', () => {
-		expect(classifyOrigin([...PROD_TARGETS, ...DEV_TARGETS])).toBe('dev');
-		expect(classifyOrigin([...DEV_TARGETS, ...PROD_TARGETS])).toBe('dev');
-	});
-
-	it('reports unknown when nothing is classifiable, rather than assuming prod', () => {
-		expect(classifyOrigin(UNSCOPED_TARGETS)).toBe('unknown');
-		expect(classifyOrigin([])).toBe('unknown');
-		expect(classifyOrigin([null, undefined])).toBe('unknown');
+		expect(DEV_SCOPE_RE.test('div.things-abcdefghijkl')).toBe(false);
+		expect(DEV_SCOPE_RE.test('div.class-with-s-inside')).toBe(false);
 	});
 });
 

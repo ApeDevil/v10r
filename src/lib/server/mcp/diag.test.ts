@@ -11,8 +11,7 @@ import { describe, expect, it, vi } from 'vitest';
  *     discriminator. The recorder infers `isError && diag === undefined ⟹ the transport produced
  *     this`, and that inference is only sound while these two literals stay bare. If someone
  *     "helpfully" adds a diag to them, every unknown-tool and every thrown-tool row would silently
- *     reclassify as a handler error, and `tool_error` — the meter that reports uninstrumented call
- *     sites — would stop meaning anything.
+ *     reclassify as a handler error.
  *
  * Mocked because importing the admin registry otherwise constructs a real Neon pool at module load.
  */

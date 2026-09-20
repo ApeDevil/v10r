@@ -13,16 +13,8 @@
 			"badge": "🧙‍♂️"
 		},
 		{
-			"folderPath": "velociraptor🦖/docs/implementation/",
-			"badge": "🚀"
-		},
-		{
 			"folderPath": "velociraptor🦖/docs/stack/",
 			"badge": "🥞"
-		},
-		{
-			"folderPath": "velociraptor🦖/assets/",
-			"badge": "🎒"
 		},
 		{
 			"folderPath": "velociraptor/src/lib/components/",
@@ -33,20 +25,12 @@
 			"badge": "🏛️"
 		},
 		{
-			"folderPath": "velociraptor/src/routes/api/session/",
-			"badge": "☎️"
-		},
-		{
 			"folderPath": "velociraptor/src/routes/",
 			"badge": "🔱"
 		},
 		{
 			"folderPath": "velociraptor/docs/",
 			"badge": "📚"
-		},
-		{
-			"folderPath": "velociraptor/src/lib/services/",
-			"badge": "🛎️"
 		},
 		{
 			"folderPath": "velociraptor/docs/guides/",
@@ -107,10 +91,6 @@
 		{
 			"folderPath": "velociraptor/src/lib/components/primitives/decorative/",
 			"badge": "🎀"
-		},
-		{
-			"folderPath": "velociraptor/src/lib/server/config.ts/",
-			"badge": "🎛️"
 		},
 		{
 			"folderPath": "velociraptor/src/routes/api/",

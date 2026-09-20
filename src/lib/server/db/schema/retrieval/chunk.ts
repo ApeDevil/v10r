@@ -11,6 +11,10 @@ import { tsvector, vector } from './_custom-types';
 import { document } from './document';
 import { embeddingModel, retrievalSchema } from './embedding-model';
 
+// `sentence` is inert: `plan.ts` emits paragraph/section only and no row carries it. It stays in
+// the TYPE because drizzle-kit recreates an enum by rewriting the column as text — a full rewrite
+// of the 180 MB chunk table plus its HNSW index, which the Neon project's 512 MB cap refused
+// (push attempt 4, 2026-09-19). Dropping it is an ALTER TYPE for a day the table is small again.
 export const chunkLevelEnum = retrievalSchema.enum('chunk_level', ['sentence', 'paragraph', 'section']);
 
 export const chunk = retrievalSchema.table(
@@ -35,8 +39,6 @@ export const chunk = retrievalSchema.table(
 		contextPrefix: text('context_prefix'),
 		tokenCount: integer('token_count').notNull(),
 		contentHash: text('content_hash').notNull(),
-		overlapPrev: integer('overlap_prev').notNull().default(0),
-		overlapNext: integer('overlap_next').notNull().default(0),
 		embeddingModelId: text('embedding_model_id').references(() => embeddingModel.id, { onDelete: 'restrict' }),
 		embedding: vector(1536)('embedding'),
 		/**

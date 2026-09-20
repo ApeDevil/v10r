@@ -7,11 +7,10 @@ import { getCooldownResumeAt } from './providers';
 /**
  * Single source of truth for the admin "Provider Resources & Limits" board.
  *
- * Reconciles three inputs into one serializable shape consumed by BOTH the page
- * `load()` (SSR first-paint) and `GET /api/admin/ai/quota` (live poll), so the
- * contract can't drift between them:
+ * Reconciles three inputs into one serializable shape for the admin AI layout
+ * `load()` (`QuotaPanel` + the Overview headroom strip):
  *   - documented ceilings      → static `PROVIDER_LIMITS` (rots; carries verifiedOn)
- *   - observed requests/tokens  → SQL over `model_call` (today, UTC; lower bound)
+ *   - observed requests         → SQL over `model_call` (today, UTC; lower bound)
  *   - 429s + embedding calls    → Redis counters (signals the SQL aggregate can't see)
  *   - availability             → the Redis-backed circuit breaker
  *
@@ -33,20 +32,16 @@ export interface ProviderQuota {
 	// ── Documented limits (static config) ──
 	rpd: number | null;
 	rpm: number | null;
-	tpm: number | null;
 	rpdConfidence: LimitConfidence;
 	resetKind: ResetKind;
-	resetTimezone: string | null;
 	/** Next reset boundary as an absolute ISO instant (fixed-daily only), else null. */
 	resetAt: string | null;
 	verifiedOn: string;
-	sourceUrl: string;
 	note?: string;
 	/** False when the connection's model is not one the documented ceilings were read for. */
 	limitsVerified: boolean;
 	// ── Observed usage today (our own, lower bound) ──
 	requestsToday: number;
-	tokensToday: number;
 	/** Embedding API calls today (Google only; 0 elsewhere) — the hidden Gemini load. */
 	embeddingsToday: number;
 	/** Rate-limit (429) hits today. */
@@ -106,13 +101,10 @@ export async function buildProviderQuota(registry: ProviderRegistry): Promise<Pr
 				model: p.modelId,
 				rpd,
 				rpm: limit?.rpm ?? null,
-				tpm: limit?.tpm ?? null,
 				rpdConfidence: limit?.rpdConfidence ?? 'unknown',
 				resetKind: limit?.resetKind ?? 'unknown',
-				resetTimezone: limit?.resetTimezone ?? null,
 				resetAt,
 				verifiedOn: limit?.verifiedOn ?? '',
-				sourceUrl: documented?.sourceUrl ?? '',
 				note: limitsVerified
 					? limit?.note
 					: documented
@@ -120,7 +112,6 @@ export async function buildProviderQuota(registry: ProviderRegistry): Promise<Pr
 						: undefined,
 				limitsVerified,
 				requestsToday,
-				tokensToday: sqlUsage?.tokens ?? 0,
 				embeddingsToday: redisUsage.embeddings,
 				rateLimitedToday: redisUsage.rateLimited,
 				usageSource: limit ? 'estimated' : 'unknown',

@@ -61,7 +61,6 @@ export const nameSourceConnectionSaveSchema = v.object({
 	tokenUrl: httpsUrl,
 	version,
 });
-export type NameSourceConnectionSaveForm = v.InferOutput<typeof nameSourceConnectionSaveSchema>;
 
 export const nameSourceConnectionTestSchema = v.object({
 	vendor,
@@ -70,6 +69,5 @@ export const nameSourceConnectionTestSchema = v.object({
 	apiBase: httpsUrl,
 	tokenUrl: httpsUrl,
 });
-export type NameSourceConnectionTestForm = v.InferOutput<typeof nameSourceConnectionTestSchema>;
 
 export const nameSourceSecretRemoveSchema = v.object({ vendor, version });

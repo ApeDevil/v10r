@@ -15,12 +15,7 @@ import {
 import { Badge } from '$lib/components/primitives';
 import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
-import {
-	buildContextMenuItems,
-	type ContextMenuCallbacks,
-	dispatchMenuAction,
-	type MenuEntry,
-} from './context-menu-items';
+import { buildContextMenuItems, type ContextMenuCallbacks, dispatchMenuAction } from './context-menu-items';
 import type { ExplorerState } from './explorer.state.svelte';
 import { isSameVirtualTree, VIRTUAL_ROOT } from './explorer-actions';
 import type { ExplorerNode } from './node';

@@ -276,7 +276,6 @@ $effect(() => {
 								<span class="field-label">Expiry</span>
 								<input type="hidden" name="expiresIn" value={presignExpiry} />
 								<ToggleGroup
-									type="single"
 									bind:value={presignExpiry}
 									items={[
 										{ value: '300', label: '5 min' },

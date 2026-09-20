@@ -19,9 +19,6 @@ export const contactSchema = v.object({
 	),
 });
 
-export type ContactInput = v.InferInput<typeof contactSchema>;
-export type ContactOutput = v.InferOutput<typeof contactSchema>;
-
 export const settingsSchema = v.object({
 	displayName: v.pipe(
 		v.string(),
@@ -50,6 +47,3 @@ export const settingsSchema = v.object({
 	marketingEmails: v.optional(v.boolean(), false),
 	publicProfile: v.optional(v.boolean(), true),
 });
-
-export type SettingsInput = v.InferInput<typeof settingsSchema>;
-export type SettingsOutput = v.InferOutput<typeof settingsSchema>;

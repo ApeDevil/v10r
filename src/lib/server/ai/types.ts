@@ -1,8 +1,4 @@
-import type { UIMessage } from 'ai';
 import type { DeskFileType } from '$lib/types/db-enums';
-
-/** A legacy simple message or a full UIMessage from the AI SDK v6 client. */
-export type ChatMessage = { role: 'user' | 'assistant'; content: string } | UIMessage;
 
 /**
  * One panel's context as the desk sends it (`DeskRequestSchema.panelContext`): the text the

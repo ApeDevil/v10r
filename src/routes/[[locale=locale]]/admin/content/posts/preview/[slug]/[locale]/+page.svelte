@@ -5,8 +5,6 @@ import { PageContainer, Stack } from '$lib/components/layout';
 import { Typography } from '$lib/components/primitives';
 import { formatDate } from '$lib/i18n';
 
-export const csr = false;
-
 let { data } = $props();
 
 const driftLabel = $derived.by(() => {

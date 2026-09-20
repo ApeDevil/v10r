@@ -169,66 +169,17 @@ User clicks "Connect Discord"
 
 **Recommendation:** If implementing Discord, require users to join a support/community server, then the bot can DM server members.
 
-### Token Management
+### Credential Model
 
-| Token | Lifetime | Storage |
-|-------|----------|---------|
-| **Access token** | 7 days (fixed) | Encrypted in DB |
-| **Refresh token** | Undocumented | Encrypted in DB |
-
-### Token Refresh Strategy
-
-```
-Before sending notification:
-         │
-         ▼
-┌────────────────────────┐
-│ Check token_expires_at │
-└──────────┬─────────────┘
-           │
-    ┌──────┴──────┐
-    ▼             ▼
- Valid        Expiring/Expired
-    │             │
-    │             ▼
-    │      ┌────────────────┐
-    │      │ POST /token    │
-    │      │ grant_type=    │
-    │      │ refresh_token  │
-    │      └───────┬────────┘
-    │              │
-    │       ┌──────┴──────┐
-    │       ▼             ▼
-    │    Success       Failed
-    │       │             │
-    │       │             ▼
-    │       │      Mark inactive
-    │       │      Notify user
-    │       │
-    └───────┴──────────────┐
-                           ▼
-                   Send notification
-```
-
-### Credential Storage
+DMs are sent with the application's **bot token** (`DISCORD_BOT_TOKEN`), never with a user OAuth
+token. The OAuth2 code exchange serves one call — `/users/@me` — to learn who is linking; the
+returned access/refresh tokens are discarded, so nothing user-scoped is stored or refreshed.
 
 | Column | Content |
 |--------|---------|
 | `discord_user_id` | For DM channel creation |
 | `discord_username` | For display |
-| `access_token` | **Encrypted** (AES-256-GCM) |
-| `refresh_token` | **Encrypted** (AES-256-GCM) |
-| `token_expires_at` | When access token expires |
-| `is_active` | False if refresh fails or DMs disabled |
-
-### Token Encryption
-
-| Requirement | Implementation |
-|-------------|----------------|
-| **Algorithm** | AES-256-GCM (Web Crypto, authenticated encryption) — `$lib/server/security/aes-gcm.ts`, shared with the AI provider keys |
-| **Key management** | 64-char hex `ENCRYPTION_KEY` env var (raw 32-byte key, no KMS/KEK), read once in `security/encryption-key.ts` and passed to the primitive by the caller. Rotating or losing it invalidates every stored credential — Discord tokens *and* AI provider keys |
-| **Nonce** | Unique 96-bit random per encryption (critical!) |
-| **Storage format** | `nonce:ciphertext` (Base64) — GCM auth tag embedded in the ciphertext |
+| `is_active` | False if DMs are disabled or the user disconnects |
 
 ---
 
@@ -257,7 +208,7 @@ See [../pwa.md](../pwa.md) for the full design record — payload contract, iOS 
 |---------|---------------|--------|
 | **Telegram** | 403 Forbidden | Bot blocked - mark inactive |
 | **Discord** | 50007 error | Cannot DM user - mark inactive |
-| **Discord** | 401 Unauthorized | Token expired - attempt refresh |
+| **Discord** | 401 Unauthorized | Bot token invalid - configuration error, alert admin |
 | **Any** | 3+ consecutive failures | Mark inactive, notify via other channel |
 
 ### Inactive Channel UI
@@ -286,8 +237,7 @@ When a channel becomes inactive:
 | 1 | User clicks "Disconnect" |
 | 2 | Confirmation modal: "Stop receiving {channel} notifications?" |
 | 3 | Set `is_active = false`, set `unlinked_at` |
-| 4 | For Discord: optionally revoke token at Discord |
-| 5 | Show success toast |
+| 4 | Show success toast |
 
 **Note:** We soft-delete (set `is_active = false`) rather than hard-delete to:
 - Preserve audit trail
@@ -304,7 +254,7 @@ Background job removes records where `is_active = false` and `unlinked_at < NOW(
 
 | Risk | Mitigation |
 |------|------------|
-| **Token theft** | Encrypt at rest, never log tokens |
+| **Bot token theft** | Env var only, never persisted or logged |
 | **CSRF in OAuth** | Validate state parameter from secure cookie |
 | **Verification token brute-force** | Short expiry, rate limit generation |
 | **Replay attacks** | Mark tokens as used immediately |

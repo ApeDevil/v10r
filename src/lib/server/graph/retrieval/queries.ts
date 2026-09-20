@@ -87,11 +87,7 @@ export async function getEntitiesForChunks(
 }
 
 /** Lightweight graph corpus stats for the retrieval overview (tenant-scoped). */
-export async function getRetrievalGraphStats(ownerIds: string[]): Promise<{
-	nodes: number;
-	edges: number;
-	labels: string[];
-}> {
+export async function getRetrievalGraphStats(ownerIds: string[]): Promise<{ nodes: number; edges: number }> {
 	const [nodeCount, edgeCount] = await Promise.all([
 		cypher<{ c: number }>('MATCH (n:Entity) WHERE n.ownerId IN $ownerIds RETURN count(n) AS c', { ownerIds }),
 		cypher<{ c: number }>(
@@ -104,7 +100,6 @@ export async function getRetrievalGraphStats(ownerIds: string[]): Promise<{
 	return {
 		nodes: Number(nodeCount[0]?.c ?? 0),
 		edges: Number(edgeCount[0]?.c ?? 0),
-		labels: ['Entity'],
 	};
 }
 

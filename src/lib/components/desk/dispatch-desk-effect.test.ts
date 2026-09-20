@@ -40,18 +40,6 @@ describe('dispatchDeskEffect', () => {
 		expect(actions.addPanel).not.toHaveBeenCalled();
 	});
 
-	it('desk:activate_panel reports false when the panel is absent', () => {
-		const actions = makeMockActions(vi, false);
-		expect(dispatchDeskEffect({ type: 'desk:activate_panel', panelId: 'editor-x' }, actions)).toBe(false);
-		expect(actions.focusPanel).toHaveBeenCalledWith('editor-x');
-	});
-
-	it('desk:focus_panel focuses an existing panel and reports true', () => {
-		const actions = makeMockActions(vi, true);
-		expect(dispatchDeskEffect({ type: 'desk:focus_panel', panelId: 'editor-x' }, actions)).toBe(true);
-		expect(actions.focusPanel).toHaveBeenCalledWith('editor-x');
-	});
-
 	it('desk:refresh_file publishes to bus', () => {
 		const actions = makeMockActions(vi);
 		dispatchDeskEffect({ type: 'desk:refresh_file', fileId: 'f1' }, actions);
@@ -92,29 +80,6 @@ describe('dispatchDeskEffect', () => {
 			),
 		).toBe(true);
 		expect(actions.updatePanel).not.toHaveBeenCalled();
-	});
-
-	it('desk:notify publishes to bus with level', () => {
-		const actions = makeMockActions(vi);
-		dispatchDeskEffect({ type: 'desk:notify', message: 'Done!', level: 'success' }, actions);
-
-		expect(actions.publish).toHaveBeenCalledWith('ai:notify', { message: 'Done!', level: 'success' });
-	});
-
-	it('desk:scroll_to focuses the target panel BEFORE publishing', () => {
-		const actions = makeMockActions(vi, true);
-		const order: string[] = [];
-		(actions.focusPanel as ReturnType<typeof vi.fn>).mockImplementation(() => {
-			order.push('focus');
-			return true;
-		});
-		(actions.publish as ReturnType<typeof vi.fn>).mockImplementation(() => {
-			order.push('publish');
-		});
-		dispatchDeskEffect({ type: 'desk:scroll_to', panelId: 'editor-f1', target: 'heading-2' }, actions);
-
-		expect(order).toEqual(['focus', 'publish']);
-		expect(actions.publish).toHaveBeenCalledWith('ai:scroll_to', { panelId: 'editor-f1', target: 'heading-2' });
 	});
 
 	it('unknown effect type reports not-applied', () => {

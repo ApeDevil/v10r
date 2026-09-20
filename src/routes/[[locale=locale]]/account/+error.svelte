@@ -14,7 +14,6 @@ import { localizeHref } from '$lib/i18n';
 	status={page.status}
 	message={page.error?.message}
 	errorId={page.error?.errorId}
-	context="app"
 >
 	{#snippet actions()}
 		{#if page.status >= 500}

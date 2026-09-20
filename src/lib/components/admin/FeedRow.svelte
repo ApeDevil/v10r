@@ -94,7 +94,7 @@ function onkeydown(e: KeyboardEvent) {
 		border-left: 3px solid var(--color-primary);
 	}
 	.row.paired {
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 6%, transparent);
+		background: color-mix(in srgb, var(--color-warning) 6%, transparent);
 	}
 	.row td {
 		padding: var(--spacing-2) var(--spacing-3);
@@ -110,7 +110,7 @@ function onkeydown(e: KeyboardEvent) {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: var(--color-warning, #f59e0b);
+		background: var(--color-warning);
 	}
 	.col-path {
 		max-width: 18rem;

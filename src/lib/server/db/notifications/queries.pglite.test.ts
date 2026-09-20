@@ -13,7 +13,7 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { getNotifications, getUnreadCount, getNotificationById } = await import('./queries');
+const { getNotifications, getUnreadCount } = await import('./queries');
 const { db } = await import('$lib/server/db');
 
 const USER_A = makeUser({ id: 'user-a' });
@@ -117,30 +117,6 @@ describe('notification queries', () => {
 		it('returns 0 when no unread', async () => {
 			const count = await getUnreadCount(USER_A.id);
 			expect(count).toBe(0);
-		});
-	});
-
-	describe('getNotificationById', () => {
-		it('returns notification for the correct user', async () => {
-			const n = makeNotification({ userId: USER_A.id, messageKey: 'notif_mine' });
-			await db.insert(notifications).values(n);
-
-			const result = await getNotificationById(n.id, USER_A.id);
-			expect(result).not.toBeNull();
-			expect(result?.messageKey).toBe('notif_mine');
-		});
-
-		it('returns null for wrong user (IDOR protection)', async () => {
-			const n = makeNotification({ userId: USER_A.id, messageKey: 'notif_secret' });
-			await db.insert(notifications).values(n);
-
-			const result = await getNotificationById(n.id, USER_B.id);
-			expect(result).toBeNull();
-		});
-
-		it('returns null for nonexistent ID', async () => {
-			const result = await getNotificationById('nonexistent', USER_A.id);
-			expect(result).toBeNull();
 		});
 	});
 });

@@ -18,12 +18,11 @@ interface Props {
 	breadcrumbs: Breadcrumb[];
 	backHref: string;
 	backLabel: string;
-	sourceUrl?: string | null;
 	/** Overrides the `/docs/<section>/<slug>.md` default alternate link. */
 	markdownHref?: string;
 }
 
-let { entry, html, toc, breadcrumbs, backHref, backLabel, sourceUrl, markdownHref }: Props = $props();
+let { entry, html, toc, breadcrumbs, backHref, backLabel, markdownHref }: Props = $props();
 
 const mdHref = $derived(
 	markdownHref ?? (entry.section && entry.slug ? `/docs/${entry.section}/${entry.slug}.md` : null),
@@ -62,11 +61,7 @@ $effect(() => {
 </svelte:head>
 
 <PageContainer width="wide">
-	<PageHeader title={entry.title} description={entry.description} {breadcrumbs}>
-		{#if sourceUrl}
-			<a class="source-link" href={sourceUrl} target="_blank" rel="noopener">View source</a>
-		{/if}
-	</PageHeader>
+	<PageHeader title={entry.title} description={entry.description} {breadcrumbs} />
 
 	{#if chipSections.length > 0}
 		<div class="toc-mobile">
@@ -97,15 +92,6 @@ $effect(() => {
 </PageContainer>
 
 <style>
-	.source-link {
-		font-size: var(--text-xs);
-		color: var(--color-muted);
-		text-decoration: none;
-	}
-	.source-link:hover {
-		color: var(--color-fg);
-	}
-
 	.leaf-layout {
 		display: block;
 		margin-bottom: var(--spacing-7);

@@ -124,10 +124,6 @@ export function createSidebarState(initialWidth = 240) {
 			state.pinned = !state.pinned;
 		},
 
-		openMobile() {
-			state.mobileOpen = true;
-		},
-
 		closeMobile() {
 			state.mobileOpen = false;
 		},

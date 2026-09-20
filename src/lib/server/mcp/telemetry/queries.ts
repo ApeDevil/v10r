@@ -87,8 +87,6 @@ export async function getToolBreakdown(since: Date) {
 			invalidArgs: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'invalid_args')::int`,
 			notFound: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'not_found')::int`,
 			threw: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'threw')::int`,
-			// Non-zero means a handler returned isError without a diag — an uninstrumented call site.
-			uninstrumented: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'tool_error')::int`,
 		})
 		.from(mcpCallLog)
 		.where(and(externalOnly(since), isNotNull(mcpCallLog.toolName)))
@@ -132,7 +130,6 @@ export async function getHealthSummary(since: Date) {
 			// gate_ms > 1000 means the limiter FAIL-OPENED: the rate limit was NOT enforced. A
 			// percentile would smooth over exactly this tail event, so it is counted, not averaged.
 			failOpen: sql<number>`count(*) FILTER (WHERE ${mcpCallLog.gateMs} > 1000)::int`,
-			rateLimitedGate: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} = 'rate_limited')::int`,
 			authFailures: sql<number>`sum(${mcpCallLog.observedCount}) FILTER (WHERE ${mcpCallLog.outcome} IN ('unauthorized','unconfigured'))::int`,
 		})
 		.from(mcpCallLog)
@@ -143,7 +140,6 @@ export async function getHealthSummary(since: Date) {
 		distinctClients: Number(row?.distinctClients ?? 0),
 		unknownMethod: Number(row?.unknownMethod ?? 0),
 		failOpen: Number(row?.failOpen ?? 0),
-		rateLimitedGate: Number(row?.rateLimitedGate ?? 0),
 		authFailures: Number(row?.authFailures ?? 0),
 	};
 }
@@ -171,28 +167,6 @@ export async function getLatency(since: Date) {
 		.from(mcpCallLog)
 		.where(gte(mcpCallLog.startedAt, since))
 		.groupBy(mcpCallLog.surface);
-}
-
-/**
- * Which client software is calling, and which protocol era.
- *
- * Both values are self-reported and unverified — read as a low-cardinality hint, never as identity.
- * `requested` vs `served` is kept apart deliberately: a client that asks for a version this server
- * does not serve, gets a 400, and falls back would otherwise be indistinguishable from a native
- * caller of the older version, erasing the migration signal at the moment of capture.
- */
-export async function getClientBreakdown(since: Date) {
-	return db
-		.select({
-			clientFamily: mcpCallLog.clientFamily,
-			requestedProtocolVersion: mcpCallLog.requestedProtocolVersion,
-			rcHeaders: mcpCallLog.rcHeaders,
-			calls: sql<number>`sum(${mcpCallLog.observedCount})::int`,
-		})
-		.from(mcpCallLog)
-		.where(externalOnly(since))
-		.groupBy(mcpCallLog.clientFamily, mcpCallLog.requestedProtocolVersion, mcpCallLog.rcHeaders)
-		.orderBy(desc(sql`sum(${mcpCallLog.observedCount})`));
 }
 
 /**

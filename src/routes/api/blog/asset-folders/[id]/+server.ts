@@ -19,15 +19,6 @@ const UpdateAssetFolderSchema = v.object({
 	parentId: v.optional(v.nullable(v.string())),
 });
 
-export const GET: RequestHandler = async ({ params, locals }) => {
-	const guard = guardApiBlogAuthor(locals);
-	if ('error' in guard) return guard.error;
-	const { user } = guard;
-	const row = await getAssetFolder(params.id, user.id);
-	if (!row) return apiError(404, 'folder_not_found', 'Folder not found.');
-	return apiOk({ folder: row });
-};
-
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {
 	const guard = guardApiBlogAuthor(locals);
 	if ('error' in guard) return guard.error;

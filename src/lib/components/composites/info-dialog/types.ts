@@ -1,5 +1,3 @@
-import type { Snippet } from 'svelte';
-
 /** A single property definition for PropsTable */
 export interface PropDef {
 	name: string;
@@ -7,14 +5,6 @@ export interface PropDef {
 	default?: string;
 	required?: boolean;
 	description: string;
-}
-
-/** A named content section for tabbed mode */
-export interface InfoSection {
-	id: string;
-	label: string;
-	icon?: string;
-	content: Snippet;
 }
 
 /** Pre-highlighted code block data (from server-side Shiki) */

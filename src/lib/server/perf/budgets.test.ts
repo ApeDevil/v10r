@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-	budgetKeys,
+	type BudgetKey,
 	budgets,
 	FIELD_METRICS,
 	fieldBudgetKey,
@@ -8,6 +8,8 @@ import {
 	MIN_SAMPLES_FOR_P75,
 	scoreBudget,
 } from './budgets';
+
+const budgetKeys = Object.keys(budgets) as BudgetKey[];
 
 describe('budgets.json integrity', () => {
 	it('defines a warn below a fail for every budget', () => {

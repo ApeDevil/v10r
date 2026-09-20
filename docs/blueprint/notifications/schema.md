@@ -171,8 +171,6 @@ CREATE TYPE delivery_status AS ENUM (
   'processing',  -- Currently sending
   'sent',        -- Provider accepted
   'failed',      -- Provider says it will never work (403, bad address) — retry is pointless
-  'skipped',     -- UNUSED: never written by any code path
-  'retrying',    -- UNUSED: a retry is 'pending' with a future next_attempt_at
   'dead'         -- Retryable fault outlived the budget — surfaces in the admin panel
 );
 
@@ -377,7 +375,7 @@ ADD COLUMN push_security BOOLEAN NOT NULL DEFAULT true;
 
 ```sql
 CREATE TYPE delivery_status AS ENUM (
-  'pending', 'processing', 'sent', 'failed', 'skipped', 'retrying', 'dead'
+  'pending', 'processing', 'sent', 'failed', 'dead'
 );
 
 CREATE TYPE notification_channel AS ENUM (

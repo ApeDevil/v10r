@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!CODE_SHAPE.test(params.code)) {
 		return { failure: 'invalid' as const };
 	}
-	return { code: params.code };
+	return { failure: null };
 };
 
 export const actions: Actions = {

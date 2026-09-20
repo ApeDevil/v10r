@@ -142,7 +142,7 @@ const sections = $derived([
 					></span>
 					<div class="cron-body">
 						<h4>analytics-cleanup</h4>
-						<p class="cron-detail">Daily at 02:00 UTC — deletes rows past the windows above.</p>
+						<p class="cron-detail">Daily at 03:00 UTC (the cron sweep) — deletes rows past the windows above.</p>
 						<dl>
 							<dt>Last run</dt>
 							<dd>{relativeTime(jobs.cleanup?.startedAt ?? null)}</dd>
@@ -175,7 +175,7 @@ const sections = $derived([
 					></span>
 					<div class="cron-body">
 						<h4>analytics-rollup</h4>
-						<p class="cron-detail">Daily at 02:30 UTC — collapses raw events into daily_page_stats.</p>
+						<p class="cron-detail">Daily at 03:00 UTC (same sweep, rollup before cleanup) — collapses raw events into daily_page_stats.</p>
 						<dl>
 							<dt>Last run</dt>
 							<dd>{relativeTime(jobs.rollup?.startedAt ?? null)}</dd>
@@ -226,15 +226,6 @@ const sections = $derived([
 		font-size: var(--text-fluid-base);
 		color: var(--color-muted);
 		line-height: 1.6;
-	}
-
-	.lede code {
-		font-family: ui-monospace, monospace;
-		font-size: 0.92em;
-		padding: 0.1em 0.35em;
-		border-radius: var(--radius-sm);
-		background: var(--color-subtle);
-		color: var(--color-fg);
 	}
 
 	.section-head {

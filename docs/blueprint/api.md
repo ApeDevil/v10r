@@ -2,6 +2,8 @@
 
 REST endpoints with SvelteKit +server.ts files.
 
+> **Illustrative template.** The `items` / `health` / `upload` routes and their helpers in the snippets below are a teaching example, not v10r files. The shipped API is the [Endpoint Inventory](#endpoint-inventory-feature-families) at the end; its adapters live in `src/routes/api/**`, the shared primitives in `src/lib/server/http/` (`body.ts`, `guards.ts`, `rate-limit.ts`, `response.ts`).
+
 ---
 
 ## Strategy
@@ -230,7 +232,7 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 ### Valibot Schemas
 
 ```typescript
-// src/lib/server/http/schemas.ts
+// Illustrative — v10r keeps request schemas beside each domain (e.g. src/lib/server/blog/schemas.ts)
 import * as v from 'valibot';
 
 // Reusable schemas
@@ -257,7 +259,7 @@ export const UpdateItemSchema = v.partial(CreateItemSchema);
 ### Validation Helper
 
 ```typescript
-// src/lib/server/http/validate.ts
+// Illustrative — the shipped body parser is src/lib/server/http/body.ts
 import { error } from '@sveltejs/kit';
 import * as v from 'valibot';
 
@@ -426,7 +428,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 > **Security:** Never use `===` for secret comparison—it's vulnerable to timing attacks. Use `crypto.timingSafeEqual()` instead.
 
 ```typescript
-// src/lib/server/auth/api-key.ts
+// Illustrative — the shipped bearer check is the MCP token guard in src/lib/server/mcp/
 import { timingSafeEqual } from 'crypto';
 import { API_SECRET_KEY } from '$env/static/private';
 
@@ -479,7 +481,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 CORS is implemented as a composable handler using `sequence`. See [auth.md](./auth.md) for the full hooks.server.ts setup.
 
 ```typescript
-// src/lib/server/hooks/cors.ts
+// Illustrative — CORS is not a shipped hook; the pipeline is src/hooks.server.ts
 import type { Handle } from '@sveltejs/kit';
 
 const ALLOWED_ORIGINS = [
@@ -537,7 +539,7 @@ export const handle = sequence(corsHandle, authHandle, sessionHandle);
 ### Per-Route CORS
 
 ```typescript
-// src/routes/api/public/+server.ts
+// Illustrative per-route CORS
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -621,7 +623,7 @@ export const GET: RequestHandler = async ({ url }) => {
 **Required:** `"file-type": "^19.x"` — see [development-environment.md](../foundation/development-environment.md)
 
 ```typescript
-// src/lib/server/upload/validate.ts
+// Illustrative — the shipped upload validation is src/lib/server/store/guards.ts
 import { fileTypeFromBuffer } from 'file-type';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
@@ -658,7 +660,7 @@ export async function validateFileContent(file: File): Promise<ValidatedFile> {
 ```
 
 ```typescript
-// src/routes/api/upload/+server.ts
+// Illustrative — the shipped upload door is src/routes/api/blog/assets/+server.ts (ticket) + .../confirm
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { validateFileContent } from '$lib/server/upload/validate';
@@ -1012,7 +1014,7 @@ src/
 
 | Family | Endpoints | Auth |
 |--------|-----------|------|
-| **Blog posts** | `GET/POST /api/blog/posts`, `PATCH/DELETE /api/blog/posts/[id]`, `POST .../publish`, `GET/POST .../revisions`, `GET/POST .../tags`, `GET/POST .../domain`, `POST .../export`, `POST .../import` | `guardApiBlogAuthor` |
+| **Blog posts** | `GET/POST /api/blog/posts`, `GET/PATCH /api/blog/posts/[id]`, `POST .../publish`, `POST .../revisions`, `PUT .../tags`, `PUT .../domain`, `GET .../export`, `POST /api/blog/posts/import` | `guardApiBlogAuthor` |
 | **Blog assets** | `GET/POST /api/blog/assets`, `PATCH/DELETE /api/blog/assets/[id]`, `POST .../confirm` | `guardApiBlogAuthor` |
 | **Blog asset folders** | `GET/POST /api/blog/asset-folders`, `PATCH/DELETE .../[id]` | `guardApiBlogAuthor` |
 | **Blog post folders** | `GET/POST /api/blog/post-folders`, `PATCH/DELETE .../[id]` | `guardApiBlogAuthor` |
@@ -1021,7 +1023,7 @@ src/
 | **Blog preview** | `POST /api/blog/preview` | `guardApiBlogAuthor` |
 | **Blog comments** | `GET/POST /api/blog/posts/[id]/comments`, `PATCH/DELETE /api/blog/comments/[id]`, `POST .../hide`, `POST .../unhide`, `POST .../remove` (admin) | GET public; POST session; admin actions `guardApiAdmin` |
 | **Grant requests** | `POST/GET/DELETE /api/grant-requests` | session (own) |
-| **Admin grant requests** | `GET /api/admin/grant-requests`, `POST .../approve`, `POST .../deny` | `guardApiAdmin` |
+| **Admin grant requests** | `GET /api/admin/grant-requests`, `POST .../[id]/approve`, `POST .../[id]/deny` | `guardApiAdmin` |
 | **Admin user grants** | `GET /api/admin/users/[id]/grants`, `PUT/DELETE .../grants/[kind]` | `guardApiAdmin` |
 
 > **Namespace constraint:** `/api/auth/*` is owned by Better Auth's `svelteKitHandler` catch-all. Custom routes under this prefix will 404. Grant-request endpoints are at `/api/grant-requests`, not `/api/auth/grant-requests`.
@@ -1034,7 +1036,7 @@ Mutating and long-lived endpoints bound their inputs and connections at the adap
 
 | Endpoint | Bound |
 |----------|-------|
-| `PUT /api/desk/spreadsheets/[id]` | Caps cell count, column-meta count, per-cell string length, and total payload size. |
+| `PUT /api/desk/files/[id]` | Caps cell count, column-meta count, per-cell string length, and total payload size. |
 | `POST /api/ai/chatbot` · `/api/ai/deskbot` | Per-surface Valibot schemas (`ChatbotRequestSchema` / `DeskRequestSchema`) cap the lengths of the `toolScopes` and `deskLayout` arrays, and bound the chatbot `pageRouteId` route template (120-char max + strict leading-slash regex — see [ai/site-awareness.md](./ai/site-awareness.md)). |
 | `POST /api/ai/proposals/[id]/approve` | Per-user rate-limited. |
 | `GET /api/ai/conversations/[id]/turns/[messageId]` | The turn's full trace for its owner (`TurnTrace`, [ai/turn-trace.md](./ai/turn-trace.md)): owner-scoped on the turn row AND the path's conversation, both misses read as 404; conversation rate-limiter; grounding bodies resolved for the viewer's own corpus plus the system docs corpus only. |

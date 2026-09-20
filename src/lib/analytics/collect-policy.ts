@@ -204,11 +204,6 @@ export function userLaneSurface(path: string): UserSurface | null {
 	return USER_LANE_SURFACES.find(([prefix]) => startsWithSegment(unprefixed, prefix))?.[1] ?? null;
 }
 
-/** True when an authenticated request belongs in the user lane. */
-export function isUserLanePath(path: string): boolean {
-	return userLaneSurface(path) !== null;
-}
-
 /** True when the User-Agent looks like a crawler, preview bot, or headless probe. */
 export function isBot(userAgent: string): boolean {
 	return BOT_UA_RE.test(userAgent);

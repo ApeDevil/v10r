@@ -24,8 +24,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		title: 'Send - Notifications - Showcases',
-		userId: locals.user.id,
-		userName: locals.user.name,
 		notificationTypes: VALID_TYPES,
 	};
 };
@@ -41,14 +39,14 @@ export const actions: Actions = {
 			return fail(400, { error: 'Invalid notification type' });
 		}
 
-		const notification = await sendNotification({
+		await sendNotification({
 			userId: locals.user.id,
 			type: type as 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow',
 			messageKey: PRESETS[type],
 			messageParams: {},
 		});
 
-		return { sent: true, type, notificationId: notification.id };
+		return { sent: true };
 	},
 
 	customSend: async ({ request, locals }) => {
@@ -68,13 +66,13 @@ export const actions: Actions = {
 
 		// Custom showcase sends use the generic `notif_custom` template with the
 		// supplied text as a parameter, demonstrating ICU interpolation.
-		const notification = await sendNotification({
+		await sendNotification({
 			userId: locals.user.id,
 			type: type as 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow',
 			messageKey: 'notif_custom',
 			messageParams: { text: customText },
 		});
 
-		return { sent: true, type, notificationId: notification.id };
+		return { sent: true };
 	},
 };

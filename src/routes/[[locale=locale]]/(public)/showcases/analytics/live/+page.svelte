@@ -13,7 +13,6 @@ interface LiveEvent {
 	type: string;
 	path: string;
 	timestamp: string;
-	sessionId?: string;
 }
 
 let events = $state<LiveEvent[]>([]);

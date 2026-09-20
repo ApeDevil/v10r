@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 
 export const selectionBarVariants = cva([
 	'fixed bottom-[calc(2rem+var(--safe-bottom))] left-1/2 -translate-x-1/2 z-panel',
@@ -36,8 +36,3 @@ export const selectionBarDismissVariants = cva([
 	'text-muted cursor-pointer',
 	'outline-none',
 ]);
-
-export type SelectionBarVariants = VariantProps<typeof selectionBarVariants>;
-export type SelectionBarCountVariants = VariantProps<typeof selectionBarCountVariants>;
-export type SelectionBarActionVariants = VariantProps<typeof selectionBarActionVariants>;
-export type SelectionBarDismissVariants = VariantProps<typeof selectionBarDismissVariants>;

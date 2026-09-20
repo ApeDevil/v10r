@@ -27,7 +27,6 @@ import type {
 	GroundingSource,
 	HistoryMessage,
 	HistoryPart,
-	ModelCallOutcome,
 	ModelCallRecord,
 	ModelCallRequest,
 	ModelCallResponse,
@@ -75,7 +74,6 @@ export interface CallEndInput {
 	textChars?: number;
 	toolCalls?: { toolCallId: string; toolName: string }[];
 	warnings?: string[];
-	outcome?: ModelCallOutcome;
 }
 
 /** What a tool execution reports — the SDK hook and the step's result loop each bring part. */
@@ -401,7 +399,8 @@ export function createTurnRecorder(init: TurnRecorderInit): TurnRecorder {
 			call.durationMs = started === undefined ? null : now() - started;
 			call.inputTokens = input.usage?.inputTokens ?? 0;
 			call.outputTokens = input.usage?.outputTokens ?? 0;
-			call.outcome = input.outcome ?? 'ok';
+			// A call that reaches callEnd completed; attemptEnd marks the open call on error/cancel.
+			call.outcome = 'ok';
 			const response: ModelCallResponse = {
 				textChars: input.textChars ?? 0,
 				toolCalls: input.toolCalls ?? [],

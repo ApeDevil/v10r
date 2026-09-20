@@ -14,6 +14,7 @@ import { getRetrievalGraphStats } from '$lib/server/graph/retrieval/queries';
 import { safeDeferPromise } from '$lib/server/http/defer';
 import { requireAdmin } from '$lib/server/http/guards';
 import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
+import { buildSearchIndex } from '$lib/server/search';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
@@ -43,6 +44,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		overview,
 		errorDocs,
 		bySource,
+		// The catalog corpus is the in-process ⌘K index, not `retrieval.document` rows.
+		catalogEntries: buildSearchIndex(locals.locale).length,
 		coverage,
 		graph,
 		filters: { status, page },

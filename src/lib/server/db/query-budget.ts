@@ -46,24 +46,11 @@ export const QUERY_BUDGETS = {
 		maxQueries: 1,
 		note: 'A single capped read; the tree is assembled in memory, not by walking parents.',
 	},
-	'desk.countFolderContents': {
-		maxQueries: 2,
-		note: 'Subfolder count and file count in one wave; neither iterates the children.',
-	},
 } as const satisfies Record<string, QueryBudget>;
 
 export type BudgetedOperation = keyof typeof QUERY_BUDGETS;
 
 export const budgetedOperations = Object.keys(QUERY_BUDGETS) as BudgetedOperation[];
-
-/**
- * Repeats of one shape inside a single operation that stop being plausible.
- *
- * Three is where a coincidence becomes a pattern: a read plus its ownership check
- * plus a re-read is defensible, a fourth identical statement is a loop. This is a
- * SUSPICION threshold for the runtime census, not a proof — see `query-census.ts`.
- */
-export const SUSPECTED_N_PLUS_ONE_REPEATS = 3;
 
 /**
  * Round trips one HTTP request may make before it is worth a log line.
@@ -79,18 +66,14 @@ export interface QueryVerdict {
 	count: number;
 	maxQueries: number;
 	overBudget: boolean;
-	/** The most-repeated shape and its count, when it passed the suspicion threshold. */
-	suspectedNPlusOne: { shape: string; times: number } | null;
 }
 
 export function scoreQueryCensus(operation: BudgetedOperation, census: QueryCensus): QueryVerdict {
 	const { maxQueries } = QUERY_BUDGETS[operation];
-	const worst = census.worst();
 	return {
 		operation,
 		count: census.count,
 		maxQueries,
 		overBudget: census.count > maxQueries,
-		suspectedNPlusOne: worst && worst.times > SUSPECTED_N_PLUS_ONE_REPEATS ? worst : null,
 	};
 }

@@ -204,7 +204,6 @@ describe('lane timings', () => {
 		const { composition, trace } = await turn(REAL_QUESTION);
 
 		// The lane degrades — the turn proceeds without its context, the failure on record.
-		expect(composition.errors['project-docs']).toContain('429');
 		expect(trace.grounding.find((g) => g.id === 'project-docs')?.error).toContain('429');
 		expect(composition.systemPrompt).toContain('<catalog-map>');
 	});
@@ -295,9 +294,9 @@ describe('navigation grounding', () => {
 	it('proceeds without the block when the catalog lane fails, and says so', async () => {
 		searchCatalogRecords.mockRejectedValue(new Error('neon down'));
 
-		const { composition } = await turn('Where is the auth showcase?');
+		const { composition, trace } = await turn('Where is the auth showcase?');
 
-		expect(composition.errors.catalog).toContain('neon down');
+		expect(trace.grounding.find((g) => g.id === 'catalog')?.error).toContain('neon down');
 		expect(composition.blocks.some((b) => b.id === 'catalog-results')).toBe(false);
 		expect(composition.systemPrompt).toContain('Project catalog rules');
 	});

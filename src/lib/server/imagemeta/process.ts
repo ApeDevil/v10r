@@ -60,7 +60,7 @@ export async function processImage(bytes: Uint8Array): Promise<ProcessedImage> {
 		ext: 'webp',
 		width: out.info.width,
 		height: out.info.height,
-		exif: { ...exif, width: exif.width ?? out.info.width, height: exif.height ?? out.info.height },
+		exif,
 	};
 }
 
@@ -71,24 +71,13 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 }
 
 function parseExif(bytes: Uint8Array): ExtractedExif {
-	const empty: ExtractedExif = {
-		width: null,
-		height: null,
-		make: null,
-		model: null,
-		dateTimeOriginal: null,
-		gps: null,
-	};
+	const empty: ExtractedExif = { dateTimeOriginal: null, gps: null };
 	try {
 		const tags = ExifReader.load(toArrayBuffer(bytes), { expanded: true });
 		const lat = tags.gps?.Latitude;
 		const lng = tags.gps?.Longitude;
 		const hasGps = typeof lat === 'number' && typeof lng === 'number';
 		return {
-			width: numOrNull(tags.file?.['Image Width']?.value),
-			height: numOrNull(tags.file?.['Image Height']?.value),
-			make: strOrNull(tags.exif?.Make?.description),
-			model: strOrNull(tags.exif?.Model?.description),
 			dateTimeOriginal: strOrNull(tags.exif?.DateTimeOriginal?.description),
 			gps: hasGps ? { lat: lat as number, lng: lng as number } : null,
 		};
@@ -96,10 +85,6 @@ function parseExif(bytes: Uint8Array): ExtractedExif {
 		// No / unsupported EXIF (normal for PNG, WebP, screenshots) — not an error.
 		return empty;
 	}
-}
-
-function numOrNull(v: unknown): number | null {
-	return typeof v === 'number' && Number.isFinite(v) ? v : null;
 }
 
 function strOrNull(v: unknown): string | null {

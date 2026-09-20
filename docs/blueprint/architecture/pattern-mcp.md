@@ -20,7 +20,7 @@ The Pattern MCP closes that gap. Each entry in [`pattern-library/registry.json`]
 
 The server (`server.ts`, `protocol.ts`, `tools.ts`) is intentionally boring: JSON-RPC plumbing and six query functions over two JSON files (the pattern registry and the snippet rules). All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
 
-A drift guard (`validate-registry.ts`, wired into `bun run validate` as `patterns:validate`) keeps the registry honest: every `docs`/`code`/`tests` path must exist on disk, `showcases` refs of `kind: "route"` must be members of `src/lib/showcases/catalog/registry.ts` (not merely directories on disk), `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), IDs must be unique kebab-case, and each tier's contract holds (deep records must carry invariants/emulation notes; light records must not). A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
+A drift guard (`pattern-library/validate.ts`, wired into `bun run validate` as `patterns:validate`) keeps the registry honest: every `docs`/`code`/`tests` path must exist on disk, `showcases` refs of `kind: "route"` must be members of `src/lib/showcases/catalog/registry.ts` (not merely directories on disk), `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), IDs must be unique kebab-case, and each tier's contract holds (deep records must carry invariants/emulation notes; light records must not). A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
 
 The registry is also self-referential: it catalogs v10r's own documentation conventions as patterns (`docs-nav-hubs`, `pattern-index`) alongside code patterns (`multi-client-core`, `layered-rag`, `jobs-scheduler`, …). The root README's Pattern Index is not a twin that could drift — it is **generated from this registry** (see "Derived surfaces" below).
 
@@ -46,7 +46,7 @@ Because the match is purely lexical, **a keyword that does not survive tokenizat
 
 ### Deterministic plan assembly, not inference
 
-`recommend_emulation_plan` takes a list of desired capabilities and returns a dependency-ordered build plan — but it does no reasoning of its own. It matches capabilities to pattern records lexically, expands the selection through `depends_on` edges, and orders the result with the same Kahn toposort `validate-registry.ts` uses to check the registry for cycles. The assembly is 100% deterministic and inspectable; the agent supplies the judgment about *how* to adapt each step to the target project. Keeping the assembler dumb is deliberate — it's a query over curated facts, not a second opinion.
+`recommend_emulation_plan` takes a list of desired capabilities and returns a dependency-ordered build plan — but it does no reasoning of its own. It matches capabilities to pattern records lexically, expands the selection through `depends_on` edges, and orders the result with the same Kahn toposort `pattern-library/validate.ts` uses to check the registry for cycles. The assembly is 100% deterministic and inspectable; the agent supplies the judgment about *how* to adapt each step to the target project. Keeping the assembler dumb is deliberate — it's a query over curated facts, not a second opinion.
 
 ### Ephemeral read-only container
 

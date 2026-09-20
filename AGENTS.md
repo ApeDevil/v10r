@@ -35,7 +35,8 @@ Change code directly: no compatibility layers, migration shims, or deprecation p
 
 Follow `biome.json`: tabs, LF, 120-column width, single JS quotes, semicolons, trailing
 commas. Use PascalCase components, kebab-case modules, and `.svelte.ts` for runes.
-Consult [docs/naming.md](docs/naming.md) before introducing names; comments explain why.
+Consult [docs/naming.md](docs/naming.md) before introducing names; comments explain why —
+the principle behind both is [docs/foundation/self-expressive-project.md](docs/foundation/self-expressive-project.md).
 Never name a prop `state`.
 
 Use existing components instead of raw buttons, inputs, selects, or textareas.

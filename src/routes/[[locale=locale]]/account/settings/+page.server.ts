@@ -26,7 +26,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 			dateFormat: prefs.dateFormat as 'relative' | 'absolute' | 'iso',
 			sidebarWidth: prefs.sidebarWidth,
 			reduceMotion: prefs.reduceMotion,
-			highContrast: prefs.highContrast,
 		},
 		valibot(userSettingsSchema),
 	);

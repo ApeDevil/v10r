@@ -212,18 +212,12 @@ const activeContexts = $derived.by((): PanelContext[] => {
 });
 
 /** Total estimated tokens across all active (implicit + pinned) entries */
-const tokenEstimate = $derived(activeContexts.reduce((sum, c) => sum + c.tokenEstimate, 0));
 
 // Public getters (must be called in reactive context)
 
-/** All context entries with status. No UI consumes this yet. */
+/** All context entries with status — the bot panel's context section and the chip strip. */
 export function getContextChips(): ContextChip[] {
 	return contextChips;
-}
-
-/** Get total estimated tokens across active contexts */
-export function getTokenEstimate(): number {
-	return tokenEstimate;
 }
 
 /**

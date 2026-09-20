@@ -5,25 +5,21 @@
  * profiles (`ai/profile/`): what the assistant is told about itself is the profile's,
  * what it is told about the conversation so far is here.
  */
-import type { ChatMessage } from '../types';
+import type { UIMessage } from 'ai';
 
-/** Extract text content from a ChatMessage (handles both legacy and UIMessage format). */
-export function getMessageText(msg: ChatMessage): string {
-	if ('content' in msg && typeof msg.content === 'string') return msg.content;
-	if ('parts' in msg) {
-		return msg.parts
-			.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-			.map((p) => p.text)
-			.join('\n');
-	}
-	return '';
+/** The text parts of a UIMessage, joined — what the model said or was asked, minus tool parts. */
+export function getMessageText(msg: UIMessage): string {
+	return msg.parts
+		.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+		.map((p) => p.text)
+		.join('\n');
 }
 
 /**
  * Window conversation history to last N turns to stay within token budget.
  * Always keeps the most recent messages. Rough estimate: 4 chars ≈ 1 token.
  */
-export function windowMessages(messages: ChatMessage[], maxTurns = 5): ChatMessage[] {
+export function windowMessages(messages: UIMessage[], maxTurns = 5): UIMessage[] {
 	const maxMessages = maxTurns * 2;
 	if (messages.length <= maxMessages) return messages;
 	const result = messages.slice(-maxMessages);

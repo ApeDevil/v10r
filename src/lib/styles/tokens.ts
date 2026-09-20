@@ -212,7 +212,6 @@ export const boxShadow = {
  * References only — the numeric ladder lives in app.css (SSOT); calc() consumers
  * there require the CSS vars to stay numeric. Keys are the `z-*` utility suffixes. */
 export const zIndex = {
-	base: 'var(--z-base)',
 	sidebar: 'var(--z-sidebar)',
 	fab: 'var(--z-fab)',
 	/** Non-modal docked surfaces (chatbot dock, selection bar) — above content +

@@ -162,7 +162,6 @@ export const botIpRanges = analyticsSchema.table(
 	],
 );
 
-export type BotHitRow = typeof botHits.$inferSelect;
 export type BotHitInsert = typeof botHits.$inferInsert;
 export type BotRangeSource = (typeof botRangeSourceEnum.enumValues)[number];
 export type BotVerification = (typeof botVerificationEnum.enumValues)[number];

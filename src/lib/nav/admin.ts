@@ -41,10 +41,7 @@ export const adminNavGroups: AdminNavGroup[] = [
 	},
 	{
 		label: m.admin_nav_group_manage,
-		items: [
-			{ label: m.admin_nav_users, href: '/admin/users', icon: 'i-lucide-users' },
-			{ label: m.admin_nav_flags, href: '/admin/flags', icon: 'i-lucide-toggle-right' },
-		],
+		items: [{ label: m.admin_nav_users, href: '/admin/users', icon: 'i-lucide-users' }],
 	},
 	{
 		label: m.admin_nav_group_access,

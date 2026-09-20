@@ -182,12 +182,9 @@ export interface TurnComposition {
 	/** Compaction-wrapped, `resolve_ref` included; `{}` on a tool-less turn. */
 	tools: ToolSet;
 	stepBudget: number;
-	activations: Activation[];
-	grounding: GroundingSource[];
-	/** Per-source failure messages — a lane can fail while the turn proceeds without it. */
-	errors: Partial<Record<GroundingSourceId, string>>;
 	/** The shared embed's own wait; each lane's settle time is on its grounding source. */
 	embedMs?: number;
+	/** The turn's working state — activations, grounding sources and lane seeds, for tests that assert on them. */
 	state: TurnState;
 	/** Run the capabilities' verifiers over the answer; each stage's ms by capability. */
 	verify(answer: string): Promise<Verification & { stages: Partial<Record<CapabilityId, number>> }>;
@@ -305,7 +302,6 @@ export async function composeTurn(
 ): Promise<TurnComposition> {
 	const t0 = performance.now();
 	const offset = (at: number) => Math.round(at - t0);
-	const errors: TurnComposition['errors'] = {};
 	let embedMs: number | undefined;
 
 	// Embed the user message at most ONCE per turn. Every lane that needs the vector shares
@@ -347,7 +343,6 @@ export async function composeTurn(
 	// with the lane's own clock; the barrier only orders the assembly. A source whose
 	// capability did not activate is recorded as skipped, with the rule's reason.
 	const recordSource = (source: GroundingSource) => {
-		if (source.error) errors[source.id] = source.error;
 		state.grounding.set(source.id, source);
 		recorder?.grounding(source);
 	};
@@ -494,9 +489,6 @@ export async function composeTurn(
 		blocks,
 		tools,
 		stepBudget: profile.stepBudget(turn),
-		activations: [...state.activations.values()],
-		grounding: [...state.grounding.values()],
-		errors,
 		...(embedMs !== undefined ? { embedMs } : {}),
 		state,
 		verify,

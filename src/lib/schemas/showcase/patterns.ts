@@ -38,9 +38,6 @@ export const wizardSchema = v.object({
 	...wizardStep3Schema.entries,
 });
 
-export type WizardInput = v.InferInput<typeof wizardSchema>;
-export type WizardOutput = v.InferOutput<typeof wizardSchema>;
-
 export const dynamicSchema = v.object({
 	title: v.pipe(v.string(), v.trim(), v.nonEmpty('Title is required'), v.maxLength(100)),
 	tags: v.pipe(
@@ -50,14 +47,8 @@ export const dynamicSchema = v.object({
 	),
 });
 
-export type DynamicInput = v.InferInput<typeof dynamicSchema>;
-export type DynamicOutput = v.InferOutput<typeof dynamicSchema>;
-
 export const dependentSchema = v.object({
 	country: v.picklist(['US', 'DE', 'JP'], 'Select a country'),
 	state: v.pipe(v.string(), v.nonEmpty('Select a state')),
 	city: v.pipe(v.string(), v.nonEmpty('Select a city')),
 });
-
-export type DependentInput = v.InferInput<typeof dependentSchema>;
-export type DependentOutput = v.InferOutput<typeof dependentSchema>;

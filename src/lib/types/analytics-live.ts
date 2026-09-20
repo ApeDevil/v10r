@@ -6,7 +6,6 @@ import type { ConsentTier } from '$lib/types/db-enums';
 export interface LiveEvent {
 	id: number;
 	ts: string;
-	sessionId: string;
 	visitorFragment: string;
 	path: string;
 	device: string | null;

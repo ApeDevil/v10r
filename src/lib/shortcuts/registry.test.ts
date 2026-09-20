@@ -25,7 +25,7 @@ describe('shortcut registry', () => {
 			id: 'test:action',
 			keys: 'shift+mod+x',
 			description: 'Test',
-			category: 'actions',
+			category: 'global',
 			action,
 		});
 		try {

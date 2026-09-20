@@ -5,7 +5,7 @@
  * server the same way `registry.json` is: one JSON, two runtimes, zero cross-
  * imports of `.ts` between `mcp/` and `src/`. The `{{COLOR_TOKENS}}` placeholder in the
  * token-opacity rule is expanded at load time from `src/app.css` (inlined into the
- * bundle via the same `?raw` glob technique as the docs corpus), so the 480 color tokens
+ * bundle via the same `?raw` glob technique as the docs corpus), so the color tokens
  * have exactly one source of truth and there is no generated artifact to keep in sync.
  */
 import { readFileSync } from 'node:fs';

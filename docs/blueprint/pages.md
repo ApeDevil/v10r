@@ -220,7 +220,7 @@ routes/
 ### Error Page Implementation
 
 ```svelte
-<!-- src/routes/+error.svelte (Root) -->
+<!-- src/routes/[[locale=locale]]/+error.svelte (Root) -->
 <script>
   import { page } from '$app/state';
 </script>

@@ -9,7 +9,6 @@
 
 set -uo pipefail
 OUT=".vercel/output/static/_app/immutable"
-ROUTE_JS_FAIL_KB=250
 
 if [ ! -d "$OUT" ]; then
 	echo "No build output at $OUT — run: podman compose run --rm --entrypoint bun app run build"

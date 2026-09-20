@@ -3,7 +3,6 @@ import { env } from '$env/dynamic/private';
 import { localizeHref } from '$lib/i18n';
 import { db } from '$lib/server/db';
 import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { encryptAesGcm, getEncryptionKey } from '$lib/server/security';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals, cookies }) => {
@@ -65,13 +64,8 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 
 	const discordUser = await userRes.json();
 
-	// Encrypt tokens
-	const encryptionKey = getEncryptionKey();
-	const encAccessToken = await encryptAesGcm(tokens.access_token, encryptionKey);
-	const encRefreshToken = await encryptAesGcm(tokens.refresh_token, encryptionKey);
-	const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000);
-
-	// Upsert Discord account
+	// The code-exchange token served its one purpose (`/users/@me`); DMs go out with the bot
+	// token, so only the identity is kept.
 	await db
 		.insert(userDiscordAccounts)
 		.values({
@@ -79,23 +73,14 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 			userId: locals.user.id,
 			discordUserId: discordUser.id,
 			discordUsername: discordUser.username,
-			accessToken: encAccessToken,
-			refreshToken: encRefreshToken,
-			tokenExpiresAt,
 		})
 		.onConflictDoUpdate({
 			target: userDiscordAccounts.userId,
 			set: {
 				discordUserId: discordUser.id,
 				discordUsername: discordUser.username,
-				accessToken: encAccessToken,
-				refreshToken: encRefreshToken,
-				tokenExpiresAt,
 				isActive: true,
 				linkedAt: new Date(),
-				tokensRefreshedAt: new Date(),
-				tokenRefreshFailedAt: null,
-				unlinkedAt: null,
 			},
 		});
 

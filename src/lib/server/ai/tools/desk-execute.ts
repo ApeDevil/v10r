@@ -94,14 +94,10 @@ export const TOOL_RECOVERY: Record<DeskExecutableTool, ProposalStepRecovery> = {
 	desk_delete_file: 'soft_delete',
 };
 
-/** Who is driving this execution. Recorded for audit; never widens authority. */
-export type DeskActor = 'ai-inloop' | 'proposal-replay';
-
 export interface DeskExecContext {
 	userId: string;
 	/** Scopes actually granted for this execution — server-derived, never client-supplied. */
 	scopes: DeskToolScope[];
-	actor: DeskActor;
 	/**
 	 * The transaction the caller already holds, when the mutation must commit together
 	 * with something else — the proposal replay writes the step's receipt on it.

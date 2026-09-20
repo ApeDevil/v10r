@@ -147,7 +147,6 @@ src/lib/server/
     notification-cleanup.ts
     notification-delivery.ts
     telegram-token-cleanup.ts
-    discord-token-refresh.ts
     analytics-cleanup.ts
     analytics-rollup.ts
     bot-ranges-refresh.ts

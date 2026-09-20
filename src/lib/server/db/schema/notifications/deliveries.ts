@@ -12,6 +12,10 @@ export const deliveryStatusEnum = notificationsSchema.enum('delivery_status', [
 	'processing',
 	'sent',
 	'failed',
+	// `skipped` and `retrying` are inert: no code produces them (a retried row is `pending` with
+	// `attempts > 0`). They stay in the TYPE because drizzle-kit cannot recreate an enum behind
+	// the partial-index predicates below (`status = 'pending'` …) — the text swap fails — and a
+	// push-only repo does not hand-run ALTER TYPE. See docs/blueprint/notifications/schema.md.
 	'skipped',
 	'retrying',
 	'dead',

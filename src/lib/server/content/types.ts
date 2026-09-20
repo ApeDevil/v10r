@@ -63,16 +63,3 @@ export type DriftStatus =
 	| { status: 'not-pushed' }
 	| { status: 'up-to-date'; lastPublishedAt: Date }
 	| { status: 'ahead'; lastPublishedAt: Date; dbHash: string };
-
-/** Glossary entry: a term + its locked translations per non-base locale. */
-export interface GlossaryTerm {
-	en: string;
-	translations: Partial<Record<Exclude<Locale, 'en'>, string>>;
-}
-
-/** Parsed `content/glossary.md` — passed verbatim to translation prompts. */
-export interface Glossary {
-	doNotTranslate: string[];
-	registerByLocale: Partial<Record<Exclude<Locale, 'en'>, string>>;
-	termLock: GlossaryTerm[];
-}

@@ -23,7 +23,7 @@ const DENY_NAME_PATTERNS = [
 	/^settings\.local\.json$/i,
 ];
 
-export type SafePath = { ok: true; abs: string } | { ok: false; reason: string };
+type SafePath = { ok: true; abs: string } | { ok: false; reason: string };
 
 export function resolveSafe(userPath: string, root: string = DEFAULT_ROOT): SafePath {
 	if (typeof userPath !== 'string' || userPath.trim().length === 0) {
@@ -58,10 +58,9 @@ export function resolveSafe(userPath: string, root: string = DEFAULT_ROOT): Safe
 	return { ok: true, abs };
 }
 
-export interface Excerpt {
+interface Excerpt {
 	ok: boolean;
 	text: string;
-	totalLines?: number;
 	shownFrom?: number;
 	shownTo?: number;
 }
@@ -104,5 +103,5 @@ export function readExcerpt(
 	if (text.length > MAX_OUTPUT_BYTES) {
 		text = `${text.slice(0, MAX_OUTPUT_BYTES)}\n… [truncated at ${MAX_OUTPUT_BYTES} bytes — request a narrower range]`;
 	}
-	return { ok: true, text, totalLines: total, shownFrom: from, shownTo: to };
+	return { ok: true, text, shownFrom: from, shownTo: to };
 }

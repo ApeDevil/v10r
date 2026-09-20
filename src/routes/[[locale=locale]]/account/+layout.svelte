@@ -4,13 +4,9 @@ import { NavTab, PageHeader } from '$lib/components/composites';
 import { PageContainer } from '$lib/components/layout';
 import { AppShell } from '$lib/components/shell';
 import * as m from '$lib/paraglide/messages';
-import { setNotificationContext } from '$lib/state';
 import type { LayoutData } from './$types';
 
 let { data, children }: { data: LayoutData; children: Snippet } = $props();
-
-// svelte-ignore state_referenced_locally
-setNotificationContext(data.unreadCount);
 
 const tabs = [
 	{ label: m.nav_dashboard(), href: '/account/dashboard', icon: 'i-lucide-layout-dashboard' },

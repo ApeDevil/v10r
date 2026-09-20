@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ContextMenu as CtxMenu, Popover, Tooltip } from 'bits-ui';
+import { ContextMenu as CtxMenu, Popover } from 'bits-ui';
 import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
@@ -8,7 +8,6 @@ import {
 import { useSurface } from '$lib/styles/elevation';
 import { cn } from '$lib/utils/cn';
 import { getDeskSettings } from './desk-settings.state.svelte';
-import { collectLeaves } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
 import { getWorkspaceContext } from './workspace.state.svelte';
 import type { Workspace } from './workspace.types';
@@ -86,14 +85,6 @@ function handleUndo() {
 function startRename(ws: Workspace) {
 	renamingId = ws.id;
 	renameValue = ws.name;
-}
-
-/** Get panel type summary for tooltip */
-function getPanelSummary(ws: Workspace): string {
-	const types = Object.values(ws.layout.panels)
-		.map((p) => p.type)
-		.filter((v, i, a) => a.indexOf(v) === i);
-	return types.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(' \u00b7 ');
 }
 </script>
 
@@ -341,7 +332,7 @@ function getPanelSummary(ws: Workspace): string {
 		width: 5px;
 		height: 5px;
 		border-radius: var(--radius-full);
-		background: var(--color-warning, #f59e0b);
+		background: var(--color-warning);
 	}
 
 	/* Overflow button */
@@ -416,7 +407,7 @@ function getPanelSummary(ws: Workspace): string {
 		padding: 5px 10px;
 		font-size: 12px;
 		font-weight: 500;
-		color: var(--color-primary-fg, #fff);
+		color: var(--color-primary-fg);
 		background: var(--color-primary);
 		border-radius: calc(var(--radius-md) - 2px);
 		cursor: pointer;

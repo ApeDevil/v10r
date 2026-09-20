@@ -34,5 +34,3 @@ export const listCommentsQuerySchema = v.object({
 	cursor: v.optional(v.string()),
 	limit: v.optional(v.pipe(v.number(), v.minValue(1), v.maxValue(50))),
 });
-
-export type ListCommentsQuery = v.InferOutput<typeof listCommentsQuerySchema>;

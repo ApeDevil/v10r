@@ -294,18 +294,6 @@ describe('notification outbox', () => {
 			expect((await row(delivery.id)).attempts).toBe(2);
 		});
 
-		it('rescues a legacy row that has no claim stamp', async () => {
-			const [delivery] = await createDeliveries(notificationId, ['email']);
-			await patch(delivery.id, {
-				status: 'processing',
-				attemptedAt: null,
-				createdAt: sql`now() - interval '1 day'`,
-			});
-
-			expect(await reclaimStaleDeliveries()).toBe(1);
-			expect((await row(delivery.id)).status).toBe('pending');
-		});
-
 		it('never touches a row in any other status', async () => {
 			const [a, b, c] = await createDeliveries(notificationId, ['email', 'telegram', 'discord']);
 			await patch(a.id, { status: 'sent', attemptedAt: sql`now() - interval '1 day'` });

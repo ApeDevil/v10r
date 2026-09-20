@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
+import * as schema from '$lib/server/db/schema';
 import {
 	computePercentage,
 	computeThreshold,
@@ -9,6 +10,11 @@ import {
 	type NeonTableInfo,
 	sanitizeError,
 } from './index';
+
+/** The app's own namespaces — every `pgSchema()` the schema barrel exports, so this list cannot rot. */
+const APP_NAMESPACES = Object.values(schema)
+	.map((value) => (value && typeof value === 'object' && 'schemaName' in value ? String(value.schemaName) : null))
+	.filter((name): name is string => name !== null);
 
 export async function fetchNeonMetrics(): Promise<DependencyResult<NeonMetrics>> {
 	const start = performance.now();
@@ -21,17 +27,17 @@ export async function fetchNeonMetrics(): Promise<DependencyResult<NeonMetrics>>
 					n.nspname AS schema_name,
 					c.relname AS table_name,
 					pg_total_relation_size(c.oid) AS total_bytes,
-					pg_relation_size(c.oid) AS table_bytes,
-					pg_indexes_size(c.oid) AS index_bytes,
 					s.n_live_tup AS live_rows,
 					s.n_dead_tup AS dead_rows,
-					s.last_autovacuum,
-					s.last_autoanalyze
+					s.last_autovacuum
 				FROM pg_class c
 				JOIN pg_namespace n ON n.oid = c.relnamespace
 				LEFT JOIN pg_stat_user_tables s ON s.relid = c.oid
 				WHERE c.relkind = 'r'
-					AND n.nspname IN ('auth','ai','app','jobs','analytics','rag','notifications','showcase')
+					AND n.nspname IN (${sql.join(
+						APP_NAMESPACES.map((name) => sql`${name}`),
+						sql`, `,
+					)})
 				ORDER BY pg_total_relation_size(c.oid) DESC
 			`),
 		]);
@@ -46,12 +52,9 @@ export async function fetchNeonMetrics(): Promise<DependencyResult<NeonMetrics>>
 			schema: row.schema_name as string,
 			table: row.table_name as string,
 			totalBytes: Number(row.total_bytes),
-			tableBytes: Number(row.table_bytes),
-			indexBytes: Number(row.index_bytes),
 			liveRows: Number(row.live_rows ?? 0),
 			deadRows: Number(row.dead_rows ?? 0),
 			lastAutovacuum: row.last_autovacuum ? String(row.last_autovacuum) : null,
-			lastAutoanalyze: row.last_autoanalyze ? String(row.last_autoanalyze) : null,
 		}));
 
 		const limitBytes = FREE_TIER_LIMITS.neon.storageBytes;

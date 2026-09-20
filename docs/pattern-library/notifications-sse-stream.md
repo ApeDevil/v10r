@@ -1,6 +1,6 @@
 ---
 title: "In-app SSE stream & notification center"
-description: "A container-mode in-memory connection map pushes notifications over SSE in real time (falling back to invalidate()-based polling on Vercel serverless) and…"
+description: "One SSE route serves notifications in real time over two transports: an in-memory connection map on a persistent host, Redis pub/sub on Vercel serverless; the…"
 category: "Notifications"
 ---
 
@@ -12,7 +12,7 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 
 **Category:** Notifications · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — same-origin authenticated stream, connection-limited
 
-A container-mode in-memory connection map pushes notifications over SSE in real time (falling back to invalidate()-based polling on Vercel serverless) and feeds a Svelte 5 runes notification-center state.
+One SSE route serves notifications in real time over two transports: an in-memory connection map on a persistent host, Redis pub/sub on Vercel serverless; the account pages re-run their load via invalidate() instead of holding a stream open.
 
 **When to use:** Use when the UI needs near-real-time in-app notification delivery without standing up a third-party pub/sub service.
 
@@ -23,7 +23,7 @@ A container-mode in-memory connection map pushes notifications over SSE in real 
 ## Code
 
 - `src/lib/server/notifications/stream.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/notifications/stream.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/notifications/stream.ts))
-- `src/lib/state/notifications.svelte.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/notifications.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/notifications.svelte.ts))
+- `src/routes/api/notifications/stream/+server.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/notifications/stream/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/notifications/stream/+server.ts))
 
 ## Proof
 

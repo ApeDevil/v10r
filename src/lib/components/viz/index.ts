@@ -1,10 +1,7 @@
 // Viz components — explicit import only, NOT re-exported from components/index.ts
 // Usage: import { BarChart } from '$lib/components/viz';
 
-// Shared state components
-export { default as ChartEmpty } from './_shared/ChartEmpty.svelte';
-export { default as ChartError } from './_shared/ChartError.svelte';
-export { default as SvgTooltip } from './_shared/SvgTooltip.svelte';
+// Charts
 export { default as AreaChart } from './chart/area/AreaChart.svelte';
 export { default as BarChart } from './chart/bar/BarChart.svelte';
 export { default as BubbleChart } from './chart/bubble/BubbleChart.svelte';

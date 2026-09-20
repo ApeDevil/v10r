@@ -31,14 +31,14 @@ A generated table in README.md mapping every repo pattern to the doc that explai
 
 ## Invariants
 
-- Coverage source of truth is mcp/patterns.registry.json — the README region between the PATTERN-INDEX markers is generated and must never be hand-edited.
+- Coverage source of truth is pattern-library/registry.json — the README region between the PATTERN-INDEX markers is generated and must never be hand-edited.
 - Every row must point to docs AND code AND (where possible) a live proof route — a row without proof is a claim, not a pattern.
 - patterns:check in the validate gate blocks shipping a stale index; bun run patterns:build (or vr ref) regenerates it.
 
 ## Emulation notes
 
 - Anchor the human-readable index to a machine-readable registry and GENERATE it — a hand-maintained twin drifts (this one did: its own row-count claim went stale before the generator existed).
-- Showcase-route cells are validated by mcp/validate-registry.ts against src/lib/showcases/catalog/registry.ts membership, not mere directory existence.
+- Showcase-route cells are validated by pattern-library/validate.ts against src/lib/showcases/catalog/registry.ts membership, not mere directory existence.
 
 ## Depends on
 

@@ -28,7 +28,6 @@ export interface TtlSnapshot {
 	key: string;
 	remainingSeconds: number;
 	isExpired: boolean;
-	capturedAt: string;
 }
 
 export interface RateLimitResult {

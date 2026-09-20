@@ -32,20 +32,11 @@ export async function listConversations(userId: string, sort: ConversationSort =
 	return { items, total: countResult?.total ?? 0 };
 }
 
-/** Row and token totals for a user's conversations. The quota they are measured against is
+/** Row total for a user's conversations. The quota it is measured against is
  * `ai` policy, not a property of the data — see `ai/conversation-quota.ts`. */
 export async function getConversationStats(userId: string) {
-	const [row] = await db
-		.select({
-			total: count(),
-			totalTokens: sql<number>`COALESCE(SUM(${conversation.totalInputTokens} + ${conversation.totalOutputTokens}), 0)`,
-		})
-		.from(conversation)
-		.where(eq(conversation.userId, userId));
-	return {
-		total: row?.total ?? 0,
-		totalTokens: row?.totalTokens ?? 0,
-	};
+	const [row] = await db.select({ total: count() }).from(conversation).where(eq(conversation.userId, userId));
+	return { total: row?.total ?? 0 };
 }
 
 /** How many conversations a user currently has. */
@@ -87,8 +78,6 @@ async function listTurnSummaries(conversationId: string, userId: string): Promis
 			citations: turn.citations,
 			grounding: turn.grounding,
 			createdAt: turn.createdAt,
-			modelCalls: sql<number>`(SELECT COUNT(*) FROM ${modelCall} WHERE ${modelCall.messageId} = ${turn.messageId})`,
-			toolExecutions: sql<number>`(SELECT COUNT(*) FROM ${toolCall} WHERE ${toolCall.messageId} = ${turn.messageId})`,
 		})
 		.from(turn)
 		.where(and(eq(turn.conversationId, conversationId), eq(turn.userId, userId)))
@@ -101,8 +90,6 @@ async function listTurnSummaries(conversationId: string, userId: string): Promis
 		activations: row.activations,
 		citations: row.citations,
 		cited: row.grounding.flatMap((source) => source.items.filter((item) => item.state === 'cited')),
-		modelCalls: Number(row.modelCalls),
-		toolExecutions: Number(row.toolExecutions),
 		createdAt: row.createdAt.toISOString(),
 	}));
 }
@@ -239,7 +226,9 @@ export async function resolveGroundingBodies(trace: TurnTrace, ownerIds: string[
 	// A parent that is itself a candidate this turn is read once, from the candidate rows.
 	const parents = new Map<string, { level: ChunkLevel; position: number; chars: number }>();
 	for (const r of [...chunkRows, ...parentRows]) {
-		parents.set(r.id, { level: r.level, position: r.position, chars: r.content.length });
+		// The column's enum still lists the retired `sentence` value (see `chunkLevelEnum` for why the
+		// type cannot be recreated); no row carries it and no writer produces it.
+		parents.set(r.id, { level: r.level as ChunkLevel, position: r.position, chars: r.content.length });
 	}
 	const maps = new Map(mapRows.map((r) => [r.id, r]));
 

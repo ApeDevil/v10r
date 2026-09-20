@@ -10,12 +10,11 @@ interface Props {
 	status: number;
 	message?: string;
 	errorId?: string;
-	context?: 'default' | 'showcase' | 'app' | 'auth';
 	actions?: Snippet;
 	children?: Snippet;
 }
 
-let { status, message, errorId, context = 'default', actions, children }: Props = $props();
+let { status, message, errorId, actions, children }: Props = $props();
 
 const icon = $derived.by(() => {
 	if (status === 404) return 'i-lucide-compass';

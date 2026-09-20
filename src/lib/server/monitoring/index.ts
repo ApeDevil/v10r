@@ -14,12 +14,9 @@ export interface NeonTableInfo {
 	schema: string;
 	table: string;
 	totalBytes: number;
-	tableBytes: number;
-	indexBytes: number;
 	liveRows: number;
 	deadRows: number;
 	lastAutovacuum: string | null;
-	lastAutoanalyze: string | null;
 }
 
 export interface NeonMetrics {

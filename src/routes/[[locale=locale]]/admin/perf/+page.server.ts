@@ -29,7 +29,6 @@ export const load: PageServerLoad = ({ url, locals }) => {
 	return {
 		title: 'Performance',
 		range,
-		days,
 		lab: {
 			generatedAt: snapshot.generatedAt,
 			gitSha: snapshot.gitSha,

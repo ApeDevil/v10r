@@ -19,7 +19,6 @@ export interface ConversationSummary {
 
 export interface StorageMeta {
 	total: number;
-	totalTokens: number;
 	limit: number;
 	usagePercent: number;
 }

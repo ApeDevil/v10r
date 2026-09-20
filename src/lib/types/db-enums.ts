@@ -58,9 +58,6 @@ export type AiProviderId = (typeof AI_PROVIDER_IDS)[number];
 export const NAME_SOURCE_VENDORS = ['euipo', 'tavily', 'brave'] as const;
 export type NameSourceVendor = (typeof NAME_SOURCE_VENDORS)[number];
 
-export const NOTIFICATION_CHANNELS = ['email', 'telegram', 'discord', 'push'] as const;
-export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
-
 export const NOTIFICATION_TYPES = ['mention', 'comment', 'system', 'success', 'security', 'follow'] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

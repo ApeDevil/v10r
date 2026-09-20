@@ -8,13 +8,13 @@ import { buildById, topoSort } from '../pattern-library/schema.ts';
 import { DEFAULT_LINES, MAX_LINES, readExcerpt } from './security.ts';
 import { validateSnippetStdio } from './snippet.ts';
 
-export interface ToolDef {
+interface ToolDef {
 	name: string;
 	description: string;
 	inputSchema: Record<string, unknown>;
 }
 
-export interface ToolResult {
+interface ToolResult {
 	content: Array<{ type: 'text'; text: string }>;
 	isError?: boolean;
 }
@@ -549,11 +549,11 @@ export function handleToolCall(name: string, args: unknown, ctx: ToolContext): T
 	}
 	if (!ctx.registry) {
 		return fail(
-			`The pattern registry failed to load: ${ctx.loadError ?? 'unknown error'}. Fix mcp/patterns.registry.json and restart.`,
+			`The pattern registry failed to load: ${ctx.loadError ?? 'unknown error'}. Fix pattern-library/registry.json and restart.`,
 			[
 				{
 					tool: 'get_file_excerpt',
-					args: { path: 'mcp/patterns.registry.json' },
+					args: { path: 'pattern-library/registry.json' },
 					why: 'still works without the registry — read the file to see what is malformed.',
 				},
 			],

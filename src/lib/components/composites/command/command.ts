@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 
 export const commandRootVariants = cva(['flex flex-col overflow-hidden rounded-md']);
 
@@ -24,12 +24,3 @@ export const commandItemVariants = cva([
 export const commandSeparatorVariants = cva(['h-px bg-border']);
 
 export const commandShortcutVariants = cva(['ml-auto text-fluid-xs text-muted']);
-
-export type CommandRootVariants = VariantProps<typeof commandRootVariants>;
-export type CommandInputVariants = VariantProps<typeof commandInputVariants>;
-export type CommandListVariants = VariantProps<typeof commandListVariants>;
-export type CommandEmptyVariants = VariantProps<typeof commandEmptyVariants>;
-export type CommandGroupHeadingVariants = VariantProps<typeof commandGroupHeadingVariants>;
-export type CommandItemVariants = VariantProps<typeof commandItemVariants>;
-export type CommandSeparatorVariants = VariantProps<typeof commandSeparatorVariants>;
-export type CommandShortcutVariants = VariantProps<typeof commandShortcutVariants>;

@@ -371,10 +371,6 @@ function stageDescription(id: string): string {
 		color: var(--stage-color);
 	}
 
-	.pill-error .pill-icon {
-		color: var(--color-error-fg);
-	}
-
 	.pill-label {
 		font-size: 10px;
 		font-weight: 500;

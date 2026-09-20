@@ -20,8 +20,6 @@ import { requireAuth } from '$lib/server/http/guards';
 import { collectUserData } from '$lib/server/privacy';
 import type { PageServerLoad } from './$types';
 
-export const prerender = false;
-
 /** Cookie values safe to echo back. Everything else: presence only (session tokens!). */
 const SAFE_VALUE_COOKIES = new Set<string>([CONSENT_COOKIE, PARAGLIDE_LOCALE_COOKIE]);
 

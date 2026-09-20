@@ -29,10 +29,7 @@ let { children, data } = $props();
 
 // Initialize all shell contexts (SSR-safe, request-scoped)
 // svelte-ignore state_referenced_locally
-const theme = setThemeContext({
-	mode: data.themeMode,
-	accent: 'blue',
-});
+const theme = setThemeContext({ mode: data.themeMode });
 // svelte-ignore state_referenced_locally
 const sidebar = setSidebarContext(data.sidebarWidth);
 const modals = setModalsContext();

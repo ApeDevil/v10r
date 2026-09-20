@@ -104,7 +104,7 @@ export async function executeProposal(proposal: ProposalRow, userId: string): Pr
 				// Replay under the scopes frozen when the plan was PROPOSED, never anything
 				// supplied on the approving request — approval must not widen the reviewed grant.
 				const outcome = await executeDeskToolCall(
-					{ userId, scopes, actor: 'proposal-replay', handle: tx },
+					{ userId, scopes, handle: tx },
 					step.toolName,
 					step.args,
 					step.target,

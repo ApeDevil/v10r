@@ -16,7 +16,6 @@ export const load: PageServerLoad = async () => {
 	]);
 
 	return {
-		days,
 		vitals,
 		origins,
 		lab: {

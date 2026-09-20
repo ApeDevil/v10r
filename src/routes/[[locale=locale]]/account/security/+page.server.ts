@@ -42,12 +42,10 @@ export const load: PageServerLoad = async ({ locals, setHeaders }) => {
 			return {
 				id: s.id,
 				displayId: hashForDisplay(s.id),
-				createdAt: s.createdAt.toISOString(),
 				expiresAt: s.expiresAt.toISOString(),
 				// Only the viewer's current connection shows its raw IP; prior sessions
 				// are masked (matches the GDPR export — Art 15(4), third-party IPs).
 				ipAddress: s.ipAddress ? (isCurrent ? s.ipAddress : maskIp(s.ipAddress)) : null,
-				userAgent: s.userAgent,
 				isCurrent,
 			};
 		}),

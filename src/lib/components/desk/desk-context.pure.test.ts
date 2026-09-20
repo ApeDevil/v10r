@@ -6,7 +6,6 @@ import {
 	CONTEXT_TOKEN_BUDGET,
 	computeActiveContexts,
 	computeContextChips,
-	computePanelStatus,
 	estimateTokens,
 	truncateToTokenBudget,
 } from './desk-context.pure';
@@ -16,28 +15,6 @@ describe('estimateTokens', () => {
 		expect(estimateTokens('abcd')).toBe(1);
 		expect(estimateTokens('abcde')).toBe(2);
 		expect(estimateTokens('')).toBe(0);
-	});
-});
-
-describe('computePanelStatus', () => {
-	it('returns focused when panel is focused and not dismissed', () => {
-		expect(computePanelStatus('p1', 'p1', new Set(), new Set())).toBe('focused');
-	});
-
-	it('returns active when panel is pinned and not dismissed', () => {
-		expect(computePanelStatus('p1', 'other', new Set(['p1']), new Set())).toBe('active');
-	});
-
-	it('returns background when panel is neither focused nor pinned', () => {
-		expect(computePanelStatus('p1', 'other', new Set(), new Set())).toBe('background');
-	});
-
-	it('returns background when focused but dismissed', () => {
-		expect(computePanelStatus('p1', 'p1', new Set(), new Set(['p1']))).toBe('background');
-	});
-
-	it('returns background when pinned but dismissed', () => {
-		expect(computePanelStatus('p1', null, new Set(['p1']), new Set(['p1']))).toBe('background');
 	});
 });
 

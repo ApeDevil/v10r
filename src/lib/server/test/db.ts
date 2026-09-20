@@ -24,41 +24,10 @@ export interface TestDbOptions {
  * measured 59% of the old per-file cost. `extensions` must still be supplied on restore:
  * the dump carries the extension's data, not its registration.
  *
- * The fallback below builds from scratch, for `bunx vitest run <one file>` invocations
- * that bypass the `db` project and so never ran globalSetup. It warns rather than throws,
- * because that invocation is the documented single-file workflow — but it warns loudly,
- * since silently paying the old cost is the failure mode that would make this look like
- * it accomplished nothing.
+ * A single-file `bunx vitest run <file>` still runs the project's globalSetup, so the
+ * snapshot is always injected; a missing one means the file is not in the `db` project
+ * (a `*.pglite.test.ts` name is what routes it there), which is worth failing loudly.
  */
-async function buildFromScratch({ logger }: TestDbOptions) {
-	const client = new PGlite({ extensions: { vector } });
-	await client.exec('CREATE EXTENSION IF NOT EXISTS vector');
-	const db = drizzle(client, { schema, logger });
-
-	// Dynamic on purpose: `drizzle-kit/api` drags esbuild in, and no worker on the
-	// restore path should pay to resolve and transform that.
-	const { pushSchema } = await import('drizzle-kit/api');
-	// biome-ignore lint/suspicious/noExplicitAny: PGlite db type doesn't match pushSchema's strict PgDatabase generic
-	const { statementsToExecute } = await pushSchema(schema, db as any);
-
-	const schemaStmts = statementsToExecute.filter((s) => s.startsWith('CREATE SCHEMA'));
-	for (const stmt of schemaStmts) await client.exec(stmt);
-
-	// Unqualified enum references in the generated DDL resolve through search_path, so every
-	// namespace must be on it. Derived from the CREATE SCHEMA statements rather than listed:
-	// the hand-kept list went stale twice (it still named `app` and `rag` after both were
-	// renamed) and the symptom was a type-does-not-exist error far from the cause.
-	const namespaces = schemaStmts
-		.map((stmt) => /CREATE SCHEMA (?:IF NOT EXISTS )?"?(\w+)"?/.exec(stmt)?.[1])
-		.filter((name): name is string => Boolean(name));
-	await client.exec(`SET search_path TO public, ${namespaces.join(', ')}`);
-
-	for (const stmt of statementsToExecute.filter((s) => !s.startsWith('CREATE SCHEMA'))) {
-		await client.exec(stmt);
-	}
-	return { db, client };
-}
-
 export async function createTestDb(options: TestDbOptions = {}) {
 	let dumpPath: string | undefined;
 	let searchPath: string | undefined;
@@ -70,8 +39,9 @@ export async function createTestDb(options: TestDbOptions = {}) {
 	}
 
 	if (!dumpPath || !searchPath) {
-		console.warn('[createTestDb] no schema snapshot injected — rebuilding from scratch (~5x slower)');
-		return buildFromScratch(options);
+		throw new Error(
+			'[createTestDb] no schema snapshot injected — is this file in the `db` vitest project (*.pglite.test.ts)?',
+		);
 	}
 
 	const client = new PGlite({

@@ -12,7 +12,6 @@ export interface NeonBranch {
 	parentId: string | null;
 	createdAt: string;
 	updatedAt: string;
-	currentState: string;
 	/** Logical data size of the branch in bytes (may be absent on some plans). */
 	logicalSize: number | null;
 }

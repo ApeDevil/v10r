@@ -228,7 +228,7 @@ function formatDisplay(value: import('$lib/desk/formula').CellValue): string {
 	}
 
 	.sheet-error {
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 		font-size: 11px;
 	}
 

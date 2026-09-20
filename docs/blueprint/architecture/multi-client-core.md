@@ -106,14 +106,14 @@ Domain functions must not import from `@sveltejs/kit` or `$app/`. Those imports 
 ```typescript
 // WRONG — domain module importing framework
 import { error } from '@sveltejs/kit';
-export async function getNotification(id: string, userId: string) {
+export async function getFolder(id: string, userId: string) {
   const row = await db.select()...;
   if (!row) error(404, 'Not found'); // breaks AI tools and jobs
 }
 
 // CORRECT — domain function returning null
-export async function getNotificationById(id: string, userId: string) {
-  const [row] = await db.select()...where(and(eq(notifications.id, id), eq(notifications.userId, userId))).limit(1);
+export async function getFolder(id: string, userId: string) {
+  const [row] = await db.select()...where(and(eq(folder.id, id), eq(folder.userId, userId))).limit(1);
   return row ?? null;
 }
 ```
@@ -123,7 +123,7 @@ export async function getNotificationById(id: string, userId: string) {
 `Date` objects serialize as `{}` in JSON. The route layer converts them. Domain modules return `Date` objects as-is.
 
 ```typescript
-// src/routes/account/notifications/+page.server.ts
+// src/routes/[[locale=locale]]/account/notifications/+page.server.ts
 return {
   notifications: notifications.map((n) => ({
     ...n,
@@ -172,7 +172,7 @@ import { createNotification } from '$lib/server/notifications/send'; // private
 The load function extracts from `event.locals`, calls domain functions, serializes dates, returns data.
 
 ```typescript
-// src/routes/account/notifications/+page.server.ts
+// src/routes/[[locale=locale]]/account/notifications/+page.server.ts
 export const load: PageServerLoad = async ({ locals, url }) => {
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
   const offset = (page - 1) * PAGE_SIZE;
@@ -225,7 +225,7 @@ Note: the same `markAsRead()` function serves both this REST endpoint and any fu
 A tool is a thin wrapper: Zod schema describing parameters, description for the LLM, and an `execute` callback that calls the existing domain function.
 
 ```typescript
-// src/lib/server/ai/tools/notifications.ts
+// Illustrative — shipped tools live in src/lib/server/ai/tools/*.ts (e.g. search-docs.ts); none wraps notifications today
 import { tool } from 'ai';
 import { z } from 'zod';
 import { getNotifications, getUnreadCount } from '$lib/server/db/notifications/queries';

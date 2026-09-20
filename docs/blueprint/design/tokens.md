@@ -215,7 +215,6 @@ export const colors = {
 
 /** Z-index layers — numeric SSOT lives in app.css; tokens.ts holds var() references */
 export const zIndex = {
-  base: 'var(--z-base)',         // 0
   sidebar: 'var(--z-sidebar)',   // 10
   fab: 'var(--z-fab)',           // 20
   panel: 'var(--z-panel)',       // 25 — non-modal docked (chatbot dock, selection bar)

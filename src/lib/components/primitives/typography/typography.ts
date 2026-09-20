@@ -11,11 +11,8 @@ export const typographyVariants = cva('', {
 			h6: 'text-fluid-base font-semibold color-heading',
 			body: 'text-fluid-base leading-relaxed color-body',
 			lead: 'text-fluid-lg color-muted leading-relaxed',
-			large: 'text-fluid-lg font-medium color-fg',
-			small: 'text-fluid-sm color-fg',
 			muted: 'text-fluid-sm color-muted',
 			code: 'font-mono text-fluid-sm bg-subtle px-1.5 py-0.5 rounded color-fg',
-			blockquote: 'text-fluid-base italic border-l-4 border-primary pl-4 color-fg',
 		},
 	},
 	defaultVariants: {

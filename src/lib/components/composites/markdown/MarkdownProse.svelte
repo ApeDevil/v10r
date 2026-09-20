@@ -210,10 +210,10 @@ let { html, class: className }: Props = $props();
 	.markdown-prose :global(.embed-warning) {
 		margin: 1.5em 0;
 		padding: 1em;
-		border: 1px solid var(--color-error, #ef4444);
+		border: 1px solid var(--color-error);
 		border-radius: var(--radius-md, 8px);
-		background-color: color-mix(in srgb, var(--color-error, #ef4444) 8%, transparent);
-		color: var(--color-error-fg, #ef4444);
+		background-color: color-mix(in srgb, var(--color-error) 8%, transparent);
+		color: var(--color-error-fg);
 		font-size: 0.875em;
 	}
 </style>

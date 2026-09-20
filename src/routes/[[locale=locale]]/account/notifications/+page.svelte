@@ -5,11 +5,10 @@ import { EmptyState, NotificationCenter } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Button, buttonVariants } from '$lib/components/primitives/button';
 import * as m from '$lib/paraglide/messages';
-import { getNotificationsState, getToast } from '$lib/state';
+import { getToast } from '$lib/state';
 
 let { data } = $props();
 
-const notifs = getNotificationsState();
 const toast = getToast();
 let filter = $state('all');
 
@@ -19,7 +18,6 @@ async function handleMarkRead(id: string) {
 		headers: { 'X-Requested-With': 'fetch' },
 	});
 	if (res.ok) {
-		notifs.decrementBy(1);
 		await invalidate('app:notifications');
 	}
 }
@@ -31,7 +29,6 @@ async function handleMarkAllRead() {
 	});
 	if (res.ok) {
 		const { data } = await res.json();
-		notifs.decrementBy(data.count);
 		toast.success(m.account_notifications_marked_read({ count: data.count }));
 		await invalidate('app:notifications');
 	}

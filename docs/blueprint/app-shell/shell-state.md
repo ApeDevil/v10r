@@ -1,6 +1,6 @@
 # Shell State
 
-Orchestration of state across app shell components: sidebar, modals, theme, notifications, and user session.
+Orchestration of state across app shell components: sidebar, modals, theme, toasts, and user session.
 
 ---
 
@@ -15,16 +15,16 @@ Orchestration of state across app shell components: sidebar, modals, theme, noti
 │  │   Sidebar    │   │    Theme     │   │   Session    │            │
 │  │              │   │              │   │              │            │
 │  │ • expanded   │   │ • mode       │   │ • user       │            │
-│  │ • pinned     │   │ • accent     │   │ • expiresAt  │            │
+│  │ • pinned     │   │ • resolved   │   │ • expiresAt  │            │
 │  │ • activeNav  │   │              │   │              │            │
 │  └──────────────┘   └──────────────┘   └──────────────┘            │
 │         │                  │                  │                     │
 │         │                  │                  │                     │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐            │
-│  │    Modals    │   │ Notifications│   │  Preferences │            │
+│  │    Modals    │   │    Toast     │   │  Preferences │            │
 │  │              │   │              │   │              │            │
-│  │ • quickSearch│   │ • unreadCount│   │ • locale     │            │
-│  │ • shortcuts  │   │ • lastFetched│   │ • timezone   │            │
+│  │ • quickSearch│   │ • queue      │   │ • locale     │            │
+│  │ • shortcuts  │   │              │   │ • timezone   │            │
 │  │ • sessionExp.│   │              │   │ • a11y       │            │
 │  └──────────────┘   └──────────────┘   └──────────────┘            │
 │                                                                      │
@@ -142,28 +142,30 @@ export function getSidebar() {
 
 ```typescript
 // src/lib/state/theme.svelte.ts
-import { browser } from '$app/environment';
 import { getContext, setContext } from 'svelte';
+import { browser } from '$app/environment';
+import { apiFetch } from '$lib/api';
+import type { Theme } from '$lib/types/db-enums';
+import { setCookie } from '$lib/utils/cookies';
 
-type ThemeMode = 'light' | 'dark' | 'system';
-type AccentColor = 'blue' | 'purple' | 'green' | 'orange';
-
+type ThemeMode = Theme;
 interface ThemeState {
   mode: ThemeMode;
-  accent: AccentColor;
   resolvedMode: 'light' | 'dark'; // Computed from mode + system preference
 }
 
 const THEME_CTX = Symbol('theme');
 
-export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor }) {
-  let state = $state<ThemeState>({
+/**
+ * Create theme state instance.
+ * @param initial - Initial theme settings from server
+ */
+export function createThemeState(initial: { mode: ThemeMode }) {
+  const state = $state<ThemeState>({
     mode: initial.mode,
-    accent: initial.accent,
     resolvedMode: 'light',
   });
 
-  // Resolve system preference
   $effect(() => {
     if (!browser) return;
 
@@ -181,44 +183,51 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
     }
   });
 
-  // Apply to DOM
   $effect(() => {
     if (!browser) return;
     document.documentElement.classList.toggle('dark', state.resolvedMode === 'dark');
-    document.documentElement.dataset.accent = state.accent;
   });
 
   return {
-    get mode() { return state.mode; },
-    get accent() { return state.accent; },
-    get resolvedMode() { return state.resolvedMode; },
-    get isDark() { return state.resolvedMode === 'dark'; },
+    get mode() {
+      return state.mode;
+    },
+    get resolvedMode() {
+      return state.resolvedMode;
+    },
+    get isDark() {
+      return state.resolvedMode === 'dark';
+    },
 
     setMode(mode: ThemeMode) {
       state.mode = mode;
-      // Persist to cookie (for SSR)
-      document.cookie = `theme=${mode};path=/;max-age=31536000;SameSite=Lax`;
-      // Persist to DB (async, fire-and-forget)
-      fetch('/api/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme: mode }),
-      });
-    },
-
-    setAccent(accent: AccentColor) {
-      state.accent = accent;
+      if (browser) {
+        setCookie('theme', mode, { maxAge: 31536000 });
+        // Fire-and-forget DB persistence for authenticated users
+        apiFetch('/api/preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: mode }),
+        }).catch(() => {});
+      }
     },
   };
 }
 
-// Context helpers for SSR-safe access
-export function setThemeContext(initial: { mode: ThemeMode; accent: AccentColor }) {
+/**
+ * Set theme context in component tree.
+ * Call this in root layout with initial values from load function.
+ */
+export function setThemeContext(initial: { mode: ThemeMode }) {
   const theme = createThemeState(initial);
   setContext(THEME_CTX, theme);
   return theme;
 }
 
+/**
+ * Get theme state from context.
+ * Use this in child components.
+ */
 export function getTheme() {
   return getContext<ReturnType<typeof createThemeState>>(THEME_CTX);
 }
@@ -343,76 +352,28 @@ Full lifecycle and spatial spec: [../ai/persistent-chatbot.md](../ai/persistent-
 
 ---
 
-## Notification Badge State
-
-> **SSR Safety:** Notifications use the context pattern to avoid module-level state sharing.
-
-The store is a minimal unread-count holder. It carries no polling and no fetch — real-time delivery lives in the `SidebarNotifications` consumer (SSE via `/api/notifications/stream`). The store just exposes the count and the mutations consumers call on incoming events.
-
-```typescript
-// src/lib/state/notifications.svelte.ts
-import { getContext, setContext } from 'svelte';
-
-const NOTIFICATION_CTX = Symbol('notifications');
-
-export function createNotificationState(initialCount = 0) {
-  let unreadCount = $state(initialCount);
-
-  return {
-    get unreadCount() {
-      return unreadCount;
-    },
-    setCount(count: number) {
-      unreadCount = count;
-    },
-    increment() {
-      unreadCount++;
-    },
-    decrementBy(n: number) {
-      unreadCount = Math.max(0, unreadCount - n);
-    },
-  };
-}
-
-// Call in the app layout.
-export function setNotificationContext(initialCount = 0) {
-  const state = createNotificationState(initialCount);
-  setContext(NOTIFICATION_CTX, state);
-  return state;
-}
-
-// Call in child components.
-export function getNotifications() {
-  return getContext<ReturnType<typeof createNotificationState>>(NOTIFICATION_CTX);
-}
-```
-
----
 
 ## Session State
 
 Session is **server-authoritative**. Client receives session data from load functions.
 
 ```typescript
-// src/routes/(app)/+layout.server.ts
-export const load = async ({ locals }) => {
-  return {
-    user: locals.user,
-    session: locals.session,
-  };
+// src/routes/[[locale=locale]]/account/+layout.server.ts
+export const load: LayoutServerLoad = async ({ locals, url }) => {
+  const { user } = requireAuth(locals, url.pathname + url.search);
+  return { user };
 };
 ```
 
 ```svelte
-<!-- src/routes/(app)/+layout.svelte -->
+<!-- src/lib/components/shell/AppShell.svelte -->
 <script lang="ts">
-  import { setContext } from 'svelte';
+  import { setSessionContext } from '$lib/state/session.svelte';
 
-  let { data, children } = $props();
+  let { session, children } = $props();
 
-  // Make session available to all child components
-  setContext('user', () => data.user);
-  setContext('session', () => data.session);
+  // Make the session available to every shell child via getSession()
+  setSessionContext(session);
 </script>
 ```
 
@@ -425,34 +386,29 @@ export const load = async ({ locals }) => {
 Shell initialization happens in a specific order to prevent flashes and ensure dependencies:
 
 ```svelte
-<!-- src/routes/(app)/+layout.svelte -->
+<!-- src/routes/[[locale=locale]]/+layout.svelte -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { setSidebarContext } from '$lib/state/sidebar.svelte';
   import { setThemeContext } from '$lib/state/theme.svelte';
   import { setModalsContext } from '$lib/state/modals.svelte';
-  import { setNotificationContext } from '$lib/state/notifications.svelte';
+  import { setToastContext } from '$lib/state/toast.svelte';
   import { initKeyboardHandler } from '$lib/shortcuts';
 
   let { data, children } = $props();
 
   // Initialize all contexts (SSR-safe, request-scoped)
   // 1. Theme (already applied in app.html, just sync state)
-  const theme = setThemeContext({
-    mode: data.settings?.theme ?? 'system',
-    accent: data.settings?.accentColor ?? 'blue',
-  });
+  const theme = setThemeContext({ mode: data.themeMode });
 
-  // 2. Sidebar (loads from localStorage on client)
-  const sidebar = setSidebarContext();
+  // 2. Sidebar (server-persisted width, expanded/pinned from localStorage on client)
+  const sidebar = setSidebarContext(data.sidebarWidth);
 
-  // 3. Modals (ephemeral client state)
+  // 3. Modals + toasts (ephemeral client state)
   const modals = setModalsContext();
+  const toast = setToastContext();
 
-  // 4. Notifications (unread-count holder; SSE lives in SidebarNotifications)
-  const notifications = setNotificationContext(data.unreadCount ?? 0);
-
-  // 5. Keyboard shortcuts (register handlers)
+  // 4. Keyboard shortcuts (register handlers)
   onMount(() => {
     return initKeyboardHandler();
   });
@@ -467,33 +423,16 @@ Shell initialization happens in a specific order to prevent flashes and ensure d
 
 ### Event-Based Updates
 
-When one component needs to trigger updates in another:
-
 ```typescript
 // Option 1: Svelte 5 reactive state (preferred)
 // Components import and react to shared state
 
-// Option 2: Custom events for decoupled components
-import { createEventDispatcher } from 'svelte';
-
-// In notification card
-function markAsRead() {
-  // Update local state
-  notification.read = true;
-
-  // Notify sidebar badge
-  window.dispatchEvent(new CustomEvent('notification:read'));
+// Option 2: SvelteKit invalidation for server-owned data
+// The notifications page marks a row read, then re-runs its own load:
+async function markAsRead(id: string) {
+  await fetch(`/api/notifications/${id}/read`, { method: 'POST', headers: { 'X-Requested-With': 'fetch' } });
+  await invalidate('app:notifications'); // the page load declares depends('app:notifications')
 }
-
-// In sidebar
-const notifications = getNotifications(); // Get from context
-$effect(() => {
-  if (!browser) return;
-
-  const handler = () => notifications.decrementBy(1);
-  window.addEventListener('notification:read', handler);
-  return () => window.removeEventListener('notification:read', handler);
-});
 ```
 
 ### Data Flow Diagram
@@ -504,9 +443,10 @@ Server (load functions)
          ▼
 ┌─────────────────────────────────────┐
 │   +layout.svelte (root)             │
-│   • Receives: user, session,        │
-│     settings, unreadCount           │
-│   • Initializes: theme, notifications│
+│   • Receives: themeMode, sidebarWidth│
+│     style, session                  │
+│   • Initializes: theme, sidebar,    │
+│     modals, toast                   │
 │   • Provides: context               │
 └─────────────────────────────────────┘
          │
@@ -533,19 +473,17 @@ Server (load functions)
 Add a debug panel in development:
 
 ```svelte
-<!-- src/lib/components/dev/StateDebugger.svelte -->
+<!-- Illustrative — a dev-only panel; not shipped -->
 <script lang="ts">
   import { dev } from '$app/environment';
   import { getSidebar } from '$lib/state/sidebar.svelte';
   import { getTheme } from '$lib/state/theme.svelte';
   import { getModals } from '$lib/state/modals.svelte';
-  import { getNotifications } from '$lib/state/notifications.svelte';
 
   // Get all state from context (SSR-safe)
   const sidebar = getSidebar();
   const theme = getTheme();
   const modals = getModals();
-  const notifications = getNotifications();
 
   let expanded = $state(false);
 </script>
@@ -571,9 +509,6 @@ Add a debug panel in development:
           modals: {
             active: modals.active,
           },
-          notifications: {
-            count: notifications.unreadCount,
-          },
         }, null, 2)}</pre>
       </div>
     {/if}
@@ -588,10 +523,9 @@ Add a debug panel in development:
 ```
 src/lib/state/
 ├── sidebar.svelte.ts            # Sidebar expanded/pinned/mobile state
-├── theme.svelte.ts              # Theme mode and accent
+├── theme.svelte.ts              # Theme mode
 ├── modals.svelte.ts             # Active modal tracking (quickSearch | shortcuts | sessionExpiry)
 ├── chatbot-session.svelte.ts    # Vely chatbot live thread (module singleton, NOT a context)
-├── notifications.svelte.ts      # Unread count, polling
 └── index.ts                     # Exports
 ```
 

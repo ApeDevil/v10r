@@ -212,5 +212,4 @@ export const EDGE_KIND_LABELS: Record<TurnGraphEdgeKind, LabelFn> = {
 export const LEVEL_LABELS: Record<ChunkLevel, LabelFn> = {
 	section: m.showcase_ai_graph_level_section,
 	paragraph: m.showcase_ai_graph_level_paragraph,
-	sentence: m.showcase_ai_graph_level_sentence,
 };

@@ -11,13 +11,12 @@ function defineColors(c: PaletteColors): PaletteColors {
 }
 
 /**
- * P0 — High Contrast (WCAG AAA, auto-selected for prefers-contrast: more)
+ * P0 — High Contrast (WCAG AAA)
  */
 const P0: Palette = {
 	id: 'P0' as PaletteId,
 	name: 'High Contrast',
 	description: 'Maximum contrast for accessibility. WCAG AAA compliant.',
-	highContrast: true,
 	accentOffset: 0,
 	light: defineColors({
 		bg: 'oklch(0.97 0 0)',

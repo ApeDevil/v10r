@@ -1,6 +1,5 @@
 /**
- * The orchestrator's own behaviour: the refusal paths it takes BEFORE streaming, and
- * what `createOnFinish` persists.
+ * The orchestrator's own behaviour: the refusal paths it takes BEFORE streaming.
  *
  * The forty pure cases that used to share this file moved to `context/system-prompt.test.ts`,
  * where they run with none of the mocks below. What is left genuinely needs them:
@@ -256,7 +255,7 @@ vi.mock('ai', async (importOriginal) => ({
 
 // Dynamic imports (resolved after vi.mock hoisting)
 
-const { createOnFinish, orchestrateChat } = await import('./chat-orchestrator');
+const { orchestrateChat } = await import('./chat-orchestrator');
 
 const mutations = await import('$lib/server/db/ai/mutations');
 const queries = await import('$lib/server/db/ai/queries');
@@ -297,44 +296,6 @@ const registry = {
 	embeddingConnection: () => ({ apiKey: 'request-key' }),
 };
 
-// 5. createOnFinish
-
-describe('createOnFinish', () => {
-	beforeEach(() => {
-		saveMessages.mockReset();
-	});
-
-	it('calls saveMessages when conversationId and text are present', async () => {
-		saveMessages.mockResolvedValueOnce(undefined as never);
-		const onFinish = createOnFinish('conv-1', 'user-1');
-		await onFinish({ text: 'Hello world' });
-		expect(saveMessages).toHaveBeenCalledOnce();
-		expect(saveMessages).toHaveBeenCalledWith(
-			'conv-1',
-			'user-1',
-			expect.arrayContaining([expect.objectContaining({ role: 'assistant', content: 'Hello world' })]),
-		);
-	});
-
-	it('does not call saveMessages when conversationId is undefined', async () => {
-		const onFinish = createOnFinish(undefined, 'user-1');
-		await onFinish({ text: 'Hello' });
-		expect(saveMessages).not.toHaveBeenCalled();
-	});
-
-	it('does not call saveMessages when text is empty', async () => {
-		const onFinish = createOnFinish('conv-1', 'user-1');
-		await onFinish({ text: '' });
-		expect(saveMessages).not.toHaveBeenCalled();
-	});
-
-	it('swallows errors thrown by saveMessages', async () => {
-		saveMessages.mockRejectedValueOnce(new Error('DB exploded'));
-		const onFinish = createOnFinish('conv-1', 'user-1');
-		await expect(onFinish({ text: 'Hello' })).resolves.toBeUndefined();
-	});
-});
-
 // 6. orchestrateChat (integration — error paths)
 
 describe('orchestrateChat', () => {
@@ -342,7 +303,7 @@ describe('orchestrateChat', () => {
 		userId: 'user-1',
 		surface: 'deskbot' as const,
 		registry,
-		messages: [{ role: 'user' as const, content: 'Hello' }],
+		messages: [{ id: 'm1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hello' }] }],
 	};
 
 	beforeEach(() => {
@@ -393,7 +354,6 @@ describe('orchestrateChat', () => {
 
 		expect(response.status).toBe(dbErr.toStatus());
 		expect(response.status).toBe(503);
-		expect(response.headers.get('X-Error-Source')).toBe('db');
 		// The AI error lane must not claim this failure.
 		expect(response.headers.get('X-AI-Error-Kind')).toBeNull();
 
@@ -422,7 +382,7 @@ describe('chatbot turn timing', () => {
 		userId: 'user-1',
 		surface: 'chatbot' as const,
 		registry,
-		messages: [{ role: 'user' as const, content: 'Hello' }],
+		messages: [{ id: 'm1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hello' }] }],
 	};
 
 	beforeEach(() => {
@@ -506,7 +466,7 @@ describe('chatbot turn persistence and framing', () => {
 		userId: 'user-1',
 		surface: 'chatbot' as const,
 		registry,
-		messages: [{ role: 'user' as const, content: 'Hello' }],
+		messages: [{ id: 'm1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hello' }] }],
 	};
 
 	beforeEach(() => {
@@ -697,7 +657,7 @@ describe('chatbot turn steps', () => {
 			userId: 'user-1',
 			surface: 'chatbot',
 			registry,
-			messages: [{ role: 'user', content: 'Hello' }],
+			messages: [{ id: 'm1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hello' }] }],
 		});
 		await streamRun.done;
 
@@ -724,7 +684,13 @@ describe('chatbot turn steps', () => {
 			surface: 'chatbot',
 			registry,
 			authCeiling: 'user',
-			messages: [{ role: 'user', content: 'Where is the auth showcase? Give me the link.' }],
+			messages: [
+				{
+					id: 'm1',
+					role: 'user' as const,
+					parts: [{ type: 'text' as const, text: 'Where is the auth showcase? Give me the link.' }],
+				},
+			],
 		});
 		await streamRun.done;
 
@@ -763,7 +729,7 @@ describe('chatbot turn failure', () => {
 		userId: 'user-1',
 		surface: 'chatbot' as const,
 		registry,
-		messages: [{ role: 'user' as const, content: 'Hello' }],
+		messages: [{ id: 'm1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hello' }] }],
 	};
 
 	beforeEach(() => {
@@ -885,7 +851,7 @@ describe('chatbot turn cancellation', () => {
 		userId: 'user-1',
 		surface: 'chatbot' as const,
 		registry,
-		messages: [{ role: 'user' as const, content: 'Hello' }],
+		messages: [{ id: 'm1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Hello' }] }],
 	};
 
 	beforeEach(() => {
@@ -1014,7 +980,7 @@ describe('desk turn streaming', () => {
 		userId: 'user-1',
 		surface: 'deskbot' as const,
 		registry: { ...registry, entries: [toolProvider, groq] } as never,
-		messages: [{ role: 'user' as const, content: 'Set A1 to 1' }],
+		messages: [{ id: 'm1', role: 'user' as const, parts: [{ type: 'text' as const, text: 'Set A1 to 1' }] }],
 		toolScopes: ['desk:read', 'desk:write'] as never,
 	};
 	beforeEach(async () => {
@@ -1100,7 +1066,6 @@ describe('desk turn streaming', () => {
 		expect(frame.messageMetadata.harness.proposal).toMatchObject({
 			id: 'prp_1',
 			status: 'pending',
-			estimatedWrites: 1,
 			steps: [
 				{ tool: 'desk_update_cells', risk: 'write', recovery: 'revision', target: { fileId: 'fil_a', version: 3 } },
 			],

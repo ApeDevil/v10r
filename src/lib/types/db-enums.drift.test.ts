@@ -15,7 +15,6 @@ import { commentStatusEnum } from '$lib/server/db/schema/blog/comment';
 import { postStatusEnum } from '$lib/server/db/schema/blog/post';
 import { fileTypeEnum } from '$lib/server/db/schema/desk/file';
 import { nameSourceVendorEnum } from '$lib/server/db/schema/name-check/source-connection';
-import { notificationChannelEnum } from '$lib/server/db/schema/notifications/deliveries';
 import { notificationTypeEnum } from '$lib/server/db/schema/notifications/notifications';
 import { dateFormatEnum, displayDensityEnum, themeEnum } from '$lib/server/db/schema/personalization/user-preferences';
 import {
@@ -27,7 +26,6 @@ import {
 	DESK_FILE_TYPES,
 	DISPLAY_DENSITIES,
 	NAME_SOURCE_VENDORS,
-	NOTIFICATION_CHANNELS,
 	NOTIFICATION_TYPES,
 	POST_STATUSES,
 	PROPOSAL_STATUSES,
@@ -46,7 +44,6 @@ const MIRRORS: ReadonlyArray<[string, readonly string[], readonly string[]]> = [
 	['ai.ai_provider', AI_PROVIDER_IDS, aiProviderEnum.enumValues],
 	['ai.agent_proposal_status', PROPOSAL_STATUSES, proposalStatusEnum.enumValues],
 	['ai.agent_proposal_step_kind', PROPOSAL_STEP_KINDS, proposalStepKindEnum.enumValues],
-	['notifications.notification_channel', NOTIFICATION_CHANNELS, notificationChannelEnum.enumValues],
 	['notifications.notification_type', NOTIFICATION_TYPES, notificationTypeEnum.enumValues],
 	['analytics.consent_tier', CONSENT_TIERS, consentTierEnum.enumValues],
 	['analytics.user_surface', USER_SURFACES, userSurfaceEnum.enumValues],

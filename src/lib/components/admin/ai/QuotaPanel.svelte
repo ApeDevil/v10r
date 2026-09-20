@@ -19,18 +19,14 @@ interface ProviderQuota {
 	model: string;
 	rpd: number | null;
 	rpm: number | null;
-	tpm: number | null;
 	rpdConfidence: 'documented' | 'estimated' | 'unknown';
 	resetKind: 'fixed-daily' | 'rolling' | 'unknown';
-	resetTimezone: string | null;
 	resetAt: string | null;
 	verifiedOn: string;
-	sourceUrl: string;
 	note?: string;
 	/** False when the connection's model is not one the documented ceilings were read for. */
 	limitsVerified: boolean;
 	requestsToday: number;
-	tokensToday: number;
 	embeddingsToday: number;
 	rateLimitedToday: number;
 	usageSource: 'estimated' | 'unknown';

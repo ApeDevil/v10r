@@ -41,7 +41,6 @@ vi.mock('$env/dynamic/private', () => ({ env: {} }));
 const {
 	getCapabilityGaps,
 	countSuppressedGaps,
-	getClientBreakdown,
 	getHealthSummary,
 	getPrivateCalls,
 	getPrivateGaps,
@@ -275,7 +274,6 @@ describe('the private lane', () => {
 	it('never leaks a private row into the external panels', async () => {
 		await db.insert(mcpCallLog).values(privateRow({ outcome: 'empty', queryText: 'private only' }));
 		expect(await getToolBreakdown(SINCE)).toHaveLength(0);
-		expect(await getClientBreakdown(SINCE)).toHaveLength(0);
 		expect(await getCapabilityGaps(SINCE)).toHaveLength(0);
 	});
 });

@@ -628,7 +628,6 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 					'[auth] getSession failed — degrading request to anonymous:',
 					err instanceof Error ? err.message : err,
 				);
-				event.locals.authDegraded = true;
 				return null;
 			}),
 	);
@@ -661,7 +660,6 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 						'[auth] grant lookup failed — treating as no grants:',
 						err instanceof Error ? err.message : err,
 					);
-					event.locals.authDegraded = true;
 					return [] as Awaited<ReturnType<typeof listActiveGrantKinds>>;
 				})
 			: Promise.resolve([] as Awaited<ReturnType<typeof listActiveGrantKinds>>),

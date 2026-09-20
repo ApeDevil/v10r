@@ -17,13 +17,13 @@ vi.mock('$lib/server/db', async () => {
 });
 
 const { db } = await import('$lib/server/db');
-const { exportAuditLogCsv } = await import('./audit');
+const { streamAuditLogCsv } = await import('./audit');
 
 afterAll(async () => {
 	await testClient?.close();
 });
 
-describe('exportAuditLogCsv', () => {
+describe('streamAuditLogCsv', () => {
 	it('neutralizes formula-injection payloads', async () => {
 		await db.insert(adminAuditLog).values({
 			action: 'passkey.renamed',
@@ -34,7 +34,8 @@ describe('exportAuditLogCsv', () => {
 			detail: { name: '=cmd|/c calc' },
 		});
 
-		const csv = await exportAuditLogCsv();
+		let csv = '';
+		for await (const chunk of streamAuditLogCsv()) csv += chunk;
 		const dataLine = csv.split('\n')[1];
 
 		// Every formula-leading value is prefixed with a quote

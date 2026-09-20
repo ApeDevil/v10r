@@ -1,37 +1,16 @@
 /**
- * Error code registry — single source of truth for stable wire codes.
+ * Client-side error codes with a localized rendering (`./render.ts`).
  *
- * Adapters surface `{ code, message }` where `message` is Paraglide-resolved.
- * Renaming a code is a breaking change for non-browser clients.
+ * These are NOT the REST wire codes — adapters emit snake_case codes through
+ * `$lib/server/http/response.ts` (`not_found`, `rate_limited`, …). This set is what the
+ * login page and the i18n showcase resolve to copy; add a code only with a consumer.
  */
 
 export const ErrorCode = {
-	// auth — 401/403
-	AUTH_REQUIRED: 'AUTH_REQUIRED',
 	AUTH_INVALID: 'AUTH_INVALID',
-	AUTH_FORBIDDEN: 'AUTH_FORBIDDEN',
-	AUTH_SESSION_EXPIRED: 'AUTH_SESSION_EXPIRED',
-	// validation — 400/422
-	VALIDATION_FAILED: 'VALIDATION_FAILED',
 	VALIDATION_REQUIRED: 'VALIDATION_REQUIRED',
-	VALIDATION_FORMAT: 'VALIDATION_FORMAT',
-	VALIDATION_LENGTH: 'VALIDATION_LENGTH',
-	// resource — 404/409/410/423
 	RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
-	RESOURCE_CONFLICT: 'RESOURCE_CONFLICT',
-	RESOURCE_GONE: 'RESOURCE_GONE',
-	RESOURCE_LOCKED: 'RESOURCE_LOCKED',
-	// i18n
-	LOCALE_UNSUPPORTED: 'LOCALE_UNSUPPORTED',
-	TRANSLATION_MISSING: 'TRANSLATION_MISSING',
-	// rate limit — 429
 	RATE_LIMITED: 'RATE_LIMITED',
-	// idempotency — 409/422
-	IDEMPOTENCY_KEY_REUSED: 'IDEMPOTENCY_KEY_REUSED',
-	// upstream — 502/503/504
-	UPSTREAM_UNAVAILABLE: 'UPSTREAM_UNAVAILABLE',
-	UPSTREAM_TIMEOUT: 'UPSTREAM_TIMEOUT',
-	// internal — 500
 	INTERNAL: 'INTERNAL',
 } as const;
 

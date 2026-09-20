@@ -172,7 +172,7 @@ export const MAX_NEXT_ACTIONS = 3;
  * as machine-parsable while staying visible.
  *
  * Never throws — a throw inside a handler would surface as a diag-less transport
- * error and corrupt the `tool_error` meter. An empty array returns the body
+ * error and be classified as `threw`. An empty array returns the body
  * unchanged; the gate test, not this function, forbids the empty case.
  */
 export function withNextActions(body: string, actions: readonly NextAction[]): string {
@@ -191,7 +191,7 @@ export function withNextActions(body: string, actions: readonly NextAction[]): s
  * (unknown-tool and tool-threw). Because every registry-produced error MUST carry a diag, the
  * recorder can infer `isError && diag === undefined ⟹ the transport produced this` — a TOTAL
  * inference, and total only because this parameter is required. Make it optional and that branch
- * becomes a guess, which in turn breaks `tool_error`, the meter that reports uninstrumented sites.
+ * becomes a guess.
  *
  * `next` is required for the same reason: a new error branch that strands the caller
  * without a recovery step must be a compile error, not a review miss.

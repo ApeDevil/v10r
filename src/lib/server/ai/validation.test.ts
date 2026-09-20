@@ -1,9 +1,14 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '$lib/types/desk-context-limits';
-import { ChatbotRequestSchema, CreateConversationSchema, DeskRequestSchema } from './validation';
+import { ChatbotRequestSchema, DeskRequestSchema } from './validation';
 
-const HELLO = [{ role: 'user' as const, content: 'Hello' }];
+const text = (id: string, role: 'user' | 'assistant', text: string) => ({
+	id,
+	role,
+	parts: [{ type: 'text' as const, text }],
+});
+const HELLO = [text('m1', 'user', 'Hello')];
 
 describe('ChatbotRequestSchema (read-only grounded surface)', () => {
 	it('accepts valid input', () => {
@@ -25,7 +30,7 @@ describe('ChatbotRequestSchema (read-only grounded surface)', () => {
 	});
 
 	it('rejects over 100 messages', () => {
-		const messages = Array.from({ length: 101 }, () => ({ role: 'user' as const, content: 'msg' }));
+		const messages = Array.from({ length: 101 }, (_, i) => text(`m${i}`, 'user', 'msg'));
 		expect(v.safeParse(ChatbotRequestSchema, { messages }).success).toBe(false);
 	});
 
@@ -34,13 +39,15 @@ describe('ChatbotRequestSchema (read-only grounded surface)', () => {
 		expect(result.success).toBe(false);
 	});
 
-	it('rejects content over 32k chars', () => {
-		const result = v.safeParse(ChatbotRequestSchema, { messages: [{ role: 'user', content: 'x'.repeat(32_001) }] });
+	it('rejects a text part over 32k chars', () => {
+		const result = v.safeParse(ChatbotRequestSchema, { messages: [text('m1', 'user', 'x'.repeat(32_001))] });
 		expect(result.success).toBe(false);
 	});
 
 	it('rejects message with invalid role', () => {
-		expect(v.safeParse(ChatbotRequestSchema, { messages: [{ role: 'system', content: 'Hello' }] }).success).toBe(false);
+		expect(v.safeParse(ChatbotRequestSchema, { messages: [{ id: 'm1', role: 'system', parts: [] }] }).success).toBe(
+			false,
+		);
 	});
 
 	it('accepts a well-formed pageRouteId (site-awareness)', () => {
@@ -166,7 +173,7 @@ describe('DeskRequestSchema (mutating operator surface)', () => {
 	});
 
 	it('rejects message with invalid role (shared base)', () => {
-		expect(v.safeParse(DeskRequestSchema, { messages: [{ role: 'system', content: 'Hi' }] }).success).toBe(false);
+		expect(v.safeParse(DeskRequestSchema, { messages: [{ id: 'm1', role: 'system', parts: [] }] }).success).toBe(false);
 	});
 });
 
@@ -210,23 +217,5 @@ describe('PanelContextEntry extended fields (deskbot)', () => {
 			panelContext: [{ panelType: 'editor', label: 'Notes', content: 'x', contentLevel: 'minimal' }],
 		});
 		expect(result.success).toBe(false);
-	});
-});
-
-describe('CreateConversationSchema', () => {
-	it('accepts empty object (title is optional)', () => {
-		expect(v.safeParse(CreateConversationSchema, {}).success).toBe(true);
-	});
-
-	it('accepts valid title', () => {
-		expect(v.safeParse(CreateConversationSchema, { title: 'My Chat' }).success).toBe(true);
-	});
-
-	it('rejects empty string title', () => {
-		expect(v.safeParse(CreateConversationSchema, { title: '' }).success).toBe(false);
-	});
-
-	it('rejects title over 200 chars', () => {
-		expect(v.safeParse(CreateConversationSchema, { title: 'x'.repeat(201) }).success).toBe(false);
 	});
 });

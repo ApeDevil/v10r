@@ -14,7 +14,7 @@ const pipelineCounts = $derived({
 	map: data.overview.totalMaps,
 	chunks: data.coverage.totalChunks,
 	docs: data.bySource.find((s) => s.source === 'docs')?.count ?? 0,
-	catalog: data.bySource.find((s) => s.source === 'catalog')?.count ?? 0,
+	catalog: data.catalogEntries,
 });
 
 let actionId = $state('');

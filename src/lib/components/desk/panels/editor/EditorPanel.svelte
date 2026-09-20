@@ -220,8 +220,6 @@ async function save() {
 		savedMarkdown = markdown;
 		lastSavedAt = new Date();
 		saveState = 'saved';
-
-		bus.publish('editor:save', { documentId: postId, revisionId: revision.id });
 	} catch (e) {
 		saveState = 'unsaved';
 		error = e instanceof Error ? e.message : 'Save failed';

@@ -14,7 +14,7 @@ One name per concept, and the name is the path.
 |------|------------|-------|
 | **retrieval** | The **engine**: chunk → embed → tiers 1/2/3 → RRF fusion. The ground truth. | `src/lib/server/retrieval/` · `retrieval` pgSchema · `/api/retrieval/*` |
 | **corpus map** | The **ingest-built map** of one collection's corpus — what it covers, without loading it. Deterministic, no LLM, no embedding; injected as `<project-overview>` on every chatbot turn. | `retrieval.corpus_map` · `db/schema/retrieval/corpus-map.ts` · `ai/capabilities/project-map.ts` |
-| **llmwiki** | **RETIRED 2026-09-12** (Phase 4 of `docs/ai-ref-plan.md`, decision D2). Was the pointer layer over the engine: curated pages (`title + tldr + body + tags`) whose `pointers:` were source chunk ids. No writer ever ran in production; its one live piece — the deterministic overview row — is the corpus map above. | was `src/lib/server/llmwiki/` |
+| **llmwiki** | **RETIRED 2026-09-12** (Phase 4 of the since-deleted `docs/ai-ref-plan.md`, decision D2). Was the pointer layer over the engine: curated pages (`title + tldr + body + tags`) whose `pointers:` were source chunk ids. No writer ever ran in production; its one live piece — the deterministic overview row — is the corpus map above. | was `src/lib/server/llmwiki/` |
 
 The umbrella term "nRAG" is gone. The docs claimed it was not a code identifier while
 fourteen identifiers and one admin nav label used it; the subsystem is now named once, and

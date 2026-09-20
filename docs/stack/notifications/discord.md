@@ -21,7 +21,7 @@ User clicks "Connect Discord"
     OAuth2 Flow ─────────────────┐
          │                       │
          ▼                       ▼
-   Get access_token       Get discord_user_id
+   Exchange code         Get discord_user_id
          │                       │
          └───────┬───────────────┘
                  ▼
@@ -64,24 +64,20 @@ User clicks "Connect Discord"
 | 1 | Generate CSRF state token, store in cookie |
 | 2 | Redirect to Discord authorization URL |
 | 3 | User approves, Discord redirects back with code |
-| 4 | Exchange code for access_token + refresh_token |
-| 5 | Fetch user info (`/users/@me`) |
-| 6 | Store discord_user_id + tokens in database |
+| 4 | Exchange code for a short-lived access token |
+| 5 | Fetch user info (`/users/@me`) with it, then discard it |
+| 6 | Store discord_user_id + username in database |
 
 ## Database Tables
 
 | Table | Columns |
 |-------|---------|
-| `user_discord_accounts` | user_id, discord_user_id, discord_username, access_token, refresh_token, token_expires_at, linked_at, is_active, token_refresh_failed_at, tokens_refreshed_at, unlinked_at |
+| `user_discord_accounts` | user_id, discord_user_id, discord_username, linked_at, is_active, unlinked_at |
 
 ## Token Management
 
-| Token | Lifetime | Action |
-|-------|----------|--------|
-| Access token | ~7 days | Use for API calls |
-| Refresh token | Undocumented | Exchange for new access token |
-
-**Important:** Implement token refresh before expiry. If refresh fails, mark connection as inactive.
+DMs are sent with the bot token (`DISCORD_BOT_TOKEN`). No user access or refresh token is stored,
+so there is nothing to refresh and nothing to revoke on disconnect.
 
 ## Sending DMs
 
@@ -137,16 +133,14 @@ For announcements to a channel (not user-specific):
 |------------|--------|------------|
 | User must authorize OAuth | Can't DM arbitrary users | Clear connection flow |
 | DMs can be disabled | Message fails silently | Mark inactive on failure |
-| Token expires | Must refresh periodically | Background refresh job |
 | No delivery confirmation | Can't verify receipt | Best-effort delivery |
 
 ## Security Considerations
 
 | Risk | Mitigation |
 |------|------------|
-| Token theft | Encrypt at rest, secure transport |
+| Bot token theft | Env var only, never persisted |
 | OAuth state bypass | Validate state parameter (CSRF) |
-| Refresh token exposure | Store securely, rotate on use |
 | Rate limit abuse | Per-user rate limiting |
 
 ## Comparison with Telegram
@@ -154,7 +148,7 @@ For announcements to a channel (not user-specific):
 | Factor | Discord | Telegram |
 |--------|---------|----------|
 | User linking | OAuth2 (complex) | Deep link (simple) |
-| Token management | Access + refresh tokens | None (chat_id only) |
+| Token management | None (bot token + discord_user_id) | None (chat_id only) |
 | Setup complexity | Higher | Lower |
 | Message formatting | Rich embeds | Markdown |
 | Rate limits | Stricter | More lenient |

@@ -30,7 +30,7 @@ const messages = {
 } as const;
 
 // Action failures win over load failures — the load only checks the shape.
-const failure = $derived(form?.failure ?? ('failure' in data ? data.failure : null));
+const failure = $derived(form?.failure ?? data.failure);
 const msg = $derived(failure ? messages[failure] : null);
 </script>
 

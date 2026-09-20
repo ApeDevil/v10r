@@ -164,7 +164,7 @@ export function getShortcutsByCategory(): Record<string, Shortcut[]> {
 ### Keyboard Handler
 
 ```typescript
-// src/lib/shortcuts/handler.ts
+// src/lib/shortcuts/keyboard.ts
 import { browser } from '$app/environment';
 
 let sequenceBuffer: string[] = [];
@@ -334,13 +334,13 @@ function normalizeKey(event: KeyboardEvent): string {
   });
 </script>
 
-<ShortcutsModal />
+<ShortcutsDialog />
 ```
 
-### Shortcuts Modal Component
+### Shortcuts Dialog Component
 
 ```svelte
-<!-- src/lib/components/shell/ShortcutsModal.svelte -->
+<!-- src/lib/components/shell/ShortcutsDialog.svelte -->
 <script lang="ts">
   import { Dialog } from 'bits-ui';
   import { getShortcutsByCategory } from '$lib/shortcuts';

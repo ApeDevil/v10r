@@ -105,5 +105,5 @@ export async function cypher<T = Record<string, unknown>>(
 }
 
 // Public surface — see the note in `store/index.ts`; same shape, same reason.
-export { classifyError, Neo4jError } from './errors';
+export { Neo4jError } from './errors';
 export * from './types';

@@ -7,6 +7,7 @@ import { db } from '$lib/server/db';
 import { contentHash } from '$lib/server/db/content-hash';
 import { chunk, document } from '$lib/server/db/schema/retrieval';
 import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '$lib/types/ingest-pipeline';
+import type { ChunkLevel } from '$lib/types/turn-trace';
 import { chunkDocument } from '../chunk';
 import { EMBEDDING_MODEL_ID, MAX_CHUNKS_PER_DOCUMENT, SYSTEM_DOCS_USER_ID } from '../config';
 import { generateEmbeddings } from '../embed';
@@ -18,7 +19,7 @@ import { storeChunkStructure, storeEntitiesAndRelationships } from './graph-stor
 
 type IngestEmitFn = (event: IngestEvent) => void;
 
-/** Hash content using Web Crypto */
+/** Report one pipeline step to the optional listener. */
 function emit(
 	fn: IngestEmitFn | undefined,
 	step: IngestStepId,
@@ -113,7 +114,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 			documentId: string;
 			userId: string;
 			parentId: string | null;
-			level: 'sentence' | 'paragraph' | 'section';
+			level: ChunkLevel;
 			position: number;
 			content: string;
 			contextPrefix: string | null;

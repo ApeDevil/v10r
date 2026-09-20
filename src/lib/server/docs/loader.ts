@@ -1,4 +1,3 @@
-import { env } from '$env/dynamic/public';
 import type { DocEntry, DocSection } from '$lib/docs/types';
 import { renderBlogPost } from '$lib/server/blog/pipeline';
 import type { TocEntry } from '$lib/server/blog/types';
@@ -68,10 +67,4 @@ export async function renderRootDoc(slug: string): Promise<RenderedRootDoc | nul
 	const rendered: RenderedRootDoc = { doc, html: result.html, toc: result.toc };
 	if (import.meta.env.PROD) rootRenderCache.set(doc.sourcePath, rendered);
 	return rendered;
-}
-
-export function docsSourceUrl(sourcePath: string): string | null {
-	const base = env.PUBLIC_DOCS_SOURCE_BASE;
-	if (!base) return null;
-	return `${base.replace(/\/$/, '')}/${sourcePath}`;
 }

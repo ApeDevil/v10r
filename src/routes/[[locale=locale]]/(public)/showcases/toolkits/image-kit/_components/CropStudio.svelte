@@ -303,7 +303,7 @@ const isFallback = $derived(view[activeRatio].fallback);
 
 <div class="crop-studio">
 	<div class="crop-toolbar">
-		<ToggleGroup type="single" bind:value={activeRatioStr} items={ratioItems} size="sm" />
+		<ToggleGroup bind:value={activeRatioStr} items={ratioItems} size="sm" />
 		<Button type="button" variant="ghost" size="sm" onclick={resetActive}>
 			<span class="i-lucide-rotate-ccw text-icon-sm mr-1" aria-hidden="true"></span>
 			Reset to suggestion

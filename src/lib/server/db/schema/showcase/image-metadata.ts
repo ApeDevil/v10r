@@ -12,7 +12,7 @@
  *   image.ai_proposal  — append-only snapshot of each AI run (raw output + telemetry)
  *   image.tag / image.metadata_tag — N:M keywords
  *
- * Mirrors the agent_proposal approval pattern (status enum, approvedBy/approvedAt) but
+ * Mirrors the agent_proposal approval record (approvedBy/approvedAt) but
  * does NOT reuse ai.agent_proposal: that table's conversationId/messageId are NOT-NULL
  * FKs and its payload is ProposedToolCall[] — an image proposal is neither.
  */
@@ -34,14 +34,6 @@ import type { ConfidenceTier, FieldProvenance, ImageAnalysis, MetadataFieldKey }
 import { user } from '../auth/_better-auth';
 
 export const imageSchema = pgSchema('image');
-
-/** Approval lifecycle. Whole-form atomic: one status drives the whole metadata record. */
-export const imageMetadataStatusEnum = imageSchema.enum('image_metadata_status', [
-	'draft',
-	'proposed',
-	'approved',
-	'rejected',
-]);
 
 /** Keep in sync with IMAGE_CATEGORIES in $lib/schemas/image-metadata. */
 export const imageCategoryEnum = imageSchema.enum('image_category', [
@@ -96,7 +88,6 @@ export const imageMetadata = imageSchema.table(
 		caption: text('caption').notNull().default(''),
 		altText: text('alt_text').notNull(),
 		category: imageCategoryEnum('category').notNull(),
-		status: imageMetadataStatusEnum('status').notNull().default('draft'),
 		/** Opt-in sensitive field — only set when the human approves location capture. */
 		gpsLat: doublePrecision('gps_lat'),
 		gpsLng: doublePrecision('gps_lng'),
@@ -110,7 +101,6 @@ export const imageMetadata = imageSchema.table(
 	},
 	(table) => [
 		uniqueIndex('image_metadata_image_idx').on(table.imageId),
-		index('image_metadata_status_idx').on(table.status).where(sql`deleted_at IS NULL`),
 		// GPS is both-or-neither (a half-coordinate is a corrupt location) and in-range.
 		// Makes the invalid states unrepresentable at rest, not just handler-enforced.
 		check('image_metadata_gps_pair', sql`(${table.gpsLat} IS NULL) = (${table.gpsLng} IS NULL)`),

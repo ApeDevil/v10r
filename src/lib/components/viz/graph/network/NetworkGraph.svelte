@@ -15,7 +15,6 @@ interface Props {
 	aspect?: ChartContainerVariants['aspect'];
 	ariaLabel?: string;
 	class?: string;
-	onNodeClick?: (nodeId: string) => void;
 	/** Node IDs to emphasize; others dim. */
 	highlightedNodeIds?: Set<string> | null;
 	/** Edge keys (`source→target`) to emphasize; others dim. */
@@ -28,7 +27,6 @@ let {
 	aspect = 'chart',
 	ariaLabel = 'Network graph',
 	class: className,
-	onNodeClick,
 	highlightedNodeIds = null,
 	highlightedEdgeKeys = null,
 }: Props = $props();
@@ -417,10 +415,7 @@ let announcement = $derived.by(() => {
 				onmousedown={(e) => handleNodeMousedown(e, node)}
 				onmouseenter={() => (hoveredNodeId = node.id)}
 				onmouseleave={() => (hoveredNodeId = null)}
-				onclick={() => {
-						selectedNodeId = selectedNodeId === node.id ? null : node.id;
-						if (selectedNodeId) onNodeClick?.(node.id);
-					}}
+				onclick={() => (selectedNodeId = selectedNodeId === node.id ? null : node.id)}
 				onkeydown={(e) => handleNodeKeydown(e, node, idx)}
 				onfocus={() => (hoveredNodeId = node.id)}
 				onblur={() => (hoveredNodeId = null)}

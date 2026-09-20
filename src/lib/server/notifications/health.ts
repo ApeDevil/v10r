@@ -16,14 +16,16 @@ export interface ChannelProbes {
 	telegram: ProbeResult | null;
 }
 
-async function probeWithTimeout(fn: () => Promise<ProbeResult>, timeoutMs = 5000): Promise<ProbeResult> {
+const PROBE_TIMEOUT_MS = 5000;
+
+async function probeWithTimeout(fn: (signal: AbortSignal) => Promise<ProbeResult>): Promise<ProbeResult> {
 	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), timeoutMs);
+	const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
 	try {
-		return await fn();
+		return await fn(controller.signal);
 	} catch (err) {
 		if (err instanceof Error && err.name === 'AbortError') {
-			return { status: 'error', latencyMs: timeoutMs, message: 'Timeout' };
+			return { status: 'error', latencyMs: PROBE_TIMEOUT_MS, message: 'Timeout' };
 		}
 		return {
 			status: 'error',
@@ -35,7 +37,7 @@ async function probeWithTimeout(fn: () => Promise<ProbeResult>, timeoutMs = 5000
 	}
 }
 
-async function probeDiscord(): Promise<ProbeResult> {
+async function probeDiscord(signal: AbortSignal): Promise<ProbeResult> {
 	const token = env.DISCORD_BOT_TOKEN;
 	if (!token) {
 		return { status: 'unconfigured', latencyMs: 0, message: 'DISCORD_BOT_TOKEN not set' };
@@ -44,6 +46,7 @@ async function probeDiscord(): Promise<ProbeResult> {
 	const start = performance.now();
 	const res = await fetch('https://discord.com/api/v10/users/@me', {
 		headers: { Authorization: `Bot ${token}` },
+		signal,
 	});
 	const latencyMs = Math.round(performance.now() - start);
 
@@ -58,14 +61,14 @@ async function probeDiscord(): Promise<ProbeResult> {
 	};
 }
 
-async function probeTelegram(): Promise<ProbeResult> {
+async function probeTelegram(signal: AbortSignal): Promise<ProbeResult> {
 	const token = env.TELEGRAM_BOT_TOKEN;
 	if (!token) {
 		return { status: 'unconfigured', latencyMs: 0, message: 'TELEGRAM_BOT_TOKEN not set' };
 	}
 
 	const start = performance.now();
-	const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+	const res = await fetch(`https://api.telegram.org/bot${token}/getMe`, { signal });
 	const latencyMs = Math.round(performance.now() - start);
 
 	if (res.ok) {

@@ -1,6 +1,5 @@
 <script lang="ts">
 import CitationChip from '$lib/components/composites/citation/CitationChip.svelte';
-import ConfirmationCard from '$lib/components/composites/citation/ConfirmationCard.svelte';
 import type { CatalogSource } from '$lib/components/composites/citation/citation-types';
 import * as m from '$lib/paraglide/messages';
 import type { TurnError } from '$lib/types/ai-error';
@@ -29,11 +28,9 @@ interface Props {
 	turnError?: TurnError;
 	/** Where the finished turn opens in the turn inspector — set once its trace has persisted. */
 	inspectHref?: string | null;
-	/** Callback when user confirms a destructive AI action */
-	onconfirmaction?: (description: string) => void;
 }
 
-let { role, parts, content, catalogSources, turnError, inspectHref = null, onconfirmaction }: Props = $props();
+let { role, parts, content, catalogSources, turnError, inspectHref = null }: Props = $props();
 
 const isUser = $derived(role === 'user');
 
@@ -120,13 +117,6 @@ function turnErrorCopy(error: TurnError): string {
 			{:else if isToolPart(part)}
 				{@const toolName = toolNameOf(part)}
 				<ToolCallStatus label={toolLabel(toolName)} phase={TOOL_PHASE[part.state] ?? 'running'} output={part.output} />
-				{#if part.state === 'output-available' && part.output && typeof part.output === 'object' && 'requiresConfirmation' in part.output}
-					<ConfirmationCard
-						description={(part.output as { description?: string }).description ?? 'Confirm this action?'}
-						onconfirm={() => onconfirmaction?.((part.output as { description?: string }).description ?? '')}
-						onskip={() => {}}
-					/>
-				{/if}
 			{/if}
 		{/each}
 

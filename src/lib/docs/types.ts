@@ -32,5 +32,3 @@ export const STACK_LAYER_ORDER = [
 	'ops',
 	'capabilities',
 ] as const;
-
-export type StackLayer = (typeof STACK_LAYER_ORDER)[number];

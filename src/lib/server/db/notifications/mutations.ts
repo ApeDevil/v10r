@@ -9,7 +9,7 @@ interface CreateNotificationInput {
 	userId: string;
 	actorId?: string;
 	type: 'mention' | 'comment' | 'system' | 'success' | 'security' | 'follow';
-	/** Paraglide message key resolved at render time (e.g. 'notif_feedback_received'). */
+	/** Paraglide message key resolved at render time (e.g. 'notif_comment'). */
 	messageKey: string;
 	/** ICU interpolation values for the message. Defaults to {}. */
 	messageParams?: NotificationParams;

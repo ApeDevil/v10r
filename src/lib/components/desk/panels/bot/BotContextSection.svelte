@@ -178,11 +178,11 @@ function truncateContent(content: string): { text: string; totalLines: number; t
 	}
 
 	.token-fill.warning {
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 60%, transparent);
+		background: color-mix(in srgb, var(--color-warning) 60%, transparent);
 	}
 
 	.token-fill.error {
-		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 70%, transparent);
+		background: color-mix(in srgb, var(--color-error-fg) 70%, transparent);
 	}
 
 	.token-label {
@@ -198,11 +198,11 @@ function truncateContent(content: string): { text: string; totalLines: number; t
 	}
 
 	.token-label.warning {
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 	}
 
 	.token-label.error {
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 	}
 
 	/* Empty state */
@@ -286,7 +286,7 @@ function truncateContent(content: string): { text: string; totalLines: number; t
 	.stale-dot {
 		font-size: 8px;
 		line-height: 1;
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 	}
 
 	.entry-actions {

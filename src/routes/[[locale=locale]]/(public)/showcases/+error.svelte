@@ -24,7 +24,6 @@ const hint = $derived(HINT_MAP.find(([prefix]) => path.startsWith(prefix))?.[1] 
 	status={page.status}
 	message={page.error?.message}
 	errorId={page.error?.errorId}
-	context="showcase"
 >
 	<div class="hint">
 		<span class="i-lucide-lightbulb hint-icon" aria-hidden="true"></span>

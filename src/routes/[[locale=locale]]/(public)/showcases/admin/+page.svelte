@@ -53,12 +53,6 @@ const groups: Group[] = [
 				icon: 'i-lucide-users',
 				can: 'View and ban accounts. Cannot read passwords (Argon2 hashed).',
 			},
-			{
-				label: 'Feature Flags',
-				href: '/admin/flags',
-				icon: 'i-lucide-toggle-right',
-				can: 'Toggle features for rollout / kill-switch.',
-			},
 		],
 	},
 	{

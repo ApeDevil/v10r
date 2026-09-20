@@ -7,7 +7,7 @@ metadata:
 
 # Reviewing a surface for Explosive Discovery
 
-The principle lives in `docs/blueprint/design/explosive-discovery.md` — read it once. This file is the procedure: what to look at, in what order, and what to emit. The heuristic is advisory; a finding becomes mandatory only when another requirement (accessibility, a product rule) makes it so. Not Progressive Revelation (that is journey-stage content gating, planned); this is choice structure on one page at one moment.
+The principle lives in `docs/foundation/explosive-discovery.md` (two axes, invariants, anti-goals) and the review method in `docs/blueprint/design/explosive-discovery.md` — read both once. This file is the procedure: what to look at, in what order, and what to emit. The heuristic is advisory; a finding becomes mandatory only when another requirement (accessibility, a product rule) makes it so. The procedure reviews the depth axis — choice structure on one page at one moment.
 
 **Keywords**: menu, kebab, overflow, context menu, toolbar, sidebar, palette, submenu, "More", shortcuts, mobile sheet, choice load.
 

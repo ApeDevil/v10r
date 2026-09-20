@@ -532,10 +532,6 @@ onMount(() => {
 		margin: 0;
 	}
 
-	.login-header p {
-		margin: 0;
-	}
-
 	.error-alert {
 		display: flex;
 		align-items: center;

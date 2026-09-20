@@ -320,6 +320,8 @@ html.reduce-motion *::after {
 
 ## Data Model
 
+> **Illustrative.** The `user_settings` table below is a teaching shape. The shipped table is `personalization.user_preferences` (`src/lib/server/db/schema/personalization/user-preferences.ts`): `sidebar_width`, `locale`, `timezone`, `reduce_motion`, the palette/typography/radius ids and `transparency_seen_at`; the theme mode lives in the `theme` cookie and `/api/preferences`.
+
 ### User Settings Table
 
 ```typescript
@@ -457,6 +459,8 @@ The user menu dropdown (sidebar footer) includes a quick theme toggle.
 ---
 
 ## Components
+
+> **Illustrative.** The shipped settings page (`account/settings/+page.svelte`) composes primitives inline; there is no `composites/settings/` directory.
 
 ```
 src/lib/components/composites/settings/

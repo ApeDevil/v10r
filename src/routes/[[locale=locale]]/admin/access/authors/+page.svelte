@@ -133,12 +133,6 @@ $effect(() => {
 	.muted {
 		color: var(--color-muted);
 	}
-	.dialog-body {
-		padding: var(--spacing-5);
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-3);
-	}
 	.dialog-actions {
 		display: flex;
 		justify-content: flex-end;

@@ -22,7 +22,7 @@ The manual form is the ground floor: every AI failure mode collapses to a typed 
 | Vision resolver | `src/lib/server/ai/providers.ts` | `supportsVision` flag + `resolveVisionProvider()`; exposed as `getVisionProvider()` from `ai/index.ts`. |
 | Price board | `src/lib/server/ai/pricing.ts` | Hand-maintained reference rates (sibling of `provider-limits.ts`). `MODEL_PRICES` + `estimateCost()` → `CostEstimate \| null`. Server-only; never ships to the client. |
 | Canonical schema | `src/lib/schemas/image-metadata.ts` | One source, three consumers: AI-propose schema + strict save schema + helpers. Also holds the client-safe `AnalyzeUsage` / `CostEstimate` DTO types. |
-| Storage | `src/lib/server/showcases/store/image.ts` | R2 ops under the `showcase/imagemeta/` prefix. |
+| Storage | `src/lib/server/store/image.ts` | R2 ops under the `showcase/imagemeta/` prefix. |
 | DB | `src/lib/server/db/schema/showcase/image-metadata.ts` | Dedicated `image` pgSchema: `asset` / `metadata` / `ai_proposal` / `tag` / `metadata_tag`. `ai_proposal` stores token counts (incl. nullable `reasoning_tokens`), never dollars. |
 | Route | `src/routes/[[locale=locale]]/(public)/showcases/toolkits/image-metadata/` | `+page.server.ts` (load + `upload`/`save` actions), `MetadataApprovalDialog.svelte`. Analysis endpoint: `src/routes/api/ai/images/[id]/analyze/+server.ts` (behind `guardAiRequest`, `{ data }/{ error }` envelope, redis idempotency claim). |
 
@@ -120,7 +120,7 @@ The `jsonSchema()` in `extract.ts` mirrors the canonical Valibot `imageAnalysisS
 
 ### Whole-form atomic approval
 
-One `status` enum drives the entire metadata record (`draft` → `proposed` → `approved` → `rejected`). Approval is whole-form, not per-field.
+Saving the form *is* the approval: a metadata record exists only once a human has approved the whole form, so there is no per-record draft/proposed/rejected lifecycle. Approval is whole-form, not per-field.
 
 `fieldProvenance` (`empty` | `ai-draft` | `human`, per content field) is **advisory audit only** — it never gates save. It rides the save action as a JSON hidden field, parsed defensively: a missing or garbage value defaults every field to `human` (the user is clicking save).
 

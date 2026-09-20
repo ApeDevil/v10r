@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { floatingContentBase } from '$lib/styles/floating';
 
 export const dropdownMenuContentVariants = cva([
@@ -16,7 +16,3 @@ export const dropdownMenuItemVariants = cva([
 ]);
 
 export const dropdownMenuSeparatorVariants = cva(['h-px bg-border']);
-
-export type DropdownMenuContentVariants = VariantProps<typeof dropdownMenuContentVariants>;
-export type DropdownMenuItemVariants = VariantProps<typeof dropdownMenuItemVariants>;
-export type DropdownMenuSeparatorVariants = VariantProps<typeof dropdownMenuSeparatorVariants>;

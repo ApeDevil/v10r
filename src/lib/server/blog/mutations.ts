@@ -56,7 +56,6 @@ export async function updatePostMetadata(
 	data: {
 		slug?: string;
 		status?: PostStatus;
-		coverImageId?: string | null;
 		publishedAt?: Date | null;
 		folderId?: string | null;
 	},

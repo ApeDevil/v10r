@@ -2,6 +2,7 @@ import { baseLocale, locales } from '$lib/paraglide/runtime';
 import { listPublishedPostsForFeed } from '$lib/server/blog';
 import { REDIRECT_HREFS } from '$lib/server/search/adapters/_redirects';
 import { showcases } from '$lib/showcases/catalog/registry';
+import { escapeXmlAttr } from '$lib/utils/xml';
 import type { RequestHandler } from './$types';
 
 const PROD_ORIGIN = 'https://www.v10r.dev';
@@ -41,15 +42,6 @@ function showcasePaths(): string[] {
 
 const STATIC_PATHS = [...BASE_PATHS, ...showcasePaths()];
 
-function escapeXml(s: string): string {
-	return s
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;')
-		.replace(/'/g, '&apos;');
-}
-
 function toDateStr(d: Date): string {
 	return d.toISOString().slice(0, 10);
 }
@@ -79,9 +71,9 @@ function buildAlternates(localeMap: Map<string, string>): string {
 	return locales
 		.map((locale) => {
 			const href = localeMap.get(locale) ?? enUrl;
-			return `      <xhtml:link rel="alternate" hreflang="${locale}" href="${escapeXml(href)}"/>`;
+			return `      <xhtml:link rel="alternate" hreflang="${locale}" href="${escapeXmlAttr(href)}"/>`;
 		})
-		.concat([`      <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(enUrl)}"/>`])
+		.concat([`      <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXmlAttr(enUrl)}"/>`])
 		.join('\n');
 }
 
@@ -93,7 +85,7 @@ function buildAlternates(localeMap: Map<string, string>): string {
 function urlBlock(localeUrl: string, lastmod: string | null, alternates: string): string {
 	const lastmodLine = lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : '';
 	return `  <url>
-    <loc>${escapeXml(localeUrl)}</loc>${lastmodLine}
+    <loc>${escapeXmlAttr(localeUrl)}</loc>${lastmodLine}
 ${alternates}
   </url>`;
 }

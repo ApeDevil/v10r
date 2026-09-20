@@ -53,10 +53,10 @@ export function renderDigest(
 	items: DigestItem[],
 	locale: string,
 	maxChars: number = DIGEST_BODY_LIMITS.email,
-): { subject: string; body: string } {
+): { body: string } {
 	// Routed through renderNotification so the locale stays a plain string —
-	// the generated message functions take a narrowed locale union.
-	const subject = renderNotification('notif_digest_subject', { count: items.length }, locale);
+	// the generated message functions take a narrowed locale union. The subject is the
+	// carrier notification's own `notif_digest_subject` (db/notifications/mutations.ts).
 	const intro = renderNotification('notif_digest_intro', {}, locale);
 
 	const lines: string[] = [];
@@ -75,5 +75,5 @@ export function renderDigest(
 	const omitted = items.length - shown;
 	const body = [intro, '', ...lines, ...(omitted > 0 ? [`… +${omitted} more`] : [])].join('\n');
 
-	return { subject, body };
+	return { body };
 }

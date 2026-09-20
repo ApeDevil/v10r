@@ -426,6 +426,8 @@ await db.delete(user)
 
 ## Components
 
+> **Illustrative.** The shipped account pages compose primitives inline under `src/routes/[[locale=locale]]/account/**`; there is no `composites/account/` directory.
+
 ```
 src/lib/components/composites/account/
 ├── ProfileForm.svelte           # Profile editing with auto-save

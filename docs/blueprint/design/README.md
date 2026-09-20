@@ -35,9 +35,12 @@ Bad:  All options visible at once
 Good: Primary actions visible, secondary in menus/dropdowns
 ```
 
-When a menu, toolbar or page offers more than ~5 ± 2 simultaneous choices, review it with
-[explosive-discovery.md](./explosive-discovery.md) — directions over lists, context
-promotion, one hierarchy per device projection, an expert path beside every discovery path.
+The principle is spelled out in
+[foundation/explosive-discovery.md](../../foundation/explosive-discovery.md) — Explosive
+Discovery, on a page and across a journey. When a menu, toolbar or page offers more than
+~5 ± 2 simultaneous choices, review it with [explosive-discovery.md](./explosive-discovery.md)
+— directions over lists, context promotion, one hierarchy per device projection, an expert
+path beside every discovery path.
 
 ### 4. Responsive by Default
 
@@ -250,9 +253,7 @@ Animations feel responsive, not showy. Users shouldn't wait for animations.
 
 ```css
 --ease-default: cubic-bezier(0.4, 0, 0.2, 1);  /* Smooth default */
---ease-in: cubic-bezier(0.4, 0, 1, 1);          /* Accelerate out */
 --ease-out: cubic-bezier(0, 0, 0.2, 1);         /* Decelerate in */
---ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* Playful (rare) */
 ```
 
 ### Reduced Motion

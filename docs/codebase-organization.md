@@ -217,4 +217,5 @@ These are the reasons behind placements that otherwise look arbitrary.
 | [`system-abstraction.md`](./system-abstraction.md) | Runtime view: layers, request flow, hooks pipeline |
 | [`blueprint/architecture/multi-client-core.md`](./blueprint/architecture/multi-client-core.md) | The hexagonal core in detail |
 | [`src/lib/architecture.gate.test.ts`](../src/lib/architecture.gate.test.ts) | The invariants, executable |
+| [`foundation/self-expressive-project.md`](./foundation/self-expressive-project.md) | The principle this map serves: structure expresses architecture, and the gates that make it testable |
 | [`CLAUDE.md`](../CLAUDE.md) | Agent instructions and house rules |

@@ -32,7 +32,7 @@ The editor is content-type-agnostic — blog posts are the first implementation,
 This covers :tag[authentication]{domain=security} concepts.
 
 <!-- Block/leaf (double colon) — embedding components -->
-::chart{src="/api/stats/users" type="line"}
+::scene{src="/models/Fox.glb" height="320"}
 
 <!-- Container (triple colon) — wrapping content -->
 :::callout[Warning]
@@ -66,8 +66,7 @@ Markdown (DB text column)
 unified()
   .use(remarkParse)                       // markdown -> mdast
   .use(remarkGfm)                         // tables, strikethrough, task lists
-  .use(remarkFrontmatter, ['yaml'])       // parse ---yaml--- blocks
-  .use(remarkExtractFrontmatter)          // surface frontmatter to vfile.data
+  .use(remarkFrontmatter, ['yaml'])       // strip ---yaml--- blocks (metadata lives in columns, not the body)
   .use(remarkDirective)                   // ::embed[...]{...} syntax
   .use(remarkDirectiveHandlers)           // CUSTOM: visit directives, extract embed descriptors
   .use(remarkRehype)                      // mdast -> hast
@@ -223,14 +222,14 @@ First explicit save (Cmd+S):
   -> Creates post record + first revision in DB
   -> Save indicator: green "Saved just now"
 
-Subsequent saves: POST /api/blog/[id]/revision (creates new revision)
+Subsequent saves: POST /api/blog/posts/[id]/revisions (creates new revision)
 Preview: auto-updates on content change (cross-panel pub/sub, debounced 300ms)
 Publish: kebab menu (Post > Publish) -> inline confirm strip -> publishPost()
 ```
 
 ### Editor Paradigm: Source Editor, Never WYSIWYG
 
-WYSIWYG is rejected. Custom syntax (`::chart[]`, `::scene[]`) requires a bespoke ProseMirror node view per embed type. Failures are silent — the editor renders fine but produces corrupted markdown. Source editors have visible, author-recoverable failures.
+WYSIWYG is rejected. Custom syntax (`::scene[]`, `:::callout`) requires a bespoke ProseMirror node view per embed type. Failures are silent — the editor renders fine but produces corrupted markdown. Source editors have visible, author-recoverable failures.
 
 Scout confirmed: nobody has solved custom syntax round-trip editing cleanly in WYSIWYG. The pragmatic path is source editing with slash commands that auto-insert the syntax.
 
@@ -317,7 +316,6 @@ interface DeskBus {
 Channels:
 - `editor:content` — editor emits `{ content, type, metadata }` on change (debounced)
 - `editor:document` — editor emits `{ documentId, type }` when a different document opens
-- `editor:save` — editor emits after successful save (preview can refresh from server)
 
 This is valuable beyond editor/preview — the chat panel can subscribe to `editor:document` to know what the user is working on, enabling contextual writing suggestions about the current post. For the full channel list (including `files:select`, `spreadsheet:open`, `files:insert-image`), see [desk/README.md](./desk/README.md#cross-panel-communication-deskbus).
 
@@ -383,12 +381,12 @@ export const syntaxes = {
     hasContent: true,
     embedKind: 'callout',
   },
-  chart: {
+  scene: {
     directive: 'leaf',         // remark-directive type (::)
-    name: 'chart',
+    name: 'scene',
     requiredAttrs: ['src'],
     hasContent: false,
-    embedKind: 'chart',
+    embedKind: 'scene',
   },
 } as const;
 ```
@@ -412,7 +410,6 @@ All tables in `pgSchema('blog')`, following the existing pattern.
 | `id` | text | PK | `pst_` prefix |
 | `slug` | text | NOT NULL, UNIQUE, CHECK `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` | URL-friendly identifier |
 | `author_id` | text | NOT NULL, FK -> auth.user(id) ON DELETE RESTRICT | RESTRICT: force explicit reassignment before user deletion |
-| `cover_image_id` | text | nullable, FK -> blog.asset(id) ON DELETE SET NULL | Social cards, RSS, index listings |
 | `status` | enum | NOT NULL, DEFAULT 'draft' | `draft`, `published`, `archived` |
 | `published_at` | timestamptz | nullable | Set when first published |
 | `deleted_at` | timestamptz | nullable | Soft delete |
@@ -425,7 +422,7 @@ Indexes: `(slug)` unique, `(author_id)`, `(status, published_at DESC)`, `(create
 - Removed `published_revision_id` single pointer — replaced by `blog.published_revision` junction table for per-locale publishing
 - Removed `review` status — no workflow, no UI, no guard. Add via `ALTER TYPE ADD VALUE` when multi-author review is designed
 - Added `deleted_at` for soft delete (partial index referenced it but column was missing)
-- Added `cover_image_id` FK for social cards, RSS, index listings
+- `cover_image_id` FK dropped 2026-09-19: never populated or read; add it back with the social-card feature
 - `author_id` uses RESTRICT (not CASCADE) — don't orphan posts on user deletion
 
 #### `blog.revision` — Immutable Content Snapshots
@@ -543,7 +540,6 @@ RESTRICT on asset deletion — don't delete assets that posts reference.
 | FK | ON DELETE | Rationale |
 |----|-----------|-----------|
 | `post.author_id` -> user | RESTRICT | Force explicit reassignment before user deletion |
-| `post.cover_image_id` -> asset | SET NULL | Losing cover is cosmetic, not data loss |
 | `post.folder_id` -> post_folder | SET NULL | Deleting a folder orphans posts to root, not data loss |
 | `asset.folder_id` -> asset_folder | SET NULL | Deleting a folder orphans assets to root, not data loss |
 | `revision.post_id` -> post | CASCADE | Revisions are owned by the post |
@@ -594,7 +590,7 @@ All additive — no existing tables need modification.
 Images are referenced via stable proxy URLs rather than presigned R2 URLs (which expire after ~1 hour). Two proxy endpoints handle resolution:
 
 - **`/api/blog/assets/[id]/image`** — looks up asset by ID, 302-redirects to a fresh presigned R2 URL. Used when inserting new images from the Explorer panel.
-- **`/api/blog/media/[...path]`** — accepts R2 storage keys directly (e.g. `blog/uuid.ext`), 302-redirects to a fresh presigned URL. Used by `Renderer.svelte` to rewrite legacy presigned URLs in existing content.
+- **`/api/blog/media/[...path]`** — accepts R2 storage keys directly (e.g. `blog/uuid.ext`), 302-redirects to a fresh presigned URL. The form `content:push` writes into post markdown (`server/content/assets.ts`); the render pipeline's `rehype-rewrite-r2` also maps any presigned R2 URL left in an older post body onto it.
 
 Both endpoints set `Cache-Control: public, max-age=300` so browsers cache the redirect for 5 minutes. The presigned URL itself is valid for 1 hour.
 
@@ -924,8 +920,8 @@ $lib/content-syntax/               # Shared syntax definitions
   remark-adapter.ts                 # Specs -> remark-directive handlers
   codemirror-adapter.ts             # (planned) Specs -> CM6 decorations (Phase 3)
 
-$lib/components/blog/              # Rendering
-  Renderer.svelte                   # {html, embeds} -> prose + hydrated embeds
+$lib/components/blog/              # Rendering (the post page renders `html` through
+                                    #   composites/markdown/MarkdownProse + actions/hydrate-embeds)
   CommentsIsland.svelte             # Client island: fetches + renders comments after mount
   BlogTag.svelte                    # Tag chip
   PostCard.svelte                   # Index/list card
@@ -1212,9 +1208,9 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 7. `$lib/components/composites/markdown/MarkdownProse.svelte` + embed registry
 8. Public routes: `/blog/`, `/blog/[slug]` (with JSON-LD + OG meta), `/blog/tag/[tag]`, `/blog/feed.xml`, `/blog/sitemap.xml`
 9. Admin content page: `/admin/content` (post list + status management via form actions)
-10. API endpoints: `POST /api/blog` (create), `PATCH /api/blog/[id]` (metadata), `POST /api/blog/[id]/revision`, `POST /api/blog/[id]/publish`
+10. API endpoints: `POST /api/blog/posts` (create), `PATCH /api/blog/posts/[id]` (metadata), `POST /api/blog/posts/[id]/revisions`, `POST /api/blog/posts/[id]/publish`
 11. `publishPost()` + `unpublishPost()` orchestration with ISR revalidation
-12. CLI import script: `scripts/blog-import.ts` (`.md` files -> DB)
+12. Import door: `POST /api/blog/posts/import` (`.md` upload from the desk Explorer -> DB)
 
 ### Phase 2: Desk Editor + Preview
 

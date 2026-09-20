@@ -78,7 +78,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 			title: 'Models & Routing',
 			unavailable: true as const,
 			connections: [],
-			defaultProviderId: null,
 			degraded: false,
 			encryptionConfigured: encryptionConfigured(),
 			activeProviderId: null,
@@ -101,7 +100,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		title: 'Models & Routing',
 		unavailable: false as const,
 		connections: registry.entries.map(publicProviderConnection),
-		defaultProviderId: registry.defaultProviderId,
 		degraded: registry.degraded,
 		encryptionConfigured: encryptionConfigured(),
 		activeProviderId: getActiveProviderInfo(registry)?.id ?? null,
@@ -246,7 +244,6 @@ export const actions: Actions = {
 		if (!result.ok) return rejectionFailure(result.rejected, provider ?? expectedCurrentDefault ?? 'groq');
 
 		return {
-			defaultSaved: provider,
 			message: provider
 				? m.admin_ai_models_default_saved({ name: PROVIDER_LABELS[provider] })
 				: m.admin_ai_models_default_saved_automatic(),

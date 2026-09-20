@@ -11,8 +11,7 @@ import type { LayoutServerLoad } from './$types';
  * own; entries carry model closures and cannot ride layout data.
  *
  * An unreadable settings table must not take the whole section down — the Models tab
- * is where an operator goes to fix exactly that — so it degrades to an empty board with
- * `settingsUnavailable` set.
+ * is where an operator goes to fix exactly that — so it degrades to an empty board.
  */
 export const load: LayoutServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
@@ -23,9 +22,8 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			providers: registry.entries.map(publicProviderConnection),
 			activeProvider: getActiveProviderInfo(registry),
 			resources: await buildProviderQuota(registry),
-			settingsUnavailable: false,
 		};
 	} catch {
-		return { providers: [], activeProvider: null, resources: [], settingsUnavailable: true };
+		return { providers: [], activeProvider: null, resources: [] };
 	}
 };

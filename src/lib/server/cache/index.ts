@@ -22,7 +22,6 @@ export {
 	cacheKey,
 	clearLocalCache,
 	definePolicy,
-	dropTiered,
 	LOCAL_MAX_ENTRIES,
 	readTiered,
 	writeTiered,

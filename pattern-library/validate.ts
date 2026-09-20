@@ -2,8 +2,8 @@
  * Registry drift guard: structural schema, referential integrity, DAG check, and
  * filesystem existence for every referenced path. Exits non-zero on any error.
  *
- * Run (host):  podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/validate-registry.ts
- * Run (container): bun run mcp:validate
+ * Run (host):  podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/pattern-library/validate.ts
+ * Run (container): bun run patterns:validate
  */
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -93,13 +93,13 @@ for (const pattern of registry.patterns) {
 		});
 	}
 	// Deep-tier depth (invariants/notes/capabilities/keywords/docs non-empty) and the
-	// light-tier docs floor are structural errors in registry.ts. The only advisory
+	// light-tier docs floor are structural errors in schema.ts. The only advisory
 	// left: a light record with no keywords still loses search recall.
 	if (pattern.tier === 'light' && pattern.keywords.length === 0) {
 		warnings.push(`${pattern.id}: no keywords — search recall will be weak`);
 	}
 	// Maturity advisories. proven⇔refs+attestation is a structural error in
-	// registry.ts; these two stay warnings by policy — staleness that fails the
+	// schema.ts; these two stay warnings by policy — staleness that fails the
 	// gate teaches people to route around it (same stance as the perf snapshot).
 	if (pattern.maturity === 'implemented' && pattern.tests.length + pattern.showcases.length > 0) {
 		warnings.push(

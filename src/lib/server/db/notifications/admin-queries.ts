@@ -73,8 +73,6 @@ export interface DeliveryLogEntry {
 	errorCode: string | null;
 	errorMessage: string | null;
 	attempts: number;
-	attemptedAt: Date | null;
-	sentAt: Date | null;
 	createdAt: Date;
 }
 
@@ -89,10 +87,7 @@ export async function getDeliveryLog(filters: DeliveryLogFilters & { pageSize: n
 	}
 	if (filters.status && filters.status !== 'all') {
 		conditions.push(
-			eq(
-				notificationDeliveries.status,
-				filters.status as 'pending' | 'processing' | 'sent' | 'failed' | 'skipped' | 'retrying' | 'dead',
-			),
+			eq(notificationDeliveries.status, filters.status as 'pending' | 'processing' | 'sent' | 'failed' | 'dead'),
 		);
 	}
 
@@ -110,8 +105,6 @@ export async function getDeliveryLog(filters: DeliveryLogFilters & { pageSize: n
 				errorCode: notificationDeliveries.errorCode,
 				errorMessage: notificationDeliveries.errorMessage,
 				attempts: notificationDeliveries.attempts,
-				attemptedAt: notificationDeliveries.attemptedAt,
-				sentAt: notificationDeliveries.sentAt,
 				createdAt: notificationDeliveries.createdAt,
 			})
 			.from(notificationDeliveries)
@@ -133,8 +126,6 @@ export async function getDeliveryLog(filters: DeliveryLogFilters & { pageSize: n
 		errorCode: r.errorCode,
 		errorMessage: r.errorMessage,
 		attempts: r.attempts,
-		attemptedAt: r.attemptedAt,
-		sentAt: r.sentAt,
 		createdAt: r.createdAt,
 	}));
 

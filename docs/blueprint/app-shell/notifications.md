@@ -1,6 +1,6 @@
 # Notifications
 
-In-app notification system with full-page notification center, preference management, and real-time updates.
+In-app notification system with a full-page notification center, preference management, and an SSE stream (`/api/notifications/stream`) for clients that want live updates. The app shell itself renders the unread count from the page load; the stream's in-repo consumer is the notifications pipeline showcase.
 
 **Runtime model:** SSE either way, with the *transport* chosen by platform capability. On a persistent host an in-memory connection map is sufficient. On serverless each instance has its own module scope, so events travel over Redis pub/sub and every stream subscribes on connect. (There is no polling fallback — an earlier version of this document described one that was never built.)
 
@@ -21,26 +21,13 @@ In-app notification system with full-page notification center, preference manage
 
 **Two entry points:**
 
-1. **Sidebar bell icon** - Badge shows unread count, click navigates to center
-2. **Direct navigation** - `/account/notifications` for deep linking
-
-```
-Sidebar Header:
-┌──────────────────────┐
-│  Logo                │
-│  🔍 Search...    ⌘K  │
-│  💬 Ask AI...    ⌘J  │
-│  🔔 Notifications (3)│ ← Badge with unread count
-└──────────────────────┘
-```
+1. **Account tab** — the `Notifications` tab in `account/+layout.svelte` (bell icon, no badge)
+2. **Direct navigation** — `/account/notifications` for deep linking (`?n=<id>` focuses one notification)
 
 **Why full page (not modal)?**
 - Mobile-friendly (avoids modal scroll issues)
 - Supports deep linking to specific notifications
 - Cleaner navigation model
-
----
-
 ## Notification Center
 
 **Route:** `/account/notifications`
@@ -172,42 +159,6 @@ Sidebar Header:
 
 ---
 
-## Sidebar Notification Trigger
-
-```svelte
-<!-- src/lib/components/shell/SidebarNotifications.svelte -->
-<script lang="ts">
-  import { Popover } from 'bits-ui';
-  import { NotificationPreview, NotificationBadge } from '$lib/components/composites/notifications';
-
-  let { notifications, unreadCount } = $props();
-</script>
-
-<!-- Desktop: Popover preview -->
-<Popover.Root>
-  <Popover.Trigger class="notification-trigger">
-    <span class="i-lucide-bell" />
-    {#if unreadCount > 0}
-      <NotificationBadge count={unreadCount} />
-    {/if}
-  </Popover.Trigger>
-
-  <Popover.Content side="right" align="start" class="w-80">
-    <NotificationPreview {notifications} />
-    <a href="/account/notifications" class="view-all">View all</a>
-  </Popover.Content>
-</Popover.Root>
-
-<!-- Mobile: Direct link (no popover) -->
-<a href="/account/notifications" class="notification-trigger md:hidden">
-  <span class="i-lucide-bell" />
-  {#if unreadCount > 0}
-    <NotificationBadge count={unreadCount} />
-  {/if}
-</a>
-```
-
----
 
 ## Notification Settings
 
@@ -363,73 +314,9 @@ import { notifyUser } from '$lib/server/notifications/stream';
 notifyUser(targetUserId, { type: 'new', count: newUnreadCount, title: notification.title });
 ```
 
-### Serverless Fallback: Polling with `invalidate()`
-
-On Vercel (no persistent process), use SvelteKit's native invalidation:
-
-```svelte
-<!-- src/lib/components/shell/NotificationPoller.svelte -->
-<script lang="ts">
-  import { invalidate } from '$app/navigation';
-  import { onMount } from 'svelte';
-
-  const POLL_INTERVAL = 30_000;
-
-  onMount(() => {
-    const timer = setInterval(() => {
-      invalidate('app:notifications');
-    }, POLL_INTERVAL);
-    return () => clearInterval(timer);
-  });
-</script>
-```
-
-The layout load function declares `depends('app:notifications')`, so `invalidate('app:notifications')` re-runs only that load — not all load functions. This is critical; using `invalidateAll()` would refetch everything.
-
 ### Client-Side SSE Consumer
 
-```svelte
-<!-- src/lib/components/shell/SidebarNotifications.svelte -->
-<script lang="ts">
-  import { getNotifications } from '$lib/state/notifications.svelte';
-
-  const notif = getNotifications();
-  let sseSource: EventSource | null = null;
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  let attempts = 0;
-
-  function connect() {
-    sseSource?.close();
-    sseSource = new EventSource('/api/notifications/stream');
-
-    sseSource.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      if (msg.type === 'init' || msg.type === 'count') {
-        notif.setCount(msg.count);
-      } else if (msg.type === 'new') {
-        notif.increment();
-      }
-      attempts = 0; // reset backoff on success
-    };
-
-    sseSource.onerror = () => {
-      sseSource?.close();
-      const delay = Math.min(1000 * 2 ** attempts, 30_000);
-      attempts++;
-      reconnectTimer = setTimeout(connect, delay);
-    };
-  }
-
-  // $effect runs only on client — SSE is not available during SSR
-  $effect(() => {
-    connect();
-    return () => {
-      sseSource?.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-    };
-  });
-</script>
-```
+The in-repo consumer is the notifications pipeline showcase (`showcases/notifications/pipeline/+page.svelte`): one `EventSource('/api/notifications/stream')`, `init` sets the count from the authoritative server value, `new` increments it. The account pages do not hold a stream open — mark-read calls `invalidate('app:notifications')`, which re-runs the notifications page load (`depends('app:notifications')`) so the list and the count come back from the database.
 
 ### SSE Security Hardening
 
@@ -704,61 +591,13 @@ export async function markAllAsRead(userId: string) {
 src/lib/components/composites/notifications/
 ├── NotificationCenter.svelte    # Full page list
 ├── NotificationCard.svelte      # Single notification row
-├── NotificationPreview.svelte   # Popover preview (desktop)
-├── NotificationBadge.svelte     # Unread count indicator
 └── NotificationFilters.svelte   # Filter tabs
-
-src/lib/components/shell/
-└── SidebarNotifications.svelte  # Bell icon + SSE consumer + popover
-
-src/lib/state/
-└── notifications.svelte.ts      # Context-based state (SSR-safe, like toast.svelte.ts)
-```
-
-### Notification State (Svelte 5 Runes)
-
-Follows the same context pattern as `toast.svelte.ts` — no module-level singletons (SSR would share state across requests):
-
-```typescript
-// src/lib/state/notifications.svelte.ts
-import { getContext, setContext } from 'svelte';
-
-const NOTIF_CTX = Symbol('notifications');
-
-export function createNotificationState(initialCount: number) {
-  let unreadCount = $state(initialCount);
-
-  return {
-    get unreadCount() { return unreadCount; },
-    setCount(n: number) { unreadCount = n; },
-    increment() { unreadCount++; },
-    decrementBy(n: number) { unreadCount = Math.max(0, unreadCount - n); },
-  };
-}
-
-export function setNotificationContext(initialCount: number) {
-  return setContext(NOTIF_CTX, createNotificationState(initialCount));
-}
-
-export function getNotifications() {
-  return getContext<ReturnType<typeof createNotificationState>>(NOTIF_CTX);
-}
 ```
 
 ### Data Loading
 
-Unread count loaded in root layout — one DB query per full page load, then SSE (or polling) keeps it current:
+The notifications page load (`account/notifications/+page.server.ts`) fetches the page of notifications and the unread count in one parallel wave and declares `depends('app:notifications')`; the page's mark-read handlers call `invalidate('app:notifications')` after the POST succeeds. No client-side count state — the database stays the single source of truth.
 
-```typescript
-// src/routes/[[locale=locale]]/account/+layout.server.ts
-export const load: LayoutServerLoad = async ({ locals, depends }) => {
-  depends('app:notifications');
-  if (!locals.user) return { unreadCount: 0 };
-  return { unreadCount: await getUnreadCount(locals.user.id) };
-};
-```
-
----
 
 ## Related
 

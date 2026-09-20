@@ -390,7 +390,7 @@ function removeGhost() {
 	}
 
 	.dock-tab-dot.dot-unsaved {
-		background: var(--color-warning, #f59e0b);
+		background: var(--color-warning);
 	}
 
 	.dock-tab-dot.dot-saving {
@@ -408,7 +408,7 @@ function removeGhost() {
 	}
 
 	.dock-tab-dot.dot-ai-modified {
-		background: var(--color-warning, #f59e0b);
+		background: var(--color-warning);
 	}
 
 	.dock-tab-dot.dot-ai-error {

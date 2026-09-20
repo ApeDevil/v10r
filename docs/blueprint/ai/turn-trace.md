@@ -1,9 +1,8 @@
 # Turn trace
 
 > **Status: BUILT 2026-09-12 (Phases 1, 3 and 5 of the AI context + trace refactor),
-> validate-green; the turn graph and the recorded ancestry landed 2026-09-13.** Requires the
-> `db:rename-conversation-step` script and one interactive `db:push` before a turn can persist.
-> Phase 2 (profiles, [profiles.md](./profiles.md)) sits under it; Phase 4 (the pointer-layer
+> validate-green; the turn graph and the recorded ancestry landed 2026-09-13; the
+> `ai.conversation_step` → `ai.model_call` rename DDL has been applied.** Phase 2 (profiles, [profiles.md](./profiles.md)) sits under it; Phase 4 (the pointer-layer
 > retirement) landed the same day; Phase 5 gave the deskbot page the same inspector.
 
 ## What this is

@@ -211,11 +211,10 @@ export interface ProviderUsageToday {
 	provider: string;
 	/** Successful AI SDK steps today ≈ provider API requests (a lower bound — see note). */
 	requests: number;
-	tokens: number;
 }
 
 /**
- * Today's (UTC) per-provider request + token usage from `model_call`.
+ * Today's (UTC) per-provider request count from `model_call`.
  *
  * `requests` counts one row per *successful* step, which is ≈ one provider API
  * call against its RPD ceiling. It's a LOWER BOUND: 429'd/aborted calls never
@@ -231,7 +230,6 @@ export async function getProviderUsageToday(): Promise<ProviderUsageToday[]> {
 		.select({
 			provider: sql<string>`COALESCE(${modelCall.providerId}, 'unknown')`,
 			requests: count(),
-			tokens: sql<number>`COALESCE(SUM(${modelCall.inputTokens} + ${modelCall.outputTokens}), 0)`,
 		})
 		.from(modelCall)
 		.where(gte(modelCall.createdAt, startOfDay))
@@ -240,6 +238,5 @@ export async function getProviderUsageToday(): Promise<ProviderUsageToday[]> {
 	return rows.map((r) => ({
 		provider: r.provider,
 		requests: Number(r.requests),
-		tokens: Number(r.tokens),
 	}));
 }

@@ -90,8 +90,6 @@ interface Props {
 	serverActiveWorkspaceId?: string | null;
 	/** Fires after any panel close — the host wires undo UX (e.g. toast calling `restore`). */
 	onPanelClosed?: (panel: PanelDefinition, restore: () => void) => void;
-	/** Sink for AI `desk:notify` effects (ai:notify bus channel). Omit = dropped. */
-	onNotify?: (notification: { message: string; level: 'info' | 'success' | 'error' }) => void;
 	panelContent: Snippet<[string]>;
 	class?: string;
 }
@@ -111,7 +109,6 @@ let {
 	serverWorkspaces = [],
 	serverActiveWorkspaceId = null,
 	onPanelClosed,
-	onNotify,
 	panelContent,
 	class: className,
 }: Props = $props();
@@ -200,14 +197,6 @@ $effect(() => {
 
 // DeskBus: typed pub/sub available to all panels via context
 const bus = setDeskBusContext();
-
-// Surface-independent sink for AI notifications — subscribing HERE (not in
-// ChatPanel) is what makes them survive the chat panel being closed or behind
-// an overlay. Without it, ai:notify has no subscriber at all.
-$effect(() => {
-	if (!onNotify) return;
-	return bus.subscribe('ai:notify', (payload) => onNotify(payload));
-});
 
 // Desk settings: panel color customization via context
 // Priority: server data (DB) > localStorage cache > defaults

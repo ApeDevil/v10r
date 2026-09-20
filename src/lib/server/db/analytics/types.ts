@@ -5,13 +5,7 @@
  * have the sink importing upward for a shape only the sink fills in.
  */
 
-import type { InferSelectModel } from 'drizzle-orm';
-import type { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
 import type { CommandVia } from '$lib/types/journey-events';
-
-export type AnalyticsEvent = InferSelectModel<typeof events>;
-export type AnalyticsSession = InferSelectModel<typeof sessions>;
-export type DailyPageStat = InferSelectModel<typeof dailyPageStats>;
 
 export interface TrafficTrendPoint {
 	date: string;
@@ -141,19 +135,6 @@ export interface TransitionRow {
 export interface PageCount {
 	path: string;
 	count: number;
-}
-
-/**
- * One Web Vital, summarised at the 75th percentile — the threshold Google's own
- * scoring uses, and the reason the mean is the wrong statistic here: a long tail
- * of slow interactions is exactly what the mean hides.
- */
-export interface VitalSummary {
-	metric: string;
-	p75: number;
-	samples: number;
-	/** Most frequently blamed element, from the attribution build. */
-	worstTarget: string | null;
 }
 
 /** An aggregated friction signal — rage clicks, dead clicks. */

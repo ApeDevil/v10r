@@ -119,7 +119,6 @@ function getPanelType(panelId: string): string | undefined {
 				duration: 6000,
 				action: { label: 'Undo', onclick: restore },
 			})}
-		onNotify={(n) => toast?.show({ type: n.level, message: n.message, duration: 6000 })}
 		class="desk-dock"
 	>
 		{#snippet panelContent(panelId)}

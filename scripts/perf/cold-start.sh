@@ -17,9 +17,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 CONTAINER=v10r
-WARN_MS=15000
-FAIL_MS=25000
+BUDGETS="$SCRIPT_DIR/../../src/lib/server/perf/budgets.json"
 TIMEOUT_S=120
+
+read_budget() { # $1 = warn|fail; falls back if jq or the file is unavailable
+	if command -v jq >/dev/null 2>&1 && [ -f "$BUDGETS" ]; then
+		jq -r ".budgets.cold_start_ms.$1" "$BUDGETS" 2>/dev/null && return
+	fi
+	[ "$1" = "warn" ] && echo 15000 || echo 25000
+}
+
+WARN_MS=$(read_budget warn)
+FAIL_MS=$(read_budget fail)
 
 cd "$PROJECT_DIR"
 

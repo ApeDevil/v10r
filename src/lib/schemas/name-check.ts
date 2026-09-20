@@ -39,7 +39,6 @@ export const nameCheckQuerySchema = v.object({
 	category: categoryField,
 });
 
-export type NameCheckQueryInput = v.InferInput<typeof nameCheckQuerySchema>;
 export type NameCheckQueryOutput = v.InferOutput<typeof nameCheckQuerySchema>;
 
 /** The form variant adds the honeypot trio the feedback form established. */
@@ -50,6 +49,3 @@ export const nameCheckFormSchema = v.object({
 	/** Honeypot — must remain empty. Bots fill all visible fields. */
 	bookmark: v.optional(v.literal(''), ''),
 });
-
-export type NameCheckFormInput = v.InferInput<typeof nameCheckFormSchema>;
-export type NameCheckFormOutput = v.InferOutput<typeof nameCheckFormSchema>;

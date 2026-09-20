@@ -274,7 +274,6 @@ const resultInto = (toolCallId: string) =>
 			{@render fact('historyCount', node.call.request.historyCount)}
 			{@render fact('toolResultIds', node.call.request.toolResultIds === undefined ? m.showcase_ai_graph_not_recorded() : node.call.request.toolResultIds.join(', ') || '—')}
 			{@render fact('toolsOffered', node.call.request.toolsOffered.join(', ') || '—')}
-			{@render fact('activeTools', node.call.request.activeTools?.join(', ') ?? null)}
 			{@render fact('toolChoice', node.call.request.toolChoice)}
 			{@render fact('providerOptions', node.call.request.providerOptions ? json(node.call.request.providerOptions) : null)}
 		</dl>

@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 /**
- * Scaffold a new content/<domain>/<slug>/en.md with a fresh UUID v7 baked into
+ * Scaffold a new content/blog/<slug>/en.md with a fresh UUID v7 baked into
  * frontmatter. Refuses to overwrite an existing file.
  *
  * Usage:
- *   bun run content:new <slug> [--domain=blog] [--title="..."] [--summary="..."]
+ *   bun run content:new <slug> [--title="..."] [--summary="..."]
  *
- * Default domain is `blog`. The UUID v7 in `id` is stable across slug renames —
+ * The UUID v7 in `id` is stable across slug renames —
  * never edit it by hand. After scaffolding, edit the body, then run:
  *   bun run content:check
  *   bun run content:push <slug>
@@ -19,7 +19,6 @@ import { serializeContentFile } from '$lib/server/content/frontmatter';
 
 interface Args {
 	slug: string;
-	domain: string;
 	title?: string;
 	summary?: string;
 }
@@ -38,7 +37,7 @@ function parseArgs(argv: string[]): Args {
 	}
 	const slug = positional[0];
 	if (!slug) {
-		console.error('usage: bun run content:new <slug> [--domain=blog] [--title="..."] [--summary="..."]');
+		console.error('usage: bun run content:new <slug> [--title="..."] [--summary="..."]');
 		process.exit(1);
 	}
 	if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug)) {
@@ -47,14 +46,13 @@ function parseArgs(argv: string[]): Args {
 	}
 	return {
 		slug,
-		domain: flags.get('domain') ?? 'blog',
 		title: flags.get('title'),
 		summary: flags.get('summary'),
 	};
 }
 
 const args = parseArgs(process.argv.slice(2));
-const dir = join(process.cwd(), 'content', args.domain, args.slug);
+const dir = join(process.cwd(), 'content', 'blog', args.slug);
 const enPath = join(dir, 'en.md');
 
 try {
@@ -78,7 +76,7 @@ const frontmatter = {
 	date: today,
 };
 
-const body = `\nWrite the post here. Translate to other locales by asking Claude Code:\n\n> translate content/${args.domain}/${args.slug}/en.md to de and ru\n`;
+const body = `\nWrite the post here. Translate to other locales by asking Claude Code:\n\n> translate content/blog/${args.slug}/en.md to de and ru\n`;
 
 await writeFile(enPath, serializeContentFile(frontmatter, body), 'utf8');
 

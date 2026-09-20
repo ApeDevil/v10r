@@ -87,7 +87,6 @@ export interface FixturePreferences {
 	timezone: string;
 	dateFormat: DateFormat;
 	reduceMotion: boolean;
-	highContrast: boolean;
 	paletteId: string | null;
 	typographyId: string | null;
 	radiusId: string | null;
@@ -251,7 +250,6 @@ export const fixturePreferences: FixturePreferences[] = [
 		timezone: 'UTC',
 		dateFormat: 'relative',
 		reduceMotion: false,
-		highContrast: false,
 		paletteId: null,
 		typographyId: null,
 		radiusId: null,
@@ -266,7 +264,6 @@ export const fixturePreferences: FixturePreferences[] = [
 		timezone: 'Europe/Berlin',
 		dateFormat: 'absolute',
 		reduceMotion: true,
-		highContrast: false,
 		paletteId: null,
 		typographyId: null,
 		radiusId: null,
@@ -369,5 +366,3 @@ export const authFixture = {
 	auditLog: fixtureAuditLog,
 	edges: fixtureEdges,
 } as const;
-
-export type AuthFixture = typeof authFixture;

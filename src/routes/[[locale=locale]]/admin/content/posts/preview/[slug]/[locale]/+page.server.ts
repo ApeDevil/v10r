@@ -45,7 +45,6 @@ export const load: PageServerLoad = async ({ params }) => {
 		fileHash,
 		html: render.html,
 		embeds: render.embeds,
-		toc: render.toc,
 		drift,
 		supportedLocales: locales,
 	};

@@ -140,9 +140,6 @@ export const mcpCallStageEnum = mcpSchema.enum('mcp_call_stage', [
  *
  * `snapshot_miss` is an OPERATOR ALARM, not a caller error: the path is allowlisted but absent
  * from the build-time excerpt snapshot, meaning `mcp:excerpts:build` drifted in production.
- *
- * `tool_error` is a COVERAGE METER, not an outcome anyone should see: it means a handler returned
- * `isError` without a `diag`. Non-zero ⇒ an uninstrumented `errorResult` call site exists.
  */
 export const mcpCallOutcomeEnum = mcpSchema.enum('mcp_call_outcome', [
 	// stage: tool
@@ -154,7 +151,11 @@ export const mcpCallOutcomeEnum = mcpSchema.enum('mcp_call_outcome', [
 	'conflict', //     optimistic-concurrency loss on the admin demo CAS — NOT a client bug
 	'unknown_tool',
 	'threw',
-	'tool_error', //   isError with no diag — see above
+	// Inert since 2026-09-19: the classifier cannot produce it (a diag-less isError is always the
+	// transport's, i.e. unknown_tool/threw). It stays in the TYPE only because drizzle-kit cannot
+	// recreate an enum behind the `mcp_call_stage_outcome` CHECK (the text swap fails to validate
+	// the constraint), and a push-only repo does not hand-run ALTER TYPE. No row carries it.
+	'tool_error',
 	// stage: protocol
 	'unknown_method', // resources/list, prompts/list, ... — client interop probes worth reading
 	// stage: envelope
@@ -509,5 +510,4 @@ export const mcpCallLog = mcpSchema.table(
 	],
 );
 
-export type McpCallLogRow = typeof mcpCallLog.$inferSelect;
 export type McpCallLogInsert = typeof mcpCallLog.$inferInsert;

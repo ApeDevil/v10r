@@ -202,10 +202,3 @@ export async function writeTiered<T>(policy: CachePolicy, key: string, value: T)
 		.set(key, envelope, { ex: envelope.ttl + policy.staleFor })
 		.catch((err) => console.error(`[cache] write failed for ${key}:`, err));
 }
-
-/** Invalidate one key in both tiers. Takes the built key — it already carries the policy. */
-export async function dropTiered(key: string): Promise<void> {
-	localTier.delete(key);
-	if (!redis) return;
-	await redis.del(key).catch((err) => console.error(`[cache] drop failed for ${key}:`, err));
-}

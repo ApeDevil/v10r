@@ -28,8 +28,6 @@ type SessionState = {
 export function createSessionState(initialSession: Session | null) {
 	const expiresAt = initialSession?.expiresAt ? new Date(initialSession.expiresAt) : null;
 
-	const user = initialSession?.user ?? null;
-
 	const state = $state<SessionState>({
 		status: 'valid',
 		expiresAt,
@@ -91,20 +89,12 @@ export function createSessionState(initialSession: Session | null) {
 			return state.status;
 		},
 
-		get expiresAt() {
-			return state.expiresAt;
-		},
-
 		get timeRemaining() {
 			return state.timeRemaining;
 		},
 
 		get warningDismissed() {
 			return state.warningDismissed;
-		},
-
-		get user() {
-			return user;
 		},
 
 		dismissWarning() {
@@ -135,12 +125,6 @@ export function createSessionState(initialSession: Session | null) {
 
 		markExpired() {
 			state.status = 'expired';
-			state.timeRemaining = 0;
-			stopTimer();
-		},
-
-		markRevoked() {
-			state.status = 'revoked';
 			state.timeRemaining = 0;
 			stopTimer();
 		},

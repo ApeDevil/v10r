@@ -1,14 +1,6 @@
 <script lang="ts">
 import { cn } from '$lib/utils/cn';
-import {
-	type ChartAxisVariants,
-	type ChartGridVariants,
-	type ChartRootVariants,
-	chartAxisVariants,
-	chartGridVariants,
-	chartRootVariants,
-	chartTooltipVariants,
-} from './simple-chart';
+import { chartAxisVariants, chartGridVariants, chartRootVariants, chartTooltipVariants } from './simple-chart';
 
 interface ChartDataPoint {
 	label: string;
@@ -25,34 +17,12 @@ interface ChartSeries {
 interface Props {
 	type?: 'bar' | 'line' | 'area';
 	data: ChartSeries[] | ChartDataPoint[];
-	labels?: string[];
 	width?: number;
 	height?: number;
-	showGrid?: boolean;
-	showLabels?: boolean;
-	showTooltip?: boolean;
-	animate?: boolean;
 	class?: string;
-	size?: ChartRootVariants['size'];
-	gridStyle?: ChartGridVariants['style'];
-	axisWeight?: ChartAxisVariants['weight'];
 }
 
-let {
-	type = 'bar',
-	data,
-	labels = [],
-	width = 600,
-	height = 400,
-	showGrid = true,
-	showLabels = true,
-	showTooltip = true,
-	animate = true,
-	class: className,
-	size = 'md',
-	gridStyle = 'solid',
-	axisWeight = 'normal',
-}: Props = $props();
+let { type = 'bar', data, width = 600, height = 400, class: className }: Props = $props();
 
 // Tooltip state
 let tooltipVisible = $state(false);
@@ -93,8 +63,6 @@ const series = $derived.by(() => {
 });
 
 const allLabels = $derived.by(() => {
-	if (labels.length > 0) return labels;
-
 	// Extract from first series
 	const firstSeries = series[0];
 	if (!firstSeries) return [];
@@ -143,8 +111,6 @@ const gridLines = $derived.by(() => {
 
 // Handle tooltip
 function handleMouseMove(event: MouseEvent, seriesIndex: number, _dataIndex: number, value: number) {
-	if (!showTooltip) return;
-
 	const target = event.currentTarget as SVGElement;
 	const rect = target.getBoundingClientRect();
 
@@ -159,7 +125,6 @@ function handleMouseLeave() {
 }
 
 function handleFocus(event: FocusEvent, seriesIndex: number, _dataIndex: number, value: number) {
-	if (!showTooltip) return;
 	const target = event.currentTarget as SVGElement;
 	const rect = target.getBoundingClientRect();
 	const svgEl = target.closest('svg');
@@ -187,7 +152,7 @@ function renderBar(seriesIndex: number, dataIndex: number, value: number) {
 		height: h,
 		rx: 4,
 		fill: color,
-		style: animate ? `--chart-delay: ${dataIndex * 0.05}s` : '',
+		style: `--chart-delay: ${dataIndex * 0.05}s`,
 	};
 }
 
@@ -244,7 +209,7 @@ function getDataPoints(seriesIndex: number) {
 }
 </script>
 
-<div class={cn(chartRootVariants({ size }), className)}>
+<div class={cn(chartRootVariants(), className)}>
 	<svg
 		{width}
 		{height}
@@ -263,13 +228,11 @@ function getDataPoints(seriesIndex: number) {
 
 		<g transform="translate({padding.left}, {padding.top})">
 			<!-- Grid lines -->
-			{#if showGrid}
-				<g class={chartGridVariants({ style: gridStyle })}>
-					{#each gridLines as line}
-						<line x1="0" y1={line.y} x2={chartWidth} y2={line.y} />
-					{/each}
-				</g>
-			{/if}
+			<g class={chartGridVariants()}>
+				{#each gridLines as line}
+					<line x1="0" y1={line.y} x2={chartWidth} y2={line.y} />
+				{/each}
+			</g>
 
 			<!-- Axes -->
 			<line
@@ -283,15 +246,13 @@ function getDataPoints(seriesIndex: number) {
 			<line x1="0" y1="0" x2="0" y2={chartHeight} class="stroke-border" stroke-width="2" />
 
 			<!-- Y-axis labels -->
-			{#if showLabels}
-				<g class={chartAxisVariants({ weight: axisWeight })}>
-					{#each gridLines as line}
-						<text x="-10" y={line.y} text-anchor="end" dominant-baseline="middle">
-							{Math.round(line.value)}
-						</text>
-					{/each}
-				</g>
-			{/if}
+			<g class={chartAxisVariants()}>
+				{#each gridLines as line}
+					<text x="-10" y={line.y} text-anchor="end" dominant-baseline="middle">
+						{Math.round(line.value)}
+					</text>
+				{/each}
+			</g>
 
 			<!-- Area gradients -->
 			{#if type === 'area'}
@@ -329,7 +290,7 @@ function getDataPoints(seriesIndex: number) {
 							onmousemove={(e) => handleMouseMove(e, seriesIndex, dataIndex, value)}
 							onfocus={(e) => handleFocus(e, seriesIndex, dataIndex, value)}
 							onblur={handleMouseLeave}
-							class={cn('transition-opacity hover:opacity-80 focus-visible:opacity-80 cursor-pointer focus-visible:outline-none', animate && 'chart-animate-bar')}
+							class={cn('transition-opacity hover:opacity-80 focus-visible:opacity-80 cursor-pointer focus-visible:outline-none chart-animate-bar')}
 						/>
 					{/each}
 				{/each}
@@ -337,7 +298,7 @@ function getDataPoints(seriesIndex: number) {
 				<!-- Line/Area chart -->
 				{#each series as s, seriesIndex}
 					{@const pathProps = renderPath(seriesIndex)}
-					<path {...pathProps} class={animate ? 'chart-animate-line' : undefined} />
+					<path {...pathProps} class="chart-animate-line" />
 
 					<!-- Data point circles -->
 					{#each getDataPoints(seriesIndex) as point}
@@ -360,15 +321,13 @@ function getDataPoints(seriesIndex: number) {
 			{/if}
 
 			<!-- X-axis labels -->
-			{#if showLabels}
-				<g class={chartAxisVariants({ weight: axisWeight })}>
-					{#each allLabels as label, i}
-						<text x={scaleX(i)} y={chartHeight + 25} text-anchor="middle">
-							{label}
-						</text>
-					{/each}
-				</g>
-			{/if}
+			<g class={chartAxisVariants()}>
+				{#each allLabels as label, i}
+					<text x={scaleX(i)} y={chartHeight + 25} text-anchor="middle">
+						{label}
+					</text>
+				{/each}
+			</g>
 		</g>
 	</svg>
 
@@ -397,7 +356,7 @@ function getDataPoints(seriesIndex: number) {
 	</table>
 
 	<!-- Tooltip -->
-	{#if showTooltip && tooltipVisible}
+	{#if tooltipVisible}
 		<div
 			class={chartTooltipVariants()}
 			style="left: {tooltipX}px; top: {tooltipY}px; opacity: {tooltipVisible ? 1 : 0};"

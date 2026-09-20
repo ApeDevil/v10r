@@ -2,7 +2,7 @@
  * Random style generation and resolution.
  */
 
-import { getPalette, PALETTE_IDS, PALETTE_REGISTRY } from './palette-registry';
+import { getPalette, PALETTE_IDS } from './palette-registry';
 import { getRadius, RADIUS_IDS } from './radius-registry';
 import type { PaletteId, RadiusId, ResolvedStyle, StyleConfig, TypographyId } from './types';
 import { getTypography, TYPOGRAPHY_IDS } from './typography-registry';
@@ -14,8 +14,6 @@ interface GenerateOptions {
 	excludeTypographyIds?: TypographyId[];
 	/** Exclude these radius IDs from selection */
 	excludeRadiusIds?: RadiusId[];
-	/** Prefer high-contrast palettes (for prefers-contrast: more) */
-	highContrast?: boolean;
 }
 
 function pickRandom<T>(items: readonly T[]): T {
@@ -27,15 +25,7 @@ function pickRandom<T>(items: readonly T[]): T {
  * Excludes provided IDs to avoid same-style re-rolls.
  */
 export function generateRandomStyle(opts?: GenerateOptions): StyleConfig {
-	let palettePool: readonly PaletteId[];
-
-	if (opts?.highContrast) {
-		// Only pick from high-contrast palettes
-		const hcIds = PALETTE_REGISTRY.filter((p) => p.highContrast).map((p) => p.id);
-		palettePool = hcIds.length > 0 ? hcIds : PALETTE_IDS;
-	} else {
-		palettePool = PALETTE_IDS;
-	}
+	let palettePool: readonly PaletteId[] = PALETTE_IDS;
 
 	if (opts?.excludePaletteIds?.length) {
 		const filtered = palettePool.filter((id) => !opts.excludePaletteIds?.includes(id));

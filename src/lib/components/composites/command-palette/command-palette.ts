@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 
 export const commandPaletteOverlayVariants = cva(['fixed inset-0 z-overlay bg-black/50']);
 
@@ -8,6 +8,3 @@ export const commandPaletteContentVariants = cva([
 	'max-h-[calc(75dvh-1rem)] overflow-y-auto',
 	'border',
 ]);
-
-export type CommandPaletteOverlayVariants = VariantProps<typeof commandPaletteOverlayVariants>;
-export type CommandPaletteContentVariants = VariantProps<typeof commandPaletteContentVariants>;

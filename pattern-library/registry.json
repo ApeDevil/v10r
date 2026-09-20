@@ -1,6 +1,6 @@
 {
 	"version": "2.1.0",
-	"note": "Two-tier pattern registry for the v10r pattern library — the single source of truth every derived surface is built from: the README Pattern Index, the /docs/pattern-library section (catalog + one page per record), both MCP runtimes, /showcases/mcp, and Vely's pattern tool. Deep records are full emulation cards (invariants + emulation notes required); light records are index rows (pointers only). Every path is repo-relative and validated by mcp/validate-registry.ts. Records point to docs and code — they do not duplicate explanations.",
+	"note": "Two-tier pattern registry for the v10r pattern library — the single source of truth every derived surface is built from: the README Pattern Index, the /docs/pattern-library section (catalog + one page per record), both MCP runtimes, /showcases/mcp, and Vely's pattern tool. Deep records are full emulation cards (invariants + emulation notes required); light records are index rows (pointers only). Every path is repo-relative and validated by pattern-library/validate.ts. Records point to docs and code — they do not duplicate explanations.",
 	"groups": [
 		{
 			"id": "foundations",
@@ -1358,8 +1358,12 @@
 			"depends_on": [],
 			"docs": [
 				{
+					"path": "docs/foundation/explosive-discovery.md",
+					"note": "The principle: two axes (depth on a page, revelation over a journey), invariants, accessibility"
+				},
+				{
 					"path": "docs/blueprint/design/explosive-discovery.md",
-					"note": "The heuristic: objective, choice trigger, context first, projections, review signals, output shape, invariants"
+					"note": "The review method: objective, choice trigger, context first, projections, review signals, output shape"
 				},
 				{
 					"path": "docs/blueprint/design/README.md",
@@ -2363,13 +2367,13 @@
 			],
 			"showcases": [],
 			"invariants": [
-				"Coverage source of truth is mcp/patterns.registry.json — the README region between the PATTERN-INDEX markers is generated and must never be hand-edited.",
+				"Coverage source of truth is pattern-library/registry.json — the README region between the PATTERN-INDEX markers is generated and must never be hand-edited.",
 				"Every row must point to docs AND code AND (where possible) a live proof route — a row without proof is a claim, not a pattern.",
 				"patterns:check in the validate gate blocks shipping a stale index; bun run patterns:build (or vr ref) regenerates it."
 			],
 			"emulation_notes": [
 				"Anchor the human-readable index to a machine-readable registry and GENERATE it — a hand-maintained twin drifts (this one did: its own row-count claim went stale before the generator existed).",
-				"Showcase-route cells are validated by mcp/validate-registry.ts against src/lib/showcases/catalog/registry.ts membership, not mere directory existence."
+				"Showcase-route cells are validated by pattern-library/validate.ts against src/lib/showcases/catalog/registry.ts membership, not mere directory existence."
 			],
 			"risk": "low — documentation artifact",
 			"maturity": "proven",
@@ -3531,12 +3535,12 @@
 		{
 			"id": "admin-privacy-audit-log",
 			"tier": "light",
-			"title": "Audit log, announcements, feature flags",
+			"title": "Audit log and announcements",
 			"category": "admin-privacy",
-			"summary": "Admin-side systems for recording an audit trail of privileged actions, publishing site announcements, and toggling feature flags, all under the admin server module.",
-			"when_to_use": "Use when an admin action needs to be logged, a message needs to be broadcast to users, or a feature needs a togglable flag.",
-			"capabilities": ["audit log", "announcements", "feature flags"],
-			"keywords": ["audit log", "feature flags", "announcements", "admin"],
+			"summary": "Admin-side systems for recording an audit trail of privileged actions and publishing site announcements, all under the admin server module.",
+			"when_to_use": "Use when an admin action needs to be logged or a message needs to be broadcast to users.",
+			"capabilities": ["audit log", "announcements"],
+			"keywords": ["audit log", "announcements", "admin"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3636,7 +3640,7 @@
 				},
 				{
 					"path": "src/lib/server/ai/policy/governor.ts",
-					"note": "requiresApproval(risk) + shouldRequirePlan"
+					"note": "requiresApproval(risk) — the stated rule; shouldRequirePlan lives in capabilities/desk-plan.ts"
 				},
 				{
 					"path": "src/lib/server/ai/tool-leak-guard.ts",
@@ -4804,10 +4808,10 @@
 			"tier": "light",
 			"title": "In-app SSE stream & notification center",
 			"category": "notifications",
-			"summary": "A container-mode in-memory connection map pushes notifications over SSE in real time (falling back to invalidate()-based polling on Vercel serverless) and feeds a Svelte 5 runes notification-center state.",
+			"summary": "One SSE route serves notifications in real time over two transports: an in-memory connection map on a persistent host, Redis pub/sub on Vercel serverless; the account pages re-run their load via invalidate() instead of holding a stream open.",
 			"when_to_use": "Use when the UI needs near-real-time in-app notification delivery without standing up a third-party pub/sub service.",
 			"capabilities": ["sse stream", "notification center"],
-			"keywords": ["sse", "connection map", "runes state"],
+			"keywords": ["sse", "connection map", "redis pub/sub"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4819,7 +4823,7 @@
 					"path": "src/lib/server/notifications/stream.ts"
 				},
 				{
-					"path": "src/lib/state/notifications.svelte.ts"
+					"path": "src/routes/api/notifications/stream/+server.ts"
 				}
 			],
 			"tests": [],

@@ -47,14 +47,32 @@ const RETIRED: RetiredTerm[] = [
 		term: 'nRAG',
 		use: 'retrieval',
 		allow: ['docs/naming.md', 'docs/blueprint/ai/knowledge-base.md'],
-		why: 'naming.md quotes it; Ref-ToDo records the Neo4j label rename; knowledge-base.md is the retirement record',
+		why: 'naming.md quotes it; knowledge-base.md is the retirement record',
 	},
 	{ term: 'RetrieverLane', use: 'RetrieverId', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{ term: 'TelemetryLane', use: 'TelemetryOrigin', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{ term: 'ProbeLane', use: 'ProbeCorpus', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{ term: 'RetrievalLayer', use: 'RetrievalCorpus', allow: ['docs/naming.md'], why: 'quoted as retired' },
-	{ term: 'PIPELINE_REGISTRY', use: 'RETRIEVAL_STEPS', allow: ['docs/naming.md'], why: 'quoted as retired' },
+	{ term: 'PIPELINE_REGISTRY', use: 'RetrievalStepId', allow: ['docs/naming.md'], why: 'quoted as retired' },
 	{ term: 'NotificationProvider', use: 'DeliveryChannel', allow: ['docs/naming.md'], why: 'quoted as retired' },
+	{
+		term: 'Progressive Revelation',
+		use: 'Explosive Discovery (docs/foundation/explosive-discovery.md, journey axis)',
+		allow: ['docs/naming.md'],
+		why: 'quoted as retired',
+	},
+	{
+		term: 'ProgRev',
+		use: 'Explosive Discovery (docs/foundation/explosive-discovery.md, journey axis)',
+		allow: ['docs/naming.md'],
+		why: 'quoted as retired',
+	},
+	{
+		term: 'progressive-revelation',
+		use: 'explosive-discovery (the foundation doc and its slug)',
+		allow: ['docs/naming.md'],
+		why: 'quoted as retired',
+	},
 	{
 		term: 'NotificationService',
 		use: 'sendNotification',
@@ -65,13 +83,13 @@ const RETIRED: RetiredTerm[] = [
 		term: 'workbench',
 		use: 'dock',
 		allow: ['docs/naming.md'],
-		why: 'naming.md quotes retired terms; Ref-ToDo explains why the Neo4j projection must be re-run',
+		why: 'naming.md quotes retired terms',
 	},
 	{
 		term: 'conversation_step',
 		use: 'model_call',
-		allow: ['docs/naming.md', 'scripts/db/rename-conversation-step.ts', 'docs/blueprint/ai/turn-trace.md'],
-		why: 'naming.md quotes retired terms; the plan and the trace doc record the rename; the rename script is the DDL that performs it',
+		allow: ['docs/naming.md', 'docs/blueprint/ai/turn-trace.md'],
+		why: 'naming.md quotes retired terms; the trace doc records the rename',
 	},
 	{
 		term: 'conversationStep',
@@ -148,8 +166,8 @@ const RETIRED: RetiredTerm[] = [
 	{
 		term: 'llmwiki',
 		use: 'corpus map (retrieval.corpus_map, the project-map capability)',
-		allow: ['docs/naming.md', 'docs/blueprint/ai/knowledge-base.md', 'scripts/db/rename-llmwiki-page.ts'],
-		why: 'naming.md quotes retired terms; the plan, Ref-ToDo and knowledge-base.md are the retirement record; the rename script is the DDL that performs the retirement',
+		allow: ['docs/naming.md', 'docs/blueprint/ai/knowledge-base.md'],
+		why: 'naming.md quotes retired terms; knowledge-base.md is the retirement record',
 	},
 ];
 
@@ -165,11 +183,6 @@ const DUPLICATE_DECLARATIONS_ALLOWED: Record<string, string> = {
 	// Per-domain outcome shapes with different fields, following the `<Concept>Result`
 	// convention. Documents vs images ingest nothing alike.
 	IngestResult: 'per-domain result shape, distinct fields',
-	// The stdio MCP server runs under bare Bun with no `$lib` alias and no bundler, so it
-	// cannot import the hosted transport's types. `mcp/patterns/parity.test.ts` is what keeps
-	// the two copies honest; collapsing them would break the container instead.
-	ToolDef: 'stdio MCP cannot import $lib — guarded by patterns/parity.test.ts',
-	ToolResult: 'stdio MCP cannot import $lib — guarded by patterns/parity.test.ts',
 };
 
 const EXPORTED_TYPE = /^export (?:type|interface|class|enum) ([A-Z][A-Za-z0-9_]*)\b/gm;
@@ -509,10 +522,8 @@ describe('naming gate', () => {
 	/** The package scripts are vocabulary too — `db:rag-*` outlived the schema it named. */
 	it('no package script names a retired subsystem', () => {
 		const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
-		const offenders = Object.keys(pkg.scripts).filter(
-			(name) => /\brag\b/.test(name) && name !== 'db:rename-rag-schema',
-		);
-		expect(offenders, 'db:rename-rag-schema keeps its name: it describes the migration it performs').toEqual([]);
+		const offenders = Object.keys(pkg.scripts).filter((name) => /\brag\b/.test(name));
+		expect(offenders, 'the pipeline is `retrieval`').toEqual([]);
 	});
 });
 describe('test lane naming', () => {

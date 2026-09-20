@@ -233,7 +233,7 @@ async function executeDeleteAll() {
 	}
 
 	.error-state {
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 	}
 
 	/* Usage bar — matches Context tab token bar */
@@ -259,11 +259,11 @@ async function executeDeleteAll() {
 	}
 
 	.usage-fill.warning {
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 60%, transparent);
+		background: color-mix(in srgb, var(--color-warning) 60%, transparent);
 	}
 
 	.usage-fill.error {
-		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 70%, transparent);
+		background: color-mix(in srgb, var(--color-error-fg) 70%, transparent);
 	}
 
 	.usage-label {
@@ -273,20 +273,20 @@ async function executeDeleteAll() {
 	}
 
 	.usage-label.warning {
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 	}
 
 	.usage-label.error {
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 	}
 
 	.warning-strip {
 		padding: 8px 12px;
 		border-radius: var(--radius-md);
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 8%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 20%, transparent);
+		background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-warning) 20%, transparent);
 		font-size: 12px;
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 	}
 
 	.empty-state {
@@ -351,22 +351,22 @@ async function executeDeleteAll() {
 		gap: 8px;
 		padding: 8px 12px;
 		border-radius: var(--radius-md);
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 8%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 20%, transparent);
+		background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-warning) 20%, transparent);
 	}
 
 	.confirm-strip.danger {
-		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 8%, transparent);
-		border-color: color-mix(in srgb, var(--color-error-fg, #ef4444) 20%, transparent);
+		background: color-mix(in srgb, var(--color-error-fg) 8%, transparent);
+		border-color: color-mix(in srgb, var(--color-error-fg) 20%, transparent);
 	}
 
 	.confirm-text {
 		font-size: 12px;
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 	}
 
 	.confirm-strip.danger .confirm-text {
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 	}
 
 	.confirm-actions {
@@ -435,8 +435,8 @@ async function executeDeleteAll() {
 	}
 
 	.conv-delete:hover {
-		color: var(--color-error-fg, #ef4444);
-		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 8%, transparent);
+		color: var(--color-error-fg);
+		background: color-mix(in srgb, var(--color-error-fg) 8%, transparent);
 	}
 
 	/* Delete all */
@@ -448,7 +448,7 @@ async function executeDeleteAll() {
 		border: none;
 		background: none;
 		font-size: 12px;
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 		cursor: pointer;
 	}
 

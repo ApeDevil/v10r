@@ -37,7 +37,6 @@ export const adminNavItem: NavItem = {
 		adminChild('/admin/perf', m.nav_admin_perf),
 		adminChild('/admin/audit', m.nav_admin_audit),
 		adminChild('/admin/users', m.nav_admin_users),
-		adminChild('/admin/flags', m.nav_admin_flags),
 		adminChild('/admin/ai', m.nav_admin_ai),
 		adminChild('/admin/jobs', m.nav_admin_jobs),
 		adminChild('/admin/notifications', m.nav_admin_notifications),

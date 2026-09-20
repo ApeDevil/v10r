@@ -23,7 +23,6 @@ const {
 	refreshConversationTokens,
 	saveMessages,
 	saveTurnTrace,
-	updateConversationTitle,
 	updateMessageContent,
 } = await import('./mutations');
 const { getTurn, resolveGroundingBodies } = await import('./queries');
@@ -218,24 +217,6 @@ describe('AI mutations', () => {
 			expect(await db.select().from(message)).toHaveLength(0);
 			const [row] = await db.select().from(conversation);
 			expect(row.updatedAt.getTime()).toBe(conv.updatedAt.getTime());
-		});
-	});
-
-	describe('updateConversationTitle', () => {
-		it('updates title for own conversation', async () => {
-			const conv = await createConversation(USER_A.id);
-			await updateConversationTitle(conv.id, USER_A.id, 'Updated Title');
-
-			const [row] = await db.select().from(conversation);
-			expect(row.title).toBe('Updated Title');
-		});
-
-		it('does not update for wrong userId', async () => {
-			const conv = await createConversation(USER_A.id, 'Original');
-			await updateConversationTitle(conv.id, USER_B.id, 'Hacked');
-
-			const [row] = await db.select().from(conversation);
-			expect(row.title).toBe('Original');
 		});
 	});
 

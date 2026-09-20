@@ -64,37 +64,5 @@ export const actions: Actions = {
 				uaHash,
 			}),
 		);
-
-		return { success: true, tier };
-	},
-
-	clear: async (event) => {
-		const { request, cookies } = event;
-		const ip = getClientIp(event);
-		const { success } = await limiter.limit(ipLimitKey(ip));
-		if (!success) return fail(429, { error: 'Rate limited' });
-
-		const previousRaw = cookies.get(CONSENT_COOKIE);
-		const previousTier = previousRaw ? parseConsentTier(previousRaw) : null;
-
-		cookies.delete(CONSENT_COOKIE, { path: '/' });
-
-		if (previousTier) {
-			const ua = request.headers.get('user-agent') ?? '';
-			const visitorId = await deriveVisitorId(ip ?? '', ua);
-			const uaHash = await deriveUaHash(ua);
-
-			deferAfterResponse('consent:record-withdrawal', () =>
-				recordConsentEvent({
-					visitorId,
-					action: 'withdraw',
-					tierBefore: previousTier,
-					tierAfter: 'necessary',
-					uaHash,
-				}),
-			);
-		}
-
-		return { success: true };
 	},
 };

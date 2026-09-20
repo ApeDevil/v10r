@@ -1,11 +1,7 @@
-import type { ConfidenceTier, CostEstimate, ImageAnalysis, MetadataFieldKey } from '$lib/schemas/image-metadata';
+import type { CostEstimate, ImageAnalysis } from '$lib/schemas/image-metadata';
 
 /** EXIF/technical fields parsed from the ORIGINAL bytes, before stripping. */
 export interface ExtractedExif {
-	width: number | null;
-	height: number | null;
-	make: string | null;
-	model: string | null;
 	dateTimeOriginal: string | null;
 	/** Signed decimal degrees, or null. Sensitive — surfaced as an opt-in field only. */
 	gps: { lat: number; lng: number } | null;
@@ -50,5 +46,3 @@ export type ExtractResult =
 			cost: CostEstimate | null;
 	  }
 	| { ok: false; reason: ExtractFailureReason; message: string };
-
-export type ConfidenceMap = Record<MetadataFieldKey, ConfidenceTier>;

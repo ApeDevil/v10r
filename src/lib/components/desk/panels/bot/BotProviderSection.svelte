@@ -139,7 +139,7 @@ function formatCooldown(isoString: string): string {
 	}
 
 	.error-state {
-		color: var(--color-error-fg, #ef4444);
+		color: var(--color-error-fg);
 	}
 
 	.scope-group {
@@ -249,20 +249,20 @@ function formatCooldown(isoString: string): string {
 	}
 
 	.status-badge.cooldown {
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 12%, transparent);
-		color: var(--color-warning, #f59e0b);
+		background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+		color: var(--color-warning);
 	}
 
 	.warning-strip {
 		padding: 8px 12px;
 		border-radius: var(--radius-md);
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 8%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 20%, transparent);
+		background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-warning) 20%, transparent);
 	}
 
 	.warning-text {
 		font-size: 12px;
-		color: var(--color-warning, #f59e0b);
+		color: var(--color-warning);
 	}
 
 	.reset-link {

@@ -79,7 +79,7 @@ Cony owns both lanes. The voice, clarity, and resonance standards are identical.
 **Velociraptor (v10r)**: SvelteKit 2 + Svelte 5:
 
 1. **UI strings** — Paraglide JS, files at `messages/{en, other locales}.json`, compiled to type-safe functions. Every key change is a three-locale change.
-2. **DB content** — `source` (en, NOT NULL) + `name_i18n` JSONB partial map for non-base locales, resolved by `tc()` in `src/lib/i18n/content.ts`. Admin editorial surface at `src/routes/admin/content/`.
+2. **DB content** — `source` (en, NOT NULL) + `name_i18n` JSONB partial map for non-base locales, resolved by `tc()` in `src/lib/i18n/translate.ts`. Admin editorial surface at `src/routes/[[locale=locale]]/admin/content/`.
 
 Where copy actually lives today:
 - **UI strings (compile-time)** — `messages/{en, other locales}.json`, compiled into `src/lib/paraglide/` by Paraglide.

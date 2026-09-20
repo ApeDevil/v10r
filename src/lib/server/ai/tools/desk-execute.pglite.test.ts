@@ -32,7 +32,6 @@ const USER = makeUser({ id: 'user-ai-writer' });
 const ctx: Parameters<typeof executeDeskToolCall>[0] = {
 	userId: USER.id,
 	scopes: ['desk:write', 'desk:create'],
-	actor: 'proposal-replay',
 };
 const execCtx = () => ({ toolCallId: 'tc', messages: [], abortSignal: new AbortController().signal });
 

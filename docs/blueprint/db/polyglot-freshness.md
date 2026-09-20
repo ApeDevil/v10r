@@ -2,6 +2,8 @@
 
 Cross-database reference integrity in a multi-store architecture.
 
+> **Illustrative blueprint.** The outbox, reconciliation job, `services/*` modules and cron routes in the snippets are a reference design, not v10r files. What ships today: account deletion fans out in `src/lib/server/privacy/`, graph writes go through `cypher()` in `src/lib/server/graph/`, and the notification outbox lives in `src/lib/server/notifications/outbox.ts`.
+
 ---
 
 ## The Problem

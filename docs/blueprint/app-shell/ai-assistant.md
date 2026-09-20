@@ -289,7 +289,7 @@ const sanitizedMessage = sanitizeInput(message, {
 ```
 
 ```typescript
-// src/lib/server/ai/sanitize.ts
+// Illustrative — the shipped guards are src/lib/server/ai/guard.ts and tool-leak-guard.ts
 export function sanitizeInput(input: string, options: SanitizeOptions): string {
   let sanitized = input;
 

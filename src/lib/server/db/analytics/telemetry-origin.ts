@@ -37,9 +37,9 @@
  */
 
 /**
- * Dev-build scope class. Deliberately written to be valid in BOTH POSIX (for
- * Postgres `~`) and JavaScript regex, because the SQL filter and the TypeScript
- * classifier must never diverge — this string is what keeps them identical.
+ * Dev-build scope class. Written to be valid in BOTH POSIX (for Postgres `~`) and
+ * JavaScript regex: the SQL filter in `perf-queries.ts` is the one consumer, and the
+ * test suite proves the pattern's boundary semantics by compiling it as a JS regex.
  *
  * The leading `(^|[.# >])` is load-bearing: without a boundary this also matches
  * the `s-` inside no prefix at all, and more importantly it must NOT match the
@@ -54,33 +54,4 @@ export const DEV_SCOPE_PATTERN = '(^|[.# >])s-[A-Za-z0-9_-]{10,}';
 /** Production-build scope prefix. Plain substring — no regex needed. */
 export const PROD_SCOPE_MARKER = 'svelte-';
 
-const DEV_SCOPE_RE = new RegExp(DEV_SCOPE_PATTERN);
-
 export type TelemetryOrigin = 'prod' | 'dev' | 'unknown';
-
-/** Classify a single attribution target, or `null` when it carries no scope class. */
-export function classifyTarget(target: string | null | undefined): 'dev' | 'prod' | null {
-	if (!target) return null;
-	if (DEV_SCOPE_RE.test(target)) return 'dev';
-	if (target.includes(PROD_SCOPE_MARKER)) return 'prod';
-	return null;
-}
-
-/**
- * Classify a whole session from the targets it produced.
- *
- * Dev wins over prod when both appear, which is the conservative direction: one
- * dev marker proves a developer's browser was involved, whereas a prod marker
- * only proves one component was compiled by a prod build. Losing a real session
- * to over-filtering costs a sample; keeping a dev session costs the accuracy of
- * every percentile it lands in.
- */
-export function classifyOrigin(targets: readonly (string | null | undefined)[]): TelemetryOrigin {
-	let sawProd = false;
-	for (const target of targets) {
-		const verdict = classifyTarget(target);
-		if (verdict === 'dev') return 'dev';
-		if (verdict === 'prod') sawProd = true;
-	}
-	return sawProd ? 'prod' : 'unknown';
-}

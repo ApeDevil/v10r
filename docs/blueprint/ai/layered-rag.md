@@ -157,7 +157,7 @@ A question that asks **where** something lives is answered by a verified path �
 
 ### Citation chips (UI)
 
-`src/lib/components/desk/panels/bot/CitationChip.svelte` + `chat/citation-types.ts`. A native `<a>` to `localizeHref(path) + anchor`, ≥44px touch target, surface badge, EN-fallback badge. The orchestrator builds `metadata.catalogSources` (only rows the answer text references); `ChatMessage.svelte` renders a "Related surfaces" chip row below the answer.
+`src/lib/components/composites/citation/CitationChip.svelte` + `citation-types.ts`. A native `<a>` to `localizeHref(path) + anchor`, ≥44px touch target, surface badge, EN-fallback badge. The orchestrator builds `metadata.catalogSources` (only rows the answer text references); `ChatMessage.svelte` renders a "Related surfaces" chip row below the answer.
 
 ---
 
@@ -229,7 +229,7 @@ The Neo4j RAG graph is **per-tenant**. A read returns only the caller's own node
 | `:Chunk` | id | Carries `ownerId`. |
 | `:Entity` | `{name, ownerId}` | Composite — the same entity name under two owners is two distinct nodes. (Was name-only, which merged entities across tenants.) |
 
-`scripts/db/setup-neo4j.ts` enforces this: the old name-only `entity_name_unique` constraint is dropped; `entity_name_owner_unique (name, ownerId)` is the composite uniqueness, with `entity_owner` and `chunk_owner` indexes for the scoped reads.
+`scripts/db/setup-neo4j.ts` enforces this: `entity_name_owner_unique (name, ownerId)` is the composite uniqueness, with `entity_owner` and `chunk_owner` indexes for the scoped reads.
 
 ### Scoped reads
 

@@ -12,8 +12,6 @@ const event = () => ({ locals: {} }) as unknown as LoadEvent;
 
 type LoadData = {
 	state: { message: string; color: string; version: number; updatedAt: string; updatedBy: string | null } | null;
-	colors: string[];
-	maxMessageLength: number;
 	unavailable: boolean;
 };
 const loadData = async (): Promise<LoadData> => (await load(event())) as unknown as LoadData;
@@ -39,8 +37,6 @@ describe('/admin/mcp +page.server load', () => {
 		svc.getDemoState.mockResolvedValue(VIEW);
 		const data = await loadData();
 		expect(data.state).toEqual(VIEW);
-		expect(data.colors).toContain('blue');
-		expect(data.maxMessageLength).toBe(500);
 		expect(data.unavailable).toBe(false);
 	});
 

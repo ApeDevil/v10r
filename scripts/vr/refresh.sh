@@ -15,7 +15,7 @@ usage() {
 	cat <<'EOF'
 vr refresh (ref) — refresh derived surfaces (`bun run refresh`) in the repo's container.
 
-Chain: mcp:validate → patterns:build → mcp:excerpts:build → db:ingest-docs.
+Chain: patterns:validate → patterns:build → mcp:excerpts:build → db:ingest-docs.
 patterns:build regenerates the README Pattern Index and the docs/pattern-library/
 pages from the registry; the ingest is content-hash idempotent — only changed
 docs re-embed.

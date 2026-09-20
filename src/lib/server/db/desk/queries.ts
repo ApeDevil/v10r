@@ -179,34 +179,6 @@ export async function getFolder(id: string, userId: string) {
 	return row ?? null;
 }
 
-/** Count subfolders + files inside a folder (for delete confirmation). Skips soft-deleted files. */
-export async function countFolderContents(id: string, userId: string) {
-	const [[subfolders], [files]] = await Promise.all([
-		db
-			.select({ count: count() })
-			.from(folder)
-			.where(and(eq(folder.parentId, id), eq(folder.userId, userId))),
-		db
-			.select({ count: count() })
-			.from(file)
-			.where(and(eq(file.folderId, id), eq(file.userId, userId), isNull(file.deletedAt))),
-	]);
-	return (subfolders?.count ?? 0) + (files?.count ?? 0);
-}
-
-/** Get all files with ai_context = true for a user. Skips soft-deleted. */
-export async function getAiContextFiles(userId: string) {
-	return db
-		.select({
-			id: file.id,
-			type: file.type,
-			name: file.name,
-			folderId: file.folderId,
-		})
-		.from(file)
-		.where(and(eq(file.userId, userId), eq(file.aiContext, true), isNull(file.deletedAt)));
-}
-
 /**
  * Global: every ai_context file across all users (with owner + freshness), for the
  * deskbot retrieval sync job to reconcile against the retrieval corpus. Skips soft-deleted.

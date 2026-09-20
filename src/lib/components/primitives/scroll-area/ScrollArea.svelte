@@ -18,10 +18,6 @@ interface Props {
 	 */
 	orientation?: 'vertical' | 'horizontal' | 'both';
 	/**
-	 * Scrollbar size variant
-	 */
-	size?: ScrollbarVariants['size'];
-	/**
 	 * Time in milliseconds before scrollbars hide
 	 */
 	scrollHideDelay?: number;
@@ -35,14 +31,7 @@ interface Props {
 	children?: Snippet;
 }
 
-let {
-	type = 'hover',
-	orientation = 'vertical',
-	size = 'md',
-	scrollHideDelay = 600,
-	class: className,
-	children,
-}: Props = $props();
+let { type = 'hover', orientation = 'vertical', scrollHideDelay = 600, class: className, children }: Props = $props();
 
 const showVertical = $derived(orientation === 'vertical' || orientation === 'both');
 const showHorizontal = $derived(orientation === 'horizontal' || orientation === 'both');
@@ -58,7 +47,7 @@ const showHorizontal = $derived(orientation === 'horizontal' || orientation === 
 	{#if showVertical}
 		<ScrollAreaPrimitive.Scrollbar
 			orientation="vertical"
-			class={cn(scrollbarVariants({ orientation: 'vertical', size }))}
+			class={cn(scrollbarVariants({ orientation: 'vertical' }))}
 		>
 			<ScrollAreaPrimitive.Thumb class={SCROLL_THUMB_CLASS} />
 		</ScrollAreaPrimitive.Scrollbar>
@@ -67,7 +56,7 @@ const showHorizontal = $derived(orientation === 'horizontal' || orientation === 
 	{#if showHorizontal}
 		<ScrollAreaPrimitive.Scrollbar
 			orientation="horizontal"
-			class={cn(scrollbarVariants({ orientation: 'horizontal', size }))}
+			class={cn(scrollbarVariants({ orientation: 'horizontal' }))}
 		>
 			<ScrollAreaPrimitive.Thumb class={SCROLL_THUMB_CLASS} />
 		</ScrollAreaPrimitive.Scrollbar>

@@ -3,7 +3,6 @@ import { desc, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import {
 	documentVault,
-	networkRegistry,
 	showcaseAuditLog,
 	temporalRecord,
 	typeSpecimen,
@@ -25,8 +24,6 @@ import { checkRowLimit } from '$lib/server/showcases/row-limit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const start = performance.now();
-
 	try {
 		const [mutableRows, versionHistory, activeDocuments, deletedDocuments, appendLog, temporalRows] = await Promise.all(
 			[
@@ -39,11 +36,6 @@ export const load: PageServerLoad = async () => {
 			],
 		);
 
-		// Also load append-only network registry
-		const appendOnlyRecords = await db.select().from(networkRegistry).orderBy(desc(networkRegistry.registeredAt));
-
-		const queryMs = Math.round((performance.now() - start) * 100) / 100;
-
 		return {
 			title: 'Mutability - Relational - Showcases',
 			mutableRows,
@@ -51,9 +43,7 @@ export const load: PageServerLoad = async () => {
 			activeDocuments,
 			deletedDocuments,
 			appendLog,
-			appendOnlyRecords,
 			temporalRows,
-			queryMs,
 		};
 	} catch (err) {
 		return {
@@ -62,9 +52,7 @@ export const load: PageServerLoad = async () => {
 			activeDocuments: [],
 			deletedDocuments: [],
 			appendLog: [],
-			appendOnlyRecords: [],
 			temporalRows: [],
-			queryMs: Math.round((performance.now() - start) * 100) / 100,
 			error: err instanceof Error ? err.message : 'Unknown database error',
 		};
 	}

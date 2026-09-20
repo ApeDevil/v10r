@@ -1,13 +1,13 @@
 /**
- * Canonical syntax definitions for custom markdown directives.
- * Shared between remark (server rendering) and CodeMirror (editor highlighting).
- * Adding a new syntax = add one entry here + one embed component.
+ * Canonical syntax definitions for custom markdown directives, consumed by the remark adapter
+ * (server rendering). Adding a new syntax = one entry here + one embed component registered in
+ * `$lib/components/blog/embeds/registry.ts` — a directive with no component renders nothing.
  */
 
 export interface SyntaxDefinition {
 	/** remark-directive node type */
 	directive: 'text' | 'leaf' | 'container';
-	/** Directive name used in markdown (e.g., `::chart` or `:::callout`) */
+	/** Directive name used in markdown (e.g., `::scene` or `:::callout`) */
 	name: string;
 	/** Attributes that must be present */
 	requiredAttrs: string[];
@@ -28,14 +28,6 @@ export const syntaxes = {
 		hasContent: true,
 		embedKind: 'callout',
 	},
-	chart: {
-		directive: 'leaf',
-		name: 'chart',
-		requiredAttrs: ['src'],
-		optionalAttrs: ['type', 'height'],
-		hasContent: false,
-		embedKind: 'chart',
-	},
 	scene: {
 		directive: 'leaf',
 		name: 'scene',
@@ -44,14 +36,4 @@ export const syntaxes = {
 		hasContent: false,
 		embedKind: 'scene',
 	},
-	video: {
-		directive: 'leaf',
-		name: 'video',
-		requiredAttrs: ['src'],
-		optionalAttrs: ['title', 'poster'],
-		hasContent: false,
-		embedKind: 'video',
-	},
 } as const satisfies Record<string, SyntaxDefinition>;
-
-export type SyntaxName = keyof typeof syntaxes;

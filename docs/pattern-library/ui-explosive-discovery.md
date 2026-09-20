@@ -16,7 +16,8 @@ A review heuristic, not a rule: when a menu, toolbar or page offers more than ~5
 
 ## Docs
 
-- [docs/blueprint/design/explosive-discovery.md](/docs/blueprint/design/explosive-discovery) — The heuristic: objective, choice trigger, context first, projections, review signals, output shape, invariants ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/explosive-discovery.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/explosive-discovery.md))
+- [docs/foundation/explosive-discovery.md](/docs/foundation/explosive-discovery) — The principle: two axes (depth on a page, revelation over a journey), invariants, accessibility ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/foundation/explosive-discovery.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/foundation/explosive-discovery.md))
+- [docs/blueprint/design/explosive-discovery.md](/docs/blueprint/design/explosive-discovery) — The review method: objective, choice trigger, context first, projections, review signals, output shape ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/explosive-discovery.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/explosive-discovery.md))
 - `docs/blueprint/design/README.md` — Design principle 3 (progressive disclosure) — what this heuristic refines ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/README.md))
 
 ## Code

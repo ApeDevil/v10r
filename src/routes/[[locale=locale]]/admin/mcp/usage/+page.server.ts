@@ -4,7 +4,6 @@ import {
 	countSuppressedGaps,
 	GAP_MIN_DISTINCT_CLIENTS,
 	getCapabilityGaps,
-	getClientBreakdown,
 	getHealthSummary,
 	getLatency,
 	getPrivateCalls,
@@ -69,7 +68,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		// the one that touches retained third-party text — worth keeping off the critical path.
 		gaps: safeDeferPromise(getCapabilityGaps(since), []),
 		suppressedGaps: safeDeferPromise(countSuppressedGaps(since), 0),
-		clients: safeDeferPromise(getClientBreakdown(since), []),
 		unsupportedVersions: safeDeferPromise(getUnsupportedVersionRequests(since), []),
 		// The private lane's list panels — bounded previews, still raw-log scans, so deferred too.
 		privateCalls: safeDeferPromise(getPrivateCalls(since), []),

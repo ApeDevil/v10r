@@ -7,13 +7,9 @@ import { cn } from '$lib/utils/cn';
 interface Props {
 	value?: string[];
 	placeholder?: string;
-	delimiters?: string[];
 	max?: number;
 	maxLength?: number;
-	allowDuplicates?: boolean;
-	validate?: (tag: string) => string | undefined;
 	size?: 'sm' | 'md';
-	tagVariant?: TagVariants['variant'];
 	disabled?: boolean;
 	error?: boolean;
 	id?: string;
@@ -24,13 +20,9 @@ interface Props {
 let {
 	value = $bindable<string[]>([]),
 	placeholder = 'Add tags...',
-	delimiters = ['Enter'],
 	max,
 	maxLength,
-	allowDuplicates = false,
-	validate,
 	size = 'md',
-	tagVariant = 'default',
 	disabled = false,
 	error = false,
 	id,
@@ -52,18 +44,11 @@ function trimAndValidate(raw: string): string | undefined {
 	let tag = raw.trim();
 	if (!tag) return undefined;
 	if (maxLength) tag = tag.slice(0, maxLength);
-	if (!allowDuplicates && value.includes(tag)) {
+	if (value.includes(tag)) {
 		const dupeIdx = value.indexOf(tag);
 		triggerShake(dupeIdx);
 		announce(`${tag} already added.`);
 		return undefined;
-	}
-	if (validate) {
-		const err = validate(tag);
-		if (err) {
-			announce(err);
-			return undefined;
-		}
 	}
 	if (atMax) {
 		announce(`Maximum ${max} tags reached.`);
@@ -104,7 +89,7 @@ function announce(msg: string) {
 function handleKeydown(e: KeyboardEvent) {
 	if (disabled) return;
 
-	if (delimiters.includes(e.key) && inputValue.trim()) {
+	if (e.key === 'Enter' && inputValue.trim()) {
 		e.preventDefault();
 		if (addTag(inputValue)) {
 			inputValue = '';
@@ -168,7 +153,6 @@ function handleContainerClick() {
 				<li class:pending-delete={pendingDeleteIndex === i} class:shake={shakeIndex === i}>
 					<Tag
 						label={tag}
-						variant={tagVariant}
 						size={tagSize}
 						{disabled}
 						ondismiss={disabled ? undefined : () => removeTag(i)}

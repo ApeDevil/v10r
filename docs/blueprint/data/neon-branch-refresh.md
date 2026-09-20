@@ -123,8 +123,8 @@ Both reuse the existing `CRON_SECRET` bearer auth and are registered in `$lib/se
 
 | Job | Schedule | Purpose |
 |-----|----------|---------|
-| `dbops-refresh` | `0 4 * * *` daily | Scheduled auto-reset. Drives `advanceRun` to terminal. **Gated by `DBOPS_AUTO_REFRESH_ENABLED`** (default off). |
-| `dbops-reaper` | `*/15 * * * *` | Sweep stuck runs whose lease expired. |
+| `dbops-refresh` | daily (`/api/cron/due` sweep, `0 3 * * *`) | Scheduled auto-reset. Drives `advanceRun` to terminal. **Gated by `DBOPS_AUTO_REFRESH_ENABLED`** (default off). |
+| `dbops-reaper` | daily (same sweep) | Sweep stuck runs whose lease expired. |
 
 Both run inside the daily `/api/cron/due` sweep (refresh before reaper, by registry order); `/api/cron/dbops-refresh` and `/api/cron/dbops-reaper` remain callable by slug.
 

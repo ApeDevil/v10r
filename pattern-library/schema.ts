@@ -17,7 +17,7 @@ export type PatternTier = 'deep' | 'light';
 /**
  * Machine-checkable evidence grade, orthogonal to tier (tier = documentation
  * depth, maturity = proof). Every value is verifiable from the record itself:
- * `proven` ⇔ at least one tests/showcases ref (whose existence mcp:validate
+ * `proven` ⇔ at least one tests/showcases ref (whose existence patterns:validate
  * already enforces) plus a `verifiedAt`/`verifiedSha` attestation;
  * `planned` ⇔ no proof refs at all; `implemented` = code exists, no linked
  * proof surface yet. Finer self-declared rungs (unit- vs browser-verified)

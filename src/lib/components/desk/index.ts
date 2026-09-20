@@ -35,7 +35,6 @@ export {
 	type ContextOmission,
 	computeActiveContexts,
 	computeContextChips,
-	computePanelStatus,
 	estimateTokens,
 	truncateToTokenBudget,
 } from './desk-context.pure';
@@ -48,7 +47,6 @@ export {
 	getContextChips,
 	getContextRegistryVersion,
 	getRequestPreview,
-	getTokenEstimate,
 	type PanelContext,
 	type PanelStatus,
 	pinContext,

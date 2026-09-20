@@ -43,5 +43,3 @@ export const customPaletteSchema = v.object({
 	lightColors: paletteColorsSchema,
 	darkColors: paletteColorsSchema,
 });
-
-export type CustomPaletteInput = v.InferInput<typeof customPaletteSchema>;

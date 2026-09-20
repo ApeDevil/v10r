@@ -72,4 +72,3 @@ export const dbopsOperation = dbopsSchema.table(
 );
 
 export type DbopsOperation = typeof dbopsOperation.$inferSelect;
-export type NewDbopsOperation = typeof dbopsOperation.$inferInsert;

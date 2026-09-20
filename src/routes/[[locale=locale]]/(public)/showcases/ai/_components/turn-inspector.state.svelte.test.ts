@@ -49,8 +49,6 @@ const thread = (messageId: string, question = 'Q?', answer = 'A.') => ({
 			activations: [],
 			citations: [],
 			cited: [],
-			modelCalls: 1,
-			toolExecutions: 0,
 			createdAt: '2026-09-13T10:00:00.000Z',
 		},
 	],

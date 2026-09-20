@@ -15,15 +15,7 @@ import { parse as parseYaml } from 'yaml';
  * Retrieval-only exclusions — docs that render for humans but must not be embedded —
  * are passed per-consumer via the `extra` arg to {@link isBlocked}.
  */
-export const BLOCKLIST = new Set<string>([
-	'docs/blueprint/blog.md',
-	'docs/stack/vendors.md',
-	// External review notes, not curriculum. Today the section gate already drops
-	// top-level docs files, but that exclusion is an accident of placement — this
-	// entry keeps the review out of the corpus even if the file moves or the
-	// section rules widen.
-	'docs/codex-review.md',
-]);
+export const BLOCKLIST = new Set<string>(['docs/blueprint/blog.md', 'docs/stack/vendors.md']);
 
 /** Path prefixes excluded everywhere (process notes, guides). */
 export const BLOCKED_PREFIXES = ['docs/guides/', 'docs/blueprint/desk/'];

@@ -14,7 +14,7 @@ import { cycleRun } from '$lib/server/db/schema';
 import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
 import { checkRowLimit } from '$lib/server/showcases/row-limit';
 import type { CycleSpan, CycleStageId, CycleTrace, SimulateAiError } from '$lib/showcases/cycle/types';
-import type { RetrievalChunksEvent, RetrievalPromptEvent, RetrievalStepEvent } from '$lib/types/retrieval-trace';
+import type { RetrievalStepEvent } from '$lib/types/retrieval-trace';
 import { blockRemaining, createTrace, endSpan, failSpan, finalizeTrace, startSpan } from './trace';
 
 export interface AiCycleInput {
@@ -56,8 +56,7 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 		'tier-3': 'retrieve',
 	};
 
-	const emit = (event: RetrievalStepEvent | RetrievalChunksEvent | RetrievalPromptEvent) => {
-		if (event.type !== 'pipeline:step') return;
+	const emit = (event: RetrievalStepEvent) => {
 		const stage = stageMap[event.step];
 		if (!stage) return;
 

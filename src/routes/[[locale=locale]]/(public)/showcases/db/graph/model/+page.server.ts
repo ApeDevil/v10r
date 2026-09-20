@@ -5,7 +5,6 @@ import { reseedGraph } from '$lib/server/showcases/graph/seed';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const start = performance.now();
 	const admin = isAdmin(locals.user);
 
 	try {
@@ -15,15 +14,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 			getFullGraph(),
 		]);
 
-		const queryMs = Math.round((performance.now() - start) * 100) / 100;
-
-		return { title: 'Model - Graph - Showcases', labels, relTypes, graphData, queryMs, isAdmin: admin };
+		return { title: 'Model - Graph - Showcases', labels, relTypes, graphData, isAdmin: admin };
 	} catch (err) {
 		return {
 			labels: [],
 			relTypes: [],
 			graphData: { nodes: [], edges: [], entityTypes: [], relationshipTypes: [] },
-			queryMs: Math.round((performance.now() - start) * 100) / 100,
 			isAdmin: admin,
 			error: err instanceof Error ? err.message : 'Unknown database error',
 		};

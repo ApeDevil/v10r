@@ -17,8 +17,4 @@ export const userSettingsSchema = v.object({
 		240,
 	),
 	reduceMotion: v.optional(v.boolean(), false),
-	highContrast: v.optional(v.boolean(), false),
 });
-
-export type UserSettingsInput = v.InferInput<typeof userSettingsSchema>;
-export type UserSettingsOutput = v.InferOutput<typeof userSettingsSchema>;

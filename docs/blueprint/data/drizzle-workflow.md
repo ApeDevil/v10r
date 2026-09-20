@@ -45,6 +45,7 @@ If transitioning with an existing prod DB that was managed via push: generate th
 | No rollback support ([#1339](https://github.com/drizzle-team/drizzle-orm/discussions/1339)) | No down migrations | Write manual rollback SQL if needed |
 | Editing generated SQL | Corrupts snapshot state, wrong diffs forever | Never manually edit generated migration files |
 | Enum rename | Generates drop+recreate, fails with existing data | Manual `ALTER TYPE ... RENAME VALUE` |
+| Schema / table / column rename | Push sees DROP + CREATE and discards the rows | One-off `ALTER … RENAME` script run before `db:push`, deleted once applied |
 | `pgEnum` not exported | `CREATE TYPE` silently omitted from output | Always export enum objects |
 
 ## Related

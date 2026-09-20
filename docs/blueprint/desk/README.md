@@ -70,11 +70,8 @@ Current channels:
 |---------|---------|-----------|
 | `editor:content` | `{ content, type, metadata }` | Editor (debounced on change) |
 | `editor:document` | `{ documentId, type } \| null` | Editor (on document switch) |
-| `editor:save` | `{ documentId, revisionId }` | Editor (after server save) |
-| `files:select` | `{ type: 'post' \| 'asset' \| 'spreadsheet', id, data } \| null` | Explorer (on item select/deselect) |
-| `spreadsheet:open` | `{ fileId, name }` | Explorer (on spreadsheet open) |
 | `files:insert-image` | `{ assetId, fileName, altText, downloadUrl, _nonce }` | Explorer (image insert into editor) |
-| `ai:open_panel`, `ai:refresh_file`, `ai:highlight`, `ai:notify`, `ai:scroll_to` | AI-driven desk actions | AI tool calls (open/refresh/highlight/notify/scroll a panel) |
+| `ai:refresh_file`, `ai:file_refreshed`, `ai:refresh_explorer` | AI-driven desk actions | Desk effects dispatched from AI tool receipts (refresh a file panel / the explorer) |
 
 ### Explorer Panel
 

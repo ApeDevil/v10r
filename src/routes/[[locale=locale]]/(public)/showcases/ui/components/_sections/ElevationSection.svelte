@@ -112,7 +112,7 @@ const vision = $derived(visionSel as 'none' | 'grayscale' | 'blur' | 'forced');
 					</div>
 					<div class="ctl">
 						<span class="ctl-label">Elevation rung</span>
-						<ToggleGroup type="single" items={RUNGS} bind:value={rungStr} size="lg" />
+						<ToggleGroup items={RUNGS} bind:value={rungStr} size="lg" />
 					</div>
 					<div class="ctl">
 						<span class="ctl-label">Channels</span>

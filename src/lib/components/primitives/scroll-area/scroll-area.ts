@@ -16,26 +16,9 @@ export const scrollbarVariants = cva(
 				horizontal:
 					'h-2.5 flex-col border-t border-t-transparent p-px data-[state=visible]:animate-in data-[state=hidden]:animate-out data-[state=hidden]:fade-out-0 data-[state=visible]:fade-in-0',
 			},
-			size: {
-				sm: '',
-				md: '',
-			},
 		},
-		compoundVariants: [
-			{
-				orientation: 'vertical',
-				size: 'sm',
-				class: 'w-2',
-			},
-			{
-				orientation: 'horizontal',
-				size: 'sm',
-				class: 'h-2',
-			},
-		],
 		defaultVariants: {
 			orientation: 'vertical',
-			size: 'md',
 		},
 	},
 );

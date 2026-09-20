@@ -357,5 +357,5 @@ Before shipping a new typography set:
 
 - [architecture.md](./architecture.md) — Styling layer and state management
 - [user-data.md](./user-data.md) — Style preferences as user configuration
-- [progressive-revelation.md](./progressive-revelation.md) — FTUX integration
+- [explosive-discovery.md](./explosive-discovery.md) — the journey axis: the dice roll as the first revelation
 - Style randomizer — the feature lives in `src/lib/styles/random/` (original planning blueprint removed; see git history)

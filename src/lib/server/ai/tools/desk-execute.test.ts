@@ -46,7 +46,7 @@ const REVIEWED_AT = '2026-09-12T08:00:00.000Z';
 /** Every scope granted — the execution tests assert behaviour, not authorization. */
 const ALL_SCOPES = ['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask'] as const;
 const ctx = (scopes: readonly string[] = ALL_SCOPES) =>
-	({ userId: USER_ID, scopes: [...scopes], actor: 'proposal-replay' }) as Parameters<typeof executeDeskToolCall>[0];
+	({ userId: USER_ID, scopes: [...scopes] }) as Parameters<typeof executeDeskToolCall>[0];
 
 const sheetTarget = (version: number) => ({
 	fileId: 'fil_abc',

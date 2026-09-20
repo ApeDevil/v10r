@@ -267,7 +267,6 @@ each may make **at any row count**:
 | `blog.listPosts` | 5 | count + page, then revisions + tags + domains batched by the fetched ids |
 | `desk.listFiles` | 2 | one page read and one count, issued together |
 | `desk.listFolders` | 1 | a single capped read; the tree is assembled in memory |
-| `desk.countFolderContents` | 2 | subfolder count and file count in one wave |
 
 Every number is what the gate measured on the day it was accepted, not an estimate. The gate
 runs each operation over a 3-row and a 30-row fixture and requires the counts to **match** —

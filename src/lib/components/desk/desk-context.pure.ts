@@ -66,22 +66,6 @@ export function estimateTokens(content: string): number {
 }
 
 /**
- * Compute the context status for a single panel.
- * Mirrors the logic in desk-context.svelte.ts contextChips $derived.
- */
-export function computePanelStatus(
-	panelId: string,
-	focusedPanelId: string | null,
-	pinnedIds: Set<string>,
-	dismissedIds: Set<string>,
-): PanelStatus {
-	const isDismissed = dismissedIds.has(panelId);
-	if (!isDismissed && focusedPanelId === panelId) return 'focused';
-	if (!isDismissed && pinnedIds.has(panelId)) return 'active';
-	return 'background';
-}
-
-/**
  * Build the full ContextChip[] array from registry state.
  * Extracted from desk-context.svelte.ts:185-212.
  */

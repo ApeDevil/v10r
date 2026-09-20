@@ -15,11 +15,9 @@
  *   - All rows owned by the reserved SYSTEM_DOCS_USER_ID / PROJECT_DOCS_COLLECTION
  *     (every retrieval query hard-filters user_id). Idempotent: content-hash skip,
  *     soft-delete + re-insert on change, delete-not-seen reconcile for removed files.
- *     Pass --force (or INGEST_FORCE=1) to re-chunk docs after a chunking-LOGIC change (the
- *     per-file content hash only detects content edits). --force is RESUME-SAFE: it skips
- *     docs already in the hierarchical layout, so a conversion interrupted by the free-tier
- *     daily embed cap (1000 embed requests/day) finishes over multiple runs rather than
- *     restarting from the top. To re-chunk an already-hierarchical corpus, clear it first.
+ *     Pass --force (or INGEST_FORCE=1) to re-chunk and re-embed every doc after a
+ *     chunking-LOGIC change (the per-file content hash only detects content edits). It
+ *     burns embed quota for the whole corpus; the free tier caps at 1000 embed requests/day.
  *
  * Produces hierarchical parent(section)+child(paragraph) chunks so retrieval tier-1
  * (hybrid vector+BM25) AND tier-2 (parent-child) both work for the docs corpus, with
@@ -64,7 +62,6 @@ const EMBED_BATCH = 32;
 const MAX_EMBED_PER_MIN = 90;
 // Re-chunk + re-embed docs even when their file hash is unchanged. Needed after a
 // chunking-LOGIC change (the per-file hash only detects CONTENT edits, not code changes).
-// Resume-safe: skips docs already converted to the hierarchical layout (see main()).
 const FORCE = process.argv.includes('--force') || process.env.INGEST_FORCE === '1';
 
 const SCRIPT_NAME = 'ingest-docs';
@@ -109,8 +106,6 @@ const DOCS_ROOT = fileURLToPath(new URL('../../docs', import.meta.url));
 // Docs that render for humans at /docs but must NOT enter the chatbot corpus —
 // planned-but-unbuilt designs the assistant would otherwise assert as live code.
 const RETRIEVAL_ONLY_BLOCK = new Set<string>([
-	'docs/blueprint/progressive-revelation.md',
-	'docs/foundation/progressive-revelation.md',
 	// Design record for the persistent/minimizable chatbot. BUILT on dev but uncommitted;
 	// the doc also describes deferred pieces (experimental_resume, citation chips on
 	// resume). Held from the retrieval corpus until committed + the corpus is re-ingested, to avoid the
@@ -353,17 +348,6 @@ async function main() {
 	`);
 	const activeByPath = new Map(existing.rows.map((r) => [r.sourceUri, r]));
 
-	// Docs whose ACTIVE version is already in the hierarchical (section + paragraph) layout.
-	// In --force mode we skip these, so a re-ingest interrupted by the daily embed cap
-	// (1000 embed requests/day on the free tier) RESUMES on the next run instead of redoing
-	// converted docs from the top — otherwise a >1000-chunk corpus could never finish.
-	const hierarchical = await db.execute<{ sourceUri: string }>(sql`
-		SELECT DISTINCT d.source_uri AS "sourceUri"
-		FROM retrieval.document d JOIN retrieval.chunk c ON c.document_id = d.id
-		WHERE d.source = 'docs' AND d.deleted_at IS NULL AND c.level = 'section'
-	`);
-	const hierarchicalPaths = new Set(hierarchical.rows.map((r) => r.sourceUri));
-
 	let inserted = 0;
 	let updated = 0;
 	let skipped = 0;
@@ -374,12 +358,6 @@ async function main() {
 		seen.push(doc.docsPath);
 		const prior = activeByPath.get(doc.docsPath);
 		if (!FORCE && prior && prior.contentHash === doc.rawHash) {
-			skipped++;
-			continue;
-		}
-		// Resume-safe force: don't redo docs already converted to the hierarchical layout,
-		// so a conversion interrupted by the daily embed cap finishes across multiple runs.
-		if (FORCE && prior && hierarchicalPaths.has(doc.docsPath)) {
 			skipped++;
 			continue;
 		}

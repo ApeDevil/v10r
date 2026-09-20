@@ -10,19 +10,12 @@ import type { DagData, DagNode as DagNodeType } from './types';
 
 interface Props {
 	data: DagData;
-	orientation?: 'horizontal' | 'vertical';
 	aspect?: ChartContainerVariants['aspect'];
 	ariaLabel?: string;
 	class?: string;
 }
 
-let {
-	data,
-	orientation = 'horizontal',
-	aspect = 'chart',
-	ariaLabel = 'DAG diagram',
-	class: className,
-}: Props = $props();
+let { data, aspect = 'chart', ariaLabel = 'DAG diagram', class: className }: Props = $props();
 
 interface LayoutNode {
 	id: string;
@@ -93,12 +86,12 @@ function computeLayout() {
 		for (const node of dag.nodes()) {
 			const id = node.data as string;
 			const nodeData = nodeMap.get(id);
-			const isHorizontal = orientation === 'horizontal';
+			// Sugiyama lays layers out along Y; the graph reads left to right, so the axes swap.
 			rawNodes.push({
 				id,
 				nodeData,
-				x: isHorizontal ? node.y : node.x,
-				y: isHorizontal ? node.x : node.y,
+				x: node.y,
+				y: node.x,
 				// Sugiyama Y is always the layer/depth axis
 				layerCoord: node.y,
 			});
@@ -119,11 +112,7 @@ function computeLayout() {
 
 		const links: LayoutLink[] = [];
 		for (const link of dag.links()) {
-			const isHorizontal = orientation === 'horizontal';
-			const points = link.points.map((p: [number, number]) => ({
-				x: isHorizontal ? p[1] : p[0],
-				y: isHorizontal ? p[0] : p[1],
-			}));
+			const points = link.points.map((p: [number, number]) => ({ x: p[1], y: p[0] }));
 			links.push({
 				sourceId: link.source.data as string,
 				targetId: link.target.data as string,
@@ -147,11 +136,10 @@ function computeLayout() {
 	}
 }
 
-// Recompute when data or orientation changes
+// Recompute when data changes
 // svelte-ignore state_referenced_locally
 $effect(() => {
 	const _data = data;
-	const _orientation = orientation;
 	if (d3DagModule) {
 		computeLayout();
 	}
@@ -169,12 +157,8 @@ function linkPath(link: LayoutLink): string {
 	if (rest.length === 1) {
 		// Direct: cubic bezier
 		const last = rest[0];
-		if (orientation === 'horizontal') {
-			const mx = (first.x + last.x) / 2;
-			return `M${first.x},${first.y}C${mx},${first.y} ${mx},${last.y} ${last.x},${last.y}`;
-		}
-		const my = (first.y + last.y) / 2;
-		return `M${first.x},${first.y}C${first.x},${my} ${last.x},${my} ${last.x},${last.y}`;
+		const mx = (first.x + last.x) / 2;
+		return `M${first.x},${first.y}C${mx},${first.y} ${mx},${last.y} ${last.x},${last.y}`;
 	}
 
 	// Multi-point: polyline

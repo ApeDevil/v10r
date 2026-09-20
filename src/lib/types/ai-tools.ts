@@ -25,11 +25,7 @@ export type DeskEffect =
 	| { type: 'desk:open_panel'; panelType: string; fileId: string; label: string }
 	| { type: 'desk:refresh_file'; fileId: string }
 	| { type: 'desk:refresh_explorer' }
-	| { type: 'desk:tab_indicator'; fileId: string; panelType: string; variant: 'modified' | 'created' | 'deleted' }
-	| { type: 'desk:notify'; message: string; level: 'info' | 'success' | 'error' }
-	| { type: 'desk:activate_panel'; panelId: string }
-	| { type: 'desk:scroll_to'; panelId: string; target: string }
-	| { type: 'desk:focus_panel'; panelId: string };
+	| { type: 'desk:tab_indicator'; fileId: string; panelType: string; variant: 'modified' | 'created' | 'deleted' };
 
 /**
  * Tool permission scopes the desk client requests. Deskbot-only — the chatbot has no scopes.

@@ -45,8 +45,6 @@ const config: KnipConfig = {
 
 	// Dependencies that Knip can't trace through barrel re-exports or Vite plugins
 	ignoreDependencies: [
-		'@unocss/preset-icons',
-		'@unocss/preset-uno',
 		'uno.css', // virtual import from UnoCSS Vite plugin
 		// Sub-packages of installed unified/remark/rehype ecosystem
 		'vfile',
@@ -61,9 +59,6 @@ const config: KnipConfig = {
 
 	// Treat entry file exports as intentional public API
 	includeEntryExports: true,
-
-	// Ignore Drizzle relation exports (consumed by ORM at runtime, not by imports)
-	ignoreMembers: ['.*Relations$'],
 
 	// Exclude export/type analysis from default runs — too noisy with Svelte templates.
 	// Svelte component `default` exports + multi-client server functions + CVA variant types

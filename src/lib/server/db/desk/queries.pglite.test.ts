@@ -16,17 +16,8 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const {
-	getFile,
-	listFiles,
-	getFolder,
-	listFolders,
-	countFolderContents,
-	getSpreadsheetByFileId,
-	getMarkdownByFileId,
-	getAiContextFiles,
-	searchFiles,
-} = await import('./queries');
+const { getFile, listFiles, getFolder, listFolders, getSpreadsheetByFileId, getMarkdownByFileId, searchFiles } =
+	await import('./queries');
 const { db } = await import('$lib/server/db');
 
 const USER_A = makeUser({ id: 'user-a' });
@@ -225,47 +216,6 @@ describe('desk queries', () => {
 		});
 	});
 
-	describe('countFolderContents', () => {
-		it('returns 0 for an empty folder', async () => {
-			const fol = makeFolder({ userId: USER_A.id });
-			await db.insert(folder).values(fol);
-
-			const count = await countFolderContents(fol.id, USER_A.id);
-			expect(count).toBe(0);
-		});
-
-		it('counts subfolders', async () => {
-			const parent = makeFolder({ userId: USER_A.id });
-			const child1 = makeFolder({ userId: USER_A.id, parentId: parent.id, name: 'Child 1' });
-			const child2 = makeFolder({ userId: USER_A.id, parentId: parent.id, name: 'Child 2' });
-			await db.insert(folder).values([parent, child1, child2]);
-
-			const count = await countFolderContents(parent.id, USER_A.id);
-			expect(count).toBe(2);
-		});
-
-		it('counts files in a folder', async () => {
-			const fol = makeFolder({ userId: USER_A.id });
-			await db.insert(folder).values(fol);
-			await db
-				.insert(file)
-				.values([makeFile({ userId: USER_A.id, folderId: fol.id }), makeFile({ userId: USER_A.id, folderId: fol.id })]);
-
-			const count = await countFolderContents(fol.id, USER_A.id);
-			expect(count).toBe(2);
-		});
-
-		it('counts both subfolders and files together', async () => {
-			const fol = makeFolder({ userId: USER_A.id });
-			const subfol = makeFolder({ userId: USER_A.id, parentId: fol.id, name: 'Sub' });
-			await db.insert(folder).values([fol, subfol]);
-			await db.insert(file).values(makeFile({ userId: USER_A.id, folderId: fol.id }));
-
-			const count = await countFolderContents(fol.id, USER_A.id);
-			expect(count).toBe(2);
-		});
-	});
-
 	describe('getSpreadsheetByFileId', () => {
 		it('returns joined file and spreadsheet data', async () => {
 			const f = makeFile({ userId: USER_A.id, name: 'Joined File' });
@@ -328,38 +278,6 @@ describe('desk queries', () => {
 
 			const result = await getMarkdownByFileId(f.id, USER_B.id);
 			expect(result).toBeNull();
-		});
-	});
-
-	describe('getAiContextFiles', () => {
-		it('returns only files with aiContext=true', async () => {
-			await db
-				.insert(file)
-				.values([
-					makeFile({ userId: USER_A.id, aiContext: true, name: 'AI File' }),
-					makeFile({ userId: USER_A.id, aiContext: false, name: 'Normal File' }),
-				]);
-
-			const result = await getAiContextFiles(USER_A.id);
-			expect(result).toHaveLength(1);
-			expect(result[0].name).toBe('AI File');
-		});
-
-		it('returns empty list when no files have aiContext=true', async () => {
-			await db.insert(file).values(makeFile({ userId: USER_A.id, aiContext: false }));
-
-			const result = await getAiContextFiles(USER_A.id);
-			expect(result).toHaveLength(0);
-		});
-
-		it('isolates results by user', async () => {
-			await db
-				.insert(file)
-				.values([makeFile({ userId: USER_A.id, aiContext: true }), makeFile({ userId: USER_B.id, aiContext: true })]);
-
-			const result = await getAiContextFiles(USER_A.id);
-			expect(result).toHaveLength(1);
-			expect(result[0]).not.toHaveProperty('userId', USER_B.id);
 		});
 	});
 });

@@ -176,8 +176,8 @@ $effect(() => {
 	}
 
 	.badge-error {
-		background: color-mix(in srgb, var(--color-error-fg, #ef4444) 15%, transparent);
-		color: var(--color-error-fg, #ef4444);
+		background: color-mix(in srgb, var(--color-error-fg) 15%, transparent);
+		color: var(--color-error-fg);
 	}
 
 	.badge-effect {

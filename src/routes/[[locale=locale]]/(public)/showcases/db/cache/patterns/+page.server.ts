@@ -15,20 +15,15 @@ import { getEntryDetail, getShowcaseStats, listShowcaseEntries } from '$lib/serv
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const start = performance.now();
-
 	try {
 		const [entries, stats] = await Promise.all([listShowcaseEntries(), getShowcaseStats()]);
 
-		const queryMs = Math.round((performance.now() - start) * 100) / 100;
-
-		return { title: 'Patterns - Cache - Showcases', entries, stats, queryMs };
+		return { title: 'Patterns - Cache - Showcases', entries, stats };
 	} catch (err) {
 		const cacheErr = classifyCacheError(err);
 		return {
 			entries: [],
 			stats: { keyCount: 0, keysByType: {} },
-			queryMs: Math.round((performance.now() - start) * 100) / 100,
 			error: cacheErr.message,
 		};
 	}
@@ -73,8 +68,8 @@ export const actions: Actions = {
 		if (!key) return fail(400, { message: 'No key specified.' });
 
 		try {
-			const value = await incrementCounter(key, amount);
-			return { success: true, counterValue: value };
+			await incrementCounter(key, amount);
+			return { success: true };
 		} catch (err) {
 			const cacheErr = classifyCacheError(err);
 			return fail(400, { message: cacheErr.message });
@@ -88,8 +83,8 @@ export const actions: Actions = {
 		if (!key) return fail(400, { message: 'No key specified.' });
 
 		try {
-			const value = await decrementCounter(key, amount);
-			return { success: true, counterValue: value };
+			await decrementCounter(key, amount);
+			return { success: true };
 		} catch (err) {
 			const cacheErr = classifyCacheError(err);
 			return fail(400, { message: cacheErr.message });
@@ -184,7 +179,6 @@ export const actions: Actions = {
 			const value = await popFromList(key, side);
 			return {
 				success: true,
-				poppedValue: value,
 				message: value ? `Popped "${value}" from ${side}.` : 'List is empty.',
 			};
 		} catch (err) {

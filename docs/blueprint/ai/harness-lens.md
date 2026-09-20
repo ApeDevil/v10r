@@ -19,7 +19,7 @@ We use the term as a diagnostic. Asking "does v10r have all the harness primitiv
 | Approval boundary (sentinels → one proposal, loop stop) | `ai/proposals` | `proposals/approval-boundary.ts` — `collectApprovalRequests`, `toCardSteps`, `stoppedAtApproval` |
 | Plan validation | `ai/proposals` + `ai/tools` | `proposals/plan-validation.ts` — `validateProposedPlan` over `tools/desk-mutation-inputs.ts` (one valibot schema per mutation tool, also the model-facing JSON Schema) |
 | Proposal execution (receipts, receipt message) | `ai/proposals` | `proposals/execute-proposal.ts` — `executeProposal`, `proposalOutcome`; receipts in `db/ai/proposals.ts` (`recordProposalStep`, `markInterruptedIfStale`) |
-| Step loop & provider fallback | `ai` | `chat-orchestrator.ts` — `streamText` + `stopWhen` + `tryFallback` (provider fallback & cooldown) |
+| Step loop & provider fallback | `ai` | `chat-orchestrator.ts` — `streamText` + `stopWhen`; provider rotation & cooldown in `_shared/streaming-turn.ts` |
 | Per-request scope step caps | `ai/profile` | `profile/deskbot.ts` — `stepBudget` (read-only incl. `desk:ask` = 3, mutation = 5); `profile/chatbot.ts` = 3 |
 | Context compaction (fixes AI SDK #9631) | `ai/loop` + `ai/capabilities` | `loop/compact.ts` — `compactToolResults`; `capabilities/compaction.ts` — `wrapToolsWithCompaction` + the `resolve_ref` tool |
 | System prompt assembly | `ai/profile` | `profile/profile.ts` — `composeTurn`: identity → guidance → stable grounding ‖ awareness → dynamic grounding → guides (cache order); see [profiles.md](./profiles.md) |
@@ -70,7 +70,7 @@ Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.fi
 
 1. `tools/_types.ts` — the risk vocabulary
 2. `profile/profile.ts` + `profile/deskbot.ts` — what a turn is composed from: scope-gated capabilities, the step budget (load-bearing seam)
-3. `chat-orchestrator.ts` — the step loop + `tryFallback`
+3. `chat-orchestrator.ts` — the step loop; `_shared/streaming-turn.ts` — provider rotation
 4. `loop/compact.ts` + `capabilities/compaction.ts` — the #9631 workaround
 5. `policy/governor.ts` — the approval gate (`requiresApproval`); `capabilities/desk-plan.ts` — the plan-gating predicate (`shouldRequirePlan`)
 6. `db/schema/ai/proposal.ts` — the proposal state machine

@@ -2,7 +2,7 @@
  * NOTIFICATIONS — In-app notification records.
  *
  * Locale-neutral payload pattern:
- *   - `messageKey` names a Paraglide message (e.g. 'notif_feedback_received').
+ *   - `messageKey` names a Paraglide message (e.g. 'notif_comment').
  *   - `messageParams` carries ICU interpolation values (e.g. {name: 'Anna'}).
  *   - The viewer (in-app list) and the delivery worker (email/push) render via
  *     Paraglide using the *recipient's* preferred locale, NOT the locale of

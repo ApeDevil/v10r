@@ -21,16 +21,6 @@ const UpdateFolderSchema = v.object({
 	parentId: v.optional(v.nullable(v.string())),
 });
 
-/** Get a single folder. */
-export const GET: RequestHandler = async ({ params, locals }) => {
-	const guard = guardApiUser(locals);
-	if ('error' in guard) return guard.error;
-	const { user } = guard;
-	const row = await getFolder(params.id, user.id);
-	if (!row) return apiError(404, 'folder_not_found', 'Folder not found.');
-	return apiOk({ folder: row });
-};
-
 /** Update folder (rename and/or move). */
 export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const guard = guardApiUser(locals);

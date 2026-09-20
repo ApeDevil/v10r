@@ -3,19 +3,16 @@ import type { Snippet } from 'svelte';
 import * as m from '$lib/paraglide/messages';
 import { cn } from '$lib/utils/cn';
 import {
-	type CarouselRootVariants,
 	carouselButtonVariants,
 	carouselContentVariants,
 	carouselDotsVariants,
 	carouselDotVariants,
-	carouselItemVariants,
 	carouselRootVariants,
 } from './carousel';
 
-interface Props extends CarouselRootVariants {
+interface Props {
 	children: Snippet;
 	class?: string;
-	loop?: boolean;
 	autoplay?: boolean;
 	autoplayInterval?: number;
 	showDots?: boolean;
@@ -24,8 +21,6 @@ interface Props extends CarouselRootVariants {
 
 let {
 	children,
-	orientation = 'horizontal',
-	loop = true,
 	autoplay = false,
 	autoplayInterval = 3000,
 	showDots = true,
@@ -94,70 +89,36 @@ $effect(() => {
 function goToSlide(index: number) {
 	if (!scrollContainer || !slides[index]) return;
 
-	const slide = slides[index];
-	const scrollProperty = orientation === 'horizontal' ? 'scrollLeft' : 'scrollTop';
-	const offsetProperty = orientation === 'horizontal' ? 'offsetLeft' : 'offsetTop';
-
-	scrollContainer[scrollProperty] = slide[offsetProperty];
+	scrollContainer.scrollLeft = slides[index].offsetLeft;
 }
 
-// Navigate to previous slide
+// The strip loops: stepping past either end wraps to the other.
 function goToPrev() {
-	const prevIndex = currentSlide - 1;
-	if (prevIndex < 0) {
-		if (loop) {
-			goToSlide(slides.length - 1);
-		}
-	} else {
-		goToSlide(prevIndex);
-	}
+	goToSlide(currentSlide - 1 < 0 ? slides.length - 1 : currentSlide - 1);
 }
 
-// Navigate to next slide
 function goToNext() {
-	const nextIndex = currentSlide + 1;
-	if (nextIndex >= slides.length) {
-		if (loop) {
-			goToSlide(0);
-		}
-	} else {
-		goToSlide(nextIndex);
-	}
+	goToSlide(currentSlide + 1 >= slides.length ? 0 : currentSlide + 1);
 }
 
-// Keyboard navigation
 function handleKeydown(e: KeyboardEvent) {
-	if (orientation === 'horizontal') {
-		if (e.key === 'ArrowLeft') {
-			e.preventDefault();
-			goToPrev();
-		} else if (e.key === 'ArrowRight') {
-			e.preventDefault();
-			goToNext();
-		}
-	} else {
-		if (e.key === 'ArrowUp') {
-			e.preventDefault();
-			goToPrev();
-		} else if (e.key === 'ArrowDown') {
-			e.preventDefault();
-			goToNext();
-		}
+	if (e.key === 'ArrowLeft') {
+		e.preventDefault();
+		goToPrev();
+	} else if (e.key === 'ArrowRight') {
+		e.preventDefault();
+		goToNext();
 	}
 }
 
 function toggleAutoplay() {
 	isPlaying = !isPlaying;
 }
-
-// Check if navigation buttons should be disabled
-const canGoPrev = $derived(loop || currentSlide > 0);
-const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-	class={cn(carouselRootVariants({ orientation }), className)}
+	class={cn(carouselRootVariants(), className)}
 	onmouseenter={() => (isHovering = true)}
 	onmouseleave={() => (isHovering = false)}
 	onkeydown={handleKeydown}
@@ -167,7 +128,7 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 >
 	<div
 		bind:this={scrollContainer}
-		class={cn(carouselContentVariants({ orientation }))}
+		class={cn(carouselContentVariants())}
 		role="list"
 	>
 		{@render children()}
@@ -175,36 +136,26 @@ const canGoNext = $derived(loop || currentSlide < slides.length - 1);
 
 	{#if showArrows}
 		<button
-			class={cn(carouselButtonVariants({ orientation, direction: 'prev' }))}
+			class={cn(carouselButtonVariants({ direction: 'prev' }))}
 			onclick={goToPrev}
-			disabled={!canGoPrev}
 			aria-label={m.primitives_carousel_previous()}
 			type="button"
 		>
-			{#if orientation === 'horizontal'}
-				<div class="i-lucide-chevron-left h-5 w-5" aria-hidden="true"></div>
-			{:else}
-				<div class="i-lucide-chevron-up h-5 w-5" aria-hidden="true"></div>
-			{/if}
+			<div class="i-lucide-chevron-left h-5 w-5" aria-hidden="true"></div>
 		</button>
 
 		<button
-			class={cn(carouselButtonVariants({ orientation, direction: 'next' }))}
+			class={cn(carouselButtonVariants({ direction: 'next' }))}
 			onclick={goToNext}
-			disabled={!canGoNext}
 			aria-label={m.primitives_carousel_next()}
 			type="button"
 		>
-			{#if orientation === 'horizontal'}
-				<div class="i-lucide-chevron-right h-5 w-5" aria-hidden="true"></div>
-			{:else}
-				<div class="i-lucide-chevron-down h-5 w-5" aria-hidden="true"></div>
-			{/if}
+			<div class="i-lucide-chevron-right h-5 w-5" aria-hidden="true"></div>
 		</button>
 	{/if}
 
 	{#if showDots && slides.length > 0}
-		<div class={cn(carouselDotsVariants({ orientation }), 'relative')} role="tablist" aria-label={m.primitives_carousel_indicators()}>
+		<div class={cn(carouselDotsVariants(), 'relative')} role="tablist" aria-label={m.primitives_carousel_indicators()}>
 			{#each slides as _, index}
 				<button
 					class={cn(carouselDotVariants({ active: index === currentSlide }))}

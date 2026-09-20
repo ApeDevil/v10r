@@ -18,33 +18,15 @@ interface AccordionItem {
 }
 
 interface Props extends AccordionVariants {
-	/** Accordion type: single allows one open at a time, multiple allows many */
-	type?: 'single' | 'multiple';
-	/** Current value(s) - single: string, multiple: string[] */
-	value?: string | string[];
+	/** The open item's value; one item open at a time, and it can be collapsed again. */
+	value?: string;
 	/** Array of accordion items with value, title, and content */
 	items: AccordionItem[];
 	/** Additional class for root container */
 	class?: string;
-	/** Allow collapsing the currently open item (only for type="single") */
-	collapsible?: boolean;
 }
 
-let {
-	type = 'single',
-	value = $bindable(),
-	items,
-	variant = 'default',
-	size = 'md',
-	class: className,
-	collapsible = true,
-}: Props = $props();
-
-// Default value depends on type — can't reference type in $bindable() default
-// svelte-ignore state_referenced_locally
-if (value === undefined) {
-	value = type === 'single' ? '' : [];
-}
+let { value = $bindable(''), items, variant = 'default', size = 'md', class: className }: Props = $props();
 
 // Type guard to check if content is a snippet
 function isSnippet(content: string | Snippet): content is Snippet {
@@ -91,25 +73,9 @@ function isSnippet(content: string | Snippet): content is Snippet {
 	{/each}
 {/snippet}
 
-{#if type === 'single'}
-	<AccordionPrimitive.Root
-		type="single"
-		value={value as string}
-		onValueChange={(v: string) => value = v}
-		class={cn('w-full', className)}
-	>
-		{@render accordionItems()}
-	</AccordionPrimitive.Root>
-{:else}
-	<AccordionPrimitive.Root
-		type="multiple"
-		value={value as string[]}
-		onValueChange={(v: string[]) => value = v}
-		class={cn('w-full', className)}
-	>
-		{@render accordionItems()}
-	</AccordionPrimitive.Root>
-{/if}
+<AccordionPrimitive.Root type="single" {value} onValueChange={(v: string) => value = v} class={cn('w-full', className)}>
+	{@render accordionItems()}
+</AccordionPrimitive.Root>
 
 <style>
 	/* Content differentiation: muted text + primary border accent when open */

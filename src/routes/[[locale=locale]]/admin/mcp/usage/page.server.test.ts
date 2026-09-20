@@ -21,7 +21,6 @@ vi.mock('$lib/server/mcp/telemetry/queries', () => ({
 		distinctClients: 0,
 		unknownMethod: 0,
 		failOpen: 0,
-		rateLimitedGate: 0,
 		authFailures: 0,
 	}),
 	getToolBreakdown: async () => [],
@@ -29,7 +28,6 @@ vi.mock('$lib/server/mcp/telemetry/queries', () => ({
 	getLatency: async () => [],
 	getCapabilityGaps: async () => [],
 	countSuppressedGaps: async () => 0,
-	getClientBreakdown: async () => [],
 	getUnsupportedVersionRequests: async () => [],
 	getPrivateSummary: async () => ({
 		calls: 0,

@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { floatingContentBase } from '$lib/styles/floating';
 
 export const contextMenuContentVariants = cva([
@@ -18,8 +18,3 @@ export const contextMenuItemVariants = cva([
 export const contextMenuSeparatorVariants = cva(['h-px bg-border']);
 
 export const contextMenuShortcutVariants = cva(['text-fluid-xs text-muted']);
-
-export type ContextMenuContentVariants = VariantProps<typeof contextMenuContentVariants>;
-export type ContextMenuItemVariants = VariantProps<typeof contextMenuItemVariants>;
-export type ContextMenuSeparatorVariants = VariantProps<typeof contextMenuSeparatorVariants>;
-export type ContextMenuShortcutVariants = VariantProps<typeof contextMenuShortcutVariants>;

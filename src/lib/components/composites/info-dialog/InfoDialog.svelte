@@ -10,7 +10,7 @@ import { cn } from '$lib/utils/cn';
 import { renderMarkdown } from '$lib/utils/markdown';
 import CodeBlock from './CodeBlock.svelte';
 import PropsTable from './PropsTable.svelte';
-import type { ComponentDoc, InfoSection } from './types';
+import type { ComponentDoc } from './types';
 
 interface Props {
 	/** Dialog title */
@@ -26,7 +26,6 @@ interface Props {
 	/** Simple content mode */
 	children?: Snippet;
 	/** Custom tabbed mode */
-	sections?: InfoSection[];
 	/** Additional dialog classes */
 	class?: string;
 	/** Externally controlled open state */
@@ -42,7 +41,6 @@ let {
 	ariaLabel,
 	doc,
 	children,
-	sections,
 	class: className,
 	open = $bindable(false),
 	noTrigger = false,
@@ -62,9 +60,7 @@ const docTabs = $derived.by(() => {
 });
 
 const hasDocContent = $derived(docTabs.length > 0);
-const hasSections = $derived(sections && sections.length > 0);
 const useDocMode = $derived(doc && hasDocContent);
-const useSectionsMode = $derived(!useDocMode && hasSections);
 </script>
 
 {#snippet propsContent()}
@@ -169,15 +165,6 @@ const useSectionsMode = $derived(!useDocMode && hasSections);
 							<Tabs tabs={tabItems} />
 						</div>
 					{/if}
-				{:else if useSectionsMode && sections}
-					{@const tabItems = sections.map((s) => ({
-						value: s.id,
-						label: s.label,
-						content: s.content,
-					}))}
-					<div class="dialog-content">
-						<Tabs tabs={tabItems} />
-					</div>
 				{:else if children}
 					<div class="dialog-content">
 						{@render children()}

@@ -14,8 +14,6 @@ import { reseedShowcase } from '$lib/server/db/showcase/seed';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const start = performance.now();
-
 	try {
 		const [specimens, temporals, documents, collections, networks, bookings, audits] = await Promise.all([
 			db.select().from(typeSpecimen),
@@ -27,8 +25,6 @@ export const load: PageServerLoad = async () => {
 			db.select().from(showcaseAuditLog).orderBy(sql`occurred_at DESC`),
 		]);
 
-		const queryMs = Math.round((performance.now() - start) * 100) / 100;
-
 		return {
 			title: 'Type System - Relational - Showcases',
 			specimens,
@@ -38,7 +34,6 @@ export const load: PageServerLoad = async () => {
 			networks,
 			bookings,
 			audits,
-			queryMs,
 		};
 	} catch (err) {
 		return {
@@ -49,7 +44,6 @@ export const load: PageServerLoad = async () => {
 			networks: [],
 			bookings: [],
 			audits: [],
-			queryMs: Math.round((performance.now() - start) * 100) / 100,
 			error: err instanceof Error ? err.message : 'Unknown database error',
 		};
 	}

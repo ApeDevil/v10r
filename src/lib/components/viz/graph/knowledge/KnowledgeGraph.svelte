@@ -11,7 +11,6 @@ interface Props {
 	aspect?: ChartContainerVariants['aspect'];
 	ariaLabel?: string;
 	class?: string;
-	onNodeClick?: (nodeId: string) => void;
 	highlightedNodeIds?: Set<string> | null;
 	highlightedEdgeKeys?: Set<string> | null;
 }
@@ -21,7 +20,6 @@ let {
 	aspect = 'chart',
 	ariaLabel = 'Knowledge graph',
 	class: className,
-	onNodeClick,
 	highlightedNodeIds = null,
 	highlightedEdgeKeys = null,
 }: Props = $props();
@@ -116,7 +114,6 @@ function handleFilterChange(filters: {
 				data={filteredData}
 				{aspect}
 				{ariaLabel}
-				{onNodeClick}
 				{highlightedNodeIds}
 				{highlightedEdgeKeys}
 			/>

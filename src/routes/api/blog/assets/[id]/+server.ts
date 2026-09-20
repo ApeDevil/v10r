@@ -5,32 +5,11 @@ import { PatchAssetSchema } from '$lib/server/blog/schemas';
 import { guardApiBlogAuthor, guardAssetOwnership } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
-import { deleteBlogObject, generateBlogDownloadUrl } from '$lib/server/store/blog';
+import { deleteBlogObject } from '$lib/server/store/blog';
 import { classifyS3Error } from '$lib/server/store/errors';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:assets:mutate', 30, '1 m');
-
-/** Get asset detail with download URL. */
-export const GET: RequestHandler = async ({ params, locals }) => {
-	const guard = guardApiBlogAuthor(locals);
-	if ('error' in guard) return guard.error;
-	const { user } = guard;
-
-	const owned = guardAssetOwnership(await getAssetById(params.id), user);
-	if ('error' in owned) return owned.error;
-	const { asset } = owned;
-
-	let downloadUrl: string | null = null;
-	try {
-		const result = await generateBlogDownloadUrl(asset.storageKey, 3600);
-		downloadUrl = result.url;
-	} catch {
-		// R2 not configured
-	}
-
-	return apiOk({ asset: { ...asset, downloadUrl } });
-};
 
 /** Update asset metadata (alt text, dimensions). */
 export const PATCH: RequestHandler = async ({ params, request, locals }) => {

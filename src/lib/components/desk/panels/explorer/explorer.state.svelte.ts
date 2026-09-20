@@ -176,15 +176,6 @@ export class ExplorerState {
 		return out;
 	}
 
-	/** Update a node's label (after successful rename). */
-	updateLabel(nodeId: string, label: string): void {
-		const node = this.nodes.get(nodeId);
-		if (node) {
-			node.label = label;
-			node.sortKey = `${node.isFolder ? '0' : '1'}_${label.toLowerCase()}`;
-		}
-	}
-
 	/** Update a node's aiContext flag. */
 	updateAiContext(nodeId: string, aiContext: boolean): void {
 		// Update the node data (for context menu label reads)

@@ -115,7 +115,6 @@ Set in Vercel dashboard → Settings → Environment Variables:
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `NEON_DATABASE_URL_PROD` | Yes | Neon connection string. Neon's Vercel integration auto-injects `DATABASE_URL` — if you use it, set `NEON_DATABASE_URL_PROD` manually or reconfigure the integration's target var |
-| `NEON_DATABASE_URL_DEV` | No | Optional labeled spare for the dev branch; not read by the app |
 | `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL — enables rate limiting. Without it the limiter passes through in dev and fails closed in prod |
 | `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token (paired with the URL above) |
 | `CRON_SECRET` | Yes | Bearer token for cron endpoints |

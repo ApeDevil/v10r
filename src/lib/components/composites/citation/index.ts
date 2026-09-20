@@ -6,5 +6,4 @@
  * both render the same catalog citations.
  */
 export { default as CitationChip } from './CitationChip.svelte';
-export { default as ConfirmationCard } from './ConfirmationCard.svelte';
 export type * from './citation-types';

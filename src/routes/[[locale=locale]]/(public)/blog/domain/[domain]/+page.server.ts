@@ -28,7 +28,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	return {
 		title: `${domainRow.name} - Blog`,
 		posts: items,
-		total,
 		page,
 		totalPages: Math.ceil(total / PAGE_SIZE),
 		domainName: domainRow.name,

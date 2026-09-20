@@ -87,11 +87,9 @@ describe('/admin/ai/models load', () => {
 		const data = (await load(loadEvent())) as {
 			connections: unknown[];
 			unavailable: boolean;
-			defaultProviderId: string | null;
 		};
 		expect(guards.requireAdmin).toHaveBeenCalled();
 		expect(data.unavailable).toBe(false);
-		expect(data.defaultProviderId).toBe('groq');
 		const serialized = JSON.stringify(data);
 		expect(serialized).not.toContain('getInstance');
 		expect(serialized).not.toContain('apiKeyCiphertext');
@@ -212,7 +210,7 @@ describe('/admin/ai/models actions', () => {
 		settings.setProjectDefaultProvider.mockResolvedValue({ ok: true, auditRecorded: true });
 		expect(
 			await actions.setDefault?.(formEvent({ provider: 'automatic', expectedCurrentDefault: 'groq' })),
-		).toMatchObject({ defaultSaved: null });
+		).toMatchObject({ message: expect.stringContaining('Automatic') });
 		expect(settings.setProjectDefaultProvider).toHaveBeenCalledWith(
 			{ provider: null, expectedCurrentDefault: 'groq' },
 			expect.anything(),

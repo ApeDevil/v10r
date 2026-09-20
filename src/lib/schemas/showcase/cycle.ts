@@ -7,4 +7,3 @@ export const cycleSchema = v.object({
 });
 
 export type CycleInput = v.InferInput<typeof cycleSchema>;
-export type CycleOutput = v.InferOutput<typeof cycleSchema>;

@@ -5,14 +5,13 @@
  *
  * BLOG DOMAIN — Subject area taxonomy (one per post).
  * Co-located here (above post) so post.domainId can reference it directly.
- * The `blog` schema object lives in ./schema so folder/cover FKs can be wired
- * inline without the post ↔ folder/asset import cycle re-forming.
+ * The `blog` schema object lives in ./schema so the folder FK can be wired
+ * inline without the post ↔ folder import cycle re-forming.
  */
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import type { TranslationMap } from '$lib/i18n/translate';
 import { user } from '../auth/_better-auth';
-import { asset } from './asset';
 import { postFolder } from './post-folder';
 import { blogSchema } from './schema';
 
@@ -45,8 +44,6 @@ export const post = blogSchema.table(
 		authorId: text('author_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'restrict' }),
-		/** Cover image. Deleting the asset clears the cover (SET NULL) rather than blocking. */
-		coverImageId: text('cover_image_id').references((): AnyPgColumn => asset.id, { onDelete: 'set null' }),
 		domainId: text('domain_id').references(() => domain.id, { onDelete: 'set null' }),
 		/** Parent folder (nullable = root level under virtual:blog). Deleting a folder orphans posts to root (SET NULL). */
 		folderId: text('folder_id').references(() => postFolder.id, { onDelete: 'set null' }),
@@ -71,8 +68,7 @@ export const post = blogSchema.table(
 		check('slug_format', sql`${table.slug} ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'`),
 		index('blog_post_domain_idx').on(table.domainId),
 		index('blog_post_author_folder_idx').on(table.authorId, table.folderId),
-		// Single-column FK indexes back the ON DELETE SET NULL scans (folder / cover-asset delete).
+		// Single-column FK index backs the ON DELETE SET NULL scan (folder delete).
 		index('blog_post_folder_idx').on(table.folderId),
-		index('blog_post_cover_image_idx').on(table.coverImageId),
 	],
 );

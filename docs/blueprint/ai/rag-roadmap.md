@@ -1,6 +1,6 @@
 # RAG Roadmap — the two LLM-amplifying retrieval features
 
-> **2026-09-12:** the third spec this doc carried — an LLM-compiled page layer with a nightly recompile loop — was dropped with the layer it built on (Phase 4 of [`docs/ai-ref-plan.md`](../../ai-ref-plan.md), decision D2). The reranker and step-back specs below stand.
+> **2026-09-12:** the third spec this doc carried — an LLM-compiled page layer with a nightly recompile loop — was dropped with the layer it built on (Phase 4 of `docs/ai-ref-plan.md` (plan document, since deleted), decision D2). The reranker and step-back specs below stand.
 
 The detailed companion to [knowledge-base.md](./knowledge-base.md). That blueprint maps the whole subsystem and marks what is wired versus scaffold; this doc specs the two features that the Phase C foundation precedes: a **reranker** and a **step-back query-transform**.
 

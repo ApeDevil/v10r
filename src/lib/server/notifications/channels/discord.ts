@@ -1,8 +1,4 @@
-import { eq } from 'drizzle-orm';
 import { env } from '$env/dynamic/private';
-import { db } from '$lib/server/db';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { decryptAesGcm, encryptAesGcm, getEncryptionKey } from '$lib/server/security';
 import type { DeliveryChannel, DeliveryPayload, DeliveryResult } from './types';
 
 export class DiscordChannel implements DeliveryChannel {
@@ -92,68 +88,5 @@ export class DiscordChannel implements DeliveryChannel {
 				retryable: true,
 			};
 		}
-	}
-}
-
-/** Refresh Discord OAuth2 tokens for an account */
-export async function refreshDiscordTokens(accountId: string): Promise<boolean> {
-	const [account] = await db.select().from(userDiscordAccounts).where(eq(userDiscordAccounts.id, accountId)).limit(1);
-
-	if (!account) return false;
-
-	const clientId = env.DISCORD_CLIENT_ID;
-	const clientSecret = env.DISCORD_CLIENT_SECRET;
-	if (!clientId || !clientSecret) return false;
-
-	try {
-		const refreshToken = await decryptAesGcm(account.refreshToken, getEncryptionKey());
-
-		const res = await fetch('https://discord.com/api/v10/oauth2/token', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: new URLSearchParams({
-				grant_type: 'refresh_token',
-				refresh_token: refreshToken,
-				client_id: clientId,
-				client_secret: clientSecret,
-			}),
-		});
-
-		if (!res.ok) {
-			await db
-				.update(userDiscordAccounts)
-				.set({ tokenRefreshFailedAt: new Date() })
-				.where(eq(userDiscordAccounts.id, accountId));
-			return false;
-		}
-
-		const tokens = await res.json();
-		const encryptionKey = getEncryptionKey();
-		const encAccessToken = await encryptAesGcm(tokens.access_token, encryptionKey);
-		const encRefreshToken = await encryptAesGcm(tokens.refresh_token, encryptionKey);
-		const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
-
-		await db
-			.update(userDiscordAccounts)
-			.set({
-				accessToken: encAccessToken,
-				refreshToken: encRefreshToken,
-				tokenExpiresAt: expiresAt,
-				tokensRefreshedAt: new Date(),
-				tokenRefreshFailedAt: null,
-			})
-			.where(eq(userDiscordAccounts.id, accountId));
-
-		return true;
-	} catch {
-		try {
-			await db
-				.update(userDiscordAccounts)
-				.set({ tokenRefreshFailedAt: new Date() })
-				.where(eq(userDiscordAccounts.id, accountId));
-		} catch (dbErr) {
-			console.error('[discord] Failed to record token refresh failure:', dbErr);
-		}
-		return false;
 	}
 }

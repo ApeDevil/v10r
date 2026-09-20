@@ -36,11 +36,10 @@ const JourneyEvent = v.object({
 	referrer: v.nullish(v.pipe(v.string(), v.maxLength(512))),
 	occurredAt: v.pipe(v.string(), v.isoTimestamp()),
 	/**
-	 * Optional so pre-field clients keep validating (v.object strips unknowns
-	 * anyway). 'enter' events are dropped below: the initial load is the server
-	 * hook's row, and counting it here again was the double-count bug.
+	 * 'enter' events are dropped below: the initial load is the server hook's row, and
+	 * counting it here again was the double-count bug.
 	 */
-	navigationType: v.optional(v.picklist(['enter', 'spa'])),
+	navigationType: v.picklist(['enter', 'spa']),
 });
 
 const JourneyBatch = v.object({

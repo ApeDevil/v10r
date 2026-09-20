@@ -80,7 +80,7 @@ const GUARD_PATTERNS: Array<{ scheme: string; re: RegExp }> = [
 	 * session is involved, because the authority being checked is the object's,
 	 * not the caller's.
 	 */
-	{ scheme: 'namespace-guard', re: /\bassert(Showcase|Blog|Image|Imagemeta|Imagekit|Avatar)Key\b/ },
+	{ scheme: 'namespace-guard', re: /\bassert(Showcase|Blog|Imagemeta|Imagekit|Avatar)Key\b/ },
 ];
 
 /**
@@ -104,7 +104,8 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
 		'Consent-free human-confirmation ping (sendBeacon; cannot set headers). Constant payload, no identifier read or written client-side; Origin-checked, HMAC-nonce-validated, rate-limited; only ever sets human_confirmed_at on an existing session.',
 	'analytics/stream/+server.ts': 'Synthetic demo data only; connection-capped.',
 	'blog/assets/[id]/image/+server.ts': 'Public image proxy. Resolves only assets attached to published posts.',
-	'blog/media/[...path]/+server.ts': 'Legacy key proxy. Same published-only resolution as the by-id proxy.',
+	'blog/media/[...path]/+server.ts':
+		'Storage-key proxy for content:push markdown. Same published-only resolution as the by-id proxy.',
 	'style/pick/+server.ts':
 		"Writes only the caller's own v10r_style cookie. The custom-palette (CP_) branch checks session and ownership inline.",
 	'style/roll/+server.ts':

@@ -18,8 +18,12 @@ const NUMERIC = '^[0-9]+(\\.[0-9]+)?$';
 
 /**
  * Per-session origin verdict, derived from Svelte scope classes in the attribution
- * targets. Mirrors `classifyOrigin()` exactly, including dev-wins-over-prod; the
- * shared pattern constants are what keep the two implementations honest.
+ * targets (`telemetry-origin.ts` holds the patterns). Dev wins over prod when both
+ * appear, which is the conservative direction: one dev marker proves a developer's
+ * browser was involved, whereas a prod marker only proves one component was compiled
+ * by a prod build. Losing a real session to over-filtering costs a sample; keeping a
+ * dev session costs the accuracy of every percentile it lands in. No scope class at
+ * all is `unknown`, excluded from prod aggregates rather than assumed prod.
  */
 function lanesCte(cutoff: Date) {
 	return sql`
@@ -166,7 +170,7 @@ export async function getVitalsTrend(days: number): Promise<VitalTrendPoint[]> {
 
 // Idle-gap profile
 
-export const IDLE_GAP_BUCKETS = ['lt1m', '1to15m', '15to60m', 'gt60m'] as const;
+const IDLE_GAP_BUCKETS = ['lt1m', '1to15m', '15to60m', 'gt60m'] as const;
 export type IdleGapBucket = (typeof IDLE_GAP_BUCKETS)[number];
 
 export interface IdleGapRow {

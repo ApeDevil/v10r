@@ -23,7 +23,6 @@ async function measureConnection() {
 			connected: false,
 			latencyMs: 0,
 			error: cacheErr.message,
-			errorKind: cacheErr.kind,
 			keyCount: null,
 			endpoint: null,
 			measuredAt: new Date().toISOString(),

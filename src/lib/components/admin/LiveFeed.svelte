@@ -275,7 +275,7 @@ onMount(() => {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background: var(--color-success, #10b981);
+		background: var(--color-success);
 	}
 	.connection[data-mode='polling'] .dot {
 		animation: pulse 2s ease-in-out infinite;
@@ -307,7 +307,7 @@ onMount(() => {
 	.paused-badge {
 		padding: var(--spacing-1) var(--spacing-2);
 		border-radius: var(--radius-sm);
-		background: color-mix(in srgb, var(--color-warning, #f59e0b) 15%, transparent);
+		background: color-mix(in srgb, var(--color-warning) 15%, transparent);
 		color: var(--color-fg);
 		font-size: var(--text-fluid-xs);
 	}

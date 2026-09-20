@@ -24,7 +24,7 @@ export const actions: Actions = {
 				kind: 'blog-author',
 				message: form.data.message,
 			});
-			return { form, requested: true };
+			return { form };
 		} catch (err) {
 			if (err instanceof GrantRequestPendingError) return fail(409, { form, code: err.code });
 			throw err;
@@ -35,6 +35,5 @@ export const actions: Actions = {
 		const { user } = requireAuth(locals);
 		const cancelled = await cancelMyPendingRequest(user.id, 'blog-author');
 		if (!cancelled) error(404, 'No pending request');
-		return { cancelled: true };
 	},
 };

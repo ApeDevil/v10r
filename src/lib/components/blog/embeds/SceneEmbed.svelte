@@ -105,10 +105,6 @@ const defaultAnimation = $derived(resolved.type === 'registry' ? resolved.model.
 const autoRotate = $derived(phase === 'dormant' && !reducedMotion.current);
 const controlsEnabled = $derived(phase === 'active' && hasControls);
 const renderMode = $derived(hasAnimations || phase === 'dormant' ? 'always' : 'on-demand');
-
-function handleError() {
-	phase = 'loading';
-}
 </script>
 
 {#if resolved.type === 'error'}
@@ -327,7 +323,7 @@ function handleError() {
 	.error-icon {
 		width: 1.5rem;
 		height: 1.5rem;
-		color: var(--color-error, #ef4444);
+		color: var(--color-error);
 	}
 
 	.error-text {

@@ -17,11 +17,10 @@ export const load: PageServerLoad = async ({ url }) => {
 		const funnel = await getFunnelSteps(days, FUNNEL_STEPS);
 		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
-		return { funnel, days, queryMs };
+		return { funnel, queryMs };
 	} catch (err) {
 		return {
 			funnel: [],
-			days,
 			error: err instanceof Error ? err.message : 'Unknown database error',
 		};
 	}

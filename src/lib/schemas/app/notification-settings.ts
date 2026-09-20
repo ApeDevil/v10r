@@ -35,5 +35,3 @@ export const notificationSettingsSchema = v.object({
 	quietStart: v.optional(quietTime, null),
 	quietEnd: v.optional(quietTime, null),
 });
-
-export type NotificationSettingsInput = v.InferInput<typeof notificationSettingsSchema>;

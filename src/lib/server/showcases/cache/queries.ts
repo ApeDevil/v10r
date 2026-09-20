@@ -110,7 +110,6 @@ export async function getTtlSnapshot(key: string): Promise<TtlSnapshot> {
 		key,
 		remainingSeconds: ttl,
 		isExpired: ttl === -2,
-		capturedAt: new Date().toISOString(),
 	};
 }
 

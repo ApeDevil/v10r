@@ -10,19 +10,13 @@
  *   step budgets, guard stages). Per-turn facts are not mirrored at all: both pages
  *   render a turn's own persisted `TurnTrace` (`$lib/types/turn-trace.ts`) through the
  *   inspector projection (`./inspector.ts`).
- *
- * AI_TOPOLOGY_VERSION is a drift signal for the tests and the page footer — NOT a
- * compat mechanism. Nothing may branch on it (no-backward-compat house rule).
  */
 
 import { type DeskToolScope, TOOL_MANIFEST, type ToolRisk } from '$lib/types/ai-tools';
 import type { AiSurface } from '$lib/types/db-enums';
-import type { RetrievalStepStatus } from '$lib/types/retrieval-trace';
-
-export const AI_TOPOLOGY_VERSION = 1;
 
 /**
- * Per-turn runtime status vocabulary — `RetrievalStepStatus` plus `not-taken`.
+ * Per-turn runtime status vocabulary of the spine and the guard stages.
  *
  * `skipped` means the ENGINE declined (e.g. relevance gate); `not-taken` means a
  * HUMAN declined — a proposal rejected or left to expire. Rendering that arm as
@@ -30,7 +24,7 @@ export const AI_TOPOLOGY_VERSION = 1;
  * claim. Orthogonal to the BUILD axis (`live | dormant | planned` on the static
  * topology): a dormant layer simply never leaves `pending`.
  */
-export type TraceStatus = RetrievalStepStatus | 'not-taken';
+export type TraceStatus = 'pending' | 'active' | 'done' | 'error' | 'skipped' | 'not-taken';
 
 /** Spine layer identifiers — the bands of the `SurfaceFlow` stack, in request order. */
 export type AiLayerId =
@@ -205,34 +199,6 @@ export const AI_LAYERS: readonly AiLayer[] = [
 		shape: 'single',
 		source: 'src/lib/server/db/ai/mutations.ts',
 	},
-];
-
-/** Edge semantics beyond plain top-to-bottom flow. Line-style encodes `kind`, never color. */
-export type AiEdgeKind = 'main' | 'gated' | 'fallback' | 'replay' | 'abort' | 'async';
-
-export interface AiFlowEdge {
-	from: AiLayerId;
-	to: AiLayerId;
-	kind: AiEdgeKind;
-	surfaces: readonly AiSurface[];
-	/** Predicate/label name rendered on the edge (verbatim code identifier). */
-	label?: string;
-}
-
-/** The non-linear edges the spine must draw beyond band adjacency. */
-export const AI_EXTRA_EDGES: readonly AiFlowEdge[] = [
-	// Provider rotation — retry of the same logical edge with the next provider.
-	{
-		from: 'stream',
-		to: 'stream',
-		kind: 'fallback',
-		surfaces: ['chatbot', 'deskbot'],
-		label: 'markCooldown → next provider',
-	},
-	// Deskbot corpus freshness is reconciled OFF the hot path by a polling job.
-	{ from: 'persist', to: 'retrieval', kind: 'async', surfaces: ['deskbot'], label: 'desk-retrieval-sync' },
-	// The approval replay is a SEPARATE HTTP request — rendered as a second stack, not a back-edge.
-	{ from: 'gate', to: 'harness', kind: 'replay', surfaces: ['deskbot'], label: 'POST /api/ai/proposals/[id]/approve' },
 ];
 
 /** The four `guardAiRequest()` stages with their terminating failure contract. */

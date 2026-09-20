@@ -331,13 +331,6 @@ async function handleAvatarRemove() {
 								<Switch bind:checked={$form.reduceMotion} label={$form.reduceMotion ? m.account_settings_toggle_on() : m.account_settings_toggle_off()} />
 							{/snippet}
 						</FormField>
-
-						<FormField label={m.account_settings_a11y_high_contrast()} description={m.account_settings_a11y_high_contrast_description()}>
-							{#snippet children(_)}
-								<input type="hidden" name="highContrast" value={$form.highContrast ? 'on' : ''} />
-								<Switch bind:checked={$form.highContrast} label={$form.highContrast ? m.account_settings_toggle_on() : m.account_settings_toggle_off()} />
-							{/snippet}
-						</FormField>
 					</Stack>
 				{/snippet}
 			</Card>
@@ -435,16 +428,4 @@ async function handleAvatarRemove() {
 />
 
 <style>
-	.delete-confirm-input {
-		margin-top: var(--spacing-2);
-		padding: var(--spacing-2) var(--spacing-3);
-		border: 1px solid var(--color-error-fg);
-		border-radius: var(--radius-sm);
-		background-color: var(--surface-1);
-		color: var(--color-fg);
-		font-size: var(--text-fluid-sm);
-		width: 100%;
-		max-width: 200px;
-		outline: none;
-	}
 </style>

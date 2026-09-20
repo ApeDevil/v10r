@@ -19,7 +19,6 @@ export const documentSourceEnum = retrievalSchema.enum('document_source', [
 	'web',
 	'text',
 	'api',
-	'catalog',
 	'docs',
 	'desk',
 ]);

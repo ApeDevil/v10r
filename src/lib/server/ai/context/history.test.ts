@@ -11,13 +11,15 @@ import type { UIMessage } from 'ai';
 import { describe, expect, it } from 'vitest';
 import { getMessageText, windowMessages } from './history';
 
+const msg = (role: 'user' | 'assistant', text: string): UIMessage => ({
+	id: `${role}-${text}`,
+	role,
+	parts: [{ type: 'text', text }],
+});
+
 // 1. getMessageText
 
 describe('getMessageText', () => {
-	it('returns content from legacy {role, content} format', () => {
-		expect(getMessageText({ role: 'user', content: 'hello' })).toBe('hello');
-	});
-
 	it('extracts text from UIMessage with a single text part', () => {
 		const msg: UIMessage = {
 			id: 'x',
@@ -59,52 +61,34 @@ describe('getMessageText', () => {
 		};
 		expect(getMessageText(msg)).toBe('');
 	});
-
-	it('returns empty string for legacy message with empty content', () => {
-		expect(getMessageText({ role: 'user', content: '' })).toBe('');
-	});
 });
 
 // 2. windowMessages
 
 describe('windowMessages', () => {
 	it('returns all messages when count is within maxTurns * 2', () => {
-		const messages = [
-			{ role: 'user' as const, content: 'a' },
-			{ role: 'assistant' as const, content: 'b' },
-			{ role: 'user' as const, content: 'c' },
-			{ role: 'assistant' as const, content: 'd' },
-		];
+		const messages = [msg('user', 'a'), msg('assistant', 'b'), msg('user', 'c'), msg('assistant', 'd')];
 		const result = windowMessages(messages, 5);
 		expect(result).toHaveLength(4);
 		expect(result).toEqual(messages);
 	});
 
 	it('slices to last maxTurns*2 messages when over budget', () => {
-		const messages = Array.from({ length: 12 }, (_, i) => ({
-			role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
-			content: `msg ${i}`,
-		}));
+		const messages = Array.from({ length: 12 }, (_, i) => msg(i % 2 === 0 ? 'user' : 'assistant', `msg ${i}`));
 		const result = windowMessages(messages, 5);
 		expect(result).toHaveLength(10);
-		expect((result[0] as { content: string }).content).toBe('msg 2');
-		expect((result[9] as { content: string }).content).toBe('msg 11');
+		expect(getMessageText(result[0])).toBe('msg 2');
+		expect(getMessageText(result[9])).toBe('msg 11');
 	});
 
 	it('result starts with user-role message after slicing', () => {
-		const messages = Array.from({ length: 12 }, (_, i) => ({
-			role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
-			content: `msg ${i}`,
-		}));
+		const messages = Array.from({ length: 12 }, (_, i) => msg(i % 2 === 0 ? 'user' : 'assistant', `msg ${i}`));
 		const result = windowMessages(messages, 5);
 		expect(result[0].role).toBe('user');
 	});
 
 	it('drops leading assistant message after slicing odd-aligned input', () => {
-		const messages = Array.from({ length: 11 }, (_, i) => ({
-			role: (i % 2 === 0 ? 'assistant' : 'user') as 'user' | 'assistant',
-			content: `msg ${i}`,
-		}));
+		const messages = Array.from({ length: 11 }, (_, i) => msg(i % 2 === 0 ? 'assistant' : 'user', `msg ${i}`));
 		const result = windowMessages(messages, 2);
 		expect(result[0].role).toBe('user');
 	});
@@ -114,38 +98,31 @@ describe('windowMessages', () => {
 	});
 
 	it('handles single user message', () => {
-		const messages = [{ role: 'user' as const, content: 'hello' }];
+		const messages = [msg('user', 'hello')];
 		const result = windowMessages(messages, 5);
 		expect(result).toHaveLength(1);
 		expect(result[0].role).toBe('user');
 	});
 
 	it('handles odd message count within budget', () => {
-		const messages = [
-			{ role: 'user' as const, content: 'a' },
-			{ role: 'assistant' as const, content: 'b' },
-			{ role: 'user' as const, content: 'c' },
-		];
+		const messages = [msg('user', 'a'), msg('assistant', 'b'), msg('user', 'c')];
 		expect(windowMessages(messages, 5)).toHaveLength(3);
 	});
 
 	it('returns same reference (no copy) at exact boundary of maxTurns*2', () => {
-		const messages = Array.from({ length: 10 }, (_, i) => ({
-			role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
-			content: `msg ${i}`,
-		}));
+		const messages = Array.from({ length: 10 }, (_, i) => msg(i % 2 === 0 ? 'user' : 'assistant', `msg ${i}`));
 		expect(windowMessages(messages, 5)).toBe(messages);
 	});
 
 	it('slices correctly with maxTurns=1', () => {
 		const messages = [
-			{ role: 'user' as const, content: 'old' },
-			{ role: 'assistant' as const, content: 'old reply' },
-			{ role: 'user' as const, content: 'new' },
-			{ role: 'assistant' as const, content: 'new reply' },
+			msg('user', 'old'),
+			msg('assistant', 'old reply'),
+			msg('user', 'new'),
+			msg('assistant', 'new reply'),
 		];
 		const result = windowMessages(messages, 1);
 		expect(result).toHaveLength(2);
-		expect((result[0] as { content: string }).content).toBe('new');
+		expect(getMessageText(result[0])).toBe('new');
 	});
 });

@@ -54,16 +54,6 @@ export async function getNotificationsSince(userId: string, since: Date, limit: 
 		.limit(limit);
 }
 
-/** Get a single notification (auth-scoped) */
-export async function getNotificationById(id: string, userId: string) {
-	const [row] = await db
-		.select()
-		.from(notifications)
-		.where(and(eq(notifications.id, id), eq(notifications.userId, userId)))
-		.limit(1);
-	return row ?? null;
-}
-
 /** All push subscriptions (devices) for a user. */
 export async function getPushSubscriptions(userId: string) {
 	return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));

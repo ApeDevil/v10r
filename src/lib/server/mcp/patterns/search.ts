@@ -2,7 +2,7 @@
  * Pure scoring + dependency-ordering over the pattern registry. Deterministic: same query,
  * same registry → same ranking (ties break by registry order). No I/O, no framework.
  *
- * This mirrors the algorithm in the stdio server's `mcp/tools.ts` / `mcp/registry.ts`. The
+ * This mirrors the algorithm in the stdio server's `mcp/tools.ts` / `pattern-library/schema.ts`. The
  * duplication is deliberate — the two runtimes cannot safely share one module (the container
  * server has no `$lib` alias and no bundler), so the stdio copy stays self-contained and this
  * copy serves the hosted transport. `patterns/parity.test.ts` guards the two against drift.

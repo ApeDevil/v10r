@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 
 export interface PaneDefinition {
 	id: string;
@@ -62,7 +62,3 @@ export const gripVariants = cva(
 		},
 	},
 );
-
-export type TabBarVariants = VariantProps<typeof tabBarVariants>;
-export type TabVariants = VariantProps<typeof tabVariants>;
-export type GripVariants = VariantProps<typeof gripVariants>;

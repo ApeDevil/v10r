@@ -116,7 +116,7 @@ The main export is a `sequence()` of fourteen `Handle` middlewares that mutate t
 | 7 | `authCaptchaGate` | — | Decision response on captcha/rate-limit fail | Before `authHandler` — gate must run before Better Auth consumes the request body |
 | 8 | `authHandler` | — | 429 on rate-limit exceed | Better Auth `svelteKitHandler` + Upstash rate-limit on `/api/auth/*` keyed by `clientIp` |
 | 9 | `csrfProtection` | — | 403 on mutating `/api/*` without `X-Requested-With` or mismatched origin | Exempt: `/api/auth/`, `/api/cron/`, `/api/webhooks/`, `/api/analytics/journey`, `/api/mcp/` |
-| 10 | `sessionPopulate` | `user`, `session`, `grants`, `authDegraded?` | No | Must run AFTER `authHandler` (Better Auth #2188: `svelteKitHandler` does not populate locals). Fast-path skips DB if session cookie absent. A DB failure degrades the request to anonymous (`authDegraded: true`) instead of 500ing every session-carrying page |
+| 10 | `sessionPopulate` | `user`, `session`, `grants` | No | Must run AFTER `authHandler` (Better Auth #2188: `svelteKitHandler` does not populate locals). Fast-path skips DB if session cookie absent. A DB failure degrades the request to anonymous instead of 500ing every session-carrying page |
 | 11 | `consentLoader` | `consentTier` (default `'necessary'`) | No | Before route handlers need consent tier |
 | 12 | `debugOwnerLoader` | `debugOwnerId` | No | Verifies `v10r_debug_owner` HMAC cookie; fail-closed; independent of Better Auth |
 | 13 | `devRouteGuard` | — | 404 on `(dev)` routes outside DEV | — |
@@ -210,11 +210,11 @@ Route areas under `src/routes/[[locale=locale]]/` and the parallel `src/routes/a
 | Public + Showcases | `(public)/` (blog, docs, showcases, feedback) | — | — | None; self-documenting layer |
 | Auth | `auth/` (login, verify) | `/api/auth/*` | `auth/` | ALTCHA-gated, rate-limited |
 | Account (member) | `account/` (dashboard, data, notifications, security, settings) | `/api/preferences/*`, `/api/notifications/*`, `/api/consent`, `/api/account/*` | `preferences/`, `notifications/`, `privacy/` | `account/+layout.server.ts` |
-| Admin | `admin/` (access, ai, analytics, audit, cache, content, db, feedback, flags, jobs, mcp, notifications, perf, users) | `/api/admin/*` | various | `admin/+layout.server.ts` |
-| Desk (AI workspace) | `desk/` | `/api/desk/*` (files, folders, spreadsheets, theme, workspaces) | `store/`, `branding/` | `desk/+layout.server.ts` |
+| Admin | `admin/` (access, ai, analytics, audit, cache, content, db, feedback, jobs, mcp, name-check, notifications, perf, users) | `/api/admin/*` | various | `admin/+layout.server.ts` |
+| Desk (AI workspace) | `desk/` | `/api/desk/*` (files, folders, theme, workspaces) | `store/`, `branding/` | `desk/+layout.server.ts` |
 | Blog | `(public)/blog/` | `/api/blog/*` (posts, comments, tags, assets, domains, folders, feed.xml) | `blog/`, `content/` | Capability-gated authoring |
 | AI Assistant | — | `/api/ai/*` (chat, conversations, proposals, providers) | `ai/` | Session-gated |
-| RAG / Retrieval | — | `/api/retrieval/*` (documents, graph, ingest, search, stats) | `retrieval/`, `graph/` | Admin-gated |
+| RAG / Retrieval | — | `/api/retrieval/*` (documents, documents/[id], graph/node/[elementId], graph/path, ingest, ingest/stream, search) | `retrieval/`, `graph/` | Admin-gated |
 | Notifications | — | `/api/notifications/*` (stream SSE, telegram, discord, read-all) | `notifications/` | Session-gated |
 | Analytics | — | `/api/analytics/*` (journey beacon, stream) | `analytics/` | Consent-tiered |
 | Privacy (GDPR) | `account/data` (transparency mirror) | `/api/account/*` (data, data/export, DELETE) | `privacy/` | Session-gated; per-endpoint rate limits (10/5/3 per min) |

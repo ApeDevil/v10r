@@ -1,8 +1,7 @@
 /**
  * Retrieval CORPUS axis — the four stores the chatbot draws grounding from.
  *
- * Orthogonal to the STAGE axis (`RetrievalPhase`) and the PATH axis (`RetrieverId`) in
- * `retrieval-trace.ts`. Client-safe pure constants, so the admin pipeline diagram and the AI
+ * Orthogonal to the PATH axis (`RetrieverId`) in `retrieval-trace.ts`. Client-safe pure constants, so the admin pipeline diagram and the AI
  * showcase read one taxonomy and cannot drift.
  */
 

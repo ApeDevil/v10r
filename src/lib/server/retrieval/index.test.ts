@@ -192,20 +192,6 @@ describe('retrieve', () => {
 		expect(steps).toContain('rank');
 		expect(steps).toContain('context');
 	});
-
-	it('unused tiers emitted as skipped', async () => {
-		mockSearchContextual.mockResolvedValue([]);
-
-		const events: RetrievalStepEvent[] = [];
-		await retrieve('test query', { userId: 'u1', tiers: [1] }, (e) => {
-			if (e.type === 'pipeline:step') events.push(e);
-		});
-
-		const skipped = events.filter((e) => e.status === 'skipped');
-		const skippedSteps = skipped.map((e) => e.step);
-		expect(skippedSteps).toContain('tier-2');
-		expect(skippedSteps).toContain('tier-3');
-	});
 });
 
 describe('formatContextForPrompt', () => {

@@ -19,10 +19,9 @@ export async function checkConversationLimit(userId: string): Promise<string | n
 }
 
 export async function getConversationQuota(userId: string) {
-	const { total, totalTokens } = await getConversationStats(userId);
+	const { total } = await getConversationStats(userId);
 	return {
 		total,
-		totalTokens,
 		limit: MAX_CONVERSATIONS_PER_USER,
 		usagePercent: Math.round((total / MAX_CONVERSATIONS_PER_USER) * 100),
 	};

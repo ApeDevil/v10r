@@ -59,7 +59,7 @@ export function adaptBlogAssets(assets: AssetListItem[]): ExplorerNode[] {
 		sourceData: a as unknown as Record<string, unknown>,
 		label: a.fileName,
 		icon: a.mimeType.startsWith('image/') ? 'i-lucide-image' : 'i-lucide-file',
-		iconColor: 'var(--color-success, #22c55e)',
+		iconColor: 'var(--color-success)',
 		isFolder: false,
 		capabilities: new Set<NodeCapability>(ASSET_CAPABILITIES),
 		sortKey: `1_${a.fileName.toLowerCase()}`,

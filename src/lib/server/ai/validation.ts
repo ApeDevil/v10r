@@ -33,19 +33,13 @@ const DynamicToolPart = v.object({
 
 const UIMessagePart = v.union([FixedUIMessagePart, DynamicToolPart]);
 
-/** Accept both legacy {role, content} and UIMessage {id, role, parts} formats. */
-const ChatMessageSchema = v.union([
-	v.object({
-		role: MessageRole,
-		content: v.pipe(v.string(), v.minLength(1), v.maxLength(32_000)),
-	}),
-	v.object({
-		id: v.string(),
-		role: MessageRole,
-		parts: v.array(UIMessagePart),
-		metadata: v.optional(v.unknown()),
-	}),
-]);
+/** The AI SDK UIMessage `{id, role, parts}` — the only shape `DefaultChatTransport` sends. */
+const ChatMessageSchema = v.object({
+	id: v.string(),
+	role: MessageRole,
+	parts: v.array(UIMessagePart),
+	metadata: v.optional(v.unknown()),
+});
 
 /**
  * One panel's context as the desk serializer sends it (`SerializedContext`). The identity
@@ -78,7 +72,7 @@ const DeskLayoutEntry = v.object({
 
 /**
  * Fields every AI-surface request carries. Spread into each per-surface schema below so
- * the common envelope stays defined once. All three schemas use `v.object` (NOT
+ * the common envelope stays defined once. Both schemas use `v.object` (NOT
  * `v.strictObject`) so the AI SDK's transport envelope fields (`id`, `trigger`,
  * `messageId`, …) pass through and unknown keys are dropped rather than 400'd.
  */
@@ -128,8 +122,4 @@ export const DeskRequestSchema = v.object({
 			name: v.string(),
 		}),
 	),
-});
-
-export const CreateConversationSchema = v.object({
-	title: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(200))),
 });

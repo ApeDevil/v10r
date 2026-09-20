@@ -8,13 +8,6 @@ import { getContext, setContext } from 'svelte';
 export interface DeskEvents {
 	'editor:content': { content: string; type: string; metadata: Record<string, unknown> };
 	'editor:document': { documentId: string; type: string } | null;
-	'editor:save': { documentId: string; revisionId: string };
-	'files:select': {
-		type: 'post' | 'asset' | 'spreadsheet';
-		id: string;
-		data: Record<string, unknown>;
-	} | null;
-	'spreadsheet:open': { fileId: string; name: string };
 	'files:insert-image': {
 		assetId: string;
 		fileName: string;
@@ -25,14 +18,10 @@ export interface DeskEvents {
 	};
 
 	// AI-originated desk actions
-	'ai:open_panel': { panelType: string; fileId?: string; label?: string };
 	'ai:refresh_file': { fileId: string };
 	/** The panel showing `fileId` answers `ai:refresh_file`: what it now shows, or that it could not reload. */
 	'ai:file_refreshed': { fileId: string; version: number | null; ok: boolean };
 	'ai:refresh_explorer': Record<string, never>;
-	'ai:highlight': { panelId: string; cells?: { row: number; col: number }[]; duration?: number };
-	'ai:notify': { message: string; level: 'info' | 'success' | 'error' };
-	'ai:scroll_to': { panelId: string; target: string };
 }
 
 export interface SubscribeOptions {

@@ -42,7 +42,7 @@ The function is also TTL-cached (60s, 1000-entry cap, negative results included)
 `app.custom_palettes` — per-user rows, derived from a preset.
 
 ```
-src/lib/server/db/schema/app/custom-palettes.ts
+src/lib/server/db/schema/personalization/custom-palettes.ts
 ```
 
 ```typescript

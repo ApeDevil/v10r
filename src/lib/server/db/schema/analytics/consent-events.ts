@@ -5,7 +5,7 @@
 import { index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { analyticsSchema, consentTierEnum } from './events';
 
-export const consentActionEnum = analyticsSchema.enum('consent_action', ['grant', 'change', 'withdraw']);
+export const consentActionEnum = analyticsSchema.enum('consent_action', ['grant', 'change']);
 
 export const consentEvents = analyticsSchema.table(
 	'consent_events',

@@ -281,8 +281,6 @@ describe('servedBy / turnOptions', () => {
 			activations: [],
 			citations: [],
 			cited: [],
-			modelCalls: 1,
-			toolExecutions: 0,
 		}));
 		expect(turnOptions(messages, summaries).map((t) => t.question)).toEqual(['second?', 'first?']);
 	});

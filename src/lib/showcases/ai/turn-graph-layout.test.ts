@@ -15,7 +15,6 @@ import {
 	COLUMN_WIDTH,
 	cardSize,
 	cardVariant,
-	edgeHandles,
 	GROUP_HEADER,
 	GROUP_PADDING,
 	GUTTER_WIDTH,
@@ -186,18 +185,6 @@ describe('turn graph geometry — the chatbot fixture in detail', () => {
 		const call = graph.nodes.find((n) => n.id === NODE_IDS.call('demo_call_1')) as (typeof graph.nodes)[number];
 		expect(cardSize(call)).toEqual({ width: COLUMN_WIDTH, height: 80 });
 		expect(GUTTER_WIDTH).toBeGreaterThan(8 * 8 + 16 + 14);
-	});
-
-	it('names the handles by direction: across by side, within a column along the rail', () => {
-		const columnOf = (id: string) => graph.nodes.find((n) => n.id === id)?.column ?? 'context';
-		const inclusion = graph.edges.find((e) => e.kind === 'inclusion') as (typeof graph.edges)[number];
-		expect(edgeHandles(inclusion, columnOf)).toEqual({ sourceHandle: 'r-out', targetHandle: 'l-in' });
-		const result = graph.edges.find(
-			(e) => e.kind === 'result' && e.target.startsWith('call:'),
-		) as (typeof graph.edges)[number];
-		expect(edgeHandles(result, columnOf)).toEqual({ sourceHandle: 'l-out', targetHandle: 'r-in' });
-		const request = graph.edges.find((e) => e.kind === 'request') as (typeof graph.edges)[number];
-		expect(edgeHandles(request, columnOf)).toEqual({ sourceHandle: 'l-out', targetHandle: 'l-in' });
 	});
 });
 

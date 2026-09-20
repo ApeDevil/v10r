@@ -1,15 +1,14 @@
 /**
- * Admin pairing endpoints — generate a code (POST) or list active pairings (GET).
+ * Admin pairing endpoint — generate a pairing code (+ its QR) for the current admin.
  */
 
 import { requireAdmin } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiOk } from '$lib/server/http/response';
-import { createPairingCode, getActivePairings, qrSvg } from '$lib/server/pairing';
+import { apiCreated, apiError } from '$lib/server/http/response';
+import { createPairingCode, qrSvg } from '$lib/server/pairing';
 import type { RequestHandler } from './$types';
 
 const generateLimit = createLimiter('rl:pair:generate', 5, '60 s');
-const listLimit = createLimiter('rl:pair:list', 30, '60 s');
 
 export const POST: RequestHandler = async ({ locals, url, request }) => {
 	const { user } = requireAdmin(locals);
@@ -35,22 +34,4 @@ export const POST: RequestHandler = async ({ locals, url, request }) => {
 		console.error('[pairing] createPairingCode failed', err);
 		return apiError(500, 'internal', 'Failed to generate pairing code.');
 	}
-};
-
-export const GET: RequestHandler = async ({ locals }) => {
-	const { user } = requireAdmin(locals);
-
-	const { success, reset } = await listLimit.limit(user.id);
-	if (!success) return rateLimitResponse(reset);
-
-	const pairings = await getActivePairings(user.id);
-	return apiOk({
-		pairings: pairings.map((p) => ({
-			code: p.code,
-			createdAt: p.createdAt.toISOString(),
-			expiresAt: p.expiresAt.toISOString(),
-			consumedAt: p.consumedAt?.toISOString() ?? null,
-			pairedSessionId: p.pairedSessionId,
-		})),
-	});
 };

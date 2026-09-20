@@ -48,7 +48,6 @@
 	--color-fg-alpha: color-mix(in srgb, var(--color-fg) 10%, transparent);
 
 	/* Backdrop & Shadows */
-	--backdrop: rgb(0 0 0 / 0.5);
 	--shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
 	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -88,14 +87,11 @@
 
 	/* Layout - Content */
 	--layout-max-width: 80rem;
-	--layout-content-width: 65ch;
-	--layout-wide-width: 90rem;
 	--layout-narrow-width: 50rem;
 
 	/* Z-index layers — SSOT (tokens.ts zIndex references these vars).
 	   Values stay numeric: calc() consumers exist (grain-glow, SidebarDrawer, SessionWarningBanner).
 	   Same-z nesting (e.g. select inside popover) resolves by portal order — Bits appends in open order. */
-	--z-base: 0;
 	--z-sidebar: 10;
 	--z-fab: 20;
 	--z-panel: 25; /* non-modal docked surfaces (chatbot dock, selection bar) — below modal scrims */
@@ -186,9 +182,7 @@
 	--duration-slow: 400ms;
 	--duration-slower: 600ms;
 	--ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-	--ease-in: cubic-bezier(0.4, 0, 1, 1);
 	--ease-out: cubic-bezier(0, 0, 0.2, 1);
-	--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
 	/* Radius tokens */
 	--radius-sm: 0.25rem;
@@ -233,11 +227,8 @@
 	--spacing-8: 3rem;
 
 	/* Fluid spacing tokens */
-	--spacing-fluid-1: clamp(0.25rem, 0.2rem + 0.25vw, 0.5rem);
-	--spacing-fluid-2: clamp(0.5rem, 0.4rem + 0.5vw, 1rem);
 	--spacing-fluid-3: clamp(0.75rem, 0.5rem + 1vw, 1.5rem);
 	--spacing-fluid-4: clamp(1rem, 0.75rem + 1.5vw, 2rem);
-	--spacing-fluid-5: clamp(1.5rem, 1rem + 2vw, 3rem);
 	--spacing-fluid-6: clamp(2rem, 1.5rem + 2.5vw, 4rem);
 
 	/* Fluid typography tokens */
@@ -295,7 +286,6 @@
 	--color-info-light: oklch(0.35 0.06 250);
 
 	/* Backdrop & Shadows - Dark */
-	--backdrop: rgb(0 0 0 / 0.7);
 	--shadow-sm: 0 1px 2px rgb(0 0 0 / 0.1);
 	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2);
 	--shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.2);

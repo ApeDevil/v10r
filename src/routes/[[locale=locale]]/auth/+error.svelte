@@ -15,7 +15,6 @@ import * as m from '$lib/paraglide/messages';
 	status={page.status}
 	message={page.error?.message}
 	errorId={page.error?.errorId}
-	context="auth"
 >
 	{#snippet actions()}
 		{#if page.status >= 500}

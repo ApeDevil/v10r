@@ -17,10 +17,9 @@ export const ERR = {
 	INVALID_REQ: -32600,
 	NO_METHOD: -32601,
 	BAD_PARAMS: -32602,
-	INTERNAL: -32603,
 } as const;
 
-export type ParseOutcome =
+type ParseOutcome =
 	| { kind: 'message'; msg: RpcMessage }
 	| { kind: 'batch' }
 	| { kind: 'invalid' }
@@ -51,8 +50,8 @@ export function ok(id: Id, result: unknown): string {
 	return `${JSON.stringify({ jsonrpc: '2.0', id, result })}\n`;
 }
 
-export function err(id: Id, code: number, message: string, data?: unknown): string {
-	const error = data === undefined ? { code, message } : { code, message, data };
+export function err(id: Id, code: number, message: string): string {
+	const error = { code, message };
 	return `${JSON.stringify({ jsonrpc: '2.0', id, error })}\n`;
 }
 

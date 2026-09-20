@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { docsSourceUrl, renderDoc } from '$lib/server/docs/loader';
+import { renderDoc } from '$lib/server/docs/loader';
 
 export const load = async ({ params }) => {
 	const rendered = await renderDoc('pattern-library', params.slug);
@@ -9,6 +9,5 @@ export const load = async ({ params }) => {
 		entry: rendered.entry,
 		html: rendered.html,
 		toc: rendered.toc,
-		sourceUrl: docsSourceUrl(rendered.entry.sourcePath),
 	};
 };

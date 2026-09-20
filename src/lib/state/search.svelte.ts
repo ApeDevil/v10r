@@ -94,5 +94,3 @@ export function createSearchEngine() {
 		},
 	};
 }
-
-export type SearchEngine = ReturnType<typeof createSearchEngine>;

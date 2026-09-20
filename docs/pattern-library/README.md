@@ -121,7 +121,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Data retention policy & purge jobs](./admin-privacy-data-retention.md)
 - [Cross-device debug pairing (QR + HMAC cookie)](./admin-privacy-pairing.md)
 - [Style picking + custom palettes](./admin-privacy-style-picking.md)
-- [Audit log, announcements, feature flags](./admin-privacy-audit-log.md)
+- [Audit log and announcements](./admin-privacy-audit-log.md)
 - [Feedback capture](./admin-privacy-feedback.md)
 
 ### AI

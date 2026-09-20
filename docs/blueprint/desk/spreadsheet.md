@@ -235,7 +235,7 @@ $lib/server/db/schema/desk/
   index.ts                           # Re-exports all desk schema objects
 
 $lib/server/db/desk/
-  queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId, getAiContextFiles, listFolders, getFolder, countFolderContents
+  queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId, listFolders, getFolder
   mutations.ts                       # createSpreadsheetFile, createMarkdownFile, renameFile, deleteFile, updateSpreadsheetByFileId, updateMarkdownByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
 
 src/routes/api/desk/files/

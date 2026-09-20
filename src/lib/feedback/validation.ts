@@ -44,6 +44,3 @@ export const feedbackSubmissionSchema = v.object({
 	/** Honeypot — must remain empty. Bots fill all visible fields. */
 	bookmark: v.optional(v.literal(''), ''),
 });
-
-export type FeedbackSubmissionInput = v.InferInput<typeof feedbackSubmissionSchema>;
-export type FeedbackSubmissionOutput = v.InferOutput<typeof feedbackSubmissionSchema>;

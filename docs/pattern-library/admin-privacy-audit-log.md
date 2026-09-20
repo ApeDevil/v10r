@@ -1,10 +1,10 @@
 ---
-title: "Audit log, announcements, feature flags"
-description: "Admin-side systems for recording an audit trail of privileged actions, publishing site announcements, and toggling feature flags, all under the admin server…"
+title: "Audit log and announcements"
+description: "Admin-side systems for recording an audit trail of privileged actions and publishing site announcements, all under the admin server module."
 category: "Admin & Privacy"
 ---
 
-# Audit log, announcements, feature flags
+# Audit log and announcements
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -12,9 +12,9 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 
 **Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — audit integrity and flag correctness affect privileged operations
 
-Admin-side systems for recording an audit trail of privileged actions, publishing site announcements, and toggling feature flags, all under the admin server module.
+Admin-side systems for recording an audit trail of privileged actions and publishing site announcements, all under the admin server module.
 
-**When to use:** Use when an admin action needs to be logged, a message needs to be broadcast to users, or a feature needs a togglable flag.
+**When to use:** Use when an admin action needs to be logged or a message needs to be broadcast to users.
 
 ## Docs
 

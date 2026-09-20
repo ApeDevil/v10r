@@ -125,14 +125,6 @@ const sections = $derived([
 		line-height: 1.55;
 	}
 
-	.card-note code {
-		font-family: ui-monospace, monospace;
-		font-size: 0.92em;
-		padding: 0.05em 0.3em;
-		border-radius: var(--radius-sm);
-		background: var(--color-subtle);
-	}
-
 	.surface-list {
 		display: flex;
 		flex-direction: column;

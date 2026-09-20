@@ -3,8 +3,10 @@ import { PAGE_SIZE } from '$lib/server/notifications/config';
 import { renderNotification } from '$lib/server/notifications/render-message';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
-	if (!locals.user) return { notifications: [], unreadCount: 0, page: 1, pageSize: PAGE_SIZE };
+export const load: PageServerLoad = async ({ locals, url, depends }) => {
+	// Mark-read on the page invalidates this key so the list and the count re-render.
+	depends('app:notifications');
+	if (!locals.user) return { notifications: [], unreadCount: 0 };
 
 	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
 	const offset = (page - 1) * PAGE_SIZE;
@@ -27,7 +29,5 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			archivedAt: n.archivedAt?.toISOString() ?? null,
 		})),
 		unreadCount,
-		page,
-		pageSize: PAGE_SIZE,
 	};
 };

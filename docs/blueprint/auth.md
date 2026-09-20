@@ -148,7 +148,7 @@ export type Auth = typeof auth;
 ### Auth Email Template
 
 ```typescript
-// src/lib/server/email.ts
+// Illustrative — the shipped sender is src/lib/server/auth/send-auth-email.ts
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -377,7 +377,7 @@ export const userProfile = pgTable('user_profile', {
 ### Email Entry (Step 1)
 
 ```svelte
-<!-- src/routes/auth/login/+page.svelte -->
+<!-- src/routes/[[locale=locale]]/auth/login/+page.svelte -->
 <script lang="ts">
   import { authClient, signIn } from '$lib/auth-client';
   import { goto } from '$app/navigation';
@@ -451,7 +451,7 @@ export const userProfile = pgTable('user_profile', {
 > Magic links and OTPs are **cryptographically independent** — different tokens, different verification methods.
 
 ```svelte
-<!-- src/routes/auth/verify/+page.svelte -->
+<!-- src/routes/[[locale=locale]]/auth/verify/+page.svelte -->
 <script lang="ts">
   import { authClient } from '$lib/auth-client';
   import { goto } from '$app/navigation';
@@ -664,8 +664,8 @@ GET    /api/grant-requests          — check own pending request
 DELETE /api/grant-requests          — cancel own request
 
 GET    /api/admin/grant-requests          — list all pending (admin)
-POST   /api/admin/grant-requests/approve  — approve
-POST   /api/admin/grant-requests/deny     — deny
+POST   /api/admin/grant-requests/[id]/approve  — approve
+POST   /api/admin/grant-requests/[id]/deny     — deny
 
 GET    /api/admin/users/[id]/grants         — list active grants for user
 PUT    /api/admin/users/[id]/grants/[kind]  — grant capability
@@ -681,7 +681,7 @@ DELETE /api/admin/users/[id]/grants/[kind]  — revoke capability
 ### Server-Side (Recommended)
 
 ```typescript
-// src/routes/account/dashboard/+page.server.ts
+// src/routes/[[locale=locale]]/account/dashboard/+page.server.ts
 import { redirect } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 
@@ -701,7 +701,7 @@ export async function load({ request }) {
 ### Helper Function
 
 ```typescript
-// src/lib/server/auth/guard.ts
+// Illustrative — the shipped guards are requireAuth/requireAdmin in src/lib/server/http/guards.ts
 import { redirect } from '@sveltejs/kit';
 import { auth } from '$lib/server/auth';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -721,7 +721,7 @@ export async function requireAuth(event: RequestEvent) {
 ```
 
 ```typescript
-// src/routes/account/settings/+page.server.ts
+// src/routes/[[locale=locale]]/account/settings/+page.server.ts
 import { requireAuth } from '$lib/server/auth/guard';
 
 export async function load(event) {
@@ -960,7 +960,7 @@ export async function cleanupExpiredSessions() {
 > **Security:** Use timing-safe comparison for cron secrets to prevent timing attacks.
 
 ```typescript
-// src/routes/api/cron/session-cleanup/+server.ts
+// Illustrative — shipped as the `session-cleanup` job in src/lib/server/jobs/index.ts, served by /api/cron/[job]
 import { json, error } from '@sveltejs/kit';
 import { timingSafeEqual } from 'crypto';
 import { CRON_SECRET } from '$env/static/private';

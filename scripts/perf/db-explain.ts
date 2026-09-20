@@ -7,7 +7,7 @@
  * SELECT / EXPLAIN / SHOW — no mutations.
  *
  * Usage (from host, via the container so env + node_modules are present):
- *   podman compose run --rm --entrypoint bun v10r run scripts/perf/db-explain.ts
+ *   podman compose run --rm --entrypoint bun app run scripts/perf/db-explain.ts
  *
  * Targets NEON_DATABASE_URL_PROD (the real corpus). Each probe is independently
  * try/caught so one failure never aborts the rest.

@@ -9,10 +9,8 @@
  *       name not in registry.tools  →  unknown_tool
  *       otherwise                   →  threw
  *
- * The inference is TOTAL only because `errorResult`'s diag parameter is required. If a handler ever
- * returns `isError` without one, it lands in `tool_error` — which is not an outcome anyone should
- * see, but a COVERAGE METER: a non-zero count means an uninstrumented `errorResult` call site
- * exists. The schema tells you when the instrumentation has a hole.
+ * The inference is TOTAL only because `errorResult`'s diag parameter is required: a handler
+ * cannot return `isError` without one, so "no diag" can only mean the transport.
  */
 import type { McpCallObservation, ToolDiag } from '../types';
 
@@ -27,19 +25,17 @@ export type McpOutcome =
 	| 'conflict'
 	| 'unknown_tool'
 	| 'threw'
-	| 'tool_error'
 	| 'unknown_method'
 	| 'bad_envelope'
 	| 'parse_error'
 	| 'unsupported_version'
 	| 'forbidden_origin'
-	| 'rate_limited'
 	| 'unauthorized'
 	| 'unconfigured'
 	| 'internal_error';
 
 /** Reasons a request can be refused before the transport ever runs. */
-export type McpGateReason = 'rate_limited' | 'unauthorized' | 'unconfigured';
+export type McpGateReason = 'unauthorized' | 'unconfigured';
 
 /** Methods the transport implements. Anything else is caller-controlled text → 'other'. */
 const KNOWN_METHODS = new Set([

@@ -58,7 +58,6 @@ export async function linkTelegramAccount(opts: {
 				telegramUsername: username,
 				isActive: true,
 				linkedAt: new Date(),
-				unlinkedAt: null,
 			},
 		});
 

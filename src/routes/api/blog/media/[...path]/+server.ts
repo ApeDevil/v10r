@@ -11,7 +11,8 @@ const limiter = createLimiter('rl:blog:media', 60, '1 m');
 
 /**
  * Public media proxy by storage key — redirects to a fresh presigned R2 URL.
- * Used to fix legacy blog content that embedded presigned URLs directly.
+ * The file-as-source workflow (`content:push`, `server/content/assets.ts`) writes
+ * this form into post markdown; the by-id proxy serves Explorer-inserted images.
  *
  * URL pattern: /api/blog/media/blog/uuid.ext
  * The [...path] param becomes the R2 storage key.

@@ -3,7 +3,7 @@
  * Code format: 6 digits in alphabet [2-9] (no 0/1 to avoid O/I confusion).
  */
 import crypto from 'node:crypto';
-import { and, desc, eq, gt, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, eq, gt, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { pairingCodes, sessions } from '$lib/server/db/schema/analytics';
 
@@ -42,8 +42,6 @@ export async function createPairingCode(adminUserId: string): Promise<CreatedPai
 export interface ClaimResult {
 	ok: true;
 	adminUserId: string;
-	pairedAt: Date;
-	expiresAt: Date;
 }
 export interface ClaimFailure {
 	ok: false;
@@ -78,14 +76,12 @@ export async function claimPairingCode(rawCode: string, sessionId: string): Prom
 
 	const claimed = result[0];
 	if (claimed) {
-		const pairedAt = now;
-		const pairedExpiresAt = new Date(now.getTime() + PAIRED_SESSION_TTL_MS);
 		// Tag the session as paired (best-effort: insert path on session creation handles new sessions)
 		await db
 			.update(sessions)
-			.set({ pairedAdminUserId: claimed.adminUserId, pairedAt })
+			.set({ pairedAdminUserId: claimed.adminUserId, pairedAt: now })
 			.where(eq(sessions.id, sessionId));
-		return { ok: true, adminUserId: claimed.adminUserId, pairedAt, expiresAt: pairedExpiresAt };
+		return { ok: true, adminUserId: claimed.adminUserId };
 	}
 
 	// Failed: figure out why for better UX. Bump attempt count even on failed lookups
@@ -119,38 +115,6 @@ export async function revokePairing(code: string, adminUserId: string): Promise<
 			.where(eq(sessions.pairedAdminUserId, adminUserId));
 	}
 	return !!result[0];
-}
-
-export interface ActivePairing {
-	code: string;
-	createdAt: Date;
-	expiresAt: Date;
-	consumedAt: Date | null;
-	pairedSessionId: string | null;
-}
-
-/** Active codes (unconsumed and unexpired) plus consumed pairings still within session TTL. */
-export async function getActivePairings(adminUserId: string): Promise<ActivePairing[]> {
-	const now = new Date();
-	const cutoff = new Date(now.getTime() - PAIRED_SESSION_TTL_MS);
-	const rows = await db
-		.select({
-			code: pairingCodes.code,
-			createdAt: pairingCodes.createdAt,
-			expiresAt: pairingCodes.expiresAt,
-			consumedAt: pairingCodes.consumedAt,
-			pairedSessionId: pairingCodes.consumedBySessionId,
-		})
-		.from(pairingCodes)
-		.where(
-			and(
-				eq(pairingCodes.adminUserId, adminUserId),
-				sql`(${pairingCodes.consumedAt} IS NULL AND ${pairingCodes.expiresAt} > ${now}) OR (${pairingCodes.consumedAt} > ${cutoff})`,
-			),
-		)
-		.orderBy(desc(pairingCodes.createdAt))
-		.limit(10);
-	return rows;
 }
 
 /** True if the admin has any active paired sessions (consumed within 2h). */

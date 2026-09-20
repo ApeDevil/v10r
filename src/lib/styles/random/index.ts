@@ -3,7 +3,7 @@
  */
 
 export type { AccentTokens } from './accent';
-export { ACCENT_TOKEN_KEYS, deriveAccentTokens } from './accent';
+export { deriveAccentTokens } from './accent';
 export { contrastRatio, luminance, validatePaletteContrast } from './contrast';
 export { parseStyleCookie, STYLE_COOKIE_NAME, STYLE_COOKIE_OPTIONS, serializeStyleCookie } from './cookie';
 export { generateRandomStyle, resolveStyle } from './generator';

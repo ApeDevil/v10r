@@ -78,7 +78,6 @@ export const imageKitCropSchema = v.object({
 	/** One short phrase describing what the crop should keep. */
 	note: v.nullable(v.string()),
 });
-export type ImageKitCrop = v.InferOutput<typeof imageKitCropSchema>;
 
 export const imageKitVisionSchema = v.object({
 	title: v.nullable(v.string()),
@@ -199,14 +198,4 @@ export interface PreRunEstimate {
 	estInputTokens: number;
 	estOutputTokens: number;
 	cost: CostEstimate | null;
-}
-
-export interface ImageKitUploadResult {
-	imageId: string;
-	previewUrl: string;
-	width: number;
-	height: number;
-	fileSize: number;
-	/** Reference estimate for one Run; null when no vision provider is configured. */
-	estimate: PreRunEstimate | null;
 }

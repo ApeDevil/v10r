@@ -36,7 +36,7 @@ These are enforced in `privacy/report.ts`, not left to callers:
 - **Sections degrade independently.** A `settle()` wrapper makes one failed read render that section unavailable; it never 500s the whole report.
 - **Per-domain legal basis + Art 20 `portable` tag.** Portability applies only to consent/contract data; the report marks which sections it covers.
 - **Analytics comes in two lanes, and only one belongs in the report.** The authenticated lane (`analytics.user_events`, keyed by user id) IS included as the `behavior` section — plainly this user's data under Art 15, reported on a legitimate-interest basis and marked portable. The anonymous lane (`analytics.events`, keyed by hashed `visitorId`) is deliberately absent: re-identifying that hash needs a documented Art 6(4) basis that does not exist. Do not add it without one — and note that joining the two lanes would not merely widen this report, it would move the anonymous lane onto a different legal footing entirely. See [blueprint/analytics/two-lane-model.md](../../blueprint/analytics/two-lane-model.md).
-- **The `security` section is contract, never portable.** It reports `twoFactorEnabled` + passkey display metadata only — never a secret, backup code, public key, credential ID, or raw AAGUID. `REPORT_SCHEMA_VERSION` is bumped (`2026-06-17`) when section shape changes. Erasure needs no change: passkey/two-factor rows FK-cascade with `auth.user`.
+- **The `security` section is contract, never portable.** It reports `twoFactorEnabled` + passkey display metadata only — never a secret, backup code, public key, credential ID, or raw AAGUID. `REPORT_SCHEMA_VERSION` is bumped (`2026-07-25` today) when section shape changes. Erasure needs no change: passkey/two-factor rows FK-cascade with `auth.user`.
 - **The `images` section reports a `withGpsCount`.** The Image Metadata Reader treats location as opt-in (see [../../blueprint/ai/image-metadata.md](../../blueprint/ai/image-metadata.md)); the aggregator can count persisted-location records because GPS lives in a typed `gps_lat`/`gps_lng` column, never only inside a blob. Stored image derivatives are EXIF-stripped, so no GPS exists outside this opt-in column.
 
 ### Erasure is the FK cascade — plus a Neo4j sweep
@@ -67,7 +67,7 @@ Transparency runs both ways: data subjects get the rights above; this section di
 
 ### Scope
 
-Admin-only surfaces (non-admins 404, see guarantees) group into four buckets: **Observe** (DB/analytics dashboards — aggregate only, no raw IPs; the audit log; feedback triage), **Manage** (ban users, toggle feature flags), **Content** (CRUD posts/tags), **System** (inspect/re-run jobs, configure notification channels, AI usage, flush cache). None of these read secrets.
+Admin-only surfaces (non-admins 404, see guarantees) group into four buckets: **Observe** (DB/analytics dashboards — aggregate only, no raw IPs; the audit log; feedback triage), **Manage** (ban users), **Content** (CRUD posts/tags), **System** (inspect/re-run jobs, configure notification channels, AI usage, flush cache). None of these read secrets.
 
 ### Guarantees (code-enforced, not policy)
 

@@ -15,14 +15,6 @@
 import type { DagData } from '$lib/components/viz/graph';
 import type { Registry } from '$patterns/schema';
 
-/** Slim per-pattern projection for the page's dependency table. */
-export interface PatternRow {
-	id: string;
-	tier: 'deep' | 'light';
-	category: string;
-	depends_on: string[];
-}
-
 export interface RegistryStats {
 	patternCount: number;
 	deepCount: number;

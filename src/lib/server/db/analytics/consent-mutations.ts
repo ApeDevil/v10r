@@ -8,7 +8,7 @@ import type { ConsentTier } from '$lib/types/db-enums';
 
 export async function recordConsentEvent(event: {
 	visitorId: string;
-	action: 'grant' | 'change' | 'withdraw';
+	action: 'grant' | 'change';
 	tierBefore: ConsentTier | null;
 	tierAfter: ConsentTier;
 	uaHash?: string;

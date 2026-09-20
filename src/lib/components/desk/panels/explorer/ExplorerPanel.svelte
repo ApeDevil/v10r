@@ -217,15 +217,6 @@ function openPost(p: ExplorerPostItem) {
 
 function selectAsset(a: AssetListItem) {
 	selectedAsset = selectedAsset?.id === a.id ? null : a;
-	if (selectedAsset) {
-		bus.publish('files:select', {
-			type: 'asset',
-			id: a.id,
-			data: { fileName: a.fileName, downloadUrl: a.downloadUrl, mimeType: a.mimeType },
-		});
-	} else {
-		bus.publish('files:select', null);
-	}
 }
 
 /**
@@ -246,7 +237,6 @@ function openFilePanel(f: FileListItem, suffix = '') {
 		meta: { fileId: f.id },
 	};
 	dock.addPanel(panel);
-	if (panelType === 'spreadsheet') bus.publish('spreadsheet:open', { fileId: f.id, name: f.name });
 }
 
 function insertAsset(a: AssetListItem) {

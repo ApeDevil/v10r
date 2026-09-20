@@ -1,16 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
-export const toggleGroupVariants = cva(['inline-flex'], {
-	variants: {
-		orientation: {
-			horizontal: 'flex-row',
-			vertical: 'flex-col',
-		},
-	},
-	defaultVariants: {
-		orientation: 'horizontal',
-	},
-});
+export const toggleGroupVariants = cva(['inline-flex flex-row']);
 
 export const toggleGroupItemVariants = cva(
 	[
@@ -24,10 +14,6 @@ export const toggleGroupItemVariants = cva(
 	],
 	{
 		variants: {
-			variant: {
-				default: '',
-				outline: '',
-			},
 			size: {
 				sm: 'h-8 px-2.5 text-sm',
 				md: 'h-10 px-3',
@@ -35,11 +21,9 @@ export const toggleGroupItemVariants = cva(
 			},
 		},
 		defaultVariants: {
-			variant: 'default',
 			size: 'md',
 		},
 	},
 );
 
-export type ToggleGroupVariants = VariantProps<typeof toggleGroupVariants>;
 export type ToggleGroupItemVariants = VariantProps<typeof toggleGroupItemVariants>;

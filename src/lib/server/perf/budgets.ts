@@ -33,8 +33,6 @@ export const budgets = raw.budgets as Readonly<Record<string, Budget>>;
 
 export type BudgetKey = keyof typeof raw.budgets;
 
-export const budgetKeys = Object.keys(budgets) as BudgetKey[];
-
 /**
  * The ratchet: the measured value at the moment it was accepted.
  *
@@ -50,10 +48,6 @@ export const budgetKeys = Object.keys(budgets) as BudgetKey[];
  * used the headroom — never to absorb a dependency, which is what they exist to catch.
  */
 export const ceilings = raw.ceilings as Readonly<Record<string, number>>;
-
-export function ceilingFor(metric: string): number | null {
-	return ceilings[metric] ?? null;
-}
 
 /**
  * Score a measurement. Every budget here is "lower is better", so the comparison

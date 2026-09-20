@@ -46,7 +46,6 @@ Choose the correct layout for each store based on where it's needed:
 | Theme, locale | App-wide | Root `+layout.svelte` | Affects all pages including public |
 | Sidebar, user menu | Authenticated zone | `(app)/+layout.svelte` | Only needed in app shell |
 | Shopping cart | E-commerce section | `(shop)/+layout.svelte` | Scoped to shop routes |
-| Feature flags | Per-feature | Route group layout | Feature isolation |
 | Form drafts | Single page | `+page.svelte` | Page lifecycle only |
 
 ```
@@ -63,7 +62,7 @@ src/routes/
 Export a factory from `.svelte.ts`, instantiate it once per request in a layout, and expose it via context. Each request gets its own isolated instance — no cross-request leak.
 
 ```typescript
-// src/lib/state/todos.svelte.ts
+// Illustrative — the shipped stores follow this shape, e.g. src/lib/state/sidebar.svelte.ts
 export function createTodoStore(initial: Todo[] = []) {
   let todos = $state(initial);
 
@@ -98,7 +97,7 @@ Module-level `$state` exported directly from `.svelte.ts` is shared across ALL u
 ### Type-Safe Context Helper
 
 ```typescript
-// src/lib/state/context.ts
+// Illustrative — v10r stores each export their own set/get pair instead
 import { setContext, getContext } from 'svelte';
 
 export function createContext<T>(key: string) {
@@ -322,7 +321,7 @@ Common mismatch sources (timestamps/dates, random UUIDs, media queries, browser-
 **1. Server reads from cookie in layout load:**
 
 ```typescript
-// src/routes/+layout.server.ts
+// src/routes/[[locale=locale]]/+layout.server.ts
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
@@ -374,7 +373,7 @@ App-wide UI state for sidebar, theme, and locale. Uses cookies for SSR-affecting
 Define explicit TypeScript interfaces for type-safe context usage:
 
 ```typescript
-// src/lib/state/types.ts
+// Illustrative — v10r keeps each store's types beside it; Theme comes from $lib/types/db-enums
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -406,7 +405,7 @@ export interface ToastStore {
 ### Store File (Factory Pattern for SSR Safety)
 
 ```typescript
-// src/lib/state/ui.svelte.ts
+// Illustrative — compare src/lib/state/sidebar.svelte.ts
 
 import { browser } from '$app/environment';
 import type { Theme, ThemeStore, SidebarStore } from './types';

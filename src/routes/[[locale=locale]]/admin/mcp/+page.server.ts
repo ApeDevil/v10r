@@ -1,5 +1,4 @@
 import { requireAdmin } from '$lib/server/http/guards';
-import { DEMO_COLORS, MAX_MESSAGE_LENGTH } from '$lib/server/mcp/demo/config';
 import { getDemoState } from '$lib/server/mcp/demo/state';
 import type { PageServerLoad } from './$types';
 
@@ -18,8 +17,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return {
 			title: 'MCP Test',
 			state,
-			colors: [...DEMO_COLORS],
-			maxMessageLength: MAX_MESSAGE_LENGTH,
 			unavailable: false,
 		};
 	} catch (cause) {
@@ -28,8 +25,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return {
 			title: 'MCP Test',
 			state: null,
-			colors: [...DEMO_COLORS],
-			maxMessageLength: MAX_MESSAGE_LENGTH,
 			unavailable: true,
 		};
 	}

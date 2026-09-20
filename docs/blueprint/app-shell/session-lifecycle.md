@@ -70,7 +70,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
 
 ## Implementation
 
-> **Endpoints below are illustrative.** The shipped pieces are the components `shell/session/{SessionMonitor,SessionWarningBanner,SessionExpiryModal}.svelte` and the `getSession()` context store. The re-auth routes (`/api/auth/extend-session`, `/api/auth/send-reauth-code`, `/api/auth/reauthenticate`) are not yet built — treat them as a reference contract.
+> **Endpoints below are illustrative.** The shipped pieces are the components `shell/session/{SessionMonitor,SessionWarningBanner,SessionExpiryDialog}.svelte` and the `getSession()` context store. The re-auth routes (`/api/auth/extend-session`, `/api/auth/send-reauth-code`, `/api/auth/reauthenticate`) are not yet built — treat them as a reference contract.
 
 ### Session Monitor
 
@@ -79,7 +79,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
 <script lang="ts">
   import { page } from '$app/state';
   import { invalidateAll } from '$app/navigation';
-  import SessionExpiryModal from './SessionExpiryModal.svelte';
+  import SessionExpiryDialog from './SessionExpiryDialog.svelte';
   import SessionWarningBanner from './SessionWarningBanner.svelte';
 
   let { session } = $props();
@@ -166,7 +166,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
 {/if}
 
 {#if showExpiredModal}
-  <SessionExpiryModal
+  <SessionExpiryDialog
     email={session?.user?.email}
     onreauthenticate={handleReauthenticate}
     onsendcode={sendReauthCode}
@@ -209,7 +209,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
 ### Expiry Modal
 
 ```svelte
-<!-- src/lib/components/shell/session/SessionExpiryModal.svelte -->
+<!-- src/lib/components/shell/session/SessionExpiryDialog.svelte -->
 <script lang="ts">
   import { Dialog } from 'bits-ui';
 
@@ -554,7 +554,7 @@ if (!success) return rateLimitResponse(reset);
 For high-stakes actions, require recent authentication:
 
 ```typescript
-// src/lib/server/auth/require-recent-auth.ts
+// Illustrative — the shipped step-up (TOTP re-auth for sensitive actions) is src/lib/server/auth/step-up.ts
 export async function requireRecentAuth(session: Session, maxAge = 15 * 60 * 1000) {
   const sessionAge = Date.now() - new Date(session.createdAt).getTime();
 
@@ -632,7 +632,7 @@ src/lib/components/shell/
 ├── SessionMonitor.svelte
 └── session/
     ├── SessionWarningBanner.svelte
-    ├── SessionExpiryModal.svelte
+    ├── SessionExpiryDialog.svelte
     └── index.ts
 ```
 

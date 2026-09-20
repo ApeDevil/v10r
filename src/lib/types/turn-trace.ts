@@ -35,7 +35,7 @@ import type { RetrieverId } from './retrieval-trace';
 export type TurnItemState = 'available' | 'considered' | 'included' | 'executed' | 'cited';
 
 /** A chunk's rung in its document's hierarchy, as `retrieval.chunk.level` records it. */
-export type ChunkLevel = 'sentence' | 'paragraph' | 'section';
+export type ChunkLevel = 'paragraph' | 'section';
 
 /**
  * The system-prompt blocks either surface assembles. A capability's guidance block is
@@ -241,7 +241,6 @@ export interface ModelCallRequest {
 	 */
 	toolResultIds?: string[];
 	toolsOffered: string[];
-	activeTools?: string[];
 	toolChoice?: string;
 	providerOptions?: Record<string, unknown>;
 }
@@ -424,7 +423,5 @@ export interface TurnSummary {
 	citations: CitationRecord[];
 	/** Cited catalog items, so a reloaded thread renders its chips without the full trace. */
 	cited: GroundingItem[];
-	modelCalls: number;
-	toolExecutions: number;
 	createdAt: string;
 }

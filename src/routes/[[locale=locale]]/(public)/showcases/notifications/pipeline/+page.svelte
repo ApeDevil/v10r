@@ -33,16 +33,6 @@ $effect(() => {
 		lastEvent = { type: 'new', time: new Date().toLocaleTimeString() };
 	});
 
-	es.addEventListener('read', () => {
-		if (unreadCount > 0) unreadCount--;
-		lastEvent = { type: 'read', time: new Date().toLocaleTimeString() };
-	});
-
-	es.addEventListener('read-all', () => {
-		unreadCount = 0;
-		lastEvent = { type: 'read-all', time: new Date().toLocaleTimeString() };
-	});
-
 	es.onerror = () => {
 		sseStatus = 'disconnected';
 	};

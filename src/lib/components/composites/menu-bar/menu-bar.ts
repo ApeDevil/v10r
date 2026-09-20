@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { floatingContentBase } from '$lib/styles/floating';
 
 export const menuBarRootVariants = cva(['flex items-center gap-1', 'border-b border-border bg-surface-2', 'px-2 py-1']);
@@ -40,12 +40,3 @@ export const menuBarCheckboxItemVariants = cva([
 ]);
 
 export const menuBarItemIndicatorVariants = cva(['absolute left-2 h-4 w-4', 'flex items-center justify-center']);
-
-export type MenuBarRootVariants = VariantProps<typeof menuBarRootVariants>;
-export type MenuBarTriggerVariants = VariantProps<typeof menuBarTriggerVariants>;
-export type MenuBarContentVariants = VariantProps<typeof menuBarContentVariants>;
-export type MenuBarItemVariants = VariantProps<typeof menuBarItemVariants>;
-export type MenuBarSeparatorVariants = VariantProps<typeof menuBarSeparatorVariants>;
-export type MenuBarShortcutVariants = VariantProps<typeof menuBarShortcutVariants>;
-export type MenuBarCheckboxItemVariants = VariantProps<typeof menuBarCheckboxItemVariants>;
-export type MenuBarItemIndicatorVariants = VariantProps<typeof menuBarItemIndicatorVariants>;

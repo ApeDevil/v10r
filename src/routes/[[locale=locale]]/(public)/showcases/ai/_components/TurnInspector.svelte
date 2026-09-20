@@ -117,7 +117,6 @@ function onTimelineSelect(rowId: string) {
 
 		<div class="toolbar">
 			<ToggleGroup
-				type="single"
 				size="sm"
 				items={views}
 				bind:value={() => inspector.view, (value) => {
@@ -126,7 +125,6 @@ function onTimelineSelect(rowId: string) {
 			/>
 			{#if graph.calls.length > 1}
 				<ToggleGroup
-					type="single"
 					size="sm"
 					items={callItems}
 					bind:value={() => inspector.callId ?? ALL_CALLS, (value) => {

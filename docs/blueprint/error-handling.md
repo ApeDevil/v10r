@@ -2,6 +2,8 @@
 
 SvelteKit error handling patterns for pages, forms, and API routes.
 
+> **Illustrative template.** The `items` routes and helpers in the snippets below are a teaching example, not v10r files. The shipped pieces are `ServerError` in `src/lib/server/errors/`, the `+error.svelte` pages under `src/routes/[[locale=locale]]/`, `withRetry` in `src/lib/server/resilience/retry.ts`, and the AI error mapping in `src/lib/server/ai/chat-orchestrator.ts`.
+
 ## Error Types
 
 | Type | Cause | Handling |
@@ -71,7 +73,7 @@ export async function load({ params, locals }) {
 ### Global Error Page
 
 ```svelte
-<!-- src/routes/+error.svelte -->
+<!-- src/routes/[[locale=locale]]/+error.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
 </script>
@@ -301,7 +303,7 @@ export async function POST({ request, locals }) {
 ### Consistent API Error Format
 
 ```typescript
-// src/lib/server/api-error.ts
+// Illustrative — see ServerError in src/lib/server/errors/index.ts
 import { json } from '@sveltejs/kit';
 
 export function apiError(
@@ -550,7 +552,7 @@ AI requests have unique failure modes. Handle them gracefully.
 ### AI API Error Handling
 
 ```typescript
-// src/routes/api/chat/+server.ts
+// Illustrative — the shipped route is src/routes/api/ai/chatbot/+server.ts → chat-orchestrator.ts
 import { json } from '@sveltejs/kit';
 import { streamText } from 'ai';
 import { APIError } from '@ai-sdk/provider';
@@ -621,7 +623,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 ### Retry Pattern for AI
 
 ```typescript
-// src/lib/utils/ai-retry.ts
+// Illustrative — see src/lib/server/resilience/retry.ts
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options = { maxRetries: 3, delayMs: 1000 }

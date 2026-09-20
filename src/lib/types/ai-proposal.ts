@@ -55,7 +55,6 @@ export interface ProposalCardData {
 	id: string;
 	goal: string;
 	steps: ProposalCardStep[];
-	estimatedWrites: number;
 	riskTier: 'low' | 'medium' | 'high';
 	status: ProposalStatus;
 }

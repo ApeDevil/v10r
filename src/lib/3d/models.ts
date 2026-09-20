@@ -14,7 +14,6 @@ import { FOX_CUSTOMIZATION, ROBOT_CUSTOMIZATION, SOFA_CUSTOMIZATION } from './cu
 export type RotationAxis = 'x' | 'y' | 'z';
 
 /** Threlte render mode */
-export type RenderMode = 'always' | 'on-demand' | 'manual';
 
 // Camera
 
@@ -43,18 +42,10 @@ export interface CardCameraOverrides {
 // Controls
 
 export interface OrbitControlsConfig {
-	/** Enable orbit controls (default: true for viewport, false for card) */
-	enabled: boolean;
 	/** Enable zoom (default: true for viewport, false for card) */
 	enableZoom?: boolean;
 	/** Enable pan (default: true for viewport, false for card) */
 	enablePan?: boolean;
-	/** Min distance for zoom (default: none) */
-	minDistance?: number;
-	/** Max distance for zoom (default: none) */
-	maxDistance?: number;
-	/** Auto-rotate speed in rad/s (default: 0 = disabled) */
-	autoRotateSpeed?: number;
 }
 
 // Auto-rotation (card view)
@@ -106,11 +97,6 @@ export interface Model3D {
 	/** Tags for filtering in the card grid */
 	tags: string[];
 
-	/** Render mode for full-page viewport (default: inferred from animations) */
-	viewportRenderMode?: RenderMode;
-	/** Render mode for card thumbnail (default: 'on-demand') */
-	cardRenderMode?: RenderMode;
-
 	/** Base camera preset. */
 	camera: CameraPreset;
 	/** Overrides for card thumbnail camera. Merged over base camera. */
@@ -137,8 +123,6 @@ export interface Model3D {
 
 	/** Icon class for LinkCard / badge (UnoCSS icon) */
 	icon: string;
-	/** Thumbnail image path for loading skeleton / fallback */
-	thumbnail?: string;
 	/** Attribution / source credit */
 	credit?: string;
 	/** External link to model source */
@@ -165,7 +149,6 @@ export const MODELS: Model3D[] = [
 		},
 
 		controls: {
-			enabled: true,
 			enableZoom: true,
 			enablePan: true,
 		},
@@ -181,9 +164,6 @@ export const MODELS: Model3D[] = [
 			directionalIntensity: 1,
 			ambientIntensity: 0.5,
 		},
-
-		viewportRenderMode: 'on-demand',
-		cardRenderMode: 'on-demand',
 
 		credit: 'theblueturtle_ (Sketchfab)',
 		sourceUrl: 'https://github.com/KhronosGroup/glTF-Sample-Assets',
@@ -208,7 +188,6 @@ export const MODELS: Model3D[] = [
 		},
 
 		controls: {
-			enabled: true,
 			enableZoom: true,
 			enablePan: true,
 		},
@@ -229,9 +208,6 @@ export const MODELS: Model3D[] = [
 			clips: ['Survey', 'Walk', 'Run'],
 			defaultClip: 'Survey',
 		},
-
-		viewportRenderMode: 'always',
-		cardRenderMode: 'always',
 
 		showGrid: true,
 		gridArgs: [200, 20],
@@ -259,7 +235,6 @@ export const MODELS: Model3D[] = [
 		},
 
 		controls: {
-			enabled: true,
 			enableZoom: true,
 			enablePan: true,
 		},
@@ -275,9 +250,6 @@ export const MODELS: Model3D[] = [
 			directionalIntensity: 1.2,
 			ambientIntensity: 0.6,
 		},
-
-		viewportRenderMode: 'on-demand',
-		cardRenderMode: 'on-demand',
 
 		credit: 'Wayfair LLC',
 		sourceUrl: 'https://github.com/KhronosGroup/glTF-Sample-Assets',
@@ -302,7 +274,6 @@ export const MODELS: Model3D[] = [
 		},
 
 		controls: {
-			enabled: true,
 			enableZoom: true,
 			enablePan: true,
 		},
@@ -324,9 +295,6 @@ export const MODELS: Model3D[] = [
 			defaultClip: 'Idle',
 		},
 
-		viewportRenderMode: 'always',
-		cardRenderMode: 'always',
-
 		showGrid: true,
 		gridArgs: [4, 8],
 
@@ -343,7 +311,6 @@ export const MODELS_BY_ID = new Map(MODELS.map((m) => [m.id, m]));
 // Defaults — consumed by the viewer components to fill gaps
 
 export const CARD_DEFAULTS = {
-	renderMode: 'on-demand' as RenderMode,
 	autoRotation: {
 		enabled: true,
 		speed: 0.5,
@@ -351,16 +318,13 @@ export const CARD_DEFAULTS = {
 		pauseOnHover: true,
 	},
 	controls: {
-		enabled: false,
 		enableZoom: false,
 		enablePan: false,
 	},
 } as const;
 
 export const VIEWPORT_DEFAULTS = {
-	renderMode: 'on-demand' as RenderMode,
 	controls: {
-		enabled: true,
 		enableZoom: true,
 		enablePan: true,
 	},
@@ -378,7 +342,6 @@ export const VIEWPORT_DEFAULTS = {
 // Resolved config helpers — merge model config with defaults
 
 export interface ResolvedCardConfig {
-	renderMode: RenderMode;
 	camera: CameraPreset;
 	autoRotation: Required<AutoRotationConfig>;
 	controls: Required<OrbitControlsConfig>;
@@ -386,7 +349,6 @@ export interface ResolvedCardConfig {
 }
 
 export interface ResolvedViewportConfig {
-	renderMode: RenderMode;
 	camera: Required<CameraPreset>;
 	controls: Required<OrbitControlsConfig>;
 	lighting: Required<LightConfig>;
@@ -400,7 +362,6 @@ export function resolveCardConfig(model: Model3D): ResolvedCardConfig {
 	};
 
 	return {
-		renderMode: model.cardRenderMode ?? CARD_DEFAULTS.renderMode,
 		camera,
 		autoRotation: {
 			enabled: model.autoRotation?.enabled ?? CARD_DEFAULTS.autoRotation.enabled,
@@ -409,12 +370,8 @@ export function resolveCardConfig(model: Model3D): ResolvedCardConfig {
 			pauseOnHover: model.autoRotation?.pauseOnHover ?? CARD_DEFAULTS.autoRotation.pauseOnHover,
 		},
 		controls: {
-			enabled: model.controls?.enabled ?? CARD_DEFAULTS.controls.enabled,
 			enableZoom: model.controls?.enableZoom ?? CARD_DEFAULTS.controls.enableZoom,
 			enablePan: model.controls?.enablePan ?? CARD_DEFAULTS.controls.enablePan,
-			autoRotateSpeed: 0,
-			minDistance: undefined as unknown as number,
-			maxDistance: undefined as unknown as number,
 		},
 		lighting: {
 			directionalPosition: model.lighting.directionalPosition,
@@ -426,10 +383,7 @@ export function resolveCardConfig(model: Model3D): ResolvedCardConfig {
 
 /** Merge model config with viewport defaults for the viewer components. */
 export function resolveViewportConfig(model: Model3D): ResolvedViewportConfig {
-	const inferredRenderMode: RenderMode = model.animations ? 'always' : 'on-demand';
-
 	return {
-		renderMode: model.viewportRenderMode ?? inferredRenderMode,
 		camera: {
 			position: model.camera.position,
 			target: model.camera.target,
@@ -438,12 +392,8 @@ export function resolveViewportConfig(model: Model3D): ResolvedViewportConfig {
 			far: model.camera.far ?? VIEWPORT_DEFAULTS.camera.far,
 		},
 		controls: {
-			enabled: model.controls?.enabled ?? VIEWPORT_DEFAULTS.controls.enabled,
 			enableZoom: model.controls?.enableZoom ?? VIEWPORT_DEFAULTS.controls.enableZoom,
 			enablePan: model.controls?.enablePan ?? VIEWPORT_DEFAULTS.controls.enablePan,
-			autoRotateSpeed: model.controls?.autoRotateSpeed ?? 0,
-			minDistance: model.controls?.minDistance ?? 0,
-			maxDistance: model.controls?.maxDistance ?? Infinity,
 		},
 		lighting: {
 			directionalPosition: model.lighting.directionalPosition,

@@ -1,139 +1,120 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { channelsForSettings } from './router';
 
-vi.mock('$lib/server/db/notifications/mutations', () => ({
-	getOrCreateSettings: vi.fn(),
-}));
-
-const { getOrCreateSettings } = await import('$lib/server/db/notifications/mutations');
-const { routeToChannels } = await import('./router');
-
-const mockSettings = getOrCreateSettings as ReturnType<typeof vi.fn>;
-
-describe('routeToChannels', () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
-
-	it('returns ["email"] for security type (always forced)', async () => {
-		mockSettings.mockResolvedValue({
+describe('channelsForSettings', () => {
+	it('returns ["email"] for security type (always forced)', () => {
+		const settings = {
 			emailSecurity: false, // even when explicitly off, security forces email
 			mutedUntil: null,
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'security');
+		const channels = channelsForSettings(settings, 'security');
 		expect(channels).toContain('email');
 	});
 
-	it('respects email setting per type', async () => {
-		mockSettings.mockResolvedValue({
+	it('respects email setting per type', () => {
+		const settings = {
 			emailMention: true,
 			mutedUntil: null,
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'mention');
+		const channels = channelsForSettings(settings, 'mention');
 		expect(channels).toContain('email');
 	});
 
-	it('excludes email when setting is false', async () => {
-		mockSettings.mockResolvedValue({
+	it('excludes email when setting is false', () => {
+		const settings = {
 			emailComment: false,
 			mutedUntil: null,
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'comment');
+		const channels = channelsForSettings(settings, 'comment');
 		expect(channels).not.toContain('email');
 	});
 
-	it('returns [] when globally muted (mutedUntil in future)', async () => {
-		mockSettings.mockResolvedValue({
+	it('returns [] when globally muted (mutedUntil in future)', () => {
+		const settings = {
 			emailMention: true,
 			mutedUntil: new Date(Date.now() + 60_000),
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'mention');
+		const channels = channelsForSettings(settings, 'mention');
 		expect(channels).toEqual([]);
 	});
 
-	it('returns [] when settings is null', async () => {
-		mockSettings.mockResolvedValue(null);
-
-		const channels = await routeToChannels('user-1', 'mention');
-		expect(channels).toEqual([]);
-	});
-
-	it('includes telegram when telegram setting is true', async () => {
-		mockSettings.mockResolvedValue({
+	it('includes telegram when telegram setting is true', () => {
+		const settings = {
 			emailMention: false,
 			telegramMention: true,
 			mutedUntil: null,
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'mention');
+		const channels = channelsForSettings(settings, 'mention');
 		expect(channels).toContain('telegram');
 	});
 
-	it('includes push when the push setting is true', async () => {
-		mockSettings.mockResolvedValue({
+	it('includes push when the push setting is true', () => {
+		const settings = {
 			emailMention: false,
 			pushMention: true,
 			mutedUntil: null,
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'mention');
+		const channels = channelsForSettings(settings, 'mention');
 		expect(channels).toContain('push');
 	});
 
-	it('excludes push when the push setting is false', async () => {
-		mockSettings.mockResolvedValue({
+	it('excludes push when the push setting is false', () => {
+		const settings = {
 			emailSecurity: true,
 			pushSecurity: false,
 			mutedUntil: null,
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'security');
+		const channels = channelsForSettings(settings, 'security');
 		expect(channels).not.toContain('push');
 	});
 
-	it('never routes push for types without a push column (success/follow)', async () => {
-		mockSettings.mockResolvedValue({
+	it('never routes push for types without a push column (success/follow)', () => {
+		const settings = {
 			emailSuccess: true,
 			mutedUntil: null,
-		});
+		};
 
-		const channels = await routeToChannels('user-1', 'success');
+		const channels = channelsForSettings(settings, 'success');
 		expect(channels).not.toContain('push');
 	});
 
 	describe('digestFrequency: never', () => {
-		it('suppresses every external channel', async () => {
-			mockSettings.mockResolvedValue({
+		it('suppresses every external channel', () => {
+			const settings = {
 				emailMention: true,
 				pushMention: true,
 				mutedUntil: null,
 				digestFrequency: 'never',
-			});
+			};
 
-			expect(await routeToChannels('user-1', 'mention')).toEqual([]);
+			expect(channelsForSettings(settings, 'mention')).toEqual([]);
 		});
 
-		it('does not suppress security', async () => {
-			mockSettings.mockResolvedValue({
+		it('does not suppress security', () => {
+			const settings = {
 				emailSecurity: true,
 				mutedUntil: null,
 				digestFrequency: 'never',
-			});
+			};
 
-			expect(await routeToChannels('user-1', 'security')).toContain('email');
+			expect(channelsForSettings(settings, 'security')).toContain('email');
 		});
 
-		it('any other value routes normally', async () => {
-			mockSettings.mockResolvedValue({
+		it('any other value routes normally', () => {
+			const settings = {
 				emailMention: true,
 				mutedUntil: null,
 				digestFrequency: 'instant',
-			});
+			};
 
-			expect(await routeToChannels('user-1', 'mention')).toContain('email');
+			expect(channelsForSettings(settings, 'mention')).toContain('email');
 		});
 	});
 
@@ -142,22 +123,22 @@ describe('routeToChannels', () => {
 		// force-send, so a global mute suppressed security alerts while an
 		// explicit `emailSecurity: false` did not. The two mutes disagreed about
 		// the one category that matters most; security now always wins.
-		it('an active global mute does NOT suppress a security alert', async () => {
-			mockSettings.mockResolvedValue({
+		it('an active global mute does NOT suppress a security alert', () => {
+			const settings = {
 				emailSecurity: false,
 				mutedUntil: new Date(Date.now() + 60_000),
-			});
+			};
 
-			expect(await routeToChannels('user-1', 'security')).toContain('email');
+			expect(channelsForSettings(settings, 'security')).toContain('email');
 		});
 
-		it('an active global mute still suppresses everything else', async () => {
-			mockSettings.mockResolvedValue({
+		it('an active global mute still suppresses everything else', () => {
+			const settings = {
 				emailMention: true,
 				mutedUntil: new Date(Date.now() + 60_000),
-			});
+			};
 
-			expect(await routeToChannels('user-1', 'mention')).toEqual([]);
+			expect(channelsForSettings(settings, 'mention')).toEqual([]);
 		});
 	});
 });

@@ -253,14 +253,6 @@ export function createWorkspaceState(
 		markSaved,
 		captureLayout,
 		snapshotCurrent,
-
-		// For persistence layer
-		setWorkspaces(ws: Workspace[]) {
-			workspaces = ws;
-		},
-		setActiveId(id: string | null) {
-			activeId = id;
-		},
 	};
 }
 

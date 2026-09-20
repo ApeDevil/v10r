@@ -3,7 +3,7 @@ import type { Snippet } from 'svelte';
 import { cn } from '$lib/utils/cn';
 import { type TypographyVariants, typographyVariants } from './typography';
 
-type Element = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'blockquote' | 'code' | 'pre';
+type Element = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'code' | 'pre';
 
 interface Props extends TypographyVariants {
 	as?: Element;
@@ -23,11 +23,8 @@ const elementMap: Record<NonNullable<typeof variant>, Element> = {
 	h6: 'h6',
 	body: 'p',
 	lead: 'p',
-	large: 'p',
-	small: 'span',
 	muted: 'span',
 	code: 'code',
-	blockquote: 'blockquote',
 };
 
 let element = $derived(as || (variant ? elementMap[variant as keyof typeof elementMap] : null) || 'p');

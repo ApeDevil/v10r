@@ -4,9 +4,10 @@
  *
  * Renders an element one elevation rung above its parent surface (app background = 0),
  * resolved via context so nesting auto-increments: background → sidebar → menu → panel each
- * climb a step without naming a number. Pass `level` only to pin a reset root. Structural
- * chrome uses this component; primitives that stamp elevation on a Bits `.Content` they don't
- * wrap call the `useSurface()` hook directly instead (no extra DOM node).
+ * climb a step without naming a number. Pass `level` only to pin a reset root. The shipped
+ * chrome and primitives call the `useSurface()` hook directly (no extra DOM node); this
+ * wrapper is the showcase's demonstration of the same engine, and the drop-in form for an
+ * adopter who wants a plain element with the elevation applied.
  */
 import type { Snippet } from 'svelte';
 import type { HTMLAttributes } from 'svelte/elements';

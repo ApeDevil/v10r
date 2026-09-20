@@ -48,9 +48,10 @@ export interface RecentEventsOptions {
 	sinceId?: number;
 	filter?: 'all' | 'paired';
 	limit?: number;
-	/** Window in seconds — events older than this are excluded. */
-	windowSec?: number;
 }
+
+/** The live feed's lookback — events older than this are not "live". */
+const LIVE_WINDOW_SEC = 300;
 
 /**
  * Live-feed query. Returns events newer than `sinceId`, joined with their session
@@ -60,7 +61,7 @@ export interface RecentEventsOptions {
 export async function getRecentEvents(opts: RecentEventsOptions): Promise<LiveEvent[]> {
 	const sinceId = opts.sinceId ?? 0;
 	const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
-	const windowCutoff = new Date(Date.now() - (opts.windowSec ?? 300) * 1000);
+	const windowCutoff = new Date(Date.now() - LIVE_WINDOW_SEC * 1000);
 
 	const conditions = [gt(events.id, sinceId), gt(events.timestamp, windowCutoff)];
 	if (opts.filter === 'paired') {
@@ -71,7 +72,6 @@ export async function getRecentEvents(opts: RecentEventsOptions): Promise<LiveEv
 		.select({
 			id: events.id,
 			ts: events.timestamp,
-			sessionId: events.sessionId,
 			visitorId: events.visitorId,
 			path: events.path,
 			consentTier: events.consentTier,
@@ -94,7 +94,6 @@ export async function getRecentEvents(opts: RecentEventsOptions): Promise<LiveEv
 		return {
 			id: r.id,
 			ts: r.ts.toISOString(),
-			sessionId: r.sessionId,
 			visitorFragment: r.visitorId.slice(0, 10),
 			path: r.path,
 			device: showDevice ? r.device : null,

@@ -76,4 +76,4 @@ Place local assets under `content/blog/<slug>/assets/`.
 | Scaffold script | `scripts/content/new.ts` |
 | File→DB primitives | `src/lib/server/content/` |
 | Runtime read | `src/routes/(public)/blog/[slug]/+page.server.ts` (DB-backed) |
-| Preview (file-backed) | `src/routes/admin/content/posts/preview/[slug]/[locale]/` |
+| Preview (file-backed) | `src/routes/[[locale=locale]]/admin/content/posts/preview/[slug]/[locale]/` |

@@ -9,7 +9,6 @@ import { dbopsReaper } from './dbops-reaper';
 import { dbopsRefresh } from './dbops-refresh';
 import { deskRetention } from './desk-retention';
 import { deskRetrievalSync } from './desk-retrieval-sync';
-import { discordTokenRefresh } from './discord-token-refresh';
 import { grantRequestExpiry } from './grant-request-expiry';
 import { logCleanup } from './log-cleanup';
 import { mcpTelemetryRetention } from './mcp-telemetry-retention';
@@ -55,7 +54,6 @@ export const jobs: Record<string, Job> = {
 	'session-cleanup': { execute: sessionCleanup, cadence: 'daily' },
 	'grant-request-expiry': { execute: grantRequestExpiry, cadence: 'daily' },
 	'telegram-token-cleanup': { execute: telegramTokenCleanup, cadence: 'daily' },
-	'discord-token-refresh': { execute: discordTokenRefresh, cadence: 'daily' },
 	'notification-cleanup': { execute: notificationCleanup, cadence: 'daily' },
 	// Builds deliveries for digest subscribers, whose instant enqueue is suppressed
 	// in routeExternal.

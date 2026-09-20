@@ -18,7 +18,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 |---|---|---|
 | The three-tier retrieval pipeline | `retrieval` | `rag`, `nRAG`, `rag-shared` |
 | A user's authenticated login | `Session` | — |
-| An anonymous analytics visit | `AnalyticsSession` | analytics-local `Session` |
+| An anonymous analytics visit | `analytics.sessions` row | analytics-local `Session` type |
 | An AI model vendor | `provider` | — |
 | An external notification transport | `channel` | `NotificationProvider`, `notifications/providers/` |
 | An infrastructure service we depend on | `dependency` | monitoring `ProviderStatus` / `ProviderResult` |
@@ -51,8 +51,8 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | How an approved step is undone | `recovery` (`ProposalStepRecovery`: `revision`/`soft_delete`/`rename_back`/`none`) | model-authored `rollback` text |
 | The database or transaction a domain mutation runs on | `handle` (`DbHandle`) | — |
 | What the daily cron sweep runs | `jobsDueOn` (`/api/cron/due`) | one `vercel.json` entry per job |
-| The MCP demo-state domain module | `mcp/demo/state.ts` | `mcp/demo/service.ts` |
-| The registry of pattern MCP *tools* | `mcp/patterns/tools.ts` | `mcp/patterns/registry.ts` |
+| The MCP demo-state domain module | `src/lib/server/mcp/demo/state.ts` | `mcp/demo/service.ts` |
+| The registry of pattern MCP *tools* | `src/lib/server/mcp/patterns/tools.ts` | `mcp/patterns/registry.ts` |
 | The showcase Redis key namespace | `SHOWCASE_CACHE_PREFIX` / `assertShowcaseCacheKey` | cache-local `SHOWCASE_PREFIX` |
 | The design system's icon size scale | `iconSize` (`styles/tokens.ts`) | sidebar-local `iconSize` |
 | The sidebar's computed icon width | `sidebarIconSize` | `iconSize` |
@@ -121,7 +121,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The tool calls whose results a provider request carried | `toolResultIds` (`ModelCallRequest`) — absent means not recorded, empty means none | `historyCount` as a proxy, `toolResults` |
 | A chunk's place in its document, as a turn records it | `chunkPlace()` (`ai/capabilities/chunk-place.ts`): `parentId` · `level` (`ChunkLevel`) · `position` · `contentHash` · `path`; `retriever` (`RetrieverId`) per item, `retrievers` per source | `ancestry`, `depth` (a number), `tiers` on the source, `lineage` |
 | The deterministic, ingest-built map of one collection's corpus — what it covers, without loading it | `corpus map` (`retrieval.corpus_map`, `getCorpusMap` / `countCorpusMaps` in `db/retrieval/queries.ts`; the chatbot's is the `project-map` capability, injected as `<project-overview>`) | `llmwiki` (the LLM-compiled pointer layer, retired 2026-09-12 — it had no writer and every fresh user's wiki was empty), `llmwiki_page`, `overview page`, `LlmwikiPage`, `loadOverview`, `get_llmwiki_pages`, `get_source_chunks` |
-| The review heuristic for a menu, toolbar or page that offers too many simultaneous choices — and the structure it recommends | `Explosive Discovery` (the heuristic: `docs/blueprint/design/explosive-discovery.md`, registry `ui-explosive-discovery`, skill `uxy-explosive-discovery`); `Nested Depth` (the structure: directions that narrow intent, detail on entry) | — (`progressive disclosure` stays the design *principle* in `design/README.md`; `Progressive Revelation` is a different, planned feature — never a synonym) |
+| Capability nested by meaning and revealed as intent becomes specific — on one page, and across a user's journey — plus the structure it recommends and the method that reviews for it | `Explosive Discovery` (the principle: `docs/foundation/explosive-discovery.md`; the review method: `docs/blueprint/design/explosive-discovery.md`, registry `ui-explosive-discovery`, skill `uxy-explosive-discovery`); `Nested Depth` (the structure: directions that narrow intent, detail on entry) | `Progressive Revelation`, `ProgRev`, `progressive-revelation` (the planned journey-stage feature — absorbed 2026-09-20 as the journey axis of Explosive Discovery; the blueprint with its unbuilt schema was deleted). `progressive disclosure` is not retired: it stays the design *intent*, principle 3 in `design/README.md` |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 
@@ -159,13 +159,14 @@ Two of these deserve their reasoning spelled out, because the losing name looked
   `budgets.json` budgets *metrics*, `query-budget.ts` budgets *operations*. Keyed by a function
   name and meaningless without it, which is why it is a separate declaration rather than
   another section of the same JSON.
-- **`Explosive Discovery`, beside `progressive disclosure` and `Progressive Revelation`.**
-  Three names, three concepts, on purpose. *Progressive disclosure* is the design principle
-  (show what is needed now). *Explosive Discovery* is the review heuristic that says how to
-  structure the rest — directions, context promotion, one hierarchy per device, an advisory
-  five-part output. *Progressive Revelation* is a planned feature that gates content by
-  journey stage. Nothing is retired: the gate has nothing to catch; the risk is conflation,
-  and the doc's first callout carries it.
+- **`Explosive Discovery`, beside `progressive disclosure` — and `Progressive Revelation`
+  retired.** Two names, two jobs. *Progressive disclosure* is the intent (show what is needed
+  now, principle 3). *Explosive Discovery* is the principle that says how — capability nested
+  by meaning, directions, context promotion, an expert path, one hierarchy per device — and
+  the review method that checks for it. *Progressive Revelation* used to sit beside them as a
+  third concept: content revealed by journey stage. It was the same idea stretched along time,
+  held under a second name for a feature nobody built. One concept, one name: it is now the
+  journey axis of `foundation/explosive-discovery.md`, and the gate catches the old word.
 
 ## Words that carry a metaphor
 
@@ -268,7 +269,7 @@ Two consequences worth stating:
 
 - **A one-method "service" object is a function.** `NotificationService.send(input)` became
   `sendNotification(input)`. The domain layer is plain functions everywhere else.
-- **Constants go in `config.ts` when they are policy** (`mcp/demo/config.ts`), and in a file
+- **Constants go in `config.ts` when they are policy** (`src/lib/server/mcp/demo/config.ts`), and in a file
   named for what they are when they are not — `db/analytics/sentinels.ts` holds the
   `UNKNOWN_COUNTRY` / `UNKNOWN_CLIENT` sentinels, which are vocabulary, not policy.
 
@@ -317,7 +318,7 @@ Flagged by audit, examined, kept:
   entity terminal; they never meet in one module.
 - `registry` as a filename in seven places. It means the same thing every time — a catalogue
   keyed by id. The one real collision was `mcp/patterns/registry.ts`, which was a registry of
-  *tools*, not of patterns, and is now `tools.ts` beside its sibling `mcp/demo/tools.ts`.
+  *tools*, not of patterns, and is now `tools.ts` beside its sibling `src/lib/server/mcp/demo/tools.ts`.
 - `assertShowcaseKey` / `SHOWCASE_PREFIX` in `server/store/`. The canonical pair keeps the
   plain name: it is security-critical (SEC-N01) and pinned by a regex in
   `security/authz-coverage.gate.test.ts`. The Redis copy took the qualifier instead.
@@ -326,12 +327,13 @@ Flagged by audit, examined, kept:
 
 - **MCP tool names** (`search_patterns`, `get_pattern`, `get_file_excerpt`,
   `trace_capability`, `recommend_emulation_plan`, `validate_snippet`) — external clients
-  call them, and `mcp/patterns/parity.test.ts` guards stdio↔HTTP agreement.
+  call them, and `src/lib/server/mcp/patterns/parity.test.ts` guards stdio↔HTTP agreement.
 - **Pattern-registry `id`s** — the MCP surface, the generated docs pages and external
   agents all address patterns by id.
 - **Better Auth's tables** — vendor-owned.
-- **Stored enum values and column names** — renaming needs DDL; route it through
-  `docs/Ref-ToDo.md`.
+- **Stored enum values and column names** — renaming needs hand-written `ALTER … RENAME`
+  DDL run before `db:push` (push sees a rename as DROP + CREATE); see
+  [blueprint/data/drizzle-workflow.md](./blueprint/data/drizzle-workflow.md).
 - **The `notif_*` i18n key names.** They look like an abbreviation to tidy, but
   `notifications.message_key` *stores* them and `renderNotification` resolves the stored
   value against the Paraglide registry at send time. Renaming the keys would blank every

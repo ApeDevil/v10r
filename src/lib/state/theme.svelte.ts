@@ -9,11 +9,8 @@ import type { Theme } from '$lib/types/db-enums';
 import { setCookie } from '$lib/utils/cookies';
 
 type ThemeMode = Theme;
-type AccentColor = 'blue' | 'purple' | 'green' | 'orange';
-
 interface ThemeState {
 	mode: ThemeMode;
-	accent: AccentColor;
 	resolvedMode: 'light' | 'dark'; // Computed from mode + system preference
 }
 
@@ -23,10 +20,9 @@ const THEME_CTX = Symbol('theme');
  * Create theme state instance.
  * @param initial - Initial theme settings from server
  */
-export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor }) {
+export function createThemeState(initial: { mode: ThemeMode }) {
 	const state = $state<ThemeState>({
 		mode: initial.mode,
-		accent: initial.accent,
 		resolvedMode: 'light',
 	});
 
@@ -50,15 +46,11 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
 	$effect(() => {
 		if (!browser) return;
 		document.documentElement.classList.toggle('dark', state.resolvedMode === 'dark');
-		document.documentElement.dataset.accent = state.accent;
 	});
 
 	return {
 		get mode() {
 			return state.mode;
-		},
-		get accent() {
-			return state.accent;
 		},
 		get resolvedMode() {
 			return state.resolvedMode;
@@ -79,10 +71,6 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
 				}).catch(() => {});
 			}
 		},
-
-		setAccent(accent: AccentColor) {
-			state.accent = accent;
-		},
 	};
 }
 
@@ -90,7 +78,7 @@ export function createThemeState(initial: { mode: ThemeMode; accent: AccentColor
  * Set theme context in component tree.
  * Call this in root layout with initial values from load function.
  */
-export function setThemeContext(initial: { mode: ThemeMode; accent: AccentColor }) {
+export function setThemeContext(initial: { mode: ThemeMode }) {
 	const theme = createThemeState(initial);
 	setContext(THEME_CTX, theme);
 	return theme;

@@ -89,7 +89,7 @@ const sections = $derived([
 		{/snippet}
 		<div class="sim">
 			<span id="sim-role-label" class="lbl">Simulated role</span>
-			<ToggleGroup type="single" bind:value={simulatedRole} items={ROLE_ITEMS} />
+			<ToggleGroup bind:value={simulatedRole} items={ROLE_ITEMS} />
 			<p class="text-sm text-muted">
 				Client-only — your real session is untouched and this value never leaves the browser.
 			</p>

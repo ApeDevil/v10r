@@ -10,10 +10,8 @@ import {
 	createUIMessageStreamResponse,
 	type LanguageModel,
 	type LanguageModelUsage,
-	type ModelMessage,
 	stepCountIs,
 	streamText,
-	type ToolSet,
 	type UIMessage,
 } from 'ai';
 import type { HarnessMetadata } from '$lib/components/composites/chatbot/harness-types';
@@ -41,7 +39,7 @@ import { estimateTurnTokens, fitsTokenMinute } from '$lib/server/ai/provider-lim
 import { incrProvider429 } from '$lib/server/ai/provider-usage';
 import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
 import type { DeskToolScope } from '$lib/server/ai/tools';
-import type { ChatMessage, PanelContextEntry } from '$lib/server/ai/types';
+import type { PanelContextEntry } from '$lib/server/ai/types';
 import {
 	createConversation,
 	refreshConversationTokens,
@@ -67,7 +65,7 @@ import {
 	type TurnAttempt,
 } from './_shared/streaming-turn';
 import { checkConversationLimit } from './conversation-quota';
-import { composeTurn, identityBlock, PROFILES, type TurnComposition, type TurnInput } from './profile';
+import { composeTurn, PROFILES, type TurnComposition, type TurnInput } from './profile';
 import {
 	collectApprovalRequests,
 	isApprovalSentinel,
@@ -119,7 +117,7 @@ export interface ChatInput {
 	/** The provider snapshot the entry guard loaded; every resolution in this turn uses it. */
 	registry: ProviderRegistry;
 	providerId?: string;
-	messages: ChatMessage[];
+	messages: UIMessage[];
 	conversationId?: string;
 	panelContext?: PanelContextEntry[];
 	toolScopes?: DeskToolScope[];
@@ -158,34 +156,6 @@ interface ChatError {
 
 // The system prompt is the surface's profile (`ai/profile/`); the history helpers are
 // `ai/context/history.ts`.
-
-/** Persist assistant message after stream finishes; charge token budget. */
-export function createOnFinish(conversationId: string | undefined, userId: string) {
-	return async ({
-		text,
-		totalUsage,
-	}: {
-		text: string;
-		totalUsage?: { inputTokens?: number; outputTokens?: number };
-	}) => {
-		try {
-			if (conversationId && text) {
-				await saveMessages(conversationId, userId, [{ id: crypto.randomUUID(), role: 'assistant', content: text }]);
-			}
-			if (totalUsage) {
-				const inputTokens = totalUsage.inputTokens ?? 0;
-				const outputTokens = totalUsage.outputTokens ?? 0;
-				console.info('[ai:chat] totalUsage:', { inputTokens, outputTokens });
-				await chargeTokens(userId, inputTokens + outputTokens);
-			}
-		} catch (err) {
-			console.error('[ai:chat] Failed to finalize stream:', {
-				conversationId,
-				error: err instanceof Error ? err.message : err,
-			});
-		}
-	};
-}
 
 /** Resolve or auto-create the conversation. Returns conversationId or error. */
 async function resolveConversation(
@@ -238,68 +208,6 @@ function modelCallSignal(cancellation: Cancellation, deadline?: Deadline): Abort
 		? deadline.child(MODEL_CALL_TIMEOUT_MS, { reserveMs: FINALIZATION_RESERVE_MS }).signal()
 		: AbortSignal.timeout(MODEL_CALL_TIMEOUT_MS);
 	return AbortSignal.any([cancellation.signal, ceiling]);
-}
-
-/** Attempt streaming with fallback providers on transient errors. */
-async function tryFallback(
-	systemPrompt: string,
-	messages: ModelMessage[],
-	conversationId: string | undefined,
-	userId: string,
-	fallbacks: ProviderEntry[],
-	cancellation: Cancellation,
-	wantsTools = false,
-	deskTools?: ToolSet,
-	stepBudget = 1,
-	deadline?: Deadline,
-): Promise<Response | null> {
-	for (const fallback of fallbacks) {
-		if (await isCooledDown(fallback.id)) continue;
-		// For tool requests, prefer tool-capable providers
-		if (wantsTools && !fallback.capabilities.tools) continue;
-		try {
-			const fallbackModel = fallback.getInstance();
-			if (!fallbackModel) continue;
-
-			const useTools = wantsTools && fallback.capabilities.tools && deskTools;
-			const result = streamText({
-				model: fallbackModel,
-				system: systemPrompt,
-				messages,
-				maxRetries: 0,
-				maxOutputTokens: MAX_TOKENS,
-				abortSignal: modelCallSignal(cancellation, deadline),
-				...(useTools ? { tools: deskTools, toolChoice: 'auto' as const, stopWhen: stepCountIs(stepBudget) } : {}),
-				onFinish: createOnFinish(conversationId, userId),
-				onError: ({ error }) => {
-					console.error('[ai:chat:fallback] Stream error:', error);
-				},
-			});
-
-			result.consumeStream();
-
-			const headers: Record<string, string> = {};
-			if (conversationId) headers['X-Conversation-Id'] = conversationId;
-			const stream = createUIMessageStream({
-				execute: ({ writer }) => {
-					writer.merge(result.toUIMessageStream());
-				},
-				onError: (error: unknown): string => {
-					const aiErr = classifyAiError(error);
-					console.error(`[ai:chat:fallback] Stream classify [${aiErr.kind}]:`, error);
-					if (aiErr.kind === 'rate_limit') {
-						void markCooldown(fallback.id);
-						void incrProvider429(fallback.id);
-					}
-					return `[${aiErr.kind}] ${safeAiMessage(aiErr.kind)}`;
-				},
-			});
-			return createUIMessageStreamResponse({ stream: cancellation.body(stream), headers });
-		} catch {
-			// try next fallback
-		}
-	}
-	return null;
 }
 
 /**
@@ -404,15 +312,9 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// persists a deterministic receipt message the client carries in this history.
 	const windowedMessages = windowMessages(rawMessages);
 
-	// Convert to ModelMessages for streamText compatibility.
-	// Legacy {role, content} messages are wrapped as UIMessages with text parts first.
-	const normalized: UIMessage[] = windowedMessages.map((m) => {
-		if ('parts' in m) return m as UIMessage;
-		return { id: crypto.randomUUID(), role: m.role, parts: [{ type: 'text' as const, text: m.content }] };
-	});
 	// Compact loaded history so oversized tool results from resumed conversations
 	// don't blow the context window before the first step even runs.
-	const messages = compactToolResults(await convertToModelMessages(normalized));
+	const messages = compactToolResults(await convertToModelMessages(windowedMessages));
 
 	// Resolve the provider for this turn against the snapshot the guard loaded
 	// (request override → stored preference → project default → capability order).
@@ -522,10 +424,6 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 
 	const responseHeaders: Record<string, string> = {};
 	if (conversationId) responseHeaders['X-Conversation-Id'] = conversationId;
-	// The desk turn's composition, kept outside the try so the catch's fallback can reuse its
-	// prompt and tools; a chatbot turn composes inside its stream.
-	let deskComposition: TurnComposition | undefined;
-
 	/** Circuit breaker: a rate-limited provider sits out the next turns. */
 	function coolProvider(providerId: string | null, kind: AiErrorKind): void {
 		if (kind !== 'rate_limit' || !providerId) return;
@@ -865,7 +763,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		// rotation before the first content part, a classified error frame when nothing reached
 		// the client. The assistant row (`assistantMsgId`) is already persisted above. The desk
 		// profile has no retrieval lane, so the composition is ready before the stream opens.
-		deskComposition = await composeTurn(profile, turn, recorder);
+		const deskComposition: TurnComposition = await composeTurn(profile, turn, recorder);
 		const { systemPrompt, tools: deskTools, stepBudget: maxSteps } = deskComposition;
 		const hasDeskTools = Object.keys(deskTools).length > 0;
 		let stepCounter = 0;
@@ -950,7 +848,6 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 								id: proposal.id,
 								goal,
 								steps: toCardSteps(approval.steps),
-								estimatedWrites: approval.steps.length,
 								riskTier: proposal.riskTier,
 								status: 'pending',
 							};
@@ -1004,7 +901,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					});
 				};
 
-				const blockIds = () => deskComposition?.blocks.map((b) => b.id) ?? [];
+				const blockIds = () => deskComposition.blocks.map((b) => b.id);
 				const makeStream = (attemptModel: LanguageModel) =>
 					streamText({
 						model: traceModelCalls(attemptModel, recorder, { blockIds }),
@@ -1059,7 +956,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					else if (recorder.trace().attempts.at(-1)?.outcome === 'started') recorder.attemptEnd('ok');
 					// The capabilities' verifiers: the desk chunks the search tool surfaced join the
 					// trace as the `desk` source's items.
-					await deskComposition?.verify(text);
+					await deskComposition.verify(text);
 					if (!conversationId) {
 						flushNow();
 						closed = true;
@@ -1142,39 +1039,13 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		// no model can fix. Surface it honestly instead — no cooldown, no fallback.
 		if (err instanceof DbError) {
 			console.error('[ai:chat] DB failure surfaced through orchestrator:', err);
-			return Response.json(
-				{ error: { code: err.kind, message: safeDbMessage(err.kind) } },
-				{ status: err.toStatus(), headers: { 'X-Error-Source': 'db' } },
-			);
+			return Response.json({ error: { code: err.kind, message: safeDbMessage(err.kind) } }, { status: err.toStatus() });
 		}
 
+		// Nothing before the stream opens talks to a provider (the chatbot composes inside the
+		// stream, the desk profile has no retrieval lane), so this is a plain failure: no cooldown,
+		// no fallback — `streaming-turn.ts` owns provider rotation for the turn itself.
 		const aiErr = classifyAiError(err);
-		coolProvider(currentProviderId, aiErr.kind);
-
-		// `unknown` is deliberately NOT in this allowlist: it is `classifyAiError`'s catch-all, so
-		// falling back on it spent a second provider's quota re-running deterministic bugs (bad
-		// tool schema, serialization failure) that every provider fails identically.
-		if (['unavailable', 'timeout', 'rate_limit'].includes(aiErr.kind)) {
-			// Per-surface fallback. Only a genuine DESK turn (real desk scopes) may mount desk
-			// tools, and only the ones its composition mounted — a throw before the composition
-			// leaves a tool-less fallback. A chatbot turn falls back tool-less on any provider:
-			// ungrounded but honest, on the identity block alone.
-			const isDeskTurn = !!toolScopes?.length;
-			const fallbackResponse = await tryFallback(
-				deskComposition?.systemPrompt ?? identityBlock(profile.identity),
-				messages,
-				conversationId,
-				userId,
-				configuredProviders.filter((p) => p.id !== currentProviderId),
-				cancellation,
-				isDeskTurn,
-				isDeskTurn ? deskComposition?.tools : undefined,
-				deskComposition?.stepBudget,
-				input.deadline,
-			);
-			if (fallbackResponse) return fallbackResponse;
-		}
-
 		return Response.json(
 			{ error: { code: aiErr.kind, message: safeAiMessage(aiErr.kind) } },
 			{ status: aiErrorToStatus(aiErr.kind), headers: { 'X-AI-Error-Kind': aiErr.kind } },

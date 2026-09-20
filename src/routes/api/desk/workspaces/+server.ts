@@ -1,34 +1,13 @@
 import * as v from 'valibot';
 import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
-import { createWorkspace, getActiveWorkspaceId, listWorkspaces } from '$lib/server/desk';
+import { createWorkspace } from '$lib/server/desk';
 import { CreateWorkspaceSchema } from '$lib/server/desk/schemas';
 import { guardApiUser } from '$lib/server/http/guards';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:workspaces', 10, '1 m');
-
-/** List all workspaces (with layouts) + active ID. */
-export const GET: RequestHandler = async ({ locals }) => {
-	const guard = guardApiUser(locals);
-	if ('error' in guard) return guard.error;
-	const { user } = guard;
-
-	const [workspaces, activeId] = await Promise.all([listWorkspaces(user.id), getActiveWorkspaceId(user.id)]);
-
-	return apiOk({
-		workspaces: workspaces.map((w) => ({
-			id: w.id,
-			name: w.name,
-			layout: w.layout,
-			sortOrder: w.sortOrder,
-			createdAt: w.createdAt.toISOString(),
-			updatedAt: w.updatedAt.toISOString(),
-		})),
-		activeId,
-	});
-};
 
 /** Create a new workspace from current layout. Auto-activates. */
 export const POST: RequestHandler = async ({ locals, request }) => {

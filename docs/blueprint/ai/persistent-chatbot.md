@@ -280,7 +280,7 @@ relying on it; add the userId-stamped pointer guard in `ensureChat` as defense i
 | `src/lib/state/modals.svelte.ts` | remove `aiAssistant` from the modal stack (no longer a mutually-exclusive modal) |
 | `src/app.html` | add `viewport-fit=cover` to the viewport meta (so `env(safe-area-inset-*)` resolves) |
 | `src/lib/styles/tokens.ts` | add `z-panel: 25` |
-| `src/lib/components/shell/SessionMonitor.svelte` | call `session.reset()` on logout/expiry |
+| `src/lib/components/shell/session/SessionMonitor.svelte` | call `session.reset()` on logout/expiry |
 
 ## Phased implementation
 

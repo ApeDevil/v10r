@@ -370,7 +370,6 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
 	// the barrel so the barrel can re-export the cache modules that need it. Same one read.
 	'src/lib/server/cache/client.ts -> $env/dynamic/private',
 	'src/lib/server/db/index.ts -> $env/dynamic/private',
-	'src/lib/server/docs/loader.ts -> $env/dynamic/public',
 	'src/lib/server/graph/index.ts -> $env/dynamic/private',
 	'src/lib/server/jobs/dbops-refresh.ts -> $env/dynamic/private',
 	'src/lib/server/jobs/delivery-scheduler.ts -> $env/dynamic/private',
@@ -397,8 +396,7 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
 ];
 
 /**
- * Five domains still have no `index.ts` at all — `analytics`, `docs`, `mcp`, `retrieval-shared`,
- * `test` — so for those the rule is not merely broken but unfollowable, and giving them a
+ * Four domains still have no `index.ts` at all — `docs`, `mcp`, `retrieval-shared`, `test` — so for those the rule is not merely broken but unfollowable, and giving them a
  * public surface is the next step. Four of the original nine are done: `schemas` and `style`
  * gained barrels, `branding` was absorbed into `style`, and `security` gained one when the
  * pairing cookie became its fourth caller — which retired four entries from this list.
@@ -444,7 +442,6 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/jobs/bot-ranges-refresh.ts -> analytics/bot-ranges',
 	'src/lib/server/jobs/bot-ranges-refresh.ts -> analytics/datacenter-ranges',
 	'src/lib/server/jobs/desk-retrieval-sync.ts -> ai/deskbot-retrieval',
-	'src/lib/server/jobs/discord-token-refresh.ts -> notifications/channels/discord',
 	'src/lib/server/jobs/grant-request-expiry.ts -> auth/grant-requests',
 	'src/lib/server/jobs/notification-delivery.ts -> notifications/outbox',
 	'src/lib/server/jobs/notification-delivery.ts -> notifications/channels',

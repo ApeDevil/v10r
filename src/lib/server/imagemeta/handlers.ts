@@ -96,7 +96,6 @@ export async function saveImageMetadata(
 		caption: data.caption,
 		altText: data.altText,
 		category: data.category,
-		status: 'approved' as const,
 		gpsLat,
 		gpsLng,
 		fieldProvenance: provenance,

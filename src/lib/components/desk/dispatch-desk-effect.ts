@@ -66,17 +66,6 @@ export function dispatchDeskEffect(effect: DeskEffect, actions: EffectActions): 
 			if (open) actions.updatePanel(open, { indicator: effect.variant === 'modified' ? 'ai-modified' : undefined });
 			return true;
 		}
-		case 'desk:notify':
-			actions.publish('ai:notify', { message: effect.message, level: effect.level });
-			return true;
-		case 'desk:activate_panel':
-		case 'desk:focus_panel':
-			return actions.focusPanel(effect.panelId);
-		case 'desk:scroll_to':
-			// Focus first — a scroll inside a background tab is invisible on every surface.
-			actions.focusPanel(effect.panelId);
-			actions.publish('ai:scroll_to', { panelId: effect.panelId, target: effect.target });
-			return true;
 		default:
 			// Unknown effect — report as not applied so the caller can log it.
 			return false;

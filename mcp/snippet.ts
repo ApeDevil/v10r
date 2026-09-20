@@ -31,7 +31,7 @@ interface RuleSet {
 	degraded: string[];
 }
 
-export interface SnippetOutcome {
+interface SnippetOutcome {
 	ok: boolean;
 	text: string;
 }

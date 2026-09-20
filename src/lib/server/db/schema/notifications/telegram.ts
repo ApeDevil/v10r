@@ -19,7 +19,6 @@ export const userTelegramAccounts = notificationsSchema.table(
 		telegramUsername: text('telegram_username'),
 		isActive: boolean('is_active').notNull().default(true),
 		linkedAt: timestamp('linked_at', { withTimezone: true }).notNull().defaultNow(),
-		unlinkedAt: timestamp('unlinked_at', { withTimezone: true }),
 	},
 	(table) => [index('telegram_user_idx').on(table.userId)],
 );

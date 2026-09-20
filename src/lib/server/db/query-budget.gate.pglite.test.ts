@@ -39,7 +39,7 @@ vi.mock('$lib/server/db', async () => {
 });
 
 const { listPosts } = await import('$lib/server/blog/queries');
-const { countFolderContents, getFile, listFiles, listFolders } = await import('./desk/queries');
+const { getFile, listFiles, listFolders } = await import('./desk/queries');
 const { db } = await import('$lib/server/db');
 
 const OWNER = makeUser({ id: 'query-budget-owner' });
@@ -119,7 +119,6 @@ const OPERATIONS: Record<BudgetedOperation, (size: number) => Promise<unknown>> 
 	'blog.listPosts': (size) => listPosts({ pageSize: size }),
 	'desk.listFiles': (size) => listFiles(OWNER.id, undefined, 0, size),
 	'desk.listFolders': () => listFolders(OWNER.id),
-	'desk.countFolderContents': () => countFolderContents(ROOT_FOLDER, OWNER.id),
 };
 
 async function census(work: () => Promise<unknown>): Promise<QueryCensus> {

@@ -15,7 +15,6 @@ interface ChildHit {
 	parentId: string | null;
 	documentId: string;
 	documentTitle: string;
-	content: string;
 	distance: number;
 	[key: string]: unknown;
 }
@@ -35,7 +34,6 @@ async function searchChildren(
 				c.id AS chunk_id,
 				c.parent_id,
 				c.document_id,
-				c.content,
 				c.embedding <=> ${embeddingStr}::vector AS distance
 			FROM retrieval.chunk c
 			WHERE c.user_id = ${userId}
@@ -51,7 +49,6 @@ async function searchChildren(
 			r.parent_id AS "parentId",
 			r.document_id AS "documentId",
 			d.title AS "documentTitle",
-			r.content,
 			r.distance AS distance
 		FROM ranked r
 		JOIN retrieval.document d ON d.id = r.document_id

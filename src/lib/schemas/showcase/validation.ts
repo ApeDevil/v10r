@@ -29,9 +29,6 @@ export const realtimeSchema = v.pipe(
 	),
 );
 
-export type RealtimeInput = v.InferInput<typeof realtimeSchema>;
-export type RealtimeOutput = v.InferOutput<typeof realtimeSchema>;
-
 export const asyncSchema = v.object({
 	username: v.pipe(
 		v.string(),
@@ -42,9 +39,6 @@ export const asyncSchema = v.object({
 	),
 	email: v.pipe(v.string(), v.trim(), v.nonEmpty('Required'), v.toLowerCase(), v.email('Invalid email address')),
 });
-
-export type AsyncInput = v.InferInput<typeof asyncSchema>;
-export type AsyncOutput = v.InferOutput<typeof asyncSchema>;
 
 export const serverSchema = v.object({
 	email: v.pipe(
@@ -61,6 +55,3 @@ export const serverSchema = v.object({
 		v.minLength(4, 'At least 4 characters'),
 	),
 });
-
-export type ServerInput = v.InferInput<typeof serverSchema>;
-export type ServerOutput = v.InferOutput<typeof serverSchema>;

@@ -20,7 +20,7 @@ import { readProposedTarget } from './proposed-target';
 // Tool metadata (name → risk/scope) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 
 export function createCreateTools(userId: string) {
-	const inLoop = { userId, scopes: ['desk:create' as const], actor: 'ai-inloop' as const };
+	const inLoop = { userId, scopes: ['desk:create' as const] };
 	return {
 		desk_create_spreadsheet: tool({
 			description:

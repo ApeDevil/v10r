@@ -28,7 +28,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	return {
 		title: `Posts tagged "${tagRow.name}"`,
 		posts: items,
-		total,
 		page,
 		totalPages: Math.ceil(total / PAGE_SIZE),
 		tagName: tagRow.name,

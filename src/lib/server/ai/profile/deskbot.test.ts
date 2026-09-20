@@ -50,7 +50,7 @@ describe('scope gating', () => {
 		const composed = await compose([], { hasTools: false });
 		expect(Object.keys(composed.tools)).toHaveLength(0);
 		expect(composed.blocks.map((b) => b.id)).toEqual(['role']);
-		expect(composed.activations.find((a) => a.id === 'desk-awareness')).toEqual({
+		expect(composed.state.activations.get('desk-awareness')).toEqual({
 			id: 'desk-awareness',
 			active: false,
 			reason: 'scope_off',
@@ -106,7 +106,7 @@ describe('scope gating', () => {
 
 	it("records each scoped capability's verdict: granted, scope_off, or providers_cooled", async () => {
 		const granted = await compose(['desk:read', 'desk:write']);
-		const verdicts = Object.fromEntries(granted.activations.map((a) => [a.id, a]));
+		const verdicts = Object.fromEntries([...granted.state.activations.values()].map((a) => [a.id, a]));
 		expect(verdicts['desk-files']).toEqual({ id: 'desk-files', active: true });
 		expect(verdicts['desk-edit']).toEqual({ id: 'desk-edit', active: true });
 		expect(verdicts['desk-plan']).toEqual({ id: 'desk-plan', active: true });
@@ -114,7 +114,7 @@ describe('scope gating', () => {
 		expect(verdicts['desk-ask']).toEqual({ id: 'desk-ask', active: false, reason: 'scope_off' });
 
 		const cooled = await compose(['desk:read', 'desk:write'], { hasTools: false, toolsCooled: true });
-		expect(cooled.activations.find((a) => a.id === 'desk-files')).toMatchObject({
+		expect(cooled.state.activations.get('desk-files')).toMatchObject({
 			active: false,
 			reason: 'providers_cooled',
 		});
@@ -127,22 +127,22 @@ describe('scope gating', () => {
 	it('leaves desk_search_knowledge out while the desk corpus is empty or still indexing', async () => {
 		const empty = await compose(['desk:ask'], { deskCorpus: 'none' });
 		expect(Object.keys(empty.tools)).not.toContain('desk_search_knowledge');
-		expect(empty.activations.find((a) => a.id === 'desk-ask')).toEqual({
+		expect(empty.state.activations.get('desk-ask')).toEqual({
 			id: 'desk-ask',
 			active: false,
 			reason: 'empty_corpus',
 		});
 		// The skipped source carries the same reason — the inspector shows why nothing was searched.
-		expect(empty.grounding.find((g) => g.id === 'desk')).toMatchObject({ ran: false, skippedReason: 'empty_corpus' });
+		expect(empty.state.grounding.get('desk')).toMatchObject({ ran: false, skippedReason: 'empty_corpus' });
 
 		const indexing = await compose(['desk:ask'], { deskCorpus: 'indexing' });
 		expect(Object.keys(indexing.tools)).not.toContain('desk_search_knowledge');
-		expect(indexing.activations.find((a) => a.id === 'desk-ask')).toMatchObject({ reason: 'indexing' });
-		expect(indexing.grounding.find((g) => g.id === 'desk')).toMatchObject({ skippedReason: 'indexing' });
+		expect(indexing.state.activations.get('desk-ask')).toMatchObject({ reason: 'indexing' });
+		expect(indexing.state.grounding.get('desk')).toMatchObject({ skippedReason: 'indexing' });
 
 		// The scope verdict comes first: a corpus state never turns a scope_off into a corpus reason.
 		const unscoped = await compose(['desk:read'], { deskCorpus: 'none' });
-		expect(unscoped.activations.find((a) => a.id === 'desk-ask')).toMatchObject({ reason: 'scope_off' });
+		expect(unscoped.state.activations.get('desk-ask')).toMatchObject({ reason: 'scope_off' });
 
 		expect(Object.keys((await compose(['desk:ask'], { deskCorpus: 'ready' })).tools)).toContain(
 			'desk_search_knowledge',
@@ -167,12 +167,14 @@ describe('desk-ask grounding', () => {
 
 	it('records the desk source as skipped when the scope is off', async () => {
 		const composed = await compose(['desk:read']);
-		expect(composed.grounding).toEqual([{ id: 'desk', ran: false, skippedReason: 'scope_off', items: [] }]);
+		expect([...composed.state.grounding.values()]).toEqual([
+			{ id: 'desk', ran: false, skippedReason: 'scope_off', items: [] },
+		]);
 	});
 
 	it('leaves the desk source unrecorded when the tool was mounted but never searched', async () => {
 		const composed = await compose(['desk:ask']);
-		expect(composed.grounding).toEqual([]);
+		expect([...composed.state.grounding.values()]).toEqual([]);
 		const verified = await composed.verify('No search needed.');
 		expect(verified.grounding).toEqual([]);
 		expect(composed.state.grounding.has('desk')).toBe(false);

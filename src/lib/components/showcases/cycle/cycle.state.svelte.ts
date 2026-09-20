@@ -31,8 +31,6 @@ function initialStages(set: StageSet): CycleStageState[] {
 	}));
 }
 
-export type CycleState = ReturnType<typeof createCycleState>;
-
 export function createCycleState(set: StageSet = 'default') {
 	let stages = $state<CycleStageState[]>(initialStages(set));
 	let selectedStageId = $state<CycleStageId | null>(null);

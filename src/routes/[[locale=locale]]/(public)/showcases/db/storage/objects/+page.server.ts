@@ -5,11 +5,8 @@ import { formatBytes } from '$lib/server/store/types';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const start = performance.now();
-
 	try {
 		const objects = await listShowcaseObjects();
-		const queryMs = Math.round((performance.now() - start) * 100) / 100;
 
 		return {
 			title: 'Objects - Storage - Showcases',
@@ -18,11 +15,10 @@ export const load: PageServerLoad = async () => {
 				sizeFormatted: formatBytes(o.size),
 				lastModified: o.lastModified.toISOString(),
 			})),
-			queryMs,
 		};
 	} catch (err) {
 		const storeErr = classifyS3Error(err);
-		return { objects: [], queryMs: 0, error: storeErr.message };
+		return { objects: [], error: storeErr.message };
 	}
 };
 
