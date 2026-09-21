@@ -18,6 +18,7 @@
  * hide-and-vacate only; a repositioner inherits every browser drift bug.
  */
 
+import { untrack } from 'svelte';
 import { browser } from '$app/environment';
 
 const OPEN_THRESHOLD = 150;
@@ -72,6 +73,14 @@ class VisualViewportWatcher {
 	 * Attach listeners. Idempotent; returns the detach function. Called from
 	 * ONE $effect in the root layout — the singleton never self-attaches, so
 	 * SSR and the node test env see a dormant object reporting 0/false.
+	 *
+	 * The initial measurement is untracked: `#measure` reads `#inset`/`#open`,
+	 * and a tracked read would make the caller's effect depend on the very
+	 * state the rAF measurement writes. The first keyboard open then re-ran the
+	 * effect — teardown reset the state, re-attach measured "open" again — and
+	 * looped until Svelte threw effect_update_depth_exceeded, ~270 ms of solid
+	 * CPU per throw, re-triggered by every viewport event while the keyboard
+	 * stayed up: the whole page froze on Android the moment a field got focus.
 	 */
 	attach(): () => void {
 		if (!browser || !window.visualViewport) return () => {};
@@ -81,7 +90,7 @@ class VisualViewportWatcher {
 		vv.addEventListener('scroll', this.#schedule);
 		window.addEventListener('resize', this.#schedule);
 		window.addEventListener('orientationchange', this.#schedule);
-		this.#measure();
+		untrack(() => this.#measure());
 		this.#detach = () => {
 			vv.removeEventListener('resize', this.#schedule);
 			vv.removeEventListener('scroll', this.#schedule);

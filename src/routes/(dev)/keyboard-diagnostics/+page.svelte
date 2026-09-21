@@ -17,9 +17,16 @@
  * and the raw-vs-primitive comparison IS the diagnostic.
  *
  * Query toggles isolate root-layout suspects without a rebuild:
- *   ?nowatch     detach the visual-viewport watcher
- *   ?nocover     drop viewport-fit=cover from the viewport meta
- *   ?systemfont  render with system-ui instead of the variable fonts
+ *   ?nowatch        detach the visual-viewport watcher
+ *   ?nocover        drop viewport-fit=cover from the viewport meta
+ *   ?systemfont     render with system-ui instead of the variable fonts
+ *   ?nocss[=part]   disable every stylesheet, or only those whose dev id / href
+ *                   contains `part` (e.g. app.css, uno.css, fontsource)
+ *
+ * Two channels survive a hang: the tab title carries the heartbeat (the browser
+ * process paints it, so it keeps ticking through a renderer paint stall and
+ * stops only when JS itself is stuck), and every log line is POSTed to
+ * ./log/+server.ts, which prints it to the dev server's stdout.
  */
 import { onMount } from 'svelte';
 import { Button, Input } from '$lib/components/primitives';
@@ -30,7 +37,7 @@ const MAX_LINES = 80;
 let valueB = $state('');
 let valueC = $state('');
 let lines = $state<string[]>([]);
-let toggles = $state({ nowatch: false, nocover: false, systemfont: false });
+let toggles = $state({ nowatch: false, nocover: false, systemfont: false, nocss: null as string | null });
 let snapshot = $state({
 	innerHeight: 0,
 	vvHeight: 0,
@@ -39,14 +46,29 @@ let snapshot = $state({
 	keyboard: '-',
 	inset: '-',
 	active: '-',
+	hasFocus: false,
+	visibility: '-',
+	beat: 0,
 	ua: '',
 });
 
 const t0 = typeof performance === 'undefined' ? 0 : performance.now();
 
+/** Fire-and-forget copy of a line to the dev server's stdout (see ./log/+server.ts). */
+function ship(line: string) {
+	fetch('/keyboard-diagnostics/log', {
+		method: 'POST',
+		keepalive: true,
+		headers: { 'content-type': 'text/plain', 'x-requested-with': 'fetch' },
+		body: line,
+	}).catch(() => {});
+}
+
 function log(line: string) {
 	const stamp = ((performance.now() - t0) / 1000).toFixed(2).padStart(6);
-	lines = [`${stamp}s ${line}`, ...lines].slice(0, MAX_LINES);
+	const stamped = `${stamp}s ${line}`;
+	lines = [stamped, ...lines].slice(0, MAX_LINES);
+	ship(stamped);
 }
 
 function describe(target: EventTarget | null): string {
@@ -56,9 +78,12 @@ function describe(target: EventTarget | null): string {
 	return `${target.tagName.toLowerCase()}${target.id ? `#${target.id}` : ''}`;
 }
 
+let beat = 0;
+
 function measure() {
 	const vv = window.visualViewport;
 	const root = document.documentElement;
+	beat += 1;
 	snapshot = {
 		innerHeight: window.innerHeight,
 		vvHeight: vv ? Math.round(vv.height) : 0,
@@ -67,13 +92,39 @@ function measure() {
 		keyboard: root.dataset.keyboard ?? '-',
 		inset: root.style.getPropertyValue('--keyboard-inset') || '-',
 		active: describe(document.activeElement),
+		hasFocus: document.hasFocus(),
+		visibility: document.visibilityState,
+		beat,
 		ua: navigator.userAgent,
 	};
+	document.title = `hb ${beat} · vv ${snapshot.vvHeight} · ${snapshot.active}`;
+	// Every 2 s the sink also gets a heartbeat, so a hang is visible as silence.
+	if (beat % 4 === 0)
+		ship(`heartbeat hb=${beat} vv=${snapshot.vvHeight} inner=${snapshot.innerHeight} active=${snapshot.active}`);
 }
 
 onMount(() => {
 	const params = new URLSearchParams(location.search);
-	toggles = { nowatch: params.has('nowatch'), nocover: params.has('nocover'), systemfont: params.has('systemfont') };
+	toggles = {
+		nowatch: params.has('nowatch'),
+		nocover: params.has('nocover'),
+		systemfont: params.has('systemfont'),
+		nocss: params.has('nocss') ? params.get('nocss') : null,
+	};
+
+	if (toggles.nocss !== null) {
+		const part = toggles.nocss;
+		let disabled = 0;
+		for (const sheet of document.styleSheets) {
+			const node = sheet.ownerNode as HTMLElement | null;
+			const id = node?.dataset.viteDevId ?? (node as HTMLLinkElement | null)?.href ?? '';
+			if (part === '' || id.includes(part)) {
+				sheet.disabled = true;
+				disabled += 1;
+			}
+		}
+		log(`toggle: ${disabled}/${document.styleSheets.length} stylesheets disabled (${part || 'all'})`);
+	}
 
 	if (toggles.nowatch) {
 		// attach() is idempotent and hands back the live detach function.
@@ -123,6 +174,15 @@ onMount(() => {
 	const onPointer = (e: PointerEvent) => log(`pointerdown ${e.pointerType} → ${describe(e.target)}${flag(e)}`);
 	const onError = (e: ErrorEvent) => log(`ERROR ${e.message}`);
 	const onRejection = (e: PromiseRejectionEvent) => log(`REJECTION ${String(e.reason)}`);
+	// Window-level focus (element focus/blur do not bubble, so these are the
+	// window's own). An IME that never appears while the window is blurred means
+	// something above Chrome holds Android's input focus.
+	const onWindowFocus = (e: Event) => {
+		measure();
+		log(`window.${e.type} hasFocus=${document.hasFocus()}`);
+	};
+	const onTouch = (e: TouchEvent) => log(`${e.type} n=${e.touches.length} cancelable=${e.cancelable}${flag(e)}`);
+	const onClick = (e: MouseEvent) => log(`click → ${describe(e.target)}${flag(e)}`);
 
 	const vv = window.visualViewport;
 	vv?.addEventListener('resize', onViewport);
@@ -140,7 +200,14 @@ onMount(() => {
 	window.addEventListener('pointerdown', onPointer);
 	window.addEventListener('error', onError);
 	window.addEventListener('unhandledrejection', onRejection);
-	// The heartbeat proves the main thread is alive even when nothing renders.
+	window.addEventListener('focus', onWindowFocus);
+	window.addEventListener('blur', onWindowFocus);
+	window.addEventListener('touchstart', onTouch, { passive: true });
+	window.addEventListener('touchend', onTouch, { passive: true });
+	window.addEventListener('touchcancel', onTouch, { passive: true });
+	window.addEventListener('click', onClick);
+	// The heartbeat proves the main thread is alive even when nothing renders:
+	// `hb` in the status bar keeps counting while the page is alive.
 	const heartbeat = setInterval(measure, 500);
 
 	measure();
@@ -162,6 +229,12 @@ onMount(() => {
 		window.removeEventListener('pointerdown', onPointer);
 		window.removeEventListener('error', onError);
 		window.removeEventListener('unhandledrejection', onRejection);
+		window.removeEventListener('focus', onWindowFocus);
+		window.removeEventListener('blur', onWindowFocus);
+		window.removeEventListener('touchstart', onTouch);
+		window.removeEventListener('touchend', onTouch);
+		window.removeEventListener('touchcancel', onTouch);
+		window.removeEventListener('click', onClick);
 		clearInterval(heartbeat);
 	};
 });
@@ -180,12 +253,15 @@ onMount(() => {
 			<span>vv {snapshot.vvHeight}/{snapshot.vvOffsetTop} ×{snapshot.vvScale}</span>
 			<span>kb {snapshot.keyboard} {snapshot.inset}</span>
 			<span>active {snapshot.active}</span>
+			<span>win {snapshot.hasFocus ? 'focused' : 'BLURRED'}</span>
+			<span>vis {snapshot.visibility}</span>
+			<span>hb {snapshot.beat}</span>
 		</div>
 		<pre class="status-tail">{lines.slice(0, 3).join('\n')}</pre>
 	</div>
 
 	<h1 class="title">Keyboard diagnostics</h1>
-	<p class="hint">Tap a field, type a few characters, then read the log. Toggles: <code>?nowatch</code> <code>?nocover</code> <code>?systemfont</code></p>
+	<p class="hint">Tap a field, type a few characters, then read the log. Toggles: <code>?nowatch</code> <code>?nocover</code> <code>?systemfont</code> <code>?nocss</code></p>
 
 	<div class="field">
 		<label for="kd-a">A · native input, no binding</label>

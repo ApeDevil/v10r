@@ -128,6 +128,10 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
  * surface can actually reach.
  */
 const PUBLIC_SURFACES: Record<string, string> = {
+	// ── Dev-only diagnostics ─────────────────────────────────────────────────
+	'(dev)/keyboard-diagnostics/log/+server.ts':
+		'Log sink for the on-device keyboard diagnostics page. `(dev)` routes 404 in production (devRouteGuard), and the handler only echoes the request body to the dev server stdout — nothing is stored, read back, or acted on.',
+
 	// ── Non-/api endpoints ────────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/blog/feed.xml/+server.ts':
 		'Public RSS feed. Reads listPublishedPostsForFeed, so drafts are unreachable by construction.',
