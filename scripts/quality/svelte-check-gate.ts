@@ -13,7 +13,15 @@
  *
  * Exit codes:
  *   0  scan completed, zero errors, file count at or above the floor
- *   1  type errors, file count below the floor, or the checker crashed
+ *   1  type errors, file count below the floor, or the checker crashed twice
+ *
+ * The checker is launched on Node directly rather than through `bunx`: Node is
+ * the engine the Containerfile provisions for it (see docs/stack/core/bun.md),
+ * and the `bunx` hop only added a second Bun process to a chain that has been
+ * dying with SIGSEGV. A checker killed by a signal is not a type failure — its
+ * verdict is deterministic — so the gate retries ONCE, says so on stderr, and
+ * fails only when the retry dies too. A crash is never reported as green: the
+ * retry re-scans the whole tree and must produce its own COMPLETED summary.
  *
  * Usage: bun run scripts/quality/svelte-check-gate.ts   (the `check` script wires it after svelte-kit sync)
  */
@@ -23,13 +31,34 @@
 // when the tree genuinely shrinks.
 const MIN_FILES = 7000;
 
-const proc = Bun.spawn(
-	['bunx', 'svelte-check', '--tsconfig', './tsconfig.json', '--output', 'machine', '--threshold', 'error'],
-	{ stdout: 'pipe', stderr: 'inherit' },
-);
+async function runChecker(): Promise<{ out: string; exitCode: number; signal: string | null }> {
+	const proc = Bun.spawn(
+		[
+			'node',
+			'node_modules/svelte-check/bin/svelte-check',
+			'--tsconfig',
+			'./tsconfig.json',
+			'--output',
+			'machine',
+			'--threshold',
+			'error',
+		],
+		{ stdout: 'pipe', stderr: 'inherit' },
+	);
+	const out = await new Response(proc.stdout).text();
+	const exitCode = await proc.exited;
+	return { out, exitCode, signal: proc.signalCode ?? null };
+}
 
-const out = await new Response(proc.stdout).text();
-const exitCode = await proc.exited;
+const SUMMARY_LINE = /^\d+\s+COMPLETED\s/m;
+
+let { out, exitCode, signal } = await runChecker();
+if (!SUMMARY_LINE.test(out) && (signal !== null || exitCode > 128)) {
+	console.error(
+		`svelte-check-gate: checker died by signal (${signal ?? `exit ${exitCode}`}) before completing — a runtime/host fault, not a type error; retrying once.`,
+	);
+	({ out, exitCode, signal } = await runChecker());
+}
 
 const DIAGNOSTIC = /^\d+\s+(ERROR|WARNING)\s+"(.+?)"\s+(\d+):(\d+)\s+"(.*)"$/;
 const SUMMARY = /^\d+\s+COMPLETED\s+(\d+)\s+FILES\s+(\d+)\s+ERRORS\s+(\d+)\s+WARNINGS\s+(\d+)\s+FILES_WITH_PROBLEMS$/;
@@ -47,7 +76,9 @@ for (const line of out.split('\n')) {
 }
 
 if (!summary) {
-	console.error(`svelte-check-gate: no COMPLETED summary in checker output (crashed? exit ${exitCode}).`);
+	console.error(
+		`svelte-check-gate: no COMPLETED summary in checker output (crashed? ${signal ?? `exit ${exitCode}`}).`,
+	);
 	process.exit(1);
 }
 if (summary.errors > 0 || exitCode !== 0) {
