@@ -32,7 +32,13 @@ export async function listDocuments(userId: string, offset = 0, limit = 50) {
  */
 export async function getDocumentBySourcePath(sourceUri: string, userId: string) {
 	const [row] = await db
-		.select({ id: document.id, updatedAt: document.updatedAt, contentHash: document.contentHash })
+		.select({
+			id: document.id,
+			updatedAt: document.updatedAt,
+			contentHash: document.contentHash,
+			derivationKey: document.derivationKey,
+			status: document.status,
+		})
 		.from(document)
 		.where(and(eq(document.sourceUri, sourceUri), eq(document.userId, userId), isNull(document.deletedAt)))
 		.limit(1);

@@ -14,6 +14,16 @@ Optional heavyweight capabilities load behind dynamic-import boundaries, and the
 
 **When to use:** Use when a dependency is large, feature-specific, rarely used, browser-only or expensive to initialize — 3D, maps, charts, editors, graph visualization.
 
+## Avoid when
+
+- The dependency is small or needed by most routes, so splitting it out moves no weight off the shared baseline
+- The page weight is images or fonts rather than client JavaScript — that is asset delivery's problem
+
+## Alternatives
+
+- **import the module directly instead of through a barrel** — prefer when the weight comes from an unrelated sibling the barrel drags in, not from the capability itself
+- **asset delivery work (responsive images, AVIF/WebP, font subsetting)** — prefer when images or fonts, not client JavaScript, dominate page load
+
 ## Docs
 
 - [docs/blueprint/velocity/runtime.md#heavy-dependency-quarantine](/docs/blueprint/velocity/runtime) — Why the baseline is the number that matters ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/runtime.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/runtime.md))

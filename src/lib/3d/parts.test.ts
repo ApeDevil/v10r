@@ -64,7 +64,7 @@ describe('SOFA_PARTS photos', () => {
 				expect(photo.src).toMatch(/^\/images\/parts\/glam-velvet-sofa\/[a-z0-9-]+\.(jpg|webp|png|avif)$/);
 				expect(photo.alt.trim()).not.toBe('');
 				expect(photo.caption.trim()).not.toBe('');
-				expect(photo.credit.trim()).not.toBe('');
+				expect(photo.rights.author.trim()).not.toBe('');
 			}
 		}
 	});

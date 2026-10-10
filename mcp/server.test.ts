@@ -153,6 +153,20 @@ describe('tools', () => {
 		expect(body).toContain('quantum teleport');
 	});
 
+	// The fitness block is how an agent rules a pattern OUT. A plan that lists steps without
+	// their contraindications, or without the infrastructure the whole plan needs, reads as
+	// an unconditional recommendation.
+	test("recommend_emulation_plan carries each step's contraindications and the requires union", () => {
+		const result = handleToolCall('recommend_emulation_plan', { capabilities: ['grounded answers', 'caching'] }, ctx);
+		const body = result.content[0]?.text ?? '';
+		expect(body).toContain('**Avoid when:**');
+		expect(body).toMatch(/This plan requires: [a-z-]+(, [a-z-]+)*\./);
+		const needs = /This plan requires: ([a-z, -]+)\./.exec(body)?.[1].split(', ') ?? [];
+		expect(needs.length).toBe(new Set(needs).size);
+		expect(body).toContain('pgvector');
+		expect(body).toContain('redis');
+	});
+
 	test('tool results are text-only — structuredContent hides text from Claude Code', () => {
 		for (const [name, args] of [
 			['search_patterns', { query: 'jobs' }],

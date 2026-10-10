@@ -48,7 +48,9 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The client-side lifecycle of one proposal | `proposal run` (`ProposalRun`, `ProposalRunPhase`) | `proposalBusy` |
 | The deterministic assistant message an approval leaves in the thread | `execution receipt message` | the `[resumeFromProposalId:…]` resume turn |
 | The step after which a deskbot turn stops for a decision | `approval boundary` (`stoppedAtApproval`) | — |
-| How an approved step is undone | `recovery` (`ProposalStepRecovery`: `revision`/`soft_delete`/`rename_back`/`none`) | model-authored `rollback` text |
+| How an approved step is undone | `recovery` (`ProposalStepRecovery`: `revision`/`soft_delete`/`rename_back`/`created`/`none` — the same kinds a `StepRecoveryPoint` carries) | model-authored `rollback` text |
+| What undoing one executed step needs, captured when it ran | `recovery point` (`StepRecoveryPoint`, column `agent_proposal_step.recovery`) | `rollback data`, `snapshot` (that is a `revision`) |
+| Undoing a plan that ran, and its per-step evidence | `revert` (`revertProposal`, `revert_status`, `POST …/revert`) and `revert receipt` (`agent_proposal_revert_step`) | `rollback` (there is none — compensation is not atomic), `undo` as a type or route name (it is the button's word) |
 | The database or transaction a domain mutation runs on | `handle` (`DbHandle`) | — |
 | What the daily cron sweep runs | `jobsDueOn` (`/api/cron/due`) | one `vercel.json` entry per job |
 | The MCP demo-state domain module | `src/lib/server/mcp/demo/state.ts` | `mcp/demo/service.ts` |
@@ -100,6 +102,8 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The proposal a deskbot turn stopped on, as its owner reads it back | `turn proposal` (`TurnProposal` on the trace's read side, resolved by `proposalId` through `resolveTurnProposal`; the inspector's `proposal` group) | `plan` on its own (the model's `desk_propose_plan` input), `approval` (the door, not the record) |
 | One turn as the inspector reads it — the trace plus the question, the answer and the profile | `InspectedTurn` | `TurnFixture`, `ReplayTurn` |
 | Where a shown turn came from | `provenance` (`TurnProvenance.kind`: `authored` · `recorded` · `live`; rendered by `ProvenanceBadge` — one chip and, where the reader is owed it, one sentence of gloss (`showcase_ai_prov_*`); never inferred) | `source` on its own (the spine's old `recorded`/`live` flag), `demo`, a `mode chip` for a turn |
+| Where any value came from — entity, producing activity, agent | `provenance` (the general concept; `TurnProvenance` and `fieldProvenance` are instances, see `docs/blueprint/integrity/derivation.md#provenance-record`) | `lineage` (spoken for — rejected for chunk ancestry), `origin` as a type name |
+| The freshness key of a derived output | `derivation key` (`derivationKey(transform, inputs)` in `db/content-hash.ts`; column `derivation_key`) | `cache key` (that is `cacheKey` in `server/cache/`), `fingerprint` on its own, a `--force` flag |
 | Renaming every id of a recorded turn to a `demo_` id before it becomes a fixture | `scrubTurn` (`$lib/showcases/ai/inspector.ts`; the recording script and the fixture test share it) | `anonymize`, `sanitize`, `redact` (the retention pass that empties bodies) |
 | The upper description of one surface's assistant: identity + capabilities | `profile` (`AssistantProfile`, `ai/profile/<surface>.ts`, `PROFILES` by surface); its client-safe projection is the `profile manifest` (`AssistantProfileManifest`, `GET /api/ai/profiles/[surface]`) | `persona`, `agent config`, `system prompt` for the whole |
 | Who an assistant is and the rules it always follows — the `<role>` + `<instructions>` block | `identity` (`AssistantIdentity`, `identityBlock()`; the shared tail is `shared-rules.ts`) | `SYSTEM_PROMPT`, `DESK_SYSTEM_PROMPT`, `persona` |

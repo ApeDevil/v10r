@@ -14,6 +14,17 @@ A review heuristic, not a rule: when a menu, toolbar or page offers more than ~5
 
 **When to use:** Reviewing or designing any menu, toolbar, context menu, sidebar or command surface that has grown past a handful of unrelated actions — and deciding whether the answer is grouping, context promotion, a shortcut, or leaving it flat.
 
+## Avoid when
+
+- A small, familiar or comparison-driven action set — flat is right wherever scanning beats navigating
+- Dashboards, expert consoles and repetitive workflows where nesting would slow the happy path users repeat
+- Nesting only because a bar ran out of room — a 'More' bucket of leftovers is the anti-pattern the heuristic exists to catch
+
+## Alternatives
+
+- **A flat list or toolbar** — prefer when the actions are few, highly familiar, scanned or compared side by side, or need direct repeated access
+- **Plain progressive disclosure: primary actions visible, secondary in one menu** — prefer when one or two actions dominate the context and the rest form a short secondary list with no directions to name
+
 ## Docs
 
 - [docs/foundation/explosive-discovery.md](/docs/foundation/explosive-discovery) — The principle: two axes (depth on a page, revelation over a journey), invariants, accessibility ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/foundation/explosive-discovery.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/foundation/explosive-discovery.md))

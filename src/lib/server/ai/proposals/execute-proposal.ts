@@ -17,20 +17,20 @@ import { db } from '$lib/server/db';
 import { saveMessages } from '$lib/server/db/ai/mutations';
 import {
 	listProposalSteps,
+	lockExecuting,
 	markExecuted,
 	markFailed,
 	recordProposalStep,
 	touchExecuting,
 } from '$lib/server/db/ai/proposals';
 import type { agentProposal } from '$lib/server/db/schema/ai/proposal';
-import type { agentProposalStep } from '$lib/server/db/schema/ai/proposal-step';
 import type { ProposalOutcome, ProposalReceiptMessage, ProposalStepReceipt } from '$lib/types/ai-proposal';
 import type { ProposalStatus } from '$lib/types/db-enums';
 import type { DeskToolScope } from '../tools/_types';
-import { effectsForStep, executeDeskToolCall } from '../tools/desk-execute';
+import { executeDeskToolCall } from '../tools/desk-execute';
+import { effectsOfReceipts, toStepReceipt } from './proposal-outcome';
 
 type ProposalRow = typeof agentProposal.$inferSelect;
-type StepRow = typeof agentProposalStep.$inferSelect;
 
 /**
  * The terminal reason the client tells apart from a step's own error text. Its sibling,
@@ -38,20 +38,8 @@ type StepRow = typeof agentProposalStep.$inferSelect;
  */
 const FAILURE_CONFLICT = 'conflict';
 
-export function toStepReceipt(row: StepRow): ProposalStepReceipt {
-	return {
-		stepIndex: row.stepIndex,
-		toolName: row.toolName,
-		kind: row.kind,
-		output: (row.output as Record<string, unknown> | null) ?? null,
-		errorMessage: row.errorMessage,
-	};
-}
-
-/** The effects the completed steps imply — the same derivation the live run used. */
-export function effectsOfReceipts(steps: readonly ProposalStepReceipt[]) {
-	return steps.filter((s) => s.kind === 'ok' && s.output).flatMap((s) => effectsForStep(s.toolName, s.output ?? {}));
-}
+/** Same reason the healer writes: this run lost its lease, and the fence stopped its next step. */
+const FAILURE_FENCED = 'interrupted';
 
 /**
  * The deterministic account of a run: one line per planned step — done, failed, or never
@@ -101,6 +89,9 @@ export async function executeProposal(proposal: ProposalRow, userId: string): Pr
 		let receipt: ProposalStepReceipt;
 		try {
 			receipt = await db.transaction(async (tx) => {
+				// The fence: a run healed to failed('interrupted') while this one stalled must not
+				// commit another step behind the terminal status.
+				if (!(await lockExecuting(tx, proposal.id))) throw new Error(FAILURE_FENCED);
 				// Replay under the scopes frozen when the plan was PROPOSED, never anything
 				// supplied on the approving request — approval must not widen the reviewed grant.
 				const outcome = await executeDeskToolCall(
@@ -120,6 +111,7 @@ export async function executeProposal(proposal: ProposalRow, userId: string): Pr
 						outcome.ok && outcome.output.created === true && typeof outcome.output.fileId === 'string'
 							? outcome.output.fileId
 							: undefined,
+					recovery: outcome.ok ? outcome.recovery : undefined,
 				});
 				return toStepReceipt(row);
 			});
@@ -151,6 +143,7 @@ export async function executeProposal(proposal: ProposalRow, userId: string): Pr
 		effects: effectsOfReceipts(steps),
 		receiptMessage,
 		expiresAt: proposal.expiresAt.toISOString(),
+		revert: null,
 	};
 }
 
@@ -170,22 +163,4 @@ async function persistReceiptMessage(
 		console.error('[ai:proposal] Failed to persist the receipt message:', err);
 		return null;
 	}
-}
-
-/**
- * The outcome of a proposal that is no longer running, rebuilt from its receipts — what
- * the status route and a repeated approval answer with. The receipt message is not
- * rebuilt: it is a row of the conversation already.
- */
-export async function proposalOutcome(proposal: ProposalRow): Promise<ProposalOutcome> {
-	const steps = (await listProposalSteps(proposal.id)).map(toStepReceipt);
-	return {
-		id: proposal.id,
-		status: proposal.status,
-		steps,
-		failureMessage: proposal.failureMessage,
-		effects: effectsOfReceipts(steps),
-		receiptMessage: null,
-		expiresAt: proposal.expiresAt.toISOString(),
-	};
 }

@@ -14,6 +14,16 @@ A long list costs the size of the viewport instead of the size of the data; the 
 
 **When to use:** Use above roughly 200 rows for tables, trees, explorer lists, timelines, feeds and logs. Below that, windowing adds more complexity than it removes.
 
+## Avoid when
+
+- The collection stays under roughly 200 rows — windowing adds more complexity than it removes
+- Rows have variable heights — measurement, a resize observer and an offset table are a different pattern, not an option on this one
+
+## Alternatives
+
+- **Render the full list** — prefer when the collection is small enough that its DOM, layout and hit-testing cost go unnoticed
+- **A measured variable-height virtualizer (resize observer plus a running offset table)** — prefer when row heights genuinely vary and the scroll-jump risk that measurement brings is accepted
+
 ## Docs
 
 - [docs/blueprint/velocity/interaction.md#virtualized-rendering](/docs/blueprint/velocity/interaction) — Why uniform row height only ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/interaction.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/interaction.md))

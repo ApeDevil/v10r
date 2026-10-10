@@ -14,6 +14,16 @@ A layered component system — Bits UI → primitives (styled atoms) → composi
 
 **When to use:** Emulate when a project needs consistent UI at any scale: the layer split keeps styling decisions in one place and bans ad-hoc HTML.
 
+## Avoid when
+
+- A non-Svelte frontend — every primitive wraps Bits UI, which is Svelte-native and the layer system depends on it
+- A project committed to a Tailwind theme config or another styled kit — token CSS variables are core to theming and hard to reverse
+
+## Alternatives
+
+- **Radix or Headless UI primitives under the same CVA + token layering** — prefer when the frontend is React or Vue rather than Svelte
+- **Tailwind with its theme config instead of UnoCSS + CSS-variable tokens** — prefer when a larger ecosystem and documentation matter more than build speed and the app needs no runtime theming or rebuild-free dark mode
+
 ## Docs
 
 - `docs/blueprint/design/README.md` — Design philosophy hub ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/README.md))

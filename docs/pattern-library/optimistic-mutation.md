@@ -14,6 +14,16 @@ The confirmed value and the pending intents are stored separately and the UI rea
 
 **When to use:** Use for reversible, predictable actions where failure is uncommon: rename, toggle, reorder, move, favourite. Never for payments, irreversible deletion, or permission changes.
 
+## Avoid when
+
+- The action is a payment, an irreversible deletion or a permission change — a rollback cannot restore it
+- The client cannot predict the server-side outcome, so the optimistic value would be a guess
+- Failure is common, so the rollback path runs about as often as the confirmed one
+
+## Alternatives
+
+- **Pessimistic submit: disable the control and wait for the server's answer** — prefer when the action is irreversible, touches authorization, or has an outcome the client cannot predict
+
 ## Docs
 
 - [docs/blueprint/velocity/interaction.md#optimistic-mutation](/docs/blueprint/velocity/interaction) — The pattern, and what must never go through it ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/interaction.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/interaction.md))

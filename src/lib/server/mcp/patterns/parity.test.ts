@@ -40,6 +40,20 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 	// The tool SET check above cannot catch a field rendered in one runtime's card
 	// but not the other's. Pin the maturity line the same way — by source text —
 	// in both copies of patternCard.
+	// The fitness block (requires / avoid when / alternatives) is how an agent rules a pattern
+	// OUT; it lives once in `pattern-library/fitness.ts`. Both runtimes must import it, never
+	// grow a local copy that could render differently.
+	it('renders the fitness block from the one shared module in both runtimes', () => {
+		const hostedSource = readFileSync('src/lib/server/mcp/patterns/tools.ts', 'utf8');
+		expect(stdioSource).toContain("from '../pattern-library/fitness.ts'");
+		expect(hostedSource).toContain("from '$patterns/fitness'");
+		for (const source of [stdioSource, hostedSource]) {
+			expect(source).not.toMatch(/\nfunction (fitnessLines|requiresLine)\(/);
+			expect(source).toContain('...fitnessLines(pattern),');
+			expect(source).toContain('requiresLine(order');
+		}
+	});
+
 	it('renders the maturity grade in both runtimes', () => {
 		const hostedSource = readFileSync('src/lib/server/mcp/patterns/tools.ts', 'utf8');
 		for (const source of [stdioSource, hostedSource]) {

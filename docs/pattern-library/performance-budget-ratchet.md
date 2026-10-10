@@ -14,6 +14,15 @@ Two thresholds with different jobs: targets are where we want to be and never fa
 
 **When to use:** Use for any deterministic metric worth defending — shared JS, route JS, prerendered document weight, known expensive queries.
 
+## Avoid when
+
+- The metric is not deterministic run to run, like cold-start time or field latency — report it, don't gate it
+- No production build runs before shipping, so there is no lab measurement the gate can trust
+
+## Alternatives
+
+- **a target scored on a dashboard that never fails the build** — prefer when the metric is noisy or field-measured and only needs to stay visible
+
 ## Docs
 
 - [docs/blueprint/velocity/measurement.md#performance-budget-and-ratchet](/docs/blueprint/velocity/measurement) — Targets vs ratchets, and the field/lab/dev split ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/measurement.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/measurement.md))

@@ -845,6 +845,28 @@ Not every table should allow the same write operations. Five patterns, demoed li
 | **Append-only** | Insert only — no update or delete code path at all. | Audit logs, event streams: the trail must outlive edits, by design (see [auth.md](../auth.md#audit-log-no-foreign-key-by-design)). |
 | **Temporal (bitemporal)** | `valid_from` / `valid_to` track when a fact was true in the real world, separate from `recorded_at` (when it was written). Query "what was valid on date X?" with a range containment check. | The history of *real-world* truth matters, not just the history of edits — pricing tiers, org membership, addresses. |
 
+### How much time to model
+
+Each rung answers one more question and costs one more invariant. Climb only as far as a
+question someone actually asks.
+
+| Rung | Answers | Shape | v10r instance |
+|---|---|---|---|
+| 1. Last write | "What is it now, and when did it last change?" | `updated_at` (+ a `version` counter for compare-and-swap) | most tables; `spreadsheet.version` |
+| 2. Transaction time | "What did it look like before that edit?" | append-only revision rows (`entity_id`, revision, `content_hash`, `recorded_at`, author) | `blog.revision`, `desk.file_revision` |
+| 3. Valid time | "What was true on date X?" — when a fact's real-world validity differs from when it was written | a period per row; where periods of one entity must not overlap, a `tstzrange` with `[)` bounds and `EXCLUDE USING gist (entity_id WITH =, valid_during WITH &&)` | `showcase.temporal_record` (`valid_from`/`valid_to` + a `CHECK`, queried by `queryTemporalAt` — `/showcases/db/relational/mutability#temporal`); `showcase.range_booking` for `tstzrange` + GiST |
+| 4. Bitemporal | "What did we *believe* at T1 about the state at T2?" | valid time **and** transaction time on every row; corrections are new rows, never updates | none. The showcase adds `recorded_at` to rung 3, but it keeps no superseded rows, so it cannot answer this question |
+
+- Bitemporal is justified only by retroactive corrections that must stay auditable: billing
+  restatements, payroll, insurance, regulatory reporting. Otherwise rung 3 plus the revision
+  table of rung 2 answer every question it would.
+- PostgreSQL 18 added `WITHOUT OVERLAPS` primary/unique keys and `PERIOD` foreign keys, but no
+  system versioning (`FOR PORTION OF` is slated for 19). Neon serves 18 to new projects since
+  2026-05-01. Drizzle-kit support for `WITHOUT OVERLAPS` is unverified, and this repo is
+  push-only, so the exclusion constraint above remains the portable form.
+- Pick one bound convention (`[)`, half-open) and keep it everywhere. Mixing it with `[]` is
+  how two "adjacent" periods quietly overlap by one instant.
+
 ---
 
 ## Related

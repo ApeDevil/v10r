@@ -73,7 +73,7 @@ where to look after the docs.
 | Database (schema, queries, push) | `docs/codebase-organization.md` (`db/` section), `docs/blueprint/data/README.md`, `docs/stack/data/README.md` | `src/lib/server/db/`, `drizzle.config.ts` |
 | Auth / sessions / grants | `docs/blueprint/auth.md`, `docs/stack/auth/better-auth.md` | `src/lib/server/auth/` |
 | Request pipeline / middleware | `docs/system-abstraction.md` (Spine A), `docs/blueprint/middleware.md` | `src/hooks.server.ts` |
-| AI / RAG / chatbot | `docs/blueprint/ai/README.md`, `docs/stack/ai/ai-sdk.md` | `src/lib/server/ai/`, `retrieval/`, `llmwiki/` |
+| AI / RAG / chatbot | `docs/blueprint/ai/README.md`, `docs/stack/ai/ai-sdk.md` | `src/lib/server/ai/`, `retrieval/` |
 | UI / design system / styling | `docs/blueprint/design/README.md` → `components.md`, `tokens.md`, `styling.md`; `docs/stack/ui/README.md` | `src/lib/components/`, `src/app.css`, `src/lib/styles/tokens.ts` |
 | Svelte state / runes | `docs/blueprint/state.md` | `src/lib/state/` |
 | API (REST / SSE) | `docs/blueprint/api.md`, `docs/stack/capabilities/api.md` | `src/routes/api/`, `src/lib/server/http/` |

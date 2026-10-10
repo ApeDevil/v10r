@@ -39,17 +39,19 @@ describe('search_pattern_library', () => {
 		expect(out.results[0].path).toBe('/docs/pattern-library/jobs-scheduler');
 	});
 
-	it('carries invariants/emulation notes on deep rows only', async () => {
+	it('carries contraindications, invariants and emulation notes on deep rows only', async () => {
 		const deep = await exec(createSearchPatternLibraryTool('en'), { query: 'background jobs cron' });
 		expect(deep.results[0].tier).toBe('deep');
 		expect(deep.results[0].invariants.length).toBeGreaterThan(0);
 		expect(deep.results[0].emulation_notes.length).toBeGreaterThan(0);
+		expect(deep.results[0].avoid_when.length).toBeGreaterThan(0);
 
 		const light = await exec(createSearchPatternLibraryTool('en'), { query: 'proof-of-work captcha altcha' });
 		expect(light.results[0].id).toBe('anti-abuse-captcha');
 		expect(light.results[0].tier).toBe('light');
 		expect(light.results[0]).not.toHaveProperty('invariants');
 		expect(light.results[0]).not.toHaveProperty('emulation_notes');
+		expect(light.results[0]).not.toHaveProperty('avoid_when');
 	});
 
 	it('rejects an unknown category with a helpful error instead of throwing', async () => {

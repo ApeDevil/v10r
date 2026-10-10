@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { makeConversation, makeUser } from '$lib/server/test/fixtures';
 import { conversation, message } from '../../db/schema/ai/conversation';
+import { agentProposal } from '../../db/schema/ai/proposal';
 import { user } from '../../db/schema/auth/_better-auth';
 import { file } from '../../db/schema/desk';
 
@@ -37,11 +38,12 @@ vi.mock('$lib/server/db/ai/proposals', async (importOriginal) => {
 	};
 });
 
-const { executeProposal, proposalOutcome, receiptText } = await import('./execute-proposal');
+const { executeProposal, receiptText } = await import('./execute-proposal');
+const { proposalOutcome } = await import('./proposal-outcome');
 const { approveProposal, createProposal, getProposal, listProposalSteps, markExecuting, recordProposalStep } =
 	await import('$lib/server/db/ai/proposals');
 const { createSpreadsheetFile, updateSpreadsheetByFileId } = await import('$lib/server/db/desk/mutations');
-const { getFile, listFiles } = await import('$lib/server/db/desk/queries');
+const { getFile, getSpreadsheetByFileId, listFiles } = await import('$lib/server/db/desk/queries');
 const { readProposedTarget } = await import('../tools/proposed-target');
 const { db } = await import('$lib/server/db');
 
@@ -218,5 +220,32 @@ describe('executeProposal', () => {
 				'2. Delete "c" — not run',
 			].join('\n'),
 		);
+	});
+	// The lease heals a stalled run to failed('interrupted'); the fence makes that terminal.
+	// Without it, the stalled executor's next step would still commit behind the status.
+	it('commits no further step once the run was healed to interrupted', async () => {
+		const { file: sheet } = await createSpreadsheetFile(USER.id, 'Fenced', { A1: { v: 1 } });
+		const target = await readProposedTarget(USER.id, sheet.id);
+		const row = await claimed([
+			{
+				toolName: 'desk_update_cells',
+				args: { file_id: sheet.id, updates: [{ cell: 'A1', value: 2 }] },
+				action: 'Set A1 to 2 in "Fenced"',
+				target: target ?? undefined,
+			},
+		]);
+		await db
+			.update(agentProposal)
+			.set({ status: 'failed', failureMessage: 'interrupted' })
+			.where(eq(agentProposal.id, row.id));
+
+		const outcome = await executeProposal(row, USER.id);
+
+		expect(outcome.status).toBe('failed');
+		expect(outcome.failureMessage).toBe('interrupted');
+		expect(await listProposalSteps(row.id)).toEqual([]);
+		expect((await getProposal(row.id))?.failureMessage).toBe('interrupted');
+		// The fenced step's mutation rolled back with it.
+		expect((await getSpreadsheetByFileId(sheet.id, USER.id))?.spreadsheet.cells.A1?.v).toBe(1);
 	});
 });

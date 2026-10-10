@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { planChunks } from './plan';
+import { contentHash } from '../db/content-hash';
+import { CHUNKER_VERSION, planChunks } from './plan';
 
 const OPTS = { sectionTarget: 1000, paragraphTarget: 300, overlap: 50 };
 
@@ -47,6 +48,56 @@ describe('planChunks', () => {
 		const large = await planChunks(text, { sectionTarget: 100_000, paragraphTarget: 300, overlap: 0 });
 		expect(large.parents).toHaveLength(1);
 		expect(small.parents.length).toBeGreaterThanOrEqual(large.parents.length);
+	});
+});
+
+describe('chunker output fingerprint', () => {
+	// Stored chunks are derivations of their documents through this planner, keyed by
+	// CHUNKER_VERSION. If this fingerprint moves, the planner's OUTPUT changed: decide whether
+	// existing corpora must be re-derived (bump CHUNKER_VERSION, then re-pin both values) or
+	// the change is output-neutral after all. Re-pinning without that decision is how a corpus
+	// silently goes stale.
+	const FIXTURE = [
+		'# Title',
+		'',
+		'Intro paragraph with a [link](/docs) and `code`.',
+		'',
+		'## Section A',
+		'',
+		...Array.from({ length: 8 }, (_, i) => `Paragraph A${i}. ${'alpha beta gamma delta '.repeat(12)}`),
+		'',
+		'## Section B',
+		'',
+		'```ts',
+		'const x = 1;',
+		'```',
+		'',
+		...Array.from({ length: 5 }, (_, i) => `- list item ${i} ${'word '.repeat(20)}`),
+		'',
+		'### Section C',
+		'',
+		'| col a | col b |',
+		'| --- | --- |',
+		...Array.from({ length: 6 }, (_, i) => `| row ${i} ${'cell '.repeat(6)} | ${'value '.repeat(6)} |`),
+		'',
+		`One oversized paragraph that must be split by the overlap logic. ${'lorem ipsum dolor sit '.repeat(80)}`,
+		'',
+		'#### Windows line endings\r',
+		'',
+		'A paragraph ending in CRLF.\r',
+	].join('\n');
+
+	it('matches the output pinned for this CHUNKER_VERSION', async () => {
+		const { parents, children } = await planChunks(FIXTURE, { sectionTarget: 200, paragraphTarget: 60, overlap: 10 });
+		const parentIndex = new Map(parents.map((p, i) => [p.id, i]));
+		const shape = [
+			...parents.map((p) => ['s', p.position, p.tokenCount, p.content]),
+			...children.map((c) => ['p', parentIndex.get(c.parentId ?? ''), c.position, c.tokenCount, c.content]),
+		];
+		expect({ version: CHUNKER_VERSION, fingerprint: await contentHash(JSON.stringify(shape)) }).toEqual({
+			version: 1,
+			fingerprint: 'd6a6f80b35b7c1f1a051be3906cdfcea82472463c66c8890b59670eb7079cb55',
+		});
 	});
 });
 

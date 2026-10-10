@@ -14,6 +14,18 @@ One report from several unreliable upstreams: concurrent per-source deadlines, a
 
 **When to use:** Use when a feature aggregates third-party APIs of uneven reliability and the user needs an honest partial answer — what was found, and where the search could not look — rather than an all-or-nothing one.
 
+**Requires:** postgres, third-party-api
+
+## Avoid when
+
+- One reliable upstream answers the question — per-source breakers, quotas, bulkheads and coverage rows have nothing to aggregate
+- The caller needs an authoritative verdict such as legal clearance — the report only describes what was found and where it could not look
+
+## Alternatives
+
+- **Manual links to each authoritative search (the manual-only NameSource)** — prefer when no upstream has a usable API, or its contract or terms forbid scripted access
+- **Call the single upstream directly with plain error handling** — prefer when one reliable source covers the whole question and a failure can simply be an error response
+
 ## Docs
 
 - [docs/blueprint/name-check.md](/docs/blueprint/name-check) — The pattern: vocabulary, pipeline, sources, resilience, privacy, what the UI never says ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/name-check.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/name-check.md))

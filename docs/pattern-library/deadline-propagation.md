@@ -14,6 +14,16 @@ A latency budget stamped once at the edge, from which every downstream operation
 
 **When to use:** Use when a request or job calls external APIs, AI providers, distributed services, several databases in sequence, or anything that retries.
 
+## Avoid when
+
+- The request makes one flat call with no nesting or retries, so its own timeout already states the bound
+- No leaf will take a child budget and honour it — stamping the deadline alone bounds nothing
+- You need the work cancelled, not just the wait — a deadline stops waiting while ignored work runs on
+
+## Alternatives
+
+- **a single per-call timeout (AbortSignal.timeout)** — prefer when the operation is one call with no nested or retried work beneath it
+
 ## Docs
 
 - [docs/blueprint/velocity/runtime.md#deadline-propagation](/docs/blueprint/velocity/runtime) — Why the clamp in child() is the whole pattern ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/runtime.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/runtime.md))

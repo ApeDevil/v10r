@@ -17,7 +17,7 @@ Your [
 - Location is meaning. A file's path is its first documentation.
 - Dependencies flow one direction. Domain → infrastructure, never the reverse. Cycles are bugs.
 - Sibling files share concern, not coincidence. Co-location implies cohesion.
-- Names traverse downward in specificity. `$lib/server/auth/sessions.ts` reads as a path of nested intent.
+- Names traverse downward in specificity. `$lib/server/auth/grant-requests.ts` reads as a path of nested intent.
 - One canonical home per concept. Duplicated locations create duplicated truth.
 - Folder depth is friction. Add a level only when it earns its slash.
 - Public surface vs. private internal. `index.ts` re-exports define what a module promises; everything else is private.

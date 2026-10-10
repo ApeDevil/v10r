@@ -9,16 +9,17 @@
 // unit-tested in parts.test.ts.
 
 import type { Mesh, Object3D } from 'three';
+import type { AssetRights } from '$lib/credits/asset-rights';
 
 export interface PartPhoto {
-	/** Static asset path (under /images/parts/) — attribution in ATTRIBUTION.md next to the assets */
+	/** Static asset path (under /images/parts/). */
 	src: string;
 	/** Alt text for the image */
 	alt: string;
 	/** Short caption shown under the photo in the lightbox */
 	caption: string;
-	/** Author / license credit line shown in the lightbox */
-	credit: string;
+	/** Author, SPDX license and source — rendered as the lightbox credit line and on `/credits`. */
+	rights: AssetRights;
 }
 
 export interface PartDef {
@@ -55,19 +56,31 @@ export const SOFA_PARTS: PartDef[] = [
 				src: '/images/parts/glam-velvet-sofa/body-1.jpg',
 				alt: 'Living room with a gold velvet sectional sofa',
 				caption: 'Velvet upholstery on a full sofa body',
-				credit: 'firepile — CC BY 2.0',
+				rights: {
+					author: 'firepile (Flickr)',
+					license: 'CC-BY-2.0',
+					source: 'https://www.flickr.com/photos/17643132@N00/4777614971',
+				},
 			},
 			{
 				src: '/images/parts/glam-velvet-sofa/body-2.jpg',
 				alt: 'Close-up of deep ruby velvet pile',
 				caption: 'The dense, light-catching pile that defines velvet',
-				credit: 'sure2talk — CC BY 2.0',
+				rights: {
+					author: 'sure2talk (Flickr)',
+					license: 'CC-BY-2.0',
+					source: 'https://www.flickr.com/photos/19862723@N00/4335805782',
+				},
 			},
 			{
 				src: '/images/parts/glam-velvet-sofa/body-3.jpg',
 				alt: 'Red quilted velvet upholstery with diamond stitching',
 				caption: 'Quilted velvet — a classic upholstery treatment',
-				credit: 'BuyandCreate.com — CC BY-SA 2.0',
+				rights: {
+					author: 'BuyandCreate.com (Flickr)',
+					license: 'CC-BY-SA-2.0',
+					source: 'https://www.flickr.com/photos/30099605@N04/3332477693',
+				},
 			},
 		],
 		customizeHint: true,
@@ -82,19 +95,31 @@ export const SOFA_PARTS: PartDef[] = [
 				src: '/images/parts/glam-velvet-sofa/legs-1.jpg',
 				alt: 'Sculpture assembled from dozens of turned wooden furniture legs',
 				caption: 'Turned legs in every profile a lathe can produce',
-				credit: 'Orin Zebest — CC BY 2.0',
+				rights: {
+					author: 'Orin Zebest (Flickr)',
+					license: 'CC-BY-2.0',
+					source: 'https://www.flickr.com/photos/33917831@N00/2966487924',
+				},
 			},
 			{
 				src: '/images/parts/glam-velvet-sofa/legs-2.jpg',
 				alt: 'Craftsman shaping spinning wood on a lathe',
 				caption: 'Turning: the craft that shapes each leg',
-				credit: 'William Warby — CC BY 2.0',
+				rights: {
+					author: 'William Warby (Flickr)',
+					license: 'CC-BY-2.0',
+					source: 'https://www.flickr.com/photos/26782864@N00/4012296308',
+				},
 			},
 			{
 				src: '/images/parts/glam-velvet-sofa/legs-3.jpg',
 				alt: 'Dark stained wood boards with visible grain',
 				caption: 'The dark finish used on the sofa legs',
-				credit: 'webtreats — CC BY 2.0',
+				rights: {
+					author: 'webtreats (Flickr)',
+					license: 'CC-BY-2.0',
+					source: 'https://www.flickr.com/photos/44071822@N08/4451865583',
+				},
 			},
 		],
 	},
@@ -108,19 +133,32 @@ export const SOFA_PARTS: PartDef[] = [
 				src: '/images/parts/glam-velvet-sofa/feet-1.jpg',
 				alt: 'Antique bed foot with a caster wheel at its base',
 				caption: 'Furniture feet have carried hardware for centuries',
-				credit: 'Skoklosters slott — public domain',
+				rights: {
+					author: 'Skoklosters slott / LSH',
+					license: 'LicenseRef-PublicDomain',
+					source:
+						'https://commons.wikimedia.org/wiki/File:Bl%C3%A5_s%C3%A4ngen._Detalj._Hjul_-_Skoklosters_slott_-_85958.tif',
+				},
 			},
 			{
 				src: '/images/parts/glam-velvet-sofa/feet-2.jpg',
 				alt: 'Set of engraved antique brass hardware on a wooden table',
 				caption: 'Brass fittings — durable and decorative',
-				credit: 'denise carbonell — CC BY 2.0',
+				rights: {
+					author: 'denise carbonell (Flickr)',
+					license: 'CC-BY-2.0',
+					source: 'https://www.flickr.com/photos/11574896@N03/6947259737',
+				},
 			},
 			{
 				src: '/images/parts/glam-velvet-sofa/feet-3.jpg',
 				alt: 'Polished brass panel with vent slots',
 				caption: 'The warm sheen of a polished brass finish',
-				credit: "Jnzl's Photos — CC BY 2.0",
+				rights: {
+					author: "Jnzl's Photos (Flickr)",
+					license: 'CC-BY-2.0',
+					source: 'https://www.flickr.com/photos/102748040@N03/14759170359',
+				},
 			},
 		],
 	},

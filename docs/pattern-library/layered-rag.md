@@ -14,6 +14,19 @@ One shared retrieve() kernel (embed → tiers → RRF fusion) under a single use
 
 **When to use:** Use when a project needs grounded answers over a corpus: start with read-only search plus citation/provenance before adding any mutating tools.
 
+**Requires:** postgres, pgvector, ai-provider
+
+## Avoid when
+
+- The corpus fits in the prompt whole — an ingest-built map plus full text needs no embeddings, quota or chunk-level tenant filter
+- Questions are where-is lookups by title or path — the catalog's keyword and Postgres FTS lanes answer them without an embedding
+- Answers must reflect live per-request rows — chunks are ingest-time copies, refreshed off the hot path by a polling job
+
+## Alternatives
+
+- **Keyword search over Postgres FTS (the search_catalog lanes), no vectors** — prefer when queries name titles or paths and no embedding provider or quota is available
+- **A RAG framework (LangChain, LlamaIndex) instead of a hand-rolled kernel** — prefer when the project is Python-first, where the framework ecosystem is mature, and inspectable seams matter less than ready-made loaders
+
 ## Docs
 
 - [docs/blueprint/ai/layered-rag.md](/docs/blueprint/ai/layered-rag) — Kernel, profiles, corpus map, catalog grounding, docs corpus ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/layered-rag.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/layered-rag.md))

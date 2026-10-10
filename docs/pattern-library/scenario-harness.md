@@ -14,6 +14,17 @@ Representative paths driven under one adverse condition at a time — cold cache
 
 **When to use:** Use once the obvious latency work is done and the remaining risk is behaviour under failure and load rather than in the happy path.
 
+## Avoid when
+
+- The happy-path latency work is not done yet — the harness is for behaviour under failure and load after that
+- There is no real cache or resilience mechanism to drive — a harness that reimplements one proves only itself
+- The condition needs a real deployment, network, corpus or browser (cold compute, slow network, large dataset)
+
+## Alternatives
+
+- **unit tests of each resilience and cache module** — prefer when one mechanism's logic needs proving, not its behaviour under an adverse condition end to end
+- **a load test against a real deployment** — prefer when the condition is cold compute, network latency or large-dataset behaviour a simulated dependency cannot reproduce
+
 ## Docs
 
 - [docs/blueprint/velocity/measurement.md#performance-scenario-harness](/docs/blueprint/velocity/measurement) — The committed run, and which rows of the grid are still empty ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/measurement.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/measurement.md))

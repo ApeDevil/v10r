@@ -26,3 +26,10 @@ export const PARAGRAPH_CHUNK_TARGET = 300;
 
 /** Token overlap carried between adjacent child chunks. */
 export const CHUNK_OVERLAP = 50;
+
+/**
+ * The embedding half of a corpus's derivation inputs — model AND width, since the same model
+ * at another dimensionality writes incompatible vectors. Built here, once, so the app ingest
+ * and the docs script cannot key the embedder two ways (`chunkingInput` is the chunker's half).
+ */
+export const EMBEDDING_INPUT = `${EMBEDDING_MODEL_ID}@${EMBEDDING_DIMENSIONS}`;

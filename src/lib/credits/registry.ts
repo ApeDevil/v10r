@@ -13,8 +13,11 @@
  * All human-visible copy is Paraglide message references (`LabelFn`); brand
  * names and SPDX license strings stay untranslated by design.
  */
+import { MODELS } from '../3d/models';
+import { SOFA_PARTS } from '../3d/parts';
 import type { LabelFn } from '../nav/types';
 import * as m from '../paraglide/messages.js';
+import type { AssetRights } from './asset-rights';
 
 /** Where an entry comes from — drives what the gate test can verify. */
 export type CreditSource =
@@ -420,4 +423,27 @@ export const credits: CreditEntry[] = [
 		license: 'MIT',
 		source: { kind: 'npm', pkg: 'vitest' },
 	},
+];
+
+/**
+ * A third-party asset shipped under `static/`, credited from the module that owns it — never
+ * re-typed here. The owners hold the rights record beside the data that uses the asset, so a
+ * new model or photo cannot reach the page without one (`registry.gate.test.ts` checks every
+ * file under the asset directories has exactly one entry).
+ */
+export interface AssetCredit {
+	/** Public path of the file, e.g. `/models/Fox.glb`. */
+	path: string;
+	/** What the asset is, as the owning module names it. */
+	title: string;
+	rights: AssetRights;
+}
+
+export const assetCredits: AssetCredit[] = [
+	...MODELS.map((model) => ({ path: model.path, title: model.name, rights: model.rights })),
+	...SOFA_PARTS.flatMap((part) => part.photos ?? []).map((photo) => ({
+		path: photo.src,
+		title: photo.caption,
+		rights: photo.rights,
+	})),
 ];

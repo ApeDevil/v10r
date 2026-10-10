@@ -14,6 +14,17 @@ One backend operations layer ($lib/server/[domain]/) serves four clients — hum
 
 **When to use:** Reach for this whenever a backend capability must be reachable from more than one entry point (page action, API route, AI tool, cron job). It is the foundation nearly every other v10r pattern builds on.
 
+## Avoid when
+
+- An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped
+- Extracting a domain service for a hypothetical second client — extract only when two concrete consumers share a multi-step workflow
+- Reaching for DI containers, command buses or one-implementation interfaces — the pattern is plain module imports, not hexagonal ceremony
+
+## Alternatives
+
+- **Call the data function directly from the +page.server.ts or +server.ts adapter** — prefer when the operation is one query or mutation with a single concrete consumer
+- **Class-based DI containers with formal port interfaces** — prefer when the runtime is a long-lived server with no serverless cold-start cost and a port has more than one real implementation
+
 ## Docs
 
 - [docs/blueprint/architecture/multi-client-core.md](/docs/blueprint/architecture/multi-client-core) — The full pattern: canonical module shape, client wiring, error contract ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/multi-client-core.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/multi-client-core.md))

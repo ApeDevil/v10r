@@ -67,7 +67,7 @@ Evidence > Confidence ranking > Coverage > Volume of findings.
 - Framework-required exports: Svelte component default exports, SvelteKit route module exports, hooks file exports, `+server.ts` HTTP verb exports.
 - `pgSchema()`/`pgEnum()` exports in Drizzle — required by `db:push` even when no TS code imports them.
 - Test fixtures and helpers referenced by file path / discovery, not import.
-- Public API surfaces — anything re-exported from `$lib/index.ts` or similar barrels intended for external consumption.
+- Public API surfaces — anything re-exported from `$lib/components/index.ts` or similar barrels intended for external consumption.
 - Showcase pages and template/reference code — Velociraptor is a self-documenting template; showcase routes are the documentation. Do not propose deleting showcases.
 - Generated code: Paraglide messages, type artifacts, `.svelte-kit/` outputs.
 

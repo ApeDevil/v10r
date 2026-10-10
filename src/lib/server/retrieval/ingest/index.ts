@@ -1,17 +1,27 @@
 /**
  * Ingestion pipeline: document → chunks → embeddings → Postgres + Neo4j.
  */
+import type { LanguageModel } from 'ai';
 import { eq } from 'drizzle-orm';
 import { getActiveProvider, loadProviderRegistry } from '$lib/server/ai';
 import { db } from '$lib/server/db';
-import { contentHash } from '$lib/server/db/content-hash';
+import { contentHash, derivationKey } from '$lib/server/db/content-hash';
 import { chunk, document } from '$lib/server/db/schema/retrieval';
 import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '$lib/types/ingest-pipeline';
 import type { ChunkLevel } from '$lib/types/turn-trace';
 import { chunkDocument } from '../chunk';
-import { EMBEDDING_MODEL_ID, MAX_CHUNKS_PER_DOCUMENT, SYSTEM_DOCS_USER_ID } from '../config';
+import {
+	CHUNK_OVERLAP,
+	EMBEDDING_INPUT,
+	EMBEDDING_MODEL_ID,
+	MAX_CHUNKS_PER_DOCUMENT,
+	PARAGRAPH_CHUNK_TARGET,
+	SECTION_CHUNK_TARGET,
+	SYSTEM_DOCS_USER_ID,
+} from '../config';
 import { generateEmbeddings } from '../embed';
 import { RetrievalError } from '../errors';
+import { chunkingInput } from '../plan';
 import type { IngestableDocument, IngestResult } from '../types';
 import { addContextPrefixes } from './contextual-prep';
 import { extractEntitiesFromSections } from './entity-extract';
@@ -31,29 +41,73 @@ function emit(
 }
 
 /**
- * Ingest a document into the retrieval retrieval system.
+ * Version of this pipeline's own transform: the context-prefix composition and the entity
+ * pass below. The chunker, the sizing, the embedding model and the context model are keyed
+ * as separate inputs, so this moves only when THIS file changes what it writes.
+ */
+const INGEST_TRANSFORM = 'retrieval-ingest@1';
+
+/** Everything the stored rows are derived from, resolved once before any write. */
+interface IngestPlan {
+	chatModel: LanguageModel | null;
+	documentHash: string;
+	derivationKey: string;
+}
+
+async function planIngest(doc: IngestableDocument): Promise<IngestPlan> {
+	if (!doc.content.trim()) {
+		throw new RetrievalError('ingestion', 'Document content is empty');
+	}
+	// Contextual chunk prefixes are optional: no readable connection means plain chunks,
+	// never a failed ingest. Which model wrote them (or that none did) is an input — the
+	// same text through a different model is a different derivation.
+	const registry = await loadProviderRegistry().catch(() => null);
+	const active = registry ? getActiveProvider(registry) : null;
+	const chatModel = active?.getInstance() ?? null;
+	const documentHash = await contentHash(doc.content);
+	const key = await derivationKey(INGEST_TRANSFORM, [
+		documentHash,
+		doc.title,
+		chunkingInput({
+			sectionTarget: SECTION_CHUNK_TARGET,
+			paragraphTarget: PARAGRAPH_CHUNK_TARGET,
+			overlap: CHUNK_OVERLAP,
+		}),
+		EMBEDDING_INPUT,
+		chatModel && active ? `${active.id}:${active.modelId}` : 'no-context-model',
+	]);
+	return { chatModel, documentHash, derivationKey: key };
+}
+
+/**
+ * Ingest a document into the retrieval system.
  * Pipeline: chunk → contextualize → embed → store PG → extract entities → store Neo4j
  *
  * When `onEvent` is provided, emits pipeline events at each step for real-time UI feedback.
  */
 export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): Promise<IngestResult> {
+	return runIngest(doc, await planIngest(doc), onEvent);
+}
+
+/**
+ * Re-derive a document only when its derivation key moved. Same content, title, chunker,
+ * embedding model and context model produce the same chunks, so re-embedding them is
+ * quota spent for nothing. Returns null when the stored copy is already current.
+ */
+export async function ingestIfChanged(doc: IngestableDocument, storedKey: string | null): Promise<IngestResult | null> {
+	const plan = await planIngest(doc);
+	if (storedKey !== null && storedKey === plan.derivationKey) return null;
+	return runIngest(doc, plan, undefined);
+}
+
+async function runIngest(doc: IngestableDocument, plan: IngestPlan, onEvent?: IngestEmitFn): Promise<IngestResult> {
 	const start = performance.now();
-
-	if (!doc.content.trim()) {
-		throw new RetrievalError('ingestion', 'Document content is empty');
-	}
-
-	// Contextual chunk prefixes are optional: no readable connection means plain chunks,
-	// never a failed ingest.
-	const registry = await loadProviderRegistry().catch(() => null);
-	const chatModel = registry ? (getActiveProvider(registry)?.getInstance() ?? null) : null;
+	const { chatModel, documentHash } = plan;
 
 	// Ownership is mandatory: user uploads carry doc.userId; system-generated
 	// corpora (docs/catalog) fall back to the reserved system owner. This id
 	// stamps both the Postgres row and every Neo4j chunk/entity for tenant scoping.
 	const ownerId = doc.userId ?? SYSTEM_DOCS_USER_ID;
-
-	const documentHash = await contentHash(doc.content);
 
 	// 1. Create document record
 	emit(onEvent, 'insert', 'active');
@@ -68,6 +122,7 @@ export async function ingest(doc: IngestableDocument, onEvent?: IngestEmitFn): P
 		sourceUri: doc.sourcePath ?? null,
 		status: 'processing',
 		contentHash: documentHash,
+		derivationKey: plan.derivationKey,
 	});
 	emit(onEvent, 'insert', 'done', {
 		durationMs: Math.round(performance.now() - insertStart),

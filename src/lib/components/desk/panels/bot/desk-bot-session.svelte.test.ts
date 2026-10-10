@@ -45,6 +45,7 @@ const outcome = (over: Partial<ProposalOutcome> = {}): ProposalOutcome => ({
 	effects: [{ type: 'desk:refresh_file', fileId: 'fil_a' }],
 	receiptMessage: { id: 'msg_receipt', text: 'Ran the approved plan (1 of 1 step).' },
 	expiresAt: '2026-09-12T09:00:00.000Z',
+	revert: null,
 	...over,
 });
 
@@ -64,6 +65,103 @@ beforeEach(() => {
 	fetchMock.mockReset();
 });
 afterEach(() => vi.unstubAllGlobals());
+
+const reverted = (over: Partial<ProposalOutcome> = {}) =>
+	outcome({
+		effects: [{ type: 'desk:refresh_file', fileId: 'fil_a' }],
+		receiptMessage: { id: 'msg_undo', text: 'Undid the plan (1 of 1 step).' },
+		revert: { status: 'reverted', steps: [{ stepIndex: 0, kind: 'ok', errorMessage: null }] },
+		...over,
+	});
+
+describe('DeskBotSession undo run', () => {
+	it('moves through reverting to the reported revert, refreshes what it touched, appends the undo once', async () => {
+		fetchMock.mockResolvedValueOnce(json(outcome())).mockResolvedValueOnce(json(reverted()));
+		const session = new DeskBotSession();
+		const desk = sink();
+		session.attach(desk);
+		await session.approve('prp_1');
+
+		const undo = session.revert('prp_1');
+		expect(session.runFor('prp_1').revert?.phase).toBe('reverting');
+		expect(session.isBusy).toBe(true);
+		await undo;
+
+		expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/ai/proposals/prp_1/revert');
+		expect(session.runFor('prp_1')).toMatchObject({ phase: 'executed', revert: { phase: 'reverted' } });
+		expect(desk.effects).toHaveLength(2);
+		expect(session.chat.messages.map((m) => m.id)).toEqual(['msg_receipt', 'msg_undo']);
+
+		// A reconcile of the settled undo dispatches nothing again.
+		fetchMock.mockResolvedValueOnce(json(reverted()));
+		await session.reconcile('prp_1');
+		expect(desk.effects).toHaveLength(2);
+		expect(session.chat.messages).toHaveLength(2);
+	});
+
+	it("a lost undo response keeps the run's receipts and asks the server", async () => {
+		fetchMock
+			.mockResolvedValueOnce(json(outcome()))
+			.mockRejectedValueOnce(new TypeError('network down'))
+			.mockRejectedValueOnce(new TypeError('still down'));
+		const session = new DeskBotSession();
+		await session.approve('prp_1');
+		await session.revert('prp_1');
+		expect(session.runFor('prp_1')).toMatchObject({
+			phase: 'executed',
+			steps: [{ kind: 'ok' }],
+			revert: { phase: 'unknown' },
+		});
+	});
+
+	// A revert whose process died is still `reverting` on the server until the status route
+	// heals it. Only this client's own request may hold the session busy — never that row.
+	it('a server-side reverting never holds the session busy, and attach asks again', async () => {
+		fetchMock
+			.mockResolvedValueOnce(json(outcome({ revert: { status: 'reverting', steps: [] } })))
+			.mockResolvedValueOnce(json(reverted()));
+		const session = new DeskBotSession();
+		await session.reconcile('prp_1');
+		expect(session.runFor('prp_1').revert?.phase).toBe('reverting');
+		expect(session.isBusy).toBe(false);
+
+		session.attach(sink());
+		await vi.waitFor(() => expect(session.runFor('prp_1').revert?.phase).toBe('reverted'));
+	});
+
+	it('a status read that left before the undo never erases a settled undo', async () => {
+		fetchMock
+			.mockResolvedValueOnce(json(outcome()))
+			.mockResolvedValueOnce(json(reverted()))
+			.mockResolvedValueOnce(json(outcome()));
+		const session = new DeskBotSession();
+		await session.approve('prp_1');
+		await session.revert('prp_1');
+		await session.reconcile('prp_1');
+		expect(session.runFor('prp_1').revert?.phase).toBe('reverted');
+	});
+
+	it('a refused undo leaves no undo in flight', async () => {
+		fetchMock
+			.mockResolvedValueOnce(json(outcome()))
+			.mockResolvedValueOnce(new Response(JSON.stringify({ error: { code: 'revert_unavailable' } }), { status: 409 }))
+			.mockResolvedValueOnce(json(outcome()));
+		const session = new DeskBotSession();
+		await session.approve('prp_1');
+		await session.revert('prp_1');
+		expect(session.runFor('prp_1').revert).toBeNull();
+		expect(session.isBusy).toBe(false);
+	});
+
+	it('offers no second undo once one was asked for', async () => {
+		fetchMock.mockResolvedValueOnce(json(outcome())).mockResolvedValueOnce(json(reverted()));
+		const session = new DeskBotSession();
+		await session.approve('prp_1');
+		await session.revert('prp_1');
+		await session.revert('prp_1');
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+});
 
 describe('DeskBotSession approval run', () => {
 	it('moves through approving to the reported status, dispatches effects, appends the receipt once', async () => {

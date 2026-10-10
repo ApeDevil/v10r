@@ -43,6 +43,10 @@ export const document = retrievalSchema.table(
 		totalTokens: integer('total_tokens').notNull().default(0),
 		errorMessage: text('error_message'),
 		contentHash: text('content_hash').notNull(),
+		// derivationKey(transform@version, inputs) of the chunks + embeddings below. The rows
+		// are current while a recomputed key matches; a content hash alone misses a chunker or
+		// embedding-model change. Null = derived before keys existed, i.e. stale.
+		derivationKey: text('derivation_key'),
 		deletedAt: timestamp('deleted_at', { withTimezone: true }),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

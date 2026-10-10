@@ -14,6 +14,17 @@ Every layer records spans into a request-scoped recorder stamped by the outermos
 
 **When to use:** Use anywhere performance matters and a slow response needs to decompose — the request lifecycle, domain operations, databases, caches, external services.
 
+## Avoid when
+
+- The site is mostly prerendered and CDN-served, so few requests ever reach the handler to be traced
+- Span detail cannot be limited to trusted callers — a public breakdown maps internals and hands out a timing oracle
+- The tracer cannot sit outermost in the middleware chain, so total and unattributed would understate the request
+
+## Alternatives
+
+- **an OpenTelemetry exporter behind the same span API** — prefer when spans must leave the process for a vendor backend or join a trace across services
+- **a single total duration (field TTFB or one log line)** — prefer when you only need to know that a response is slow, not which layer made it slow
+
 ## Docs
 
 - [docs/blueprint/velocity/measurement.md#latency-tracing](/docs/blueprint/velocity/measurement) — Why unattributed is a floor, not a figure ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/measurement.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/measurement.md))

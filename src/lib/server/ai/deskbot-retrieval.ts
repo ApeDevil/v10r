@@ -16,11 +16,11 @@
  */
 import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
 import { getMarkdownByFileId, getSpreadsheetByFileId, listFileTimestamps } from '$lib/server/db/desk/queries';
-import { deleteDocument } from '$lib/server/db/retrieval/mutations';
+import { deleteDocument, markDocumentCurrent } from '$lib/server/db/retrieval/mutations';
 import { getDocumentBySourcePath, listDocumentOrigins } from '$lib/server/db/retrieval/queries';
 import { deferAfterResponse } from '$lib/server/platform';
 import { retrieve } from '$lib/server/retrieval';
-import { ingest } from '$lib/server/retrieval/ingest';
+import { ingestIfChanged } from '$lib/server/retrieval/ingest';
 import type { RankedChunk, RetrievalResult } from '$lib/server/retrieval/types';
 
 /** Stable back-pointer from a retrieval document to its originating desk file. */
@@ -41,7 +41,8 @@ function spreadsheetToText(cells: SpreadsheetCells): string {
  * (Re)ingest one desk file into the user's retrieval corpus. Idempotent by `sourceUri`: the
  * fresh copy is ingested FIRST and the previous one removed only once that succeeded, so a
  * failed re-ingest (embedding quota, a transient error) leaves the old copy searchable
- * instead of a gap until the next sync. Returns true if it ingested.
+ * instead of a gap until the next sync. Returns true if it ingested, false when the stored
+ * copy's derivation key already matched.
  */
 export async function syncDeskFileToRetrieval(
 	userId: string,
@@ -71,7 +72,20 @@ export async function syncDeskFileToRetrieval(
 		return false;
 	}
 
-	await ingest({ title, content, sourcePath, sourceType: 'desk', userId });
+	// A file whose content, title and derivation pipeline are unchanged (an edit that only
+	// moved `updatedAt`, a re-pin) keeps its chunks: re-embedding identical input is quota
+	// spent for nothing. The copy is re-stamped so it no longer reads as stale.
+	// Only a READY copy's key counts: an errored ingest also stored its key, and matching it
+	// would skip the retry that copy needs.
+	const result = await ingestIfChanged(
+		{ title, content, sourcePath, sourceType: 'desk', userId },
+		existing?.status === 'ready' ? existing.derivationKey : null,
+	);
+	if (!result) {
+		// A null key never matches, so a skip implies a ready `existing`.
+		if (existing) await markDocumentCurrent(existing.id, userId);
+		return false;
+	}
 	if (existing) await deleteDocument(existing.id, userId);
 	return true;
 }

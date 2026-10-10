@@ -14,6 +14,18 @@ Database round trips counted per request by the driver's own logger, and per ope
 
 **When to use:** Use on any user-facing path that touches a datastore, and on every list endpoint without exception.
 
+**Requires:** postgres
+
+## Avoid when
+
+- The path touches no datastore or is not user-facing and latency-sensitive — there is no round-trip count to defend
+- No test can run the operation over two data sizes — a runtime count alone cannot prove or rule out N+1
+
+## Alternatives
+
+- **A runtime per-request query counter alone (the census as a tripwire)** — prefer when catching the request that suddenly makes ninety queries is enough and nobody needs N+1 proved
+- **EXPLAIN ANALYZE by hand on the suspect query** — prefer when the question is why one query is slow, not how many round trips an operation makes
+
 ## Docs
 
 - [docs/blueprint/velocity/data.md#query-budget-and-hot-query-proof](/docs/blueprint/velocity/data) — Why the runtime census is a tripwire and only the gate is a proof ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))

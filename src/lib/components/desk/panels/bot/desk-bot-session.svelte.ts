@@ -21,7 +21,7 @@
  * A lost response is `unknown` until `GET /api/ai/proposals/[id]` settles it.
  */
 
-import { SvelteMap } from 'svelte/reactivity';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { apiFetch, CSRF_HEADER } from '$lib/api';
 import { isToolPart, toolNameOf } from '$lib/components/composites/chatbot/tool-part';
 import { Chat, DefaultChatTransport } from '$lib/state/chat-client';
@@ -51,7 +51,7 @@ export interface DeskBotSink {
  */
 type DeskBotErrorKind = string;
 
-const PENDING_RUN: ProposalRun = { phase: 'pending', steps: [], failureMessage: null };
+const PENDING_RUN: ProposalRun = { phase: 'pending', steps: [], failureMessage: null, revert: null };
 
 const TERMINAL_PHASES: ReadonlySet<ProposalRunPhase> = new Set(['executed', 'failed', 'rejected', 'expired']);
 
@@ -61,6 +61,12 @@ export class DeskBotSession {
 	lastErrorKind = $state<DeskBotErrorKind | null>(null);
 	/** Per proposal: where its approval stands. Absent = still pending on the card. */
 	readonly runs = new SvelteMap<string, ProposalRun>();
+	/**
+	 * Undo requests THIS client has in flight. Busy-ness comes from here, not from a
+	 * `reverting` the server reported: a revert whose process died is healed by the status
+	 * route, and must never hold the session busy in the meantime.
+	 */
+	readonly #reverting = new SvelteSet<string>();
 
 	/** Bumped by `newChat()`: a response header from the previous thread must not name this one. */
 	#epoch = 0;
@@ -115,6 +121,7 @@ export class DeskBotSession {
 
 	/** An approval request is in flight — nothing else may start until it settles. */
 	get isApproving(): boolean {
+		if (this.#reverting.size > 0) return true;
 		for (const run of this.runs.values()) if (run.phase === 'approving') return true;
 		return false;
 	}
@@ -135,7 +142,8 @@ export class DeskBotSession {
 		for (const effect of queued) sink.dispatchEffect(effect);
 		// A panel that remounts mid-approval, or after a lost response, asks the server.
 		for (const [id, run] of this.runs) {
-			if (run.phase === 'approving' || run.phase === 'unknown') void this.reconcile(id);
+			const revertOpen = run.revert?.phase === 'reverting' || run.revert?.phase === 'unknown';
+			if (run.phase === 'approving' || run.phase === 'unknown' || revertOpen) void this.reconcile(id);
 		}
 	}
 
@@ -168,7 +176,7 @@ export class DeskBotSession {
 
 	async approve(proposalId: string): Promise<void> {
 		if (this.isBusy) return;
-		this.runs.set(proposalId, { phase: 'approving', steps: [], failureMessage: null });
+		this.runs.set(proposalId, { phase: 'approving', steps: [], failureMessage: null, revert: null });
 		try {
 			const res = await apiFetch(`/api/ai/proposals/${proposalId}/approve`, {
 				method: 'POST',
@@ -186,7 +194,7 @@ export class DeskBotSession {
 			await this.reconcile(proposalId);
 		} catch (err) {
 			// The request may have reached the server — the outcome is unknown, not failed.
-			this.runs.set(proposalId, { phase: 'unknown', steps: [], failureMessage: null });
+			this.runs.set(proposalId, { phase: 'unknown', steps: [], failureMessage: null, revert: null });
 			appendIOLog({
 				source: 'effect',
 				level: 'error',
@@ -199,18 +207,57 @@ export class DeskBotSession {
 
 	async reject(proposalId: string): Promise<void> {
 		if (this.isBusy) return;
-		this.runs.set(proposalId, { phase: 'approving', steps: [], failureMessage: null });
+		this.runs.set(proposalId, { phase: 'approving', steps: [], failureMessage: null, revert: null });
 		try {
 			const res = await apiFetch(`/api/ai/proposals/${proposalId}/approve`, { method: 'DELETE' });
 			if (res.ok) {
-				this.runs.set(proposalId, { phase: 'rejected', steps: [], failureMessage: null });
+				this.runs.set(proposalId, { phase: 'rejected', steps: [], failureMessage: null, revert: null });
 				appendIOLog({ source: 'effect', label: 'Plan rejected.' });
 				return;
 			}
 			await this.reconcile(proposalId);
 		} catch {
-			this.runs.set(proposalId, { phase: 'unknown', steps: [], failureMessage: null });
+			this.runs.set(proposalId, { phase: 'unknown', steps: [], failureMessage: null, revert: null });
 			await this.reconcile(proposalId);
+		}
+	}
+
+	/**
+	 * Undo a plan that ran. Same shape as `approve()`: the run's revert goes `reverting` →
+	 * the status the server reports, a lost response is `unknown` until `reconcile()` reads
+	 * it, and the server's revert message joins the thread so the model learns what was undone.
+	 */
+	async revert(proposalId: string): Promise<void> {
+		const run = this.runs.get(proposalId);
+		if (this.isBusy || !run || run.revert) return;
+		this.runs.set(proposalId, { ...run, revert: { phase: 'reverting', steps: [] } });
+		this.#reverting.add(proposalId);
+		try {
+			const res = await apiFetch(`/api/ai/proposals/${proposalId}/revert`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: '{}',
+			});
+			if (res.ok) {
+				const { data } = (await res.json()) as { data: ProposalOutcome };
+				this.#settle(data);
+				return;
+			}
+			appendIOLog({ source: 'effect', level: 'error', label: `Undo refused: ${res.status}` });
+			// Nothing was claimed for this request; the status route says what, if anything, was.
+			this.runs.set(proposalId, { ...run, revert: null });
+			await this.reconcile(proposalId);
+		} catch (err) {
+			this.runs.set(proposalId, { ...run, revert: { phase: 'unknown', steps: [] } });
+			appendIOLog({
+				source: 'effect',
+				level: 'error',
+				label: 'Undo: no response — checking status.',
+				detail: err instanceof Error ? err.message : String(err),
+			});
+			await this.reconcile(proposalId);
+		} finally {
+			this.#reverting.delete(proposalId);
 		}
 	}
 
@@ -219,14 +266,27 @@ export class DeskBotSession {
 		try {
 			const res = await apiFetch(`/api/ai/proposals/${proposalId}`);
 			if (!res.ok) {
-				this.runs.set(proposalId, { phase: 'unknown', steps: [], failureMessage: null });
+				this.#markUnknown(proposalId);
 				return;
 			}
 			const { data } = (await res.json()) as { data: ProposalOutcome };
 			this.#settle(data);
 		} catch {
-			this.runs.set(proposalId, { phase: 'unknown', steps: [], failureMessage: null });
+			this.#markUnknown(proposalId);
 		}
+	}
+
+	/**
+	 * An unreadable status. A run whose UNDO was in question keeps its receipts — only the
+	 * undo is unknown; anything else is unknown as a whole until the next reconcile.
+	 */
+	#markUnknown(proposalId: string): void {
+		const run = this.runs.get(proposalId);
+		if (run?.revert) {
+			this.runs.set(proposalId, { ...run, revert: { ...run.revert, phase: 'unknown' } });
+			return;
+		}
+		this.runs.set(proposalId, { phase: 'unknown', steps: [], failureMessage: null, revert: null });
 	}
 
 	/** Teardown owner = `resetDeskBotSessions` on logout. */
@@ -248,7 +308,32 @@ export class DeskBotSession {
 		// A settled run never regresses: a status read that left the server before the approval
 		// finished may arrive after the approval's own answer did.
 		if (previous && TERMINAL_PHASES.has(previous.phase) && !TERMINAL_PHASES.has(outcome.status)) return;
-		this.runs.set(outcome.id, { phase: outcome.status, steps: outcome.steps, failureMessage: outcome.failureMessage });
+		// A settled undo is never erased by a status read that left the server before the undo
+		// was claimed. An undo still in question with no server record was never claimed.
+		const settledBefore =
+			previous?.revert && (previous.revert.phase === 'reverted' || previous.revert.phase === 'revert_failed')
+				? previous.revert
+				: null;
+		const revert = outcome.revert ? { phase: outcome.revert.status, steps: outcome.revert.steps } : settledBefore;
+		this.runs.set(outcome.id, {
+			phase: outcome.status,
+			steps: outcome.steps,
+			failureMessage: outcome.failureMessage,
+			revert,
+		});
+		// The undo settles once, like the run: its effects and message on the first terminal answer.
+		if (revert && revert.phase !== 'reverting' && previous?.phase === outcome.status) {
+			if (previous.revert?.phase === revert.phase) return;
+			const undone = revert.steps.filter((step) => step.kind === 'ok').length;
+			appendIOLog({
+				source: 'effect',
+				level: revert.phase === 'reverted' ? 'success' : 'error',
+				label: `Undo: ${undone} of ${revert.steps.length} step${revert.steps.length === 1 ? '' : 's'} undone.`,
+			});
+			for (const effect of outcome.effects) this.#dispatch(effect);
+			if (outcome.receiptMessage) this.#appendReceipt(outcome.receiptMessage.id, outcome.receiptMessage.text);
+			return;
+		}
 		// Effects are dispatched once per settle from the client's side: a reconcile after a
 		// lost response has to refresh the desk, a reconcile of a run already settled must not.
 		if (previous?.phase === outcome.status) return;

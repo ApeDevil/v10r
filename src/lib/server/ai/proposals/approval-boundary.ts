@@ -86,6 +86,7 @@ const RECOVERY_RETENTION: Record<ProposalStepRecovery, RetentionRuleId | null> =
 	revision: 'desk-revisions',
 	soft_delete: 'desk-trash',
 	rename_back: null,
+	created: null,
 	none: null,
 };
 

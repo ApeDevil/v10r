@@ -34,6 +34,17 @@ export const proposalStatusEnum = aiSchema.enum('agent_proposal_status', [
 export const proposalRiskTierEnum = aiSchema.enum('agent_proposal_risk_tier', ['low', 'medium', 'high']);
 
 /**
+ * The undo of an executed plan. Null until claimed; one revert per proposal, so the
+ * claim is a conditional UPDATE from null. Its per-step evidence is
+ * `agent_proposal_revert_step`. Mirrored in `$lib/types/db-enums`.
+ */
+export const proposalRevertStatusEnum = aiSchema.enum('agent_proposal_revert_status', [
+	'reverting',
+	'reverted',
+	'revert_failed',
+]);
+
+/**
  * The reviewed baseline of a mutation step: the file the user saw on the PlanCard and
  * the version it had when the plan was proposed. Replay compares against THIS — never
  * a fresh read — so an edit made between review and approval surfaces as a conflict
@@ -100,6 +111,12 @@ export const agentProposal = aiSchema.table(
 		 * outlived its lease (the process died between a step and its terminal transition).
 		 */
 		failureMessage: text('failure_message'),
+		/** The undo of this plan, once claimed — see `ai/proposals/revert-proposal.ts`. */
+		revertStatus: proposalRevertStatusEnum('revert_status'),
+		/** Who asked for the undo. Set null on erasure, like `approvedBy`. */
+		revertedBy: text('reverted_by').references(() => user.id, { onDelete: 'set null' }),
+		/** When the undo reached a terminal revert status. */
+		revertedAt: timestamp('reverted_at', { withTimezone: true }),
 		/** Auto-expire pending proposals. Stops stale approvals long after the UI context is gone. */
 		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -109,9 +126,9 @@ export const agentProposal = aiSchema.table(
 		index('agent_proposal_conv_status_idx').on(table.conversationId, table.status),
 		// Partial index — only track unresolved proposals for the expiry sweep.
 		index('agent_proposal_pending_expiry_idx').on(table.expiresAt).where(sql`${table.status} = 'pending'`),
-		// Exactly-once guarantee: at most one row per proposal id is in the
-		// `executing` or `executed` state. A double-tap approval collides on
-		// this index and the caller reads the existing row instead of racing.
+		// Redundant with the primary key (a unique index on `id` cannot collide with
+		// anything); exactly-once comes from `markExecuting`'s conditional UPDATE. Kept
+		// until a deliberate push drops it — see PATTERN_INITIATIVE_2026_10.md F6.
 		uniqueIndex('agent_proposal_exec_unique_idx').on(table.id).where(sql`${table.status} IN ('executing', 'executed')`),
 	],
 );

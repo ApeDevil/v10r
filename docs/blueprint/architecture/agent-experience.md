@@ -78,6 +78,28 @@ Contracts worth knowing:
 - **The report never echoes snippet content** — findings are `rule at line:column` only, and the argument is named `snippet` precisely because telemetry's `extractQuery` does not read it. Three independent barriers keep caller code out of the call log, pinned by `observer.snippet.test.ts`.
 - **The stdio server is a one-directional superset**: it adds a `Bun.Transpiler` syntax pre-check (`syntax-error`) the hosted surface never emits, and it degrades *visibly* (a report footer) if `src/app.css` is unreadable.
 
+## Links and routing stay resolvable
+
+A context file is only as good as the paths it routes to, and practitioner surveys find stale
+references in roughly a quarter of AI config files. Two gates keep v10r's from rotting:
+
+- **Instruction files route to paths that exist.** `src/lib/agent-instructions.gate.test.ts`
+  reads `AGENTS.md`, `CLAUDE.md`, `.claude/agents/*.md` and `.claude/skills/**`. Every backticked
+  repo path, and every bare `name/` in a routing table, must resolve. A path named on purpose as
+  absent ("there is no `src/lib/server/i18n/` yet") is an allowance with a reason, and the
+  allowance fails once the sentence or the absence goes away. The same files must carry no
+  hidden bidi or zero-width characters, the rule-file backdoor class: instructions an agent
+  obeys that a reviewer never sees in the diff.
+- **Anchors resolve to headings the page renders.** `patterns:validate` resolves every
+  `#fragment` in a registry doc ref through `headingAnchors()`
+  (`src/lib/docs/heading-anchors.server.ts`), which runs the docs renderer's own
+  `remark → rehype-slug` chain. The README TOC's `anchorFor` goes through the same helper, so one
+  slugger serves the gate, the TOC and the rendered page.
+
+Not covered: anchors inside chatbot answers. `catalog-citations.ts` still strips the fragment
+before it checks a route. Verifying it at runtime would need a per-page heading index on every
+turn, and the cited route already lands on the right page.
+
 ## Known limitations and anti-goals
 
 - `Cross-Origin-Resource-Policy: same-site` is stamped on every response, so a *browser-context* cross-origin fetch of `/llms.txt` or a `.md` page is blocked. CLI and server-side fetches — the actual agent path — are unaffected. Deliberate: weakening the header for everyone to serve one edge case is the wrong trade.

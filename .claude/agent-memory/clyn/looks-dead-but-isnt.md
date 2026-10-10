@@ -409,3 +409,17 @@ Stable rules only. Session findings live in the parent's ledger, not here.
   (ledger's TurnTimings item), plus JSON-schema keys inside tool definitions.
 - `journey/+server.ts navigationType: v.optional` exists "so pre-field clients keep validating";
   the only client always sends `'spa'` — a compat shim, contrary to the no-backward-compat rule.
+
+## Proposals / revert / derivation key — learned 2026-10-10
+- `mcp/tools.ts` ↔ `src/lib/server/mcp/patterns/tools.ts` carry byte-identical helpers
+  (`fitnessLines`, `requiresLine`, `patternCard`): two runtimes (bare-Bun stdio vs app), pinned by
+  `mcp/patterns/parity.test.ts`. Deliberate mirror — report as "keep", never as duplication to merge.
+- `agent_proposal.approvedBy` / `revertedBy` / `revertedAt` are write-only audit columns by
+  convention (only `executedAt` surfaces, via `turn-proposal.ts`). Flag as needs-decision, not HIGH.
+- `markInterruptedIfStale(id, leaseMs)` / `markRevertInterruptedIfStale(id, leaseMs)`: `leaseMs`
+  is a test seam (pglite test passes 0); routes never pass it.
+- `pattern-library/validate.ts` imports `src/lib/docs/heading-anchors.ts` by RELATIVE path
+  (`../src/lib/...ts`) — a `$lib` grep misses it. Same for `scripts/db/ingest-docs.ts` →
+  `db/content-hash.ts`, `retrieval/plan.ts`.
+- knip (ignoreExportsUsedInFile) returns NOTHING for in-file-only exports in these files; own
+  census needed (undoEffects, revertEffects, revertText, licenseLabel, PATTERN_REQUIREMENTS…).

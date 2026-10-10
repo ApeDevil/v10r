@@ -3,6 +3,8 @@
  * only — no outputSchema/title/annotations, which trigger a Claude Code bug that silently drops
  * the whole server's tool list) and their handlers over the pattern registry.
  */
+
+import { fitnessLines, requiresLine } from '../pattern-library/fitness.ts';
 import type { PatternRecord, Registry, RegRef } from '../pattern-library/schema.ts';
 import { buildById, topoSort } from '../pattern-library/schema.ts';
 import { DEFAULT_LINES, MAX_LINES, readExcerpt } from './security.ts';
@@ -53,7 +55,7 @@ export const TOOLS: ToolDef[] = [
 	{
 		name: 'get_pattern',
 		description:
-			'Fetch the full curated card for one pattern: summary, when to use, docs to read, code entry points, tests, showcase proof, invariants that MUST hold when emulating, and emulation notes.',
+			'Fetch the full curated card for one pattern: summary, when to use, when NOT to use (contraindications, alternatives, required infrastructure), docs to read, code entry points, tests, showcase proof, invariants that MUST hold when emulating, and emulation notes.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -111,7 +113,7 @@ export const TOOLS: ToolDef[] = [
 	{
 		name: 'recommend_emulation_plan',
 		description:
-			'Assemble a dependency-ordered emulation plan for a set of desired capabilities. Deterministic registry assembly (no inference): selects matching patterns, expands prerequisites, orders them topologically, and attaches the invariants you must preserve.',
+			'Assemble a dependency-ordered emulation plan for a set of desired capabilities. Deterministic registry assembly (no inference): selects matching patterns, expands prerequisites, orders them topologically, and attaches each step\'s contraindications, the infrastructure the whole plan requires, and the invariants you must preserve. Drop any step whose "Avoid when" describes the target project.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -297,6 +299,8 @@ function patternCard(pattern: PatternRecord): string {
 		pattern.summary,
 		'',
 		`**When to use:** ${pattern.when_to_use}`,
+		'',
+		...fitnessLines(pattern),
 		'',
 	];
 	if (pattern.tier === 'light') {
@@ -507,6 +511,7 @@ function recommendPlan(args: Record<string, unknown>, registry: Registry): ToolR
 			`### Step ${index + 1}: ${pattern.title} (\`${id}\`)`,
 			covers ? `Satisfies: ${covers.join(', ')}` : 'Included as prerequisite (depends_on).',
 			`Risk: ${pattern.risk}`,
+			...fitnessLines(pattern),
 			`Read:\n${refLines(pattern.docs)}`,
 			`Model on:\n${refLines(pattern.code)}`,
 			pattern.tests.length > 0 ? `Mirror tests:\n${refLines(pattern.tests)}` : '',
@@ -517,6 +522,7 @@ function recommendPlan(args: Record<string, unknown>, registry: Registry): ToolR
 	});
 	const notes = [
 		'Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.',
+		requiresLine(order.map((id) => byId.get(id)).filter((pattern) => pattern !== undefined)),
 		lightOnly.length > 0 ? `Related index entries (no deep card yet): ${lightOnly.join('; ')}.` : '',
 		unmatched.length > 0
 			? `Unmatched capabilities (no registry entry yet — cover manually or search with different terms): ${unmatched.join(', ')}.`

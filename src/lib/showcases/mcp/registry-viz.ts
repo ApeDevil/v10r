@@ -85,6 +85,14 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'query-budget': 'Queries',
 	'scenario-harness': 'Scenarios',
 	'name-check': 'Name Check',
+	'source-of-truth-gate': 'One Owner',
+	'evidence-status-dimensions': 'Evidence',
+	'derivation-key': 'Derive Key',
+	'reproducible-artifact-build': 'Repro Build',
+	'provenance-record': 'Provenance',
+	'durable-step-execution': 'Durable Steps',
+	'versioned-document-session': 'Doc Session',
+	'asset-rights-manifest': 'Asset Rights',
 };
 
 /**

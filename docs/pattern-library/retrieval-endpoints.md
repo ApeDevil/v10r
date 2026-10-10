@@ -14,6 +14,17 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 
 **When to use:** Use when the corpus must be maintainable from more than one runtime (app UI and scripts) without forking chunking logic.
 
+**Requires:** postgres, pgvector, ai-provider
+
+## Avoid when
+
+- The corpus is fed from one runtime only — a single in-process ingest call needs no HTTP door or shared pure chunker
+- Chunking needs I/O such as per-chunk LLM contextual prep — the door is shareable across runtimes only because planChunks() is pure
+
+## Alternatives
+
+- **Ingest in-process from the app alone, with no script or HTTP door** — prefer when documents arrive only through the app UI and are never bulk-loaded by a script
+
 ## Docs
 
 - [docs/blueprint/ai/knowledge-base.md](/docs/blueprint/ai/knowledge-base) — The ingest door pattern ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/knowledge-base.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/knowledge-base.md))

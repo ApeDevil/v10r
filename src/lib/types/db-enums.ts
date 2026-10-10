@@ -50,6 +50,13 @@ export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
 export const PROPOSAL_STEP_KINDS = ['ok', 'failed', 'conflict'] as const;
 export type ProposalStepKind = (typeof PROPOSAL_STEP_KINDS)[number];
 
+/**
+ * The undo of an executed plan (`ai.agent_proposal.revert_status`): null until a revert is
+ * claimed, then `reverting → reverted | revert_failed`. One revert per proposal.
+ */
+export const PROPOSAL_REVERT_STATUSES = ['reverting', 'reverted', 'revert_failed'] as const;
+export type ProposalRevertStatus = (typeof PROPOSAL_REVERT_STATUSES)[number];
+
 /** The AI vendors an administrator can connect. Order is the resolvers' first-configured order. */
 export const AI_PROVIDER_IDS = ['groq', 'openai', 'google'] as const;
 export type AiProviderId = (typeof AI_PROVIDER_IDS)[number];

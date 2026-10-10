@@ -20,6 +20,9 @@ function makePattern(overrides: Partial<PatternRecord>): PatternRecord {
 		category: 'alpha',
 		summary: 'A test pattern.',
 		when_to_use: 'When testing.',
+		avoid_when: [],
+		alternatives: [],
+		requires: [],
 		capabilities: [],
 		keywords: ['test'],
 		depends_on: [],
@@ -40,6 +43,9 @@ const DEEP = makePattern({
 	tier: 'deep',
 	title: 'Deep pattern',
 	capabilities: ['deep things'],
+	avoid_when: ['the list is short', 'nobody reads it'],
+	alternatives: [{ approach: 'A plain loop', prefer_when: 'n stays under a hundred' }],
+	requires: ['postgres'],
 	invariants: ['never break'],
 	emulation_notes: ['copy carefully'],
 	code: [{ path: 'src/lib/server/alpha', kind: 'dir' }],
@@ -141,9 +147,13 @@ describe('renderReadmeIndex', () => {
 		);
 	});
 	it('badges only non-proven rows so the proven majority stays quiet', () => {
-		expect(region).toContain('[**Deep pattern**](docs/pattern-library/alpha-deep.md) |');
+		expect(region).toContain('[**Deep pattern**](docs/pattern-library/alpha-deep.md)<br>');
 		expect(region).not.toContain('[**Deep pattern**](docs/pattern-library/alpha-deep.md) _(');
 		expect(region).toContain('[Beta solo](docs/pattern-library/beta-solo.md) _(implemented)_');
+	});
+	it('ends deep rows with their headline contraindication only', () => {
+		expect(region).toContain('alpha-deep.md)<br>_Avoid when:_ the list is short |');
+		expect(region).not.toContain('nobody reads it');
 	});
 	it('omits categories with no patterns', () => {
 		expect(region).not.toContain('### Empty');
@@ -161,11 +171,19 @@ describe('renderPatternPage', () => {
 		expect(page).toContain('## Emulation notes');
 		expect(page).toContain('- `src/lib/server/alpha/`');
 	});
+	it('renders the fitness block before the docs', () => {
+		const page = renderPatternPage(DEEP, REGISTRY, ALL_PUBLISHED);
+		expect(page).toContain('**Requires:** postgres');
+		expect(page).toContain('## Avoid when\n\n- the list is short\n- nobody reads it');
+		expect(page).toContain('- **A plain loop** — prefer when n stays under a hundred');
+		expect(page.indexOf('## Avoid when')).toBeLessThan(page.indexOf('## Docs'));
+	});
 	it('labels light pages as index cards and omits deep sections', () => {
 		const page = renderPatternPage(LIGHT, REGISTRY, ALL_PUBLISHED);
 		expect(page).toContain('_Index card —');
 		expect(page).not.toContain('## Invariants');
 		expect(page).not.toContain('## Emulation notes');
+		expect(page).not.toContain('## Avoid when');
 	});
 	it('renders the maturity grade with its attestation on the metadata line', () => {
 		const proven = renderPatternPage(DEEP, REGISTRY, ALL_PUBLISHED);

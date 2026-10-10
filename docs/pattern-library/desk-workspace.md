@@ -14,6 +14,17 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 
 **When to use:** Use for IDE-like authoring surfaces where several content types (editor, explorer, spreadsheet, AI bot) must coexist, communicate, and stay AI-drivable — and where the same workspace must work on phones without forking its state model.
 
+## Avoid when
+
+- One content type in one view — a page with one panel needs no split tree, panel registry or DeskBus
+- Panels that never talk to each other or to an AI — DeskBus and the desk effect contract pay off only when panels coordinate
+- A phone layout that must differ structurally — mobile here is a projection that may focus, open or close panels, never split or resize
+
+## Alternatives
+
+- **A single page with layout primitives (Stack, Cluster, a fixed split)** — prefer when the content types and their arrangement are fixed and users never rearrange, split or tab them
+- **An embedded DockLayout inside a Card with mobileChrome="bar"** — prefer when the workspace is one section of a page rather than the whole viewport
+
 ## Docs
 
 - `docs/blueprint/desk/README.md` — The hub: focus architecture, desk effect contract, mobile chrome, Explorer, DeskBus channels ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/desk/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/desk/README.md))

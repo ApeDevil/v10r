@@ -14,6 +14,18 @@ Only work the caller's intent depends on runs before the response; analytics, in
 
 **When to use:** Use whenever an operation performs secondary effects before returning. Not for a durable write that must be acknowledged before the response.
 
+## Avoid when
+
+- The side effect is a durable write the caller must see acknowledged — that is critical work, not a deferred tail
+- The work is not idempotent, so a platform retry of the spawning request would apply it twice
+- The work is heavy enough to be background class (exports, media processing, AI enrichment) and should not ride the response's tail
+
+## Alternatives
+
+- **await the effect inline before responding** — prefer when the effect is cheap and its failure must reach the caller
+- **a background job or outbox drained by a worker** — prefer when the work is heavy, must outlive the request, or needs retries with its own schedule
+- **streaming deferral with safeDeferPromise** — prefer when the result belongs inside the response body and should stream in after the first bytes
+
 ## Docs
 
 - [docs/blueprint/velocity/runtime.md#critical-path--deferred-tail](/docs/blueprint/velocity/runtime) — The two platform facts behind the wrapper ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/runtime.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/runtime.md))

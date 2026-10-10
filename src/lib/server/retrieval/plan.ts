@@ -13,6 +13,16 @@ import { contentHash } from '../db/content-hash';
 import { splitMarkdown } from './markdown-split';
 import type { RawChunk } from './types';
 
+/**
+ * Version of the chunking LOGIC (this planner + `splitMarkdown`). Every stored chunk is a
+ * derivation of its document through this code, so the version is part of each corpus's
+ * derivation key (`derivationKey` in `db/content-hash.ts`): bump it and the next ingest
+ * re-derives documents whose bytes did not change. Sizing is passed in and keyed separately.
+ * `plan.test.ts` pins the planner's output on a fixture, so a behaviour change cannot land
+ * without someone deciding whether it deserves a bump.
+ */
+export const CHUNKER_VERSION = 1;
+
 export interface PlanOptions {
 	/** Section-level (parent) chunk target, approximate tokens. */
 	sectionTarget: number;
@@ -20,6 +30,15 @@ export interface PlanOptions {
 	paragraphTarget: number;
 	/** Token overlap carried between adjacent child chunks. */
 	overlap: number;
+}
+
+/**
+ * The chunking half of a corpus's derivation inputs: logic version plus the sizing it ran
+ * with. One string, built here, so the app ingest and the docs script cannot key the same
+ * chunker two different ways.
+ */
+export function chunkingInput({ sectionTarget, paragraphTarget, overlap }: PlanOptions): string {
+	return `chunker@${CHUNKER_VERSION}:${sectionTarget}/${paragraphTarget}/${overlap}`;
 }
 
 /** Rough token count estimate: ~4 chars per token for English text. */

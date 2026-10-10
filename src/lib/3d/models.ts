@@ -7,6 +7,7 @@
 // Pages import scenes by model ID via route-level mapping to avoid
 // circular dependencies and preserve code-splitting.
 
+import type { AssetRights } from '$lib/credits/asset-rights';
 import type { CustomizationConfig } from './customization';
 import { FOX_CUSTOMIZATION, ROBOT_CUSTOMIZATION, SOFA_CUSTOMIZATION } from './customization';
 
@@ -123,10 +124,8 @@ export interface Model3D {
 
 	/** Icon class for LinkCard / badge (UnoCSS icon) */
 	icon: string;
-	/** Attribution / source credit */
-	credit?: string;
-	/** External link to model source */
-	sourceUrl?: string;
+	/** Author, SPDX license and source — the one record `/credits` and the gate read. */
+	rights: AssetRights;
 }
 
 // Model registry
@@ -165,8 +164,11 @@ export const MODELS: Model3D[] = [
 			ambientIntensity: 0.5,
 		},
 
-		credit: 'theblueturtle_ (Sketchfab)',
-		sourceUrl: 'https://github.com/KhronosGroup/glTF-Sample-Assets',
+		rights: {
+			author: 'theblueturtle_ (Sketchfab)',
+			license: 'CC-BY-4.0',
+			source: 'https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/DamagedHelmet',
+		},
 	},
 	{
 		id: 'fox',
@@ -212,8 +214,11 @@ export const MODELS: Model3D[] = [
 		showGrid: true,
 		gridArgs: [200, 20],
 
-		credit: 'PixelMannen (Sketchfab)',
-		sourceUrl: 'https://github.com/KhronosGroup/glTF-Sample-Assets',
+		rights: {
+			author: 'PixelMannen (Sketchfab)',
+			license: 'CC0-1.0',
+			source: 'https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Fox',
+		},
 	},
 	{
 		id: 'glam-velvet-sofa',
@@ -251,8 +256,11 @@ export const MODELS: Model3D[] = [
 			ambientIntensity: 0.6,
 		},
 
-		credit: 'Wayfair LLC',
-		sourceUrl: 'https://github.com/KhronosGroup/glTF-Sample-Assets',
+		rights: {
+			author: 'Wayfair LLC',
+			license: 'CC-BY-4.0',
+			source: 'https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/GlamVelvetSofa',
+		},
 	},
 	{
 		id: 'robot-expressive',
@@ -298,8 +306,11 @@ export const MODELS: Model3D[] = [
 		showGrid: true,
 		gridArgs: [4, 8],
 
-		credit: 'Tomás Laulhé',
-		sourceUrl: 'https://github.com/mrdoob/three.js',
+		rights: {
+			author: 'Tomás Laulhé',
+			license: 'CC0-1.0',
+			source: 'https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf/RobotExpressive',
+		},
 	},
 ];
 

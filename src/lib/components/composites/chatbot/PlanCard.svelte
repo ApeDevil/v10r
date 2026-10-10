@@ -15,8 +15,11 @@
  * is complete and nothing else is changing the desk.
  *
  * Risk and recovery wording come from the tool the step names (server-derived), never
- * from model prose. See `docs/blueprint/ai/harness-lens.md`.
+ * from model prose. Once a plan ran, Undo (`onundo`) asks the server to put back what the
+ * steps changed; each step then shows whether it was undone or left alone because the file
+ * moved on since. See `docs/blueprint/ai/harness-lens.md`.
  */
+import { Button } from '$lib/components/primitives/button';
 import * as m from '$lib/paraglide/messages';
 import type { ProposalCardStep, ProposalRun, ProposalStepReceipt, ProposalStepRecovery } from '$lib/types/ai-proposal';
 import { cn } from '$lib/utils/cn';
@@ -32,9 +35,11 @@ interface Props {
 	busy: boolean;
 	onapprove: () => void;
 	onreject: () => void;
+	/** Undo a plan that ran; absent where undo is not offered (showcase fixtures). */
+	onundo?: () => void;
 }
 
-let { proposal, run, streamReady, busy, onapprove, onreject }: Props = $props();
+let { proposal, run, streamReady, busy, onapprove, onreject, onundo }: Props = $props();
 
 let runButton: HTMLButtonElement | undefined = $state();
 
@@ -51,20 +56,53 @@ $effect(() => {
 
 const destructiveCount = $derived(proposal.steps.filter((s) => s.risk === 'destructive').length);
 
-// A revision or a soft-deleted row is RETAINED for the schedule's window, not restorable
-// from the app (there is no restore path yet) — the copy says exactly that, with the
-// window the server read from the retention schedule. Only rename-back and delete-the-new
-// file are actions the user can take.
+// What Undo will do for each step, by the tool's recovery kind. A revision or a soft-deleted
+// row is only restorable while the retention schedule keeps it — the copy carries the window
+// the server read from that schedule.
 const RECOVERY_COPY: Record<ProposalStepRecovery, (step: ProposalCardStep) => string> = {
 	revision: (step) => m.ai_plan_recovery_revision({ days: String(step.retentionDays ?? 0) }),
 	soft_delete: (step) => m.ai_plan_recovery_soft_delete({ days: String(step.retentionDays ?? 0) }),
 	rename_back: () => m.ai_plan_recovery_rename_back(),
+	created: () => m.ai_plan_recovery_created(),
 	none: () => m.ai_plan_recovery_none(),
 };
 
 function receiptFor(index: number): ProposalStepReceipt | undefined {
 	return run?.steps.find((s) => s.stepIndex === index);
 }
+
+/** Offered once a plan ran and changed something, until an undo was asked for. */
+const canUndo = $derived(
+	onundo !== undefined &&
+		run !== undefined &&
+		(run.phase === 'executed' || run.phase === 'failed') &&
+		run.steps.some((s) => s.kind === 'ok') &&
+		run.revert === null,
+);
+
+/** A step's undo outcome, once the revert answered for it. */
+function undoVerdict(index: number): { text: string; kind: 'ok' | 'conflict' } | null {
+	const receipt = run?.revert?.steps.find((s) => s.stepIndex === index);
+	if (!receipt) return null;
+	return receipt.kind === 'ok'
+		? { text: m.ai_plan_step_undone(), kind: 'ok' }
+		: { text: m.ai_plan_step_not_undone({ reason: receipt.errorMessage ?? '' }), kind: 'conflict' };
+}
+
+const revertCopy = $derived.by(() => {
+	switch (run?.revert?.phase) {
+		case 'reverting':
+			return m.ai_plan_revert_reverting();
+		case 'reverted':
+			return m.ai_plan_revert_reverted();
+		case 'revert_failed':
+			return m.ai_plan_revert_failed();
+		case 'unknown':
+			return m.ai_plan_revert_unknown();
+		default:
+			return '';
+	}
+});
 
 /** The per-step verdict once the run has settled; nothing while it is still pending. */
 function stepVerdict(index: number): { text: string; kind: 'ok' | 'failed' | 'conflict' | 'skipped' } | null {
@@ -160,6 +198,10 @@ const statusCopy = $derived.by(() => {
 					{#if verdict}
 						<span class="plan-card-step-verdict">{verdict.text}</span>
 					{/if}
+					{#if undoVerdict(i)}
+						{@const undone = undoVerdict(i)}
+						<span class="plan-card-step-verdict plan-card-step-undo-{undone?.kind}">{undone?.text}</span>
+					{/if}
 				</div>
 			</li>
 		{/each}
@@ -169,6 +211,19 @@ const statusCopy = $derived.by(() => {
 		<div class="plan-card-status plan-card-status-{phase}" aria-live="polite">
 			{statusCopy}
 		</div>
+		{#if revertCopy}
+			<div class="plan-card-status plan-card-revert-{run?.revert?.phase}" aria-live="polite">
+				{revertCopy}
+			</div>
+		{/if}
+		{#if canUndo}
+			<div class="plan-card-actions">
+				<Button variant="outline" size="sm" disabled={busy} onclick={onundo}>
+					<span class="i-lucide-undo-2" aria-hidden="true"></span>
+					{m.ai_plan_undo()}
+				</Button>
+			</div>
+		{/if}
 	{:else}
 		<div class="plan-card-actions">
 			<button
@@ -298,6 +353,13 @@ const statusCopy = $derived.by(() => {
 	}
 	.plan-card-step-failed .plan-card-step-verdict,
 	.plan-card-step-conflict .plan-card-step-verdict {
+		color: var(--color-error-fg);
+	}
+	/* The undo's verdict sits under the run's and must not inherit its colour. */
+	.plan-card-step-verdict.plan-card-step-undo-ok {
+		color: var(--color-fg);
+	}
+	.plan-card-step-verdict.plan-card-step-undo-conflict {
 		color: var(--color-error-fg);
 	}
 	.plan-card-step-skipped {

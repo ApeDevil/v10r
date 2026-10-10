@@ -14,6 +14,20 @@ A read walks outward from process memory to Redis to the origin. The policy decl
 
 **When to use:** Use when reads substantially outnumber writes, the result is expensive and reused, and bounded staleness is acceptable. Not because a cache exists.
 
+**Requires:** redis
+
+## Avoid when
+
+- The data changes constantly or must be strongly current — the cache becomes a second source of truth
+- The computation is already cheap, or invalidation would cost more than the work it saves
+- Reads do not substantially outnumber writes, so entries are invalidated before they are reused
+
+## Alternatives
+
+- **Remove or combine the work (drop the fetch, one cheaper query)** — prefer when the cost is avoidable work rather than a reused expensive answer — the decision hierarchy puts removal ahead of caching
+- **HTTP / CDN cache headers** — prefer when the response is public and identical for every reader, so the edge can hold it without a key scope
+- **A single bounded process-local TTL cache, no shared tier** — prefer when the app runs as one long-lived instance, so there is no second instance for a shared tier to serve
+
 ## Docs
 
 - [docs/blueprint/velocity/data.md#hierarchical-cache](/docs/blueprint/velocity/data) — The tiers, and key identity as a security boundary ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))

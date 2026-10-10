@@ -16,12 +16,13 @@
  * Curation itself (which technologies deserve an entry) is editorial and
  * deliberately not tested.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { getManifest } from '$lib/server/docs/manifest';
 import { showcases } from '../showcases/catalog/registry';
-import { creditGroups, credits } from './registry';
+import { requiresAttribution } from './asset-rights';
+import { assetCredits, creditGroups, credits } from './registry';
 
 const rootUrl = (rel: string) => fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 
@@ -136,5 +137,56 @@ describe('credits registry gate', () => {
 		expect(credits.filter((e) => e.docs).length).toBeGreaterThan(0);
 		expect(credits.filter((e) => e.showcase).length).toBeGreaterThan(0);
 		expect(credits.filter((e) => e.source.kind === 'service').length).toBeGreaterThan(0);
+	});
+});
+
+/**
+ * ASSET RIGHTS — every third-party file under the asset directories is credited exactly once,
+ * from the module that owns it, with a well-formed license; a license that requires attribution
+ * carries an author and an https source. This checks metadata presence and shape, never legal
+ * sufficiency — that is a human judgement no identifier encodes.
+ */
+describe('asset rights', () => {
+	const ASSET_DIRS = ['static/models', 'static/images/parts'];
+	const SPDX_ID = /^(LicenseRef-[A-Za-z0-9.-]+|[A-Za-z0-9][A-Za-z0-9.+-]*)$/;
+	const CC_ID = /^CC(0-1\.0|-BY(-SA|-ND|-NC)*-\d\.\d)$/;
+
+	function filesUnder(rel: string): string[] {
+		const abs = rootUrl(rel);
+		return readdirSync(abs, { recursive: true, withFileTypes: true })
+			.filter((entry) => entry.isFile())
+			.map((entry) => `${entry.parentPath.slice(rootUrl('static').length)}/${entry.name}`);
+	}
+
+	const shipped = ASSET_DIRS.flatMap(filesUnder).sort();
+
+	it('scans a non-empty asset set (a moved directory would pass every check vacuously)', () => {
+		expect(shipped.length).toBeGreaterThan(5);
+		expect(assetCredits.length).toBeGreaterThan(5);
+	});
+
+	it('credits every shipped asset exactly once and no file that is not shipped', () => {
+		const credited = assetCredits.map((asset) => asset.path).sort();
+		expect(credited).toEqual([...new Set(credited)]);
+		expect(credited).toEqual(shipped);
+	});
+
+	it('gives every asset an SPDX id, and an author plus https source where the license requires attribution', () => {
+		for (const { path, rights } of assetCredits) {
+			expect(rights.license, path).toMatch(SPDX_ID);
+			// Creative Commons ids are case-sensitive SPDX; a near-miss (`cc-by-4.0`, `CC-BY4.0`)
+			// would dodge requiresAttribution and with it the author check below.
+			if (/^cc/i.test(rights.license)) expect(rights.license, path).toMatch(CC_ID);
+			expect(rights.source, path).toMatch(/^https:\/\//);
+			if (requiresAttribution(rights.license)) expect(rights.author.trim().length, path).toBeGreaterThan(0);
+		}
+	});
+
+	it('recognises the attribution licenses it ships', () => {
+		expect(requiresAttribution('CC-BY-4.0')).toBe(true);
+		expect(requiresAttribution('CC-BY-SA-2.0')).toBe(true);
+		expect(requiresAttribution('CC0-1.0')).toBe(false);
+		expect(requiresAttribution('LicenseRef-PublicDomain')).toBe(false);
+		expect(assetCredits.some((asset) => requiresAttribution(asset.rights.license))).toBe(true);
 	});
 });

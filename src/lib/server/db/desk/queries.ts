@@ -1,7 +1,7 @@
 import { and, count, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm';
 import type { DeskFileType } from '$lib/types/db-enums';
 import { type DbHandle, db } from '../index';
-import { file, folder, markdown, spreadsheet } from '../schema/desk';
+import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
 
 // Soft-delete note
 // All queries below filter `file.deleted_at IS NULL` (and the same on
@@ -194,4 +194,17 @@ export async function listAiContextFilesForSync() {
 		})
 		.from(file)
 		.where(and(eq(file.aiContext, true), isNull(file.deletedAt)));
+}
+
+/**
+ * One pre-image revision, owner-scoped. Null once the `desk-revisions` retention sweep has
+ * removed it — an undo that leans on it must say so rather than guess.
+ */
+export async function getRevision(id: string, userId: string, handle: DbHandle = db) {
+	const [row] = await handle
+		.select()
+		.from(fileRevision)
+		.where(and(eq(fileRevision.id, id), eq(fileRevision.userId, userId)))
+		.limit(1);
+	return row ?? null;
 }

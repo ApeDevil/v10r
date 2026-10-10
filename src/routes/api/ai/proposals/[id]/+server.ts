@@ -7,8 +7,13 @@
  * included, so a panel can still reload the file a completed step changed.
  */
 
-import { proposalOutcome } from '$lib/server/ai/proposals/execute-proposal';
-import { getProposal, markExpiredIfPending, markInterruptedIfStale } from '$lib/server/db/ai/proposals';
+import { proposalOutcome } from '$lib/server/ai/proposals/proposal-outcome';
+import {
+	getProposal,
+	markExpiredIfPending,
+	markInterruptedIfStale,
+	markRevertInterruptedIfStale,
+} from '$lib/server/db/ai/proposals';
 import { getConversation } from '$lib/server/db/ai/queries';
 import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
 import { guardApiUser } from '$lib/server/http/guards';
@@ -32,6 +37,9 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		// executing row past its lease is `failed('interrupted')` — with its receipts intact.
 		if (proposal.status === 'pending') proposal = (await markExpiredIfPending(proposal.id)) ?? proposal;
 		if (proposal.status === 'executing') proposal = (await markInterruptedIfStale(proposal.id)) ?? proposal;
+		// A revert whose process died is healed the same way; a client polling after a lost
+		// undo response would otherwise wait on `reverting` forever.
+		if (proposal.revertStatus === 'reverting') proposal = (await markRevertInterruptedIfStale(proposal.id)) ?? proposal;
 
 		return apiOk(await proposalOutcome(proposal));
 	} catch (err) {

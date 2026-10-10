@@ -18,3 +18,15 @@ export async function deleteDocument(id: string, userId: string): Promise<boolea
 		return !!updated;
 	});
 }
+
+/**
+ * Re-stamp a document whose derivation key still matches its source: the stored copy was
+ * verified current now, so readers that compare index time to the source's edit time must
+ * not report it as stale. Content and chunks are untouched.
+ */
+export async function markDocumentCurrent(id: string, userId: string): Promise<void> {
+	await db
+		.update(document)
+		.set({ updatedAt: new Date() })
+		.where(and(eq(document.id, id), eq(document.userId, userId), isNull(document.deletedAt)));
+}

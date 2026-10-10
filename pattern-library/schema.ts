@@ -25,6 +25,33 @@ export type PatternTier = 'deep' | 'light';
  */
 export type PatternMaturity = 'planned' | 'implemented' | 'proven';
 
+/**
+ * Infrastructure a pattern needs the TARGET project to have — a closed vocabulary so a
+ * recommender can union it across a plan and a reader can rule a pattern out before
+ * reading it. Frameworks are not listed: every pattern assumes the v10r stack's runtime.
+ */
+export const PATTERN_REQUIREMENTS = [
+	'postgres',
+	'pgvector',
+	'neo4j',
+	'redis',
+	'object-storage',
+	'cron',
+	'ai-provider',
+	'third-party-api',
+	'web-worker',
+	'wasm-toolchain',
+	'service-worker',
+] as const;
+
+export type PatternRequirement = (typeof PATTERN_REQUIREMENTS)[number];
+
+/** A considered alternative and the condition under which it beats this pattern. */
+export interface RegAlternative {
+	approach: string;
+	prefer_when: string;
+}
+
 export interface RegRef {
 	path: string;
 	note?: string;
@@ -51,6 +78,17 @@ export interface PatternRecord {
 	category: string;
 	summary: string;
 	when_to_use: string;
+	/**
+	 * Contraindications: situations where adopting the pattern is the wrong call. The
+	 * first entry is the headline the generated index prints, so keep it to one clause.
+	 * Author judgement, not measurement — required on deep cards so the fitness question
+	 * ("is this the smallest thing that works here?") is answered before the how.
+	 */
+	avoid_when: string[];
+	/** Simpler or different approaches the pattern was chosen over, and when they win instead. */
+	alternatives: RegAlternative[];
+	/** What the target project must already run (see `PATTERN_REQUIREMENTS`). */
+	requires: PatternRequirement[];
 	capabilities: string[];
 	keywords: string[];
 	depends_on: string[];
@@ -81,9 +119,17 @@ export const REGISTRY_FILENAME = 'registry.json';
 const REF_KINDS: readonly string[] = ['file', 'dir', 'route', 'approute', 'anchor'];
 const TIERS: readonly string[] = ['deep', 'light'];
 const MATURITIES: readonly string[] = ['planned', 'implemented', 'proven'];
+const REQUIREMENTS: readonly string[] = PATTERN_REQUIREMENTS;
 const VERIFIED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const STRING_LIST_FIELDS = ['capabilities', 'keywords', 'depends_on', 'invariants', 'emulation_notes'] as const;
+const STRING_LIST_FIELDS = [
+	'avoid_when',
+	'capabilities',
+	'keywords',
+	'depends_on',
+	'invariants',
+	'emulation_notes',
+] as const;
 const REF_LIST_FIELDS = ['docs', 'code', 'tests', 'showcases'] as const;
 const STRING_FIELDS = ['id', 'title', 'category', 'summary', 'when_to_use', 'risk'] as const;
 
@@ -133,6 +179,30 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 			errors.push(`${where}.${field}: must be an array of strings`);
 		}
 	}
+	if (!Array.isArray(value.alternatives)) {
+		errors.push(`${where}.alternatives: must be an array`);
+	} else {
+		value.alternatives.forEach((alt, altIndex) => {
+			if (
+				!isRecord(alt) ||
+				typeof alt.approach !== 'string' ||
+				alt.approach.length === 0 ||
+				typeof alt.prefer_when !== 'string' ||
+				alt.prefer_when.length === 0
+			) {
+				errors.push(`${where}.alternatives[${altIndex}]: must be {approach, prefer_when} with non-empty strings`);
+			}
+		});
+	}
+	if (!isStringArray(value.requires)) {
+		errors.push(`${where}.requires: must be an array of strings`);
+	} else {
+		for (const requirement of value.requires) {
+			if (!REQUIREMENTS.includes(requirement)) {
+				errors.push(`${where}.requires: '${requirement}' is not one of ${REQUIREMENTS.join('|')}`);
+			}
+		}
+	}
 	for (const field of REF_LIST_FIELDS) {
 		const list = value[field];
 		if (!Array.isArray(list)) {
@@ -146,7 +216,7 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 	// Per-tier contract: "deep" is a promise (full emulation card), "light" a pointer
 	// row. Enforced structurally so a violating registry never loads anywhere.
 	if (value.tier === 'deep') {
-		for (const field of ['invariants', 'emulation_notes', 'capabilities', 'keywords', 'docs'] as const) {
+		for (const field of ['avoid_when', 'invariants', 'emulation_notes', 'capabilities', 'keywords', 'docs'] as const) {
 			if (Array.isArray(value[field]) && value[field].length === 0) {
 				errors.push(`${where}.${field}: deep records must have at least one entry`);
 			}

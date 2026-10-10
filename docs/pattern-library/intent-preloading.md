@@ -14,6 +14,16 @@ A policy layer over the app-wide `data-sveltekit-preload-data="hover"` default, 
 
 **When to use:** Use when a link's cost or its probability differs from the average — an expensive report gets `code`, a strongly predicted next step gets `code-data` or a programmatic preload.
 
+## Avoid when
+
+- The route's data is expensive, highly volatile or unlikely to be used — a preload creates real backend work on a guess
+- Bandwidth may be constrained, or a speculative load would pollute a cache
+- No link's cost or follow-through probability differs from the average — the app-wide hover default already covers it
+
+## Alternatives
+
+- **SvelteKit's app-wide `data-sveltekit-preload-data="hover"` default alone** — prefer when every link has roughly average cost and probability, so no per-link policy is needed
+
 ## Docs
 
 - [docs/blueprint/velocity/interaction.md#intent-based-preloading](/docs/blueprint/velocity/interaction) — The six levels and what each is for ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/interaction.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/interaction.md))

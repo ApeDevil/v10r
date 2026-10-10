@@ -14,6 +14,18 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 
 **When to use:** Use as soon as an LLM gets tools: the manifest/harness split is what keeps tool permissions auditable and surfaces honest.
 
+**Requires:** ai-provider
+
+## Avoid when
+
+- The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern
+- A developer CLI or IDE agent — this is the product-embedded subset; SKILL.md files and visible subagent delegation were left out on purpose
+
+## Alternatives
+
+- **Adopt a full agent framework (Mastra) for loop, tools and memory** — prefer when the bot's scope is large enough that the framework's weight pays back over hand-owned loop, policy and compaction seams
+- **Per-tool needsApproval flags on the AI SDK tool definitions** — prefer when there are only one or two mutating tools, so approval fatigue has no room to build up
+
 ## Docs
 
 - [docs/blueprint/ai/surfaces.md](/docs/blueprint/ai/surfaces) — Tool calling and per-surface tool membership ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/surfaces.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/surfaces.md))

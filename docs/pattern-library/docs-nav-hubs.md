@@ -14,6 +14,16 @@ An AI-optimized docs tree where every directory's README.md is a navigation hub 
 
 **When to use:** Adopt in any repo meant to be read by AI agents: it turns documentation from a pile of files into an addressable index.
 
+## Avoid when
+
+- A doc set small enough for one README — a hub per directory adds an index with nothing to route
+- Hubs that would restate their files — a hub routes, never summarizes; a summary hub is a second source of truth that drifts
+
+## Alternatives
+
+- **A single README or one flat docs folder** — prefer when the whole doc set is a handful of files an agent can list and pick from directly
+- **An index generated from a docs manifest (as /llms.txt is built from getManifest())** — prefer when doc metadata already lives in a machine-readable manifest, so a hand-written topic table would be a second copy
+
 ## Docs
 
 - `docs/README.md` — Root hub — the entry point of the whole convention ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/README.md))

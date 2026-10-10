@@ -36,6 +36,7 @@ import {
 } from '$lib/server/db/desk/mutations';
 import { getMarkdownByFileId, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
 import type { ProposedTarget } from '$lib/server/db/schema/ai/proposal';
+import type { StepRecoveryPoint } from '$lib/server/db/schema/ai/proposal-step';
 import type { ProposalStepRecovery } from '$lib/types/ai-proposal';
 import { DESK_READ_MAX_CHARS } from '../config';
 import { followAiContextChange } from '../deskbot-retrieval';
@@ -45,7 +46,13 @@ import { type DeskMutationInput, describeIssues, parseMutationInput } from './de
 import { applyMarkdownEdits } from './markdown-edits';
 
 export type DeskExecResult =
-	| { ok: true; output: Record<string, unknown>; effects: DeskEffect[] }
+	| {
+			ok: true;
+			output: Record<string, unknown>;
+			effects: DeskEffect[];
+			/** What an undo needs — server-only, persisted on the step receipt, never in `output`. */
+			recovery: StepRecoveryPoint;
+	  }
 	| { ok: false; kind: 'failed' | 'conflict'; output: null; errorMessage: string };
 
 /**
@@ -89,8 +96,8 @@ export const TOOL_RECOVERY: Record<DeskExecutableTool, ProposalStepRecovery> = {
 	desk_rename_file: 'rename_back',
 	desk_update_markdown: 'revision',
 	desk_edit_markdown: 'revision',
-	desk_create_spreadsheet: 'none',
-	desk_create_markdown: 'none',
+	desk_create_spreadsheet: 'created',
+	desk_create_markdown: 'created',
 	desk_delete_file: 'soft_delete',
 };
 
@@ -205,13 +212,24 @@ export async function executeDeskToolCall(
 				);
 				if (!result) return failed('Failed to update cells.');
 				if (result.status === 'conflict') return conflict();
-				return done(toolName, {
-					updated: true,
-					fileId: file_id,
-					name: result.file.name,
-					cellsChanged: updates.length,
-					version: result.version,
-				});
+				return done(
+					toolName,
+					{
+						updated: true,
+						fileId: file_id,
+						name: result.file.name,
+						cellsChanged: updates.length,
+						version: result.version,
+					},
+					{
+						kind: 'revision',
+						fileId: file_id,
+						fileType: 'spreadsheet',
+						revisionId: result.revisionId,
+						version: result.version,
+						fileUpdatedAt: result.file.updatedAt.toISOString(),
+					},
+				);
 			}
 			case 'desk_rename_file': {
 				const { file_id, name } = parsed.output as DeskMutationInput<'desk_rename_file'>;
@@ -222,7 +240,16 @@ export async function executeDeskToolCall(
 					if (lock.status === 'changed') return conflict();
 					const result = await renameFile(file_id, userId, name, tx);
 					if (!result) return failed('File not found.');
-					return done(toolName, { renamed: true, fileId: result.id, name: result.name });
+					return done(
+						toolName,
+						{ renamed: true, fileId: result.id, name: result.name },
+						{
+							kind: 'rename_back',
+							fileId: result.id,
+							previousName: lock.file.name,
+							fileUpdatedAt: result.updatedAt.toISOString(),
+						},
+					);
 				});
 			}
 			case 'desk_update_markdown': {
@@ -246,12 +273,11 @@ export async function executeDeskToolCall(
 				);
 				if (!result) return failed('Markdown file not found.');
 				if (result.status === 'conflict') return conflict();
-				return done(toolName, {
-					updated: true,
-					fileId: result.file.id,
-					name: result.file.name,
-					version: result.version,
-				});
+				return done(
+					toolName,
+					{ updated: true, fileId: result.file.id, name: result.file.name, version: result.version },
+					markdownRecovery(result),
+				);
 			}
 			case 'desk_edit_markdown': {
 				const { file_id, edits } = parsed.output as DeskMutationInput<'desk_edit_markdown'>;
@@ -272,25 +298,37 @@ export async function executeDeskToolCall(
 				);
 				if (!result) return failed('Markdown file not found.');
 				if (result.status === 'conflict') return conflict();
-				return done(toolName, {
-					updated: true,
-					fileId: result.file.id,
-					name: result.file.name,
-					version: result.version,
-					editsApplied: edits.length,
-				});
+				return done(
+					toolName,
+					{
+						updated: true,
+						fileId: result.file.id,
+						name: result.file.name,
+						version: result.version,
+						editsApplied: edits.length,
+					},
+					markdownRecovery(result),
+				);
 			}
 			case 'desk_create_spreadsheet': {
 				const { name, cells } = parsed.output as DeskMutationInput<'desk_create_spreadsheet'>;
 				const initial = applyCellUpdates({}, cells);
 				if ('error' in initial) return failed(initial.error);
 				const result = await createSpreadsheetFile(userId, name, initial.cells, null, null, handle);
-				return done(toolName, { created: true, fileId: result.file.id, name: result.file.name });
+				return done(
+					toolName,
+					{ created: true, fileId: result.file.id, name: result.file.name },
+					createdRecovery(result.file),
+				);
 			}
 			case 'desk_create_markdown': {
 				const { name, content } = parsed.output as DeskMutationInput<'desk_create_markdown'>;
 				const result = await createMarkdownFile(userId, name, content, null, null, handle);
-				return done(toolName, { created: true, fileId: result.file.id, name: result.file.name });
+				return done(
+					toolName,
+					{ created: true, fileId: result.file.id, name: result.file.name },
+					createdRecovery(result.file),
+				);
 			}
 			case 'desk_delete_file': {
 				const { file_id } = parsed.output as DeskMutationInput<'desk_delete_file'>;
@@ -302,7 +340,11 @@ export async function executeDeskToolCall(
 					const result = await deleteFile(file_id, userId, 'ai', tx);
 					if (!result) return failed('File not found.');
 					if (result.aiContext) followAiContextChange(userId, result.id, result.type, false);
-					return done(toolName, { deleted: true, fileId: result.id, name: result.name });
+					return done(
+						toolName,
+						{ deleted: true, fileId: result.id, name: result.name },
+						{ kind: 'soft_delete', fileId: result.id, fileUpdatedAt: result.updatedAt.toISOString() },
+					);
 				});
 			}
 			default:
@@ -313,6 +355,25 @@ export async function executeDeskToolCall(
 	}
 }
 
-function done(toolName: string, output: Record<string, unknown>): DeskExecResult {
-	return { ok: true, output, effects: effectsForStep(toolName, output) };
+function done(toolName: string, output: Record<string, unknown>, recovery: StepRecoveryPoint): DeskExecResult {
+	return { ok: true, output, effects: effectsForStep(toolName, output), recovery };
+}
+
+function markdownRecovery(result: {
+	file: { id: string; updatedAt: Date };
+	version: number;
+	revisionId: string;
+}): StepRecoveryPoint {
+	return {
+		kind: 'revision',
+		fileId: result.file.id,
+		fileType: 'markdown',
+		revisionId: result.revisionId,
+		version: result.version,
+		fileUpdatedAt: result.file.updatedAt.toISOString(),
+	};
+}
+
+function createdRecovery(created: { id: string; updatedAt: Date }): StepRecoveryPoint {
+	return { kind: 'created', fileId: created.id, fileUpdatedAt: created.updatedAt.toISOString() };
 }

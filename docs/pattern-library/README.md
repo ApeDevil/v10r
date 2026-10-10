@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 162 patterns (30 deep cards / 132 index rows) across 26 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 172 patterns (38 deep cards / 134 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -77,6 +77,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Docs navigation hubs (README-per-directory convention)**](./docs-nav-hubs.md)
 - [**Pattern Index (the generated README capability map)**](./pattern-index.md)
 - [**Agent Experience (AX) surfaces**](./agent-experience.md)
+- [Resource anchor integrity (fragments and routing paths resolve)](./resource-anchor-integrity.md)
 
 ### Databases & Storage
 
@@ -89,6 +90,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Polyglot freshness (Postgres ↔ Neo4j sync)](./databases-polyglot-freshness.md)
 - [Object storage (Cloudflare R2, presigned transfer)](./databases-object-storage.md)
 - [Cache (Upstash Redis, ephemeral patterns)](./databases-cache.md)
+- [Temporal data modeling (how much time to store)](./temporal-data-modeling.md)
 
 ### Database Operations
 
@@ -245,3 +247,20 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Latency tracing (a v10r span API, Server-Timing as one renderer)**](./latency-tracing.md)
 - [**Performance budget and ratchet (targets aspire, ceilings hold)**](./performance-budget-ratchet.md)
 - [**Performance scenario harness (adverse conditions, committed)**](./scenario-harness.md)
+
+### Truth & Evidence
+
+- [**Source-of-truth gate (one owner, bound copies)**](./source-of-truth-gate.md)
+- [**Evidence status dimensions (verdict, coverage, confidence, freshness kept apart)**](./evidence-status-dimensions.md)
+- [**Asset rights manifest (owned rights record + gate over shipped files)**](./asset-rights-manifest.md)
+
+### Derivation & Provenance
+
+- [**Derivation key (freshness by input fingerprint)**](./derivation-key.md)
+- [**Reproducible artifact build (regenerate-and-diff, or manifest + digest)**](./reproducible-artifact-build.md)
+- [**Provenance record (entity, activity, agent — PROV-DM core)**](./provenance-record.md)
+
+### Durable Execution
+
+- [**Durable step execution (claim, lease, fence, receipts)**](./durable-step-execution.md)
+- [**Versioned document session (save queue, drafts, CAS, explicit conflict)**](./versioned-document-session.md)

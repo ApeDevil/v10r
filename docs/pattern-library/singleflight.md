@@ -14,6 +14,17 @@ Concurrent callers for one key share one execution, and across instances a refre
 
 **When to use:** Use for expensive cache rebuilds, external provider calls, AI calls, aggregate queries and read-model refreshes — anything where a synchronised expiry produces simultaneous identical work.
 
+## Avoid when
+
+- The work is cheap or never requested concurrently — there is no simultaneous identical work to collapse
+- Calls that look alike differ in inputs or intent — coalescing would hand a caller someone else's answer
+- The need is reuse across time — coalescing drops entries on settle; that is a cache's job, not this one's
+
+## Alternatives
+
+- **TTL jitter alone** — prefer when the stampede comes from sibling keys expiring together rather than a burst on one key
+- **In-process `coalesce` only, without the cross-instance refresh claim** — prefer when the app runs on one instance, or duplicate refreshes across instances are cheap
+
 ## Docs
 
 - [docs/blueprint/velocity/data.md#singleflight--stampede-protection](/docs/blueprint/velocity/data) — Why a cold caller never waits ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))

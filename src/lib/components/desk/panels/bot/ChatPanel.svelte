@@ -282,6 +282,7 @@ $effect(() => {
 								{busy}
 								onapprove={() => session?.approve(proposal.id)}
 								onreject={() => session?.reject(proposal.id)}
+								onundo={() => session?.revert(proposal.id)}
 							/>
 						{/if}
 					{/if}

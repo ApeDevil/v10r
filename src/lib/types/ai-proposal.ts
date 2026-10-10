@@ -6,15 +6,17 @@
  * Zero imports beyond the enum mirror, so the desk bundle can read it.
  */
 import type { DeskEffect } from './ai-tools';
-import type { DeskFileType, ProposalStatus, ProposalStepKind } from './db-enums';
+import type { DeskFileType, ProposalRevertStatus, ProposalStatus, ProposalStepKind } from './db-enums';
 
 /**
- * How an approved step can be undone — derived from the TOOL, never model prose:
- * `revision` (a pre-image `desk.file_revision` is captured before the overwrite),
- * `soft_delete` (the file waits in the trash for the retention window), `rename_back`
- * (rename it again), `none` (a create — delete it if unwanted).
+ * How an approved step is undone — derived from the TOOL, never model prose, and the same word
+ * the step's server-side recovery point carries (`StepRecoveryPoint.kind`), so the card's
+ * promise and the undo that runs cannot drift: `revision` (restore the pre-image
+ * `desk.file_revision`), `soft_delete` (bring the file back from the trash), `rename_back`
+ * (restore the previous name), `created` (move the new file to the trash). `none` is the
+ * fallback for a step with nothing to undo.
  */
-export type ProposalStepRecovery = 'revision' | 'soft_delete' | 'rename_back' | 'none';
+export type ProposalStepRecovery = 'revision' | 'soft_delete' | 'rename_back' | 'created' | 'none';
 
 /** The file a step changes, as the user reviewed it. */
 export interface ProposalCardTarget {
@@ -68,6 +70,20 @@ export interface ProposalStepReceipt {
 	errorMessage: string | null;
 }
 
+/** One forward step's undo — `ai.agent_proposal_revert_step` as the client sees it. */
+export interface ProposalRevertReceipt {
+	/** The forward step this undoes. */
+	stepIndex: number;
+	kind: ProposalStepKind;
+	errorMessage: string | null;
+}
+
+/** The undo of a plan that ran, once someone asked for it: its status and per-step receipts. */
+export interface ProposalRevert {
+	status: ProposalRevertStatus;
+	steps: ProposalRevertReceipt[];
+}
+
 /**
  * The deterministic assistant message the approve door persists once a plan has run:
  * what the user reads under the card, and what the model reads as history next turn.
@@ -87,6 +103,8 @@ export interface ProposalOutcome {
 	effects: DeskEffect[];
 	receiptMessage: ProposalReceiptMessage | null;
 	expiresAt: string;
+	/** Null until an undo was claimed (`POST /api/ai/proposals/[id]/revert`). */
+	revert: ProposalRevert | null;
 }
 
 /**
@@ -100,4 +118,9 @@ export interface ProposalRun {
 	phase: ProposalRunPhase;
 	steps: ProposalStepReceipt[];
 	failureMessage: string | null;
+	/**
+	 * The undo, as the client tracks it: the server's revert status, or `unknown` while a lost
+	 * revert response is reconciled. Null until the user asked for one.
+	 */
+	revert: { phase: ProposalRevertStatus | 'unknown'; steps: ProposalRevertReceipt[] } | null;
 }

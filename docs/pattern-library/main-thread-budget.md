@@ -14,6 +14,20 @@ Expensive browser work moves off the main thread only where measurement justifie
 
 **When to use:** Use for large parsing, image processing, graph layout, data crunching or expensive editor operations — anything that would otherwise block input and rendering.
 
+**Requires:** web-worker
+
+## Avoid when
+
+- The operation is cheap or unmeasured — it stays on the main thread until a number justifies a worker
+- Serializing and transferring the payload costs about as much as the compute the worker would save
+- The work is server-side or scheduled — that is a background job, not a Web Worker
+
+## Alternatives
+
+- **reduce the data or work before moving it** — prefer when the input can be shrunk, sampled or paged so the operation stops blocking on its own
+- **keep it inline on the main thread** — prefer when measurement shows the operation does not noticeably block input or rendering
+- **a Web Worker running plain JavaScript, without WASM** — prefer when a WASM kernel has not beaten a line-for-line JS implementation with transfer cost included
+
 ## Docs
 
 - [docs/blueprint/velocity/runtime.md#main-thread-budget--compute-isolation](/docs/blueprint/velocity/runtime) — The decision hierarchy and what a benchmark must include ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/runtime.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/runtime.md))

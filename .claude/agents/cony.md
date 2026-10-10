@@ -87,7 +87,7 @@ Where copy actually lives today:
 - **Form copy + translatable DB columns** — scattered per-feature in `src/lib/server/[domain]/schemas.ts` (Valibot schemas: labels, helper text, validation messages) and Superforms-bound components.
 - **Blog content** — `src/lib/server/blog/` (the only long-form content domain today; pages, FAQ, announcements would join when added).
 
-There is no global `src/lib/server/content/` or `src/lib/server/i18n/` yet — premature with one long-form consumer. Centralizing shared primitives is an `ary` call when a second domain appears, not cony's.
+There is no `src/lib/server/i18n/` yet — premature with one long-form consumer. Centralizing shared primitives is an `ary` call when a second domain appears, not cony's.
 
 For deeper context on any technology, read the relevant `docs/` directory README first, then follow its topic table to the specific file.
 

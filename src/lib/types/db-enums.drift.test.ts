@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { aiSurfaceEnum } from '$lib/server/db/schema/ai/conversation';
-import { proposalStatusEnum } from '$lib/server/db/schema/ai/proposal';
+import { proposalRevertStatusEnum, proposalStatusEnum } from '$lib/server/db/schema/ai/proposal';
 import { proposalStepKindEnum } from '$lib/server/db/schema/ai/proposal-step';
 import { aiProviderEnum } from '$lib/server/db/schema/ai/provider-connection';
 import { consentTierEnum } from '$lib/server/db/schema/analytics/events';
@@ -28,6 +28,7 @@ import {
 	NAME_SOURCE_VENDORS,
 	NOTIFICATION_TYPES,
 	POST_STATUSES,
+	PROPOSAL_REVERT_STATUSES,
 	PROPOSAL_STATUSES,
 	PROPOSAL_STEP_KINDS,
 	THEMES,
@@ -44,6 +45,7 @@ const MIRRORS: ReadonlyArray<[string, readonly string[], readonly string[]]> = [
 	['ai.ai_provider', AI_PROVIDER_IDS, aiProviderEnum.enumValues],
 	['ai.agent_proposal_status', PROPOSAL_STATUSES, proposalStatusEnum.enumValues],
 	['ai.agent_proposal_step_kind', PROPOSAL_STEP_KINDS, proposalStepKindEnum.enumValues],
+	['ai.agent_proposal_revert_status', PROPOSAL_REVERT_STATUSES, proposalRevertStatusEnum.enumValues],
 	['notifications.notification_type', NOTIFICATION_TYPES, notificationTypeEnum.enumValues],
 	['analytics.consent_tier', CONSENT_TIERS, consentTierEnum.enumValues],
 	['analytics.user_surface', USER_SURFACES, userSurfaceEnum.enumValues],

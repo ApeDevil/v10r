@@ -50,7 +50,14 @@ function toRow(pattern: PatternRecord) {
 		showcases: pattern.showcases.map((ref) => ref.path),
 		// Deep-only depth: at most ~11 records carry these, so the context cost is
 		// bounded — and they are this tool's unique value over plain doc search.
-		...(pattern.tier === 'deep' ? { invariants: pattern.invariants, emulation_notes: pattern.emulation_notes } : {}),
+		...(pattern.tier === 'deep'
+			? {
+					avoid_when: pattern.avoid_when,
+					requires: pattern.requires,
+					invariants: pattern.invariants,
+					emulation_notes: pattern.emulation_notes,
+				}
+			: {}),
 	};
 }
 

@@ -14,6 +14,18 @@ Independent operations execute concurrently; sequential waiting requires a real 
 
 **When to use:** Use whenever one request needs several independent resources. Reach for it fourth, after removing the fetch, combining the query, and batching.
 
+## Avoid when
+
+- The second call needs the first one's result — sequential waiting is correct when the dependency is real
+- The fetch can be removed, combined into one query or batched — a round trip removed beats a round trip parallelised
+- The fan-out is an unbounded list — `Promise.all` over it is a load test aimed at your own database
+
+## Alternatives
+
+- **Eliminate the fetch** — prefer when the response does not actually need the data
+- **Combine into one datastore query** — prefer when the independent reads hit the same store and can be answered by one query
+- **Batch equivalent operations (one read by the fetched ids)** — prefer when the parallel calls are the same lookup repeated per item — that is N+1, and batching removes the round trips
+
 ## Docs
 
 - [docs/blueprint/velocity/data.md#no-waterfall-data-loading](/docs/blueprint/velocity/data) — The ordered strategies; concurrency is fourth, not first ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))

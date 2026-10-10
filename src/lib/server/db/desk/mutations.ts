@@ -68,9 +68,9 @@ export async function renameFile(id: string, userId: string, name: string, handl
  *
  * Sets `deleted_at` on the file row and on the matching detail row
  * (spreadsheet or markdown). Readers filter `deleted_at IS NULL` so the
- * file disappears from every list, tree, and AI tool. There is no restore
- * path — the row stays in place until the `deskRetention` job hard-deletes
- * it after the `desk-trash` retention window.
+ * file disappears from every list, tree, and AI tool. The row stays in place
+ * until the `deskRetention` job hard-deletes it after the `desk-trash` retention
+ * window; until then `restoreFile` can bring it back.
  */
 export async function deleteFile(id: string, userId: string, source: RevisionSource = 'user', handle: DbHandle = db) {
 	return handle.transaction(async (tx) => {
@@ -418,10 +418,12 @@ export async function updateSpreadsheetByFileId(
 		if (cells !== undefined) sheetUpdate.cells = cells;
 		if (data.columnMeta !== undefined) sheetUpdate.columnMeta = data.columnMeta;
 
+		let revisionId: string | null = null;
 		if (Object.keys(sheetUpdate).length > 0) {
 			// Snapshot the pre-image before overwriting content.
+			revisionId = createId.deskRevision();
 			await tx.insert(fileRevision).values({
-				id: createId.deskRevision(),
+				id: revisionId,
 				fileId,
 				userId,
 				fileType: 'spreadsheet',
@@ -443,7 +445,12 @@ export async function updateSpreadsheetByFileId(
 		const [updated] = await tx.update(file).set(fileUpdate).where(eq(file.id, fileId)).returning();
 
 		return updated
-			? { status: 'saved' as const, file: updated, version: Number(sheetUpdate.version ?? current.version) }
+			? {
+					status: 'saved' as const,
+					file: updated,
+					version: Number(sheetUpdate.version ?? current.version),
+					revisionId,
+				}
 			: null;
 	});
 }
@@ -507,8 +514,9 @@ export async function updateMarkdownByFileId(
 		if (current.version !== data.expectedVersion) return { status: 'conflict' as const };
 
 		// Snapshot the pre-image before overwriting content.
+		const revisionId = createId.deskRevision();
 		await tx.insert(fileRevision).values({
-			id: createId.deskRevision(),
+			id: revisionId,
 			fileId,
 			userId,
 			fileType: 'markdown',
@@ -525,7 +533,7 @@ export async function updateMarkdownByFileId(
 			.where(eq(markdown.fileId, fileId));
 		const [updated] = await tx.update(file).set({ updatedAt: now }).where(eq(file.id, fileId)).returning();
 
-		return updated ? { status: 'saved' as const, file: updated, version } : null;
+		return updated ? { status: 'saved' as const, file: updated, version, revisionId } : null;
 	});
 }
 
@@ -546,4 +554,37 @@ export async function lockFileIfUnchanged(handle: DbHandle, fileId: string, user
 	if (!row) return null;
 	if (row.updatedAt.getTime() !== sinceUpdatedAt.getTime()) return { status: 'changed' as const };
 	return { status: 'locked' as const, file: row };
+}
+
+/**
+ * Bring a soft-deleted file back — the inverse of `deleteFile`, for an undo that was
+ * reviewed against the moment of deletion. Compare-and-swap on the file's `updatedAt`
+ * (compared in JS after the row lock, as `lockFileIfUnchanged` does): a file deleted and
+ * touched again since, or already restored, is `changed`, never restored twice. Clears
+ * `deleted_at` on the file and its detail row; content and its version are untouched.
+ */
+export async function restoreFile(id: string, userId: string, sinceUpdatedAt: Date, handle: DbHandle = db) {
+	return handle.transaction(async (tx) => {
+		const [row] = await tx
+			.select()
+			.from(file)
+			.where(and(eq(file.id, id), eq(file.userId, userId)))
+			.limit(1)
+			.for('update');
+		if (!row) return null;
+		if (row.deletedAt === null || row.updatedAt.getTime() !== sinceUpdatedAt.getTime()) {
+			return { status: 'changed' as const };
+		}
+		const [restored] = await tx
+			.update(file)
+			.set({ deletedAt: null, updatedAt: new Date() })
+			.where(eq(file.id, id))
+			.returning();
+		if (row.type === 'spreadsheet') {
+			await tx.update(spreadsheet).set({ deletedAt: null }).where(eq(spreadsheet.fileId, id));
+		} else if (row.type === 'markdown') {
+			await tx.update(markdown).set({ deletedAt: null }).where(eq(markdown.fileId, id));
+		}
+		return { status: 'restored' as const, file: restored };
+	});
 }

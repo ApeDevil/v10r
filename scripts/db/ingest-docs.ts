@@ -13,11 +13,13 @@
  *     chunker the app `ingest()` uses) + `doc-filter` (relative imports). Replicates
  *     the canonical-path derivation from `src/lib/server/docs/manifest.ts` (Vite-only).
  *   - All rows owned by the reserved SYSTEM_DOCS_USER_ID / PROJECT_DOCS_COLLECTION
- *     (every retrieval query hard-filters user_id). Idempotent: content-hash skip,
- *     soft-delete + re-insert on change, delete-not-seen reconcile for removed files.
- *     Pass --force (or INGEST_FORCE=1) to re-chunk and re-embed every doc after a
- *     chunking-LOGIC change (the per-file content hash only detects content edits). It
- *     burns embed quota for the whole corpus; the free tier caps at 1000 embed requests/day.
+ *     (every retrieval query hard-filters user_id). Idempotent by derivation key: a doc is
+ *     re-derived only when `derivationKey(docs-ingest@N, [file hash, chunker@version + sizing,
+ *     embedding model])` differs from the stored one, so a chunker, sizing or model change
+ *     re-derives the corpus without a flag, and an unchanged corpus costs zero embeds.
+ *     Soft-delete + re-insert on change, delete-not-seen reconcile for removed files. A full
+ *     re-derive burns embed quota for the whole corpus (free tier: 1000 embed requests/day);
+ *     a run cut short by the quota leaves the rest keyed as stale, so the next run resumes.
  *
  * Produces hierarchical parent(section)+child(paragraph) chunks so retrieval tier-1
  * (hybrid vector+BM25) AND tier-2 (parent-child) both work for the docs corpus, with
@@ -32,18 +34,20 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { neonConfig, Pool } from '@neondatabase/serverless';
-import { embedMany } from 'ai';
+import { APICallError, embedMany, RetryError } from 'ai';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { EMBEDDING_UNAVAILABLE_MESSAGES, resolveEmbeddingConnection } from '../../src/lib/server/ai/connections';
 import { listProviderConnections } from '../../src/lib/server/db/ai/provider-connections';
+import { contentHash, derivationKey } from '../../src/lib/server/db/content-hash';
 import * as schema from '../../src/lib/server/db/schema';
 import { deriveTitle, isBlocked, parseFrontmatter, slugify } from '../../src/lib/server/docs/doc-filter';
 import { buildOverviewBody } from '../../src/lib/server/docs/overview-body';
-import { planChunks } from '../../src/lib/server/retrieval/plan';
+import { chunkingInput, planChunks } from '../../src/lib/server/retrieval/plan';
 import {
 	CHUNK_OVERLAP,
 	EMBEDDING_DIMENSIONS,
+	EMBEDDING_INPUT,
 	EMBEDDING_MODEL,
 	EMBEDDING_MODEL_ID,
 	PARAGRAPH_CHUNK_TARGET,
@@ -60,9 +64,12 @@ const PROJECT_DOCS_COLLECTION_ID = 'project-docs';
 const EMBED_BATCH = 32;
 // Gemini free-tier embeddings cap at 100 requests/minute — pace safely under it.
 const MAX_EMBED_PER_MIN = 90;
-// Re-chunk + re-embed docs even when their file hash is unchanged. Needed after a
-// chunking-LOGIC change (the per-file hash only detects CONTENT edits, not code changes).
-const FORCE = process.argv.includes('--force') || process.env.INGEST_FORCE === '1';
+/**
+ * Version of THIS script's transform: the title rule, the deterministic "<title> › <heading>"
+ * context prefix and the parent/child storage shape below. Bump it when one of those changes
+ * what gets embedded; the chunker, sizing and embedding model are keyed separately.
+ */
+const DOCS_INGEST_TRANSFORM = 'docs-ingest@1';
 
 const SCRIPT_NAME = 'ingest-docs';
 const NEON_DATABASE_URL_PROD = process.env.NEON_DATABASE_URL_PROD;
@@ -94,7 +101,6 @@ if ('unavailable' in embeddingConnection) {
 const embedModel = createGoogleGenerativeAI({ apiKey: embeddingConnection.apiKey }).embedding(EMBEDDING_MODEL);
 const EMBED_OPTS = { google: { outputDimensionality: EMBEDDING_DIMENSIONS, taskType: 'RETRIEVAL_DOCUMENT' } };
 
-const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 const shortId = (prefix: string) =>
 	`${prefix}_${createHash('sha256').update(`${prefix}${Math.random()}${performance.now()}`).digest('hex').slice(0, 16)}`;
 const vecLiteral = (v: number[]) => `[${v.join(',')}]`;
@@ -139,7 +145,26 @@ interface DocFile {
 	docsPath: string; // /docs/section/slug  (== quick-search doc record path)
 	title: string;
 	body: string;
+	raw: string;
+}
+
+/** A doc plus the key of the chunks and embeddings it should currently have. */
+interface KeyedDoc extends DocFile {
 	rawHash: string;
+	derivationKey: string;
+}
+
+/** Sizing and model are inputs of every docs derivation, independent of the file. */
+const CHUNKING_INPUT = chunkingInput({
+	sectionTarget: SECTION_CHUNK_TARGET,
+	paragraphTarget: PARAGRAPH_CHUNK_TARGET,
+	overlap: CHUNK_OVERLAP,
+});
+
+async function keyDoc(doc: DocFile): Promise<KeyedDoc> {
+	const rawHash = await contentHash(doc.raw);
+	const key = await derivationKey(DOCS_INGEST_TRANSFORM, [rawHash, CHUNKING_INPUT, EMBEDDING_INPUT]);
+	return { ...doc, rawHash, derivationKey: key };
 }
 
 /** Recursively list every *.md under docs/, returning repo-relative paths. */
@@ -184,7 +209,7 @@ function buildDocFile(absPath: string): DocFile | null {
 	const fileBase = parts[parts.length - 1].replace(/\.md$/, '');
 	const slug = section === 'blueprint' ? parts.slice(2).join('/').replace(/\.md$/, '') : slugify(fileBase);
 
-	return { sourcePath, docsPath: `/docs/${section}/${slug}`, title, body, rawHash: sha256(raw) };
+	return { sourcePath, docsPath: `/docs/${section}/${slug}`, title, body, raw };
 }
 
 async function ensurePrereqs() {
@@ -214,7 +239,40 @@ async function awaitEmbedBudget(count: number): Promise<void> {
 	}
 }
 
-/** Embed one batch, paced under the quota, with 429 backoff as a safety net. */
+/** The longest wait a quota error may ask for before the run stops instead of backing off. */
+const MAX_QUOTA_WAIT_S = 300;
+
+/** A quota that will not reset within this run (the free tier's daily embed cap). */
+class EmbedQuotaExhausted extends Error {
+	constructor(waitSeconds: number) {
+		const hours = Math.floor(waitSeconds / 3600);
+		const minutes = Math.ceil((waitSeconds % 3600) / 60);
+		super(
+			`embed quota exhausted until it resets (the provider asks to retry in ~${hours}h${minutes}m). ` +
+				'Re-run then; docs already keyed are skipped.',
+		);
+	}
+}
+
+/**
+ * The wait a quota error asks for, in seconds, from the body's `RetryInfo`
+ * (`"retryDelay": "51310s"`). A per-minute limit asks for seconds, a daily one for hours.
+ * The AI SDK wraps its own retries in a `RetryError`, so every attempt is read.
+ */
+function quotaRetryDelaySeconds(err: unknown): number | null {
+	let longest: number | null = null;
+	for (const cause of RetryError.isInstance(err) ? err.errors : [err]) {
+		if (!APICallError.isInstance(cause)) continue;
+		const match = cause.responseBody?.match(/"retryDelay":\s*"(\d+(?:\.\d+)?)s"/);
+		if (match) longest = Math.max(longest ?? 0, Number(match[1]));
+	}
+	return longest;
+}
+
+/**
+ * Embed one batch, paced under the quota, with 429 backoff as a safety net. Backoff only
+ * helps a per-minute limit; a quota that asks for a longer wait stops the run at once.
+ */
 async function embedBatch(values: string[], attempt = 0): Promise<number[][]> {
 	await awaitEmbedBudget(values.length);
 	try {
@@ -223,6 +281,8 @@ async function embedBatch(values: string[], attempt = 0): Promise<number[][]> {
 		for (let i = 0; i < values.length; i++) embedTimestamps.push(now);
 		return r.embeddings;
 	} catch (err) {
+		const wait = quotaRetryDelaySeconds(err);
+		if (wait !== null && wait > MAX_QUOTA_WAIT_S) throw new EmbedQuotaExhausted(wait);
 		if (attempt < 6 && /quota|rate|429|RESOURCE_EXHAUSTED/i.test(String(err))) {
 			console.warn(`[ingest-docs] embed quota hit — backing off 35s (retry ${attempt + 1})`);
 			await sleep(35_000);
@@ -248,7 +308,7 @@ function deepestHeading(text: string): string {
 }
 
 /** Insert one document as hierarchical parent(section)+child(paragraph) chunks. Returns total count. */
-async function insertDoc(doc: DocFile): Promise<number> {
+async function insertDoc(doc: KeyedDoc): Promise<number> {
 	const { parents, children } = await planChunks(doc.body, {
 		sectionTarget: SECTION_CHUNK_TARGET,
 		paragraphTarget: PARAGRAPH_CHUNK_TARGET,
@@ -273,9 +333,11 @@ async function insertDoc(doc: DocFile): Promise<number> {
 	const totalChunks = parents.length + children.length;
 	const totalTokens = parents.reduce((s, p) => s + p.tokenCount, 0) + children.reduce((s, c) => s + c.tokenCount, 0);
 	await db.execute(sql`
-		INSERT INTO retrieval.document (id, user_id, title, source, source_uri, status, total_chunks, total_tokens, content_hash)
+		INSERT INTO retrieval.document (
+			id, user_id, title, source, source_uri, status, total_chunks, total_tokens, content_hash, derivation_key
+		)
 		VALUES (${docId}, ${SYSTEM_DOCS_USER_ID}, ${doc.title}, 'docs', ${doc.docsPath}, 'ready',
-			${totalChunks}, ${totalTokens}, ${doc.rawHash})
+			${totalChunks}, ${totalTokens}, ${doc.rawHash}, ${doc.derivationKey})
 	`);
 
 	// Parents: section-level context containers — no embedding, no prefix. They surface
@@ -336,14 +398,17 @@ async function main() {
 	console.log('[ingest-docs] Ensuring system user + collection...');
 	await ensurePrereqs();
 
-	const files = listMarkdown(DOCS_ROOT)
-		.map(buildDocFile)
-		.filter((d): d is DocFile => d !== null);
+	const files = await Promise.all(
+		listMarkdown(DOCS_ROOT)
+			.map(buildDocFile)
+			.filter((d): d is DocFile => d !== null)
+			.map(keyDoc),
+	);
 	console.log(`[ingest-docs] ${files.length} public docs found.`);
 
 	// Current active docs corpus, keyed by canonical path.
-	const existing = await db.execute<{ id: string; sourceUri: string; contentHash: string }>(sql`
-		SELECT id, source_uri AS "sourceUri", content_hash AS "contentHash"
+	const existing = await db.execute<{ id: string; sourceUri: string; derivationKey: string | null }>(sql`
+		SELECT id, source_uri AS "sourceUri", derivation_key AS "derivationKey"
 		FROM retrieval.document WHERE source = 'docs' AND deleted_at IS NULL
 	`);
 	const activeByPath = new Map(existing.rows.map((r) => [r.sourceUri, r]));
@@ -357,19 +422,35 @@ async function main() {
 	for (const doc of files) {
 		seen.push(doc.docsPath);
 		const prior = activeByPath.get(doc.docsPath);
-		if (!FORCE && prior && prior.contentHash === doc.rawHash) {
+		// Null (derived before keys existed) never matches, so such a doc is re-derived once.
+		if (prior && prior.derivationKey === doc.derivationKey) {
 			skipped++;
 			continue;
 		}
+		// The fresh copy first, the prior one retired only once it landed: a run cut short by
+		// the embed quota (insertDoc embeds before it writes) then leaves the old copy
+		// searchable instead of a hole — the same order `syncDeskFileToRetrieval` keeps.
+		let n: number;
+		try {
+			n = await insertDoc(doc);
+		} catch (err) {
+			// The reconcile below must not run on a partial `seen`; report how far this run got.
+			if (err instanceof EmbedQuotaExhausted) {
+				const left = files.length - skipped - inserted - updated;
+				console.log(
+					`[ingest-docs] ${inserted} new, ${updated} updated, ${skipped} unchanged; ${left} not reached (keyed ones skip next run).`,
+				);
+			}
+			throw err;
+		}
+		chunks += n;
 		if (prior) {
-			// Changed — soft-delete the prior version (forward-safe vs page_source restrict).
+			// Soft-delete, not delete: forward-safe vs the page_source restrict.
 			await db.execute(sql`UPDATE retrieval.document SET deleted_at = now() WHERE id = ${prior.id}`);
 			updated++;
 		} else {
 			inserted++;
 		}
-		const n = await insertDoc(doc);
-		chunks += n;
 		console.log(`[ingest-docs] ${prior ? 'upd' : 'new'} ${doc.docsPath} (+${n} chunks)`);
 	}
 
@@ -393,6 +474,7 @@ async function main() {
 }
 
 main().catch((err) => {
-	console.error('[ingest-docs] Failed:', err);
+	if (err instanceof EmbedQuotaExhausted) console.error(`[ingest-docs] Stopped: ${err.message}`);
+	else console.error('[ingest-docs] Failed:', err);
 	process.exit(1);
 });

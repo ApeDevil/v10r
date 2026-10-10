@@ -10,7 +10,7 @@
 import { getProposal, listProposalSteps } from '$lib/server/db/ai/proposals';
 import type { TurnProposal, TurnTrace } from '$lib/types/turn-trace';
 import { toCardSteps } from './approval-boundary';
-import { toStepReceipt } from './execute-proposal';
+import { toStepReceipt } from './proposal-outcome';
 
 /**
  * Attach the turn's proposal. A proposal that is gone (its message deleted) or that names

@@ -11,6 +11,7 @@
  * registry, checking doc publication, writing files — belongs to the script;
  * `RenderOpts.isPublishedDoc` injects the one predicate the renderers need.
  */
+import { headingAnchors } from '../../docs/heading-anchors.server';
 import type { PatternRecord, Registry, RegRef } from './registry';
 
 export interface RenderOpts {
@@ -32,12 +33,12 @@ export const README_MARKER_END = '<!-- PATTERN-INDEX:END -->';
 const GENERATED_NOTE =
 	'> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.';
 
-/** GitHub's heading→anchor algorithm, for the TOC links ("A & B" → "a--b"). */
+/**
+ * The anchor a heading renders to ("A & B" → "a--b"), for the TOC links. GitHub and the docs
+ * renderer both slug with github-slugger; `headingAnchors` is the one place that runs it.
+ */
 export function anchorFor(title: string): string {
-	return title
-		.toLowerCase()
-		.replace(/[^a-z0-9 -]/g, '')
-		.replace(/ /g, '-');
+	return [...headingAnchors(`# ${title}`)][0] ?? '';
 }
 
 /**
@@ -137,7 +138,11 @@ function readmeRow(pattern: PatternRecord): string {
 	// Exception badge: only non-proven rows are marked, so the table stays quiet
 	// for the proven majority instead of growing a fifth column.
 	const badge = pattern.maturity === 'proven' ? '' : ` _(${pattern.maturity})_`;
-	return `| ${title}${badge} | ${readmeDocsCell(pattern.docs)} | ${readmeCodeCell(pattern.code)} | ${readmeShowcaseCell(pattern.showcases)} |`;
+	// The index is the surface agents actually load (research: on-demand MCP lookups are
+	// rarely made), so the deep rows carry their headline contraindication inline.
+	const avoid =
+		pattern.tier === 'deep' && pattern.avoid_when.length > 0 ? `<br>_Avoid when:_ ${pattern.avoid_when[0]}` : '';
+	return `| ${title}${badge}${avoid} | ${readmeDocsCell(pattern.docs)} | ${readmeCodeCell(pattern.code)} | ${readmeShowcaseCell(pattern.showcases)} |`;
 }
 
 /** The full marker-delimited README region, markers included. */
@@ -150,6 +155,7 @@ export function renderReadmeIndex(registry: Registry): string {
 		'> like (`/desk`), mean there is no showcase; the pattern is live at that app route.',
 		'> Unmarked rows are **proven** (a linked test or showcase, verified at a recorded date); _(implemented)_',
 		'> means the code exists but no proof surface is linked yet, _(planned)_ that it is design-only.',
+		'> Each deep row ends with its headline *Avoid when* — the first reason not to adopt it; the page lists the rest.',
 		'',
 	);
 	for (const group of registry.groups) {
@@ -257,10 +263,22 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 		'',
 		`**When to use:** ${pattern.when_to_use}`,
 		'',
-		`## Docs`,
-		'',
-		pageDocsLines(pattern.docs, opts),
 	);
+	if (pattern.requires.length > 0) {
+		sections.push(`**Requires:** ${pattern.requires.join(', ')}`, '');
+	}
+	if (pattern.avoid_when.length > 0) {
+		sections.push('## Avoid when', '', bulletLines(pattern.avoid_when), '');
+	}
+	if (pattern.alternatives.length > 0) {
+		sections.push(
+			'## Alternatives',
+			'',
+			bulletLines(pattern.alternatives.map((alt) => `**${alt.approach}** — prefer when ${alt.prefer_when}`)),
+			'',
+		);
+	}
+	sections.push(`## Docs`, '', pageDocsLines(pattern.docs, opts));
 	if (pattern.code.length > 0) {
 		sections.push('', '## Code', '', pageRefLines(pattern.code));
 	}

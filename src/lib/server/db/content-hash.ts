@@ -15,3 +15,18 @@ export async function contentHash(markdown: string): Promise<string> {
 	const bytes = new Uint8Array(buffer);
 	return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+/**
+ * The freshness key of a derived output: `hash(transform, ...inputs)`, stored beside the
+ * output. The output is current exactly while a recomputed key matches the stored one.
+ *
+ * `transform` names the producing code and its version (`'docs-ingest@1'`), which is what a
+ * content hash alone cannot see: a chunker change leaves every input byte identical and every
+ * stored chunk stale. Inputs are positional — callers pass them in a fixed order — and the
+ * JSON encoding keeps `['ab', 'c']` distinct from `['a', 'bc']`. Anything that changes the
+ * output must be an input or covered by the transform version; an undeclared input is the
+ * one way this key lies.
+ */
+export function derivationKey(transform: string, inputs: readonly string[]): Promise<string> {
+	return contentHash(JSON.stringify([transform, ...inputs]));
+}

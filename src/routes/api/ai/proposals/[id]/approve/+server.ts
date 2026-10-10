@@ -4,9 +4,8 @@
  * State machine:
  *   `pending → approved → executing → (executed | failed)`
  *
- * **Idempotency**: `proposalId` IS the idempotency key. The partial unique
- * index on `agent_proposal` (see `db/schema/ai/proposal.ts`) ensures at most
- * one row is simultaneously in `executing` or `executed` state. Concurrent
+ * **Idempotency**: `proposalId` IS the idempotency key. `markExecuting`'s
+ * conditional `approved → executing` UPDATE admits one executor; concurrent
  * approvals find the existing row and answer from its step receipts.
  *
  * Flow — this handler is the adapter; `executeProposal` is the work:
@@ -20,7 +19,8 @@
  * DELETE on the same URL rejects a still-pending proposal.
  */
 
-import { executeProposal, proposalOutcome } from '$lib/server/ai/proposals/execute-proposal';
+import { executeProposal } from '$lib/server/ai/proposals/execute-proposal';
+import { proposalOutcome } from '$lib/server/ai/proposals/proposal-outcome';
 import {
 	approveProposal,
 	getProposal,
@@ -114,8 +114,8 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 			if (!approved) return await explainRefusedApproval(proposal.id);
 		}
 
-		// Transition approved → executing. Partial unique index protects
-		// us from concurrent executors.
+		// Transition approved → executing. The conditional UPDATE admits exactly one
+		// executor; a concurrent one gets no row.
 		const claimed = await markExecuting(proposal.id);
 		if (!claimed) {
 			// Someone else claimed it between our `approveProposal` and here —

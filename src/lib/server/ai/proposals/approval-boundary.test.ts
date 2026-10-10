@@ -86,7 +86,7 @@ describe('toCardSteps / riskTierOf', () => {
 				tool: 'desk_create_spreadsheet',
 				risk: 'create',
 				rationale: '',
-				recovery: 'none',
+				recovery: 'created',
 				retentionDays: null,
 			},
 		]);

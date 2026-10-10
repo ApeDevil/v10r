@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { PartPhoto } from '$lib/3d/parts';
+import { creditLine } from '$lib/credits/asset-rights';
 
 interface Props {
 	/** Photos of the selected part (thumbnail grid → click opens the lightbox) */
@@ -67,7 +68,7 @@ function handleKeydown(e: KeyboardEvent) {
 					<img src={lightboxPhoto.src} alt={lightboxPhoto.alt} />
 					<figcaption>
 						<span class="caption">{lightboxPhoto.caption}</span>
-						<span class="credit">{lightboxPhoto.credit}</span>
+						<span class="credit">{creditLine(lightboxPhoto.rights)}</span>
 					</figcaption>
 				</figure>
 

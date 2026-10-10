@@ -14,6 +14,17 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 **When to use:** Use when one product needs both a safe answer-bot and an acting agent: splitting the surface (not forking the stack) keeps permissions and prompts honest per surface.
 
+**Requires:** ai-provider
+
+## Avoid when
+
+- The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate
+- Both assistants would share tools, corpus and permissions — the split earns its keep through zero tool overlap and separate corpora
+
+## Alternatives
+
+- **One assistant whose request flags toggle retrieval and tools** — prefer when there is one permission set and one corpus, so there is no surface to dispatch on
+
 ## Docs
 
 - [docs/blueprint/ai/surfaces.md](/docs/blueprint/ai/surfaces) — The surface split and per-surface rules ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/surfaces.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/surfaces.md))

@@ -14,6 +14,18 @@ Four separate decisions about an unhealthy dependency — should we call it, how
 
 **When to use:** Use around any dependency that can fail, throttle or slow down: AI providers, Redis, the database, external APIs, object storage.
 
+## Avoid when
+
+- No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites
+- You want one resilientCall() wrapper for every call site — its defaults are wrong for most of them
+- You plan to retry non-idempotent work — a timed-out first attempt may already have succeeded unseen
+
+## Alternatives
+
+- **a bounded wait from a propagated deadline with a per-leaf fallback** — prefer when the dependency is only occasionally slow and never needs to be stopped from being called
+- **an in-process breaker with no shared state** — prefer when the app runs as one long-lived process rather than many serverless instances
+- **serve the last good cached value (stale-if-error)** — prefer when the dependency backs a read whose stale result is acceptable during an outage
+
 ## Docs
 
 - [docs/blueprint/velocity/runtime.md#resilience-policy](/docs/blueprint/velocity/runtime) — Which mechanism answers which question, and why they are separate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/runtime.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/runtime.md))

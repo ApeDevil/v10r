@@ -6,7 +6,8 @@
  */
 import { Card, PageHeader } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
-import { creditGroups, credits } from '$lib/credits/registry';
+import { creditLine } from '$lib/credits/asset-rights';
+import { assetCredits, creditGroups, credits } from '$lib/credits/registry';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 
@@ -57,6 +58,23 @@ const groupedCredits = creditGroups.map((group) => ({
 			</section>
 		{/each}
 
+		<section aria-labelledby="credits-assets-heading">
+			<h2 id="credits-assets-heading" class="credits-group-title">{m.credits_group_assets()}</h2>
+			<p class="credit-role">{m.credits_assets_lede()}</p>
+			<ul class="credit-assets">
+				{#each assetCredits as asset (asset.path)}
+					<li class="credit-asset">
+						<span class="credit-name">{asset.title}</span>
+						<span class="credit-role">{creditLine(asset.rights)}</span>
+						<a href={asset.rights.source} target="_blank" rel="noopener noreferrer" class="credit-link">
+							{m.credits_link_source()}
+							<span class="i-lucide-external-link" aria-hidden="true"></span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		</section>
+
 		<Card>
 			<Stack gap="3">
 				<p class="credits-outro-text">{m.credits_outro_source()}</p>
@@ -87,6 +105,19 @@ const groupedCredits = creditGroups.map((group) => ({
 </PageContainer>
 
 <style>
+	.credit-assets {
+		display: grid;
+		gap: 0.5rem;
+		margin-top: 0.75rem;
+	}
+	.credit-asset {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.25rem 0.75rem;
+		padding-bottom: 0.5rem;
+		border-bottom: 1px solid var(--color-border);
+	}
 	.credits-group-title {
 		margin: 0 0 var(--spacing-4);
 		font-size: var(--text-fluid-lg);

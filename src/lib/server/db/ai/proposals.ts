@@ -5,18 +5,20 @@
  *                `       ↓         ↓              `
  *                `    rejected   (retry = new row)`
  *
- * Exactly-once execution is enforced by the partial unique index on
- * `agent_proposal` at schema level — concurrent `markExecuting` calls
- * for the same proposal collide there. Readers handle the collision by
- * reading the existing row instead of racing. What each step did is the
- * `agent_proposal_step` receipt, written in the step's own transaction.
+ * Exactly-once execution comes from `markExecuting`'s conditional UPDATE
+ * (`approved → executing` matches one caller; a concurrent one gets no row and reads
+ * the existing one instead of racing). What each step did is the
+ * `agent_proposal_step` receipt, written in the step's own transaction, which also
+ * holds the fence (`lockExecuting`): a run healed to `failed('interrupted')` cannot
+ * commit another step. Lease time is the DATABASE clock throughout.
  */
-import { and, asc, eq, gt, lt, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, isNull, lt, sql } from 'drizzle-orm';
 import type { ProposalStepKind } from '$lib/types/db-enums';
 import { createId } from '../id';
 import { type DbHandle, db } from '../index';
+import { conversation } from '../schema/ai/conversation';
 import { agentProposal, type ProposedToolCall } from '../schema/ai/proposal';
-import { agentProposalStep } from '../schema/ai/proposal-step';
+import { agentProposalRevertStep, agentProposalStep, type StepRecoveryPoint } from '../schema/ai/proposal-step';
 
 /**
  * The time bound on consent, as a SQL predicate.
@@ -182,7 +184,7 @@ export async function rejectProposal(id: string, reason?: string) {
 export async function markExecuting(id: string) {
 	const [row] = await db
 		.update(agentProposal)
-		.set({ status: 'executing', updatedAt: new Date() })
+		.set({ status: 'executing', updatedAt: sql`now()` })
 		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'approved'), notExpired()))
 		.returning();
 	return row ?? null;
@@ -220,8 +222,25 @@ export async function markFailed(id: string, message: string) {
 export async function touchExecuting(id: string) {
 	await db
 		.update(agentProposal)
-		.set({ updatedAt: new Date() })
+		.set({ updatedAt: sql`now()` })
 		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'executing')));
+}
+
+/**
+ * The fence. Locks the proposal row for the step's transaction and reports whether it is
+ * still `executing`. A lease alone does not stop a slow executor that outlived it: once
+ * `markInterruptedIfStale` has healed the row to `failed`, the old run's next step finds
+ * no row here and rolls back with its mutation, instead of committing behind a terminal
+ * status. On Vercel `maxDuration` happens to kill such a run; a persistent host has no
+ * such backstop, which is why the check lives in the data.
+ */
+export async function lockExecuting(handle: DbHandle, id: string): Promise<boolean> {
+	const [row] = await handle
+		.select({ id: agentProposal.id })
+		.from(agentProposal)
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.status, 'executing')))
+		.for('update');
+	return row !== undefined;
 }
 
 /**
@@ -238,7 +257,7 @@ export async function markInterruptedIfStale(id: string, leaseMs = EXECUTION_LEA
 			and(
 				eq(agentProposal.id, id),
 				eq(agentProposal.status, 'executing'),
-				lt(agentProposal.updatedAt, new Date(Date.now() - leaseMs)),
+				lt(agentProposal.updatedAt, sql`now() - make_interval(secs => ${leaseMs / 1000})`),
 			),
 		)
 		.returning();
@@ -253,6 +272,7 @@ export interface ProposalStepReceiptInput {
 	output: unknown;
 	errorMessage?: string;
 	createdFileId?: string;
+	recovery?: StepRecoveryPoint;
 }
 
 /**
@@ -271,6 +291,7 @@ export async function recordProposalStep(handle: DbHandle, input: ProposalStepRe
 			output: input.output ?? null,
 			errorMessage: input.errorMessage ?? null,
 			createdFileId: input.createdFileId ?? null,
+			recovery: input.recovery ?? null,
 		})
 		.returning();
 	return row;
@@ -283,4 +304,120 @@ export async function listProposalSteps(proposalId: string) {
 		.from(agentProposalStep)
 		.where(eq(agentProposalStep.proposalId, proposalId))
 		.orderBy(asc(agentProposalStep.stepIndex));
+}
+
+// ── Revert: the compensating run of an executed plan ────────────────────────────────
+// Same contract as the forward run (durable-step-execution): a conditional claim, a
+// database-clock heartbeat, a fence in every step's transaction, receipts written with
+// their effect. One revert per proposal — `revert_status` is claimed from null.
+
+/**
+ * Claim the undo of a plan that ran (`executed`, or `failed` with some steps done). The
+ * conditional UPDATE is the exactly-once: a second request matches no row.
+ */
+export async function claimRevert(id: string, userId: string) {
+	const [row] = await db
+		.update(agentProposal)
+		.set({ revertStatus: 'reverting', revertedBy: userId, updatedAt: sql`now()` })
+		.where(
+			and(
+				eq(agentProposal.id, id),
+				isNull(agentProposal.revertStatus),
+				inArray(agentProposal.status, ['executed', 'failed']),
+				// Ownership in the claim itself: the one undo a plan has cannot be spent by anyone
+				// but the owner of its conversation, whichever door calls this.
+				sql`exists (select 1 from ${conversation} where ${conversation.id} = ${agentProposal.conversationId} and ${conversation.userId} = ${userId})`,
+			),
+		)
+		.returning();
+	return row ?? null;
+}
+
+/**
+ * Whether every step that ran recorded what undoing it needs. Plans executed before recovery
+ * points existed did not, and an undo of them would claim success while undoing nothing.
+ */
+export async function hasRecoveryPoints(proposalId: string): Promise<boolean> {
+	const steps = await listProposalSteps(proposalId);
+	const ran = steps.filter((step) => step.kind === 'ok');
+	return ran.length > 0 && ran.every((step) => step.recovery !== null);
+}
+
+/** The revert's fence — the forward run's `lockExecuting`, for `revert_status = 'reverting'`. */
+export async function lockReverting(handle: DbHandle, id: string): Promise<boolean> {
+	const [row] = await handle
+		.select({ id: agentProposal.id })
+		.from(agentProposal)
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.revertStatus, 'reverting')))
+		.for('update');
+	return row !== undefined;
+}
+
+/** Heartbeat between revert steps, on the database clock. */
+export async function touchReverting(id: string) {
+	await db
+		.update(agentProposal)
+		.set({ updatedAt: sql`now()` })
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.revertStatus, 'reverting')));
+}
+
+/** Terminal transition of the revert; null when it was already healed or finished. */
+export async function finishRevert(id: string, outcome: 'reverted' | 'revert_failed') {
+	const [row] = await db
+		.update(agentProposal)
+		.set({ revertStatus: outcome, revertedAt: sql`now()`, updatedAt: sql`now()` })
+		.where(and(eq(agentProposal.id, id), eq(agentProposal.revertStatus, 'reverting')))
+		.returning();
+	return row ?? null;
+}
+
+/** A revert that outlived its lease is `revert_failed`; its receipts say what was undone. */
+export async function markRevertInterruptedIfStale(id: string, leaseMs = EXECUTION_LEASE_MS) {
+	const [row] = await db
+		.update(agentProposal)
+		.set({ revertStatus: 'revert_failed', revertedAt: sql`now()`, updatedAt: sql`now()` })
+		.where(
+			and(
+				eq(agentProposal.id, id),
+				eq(agentProposal.revertStatus, 'reverting'),
+				lt(agentProposal.updatedAt, sql`now() - make_interval(secs => ${leaseMs / 1000})`),
+			),
+		)
+		.returning();
+	return row ?? null;
+}
+
+export interface RevertStepReceiptInput {
+	proposalId: string;
+	/** The forward step being undone. */
+	stepIndex: number;
+	kind: ProposalStepKind;
+	errorMessage?: string;
+}
+
+/**
+ * Write one revert receipt on the caller's transaction (the one that ran the compensating
+ * mutation). The foreign key onto the forward receipt refuses a revert of a step that
+ * never ran; the primary key refuses undoing one twice.
+ */
+export async function recordRevertStep(handle: DbHandle, input: RevertStepReceiptInput) {
+	const [row] = await handle
+		.insert(agentProposalRevertStep)
+		.values({
+			proposalId: input.proposalId,
+			stepIndex: input.stepIndex,
+			kind: input.kind,
+			errorMessage: input.errorMessage ?? null,
+		})
+		.returning();
+	return row;
+}
+
+/** The revert receipts a proposal has so far, by forward step. */
+export async function listRevertSteps(proposalId: string) {
+	return db
+		.select()
+		.from(agentProposalRevertStep)
+		.where(eq(agentProposalRevertStep.proposalId, proposalId))
+		.orderBy(asc(agentProposalRevertStep.stepIndex));
 }

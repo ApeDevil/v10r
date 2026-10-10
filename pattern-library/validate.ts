@@ -7,6 +7,7 @@
  */
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { headingAnchors } from '../src/lib/docs/heading-anchors.server.ts';
 import { loadRegistry } from './load.ts';
 import { buildById, type RegRef, topoSort } from './schema.ts';
 
@@ -38,6 +39,7 @@ function loadShowcaseHrefs(): Set<string> {
 }
 
 const showcaseHrefs = loadShowcaseHrefs();
+const anchorsByFile = new Map<string, Set<string>>();
 
 function checkRef(ref: RegRef, where: string): void {
 	const kind = ref.kind ?? 'file';
@@ -61,6 +63,16 @@ function checkRef(ref: RegRef, where: string): void {
 	const stats = statSync(target);
 	if (kind === 'file' && !stats.isFile()) {
 		errors.push(`${where}: '${ref.path}' exists but is not a file (set kind: "dir"?)`);
+	}
+	// A `#fragment` must name a heading the page actually renders — the file existing is not
+	// enough, and a renamed heading would otherwise leave a link that lands at the page top.
+	const fragment = ref.path.includes('#') ? ref.path.slice(ref.path.indexOf('#') + 1) : null;
+	if (fragment && stats.isFile() && target.endsWith('.md')) {
+		const anchors = anchorsByFile.get(target) ?? headingAnchors(readFileSync(target, 'utf8'));
+		anchorsByFile.set(target, anchors);
+		if (!anchors.has(fragment)) {
+			errors.push(`${where}: '${ref.path}' — no heading renders the anchor '#${fragment}'`);
+		}
 	}
 	if (kind === 'dir' && !stats.isDirectory()) {
 		errors.push(`${where}: '${ref.path}' exists but is not a directory`);

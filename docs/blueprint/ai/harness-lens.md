@@ -54,7 +54,7 @@ Two distinct mechanisms govern deskbot mutations.
 
 The execute path closes the loop. Each `desk_propose_plan` step carries its exact `args` and its **reviewed baseline** (`target`: the file's version / `updatedAt` at proposal time), persisted on the proposal payload after `validateProposedPlan` accepted the plan; on approval `executeProposal` replays them step-by-step through `executeDeskToolCall`, writing a **step receipt** (`agent_proposal_step`) in each step's transaction, refusing a step whose file moved on since review as a `conflict`, and stopping at the first non-`ok` step with the earlier steps kept (no rollback). No model turn follows: the door persists a deterministic **execution receipt message** the model reads as history. Approval binds execution.
 
-Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.file_revision` before mutating (capture only — no restore UI yet).
+Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.file_revision` before mutating, and every executed step records its **recovery point** on its receipt. The PlanCard's Undo (`POST /api/ai/proposals/[id]/revert` → `revertProposal`) runs one compensating step per receipt, in reverse, each a compare-and-swap against what the plan left behind — so work the user did since is never overwritten, only reported (see [surfaces.md](./surfaces.md)).
 
 ## Risk tiers — UI mapping
 

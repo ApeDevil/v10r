@@ -16,7 +16,11 @@ vi.mock('$lib/server/db/desk/queries', () => ({
 	listFileTimestamps: mockListFileTimestamps,
 }));
 const mockDeleteDocument = vi.fn();
-vi.mock('$lib/server/db/retrieval/mutations', () => ({ deleteDocument: mockDeleteDocument }));
+const mockMarkCurrent = vi.fn();
+vi.mock('$lib/server/db/retrieval/mutations', () => ({
+	deleteDocument: mockDeleteDocument,
+	markDocumentCurrent: mockMarkCurrent,
+}));
 const mockGetBySourcePath = vi.fn();
 const mockListOrigins = vi.fn();
 vi.mock('$lib/server/db/retrieval/queries', () => ({
@@ -26,7 +30,7 @@ vi.mock('$lib/server/db/retrieval/queries', () => ({
 const mockRetrieve = vi.fn();
 vi.mock('$lib/server/retrieval', () => ({ retrieve: mockRetrieve }));
 const mockIngest = vi.fn();
-vi.mock('$lib/server/retrieval/ingest', () => ({ ingest: mockIngest }));
+vi.mock('$lib/server/retrieval/ingest', () => ({ ingestIfChanged: mockIngest }));
 const mockDefer = vi.fn((_label: string, work: () => Promise<unknown>) => void work());
 vi.mock('$lib/server/platform', () => ({ deferAfterResponse: mockDefer }));
 
@@ -58,10 +62,17 @@ describe('retrieveDeskDocs', () => {
 describe('syncDeskFileToRetrieval', () => {
 	it('ingests the fresh copy before removing the previous one', async () => {
 		mockGetMarkdown.mockResolvedValueOnce({ file: { name: 'Notes' }, markdown: { content: 'hello', version: 1 } });
-		mockGetBySourcePath.mockResolvedValueOnce({ id: 'doc_old', updatedAt: T0, contentHash: 'h' });
+		mockGetBySourcePath.mockResolvedValueOnce({
+			id: 'doc_old',
+			updatedAt: T0,
+			contentHash: 'h',
+			status: 'ready',
+			derivationKey: 'k_old',
+		});
 		const order: string[] = [];
 		mockIngest.mockImplementationOnce(async () => {
 			order.push('ingest');
+			return { documentId: 'doc_new', chunkCount: 1, entityCount: 0, durationMs: 1 };
 		});
 		mockDeleteDocument.mockImplementationOnce(async () => {
 			order.push('delete');
@@ -69,13 +80,43 @@ describe('syncDeskFileToRetrieval', () => {
 		});
 		expect(await syncDeskFileToRetrieval(USER, 'fil_1', 'markdown')).toBe(true);
 		expect(order).toEqual(['ingest', 'delete']);
-		expect(mockIngest).toHaveBeenCalledWith({
-			title: 'Notes',
-			content: 'hello',
-			sourcePath: 'desk_file_fil_1',
-			sourceType: 'desk',
-			userId: USER,
+		expect(mockIngest).toHaveBeenCalledWith(
+			{
+				title: 'Notes',
+				content: 'hello',
+				sourcePath: 'desk_file_fil_1',
+				sourceType: 'desk',
+				userId: USER,
+			},
+			'k_old',
+		);
+	});
+
+	// The derivation key, not updatedAt, decides: an edit that moved the timestamp but not the
+	// inputs keeps its embeddings, and the copy is re-stamped so it stops reading as stale.
+	it('keeps a copy whose derivation key still matches and re-stamps it', async () => {
+		mockGetMarkdown.mockResolvedValueOnce({ file: { name: 'Notes' }, markdown: { content: 'hello', version: 2 } });
+		mockGetBySourcePath.mockResolvedValueOnce({
+			id: 'doc_old',
+			updatedAt: T0,
+			contentHash: 'h',
+			status: 'ready',
+			derivationKey: 'k',
 		});
+		mockIngest.mockResolvedValueOnce(null);
+		expect(await syncDeskFileToRetrieval(USER, 'fil_1', 'markdown')).toBe(false);
+		expect(mockDeleteDocument).not.toHaveBeenCalled();
+		expect(mockMarkCurrent).toHaveBeenCalledWith('doc_old', USER);
+	});
+
+	// An errored ingest stored its key too; matching it would skip the very retry it needs.
+	it('never lets an errored copy’s key skip the retry', async () => {
+		mockGetMarkdown.mockResolvedValueOnce({ file: { name: 'Notes' }, markdown: { content: 'hello', version: 2 } });
+		mockGetBySourcePath.mockResolvedValueOnce({ id: 'doc_err', updatedAt: T0, status: 'error', derivationKey: 'k' });
+		mockIngest.mockResolvedValueOnce({ documentId: 'doc_new', chunkCount: 1, entityCount: 0, durationMs: 1 });
+		expect(await syncDeskFileToRetrieval(USER, 'fil_1', 'markdown')).toBe(true);
+		expect(mockIngest.mock.calls[0]?.[1]).toBeNull();
+		expect(mockMarkCurrent).not.toHaveBeenCalled();
 	});
 
 	it('keeps the previous copy when the re-ingest throws', async () => {

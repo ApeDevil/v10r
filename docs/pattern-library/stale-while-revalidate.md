@@ -14,6 +14,16 @@ A value past its TTL but inside its stale window is returned immediately and ref
 
 **When to use:** Use when slightly stale is better than waiting: dashboards, feeds, metadata, public content, aggregate counts. Never for authorization, security state or balances requiring strong consistency.
 
+## Avoid when
+
+- The value is authorization, account security state or a balance needing strong consistency — a stale permission is a wrong permission
+- The read guards a destructive action, where waiting for a current value beats acting on a slightly stale one
+- The host freezes instances after the response and offers no after-response hook — a refresh killed halfway leaves the value stale
+
+## Alternatives
+
+- **Strict TTL (`staleFor: 0`): recompute on the reader's time once the TTL passes** — prefer when a reader must never see a value past its TTL and paying the recompute latency is acceptable
+
 ## Docs
 
 - [docs/blueprint/velocity/data.md#stale-while-revalidate](/docs/blueprint/velocity/data) — The four outcomes and what must never be stale ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))

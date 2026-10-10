@@ -65,7 +65,7 @@ const fileTarget = (fileId = 'fil_abc') => ({
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockLockFile.mockResolvedValue({ status: 'locked', file: { id: 'fil_abc' } });
+	mockLockFile.mockResolvedValue({ status: 'locked', file: { id: 'fil_abc', name: 'before' } });
 });
 
 describe('executeDeskToolCall — the reviewed baseline', () => {
@@ -113,7 +113,9 @@ describe('executeDeskToolCall — the reviewed baseline', () => {
 	});
 
 	it('a create needs no baseline — there is nothing to have reviewed', async () => {
-		mockCreateSpreadsheet.mockResolvedValueOnce({ file: { id: 'fil_new', name: 'Budget' } });
+		mockCreateSpreadsheet.mockResolvedValueOnce({
+			file: { id: 'fil_new', name: 'Budget', updatedAt: new Date('2026-10-10T10:00:00.000Z') },
+		});
 		const out = await executeDeskToolCall(ctx(), 'desk_create_spreadsheet', { name: 'Budget', cells: [] });
 		expect(out).toMatchObject({ ok: true, output: { created: true, fileId: 'fil_new', name: 'Budget' } });
 		expect(mockCreateSpreadsheet).toHaveBeenCalledWith(USER_ID, 'Budget', {}, null, null, fakeDb);
@@ -123,7 +125,12 @@ describe('executeDeskToolCall — the reviewed baseline', () => {
 describe('executeDeskToolCall — the argument contract', () => {
 	it('lands a write on the cell it names, whatever case the model used', async () => {
 		mockGetSpreadsheet.mockResolvedValueOnce({ spreadsheet: { cells: { B1: { v: 'old' } }, version: 1 } });
-		mockUpdateSpreadsheet.mockResolvedValueOnce({ status: 'saved', file: { name: 'sheet' }, version: 2 });
+		mockUpdateSpreadsheet.mockResolvedValueOnce({
+			status: 'saved',
+			file: { name: 'sheet', updatedAt: new Date('2026-10-10T10:00:00.000Z') },
+			version: 2,
+			revisionId: 'drv_1',
+		});
 		await executeDeskToolCall(
 			ctx(),
 			'desk_update_cells',
@@ -171,7 +178,11 @@ describe('executeDeskToolCall — the argument contract', () => {
 	});
 
 	it("deletes the file on the caller's transaction when given a real file_id", async () => {
-		mockDeleteFile.mockResolvedValueOnce({ id: 'fil_abc', name: 'alpha' });
+		mockDeleteFile.mockResolvedValueOnce({
+			id: 'fil_abc',
+			name: 'alpha',
+			updatedAt: new Date('2026-10-10T10:00:00.000Z'),
+		});
 		const out = await executeDeskToolCall(ctx(), 'desk_delete_file', { file_id: 'fil_abc' }, fileTarget());
 		// Replay tags the mutation as AI-originated so the pre-image revision is attributable.
 		expect(mockDeleteFile).toHaveBeenCalledWith('fil_abc', USER_ID, 'ai', fakeDb);
@@ -179,11 +190,17 @@ describe('executeDeskToolCall — the argument contract', () => {
 			ok: true,
 			output: { deleted: true, fileId: 'fil_abc', name: 'alpha' },
 			effects: [{ type: 'desk:refresh_explorer' }],
+			// The undo baseline rides beside the output, never inside what the model reads.
+			recovery: { kind: 'soft_delete', fileId: 'fil_abc', fileUpdatedAt: '2026-10-10T10:00:00.000Z' },
 		});
 	});
 
 	it('passes rename args (file_id + name) through verbatim', async () => {
-		mockRenameFile.mockResolvedValueOnce({ id: 'fil_x', name: 'Q3 notes' });
+		mockRenameFile.mockResolvedValueOnce({
+			id: 'fil_x',
+			name: 'Q3 notes',
+			updatedAt: new Date('2026-10-10T10:00:00.000Z'),
+		});
 		const out = await executeDeskToolCall(
 			ctx(),
 			'desk_rename_file',
@@ -191,7 +208,11 @@ describe('executeDeskToolCall — the argument contract', () => {
 			fileTarget('fil_x'),
 		);
 		expect(mockRenameFile).toHaveBeenCalledWith('fil_x', USER_ID, 'Q3 notes', fakeDb);
-		expect(out).toMatchObject({ ok: true, output: { renamed: true, fileId: 'fil_x', name: 'Q3 notes' } });
+		expect(out).toMatchObject({
+			ok: true,
+			output: { renamed: true, fileId: 'fil_x', name: 'Q3 notes' },
+			recovery: { kind: 'rename_back', previousName: 'before' },
+		});
 	});
 
 	it('rejects an unknown tool name instead of silently succeeding', async () => {
@@ -214,7 +235,12 @@ describe('executeDeskToolCall — the argument contract', () => {
 describe('executeDeskToolCall — effects', () => {
 	it('tells the desk what to reload — the gated tools never reach it, so this response must', async () => {
 		mockGetSpreadsheet.mockResolvedValueOnce({ spreadsheet: { cells: {}, version: 3 } });
-		mockUpdateSpreadsheet.mockResolvedValueOnce({ status: 'saved', file: { name: 'sheet' }, version: 4 });
+		mockUpdateSpreadsheet.mockResolvedValueOnce({
+			status: 'saved',
+			file: { name: 'sheet', updatedAt: new Date('2026-10-10T10:00:00.000Z') },
+			version: 4,
+			revisionId: 'drv_2',
+		});
 		const update = await executeDeskToolCall(
 			ctx(),
 			'desk_update_cells',
@@ -230,7 +256,9 @@ describe('executeDeskToolCall — effects', () => {
 			],
 		});
 
-		mockCreateSpreadsheet.mockResolvedValueOnce({ file: { id: 'fil_new', name: 'Budget' } });
+		mockCreateSpreadsheet.mockResolvedValueOnce({
+			file: { id: 'fil_new', name: 'Budget', updatedAt: new Date('2026-10-10T10:00:00.000Z') },
+		});
 		const create = await executeDeskToolCall(ctx(), 'desk_create_spreadsheet', { name: 'Budget', cells: [] });
 		expect(create).toMatchObject({
 			ok: true,
@@ -243,7 +271,9 @@ describe('executeDeskToolCall — effects', () => {
 	});
 
 	it('derives the same effects from a persisted receipt as from the live run', async () => {
-		mockCreateMarkdown.mockResolvedValueOnce({ file: { id: 'fil_doc', name: 'Notes' } });
+		mockCreateMarkdown.mockResolvedValueOnce({
+			file: { id: 'fil_doc', name: 'Notes', updatedAt: new Date('2026-10-10T10:00:00.000Z') },
+		});
 		const live = await executeDeskToolCall(ctx(), 'desk_create_markdown', { name: 'Notes', content: '# hi' });
 		expect(live.ok).toBe(true);
 		if (live.ok) expect(effectsForStep('desk_create_markdown', live.output)).toEqual(live.effects);
@@ -301,7 +331,11 @@ describe('executeDeskToolCall — scope enforcement', () => {
 	});
 
 	it('allows the call once the matching scope is present', async () => {
-		mockDeleteFile.mockResolvedValueOnce({ id: 'fil_abc', name: 'alpha' });
+		mockDeleteFile.mockResolvedValueOnce({
+			id: 'fil_abc',
+			name: 'alpha',
+			updatedAt: new Date('2026-10-10T10:00:00.000Z'),
+		});
 		const out = await executeDeskToolCall(
 			ctx(['desk:delete']),
 			'desk_delete_file',
