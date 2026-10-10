@@ -108,3 +108,28 @@ describe('euipoSource.search', () => {
 		});
 	});
 });
+
+describe('euipoSource.searchInputs', () => {
+	const connection = {
+		clientId: 'client-id',
+		clientSecret: 'client-secret',
+		apiBase: 'https://api-sandbox.euipo.europa.eu/trademark-search',
+		tokenUrl: 'https://auth-sandbox.euipo.europa.eu/oidc/accessToken',
+	};
+	const inputs = (name: string, euipo = connection) =>
+		euipoSource.searchInputs(toNameCheckQuery({ query: name, territory: 'eu', category: null }), {
+			...NO_CREDENTIALS,
+			euipo,
+		});
+
+	it('tells apart two spellings that share a compact form, because the contained term does not', () => {
+		expect(inputs('Velo Raptor')).not.toEqual(inputs('VeloRaptor'));
+	});
+
+	it('changes with the environment and never carries the client id or secret', () => {
+		expect(inputs('Velora')).not.toEqual(inputs('Velora', { ...connection, apiBase: 'https://api.euipo.europa.eu/x' }));
+		const joined = inputs('Velora').join(' ');
+		expect(joined).not.toContain('client-id');
+		expect(joined).not.toContain('client-secret');
+	});
+});

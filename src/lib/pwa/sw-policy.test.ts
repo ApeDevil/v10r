@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isImmutableAsset, mayCache, shouldHandle } from './sw-policy';
+import { isImmutableAsset, mayCache, offlineShellAssets, shouldHandle } from './sw-policy';
 
 const ORIGIN = 'https://www.v10r.dev';
 
@@ -73,5 +73,35 @@ describe('mayCache', () => {
 
 	it('refuses responses that set cookies', () => {
 		expect(mayCache(ok({ 'set-cookie': 'session=abc' }))).toBe(false);
+	});
+});
+
+describe('offlineShellAssets', () => {
+	const build = [
+		'/_app/immutable/entry/start.abc.js',
+		'/_app/immutable/nodes/0.def.js',
+		'/_app/immutable/assets/0.ghi.css',
+		'/_app/immutable/chunks/three.jkl.js',
+	];
+
+	it('returns the hashed assets the offline page references, relative or absolute', () => {
+		const html = `<link href="./_app/immutable/assets/0.ghi.css" rel="stylesheet">
+			<link rel="modulepreload" href="/_app/immutable/nodes/0.def.js">
+			<script>import("../_app/immutable/entry/start.abc.js")</script>`;
+		expect(offlineShellAssets(html, build).sort()).toEqual([
+			'/_app/immutable/assets/0.ghi.css',
+			'/_app/immutable/entry/start.abc.js',
+			'/_app/immutable/nodes/0.def.js',
+		]);
+	});
+
+	it('leaves out build files the page does not load', () => {
+		const html = '<link rel="modulepreload" href="./_app/immutable/nodes/0.def.js">';
+		expect(offlineShellAssets(html, build)).not.toContain('/_app/immutable/chunks/three.jkl.js');
+	});
+
+	it('ignores references that are not in the build, and duplicates', () => {
+		const html = `"./_app/immutable/chunks/evil.js" "./_app/immutable/nodes/0.def.js" "./_app/immutable/nodes/0.def.js"`;
+		expect(offlineShellAssets(html, build)).toEqual(['/_app/immutable/nodes/0.def.js']);
 	});
 });

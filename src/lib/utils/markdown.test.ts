@@ -1,6 +1,6 @@
 /**
  * `renderMarkdown` is the ONLY trust boundary between model output and the DOM.
- * `ChatMessage.svelte` renders assistant messages with `{@html}`; user messages
+ * `ChatMessage.svelte` renders assistant messages with `{@html}` (via `StreamedMarkdown.svelte`); user messages
  * go through Svelte's escaping. Until now this file had no tests at all, so a
  * future re-addition of `img`, or a widened scheme list, would have landed in
  * production silently.

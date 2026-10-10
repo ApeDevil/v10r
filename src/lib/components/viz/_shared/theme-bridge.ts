@@ -34,7 +34,8 @@ export function onThemeChange(fn: Listener): () => void {
 
 /** Read a single CSS custom property value (e.g., getCssVar('chart-1') reads --chart-1) */
 export function getCssVar(token: string): string {
-	if (typeof document === 'undefined') return '#000';
+	// No document during SSR: inherit the text color rather than invent one.
+	if (typeof document === 'undefined') return 'currentColor';
 	return getComputedStyle(document.documentElement).getPropertyValue(`--${token}`).trim();
 }
 
@@ -52,9 +53,78 @@ export function getVizPalette(): string[] {
 	];
 }
 
+/**
+ * The palette color for `index`, cycling — or the primary token when the palette is not
+ * read yet (an empty array before mount) or a chart token is unset. Never a literal.
+ */
+export function vizColor(palette: string[], index: number): string {
+	return (palette.length > 0 ? palette[index % palette.length] : '') || getCssVar('color-primary');
+}
+
+export type Rgb = [number, number, number];
+
+let probe: CanvasRenderingContext2D | null | undefined;
+
+/**
+ * Any CSS color (a var() token, oklch(), color-mix(), hex, named) as sRGB channels, or `null` when the
+ * string is not a color or there is no DOM. The design tokens are oklch(): a hand-written
+ * hex parser turns them into NaN, and appending a hex alpha suffix to one yields an
+ * invalid color. So the browser paints the color onto a 1×1 probe and the pixel is read back.
+ */
+export function colorChannels(color: string): Rgb | null {
+	if (typeof document === 'undefined' || !color.trim()) return null;
+	probe ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+	if (!probe) return null;
+	probe.clearRect(0, 0, 1, 1);
+	probe.fillStyle = 'transparent';
+	// A canvas has no element to resolve var() against, so tokens are resolved first.
+	probe.fillStyle = color.includes('var(') ? resolveColors([color.trim()])[0] : color.trim();
+	probe.fillRect(0, 0, 1, 1);
+	const [r, g, b, a] = probe.getImageData(0, 0, 1, 1).data;
+	return a === 0 ? null : [r, g, b];
+}
+
+/**
+ * A CSS color as `rgba()`, optionally at reduced opacity — the one form every canvas
+ * library parses (Chart.js's color helpers and MapLibre's style parser do not reliably
+ * read oklch()). Outside the browser the input is returned unchanged.
+ */
+export function toRgba(color: string, alpha = 1): string {
+	const rgb = colorChannels(color);
+	return rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})` : color;
+}
+
+function luminance([r, g, b]: Rgb): number {
+	const linear = (c: number) => {
+		const s = c / 255;
+		return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+	};
+	return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+}
+
+/**
+ * A picker for text drawn on a filled shape: whichever of the foreground and background
+ * tokens has the higher WCAG contrast with the fill. Reads the tokens once — create one per
+ * draw, call it per shape.
+ */
+export function readableTextOn(): (fill: Rgb) => string {
+	const fg = getCssVar('color-fg');
+	const bg = getCssVar('color-bg');
+	const fgRgb = colorChannels(fg);
+	const bgRgb = colorChannels(bg);
+	if (!fgRgb || !bgRgb) return () => fg;
+	const fgLum = luminance(fgRgb);
+	const bgLum = luminance(bgRgb);
+	const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+	return (fill) => {
+		const fillLum = luminance(fill);
+		return contrast(fgLum, fillLum) >= contrast(bgLum, fillLum) ? fg : bg;
+	};
+}
+
 /** Batch-resolve an array of color strings that may contain CSS var() references. */
 export function resolveColors(values: string[]): string[] {
-	if (typeof document === 'undefined') return values.map(() => '#000');
+	if (typeof document === 'undefined') return values.map(() => 'currentColor');
 	const needsResolve = values.some((v) => v.includes('var('));
 	if (!needsResolve) return values;
 

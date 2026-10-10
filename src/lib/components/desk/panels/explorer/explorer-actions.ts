@@ -2,8 +2,9 @@
  * EXPLORER ACTIONS — pure async primitives for folder/file mutations.
  *
  * Drag-drop, "Move to…" dialog, and context-menu delete all call the same
- * functions here. Rollback + error-banner messaging is centralized so TreeNode
- * stays a pure view and error handling doesn't drift between callsites.
+ * functions here. Settling optimistic intents + error-banner messaging is
+ * centralized so TreeNode stays a pure view and error handling doesn't drift
+ * between callsites.
  *
  * `VIRTUAL_ROOT` + `isSameVirtualTree` are the single source of truth for
  * cross-root forbid: both drag-drop (TreeNode.isValidDropTarget) and
@@ -107,9 +108,10 @@ const MOVE_ROUTES: Partial<Record<NodeSource, MoveSpec>> = {
  * Move any node to a new parent. Looks up the routing table by `node.source`
  * so one call site serves all six nestable source types.
  *
- * Applies optimistically via `state.moveNode`, dispatches the request, and
- * rolls back with a user-friendly error on failure. Idempotent at the
- * server level.
+ * Shows the move at once as a pending intent (`state.moveNode`), dispatches the
+ * request, then confirms or rejects exactly that intent — a failure drops only
+ * its own move, so a later move of the same node that already landed stays put.
+ * A move the tree already shows (double-drop, re-submitted dialog) sends nothing.
  */
 export async function dispatchMove(
 	state: ExplorerState,
@@ -124,7 +126,8 @@ export async function dispatchMove(
 
 	const target = newParentId ? state.getNode(newParentId) : null;
 
-	const rollback = state.moveNode(nodeId, newParentId);
+	const seq = state.moveNode(nodeId, newParentId);
+	if (seq === null) return false;
 	ctx.announce(`Moving ${node.label}.`);
 
 	// Virtual roots map to `null` server-side (leaf.folderId = null / folder.parentId = null).
@@ -140,7 +143,7 @@ export async function dispatchMove(
 		});
 
 		if (!res.ok) {
-			rollback();
+			state.rejectIntent(seq);
 			const err = await parseError(res);
 			const code = err?.code;
 			const targetLabel = target?.label ?? 'root';
@@ -160,10 +163,13 @@ export async function dispatchMove(
 			return false;
 		}
 
+		// An earlier move of this node answering after a later one confirmed: only the
+		// server knows which write it applied last, so re-read it.
+		if (state.confirmIntent(seq) === 'superseded') await ctx.refresh();
 		ctx.announce(`Moved ${node.label} into ${target?.label ?? 'root'}.`);
 		return true;
 	} catch (e) {
-		rollback();
+		state.rejectIntent(seq);
 		ctx.setError(e instanceof Error ? e.message : 'Move failed.');
 		return false;
 	}
@@ -256,9 +262,9 @@ const RENAME_ROUTES: Partial<Record<NodeSource, RenameSpec>> = {
 };
 
 /**
- * Rename a node. The TreeNode passes the node with the already-mutated `label`,
- * so this dispatcher just sends it. On failure, refreshes from server to revert
- * the optimistic update.
+ * Rename a node. TreeNode passes a COPY of the node carrying the new `label`; the
+ * tree itself is not touched, so this is pessimistic — the new name appears when
+ * the refresh after the request lands, and a failure leaves nothing to undo.
  */
 export async function dispatchRename(_state: ExplorerState, node: ExplorerNode, ctx: ActionContext): Promise<void> {
 	const spec = RENAME_ROUTES[node.source];
@@ -277,7 +283,7 @@ export async function dispatchRename(_state: ExplorerState, node: ExplorerNode, 
 		await ctx.refresh();
 	} catch (e) {
 		ctx.setError(e instanceof Error ? e.message : 'Rename failed');
-		await ctx.refresh(); // Revert optimistic update
+		await ctx.refresh();
 	}
 }
 
@@ -341,27 +347,39 @@ export async function dispatchDuplicate(state: ExplorerState, node: ExplorerNode
 // AI context toggle dispatch
 
 /**
- * Toggle a node's AI context pin. Optimistic with rollback on failure. Desk
- * files persist server-side; blog posts are client-state only (no API call).
+ * Toggle a node's AI context pin. Optimistic: shown at once as a pending intent,
+ * then confirmed or rejected exactly — a failure drops only its own toggle. Desk
+ * files persist server-side; blog posts are client-state only (no API call), so
+ * their intent confirms immediately.
  */
 export async function dispatchToggleAiContext(
 	state: ExplorerState,
 	node: ExplorerNode,
 	ctx: ActionContext,
 ): Promise<void> {
-	const newValue = !node.aiContext;
-	state.updateAiContext(node.id, newValue);
+	// Toggle what the tree shows now, not the possibly stale node the menu captured.
+	const newValue = !state.isAiPinned(node.id);
+	const seq = state.setAiContext(node.id, newValue);
+	if (seq === null) return;
 
-	if (node.source !== 'desk-file') return;
+	if (node.source !== 'desk-file') {
+		state.confirmIntent(seq);
+		return;
+	}
 
 	try {
-		await apiFetch(`/api/desk/files/${node.id}`, {
+		const res = await apiFetch(`/api/desk/files/${node.id}`, {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ aiContext: newValue }),
 		});
+		if (!res.ok) {
+			const err = await parseError(res);
+			throw new Error(err?.message ?? 'Failed to toggle AI context');
+		}
+		if (state.confirmIntent(seq) === 'superseded') await ctx.refresh();
 	} catch (e) {
-		state.updateAiContext(node.id, !newValue); // Rollback
+		state.rejectIntent(seq);
 		ctx.setError(e instanceof Error ? e.message : 'Failed to toggle AI context');
 	}
 }

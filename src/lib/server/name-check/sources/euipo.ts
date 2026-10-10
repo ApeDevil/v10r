@@ -19,7 +19,7 @@
 import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
 import { NameSourceError } from '../errors';
 import { fetchJson } from '../fetch-json';
-import type { EuipoCredentials, NameSource, NameSourceContext, TrademarkDraft } from '../name-source';
+import type { EuipoCredentials, LiveNameSource, NameSourceContext, TrademarkDraft } from '../name-source';
 
 export const EUIPO_DEFAULT_API_BASE = 'https://api.euipo.europa.eu/trademark-search';
 export const EUIPO_DEFAULT_TOKEN_URL = 'https://euipo.europa.eu/cas-server-webapp/oidc/accessToken';
@@ -171,12 +171,18 @@ async function accessToken(credentials: EuipoCredentials, ctx: NameSourceContext
 	return token;
 }
 
-export const euipoSource: NameSource = {
+export const euipoSource: LiveNameSource = {
 	id: 'euipo',
 	kind: 'trademark',
 	territories: NAME_CHECK_TERRITORIES,
 	manualUrl: (query) => `https://euipo.europa.eu/eSearch/#basic/1+1+1+1/50+50+50+50/${encodeURIComponent(query.raw)}`,
 	configured: (credentials) => credentials.euipo !== null,
+	// The API base is the environment: a sandbox connection answers with sample data, and
+	// switching to production must not keep serving it.
+	searchInputs: (query, credentials) => [
+		credentials.euipo?.apiBase ?? '',
+		...euipoQueries(query.normalized.canonical, query.normalized.compact),
+	],
 	async search(query, ctx) {
 		const credentials = ctx.credentials.euipo;
 		if (!credentials) throw new NameSourceError('credentials_missing', 'EUIPO client credentials are not configured');

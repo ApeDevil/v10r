@@ -21,6 +21,9 @@ import { makeUser } from '$lib/server/test/fixtures';
  *     so a double-approve must throw rather than re-run `grantCapability`.
  *  3. **Granting and revoking hard-delete the user's sessions**, which is what makes a
  *     capability change take effect rather than sit behind a live session.
+ *  4. **The grant notification is read and acknowledged separately.** The /desk layout
+ *     load reads it and may run speculatively (hover preload), so reading must not mark
+ *     it seen; acknowledging is a `notified_at IS NULL` guarded UPDATE, hence idempotent.
  *
  * `recordAuditEvent` is mocked: it writes to a different domain, and what matters here is
  * that the grant transitions happen, not that the audit row is shaped correctly.
@@ -243,5 +246,61 @@ describe('expireOldRequests', () => {
 		expect(await requests.expireOldRequests()).toBe(0);
 		const [row] = await db.select().from(grantRequest).where(eq(grantRequest.id, id));
 		expect(row.status).toBe('approved');
+	});
+});
+
+describe('grant notifications', () => {
+	const grantBlogAuthor = (userId: string) => grants.grantCapability({ userId, kind: 'blog-author', actor: ACTOR });
+
+	it('reading pending notifications does not consume them — a preloaded load leaves the Toast for the real visit', async () => {
+		await grantBlogAuthor(USER.id);
+
+		expect(await grants.listPendingGrantNotifications(USER.id)).toEqual(['blog-author']);
+		expect(await grants.listPendingGrantNotifications(USER.id)).toEqual(['blog-author']);
+		const [row] = await db.select().from(grant);
+		expect(row.notifiedAt).toBeNull();
+	});
+
+	it('acknowledging marks the notification seen, and a second acknowledgement is a no-op', async () => {
+		await grantBlogAuthor(USER.id);
+
+		expect(await grants.acknowledgeGrantNotifications(USER.id, ['blog-author'])).toEqual(['blog-author']);
+		expect(await grants.listPendingGrantNotifications(USER.id)).toEqual([]);
+		const [first] = await db.select().from(grant);
+		expect(first.notifiedAt).toBeInstanceOf(Date);
+
+		expect(await grants.acknowledgeGrantNotifications(USER.id, ['blog-author'])).toEqual([]);
+		const [second] = await db.select().from(grant);
+		expect(second.notifiedAt).toEqual(first.notifiedAt);
+	});
+
+	it('acknowledging with nothing pending — no grant, a revoked grant, or no kinds — is a no-op', async () => {
+		expect(await grants.acknowledgeGrantNotifications(USER.id, ['blog-author'])).toEqual([]);
+		expect(await grants.acknowledgeGrantNotifications(USER.id, [])).toEqual([]);
+
+		await grantBlogAuthor(USER.id);
+		await grants.revokeCapability({ userId: USER.id, kind: 'blog-author', actor: ACTOR });
+		expect(await grants.listPendingGrantNotifications(USER.id)).toEqual([]);
+		expect(await grants.acknowledgeGrantNotifications(USER.id, ['blog-author'])).toEqual([]);
+		const [row] = await db.select().from(grant);
+		expect(row.notifiedAt).toBeNull();
+	});
+
+	it('is user-scoped — acknowledging one user leaves another user’s notification pending', async () => {
+		await grantBlogAuthor(USER.id);
+		await grantBlogAuthor(OTHER.id);
+
+		await grants.acknowledgeGrantNotifications(USER.id, ['blog-author']);
+		expect(await grants.listPendingGrantNotifications(USER.id)).toEqual([]);
+		expect(await grants.listPendingGrantNotifications(OTHER.id)).toEqual(['blog-author']);
+	});
+
+	it('a re-grant after revocation notifies again', async () => {
+		await grantBlogAuthor(USER.id);
+		await grants.acknowledgeGrantNotifications(USER.id, ['blog-author']);
+		await grants.revokeCapability({ userId: USER.id, kind: 'blog-author', actor: ACTOR });
+		await grantBlogAuthor(USER.id);
+
+		expect(await grants.listPendingGrantNotifications(USER.id)).toEqual(['blog-author']);
 	});
 });

@@ -100,3 +100,12 @@ describe('rdapSource.search', () => {
 		expect(rows?.every((row) => row.kind === 'domain' && row.registration === 'lookup_unavailable')).toBe(true);
 	});
 });
+
+describe('rdapSource.searchInputs', () => {
+	it('is the compact label alone: every spelling of it asks about the same domains', () => {
+		const inputs = (name: string, territory: 'de' | 'eu') =>
+			rdapSource.searchInputs(toNameCheckQuery({ query: name, territory, category: null }), NO_CREDENTIALS);
+		expect(inputs('Velo Raptor', 'de')).toEqual(inputs('VeloRaptor', 'eu'));
+		expect(inputs('Velo Raptor', 'de')).toEqual(['veloraptor']);
+	});
+});

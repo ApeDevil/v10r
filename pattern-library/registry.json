@@ -5804,13 +5804,15 @@
 			"tier": "light",
 			"title": "Service-worker caching contract (HTML network-only, kill switch)",
 			"category": "pwa",
-			"summary": "The custom service worker precaches the hashed build and icons, serves HTML and __data.json network-only while never intercepting /api/* or SSE, and ships a kill switch that force-wipes caches and unregisters on a bad deploy.",
+			"summary": "The custom service worker precaches only the icons and the offline page's own assets (parsed from its HTML), fills the rest of the hashed build cache-first as it is used, serves HTML and __data.json network-only, never intercepts /api/* or SSE, and ships a kill switch that force-wipes caches and unregisters on a bad deploy.",
 			"when_to_use": "Use when you need an installable offline shell without caching personalized HTML, plus a documented recovery path for a broken worker.",
-			"avoid_when": [],
+			"avoid_when": [
+				"Unvisited routes must work fully offline — precaching only the offline shell leaves them to the offline page"
+			],
 			"alternatives": [],
 			"requires": [],
 			"capabilities": ["service worker", "offline fallback"],
-			"keywords": ["service worker", "cache contract", "kill switch"],
+			"keywords": ["service worker", "cache contract", "kill switch", "precache", "offline shell"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -5820,9 +5822,17 @@
 			"code": [
 				{
 					"path": "src/service-worker.ts"
+				},
+				{
+					"path": "src/lib/pwa/sw-policy.ts",
+					"note": "offlineShellAssets: what install precaches"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/pwa/sw-policy.test.ts"
+				}
+			],
 			"showcases": [
 				{
 					"path": "/showcases/pwa",
@@ -5833,8 +5843,8 @@
 			"emulation_notes": [],
 			"risk": "medium — touches deploy config and can affect every installed client if misconfigured",
 			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
+			"verifiedAt": "2026-10-10",
+			"verifiedSha": "149f43a7-dirty"
 		},
 		{
 			"id": "pwa-update-flow",
@@ -7047,6 +7057,10 @@
 				{
 					"path": "src/lib/actions/hydrate-embeds.ts",
 					"note": "Hydrates on intersection rather than on load"
+				},
+				{
+					"path": "src/lib/components/shell/AppShell.svelte",
+					"note": "Warms the command palette with requestIdleCallback and a timer fallback"
 				}
 			],
 			"tests": [],
@@ -7110,11 +7124,18 @@
 				{
 					"path": "src/lib/server/cache/client.ts",
 					"note": "The nullable Upstash client every consumer must handle"
+				},
+				{
+					"path": "src/lib/server/style/cookie-scope.ts",
+					"note": "Keeps the style cookie off responses meant for the CDN"
 				}
 			],
 			"tests": [
 				{
 					"path": "src/lib/server/cache/tiered.test.ts"
+				},
+				{
+					"path": "src/lib/server/style/cookie-scope.test.ts"
 				}
 			],
 			"showcases": [
@@ -7133,12 +7154,13 @@
 			"emulation_notes": [
 				"Store the freshness horizon INSIDE the envelope rather than relying on Redis TTL: Redis expiry is a floor that reclaims memory, and the envelope has to survive a read from the local tier where no Redis TTL exists.",
 				"Jitter the per-key TTL. Keys written together otherwise expire together, and synchronised expiry is how a cache becomes a stampede.",
-				"Default per-user policies to skipping the local tier: the tier is correct there, but a warm serverless instance accumulates one entry per user it happened to serve."
+				"Default per-user policies to skipping the local tier: the tier is correct there, but a warm serverless instance accumulates one entry per user it happened to serve.",
+				"The CDN is a tier with its own admission rules: Vercel caches a function response only with s-maxage (max-age alone is the browser's) and never one that sets a cookie. v10r's crawler endpoints carried s-maxage and were never cached, because every cookieless crawler was handed a style cookie; the cookie is now kept only on app-shell responses."
 			],
 			"risk": "medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns",
 			"maturity": "proven",
-			"verifiedAt": "2026-09-09",
-			"verifiedSha": "921e8266-dirty"
+			"verifiedAt": "2026-10-10",
+			"verifiedSha": "149f43a7-dirty"
 		},
 		{
 			"id": "stale-while-revalidate",
@@ -7552,6 +7574,79 @@
 			"verifiedSha": "921e8266-dirty"
 		},
 		{
+			"id": "critical-rendering-path",
+			"tier": "deep",
+			"title": "Critical rendering path (the LCP element paints from the document)",
+			"category": "velocity-runtime",
+			"summary": "What the first viewport needs paints from the server HTML and its render-blocking CSS: no hydration gate on visible content, and a late-discovered LCP graphic inlined server-side once, with a hashed CSS-mask fallback for client navigation.",
+			"when_to_use": "Use when lab or field data shows LCP landing with hydration or the load event — the LCP element is hidden until JavaScript runs, or is an image found only after CSS and layout.",
+			"avoid_when": [
+				"The LCP asset is large (over roughly 50 KB gz), so inlining it re-sends those bytes in every uncached document",
+				"Most traffic is repeat visits on fast links, where a cached file beats bytes re-sent in HTML",
+				"The LCP element is a photo — an <img> with fetchpriority=\"high\" and declared dimensions is the right tool"
+			],
+			"alternatives": [
+				{
+					"approach": "<link rel=\"preload\"> for the late asset",
+					"prefer_when": "a measurement shows the earlier fetch finishing earlier — on a link saturated by module preloads it did not (v10r's logo: 450 ms earlier start, same finish)"
+				},
+				{
+					"approach": "an <img> with fetchpriority=\"high\"",
+					"prefer_when": "the LCP element is a raster image that can be a real element rather than a CSS background or mask"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"largest contentful paint",
+				"server-side rendering",
+				"progressive enhancement",
+				"resource discovery"
+			],
+			"keywords": [
+				"lcp",
+				"largest contentful paint",
+				"first paint",
+				"hydration",
+				"inline svg",
+				"preload",
+				"render blocking",
+				"hero",
+				"critical rendering path"
+			],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#critical-rendering-path",
+					"note": "The measurements, the {@html} hydration rule and the price"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/primitives/logo/LogoHero.svelte",
+					"note": "Server-only inline value, non-empty client placeholder, hashed mask fallback"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/(public)/_components/fadeIn.ts",
+					"note": "Hides only nodes still below the fold, so painted content never blinks out"
+				}
+			],
+			"tests": [],
+			"showcases": [],
+			"invariants": [
+				"Content in the first viewport is visible without JavaScript — an entrance animation runs as CSS from first paint, never behind a hydration $effect.",
+				"A preload is a measurement, not a default; it ships only when the lab shows the resource finishing earlier and first paint not getting later.",
+				"An inlined asset ships once: a server-only value, never also in the client bundle."
+			],
+			"emulation_notes": [
+				"Chrome does not count an opacity:0 element as LCP. Revealing the hero in a hydration $effect made v10r's mobile LCP wait for ~245 KB gz of JavaScript, and with failed JavaScript the hero never appeared.",
+				"{@html} hydration decides the trick: for a non-empty client value that differs from the server's, Svelte keeps the server nodes (warning hydration_html_changed, suppressed in place); an EMPTY client value discards them. Give the client a one-element placeholder, never ''.",
+				"Inlining on both sides ships the string twice (+42 KB gz of JavaScript in v10r's case). Branch on import.meta.env.SSR so the client build tree-shakes the markup out.",
+				"Measured in the lab only (Slow 4G, 4x CPU, n=5): mobile home LCP 4,276 -> 1,624 ms, reproduced 4,344 -> 1,632; desktop at parity. The document grew 8 -> 50 KB, and doc_html_kb cannot see it because it measures prerendered pages only. Confirm in field data before calling it a win."
+			],
+			"risk": "low — rendering only; the cost is document weight on one page",
+			"maturity": "implemented"
+		},
+		{
 			"id": "heavy-dependency-quarantine",
 			"tier": "deep",
 			"title": "Heavy dependency quarantine (the baseline is the metric)",
@@ -7599,6 +7694,10 @@
 				{
 					"path": "src/lib/server/perf/budgets.json",
 					"note": "baseline_js_kb ceiling — the shared cost of every route"
+				},
+				{
+					"path": "src/lib/components/shell/AppShell.svelte",
+					"note": "Command palette imported on first open, warmed at idle"
 				}
 			],
 			"tests": [
@@ -7618,13 +7717,83 @@
 				"The question a bundle review answers is 'did this capability make every OTHER route heavier', not 'is this route big'."
 			],
 			"emulation_notes": [
-				"Watch barrel files: importing a component through a barrel can pull an unrelated heavyweight sibling into everything. v10r imports `CodeBlock` directly for exactly this reason — the composites barrel would drag the markdown sanitizer along.",
-				"The bundle gate must run a PRODUCTION build; a dev-mode build compiles both halves differently and inflates client JS ~9%. Note that v10r's `validate` has no build step — bundle regressions are only caught by `validate:build`."
+				"A barrel of Svelte components keeps every component it re-exports unless the component tree is declared side-effect free — see side-effect-free-components. Barrels of plain modules still need care: v10r imports `CodeBlock` directly because the composites barrel would pull the markdown sanitizer along.",
+				"The bundle gate must run a PRODUCTION build; a dev-mode build compiles both halves differently and inflates client JS ~9%. Note that v10r's `validate` has no build step — bundle regressions are only caught by `validate:build`.",
+				"A closed-by-default surface in a layout every route shares (a command palette, a dialog, an auth client used by one button) is a heavy capability too. Import it on first intent and warm it at idle; the cost is a network wait on first open if idle never came. v10r's palette and better-auth client moved the median route 241.9 -> 231.1 KB gz."
 			],
 			"risk": "medium — the gate fails a build, which is the point",
 			"maturity": "proven",
-			"verifiedAt": "2026-09-09",
-			"verifiedSha": "921e8266-dirty"
+			"verifiedAt": "2026-10-10",
+			"verifiedSha": "149f43a7-dirty"
+		},
+		{
+			"id": "side-effect-free-components",
+			"tier": "deep",
+			"title": "Side-effect-free component tree (barrels that tree-shake)",
+			"category": "velocity-runtime",
+			"summary": "Compiled Svelte components run code at module scope, so Rollup keeps every component a barrel re-exports. Declaring the component directory side-effect free in the bundler makes an unused export droppable — and an import made for side effects alone silently vanishes, which a gate forbids.",
+			"when_to_use": "Use when a Svelte component library is consumed through barrel files and the shared or per-route bundle carries components the page never renders.",
+			"avoid_when": [
+				"A module in the tree registers something at module scope (a custom element, a global listener, a plugin) — that import would be dropped without an error",
+				"Components are always imported from their own files, so no barrel can drag siblings along"
+			],
+			"alternatives": [
+				{
+					"approach": "leaf imports instead of barrel imports",
+					"prefer_when": "the barrel has few consumers and a lint rule can keep it that way — in v10r, rewriting the shell's imports alone changed nothing because pages import the barrel too"
+				},
+				{
+					"approach": "package.json \"sideEffects\" for a published component package",
+					"prefer_when": "the components ship as a separate npm package rather than an in-repo directory"
+				}
+			],
+			"requires": [],
+			"capabilities": ["tree shaking", "bundle size", "barrel files", "dead code elimination"],
+			"keywords": [
+				"tree shaking",
+				"barrel",
+				"sideEffects",
+				"moduleSideEffects",
+				"rollup",
+				"vite",
+				"bundle",
+				"svelte components",
+				"index.ts"
+			],
+			"depends_on": ["performance-budget-ratchet"],
+			"docs": [
+				{
+					"path": "docs/blueprint/velocity/runtime.md#side-effect-free-component-tree",
+					"note": "Why Svelte barrels keep everything, the measurement, and the price"
+				}
+			],
+			"code": [
+				{
+					"path": "vite.config.ts",
+					"note": "build.rollupOptions.treeshake.moduleSideEffects for src/lib/components/"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/perf/snapshot.gate.test.ts",
+					"note": "losing the declaration pushes the median route past its ceiling"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"Nothing imports a component module for its side effects alone — under the declaration such an import is dropped silently. `architecture.gate.test.ts` enforces it.",
+				"The declaration covers exactly the directory whose modules are pure; anything that registers at module scope lives outside it.",
+				"The effect is held by a bundle ratchet, so removing the declaration fails a build rather than going unnoticed."
+			],
+			"emulation_notes": [
+				"The cause is the compiler output, not the authoring: $.delegate(...) and template factories at module scope make every compiled .svelte file side-effecting in Rollup's eyes. One `import { Button } from '$lib/components'` shipped v10r's whole primitives layer — culori and bits-ui's select and menu included — to 197 of 199 routes.",
+				"Use a function for moduleSideEffects, `(id, external) => external || !COMPONENT_MODULE.test(id)`, so only the component directory is declared and dependencies keep their own sideEffects metadata.",
+				"Measured (production build, gzip, full route chain): median route 296.7 -> 241.9 KB, heaviest 562.8 -> 521.5 KB. The shared baseline grew 3 KB because finer chunks lengthen the per-node preload lists in the generated app.js; that raise was reviewed and recorded, not absorbed."
+			],
+			"risk": "medium — a module that relied on a side-effect import breaks silently; the gate test is the guard",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-10",
+			"verifiedSha": "149f43a7-dirty"
 		},
 		{
 			"id": "main-thread-budget",
@@ -7826,16 +7995,40 @@
 		},
 		{
 			"id": "velocity-asset-delivery",
-			"tier": "light",
+			"tier": "deep",
 			"title": "Asset delivery pipeline",
 			"category": "velocity-runtime",
-			"summary": "Keeping images and fonts from dominating page load: generated icon sets, an R2-backed image proxy with stale-while-revalidate headers, and a document-weight ceiling that catches inline-SVG bloat.",
-			"when_to_use": "Use wherever media is served — the JavaScript budget usually gets the attention while the bytes are elsewhere.",
-			"avoid_when": [],
-			"alternatives": [],
+			"summary": "Keeping images and fonts from dominating page load: metric-matched fallback faces generated from the font files, fonts deliberately not preloaded, and an R2 image redirect the CDN can actually cache (s-maxage, URL stable per presign window).",
+			"when_to_use": "Use wherever fonts or media are served — the JavaScript budget usually gets the attention while the bytes and the layout shift are elsewhere.",
+			"avoid_when": [
+				"The face renders unlike its default metrics (bold display headings, optical-size axes), where a computed fallback makes the swap shift worse",
+				"Content with system fonts only, where there is no swap to cover"
+			],
+			"alternatives": [
+				{
+					"approach": "font preload of the active faces",
+					"prefer_when": "a measurement shows LCP improving without first paint getting later — in v10r it delayed FCP 60–120 ms and added ~110 ms TBT"
+				},
+				{
+					"approach": "a fallback-metrics library (fontaine, next/font)",
+					"prefer_when": "the framework already ships one; v10r's generator parses woff2 with Node's zlib to avoid a dependency and lands within 0.5% of next/font's values"
+				}
+			],
 			"requires": [],
-			"capabilities": ["image optimization", "responsive images", "font loading", "CDN delivery"],
-			"keywords": ["image", "avif", "webp", "font", "lazy loading", "cdn", "layout shift", "cls", "assets"],
+			"capabilities": ["font loading", "layout shift", "image delivery", "CDN delivery", "responsive images"],
+			"keywords": [
+				"font",
+				"size-adjust",
+				"ascent-override",
+				"fallback font",
+				"font preload",
+				"cls",
+				"image",
+				"cdn",
+				"s-maxage",
+				"presigned url",
+				"assets"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -7844,20 +8037,49 @@
 			],
 			"code": [
 				{
-					"path": "scripts/pwa/generate-icons.ts",
-					"note": "sharp-generated icon set"
+					"path": "scripts/fonts/build-fallback-faces.ts",
+					"note": "woff2 parser and metric generator; documents the serif exclusion"
+				},
+				{
+					"path": "src/lib/styles/font-fallbacks.css",
+					"note": "Generated — rebuild, never hand-edit"
 				},
 				{
 					"path": "src/routes/api/blog/assets/[id]/image/+server.ts",
-					"note": "Published-only image proxy with SWR cache headers"
+					"note": "Published-only image redirect with a CDN-cacheable Cache-Control"
+				},
+				{
+					"path": "scripts/pwa/generate-icons.ts",
+					"note": "sharp-generated icon set"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/styles/font-fallbacks.gate.test.ts",
+					"note": "generated values match the font files; fallbacks exist exactly where measured to help"
+				},
+				{
+					"path": "src/lib/server/store/blog/public-image-url.test.ts",
+					"note": "presigned URL stable within its window"
+				}
+			],
 			"showcases": [],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — delivery concerns only",
-			"maturity": "implemented"
+			"invariants": [
+				"A web font gets a fallback face only where measurement shows it reduces the shift at swap.",
+				"Fallback metrics are generated from the installed font files, never hand-tuned.",
+				"Fonts are not preloaded by default; a preload is justified by a measurement.",
+				"A media response meant for the CDN carries s-maxage and sets no cookie."
+			],
+			"emulation_notes": [
+				"size-adjust = (web font average width / UPM) / (fallback average width / UPM); ascent, descent and line-gap overrides = web metric / UPM / size-adjust. The average width is the English-letter-frequency-weighted advance of a–z plus space.",
+				"Lab CLS stayed ≈ 0 with and without fallbacks because the reflow lands below the first viewport — measure text-block geometry with the woff2 files blocked vs loaded instead. Shipped fallbacks cut that shift 34–62% across v10r's five typography sets.",
+				"The serif display faces (Playfair, Fraunces) got no fallback: as bold headings, and Fraunces at a large optical size, their computed fallbacks made the shift worse. Isolate heading and body slots before shipping a fallback per family.",
+				"Known gaps in v10r itself: blog body images carry no dimensions or lazy loading, and unhashed static files (/logo, /favicon.svg at 121 KB gz, /models/*.glb) revalidate on every visit."
+			],
+			"risk": "low — delivery concerns only; a wrong fallback is a cosmetic shift",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-10",
+			"verifiedSha": "149f43a7-dirty"
 		},
 		{
 			"id": "velocity-compute-locality",
@@ -8102,6 +8324,10 @@
 				{
 					"path": "src/lib/server/perf/budgets.ts",
 					"note": "Scoring, and why lab and field budgets cannot be shared"
+				},
+				{
+					"path": "scripts/perf/snapshot.ts",
+					"note": "routeNodes(): each route's layout chain from the generated client app"
 				}
 			],
 			"tests": [
@@ -8127,17 +8353,19 @@
 				"Ratchets move down, not up, except through explicit architectural review. Lowering a ceiling is how an improvement gets banked.",
 				"Development measurements are never mixed with lab or production ones.",
 				"A metric is only ratcheted when it is deterministic enough to be reproducible — which is why cold-start time is reported and not gated.",
-				"A lab snapshot from a non-production build is refused rather than scored."
+				"A lab snapshot from a non-production build is refused rather than scored.",
+				"A per-route budget scores what a visitor downloads: the shared baseline, every layout on the route's chain, and the page — never the page node alone."
 			],
 			"emulation_notes": [
 				"Give ceilings a few percent of headroom over the measurement. Set exactly at the measured value, one ordinary feature trips the gate — and a gate that fails on ordinary work is a gate that gets muted. The headroom absorbs a feature and deliberately not a heavy dependency.",
 				"Keep the thresholds in ONE file that both the application and the shell probes read. Two copies drift, and the copy that drifts is always the one the gate uses.",
-				"Field and lab budgets for the same metric name are different numbers. Scoring a real-user p75 against a warm-preview budget reports a failure on every healthy deployment."
+				"Field and lab budgets for the same metric name are different numbers. Scoring a real-user p75 against a warm-preview budget reports a failure on every healthy deployment.",
+				"Derive the chain from the build, not from file paths: v10r parses the route dictionary in the generated client app.js. Scoring page nodes only had under-reported the median route by 81 KB gz, because the public shell layout alone was ~160 KB."
 			],
 			"risk": "low — measurement and gating only; no runtime behaviour",
 			"maturity": "proven",
-			"verifiedAt": "2026-09-09",
-			"verifiedSha": "921e8266-dirty"
+			"verifiedAt": "2026-10-10",
+			"verifiedSha": "149f43a7-dirty"
 		},
 		{
 			"id": "scenario-harness",

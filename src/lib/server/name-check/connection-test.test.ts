@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { credentialsForVendor, testNameSourceConnection } from './connection-test';
 import { NameSourceError } from './errors';
-import { type NameSource, NO_CREDENTIALS } from './name-source';
+import { type LiveNameSource, NO_CREDENTIALS } from './name-source';
 
 const TAVILY = { ...NO_CREDENTIALS, tavilyApiKey: 'tvly-key' };
 const EUIPO = {
@@ -11,8 +11,15 @@ const EUIPO = {
 	tokenUrl: 'https://auth.example.test/token',
 };
 
-function sourceThat(search: NameSource['search']): NameSource {
-	return { id: 'web', kind: 'web', territories: ['eu'], manualUrl: () => 'https://example.test', search };
+function sourceThat(search: LiveNameSource['search']): LiveNameSource {
+	return {
+		id: 'web',
+		kind: 'web',
+		territories: ['eu'],
+		manualUrl: () => 'https://example.test',
+		searchInputs: () => [],
+		search,
+	};
 }
 
 describe('testNameSourceConnection', () => {

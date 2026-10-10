@@ -342,6 +342,27 @@ describe('component layering', () => {
 			expect(compositeExports, `composites barrel must not re-export ${heavy}`).not.toContain(heavy);
 		}
 	});
+
+	/**
+	 * `vite.config.ts` declares every module under `src/lib/components/` side-effect
+	 * free, which is what lets a barrel import ship only the components it names. The
+	 * price of that declaration: a module imported purely for its side effects —
+	 * `import '$lib/components/…'` with no bindings — is dropped from the build without
+	 * a warning. Such an import must not exist; registration belongs inside a function
+	 * or an effect, where using the export keeps the module.
+	 */
+	it('nothing imports a component module for its side effects alone', () => {
+		const bare: string[] = [];
+		for (const file of sourceFiles(join(ROOT, 'src'), /\.(ts|js|svelte)$/)) {
+			for (const match of readFileSync(file, 'utf8').matchAll(/(?:^|\n)\s*import\s*['"]([^'"]+)['"]/g)) {
+				const target = resolveSpecifier(file, match[1]);
+				if (target?.startsWith('src/lib/components/') && !/\.css$/.test(target)) {
+					bare.push(`${relative(ROOT, file)} -> ${match[1]}`);
+				}
+			}
+		}
+		expect(bare).toEqual([]);
+	});
 });
 
 /** Composite directories whose dependency graph is too heavy for the default barrel. */

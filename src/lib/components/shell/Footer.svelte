@@ -1,5 +1,5 @@
 <script lang="ts">
-import { LogoFooter } from '$lib/components/primitives';
+import { LogoFooter } from '$lib/components/primitives/logo';
 import { localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { getConsent } from '$lib/state/consent.svelte';

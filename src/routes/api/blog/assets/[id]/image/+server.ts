@@ -3,7 +3,7 @@ import { ipLimitKey } from '$lib/server/abuse';
 import { getPublicAssetById } from '$lib/server/blog';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiError } from '$lib/server/http/response';
-import { generateBlogDownloadUrl } from '$lib/server/store/blog';
+import { generatePublicBlogImageUrl, PUBLIC_BLOG_IMAGE_CACHE_CONTROL } from '$lib/server/store/blog';
 import type { RequestHandler } from './$types';
 
 // Unauthenticated and cost-bearing (a DB read plus an R2 presign per hit), so
@@ -19,8 +19,10 @@ const limiter = createLimiter('rl:blog:asset-image', 60, '1 m');
  * so any asset id — drafts and other authors' uploads included — could be
  * presigned by an anonymous caller.
  *
- * Cache-Control: the redirect itself is short-lived (5 min),
- * but the presigned URL is valid for 1 hour.
+ * Cache-Control: the 302 is cached by the browser and by Vercel's CDN, so repeat
+ * views skip the function, the DB read and the presign entirely. The presigned URL
+ * outlives every cache that may serve the redirect — see
+ * `PUBLIC_BLOG_IMAGE_CACHE_CONTROL` for the arithmetic.
  */
 export const GET: RequestHandler = async ({ params, setHeaders, locals }) => {
 	const { success, reset } = await limiter.limit(ipLimitKey(locals.clientIp));
@@ -33,15 +35,15 @@ export const GET: RequestHandler = async ({ params, setHeaders, locals }) => {
 
 	let url: string;
 	try {
-		const result = await generateBlogDownloadUrl(asset.storageKey, 3600);
+		const result = await generatePublicBlogImageUrl(asset.storageKey);
 		url = result.url;
 	} catch {
 		return apiError(502, 'storage_unavailable', 'Storage unavailable.');
 	}
 
-	setHeaders({
-		'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
-	});
+	// Shared-cacheable because the asset hangs off a published post. Every refusal above
+	// carries no Cache-Control, so `securityHeaders` stamps it `no-store, private`.
+	setHeaders({ 'Cache-Control': PUBLIC_BLOG_IMAGE_CACHE_CONTROL });
 
 	redirect(302, url);
 };

@@ -3,12 +3,12 @@ import { onDestroy, onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
-import { getChartInfraColors, getCssVar } from '../../_shared/theme-bridge';
+import { colorChannels, getChartInfraColors, getCssVar, type Rgb, readableTextOn } from '../../_shared/theme-bridge';
 import type { HeatMapData } from './types';
 
 interface Props {
 	data: HeatMapData;
-	/** Custom color range [low, high] as hex strings. Defaults to chart grid → chart-1 */
+	/** Custom color range [low, high] — any CSS colors, tokens included. Defaults to chart grid → chart-1 */
 	colorRange?: [string, string];
 	aspect?: ChartContainerVariants['aspect'];
 	ariaLabel?: string;
@@ -48,19 +48,20 @@ const VALUE_FONT = '11px system-ui, -apple-system, sans-serif';
 const PAD = { top: 10, right: 10, bottom: 50, left: 65 };
 const GAP = 1;
 
-function hexToRgb(hex: string): [number, number, number] {
-	hex = hex.replace('#', '');
-	if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-	return [parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16)];
+function lerp(t: number, a: Rgb, b: Rgb): Rgb {
+	return [
+		Math.round(a[0] + (b[0] - a[0]) * t),
+		Math.round(a[1] + (b[1] - a[1]) * t),
+		Math.round(a[2] + (b[2] - a[2]) * t),
+	];
 }
 
-function lerp(t: number, a: [number, number, number], b: [number, number, number]): string {
-	return `rgb(${Math.round(a[0] + (b[0] - a[0]) * t)},${Math.round(a[1] + (b[1] - a[1]) * t)},${Math.round(a[2] + (b[2] - a[2]) * t)})`;
-}
-
-function getColorRange(): [[number, number, number], [number, number, number]] {
-	if (colorRange) return [hexToRgb(colorRange[0]), hexToRgb(colorRange[1])];
-	return [hexToRgb(getChartInfraColors().grid), hexToRgb(getCssVar('chart-1'))];
+/** The ramp's ends as channels — read through the browser, because the tokens are oklch(). */
+function getColorRange(): [Rgb, Rgb] | null {
+	const [low, high] = colorRange ?? [getChartInfraColors().grid, getCssVar('chart-1')];
+	const lo = colorChannels(low);
+	const hi = colorChannels(high);
+	return lo && hi ? [lo, hi] : null;
 }
 
 function cells() {
@@ -95,8 +96,11 @@ function draw() {
 	const maxV = Math.max(...flat);
 	const range = maxV - minV || 1;
 
-	const [lo, hi] = getColorRange();
-	const labelColor = getCssVar('chart-label') || '#6b7280';
+	const ramp = getColorRange();
+	if (!ramp) return;
+	const [lo, hi] = ramp;
+	const labelColor = getCssVar('chart-label') || getCssVar('color-muted');
+	const valueColor = readableTextOn();
 
 	// Cells
 	for (let r = 0; r < rows; r++) {
@@ -108,7 +112,8 @@ function draw() {
 			const w = cellW - GAP;
 			const h = cellH - GAP;
 
-			ctx.fillStyle = lerp(t, lo, hi);
+			const fill = lerp(t, lo, hi);
+			ctx.fillStyle = `rgb(${fill[0]}, ${fill[1]}, ${fill[2]})`;
 			ctx.fillRect(x, y, w, h);
 
 			// Highlight hovered cell
@@ -120,7 +125,7 @@ function draw() {
 
 			// Value text
 			if (showValues && cellW > 32 && cellH > 22) {
-				ctx.fillStyle = t > 0.55 ? '#ffffff' : '#000000';
+				ctx.fillStyle = valueColor(fill);
 				ctx.font = VALUE_FONT;
 				ctx.textAlign = 'center';
 				ctx.textBaseline = 'middle';

@@ -8,6 +8,7 @@
  * that called this concept something else.
  */
 
+export { scopeStyleCookie } from './cookie-scope';
 export {
 	type CustomPaletteRow,
 	countCustomPalettes,

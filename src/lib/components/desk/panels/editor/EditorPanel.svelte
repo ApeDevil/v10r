@@ -39,9 +39,11 @@ const isActiveTab = $derived.by(() => {
 	return leaf ? leaf.activeTab === panelId : false;
 });
 
+// Tracks only the tab becoming active (and the post loading): publishContent reads the
+// draft, and tracking those reads would publish on every keystroke, past contentTimer's debounce.
 $effect(() => {
 	if (isActiveTab && postId) {
-		publishContent();
+		untrack(publishContent);
 	}
 });
 
@@ -191,7 +193,11 @@ function handleContentChange(value: string) {
 		saveState = 'saved';
 	}
 
-	// Debounced publish to DeskBus for preview
+	schedulePublish();
+}
+
+/** Debounced publish to DeskBus for preview. */
+function schedulePublish() {
 	clearTimeout(contentTimer);
 	contentTimer = setTimeout(publishContent, 300);
 }
@@ -307,8 +313,7 @@ const unsubInsert = bus.subscribe('files:insert-image', (payload) => {
 	const md = `![${payload.altText}](${payload.downloadUrl})`;
 	markdown = markdown ? `${markdown}\n${md}\n` : `${md}\n`;
 	saveState = 'unsaved';
-	clearTimeout(contentTimer);
-	contentTimer = setTimeout(publishContent, 300);
+	schedulePublish();
 });
 
 function openInNewTab(path: string) {
@@ -509,9 +514,9 @@ onDestroy(() => {
 			{tags}
 			{locale}
 			{availableTags}
-			ontitlechange={(v) => { title = v; saveState = 'unsaved'; }}
-			onslugchange={(v) => { slug = v; }}
-			onsummarychange={(v) => { summary = v; saveState = 'unsaved'; }}
+			ontitlechange={(v) => { title = v; saveState = 'unsaved'; schedulePublish(); }}
+			onslugchange={(v) => { slug = v; schedulePublish(); }}
+			onsummarychange={(v) => { summary = v; saveState = 'unsaved'; schedulePublish(); }}
 			onlocalechange={(v) => { locale = v; }}
 			ondomainchange={handleDomainChange}
 			ontagstoggle={handleTagToggle}

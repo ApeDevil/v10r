@@ -8,7 +8,7 @@ category: "Data Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns
+**Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns
 
 A read walks outward from process memory to Redis to the origin. The policy declares namespace, TTL, stale window and scope, and `cacheKey` refuses both scope mistakes — a per-user key with no owner, and a shared key handed one.
 
@@ -36,10 +36,12 @@ A read walks outward from process memory to Redis to the origin. The policy decl
 
 - `src/lib/server/cache/tiered.ts` — Policy, key discipline, both tiers, TTL jitter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/tiered.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/tiered.ts))
 - `src/lib/server/cache/client.ts` — The nullable Upstash client every consumer must handle ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/client.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/client.ts))
+- `src/lib/server/style/cookie-scope.ts` — Keeps the style cookie off responses meant for the CDN ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/style/cookie-scope.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/style/cookie-scope.ts))
 
 ## Tests
 
 - `src/lib/server/cache/tiered.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/tiered.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/tiered.test.ts))
+- `src/lib/server/style/cookie-scope.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/style/cookie-scope.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/style/cookie-scope.test.ts))
 
 ## Proof
 
@@ -58,6 +60,7 @@ A read walks outward from process memory to Redis to the origin. The policy decl
 - Store the freshness horizon INSIDE the envelope rather than relying on Redis TTL: Redis expiry is a floor that reclaims memory, and the envelope has to survive a read from the local tier where no Redis TTL exists.
 - Jitter the per-key TTL. Keys written together otherwise expire together, and synchronised expiry is how a cache becomes a stampede.
 - Default per-user policies to skipping the local tier: the tier is correct there, but a warm serverless instance accumulates one entry per user it happened to serve.
+- The CDN is a tier with its own admission rules: Vercel caches a function response only with s-maxage (max-age alone is the browser's) and never one that sets a cookie. v10r's crawler endpoints carried s-maxage and were never cached, because every cookieless crawler was handed a style cookie; the cookie is now kept only on app-shell responses.
 
 ---
 

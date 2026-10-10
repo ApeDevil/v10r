@@ -5,7 +5,7 @@
  * Icons stay mounted across expand/collapse to prevent DOM swap jank.
  */
 
-import { Kbd } from '$lib/components/primitives';
+import { Kbd } from '$lib/components/primitives/kbd';
 import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 import { getModals } from '$lib/state/modals.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';

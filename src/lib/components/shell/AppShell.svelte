@@ -1,19 +1,9 @@
 <script lang="ts">
-import { onMount } from 'svelte';
+import { onDestroy, onMount } from 'svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { CommandPaletteItem } from '$lib/components/composites/command-palette';
-import { CommandPalette } from '$lib/components/composites/command-palette';
-import {
-	AnnouncementBanner,
-	ConsentBanner,
-	Footer,
-	NavigationProgress,
-	SessionMonitor,
-	ShortcutsDialog,
-	Sidebar,
-	ToastContainer,
-} from '$lib/components/shell';
+import { ToastContainer } from '$lib/components/composites/toast';
 import { DESK_PANELS } from '$lib/desk/panels';
 import type { Locale } from '$lib/i18n';
 import { localizeHref } from '$lib/i18n/runtime';
@@ -27,6 +17,13 @@ import { type Session, setSessionContext } from '$lib/state/session.svelte';
 import { getSidebar } from '$lib/state/sidebar.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { cn } from '$lib/utils/cn';
+import AnnouncementBanner from './AnnouncementBanner.svelte';
+import ConsentBanner from './ConsentBanner.svelte';
+import Footer from './Footer.svelte';
+import NavigationProgress from './NavigationProgress.svelte';
+import ShortcutsDialog from './ShortcutsDialog.svelte';
+import Sidebar from './Sidebar.svelte';
+import SessionMonitor from './session/SessionMonitor.svelte';
 
 type Props = {
 	children?: import('svelte').Snippet;
@@ -43,7 +40,11 @@ let { children, session = null, isAdmin = false, immersive = false, announcement
 
 // Initialize session context so child components can use getSession()
 // svelte-ignore state_referenced_locally
-setSessionContext(session);
+const sessionContext = setSessionContext(session);
+// The context owns a 1 s expiry timer. The public, account, admin and desk layouts
+// each mount their own shell, so a timer left running here leaked one interval per
+// layout-group switch for the life of the tab.
+onDestroy(() => sessionContext.destroy());
 
 const modals = getModals();
 const sidebar = getSidebar();
@@ -84,6 +85,31 @@ onMount(() => {
 		chatbotSession.hydratePointer();
 	}
 	if (chatbotSession.consumeReopenIntent()) void chatbotSession.open();
+});
+
+// The command palette is closed on almost every page view, and it carries bits-ui's
+// command + dialog machinery (~10 KB gz) that nothing else in the shell needs. It is
+// imported on first open, and warmed once the browser is idle so ⌘K does not wait on
+// the network: the bytes still arrive, but after hydration rather than competing with it.
+let CommandPalette: typeof import('$lib/components/composites/command-palette/CommandPalette.svelte').default | null =
+	$state(null);
+function loadCommandPalette(): void {
+	if (CommandPalette) return;
+	import('$lib/components/composites/command-palette/CommandPalette.svelte').then((mod) => {
+		CommandPalette = mod.default;
+	});
+}
+$effect(() => {
+	if (modals.quickSearchOpen) loadCommandPalette();
+});
+onMount(() => {
+	const idle = window.requestIdleCallback;
+	if (typeof idle === 'function') {
+		const handle = idle(loadCommandPalette, { timeout: 4000 });
+		return () => window.cancelIdleCallback?.(handle);
+	}
+	const handle = window.setTimeout(loadCommandPalette, 2000);
+	return () => window.clearTimeout(handle);
 });
 
 // Universal search engine: instant client lane (prerendered shard) + debounced
@@ -218,13 +244,15 @@ const searchItems = $derived<CommandPaletteItem[]>([
 <ToastContainer />
 
 <!-- Command palette: universal two-lane search -->
-<CommandPalette
-	bind:open={modals.quickSearchOpen}
-	bind:query={searchQuery}
-	items={searchItems}
-	mode="search"
-	loading={search.status === 'loading'}
-/>
+{#if CommandPalette}
+	<CommandPalette
+		bind:open={modals.quickSearchOpen}
+		bind:query={searchQuery}
+		items={searchItems}
+		mode="search"
+		loading={search.status === 'loading'}
+	/>
+{/if}
 
 <!-- AI assistant chatbot: persistent, minimizable, non-modal. Stays mounted while the
 	thread is alive (open|minimized) and no page shows it in place; the live Chat lives in

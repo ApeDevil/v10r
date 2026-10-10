@@ -1121,7 +1121,7 @@ Non-author users on `/desk` see an empty editor state with a "Request access" bu
 
 **Notification**
 
-A first-login Toast fires on the next `/desk` visit after grant. The flag lives on `auth.grant.notifiedAt` and is cleared server-side in the layout load via `consumePendingGrantNotifications`. Single-fire; no email.
+A first-login Toast fires on the next `/desk` visit after grant. The flag lives on `auth.grant.notifiedAt`. The layout load only reads it (`listPendingGrantNotifications`) — loads also run on link-hover preload, so a load that consumed it would swallow the Toast for a user who never opened the desk. The layout component shows the Toast, then acknowledges it via `POST /api/grant-notifications/acknowledge` (`acknowledgeGrantNotifications`, idempotent). Single-fire per real visit; no email.
 
 **Comments**
 

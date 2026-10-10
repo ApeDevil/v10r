@@ -33,7 +33,7 @@ Targets carrying no scope class at all are `unknown` — excluded, never assumed
 - **Targets** (`budgets`) — where we want to be. Scored on `/admin/perf`, never build-failing. Several are red today; saying so is the point.
 - **Ratchets** (`ceilings`) — the measured value at the moment it was accepted. Asserted by the gate. Moved **down** to bank an improvement; **up** only as an explicit, reviewed decision once feature work has used the ~3% headroom — never to absorb a dependency.
 
-The heaviest route is ~609 KB gzipped against a 250 KB target. A gate wired to the target would fail on the commit that introduced it and be muted the same afternoon; ratchets stop the number growing while the target stays visible as the thing still to fix. Lowering a ceiling is how an improvement gets banked.
+The heaviest route (`/desk`, counted as a visitor receives it: baseline, every layout and the page) is ~511 KB gzipped against a 250 KB target. A gate wired to the target would fail on the commit that introduced it and be muted the same afternoon; ratchets stop the number growing while the target stays visible as the thing still to fix. Lowering a ceiling is how an improvement gets banked.
 
 Bundle weight suits a gate unusually well: invisible in review (a one-line import can add 100 KB), deterministic (same source, same number), and only catchable before shipping.
 

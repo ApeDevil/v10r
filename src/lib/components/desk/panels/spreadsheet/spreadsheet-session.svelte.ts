@@ -2,9 +2,7 @@ import { apiFetch } from '$lib/api';
 import { createSpreadsheetState } from './spreadsheet.state.svelte';
 import { createSpreadsheetAutosave } from './spreadsheet-autosave';
 import { createSpreadsheetDrafts } from './spreadsheet-drafts';
-
-// Populated only on mount, never on the server. Reopening a panel reuses its pending save.
-const sessions = new Map<string, ReturnType<typeof createSession>>();
+import { openSpreadsheetSession } from './spreadsheet-unsaved-work';
 
 function createSession(userId: string, fileId: string) {
 	const sheet = createSpreadsheetState();
@@ -38,12 +36,10 @@ function createSession(userId: string, fileId: string) {
 	return { sheet, autosave };
 }
 
+/**
+ * Populated only on mount, never on the server. Reopening a panel reuses its pending save;
+ * sign-out drains and discards these sessions through `spreadsheet-unsaved-work.ts`.
+ */
 export function getSpreadsheetSession(userId: string, fileId: string) {
-	const key = JSON.stringify([userId, fileId]);
-	let session = sessions.get(key);
-	if (!session) {
-		session = createSession(userId, fileId);
-		sessions.set(key, session);
-	}
-	return session;
+	return openSpreadsheetSession(userId, fileId, () => createSession(userId, fileId));
 }

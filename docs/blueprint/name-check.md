@@ -85,8 +85,13 @@ A source that cannot answer becomes a coverage row, never an error response
 (`check.ts`, `coverageStatusFor`). Around each live source, in this order:
 
 - `readThrough` on a shared cache policy — 24 h for registries, 1 h for domains — keyed by
-  `<source>:<territory>:<sha256(normalised name)>`. Only successes are cached; a cached
-  failure would replay an outage for a day. The envelope keeps the upstream `retrievedAt`.
+  `<source>:<sha256(searchInputs)>`. Each `LiveNameSource` declares in `searchInputs` what
+  its `search` reads that can change the answer — EUIPO its RSQL queries and API base (the
+  sandbox/production switch), the web source its vendor, the exact typed phrase and Tavily's
+  country, GLEIF the canonical name, RDAP the compact label — never a secret. Keying by the
+  compact name alone served "Velo Raptor" the web hits for "VeloRaptor". Only successes are
+  cached; a cached failure would replay an outage for a day. The envelope keeps the upstream
+  `retrievedAt`.
 - One `defineBreaker` for the domain, subject = source id: three failures in two minutes
   opens it for five; a 429 trips it for `Retry-After`.
 - `takeDailyQuota` (`quota.ts`): per-source counters in Redis, sized to the free tiers in

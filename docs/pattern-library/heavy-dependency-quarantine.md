@@ -8,7 +8,7 @@ category: "Runtime Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — the gate fails a build, which is the point
+**Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** medium — the gate fails a build, which is the point
 
 Optional heavyweight capabilities load behind dynamic-import boundaries, and the gated metric is not the route's own size but the shared baseline every other route pays — `baseline_js_kb`, ratcheted with ~3% headroom.
 
@@ -32,6 +32,7 @@ Optional heavyweight capabilities load behind dynamic-import boundaries, and the
 
 - `scripts/perf/snapshot.ts` — Walks the Vite manifest import graph and gzips each chunk ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/perf/snapshot.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/perf/snapshot.ts))
 - `src/lib/server/perf/budgets.json` — baseline_js_kb ceiling — the shared cost of every route ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/perf/budgets.json) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/perf/budgets.json))
+- `src/lib/components/shell/AppShell.svelte` — Command palette imported on first open, warmed at idle ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/shell/AppShell.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/shell/AppShell.svelte))
 
 ## Tests
 
@@ -49,8 +50,9 @@ Optional heavyweight capabilities load behind dynamic-import boundaries, and the
 
 ## Emulation notes
 
-- Watch barrel files: importing a component through a barrel can pull an unrelated heavyweight sibling into everything. v10r imports `CodeBlock` directly for exactly this reason — the composites barrel would drag the markdown sanitizer along.
+- A barrel of Svelte components keeps every component it re-exports unless the component tree is declared side-effect free — see side-effect-free-components. Barrels of plain modules still need care: v10r imports `CodeBlock` directly because the composites barrel would pull the markdown sanitizer along.
 - The bundle gate must run a PRODUCTION build; a dev-mode build compiles both halves differently and inflates client JS ~9%. Note that v10r's `validate` has no build step — bundle regressions are only caught by `validate:build`.
+- A closed-by-default surface in a layout every route shares (a command palette, a dialog, an auth client used by one button) is a heavy capability too. Import it on first intent and warm it at idle; the cost is a network wait on first open if idle never came. v10r's palette and better-auth client moved the median route 241.9 -> 231.1 KB gz.
 
 ## Depends on
 

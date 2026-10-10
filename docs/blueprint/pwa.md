@@ -25,7 +25,8 @@ On iOS there is no sound wrapper at all: **the installed PWA is the iOS app.**
 | Service worker | `src/service-worker.ts` (built-in `$service-worker`, no Workbox) + pure policy module `$lib/pwa/sw-policy.ts` with unit tests |
 | Offline fallback | `src/routes/offline/+page.svelte` — top-level (outside the locale tree), prerendered, self-contained, tri-lingual inline |
 | Update UX | `$lib/components/shell/UpdatePrompt.svelte` + Toast action slot (`$lib/state/toast.svelte.ts` `show()`) |
-| Sign-out hygiene | `$lib/pwa/sign-out.ts` `signOutAndFlush()` (unsubscribes this device's push, flushes SW caches; the `Clear-Site-Data` header stays as best-effort) |
+| Sign-out hygiene | `$lib/pwa/sign-out.ts` `signOutAndFlush()` (unsubscribes this device's push, flushes SW caches, then erases the confirmed-lost unsaved work; the `Clear-Site-Data` header stays as best-effort) |
+| Unsaved work at sign-out | `$lib/state/unsaved-work.ts` — the user menu drains pending spreadsheet saves (bounded), names what is still unsaved in the sign-out confirm, and discards the drafts only after a successful sign-out. Forced exits (revoked/expired session) send no sign-out request, so drafts survive for recovery on the next sign-in |
 | Web push | `providers/web-push.ts` + `push_subscriptions` table + `POST/DELETE /api/notifications/push` + `$lib/pwa/push.ts` + settings card |
 | Standalone login ladder | `auth/login/+page.svelte` reorders under `display-mode: standalone` |
 
@@ -33,14 +34,14 @@ On iOS there is no sound wrapper at all: **the installed PWA is the iOS app.**
 
 "Offline-capable" is scoped honestly: installable shell, instant repeat loads, branded `/offline` fallback — **not** offline CRUD.
 
-1. **Precache** (cache-first, exact manifest): full hashed `build`, `static/icons/`, prerendered `/offline`. Excludes `models/`, `blender-assets/`, `logo/`, `favicon.svg` (iOS cache budget).
+1. **Precache the offline shell, not the build** (cache-first): prerendered `/offline`, the hashed assets its HTML loads (`offlineShellAssets`), `static/icons/`. Every other hashed file enters the cache on first use. Excludes `models/`, `blender-assets/`, `logo/`, `favicon.svg` (iOS cache budget). The full build was precached until 2026-10: ~2.2 MB gz of JS plus every font face, downloaded in the background by every first-time visitor (SvelteKit registers the worker for everyone) and again after every deploy — for no offline gain, since HTML is never cached and every offline navigation lands on `/offline` anyway.
 2. **HTML + `__data.json`: network-only, all routes, no exceptions.** Every HTML response is personalized (palette `transformPageChunk`); `__data.json` carries root-layout session data. Offline navigation ⇒ precached `/offline`.
 3. **Never intercepted at all:** non-GET, `/api/*` (SSE lives there), `accept: text/event-stream`, cross-origin. Not proxying is strictly safer than proxying.
 4. **Runtime cache admission** (positive allowlist, all must hold): same-origin GET, `response.ok`, `type === 'basic'`, no `Set-Cookie`, no `no-store`/`private`, **no query strings — refuse, never normalize** (cache-key normalization is how SvelteSpill-class cache deception is born).
 5. **No automatic `skipWaiting()`** — deploy-skew protection: the old worker keeps serving its own consistent cache until user-consented activation or all-tabs-closed. `controllerchange` reloads all tabs together.
 6. **Kill switch:** `KILL_SWITCH = true` in `src/service-worker.ts` + deploy ⇒ every installed client wipes caches, unregisters, and reloads as a plain browser tab on its next navigation (`/service-worker.js` is served `Cache-Control: no-cache` via `vercel.json`, so propagation is one navigation, not 24h). This is the recovery lever for a shipped-broken worker.
 
-**Accepted cost:** SvelteKit's `version` is app-global — every deploy invalidates the whole precache (no per-file revisioning exists for the SSR path). The re-download is background; cache names key on `VERCEL_GIT_COMMIT_SHA` (`kit.version.name`).
+**Deploy skew without a full precache.** SvelteKit's `version` is app-global, so every deploy replaces the cache (names key on `VERCEL_GIT_COMMIT_SHA`, `kit.version.name`). An old tab that needs a chunk the new deploy removed does not break: Kit's client catches the failed import, checks `version.json`, updates the worker and reloads natively (`client.js`, `stores.updated.check()` → `native_navigation`).
 
 ## Update flow
 

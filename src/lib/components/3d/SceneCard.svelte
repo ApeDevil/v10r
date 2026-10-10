@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
+import { MediaQuery } from 'svelte/reactivity';
 import type { Model3D } from '$lib/3d/models';
 import { resolveCardConfig } from '$lib/3d/models';
 import { BoundaryFallback } from '$lib/components/composites';
@@ -8,16 +9,43 @@ import SceneContent from './SceneContent.svelte';
 interface Props {
 	model: Model3D;
 	onclick?: () => void;
+	/** Something covers the grid (the viewer dialog): stop animating behind it. */
+	paused?: boolean;
 	class?: string;
 }
 
-let { model, onclick, class: className }: Props = $props();
+let { model, onclick, paused = false, class: className }: Props = $props();
 
 const config = $derived(resolveCardConfig(model));
 let hovered = $state(false);
+
+/*
+ * A grid of cards is one WebGL context each. The canvas renders on demand, and a
+ * frame is only requested while something moves — so a card animates only while
+ * it is on screen, uncovered, in a visible tab and motion is welcome. Otherwise
+ * it holds its last frame at zero GPU cost.
+ */
+const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)', false);
+let cardEl = $state<HTMLButtonElement>();
+let onScreen = $state(false);
+let documentVisible = $state(typeof document === 'undefined' || document.visibilityState === 'visible');
+
+$effect(() => {
+	if (!cardEl) return;
+	const observer = new IntersectionObserver(([entry]) => {
+		onScreen = entry.isIntersecting;
+	});
+	observer.observe(cardEl);
+	return () => observer.disconnect();
+});
+
+const animate = $derived(onScreen && documentVisible && !paused && !reducedMotion.current);
 </script>
 
+<svelte:document onvisibilitychange={() => (documentVisible = document.visibilityState === 'visible')} />
+
 <button
+	bind:this={cardEl}
 	class="scene-card {className ?? ''}"
 	{onclick}
 	type="button"
@@ -27,8 +55,8 @@ let hovered = $state(false);
 >
 	<svelte:boundary>
 		<div class="canvas-container">
-			<Canvas renderMode="always">
-				<SceneContent {model} {config} {hovered} />
+			<Canvas renderMode="on-demand">
+				<SceneContent {model} {config} {hovered} {animate} />
 			</Canvas>
 		</div>
 

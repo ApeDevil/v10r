@@ -1,4 +1,5 @@
 <script lang="ts">
+import { createAnimationFrameCoalescer } from '$lib/utils/animation-frame-coalescer';
 import { cn } from '$lib/utils/cn';
 import { getDockContext } from './dock.state.svelte';
 
@@ -15,37 +16,47 @@ const dock = getDockContext();
 const MIN_SIZE = 10;
 
 let dragging = $state(false);
+/**
+ * The split container's box, measured once per drag: dragging the divider resizes
+ * the two children, never the container, so re-measuring on every move would only
+ * force a layout read per pointer event.
+ */
+let containerRect: DOMRect | null = null;
+
+// Pointer events can fire several times per frame; only the last position before a
+// paint is visible, so the split (and the persistence it triggers) updates once per frame.
+const resize = createAnimationFrameCoalescer<number>((ratio) => {
+	const clamped = Math.max(MIN_SIZE, Math.min(100 - MIN_SIZE, ratio));
+	dock.resizeSplit(splitId, [clamped, 100 - clamped]);
+});
+
+$effect(() => () => resize.cancel());
 
 function handlePointerDown(e: PointerEvent) {
 	if (e.button !== 0) return;
 	e.preventDefault();
+	const handle = e.currentTarget as HTMLElement;
+	containerRect = handle.parentElement?.getBoundingClientRect() ?? null;
 	dragging = true;
-	(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+	handle.setPointerCapture(e.pointerId);
 }
 
 function handlePointerMove(e: PointerEvent) {
-	if (!dragging) return;
-
-	const handle = e.currentTarget as HTMLElement;
-	const container = handle.parentElement;
-	if (!container) return;
-
-	const rect = container.getBoundingClientRect();
-	let ratio: number;
-
-	if (direction === 'horizontal') {
-		ratio = ((e.clientX - rect.left) / rect.width) * 100;
-	} else {
-		ratio = ((e.clientY - rect.top) / rect.height) * 100;
-	}
-
-	const clamped = Math.max(MIN_SIZE, Math.min(100 - MIN_SIZE, ratio));
-	dock.resizeSplit(splitId, [clamped, 100 - clamped]);
+	if (!dragging || !containerRect) return;
+	const rect = containerRect;
+	resize.push(
+		direction === 'horizontal'
+			? ((e.clientX - rect.left) / rect.width) * 100
+			: ((e.clientY - rect.top) / rect.height) * 100,
+	);
 }
 
-function handlePointerUp(_e: PointerEvent) {
+function endDrag() {
 	if (!dragging) return;
 	dragging = false;
+	containerRect = null;
+	// The release position lands now, not a frame later.
+	resize.settle();
 }
 
 function handleKeyDown(e: KeyboardEvent) {
@@ -85,8 +96,8 @@ function handleKeyDown(e: KeyboardEvent) {
 	aria-valuemax={100 - MIN_SIZE}
 	onpointerdown={handlePointerDown}
 	onpointermove={handlePointerMove}
-	onpointerup={handlePointerUp}
-	onlostpointercapture={() => (dragging = false)}
+	onpointerup={endDrag}
+	onlostpointercapture={endDrag}
 	onkeydown={handleKeyDown}
 >
 	<div class="dock-resizer-line"></div>

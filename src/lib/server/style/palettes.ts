@@ -13,10 +13,25 @@ export type CustomPaletteRow = typeof customPalettes.$inferSelect;
  * Neon round-trip via a forged cookie. Negative results are cached too (bounded) so
  * spamming bogus ids can't amplify DB load. Palettes are effectively immutable per
  * id; update/delete invalidate the entry.
+ *
+ * An id that `createId.palette()` could not have produced is refused before the cache
+ * and the database, so arbitrary cookie junk costs nothing. A WELL-FORMED unknown id
+ * still costs one query per distinct id per TTL — format validation narrows the input,
+ * it cannot make guessing free.
+ *
+ * Least-recently-used eviction at the cap. The previous `clear()` let a burst of bogus
+ * ids flush every real visitor's palette along with them.
  */
 const PALETTE_CACHE_TTL_MS = 60_000;
 const PALETTE_CACHE_MAX = 1_000;
 const paletteByIdCache = new Map<string, { value: CustomPaletteRow | null; expiresAt: number }>();
+
+/** The exact shape `createId.palette()` mints: `CP_` + 12 lowercase hex. */
+const CUSTOM_PALETTE_ID = /^CP_[0-9a-f]{12}$/;
+
+function isCustomPaletteId(id: string): boolean {
+	return CUSTOM_PALETTE_ID.test(id);
+}
 
 export async function createCustomPalette(data: {
 	name: string;
@@ -46,13 +61,24 @@ export async function createCustomPalette(data: {
 
 /** Get a custom palette by ID only (no user check — for SSR rendering). Cached (see above). */
 export async function getCustomPaletteById(id: string): Promise<CustomPaletteRow | null> {
+	if (!isCustomPaletteId(id)) return null;
+
 	const cached = paletteByIdCache.get(id);
-	if (cached && cached.expiresAt > Date.now()) return cached.value;
+	if (cached && cached.expiresAt > Date.now()) {
+		// Re-insert to mark it most recently used — a Map iterates in insertion order.
+		paletteByIdCache.delete(id);
+		paletteByIdCache.set(id, cached);
+		return cached.value;
+	}
 
 	const [palette] = await db.select().from(customPalettes).where(eq(customPalettes.id, id)).limit(1);
 	const value = palette ?? null;
 
-	if (paletteByIdCache.size >= PALETTE_CACHE_MAX) paletteByIdCache.clear();
+	paletteByIdCache.delete(id);
+	if (paletteByIdCache.size >= PALETTE_CACHE_MAX) {
+		const leastRecent = paletteByIdCache.keys().next().value;
+		if (leastRecent !== undefined) paletteByIdCache.delete(leastRecent);
+	}
 	paletteByIdCache.set(id, { value, expiresAt: Date.now() + PALETTE_CACHE_TTL_MS });
 	return value;
 }

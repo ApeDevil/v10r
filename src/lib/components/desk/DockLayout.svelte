@@ -323,22 +323,39 @@ const workspace = setWorkspaceContext(initialWorkspaces, initialActiveWorkspaceI
 	},
 });
 
-// Debounced persistence — $state.snapshot() creates deep tracking
-// so in-place mutations (e.g. resizeSplit) also trigger saves.
+/**
+ * Read every nested property of a reactive value without copying it — inside an
+ * effect this subscribes to the whole tree, so in-place mutations (resizeSplit
+ * writes `sizes[0]` directly) re-run the effect just as `$state.snapshot()` would,
+ * minus the deep clone per change.
+ */
+function trackDeep(value: unknown): void {
+	if (value === null || typeof value !== 'object') return;
+	if (Array.isArray(value)) {
+		for (let i = 0; i < value.length; i++) trackDeep(value[i]);
+		return;
+	}
+	for (const key in value) trackDeep((value as Record<string, unknown>)[key]);
+}
+
+// Debounced persistence. The effect only subscribes (trackDeep); the deep copy is
+// taken once, when the debounce fires — a split drag changes the tree every frame,
+// and cloning it per frame was work thrown away by the next one.
 // svelte-ignore state_referenced_locally
 if (persist && browser) {
 	let timer: ReturnType<typeof setTimeout>;
 	$effect(() => {
 		// Skip saving during workspace switches
 		if (workspace.isSwitching) return;
-		// snapshot() deeply reads all properties, establishing fine-grained tracking
-		const root = $state.snapshot(dock.root) as LayoutNode;
-		const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
-		const barPos = dock.activityBarPosition;
-		const focusedLeafId = dock.focusedLeafId ?? undefined;
+		trackDeep(dock.root);
+		trackDeep(dock.panels);
+		void dock.activityBarPosition;
+		void dock.focusedLeafId;
 		clearTimeout(timer);
 		timer = setTimeout(() => {
-			saveDockState(root, panels, persistKey, barPos, focusedLeafId);
+			const root = $state.snapshot(dock.root) as LayoutNode;
+			const panels = $state.snapshot(dock.panels) as Record<string, PanelDefinition>;
+			saveDockState(root, panels, persistKey, dock.activityBarPosition, dock.focusedLeafId ?? undefined);
 			// Bump workspace modification tracking
 			if (workspace.activeId) workspace.onDockChange();
 		}, 300);

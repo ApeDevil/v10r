@@ -58,12 +58,6 @@ const localeItems = $derived(
 	})),
 );
 
-let revealed = $state(false);
-
-$effect(() => {
-	revealed = true;
-});
-
 const specimenName = 'Velociraptor';
 
 const zones: Array<{
@@ -125,12 +119,12 @@ const zones: Array<{
 ];
 </script>
 <!-- ACT I: Hero -->
-<section class="hero" class:hero-revealed={revealed}>
+<section class="hero">
 	<div class="hero-grid">
 		<div class="hero-identity">
 			<p class="classification">{m.home_hero_classification()}</p>
 
-			<h1 class="specimen-name" class:revealed>
+			<h1 class="specimen-name">
 				{#each specimenName as char, i}
 					<span class="char" style="animation-delay: {i * 15}ms">{char}</span>
 				{/each}
@@ -365,18 +359,22 @@ v          10            r</pre>
 		color: var(--color-fg);
 	}
 
+	/* Hero entrance is CSS-only and starts at first paint. It used to wait for a
+	   hydration-flipped class, which kept the hero (and so LCP) invisible until the
+	   page's JS had loaded — and forever without JS. Hydration adopts these nodes
+	   as-is, so the running animations are not restarted. `both` fill holds each
+	   element at its `from` frame through its delay. */
 	.char {
 		display: inline-block;
-		opacity: 0;
-		filter: blur(8px);
-		transform: translateY(0.15em);
-	}
-
-	.revealed .char {
-		animation: char-snap 150ms ease-out forwards;
+		animation: char-snap 150ms ease-out both;
 	}
 
 	@keyframes char-snap {
+		from {
+			opacity: 0;
+			filter: blur(8px);
+			transform: translateY(0.15em);
+		}
 		to {
 			opacity: 1;
 			filter: blur(0);
@@ -385,15 +383,6 @@ v          10            r</pre>
 	}
 
 	/* Hero entrance choreography — four legs converging on the title. */
-	.hero .classification,
-	.hero .tagline,
-	.hero .hero-raptor,
-	.hero .roll-block,
-	.hero .etymology-card,
-	.hero .license-card {
-		opacity: 0;
-	}
-
 	@keyframes hero-enter-from-top {
 		from { opacity: 0; transform: translateY(-16px); }
 		to   { opacity: 1; transform: translateY(0); }
@@ -415,58 +404,50 @@ v          10            r</pre>
 		to   { opacity: 1; transform: translateY(0); }
 	}
 
-	.hero-revealed .classification {
+	.hero .classification {
 		animation: hero-enter-from-top 240ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
 	}
-	.hero-revealed .tagline {
+	.hero .tagline {
 		animation: hero-enter-from-bottom 240ms cubic-bezier(0.16, 1, 0.3, 1) 240ms both;
 	}
-	.hero-revealed .hero-raptor,
-	.hero-revealed .roll-block {
+	.hero .hero-raptor,
+	.hero .roll-block {
 		animation: hero-enter-from-left 280ms cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
 	}
-	.hero-revealed .etymology-card {
+	.hero .etymology-card {
 		animation: hero-enter-from-right 280ms cubic-bezier(0.16, 1, 0.3, 1) 280ms both;
 	}
-	.hero-revealed .license-card {
+	.hero .license-card {
 		animation: hero-enter-from-right 280ms cubic-bezier(0.16, 1, 0.3, 1) 340ms both;
 	}
 
 	@media (max-width: 1023px) {
-		.hero-revealed .classification {
+		.hero .classification {
 			animation: hero-enter-vertical 240ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
 		}
-		.hero-revealed .tagline {
+		.hero .tagline {
 			animation: hero-enter-vertical 240ms cubic-bezier(0.16, 1, 0.3, 1) 280ms both;
 		}
-		.hero-revealed .hero-raptor,
-		.hero-revealed .roll-block {
+		.hero .hero-raptor,
+		.hero .roll-block {
 			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 360ms both;
 		}
-		.hero-revealed .etymology-card {
+		.hero .etymology-card {
 			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 440ms both;
 		}
-		.hero-revealed .license-card {
+		.hero .license-card {
 			animation: hero-enter-vertical 280ms cubic-bezier(0.16, 1, 0.3, 1) 520ms both;
 		}
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.char {
-			opacity: 1;
-			filter: none;
-			transform: none;
-		}
-		.revealed .char {
-			animation: none;
-		}
+		.char,
 		.hero .classification,
 		.hero .tagline,
 		.hero .hero-raptor,
 		.hero .roll-block,
 		.hero .etymology-card,
 		.hero .license-card {
-			opacity: 1;
 			animation: none;
 		}
 	}

@@ -4,7 +4,7 @@ import { onMount } from 'svelte';
 import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { GeoMap, MapMarker, MapPopup } from '$lib/components/viz';
-import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import { getVizPalette, toRgba, vizColor } from '$lib/components/viz/_shared/theme-bridge';
 import * as m from '$lib/paraglide/messages';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
@@ -215,7 +215,7 @@ const choroplethRegions = [
 								<GeoJSONSource data={STATES_GEOJSON}>
 									<FillLayer
 										paint={{
-											'fill-color': palette[0] || '#3b82f6',
+											'fill-color': toRgba(vizColor(palette, 0)),
 											'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.5, 0.2],
 										}}
 										onmousemove={(ev: { features?: Array<{ id?: string | number; properties?: Record<string, unknown> }>; lngLat?: { lng: number; lat: number } }) => {
@@ -229,7 +229,7 @@ const choroplethRegions = [
 									/>
 									<LineLayer
 										paint={{
-											'line-color': palette[0] || '#3b82f6',
+											'line-color': toRgba(vizColor(palette, 0)),
 											'line-opacity': 0.6,
 											'line-width': 1,
 										}}
@@ -267,13 +267,17 @@ const choroplethRegions = [
 ${"<"}script>
   import { GeoJSONSource, FillLayer, LineLayer,
     FeatureState, Popup } from 'svelte-maplibre-gl';
+  import { getCssVar, toRgba } from '$lib/components/viz/_shared/theme-bridge';
+
+  // A token, read at mount — as rgba(), because MapLibre does not parse oklch().
+  const primary = toRgba(getCssVar('color-primary'));
 ${"<"}/script>
 
 <GeoMap center={{ lng: -98, lat: 38 }} zoom={3}>
   <GeoJSONSource data={geojsonUrl}>
     <FillLayer
       paint={{
-        'fill-color': '#3b82f6',
+        'fill-color': primary,
         'fill-opacity': ['case',
           ['boolean', ['feature-state', 'hover'], false],
           0.5, 0.2],
@@ -282,7 +286,7 @@ ${"<"}/script>
         hoveredFeature = ev.features?.[0];
       }}
     />
-    <LineLayer paint={{ 'line-color': '#3b82f6' }} />
+    <LineLayer paint={{ 'line-color': primary }} />
     {#if hoveredFeature}
       <FeatureState id={hoveredFeature.id}
         state={{ hover: true }} />

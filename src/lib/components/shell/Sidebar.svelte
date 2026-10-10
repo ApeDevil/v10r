@@ -1,7 +1,9 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
-import { SidebarDrawer, SidebarFab, SidebarRail } from '$lib/components/shell';
 import { getSidebar } from '$lib/state/sidebar.svelte';
+import SidebarDrawer from './SidebarDrawer.svelte';
+import SidebarFab from './SidebarFab.svelte';
+import SidebarRail from './SidebarRail.svelte';
 
 interface Props {
 	isAdmin?: boolean;

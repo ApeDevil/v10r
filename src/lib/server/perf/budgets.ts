@@ -37,7 +37,7 @@ export type BudgetKey = keyof typeof raw.budgets;
  * The ratchet: the measured value at the moment it was accepted.
  *
  * Targets and ceilings are separate because they answer different questions. The
- * `route_js_kb` target is 250 KB and the heaviest route measures 609 — that gap
+ * `route_js_kb` target is 250 KB and the heaviest route measures 511 — that gap
  * is a real, honest finding and it belongs on the dashboard. But a gate wired to
  * an aspirational target fails on the day it lands, and a gate that fails on day
  * one gets muted, after which it protects nothing.

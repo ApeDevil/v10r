@@ -56,14 +56,30 @@ export interface NameSourceContext {
 	resolveNs: (host: string) => Promise<string[]>;
 }
 
-export interface NameSource {
+interface NameSourceBase {
 	id: NameSourceId;
 	kind: NameMatchKind;
 	territories: readonly NameCheckTerritory[];
 	/** The official search a person can run — shown on every coverage row. */
 	manualUrl(query: NameCheckQuery): string;
+}
+
+/** Manual-only: the registry offers no automated access we may use. */
+interface ManualNameSource extends NameSourceBase {
+	search?: undefined;
+}
+
+export interface LiveNameSource extends NameSourceBase {
 	/** Whether the credentials this source needs are present. Omitted ⇒ needs none. */
 	configured?(credentials: NameSourceCredentials): boolean;
-	/** Omitted ⇒ manual-only: the registry offers no automated access we may use. */
-	search?(query: NameCheckQuery, ctx: NameSourceContext): Promise<NameMatchDraft[]>;
+	search(query: NameCheckQuery, ctx: NameSourceContext): Promise<NameMatchDraft[]>;
+	/**
+	 * Everything `search` reads that can change its answer: the query fields it sends and
+	 * the upstream it would ask (an endpoint or a vendor — never a secret). The result cache
+	 * is keyed by exactly this list, so an input missing here serves one name's answer to
+	 * another, or sandbox data after the switch to production, for a whole TTL.
+	 */
+	searchInputs(query: NameCheckQuery, credentials: NameSourceCredentials): readonly string[];
 }
+
+export type NameSource = ManualNameSource | LiveNameSource;

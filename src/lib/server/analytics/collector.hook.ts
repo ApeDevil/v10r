@@ -8,6 +8,7 @@ import {
 	isBrowserNavigation,
 	isExcludedPath,
 	isPrefetch,
+	isSamePageDataReload,
 	userLaneSurface,
 } from '$lib/analytics/collect-policy';
 import { normalizeIpKey } from '$lib/server/abuse';
@@ -139,13 +140,18 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	// dotted paths (`/robots.txt`) and authenticated prefixes (a scanner probing
 	// `/admin`) that the anonymous human lane bars for reasons that do not apply to
 	// software. See isBotTrackablePath.
+	//
+	// A `__data.json` fetch is exempt from the header-shape test. Every client-side
+	// navigation fetches one with `Sec-Fetch-Mode: cors`, and SvelteKit has already
+	// stripped the suffix from `path` — so without the exemption each human click landed
+	// here as a bot hit. A self-declared bot fetching page data is still recorded.
 	const botUa = event.request.headers.get('user-agent') ?? '';
 	const botLane =
 		!building &&
 		!devMuted &&
 		event.request.method === 'GET' &&
 		!isPrefetch(event.request.headers) &&
-		(isBot(botUa) || !isBrowserNavigation(event.request.headers)) &&
+		(isBot(botUa) || (!event.isDataRequest && !isBrowserNavigation(event.request.headers))) &&
 		isBotTrackablePath(path);
 
 	// The authenticated lane. Eligibility is decided before resolve (cheap reads
@@ -155,6 +161,12 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	// not engage — the auth cookie is already strictly necessary under TDDDG
 	// §25(2) Nr.2 — and processing rests on Art 6(1)(b)/(f). This is disclosed
 	// under Art 13, not consented to under Art 6(1)(a).
+	//
+	// One page view per page arrived at. This lane has no beacon, so it sees a full load as
+	// the document request and a client-side navigation as that page's `__data.json` — but
+	// a page also refetches its OWN data: the hydration fetch after an `ssr = false`
+	// document (the whole desk), `invalidate()`, a form action's refresh. Those used to
+	// count again; isSamePageDataReload tells them apart by `Referer`.
 	const userSurface = userLaneSurface(path);
 	const userLane =
 		!building &&
@@ -163,6 +175,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 		userSurface &&
 		!path.includes('.') &&
 		!isPrefetch(event.request.headers) &&
+		!(event.isDataRequest && isSamePageDataReload(event.url, event.request.headers)) &&
 		event.locals.user?.id
 			? { userId: event.locals.user.id, surface: userSurface }
 			: null;

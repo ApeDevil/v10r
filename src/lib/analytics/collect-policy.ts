@@ -325,3 +325,39 @@ export function isBrowserNavigation(headers: Headers): boolean {
 	if (!(headers.get('accept') ?? '').includes('text/html')) return false;
 	return (headers.get('accept-language') ?? '').length > 0;
 }
+
+/**
+ * True when a `__data.json` request reloads the page the browser is already showing,
+ * rather than navigating to a new one.
+ *
+ * SvelteKit fetches page data in three situations and only one of them is a page view: a
+ * client-side navigation fetches the TARGET page's data while the browser still shows the
+ * previous page, so its `Referer` names somewhere else. The other two fetch the data of
+ * the page on screen — `invalidate()` / a form action's refresh, and the hydration fetch
+ * of an `ssr = false` page, whose document request was already counted — so `Referer`
+ * names the page itself.
+ *
+ * Call only for data requests, with SvelteKit's `event.url` (suffix and internal params
+ * already stripped). Both query strings are compared through `URLSearchParams`, because
+ * SvelteKit re-serializes `event.url.search` when it strips its own params. A missing or
+ * unparseable `Referer` answers false: undercounting every navigation for a visitor whose
+ * browser strips it would be the larger error.
+ *
+ * Known false positive, accepted: hover preloading (`data-sveltekit-preload-data`) fetches
+ * a target the user may never open, and nothing in the request says so.
+ */
+export function isSamePageDataReload(url: URL, headers: Headers): boolean {
+	const referer = headers.get('referer');
+	if (!referer) return false;
+	let from: URL;
+	try {
+		from = new URL(referer);
+	} catch {
+		return false;
+	}
+	return (
+		from.origin === url.origin &&
+		from.pathname === url.pathname &&
+		new URLSearchParams(from.search).toString() === url.searchParams.toString()
+	);
+}

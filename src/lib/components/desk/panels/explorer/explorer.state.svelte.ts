@@ -3,13 +3,59 @@
  *
  * Stores all nodes (virtual folders, desk folders, files, blog posts, assets)
  * in a flat Map keyed by ID. Parent-child relationships via `parentId` refs.
- * O(1) lookups and moves. Svelte 5 $state tracks fine-grained mutations.
+ * O(1) lookups and moves.
+ *
+ * `nodes` is DERIVED: the server-confirmed map with the pending optimistic intents
+ * folded on top (`explorer-intents.ts` owns the semantics and is unit-tested there).
+ * This class is the thin rune wrapper — it holds the two halves and numbers intents.
  */
+import { SvelteSet } from 'svelte/reactivity';
+import {
+	confirmIntent,
+	type ExplorerIntent,
+	type ExplorerIntentInput,
+	type ExplorerNodeMap,
+	foldIntents,
+	isNoOpIntent,
+	rejectIntent,
+} from './explorer-intents';
 import type { ExplorerNode } from './node';
 
+/** How a confirmed intent settled — `superseded` means the server must be re-read. */
+export type IntentConfirmation = 'confirmed' | 'superseded';
+
 export class ExplorerState {
-	nodes = $state<Map<string, ExplorerNode>>(new Map());
-	expanded = $state<Set<string>>(new Set(['virtual:blog', 'virtual:assets', 'virtual:data']));
+	/** Last server-confirmed nodes. Never speculative. Always replaced, never mutated. */
+	#confirmed = $state.raw<ExplorerNodeMap>(new Map());
+	/**
+	 * In-flight intents in issue order. `$state.raw` is load-bearing: a deep proxy would
+	 * hand back proxies of the intents. Entries are matched by `seq` regardless.
+	 */
+	#pending = $state.raw<ExplorerIntent[]>([]);
+	#nextSeq = 0;
+
+	/** Last fold, reused while neither half has been replaced — rows call `getChildren` per render. */
+	#shown: { confirmed: ExplorerNodeMap; pending: readonly ExplorerIntent[]; nodes: ExplorerNodeMap } | null = null;
+
+	/**
+	 * What the tree shows: confirmed nodes with every pending intent folded on top.
+	 *
+	 * A memoised getter rather than a `$derived` field: reading both `$state.raw` halves
+	 * makes it exactly as reactive in the browser, and it stays correct in the server
+	 * compile the unit lane runs, where a class `$derived` is computed once and never again.
+	 */
+	get nodes(): ExplorerNodeMap {
+		const confirmed = this.#confirmed;
+		const pending = this.#pending;
+		const shown = this.#shown;
+		if (shown?.confirmed === confirmed && shown.pending === pending) return shown.nodes;
+		const nodes = foldIntents(confirmed, pending);
+		this.#shown = { confirmed, pending, nodes };
+		return nodes;
+	}
+
+	/** A SvelteSet, mutated in place: `$state` does not proxy a Set, so `.add()` on one never re-rendered. */
+	readonly expanded = new SvelteSet<string>(['virtual:blog', 'virtual:assets', 'virtual:data']);
 	/** Assets-root filter: when true, non-image blog-assets are hidden across the asset subtree. */
 	showImagesOnly = $state<boolean>(false);
 	selectedId = $state<string | null>(null);
@@ -21,13 +67,14 @@ export class ExplorerState {
 	moveAnnouncement = $state<string>('');
 	renamingId = $state<string | null>(null);
 	deletingId = $state<string | null>(null);
-	/** Separate reactive signal for AI context pins (works around svelte:self deep-reactivity issue). */
-	aiPins = $state<Map<string, boolean>>(new Map());
 
-	/** Replace all nodes from fresh API data. Preserves expanded state. */
+	/**
+	 * Replace the confirmed nodes from fresh API data. Preserves expanded state.
+	 * Pending intents are KEPT and re-folded, so an unrelated refresh landing mid-flight
+	 * does not make an in-flight move flicker back.
+	 */
 	setNodes(nodes: ExplorerNode[]): void {
-		this.nodes = new Map(nodes.map((n) => [n.id, n]));
-		this.aiPins = new Map(nodes.filter((n) => n.aiContext).map((n) => [n.id, true]));
+		this.#confirmed = new Map(nodes.map((n) => [n.id, n]));
 	}
 
 	/** Get direct children of a node, sorted: folders first, then alphabetical. */
@@ -60,29 +107,44 @@ export class ExplorerState {
 
 	/** Toggle expanded state of a folder. */
 	toggleExpanded(nodeId: string): void {
-		const next = new Set(this.expanded);
-		if (next.has(nodeId)) next.delete(nodeId);
-		else next.add(nodeId);
-		this.expanded = next;
+		if (this.expanded.has(nodeId)) this.expanded.delete(nodeId);
+		else this.expanded.add(nodeId);
 	}
 
-	/** Move a node to a new parent (optimistic). Returns a rollback function. */
-	moveNode(nodeId: string, newParentId: string | null): () => void {
-		const node = this.nodes.get(nodeId);
-		if (!node) return () => {};
+	/**
+	 * Show an intent now; returns its `seq` for `confirmIntent`/`rejectIntent`. Returns
+	 * null — and records nothing — when the tree already shows the result (a double-drop,
+	 * a re-submitted dialog) or the node is gone: there is nothing to send.
+	 */
+	beginIntent(input: ExplorerIntentInput): number | null {
+		if (isNoOpIntent(this.nodes, input)) return null;
+		const seq = this.#nextSeq++;
+		this.#pending = [...this.#pending, { ...input, seq }];
+		return seq;
+	}
 
-		const previousParentId = node.parentId;
-		const next = new Map(this.nodes);
-		next.set(nodeId, { ...node, parentId: newParentId });
-		this.nodes = next;
+	/** Move a node to a new parent (optimistic). See `beginIntent`. */
+	moveNode(nodeId: string, newParentId: string | null): number | null {
+		return this.beginIntent({ kind: 'move', nodeId, parentId: newParentId });
+	}
 
-		return () => {
-			const current = this.nodes.get(nodeId);
-			if (!current) return;
-			const rb = new Map(this.nodes);
-			rb.set(nodeId, { ...current, parentId: previousParentId });
-			this.nodes = rb;
-		};
+	/** Pin or unpin a node's AI context (optimistic). See `beginIntent`. */
+	setAiContext(nodeId: string, aiContext: boolean): number | null {
+		return this.beginIntent({ kind: 'ai-context', nodeId, aiContext });
+	}
+
+	/** The server accepted intent `seq`. */
+	confirmIntent(seq: number): IntentConfirmation {
+		const settled = confirmIntent(this.#confirmed, this.#pending, seq);
+		// Confirmed first, then pending: the fold never briefly loses the change in between.
+		this.#confirmed = settled.confirmed;
+		this.#pending = settled.pending;
+		return settled.superseded ? 'superseded' : 'confirmed';
+	}
+
+	/** The server refused intent `seq` — dropping it is the exact rollback. */
+	rejectIntent(seq: number): void {
+		this.#pending = rejectIntent(this.#pending, seq);
 	}
 
 	/** Enter rename mode for a node. Cancels any active rename/delete. */
@@ -176,20 +238,8 @@ export class ExplorerState {
 		return out;
 	}
 
-	/** Update a node's aiContext flag. */
-	updateAiContext(nodeId: string, aiContext: boolean): void {
-		// Update the node data (for context menu label reads)
-		const node = this.nodes.get(nodeId);
-		if (node) node.aiContext = aiContext;
-		// Update the reactive signal (drives template re-renders via isAiPinned)
-		const next = new Map(this.aiPins);
-		if (aiContext) next.set(nodeId, true);
-		else next.delete(nodeId);
-		this.aiPins = next;
-	}
-
 	/** Check if a node is pinned to AI context. */
 	isAiPinned(nodeId: string): boolean {
-		return this.aiPins.has(nodeId);
+		return this.nodes.get(nodeId)?.aiContext ?? false;
 	}
 }

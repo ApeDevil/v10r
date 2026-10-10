@@ -105,7 +105,13 @@ Two thresholds, two jobs, and keeping them distinct is the whole pattern.
 
 **Targets** (`budgets` in `budgets.json`) are where we want to be. Scored on `/admin/perf`,
 never build-failing. Several are red today and saying so is the point — the heaviest route is
-~609 KB gzipped against a 250 KB target.
+~511 KB gzipped against a 250 KB target.
+
+**A route is what a visitor downloads**: the baseline, every layout above the page, and the
+page. Until 2026-10 the snapshot scored page nodes alone, leaving the intermediate layouts
+out — the `(public)` shell alone was ~160 KB gz — so its median read ~215 KB while every
+public page actually cost ~297 KB. A budget measured on the wrong unit cannot see the
+regressions that matter most: the ones in a layout every route shares.
 
 **Ratchets** (`ceilings`) are the measured value at the moment it was accepted. Asserted by
 `snapshot.gate.test.ts`. Moved **down** to bank an improvement; **up** only as an explicit,

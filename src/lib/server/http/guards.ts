@@ -42,6 +42,21 @@ function hasBlogAuthorGrant(locals: App.Locals): boolean {
 	return locals.grants?.includes('blog-author') ?? false;
 }
 
+/**
+ * The one URL prefix whose handlers read `locals.grants`: `guardApiBlogAuthor` above is
+ * its only reader, and every caller of it is a `/api/blog/*` endpoint.
+ */
+const GRANT_READING_PREFIX = '/api/blog/';
+
+/**
+ * Whether `sessionPopulate` must load `locals.grants` for this path. Everywhere else the
+ * lookup is a Postgres round trip nobody reads (the desk layout asks `hasGrant()` directly).
+ * `guards.test.ts` fails if a caller of `guardApiBlogAuthor` appears outside the prefix.
+ */
+export function readsGrants(pathname: string): boolean {
+	return pathname.startsWith(GRANT_READING_PREFIX);
+}
+
 // API guards — the ONLY family `+server.ts` may use.
 //
 // They return a Response rather than throwing one: SvelteKit does not unwrap a

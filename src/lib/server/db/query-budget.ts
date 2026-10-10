@@ -38,6 +38,10 @@ export const QUERY_BUDGETS = {
 		maxQueries: 5,
 		note: 'Two waves: count + page, then revisions + tags + domains batched by the fetched ids.',
 	},
+	'blog.getPublishedPostForSlug': {
+		maxQueries: 2,
+		note: 'The post with revision, author and domain joined, then its tags — the public post page read.',
+	},
 	'desk.listFiles': {
 		maxQueries: 2,
 		note: 'One page read and one count, issued together — the count is not a second wave.',

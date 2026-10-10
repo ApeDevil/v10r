@@ -12,6 +12,7 @@
 import { browser } from '$app/environment';
 import { Alert } from '$lib/components/composites';
 import { Badge, Button, Spinner, Switch } from '$lib/components/primitives';
+import { colorChannels, type Rgb } from '$lib/components/viz/_shared/theme-bridge';
 import type { EmbedOk } from '$lib/schemas/showcase/image-kit';
 
 interface Props {
@@ -29,20 +30,7 @@ let canvasEl = $state<HTMLCanvasElement | null>(null);
 
 const COLS = 48;
 
-// Resolve ANY CSS color (oklch, hex, rgb, color-mix) to sRGB [r,g,b] by letting the
-// browser paint it onto a 1×1 probe canvas and reading the pixel back. The design
-// tokens are authored as oklch(), which a naive hex parser silently turns into black —
-// so never parse the colour string ourselves.
-function cssColorToRgb(color: string, fallback: string): [number, number, number] {
-	const probe = document.createElement('canvas').getContext('2d');
-	if (!probe) return [128, 128, 128];
-	probe.fillStyle = '#000';
-	probe.fillStyle = (color || '').trim() || fallback;
-	probe.fillRect(0, 0, 1, 1);
-	const d = probe.getImageData(0, 0, 1, 1).data;
-	return [d[0], d[1], d[2]];
-}
-function mix(a: [number, number, number], b: [number, number, number], t: number): string {
+function mix(a: Rgb, b: Rgb, t: number): string {
 	const r = Math.round(a[0] + (b[0] - a[0]) * t);
 	const g = Math.round(a[1] + (b[1] - a[1]) * t);
 	const bl = Math.round(a[2] + (b[2] - a[2]) * t);
@@ -53,10 +41,12 @@ function mix(a: [number, number, number], b: [number, number, number], t: number
 $effect(() => {
 	if (!browser || !canvasEl || !embed?.vector?.length) return;
 	const vec = embed.vector;
+	// Read through the browser: the tokens are oklch(), which no hand-written parser handles.
 	const cs = getComputedStyle(canvasEl);
-	const zero = cssColorToRgb(cs.getPropertyValue('--color-subtle'), '#e5e7eb');
-	const pos = cssColorToRgb(cs.getPropertyValue('--color-primary'), '#3b82f6');
-	const neg = cssColorToRgb(cs.getPropertyValue('--color-error'), '#ef4444');
+	const zero = colorChannels(cs.getPropertyValue('--color-subtle'));
+	const pos = colorChannels(cs.getPropertyValue('--color-primary'));
+	const neg = colorChannels(cs.getPropertyValue('--color-error'));
+	if (!zero || !pos || !neg) return;
 
 	const rows = Math.ceil(vec.length / COLS);
 	const dpr = window.devicePixelRatio || 1;

@@ -34,6 +34,9 @@ import { checkRatchets, isScoreable, type LabSnapshot } from '$lib/server/perf/s
 const CHECK = process.argv.includes('--check');
 
 const CLIENT_MANIFEST = '.svelte-kit/output/client/.vite/manifest.json';
+/** Generated client entry — its `dictionary` maps each route to the nodes it loads. */
+const CLIENT_APP = '.svelte-kit/generated/client-optimized/app.js';
+const NODE_PREFIX = '.svelte-kit/generated/client-optimized/nodes/';
 const CLIENT_ROOT = '.svelte-kit/output/client';
 const STATIC_ROOT = '.vercel/output/static';
 const OUT = 'src/lib/server/perf/snapshot.json';
@@ -98,6 +101,36 @@ async function totalGzip(manifest: Manifest, keys: Iterable<string>): Promise<nu
 const kb = (bytes: number) => Math.round((bytes / 1024) * 10) / 10;
 
 /**
+ * Every client route with the node indices it loads on arrival: its layouts, then its
+ * page. The root layout (node 0) is implicit and already in the baseline; error nodes
+ * are left out because they load only when a page fails.
+ *
+ * Read from SvelteKit's generated `dictionary` — `"/route": [~page, [layouts], [errors]]`,
+ * `~` marking a node with a server load and an empty slot a group without a layout file.
+ * A route is the unit a visitor downloads. Scoring single page nodes instead left every
+ * intermediate layout out: the `(public)` shell alone is ~160 KB gz, and the median it
+ * reported was ~80 KB lighter than any public page actually is.
+ */
+async function routeNodes(): Promise<{ route: string; nodes: number[] }[]> {
+	const source = await Bun.file(CLIENT_APP).text();
+	const start = source.indexOf('export const dictionary');
+	const end = source.indexOf('};', start);
+	if (start < 0 || end < 0) throw new Error(`No route dictionary in ${CLIENT_APP} — did SvelteKit change its output?`);
+	const routes: { route: string; nodes: number[] }[] = [];
+	const indices = (list: string | undefined) =>
+		(list ?? '')
+			.split(',')
+			.map((slot) => slot.trim().replace('~', ''))
+			.filter((slot) => slot !== '')
+			.map(Number);
+	for (const entry of source.slice(start, end).matchAll(/"([^"]+)":\s*\[(~?\d+)(?:,\s*\[([^\]]*)\])?/g)) {
+		routes.push({ route: entry[1], nodes: [...indices(entry[3]), ...indices(entry[2])] });
+	}
+	if (routes.length === 0) throw new Error(`Parsed zero routes from ${CLIENT_APP} — the dictionary format changed.`);
+	return routes;
+}
+
+/**
  * Provenance for the snapshot. `GIT_SHA` is checked first because the container
  * this runs in has no git binary, so the spawn is only a fallback for running it
  * on a host that does. The value may carry a `-dirty` suffix — an honest snapshot
@@ -145,19 +178,15 @@ async function main() {
 	// Per-route weight = baseline plus whatever that route's node pulls in on top.
 	// Reported as a total, not a delta, because the total is what a visitor with a
 	// cold cache actually downloads.
-	const nodeKeys = Object.keys(manifest).filter((k) => k.includes('/client-optimized/nodes/'));
-	const routeTotals: { node: string; gzipKb: number }[] = [];
-	for (const nodeKey of nodeKeys) {
-		const keys = closure(manifest, [...baselineKeys, nodeKey]);
-		routeTotals.push({
-			node: nodeKey.replace('.svelte-kit/generated/client-optimized/nodes/', '').replace('.js', ''),
-			gzipKb: kb(await totalGzip(manifest, keys)),
-		});
+	const routeTotals: { route: string; gzipKb: number }[] = [];
+	for (const { route, nodes } of await routeNodes()) {
+		const keys = closure(manifest, [...baselineKeys, ...nodes.map((n) => `${NODE_PREFIX}${n}.js`)]);
+		routeTotals.push({ route, gzipKb: kb(await totalGzip(manifest, keys)) });
 	}
 	routeTotals.sort((a, b) => b.gzipKb - a.gzipKb);
 
 	const median = routeTotals.length > 0 ? routeTotals[Math.floor(routeTotals.length / 2)].gzipKb : 0;
-	const heaviest = routeTotals[0] ?? { node: 'n/a', gzipKb: 0 };
+	const heaviest = routeTotals[0] ?? { route: 'n/a', gzipKb: 0 };
 
 	let allJsBytes = 0;
 	let chunkCount = 0;
@@ -179,9 +208,9 @@ async function main() {
 		metrics: {
 			/** Gzipped JS every route loads, regardless of which page you land on. */
 			baseline_js_kb: kb(baselineBytes),
-			/** Heaviest single route, baseline included — the number `route_js_kb` budgets. */
+			/** Heaviest route — baseline, every layout and the page — the number `route_js_kb` budgets. */
 			route_js_kb: heaviest.gzipKb,
-			heaviest_route_node: heaviest.node,
+			heaviest_route: heaviest.route,
 			median_route_js_kb: median,
 			/** Every emitted client chunk, gzipped. Not per-visitor; a corpus-size trend. */
 			total_client_js_kb: kb(allJsBytes),

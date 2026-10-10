@@ -6,8 +6,8 @@
  * to /feedback with the current path pre-filled via `?from=`.
  */
 import { page } from '$app/state';
-import { PageContainer } from '$lib/components/layout';
-import { Button } from '$lib/components/primitives';
+import PageContainer from '$lib/components/layout/PageContainer.svelte';
+import { Button } from '$lib/components/primitives/button';
 import { isFeedbackBandPath } from '$lib/feedback/source';
 import { deLocalizeHref, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';

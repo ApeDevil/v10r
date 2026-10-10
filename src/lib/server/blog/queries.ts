@@ -192,13 +192,19 @@ export async function listPosts(options: ListPostsOptions = {}): Promise<{
 	return { items, total };
 }
 
-/** Get a post by slug with its published revision for a locale. */
+/**
+ * Get a post by slug with its published revision for a locale.
+ *
+ * Two round trips, in order: the post with its revision, author and domain joined in,
+ * then its tags. The domain used to be a third, serial read keyed on the first row; it is
+ * at most one row, so a left join costs nothing. Tags stay separate because joining a
+ * many-side would multiply the revision HTML across rows.
+ */
 export async function getPublishedPostForSlug(slug: string, locale = 'en'): Promise<PublishedPost | null> {
 	const [row] = await db
 		.select({
 			postId: post.id,
 			slug: post.slug,
-			domainId: post.domainId,
 			publishedAt: post.publishedAt,
 			authorId: user.id,
 			authorName: user.name,
@@ -209,11 +215,17 @@ export async function getPublishedPostForSlug(slug: string, locale = 'en'): Prom
 			revisionEmbeds: revision.embedDescriptors,
 			revisionLocale: revision.locale,
 			revisionCreatedAt: revision.createdAt,
+			domainId: domain.id,
+			domainSlug: domain.slug,
+			domainName: domain.name,
+			domainIcon: domain.icon,
+			domainColor: domain.color,
 		})
 		.from(post)
 		.innerJoin(publishedRevision, eq(post.id, publishedRevision.postId))
 		.innerJoin(revision, eq(publishedRevision.revisionId, revision.id))
 		.leftJoin(user, eq(post.authorId, user.id))
+		.leftJoin(domain, eq(post.domainId, domain.id))
 		.where(
 			and(
 				eq(post.slug, slug),
@@ -226,15 +238,16 @@ export async function getPublishedPostForSlug(slug: string, locale = 'en'): Prom
 
 	if (!row) return null;
 
-	let postDomain: { id: string; slug: string; name: string; icon: string | null; color: number | null } | null = null;
-	if (row.domainId) {
-		const [d] = await db
-			.select({ id: domain.id, slug: domain.slug, name: domain.name, icon: domain.icon, color: domain.color })
-			.from(domain)
-			.where(eq(domain.id, row.domainId))
-			.limit(1);
-		postDomain = d ?? null;
-	}
+	const postDomain =
+		row.domainId !== null && row.domainSlug !== null && row.domainName !== null
+			? {
+					id: row.domainId,
+					slug: row.domainSlug,
+					name: row.domainName,
+					icon: row.domainIcon,
+					color: row.domainColor,
+				}
+			: null;
 
 	const tags = await db
 		.select({

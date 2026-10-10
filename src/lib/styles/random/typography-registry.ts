@@ -9,9 +9,9 @@ const T1: TypographySet = {
 	id: 'T1' as TypographyId,
 	name: 'Clean',
 	description: 'Inter for everything — modern, neutral, highly readable.',
-	heading: '"Inter Variable", "Inter", system-ui, sans-serif',
-	body: '"Inter Variable", "Inter", system-ui, sans-serif',
-	mono: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace',
+	heading: '"Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif',
+	body: '"Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif',
+	mono: '"JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace',
 };
 
 const T2: TypographySet = {
@@ -19,17 +19,17 @@ const T2: TypographySet = {
 	name: 'Editorial',
 	description: 'Playfair Display headings with Space Grotesk body — classic meets modern.',
 	heading: '"Playfair Display Variable", "Playfair Display", Georgia, serif',
-	body: '"Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif',
-	mono: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace',
+	body: '"Space Grotesk Variable", "Space Grotesk", "Space Grotesk Fallback", system-ui, sans-serif',
+	mono: '"JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace',
 };
 
 const T3: TypographySet = {
 	id: 'T3' as TypographyId,
 	name: 'Technical',
 	description: 'Space Grotesk headings with Inter body — geometric and precise.',
-	heading: '"Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif',
-	body: '"Inter Variable", "Inter", system-ui, sans-serif',
-	mono: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace',
+	heading: '"Space Grotesk Variable", "Space Grotesk", "Space Grotesk Fallback", system-ui, sans-serif',
+	body: '"Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif',
+	mono: '"JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace',
 };
 
 const T4: TypographySet = {
@@ -37,17 +37,17 @@ const T4: TypographySet = {
 	name: 'Display',
 	description: 'Fraunces headings with Inter body — editorial, retro-modern.',
 	heading: '"Fraunces Variable", "Fraunces", Georgia, serif',
-	body: '"Inter Variable", "Inter", system-ui, sans-serif',
-	mono: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace',
+	body: '"Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif',
+	mono: '"JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace',
 };
 
 const T5: TypographySet = {
 	id: 'T5' as TypographyId,
 	name: 'Rounded',
 	description: 'Nunito for everything — friendly, soft, app-like.',
-	heading: '"Nunito Variable", "Nunito", system-ui, sans-serif',
-	body: '"Nunito Variable", "Nunito", system-ui, sans-serif',
-	mono: '"JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace',
+	heading: '"Nunito Variable", "Nunito", "Nunito Fallback", system-ui, sans-serif',
+	body: '"Nunito Variable", "Nunito", "Nunito Fallback", system-ui, sans-serif',
+	mono: '"JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace',
 };
 
 export const TYPOGRAPHY_REGISTRY: readonly TypographySet[] = [T1, T2, T3, T4, T5] as const;

@@ -5,9 +5,18 @@ import { startDeadline } from '$lib/server/http/deadline';
 import { resetBreakers } from '$lib/server/resilience';
 import { checkName } from './check';
 import { NameSourceError } from './errors';
-import type { NameMatchDraft, NameSource, NameSourceContext } from './name-source';
+import {
+	type LiveNameSource,
+	type NameMatchDraft,
+	type NameSource,
+	type NameSourceContext,
+	NO_CREDENTIALS,
+} from './name-source';
 import type { NameCheckQuery } from './query';
 import { resetLocalQuota } from './quota';
+import { EUIPO_DEFAULT_API_BASE, EUIPO_DEFAULT_TOKEN_URL, euipoSource } from './sources/euipo';
+import { rdapSource } from './sources/rdap';
+import { webSource } from './sources/web';
 
 vi.mock('$lib/server/cache/client', () => ({ redis: null }));
 vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
@@ -21,15 +30,20 @@ afterEach(() => {
 
 type Search = (query: NameCheckQuery, ctx: NameSourceContext) => Promise<NameMatchDraft[]>;
 
-function source(id: NameSourceId, kind: NameMatchKind, search?: Search, extra: Partial<NameSource> = {}): NameSource {
-	return {
+function source(
+	id: NameSourceId,
+	kind: NameMatchKind,
+	search?: Search,
+	extra: Partial<LiveNameSource> = {},
+): NameSource {
+	const manual = {
 		id,
 		kind,
-		territories: ['de', 'eu', 'worldwide'],
+		territories: ['de', 'eu', 'worldwide'] as const,
 		manualUrl: () => `https://registry.example/${id}`,
-		...(search ? { search } : {}),
-		...extra,
 	};
+	if (!search) return manual;
+	return { ...manual, search, searchInputs: (query) => [query.normalized.compact], ...extra };
 }
 
 function trademarkDraft(label: string, niceClasses: number[] = [9]): NameMatchDraft {
@@ -221,5 +235,75 @@ describe('checkName', () => {
 		const logged = error.mock.calls.map((call) => call.join(' ')).join('\n');
 		expect(logged).not.toContain('Velora');
 		expect(logged).toContain('gleif');
+	});
+
+	describe('result cache key', () => {
+		/** A real source's declaration with its upstream replaced by a counter. */
+		function counting(real: LiveNameSource) {
+			const search = vi.fn(async () => [] as NameMatchDraft[]);
+			return { search, source: { ...real, search } };
+		}
+		const TAVILY = { ...NO_CREDENTIALS, tavilyApiKey: 'tvly-key' };
+
+		it('keeps two spellings with one compact form apart where the search reads the spelling', async () => {
+			const web = counting(webSource);
+			const rdap = counting(rdapSource);
+			const run = (name: string) =>
+				checkName({ ...query, query: name }, { ...options(), credentials: TAVILY, sources: [web.source, rdap.source] });
+
+			await run('Velo Raptor');
+			await run('VeloRaptor');
+
+			// Both are `veloraptor`: the domains are the same domains, the exact phrases are not.
+			expect(web.search).toHaveBeenCalledTimes(2);
+			expect(rdap.search).toHaveBeenCalledTimes(1);
+		});
+
+		it('shares an answer across territories only where the search ignores the territory', async () => {
+			const web = counting(webSource);
+			const rdap = counting(rdapSource);
+			for (const territory of ['de', 'eu', 'worldwide'] as const) {
+				await checkName(
+					{ ...query, territory },
+					{ ...options(), credentials: TAVILY, sources: [web.source, rdap.source] },
+				);
+			}
+			// Tavily is told "germany" for `de` only; `eu` and `worldwide` send the same request.
+			expect(web.search).toHaveBeenCalledTimes(2);
+			expect(rdap.search).toHaveBeenCalledTimes(1);
+		});
+
+		it('stops serving sandbox answers once the EUIPO connection points at production', async () => {
+			const euipo = counting(euipoSource);
+			const sandbox = {
+				clientId: 'sandbox-client',
+				clientSecret: 'sandbox-secret',
+				apiBase: 'https://api-sandbox.euipo.europa.eu/trademark-search',
+				tokenUrl: 'https://auth-sandbox.euipo.europa.eu/oidc/accessToken',
+			};
+			const production = {
+				clientId: 'production-client',
+				clientSecret: 'production-secret',
+				apiBase: EUIPO_DEFAULT_API_BASE,
+				tokenUrl: EUIPO_DEFAULT_TOKEN_URL,
+			};
+			const run = (connection: typeof sandbox) =>
+				checkName(query, {
+					...options(),
+					credentials: { ...NO_CREDENTIALS, euipo: connection },
+					sources: [euipo.source],
+				});
+
+			await run(sandbox);
+			await run(sandbox);
+			expect(euipo.search).toHaveBeenCalledTimes(1);
+
+			await run(production);
+			expect(euipo.search).toHaveBeenCalledTimes(2);
+
+			// A rotated secret is the same environment and the same register.
+			await run({ ...production, clientSecret: 'rotated' });
+			expect(euipo.search).toHaveBeenCalledTimes(2);
+		});
 	});
 });

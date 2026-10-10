@@ -118,8 +118,13 @@ podman exec v10r bun run validate     # typecheck + biome + tests + registry/i18
 - **Source control is Stas's.** Never commit, stage, push, stash or reset on your own
   initiative — and never offer to. Uncommitted changes are how he reviews your work. Read-only
   git (`status`, `diff`, `log`) is always fine.
-- **Never run a `vr` command** (`bin/vr`, Stas's host-side dispatcher). `vr ship` pushes
-  `main`, which deploys to production. Run the container commands it wraps directly instead.
+- **Run a `vr` command only when Stas names it in his current message** (`bin/vr`, his
+  host-side dispatcher). Naming it is the authorization, including the git work the command
+  does itself; it covers that one run as written, never a later one, a variation, or a
+  sub-agent. `vr ship` pushes `main`, which deploys to production. Ship runs as `vr s -y`:
+  the pre-push `[y/N]` prompt cannot be answered from a non-interactive shell and aborts, and
+  Stas naming the command is the confirmation. Otherwise run the container commands `vr` wraps
+  directly.
 - **Never import `$lib/server/` from a `.svelte` file or a universal `+page.ts`** — the path
   is the server/client boundary.
 - **A new i18n key needs a dev-server restart**; the running Vite process 500s on the unknown

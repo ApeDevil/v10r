@@ -53,7 +53,7 @@ A set of web capabilities that make your app installable, offline-capable, and n
 **SvelteKit built-in — what v10r uses** (`src/service-worker.ts`, policy in `$lib/pwa/sw-policy.ts`):
 - `$service-worker` module provides `build`, `files`, `prerendered`, `version`
 - Readable, zero-dep, unit-testable caching policy — the SW file is itself the showcase
-- Accepted cost: `version` is app-global, so every deploy invalidates the whole precache (no per-file revisioning exists for SSR); the re-download is background
+- `version` is app-global, so every deploy replaces the cache; precache only the offline shell (the `/offline` page and the assets its HTML loads) and let hashed files fill in on use, so a deploy costs visitors nothing up front
 
 **Installability no longer requires a service worker at all:** Chrome dropped the SW requirement (Lighthouse 11 removed the PWA category) — a valid manifest alone is installable. iOS 26's share sheet defaults the "Open as Web App" toggle to on.
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { startDeadline } from '$lib/server/http/deadline';
-import { type NameSourceContext, NO_CREDENTIALS } from '../name-source';
+import { type NameSourceContext, type NameSourceCredentials, NO_CREDENTIALS } from '../name-source';
 import { toNameCheckQuery } from '../query';
 import { toWebDrafts, webSearchVendor, webSource } from './web';
 
@@ -60,5 +60,27 @@ describe('searchTavily', () => {
 		await webSource.search?.(toNameCheckQuery({ query: 'Velora', territory: 'eu', category: null }), context(eu.fetch));
 		expect(eu.bodies[0]).toMatchObject({ query: '"Velora"', exact_match: true });
 		expect(eu.bodies[0]).not.toHaveProperty('country');
+	});
+});
+
+describe('webSource.searchInputs', () => {
+	const TAVILY = { ...NO_CREDENTIALS, tavilyApiKey: 'tvly-secret' };
+	const BRAVE = { ...NO_CREDENTIALS, braveApiKey: 'brave-secret' };
+	const inputs = (name: string, territory: 'de' | 'eu', credentials: NameSourceCredentials = TAVILY) =>
+		webSource.searchInputs(toNameCheckQuery({ query: name, territory, category: null }), credentials);
+
+	it('follows the exact phrase, not the compact form', () => {
+		expect(inputs('Velo Raptor', 'eu')).not.toEqual(inputs('VeloRaptor', 'eu'));
+	});
+
+	it('follows the vendor, and the territory only where the vendor is told it', () => {
+		expect(inputs('Velora', 'eu', TAVILY)).not.toEqual(inputs('Velora', 'eu', BRAVE));
+		expect(inputs('Velora', 'de', TAVILY)).not.toEqual(inputs('Velora', 'eu', TAVILY));
+		expect(inputs('Velora', 'de', BRAVE)).toEqual(inputs('Velora', 'eu', BRAVE));
+	});
+
+	it('never carries an API key', () => {
+		expect(inputs('Velora', 'de', TAVILY).join(' ')).not.toContain('tvly-secret');
+		expect(inputs('Velora', 'de', BRAVE).join(' ')).not.toContain('brave-secret');
 	});
 });

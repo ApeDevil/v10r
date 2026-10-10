@@ -2,7 +2,7 @@
 import { Command as CommandPrimitive, Dialog } from 'bits-ui';
 import { goto } from '$app/navigation';
 import { trackCommand } from '$lib/analytics/telemetry';
-import { Kbd } from '$lib/components/primitives';
+import { Kbd } from '$lib/components/primitives/kbd';
 import { localizeHref } from '$lib/i18n/runtime';
 import { layerStack } from '$lib/state/layer-stack.svelte';
 import { useSurface } from '$lib/styles/elevation';

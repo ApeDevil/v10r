@@ -13,6 +13,7 @@ import '@fontsource-variable/space-grotesk';
 import '@fontsource-variable/jetbrains-mono';
 import '@fontsource-variable/fraunces';
 import '@fontsource-variable/nunito';
+import '$lib/styles/font-fallbacks.css';
 import { visualViewportWatcher } from '$lib/state/visual-viewport.svelte';
 
 let { children } = $props();

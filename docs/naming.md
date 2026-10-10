@@ -30,6 +30,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Anonymous vs authenticated analytics | `lane` | — |
 | The brand-name pre-screen | `name check` (`server/name-check/`, `/showcases/name-check`, `/api/name-check`, `showcase_name_check_*`) | `clearance`, `brand search`, `viability` |
 | One upstream the name check asks | `NameSource` (`name-check/sources/*.ts`) | `adapter` (that is `*.adapter.ts`), bare `source` |
+| What a live name source's search reads that can change its answer — the result cache's key | `searchInputs` on `LiveNameSource` | `cacheIdentity` (`identity` is the assistant's), `fingerprint`, `derivation key` (that one is stored beside a derived output) |
 | What a name source found | `NameMatch`, discriminated on `kind` (`trademark` · `company` · `domain` · `web`) | `sourceType`, `hit`, `result` |
 | How far each name source got | `NameCheckCoverage` (`NameCoverageStatus`) | `availability`, `health` |
 | The evidence summary of a name check | `NameConflictSignal` (`level` + `reasons`) | `risk score`, `verdict`, `safety` |
@@ -126,6 +127,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | A chunk's place in its document, as a turn records it | `chunkPlace()` (`ai/capabilities/chunk-place.ts`): `parentId` · `level` (`ChunkLevel`) · `position` · `contentHash` · `path`; `retriever` (`RetrieverId`) per item, `retrievers` per source | `ancestry`, `depth` (a number), `tiers` on the source, `lineage` |
 | The deterministic, ingest-built map of one collection's corpus — what it covers, without loading it | `corpus map` (`retrieval.corpus_map`, `getCorpusMap` / `countCorpusMaps` in `db/retrieval/queries.ts`; the chatbot's is the `project-map` capability, injected as `<project-overview>`) | `llmwiki` (the LLM-compiled pointer layer, retired 2026-09-12 — it had no writer and every fresh user's wiki was empty), `llmwiki_page`, `overview page`, `LlmwikiPage`, `loadOverview`, `get_llmwiki_pages`, `get_source_chunks` |
 | Capability nested by meaning and revealed as intent becomes specific — on one page, and across a user's journey — plus the structure it recommends and the method that reviews for it | `Explosive Discovery` (the principle: `docs/foundation/explosive-discovery.md`; the review method: `docs/blueprint/design/explosive-discovery.md`, registry `ui-explosive-discovery`, skill `uxy-explosive-discovery`); `Nested Depth` (the structure: directions that narrow intent, detail on entry) | `Progressive Revelation`, `ProgRev`, `progressive-revelation` (the planned journey-stage feature — absorbed 2026-09-20 as the journey axis of Explosive Discovery; the blueprint with its unbuilt schema was deleted). `progressive disclosure` is not retired: it stays the design *intent*, principle 3 in `design/README.md` |
+| Work kept only on this device that a sign-out would erase (today: undelivered spreadsheet drafts) | `unsaved work` (`UnsavedWork`, `$lib/state/unsaved-work.ts`; drained → confirmed → discarded) | — |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 
@@ -196,7 +198,10 @@ share. Each is spoken for:
 - **`run`** — a job execution. A Neon branch action is a *branch operation*.
 - **`path`, continued** — "critical path" stays PROSE. In code the three work classes are
   `criticalWork` / `deferredWork` / `backgroundWork`, because `path` already means a file,
-  URL or graph path.
+  URL or graph path. The **critical rendering path** is the browser's term for the resources
+  that must arrive before first paint — a separate concept with its own pattern record
+  (`critical-rendering-path`), always written in full so it never reads as the server work
+  class.
 - **`tier`** — a rung in a graded scale: a pattern record's depth (`deep`/`light`) and a
   cache level (`local`/`shared`/`origin`). Not a synonym for layer, lane or surface.
 - **`capability`** — a shared word, one concept, three subjects, always qualified:

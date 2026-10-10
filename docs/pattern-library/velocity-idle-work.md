@@ -24,6 +24,7 @@ Useful non-critical preparation performed after the page is interactive: preload
 
 - `src/lib/nav/preload.ts` — preloadOnIdle, with the Safari timeout fallback ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/nav/preload.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/nav/preload.ts))
 - `src/lib/actions/hydrate-embeds.ts` — Hydrates on intersection rather than on load ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/actions/hydrate-embeds.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/actions/hydrate-embeds.ts))
+- `src/lib/components/shell/AppShell.svelte` — Warms the command palette with requestIdleCallback and a timer fallback ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/shell/AppShell.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/shell/AppShell.svelte))
 
 ## Depends on
 

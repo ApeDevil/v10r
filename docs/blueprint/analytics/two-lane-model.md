@@ -77,6 +77,16 @@ go to `analytics.user_events` with no consent check; the rest take the anonymous
 client mirrors the rule (`telemetry.ts` tags each queued event with its lane) so a consent
 withdrawal drops exactly the anonymous rows and nothing else.
 
+**Page data (`__data.json`).** A client-side navigation fetches the target page's data with
+`Sec-Fetch-Mode: cors`, which the header-shape prefilter reads as "not a browser navigation".
+The bot lane therefore exempts data requests unless the User-Agent declares a bot — before
+that exemption every human click was a bot hit. The authenticated lane, which has no
+pageview beacon, counts **one page view per page arrived at**: the document request, or a
+data request whose `Referer` names a different page (`isSamePageDataReload`). A page
+refetching its own data — the hydration fetch of an `ssr = false` page such as the desk,
+`invalidate()`, a form action's refresh — is not a new view. Hover preloading still counts a
+target the user may not open; nothing in the request distinguishes it.
+
 ## The ePrivacy question
 
 ePrivacy Art 5(3) / **TDDDG §25** gates *access to terminal equipment*, independently of

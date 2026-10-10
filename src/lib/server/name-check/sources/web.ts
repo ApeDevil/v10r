@@ -11,7 +11,8 @@
 import { NAME_CHECK_TERRITORIES, type NameCheckTerritory } from '$lib/schemas/name-check';
 import { NameSourceError } from '../errors';
 import { fetchJson } from '../fetch-json';
-import type { NameSource, NameSourceContext, NameSourceCredentials, WebDraft } from '../name-source';
+import type { LiveNameSource, NameSourceContext, NameSourceCredentials, WebDraft } from '../name-source';
+import type { NameCheckQuery } from '../query';
 
 const RESULT_COUNT = 10;
 
@@ -74,6 +75,11 @@ export function toWebDrafts(hits: readonly WebSearchHit[]): WebDraft[] {
 /** Tavily's `country` boost takes a lowercase country name; only the German territory maps to one. */
 const TAVILY_COUNTRY: Partial<Record<NameCheckTerritory, string>> = { de: 'germany' };
 
+/** The query is the exact phrase as typed: "Velo Raptor" and "VeloRaptor" are different searches. */
+function exactPhrase(query: NameCheckQuery): string {
+	return `"${query.raw}"`;
+}
+
 async function searchTavily(
 	phrase: string,
 	territory: NameCheckTerritory,
@@ -113,14 +119,19 @@ async function searchBrave(phrase: string, apiKey: string, ctx: NameSourceContex
 		.map((hit) => ({ title: hit.title, url: hit.url, snippet: hit.description ?? null }));
 }
 
-export const webSource: NameSource = {
+export const webSource: LiveNameSource = {
 	id: 'web',
 	kind: 'web',
 	territories: NAME_CHECK_TERRITORIES,
-	manualUrl: (query) => `https://duckduckgo.com/?q=${encodeURIComponent(`"${query.raw}"`)}`,
+	manualUrl: (query) => `https://duckduckgo.com/?q=${encodeURIComponent(exactPhrase(query))}`,
 	configured: (credentials) => webSearchVendor(credentials) !== null,
+	// Vendors index differently, and only Tavily is told the territory.
+	searchInputs: (query, credentials) => {
+		const vendor = webSearchVendor(credentials) ?? '';
+		return [vendor, exactPhrase(query), vendor === 'tavily' ? (TAVILY_COUNTRY[query.territory] ?? '') : ''];
+	},
 	async search(query, ctx) {
-		const phrase = `"${query.raw}"`;
+		const phrase = exactPhrase(query);
 		const vendor = webSearchVendor(ctx.credentials);
 		if (vendor === 'tavily' && ctx.credentials.tavilyApiKey) {
 			return toWebDrafts(await searchTavily(phrase, query.territory, ctx.credentials.tavilyApiKey, ctx));

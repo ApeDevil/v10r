@@ -3,7 +3,7 @@ import { ipLimitKey } from '$lib/server/abuse';
 import { getPublicAssetByStorageKey } from '$lib/server/blog';
 import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
 import { apiError } from '$lib/server/http/response';
-import { generateBlogDownloadUrl } from '$lib/server/store/blog';
+import { generatePublicBlogImageUrl, PUBLIC_BLOG_IMAGE_CACHE_CONTROL } from '$lib/server/store/blog';
 import type { RequestHandler } from './$types';
 
 // Unauthenticated and cost-bearing, same as the by-id image proxy.
@@ -36,15 +36,15 @@ export const GET: RequestHandler = async ({ params, setHeaders, locals }) => {
 
 	let url: string;
 	try {
-		const result = await generateBlogDownloadUrl(asset.storageKey, 3600);
+		const result = await generatePublicBlogImageUrl(asset.storageKey);
 		url = result.url;
 	} catch {
 		return apiError(502, 'storage_unavailable', 'Storage unavailable.');
 	}
 
-	setHeaders({
-		'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
-	});
+	// Shared-cacheable because the asset hangs off a published post. Every refusal above
+	// carries no Cache-Control, so `securityHeaders` stamps it `no-store, private`.
+	setHeaders({ 'Cache-Control': PUBLIC_BLOG_IMAGE_CACHE_CONTROL });
 
 	redirect(302, url);
 };

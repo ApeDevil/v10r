@@ -7,9 +7,35 @@ export interface SpreadsheetDraft {
 	updatedAt: number;
 }
 
+/** Slot key: `v10r:spreadsheet-draft:<user>:<file>:<writer>`, each segment URI-encoded so it holds no `:`. */
+const userDraftPrefix = (userId: string) => `v10r:spreadsheet-draft:${encodeURIComponent(userId)}:`;
+
+/** The files this user has a draft slot for on this device — any tab, any page load. */
+export function userSpreadsheetDraftFiles(storage: Storage, userId: string): Set<string> {
+	const prefix = userDraftPrefix(userId);
+	const files = new Set<string>();
+	for (let i = 0; i < storage.length; i++) {
+		const key = storage.key(i);
+		if (key?.startsWith(prefix)) files.add(decodeURIComponent(key.slice(prefix.length).split(':')[0]));
+	}
+	return files;
+}
+
+/** Erase every draft slot this user has on this device (sign-out on a possibly shared device). */
+export function removeUserSpreadsheetDrafts(storage: Storage, userId: string): void {
+	const prefix = userDraftPrefix(userId);
+	const keys: string[] = [];
+	for (let i = 0; i < storage.length; i++) {
+		const key = storage.key(i);
+		if (key?.startsWith(prefix)) keys.push(key);
+	}
+	// Collected first: removing while iterating shifts the indices under the loop.
+	for (const key of keys) storage.removeItem(key);
+}
+
 /** Each document session owns a slot; one tab must never erase another tab's draft. */
 export function createSpreadsheetDrafts(storage: () => Storage, userId: string, fileId: string, writerId: string) {
-	const prefix = `v10r:spreadsheet-draft:${encodeURIComponent(userId)}:${encodeURIComponent(fileId)}:`;
+	const prefix = `${userDraftPrefix(userId)}${encodeURIComponent(fileId)}:`;
 	const key = `${prefix}${writerId}`;
 	return {
 		write(version: number, cells: SpreadsheetCells) {

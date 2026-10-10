@@ -23,7 +23,7 @@ An earlier design shipped an admin "visual identity" lock: a `brand_settings` si
 
 1. **`v10r_style` cookie** — `{pid, tid, rid, v:1}`, parsed by `parseStyleCookie`.
 2. **Custom palette lookup** — only when `pid` starts with `CP_`. `getCustomPaletteById()` reads the row and stamps `locals.customPaletteColors`.
-3. **Randomizer fallback** — no cookie, or one that no longer resolves → `generateRandomStyle()`, written back so the next visit is stable.
+3. **Randomizer fallback** — no cookie, or one that no longer resolves → `generateRandomStyle()`, written back so the next visit is stable. The write survives only on responses that render the app shell (an HTML page or its `__data.json`); `scopeStyleCookie` (`src/lib/server/style/cookie-scope.ts`) strips it from endpoints, because a `Set-Cookie` on `robots.txt` / `sitemap.xml` / `llms.txt` / the feed makes their `s-maxage` uncacheable on Vercel.
 
 The resolved style lands on `locals.style` and is stamped onto `<html>` as `data-palette` / `data-typography` / `data-radius` via `transformPageChunk`.
 
@@ -33,7 +33,7 @@ Because it cannot. `loadStyle` runs before auth is populated, so at that point t
 
 This is accepted, and the mitigation is placed where it can actually work: **ownership is enforced at the write and pick boundaries**, never at render. See §3.
 
-The function is also TTL-cached (60s, 1000-entry cap, negative results included). The style cookie is read on *every* request before any auth or rate limit, so an uncached `CP_` path would let a forged cookie turn each request into a Neon round-trip.
+The function is also cached (60s TTL, 1000 entries with least-recently-used eviction, negative results included), and refuses any id that is not `CP_` + 12 lowercase hex — the exact shape `createId.palette()` mints — before the cache or the database. The style cookie is read on *every* request before any auth or rate limit, so an unguarded `CP_` path would let a forged cookie turn each request into a Neon round-trip. A well-formed but unknown id still costs one query per distinct id per TTL.
 
 ---
 
@@ -108,7 +108,7 @@ src/lib/styles/random/generator.ts               -- generateRandomStyle, resolve
 src/lib/styles/random/merge.ts                   -- mergeStyleConfig (pure, tested)
 src/lib/styles/random/token-vars.ts              -- token -> CSS var, live preview
 src/lib/styles/random/palette-sanitize.ts        -- injection allowlist
-src/lib/server/style/palettes.ts          -- custom palette CRUD + TTL cache
+src/lib/server/style/palettes.ts          -- custom palette CRUD + LRU/TTL cache
 src/lib/server/style/persist.ts                  -- user_preferences mirror
 src/lib/components/style/StylePicker.svelte   -- the public picker
 src/lib/components/style/CustomPaletteWorkshop.svelte

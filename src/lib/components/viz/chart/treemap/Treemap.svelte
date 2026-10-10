@@ -4,7 +4,7 @@ import { onDestroy, onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
-import { getVizPalette } from '../../_shared/theme-bridge';
+import { getVizPalette, vizColor } from '../../_shared/theme-bridge';
 import type { TreemapNode } from './types';
 
 interface Props {
@@ -46,7 +46,7 @@ function getTopColor(node: HierarchyRectangularNode<TreemapNode>): string {
 	}
 	const siblings = current.parent?.children ?? [current];
 	const idx = siblings.indexOf(current);
-	return palette[idx % palette.length] || '#3b82f6';
+	return vizColor(palette, idx);
 }
 
 function getCellOpacity(node: HierarchyRectangularNode<TreemapNode>): number {

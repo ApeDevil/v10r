@@ -38,3 +38,28 @@ export function mayCache(response: Response): boolean {
 	if (cacheControl.includes('no-store') || cacheControl.includes('private')) return false;
 	return true;
 }
+
+/**
+ * The immutable assets the offline page loads, read from its prerendered HTML.
+ *
+ * The precache holds the offline shell, not the build. Precaching every hashed file
+ * cost each first-time visitor the whole client build (~2.2 MB gz of JS plus every
+ * font face) in the background, again after every deploy, for routes they may never
+ * open. Offline value did not justify it: HTML is never cached, so every offline
+ * navigation lands on `/offline` regardless, and that page needs only what it
+ * references. Deploy skew does not need it either — when a chunk from an older build
+ * is gone, SvelteKit checks `version.json`, updates the worker and reloads natively.
+ * Everything else enters the cache cache-first, as it is used (`handleImmutable`).
+ *
+ * Only paths present in `build` are returned, so a malformed or unexpected reference
+ * cannot make the worker fetch something outside the hashed output.
+ */
+export function offlineShellAssets(html: string, build: readonly string[]): string[] {
+	const known = new Set(build);
+	const found = new Set<string>();
+	for (const match of html.matchAll(/_app\/immutable\/[^"'`\s)]+/g)) {
+		const path = `/${match[0]}`;
+		if (known.has(path)) found.add(path);
+	}
+	return [...found];
+}

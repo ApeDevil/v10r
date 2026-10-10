@@ -159,25 +159,38 @@ export async function listGrantsForUser(userId: string) {
 	return db.select().from(grant).where(eq(grant.userId, userId)).orderBy(grant.grantedAt);
 }
 
-/** Read the pending notification (if any) and clear it in one operation. */
-export async function consumePendingGrantNotifications(userId: string): Promise<GrantKind[]> {
-	const pending = await db
+/**
+ * Grant kinds the user has not been told about yet — the "you now have X access" Toast.
+ *
+ * Read-only on purpose: the /desk layout load calls it, and loads run speculatively
+ * (`data-sveltekit-preload-data="hover"` fires one on a mere link hover). Marking the
+ * notification seen is a separate, client-initiated step — `acknowledgeGrantNotifications`
+ * — taken only after the Toast was actually shown.
+ */
+export async function listPendingGrantNotifications(userId: string): Promise<GrantKind[]> {
+	const rows = await db
 		.select({ kind: grant.kind })
 		.from(grant)
 		.where(and(eq(grant.userId, userId), isNull(grant.revokedAt), isNull(grant.notifiedAt)));
+	return rows.map((r) => r.kind);
+}
 
-	if (pending.length === 0) return [];
-
-	const kinds = pending.map((r) => r.kind);
-	// Mark exactly the kinds we just read as notified in a single UPDATE instead of
-	// one round-trip per kind. Scoping to `kinds` preserves the original semantics:
-	// a grant arriving between the read and this write is not silently suppressed.
-	await db
+/**
+ * Mark the given grant kinds' notifications as seen. Idempotent: the `notifiedAt IS NULL`
+ * filter makes a repeat — or an acknowledgement of a kind that is already seen, revoked
+ * or never granted — a no-op. Scoped to the kinds the client actually showed, so a grant
+ * that lands after the page loaded is not silently suppressed.
+ *
+ * Returns the kinds this call newly acknowledged.
+ */
+export async function acknowledgeGrantNotifications(userId: string, kinds: readonly GrantKind[]): Promise<GrantKind[]> {
+	if (kinds.length === 0) return [];
+	const rows = await db
 		.update(grant)
 		.set({ notifiedAt: new Date() })
 		.where(
-			and(eq(grant.userId, userId), inArray(grant.kind, kinds), isNull(grant.revokedAt), isNull(grant.notifiedAt)),
-		);
-
-	return kinds;
+			and(eq(grant.userId, userId), inArray(grant.kind, [...kinds]), isNull(grant.revokedAt), isNull(grant.notifiedAt)),
+		)
+		.returning({ kind: grant.kind });
+	return rows.map((r) => r.kind);
 }

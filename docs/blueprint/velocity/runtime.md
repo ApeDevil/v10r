@@ -50,6 +50,63 @@ two files.
 
 **Implementation.** `src/lib/server/platform/after-response.ts`, tests in `after-response.test.ts`.
 
+## Critical rendering path
+
+**Problem.** The server answers on time and the page still paints late. The element the
+visitor waits for — the LCP element — is hidden until hydration, or it is an image the browser
+discovers only after the stylesheet and layout, and then downloads alongside every module
+preload.
+
+**The rule.** What the first viewport needs paints from the document and its render-blocking
+CSS. JavaScript enhances it; it never reveals it.
+
+**No hydration gate on visible content.** Chrome does not count an `opacity: 0` element as
+LCP, so a `$effect` that adds a class to reveal the hero makes LCP equal to hydration — on
+v10r's home page, ~245 KB gz of JavaScript — and with failed JavaScript the hero never
+appears. The home entrance now runs as CSS from first paint, and `fadeIn` hides only cards
+that are below the fold when it runs, so painted content never blinks out.
+
+**The LCP graphic arrives with the document.** The home hero's raptor was a CSS mask: found
+after CSS and layout, then sharing a Slow 4G link with ~250 KB of module preloads. Lab LCP
+(Slow 4G, 4× CPU, n=5) was 4.3 s and landed with the load event. A preload started the fetch
+450 ms sooner and the file still finished with everything else. Inlined in the server HTML,
+LCP fell to 1.6 s (4,276 → 1,624 ms; an independent rerun gave 4,344 → 1,632). Desktop was at
+parity. Not yet confirmed in field data.
+
+**Inline it once.** `LogoHero.svelte` gives `{@html}` the SVG on the server and a one-element
+placeholder on the client, so the ~40 KB string is tree-shaken out of the bundle. Hydration
+keeps the server's nodes because, for a non-empty value that differs, Svelte adopts what is
+there by design (`hydration_html_changed`, suppressed in place). The client value must not be
+`''`: an empty value skips adoption and discards the inline SVG. After a client-side
+navigation the placeholder draws the same picture as a CSS mask from a hashed, immutably
+cached file.
+
+**The price.** +42 KB gz on every document of that page, because HTML is not cached.
+`doc_html_kb` measures prerendered documents only, so no gate sees it.
+
+**Use when** the LCP element is a graphic discovered late (a CSS background or mask, or
+inserted by JavaScript) and small enough — roughly 50 KB gz or less — to ride every document
+of its page.
+
+**Do not use when** the asset is large, or most traffic is repeat visits on fast links, where
+a cached file beats re-sending bytes in uncached HTML. A photo belongs in an `<img>` with
+`fetchpriority="high"` and declared dimensions, not inline.
+
+**Invariants.**
+
+- Content in the first viewport is visible without JavaScript.
+- A preload is a measurement, not a default. Two were measured here and both rejected: the
+  hero logo (no gain) and the fonts (slower first paint; see Asset delivery).
+- An inlined asset ships once: a server-only value, never also in the client bundle.
+
+**Known gaps.** The consent banner renders client-only, and on a first visit its text block
+may become the LCP element (unmeasured; field data decides). The theme script sits after
+`%sveltekit.head%`, where it waits for every stylesheet before the parser continues.
+
+**Implementation.** `src/lib/components/primitives/logo/LogoHero.svelte`,
+`src/routes/[[locale=locale]]/(public)/+page.svelte`,
+`src/routes/[[locale=locale]]/(public)/_components/fadeIn.ts`.
+
 ## Heavy dependency quarantine
 
 **Problem.** An optional heavyweight capability lands in the shared client bundle and makes
@@ -76,10 +133,39 @@ to initialize.
 > Did this capability make every other route heavier?
 
 `baseline_js_kb` in `budgets.json` answers exactly that — the client JS every route loads
-regardless of page. Its ratchet is 82 KB against a measured 77.7 KB, so roughly 4 KB of
+regardless of page. Its ratchet is 85 KB against a measured 82.7 KB, so under 3 KB of
 headroom stands between an ordinary import and a gate failure. That is deliberate: the
 ceiling carries ~3% headroom to absorb a feature, and explicitly not enough to absorb a heavy
-dependency, which is what it exists for.
+dependency, which is what it exists for. `median_route_js_kb` asks the same question one
+level up — a layout every public page shares is a baseline too, just not the root one.
+
+**Closed surfaces load on intent.** A dialog or palette that is closed on every page load is
+a heavy capability of its own, just a small one, and it sits in the layout every route
+shares. The command palette is imported the first time it opens and warmed when the browser
+goes idle (see [Idle and speculative work](./interaction.md#idle-and-speculative-work)).
+The better-auth client is imported inside the two functions that call it. Together with the
+session-timer fix, that took the median route from 241.9 to 231.1 KB gz. The cost: if idle
+never came, the first open waits on the network.
+
+### Side-effect-free component tree
+
+**A barrel of Svelte components is not tree-shakeable by default.** A compiled component
+runs code at module scope (`$.delegate(...)`, template factories), so Rollup must keep every
+component a barrel re-exports — one `import { Button } from '$lib/components'` shipped the
+whole primitives layer, culori and bits-ui's select and menu included, to 197 of 199 routes.
+Rewriting the shell's imports as leaf imports changed nothing (299.4 KB), because pages import
+the barrel too.
+
+`vite.config.ts` therefore declares `src/lib/components/` side-effect free
+(`treeshake.moduleSideEffects`): a component is bundled when an export of it is used and
+dropped when it is not. That one declaration took the median route from 296.7 to 241.9 KB gz.
+Its price is stated in `architecture.gate.test.ts`: nothing may import a component module for
+its side effects alone, because such an import is now silently dropped.
+
+**Use when** a component layer is consumed through barrels. **Do not use when** a module in
+the declared tree registers something at module scope that other code relies on — a custom
+element definition, a global listener, a plugin registration. Those imports would vanish
+without an error.
 
 **Where v10r already does this.** The 3D model registry code-splits per model; Threlte never
 enters the baseline. The wasm kernel is loaded via `?url` with explicit init and no Vite
@@ -143,22 +229,52 @@ attention.
 **Images.** Responsive sizes, AVIF/WebP, intrinsic dimensions, thumbnails, placeholders, CDN
 delivery, lazy loading, and above-the-fold priority for the few that earn it.
 
-**Fonts.** Subsetting, the minimum set of weights, selective preloading, self-hosted delivery,
-and a real fallback stack.
+**Fonts.** Subsetting, the minimum set of weights, self-hosted delivery, and a fallback that
+occupies the web font's box — so the swap changes glyph shapes, not layout.
 
-**Where v10r stands.** PWA icons are generated with sharp (`bun run pwa:icons`); blog media is
-proxied through R2 with `stale-while-revalidate` cache headers; the image toolkit handles
-resize and format conversion. `@sveltejs/enhanced-img` is not in use, and `doc_html_kb`
-(ceiling 5 KB) catches inline-SVG and `{@html}` bloat in the document itself.
+*Preloading is not a default; it is a measurement.* Preloading the visitor's heading and body
+faces (one or two files) delayed FCP 60–120 ms on every page tested and added ~110 ms TBT on
+the home page, while its LCP effect did not reproduce between runs (lab, Slow 4G + 4× CPU,
+n=5, 2026-10-10): a high-priority font competes with the stylesheet that gates first paint.
+v10r does not preload fonts, and records why in `hooks.server.ts`.
+
+*Metric-matched fallbacks are per family, also by measurement.* `font-fallbacks.css` is
+generated from the installed font files (`scripts/fonts/build-fallback-faces.ts`): a local
+Arial or Courier New with `size-adjust` and ascent/descent/line-gap overrides. On two long
+docs pages they cut the text shift at swap 34–62% for every typography set. The two serif
+display faces got none: as bold headings — Fraunces at a large optical size — their
+fallbacks made the shift worse, because metrics from the regular default instance do not
+describe the face as rendered. `font-fallbacks.gate.test.ts` holds both the generated
+values and the exclusion.
+
+**Where v10r stands.** PWA icons are generated with sharp (`bun run pwa:icons`). Blog images
+are served by a 302 to a presigned R2 URL; the redirect of a published asset is
+`public, max-age=300, s-maxage=1800, stale-while-revalidate=600`, so Vercel's CDN (which
+ignores `max-age` alone) answers repeat views without invoking the function, and refusals stay
+`no-store, private`. The presigned URL is signed against a 15-minute window, so it is
+byte-identical across requests in that window and the image stays browser-cached, and it is
+valid for longer than the sum of those three cache lifetimes. The image toolkit handles resize
+and format conversion. `@sveltejs/enhanced-img` is not in use. `doc_html_kb` (ceiling 5 KB)
+measures prerendered documents only — SSR documents are invisible to it, including the home
+page, which inlines its LCP graphic on purpose (see
+[Critical rendering path](#critical-rendering-path)).
 
 **Invariants.**
 
 - Pages do not ship oversized media.
-- Images declare dimensions, so layout does not shift.
+- Images declare dimensions, so layout does not shift. *Not yet true of blog body images:*
+  the rehype step rewrites `src` only, with no dimensions and no lazy loading.
 - Only genuinely critical assets get high loading priority — marking everything priority is
   the same as marking nothing.
+- A web font gets a fallback face only where measurement shows it reduces the shift at swap.
 
-**Implementation.** `scripts/pwa/generate-icons.ts`, `src/routes/api/blog/assets/[id]/image/+server.ts`,
+**Known gaps.** `/logo/*`, `/favicon.svg` (121 KB gz), `/models/*.glb` and `/images/parts/*`
+are unhashed and get Vercel's default `max-age=0, must-revalidate`, so every visit
+revalidates them. 255 Lucide icons ride the render-blocking root CSS (~13 KB gz).
+
+**Implementation.** `scripts/fonts/build-fallback-faces.ts`, `src/lib/styles/font-fallbacks.css`,
+`scripts/pwa/generate-icons.ts`, `src/routes/api/blog/assets/[id]/image/+server.ts`,
+`src/lib/server/store/blog/queries.ts` (`PUBLIC_BLOG_IMAGE_CACHE_CONTROL`, `generatePublicBlogImageUrl`),
 `src/lib/server/imagemeta/`.
 
 ## Resilience policy

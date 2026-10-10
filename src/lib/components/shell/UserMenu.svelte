@@ -17,12 +17,19 @@
 import { DropdownMenu } from 'bits-ui';
 import { goto, invalidateAll } from '$app/navigation';
 import { page } from '$app/state';
-import { ConfirmDialog } from '$lib/components/composites';
+import { ConfirmDialog } from '$lib/components/composites/confirm-dialog';
 import { locales, localizeHref } from '$lib/i18n';
 import * as m from '$lib/paraglide/messages';
 import { signOutAndFlush } from '$lib/pwa/sign-out';
 import { getLayerScope, layerStack, setLayerScope } from '$lib/state/layer-stack.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
+import {
+	collectUnsavedWork,
+	countUnsavedWork,
+	drainUnsavedWork,
+	signOutVerdict,
+	type UnsavedWork,
+} from '$lib/state/unsaved-work';
 import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
 import { floatingContentBase } from '$lib/styles/floating';
 import { cn } from '$lib/utils/cn';
@@ -53,6 +60,10 @@ const panelLevel = menuLevel + 1;
 
 let menuOpen = $state(false);
 let signOutConfirmOpen = $state(false);
+/** Unsaved items the sign-out dialog currently names; 0 = the plain confirm. */
+let unsavedAtSignOut = $state(0);
+let signOutWork: UnsavedWork[] = [];
+let preparingSignOut = false;
 
 /* Theme/Language submenu open state — drives chevron rotation; in the drawer
  * variant the stacked panel's back row closes through these binds. */
@@ -116,9 +127,45 @@ function setTheme(mode: string) {
 	}
 }
 
+/* Deliver what can still be saved BEFORE asking, so the dialog states what signing out
+ * really costs: the server's Clear-Site-Data erases the drafts kept in localStorage.
+ * Usually instant; waits on an in-flight save for at most DRAIN_TIMEOUT_MS. */
+async function requestSignOut() {
+	if (preparingSignOut) return;
+	preparingSignOut = true;
+	try {
+		const userId = page.data.session?.user.id;
+		signOutWork = userId ? await collectUnsavedWork(userId) : [];
+		unsavedAtSignOut = await drainUnsavedWork(signOutWork);
+	} finally {
+		preparingSignOut = false;
+	}
+	signOutConfirmOpen = true;
+}
+
+function confirmSignOut() {
+	const unsaved = countUnsavedWork(signOutWork);
+	if (signOutVerdict(unsaved, unsavedAtSignOut) === 'confirm') {
+		unsavedAtSignOut = unsaved; // Re-ask with the new count; the dialog stays open.
+		return;
+	}
+	signOutConfirmOpen = false;
+	void handleSignOut();
+}
+
+const signOutDescription = $derived(
+	unsavedAtSignOut === 0
+		? m.shell_sign_out_confirm_body()
+		: unsavedAtSignOut === 1
+			? m.shell_sign_out_unsaved_body()
+			: m.shell_sign_out_unsaved_body_many({ count: unsavedAtSignOut }),
+);
+
 async function handleSignOut() {
-	// Also flushes stale service-worker caches (PWA hygiene on shared devices).
-	await signOutAndFlush();
+	// Also flushes stale service-worker caches (PWA hygiene on shared devices) and,
+	// once signed out, erases the unsaved work the user just agreed to discard.
+	await signOutAndFlush(signOutWork);
+	signOutWork = [];
 	// Refresh the shared root-layout `session` (reused across the client-side
 	// nav) so the shell drops back to the logged-out state without a reload.
 	await invalidateAll();
@@ -312,7 +359,7 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 
 			<DropdownMenu.Item
 				class={destructiveItemClass}
-				onSelect={() => (signOutConfirmOpen = true)}
+				onSelect={() => void requestSignOut()}
 			>
 				<span class="i-lucide-log-out text-lg" ></span>
 				<span>{m.shell_sign_out()}</span>
@@ -378,14 +425,11 @@ const subTriggerHoverGuard = variant === 'drawer' ? (e: PointerEvent) => e.preve
 
 		<ConfirmDialog
 			bind:open={signOutConfirmOpen}
-			title={m.shell_sign_out_confirm_title()}
-			description={m.shell_sign_out_confirm_body()}
-			confirmLabel={m.shell_sign_out()}
+			title={unsavedAtSignOut === 0 ? m.shell_sign_out_confirm_title() : m.shell_sign_out_unsaved_title()}
+			description={signOutDescription}
+			confirmLabel={unsavedAtSignOut === 0 ? m.shell_sign_out() : m.shell_sign_out_unsaved_confirm()}
 			destructive
-			onconfirm={() => {
-				signOutConfirmOpen = false;
-				void handleSignOut();
-			}}
+			onconfirm={confirmSignOut}
 			oncancel={() => (signOutConfirmOpen = false)}
 		/>
 	{:else}

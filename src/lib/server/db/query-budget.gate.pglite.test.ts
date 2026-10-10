@@ -22,7 +22,7 @@ import { makeFile, makeFolder, makeUser } from '$lib/server/test/fixtures';
 import { type BudgetedOperation, budgetedOperations, QUERY_BUDGETS, scoreQueryCensus } from './query-budget';
 import { type QueryCensus, startQueryCensus } from './query-census';
 import { user } from './schema/auth/_better-auth';
-import { domain, post, postTag, revision, tag } from './schema/blog';
+import { domain, post, postTag, publishedRevision, revision, tag } from './schema/blog';
 import { file } from './schema/desk/file';
 import { folder } from './schema/desk/folder';
 
@@ -38,7 +38,7 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { listPosts } = await import('$lib/server/blog/queries');
+const { getPublishedPostForSlug, listPosts } = await import('$lib/server/blog/queries');
 const { getFile, listFiles, listFolders } = await import('./desk/queries');
 const { db } = await import('$lib/server/db');
 
@@ -56,8 +56,12 @@ const LARGE = 30;
  * Every post gets two revisions and a tag, because the shapes at risk in `listPosts`
  * are the revision and tag reads — a per-post fetch of either is the classic form, and
  * a single-revision fixture would let a `DISTINCT ON` regression pass unnoticed.
+ *
+ * `post-0` is published and carries EVERY tag, so the single-post read sees its tag count
+ * grow with the fixture — a per-tag fetch there would show up as a count that grows.
  */
 async function seed(size: number) {
+	await db.delete(publishedRevision);
 	await db.delete(postTag);
 	await db.delete(revision);
 	await db.delete(post);
@@ -93,6 +97,10 @@ async function seed(size: number) {
 	const tags = Array.from({ length: size }, (_, i) => ({ id: `tg-${i}`, slug: `tag-${i}`, name: `Tag ${i}` }));
 	await db.insert(tag).values(tags);
 	await db.insert(postTag).values(posts.map((p, i) => ({ postId: p.id, tagId: tags[i].id })));
+	if (size > 1) await db.insert(postTag).values(tags.slice(1).map((t) => ({ postId: posts[0].id, tagId: t.id })));
+	await db
+		.insert(publishedRevision)
+		.values(posts.map((p, i) => ({ postId: p.id, locale: 'en', revisionId: `rev-${i}-1` })));
 
 	await db
 		.insert(file)
@@ -117,6 +125,11 @@ async function seed(size: number) {
  */
 const OPERATIONS: Record<BudgetedOperation, (size: number) => Promise<unknown>> = {
 	'blog.listPosts': (size) => listPosts({ pageSize: size }),
+	'blog.getPublishedPostForSlug': async (size) => {
+		const read = await getPublishedPostForSlug('post-0');
+		// A miss would make one round trip at every size and pass the flatness check vacuously.
+		if (read?.tags.length !== size || !read.domain) throw new Error('fixture post-0 did not resolve fully');
+	},
 	'desk.listFiles': (size) => listFiles(OWNER.id, undefined, 0, size),
 	'desk.listFolders': () => listFolders(OWNER.id),
 };

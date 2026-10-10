@@ -3,7 +3,7 @@ import { browser } from '$app/environment';
 import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
 import { HeatMap, ScatterPlot } from '$lib/components/viz';
-import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import { getVizPalette, vizColor } from '$lib/components/viz/_shared/theme-bridge';
 import type { HeatMapData } from '$lib/components/viz/plot';
 import * as m from '$lib/paraglide/messages';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
@@ -32,7 +32,7 @@ const scatterData = {
 				{ x: 80, y: 55 },
 				{ x: 90, y: 85 },
 			],
-			backgroundColor: palette[0] || '#3b82f6',
+			backgroundColor: vizColor(palette, 0),
 			pointRadius: 5,
 			pointHoverRadius: 7,
 		},
@@ -47,7 +47,7 @@ const scatterData = {
 				{ x: 75, y: 45 },
 				{ x: 85, y: 65 },
 			],
-			backgroundColor: palette[3] || '#8b5cf6',
+			backgroundColor: vizColor(palette, 3),
 			pointRadius: 5,
 			pointHoverRadius: 7,
 		},
@@ -189,7 +189,7 @@ const serverData: HeatMapData = {
 					{#snippet visualization()}
 						<HeatMap
 							data={activityData}
-							colorRange={['#e5e7eb', '#22c55e']}
+							colorRange={['var(--color-subtle)', 'var(--color-success)']}
 							ariaLabel="Weekly activity heatmap showing contributions per day"
 						/>
 					{/snippet}
@@ -222,7 +222,7 @@ const serverData: HeatMapData = {
     yLabels: ['Mon', 'Tue', ...],
     values: [[3, 5, 1, ...], ...],
   }}
-  colorRange={['#e5e7eb', '#22c55e']}
+  colorRange={['var(--color-subtle)', 'var(--color-success)']}
   ariaLabel="Weekly activity heatmap"
 />`}</code></pre>
 					{/snippet}
@@ -288,7 +288,7 @@ const serverData: HeatMapData = {
 					{#snippet visualization()}
 						<HeatMap
 							data={serverData}
-							colorRange={['#fef2f2', '#ef4444']}
+							colorRange={['var(--color-error-bg)', 'var(--color-error)']}
 							formatValue={(v) => `${v}ms`}
 							ariaLabel="Server response time heatmap"
 						/>

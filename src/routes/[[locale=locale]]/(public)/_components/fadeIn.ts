@@ -8,23 +8,36 @@ type FadeInOptions = {
 /**
  * Svelte action: fade-in on scroll via IntersectionObserver.
  * Supports staggered translate entrance. Respects prefers-reduced-motion.
+ *
+ * The node arrives already painted by SSR, so it is never hidden up front: the
+ * observer's first report (delivered after layout, without forcing one) decides.
+ * A node already in view at hydration stays as painted — hiding it would blink
+ * visible content out and back in. Only a node still below the fold is hidden
+ * to fade in later; it is off-screen, so neither change is seen, and opacity and
+ * transform never move layout.
  */
 export function fadeIn(node: HTMLElement, options: FadeInOptions = {}) {
 	const { delay = 0, translate = 0 } = options;
 	const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-	if (prefersReduced) {
-		node.style.opacity = '1';
-		return;
-	}
+	if (prefersReduced) return;
 
-	node.style.opacity = '0';
-	if (translate) {
-		node.style.transform = `translateY(${translate}px)`;
-	}
+	let measured = false;
 
 	const observer = new IntersectionObserver(
 		([entry]) => {
+			if (!measured) {
+				measured = true;
+				if (entry.isIntersecting) {
+					observer.disconnect();
+					return;
+				}
+				node.style.opacity = '0';
+				if (translate) {
+					node.style.transform = `translateY(${translate}px)`;
+				}
+				return;
+			}
 			if (entry.isIntersecting) {
 				// Apply transition only on reveal so the initial state isn't animated
 				const props = translate ? 'opacity, transform' : 'opacity';

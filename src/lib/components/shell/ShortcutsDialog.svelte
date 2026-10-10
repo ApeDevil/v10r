@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Kbd } from '$lib/components/primitives';
+import { Kbd } from '$lib/components/primitives/kbd';
 import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
 import { layerStack } from '$lib/state/layer-stack.svelte';
 import { getModals } from '$lib/state/modals.svelte';

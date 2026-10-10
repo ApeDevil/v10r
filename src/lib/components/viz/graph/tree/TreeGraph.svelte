@@ -4,7 +4,7 @@ import { onDestroy, onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { cn } from '$lib/utils/cn';
 import type { ChartContainerVariants } from '../../_shared/chart-container';
-import { getVizPalette } from '../../_shared/theme-bridge';
+import { getVizPalette, vizColor } from '../../_shared/theme-bridge';
 import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
 import type { TreeData } from './types';
 
@@ -104,7 +104,7 @@ function isCollapsed(nodeId: string): boolean {
 }
 
 function getNodeColor(depth: number): string {
-	return palette[depth % palette.length] || '#3b82f6';
+	return vizColor(palette, depth);
 }
 
 /** Get node x/y accounting for orientation swap */

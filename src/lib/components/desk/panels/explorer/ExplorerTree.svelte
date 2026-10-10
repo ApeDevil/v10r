@@ -94,9 +94,7 @@ function handleTreeKeydown(e: KeyboardEvent) {
 		case 'ArrowLeft': {
 			e.preventDefault();
 			if (current.isFolder && explorerState.expanded.has(current.id)) {
-				const next = new Set(explorerState.expanded);
-				next.delete(current.id);
-				explorerState.expanded = next;
+				explorerState.expanded.delete(current.id);
 			} else if (current.parentId) {
 				focusNodeById(current.parentId);
 			}

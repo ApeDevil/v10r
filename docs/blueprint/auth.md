@@ -140,6 +140,13 @@ export const auth = betterAuth({
 export type Auth = typeof auth;
 ```
 
+> **The cookie cache only works if its cookie is forwarded.** `sessionPopulate` calls
+> `getSession` through `readRequestSession` (`$lib/server/auth/session.adapter.ts`), which asks
+> for `returnHeaders: true` and copies every `Set-Cookie` onto `event.cookies`. A bare
+> `auth.api.getSession()` discards the refreshed `session_data` cookie (and the `updateAge`
+> refresh of `session_token`), so every signed-in request after the first five minutes pays
+> the Postgres session lookup again.
+
 > **Security notes:**
 > - `allowedAttempts: 3` — OTP codes are invalidated after 3 failed attempts (per-code lockout)
 > - Magic link and OTP are **cryptographically independent** — compromising one doesn't reveal the other
@@ -558,19 +565,24 @@ export const userProfile = pgTable('user_profile', {
 
 ### Sign Out
 
-```svelte
-<script lang="ts">
-  import { signOut } from '$lib/auth-client';
-  import { goto } from '$app/navigation';
+The user menu (`$lib/components/shell/UserMenu.svelte`) is the one interactive door. It does
+not call the auth client directly:
 
-  async function handleSignOut() {
-    await signOut();
-    goto('/');
-  }
-</script>
+1. **Drain** — `$lib/state/unsaved-work.ts` loads every unsaved-work source on demand and
+   gives pending saves up to `DRAIN_TIMEOUT_MS` to land. The server answers sign-out with
+   `Clear-Site-Data: "cache", "cookies", "storage"`, which erases the spreadsheet drafts kept
+   in localStorage, so they must be delivered first.
+2. **Confirm** — the sign-out `ConfirmDialog` names whatever is still unsaved ("Discard and
+   sign out"); cancelling keeps the user signed in with their work. A count that grew
+   between dialog and click re-asks (`signOutVerdict`).
+3. **Sign out** — `$lib/pwa/sign-out.ts` `signOutAndFlush(work)` drops this device's push
+   subscription, signs out, and only on success erases that user's draft slots
+   (shared-device hygiene where a browser ignores the header) and flushes SW caches.
 
-<button onclick={handleSignOut}>Sign Out</button>
-```
+Forced exits — a revoked session (`SessionMonitor` → `/auth/login?reason=revoked`) or an
+expired one — send no sign-out request: no `Clear-Site-Data`, nothing discarded. The drafts
+stay under the user's key and the spreadsheet offers them for recovery after the same user
+signs in again.
 
 ---
 
@@ -590,7 +602,7 @@ Role-based authorization (`user.role === 'author'`) was replaced by a capability
 | `granted_at` | When granted |
 | `revoked_at` | nullable. Partial UNIQUE: `(user_id, kind) WHERE revoked_at IS NULL` enforces at-most-one active grant per kind |
 | `revoked_by` | nullable, admin actor ID |
-| `notified_at` | nullable. Cleared when the grant notification Toast is consumed |
+| `notified_at` | nullable. NULL until the grant notification Toast was shown on a real `/desk` visit; stamped by the client's acknowledgement (`POST /api/grant-notifications/acknowledge`) |
 
 **`auth.grant_request`** — user-initiated access requests.
 
@@ -611,13 +623,14 @@ Partial UNIQUE on `(user_id, kind) WHERE status = 'pending'` — one pending req
 ```
 $lib/server/auth/
   grants.ts           — grantCapability, revokeCapability, hasGrant,
-                        listActiveGrantKinds, consumePendingGrantNotifications
+                        listActiveGrantKinds, listPendingGrantNotifications,
+                        acknowledgeGrantNotifications
   grant-requests.ts   — createGrantRequest, approveRequest, denyRequest, expireOldRequests
 ```
 
 ### Per-Request Populate
 
-`hooks.server.ts` `sessionPopulate` sets `event.locals.grants: GrantKind[]` on every authenticated request (single PK-indexed query). `App.Locals` has a `grants: GrantKind[]` field.
+`hooks.server.ts` `sessionPopulate` sets `event.locals.grants: GrantKind[]` (single PK-indexed query) only where something reads it: `readsGrants()` in `$lib/server/http/guards.ts` admits `/api/blog/*`, the home of every `guardApiBlogAuthor` caller. Everywhere else the array is empty — the desk layout asks `hasGrant()` directly — and `guards.test.ts` fails if a grant reader appears outside the predicate. `App.Locals` has a `grants: GrantKind[]` field.
 
 On grant/revoke: the mutation deletes all sessions for the affected user. Next sign-in re-populates grants.
 

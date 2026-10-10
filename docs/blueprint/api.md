@@ -1023,6 +1023,7 @@ src/
 | **Blog preview** | `POST /api/blog/preview` | `guardApiBlogAuthor` |
 | **Blog comments** | `GET/POST /api/blog/posts/[id]/comments`, `PATCH/DELETE /api/blog/comments/[id]`, `POST .../hide`, `POST .../unhide`, `POST .../remove` (admin) | GET public; POST session; admin actions `guardApiAdmin` |
 | **Grant requests** | `POST/GET/DELETE /api/grant-requests` | session (own) |
+| **Grant notifications** | `POST /api/grant-notifications/acknowledge` (idempotent; marks the "you now have access" Toast seen) | session (own) |
 | **Admin grant requests** | `GET /api/admin/grant-requests`, `POST .../[id]/approve`, `POST .../[id]/deny` | `guardApiAdmin` |
 | **Admin user grants** | `GET /api/admin/users/[id]/grants`, `PUT/DELETE .../grants/[kind]` | `guardApiAdmin` |
 

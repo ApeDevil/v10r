@@ -11,7 +11,7 @@
 import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
 import { NameSourceError } from '../errors';
 import { fetchJson } from '../fetch-json';
-import type { CompanyDraft, NameSource } from '../name-source';
+import type { CompanyDraft, LiveNameSource } from '../name-source';
 
 const API = 'https://api.gleif.org/api/v1';
 const PAGE_SIZE = 20;
@@ -99,11 +99,12 @@ export function toGleifDrafts(
 	return drafts;
 }
 
-export const gleifSource: NameSource = {
+export const gleifSource: LiveNameSource = {
 	id: 'gleif',
 	kind: 'company',
 	territories: NAME_CHECK_TERRITORIES,
 	manualUrl: (query) => `https://search.gleif.org/#/search/simpleSearch=${encodeURIComponent(query.raw)}`,
+	searchInputs: (query) => [query.normalized.canonical],
 	async search(query, ctx) {
 		const term = encodeURIComponent(query.normalized.canonical);
 		const [records, completions] = await Promise.allSettled([

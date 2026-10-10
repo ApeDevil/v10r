@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 172 patterns (38 deep cards / 134 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 174 patterns (41 deep cards / 133 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -235,10 +235,12 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 ### Runtime Velocity
 
 - [**Critical path / deferred tail**](./critical-path-deferred-tail.md)
+- [**Critical rendering path (the LCP element paints from the document)**](./critical-rendering-path.md)
 - [**Heavy dependency quarantine (the baseline is the metric)**](./heavy-dependency-quarantine.md)
+- [**Side-effect-free component tree (barrels that tree-shake)**](./side-effect-free-components.md)
 - [**Main-thread budget (worker → WASM, each step measured)**](./main-thread-budget.md)
 - [**Resilience policy (breaker, bulkhead, shedding, bounded retry)**](./resilience-policy.md)
-- [Asset delivery pipeline](./velocity-asset-delivery.md)
+- [**Asset delivery pipeline**](./velocity-asset-delivery.md)
 - [Compute and data locality](./velocity-compute-locality.md)
 - [**Deadline propagation (one budget, divided)**](./deadline-propagation.md)
 

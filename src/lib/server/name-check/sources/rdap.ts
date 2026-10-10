@@ -18,7 +18,7 @@ import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
 import { definePolicy, readThrough } from '$lib/server/cache';
 import { DOMAIN_TLDS, RDAP_BOOTSTRAP_TTL_SECONDS, RDAP_LOOKUP_MS } from '../config';
 import { fetchJson } from '../fetch-json';
-import type { DomainDraft, NameSource, NameSourceContext } from '../name-source';
+import type { DomainDraft, LiveNameSource, NameSourceContext } from '../name-source';
 
 export const RDAP_BOOTSTRAP_URL = 'https://data.iana.org/rdap/dns.json';
 
@@ -180,12 +180,13 @@ async function lookupOne(
 	return domainDraft(label, tld);
 }
 
-export const rdapSource: NameSource = {
+export const rdapSource: LiveNameSource = {
 	id: 'rdap',
 	kind: 'domain',
 	territories: NAME_CHECK_TERRITORIES,
 	manualUrl: (query) =>
 		`https://lookup.icann.org/en/lookup?name=${encodeURIComponent(`${query.normalized.compact}.com`)}`,
+	searchInputs: (query) => [query.normalized.compact],
 	async search(query, ctx) {
 		const label = query.normalized.compact;
 		if (!DNS_LABEL.test(label)) return DOMAIN_TLDS.map((tld) => domainDraft(label, tld));

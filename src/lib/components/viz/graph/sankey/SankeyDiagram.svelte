@@ -3,7 +3,7 @@ import { onDestroy, onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { cn } from '$lib/utils/cn';
 import type { ChartContainerVariants } from '../../_shared/chart-container';
-import { getVizPalette } from '../../_shared/theme-bridge';
+import { getVizPalette, vizColor } from '../../_shared/theme-bridge';
 import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
 import type { SankeyData, SankeyLinkData, SankeyNodeData } from './types';
 
@@ -117,7 +117,7 @@ $effect(() => {
 });
 
 function getNodeColor(_node: LayoutNode, idx: number): string {
-	return palette[idx % palette.length] || '#3b82f6';
+	return vizColor(palette, idx);
 }
 
 function getLinkPath(link: LayoutLink): string {

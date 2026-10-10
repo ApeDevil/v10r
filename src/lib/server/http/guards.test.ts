@@ -319,3 +319,49 @@ describe('guardApiBlogAuthor', () => {
 		}
 	});
 });
+
+describe('readsGrants — the sessionPopulate grant lookup predicate', () => {
+	it('loads grants for the blog authoring API', () => {
+		expect(guards.readsGrants('/api/blog/posts')).toBe(true);
+		expect(guards.readsGrants('/api/blog/assets/ast_1/image')).toBe(true);
+	});
+
+	it('skips pages and every other API', () => {
+		for (const path of ['/blog', '/blog/my-post', '/de/blog', '/desk', '/de/desk/__data.json', '/api/desk/files']) {
+			expect(guards.readsGrants(path), path).toBe(false);
+		}
+	});
+
+	// The predicate is only correct while it covers every reader. A grant check added
+	// anywhere else would see an empty array and deny a real author — silently, since the
+	// admin bypass hides it from whoever tests it as admin.
+	it('covers every reader of locals.grants', async () => {
+		const { readdirSync, readFileSync, statSync } = await import('node:fs');
+		const { join, relative } = await import('node:path');
+		const root = process.cwd();
+		const files: string[] = [];
+		const walk = (dir: string) => {
+			for (const entry of readdirSync(dir)) {
+				const path = join(dir, entry);
+				if (statSync(path).isDirectory()) walk(path);
+				else if (/\.ts$/.test(path) && !/\.test\.ts$/.test(path)) files.push(relative(root, path));
+			}
+		};
+		walk(join(root, 'src/routes'));
+		walk(join(root, 'src/lib'));
+
+		const outside: string[] = [];
+		for (const file of files) {
+			// Comments may name the field; only code reads it.
+			const source = readFileSync(join(root, file), 'utf8')
+				.replace(/\/\*[\s\S]*?\*\//g, '')
+				.replace(/^\s*\/\/.*$/gm, '');
+			const callsGuard = /import\s*(?:type\s*)?\{[^}]*\bguardApiBlogAuthor\b[^}]*\}/.test(source);
+			const readsLocals = /locals\.grants/.test(source) && file !== 'src/lib/server/http/guards.ts';
+			const route = `/${file.replace(/^src\/routes\//, '')}`;
+			if (callsGuard && !(file.startsWith('src/routes/') && guards.readsGrants(route))) outside.push(file);
+			if (readsLocals) outside.push(file);
+		}
+		expect(outside, 'grant readers outside readsGrants — widen the predicate').toEqual([]);
+	});
+});

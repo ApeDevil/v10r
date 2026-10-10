@@ -11,7 +11,7 @@ import { checkRatchets, isScoreable, type LabSnapshot, scoreSnapshot, snapshot, 
  * number), and only catchable before shipping — by the time RUM reflects it,
  * users already downloaded it.
  *
- * It asserts CEILINGS, not targets. The heaviest route is 609 KB against a 250 KB
+ * It asserts CEILINGS, not targets. The heaviest route is 511 KB against a 250 KB
  * target, so a gate wired to the target would fail on the commit that introduced
  * it and be muted the same afternoon. Ceilings stop the number growing while the
  * target stays visible on /admin/perf as the thing still to fix.

@@ -1,9 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { DocSection } from '$lib/docs/types';
 import { isBlocked, slugify } from '$lib/server/docs/doc-filter';
 import { getEntry } from '$lib/server/docs/manifest';
 import { ROOT_DOCS } from '$lib/server/docs/markdown-urls';
-import { PATTERNS } from '$lib/server/patterns';
+import { CATEGORIES, PATTERNS } from '$lib/server/patterns';
 
 /**
  * Dead-link gate for the generated pattern surfaces: every docs ref in the
@@ -69,5 +71,33 @@ describe('pattern registry docs refs', () => {
 			}
 		}
 		expect(problems, problems.join('\n')).toEqual([]);
+	});
+});
+
+/**
+ * The Velocity coverage matrix routes each performance concern to the record that covers
+ * it. Its Record column (third) must name real registry ids, and every Velocity record must
+ * appear — a renamed record or a new one nobody placed in the matrix fails here.
+ */
+describe('velocity coverage matrix', () => {
+	const COVERAGE_DOC = 'docs/blueprint/velocity/coverage.md';
+	const recordCells = readFileSync(join(process.cwd(), COVERAGE_DOC), 'utf8')
+		.split('\n')
+		.filter((line) => line.startsWith('| ') && !line.startsWith('|---'))
+		.map((line) => line.split('|')[3] ?? '');
+	const named = new Set(recordCells.flatMap((cell) => [...cell.matchAll(/`([a-z0-9-]+)`/g)].map((match) => match[1])));
+	const velocityCategories = new Set(CATEGORIES.filter((category) => category.group === 'velocity').map((c) => c.id));
+
+	it('names only registry records', () => {
+		const known = new Set(PATTERNS.map((pattern) => pattern.id));
+		const unknown = [...named].filter((id) => !known.has(id));
+		expect(unknown, `${COVERAGE_DOC} names unknown records`).toEqual([]);
+	});
+
+	it('places every Velocity record', () => {
+		const missing = PATTERNS.filter(
+			(pattern) => velocityCategories.has(pattern.category) && !named.has(pattern.id),
+		).map((pattern) => pattern.id);
+		expect(missing, `${COVERAGE_DOC} omits Velocity records`).toEqual([]);
 	});
 });

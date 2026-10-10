@@ -39,6 +39,7 @@ function closeViewer() {
 		{#each MODELS as model (model.id)}
 			<SceneCard
 				{model}
+				paused={viewerOpen}
 				onclick={() => openViewer(model.id)}
 			/>
 		{/each}

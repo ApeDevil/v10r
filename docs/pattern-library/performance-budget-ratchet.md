@@ -8,7 +8,7 @@ category: "Velocity Measurement"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Velocity Measurement · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — measurement and gating only; no runtime behaviour
+**Category:** Velocity Measurement · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** low — measurement and gating only; no runtime behaviour
 
 Two thresholds with different jobs: targets are where we want to be and never fail a build, ceilings are the measured value at the moment it was accepted and only ever move down. A gate wired to a target gets muted the afternoon it is added.
 
@@ -32,6 +32,7 @@ Two thresholds with different jobs: targets are where we want to be and never fa
 
 - `src/lib/server/perf/budgets.json` — The single source of truth for both kinds of threshold ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/perf/budgets.json) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/perf/budgets.json))
 - `src/lib/server/perf/budgets.ts` — Scoring, and why lab and field budgets cannot be shared ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/perf/budgets.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/perf/budgets.ts))
+- `scripts/perf/snapshot.ts` — routeNodes(): each route's layout chain from the generated client app ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/perf/snapshot.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/perf/snapshot.ts))
 
 ## Tests
 
@@ -50,12 +51,14 @@ Two thresholds with different jobs: targets are where we want to be and never fa
 - Development measurements are never mixed with lab or production ones.
 - A metric is only ratcheted when it is deterministic enough to be reproducible — which is why cold-start time is reported and not gated.
 - A lab snapshot from a non-production build is refused rather than scored.
+- A per-route budget scores what a visitor downloads: the shared baseline, every layout on the route's chain, and the page — never the page node alone.
 
 ## Emulation notes
 
 - Give ceilings a few percent of headroom over the measurement. Set exactly at the measured value, one ordinary feature trips the gate — and a gate that fails on ordinary work is a gate that gets muted. The headroom absorbs a feature and deliberately not a heavy dependency.
 - Keep the thresholds in ONE file that both the application and the shell probes read. Two copies drift, and the copy that drifts is always the one the gate uses.
 - Field and lab budgets for the same metric name are different numbers. Scoring a real-user p75 against a warm-preview budget reports a failure on every healthy deployment.
+- Derive the chain from the build, not from file paths: v10r parses the route dictionary in the generated client app.js. Scoring page nodes only had under-reported the median route by 81 KB gz, because the public shell layout alone was ~160 KB.
 
 ---
 

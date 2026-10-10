@@ -4,7 +4,7 @@ import { onDestroy, onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
 import { cn } from '$lib/utils/cn';
 import type { ChartContainerVariants } from '../../_shared/chart-container';
-import { getVizPalette } from '../../_shared/theme-bridge';
+import { getVizPalette, vizColor } from '../../_shared/theme-bridge';
 import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
 import { arrowMarker } from '../_shared/svg-markers';
 import type { NetworkData, NetworkEdge, NetworkNode } from './types';
@@ -206,9 +206,9 @@ $effect(() => {
 });
 
 function getNodeColor(node: SimNode): string {
-	if (!node.group || groups.length === 0) return palette[0] || '#3b82f6';
+	if (!node.group || groups.length === 0) return vizColor(palette, 0);
 	const idx = groups.indexOf(node.group);
-	return palette[idx % palette.length] || '#3b82f6';
+	return vizColor(palette, idx);
 }
 
 function getNodeRadius(node: SimNode): number {

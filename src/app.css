@@ -801,29 +801,29 @@
    ═══════════════════════════════════════════════════════════════ */
 
 [data-typography="T1"] {
-	--font-heading: "Inter Variable", "Inter", system-ui, sans-serif;
-	--font-body: "Inter Variable", "Inter", system-ui, sans-serif;
-	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+	--font-heading: "Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif;
+	--font-body: "Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif;
+	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace;
 }
 [data-typography="T2"] {
 	--font-heading: "Playfair Display Variable", "Playfair Display", Georgia, serif;
-	--font-body: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif;
-	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+	--font-body: "Space Grotesk Variable", "Space Grotesk", "Space Grotesk Fallback", system-ui, sans-serif;
+	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace;
 }
 [data-typography="T3"] {
-	--font-heading: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif;
-	--font-body: "Inter Variable", "Inter", system-ui, sans-serif;
-	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+	--font-heading: "Space Grotesk Variable", "Space Grotesk", "Space Grotesk Fallback", system-ui, sans-serif;
+	--font-body: "Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif;
+	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace;
 }
 [data-typography="T4"] {
 	--font-heading: "Fraunces Variable", "Fraunces", Georgia, serif;
-	--font-body: "Inter Variable", "Inter", system-ui, sans-serif;
-	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+	--font-body: "Inter Variable", "Inter", "Inter Fallback", system-ui, sans-serif;
+	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace;
 }
 [data-typography="T5"] {
-	--font-heading: "Nunito Variable", "Nunito", system-ui, sans-serif;
-	--font-body: "Nunito Variable", "Nunito", system-ui, sans-serif;
-	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+	--font-heading: "Nunito Variable", "Nunito", "Nunito Fallback", system-ui, sans-serif;
+	--font-body: "Nunito Variable", "Nunito", "Nunito Fallback", system-ui, sans-serif;
+	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, monospace;
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -9,9 +9,11 @@
  * sentence rather than a hopeful one.
  *
  * Only successes are cached: a cached failure would replay an outage for a day. The
- * cache key hashes the normalised name so Redis never holds a prospective brand in
- * plaintext, and the envelope keeps the upstream `retrievedAt` so a cached row can say
- * how old it is.
+ * cache key hashes what the source declares its search reads (`searchInputs`) — never the
+ * normalised name alone: "Velo Raptor" and "VeloRaptor" share a compact form, but a web
+ * search for either exact phrase does not share an answer. Hashing also keeps a
+ * prospective brand out of Redis in plaintext, and the envelope keeps the upstream
+ * `retrievedAt` so a cached row can say how old it is.
  *
  * `onSourceSettled` fires as each source finishes so a streaming route can forward
  * partial results; this module does not stream itself.
@@ -42,6 +44,7 @@ import {
 import { dedupeMatches } from './dedupe';
 import { NameSourceError } from './errors';
 import {
+	type LiveNameSource,
 	type NameMatchDraft,
 	type NameSource,
 	type NameSourceContext,
@@ -150,9 +153,10 @@ function finish(envelope: SourceEnvelope, query: NameCheckQuery): NameMatch[] {
 	return dedupeMatches(enriched).sort(byScore).slice(0, MAX_MATCHES_PER_SOURCE);
 }
 
-function cacheId(source: NameSource, query: NameCheckQuery): string {
-	const digest = createHash('sha256').update(query.normalized.compact).digest('hex');
-	return `${source.id}:${query.territory}:${digest}`;
+/** JSON keeps `['ab', 'c']` and `['a', 'bc']` apart. */
+function cacheId(source: LiveNameSource, query: NameCheckQuery, credentials: NameSourceCredentials): string {
+	const inputs = JSON.stringify(source.searchInputs(query, credentials));
+	return `${source.id}:${createHash('sha256').update(inputs).digest('hex')}`;
 }
 
 async function runSource(
@@ -172,15 +176,15 @@ async function runSource(
 		...extra,
 	});
 
-	const search = source.search;
-	if (!search) return { coverage: row('manual_only'), matches: [] };
+	if (!source.search) return { coverage: row('manual_only'), matches: [] };
 	if (source.configured && !source.configured(base.credentials)) {
 		return { coverage: row('credentials_missing'), matches: [] };
 	}
 
 	try {
 		const policy = source.kind === 'domain' ? DOMAIN_POLICY : RESULT_POLICY;
-		const read = await readThrough<SourceEnvelope>(policy, { id: cacheId(source, query) }, async () => {
+		const id = cacheId(source, query, base.credentials);
+		const read = await readThrough<SourceEnvelope>(policy, { id }, async () => {
 			if (await breaker.isOpen(source.id)) {
 				throw new ResilienceError('breaker_open', `${source.id} is cooling down`);
 			}
@@ -192,7 +196,7 @@ async function runSource(
 				const child = deadline.child(SOURCE_CEILING_MS);
 				return child.run(async (signal) => ({
 					retrievedAt: base.now().toISOString(),
-					matches: await search(query, { ...base, deadline: child, signal }),
+					matches: await source.search(query, { ...base, deadline: child, signal }),
 				}));
 			});
 		});

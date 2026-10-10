@@ -1,5 +1,5 @@
 import { getMyPendingRequest } from '$lib/server/auth/grant-requests';
-import { consumePendingGrantNotifications, type GrantKind, hasGrant } from '$lib/server/auth/grants';
+import { hasGrant, listPendingGrantNotifications } from '$lib/server/auth/grants';
 import { getDeskTheme, listDeskPresets } from '$lib/server/db/desk/theme-queries';
 import { getActiveWorkspaceId, listWorkspaces } from '$lib/server/db/desk/workspace-queries';
 import { requireAuth } from '$lib/server/http/guards';
@@ -16,7 +16,9 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			getActiveWorkspaceId(user.id),
 			hasGrant(user.id, 'blog-author'),
 			getMyPendingRequest(user.id, 'blog-author'),
-			consumePendingGrantNotifications(user.id),
+			// Read-only: this load also runs on link-hover preload. The client acknowledges
+			// the notification once the Toast is actually shown (+layout.svelte).
+			listPendingGrantNotifications(user.id),
 		]);
 
 	return {
@@ -46,6 +48,6 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			granted: isBlogAuthor,
 			pendingRequest: pendingRequest ? { id: pendingRequest.id, requestedAt: pendingRequest.requestedAt } : null,
 		},
-		justGrantedKinds: justGrantedKinds as GrantKind[],
+		justGrantedKinds,
 	};
 };

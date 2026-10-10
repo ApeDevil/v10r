@@ -13,6 +13,9 @@
  *   4. SHOWCASE — a `showcase` href isn't a real node in the showcase
  *      registry tree.
  *
+ * Plus the shape rules per source kind: hosted services claim no license,
+ * datasets must name theirs.
+ *
  * Curation itself (which technologies deserve an entry) is editorial and
  * deliberately not tested.
  */
@@ -132,11 +135,17 @@ describe('credits registry gate', () => {
 		expect(offenders).toEqual([]);
 	});
 
+	it('DATA — every credited dataset names the license its data is used under', () => {
+		// Open data licenses (ODbL) make the credit the condition of use — a missing one is the bug.
+		expect(credits.filter((e) => e.source.kind === 'data' && !e.license).map((e) => e.id)).toEqual([]);
+	});
+
 	it('the scans are non-empty (a shrunken registry would pass every check above vacuously)', () => {
 		expect(npmEntries.length).toBeGreaterThan(0);
 		expect(credits.filter((e) => e.docs).length).toBeGreaterThan(0);
 		expect(credits.filter((e) => e.showcase).length).toBeGreaterThan(0);
 		expect(credits.filter((e) => e.source.kind === 'service').length).toBeGreaterThan(0);
+		expect(credits.filter((e) => e.source.kind === 'data').length).toBeGreaterThan(0);
 	});
 });
 

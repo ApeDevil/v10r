@@ -3,8 +3,8 @@
  * One row per (userId, kind); active when revoked_at IS NULL.
  * v1 supports kind='blog-author'; add new kinds by extending grantKindEnum.
  *
- * Notification: notifiedAt holds the timestamp of the first /desk visit
- * after grant — set by the layout load, cleared via single-fire UPDATE.
+ * Notification: notifiedAt is NULL until the "you now have X access" Toast has been
+ * shown on a real /desk visit; the client then acknowledges it, which stamps the time.
  */
 import { sql } from 'drizzle-orm';
 import { index, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';

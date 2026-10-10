@@ -28,6 +28,7 @@ import {
 } from '$lib/server/auth/config';
 import { listActiveGrantKinds } from '$lib/server/auth/grants';
 import { isSessionRevoked } from '$lib/server/auth/revocation';
+import { readRequestSession } from '$lib/server/auth/session.adapter';
 import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
 import { REQUEST_QUERY_CEILING } from '$lib/server/db/query-budget';
 import { startQueryCensus } from '$lib/server/db/query-census';
@@ -36,6 +37,7 @@ import { startQueryCensus } from '$lib/server/db/query-census';
 import { docsMarkdown } from '$lib/server/docs/markdown.hook';
 import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '$lib/server/http/body';
 import { startDeadline } from '$lib/server/http/deadline';
+import { readsGrants } from '$lib/server/http/guards';
 import { createLimiter, isDocumentRequest } from '$lib/server/http/rate-limit';
 import { startRequestTiming, toServerTimingHeader } from '$lib/server/http/request-timing';
 import { apiError } from '$lib/server/http/response';
@@ -43,7 +45,7 @@ import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server
 import { platform } from '$lib/server/platform';
 import { HSTS_MAX_AGE } from '$lib/server/security/config';
 import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
-import { getCustomPaletteById } from '$lib/server/style';
+import { getCustomPaletteById, scopeStyleCookie } from '$lib/server/style';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -290,6 +292,11 @@ const bodySizeFloor: Handle = async ({ event, resolve }) => {
 
 /**
  * loadStyle — reads/generates style from cookie, populates event.locals.style
+ *
+ * The cookie write is decided before resolve (SvelteKit refuses `cookies.set` after it)
+ * but kept only on responses that render the app shell — see `scopeStyleCookie`. A
+ * cookieless crawler fetching `/sitemap.xml` used to get a fresh random style on every
+ * hit, and that `Set-Cookie` made the endpoint's `s-maxage` uncacheable on Vercel.
  */
 const loadStyle: Handle = async ({ event, resolve }) => {
 	// locals.style is consumed only by HTML rendering. Skip the cookie parse + custom
@@ -348,7 +355,9 @@ const loadStyle: Handle = async ({ event, resolve }) => {
 	}
 
 	event.locals.style = resolved;
-	return resolve(event);
+	const response = await resolve(event);
+	scopeStyleCookie(response, event.isDataRequest);
+	return response;
 };
 
 /**
@@ -445,6 +454,11 @@ const i18n: Handle = ({ event, resolve }) =>
 			customPaletteStyle = `<style>[data-palette="${safePid}"]{${lightVars}}.dark[data-palette="${safePid}"]{${darkVars}}</style>`;
 		}
 
+		// Fonts are deliberately NOT preloaded (Kit's default preloads scripts and styles
+		// only). Measured 2026-10-10, lab, Slow 4G + 4× CPU, n=5: preloading the visitor's
+		// heading + body faces delayed FCP by 60–120 ms on every page tested and added
+		// ~110 ms TBT on the home page, while its LCP effect did not reproduce between
+		// runs. The metric-matched fallback faces (font-fallbacks.css) carry the swap.
 		return resolve(event, {
 			transformPageChunk: ({ html }) => {
 				let result = html
@@ -618,18 +632,18 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	// anonymous visitors browse fine. Degrade this request to anonymous instead:
 	// privileges only ever drop, never widen. (Same .catch precedent as the 2FA
 	// path in authHandler.)
+	//
+	// `readRequestSession` forwards the cookies the read writes. Without that, a cache miss
+	// re-issued the `session_data` cookie into a discarded header bag, so after the first
+	// five minutes every signed-in request paid the Postgres session lookup again.
 	const sessionData = await event.locals.timing.span('auth', () =>
-		auth.api
-			.getSession({
-				headers: event.request.headers,
-			})
-			.catch((err) => {
-				console.error(
-					'[auth] getSession failed — degrading request to anonymous:',
-					err instanceof Error ? err.message : err,
-				);
-				return null;
-			}),
+		readRequestSession(event).catch((err) => {
+			console.error(
+				'[auth] getSession failed — degrading request to anonymous:',
+				err instanceof Error ? err.message : err,
+			);
+			return null;
+		}),
 	);
 
 	event.locals.user = sessionData?.user ?? null;
@@ -646,14 +660,12 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 	// now run concurrently, and a banned user still costs no Redis call at all.
 	const su = event.locals.user;
 	const ss = event.locals.session;
-	const needsGrants = !!su && (event.url.pathname.includes('/blog') || event.url.pathname.includes('/desk'));
+	const needsGrants = !!su && readsGrants(event.url.pathname);
 
 	const [revoked, grants] = await Promise.all([
 		su && ss ? (su.banned ? Promise.resolve(true) : isSessionRevoked(su.id, ss.createdAt, ss.token)) : false,
-		// Grants are read ONLY by the blog-author guards (the /api/blog/* authoring API
-		// and blog pages). Skipped elsewhere — the array stays empty and the guards
-		// still deny correctly (admins bypass via isAdmin). Keeping it a plain array
-		// avoids an async cascade across ~25 guard call sites.
+		// Skipped wherever nothing reads the result — see readsGrants. Keeping it a plain
+		// array avoids an async cascade across ~25 guard call sites.
 		needsGrants && su
 			? listActiveGrantKinds(su.id).catch((err) => {
 					console.error(

@@ -4,7 +4,7 @@ import type { CatalogSource } from '$lib/components/composites/citation/citation
 import * as m from '$lib/paraglide/messages';
 import type { TurnError } from '$lib/types/ai-error';
 import { cn } from '$lib/utils/cn';
-import { renderMarkdown } from '$lib/utils/markdown';
+import StreamedMarkdown from './StreamedMarkdown.svelte';
 import ToolCallStatus from './ToolCallStatus.svelte';
 import { toolLabel } from './tool-label';
 import { isToolPart, TOOL_PHASE, type ToolPart, toolNameOf } from './tool-part';
@@ -12,6 +12,8 @@ import { isToolPart, TOOL_PHASE, type ToolPart, toolNameOf } from './tool-part';
 interface TextPart {
 	type: 'text';
 	text: string;
+	/** AI SDK sets this while deltas are still arriving; absent on persisted history. */
+	state?: 'streaming' | 'done';
 }
 
 type MessagePart = TextPart | ToolPart | { type: string };
@@ -65,6 +67,10 @@ function getTextContent(part: MessagePart): string {
 	return 'text' in part ? (part as TextPart).text : '';
 }
 
+function isStreaming(part: MessagePart): boolean {
+	return 'state' in part && (part as TextPart).state === 'streaming';
+}
+
 /**
  * An assistant frame exists from the stream's first `start` on and stays after a pre-text
  * failure; with nothing to show, the row is not rendered — the status row and the error box
@@ -110,7 +116,7 @@ function turnErrorCopy(error: TurnError): string {
 						{#if isUser}
 							<p class="whitespace-pre-wrap">{text}</p>
 						{:else}
-							<div class="chat-prose">{@html renderMarkdown(text)}</div>
+							<div class="chat-prose"><StreamedMarkdown {text} streaming={isStreaming(part)} /></div>
 						{/if}
 					</div>
 				{/if}

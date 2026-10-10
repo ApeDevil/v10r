@@ -65,8 +65,23 @@ that ignores the promise must not produce an unhandled rejection.
 **Measurement.** `/showcases/velocity/interaction` runs the same mutation against an
 artificial 500 ms server delay, both ways, and shows the failure and duplicate-submit paths.
 
+**When one value is not enough: the desk explorer.** Tree moves and AI pins fold the same way,
+but over a map of nodes, so `explorer-intents.ts` implements the fold locally rather than
+wrapping `OptimisticValue`. Three things in `OptimisticValue` do not fit a tree:
+- **Completion order.** It applies successes in the order responses arrive, so a late
+  response can overwrite a newer move. The explorer applies intents in the order they were
+  issued; when an older move succeeds after a newer one has already been confirmed, it
+  re-reads the server.
+- **Duplicate detection.** It joins intents by key, which would merge X → Y → X into X → Y.
+  The explorer skips an intent only when the tree already shows its result.
+- **Read cost.** Every tree row reads the folded map, so the fold must be memoised.
+
+It replaced a capture-and-restore rollback: a failed move put back the parent it had saved,
+which wiped out a later move that had succeeded.
+
 **Implementation.** `src/lib/state/optimistic.svelte.ts`, tests in
-`src/lib/state/optimistic.svelte.test.ts`.
+`src/lib/state/optimistic.svelte.test.ts`; the tree variant in
+`src/lib/components/desk/panels/explorer/explorer-intents.ts` (tests alongside).
 
 ## Intent-based preloading
 
@@ -157,11 +172,13 @@ initializing editors, decoding optional assets, computing low-priority derived d
 critical render → interactive → idle capacity → speculative preparation
 ```
 
-v10r already does this in three places: `preloadOnIdle` (with a timer fallback, because
-Safari still lacks `requestIdleCallback` — late rather than never is the right failure for
-work nobody waits on), the PWA update toast, which never calls `skipWaiting` automatically,
-and `$lib/actions/hydrate-embeds.ts`, which hydrates embeds on intersection rather than on
-load.
+Where v10r does this: the app shell warms the command palette once the browser is idle
+(`AppShell.svelte` — `requestIdleCallback` with a timer fallback, because Safari still lacks
+it; late rather than never is the right failure for work nobody waits on), and
+`$lib/actions/hydrate-embeds.ts` hydrates embeds on intersection rather than on load.
+`preloadOnIdle` (`$lib/nav/preload.ts`) is the route-level helper; today only the velocity
+showcase calls it. The PWA update toast never forces activation mid-task: it posts
+`SKIP_WAITING` on the next navigation the user starts (`UpdatePrompt.svelte`).
 
 **Invariants.**
 

@@ -3,6 +3,8 @@
  * /credits — attribution/colophon for the stack. Fully static: every entry
  * comes from `$lib/credits/registry`, no load function needed. See
  * `registry.gate.test.ts` for the drift checks (license/docs/showcase links).
+ * The exhaustive per-package license texts live in the build-generated
+ * `/third-party-licenses.txt`, linked from the outro.
  */
 import { Card, PageHeader } from '$lib/components/composites';
 import { PageContainer, Stack } from '$lib/components/layout';
@@ -79,6 +81,11 @@ const groupedCredits = creditGroups.map((group) => ({
 			<Stack gap="3">
 				<p class="credits-outro-text">{m.credits_outro_source()}</p>
 				<div class="credits-outro-links">
+					<!-- A build output, not a route: emitted by scripts/build/third-party-licenses.ts. -->
+					<a href="/third-party-licenses.txt" data-sveltekit-reload class="credit-link">
+						<span class="i-lucide-scale" aria-hidden="true"></span>
+						{m.credits_link_third_party_licenses()}
+					</a>
 					<a
 						href="https://github.com/ApeDevil/v10r"
 						target="_blank"

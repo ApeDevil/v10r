@@ -44,6 +44,13 @@ vi.mock('@vercel/functions', () => ({
 	},
 }));
 
+/**
+ * The bot lane buffers into Redis, which these tests do not have. Capture the call
+ * instead: the claim under test is which requests enter the lane, not how it buffers.
+ */
+const bufferBotHit = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock('./bot-hit-buffer', () => ({ bufferBotHit }));
+
 async function flushDeferred(): Promise<void> {
 	await Promise.allSettled(deferredWork.splice(0));
 }
@@ -57,8 +64,16 @@ process.env.ANALYTICS_DEV_TRACKING = 'true';
 const { db } = await import('$lib/server/db');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { deriveVisitorId, deriveUaHash } = await import('./visitor');
-const { isBot, isBrowserNavigation, isExcludedPath, isPrefetch, stripLocalePrefix, userLaneSurface, LOCALE_SEGMENTS } =
-	await import('$lib/analytics/collect-policy');
+const {
+	isBot,
+	isBrowserNavigation,
+	isExcludedPath,
+	isPrefetch,
+	isSamePageDataReload,
+	stripLocalePrefix,
+	userLaneSurface,
+	LOCALE_SEGMENTS,
+} = await import('$lib/analytics/collect-policy');
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
 const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
@@ -737,6 +752,172 @@ describe('analyticsCollector — misses write nothing', () => {
 		await analyticsCollector({ event: event as any, resolve: served as any });
 		await flushDeferred();
 		expect(await db.select().from(events)).toHaveLength(1);
+	});
+});
+
+// 4b. hook.ts — page-data fetches are navigations, not bots, and count once
+
+/**
+ * Every client-side navigation fetches `__data.json` with `Sec-Fetch-Mode: cors`, and
+ * SvelteKit strips the suffix before the hook sees the path — so the bot lane's
+ * header-shape test used to file each human click as a bot hit. The user lane had the
+ * opposite problem: a page refetching its own data counted as a second view.
+ */
+describe('analyticsCollector — page-data requests', () => {
+	const USER_ID = 'usr_data_request_lane';
+	const DATA_FETCH_HEADERS = {
+		'user-agent': 'Mozilla/5.0 (Test) Gecko/20100101',
+		accept: '*/*',
+		'accept-language': 'en-US,en;q=0.9',
+		'sec-fetch-mode': 'cors',
+		'sec-fetch-dest': 'empty',
+	};
+
+	function makeEvent(opts: {
+		path: string;
+		routeId: string;
+		isDataRequest: boolean;
+		headers: Record<string, string>;
+		referer?: string;
+		userId?: string;
+	}) {
+		const headers = { ...opts.headers, ...(opts.referer ? { referer: opts.referer } : {}) };
+		return {
+			url: new URL(`https://example.com${opts.path}`),
+			request: new Request(`https://example.com${opts.path}`, { headers }),
+			cookies: { get: () => undefined, set: vi.fn(), delete: vi.fn() },
+			getClientAddress: () => '203.0.113.5',
+			route: { id: opts.routeId },
+			isDataRequest: opts.isDataRequest,
+			locals: { user: opts.userId ? { id: opts.userId } : null },
+		};
+	}
+
+	const served = async () => new Response('ok');
+
+	async function collect(event: ReturnType<typeof makeEvent>) {
+		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
+		await analyticsCollector({ event: event as any, resolve: served as any });
+		await flushDeferred();
+	}
+
+	beforeEach(async () => {
+		await flushDeferred();
+		bufferBotHit.mockClear();
+		await db.delete(userEvents);
+		await db.delete(user).where(eq(user.id, USER_ID));
+		await db.insert(user).values({ id: USER_ID, name: 'Data Lane', email: 'data-lane@example.com' });
+	});
+
+	it('does not file a human client-side navigation as a bot hit', async () => {
+		await collect(
+			makeEvent({
+				path: '/blog/some-post',
+				routeId: '/[[locale=locale]]/(public)/blog/[slug]',
+				isDataRequest: true,
+				headers: DATA_FETCH_HEADERS,
+				referer: 'https://example.com/blog',
+			}),
+		);
+		expect(bufferBotHit).not.toHaveBeenCalled();
+	});
+
+	it('still files a non-browser document fetch and a declared bot fetching page data', async () => {
+		await collect(
+			makeEvent({
+				path: '/blog',
+				routeId: '/[[locale=locale]]/(public)/blog',
+				isDataRequest: false,
+				headers: { 'user-agent': 'Mozilla/5.0 (Test)', accept: '*/*' },
+			}),
+		);
+		await collect(
+			makeEvent({
+				path: '/blog',
+				routeId: '/[[locale=locale]]/(public)/blog',
+				isDataRequest: true,
+				headers: { ...DATA_FETCH_HEADERS, 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+			}),
+		);
+		expect(bufferBotHit).toHaveBeenCalledTimes(2);
+	});
+
+	it('counts an ssr=false page once: the document, not its hydration fetch', async () => {
+		await collect(
+			makeEvent({
+				path: '/desk',
+				routeId: '/[[locale=locale]]/desk',
+				isDataRequest: false,
+				headers: BROWSER_NAV_HEADERS,
+				userId: USER_ID,
+			}),
+		);
+		await collect(
+			makeEvent({
+				path: '/desk',
+				routeId: '/[[locale=locale]]/desk',
+				isDataRequest: true,
+				headers: DATA_FETCH_HEADERS,
+				referer: 'https://example.com/desk',
+				userId: USER_ID,
+			}),
+		);
+		expect(await db.select().from(userEvents)).toHaveLength(1);
+	});
+
+	it('counts a client-side navigation, but not a refresh of the page on screen', async () => {
+		const navigation = makeEvent({
+			path: '/account/data',
+			routeId: '/[[locale=locale]]/account/data',
+			isDataRequest: true,
+			headers: DATA_FETCH_HEADERS,
+			referer: 'https://example.com/account',
+			userId: USER_ID,
+		});
+		await collect(navigation);
+		const invalidation = makeEvent({
+			path: '/account/data',
+			routeId: '/[[locale=locale]]/account/data',
+			isDataRequest: true,
+			headers: DATA_FETCH_HEADERS,
+			referer: 'https://example.com/account/data',
+			userId: USER_ID,
+		});
+		await collect(invalidation);
+
+		const rows = await db.select().from(userEvents);
+		expect(rows).toHaveLength(1);
+		expect(rows[0].path).toBe('/account/data');
+	});
+});
+
+describe('isSamePageDataReload', () => {
+	const at = (href: string) => new URL(href);
+	const from = (referer?: string) => new Headers(referer ? { referer } : {});
+
+	it('is true when the referer is the page whose data is fetched', () => {
+		expect(isSamePageDataReload(at('https://example.com/desk'), from('https://example.com/desk'))).toBe(true);
+	});
+
+	it('is false for a navigation from another page', () => {
+		expect(isSamePageDataReload(at('https://example.com/account/data'), from('https://example.com/account'))).toBe(
+			false,
+		);
+	});
+
+	it('treats a changed query as a new page, and ignores how SvelteKit re-serialized it', () => {
+		expect(isSamePageDataReload(at('https://example.com/search?q=b'), from('https://example.com/search?q=a'))).toBe(
+			false,
+		);
+		expect(
+			isSamePageDataReload(at('https://example.com/search?q=a+b'), from('https://example.com/search?q=a%20b')),
+		).toBe(true);
+	});
+
+	it('is false without a usable referer, or from another origin', () => {
+		expect(isSamePageDataReload(at('https://example.com/desk'), from())).toBe(false);
+		expect(isSamePageDataReload(at('https://example.com/desk'), from('not a url'))).toBe(false);
+		expect(isSamePageDataReload(at('https://example.com/desk'), from('https://elsewhere.test/desk'))).toBe(false);
 	});
 });
 

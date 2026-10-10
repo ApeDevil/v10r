@@ -117,6 +117,13 @@ optional dependency — viz engines, Three.js, the markdown sanitiser — or app
 chrome is deep-import-only. Adding a heavy dependency to a barreled component is a
 bundle-size regression, not a style preference.
 
+The barrel only stays cheap because `vite.config.ts` declares `src/lib/components/`
+side-effect free. A compiled Svelte component runs code at module scope, so without that
+declaration Rollup keeps every component a barrel re-exports, used or not, and one barrel
+import ships the whole layer (`docs/blueprint/velocity/runtime.md`, Heavy dependency
+quarantine). The consequence for authors: registration belongs inside a function or an
+effect, never at module scope, and nothing imports a component module for its side effects.
+
 Which directories are excluded is asserted in the gate, not listed here: the prose version
 of that list drifted to naming two of fourteen.
 

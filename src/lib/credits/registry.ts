@@ -3,7 +3,9 @@
  *
  * Curated, not generated: the most credit-worthy pieces of the stack are not
  * npm packages (Neon, Aura, Vercel, R2, Podman, Bun), and the per-entry "role"
- * line is editorial. Drift is caught by `registry.gate.test.ts` instead:
+ * line is editorial. The exhaustive, generated counterpart — every package that
+ * ships to the browser, with its full license text — is `/third-party-licenses.txt`,
+ * emitted by `vite build` (`scripts/build/third-party-licenses.ts`). Drift is caught by `registry.gate.test.ts` instead:
  * every `npm`-sourced entry must exist in `package.json`, its `license` must
  * match the installed package's metadata, and every `docs`/`showcase` link
  * must resolve to a published doc / real showcase route.
@@ -25,7 +27,9 @@ export type CreditSource =
 	| { kind: 'npm'; pkg: string }
 	/** Hosted platform/service — nothing installed, no license claim. */
 	| { kind: 'service' }
-	/** Host/container tooling outside `package.json` (license is well-known, unchecked). */
+	/** Open dataset reached through a service (map data): the license is the data license, unchecked. */
+	| { kind: 'data' }
+	/** Project outside `package.json`'s reach — host tooling, packaging (license is well-known, unchecked). */
 	| { kind: 'tool' };
 
 export type CreditGroupId =
@@ -35,6 +39,7 @@ export type CreditGroupId =
 	| 'forms'
 	| 'i18n'
 	| 'ui'
+	| 'typefaces'
 	| 'viz'
 	| 'content'
 	| 'ai'
@@ -53,6 +58,7 @@ export const creditGroups: CreditGroupMeta[] = [
 	{ id: 'forms', label: m.credits_group_forms },
 	{ id: 'i18n', label: m.credits_group_i18n },
 	{ id: 'ui', label: m.credits_group_ui },
+	{ id: 'typefaces', label: m.credits_group_typefaces },
 	{ id: 'viz', label: m.credits_group_viz },
 	{ id: 'content', label: m.credits_group_content },
 	{ id: 'ai', label: m.credits_group_ai },
@@ -68,7 +74,7 @@ export interface CreditEntry {
 	role: LabelFn;
 	/** Official project/provider site. */
 	url: string;
-	/** SPDX expression for software; omitted for hosted services. */
+	/** SPDX expression for software and data; omitted for hosted services. */
 	license?: string;
 	/** In-app `/docs/...` page covering the technology. */
 	docs?: string;
@@ -249,15 +255,75 @@ export const credits: CreditEntry[] = [
 		license: 'ISC',
 		source: { kind: 'npm', pkg: '@iconify-json/lucide' },
 	},
+
 	{
-		id: 'fontsource',
-		name: 'Fontsource',
-		group: 'ui',
-		role: m.credits_role_fontsource,
-		url: 'https://fontsource.org',
+		id: 'inter',
+		name: 'Inter',
+		group: 'typefaces',
+		role: m.credits_role_inter,
+		url: 'https://rsms.me/inter/',
 		license: 'OFL-1.1',
 		showcase: '/showcases/ui/typography',
 		source: { kind: 'npm', pkg: '@fontsource-variable/inter' },
+	},
+	{
+		id: 'jetbrains-mono',
+		name: 'JetBrains Mono',
+		group: 'typefaces',
+		role: m.credits_role_jetbrains_mono,
+		url: 'https://www.jetbrains.com/lp/mono/',
+		license: 'OFL-1.1',
+		showcase: '/showcases/ui/typography',
+		source: { kind: 'npm', pkg: '@fontsource-variable/jetbrains-mono' },
+	},
+	{
+		id: 'playfair-display',
+		name: 'Playfair Display',
+		group: 'typefaces',
+		role: m.credits_role_playfair_display,
+		url: 'https://github.com/clauseggers/Playfair-Display',
+		license: 'OFL-1.1',
+		showcase: '/showcases/ui/typography',
+		source: { kind: 'npm', pkg: '@fontsource-variable/playfair-display' },
+	},
+	{
+		id: 'space-grotesk',
+		name: 'Space Grotesk',
+		group: 'typefaces',
+		role: m.credits_role_space_grotesk,
+		url: 'https://github.com/floriankarsten/space-grotesk',
+		license: 'OFL-1.1',
+		showcase: '/showcases/ui/typography',
+		source: { kind: 'npm', pkg: '@fontsource-variable/space-grotesk' },
+	},
+	{
+		id: 'fraunces',
+		name: 'Fraunces',
+		group: 'typefaces',
+		role: m.credits_role_fraunces,
+		url: 'https://github.com/undercasetype/Fraunces',
+		license: 'OFL-1.1',
+		showcase: '/showcases/ui/typography',
+		source: { kind: 'npm', pkg: '@fontsource-variable/fraunces' },
+	},
+	{
+		id: 'nunito',
+		name: 'Nunito',
+		group: 'typefaces',
+		role: m.credits_role_nunito,
+		url: 'https://github.com/googlefonts/nunito',
+		license: 'OFL-1.1',
+		showcase: '/showcases/ui/typography',
+		source: { kind: 'npm', pkg: '@fontsource-variable/nunito' },
+	},
+	{
+		id: 'fontsource',
+		name: 'Fontsource',
+		group: 'typefaces',
+		role: m.credits_role_fontsource,
+		url: 'https://fontsource.org',
+		license: 'MIT',
+		source: { kind: 'tool' },
 	},
 
 	{
@@ -292,6 +358,25 @@ export const credits: CreditEntry[] = [
 		docs: '/docs/stack/viz',
 		showcase: '/showcases/viz/maps',
 		source: { kind: 'npm', pkg: 'maplibre-gl' },
+	},
+	{
+		id: 'carto',
+		name: 'CARTO Basemaps',
+		group: 'viz',
+		role: m.credits_role_carto,
+		url: 'https://carto.com/basemaps',
+		showcase: '/showcases/viz/maps',
+		source: { kind: 'service' },
+	},
+	{
+		id: 'openstreetmap',
+		name: 'OpenStreetMap',
+		group: 'viz',
+		role: m.credits_role_openstreetmap,
+		url: 'https://www.openstreetmap.org/copyright',
+		license: 'ODbL-1.0',
+		showcase: '/showcases/viz/maps',
+		source: { kind: 'data' },
 	},
 	{
 		id: 'chartjs',
@@ -374,6 +459,15 @@ export const credits: CreditEntry[] = [
 		showcase: '/showcases/ai/chatbot',
 		source: { kind: 'service' },
 	},
+	{
+		id: 'openai',
+		name: 'OpenAI',
+		group: 'ai',
+		role: m.credits_role_openai,
+		url: 'https://platform.openai.com',
+		showcase: '/showcases/ai/chatbot',
+		source: { kind: 'service' },
+	},
 
 	{
 		id: 'vercel',
@@ -382,6 +476,16 @@ export const credits: CreditEntry[] = [
 		role: m.credits_role_vercel,
 		url: 'https://vercel.com',
 		docs: '/docs/stack/deployment',
+		source: { kind: 'service' },
+	},
+	{
+		id: 'resend',
+		name: 'Resend',
+		group: 'platform',
+		role: m.credits_role_resend,
+		url: 'https://resend.com',
+		docs: '/docs/stack/resend',
+		showcase: '/showcases/notifications/channels',
 		source: { kind: 'service' },
 	},
 	{

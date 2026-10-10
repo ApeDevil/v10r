@@ -14,7 +14,7 @@ import {
 	Sparkline,
 	Treemap,
 } from '$lib/components/viz';
-import { getVizPalette } from '$lib/components/viz/_shared/theme-bridge';
+import { getVizPalette, toRgba, vizColor } from '$lib/components/viz/_shared/theme-bridge';
 import type { TreemapNode } from '$lib/components/viz/chart/treemap/types';
 import * as m from '$lib/paraglide/messages';
 import DataControls from '../_components/DataControls.svelte';
@@ -136,7 +136,7 @@ const barData = $derived({
 		{
 			label: 'Series A',
 			data: d.values,
-			backgroundColor: palette[0] || '#3b82f6',
+			backgroundColor: vizColor(palette, 0),
 			borderRadius: 4,
 		},
 	],
@@ -148,13 +148,13 @@ const groupedBarData = $derived({
 		{
 			label: 'Series A',
 			data: d.values.slice(0, 4),
-			backgroundColor: palette[0] || '#3b82f6',
+			backgroundColor: vizColor(palette, 0),
 			borderRadius: 4,
 		},
 		{
 			label: 'Series B',
 			data: (d.values2 || d.values).slice(0, 4),
-			backgroundColor: palette[3] || '#8b5cf6',
+			backgroundColor: vizColor(palette, 3),
 			borderRadius: 4,
 		},
 	],
@@ -166,13 +166,13 @@ const stackedBarData = $derived({
 		{
 			label: 'Channel A',
 			data: d.values.slice(0, 4),
-			backgroundColor: palette[0] || '#3b82f6',
+			backgroundColor: vizColor(palette, 0),
 			borderRadius: 4,
 		},
 		{
 			label: 'Channel B',
 			data: (d.values2 || d.values).slice(0, 4),
-			backgroundColor: palette[1] || '#10b981',
+			backgroundColor: vizColor(palette, 1),
 			borderRadius: 4,
 		},
 	],
@@ -184,7 +184,7 @@ const lineData = $derived({
 		{
 			label: 'Primary',
 			data: d.values,
-			borderColor: palette[0] || '#3b82f6',
+			borderColor: vizColor(palette, 0),
 			backgroundColor: 'transparent',
 			tension: 0.3,
 			pointRadius: 4,
@@ -199,21 +199,21 @@ const multiLineData = $derived({
 		{
 			label: 'Series A',
 			data: d.values,
-			borderColor: palette[0] || '#3b82f6',
+			borderColor: vizColor(palette, 0),
 			backgroundColor: 'transparent',
 			tension: 0.3,
 		},
 		{
 			label: 'Series B',
 			data: d.values2 || d.values,
-			borderColor: palette[1] || '#10b981',
+			borderColor: vizColor(palette, 1),
 			backgroundColor: 'transparent',
 			tension: 0.3,
 		},
 		{
 			label: 'Series C',
 			data: d.values3 || d.values,
-			borderColor: palette[2] || '#f59e0b',
+			borderColor: vizColor(palette, 2),
 			backgroundColor: 'transparent',
 			tension: 0.3,
 		},
@@ -226,8 +226,8 @@ const areaData = $derived({
 		{
 			label: 'Area',
 			data: d.values,
-			borderColor: palette[0] || '#3b82f6',
-			backgroundColor: `${palette[0] || '#3b82f6'}33`,
+			borderColor: vizColor(palette, 0),
+			backgroundColor: toRgba(vizColor(palette, 0), 0.2),
 			tension: 0.4,
 			pointRadius: 3,
 		},
@@ -239,12 +239,7 @@ const pieData = $derived({
 	datasets: [
 		{
 			data: d.pieValues,
-			backgroundColor: [
-				palette[0] || '#3b82f6',
-				palette[1] || '#10b981',
-				palette[2] || '#f59e0b',
-				palette[3] || '#8b5cf6',
-			],
+			backgroundColor: [vizColor(palette, 0), vizColor(palette, 1), vizColor(palette, 2), vizColor(palette, 3)],
 			borderWidth: 2,
 			borderColor: 'var(--surface-1)',
 		},
@@ -256,12 +251,7 @@ const doughnutData = $derived({
 	datasets: [
 		{
 			data: d.pieValues,
-			backgroundColor: [
-				palette[1] || '#10b981',
-				palette[2] || '#f59e0b',
-				palette[5] || '#06b6d4',
-				palette[4] || '#ef4444',
-			],
+			backgroundColor: [vizColor(palette, 1), vizColor(palette, 2), vizColor(palette, 5), vizColor(palette, 4)],
 			borderWidth: 2,
 			borderColor: 'var(--surface-1)',
 		},
@@ -274,9 +264,9 @@ const radarData = $derived({
 		{
 			label: 'Team A',
 			data: d.radarValues,
-			borderColor: palette[0] || '#3b82f6',
-			backgroundColor: `${palette[0] || '#3b82f6'}33`,
-			pointBackgroundColor: palette[0] || '#3b82f6',
+			borderColor: vizColor(palette, 0),
+			backgroundColor: toRgba(vizColor(palette, 0), 0.2),
+			pointBackgroundColor: vizColor(palette, 0),
 		},
 	],
 });
@@ -287,16 +277,16 @@ const radarCompareData = $derived({
 		{
 			label: 'Team A',
 			data: d.radarValues,
-			borderColor: palette[0] || '#3b82f6',
-			backgroundColor: `${palette[0] || '#3b82f6'}33`,
-			pointBackgroundColor: palette[0] || '#3b82f6',
+			borderColor: vizColor(palette, 0),
+			backgroundColor: toRgba(vizColor(palette, 0), 0.2),
+			pointBackgroundColor: vizColor(palette, 0),
 		},
 		{
 			label: 'Team B',
 			data: d.radarValues2 || d.radarValues,
-			borderColor: palette[3] || '#8b5cf6',
-			backgroundColor: `${palette[3] || '#8b5cf6'}33`,
-			pointBackgroundColor: palette[3] || '#8b5cf6',
+			borderColor: vizColor(palette, 3),
+			backgroundColor: toRgba(vizColor(palette, 3), 0.2),
+			pointBackgroundColor: vizColor(palette, 3),
 		},
 	],
 });
@@ -306,8 +296,8 @@ const bubbleData = $derived({
 		{
 			label: 'Metrics',
 			data: d.bubbleData,
-			backgroundColor: `${palette[0] || '#3b82f6'}99`,
-			borderColor: palette[0] || '#3b82f6',
+			backgroundColor: toRgba(vizColor(palette, 0), 0.6),
+			borderColor: vizColor(palette, 0),
 			borderWidth: 1,
 		},
 	],
@@ -816,9 +806,9 @@ const treemapNested: TreemapNode = {
 								value={d.gaugeValue}
 								label="Health"
 								segments={[
-									{ from: 0, to: 40, color: '#ef4444' },
-									{ from: 40, to: 70, color: '#f59e0b' },
-									{ from: 70, to: 100, color: '#10b981' },
+									{ from: 0, to: 40, color: 'var(--color-error)' },
+									{ from: 40, to: 70, color: 'var(--color-warning)' },
+									{ from: 70, to: 100, color: 'var(--color-success)' },
 								]}
 							/>
 						</div>

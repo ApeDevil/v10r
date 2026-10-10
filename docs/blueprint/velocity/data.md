@@ -66,6 +66,19 @@ serve, which is memory pressure bought for a hit rate personal data rarely has.
 is a no-op. A miss is always correct, only slower — which is why this degrades silently where
 the rate limiter, guarding something that breaks when unbounded, must not.
 
+**The CDN tier stores only what it is allowed to.** Vercel's CDN caches a function response
+only when it carries `s-maxage` (`max-age` alone is a browser instruction), and never one
+that sets a cookie. Both rules caught v10r:
+
+- The blog image redirect sent `max-age` only.
+- robots.txt, the sitemap and llms.txt handed every cookieless crawler a fresh style cookie,
+  which cancelled their `s-maxage`.
+
+The style cookie is now kept only on responses that render the app shell
+(`style/cookie-scope.ts`). The blog feed still sends `max-age` only, so the CDN does not
+cache it. A response marked `public` must not vary by viewer: a session, a per-visitor
+style or an admin-only `Server-Timing` detail disqualifies it.
+
 **Invariants.**
 
 - Every cache entry has a declared owner and scope.
@@ -265,6 +278,7 @@ each may make **at any row count**:
 | Operation | Budget | What the round trips are |
 |---|---|---|
 | `blog.listPosts` | 5 | count + page, then revisions + tags + domains batched by the fetched ids |
+| `blog.getPublishedPostForSlug` | 2 | the post with revision, author and domain joined, then its tags |
 | `desk.listFiles` | 2 | one page read and one count, issued together |
 | `desk.listFolders` | 1 | a single capped read; the tree is assembled in memory |
 

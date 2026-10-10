@@ -46,6 +46,7 @@
 
 import { browser, dev } from '$app/environment';
 import type { CommandVia } from '$lib/types/journey-events';
+import { createAnimationFrameCoalescer } from '$lib/utils/animation-frame-coalescer';
 import { userLaneSurface } from './collect-policy';
 import { beacon } from './transport';
 
@@ -85,6 +86,11 @@ let routeOf: () => string = () => '(unknown)';
 
 function laneOf(path: string): Lane {
 	return signedIn && userLaneSurface(path) ? 'user' : 'anon';
+}
+
+/** Whether `push` would keep an event raised on the current page — its own discard rule, read early. */
+function recording(): boolean {
+	return hasConsent || laneOf(location.pathname) === 'user';
 }
 
 function push(kind: QueuedEvent['kind'], name: string, extra: Partial<QueuedEvent> = {}): void {
@@ -136,12 +142,34 @@ export function trackCommand(via: CommandVia, command: string): void {
  */
 export function setTelemetrySession(active: boolean): void {
 	signedIn = active;
+	loadVitalsWhenSendable();
 }
 
 /** Called by the app whenever the consent tier changes. */
 export function setTelemetryConsent(granted: boolean): void {
 	hasConsent = granted;
 	dropUnconsented(); // withdrawal drops what the banner covered; user-lane rows stay
+	loadVitalsWhenSendable();
+}
+
+let vitalsRequested = false;
+
+/**
+ * Vitals load only once they could be sent: with consent, or for a signed-in user
+ * (whose user-lane pages are not governed by the banner). An anonymous visitor
+ * without consent would download the attribution build only for `push` to drop
+ * every metric it reports.
+ *
+ * Registering late loses little: LCP, FCP, CLS and TTFB are read from buffered
+ * performance entries, so a grant that arrives seconds after load still reports
+ * the page's real values. INP is the trade-off — it only sees interactions from
+ * registration on, so interactions made before consent (typically the banner
+ * click itself) are not part of the reported INP.
+ */
+function loadVitalsWhenSendable(): void {
+	if (vitalsRequested || !initialized || !(hasConsent || signedIn)) return;
+	vitalsRequested = true;
+	void initVitals();
 }
 
 async function initVitals(): Promise<void> {
@@ -194,7 +222,15 @@ function reportEngagement(): void {
 	if (document.visibilityState === 'visible') resumeEngagement();
 }
 
+// `scrollHeight` forces layout; scroll fires many times per frame, but depth only
+// needs reading once per paint.
+const scrollDepth = createAnimationFrameCoalescer<void>(measureScrollDepth);
+
 function onScroll(): void {
+	scrollDepth.push();
+}
+
+function measureScrollDepth(): void {
 	const doc = document.documentElement;
 	const scrollable = doc.scrollHeight - window.innerHeight;
 	if (scrollable <= 0) return;
@@ -237,6 +273,9 @@ let lastClickAt = 0;
 let repeatCount = 0;
 
 function onClick(evt: MouseEvent): void {
+	// Rage and dead clicks both end in `push`; when it would discard them, skip the
+	// selector and DOM work on every click.
+	if (!recording()) return;
 	const el = evt.target instanceof Element ? evt.target : null;
 	if (!el) return;
 
@@ -314,7 +353,7 @@ export function initTelemetry(getRoute: () => string): void {
 	initialized = true;
 	routeOf = getRoute;
 
-	void initVitals();
+	loadVitalsWhenSendable();
 
 	resumeEngagement();
 	addEventListener('scroll', onScroll, { passive: true });
