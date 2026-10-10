@@ -50,7 +50,14 @@ const config = {
 				// Vite inlines small fonts as data: URIs; without font-src they fall
 				// back to default-src 'self' and get blocked in production.
 				'font-src': ['self', 'data:'],
-				'connect-src': ['self', 'blob:', 'https://basemaps.cartocdn.com', 'https://*.r2.cloudflarestorage.com'],
+				// maplibre.org serves the US-states GeoJSON behind the /showcases/viz/maps choropleth.
+				'connect-src': [
+					'self',
+					'blob:',
+					'https://basemaps.cartocdn.com',
+					'https://maplibre.org',
+					'https://*.r2.cloudflarestorage.com',
+				],
 				'worker-src': ['self', 'blob:'],
 				'object-src': ['none'],
 				'base-uri': ['self'],
