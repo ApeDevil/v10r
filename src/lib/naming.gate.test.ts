@@ -277,6 +277,7 @@ const I18N_AREAS = [
 	'session',
 	'shell',
 	'showcase',
+	'viz',
 ];
 
 /**

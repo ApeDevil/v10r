@@ -2,6 +2,7 @@
 import type { Component, Snippet } from 'svelte';
 import { onMount } from 'svelte';
 import { beforeNavigate } from '$app/navigation';
+import * as m from '$lib/paraglide/messages';
 import { getTheme } from '$lib/state/theme.svelte';
 import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
@@ -38,6 +39,7 @@ let {
 }: Props = $props();
 
 let ready = $state(false);
+let webglUnavailable = $state(false);
 let MapLibreComp: Component<Record<string, unknown>> | undefined = $state();
 let NavigationControl: Component<Record<string, unknown>> | undefined = $state();
 let ScaleControl: Component<Record<string, unknown>> | undefined = $state();
@@ -62,7 +64,24 @@ $effect(() => {
 		});
 });
 
+/**
+ * MapLibre renders through WebGL. Without a context (GPU blocklisted, acceleration off, a
+ * failing software rasterizer) its Map constructor throws outside any boundary and the
+ * figure stays blank, so probe first and explain instead.
+ */
+function canCreateWebGL(): boolean {
+	const canvas = document.createElement('canvas');
+	const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
+	gl?.getExtension('WEBGL_lose_context')?.loseContext();
+	return gl !== null;
+}
+
 onMount(async () => {
+	if (!canCreateWebGL()) {
+		webglUnavailable = true;
+		return;
+	}
+
 	const [sml] = await Promise.all([import('svelte-maplibre-gl'), import('maplibre-gl/dist/maplibre-gl.css')]);
 
 	MapLibreComp = sml.MapLibre;
@@ -75,7 +94,13 @@ onMount(async () => {
 <figure class={cn(chartContainerVariants({ aspect }), 'map-container', className)}>
 	<figcaption class="sr-only">{ariaLabel}</figcaption>
 
-	{#if !ready || !MapLibreComp || !NavigationControl || !ScaleControl || !resolvedStyle}
+	{#if webglUnavailable}
+		<div class="unavailable" role="status">
+			<span class="unavailable-icon i-lucide-triangle-alert" aria-hidden="true"></span>
+			<p class="unavailable-title">{m.viz_map_webgl_unavailable_title()}</p>
+			<p class="unavailable-description">{m.viz_map_webgl_unavailable_description()}</p>
+		</div>
+	{:else if !ready || !MapLibreComp || !NavigationControl || !ScaleControl || !resolvedStyle}
 		<div class="skeleton" role="status">
 			<svg viewBox="0 0 400 300" class="skeleton-svg" aria-hidden="true">
 				<path d="M60,100 Q80,60 120,70 T160,90 Q180,100 170,130 T130,150 Q100,140 60,100Z" class="skeleton-land pulse-1" />
@@ -89,7 +114,9 @@ onMount(async () => {
 		</div>
 	{:else}
 		<div class="map-wrapper visible">
+			<!-- The CSS is bundled in onMount; the library's unpkg fallback is CSP-blocked. -->
 			<MapLibreComp
+				autoloadGlobalCss={false}
 				style={resolvedStyle}
 				{center}
 				{zoom}
@@ -120,6 +147,38 @@ onMount(async () => {
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	.unavailable {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		padding: var(--spacing-6);
+	}
+
+	.unavailable-icon {
+		font-size: 1.5rem;
+		color: var(--color-warning);
+		margin-bottom: var(--spacing-3);
+	}
+
+	.unavailable-title {
+		font-size: var(--text-fluid-sm);
+		font-weight: 600;
+		color: var(--color-fg);
+		margin: 0 0 var(--spacing-1) 0;
+	}
+
+	.unavailable-description {
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
+		margin: 0;
+		max-width: 24rem;
+		line-height: 1.5;
 	}
 
 	.skeleton-svg {

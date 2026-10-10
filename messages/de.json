@@ -323,6 +323,8 @@
 	"primitives_skeleton_card": "Karte wird geladen",
 	"composites_boundary_fallback_title": "Etwas ist schiefgelaufen",
 	"composites_boundary_fallback_retry": "Erneut versuchen",
+	"viz_map_webgl_unavailable_title": "Karte nicht verfügbar",
+	"viz_map_webgl_unavailable_description": "Dieser Browser konnte WebGL nicht starten, das die Karte benötigt. Aktivieren Sie die Hardwarebeschleunigung in den Browsereinstellungen oder starten Sie den Browser neu.",
 	"composites_confirm_dialog_confirm": "Bestätigen",
 	"composites_confirm_dialog_cancel": "Abbrechen",
 	"composites_dialog_close": "Schließen",

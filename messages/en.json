@@ -323,6 +323,8 @@
 	"primitives_skeleton_card": "Loading card",
 	"composites_boundary_fallback_title": "Something went wrong",
 	"composites_boundary_fallback_retry": "Retry",
+	"viz_map_webgl_unavailable_title": "Map unavailable",
+	"viz_map_webgl_unavailable_description": "This browser could not start WebGL, which the map needs. Enable hardware acceleration in the browser settings, or restart the browser.",
 	"composites_confirm_dialog_confirm": "Confirm",
 	"composites_confirm_dialog_cancel": "Cancel",
 	"composites_dialog_close": "Close",

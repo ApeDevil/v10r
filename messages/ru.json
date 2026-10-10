@@ -323,6 +323,8 @@
 	"primitives_skeleton_card": "Загрузка карточки",
 	"composites_boundary_fallback_title": "Что-то пошло не так",
 	"composites_boundary_fallback_retry": "Повторить",
+	"viz_map_webgl_unavailable_title": "Карта недоступна",
+	"viz_map_webgl_unavailable_description": "Браузеру не удалось запустить WebGL, без которого карта не работает. Включите аппаратное ускорение в настройках браузера или перезапустите браузер.",
 	"composites_confirm_dialog_confirm": "Подтвердить",
 	"composites_confirm_dialog_cancel": "Отмена",
 	"composites_dialog_close": "Закрыть",
