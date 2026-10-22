@@ -1,7 +1,6 @@
 <script lang="ts">
 import { T, useTask, useThrelte } from '@threlte/core';
-import { CameraControls, interactivity, OrbitControls, useGltf } from '@threlte/extras';
-import type CameraControlsImpl from 'camera-controls';
+import { CameraControls, type CameraControlsRef, interactivity, OrbitControls, useGltf } from '@threlte/extras';
 import { tick } from 'svelte';
 import { AnimationClip, AnimationMixer, Box3 } from 'three';
 import type { Model3D, ResolvedViewportConfig } from '$lib/3d/models';
@@ -81,7 +80,7 @@ interface PickEvent {
 }
 
 let hoveredId = $state<string | null>(null);
-let controls = $state<CameraControlsImpl>();
+let controls = $state<CameraControlsRef>();
 let framedOnce = false;
 
 function handleClick(e: PickEvent) {
