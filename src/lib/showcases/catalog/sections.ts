@@ -597,4 +597,17 @@ export const showcaseSections: ShowcaseSection[] = [
 		title: 'Search coverage',
 		keywords: ['registries searched', 'euipo', 'gleif', 'rdap', 'manual review'],
 	},
+	// External service lab
+	{
+		pageHref: '/showcases/external-service',
+		anchorId: 'es-targets',
+		title: 'Service targets',
+		keywords: ['rust', 'axum', 'container', 'podman', 'render', 'health', 'cold start'],
+	},
+	{
+		pageHref: '/showcases/external-service',
+		anchorId: 'es-drills',
+		title: 'Failure drills',
+		keywords: ['timeout', 'unauthorized', 'validation', 'unreachable', 'deadline'],
+	},
 ];

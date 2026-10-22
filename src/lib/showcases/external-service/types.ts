@@ -82,6 +82,22 @@ export interface PublicServiceCall<T = unknown> {
 	measuredAt: string;
 }
 
+/** A target check: liveness (public), then status (authenticated) once liveness answered. */
+export interface PublicTargetCheck {
+	live: PublicServiceCall<ServiceLiveness>;
+	status: PublicServiceCall<ServiceStatus> | null;
+}
+
+/**
+ * Did this check start the service process? True when the process is younger than the
+ * check itself (plus a second of slack for clock-free rounding): the request arrived to
+ * find no running process, which on an idling free host means a cold start. Read from the
+ * service's own `uptimeMs`, so it is observed, not inferred from latency.
+ */
+export function startedDuringCheck(uptimeMs: number, checkElapsedMs: number): boolean {
+	return uptimeMs < checkElapsedMs + 1_000;
+}
+
 /** Preset evaluation requests. The page sends an id, never a request body. */
 export const EVALUATION_SCENARIO_IDS = ['fulfilled', 'partial_refund', 'ship_unpaid', 'overpaid'] as const;
 export type EvaluationScenarioId = (typeof EVALUATION_SCENARIO_IDS)[number];

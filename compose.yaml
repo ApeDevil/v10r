@@ -24,5 +24,25 @@ services:
       # dies there with "Reached heap limit". A cap, not an allocation — idle processes stay small.
       - NODE_OPTIONS=--max-old-space-size=12288
 
+  # The External Service Lab's reference service (services/order-rules, Rust/Axum).
+  # Optional and separate: it sits behind a profile, so plain `podman compose up` never
+  # builds or starts it. Start it with:
+  #   podman compose --profile external-service up -d order-rules
+  # The app reaches it on the compose network as http://order-rules:8080 (set
+  # EXTERNAL_SERVICE_LOCAL_URL to that in .env); 127.0.0.1:8787 is for curl and verify.ts.
+  # Build context is the service directory only — the same Containerfile Render builds.
+  order-rules:
+    profiles: ["external-service"]
+    container_name: v10r-order-rules
+    build:
+      context: services/order-rules
+      dockerfile: Containerfile
+    ports:
+      - "127.0.0.1:8787:8080"
+    environment:
+      - PORT=8080
+      # Same credential the app sends; read from .env by compose interpolation.
+      - SERVICE_TOKEN=${EXTERNAL_SERVICE_LOCAL_TOKEN:-}
+
 volumes:
   node_modules:  # Named volume keeps deps off your host system

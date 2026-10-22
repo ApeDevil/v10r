@@ -219,6 +219,10 @@ const PUBLIC_SURFACES: Record<string, string> = {
 	'[[locale=locale]]/(public)/showcases/db/storage/transfer/+page.server.ts':
 		'Presigned-URL and ranged-read demo. Keys go through assertShowcaseKey; the TTL and the byte range are both clamped server-side.',
 
+	// ── Showcase: external service lab ────────────────────────────────────────
+	'[[locale=locale]]/(public)/showcases/external-service/+page.server.ts':
+		'Anonymous form actions (check, evaluate, drill) behind the honeypot and an IP limiter. The form names a target, scenario or drill from closed lists; the server owns every URL, credential and request body. Calls a separately deployed demo service that holds no data — nothing is stored, no user data is read.',
+
 	// ── Showcase: name check ──────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/showcases/name-check/+page.server.ts':
 		"Anonymous form action running the same checkName() as /api/name-check: honeypot, then IP limiter, then a fan-out to external registries under per-source quotas and deadlines. Reads only the administrator's source connections, stores nothing but hashed-name cache keys, no user data.",

@@ -43,11 +43,13 @@ code=$?
 set -e
 [ "$code" = 2 ] && pass "refuses to start without SERVICE_TOKEN (exit 2)" || fail "missing token exited $code, want 2"
 
+start=$(date +%s%N)
 "$ENGINE" run -d --name "$NAME" -e SERVICE_TOKEN="$TOKEN" -e PORT=9090 -p "127.0.0.1:$PORT:9090" "$IMAGE" >/dev/null
-for _ in $(seq 1 50); do
+for _ in $(seq 1 500); do
 	[ "$(status_of "$BASE/health/live")" = 200 ] && break
-	sleep 0.1
+	sleep 0.01
 done
+echo "start: container run → first liveness answer in $(( ($(date +%s%N) - start) / 1000000 )) ms (local engine, image present)"
 
 [ "$(curl -s "$BASE/health/live")" = '{"status":"live"}' ] && pass "liveness on \$PORT=9090, public, minimal" || fail "liveness"
 [ "$(status_of "$BASE/v1/status")" = 401 ] && pass "status without credential → 401" || fail "status unauthenticated"

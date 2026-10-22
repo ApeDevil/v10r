@@ -9,10 +9,9 @@ import type {
 	EvaluationScenarioId,
 	OrderEvaluation,
 	PublicServiceCall,
+	PublicTargetCheck,
 	ServiceDrillId,
-	ServiceLiveness,
 	ServiceOperationName,
-	ServiceStatus,
 	ServiceTargetId,
 } from '$lib/showcases/external-service/types';
 import { callService, SERVICE_OPERATIONS, type ServiceCall } from './client';
@@ -24,15 +23,6 @@ export interface LabCallDeps {
 	deadline: Deadline;
 	fetch?: typeof fetch;
 }
-
-const SETUP_MESSAGES = {
-	unconfigured: 'This target is not configured on this deployment.',
-	incomplete: 'Only one of URL and credential is set.',
-	invalid_url: 'The configured URL is not a valid http(s) URL.',
-	not_an_origin: 'The configured URL must be an origin only — no path, query or credentials.',
-	insecure_url: 'The remote target must use https.',
-	short_token: 'The configured credential is shorter than 32 characters.',
-} as const;
 
 /** The page-safe view of a call: no origin, no credential, no raw body. */
 export function toPublicServiceCall<T>(
@@ -53,15 +43,17 @@ export function toPublicServiceCall<T>(
 	};
 }
 
-/** A call that was never made, because the target is not usable. */
+/**
+ * A call that was never made, because the target is not usable. No message: the page
+ * already states the target's setup — and the rule a misconfigured one broke — localized.
+ */
 function setupRefusal<T>(resolved: ResolvedServiceTarget, operation: ServiceOperationName): PublicServiceCall<T> {
-	const message = resolved.setup === 'misconfigured' ? SETUP_MESSAGES[resolved.problem] : SETUP_MESSAGES.unconfigured;
 	return {
 		target: resolved.id,
 		operation,
 		outcome: resolved.setup === 'misconfigured' ? 'misconfigured' : 'unconfigured',
 		httpStatus: null,
-		message,
+		message: null,
 		requestId: null,
 		timing: null,
 		data: null,
@@ -69,18 +61,13 @@ function setupRefusal<T>(resolved: ResolvedServiceTarget, operation: ServiceOper
 	};
 }
 
-export interface TargetCheck {
-	live: PublicServiceCall<ServiceLiveness>;
-	/** Not attempted when liveness failed: an unanswered target cannot authenticate. */
-	status: PublicServiceCall<ServiceStatus> | null;
-}
-
 /**
  * Liveness (public) then status (authenticated), sharing one deadline. Two calls on
  * purpose: "it is up" and "we may use it" are different facts, and the second proves the
- * credential works.
+ * credential works. Status is not attempted when liveness failed: an unanswered target
+ * cannot authenticate.
  */
-export async function checkTarget(resolved: ResolvedServiceTarget, deps: LabCallDeps): Promise<TargetCheck> {
+export async function checkTarget(resolved: ResolvedServiceTarget, deps: LabCallDeps): Promise<PublicTargetCheck> {
 	if (resolved.setup !== 'configured') {
 		return { live: setupRefusal(resolved, 'live'), status: null };
 	}

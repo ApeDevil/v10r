@@ -7,6 +7,6 @@
  */
 export { callService, SERVICE_OPERATIONS, type ServiceCall } from './client';
 export { CALL_CEILING_MS, RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW, RENDER_RESERVE_MS } from './config';
-export { checkTarget, evaluateScenario, runDrill, type TargetCheck, toPublicServiceCall } from './lab';
+export { checkTarget, evaluateScenario, runDrill, toPublicServiceCall } from './lab';
 export type { ResolvedServiceTarget, ServiceTarget } from './targets';
 export { readServiceTargets } from './targets.adapter';

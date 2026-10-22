@@ -1,0 +1,28 @@
+# Render Blueprint for the order-rules reference service — PREPARED, NOT APPLIED.
+#
+# Nothing reads this file automatically: Render only acts on a Blueprint the owner
+# creates in the dashboard (New → Blueprint, pointing at this file's path). Creating it
+# creates a web service. Do that only after the cost checklist in
+# docs/blueprint/architecture/external-service.md#cost-checklist — above all: no
+# payment method on the Render workspace.
+#
+# Paths are relative to the repository root (no rootDir), so they do not depend on how
+# Render resolves dockerfilePath against rootDir.
+services:
+  - type: web
+    name: v10r-order-rules
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./services/order-rules/Containerfile
+    dockerContext: ./services/order-rules
+    healthCheckPath: /health/live
+    # Deploy by hand: unrelated pushes must not spend free pipeline minutes.
+    autoDeployTrigger: off
+    buildFilter:
+      paths:
+        - services/order-rules/**
+    envVars:
+      # Prompted once at Blueprint creation; never committed. Render injects PORT itself.
+      - key: SERVICE_TOKEN
+        sync: false

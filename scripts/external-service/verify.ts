@@ -46,6 +46,7 @@ const { EVALUATION_SCENARIOS, UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } = aw
 	'../../src/lib/server/showcases/external-service/scenarios'
 );
 const { resolveServiceTarget } = await import('../../src/lib/server/showcases/external-service/targets');
+const { startedDuringCheck } = await import('../../src/lib/showcases/external-service/types');
 
 const args = process.argv.slice(2);
 const option = (name: string, fallback: string) => {
@@ -108,7 +109,7 @@ check(
 	status.ok ? `release ${status.data.release}` : status.kind,
 );
 if (status.ok && first.ok) {
-	const woke = status.data.uptimeMs < first.timing.totalMs + status.timing.totalMs + 1_000;
+	const woke = startedDuringCheck(status.data.uptimeMs, first.timing.totalMs + status.timing.totalMs);
 	console.log(
 		`  uptime ${status.data.uptimeMs} ms → ${woke ? 'this run started the process (cold start observed)' : 'process was already running (warm)'}`,
 	);
