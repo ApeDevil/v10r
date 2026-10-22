@@ -35,7 +35,7 @@ COMPOSE_SERVICE="${V10R_COMPOSE_SERVICE:-}"
 # tunable: VERCEL_TOKEN comes from the launching shell, never from a committed file.
 DEPLOY_MODE="${V10R_DEPLOY_MODE:-}"
 # Empty ⇒ `vr ship` promotes main itself (the train). `conversation` ⇒ main moves only when
-# Claude squash-merges after Stas says "ship it" in the conversation; `vr ship` then gates
+# Claude squashes a branch into it after Stas says "ship it" in the conversation; `vr ship` then gates
 # the feature branch and pushes that branch alone (docs/stack/ops/shipping.md). Read from
 # the committed .vrrc only — deliberately no V10R_* override, so no shell can switch the
 # rule off for one run.

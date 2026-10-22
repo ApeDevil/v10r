@@ -13,17 +13,17 @@ Velociraptor (v10r) is a SvelteKit pattern library for adaptation. Claude Code f
 
 ## Development and Validation
 
-Run tooling inside the `v10r` Podman container (local sessions). Claude Code cloud sessions
-have no container and follow the cloud column of
+Claude Code cloud sessions are the default place to develop: no container, no secrets,
+commands run directly (`bun run validate`). Local sessions run tooling inside the `v10r`
+Podman container. What runs where, and what to report as not run:
 [development-environment.md](docs/foundation/development-environment.md).
 Never run package managers on the host; keep `package.json` and `bun.lock` synchronized.
 
 ```bash
-podman compose up -d                 # start local development on :5173
-podman exec v10r bun run build       # production build
-podman exec v10r bun run test        # Vitest suites
-podman exec v10r bun run lint        # Biome checks
-podman exec v10r bun run validate    # authoritative gate
+bun run validate                     # authoritative gate (cloud)
+bun run validate:build               # + production build and perf ratchet
+podman compose up -d                 # local: start development on :5173
+podman exec v10r bun run validate    # local: the same gate in the container
 ```
 
 The gate includes typechecking, Biome, tests, registry/excerpts, i18n/content, and quality
@@ -48,7 +48,7 @@ interactive regions. Colors use `src/app.css` tokens.
 ## Testing
 
 Co-locate Vitest `*.test.ts`; database tests use `*.pglite.test.ts` and PGlite.
-Run one file with `podman exec v10r bunx vitest run <path>`.
+Run one file with `bunx vitest run <path>` (locally: `podman exec v10r bunx vitest run <path>`).
 MCP uses `bun:test` (`test:mcp`). Test invariants, security, and regressions; verify UI
 through browser showcases. No coverage threshold is configured.
 
@@ -63,14 +63,14 @@ Never hand-edit generated pattern pages, Paraglide output, MCP excerpts, or retr
 indexes. Use `package.json` generators; `refresh` also ingests docs into
 the database. See [mcp/README.md](mcp/README.md) for machine-readable access.
 
-## Commits and Pull Requests
+## Commits and Branches
 
 History mixes informal subjects with `feat(scope):` and `refactor(scope):`; prefer
-descriptive subjects. PRs should explain behavior, link relevant issues,
-report validation, and include screenshots for UI changes.
+descriptive subjects that explain behavior.
 
-Work on a feature branch: commit and push it, open a PR, then hand off and stop. GitHub
-`main` moves only when Stas explicitly says to ship in the conversation — then follow
-[shipping.md](docs/stack/ops/shipping.md) (squash merge → GitLab sync → Vercel). Never push
+Work on a feature branch: commit and push it, hand off the branch and its HEAD SHA, and stop.
+No PR is needed; a PR is only the fallback vehicle of a ship. GitHub `main` moves only when
+Stas explicitly says to ship in the conversation — then follow
+[shipping.md](docs/stack/ops/shipping.md) (squash into `main` → GitLab sync → Vercel). Never push
 `main` or GitLab, never force-push, stash, or reset. Run a `vr` command only when
 specifically requested.

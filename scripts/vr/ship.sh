@@ -10,7 +10,7 @@
 #   main            →  refused
 #
 # A repo whose .vrrc sets PROMOTION=conversation (v10r) has no train: main moves only when
-# Claude squash-merges after Stas says "ship it" (docs/stack/ops/shipping.md). There `vr ship`
+# Claude squashes a branch into it after Stas says "ship it" (docs/stack/ops/shipping.md). There `vr ship`
 # runs the same gate on the feature branch and pushes that branch alone — never dev, never main.
 #
 # The gate runs inside the repo's container against the *merged* state, so main is
@@ -262,7 +262,7 @@ branch_only() {
 	fi
 	run git push -u "$REMOTE" "$feature"
 	ok "Pushed '$feature' at $(git rev-parse HEAD)."
-	info "To ship it: tell Claude \"ship $feature\" — it squash-merges into $MAIN_BRANCH, then GitLab and Vercel follow."
+	info "To ship it: tell Claude \"ship $feature\" — it squashes it into $MAIN_BRANCH, then GitLab and Vercel follow."
 }
 
 # ---- preconditions ----

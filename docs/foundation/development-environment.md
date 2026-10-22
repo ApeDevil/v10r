@@ -1,8 +1,43 @@
 # Development Environment
 
-## Container-First Development
+Two environments share one authority, GitHub `ApeDevil/v10r`: every change is a feature branch
+pushed there, and `main` moves only by a ship ([shipping.md](../stack/ops/shipping.md)).
+Neither environment reaches the other — a cloud session never assumes Stas's machine exists.
 
-This project runs entirely in a Podman container. The host machine only needs Podman installed - all other tools (Bun, Node 22, dependencies, build tools) live inside the container. Which engine runs what: `docs/stack/core/bun.md`.
+| | Cloud session (Claude Code on the web) — **default** | Local session (Ubuntu workstation) — secondary |
+|---|---|---|
+| Used for | most feature work, and all validation that needs no credential or database | local-only work: the real database, real credentials, the dev server against Neon, `refresh` |
+| Detected by | `CLAUDE_CODE_REMOTE=true` | anything else |
+| Runs in | an isolated VM — no container, no Podman | the `v10r` Podman container (the rest of this page) |
+| Setup | automatic: SessionStart hook → `scripts/cloud/session-start.sh` (pinned Bun, frozen install, `.env` from `.env.placeholder`, `compose.yaml`'s heap cap appended to `NODE_OPTIONS`) | `podman compose up -d` |
+| Commands | `bun run …` directly | `podman exec v10r bun run …`; git on the host |
+| Secrets | none — fake values only | the real `.env` |
+| Node / Bun | Node 22 from the cloud image (not pinned by the repo), Bun pinned by `packageManager` | Node 22 (`Containerfile.dev`), Bun from the image tag |
+
+The cloud environment needs only the Trusted network defaults (the npm registry). Paraglide's
+inlang plugins are devDependencies loaded from `node_modules`, not fetched from a CDN
+([i18n.md](../blueprint/i18n.md#project-configuration)).
+
+## What runs where
+
+A check that could not run is reported as **not run**, never as passed.
+
+| Command | Cloud | Local |
+|---|---|---|
+| `validate` (the gate), `validate:build`, `test`, `test:mcp`, `check`, `lint`, `knip` | yes | yes |
+| `patterns:build`, `mcp:excerpts:build`, `content:check` (offline) | yes | yes |
+| `test:browser` (Playwright; starts `bun run dev`) | unverified — Chromium is preinstalled, but the dev server runs on the fake `.env`, so database-backed routes fail | yes |
+| ship (`scripts/ship/squash-into-main.sh`) — only on Stas's word | yes | yes (gate in the container) |
+| `db:push`, `db:seed`, `db:setup`, `db:*` | no — no database | yes |
+| `refresh` (its last step, `db:ingest-docs`, needs the database and the Gemini key) | build steps only | yes |
+| `content:check:db`, `content:push`, the dev server against Neon, anything with a real credential | no | yes |
+| `vr …` (Stas's host dispatcher) | no | only when Stas names the command |
+
+## The local container
+
+The local environment runs entirely in a Podman container. The host only needs Podman — all
+other tools (Bun, Node 22, dependencies, build tools) live inside the container. Which engine
+runs what: `docs/stack/core/bun.md`.
 
 ```
 Host Machine          Container (v10r)
@@ -13,24 +48,7 @@ Host Machine          Container (v10r)
 └─────────────┘      └──────────────────────┘
 ```
 
-## Local and cloud sessions
-
-Agents work in one of two places. Which one: `CLAUDE_CODE_REMOTE=true` means cloud.
-
-| | Local session | Cloud session (Claude Code on the web) |
-|---|---|---|
-| Runs in | the `v10r` Podman container (everything on this page) | an isolated VM — no container, no Podman |
-| Setup | `podman compose up -d` | automatic: SessionStart hook → `scripts/cloud/session-start.sh` (pinned Bun, frozen install, `.env` from `.env.placeholder`, `compose.yaml`'s heap cap appended to `NODE_OPTIONS`) |
-| Commands | `podman exec v10r bun run …` | `bun run …` directly |
-| Secrets | the real `.env` | none — fake values only |
-| Git | a feature branch, pushed to GitHub `origin` | a feature branch on GitHub |
-| Reaches `main` | only by shipping: Stas says "ship it" ([shipping.md](../stack/ops/shipping.md)) | the same |
-| Runs | everything | `validate`, `validate:build`, tests, builds |
-| Cannot run | — | `db:push`, `db:seed`, `refresh` (RAG ingest needs the DB), the dev server against Neon, anything needing a credential — report these as **not run**, never as passed |
-
-The cloud environment needs only the Trusted network defaults (the npm registry). Paraglide's
-inlang plugins are devDependencies loaded from `node_modules`, not fetched from a CDN
-([i18n.md](../blueprint/i18n.md#project-configuration)).
+The sections below describe the local container.
 
 ## Adding Dependencies
 

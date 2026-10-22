@@ -82,7 +82,7 @@ export function setVercelAnalyticsConsent(granted: boolean): void {
 	// `development` mode swaps in a cross-origin debug script from
 	// va.vercel-scripts.com, which our CSP does not allow-list and which would
 	// need an entry added to `script-src` before it could load at all. Verify
-	// this lane on a preview deployment, where it is real.
+	// this lane on production after a ship — v10r has no preview deployments.
 	if (dev) return;
 
 	injected = true;

@@ -1,6 +1,6 @@
 # Bun
 
-The runtime — single executable bundling runtime, package manager, bundler, and test runner; native TypeScript, no transpile step. Lives inside the v10r container, never on the host. See CLAUDE.md "Local Development" for the container-first rule.
+The runtime — single executable bundling runtime, package manager, bundler, and test runner; native TypeScript, no transpile step. Locally it lives inside the v10r container, never on the host; cloud sessions run it directly ([development-environment.md](../../foundation/development-environment.md)).
 
 ## Why was it chosen?
 

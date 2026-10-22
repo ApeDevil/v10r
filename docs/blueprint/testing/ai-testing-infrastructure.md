@@ -8,7 +8,7 @@
 > Claude Stop hook was also removed; agents run the explicit `bun run validate` gate instead.
 
 
-> **Status: built.** The Vitest + PGlite harness described here exists and works (`vitest.config.ts`, the `createTestDb()` helper in `src/lib/server/test/db.ts`, hundreds of `*.test.ts` files, in-process PGlite Postgres). Schema setup uses `pushSchema` from `drizzle-kit/api` — no migration files, no `drizzle/` directory, no schema-gen step. One piece remains **not built**: the root `AGENTS.md` file (and any CI). Treat that as plan; everything else reflects current code.
+> **Status: built.** The Vitest + PGlite harness described here exists and works (`vitest.config.ts`, the `createTestDb()` helper in `src/lib/server/test/db.ts`, hundreds of `*.test.ts` files, in-process PGlite Postgres). Schema setup uses `pushSchema` from `drizzle-kit/api` — no migration files, no `drizzle/` directory, no schema-gen step. The root `AGENTS.md` exists. There is no CI, by decision: the gate is `bun run validate`, which the agent runs (cloud sessions directly, local ones in the container).
 
 This document describes the testing approach — what exists, why, and how.
 
@@ -16,9 +16,11 @@ The target is an AI agent testing loop: implement → run tests → parse output
 
 ---
 
-## Container Execution Model
+## Execution model
 
-Nothing is installed on the host machine except Podman. Claude Code runs on the host but all tools (Bun, Vitest, Biome, node_modules) live inside the `v10r` container. Every command must go through `podman exec`.
+Cloud sessions (the default) have no container: the same commands run directly (`bun run test`), on a VM the SessionStart hook prepared ([development-environment.md](../../foundation/development-environment.md)). The rest of this section is the local model.
+
+Locally, nothing is installed on the host machine except Podman. Claude Code runs on the host but all tools (Bun, Vitest, Biome, node_modules) live inside the `v10r` container. Every local command goes through `podman exec`.
 
 ```
 HOST (Podman + Claude Code only)
@@ -279,7 +281,9 @@ export function makeNotification(overrides?: Partial<NotificationInsert>): Notif
 
 ## Claude Code edit hook
 
-Hook commands run on the **host machine** (where Claude Code runs). Since all tools live in the container, every command uses `podman exec v10r`.
+> **Not configured.** `.claude/settings.json` holds only the SessionStart hook (`scripts/cloud/session-start.sh`). The PostToolUse lint hook below is a design; a cloud session would run its command without `podman exec`.
+
+Local hook commands run on the **host machine** (where Claude Code runs). Since all tools live in the container, every command uses `podman exec v10r`.
 
 ### PostToolUse — lint only
 
@@ -307,7 +311,7 @@ No path translation needed — Biome runs against `src/` from the container's `/
 
 ### Machine-readable output
 
-All commands prefixed with `podman exec v10r` when run from the host.
+Locally, prefix every command with `podman exec v10r`; cloud sessions run them as written.
 
 | Tool | Format | Agent benefit |
 |------|--------|--------------|
@@ -568,69 +572,15 @@ Priority order based on codebase analysis (highest value first):
 
 **Svelte 5 state testing note:** All `.svelte.ts` state files in this project use the context factory pattern (`createToastState()`, `createDockState()`, etc.), not module-level `$state` singletons. This means the `flushSync()` requirement for external reactive state does **not** apply — call the factory directly in tests.
 
-### Phase 4 — AGENTS.md and CI
+### Phase 4 — AGENTS.md (done); CI (declined)
 
-1. Write `AGENTS.md` at project root (see template below)
-2. Add `.github/workflows/test.yml` running `vitest run` and `biome check` on PRs
+`AGENTS.md` is at the project root. CI was declined: a solo project with no PR-based review, where the agent runs `bun run validate` and the ship re-runs it with `validate:build` on the exact tree that reaches `main` ([shipping.md](../../stack/ops/shipping.md)).
 
 ---
 
-## AGENTS.md Template
+## AGENTS.md
 
-Place at project root. All AI coding agents read this file alongside `CLAUDE.md`.
-
-```markdown
-# AGENTS.md
-
-Supplementary instructions for AI coding agents working in this project.
-Read CLAUDE.md first. This file adds testing-specific guidance.
-
-## Container-First Execution
-
-Nothing is installed on the host except Podman. All commands run inside the `v10r` container:
-
-    podman exec v10r <command>
-
-Source is bind-mounted (host `.` → container `/app`). File edits are instantly visible.
-The container must be running (`podman compose up -d`).
-
-## Test Commands
-
-| From host | What it does |
-|-----------|-------------|
-| `podman exec v10r bun run test` | Run all tests once |
-| `podman exec v10r bun run test:watch` | Watch mode during development |
-| `podman exec v10r bun run validate` | Full quality gate before declaring done |
-| `podman exec v10r bun vitest run src/lib/server/errors/` | Run tests for one module |
-| `podman exec v10r bun biome check --write src/lib/server/notifications/send.ts` | Lint and fix one file |
-
-## Test Patterns
-
-**Co-location:** Tests live next to source. `send.ts` → `send.test.ts`.
-
-**DB isolation:** Use PGlite for any test touching the database.
-Mock the DB module with `vi.mock('$lib/server/db', ...)` — see `src/lib/server/test/db.ts`.
-Schema is built in-process via `pushSchema` from `drizzle-kit/api`. No migration files, no schema-gen step.
-
-**Neo4j:** Mock `cypher()` for all unit and integration tests.
-Only use Test Aura if the test cannot be written any other way.
-
-**Factories:** Use `src/lib/server/test/fixtures.ts` for test data.
-Override only what the test cares about.
-
-**Schema changes:** None needed for tests. `createTestDb()` reads the live schema via `pushSchema`,
-so test schemas track `src/lib/server/db/schema/` automatically — no regeneration step.
-
-## Boundaries
-
-- **Never** run commands on the host — always `podman exec v10r`
-- **Never** add migration files or a `drizzle/` directory for tests — the project is push-only; the harness builds schema in-process via `pushSchema`
-- **Never** commit `.env` or `.env.local` (`.env.test` is safe to commit — it contains only fake values)
-- **Never** delete or skip a failing test — fix the code or fix the test
-- **Never** use `bun test` as the test runner — use `vitest` only
-- **Never** install packages on the host — add to `package.json`, restart container
-- **Never** import `hooks.server.ts` in unit/integration tests — it starts real schedulers and Redis connections
-```
+The live file is the root [AGENTS.md](../../../AGENTS.md); the template that used to stand here was retired once it existed, so there is one copy.
 
 ---
 

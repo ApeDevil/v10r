@@ -100,7 +100,7 @@ export const verification = pgTable('verification', {
 | **Commit the file** | Type inference works, no extra step | Must re-run CLI on BA updates |
 | **Gitignore + generate on install** | Always fresh | Needs post-install hook |
 
-**Recommended:** Commit the file with `_` prefix. Add to CI to verify it's up-to-date.
+**Recommended:** Commit the file with `_` prefix. There is no CI; a check that it is up to date belongs in `bun run validate`.
 
 ---
 
