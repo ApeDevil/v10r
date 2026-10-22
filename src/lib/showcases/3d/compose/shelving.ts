@@ -4,6 +4,7 @@
  * beside a lamp and two sofas that connect to nothing — one of them a glTF model, placed
  * twice. It uses the same core as the heating fixture with no change to it.
  */
+import type { RoomLayout } from '$lib/components/3d/composition';
 import {
 	frameFromAxisAngle,
 	IDENTITY_FRAME,
@@ -134,3 +135,6 @@ export const SHELVING_COMPOSITION: ProductComposition = {
 	],
 	conduits: [],
 };
+
+/** A floor to stand on, without walls: the sofas stand out in the room, not against a wall. */
+export const SHELVING_ROOM: RoomLayout = { floor: 0, back: -0.6, span: [-1.2, 6.8], depth: 3.4 };

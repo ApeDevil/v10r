@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
+import { NeutralToneMapping, PCFShadowMap } from 'three';
 import { BoundaryFallback } from '$lib/components/composites';
 import CompositionScene, { type CompositionSceneProps } from './CompositionScene.svelte';
 
@@ -17,7 +18,8 @@ let { label, unavailableTitle, unavailableDescription, class: className, ...scen
 
 <svelte:boundary>
 	<div class="composition-canvas {className ?? ''}" data-testid="composition-canvas" role="img" aria-label={label}>
-		<Canvas renderMode="on-demand">
+		<!-- Khronos PBR Neutral: tone mapping made for products, so a token colour reads as itself. -->
+		<Canvas renderMode="on-demand" toneMapping={NeutralToneMapping} shadows={PCFShadowMap}>
 			<CompositionScene {...scene} />
 		</Canvas>
 	</div>

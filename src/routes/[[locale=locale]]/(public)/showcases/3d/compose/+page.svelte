@@ -5,8 +5,13 @@ import { Alert } from '$lib/components/composites';
 import { ToggleGroup } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { createPortStandardRegistry } from '$lib/product-composition';
-import { HEATING_COMPOSITION, HEATING_STANDARDS } from '$lib/showcases/3d/compose/heating';
-import { SHELVING_COMPOSITION, SHELVING_STANDARDS } from '$lib/showcases/3d/compose/shelving';
+import {
+	HEATING_COMPOSITION,
+	HEATING_CONDUIT_SURFACES,
+	HEATING_ROOM,
+	HEATING_STANDARDS,
+} from '$lib/showcases/3d/compose/heating';
+import { SHELVING_COMPOSITION, SHELVING_ROOM, SHELVING_STANDARDS } from '$lib/showcases/3d/compose/shelving';
 import ComposeView from './_components/ComposeView.svelte';
 
 /** One editor per catalogue, kept for the page's life: switching back finds the work and its undo intact. */
@@ -14,10 +19,13 @@ const FIXTURES = {
 	heating: {
 		editor: new CompositionEditor(HEATING_COMPOSITION, createPortStandardRegistry(HEATING_STANDARDS)),
 		standards: HEATING_STANDARDS,
+		room: HEATING_ROOM,
+		conduitSurfaces: HEATING_CONDUIT_SURFACES,
 	},
 	shelving: {
 		editor: new CompositionEditor(SHELVING_COMPOSITION, createPortStandardRegistry(SHELVING_STANDARDS)),
 		standards: SHELVING_STANDARDS,
+		room: SHELVING_ROOM,
 	},
 };
 

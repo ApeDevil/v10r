@@ -19,7 +19,23 @@ const TONE_TOKENS: Record<string, string> = {
 	muted: 'color-body',
 	primary: 'color-primary',
 	accent: 'color-accent',
+	// Physical materials: the same colour in every theme, as a white boiler is white at night.
+	enamel: 'scene-enamel',
+	steel: 'scene-steel',
+	chrome: 'scene-chrome',
+	copper: 'scene-copper',
+	brass: 'scene-brass',
+	glass: 'scene-glass',
+	rubber: 'scene-rubber',
 };
+
+/** The room a composition can stand in (`RoomBackdrop`); it turns to night with the dark theme. */
+export const ROOM_TOKENS = {
+	plaster: 'scene-plaster',
+	tile: 'scene-tile',
+	trim: 'scene-trim',
+	window: 'scene-window',
+} as const;
 
 export const FALLBACK_TOKEN = 'color-muted';
 /** The selected occurrence or port. */
@@ -37,4 +53,6 @@ export function standardTokens(standards: readonly PortStandard[]): Map<string, 
 }
 
 /** Every token a scene can ask for — resolved once per theme change. */
-export const SCENE_TOKENS = [...new Set([...Object.values(TONE_TOKENS), ...CHART_TOKENS, SELECTION_TOKEN])];
+export const SCENE_TOKENS = [
+	...new Set([...Object.values(TONE_TOKENS), ...Object.values(ROOM_TOKENS), ...CHART_TOKENS, SELECTION_TOKEN]),
+];

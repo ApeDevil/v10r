@@ -92,13 +92,25 @@ export type ProductPort = v.InferOutput<typeof productPortSchema>;
 /** A colour role, resolved to a CSS token by the renderer — never a colour value. */
 const toneSchema = idSchema;
 
-/** A parametric solid in the product's local space. Cylinders run along their local +Y. */
+/**
+ * A surface role (`matte`, `satin`, `gloss`, `metal`, `brushed`), resolved to a material by the
+ * renderer — never a material value. Like `tone`, a name the renderer does not know draws in
+ * its default finish.
+ */
+const finishSchema = v.optional(idSchema);
+
+/**
+ * A parametric solid in the product's local space. Cylinders run along their local +Y; a torus
+ * lies in its local XY plane, around +Z. A box with a `radius` has its edges rounded by it.
+ */
 export const primitiveSchema = v.variant('shape', [
 	v.strictObject({
 		shape: v.literal('box'),
 		size: v.tuple([positive, positive, positive]),
+		radius: v.optional(positive),
 		frame: frameSchema,
 		tone: toneSchema,
+		finish: finishSchema,
 	}),
 	v.strictObject({
 		shape: v.literal('cylinder'),
@@ -106,8 +118,23 @@ export const primitiveSchema = v.variant('shape', [
 		length: positive,
 		frame: frameSchema,
 		tone: toneSchema,
+		finish: finishSchema,
 	}),
-	v.strictObject({ shape: v.literal('sphere'), radius: positive, frame: frameSchema, tone: toneSchema }),
+	v.strictObject({
+		shape: v.literal('sphere'),
+		radius: positive,
+		frame: frameSchema,
+		tone: toneSchema,
+		finish: finishSchema,
+	}),
+	v.strictObject({
+		shape: v.literal('torus'),
+		radius: positive,
+		tube: positive,
+		frame: frameSchema,
+		tone: toneSchema,
+		finish: finishSchema,
+	}),
 ]);
 export type Primitive = v.InferOutput<typeof primitiveSchema>;
 
