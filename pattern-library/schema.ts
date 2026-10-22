@@ -42,6 +42,9 @@ export const PATTERN_REQUIREMENTS = [
 	'web-worker',
 	'wasm-toolchain',
 	'service-worker',
+	// A second deploy target that runs an OCI container next to the app (Podman locally,
+	// a container host such as Render remotely) — for a separately deployed service.
+	'container-host',
 ] as const;
 
 export type PatternRequirement = (typeof PATTERN_REQUIREMENTS)[number];

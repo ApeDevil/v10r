@@ -180,6 +180,7 @@ What Render Free gives, per its docs (fetched 2026-10-22 through search summarie
 - [ ] No other paid resource is attached (no disk, no custom-domain upgrade, no paid workspace plan).
 - [ ] Auto-Deploy is **Off** and the build filter is set, so unrelated pushes spend no pipeline minutes.
 - [ ] Teardown is known: Settings → Delete Web Service; then remove the two Vercel env vars.
+- [ ] The vendor checklist in [`vendors.md`](../../stack/vendors.md#adding-new-vendors) is done before going live (GDPR page, DPA, `gdpr.md` row). The service receives only synthetic order events and stores nothing, but Render still sees request metadata (IPs of Vercel's functions, timing).
 
 ### Security checklist
 

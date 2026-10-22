@@ -79,6 +79,12 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Round trips one operation may make | `QueryBudget` (`db/query-budget.ts`) | `QueryLimit`, `QueryQuota` |
 | One adverse condition, measured | `scenario` (`perf/scenarios.ts`) | `benchmark`, `case`, `situation` |
 | Where each system runs | `LocalityRow` (`perf/locality.ts`) | `RegionMap`, `DeploymentMap` |
+| A separately deployed process the app calls over HTTP | `external service` — first-party or a vendor's; the reference is `services/order-rules`, shown at `/showcases/external-service`, recorded as `architecture-external-service` | `sidecar` (the JSONB i18n column), `microservice`, `upstream` as a type, `dependency` (infrastructure we run on) |
+| One named, server-configured place an external service is reached | `service target` (`ServiceTargetId` = `local` · `remote`; `ResolvedServiceTarget` with `setup` = `configured` · `unconfigured` · `misconfigured`) | `environment` (`$env`, GitHub environments), `endpoint`, `host` |
+| How one external-service call ended | `ServiceCallOutcome` = `ok` · a `ServiceFailureKind` · `unconfigured` · `misconfigured` (nothing sent) | `status` (that is the service's `/v1/status`), `health`, `error` |
+| The correlation value one call carries across processes | `request id` (`x-request-id` header, `requestId` field) | `correlationId`, `traceId` (OpenTelemetry's word) |
+| A service build's semantic version | `release` (`StatusResponse.release`) | `version` (the optimistic-concurrency counter) |
+| A deliberate, labelled failure demonstration | `drill` (`ServiceDrillId`) — changes only what the caller sends | `fault injection`, `chaos`, `simulation` |
 | An administrator's saved credentials + model for one AI vendor | `provider connection` (`ai.provider_connection`, `ProviderEntry` once loaded, `PublicProviderConnection` on the wire) | `AiSettings`, `ProviderConfig`, `ProviderCredentials` |
 | An administrator's saved credentials for one external name-check vendor | `source connection` (`name_check.source_connection`, `NameSourceConnection` once opened, `PublicNameSourceConnection` on the wire) | `provider connection` (that is the AI one), `NameCheckSettings`, `SourceCredentials` |
 | One external company behind a name source | `vendor` (`NameSourceVendor` = `euipo` · `tavily` · `brave`; `webSearchVendor` picks one) | `provider` (an AI model vendor, exactly one thing) |
