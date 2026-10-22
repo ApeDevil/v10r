@@ -1,11 +1,16 @@
 import type { KnipConfig } from 'knip';
 
 const config: KnipConfig = {
-	// Use the real Svelte compiler for accurate import extraction
+	// Use the real Svelte compiler for accurate import extraction. Its output drops type-only
+	// imports (`import type …`, `import { type … }`), so a types.ts consumed only by .svelte
+	// files would read as unused; re-append those specifiers as side-effect imports.
 	compilers: {
 		svelte: async (source: string) => {
 			const { compile } = await import('svelte/compiler');
-			return compile(source, {}).js.code;
+			const typeImports = [...source.matchAll(/^\s*import\s+([^;]*?)\s+from\s+['"]([^'"]+)['"]/gm)]
+				.filter(([, clause]) => /^type\s|\btype\s/.test(clause))
+				.map(([, , specifier]) => `import '${specifier}';`);
+			return [compile(source, {}).js.code, ...typeImports].join('\n');
 		},
 	},
 
@@ -22,16 +27,6 @@ const config: KnipConfig = {
 		'scripts/db/verify-tx-rollback.ts',
 		'scripts/perf/db-explain.ts',
 		'scripts/perf/vely-turn-tap.js',
-	],
-
-	// Files Knip can't trace through Svelte template imports or re-export chains
-	ignore: [
-		// Viz barrel/type files — consumed via parent index.ts re-exports into Svelte templates
-		'src/lib/components/viz/chart/treemap/types.ts',
-		'src/lib/components/viz/graph/network/types.ts',
-		'src/lib/components/viz/graph/tree/types.ts',
-		'src/lib/components/viz/plot/heatmap/types.ts',
-		'src/lib/components/viz/plot/index.ts',
 	],
 
 	// SvelteKit virtual modules ($types) produce false "unresolved" reports

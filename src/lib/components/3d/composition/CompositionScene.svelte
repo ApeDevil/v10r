@@ -34,8 +34,7 @@ export interface CompositionSceneProps {
 
 <script lang="ts">
 import { T, useThrelte } from '@threlte/core';
-import { CameraControls, interactivity, TransformControls } from '@threlte/extras';
-import type CameraControlsImpl from 'camera-controls';
+import { CameraControls, type CameraControlsRef, interactivity, TransformControls } from '@threlte/extras';
 import { Box3, type Group, Vector3 } from 'three';
 import {
 	conduitPolyline,
@@ -106,7 +105,7 @@ const target = $derived.by(() => {
 });
 
 let proxy = $state<Group>();
-let controls = $state<CameraControlsImpl>();
+let controls = $state<CameraControlsRef>();
 
 // Threlte 9.7's TransformControls pauses OrbitControls but not CameraControls: pause by hand.
 function dragStart() {
