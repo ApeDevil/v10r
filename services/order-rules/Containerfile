@@ -1,0 +1,41 @@
+# order-rules — one image for every host: local Podman/Docker and Render (runtime: docker).
+#
+# Build context is THIS directory (services/order-rules), never the repository root: the
+# allowlist .dockerignore admits only the manifests and src/, so an unrelated repo change
+# can neither invalidate the cache nor leak into the image.
+#
+# Reproducibility pins (change together): RUST_IMAGE — the same digest as
+# scripts/wasm/build.sh, so the repo has one Rust builder, and its rustc is the channel
+# rust-toolchain.toml pins for local work (that file is not copied in: it also asks for
+# rustfmt/clippy, which a release build does not need and the slim image lacks) —
+# Cargo.lock (built with --locked), and RUNTIME_IMAGE. Both digests are
+# multi-platform manifest digests; the tag parts are readable aliases only. RUST_IMAGE is
+# an ARG so a registry mirror holding the same digest can be substituted
+# (mirror.gcr.io/library/rust@…) when Docker Hub rate-limits; the digest still pins the bytes.
+ARG RUST_IMAGE=docker.io/library/rust:1.97-slim@sha256:8e8cf8f7fd54a2d23d5a743b3a03f56e26b6c774276c33fa0595111704ebb15c
+ARG RUNTIME_IMAGE=gcr.io/distroless/cc-debian13:nonroot@sha256:83b9b50586253821cf63ffcec87d3d94265a093ad30da232039af962dd8f4edf
+
+FROM ${RUST_IMAGE} AS build
+WORKDIR /build
+
+# Dependency layer: compile the locked dependency graph against a stub main, so source
+# edits rebuild only the crate itself. Plain layers, no BuildKit cache mounts — those are
+# not persisted on every builder (Render's is assumed cold), layers are.
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src && echo 'fn main() {}' > src/main.rs \
+	&& cargo build --release --locked \
+	&& rm -rf src target/release/order-rules target/release/deps/order_rules-*
+
+COPY src ./src
+RUN cargo build --release --locked
+
+# Runtime: glibc + libgcc only (cc-debian13 matches the trixie builder's glibc), no shell,
+# no package manager, uid 65532. The binary is PID 1 and handles SIGTERM itself
+# (src/main.rs shutdown_signal), so no init process is needed.
+FROM ${RUNTIME_IMAGE}
+COPY --from=build /build/target/release/order-rules /usr/local/bin/order-rules
+USER nonroot
+# Default for local runs; hosts that assign a port (Render) override PORT.
+ENV PORT=8080
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/order-rules"]

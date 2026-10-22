@@ -1,0 +1,17 @@
+{
+	"image": "docker.io/library/rust:1.97-slim@sha256:8e8cf8f7fd54a2d23d5a743b3a03f56e26b6c774276c33fa0595111704ebb15c",
+	"checks": "cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked",
+	"inputs": {
+		"services/order-rules/Cargo.lock": "6fe716cfc4441a455498715a492a6682d5dd9a3dc560a272677b8a1e745b3968",
+		"services/order-rules/Cargo.toml": "e09b50bc2a5020385edcfa0842948bbe27a3c555c25e30dc02cebf43f7037833",
+		"services/order-rules/rust-toolchain.toml": "0e1df4765baf8734ca66b9217c5e3647c37a9fee6461bdc6ce7d4f002ed5f776",
+		"services/order-rules/src/config.rs": "07201c9cfbede44fcca0231c45e0c2c147ccf856e604cc1dc8d4793476fc049e",
+		"services/order-rules/src/contract.rs": "d9745eb130b93e4051c2166b30ecdcc0599a031e40b46843a8c2ef9902a83b90",
+		"services/order-rules/src/http.rs": "06b6e22c8c84da936573a18553af15ffaeee82a14a7a6b498f49076b3457e439",
+		"services/order-rules/src/main.rs": "034a9d584866d1ca3fc49610ba34164b87269dfe14438c69a743d970b13065dc",
+		"services/order-rules/src/order.rs": "3e77189f50ae1fdd1bdd5e27553056818c0bf212d532abfaff0222d8322e37a3"
+	},
+	"outputs": {
+		"services/order-rules/openapi.json": "d3d73f4e6b52a7653d4e24923310956226dc33d8ab89e1265de004a17c957f6b"
+	}
+}

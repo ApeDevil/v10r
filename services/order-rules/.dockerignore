@@ -1,0 +1,5 @@
+# Allowlist: the image is built from these paths only.
+*
+!Cargo.toml
+!Cargo.lock
+!src/

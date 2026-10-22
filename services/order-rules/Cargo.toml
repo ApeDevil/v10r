@@ -1,0 +1,30 @@
+[package]
+name = "order-rules"
+version = "0.1.0"
+edition = "2024"
+# The pinned toolchain (rust-toolchain.toml) is the floor: the resolver keeps every
+# dependency at a release that still builds on it.
+rust-version = "1.97"
+publish = false
+description = "v10r reference external service: a deterministic order-lifecycle rules engine behind an authenticated HTTP API"
+
+[dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio", "query"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+subtle = "2.6"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "time"] }
+utoipa = "6"
+utoipa-axum = "0.3"
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+# A service binary, not a size-critical artifact: the defaults plus symbol stripping
+# (smaller image, nothing lost — panics print no backtrace in production anyway).
+strip = true
