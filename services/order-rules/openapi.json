@@ -245,7 +245,7 @@
               "steps": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Step"
+                  "$ref": "#/components/schemas/OrderTransition"
                 }
               }
             }
@@ -277,12 +277,12 @@
                 "minimum": 0
               },
               "refusal": {
-                "$ref": "#/components/schemas/Refusal"
+                "$ref": "#/components/schemas/RuleRefusal"
               },
               "steps": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Step"
+                  "$ref": "#/components/schemas/OrderTransition"
                 }
               }
             }
@@ -430,7 +430,41 @@
           "refunded"
         ]
       },
-      "Refusal": {
+      "OrderTransition": {
+        "type": "object",
+        "description": "One applied event.",
+        "required": [
+          "index",
+          "event",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "from": {
+            "$ref": "#/components/schemas/OrderState"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "to": {
+            "$ref": "#/components/schemas/OrderState"
+          }
+        }
+      },
+      "RefusalReason": {
+        "type": "string",
+        "enum": [
+          "not_allowed_in_state",
+          "payment_incomplete",
+          "exceeds_balance"
+        ]
+      },
+      "RuleRefusal": {
         "type": "object",
         "description": "The first event a rule refused; evaluation stops there.",
         "required": [
@@ -456,14 +490,6 @@
             "description": "The state the order was in when the event was refused."
           }
         }
-      },
-      "RefusalReason": {
-        "type": "string",
-        "enum": [
-          "not_allowed_in_state",
-          "payment_incomplete",
-          "exceeds_balance"
-        ]
       },
       "ServiceLimits": {
         "type": "object",
@@ -523,32 +549,6 @@
             "format": "int64",
             "description": "Milliseconds since the process started. A value smaller than the caller's\nround trip means this request woke the service (a cold start).",
             "minimum": 0
-          }
-        }
-      },
-      "Step": {
-        "type": "object",
-        "description": "One applied event.",
-        "required": [
-          "index",
-          "event",
-          "from",
-          "to"
-        ],
-        "properties": {
-          "event": {
-            "$ref": "#/components/schemas/EventType"
-          },
-          "from": {
-            "$ref": "#/components/schemas/OrderState"
-          },
-          "index": {
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          "to": {
-            "$ref": "#/components/schemas/OrderState"
           }
         }
       }

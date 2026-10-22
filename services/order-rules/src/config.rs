@@ -39,6 +39,7 @@ pub struct Config {
 pub enum ConfigError {
     MissingToken,
     ShortToken,
+    MalformedToken,
     InvalidHost,
     InvalidPort,
 }
@@ -48,6 +49,9 @@ impl fmt::Display for ConfigError {
         f.write_str(match self {
             ConfigError::MissingToken => "SERVICE_TOKEN is not set",
             ConfigError::ShortToken => "SERVICE_TOKEN is shorter than 32 characters",
+            ConfigError::MalformedToken => {
+                "SERVICE_TOKEN must be printable ASCII without spaces (check for a trailing newline)"
+            }
             ConfigError::InvalidHost => "HOST is not an IP address",
             ConfigError::InvalidPort => "PORT is not a port number",
         })
@@ -69,7 +73,14 @@ impl Config {
         let token = lookup("SERVICE_TOKEN")
             .filter(|t| !t.is_empty())
             .ok_or(ConfigError::MissingToken)?;
-        if token.chars().count() < MIN_TOKEN_LEN {
+        // Printable ASCII, no whitespace: exactly what travels unchanged in an
+        // `Authorization` header. A stray newline from `echo` would otherwise make every
+        // caller's (trimmed) credential mismatch — a service that reports live and refuses
+        // everyone.
+        if !token.bytes().all(|b| b.is_ascii_graphic()) {
+            return Err(ConfigError::MalformedToken);
+        }
+        if token.len() < MIN_TOKEN_LEN {
             return Err(ConfigError::ShortToken);
         }
         Ok(Config {
@@ -121,6 +132,18 @@ mod tests {
             config(&[("SERVICE_TOKEN", "short")]).unwrap_err(),
             ConfigError::ShortToken
         );
+        for malformed in [
+            format!("{TOKEN}\n"),
+            format!(" {TOKEN}"),
+            format!("{TOKEN}é"),
+            "0123456789 abcdef0123456789abcdef0".to_owned(),
+        ] {
+            assert_eq!(
+                config(&[("SERVICE_TOKEN", malformed.as_str())]).unwrap_err(),
+                ConfigError::MalformedToken,
+                "{malformed:?}"
+            );
+        }
     }
 
     #[test]

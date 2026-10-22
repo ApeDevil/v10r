@@ -71,7 +71,7 @@ pub enum RefusalReason {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Step {
+pub struct Transition {
     pub index: usize,
     pub event: EventKind,
     pub from: OrderState,
@@ -95,12 +95,12 @@ pub struct Ledger {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Evaluation {
     Accepted {
-        steps: Vec<Step>,
+        steps: Vec<Transition>,
         final_state: OrderState,
         ledger: Ledger,
     },
     Refused {
-        steps: Vec<Step>,
+        steps: Vec<Transition>,
         refusal: Refusal,
         ledger: Ledger,
     },
@@ -173,11 +173,15 @@ fn apply(
                 },
             ))
         }
+        // Nothing is left to pay: any payment is above the open balance.
+        (Paid, OrderEvent::Pay { .. }) => Err(RefusalReason::ExceedsBalance),
         (Placed | PartiallyPaid, OrderEvent::Ship) => Err(RefusalReason::PaymentIncomplete),
         (Paid, OrderEvent::Ship) => Ok((Shipped, ledger)),
         (Shipped, OrderEvent::Deliver) => Ok((Delivered, ledger)),
         (Placed | PartiallyPaid | Paid, OrderEvent::Cancel) => Ok((Cancelled, ledger)),
-        (Delivered, OrderEvent::Refund { amount_cents }) => {
+        // Refunds return money already taken: after delivery, or after a cancellation of a
+        // (partly) paid order — otherwise cancelling would keep the customer's money.
+        (Delivered | Cancelled, OrderEvent::Refund { amount_cents }) => {
             let refunded = ledger
                 .refunded_cents
                 .checked_add(amount_cents)
@@ -185,11 +189,11 @@ fn apply(
             if refunded > ledger.paid_cents {
                 return Err(RefusalReason::ExceedsBalance);
             }
-            // A partial refund leaves the order delivered; the last cent closes it.
+            // A partial refund leaves the order where it was; the last cent closes it.
             let next = if refunded == ledger.paid_cents {
                 Refunded
             } else {
-                Delivered
+                state
             };
             Ok((
                 next,
@@ -218,7 +222,7 @@ pub fn evaluate(total_cents: u64, events: &[OrderEvent]) -> Result<Evaluation, I
     for (index, event) in events.iter().copied().enumerate() {
         match apply(state, ledger, total_cents, event) {
             Ok((next, next_ledger)) => {
-                steps.push(Step {
+                steps.push(Transition {
                     index,
                     event: event.kind(),
                     from: state,
@@ -254,7 +258,7 @@ mod tests {
     use super::*;
     use OrderEvent::*;
 
-    fn accepted(total: u64, events: &[OrderEvent]) -> (OrderState, Ledger, Vec<Step>) {
+    fn accepted(total: u64, events: &[OrderEvent]) -> (OrderState, Ledger, Vec<Transition>) {
         match evaluate(total, events).expect("valid input") {
             Evaluation::Accepted {
                 final_state,
@@ -422,13 +426,89 @@ mod tests {
     }
 
     #[test]
-    fn evaluation_is_deterministic() {
+    fn a_cancelled_paid_order_can_be_refunded() {
+        let (state, ledger, _) = accepted(
+            100,
+            &[
+                Pay { amount_cents: 50 },
+                Cancel,
+                Refund { amount_cents: 20 },
+            ],
+        );
+        assert_eq!((state, ledger.refunded_cents), (OrderState::Cancelled, 20));
+        let (state, _, _) = accepted(
+            100,
+            &[
+                Pay { amount_cents: 50 },
+                Cancel,
+                Refund { amount_cents: 50 },
+            ],
+        );
+        assert_eq!(state, OrderState::Refunded);
+        // Cancelled before any payment: nothing to give back.
+        assert_eq!(
+            refusal(100, &[Cancel, Refund { amount_cents: 1 }]).reason,
+            RefusalReason::ExceedsBalance
+        );
+    }
+
+    #[test]
+    fn paying_a_paid_order_exceeds_the_balance() {
+        assert_eq!(
+            refusal(100, &[Pay { amount_cents: 100 }, Pay { amount_cents: 1 }]).reason,
+            RefusalReason::ExceedsBalance
+        );
+    }
+
+    #[test]
+    fn a_refunded_order_accepts_nothing_more() {
         let events = [
             Pay { amount_cents: 10 },
             Ship,
-            Pay { amount_cents: 90 },
-            Ship,
+            Deliver,
+            Refund { amount_cents: 10 },
         ];
-        assert_eq!(evaluate(100, &events), evaluate(100, &events));
+        for next in [
+            Refund { amount_cents: 1 },
+            Pay { amount_cents: 1 },
+            Cancel,
+            Ship,
+            Deliver,
+        ] {
+            let mut all = events.to_vec();
+            all.push(next);
+            assert_eq!(
+                refusal(10, &all).reason,
+                RefusalReason::NotAllowedInState,
+                "{next:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn ledger_overflow_is_a_refusal_not_a_wrap() {
+        // Unreachable through `evaluate` (bounds keep sums tiny); `apply` must still not wrap.
+        let full = Ledger {
+            paid_cents: u64::MAX,
+            refunded_cents: u64::MAX - 1,
+        };
+        assert_eq!(
+            apply(
+                OrderState::PartiallyPaid,
+                full,
+                u64::MAX,
+                Pay { amount_cents: 1 }
+            ),
+            Err(RefusalReason::ExceedsBalance)
+        );
+        assert_eq!(
+            apply(
+                OrderState::Delivered,
+                full,
+                u64::MAX,
+                Refund { amount_cents: 2 }
+            ),
+            Err(RefusalReason::ExceedsBalance)
+        );
     }
 }

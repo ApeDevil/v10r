@@ -35,8 +35,8 @@ const ms = (value: number | null | undefined) => (value === null || value === un
 		<DiagRow label={m.showcase_external_service_label_service_time()}>
 			<code>{ms(call.timing.serviceMs)}</code>
 		</DiagRow>
-		<DiagRow label={m.showcase_external_service_label_adapter_time()}>
-			<code>{ms(call.timing.adapterMs)}</code>
+		<DiagRow label={m.showcase_external_service_label_client_time()}>
+			<code>{ms(call.timing.clientMs)}</code>
 		</DiagRow>
 		<DiagRow label={m.showcase_external_service_label_total()}>
 			<code>{ms(call.timing.totalMs)} · {m.showcase_external_service_label_attempts({ count: call.timing.attempts })}</code>

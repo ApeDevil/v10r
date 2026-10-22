@@ -179,7 +179,7 @@ impl From<order::RefusalReason> for RefusalReason {
 
 /// One applied event.
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Step {
+pub struct OrderTransition {
     pub index: u32,
     pub event: EventType,
     pub from: OrderState,
@@ -188,7 +188,7 @@ pub struct Step {
 
 /// The first event a rule refused; evaluation stops there.
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Refusal {
+pub struct RuleRefusal {
     pub index: u32,
     pub event: EventType,
     /// The state the order was in when the event was refused.
@@ -203,24 +203,24 @@ pub struct Refusal {
 pub enum EvaluateResponse {
     #[serde(rename_all = "camelCase")]
     Accepted {
-        steps: Vec<Step>,
+        steps: Vec<OrderTransition>,
         final_state: OrderState,
         paid_cents: u64,
         refunded_cents: u64,
     },
     #[serde(rename_all = "camelCase")]
     Refused {
-        steps: Vec<Step>,
-        refusal: Refusal,
+        steps: Vec<OrderTransition>,
+        refusal: RuleRefusal,
         paid_cents: u64,
         refunded_cents: u64,
     },
 }
 
-fn wire_steps(steps: Vec<order::Step>) -> Vec<Step> {
+fn wire_steps(steps: Vec<order::Transition>) -> Vec<OrderTransition> {
     steps
         .into_iter()
-        .map(|step| Step {
+        .map(|step| OrderTransition {
             // Bounded by MAX_EVENTS (64), so the narrowing cannot truncate.
             index: step.index as u32,
             event: step.event.into(),
@@ -249,7 +249,7 @@ impl From<order::Evaluation> for EvaluateResponse {
                 ledger,
             } => EvaluateResponse::Refused {
                 steps: wire_steps(steps),
-                refusal: Refusal {
+                refusal: RuleRefusal {
                     index: refusal.index as u32,
                     event: refusal.event.into(),
                     state: refusal.state.into(),

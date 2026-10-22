@@ -40,11 +40,12 @@ describe('external service isolation', () => {
 	});
 
 	it('is imported only by the showcase that owns it', () => {
-		const importsAdapter = /from\s+['"][^'"]*showcases\/external-service[^'"]*['"]/;
+		// Static `from '…'` and dynamic `import('…')` alike.
+		const importsClient = /(?:from\s+|import\s*\(\s*)['"][^'"]*showcases\/external-service[^'"]*['"]/;
 		const offenders = files.filter(
-			(path) => !OWN_DIRS.some((dir) => path.startsWith(dir)) && importsAdapter.test(readFileSync(path, 'utf8')),
+			(path) => !OWN_DIRS.some((dir) => path.startsWith(dir)) && importsClient.test(readFileSync(path, 'utf8')),
 		);
-		expect(offenders, 'only the External Service Lab may import its adapter').toEqual([]);
+		expect(offenders, 'only the External Service Lab may import its service client').toEqual([]);
 	});
 
 	it('names its environment variables in one server-only module', () => {

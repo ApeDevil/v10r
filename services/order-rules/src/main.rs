@@ -14,7 +14,13 @@ mod order;
 
 use std::process::ExitCode;
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
+
+use hyper::server::conn::http1;
+use hyper_util::rt::{TokioIo, TokioTimer};
+use hyper_util::server::graceful::GracefulShutdown;
+use hyper_util::service::TowerToHyperService;
+use tokio::sync::Semaphore;
 
 use crate::config::Config;
 use crate::http::AppState;
@@ -68,6 +74,18 @@ fn main() -> ExitCode {
     }
 }
 
+/// A client must finish sending a request head within this, and an idle keep-alive
+/// connection is closed after it. `REQUEST_TIMEOUT` only starts once a head is parsed, so
+/// without this a client trickling header bytes (slowloris) holds a socket forever.
+const HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
+/// Open connections at once. Past it, new connections are closed on accept: the process
+/// stays responsive to the ones it has instead of exhausting file descriptors.
+const MAX_CONNECTIONS: usize = 256;
+/// Longest wait for in-flight requests after SIGTERM — inside the 30 s hosts allow.
+const DRAIN_LIMIT: Duration = Duration::from_secs(10);
+
+/// The accept loop. Written out instead of `axum::serve` because the two protections
+/// above are connection-level settings `axum::serve` does not expose.
 async fn serve(config: Config, started: Instant) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(config.addr).await?;
     log(serde_json::json!({
@@ -77,22 +95,57 @@ async fn serve(config: Config, started: Instant) -> std::io::Result<()> {
         "bootMs": started.elapsed().as_secs_f64() * 1000.0,
     }));
 
-    let state = Arc::new(AppState {
+    let app = http::router(Arc::new(AppState {
         token: config.token,
         started,
-    });
-    axum::serve(listener, http::router(state))
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    }));
+    let slots = Arc::new(Semaphore::new(MAX_CONNECTIONS));
+    let graceful = GracefulShutdown::new();
+    let shutdown = shutdown_signal();
+    tokio::pin!(shutdown);
 
+    loop {
+        tokio::select! {
+            accepted = listener.accept() => {
+                let stream = match accepted {
+                    Ok((stream, _)) => stream,
+                    // EMFILE and friends: back off briefly instead of spinning.
+                    Err(_) => {
+                        tokio::time::sleep(Duration::from_millis(50)).await;
+                        continue;
+                    }
+                };
+                let Ok(slot) = slots.clone().try_acquire_owned() else {
+                    continue; // over capacity: dropping the stream closes it
+                };
+                let connection = http1::Builder::new()
+                    .timer(TokioTimer::new())
+                    .header_read_timeout(HEADER_READ_TIMEOUT)
+                    .serve_connection(TokioIo::new(stream), TowerToHyperService::new(app.clone()));
+                let connection = graceful.watch(connection);
+                tokio::spawn(async move {
+                    let _ = connection.await;
+                    drop(slot);
+                });
+            }
+            () = &mut shutdown => break,
+        }
+    }
+
+    drop(listener);
+    if tokio::time::timeout(DRAIN_LIMIT, graceful.shutdown())
+        .await
+        .is_err()
+    {
+        log(serde_json::json!({ "event": "drain_timeout" }));
+    }
     log(serde_json::json!({ "event": "stopped" }));
     Ok(())
 }
 
 /// Resolves on SIGTERM (container stop, host redeploy) or Ctrl-C. After it resolves the
-/// server stops accepting and waits for in-flight requests — each bounded by
-/// `http::REQUEST_TIMEOUT`, so the drain is bounded too, well inside the 30 s a host
-/// typically allows between SIGTERM and SIGKILL.
+/// server stops accepting, lets in-flight requests finish (each bounded by
+/// `http::REQUEST_TIMEOUT`) and closes idle connections, for at most `DRAIN_LIMIT`.
 async fn shutdown_signal() {
     let interrupt = async {
         let _ = tokio::signal::ctrl_c().await;
@@ -212,6 +265,8 @@ mod tests {
             }),
             Some("string") => value.is_string(),
             Some(other) => panic!("unhandled schema type {other}"),
+            // A type array (OpenAPI 3.1 nullability) must fail loudly, not conform by default.
+            None if !schema["type"].is_null() => panic!("unhandled schema type {}", schema["type"]),
             None => true,
         }
     }

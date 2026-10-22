@@ -64,6 +64,15 @@ big=$(head -c 9000 /dev/zero | tr '\0' 'x')
 [ "$(status_of -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' --data "$big" "$BASE/v1/evaluate")" = 413 ] && pass "9000-byte body → 413" || fail "body limit"
 curl -s -D - -o /dev/null -H 'x-request-id: smoke-correlation-1' "$BASE/health/live" | grep -qi '^x-request-id: smoke-correlation-1' && pass "request id echoed" || fail "request id"
 
+# Slowloris: a head that never completes must be cut off by HEADER_READ_TIMEOUT (5 s).
+start=$(date +%s)
+exec 3<>"/dev/tcp/127.0.0.1/$PORT"
+printf 'GET /health/live HTTP/1.1\r\nHo' >&3
+timeout 15 cat <&3 >/dev/null || true
+exec 3<&- 3>&-
+slow=$(( $(date +%s) - start ))
+[ "$slow" -ge 4 ] && [ "$slow" -le 7 ] && pass "unfinished request head closed after ${slow}s" || fail "slow head held ${slow}s"
+
 "$ENGINE" logs "$NAME" 2>&1 | grep -q "$TOKEN" && fail "credential appeared in the logs" || pass "credential absent from logs"
 
 start=$(date +%s%N)

@@ -33,8 +33,9 @@ use crate::order;
 
 /// Largest request body accepted. An evaluation of 64 events is well under 4 KiB.
 pub const MAX_BODY_BYTES: usize = 8 * 1024;
-/// Server-side ceiling per request. Far above any honest evaluation; it exists for slow
-/// clients trickling a body, and it keeps a graceful shutdown bounded.
+/// Server-side ceiling per request, from parsed head to response. Far above any honest
+/// evaluation; it bounds a client trickling its body and keeps a graceful drain short.
+/// A client trickling its *head* is bounded by `main.rs` `HEADER_READ_TIMEOUT`.
 pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 pub const REQUEST_ID_HEADER: &str = "x-request-id";
 const SERVICE_NAME: &str = "order-rules";
@@ -154,9 +155,11 @@ async fn evaluate(payload: Result<Json<EvaluateRequest>, JsonRejection>) -> Resp
         Err(rejection) => {
             // serde's message names the offending field and why; bounded so a hostile
             // payload cannot make the error body large.
-            let mut message = rejection.body_text();
-            message.truncate(240);
-            return error(StatusCode::BAD_REQUEST, ErrorCode::InvalidRequest, message);
+            return error(
+                StatusCode::BAD_REQUEST,
+                ErrorCode::InvalidRequest,
+                clip(&rejection.body_text(), 240),
+            );
         }
     };
 
@@ -244,6 +247,14 @@ async fn time_limit(request: Request, next: Next) -> Response {
     }
 }
 
+/// At most `max` characters of `text`. By characters, never bytes: `String::truncate` at a
+/// byte offset panics inside a multi-byte character, and the path and serde's messages
+/// both carry caller-chosen UTF-8 (a raw `é` straddling byte 128 of a path did exactly
+/// that, unauthenticated — `hostile_utf8_is_clipped_not_panicked_on`).
+fn clip(text: &str, max: usize) -> String {
+    text.chars().take(max).collect()
+}
+
 fn is_valid_request_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= MAX_REQUEST_ID_LEN
@@ -286,9 +297,10 @@ async fn observe(request: Request, next: Next) -> Response {
         .filter(|id| is_valid_request_id(id))
         .map(str::to_owned)
         .unwrap_or_else(mint_request_id);
-    let method = request.method().to_string();
-    let mut path = request.uri().path().to_owned();
-    path.truncate(128);
+    // Both bounded: http accepts arbitrarily long extension methods and paths, and one
+    // oversized log line breaks "one JSON object per line" for log shippers.
+    let method = clip(request.method().as_str(), 16);
+    let path = clip(request.uri().path(), 128);
 
     let mut response = next.run(request).await;
     let elapsed_ms = started.elapsed().as_secs_f64() * 1000.0;
@@ -516,6 +528,38 @@ mod tests {
             (status, error_code(&body)),
             (StatusCode::METHOD_NOT_ALLOWED, "method_not_allowed")
         );
+    }
+
+    #[tokio::test]
+    async fn hostile_utf8_is_clipped_not_panicked_on() {
+        // `é` occupies bytes 127–128 of the path: byte 128 is not a character boundary.
+        let path = format!("/{}é", "a".repeat(126));
+        let (status, _, body) = send(get(&path, None)).await;
+        assert_eq!(
+            (status, error_code(&body)),
+            (StatusCode::NOT_FOUND, "not_found")
+        );
+
+        // Same hazard behind auth: serde echoes an unknown name into the message. Vary the
+        // ASCII prefix so a 3-byte `€` straddles the cut point at every alignment.
+        for pad in 0..4 {
+            let kind = format!("{}{}", "x".repeat(pad), "€".repeat(120));
+            let request = format!(r#"{{"totalCents":1,"events":[{{"type":"{kind}"}}]}}"#);
+            let (status, _, body) = send(post_evaluate(request, Some(TOKEN))).await;
+            assert_eq!(
+                (status, error_code(&body)),
+                (StatusCode::BAD_REQUEST, "invalid_request"),
+                "pad {pad}"
+            );
+            assert!(body["error"]["message"].as_str().unwrap().chars().count() <= 240);
+        }
+    }
+
+    #[test]
+    fn clip_counts_characters_not_bytes() {
+        assert_eq!(clip("aé", 2), "aé");
+        assert_eq!(clip("éé", 1), "é");
+        assert_eq!(clip("abc", 10), "abc");
     }
 
     #[tokio::test]

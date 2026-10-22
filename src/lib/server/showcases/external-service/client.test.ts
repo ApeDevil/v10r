@@ -7,9 +7,9 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { startDeadline } from '$lib/server/http/deadline';
-import { callService, parseServiceTiming, SERVICE_OPERATIONS } from './client';
+import { callService, SERVICE_OPERATIONS } from './client';
 import { MAX_RESPONSE_BYTES } from './config';
-import { EVALUATION_SCENARIOS } from './scenarios';
+import { EVALUATION_PRESETS } from './presets';
 import type { ServiceTarget } from './targets';
 
 const TOKEN = 'client-test-credential-0123456789abcdef';
@@ -85,18 +85,32 @@ afterEach(() => {
 const deadline = (ms = 2_000) => ({ deadline: startDeadline(ms) });
 
 describe('callService — success', () => {
-	it('sends the credential, a request id and nothing caller-controlled', async () => {
-		responder = (_, res) => json(res, 200, LIVE, { 'server-timing': 'app;dur=0.250' });
-		const call = await callService(target, SERVICE_OPERATIONS.live, undefined, {
+	it('sends the credential only to authenticated operations', async () => {
+		responder = (request, res) => json(res, 200, request.url === '/health/live' ? LIVE : STATUS);
+		await callService(target, SERVICE_OPERATIONS.live, undefined, deadline());
+		await callService(target, SERVICE_OPERATIONS.status, undefined, deadline());
+		expect(received.map((r) => [r.url, r.headers.authorization])).toEqual([
+			['/health/live', undefined],
+			['/v1/status', `Bearer ${TOKEN}`],
+		]);
+	});
+
+	it('sends a well-formed request id and replaces one the service would reject', async () => {
+		responder = (_, res) => json(res, 200, LIVE);
+		const kept = await callService(target, SERVICE_OPERATIONS.live, undefined, {
 			...deadline(),
 			requestId: 'req-fixed-1',
 		});
-
-		expect(call).toMatchObject({ ok: true, data: LIVE, httpStatus: 200, requestId: 'req-fixed-1' });
-		expect(received).toHaveLength(1);
+		expect(kept).toMatchObject({ ok: true, data: LIVE, httpStatus: 200, requestId: 'req-fixed-1' });
 		expect(received[0]).toMatchObject({ method: 'GET', url: '/health/live' });
-		expect(received[0].headers.authorization).toBe(`Bearer ${TOKEN}`);
 		expect(received[0].headers['x-request-id']).toBe('req-fixed-1');
+
+		for (const hostile of ['has space', 'a\r\nx-injected: 1', 'x'.repeat(65)]) {
+			const call = await callService(target, SERVICE_OPERATIONS.live, undefined, { ...deadline(), requestId: hostile });
+			expect(call.ok).toBe(true);
+			expect(call.requestId).not.toBe(hostile);
+			expect(received.at(-1)?.headers['x-request-id']).toBe(call.requestId);
+		}
 	});
 
 	it('separates the service’s own time from the round trip', async () => {
@@ -105,16 +119,21 @@ describe('callService — success', () => {
 		expect(call.ok).toBe(true);
 		expect(call.timing.serviceMs).toBe(0.25);
 		expect(call.timing.roundTripMs).toBeGreaterThan(0);
-		expect(call.timing.adapterMs).toBeGreaterThanOrEqual(0);
+		expect(call.timing.clientMs).toBeGreaterThanOrEqual(0);
 		expect(call.timing.attempts).toBe(1);
 	});
 
 	it('posts the validated request body as JSON', async () => {
 		responder = (_, res) => json(res, 200, ACCEPTED);
-		const call = await callService(target, SERVICE_OPERATIONS.evaluate, EVALUATION_SCENARIOS.fulfilled, deadline());
+		const call = await callService(
+			target,
+			SERVICE_OPERATIONS.evaluate,
+			EVALUATION_PRESETS.fulfilled.request,
+			deadline(),
+		);
 		expect(call.ok).toBe(true);
 		expect(received[0].headers['content-type']).toBe('application/json');
-		expect(JSON.parse(received[0].body)).toEqual(EVALUATION_SCENARIOS.fulfilled);
+		expect(JSON.parse(received[0].body)).toEqual(EVALUATION_PRESETS.fulfilled.request);
 	});
 
 	it('ignores fields the service adds later (tolerant reader)', async () => {
@@ -151,7 +170,12 @@ describe('callService — refusals and failures', () => {
 			json(res, 400, {
 				error: { code: 'invalid_request', message: `/totalCents: must be positive${'!'.repeat(500)}` },
 			});
-		const call = await callService(target, SERVICE_OPERATIONS.evaluate, EVALUATION_SCENARIOS.fulfilled, deadline());
+		const call = await callService(
+			target,
+			SERVICE_OPERATIONS.evaluate,
+			EVALUATION_PRESETS.fulfilled.request,
+			deadline(),
+		);
 		expect(call).toMatchObject({ ok: false, kind: 'invalid_request', httpStatus: 400 });
 		expect(!call.ok && call.message.startsWith('/totalCents: must be positive')).toBe(true);
 		expect(!call.ok && call.message.length).toBeLessThanOrEqual(240);
@@ -178,6 +202,27 @@ describe('callService — refusals and failures', () => {
 		expect(received.map((r) => r.url)).toEqual(['/health/live']);
 	});
 
+	it('classifies an oversized error page by its status, not its size', async () => {
+		responder = (_, res) => {
+			res.writeHead(500, { 'content-type': 'text/html' });
+			res.end('x'.repeat(MAX_RESPONSE_BYTES + 1));
+		};
+		const call = await callService(target, SERVICE_OPERATIONS.status, undefined, deadline());
+		expect(call).toMatchObject({ ok: false, kind: 'service_error', httpStatus: 500 });
+	});
+
+	it('never retries once a response arrived — a body cut mid-stream is malformed, once', async () => {
+		responder = (_, res) => {
+			res.writeHead(200, { 'content-type': 'application/json', 'content-length': '500' });
+			res.write('{"service":"order-');
+			setTimeout(() => res.destroy(), 20);
+		};
+		const call = await callService(target, SERVICE_OPERATIONS.status, undefined, deadline());
+		expect(call).toMatchObject({ ok: false, kind: 'malformed_response', httpStatus: 200 });
+		expect(call.timing.attempts).toBe(1);
+		expect(received).toHaveLength(1);
+	});
+
 	it('times out a slow service within the deadline and does not retry it', async () => {
 		responder = (_, res) => {
 			setTimeout(() => json(res, 200, LIVE), 1_000);
@@ -199,7 +244,7 @@ describe('callService — refusals and failures', () => {
 	it('never retries an operation not declared idempotent', async () => {
 		const closed = await closedPortTarget();
 		const once = { ...SERVICE_OPERATIONS.evaluate, idempotent: false };
-		const call = await callService(closed, once, EVALUATION_SCENARIOS.fulfilled, deadline());
+		const call = await callService(closed, once, EVALUATION_PRESETS.fulfilled.request, deadline());
 		expect(call).toMatchObject({ ok: false, kind: 'unreachable' });
 		expect(call.timing.attempts).toBe(1);
 	});
@@ -213,25 +258,16 @@ describe('callService — secrets', () => {
 			responder = (_, res) => json(res, status, status === 200 ? STATUS : { error: { code: 'x', message: TOKEN } });
 			outcomes.push(await callService(target, SERVICE_OPERATIONS.status, undefined, deadline()));
 		}
-		outcomes.push(await callService(await closedPortTarget(), SERVICE_OPERATIONS.status, undefined, deadline()));
+		const closed = await closedPortTarget();
+		outcomes.push(await callService(closed, SERVICE_OPERATIONS.status, undefined, deadline()));
 
 		const surfaced = JSON.stringify(outcomes) + JSON.stringify(warn.mock.calls);
 		expect(warn).toHaveBeenCalled();
 		expect(surfaced).not.toContain(TOKEN);
 		expect(surfaced).not.toContain(target.origin);
-	});
-});
-
-describe('parseServiceTiming', () => {
-	it.each([
-		['app;dur=1.5', 1.5],
-		['db;dur=9, app;desc="handler";dur=0.042', 0.042],
-		['total;dur=3', null],
-		['app;dur=-1', null],
-		['app;dur=abc', null],
-		[null, null],
-	])('%s → %s', (header, expected) => {
-		expect(parseServiceTiming(header)).toBe(expected);
+		// The transport-error path is the one most likely to echo an address.
+		expect(surfaced).not.toContain(closed.origin);
+		expect(surfaced).not.toContain('127.0.0.1');
 	});
 });
 

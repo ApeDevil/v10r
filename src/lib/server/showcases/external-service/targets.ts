@@ -7,7 +7,7 @@
  * Pure, so the rules are testable without an environment; `targets.adapter.ts` is the
  * one place that reads the environment.
  */
-import type { ServiceTargetId } from '$lib/showcases/external-service/types';
+import type { ServiceTargetId, ServiceTargetProblem } from '$lib/showcases/external-service/types';
 import { MIN_TOKEN_LENGTH } from './config';
 
 export interface ServiceTarget {
@@ -16,9 +16,6 @@ export interface ServiceTarget {
 	origin: string;
 	token: string;
 }
-
-/** Why a set target was refused. Names the rule, never the value. */
-export type ServiceTargetProblem = 'incomplete' | 'invalid_url' | 'not_an_origin' | 'insecure_url' | 'short_token';
 
 export type ResolvedServiceTarget =
 	| { id: ServiceTargetId; setup: 'configured'; target: ServiceTarget }
@@ -48,12 +45,33 @@ export function resolveServiceTarget(id: ServiceTargetId, raw: RawServiceTarget)
 	if (parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname !== '/') {
 		return { id, setup: 'misconfigured', problem: 'not_an_origin' };
 	}
-	// The remote target crosses the public internet with a bearer credential: TLS or nothing.
-	// Plain http is tolerated only for `local`, which is a container network or loopback.
-	if (id === 'remote' && parsed.protocol !== 'https:') {
+	// A bearer credential crosses the network in this request: TLS, unless the host cannot be
+	// on the public internet. The remote target must always use https; `local` may use plain
+	// http only to loopback, a private address or a single-label (container network) name.
+	if (parsed.protocol !== 'https:' && (id === 'remote' || !isPrivateHost(parsed.hostname))) {
 		return { id, setup: 'misconfigured', problem: 'insecure_url' };
 	}
+	// The service's own startup rule: printable ASCII without spaces, so the value travels
+	// unchanged in a header — a `fetch` with anything else throws before sending.
+	if (!/^[\x21-\x7e]+$/.test(token)) return { id, setup: 'misconfigured', problem: 'malformed_token' };
 	if (token.length < MIN_TOKEN_LENGTH) return { id, setup: 'misconfigured', problem: 'short_token' };
 
 	return { id, setup: 'configured', target: { id, origin: parsed.origin, token } };
+}
+
+/**
+ * Hosts a plain-http request cannot reach across the public internet: loopback, RFC 1918
+ * and IPv6 unique-local addresses, `localhost`, and single-label names (a compose or
+ * cluster network's service name, e.g. `order-rules`).
+ */
+export function isPrivateHost(hostname: string): boolean {
+	const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+	if (host === 'localhost' || host.endsWith('.localhost')) return true;
+	if (host === '::1' || /^f[cd][0-9a-f]{2}:/.test(host)) return true;
+	const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/);
+	if (v4) {
+		const [a, b] = [Number(v4[1]), Number(v4[2])];
+		return a === 127 || a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+	}
+	return !host.includes('.') && !host.includes(':');
 }

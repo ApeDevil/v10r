@@ -1,21 +1,28 @@
 import { fail } from '@sveltejs/kit';
 import { checkHoneypot, ipLimitKey } from '$lib/server/abuse';
 import { getClientIp } from '$lib/server/http/client-ip';
+import { startDeadline } from '$lib/server/http/deadline';
 import { createLimiter } from '$lib/server/http/rate-limit';
 import {
 	CALL_CEILING_MS,
 	checkTarget,
-	evaluateScenario,
+	evaluatePreset,
+	GLOBAL_RATE_LIMIT_MAX,
+	GLOBAL_RATE_LIMIT_PREFIX,
 	RATE_LIMIT_MAX,
 	RATE_LIMIT_PREFIX,
 	RATE_LIMIT_WINDOW,
 	RENDER_RESERVE_MS,
 	readServiceTargets,
 	runDrill,
+	WAKE_CEILING_MS,
 } from '$lib/server/showcases/external-service';
 import {
-	EVALUATION_SCENARIO_IDS,
-	type EvaluationScenarioId,
+	CHECK_PATIENCE,
+	type CheckPatience,
+	EVALUATION_PRESET_IDS,
+	type EvaluationPresetId,
+	type LabRejection,
 	type PublicServiceCall,
 	SERVICE_DRILL_IDS,
 	SERVICE_TARGET_IDS,
@@ -30,10 +37,17 @@ import type { Actions, PageServerLoad, RequestEvent } from './$types';
  * `load` reports only what the server knows without calling anything: which targets are
  * configured. A page view never reaches the service — otherwise every crawler visit would
  * be an outbound call and would wake a sleeping free host. Calls happen in the actions,
- * behind the honeypot and an IP limiter, each with a sub-budget of the request deadline.
- * The form carries ids from closed lists (target, scenario, drill), never a URL or a body.
+ * behind the honeypot, a per-IP and a global limiter, each with a sub-budget of the
+ * request deadline. The form carries ids from closed lists (target, preset, drill,
+ * patience), never a URL or a body.
  */
+
+/** Room for a `wake` check (WAKE_CEILING_MS) plus rendering; Vercel's own ceiling is 300 s. */
+export const config = { maxDuration: 90 };
+
 const limiter = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
+const globalLimiter = createLimiter(GLOBAL_RATE_LIMIT_PREFIX, GLOBAL_RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
+const GLOBAL_KEY = 'all';
 
 export const load: PageServerLoad = async () => {
 	const targets = readServiceTargets();
@@ -56,22 +70,32 @@ function pick<T extends string>(form: FormData, field: string, allowed: readonly
 	return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? (value as T) : null;
 }
 
-/** Shared gate for every action: closed-list target, honeypot, then the IP limiter. */
+/** `renderedAt` as a number only when it is one: `Number(null)` and `Number('')` are 0, which passes the speed check. */
+function renderedAt(form: FormData): number {
+	const value = form.get('renderedAt');
+	return typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : Number.NaN;
+}
+
+const reject = (status: number, rejected: LabRejection) => ({ rejected: fail(status, { rejected }) });
+
+/** Shared gate for every action: closed-list target, honeypot, then the limiters. */
 async function admit(event: RequestEvent) {
 	const form = await event.request.formData();
 	const target = pick<ServiceTargetId>(form, 'target', SERVICE_TARGET_IDS);
-	if (!target) return { refused: fail(400, { refused: 'invalid' as const }) };
+	if (!target) return reject(400, 'invalid');
 
 	const bookmark = form.get('bookmark');
 	const honeypot = checkHoneypot({
 		honeypot: typeof bookmark === 'string' ? bookmark : null,
-		renderedAt: Number(form.get('renderedAt')),
+		renderedAt: renderedAt(form),
 	});
 	// Generic on purpose: it does not teach a bot which check fired.
-	if (!honeypot.allowed) return { refused: fail(400, { refused: 'rejected' as const }) };
+	if (!honeypot.allowed) return reject(400, 'rejected');
 
-	const { success } = await limiter.limit(ipLimitKey(getClientIp(event)));
-	if (!success) return { refused: fail(429, { refused: 'rate_limited' as const }) };
+	const perIp = await limiter.limit(ipLimitKey(getClientIp(event)));
+	if (!perIp.success) return reject(429, 'rate_limited');
+	const overall = await globalLimiter.limit(GLOBAL_KEY);
+	if (!overall.success) return reject(429, 'rate_limited');
 
 	return {
 		form,
@@ -80,7 +104,7 @@ async function admit(event: RequestEvent) {
 	};
 }
 
-/** Each call's adapter-side figures become spans in this request's own trace. */
+/** Each call's client-side figures become spans in this request's own trace. */
 function recordSpans(event: RequestEvent, calls: Array<PublicServiceCall | null>) {
 	for (const call of calls) {
 		if (!call?.timing) continue;
@@ -92,27 +116,31 @@ function recordSpans(event: RequestEvent, calls: Array<PublicServiceCall | null>
 export const actions: Actions = {
 	check: async (event) => {
 		const admitted = await admit(event);
-		if ('refused' in admitted) return admitted.refused;
-		const check = await checkTarget(admitted.resolved, admitted.deps);
+		if ('rejected' in admitted) return admitted.rejected;
+		const patience = pick<CheckPatience>(admitted.form, 'patience', CHECK_PATIENCE) ?? 'normal';
+		// A wake check gets its own wider deadline: the request's 10 s budget cannot hold a
+		// cold start, and observing one is the point.
+		const deps = patience === 'wake' ? { deadline: startDeadline(WAKE_CEILING_MS) } : admitted.deps;
+		const check = await checkTarget(admitted.resolved, deps);
 		recordSpans(event, [check.live, check.status]);
-		return { kind: 'check' as const, check };
+		return { kind: 'check' as const, patience, check };
 	},
 
 	evaluate: async (event) => {
 		const admitted = await admit(event);
-		if ('refused' in admitted) return admitted.refused;
-		const scenario = pick<EvaluationScenarioId>(admitted.form, 'scenario', EVALUATION_SCENARIO_IDS);
-		if (!scenario) return fail(400, { refused: 'invalid' as const });
-		const call = await evaluateScenario(admitted.resolved, scenario, admitted.deps);
+		if ('rejected' in admitted) return admitted.rejected;
+		const preset = pick<EvaluationPresetId>(admitted.form, 'preset', EVALUATION_PRESET_IDS);
+		if (!preset) return fail(400, { rejected: 'invalid' as LabRejection });
+		const call = await evaluatePreset(admitted.resolved, preset, admitted.deps);
 		recordSpans(event, [call]);
-		return { kind: 'evaluate' as const, scenario, call };
+		return { kind: 'evaluate' as const, preset, call };
 	},
 
 	drill: async (event) => {
 		const admitted = await admit(event);
-		if ('refused' in admitted) return admitted.refused;
+		if ('rejected' in admitted) return admitted.rejected;
 		const drill = pick<ServiceDrillId>(admitted.form, 'drill', SERVICE_DRILL_IDS);
-		if (!drill) return fail(400, { refused: 'invalid' as const });
+		if (!drill) return fail(400, { rejected: 'invalid' as LabRejection });
 		const call = await runDrill(admitted.resolved, drill, admitted.deps);
 		recordSpans(event, [call]);
 		return { kind: 'drill' as const, drill, call };

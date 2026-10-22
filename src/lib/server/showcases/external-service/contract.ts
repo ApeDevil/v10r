@@ -146,7 +146,43 @@ function discriminant(spec: JsonSchema, node: JsonSchema): string {
 	return '?';
 }
 
-const BOUNDS = ['minimum', 'maximum', 'minItems', 'maxItems'] as const;
+/** Constraint keywords compared value-for-value between contract and mirror. */
+const BOUNDS = [
+	'minimum',
+	'maximum',
+	'exclusiveMinimum',
+	'exclusiveMaximum',
+	'multipleOf',
+	'minItems',
+	'maxItems',
+	'uniqueItems',
+	'minLength',
+	'maxLength',
+	'pattern',
+] as const;
+
+/**
+ * Every keyword the comparison understands. A contract node using any other keyword is
+ * reported as drift instead of passing unexamined: a check that silently skips what it
+ * cannot read would let exactly the novel breaking change through.
+ */
+const MODELLED_KEYWORDS = new Set<string>([
+	...BOUNDS,
+	'$ref',
+	'type',
+	'format',
+	'description',
+	'title',
+	'properties',
+	'required',
+	'additionalProperties',
+	'items',
+	'enum',
+	'const',
+	'oneOf',
+	'anyOf',
+	'$schema',
+]);
 
 function compare(
 	spec: JsonSchema,
@@ -158,6 +194,12 @@ function compare(
 ): void {
 	const want = resolve(spec, expected);
 	const got = actual;
+	for (const keyword of Object.keys(want)) {
+		if (!MODELLED_KEYWORDS.has(keyword))
+			drift.push(`${path}: contract keyword "${keyword}" is not checked by contractDrift`);
+	}
+	if (Array.isArray(want.type))
+		drift.push(`${path}: contract type ${JSON.stringify(want.type)} (nullable?) has no mirror rule`);
 
 	const wantVariants = (want.oneOf ?? want.anyOf) as JsonSchema[] | undefined;
 	const gotVariants = (got.oneOf ?? got.anyOf) as JsonSchema[] | undefined;

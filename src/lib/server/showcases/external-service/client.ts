@@ -1,5 +1,5 @@
 /**
- * The typed adapter to the external service — the one function every caller goes through.
+ * The service client — the one function every caller of the external service goes through.
  *
  * Framework-free: it takes a resolved target, an operation, an input and a deadline, and
  * returns a value. It never throws for anything the network or the service can do, so a
@@ -8,22 +8,30 @@
  *
  * - **Bounded** — every attempt runs inside the caller's `Deadline` (`http/deadline.ts`),
  *   and the response body is read with a byte budget (`http/body.ts`).
- * - **Validated both ways** — the request against the contract mirror before it is sent,
- *   the response before it is returned (`contract.ts`).
+ * - **Validated both ways** — the request against the contract mirror before it is sent
+ *   (when the operation has a request schema), the response before it is returned
+ *   (`contract.ts`).
  * - **Classified** — exactly one `ServiceFailureKind` per failure, from the status code or
  *   the transport error, never from message text.
  * - **Retried only when safe** — once, only for operations declared idempotent, and only
- *   when nothing answered (`unreachable`): a request that reached the service and timed
- *   out may have been processed, and a retry is not free on a waking host.
+ *   when no response arrived (`unreachable`). Once a response head has arrived nothing is
+ *   retried: the service has the request. A timeout is never retried either — the request
+ *   may have been processed, and on a waking host a retry only waits for the same cold start.
+ * - **Least privilege** — the credential is sent only on operations that need it.
  * - **Correlated and timed** — `x-request-id` is sent (the service echoes and logs it),
  *   the round trip is measured, and the service's own `Server-Timing: app` is read so the
  *   caller can separate network cost from processing cost.
  * - **Quiet about secrets** — the credential is a header and nothing else: never logged,
  *   never in a result, never in a message. The origin is not logged either.
+ *
+ * Deliberately absent: options to override the credential or skip validation. A drill that
+ * needs either builds a different target or operation (`lab.ts`) — the reference client
+ * stays the thing to copy.
  */
 import * as v from 'valibot';
 import { readTextBounded } from '$lib/server/http/body';
 import type { Deadline } from '$lib/server/http/deadline';
+import { readServerTimingMetric } from '$lib/server/http/request-timing';
 import { retryWithin } from '$lib/server/resilience';
 import type {
 	OrderEvaluation,
@@ -54,6 +62,8 @@ export interface ServiceOperation<Input, Output> {
 	name: ServiceOperationName;
 	method: 'GET' | 'POST';
 	path: string;
+	/** Sends the target's bearer credential. Public operations do not get it. */
+	authenticated: boolean;
 	/** Safe to repeat: the same request has the same effect however often it arrives. */
 	idempotent: boolean;
 	requestSchema: v.GenericSchema<Input> | null;
@@ -66,6 +76,7 @@ export const SERVICE_OPERATIONS = {
 		name: 'live',
 		method: 'GET',
 		path: '/health/live',
+		authenticated: false,
 		idempotent: true,
 		requestSchema: null,
 		responseSchema: LiveResponseSchema,
@@ -74,6 +85,7 @@ export const SERVICE_OPERATIONS = {
 		name: 'status',
 		method: 'GET',
 		path: '/v1/status',
+		authenticated: true,
 		idempotent: true,
 		requestSchema: null,
 		responseSchema: StatusResponseSchema,
@@ -82,6 +94,7 @@ export const SERVICE_OPERATIONS = {
 		name: 'evaluate',
 		method: 'POST',
 		path: '/v1/evaluate',
+		authenticated: true,
 		// A pure function of its input — the contract says so (`openapi.json`), so it is
 		// declared idempotent even though it is a POST.
 		idempotent: true,
@@ -95,7 +108,7 @@ export type ServiceCall<T> =
 	| {
 			ok: false;
 			kind: ServiceFailureKind;
-			/** `null` when nothing answered, or the adapter refused to send. */
+			/** `null` when nothing answered, or the client refused to send. */
 			httpStatus: number | null;
 			message: string;
 			requestId: string;
@@ -105,18 +118,18 @@ export type ServiceCall<T> =
 export interface ServiceCallOptions {
 	deadline: Deadline;
 	fetch?: typeof fetch;
-	/** Correlation id to send; minted when absent. */
+	/**
+	 * Correlation id to send. Used only when it satisfies the service's own rule (1–64 of
+	 * `[A-Za-z0-9._-]`) — otherwise the service would replace it and the id in our result
+	 * would match no service log line; a fresh UUID is minted instead.
+	 */
 	requestId?: string;
-	/** Drills only: send this credential instead of the target's. */
-	token?: string;
-	/** Drills only: `false` sends the input without validating it first. */
-	validateRequest?: boolean;
 }
 
-/** Nothing answered: refused, reset, DNS. The one failure a retry can fix. */
+/** No response arrived: refused, reset before a response, DNS. The one failure a retry can fix. */
 class ServiceUnreachableError extends Error {
 	constructor() {
-		super('no answer from the service');
+		super('no response from the service');
 		this.name = 'ServiceUnreachableError';
 	}
 }
@@ -131,30 +144,19 @@ const FAILURE_MESSAGES: Record<ServiceFailureKind, string> = {
 	malformed_response: 'The answer did not match the contract.',
 };
 
+/** The error statuses this client tells apart; every other non-2xx is `service_error`. */
+export const CLASSIFIED_ERROR_STATUSES = {
+	400: 'invalid_request',
+	401: 'unauthorized',
+	408: 'timed_out',
+	413: 'too_large',
+} as const;
+
 function statusKind(status: number): ServiceFailureKind {
-	if (status === 401) return 'unauthorized';
-	if (status === 400) return 'invalid_request';
-	if (status === 413) return 'too_large';
-	if (status === 408) return 'timed_out';
-	return 'service_error';
+	return (CLASSIFIED_ERROR_STATUSES as Record<number, ServiceFailureKind>)[status] ?? 'service_error';
 }
 
-/** `app;dur=1.234` → 1.234. Reads only the service's own `app` metric. */
-export function parseServiceTiming(header: string | null): number | null {
-	if (!header) return null;
-	for (const metric of header.split(',')) {
-		const [name, ...params] = metric.split(';').map((part) => part.trim());
-		if (name !== 'app') continue;
-		for (const param of params) {
-			const [key, value] = param.split('=');
-			if (key === 'dur') {
-				const ms = Number(value);
-				return Number.isFinite(ms) && ms >= 0 ? ms : null;
-			}
-		}
-	}
-	return null;
-}
+const REQUEST_ID_RULE = /^[A-Za-z0-9._-]{1,64}$/;
 
 const round = (ms: number) => Math.round(ms * 100) / 100;
 
@@ -165,7 +167,8 @@ export async function callService<Input, Output>(
 	options: ServiceCallOptions,
 ): Promise<ServiceCall<Output>> {
 	const started = performance.now();
-	const requestId = options.requestId ?? crypto.randomUUID();
+	const requestId =
+		options.requestId && REQUEST_ID_RULE.test(options.requestId) ? options.requestId : crypto.randomUUID();
 	const fetchImpl = options.fetch ?? fetch;
 	let attempts = 0;
 	let roundTripMs: number | null = null;
@@ -177,7 +180,7 @@ export async function callService<Input, Output>(
 			totalMs: round(totalMs),
 			roundTripMs: roundTripMs === null ? null : round(roundTripMs),
 			serviceMs: serviceMs === null ? null : round(serviceMs),
-			adapterMs: roundTripMs === null ? null : round(Math.max(0, totalMs - roundTripMs)),
+			clientMs: roundTripMs === null ? null : round(Math.max(0, totalMs - roundTripMs)),
 			attempts,
 		};
 	};
@@ -201,24 +204,21 @@ export async function callService<Input, Output>(
 
 	let body: string | undefined;
 	if (operation.method === 'POST') {
-		if (options.validateRequest !== false && operation.requestSchema) {
+		if (operation.requestSchema) {
 			const parsed = v.safeParse(operation.requestSchema, input);
 			if (!parsed.success) {
 				const where = v.getDotPath(parsed.issues[0]) ?? 'request';
-				return fail('invalid_request', null, `Refused before sending: ${where} — ${parsed.issues[0].message}`);
+				return fail('invalid_request', null, `Rejected before sending: ${where} — ${parsed.issues[0].message}`);
 			}
 		}
 		body = JSON.stringify(input);
 	}
 
-	const headers: Record<string, string> = {
-		accept: 'application/json',
-		authorization: `Bearer ${options.token ?? target.token}`,
-		'x-request-id': requestId,
-	};
+	const headers: Record<string, string> = { accept: 'application/json', 'x-request-id': requestId };
+	if (operation.authenticated) headers.authorization = `Bearer ${target.token}`;
 	if (body !== undefined) headers['content-type'] = 'application/json';
 
-	let answered: { response: Response; text: string | null };
+	let answered: { response: Response; text: string | null; cut: boolean };
 	try {
 		answered = await retryWithin(
 			options.deadline,
@@ -242,21 +242,21 @@ export async function callService<Input, Output>(
 						redirect: 'manual',
 					});
 				} catch (error) {
-					// An abort is the deadline speaking; anything else is "nobody answered".
+					// An abort is the deadline speaking; anything else is "no response".
 					if (signal.aborted) throw error;
 					throw new ServiceUnreachableError();
 				}
-				let read: Awaited<ReturnType<typeof readTextBounded>>;
+				// From here the service has the request: nothing below is retryable.
+				let read: Awaited<ReturnType<typeof readTextBounded>> | null;
 				try {
 					read = await readTextBounded(response, MAX_RESPONSE_BYTES);
 				} catch (error) {
-					// The connection died mid-body: as unanswered as a refused connect.
 					if (signal.aborted) throw error;
-					throw new ServiceUnreachableError();
+					read = null; // the connection died mid-body
 				}
 				roundTripMs = performance.now() - attemptStarted;
-				serviceMs = parseServiceTiming(response.headers.get('server-timing'));
-				return { response, text: read.ok ? read.value : null };
+				serviceMs = readServerTimingMetric(response.headers.get('server-timing'), 'app');
+				return { response, text: read?.ok ? read.value : null, cut: read === null };
 			},
 			{ retryable: (error) => error instanceof ServiceUnreachableError },
 		);
@@ -264,30 +264,27 @@ export async function callService<Input, Output>(
 		return fail(error instanceof ServiceUnreachableError ? 'unreachable' : 'timed_out', null);
 	}
 
-	const { response, text } = answered;
-	if (text === null) {
-		return fail('malformed_response', response.status, `The answer exceeded ${MAX_RESPONSE_BYTES} bytes.`);
-	}
-
-	let json: unknown;
-	try {
-		json = JSON.parse(text);
-	} catch {
-		json = undefined;
-	}
+	const { response, text, cut } = answered;
 
 	if (!response.ok) {
+		// The status decides, whatever the body did: an oversized or cut-off error page is
+		// still that error.
 		const kind = statusKind(response.status);
-		const envelope = v.safeParse(ErrorEnvelopeSchema, json);
+		let message: string | undefined;
 		// The service's validation message names the offending field — worth passing on.
 		// Every other kind keeps its fixed message: an error body is not trusted prose.
-		const message =
-			kind === 'invalid_request' && envelope.success
-				? envelope.output.error.message.slice(0, MAX_SERVICE_MESSAGE_LENGTH)
-				: undefined;
+		if (kind === 'invalid_request' && text !== null) {
+			const envelope = v.safeParse(ErrorEnvelopeSchema, parseJson(text));
+			if (envelope.success) message = envelope.output.error.message.slice(0, MAX_SERVICE_MESSAGE_LENGTH);
+		}
 		return fail(kind, response.status, message);
 	}
 
+	if (cut) return fail('malformed_response', response.status, 'The answer was cut off.');
+	if (text === null) {
+		return fail('malformed_response', response.status, `The answer exceeded ${MAX_RESPONSE_BYTES} bytes.`);
+	}
+	const json = parseJson(text);
 	if (json === undefined) return fail('malformed_response', response.status, 'The answer was not JSON.');
 	const parsed = v.safeParse(operation.responseSchema, json);
 	if (!parsed.success) {
@@ -296,4 +293,12 @@ export async function callService<Input, Output>(
 	}
 
 	return { ok: true, data: parsed.output, httpStatus: response.status, requestId, timing: timing() };
+}
+
+function parseJson(text: string): unknown {
+	try {
+		return JSON.parse(text);
+	} catch {
+		return undefined;
+	}
 }

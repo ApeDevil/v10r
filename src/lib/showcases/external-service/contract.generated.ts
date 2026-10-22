@@ -99,7 +99,7 @@ export interface components {
             paidCents: number;
             /** Format: int64 */
             refundedCents: number;
-            steps: components["schemas"]["Step"][];
+            steps: components["schemas"]["OrderTransition"][];
         } | {
             /** @enum {string} */
             outcome: "refused";
@@ -107,8 +107,8 @@ export interface components {
             paidCents: number;
             /** Format: int64 */
             refundedCents: number;
-            refusal: components["schemas"]["Refusal"];
-            steps: components["schemas"]["Step"][];
+            refusal: components["schemas"]["RuleRefusal"];
+            steps: components["schemas"]["OrderTransition"][];
         };
         /** @description One order event. `pay` and `refund` carry an amount; the others carry nothing. */
         EventInput: {
@@ -143,8 +143,18 @@ export interface components {
         Operation: "evaluate";
         /** @enum {string} */
         OrderState: "placed" | "partially_paid" | "paid" | "shipped" | "delivered" | "cancelled" | "refunded";
+        /** @description One applied event. */
+        OrderTransition: {
+            event: components["schemas"]["EventType"];
+            from: components["schemas"]["OrderState"];
+            /** Format: int32 */
+            index: number;
+            to: components["schemas"]["OrderState"];
+        };
+        /** @enum {string} */
+        RefusalReason: "not_allowed_in_state" | "payment_incomplete" | "exceeds_balance";
         /** @description The first event a rule refused; evaluation stops there. */
-        Refusal: {
+        RuleRefusal: {
             event: components["schemas"]["EventType"];
             /** Format: int32 */
             index: number;
@@ -152,8 +162,6 @@ export interface components {
             /** @description The state the order was in when the event was refused. */
             state: components["schemas"]["OrderState"];
         };
-        /** @enum {string} */
-        RefusalReason: "not_allowed_in_state" | "payment_incomplete" | "exceeds_balance";
         ServiceLimits: {
             /** Format: int64 */
             maxAmountCents: number;
@@ -176,14 +184,6 @@ export interface components {
              *     round trip means this request woke the service (a cold start).
              */
             uptimeMs: number;
-        };
-        /** @description One applied event. */
-        Step: {
-            event: components["schemas"]["EventType"];
-            from: components["schemas"]["OrderState"];
-            /** Format: int32 */
-            index: number;
-            to: components["schemas"]["OrderState"];
         };
     };
     responses: never;

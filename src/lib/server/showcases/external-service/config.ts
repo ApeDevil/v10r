@@ -11,6 +11,13 @@
  */
 export const CALL_CEILING_MS = 8_000;
 
+/**
+ * Ceiling for a `wake` check — long enough for a free host's cold start (~1 min on Render
+ * Free), far inside a Vercel function's 300 s. The route raises its own `maxDuration` to
+ * match; only the check action uses it, and only when the visitor asks to wait.
+ */
+export const WAKE_CEILING_MS = 75_000;
+
 /** Kept back from the call budget for rendering the result. */
 export const RENDER_RESERVE_MS = 500;
 
@@ -30,7 +37,7 @@ export const MAX_RESPONSE_BYTES = 64 * 1024;
 export const MIN_TOKEN_LENGTH = 32;
 
 /**
- * Retry policy for idempotent operations, applied only when nothing answered at all
+ * Retry policy for idempotent operations, applied only when no response arrived
  * (`unreachable`). A timeout is not retried — on a waking host it would only spend the
  * rest of the budget waiting for the same cold start.
  */
@@ -41,7 +48,14 @@ export const RETRY_MAX_DELAY_MS = 200;
 /** Longest service-supplied message passed on to the page. */
 export const MAX_SERVICE_MESSAGE_LENGTH = 240;
 
-/** Lab actions per IP. Each spends one or two outbound calls. */
+/**
+ * Lab actions per IP. One action is at most two operations × two attempts = four outbound
+ * calls, so this bounds one visitor to ~80 calls a minute.
+ */
 export const RATE_LIMIT_PREFIX = 'rl:external-service';
 export const RATE_LIMIT_MAX = 20;
 export const RATE_LIMIT_WINDOW = '60 s' as const;
+
+/** Lab actions across ALL visitors — the ceiling a botnet of addresses cannot lift. */
+export const GLOBAL_RATE_LIMIT_PREFIX = 'rl:external-service:all';
+export const GLOBAL_RATE_LIMIT_MAX = 200;

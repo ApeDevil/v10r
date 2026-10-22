@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_SPANS, type RequestTiming, startRequestTiming, toServerTimingHeader } from './request-timing';
+import {
+	MAX_SPANS,
+	type RequestTiming,
+	readServerTimingMetric,
+	startRequestTiming,
+	toServerTimingHeader,
+} from './request-timing';
 
 /** Spans record real elapsed time, so a test that asserts a number needs a real gap. */
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -105,5 +111,25 @@ describe('toServerTimingHeader', () => {
 		// A raw name would inject a delimiter and corrupt every field after it.
 		expect(header).not.toContain('"');
 		expect(header).toContain('pg__select__user_;dur=1');
+	});
+});
+
+describe('readServerTimingMetric', () => {
+	it.each([
+		['app;dur=1.5', 1.5],
+		['db;dur=9, app;desc="handler";dur=0.042', 0.042],
+		['total;dur=3', null],
+		['app;dur=-1', null],
+		['app;dur=abc', null],
+		[null, null],
+	])('%s → %s', (header, expected) => {
+		expect(readServerTimingMetric(header, 'app')).toBe(expected);
+	});
+
+	it('reads back what toServerTimingHeader writes', () => {
+		const timing = startRequestTiming();
+		timing.record('db', 4.25);
+		const header = toServerTimingHeader(timing, { detail: true });
+		expect(readServerTimingMetric(header, 'db')).toBe(4.3);
 	});
 });

@@ -4,8 +4,8 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { startDeadline } from '$lib/server/http/deadline';
-import { checkTarget, evaluateScenario, runDrill } from './lab';
-import { UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './scenarios';
+import { checkTarget, evaluatePreset, runDrill } from './lab';
+import { UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './presets';
 import type { ResolvedServiceTarget } from './targets';
 
 const TOKEN = 'lab-test-credential-0123456789abcdef0123';
@@ -45,7 +45,7 @@ describe('lab — targets that cannot be called', () => {
 	] as const)('sends nothing for %o', async (resolved, outcome) => {
 		const fetch = scriptedFetch();
 		const check = await checkTarget(resolved, deps(fetch));
-		const evaluation = await evaluateScenario(resolved, 'fulfilled', deps(fetch));
+		const evaluation = await evaluatePreset(resolved, 'fulfilled', deps(fetch));
 		const drill = await runDrill(resolved, 'credential', deps(fetch));
 		expect(fetch).not.toHaveBeenCalled();
 		expect(check).toMatchObject({ live: { outcome, requestId: null, timing: null }, status: null });
@@ -97,12 +97,29 @@ describe('lab — drills change one thing on our side', () => {
 });
 
 describe('lab — projection', () => {
-	it('gives the page no origin and no credential', async () => {
-		const fetch = scriptedFetch(respond(200, { status: 'live' }), respond(200, STATUS));
-		const check = await checkTarget(configured, deps(fetch));
+	it.each([
+		['success', () => scriptedFetch(respond(200, { status: 'live' }), respond(200, STATUS))],
+		[
+			'refused credential',
+			() => scriptedFetch(respond(200, { status: 'live' }), respond(401, { error: { code: 'x', message: TOKEN } })),
+		],
+		['nothing answered', () => scriptedFetch(new TypeError(`connect ECONNREFUSED ${ORIGIN}`), new TypeError(ORIGIN))],
+	])('gives the page no origin and no credential — %s', async (_, fetch) => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const check = await checkTarget(configured, deps(fetch()));
 		const serialized = JSON.stringify(check);
 		expect(serialized).not.toContain(TOKEN);
 		expect(serialized).not.toContain(ORIGIN);
 		expect(serialized).not.toContain('internal.example');
+	});
+
+	it('every preset sends a request the contract accepts', async () => {
+		for (const preset of ['fulfilled', 'partial_refund', 'ship_unpaid', 'overpaid'] as const) {
+			const fetch = scriptedFetch(
+				respond(200, { outcome: 'accepted', steps: [], finalState: 'paid', paidCents: 0, refundedCents: 0 }),
+			);
+			expect((await evaluatePreset(configured, preset, deps(fetch))).outcome).toBe('ok');
+			expect(fetch).toHaveBeenCalledTimes(1);
+		}
 	});
 });

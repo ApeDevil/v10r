@@ -6,16 +6,19 @@ import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Select, Spinner } from '$lib/components/primitives';
 import { CallFigures, CallHistory, EvaluationSteps, OutcomeBadge } from '$lib/components/showcases/external-service';
 import * as m from '$lib/paraglide/messages';
+import { startedDuringCheck } from '$lib/showcases/external-service/cold-start';
 import {
-	EVALUATION_SCENARIO_IDS,
-	type EvaluationScenarioId,
+	type CheckPatience,
+	EVALUATION_PRESET_IDS,
+	type EvaluationPresetId,
+	type LabRejection,
 	type OrderEvaluation,
 	type PublicServiceCall,
 	type PublicTargetCheck,
 	SERVICE_DRILL_IDS,
 	type ServiceDrillId,
 	type ServiceTargetId,
-	startedDuringCheck,
+	type ServiceTargetProblem,
 } from '$lib/showcases/external-service/types';
 import { getShowcaseCard } from '../showcases';
 
@@ -30,18 +33,19 @@ const TARGET_HINTS: Record<ServiceTargetId, () => string> = {
 	local: m.showcase_external_service_target_local_hint,
 	remote: m.showcase_external_service_target_remote_hint,
 };
-const PROBLEMS = {
+const PROBLEMS: Record<ServiceTargetProblem, () => string> = {
 	incomplete: m.showcase_external_service_problem_incomplete,
 	invalid_url: m.showcase_external_service_problem_invalid_url,
 	not_an_origin: m.showcase_external_service_problem_not_an_origin,
 	insecure_url: m.showcase_external_service_problem_insecure_url,
 	short_token: m.showcase_external_service_problem_short_token,
-} as const;
-const SCENARIOS: Record<EvaluationScenarioId, () => string> = {
-	fulfilled: m.showcase_external_service_scenario_fulfilled,
-	partial_refund: m.showcase_external_service_scenario_partial_refund,
-	ship_unpaid: m.showcase_external_service_scenario_ship_unpaid,
-	overpaid: m.showcase_external_service_scenario_overpaid,
+	malformed_token: m.showcase_external_service_problem_malformed_token,
+};
+const PRESETS: Record<EvaluationPresetId, () => string> = {
+	fulfilled: m.showcase_external_service_preset_fulfilled,
+	partial_refund: m.showcase_external_service_preset_partial_refund,
+	ship_unpaid: m.showcase_external_service_preset_ship_unpaid,
+	overpaid: m.showcase_external_service_preset_overpaid,
 };
 const DRILLS: Record<ServiceDrillId, { label: () => string; hint: () => string }> = {
 	deadline: {
@@ -57,41 +61,40 @@ const DRILLS: Record<ServiceDrillId, { label: () => string; hint: () => string }
 		hint: m.showcase_external_service_drill_unvalidated_hint,
 	},
 };
-const REFUSALS = {
-	rate_limited: m.showcase_external_service_refused_rate_limited,
-	rejected: m.showcase_external_service_refused_rejected,
-	invalid: m.showcase_external_service_refused_invalid,
-} as const;
+const REJECTIONS: Record<LabRejection, () => string> = {
+	rate_limited: m.showcase_external_service_rejected_rate_limited,
+	rejected: m.showcase_external_service_rejected_rejected,
+	invalid: m.showcase_external_service_rejected_invalid,
+};
 
 const configuredTargets = $derived(data.targets.filter((t) => t.setup === 'configured').map((t) => t.id));
 const targetOptions = $derived(data.targets.map((t) => ({ value: t.id, label: TARGET_LABELS[t.id]() })));
-const scenarioOptions = EVALUATION_SCENARIO_IDS.map((id) => ({ value: id, label: SCENARIOS[id]() }));
+const presetOptions = EVALUATION_PRESET_IDS.map((id) => ({ value: id, label: PRESETS[id]() }));
 
 // The latest result per section: what an enhanced submit produced, falling back to what
 // the server rendered for a no-JS submit (`form`). Enhanced submits never touch `form`,
 // so one section's call never erases another's.
-type Refusal = keyof typeof REFUSALS;
 const rendered = $derived(form && 'kind' in form ? form : null);
 let enhancedChecks = $state<Partial<Record<ServiceTargetId, PublicTargetCheck>>>({});
-let enhancedEvaluation = $state<{ scenario: EvaluationScenarioId; call: PublicServiceCall<OrderEvaluation> } | null>(
-	null,
-);
+let enhancedEvaluation = $state<{ preset: EvaluationPresetId; call: PublicServiceCall<OrderEvaluation> } | null>(null);
 let enhancedDrill = $state<{ drill: ServiceDrillId; call: PublicServiceCall } | null>(null);
-let enhancedRefusal = $state<Refusal | null>(null);
-let refusalDismissed = $state(false);
+let enhancedRejection = $state<LabRejection | null>(null);
+let rejectionDismissed = $state(false);
 
 const checks = $derived<Partial<Record<ServiceTargetId, PublicTargetCheck>>>({
 	...(rendered?.kind === 'check' ? { [rendered.check.live.target]: rendered.check } : {}),
 	...enhancedChecks,
 });
 const evaluation = $derived(
-	enhancedEvaluation ?? (rendered?.kind === 'evaluate' ? { scenario: rendered.scenario, call: rendered.call } : null),
+	enhancedEvaluation ?? (rendered?.kind === 'evaluate' ? { preset: rendered.preset, call: rendered.call } : null),
 );
 const drill = $derived(
 	enhancedDrill ?? (rendered?.kind === 'drill' ? { drill: rendered.drill, call: rendered.call } : null),
 );
-const refusal = $derived<Refusal | null>(
-	refusalDismissed ? null : (enhancedRefusal ?? (form && 'refused' in form ? (form.refused as Refusal) : null)),
+const rejection = $derived<LabRejection | null>(
+	rejectionDismissed
+		? null
+		: (enhancedRejection ?? (form && 'rejected' in form ? (form.rejected as LabRejection) : null)),
 );
 
 /** This browser session's calls, newest first. Measured, never stored, never invented. */
@@ -99,7 +102,7 @@ let history = $state<PublicServiceCall[]>([]);
 let pending = $state<string | null>(null);
 
 let evaluateTarget = $state<string>('local');
-let evaluateScenario = $state<string>('fulfilled');
+let evaluatePreset = $state<string>('fulfilled');
 let drillTarget = $state<string>('local');
 
 $effect.pre(() => {
@@ -117,12 +120,12 @@ function remember(...calls: Array<PublicServiceCall | null>) {
 function submit(key: string): SubmitFunction {
 	return () => {
 		pending = key;
-		enhancedRefusal = null;
-		refusalDismissed = false;
+		enhancedRejection = null;
+		rejectionDismissed = false;
 		return async ({ result }) => {
 			pending = null;
 			if (result.type === 'failure') {
-				enhancedRefusal = (result.data?.refused as Refusal | undefined) ?? 'invalid';
+				enhancedRejection = (result.data?.rejected as LabRejection | undefined) ?? 'invalid';
 				return;
 			}
 			if (result.type !== 'success' || !result.data) return;
@@ -132,7 +135,7 @@ function submit(key: string): SubmitFunction {
 				enhancedChecks = { ...enhancedChecks, [outcome.check.live.target]: outcome.check };
 				remember(outcome.check.live, outcome.check.status);
 			} else if (outcome.kind === 'evaluate') {
-				enhancedEvaluation = { scenario: outcome.scenario, call: outcome.call };
+				enhancedEvaluation = { preset: outcome.preset, call: outcome.call };
 				remember(outcome.call);
 			} else if (outcome.kind === 'drill') {
 				enhancedDrill = { drill: outcome.drill, call: outcome.call };
@@ -146,6 +149,8 @@ function coldStart(check: PublicTargetCheck): boolean | null {
 	if (!check.status?.data || !check.live.timing || !check.status.timing) return null;
 	return startedDuringCheck(check.status.data.uptimeMs, check.live.timing.totalMs + check.status.timing.totalMs);
 }
+
+const PATIENCE: CheckPatience[] = ['normal', 'wake'];
 
 const sections = [
 	{ id: 'es-targets', label: m.showcase_external_service_section_targets() },
@@ -175,8 +180,8 @@ const sections = [
 			<code>order-rules</code> <span class="path-note">({m.showcase_external_service_path_note()})</span>
 		</p>
 
-		{#if refusal}
-			<Alert variant="warning" description={REFUSALS[refusal]()} closable onclose={() => (refusalDismissed = true)} />
+		{#if rejection}
+			<Alert variant="warning" description={REJECTIONS[rejection]()} closable onclose={() => (rejectionDismissed = true)} />
 		{/if}
 
 		<!-- Targets -->
@@ -205,15 +210,33 @@ const sections = [
 								<p class="small">{PROBLEMS[target.problem]()}</p>
 							{/if}
 
-							<form method="POST" action="?/check" use:enhance={submit(`check-${target.id}`)}>
-								<input type="hidden" name="target" value={target.id} />
-								{@render guard()}
-								<Button type="submit" variant="outline" size="sm" disabled={pending !== null}>
-									{#if pending === `check-${target.id}`}<Spinner size="xs" class="mr-2" />{/if}
-									<span class="i-lucide-activity h-4 w-4 mr-1"></span>
-									{m.showcase_external_service_action_check()}
-								</Button>
-							</form>
+							<Cluster gap="2">
+								{#each PATIENCE as patience (patience)}
+									<form method="POST" action="?/check" use:enhance={submit(`check-${target.id}-${patience}`)}>
+										<input type="hidden" name="target" value={target.id} />
+										<input type="hidden" name="patience" value={patience} />
+										{@render guard()}
+										<Button
+											type="submit"
+											variant={patience === 'normal' ? 'outline' : 'ghost'}
+											size="sm"
+											disabled={pending !== null}
+										>
+											{#if pending === `check-${target.id}-${patience}`}<Spinner size="xs" class="mr-2" />{/if}
+											{#if patience === 'normal'}
+												<span class="i-lucide-activity h-4 w-4 mr-1"></span>
+												{m.showcase_external_service_action_check()}
+											{:else}
+												<span class="i-lucide-alarm-clock h-4 w-4 mr-1"></span>
+												{m.showcase_external_service_action_wake()}
+											{/if}
+										</Button>
+									</form>
+								{/each}
+							</Cluster>
+							{#if pending === `check-${target.id}-wake`}
+								<p class="small muted">{m.showcase_external_service_wake_pending()}</p>
+							{/if}
 
 							{#if check}
 								<h4 class="subhead">{m.showcase_external_service_label_liveness()}</h4>
@@ -265,11 +288,11 @@ const sections = [
 						<Select options={targetOptions} bind:value={evaluateTarget} />
 					</label>
 					<label class="field">
-						<span class="small">{m.showcase_external_service_field_scenario()}</span>
-						<Select options={scenarioOptions} bind:value={evaluateScenario} />
+						<span class="small">{m.showcase_external_service_field_preset()}</span>
+						<Select options={presetOptions} bind:value={evaluatePreset} />
 					</label>
 					<input type="hidden" name="target" value={evaluateTarget} />
-					<input type="hidden" name="scenario" value={evaluateScenario} />
+					<input type="hidden" name="preset" value={evaluatePreset} />
 					{@render guard()}
 					<Button type="submit" disabled={pending !== null}>
 						{#if pending === 'evaluate'}<Spinner size="xs" class="mr-2" />{/if}
@@ -279,7 +302,7 @@ const sections = [
 
 				{#if evaluation}
 					<p class="small muted">
-						{TARGET_LABELS[evaluation.call.target]()} · {SCENARIOS[evaluation.scenario]()}
+						{TARGET_LABELS[evaluation.call.target]()} · {PRESETS[evaluation.preset]()}
 					</p>
 					{#if evaluation.call.data}
 						<EvaluationSteps evaluation={evaluation.call.data} />

@@ -6,7 +6,7 @@
  */
 import type { Deadline } from '$lib/server/http/deadline';
 import type {
-	EvaluationScenarioId,
+	EvaluationPresetId,
 	OrderEvaluation,
 	PublicServiceCall,
 	PublicTargetCheck,
@@ -16,7 +16,7 @@ import type {
 } from '$lib/showcases/external-service/types';
 import { callService, SERVICE_OPERATIONS, type ServiceCall } from './client';
 import { DRILL_DEADLINE_MS } from './config';
-import { EVALUATION_SCENARIOS, UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './scenarios';
+import { EVALUATION_PRESETS, UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './presets';
 import type { ResolvedServiceTarget } from './targets';
 
 export interface LabCallDeps {
@@ -47,7 +47,7 @@ export function toPublicServiceCall<T>(
  * A call that was never made, because the target is not usable. No message: the page
  * already states the target's setup — and the rule a misconfigured one broke — localized.
  */
-function setupRefusal<T>(resolved: ResolvedServiceTarget, operation: ServiceOperationName): PublicServiceCall<T> {
+function unattemptedCall<T>(resolved: ResolvedServiceTarget, operation: ServiceOperationName): PublicServiceCall<T> {
 	return {
 		target: resolved.id,
 		operation,
@@ -69,7 +69,7 @@ function setupRefusal<T>(resolved: ResolvedServiceTarget, operation: ServiceOper
  */
 export async function checkTarget(resolved: ResolvedServiceTarget, deps: LabCallDeps): Promise<PublicTargetCheck> {
 	if (resolved.setup !== 'configured') {
-		return { live: setupRefusal(resolved, 'live'), status: null };
+		return { live: unattemptedCall(resolved, 'live'), status: null };
 	}
 	const { target } = resolved;
 	const live = toPublicServiceCall(
@@ -86,30 +86,37 @@ export async function checkTarget(resolved: ResolvedServiceTarget, deps: LabCall
 	return { live, status };
 }
 
-export async function evaluateScenario(
+export async function evaluatePreset(
 	resolved: ResolvedServiceTarget,
-	scenario: EvaluationScenarioId,
+	preset: EvaluationPresetId,
 	deps: LabCallDeps,
 ): Promise<PublicServiceCall<OrderEvaluation>> {
-	if (resolved.setup !== 'configured') return setupRefusal(resolved, 'evaluate');
-	const call = await callService(resolved.target, SERVICE_OPERATIONS.evaluate, EVALUATION_SCENARIOS[scenario], deps);
+	if (resolved.setup !== 'configured') return unattemptedCall(resolved, 'evaluate');
+	const call = await callService(
+		resolved.target,
+		SERVICE_OPERATIONS.evaluate,
+		EVALUATION_PRESETS[preset].request,
+		deps,
+	);
 	return toPublicServiceCall(resolved.id, 'evaluate', call);
 }
 
 /**
  * A deliberate failure, made real: one thing changes on the caller's side and the
  * service's genuine response to it is reported. There is nothing to switch on in the
- * service — it has no fault-injection controls, on any host.
+ * service — it has no fault-injection controls, on any host. Nor in the client: each drill
+ * hands `callService` an ordinary value (a spent deadline, a different target, an
+ * operation without a request schema), so the reference client carries no drill options.
  */
 export async function runDrill(
 	resolved: ResolvedServiceTarget,
 	drill: ServiceDrillId,
 	deps: LabCallDeps,
 ): Promise<PublicServiceCall> {
-	if (resolved.setup !== 'configured') return setupRefusal(resolved, 'evaluate');
+	if (resolved.setup !== 'configured') return unattemptedCall(resolved, 'evaluate');
 	const { target } = resolved;
 	const evaluate = SERVICE_OPERATIONS.evaluate;
-	const request = EVALUATION_SCENARIOS.fulfilled;
+	const request = EVALUATION_PRESETS.fulfilled.request;
 
 	let call: ServiceCall<unknown>;
 	switch (drill) {
@@ -120,10 +127,10 @@ export async function runDrill(
 			});
 			break;
 		case 'credential':
-			call = await callService(target, evaluate, request, { ...deps, token: WRONG_CREDENTIAL });
+			call = await callService({ ...target, token: WRONG_CREDENTIAL }, evaluate, request, deps);
 			break;
 		case 'unvalidated':
-			call = await callService(target, evaluate, UNVALIDATED_DRILL_REQUEST, { ...deps, validateRequest: false });
+			call = await callService(target, { ...evaluate, requestSchema: null }, UNVALIDATED_DRILL_REQUEST, deps);
 			break;
 	}
 	return toPublicServiceCall(target.id, 'evaluate', call);

@@ -110,3 +110,24 @@ export function toServerTimingHeader(timing: RequestTiming, options: ServerTimin
 
 	return parts.join(', ');
 }
+
+/**
+ * Read one metric's duration from a `Server-Timing` header — the inverse of
+ * `toServerTimingHeader`, for headers other processes send us. `null` when the metric is
+ * absent or its `dur` is not a finite, non-negative number.
+ */
+export function readServerTimingMetric(header: string | null, metric: string): number | null {
+	if (!header) return null;
+	for (const entry of header.split(',')) {
+		const [name, ...params] = entry.split(';').map((part) => part.trim());
+		if (name !== metric) continue;
+		for (const param of params) {
+			const [key, value] = param.split('=');
+			if (key === 'dur') {
+				const ms = Number(value);
+				return Number.isFinite(ms) && ms >= 0 ? ms : null;
+			}
+		}
+	}
+	return null;
+}

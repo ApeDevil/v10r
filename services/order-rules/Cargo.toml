@@ -10,10 +10,14 @@ description = "v10r reference external service: a deterministic order-lifecycle 
 
 [dependencies]
 axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio", "query"] }
+# Already in axum's tree; named here because main.rs drives connections itself to get a
+# header-read timeout and a connection cap, which `axum::serve` does not expose.
+hyper = { version = "1", features = ["http1", "server"] }
+hyper-util = { version = "0.1", features = ["http1", "server", "server-graceful", "service", "tokio"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 subtle = "2.6"
-tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "time"] }
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
 utoipa = "6"
 utoipa-axum = "0.3"
 

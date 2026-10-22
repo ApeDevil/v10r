@@ -14,7 +14,8 @@
 # on a different toolchain.
 #
 # Reproducibility pins: RUST_IMAGE is the digest the Containerfile and scripts/wasm/build.sh
-# use; the channel in rust-toolchain.toml is that image's rustc. Named volumes cache the
+# use; the channel in rust-toolchain.toml is that image's rustc. The manifest's `runner`
+# records what actually ran the checks — the pinned container, or `--host` and its rustc. Named volumes cache the
 # crate registry (shared with the wasm build) and the rustfmt/clippy components.
 set -euo pipefail
 
@@ -24,9 +25,21 @@ RUST_IMAGE="docker.io/library/rust:1.97-slim@sha256:8e8cf8f7fd54a2d23d5a743b3a03
 CRATE=services/order-rules
 CHECKS='cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked'
 
+sha() { sha256sum "$1" | cut -d' ' -f1; }
+# Everything the checks judge, plus the judge: the crate, its build definition, and this
+# script (so weakening CHECKS cannot pass unnoticed).
+inputs=("$CRATE/Cargo.lock" "$CRATE/Cargo.toml" "$CRATE/Containerfile" "$CRATE/rust-toolchain.toml" scripts/external-service/check.sh)
+while IFS= read -r file; do inputs+=("$file"); done < <(find "$CRATE/src" -type f | LC_ALL=C sort)
+# Hashed BEFORE the checks run and compared after: the tree may carry concurrent edits, and
+# a file changed mid-run must not be stamped as checked.
+declare -A before
+for file in "${inputs[@]}"; do before[$file]=$(sha "$file"); done
+
 if [ "${1:-}" = "--host" ]; then
+	RUNNER="host $(cd "$CRATE" && rustc --version)"
 	(cd "$CRATE" && bash -euo pipefail -c "$CHECKS")
 else
+	RUNNER="container $RUST_IMAGE"
 	ENGINE="${CONTAINER_ENGINE:-$(command -v podman >/dev/null && echo podman || echo docker)}"
 	"$ENGINE" run --rm \
 		-v "$PWD/$CRATE:/work" \
@@ -37,17 +50,21 @@ else
 		"$RUST_IMAGE" bash -euo pipefail -c "rustup component add rustfmt clippy >/dev/null && $CHECKS"
 fi
 
-sha() { sha256sum "$1" | cut -d' ' -f1; }
+for file in "${inputs[@]}"; do
+	if [ "$(sha "$file")" != "${before[$file]}" ]; then
+		echo "check: $file changed while the checks ran — not stamping; run again" >&2
+		exit 1
+	fi
+done
+
 {
-	printf '{\n\t"image": "%s",\n\t"checks": "%s",\n\t"inputs": {\n' "$RUST_IMAGE" "$CHECKS"
-	inputs=("$CRATE/Cargo.lock" "$CRATE/Cargo.toml" "$CRATE/rust-toolchain.toml")
-	while IFS= read -r file; do inputs+=("$file"); done < <(find "$CRATE/src" -type f | LC_ALL=C sort)
+	printf '{\n\t"runner": "%s",\n\t"checks": "%s",\n\t"inputs": {\n' "$RUNNER" "$CHECKS"
 	last=$(( ${#inputs[@]} - 1 ))
 	for i in "${!inputs[@]}"; do
 		sep=','; [ "$i" = "$last" ] && sep=''
-		printf '\t\t"%s": "%s"%s\n' "${inputs[$i]}" "$(sha "${inputs[$i]}")" "$sep"
+		printf '\t\t"%s": "%s"%s\n' "${inputs[$i]}" "${before[${inputs[$i]}]}" "$sep"
 	done
 	printf '\t},\n\t"outputs": {\n\t\t"%s": "%s"\n\t}\n}\n' "$CRATE/openapi.json" "$(sha "$CRATE/openapi.json")"
 } > "$CRATE/check-manifest.json"
 
-echo "check: passed — wrote $CRATE/check-manifest.json"
+echo "check: passed ($RUNNER) — wrote $CRATE/check-manifest.json"

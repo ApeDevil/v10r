@@ -1,5 +1,5 @@
 /**
- * Verify a running order-rules service THROUGH THE REAL ADAPTER, and measure it.
+ * Verify a running order-rules service THROUGH THE REAL SERVICE CLIENT, and measure it.
  *
  *   bun run external-service:verify                    # target `local`
  *   bun run external-service:verify -- --target remote --samples 50
@@ -14,19 +14,19 @@
  *                 after >15 min of no traffic to observe a cold start; `uptimeMs` from the
  *                 status call then says whether this run woke the process.
  * - warm series — N sequential `evaluate` calls: round trip, the service's own
- *                 `Server-Timing: app`, adapter overhead (total − round trip). p50/p95/max.
+ *                 `Server-Timing: app`, client overhead (total − round trip). p50/p95/max.
  * - failure detection — time until a classified failure: connection refused (closed
  *                 local port) and a spent deadline; plus how often a 1 ms budget loses
  *                 the race to the service (why the lab's deadline drill does not use it).
- * - negative paths — wrong credential, invalid input past the adapter, oversized body,
- *                 adapter-side refusal.
+ * - negative paths — wrong credential, invalid input past the client, oversized body,
+ *                 client-side rejection; and every preset's stated answer.
  */
 import { execSync } from 'node:child_process';
 import { plugin } from 'bun';
 import type { ServiceTarget } from '../../src/lib/server/showcases/external-service/targets';
 import type { ServiceTargetId } from '../../src/lib/showcases/external-service/types';
 
-// The adapter reuses `retryWithin` from the resilience barrel, which reaches SvelteKit's
+// The service client reuses `retryWithin` from the resilience barrel, which reaches SvelteKit's
 // virtual env modules. Outside Vite they do not exist; resolve them to the process
 // environment — the same shim `src/lib/server/test/vitest.setup.ts` installs for tests.
 plugin({
@@ -42,11 +42,11 @@ plugin({
 
 const { startDeadline } = await import('../../src/lib/server/http/deadline');
 const { callService, SERVICE_OPERATIONS } = await import('../../src/lib/server/showcases/external-service/client');
-const { EVALUATION_SCENARIOS, UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } = await import(
-	'../../src/lib/server/showcases/external-service/scenarios'
+const { EVALUATION_PRESETS, UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } = await import(
+	'../../src/lib/server/showcases/external-service/presets'
 );
 const { resolveServiceTarget } = await import('../../src/lib/server/showcases/external-service/targets');
-const { startedDuringCheck } = await import('../../src/lib/showcases/external-service/types');
+const { startedDuringCheck } = await import('../../src/lib/showcases/external-service/cold-start');
 
 const args = process.argv.slice(2);
 const option = (name: string, fallback: string) => {
@@ -119,11 +119,11 @@ if (status.ok && first.ok) {
 console.log(`\nwarm series — ${samples} × evaluate(fulfilled), sequential`);
 const roundTrip: number[] = [];
 const service: number[] = [];
-const adapter: number[] = [];
+const client: number[] = [];
 const total: number[] = [];
 let warmFailures = 0;
 for (let i = 0; i < samples; i++) {
-	const call = await callService(target, SERVICE_OPERATIONS.evaluate, EVALUATION_SCENARIOS.fulfilled, {
+	const call = await callService(target, SERVICE_OPERATIONS.evaluate, EVALUATION_PRESETS.fulfilled.request, {
 		deadline: startDeadline(8_000),
 	});
 	if (!call.ok || call.data.outcome !== 'accepted') {
@@ -133,61 +133,71 @@ for (let i = 0; i < samples; i++) {
 	total.push(call.timing.totalMs);
 	if (call.timing.roundTripMs !== null) roundTrip.push(call.timing.roundTripMs);
 	if (call.timing.serviceMs !== null) service.push(call.timing.serviceMs);
-	if (call.timing.adapterMs !== null) adapter.push(call.timing.adapterMs);
+	if (call.timing.clientMs !== null) client.push(call.timing.clientMs);
 }
 check(`${samples - warmFailures}/${samples} accepted`, warmFailures === 0);
 console.log(`  HTTP round trip    ${describe(roundTrip)}`);
 console.log(`  service (app)      ${describe(service)}`);
-console.log(`  adapter overhead   ${describe(adapter)}`);
-console.log(`  adapter total      ${describe(total)}`);
+console.log(`  client overhead    ${describe(client)}`);
+console.log(`  client total       ${describe(total)}`);
 
 // ── Negative paths against the real service ─────────────────────────────────────────
 console.log('\nnegative paths');
 const evaluate = SERVICE_OPERATIONS.evaluate;
-const wrong = await callService(target, evaluate, EVALUATION_SCENARIOS.fulfilled, {
-	deadline: startDeadline(8_000),
-	token: WRONG_CREDENTIAL,
-});
+// An operation without a request schema sends whatever it is given — the lab's drill.
+const unchecked = { ...evaluate, requestSchema: null };
+const budget = () => ({ deadline: startDeadline(8_000) });
+
+const wrong = await callService(
+	{ ...target, token: WRONG_CREDENTIAL },
+	evaluate,
+	EVALUATION_PRESETS.fulfilled.request,
+	budget(),
+);
 check('wrong credential → unauthorized (401 from the service)', !wrong.ok && wrong.httpStatus === 401);
-const unvalidated = await callService(target, evaluate, UNVALIDATED_DRILL_REQUEST, {
-	deadline: startDeadline(8_000),
-	validateRequest: false,
-});
+const unvalidated = await callService(target, unchecked, UNVALIDATED_DRILL_REQUEST, budget());
 check(
-	'invalid input past the adapter → invalid_request (400 from the service)',
+	'invalid input past the client → invalid_request (400 from the service)',
 	!unvalidated.ok && unvalidated.httpStatus === 400,
 	unvalidated.ok ? '' : unvalidated.message,
 );
-const oversized = await callService(
-	target,
-	evaluate,
-	// ~10 KiB: past the service's 8 KiB body limit.
-	{ totalCents: 100, events: Array.from({ length: 700 }, () => ({ type: 'ship' as const })) },
-	{ deadline: startDeadline(8_000), validateRequest: false },
-);
+// ~10 KiB: past the service's 8 KiB body limit.
+const oversizedBody = { totalCents: 100, events: Array.from({ length: 700 }, () => ({ type: 'ship' as const })) };
+const oversized = await callService(target, unchecked, oversizedBody, budget());
 check('oversized body → too_large (413 from the service)', !oversized.ok && oversized.httpStatus === 413);
-const refused = await callService(target, evaluate, UNVALIDATED_DRILL_REQUEST, { deadline: startDeadline(8_000) });
-check('adapter refuses invalid input without sending', !refused.ok && refused.httpStatus === null);
-const refusal = await callService(target, evaluate, EVALUATION_SCENARIOS.ship_unpaid, {
-	deadline: startDeadline(8_000),
-});
-check(
-	'a rule refusal is a 200 answer',
-	refusal.ok && refusal.data.outcome === 'refused' && refusal.data.refusal.reason === 'payment_incomplete',
-);
+const rejected = await callService(target, evaluate, UNVALIDATED_DRILL_REQUEST, budget());
+check('client rejects invalid input without sending', !rejected.ok && rejected.httpStatus === null);
+
+// ── Every preset's stated answer, against the real rules ────────────────────────────
+console.log('\npresets');
+for (const [id, preset] of Object.entries(EVALUATION_PRESETS)) {
+	const call = await callService(target, evaluate, preset.request, budget());
+	const answer = call.ok ? call.data : null;
+	const expected = preset.expect;
+	const matches =
+		answer !== null &&
+		(expected.outcome === 'accepted'
+			? answer.outcome === 'accepted' && answer.finalState === expected.finalState
+			: answer.outcome === 'refused' &&
+				answer.refusal.index === expected.index &&
+				answer.refusal.reason === expected.reason);
+	check(`${id} → ${JSON.stringify(expected)}`, matches, call.ok ? '' : call.kind);
+}
 
 // ── Failure detection ───────────────────────────────────────────────────────────────
 console.log('\nfailure detection');
 const slowSamples = 20;
 let raced = 0;
 for (let i = 0; i < slowSamples; i++) {
-	const call = await callService(target, evaluate, EVALUATION_SCENARIOS.fulfilled, { deadline: startDeadline(1) });
+	const call = await callService(target, evaluate, EVALUATION_PRESETS.fulfilled.request, {
+		deadline: startDeadline(1),
+	});
 	if (call.ok) raced++;
 }
 console.log(
 	`  1 ms budget: the service answered in time ${raced}/${slowSamples} times (why the lab's drill uses a spent budget)`,
 );
-const spent = await callService(target, evaluate, EVALUATION_SCENARIOS.fulfilled, { deadline: startDeadline(0) });
+const spent = await callService(target, evaluate, EVALUATION_PRESETS.fulfilled.request, { deadline: startDeadline(0) });
 check(
 	'spent budget → timed_out, nothing sent',
 	!spent.ok && spent.kind === 'timed_out' && spent.timing.attempts === 0,

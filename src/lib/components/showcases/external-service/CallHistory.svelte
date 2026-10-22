@@ -23,7 +23,7 @@ const time = (iso: string) => iso.slice(11, 19);
 			<HeaderCell>{m.showcase_external_service_label_outcome()}</HeaderCell>
 			<HeaderCell>{m.showcase_external_service_col_round_trip_ms()}</HeaderCell>
 			<HeaderCell>{m.showcase_external_service_col_service_ms()}</HeaderCell>
-			<HeaderCell>{m.showcase_external_service_col_adapter_ms()}</HeaderCell>
+			<HeaderCell>{m.showcase_external_service_col_client_ms()}</HeaderCell>
 		</Row>
 	</Header>
 	<Body>
@@ -35,7 +35,7 @@ const time = (iso: string) => iso.slice(11, 19);
 				<Cell><OutcomeBadge outcome={call.outcome} /></Cell>
 				<Cell><code>{ms(call.timing?.roundTripMs)}</code></Cell>
 				<Cell><code>{ms(call.timing?.serviceMs)}</code></Cell>
-				<Cell><code>{ms(call.timing?.adapterMs)}</code></Cell>
+				<Cell><code>{ms(call.timing?.clientMs)}</code></Cell>
 			</Row>
 		{/each}
 	</Body>
