@@ -301,6 +301,11 @@ export const showcases: ShowcaseCard[] = [
 					{ href: '/docs/blueprint/3d/3d-quick-reference', label: '3D Quick Reference' },
 				],
 			},
+			{
+				label: m.showcase_3d_tab_compose,
+				href: '/showcases/3d/compose',
+				docs: [{ href: '/docs/blueprint/3d/product-composition', label: 'Product Composition' }],
+			},
 		],
 	},
 	{

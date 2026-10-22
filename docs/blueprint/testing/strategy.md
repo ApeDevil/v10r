@@ -111,10 +111,19 @@ content of the deep-tier ones. Renaming, deleting or *editing* one of those can 
 
 ## Where UI is proven
 
-There is no jsdom, no browser mode, no Playwright. `$effect` does not fire in the node
+There is no jsdom and no vitest browser mode. `$effect` does not fire in the node
 environment, so Svelte 5 effects cannot be unit-tested — test the state half here and verify
 the effect in the browser. The showcase pages under `(public)/showcases/` are the primary test
 strategy for UI patterns, and `bun run validate:build` catches what only a production build can.
+
+An interaction-heavy showcase gets **one Playwright spec** in `tests/browser/`, run by
+`bun run test:browser` against the running dev server (`PLAYWRIGHT_BASE_URL` points it at
+another). It is not part of `validate`: it needs Chromium and a server, and its proof is the
+pattern's, not the gate's. A spec asserts through the page's own surfaces — the export, the
+status region, the panels — so no test-only seam ships, and the same steps also run on the pure
+core under vitest so a pattern's maturity never depends on the browser lane. WebGL in headless
+Chromium needs the SwiftShader launch args set in `playwright.config.ts`. The first spec is
+`tests/browser/compose.spec.ts` (`/showcases/3d/compose`).
 
 ## The MCP suite
 

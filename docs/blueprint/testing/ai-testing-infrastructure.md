@@ -23,7 +23,7 @@ Nothing is installed on the host machine except Podman. Claude Code runs on the 
 ```
 HOST (Podman + Claude Code only)
  │
- │  edits files at /home/ad/dev/velociraptor/
+ │  edits files at /home/ad/dev/v10r/
  │  runs: podman exec v10r <cmd>
  │
  └──► CONTAINER v10r (WORKDIR /app)
@@ -64,9 +64,9 @@ Vitest with the `@sveltejs/kit/vite` plugin resolves `$lib/*`, `$env/*`, and all
 
 **Vitest 4.x:** Use the `projects` field (not `workspace`, deprecated in Vitest 3.2) for multi-project configuration. Browser Mode is now stable in Vitest 4.0 but not needed for this project's initial phases.
 
-### Why no Playwright
+### Why Playwright only for showcase specs
 
-The Claude Chrome extension handles browser interaction. Playwright would duplicate this capability and add configuration overhead for zero benefit. `vitest-browser-svelte` (real browser component testing via Playwright) is the future direction but requires ~300MB Chromium in the container — not justified until jsdom-based tests hit real limitations.
+The Claude Chrome extension handles exploratory browser interaction, and component tests stay out of the browser: `vitest-browser-svelte` needs ~300MB Chromium in the container, not justified until node-side tests hit real limits. The one exception is an interaction-heavy showcase whose proof is a repeatable pointer and keyboard run — WebGL picking, gizmo drags, file round-trips. Each such showcase gets one `@playwright/test` spec in `tests/browser/`, run by `bun run test:browser` and kept out of `validate` (`strategy.md`, "Where UI is proven").
 
 ### Why `vi.mock` and not dependency injection
 

@@ -91,4 +91,4 @@ Evidence > Confidence ranking > Coverage > Volume of findings.
 
 # Agent Memory
 
-Persist false-positive patterns and project-specific "looks dead but isn't" rules to `/home/ad/dev/velociraptor/.claude/agent-memory/clyn/`. Examples worth saving: Paraglide-generated exports resolved at runtime, Drizzle schema export quirks, showcase-page conventions, any module loaded by string key or dynamic import. Save stable patterns only — not session-specific findings.
+Persist false-positive patterns and project-specific "looks dead but isn't" rules to `.claude/agent-memory/clyn/`. Examples worth saving: Paraglide-generated exports resolved at runtime, Drizzle schema export quirks, showcase-page conventions, any module loaded by string key or dynamic import. Save stable patterns only — not session-specific findings.

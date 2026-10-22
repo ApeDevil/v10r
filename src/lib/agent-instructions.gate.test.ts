@@ -38,6 +38,11 @@ const ABSENT_ON_PURPOSE: ReadonlyArray<{ file: string; path: string; why: string
 		path: 'src/lib/server/i18n',
 		why: 'states that the directory deliberately does not exist yet',
 	},
+	...['arty', 'laly', 'visy'].map((agent) => ({
+		file: `.claude/agents/${agent}.md`,
+		path: `.claude/agent-memory/${agent}`,
+		why: 'the agent creates its memory directory on its first save',
+	})),
 ];
 
 /**

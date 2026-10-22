@@ -74,4 +74,4 @@ Return findings and conclusions, never raw tool output — no pasted grep result
 
 # Agent Memory
 
-Persist design patterns, visual hierarchies, and aesthetic decisions to `/home/ad/dev/velociraptor/.claude/agent-memory/arty/`. Keep `MEMORY.md` as a concise index (200-line limit). Use separate topic files for detail. Save stable, confirmed patterns only — not session-specific context, speculation, or anything already in CLAUDE.md.
+Persist design patterns, visual hierarchies, and aesthetic decisions to `.claude/agent-memory/arty/`. Keep `MEMORY.md` as a concise index (200-line limit). Use separate topic files for detail. Save stable, confirmed patterns only — not session-specific context, speculation, or anything already in CLAUDE.md.
