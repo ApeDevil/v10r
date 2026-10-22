@@ -1,0 +1,47 @@
+/**
+ * Policy for the External Service Lab's calls. Every number here bounds something a
+ * visitor can trigger; none of them is a product limit.
+ */
+
+/**
+ * Ceiling for one call, inside the request's own deadline (`locals.deadline`, 10 s).
+ * Long enough for a warm service across the internet, deliberately far shorter than a
+ * free host's cold start (~1 min on Render Free): a page must not hang for a minute.
+ * A call that hits it while the host wakes is reported as `timed_out`, honestly.
+ */
+export const CALL_CEILING_MS = 8_000;
+
+/** Kept back from the call budget for rendering the result. */
+export const RENDER_RESERVE_MS = 500;
+
+/**
+ * The `deadline` drill's budget: already spent. A 1 ms budget is NOT a reliable drill —
+ * a warm loopback round trip measured 0.8 ms (p50), so a local service can win the race.
+ * A spent budget is deterministic and is the real path: the adapter refuses to start work
+ * that cannot finish. In-flight timeouts are proven by `client.test.ts` (a slow socket)
+ * and observed live when a free host is cold.
+ */
+export const DRILL_DEADLINE_MS = 0;
+
+/** Largest response body read from the service. Its biggest answer is ~5 KiB. */
+export const MAX_RESPONSE_BYTES = 64 * 1024;
+
+/** Shortest credential the adapter will send. Mirrors the service's own startup floor. */
+export const MIN_TOKEN_LENGTH = 32;
+
+/**
+ * Retry policy for idempotent operations, applied only when nothing answered at all
+ * (`unreachable`). A timeout is not retried — on a waking host it would only spend the
+ * rest of the budget waiting for the same cold start.
+ */
+export const RETRY_ATTEMPTS = 2;
+export const RETRY_BASE_DELAY_MS = 50;
+export const RETRY_MAX_DELAY_MS = 200;
+
+/** Longest service-supplied message passed on to the page. */
+export const MAX_SERVICE_MESSAGE_LENGTH = 240;
+
+/** Lab actions per IP. Each spends one or two outbound calls. */
+export const RATE_LIMIT_PREFIX = 'rl:external-service';
+export const RATE_LIMIT_MAX = 20;
+export const RATE_LIMIT_WINDOW = '60 s' as const;

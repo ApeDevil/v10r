@@ -15,6 +15,9 @@
 			"!**/node_modules",
 			"!**/src/lib/paraglide",
 			"!**/src/lib/wasm/kernel",
+			"!**/src/lib/showcases/external-service/contract.generated.ts",
+			"!**/services/order-rules/openapi.json",
+			"!**/services/order-rules/target",
 			"!**/.claude/settings.local.json",
 			"!**/mcp/public-excerpts.snapshot.json"
 		]

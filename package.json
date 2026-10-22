@@ -69,7 +69,9 @@
 		"audit": "bun audit --audit-level=high",
 		"validate": "bun run check && biome ci . && bun run test && bun run test:mcp && bun run patterns:validate && bun run patterns:check && bun run mcp:excerpts:check && bun run i18n:check-missing && bun run content:check && bun run quality:opacity",
 		"refresh": "bun run patterns:validate && bun run patterns:build && bun run mcp:excerpts:build && bun run db:ingest-docs",
-		"knip": "knip"
+		"knip": "knip",
+		"external-service:contract": "bun run scripts/external-service/generate-contract.ts",
+		"external-service:verify": "bun run scripts/external-service/verify.ts"
 	},
 	"dependencies": {
 		"@ai-sdk/google": "^3.0.62",
@@ -166,6 +168,7 @@
 		"@unocss/transformer-directives": "^66",
 		"drizzle-kit": "^0.31.0",
 		"knip": "^6.3.1",
+		"openapi-typescript": "^7.13.0",
 		"svelte": "^5.45.6",
 		"svelte-check": "^4.7.6",
 		"typescript": "^5.9.3",
