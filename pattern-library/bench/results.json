@@ -1,0 +1,260 @@
+{
+	"registryVersion": "2.2.0",
+	"patterns": 175,
+	"relevance": {
+		"dev": {
+			"queries": 66,
+			"accuracyAt1": 100,
+			"recallAt3": 99.2,
+			"mrrAt10": 1,
+			"missingAbstained": "4/4",
+			"answerableGradedWeak": "1/62",
+			"misses": []
+		},
+		"holdout": {
+			"queries": 30,
+			"accuracyAt1": 76,
+			"recallAt3": 88,
+			"mrrAt10": 0.847,
+			"missingAbstained": "5/5",
+			"answerableGradedWeak": "5/25",
+			"misses": [
+				"h03 \"let an AI agent edit user records, but nothing destructive happens until a human signs off on it\" → top provenance-record, want deskbot-approval-gate",
+				"h04 \"stop bots from spamming my signup form without making real people click on traffic lights\" → top admin-privacy-feedback, want anti-abuse-honeypot|anti-abuse-captcha",
+				"h09 \"signup flow split over several screens where the city dropdown depends on the chosen country and users can add extra phone numbers\" → top name-check, want forms-multi-step-dynamic",
+				"h10 \"app should still open when the phone has no connection, without ever showing a stale personalised page from cache\" → top name-check, want pwa-service-worker",
+				"h13 \"visualize how budget money flows between departments as bands whose width shows the amount\" → top architecture-request-cycle-visualizer, want viz-graphs",
+				"h18 \"know when stored embeddings are outdated because I changed the chunking code, not the documents\" → top layered-rag, want derivation-key"
+			]
+		},
+		"holdout2": {
+			"queries": 40,
+			"accuracyAt1": 79.4,
+			"recallAt3": 83.3,
+			"mrrAt10": 0.847,
+			"missingAbstained": "5/6",
+			"answerableGradedWeak": "10/34",
+			"misses": [
+				"g02 \"users lose half-written work because their login silently expired; warn them first and let them sign back in without leaving the page\" → top singleflight, want app-shell-session-lifecycle",
+				"g08 \"store prices that take effect on a future date and still be able to fix a past mistake while keeping what we believed back then\" → top stale-while-revalidate, want temporal-data-modeling",
+				"g13 \"the support bot can't answer 'what does this button do?' because it doesn't know which page the user is looking at\" → top layered-rag, want ai-site-awareness",
+				"g14 \"where do signups drop off\" → top 3d-threlte-integration, want analytics-funnels",
+				"g17 \"map with countries shaded by value\" → top i18n-db-content, want viz-maps",
+				"g18 \"check if a username is taken while the user types, without hammering the server on every keystroke\" → top source-of-truth-gate, want forms-validation-timing",
+				"g33 \"cache a slow third-party API response in memory and Redis, keep serving the old value when the API is down, and let only one request refresh it\" → top latency-tracing, want hierarchical-cache|stale-while-revalidate|singleflight",
+				"g35 \"one-to-one video calls between users in the browser\" (missing) → returned 66, top main-thread-budget"
+			]
+		}
+	},
+	"plans": [
+		{
+			"id": "p01",
+			"steps": 3,
+			"requiredCovered": "3/3",
+			"extra": [],
+			"tokens": 1821
+		},
+		{
+			"id": "p02",
+			"steps": 5,
+			"requiredCovered": "5/5",
+			"extra": [],
+			"tokens": 3023
+		},
+		{
+			"id": "p03",
+			"steps": 3,
+			"requiredCovered": "3/3",
+			"extra": [],
+			"tokens": 1755
+		},
+		{
+			"id": "p04",
+			"steps": 3,
+			"requiredCovered": "3/3",
+			"extra": [],
+			"tokens": 1336
+		},
+		{
+			"id": "p05",
+			"steps": 5,
+			"requiredCovered": "5/5",
+			"extra": [],
+			"tokens": 2971
+		}
+	],
+	"responseTokens": {
+		"toolsList": 1486,
+		"search_patterns": {
+			"mean": 529,
+			"p50": 557,
+			"p95": 719,
+			"max": 736
+		},
+		"trace_capability": {
+			"mean": 794,
+			"p50": 809,
+			"p95": 1485,
+			"max": 1653
+		},
+		"get_pattern_all": {
+			"mean": 365,
+			"p50": 211,
+			"p95": 948,
+			"max": 1458
+		},
+		"get_pattern_deep": {
+			"mean": 844,
+			"p50": 815,
+			"p95": 1251,
+			"max": 1458
+		},
+		"recommend_emulation_plan": {
+			"mean": 2181,
+			"p50": 1821,
+			"p95": 3023,
+			"max": 3023
+		}
+	},
+	"latency": {
+		"search_patterns": {
+			"p50us": 196,
+			"p95us": 473
+		},
+		"get_pattern": {
+			"p50us": 4,
+			"p95us": 20
+		},
+		"recommend_emulation_plan": {
+			"p50us": 401,
+			"p95us": 1200
+		}
+	},
+	"workflows": {
+		"baseline": [
+			{
+				"id": "w1-fit-check",
+				"task": "Decide whether the cache-stampede pattern fits a target project that runs Postgres but no Redis.",
+				"calls": 3,
+				"tokens": 2339,
+				"errors": 0
+			},
+			{
+				"id": "w2-pick-between-candidates",
+				"task": "Pick between the candidate chatbot patterns for a streaming assistant.",
+				"calls": 3,
+				"tokens": 1663,
+				"errors": 0
+			},
+			{
+				"id": "w3-read-kernel-function",
+				"task": "Read the implementation of retrieve() — the code entry point the layered-rag card names.",
+				"calls": 2,
+				"tokens": 2255,
+				"errors": 0
+			},
+			{
+				"id": "w4-read-doc-section",
+				"task": "Read the doc section a card cites with a fragment: docs/blueprint/velocity/data.md#singleflight--stampede-protection.",
+				"calls": 2,
+				"tokens": 2746,
+				"errors": 0
+			},
+			{
+				"id": "w5-invariants-of-three",
+				"task": "Collect the invariants of three already-known patterns before a review.",
+				"calls": 3,
+				"tokens": 2888,
+				"errors": 0
+			},
+			{
+				"id": "w6-browse-category",
+				"task": "List what the velocity-data category offers.",
+				"calls": 2,
+				"tokens": 1005,
+				"errors": 0
+			},
+			{
+				"id": "w7-plan-two-capabilities",
+				"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
+				"calls": 1,
+				"tokens": 1864,
+				"errors": 0
+			},
+			{
+				"id": "w8-emulate-one",
+				"task": "Find, ground and start emulating the jobs pattern: card plus the runner entry point.",
+				"calls": 3,
+				"tokens": 2045,
+				"errors": 0
+			}
+		],
+		"progressive": [
+			{
+				"id": "w1-fit-check",
+				"task": "Decide whether the cache-stampede pattern fits a target project that runs Postgres but no Redis.",
+				"calls": 1,
+				"tokens": 275,
+				"errors": 0
+			},
+			{
+				"id": "w2-pick-between-candidates",
+				"task": "Pick between the candidate chatbot patterns for a streaming assistant.",
+				"calls": 2,
+				"tokens": 685,
+				"errors": 0
+			},
+			{
+				"id": "w3-read-kernel-function",
+				"task": "Read the implementation of retrieve() — the code entry point the layered-rag card names.",
+				"calls": 1,
+				"tokens": 1332,
+				"errors": 0
+			},
+			{
+				"id": "w4-read-doc-section",
+				"task": "Read the doc section a card cites with a fragment: docs/blueprint/velocity/data.md#singleflight--stampede-protection.",
+				"calls": 1,
+				"tokens": 617,
+				"errors": 0
+			},
+			{
+				"id": "w5-invariants-of-three",
+				"task": "Collect the invariants of three already-known patterns before a review.",
+				"calls": 1,
+				"tokens": 952,
+				"errors": 0
+			},
+			{
+				"id": "w6-browse-category",
+				"task": "List what the velocity-data category offers.",
+				"calls": 1,
+				"tokens": 445,
+				"errors": 0
+			},
+			{
+				"id": "w7-plan-two-capabilities",
+				"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
+				"calls": 1,
+				"tokens": 1904,
+				"errors": 0
+			},
+			{
+				"id": "w8-emulate-one",
+				"task": "Find, ground and start emulating the jobs pattern: card plus the runner entry point.",
+				"calls": 3,
+				"tokens": 1508,
+				"errors": 0
+			}
+		],
+		"progressive-outline": [
+			{
+				"id": "w7-plan-two-capabilities",
+				"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
+				"calls": 2,
+				"tokens": 1164,
+				"errors": 0
+			}
+		]
+	}
+}

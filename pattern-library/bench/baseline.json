@@ -1,0 +1,189 @@
+{
+	"registryVersion": "2.2.0",
+	"patterns": 175,
+	"relevance": {
+		"dev": {
+			"queries": 66,
+			"accuracyAt1": 96.8,
+			"recallAt3": 96.8,
+			"mrrAt10": 0.98,
+			"missingAbstained": "2/4",
+			"misses": [
+				"d01 \"layered-rag\" → top ai-graph-rag, want layered-rag",
+				"d36 \"where should business logic live\" → top analytics-live-feed, want multi-client-core",
+				"d63 \"kubernetes helm chart deployment\" (missing) → returned 5, top architecture-deployment",
+				"d66 \"blockchain smart contract wallet\" (missing) → returned 2, top pwa-service-worker"
+			]
+		},
+		"holdout": {
+			"queries": 30,
+			"accuracyAt1": 52,
+			"recallAt3": 44,
+			"mrrAt10": 0.589,
+			"missingAbstained": "0/5",
+			"misses": [
+				"h01 \"the UI should update instantly when I rename an item, but go back cleanly if the server request fails\" → top ui-component-system, want optimistic-mutation",
+				"h03 \"let an AI agent edit user records, but nothing destructive happens until a human signs off on it\" → top provenance-record, want deskbot-approval-gate",
+				"h04 \"stop bots from spamming my signup form without making real people click on traffic lights\" → top forms-basic-forms, want anti-abuse-honeypot|anti-abuse-captcha",
+				"h05 \"charge customers a monthly subscription with Stripe and handle failed card payments\" (missing) → returned 14, top architecture-middleware",
+				"h09 \"signup flow split over several screens where the city dropdown depends on the chosen country and users can add extra phone numbers\" → top ai-surfaces, want forms-multi-step-dynamic",
+				"h10 \"app should still open when the phone has no connection, without ever showing a stale personalised page from cache\" → top hierarchical-cache, want pwa-service-worker",
+				"h11 \"transcode uploaded videos into adaptive bitrate HLS streams\" (missing) → returned 24, top asset-rights-manifest",
+				"h12 \"two browser tabs editing the same note silently overwrite each other's changes\" → top app-shell-quick-search, want versioned-document-session",
+				"h13 \"visualize how budget money flows between departments as bands whose width shows the amount\" → top deadline-propagation, want viz-graphs",
+				"h14 \"an endpoint is slow and I can't tell whether the time goes to the database, the cache or the external API\" → top hierarchical-cache, want latency-tracing",
+				"h15 \"store product names in the database in several languages next to the English original\" → top product-connection-engine, want i18n-db-content",
+				"h16 \"the big hero graphic only shows up after the JavaScript bundle runs, so the page looks empty at first\" → top app-shell-empty-states, want critical-rendering-path",
+				"h17 \"generate a PDF invoice from an HTML template on the server\" (missing) → returned 63, top critical-rendering-path",
+				"h18 \"know when stored embeddings are outdated because I changed the chunking code, not the documents\" → top heavy-dependency-quarantine, want derivation-key",
+				"h20 \"the frontend keeps its own copy of a server enum and the two keep drifting apart\" → top latency-tracing, want source-of-truth-gate",
+				"h22 \"invite teammates to an organization account and let users switch between tenants\" (missing) → returned 19, top pwa-service-worker",
+				"h30 \"roll out a new feature to 10% of users and run an A/B experiment on it\" (missing) → returned 70, top jobs-scheduler"
+			]
+		}
+	},
+	"plans": [
+		{
+			"id": "p01",
+			"steps": 6,
+			"requiredCovered": "3/3",
+			"extra": ["ai-tool-harness", "ai-surfaces", "retrieval-endpoints"],
+			"tokens": 3197
+		},
+		{
+			"id": "p02",
+			"steps": 5,
+			"requiredCovered": "5/5",
+			"extra": [],
+			"tokens": 3028
+		},
+		{
+			"id": "p03",
+			"steps": 3,
+			"requiredCovered": "3/3",
+			"extra": [],
+			"tokens": 1745
+		},
+		{
+			"id": "p04",
+			"steps": 3,
+			"requiredCovered": "3/3",
+			"extra": [],
+			"tokens": 1336
+		},
+		{
+			"id": "p05",
+			"steps": 8,
+			"requiredCovered": "5/5",
+			"extra": ["multi-client-core", "critical-path-deferred-tail", "stale-while-revalidate"],
+			"tokens": 4322
+		}
+	],
+	"responseTokens": {
+		"toolsList": 1036,
+		"search_patterns": {
+			"mean": 469,
+			"p50": 492,
+			"p95": 582,
+			"max": 621
+		},
+		"trace_capability": {
+			"mean": 860,
+			"p50": 798,
+			"p95": 1455,
+			"max": 1763
+		},
+		"get_pattern_all": {
+			"mean": 363,
+			"p50": 209,
+			"p95": 946,
+			"max": 1455
+		},
+		"get_pattern_deep": {
+			"mean": 841,
+			"p50": 813,
+			"p95": 1249,
+			"max": 1455
+		},
+		"recommend_emulation_plan": {
+			"mean": 2726,
+			"p50": 3028,
+			"p95": 4322,
+			"max": 4322
+		}
+	},
+	"latency": {
+		"search_patterns": {
+			"p50us": 6179,
+			"p95us": 8349
+		},
+		"get_pattern": {
+			"p50us": 15,
+			"p95us": 54
+		},
+		"recommend_emulation_plan": {
+			"p50us": 6936,
+			"p95us": 9763
+		}
+	},
+	"workflows": {
+		"baseline": [
+			{
+				"id": "w1-fit-check",
+				"task": "Decide whether the cache-stampede pattern fits a target project that runs Postgres but no Redis.",
+				"calls": 3,
+				"tokens": 2297,
+				"errors": 0
+			},
+			{
+				"id": "w2-pick-between-candidates",
+				"task": "Pick between the candidate chatbot patterns for a streaming assistant.",
+				"calls": 3,
+				"tokens": 1463,
+				"errors": 0
+			},
+			{
+				"id": "w3-read-kernel-function",
+				"task": "Read the implementation of retrieve() — the code entry point the layered-rag card names.",
+				"calls": 2,
+				"tokens": 2173,
+				"errors": 0
+			},
+			{
+				"id": "w4-read-doc-section",
+				"task": "Read the doc section a card cites with a fragment: docs/blueprint/velocity/data.md#singleflight--stampede-protection.",
+				"calls": 2,
+				"tokens": 2609,
+				"errors": 0
+			},
+			{
+				"id": "w5-invariants-of-three",
+				"task": "Collect the invariants of three already-known patterns before a review.",
+				"calls": 3,
+				"tokens": 2869,
+				"errors": 0
+			},
+			{
+				"id": "w6-browse-category",
+				"task": "List what the velocity-data category offers.",
+				"calls": 2,
+				"tokens": 802,
+				"errors": 0
+			},
+			{
+				"id": "w7-plan-two-capabilities",
+				"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
+				"calls": 1,
+				"tokens": 3240,
+				"errors": 0
+			},
+			{
+				"id": "w8-emulate-one",
+				"task": "Find, ground and start emulating the jobs pattern: card plus the runner entry point.",
+				"calls": 3,
+				"tokens": 1899,
+				"errors": 0
+			}
+		]
+	}
+}

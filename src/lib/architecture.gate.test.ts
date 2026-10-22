@@ -438,7 +438,6 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/ai/deskbot-retrieval.ts -> retrieval/types',
 	'src/lib/server/ai/guard.ts -> abuse/decision.adapter',
 	'src/lib/server/ai/tools/desk-read.ts -> desk/file-tree',
-	'src/lib/server/ai/tools/search-pattern-library.ts -> mcp/patterns/search',
 	'src/lib/server/auth/factor-changes.ts -> admin/audit',
 	'src/lib/server/auth/grant-requests.ts -> admin/audit',
 	'src/lib/server/auth/grants.ts -> admin/audit',

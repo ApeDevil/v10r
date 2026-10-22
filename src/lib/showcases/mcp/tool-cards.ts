@@ -1,9 +1,10 @@
 /**
  * Hand-curated projections of the MCP server's six tool definitions
- * (mcp/tools.ts TOOLS) and its handshake sequence (mcp/smoke.ts) for the
- * Pattern MCP showcase. Mirrored as literals because mcp/*.ts is Bun-typed and
- * outside the app's TS program; tool-cards.drift.test.ts pins the tool names
- * against the source so a new tool can't land silently.
+ * (`pattern-library/query.ts`, served by both transports) and its handshake
+ * sequence (mcp/smoke.ts) for the Pattern MCP showcase. Curated literals, not
+ * the schemas themselves, because the card wording is written for people;
+ * tool-cards.drift.test.ts pins tool names AND parameter names to the live
+ * definitions, so neither a new tool nor a new parameter can land silently.
  */
 export interface ToolCard {
 	name: string;
@@ -19,9 +20,12 @@ export const TOOL_CARDS: ToolCard[] = [
 		summary:
 			'Search the pattern library by capability, feature, or concept — the entry point; follow up with get_pattern.',
 		params: [
-			{ name: 'query', detail: 'natural-language or keyword query (required)' },
-			{ name: 'limit', detail: 'max results, 1–20, default 5' },
-			{ name: 'category', detail: 'optional exact filter: architecture, ai, ui, docs, jobs' },
+			{ name: 'query', detail: 'natural-language or keyword query (required); "*" browses the category map' },
+			{ name: 'limit', detail: 'max results, 1–50, default 5' },
+			{ name: 'detail', detail: 'ids · compact (+ requirements, contraindication) · summary (default)' },
+			{ name: 'category', detail: 'optional exact filter, e.g. ai, velocity-data, integrity-truth' },
+			{ name: 'tier', detail: 'optional filter: deep (full emulation cards) or light' },
+			{ name: 'maturity', detail: 'optional filter: proven, implemented, planned' },
 		],
 	},
 	{
@@ -29,7 +33,11 @@ export const TOOL_CARDS: ToolCard[] = [
 		icon: 'i-lucide-file-text',
 		summary:
 			'Fetch the full curated card for one pattern: docs, code entry points, tests, showcase proof, invariants, emulation notes.',
-		params: [{ name: 'id', detail: 'exact pattern id, e.g. "layered-rag" (required)' }],
+		params: [
+			{ name: 'id', detail: 'exact pattern id, e.g. "layered-rag"' },
+			{ name: 'ids', detail: 'instead of id: up to 5 cards in one call' },
+			{ name: 'sections', detail: 'only these card parts; withheld ones are named, invariants loudest' },
+		],
 	},
 	{
 		name: 'get_file_excerpt',
@@ -37,7 +45,8 @@ export const TOOL_CARDS: ToolCard[] = [
 		summary:
 			'Read a bounded, line-numbered excerpt of a referenced repo file. Secret paths and traversal are rejected.',
 		params: [
-			{ name: 'path', detail: 'repo-relative path (required)' },
+			{ name: 'path', detail: 'repo-relative path (required); a #heading suffix reads that section' },
+			{ name: 'section', detail: 'one markdown heading or code declaration instead of a line range' },
 			{ name: 'start_line', detail: '1-based start line, default 1' },
 			{ name: 'line_count', detail: '1–250 lines, default 100' },
 		],
@@ -56,6 +65,8 @@ export const TOOL_CARDS: ToolCard[] = [
 		params: [
 			{ name: 'capabilities', detail: 'list of desired capabilities (required)' },
 			{ name: 'include_dependencies', detail: 'expand prerequisites via depends_on, default true' },
+			{ name: 'target_infra', detail: 'what the target runs — each step says whether it fits' },
+			{ name: 'detail', detail: 'full (default) · outline (steps and fitness only)' },
 		],
 	},
 	{

@@ -1,0 +1,245 @@
+{
+	"note": "Second holdout set, written blind to the engine after the ranking work was finished (2026-10-22): labels come from reading registry summaries and when_to_use only, without reading or running any search or scoring code. 24 natural-language needs, 6 short technical terms, 4 multi-concept queries, 6 queries the registry does not cover (relevant: []).",
+	"queries": [
+		{
+			"id": "g01",
+			"query": "my Svelte store at module level leaks one user's data into another user's server-rendered page",
+			"relevant": ["architecture-state-management"],
+			"acceptable": []
+		},
+		{
+			"id": "g02",
+			"query": "users lose half-written work because their login silently expired; warn them first and let them sign back in without leaving the page",
+			"relevant": ["app-shell-session-lifecycle"],
+			"acceptable": ["versioned-document-session"]
+		},
+		{
+			"id": "g03",
+			"query": "refresh the staging Postgres with real production data on a schedule instead of running pg_dump by hand",
+			"relevant": ["db-ops-branch-refresh"],
+			"acceptable": []
+		},
+		{
+			"id": "g04",
+			"query": "writers have to request permission to publish, an admin approves it, and unanswered requests should lapse after a while",
+			"relevant": ["identity-capability-grants"],
+			"acceptable": ["identity-route-guards"]
+		},
+		{
+			"id": "g05",
+			"query": "text jumps when the custom web font finishes loading",
+			"relevant": ["velocity-asset-delivery"],
+			"acceptable": []
+		},
+		{
+			"id": "g06",
+			"query": "a background task with several steps gets killed halfway and must resume without sending the email twice",
+			"relevant": ["durable-step-execution"],
+			"acceptable": ["notifications-router-outbox"]
+		},
+		{
+			"id": "g07",
+			"query": "dates render one way on the server and differently in the browser, causing a hydration mismatch",
+			"relevant": ["i18n-formatting"],
+			"acceptable": []
+		},
+		{
+			"id": "g08",
+			"query": "store prices that take effect on a future date and still be able to fix a past mistake while keeping what we believed back then",
+			"relevant": ["temporal-data-modeling"],
+			"acceptable": []
+		},
+		{
+			"id": "g09",
+			"query": "test the live site on my phone and see that phone's visits attributed to me on the admin dashboard without logging in on it",
+			"relevant": ["admin-privacy-pairing"],
+			"acceptable": []
+		},
+		{
+			"id": "g10",
+			"query": "let users link their Telegram or Discord account to get messages from our app",
+			"relevant": ["notifications-channels"],
+			"acceptable": ["notifications-settings-matrix", "notifications-schema-delivery-log"]
+		},
+		{
+			"id": "g11",
+			"query": "ship a new service worker version without yanking users out of what they're doing",
+			"relevant": ["pwa-update-flow"],
+			"acceptable": ["velocity-idle-work"]
+		},
+		{
+			"id": "g12",
+			"query": "have a vision model suggest a caption and alt text for uploaded photos, but a person must confirm before anything is saved",
+			"relevant": ["ai-image-metadata"],
+			"acceptable": ["toolkits-image-kit"]
+		},
+		{
+			"id": "g13",
+			"query": "the support bot can't answer 'what does this button do?' because it doesn't know which page the user is looking at",
+			"relevant": ["ai-site-awareness"],
+			"acceptable": []
+		},
+		{
+			"id": "g14",
+			"query": "where do signups drop off",
+			"relevant": ["analytics-funnels"],
+			"acceptable": ["analytics-journeys"]
+		},
+		{
+			"id": "g15",
+			"query": "moderate reader comments on articles",
+			"relevant": ["content-comments"],
+			"acceptable": []
+		},
+		{
+			"id": "g16",
+			"query": "render a GLTF model in a SvelteKit page without the server-side render crashing on window",
+			"relevant": ["3d-threlte-integration"],
+			"acceptable": ["3d-static-animated-scenes"]
+		},
+		{
+			"id": "g17",
+			"query": "map with countries shaded by value",
+			"relevant": ["viz-maps"],
+			"acceptable": []
+		},
+		{
+			"id": "g18",
+			"query": "check if a username is taken while the user types, without hammering the server on every keystroke",
+			"relevant": ["forms-validation-timing"],
+			"acceptable": []
+		},
+		{
+			"id": "g19",
+			"query": "start loading the next wizard step's data before the user clicks, but don't prefetch the expensive report page on every hover",
+			"relevant": ["intent-preloading"],
+			"acceptable": []
+		},
+		{
+			"id": "g20",
+			"query": "how do I prove the generated files committed to the repo still match what the generator would produce today",
+			"relevant": ["reproducible-artifact-build"],
+			"acceptable": ["source-of-truth-gate", "derivation-key"]
+		},
+		{
+			"id": "g21",
+			"query": "our report says 'verified' but nobody can tell whether that means we checked every source or just one",
+			"relevant": ["evidence-status-dimensions"],
+			"acceptable": ["name-check"]
+		},
+		{
+			"id": "g22",
+			"query": "deep links in my docs break silently when someone renames a heading",
+			"relevant": ["resource-anchor-integrity"],
+			"acceptable": []
+		},
+		{
+			"id": "g23",
+			"query": "one sidebar tree showing blog posts, uploaded images and files from different backends, with rename and delete per item",
+			"relevant": ["desk-explorer"],
+			"acceptable": []
+		},
+		{
+			"id": "g24",
+			"query": "everything is fast on localhost; I need to know what happens when the cache is cold or Redis hangs",
+			"relevant": ["scenario-harness"],
+			"acceptable": ["resilience-policy", "deadline-propagation"]
+		},
+		{
+			"id": "g25",
+			"query": "presigned URL direct upload",
+			"relevant": ["databases-object-storage"],
+			"acceptable": ["forms-file-uploads"]
+		},
+		{
+			"id": "g26",
+			"query": "container queries",
+			"relevant": ["ui-fluid-styling"],
+			"acceptable": []
+		},
+		{
+			"id": "g27",
+			"query": "transactional outbox",
+			"relevant": ["notifications-router-outbox"],
+			"acceptable": ["durable-step-execution"]
+		},
+		{
+			"id": "g28",
+			"query": "skeleton loaders",
+			"relevant": ["app-shell-loading-states"],
+			"acceptable": []
+		},
+		{
+			"id": "g29",
+			"query": "drizzle-kit push vs migrate",
+			"relevant": ["db-ops-dev-prod-schema-workflow"],
+			"acceptable": []
+		},
+		{
+			"id": "g30",
+			"query": "ICU plural messages",
+			"relevant": ["i18n-messages"],
+			"acceptable": ["i18n-formatting"]
+		},
+		{
+			"id": "g31",
+			"query": "public contact form that filters out bots invisibly, caps submissions per IP, and validates on the server even without JavaScript",
+			"relevant": ["anti-abuse-honeypot", "anti-abuse-rate-limiting", "forms-superforms-valibot"],
+			"acceptable": ["anti-abuse-captcha", "forms-basic-forms", "admin-privacy-feedback"]
+		},
+		{
+			"id": "g32",
+			"query": "accept a product photo upload, shrink it on the server, store it in an S3-compatible bucket and serve it through a CDN that actually caches it",
+			"relevant": ["forms-file-uploads", "databases-object-storage", "velocity-asset-delivery"],
+			"acceptable": []
+		},
+		{
+			"id": "g33",
+			"query": "cache a slow third-party API response in memory and Redis, keep serving the old value when the API is down, and let only one request refresh it",
+			"relevant": ["hierarchical-cache", "stale-while-revalidate", "singleflight"],
+			"acceptable": ["resilience-policy"]
+		},
+		{
+			"id": "g34",
+			"query": "nightly job that deletes raw analytics older than 90 days and purges expired personal data, scheduled by Vercel cron",
+			"relevant": ["admin-privacy-data-retention", "analytics-rollup-cleanup"],
+			"acceptable": ["jobs-registered-catalog", "jobs-scheduler", "jobs-platform-scheduling"]
+		},
+		{
+			"id": "g35",
+			"query": "one-to-one video calls between users in the browser",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "g36",
+			"query": "verify the HMAC signature on incoming GitHub webhooks",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "g37",
+			"query": "bulk import customers from a CSV file with a column-mapping step",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "g38",
+			"query": "voice input: transcribe what the user says into the chat box",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "g39",
+			"query": "shopping cart that holds stock for a customer until they pay",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "g40",
+			"query": "generate sitemap.xml and social share preview images for every blog post",
+			"relevant": [],
+			"acceptable": []
+		}
+	]
+}

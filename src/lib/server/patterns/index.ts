@@ -8,7 +8,6 @@
  */
 export { buildCatalog, type Catalog, type CatalogCategory, type CatalogGroup, type CatalogPattern } from './catalog';
 export {
-	buildById,
 	CATEGORIES,
 	DEEP_PATTERNS,
 	PATTERNS,
@@ -16,7 +15,6 @@ export {
 	type PatternRecord,
 	type PatternTier,
 	REGISTRY,
-	REGISTRY_ORDER,
 	type RefKind,
 	type RegCategory,
 	type RegGroup,

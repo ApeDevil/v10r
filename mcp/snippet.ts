@@ -89,6 +89,10 @@ function loadRuleSet(root: string): { set: RuleSet | null; error: string | null 
 	return cached;
 }
 
+/** The one Bun API this module touches, declared locally: the app's type checker reaches this file
+ *  (through the stdio↔hosted parity test, which imports `tools.ts`) and has no Bun types. */
+declare const Bun: { Transpiler: new (options: { loader: 'tsx' }) => { transformSync(source: string): string } };
+
 /** Syntax pre-check via Bun's built-in transpiler. Svelte snippets are checked on their
  *  <script> blocks only — markup syntax is out of scope for a transpiler. */
 function syntaxError(snippet: string, language: Language): string | null {

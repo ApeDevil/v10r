@@ -8,10 +8,11 @@ import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 import { loadRegistry } from '../pattern-library/load.ts';
 import { buildById, topoSort } from '../pattern-library/schema.ts';
+import { scorePatterns, tokenizePatternQuery } from '../pattern-library/search.ts';
 import { createLineBuffer, err, isNotification, ok, parseLine } from './protocol.ts';
 import { readExcerpt, resolveSafe } from './security.ts';
 import { dispatchLine } from './server.ts';
-import { handleToolCall, scorePatterns, TOOLS, tokenizePatternQuery } from './tools.ts';
+import { handleToolCall, TOOLS } from './tools.ts';
 
 const REPO_ROOT = resolve(import.meta.dir, '..');
 const { registry } = loadRegistry();
@@ -109,16 +110,16 @@ describe('security', () => {
 	});
 
 	test('accepts real repo files and bounds excerpts', () => {
-		const excerpt = readExcerpt('package.json', 1, 5, REPO_ROOT);
+		const excerpt = readExcerpt('package.json', { startLine: 1, lineCount: 5 }, REPO_ROOT);
 		expect(excerpt.ok).toBe(true);
 		expect(excerpt.shownTo).toBe(5);
-		const capped = readExcerpt('README.md', 1, 9999, REPO_ROOT);
+		const capped = readExcerpt('README.md', { startLine: 1, lineCount: 9999 }, REPO_ROOT);
 		expect(capped.ok).toBe(true);
 		expect((capped.shownTo ?? 0) - (capped.shownFrom ?? 0)).toBeLessThan(250);
 	});
 
 	test('start beyond EOF is an actionable error', () => {
-		const excerpt = readExcerpt('package.json', 100000, 5, REPO_ROOT);
+		const excerpt = readExcerpt('package.json', { startLine: 100000, lineCount: 5 }, REPO_ROOT);
 		expect(excerpt.ok).toBe(false);
 		expect(excerpt.text).toContain('beyond EOF');
 	});

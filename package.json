@@ -63,6 +63,7 @@
 		"patterns:validate": "bun run pattern-library/validate.ts",
 		"mcp:excerpts:build": "bun run scripts/mcp/build-public-excerpts.ts",
 		"mcp:excerpts:check": "bun run scripts/mcp/build-public-excerpts.ts --check",
+		"mcp:bench": "bun run scripts/mcp/retrieval-bench.ts",
 		"patterns:build": "bun run scripts/patterns/build-derived.ts",
 		"patterns:check": "bun run scripts/patterns/build-derived.ts --check",
 		"audit": "bun audit --audit-level=high",

@@ -208,13 +208,6 @@ const DUPLICATE_VALUES_ALLOWED: Record<string, string> = {
 	verifyConnection: 'one operation, three backend showcases — the parallel vocabulary is the point',
 	// Each marks ITS OWN entity terminal. They never meet in one module.
 	markFailed: 'per-domain terminal transition, on unrelated entities',
-	// The stdio server runs under bare Bun with no `$lib` alias and no bundler, so it cannot
-	// import the hosted implementations. `mcp/patterns/parity.test.ts` keeps the copies honest.
-	tokenizePatternQuery: 'stdio MCP cannot import $lib — guarded by patterns/parity.test.ts',
-	scorePatterns: 'stdio MCP cannot import $lib — guarded by patterns/parity.test.ts',
-	NEXT_ACTIONS_HEADING: 'stdio MCP cannot import $lib — guarded by patterns/parity.test.ts',
-	MAX_LINES: 'stdio MCP cannot import $lib — guarded by patterns/parity.test.ts',
-	DEFAULT_LINES: 'stdio MCP cannot import $lib — guarded by patterns/parity.test.ts',
 };
 
 const EXPORTED_VALUE = /^export (?:async function|function|const) ([A-Za-z_][A-Za-z0-9_]*)\b/gm;
@@ -329,7 +322,7 @@ const RETIRED_KEY_PREFIXES: Array<{ prefix: string; use: string }> = [{ prefix: 
 // registry at send time, so renaming the keys would blank every notification already in
 // the table. The abbreviation stays until a data migration is worth its own decision.
 
-const SCANNED_ROOTS = ['src', 'scripts', 'mcp', 'docs'];
+const SCANNED_ROOTS = ['src', 'scripts', 'mcp', 'pattern-library', 'docs'];
 const SCANNED_EXTENSIONS = ['.ts', '.svelte', '.md'];
 
 function sourceFiles(): string[] {

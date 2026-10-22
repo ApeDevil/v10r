@@ -18,7 +18,7 @@ The Pattern MCP closes that gap. Each entry in [`pattern-library/registry.json`]
 
 ### Registry-as-product
 
-The server (`server.ts`, `protocol.ts`, `tools.ts`) is intentionally boring: JSON-RPC plumbing and six query functions over two JSON files (the pattern registry and the snippet rules). All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
+The server is intentionally boring: JSON-RPC plumbing and six tools over two JSON files (the pattern registry and the snippet rules). The tool contract and the four registry tools are written once, in `pattern-library/query.ts` (ranking in `search.ts`, excerpt rendering in `excerpt.ts`), and both transports — stdio `mcp/tools.ts` and hosted `src/lib/server/mcp/patterns/tools.ts` — are thin readers over it that add only what genuinely differs: how a file is read, the snippet engine, and the hosted telemetry `diag`. All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
 
 A drift guard (`pattern-library/validate.ts`, wired into `bun run validate` as `patterns:validate`) keeps the registry honest: every `docs`/`code`/`tests` path must exist on disk, `showcases` refs of `kind: "route"` must be members of `src/lib/showcases/catalog/registry.ts` (not merely directories on disk), `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), IDs must be unique kebab-case, and each tier's contract holds (deep records must carry invariants/emulation notes; light records must not). A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
 
@@ -40,15 +40,47 @@ Every human- and agent-facing form of the pattern library is generated from this
 
 ### Curated cards over raw grep
 
-Each card bundles five things a grep hit never gives you together: **docs** (what to read first), **code** (where the canonical implementation lives), **tests** (what pins its behavior), **showcases** (where it's proven live), and **invariants** (what must hold true after emulation, not just after copying). `get_pattern` returns the whole card; `trace_capability` walks concept → docs → code → tests → proof for a free-text query; `search_patterns` ranks cards by a weighted lexical match over title/keywords/capabilities/category/summary/invariants — no embeddings, no network call, because the container has neither.
+Each card bundles five things a grep hit never gives you together: **docs** (what to read first), **code** (where the canonical implementation lives), **tests** (what pins its behavior), **showcases** (where it's proven live), and **invariants** (what must hold true after emulation, not just after copying). `get_pattern` returns the whole card; `trace_capability` walks concept → docs → code → tests → proof for a free-text query; `search_patterns` ranks cards lexically — no embeddings, no network call, because the container has neither.
 
-Because the match is purely lexical, **a keyword that does not survive tokenization is not weak — it is absent**, and it reads on the card as if the term were covered. The tokenizer lowercases, splits on non-alphanumerics and drops single characters and stopwords; a `+` joining two alphanumerics (`n+1`, `cmd+k`) is kept as part of the term, because splitting it produced two characters that the length filter then discarded. `search.test.ts` asserts no registry keyword tokenizes to nothing, and `parity.test.ts` pins the hosted and stdio tokenizers to the same source text — a fix applied to one copy would make the two runtimes disagree about which pattern answers a query.
+### Ranking
+
+Each query term scores the weight of the **best field** it appears in (title, keywords and capabilities above summary and `when_to_use`, invariants last), times its **IDF** over the registry; the sum is scaled by **coverage**, the IDF-weighted share of the query that matched. Three consequences, each measured on the blind holdout set in `pattern-library/bench/` (Acc@1 52% → 76%, Recall@3 44% → 88% against the previous per-field sum):
+
+- a term repeated across fields is one match, not three, so a record that answers the whole question outranks one that answers one word loudly;
+- a word in sixty records ("data") weighs little and a word in two ("stampede") decides;
+- coverage grades every hit `strong | partial | weak`. When the best hit is weak the registry almost certainly has no pattern for the request, so the tools answer with the hosted `empty` no-match (the capability-gap signal) and list the closest overlaps labelled as such — rather than a confident ranking of incidental word matches, which is what every uncovered query used to get.
+
+An exact id or title is a lookup and ranks first. The id is otherwise not indexed: its `<category>-` prefix is a namespace that let every light `architecture-*` row outrank the deep card for "architecture". Plurals and `-ing`/`-ed` forms are folded crudely on both sides; a query term of four or more letters also matches as a prefix at half weight. Embeddings, BM25F field-weight tuning and rank fusion were considered and rejected for this corpus: a few hundred curated records with authored keywords leave little for them to find, and they would add a model to the stdio container and the Vercel cold start.
+
+Because the match is purely lexical, **a keyword that does not survive tokenization is not weak — it is absent**, and it reads on the card as if the term were covered. The tokenizer lowercases, splits on non-alphanumerics and drops single characters and stopwords; a `+` joining two alphanumerics (`n+1`, `cmd+k`) is kept as part of the term, because splitting it produced two characters that the length filter then discarded. `search.test.ts` asserts no registry keyword tokenizes to nothing. There is one tokenizer, so a fix cannot land in one runtime only; `parity.test.ts` runs every benchmark query, every card, every plan and every allowlisted excerpt through both transports and compares the bytes an agent would see.
+
+### Progressive disclosure: discover broadly, narrow, retrieve minimally
+
+Every tool answers at the smallest grain that settles the agent's next decision, and expands only on request. All of it is optional parameters with the old behaviour as the default.
+
+| Need | Call | Instead of |
+|---|---|---|
+| What exists | `search_patterns {query:"*"}` → the category map with counts; add `category` / `tier` / `maturity` to list a facet | guessing queries |
+| Is it relevant, does it fit | `search_patterns … detail:"compact"` → per row: tier, maturity, `requires`, `depends on`, the headline `avoid when` | a full card per candidate |
+| Just the ids | `detail:"ids"` | — |
+| Several cards, or part of one | `get_pattern {ids:[…], sections:[…]}` (≤ 5 cards; `overview`, `fitness`, `docs`, `code`, `tests`, `showcases`, `invariants`, `emulation_notes`) | one call per card |
+| One function or one doc section | `get_file_excerpt {path, section}` — a markdown heading or a code declaration; the `#fragment` paths cards print resolve the same way | paging 100 lines blind |
+
+Two rules keep selective disclosure honest. A partial card always keeps its header — tier, maturity, risk, `depends on`, `requires` — and closes with a line naming every withheld section and its size, calling withheld invariants out as MUST-hold; it never reads as "this pattern has no invariants". And a windowed excerpt that stops before EOF ends with the sections below it, so the next call can be targeted. `excerpt.test.ts` checks that every `#fragment` a card cites resolves to a heading.
+
+The trade is measured, not assumed (`bun run mcp:bench`, scripted workflows, ≈tokens including a per-call overhead): checking fit 3 calls ≈2.3k → 2 calls ≈0.65k; reading three patterns' invariants 3 calls ≈2.9k → 1 call ≈0.9k; reading the doc section a card cites 2 calls ≈2.6k → 1 call ≈0.6k. The cost is a longer tool list (≈1.0k → ≈1.4k tokens; Claude Code's tool search loads schemas on demand) and ≈60 more tokens per default search row, which now carries the rule-out facts.
 
 ### Deterministic plan assembly, not inference
 
 `recommend_emulation_plan` takes a list of desired capabilities and returns a dependency-ordered build plan — but it does no reasoning of its own. It matches capabilities to pattern records lexically, expands the selection through `depends_on` edges, and orders the result with the same Kahn toposort `pattern-library/validate.ts` uses to check the registry for cycles. The assembly is 100% deterministic and inspectable; the agent supplies the judgment about *how* to adapt each step to the target project. Keeping the assembler dumb is deliberate — it's a query over curated facts, not a second opinion.
 
 Each step also carries the pattern's **fitness block** — `requires` (the infrastructure the target must already run), `avoid_when` (contraindications) and `alternatives` (the smaller option and when it wins) — and the plan ends with the union of `requires`. The tool never drops a step on its own; it puts the reasons *not* to adopt a pattern in front of the agent before the how, because a catalog that only says "use me" over-recommends (LLMs measurably over-suggest patterns). The same headline contraindication is printed in the generated README index, since an index the agent always reads beats a tool it rarely calls. Whether these fields change agent choices is **unmeasured** — they are author judgement, kept honest by the rule that every entry is grounded in the pattern's own docs.
+
+Three refinements, each measured on the dev plans in `pattern-library/bench/` (now a precision test in `search.test.ts`: every plan contains exactly its required patterns):
+
+- **Admission.** Each capability contributes its best deep match, plus a runner-up only when that is a *strong* match within half the best score; weak overlaps never become steps. A partial runner-up used to drag its whole dependency chain in — "fast slow-page loading" added `scenario-harness` and with it `performance-budget-ratchet` (8 steps → 5).
+- **Transitive requirements.** `requires` is shown with its dependencies' infrastructure folded in and attributed — `singleflight` requires nothing itself, but adopting it takes `redis (via hierarchical-cache)`. Cards, compact search rows and plan steps all print the closure, so fit is decidable without opening the dependency's card.
+- **A declared target.** `target_infra` (the closed `PATTERN_REQUIREMENTS` vocabulary) turns each step into a verdict: "Fits the target." or "Target lacks pgvector, ai-provider — drop or replace this step, and the steps that build on it." Absent, nothing is asserted: *unknown* stays distinct from *missing*. `detail: "outline"` drops docs, code, tests and invariants from the steps — counting the withheld invariants — for agents that fetch the cards they keep with `get_pattern {ids, sections}`.
 
 ### Ephemeral read-only container
 
@@ -76,9 +108,22 @@ A handful of the server's behaviors exist only because live E2E testing against 
 | Tool results are plain text/markdown — `structuredContent` is never returned | E2E dogfooding showed that when a result has `structuredContent`, Claude Code shows the model *only* that payload and hides the text body — `get_file_excerpt` came through as bare metadata with no code. |
 | stdout carries protocol frames only; all logging goes to stderr | Any stray `console.log` corrupts the NDJSON stream the client is parsing. |
 | The process exits on stdin EOF or SIGTERM/SIGINT | Claude Code has a known issue leaving spawned child processes orphaned otherwise — the server terminates itself rather than trusting the client to clean up. |
-| Every response stays well under Claude Code's 10k-token warning threshold | Built in by construction: bounded excerpts (`get_file_excerpt` caps at 250 lines), capped result counts, no unbounded list dumps. |
+| Every response stays well under Claude Code's 10k-token warning threshold | Built in by construction: bounded excerpts (`get_file_excerpt` caps at 250 lines and 36 KB), at most 50 search rows and 5 cards per call, no unbounded list dumps. |
 
 These aren't arbitrary style choices — each one maps to a specific failure mode observed by spawning the real server against a real client. Treat them as invariants of the MCP transport layer itself, the same way a pattern card's `invariants` field pins behavior for the patterns it describes.
+
+### Considered and not adopted (2026-10)
+
+Each was weighed against this workload — a few hundred static records, sub-millisecond queries, one dominant client — and the measurements in `pattern-library/bench/`:
+
+| Option | Decision | Why |
+|---|---|---|
+| `structuredContent` / `outputSchema` | Not adopted | Claude Code forwards only the structured payload on success when both are present (documented; maintainer-confirmed, 2026), so the markdown body — next actions included — would vanish. |
+| Tool `annotations` (`readOnlyHint`) | Deferred | Recommended by the spec, but this repo recorded a live Claude Code bug that dropped the server's whole tool list over them. Re-adding needs an interop test against a real client, which the automated gate cannot run. |
+| MCP 2026-07-28 (stateless, `server/discover`, `ttlMs`) | Deferred, separate change | Current clients still connect to 2025-11-25 servers. The migration touches framing, headers and errors on both transports and belongs with SDK v2 and its own interoperability tests, not inside a retrieval change. |
+| Resources / prompts | Not adopted | Every retrieval need above is met by parameters on the six existing tools; another surface would add discovery cost without new information. |
+| Embeddings, hybrid search, rank fusion | Not adopted | IDF + best-field + coverage took the blind holdout from 52% to 76% Acc@1 with no model; embeddings would add a model to the stdio container and the Vercel cold start for a curated corpus with authored keywords. |
+| Response memoization / HTTP caching | Not adopted | Queries run in well under a millisecond over a cached per-registry index; POST JSON-RPC is not HTTP-cacheable anyway. |
 
 ## Registry record shape
 
@@ -96,5 +141,5 @@ Full detail — trust-surface boundaries, auth, rate limits, the persistent demo
 
 - **See it live:** [/showcases/mcp](/showcases/mcp) — interactive dependency graph, architecture diagram, and protocol walkthrough
 - **Run it, test it, register it, add a pattern:** [mcp/README.md](../../../mcp/README.md)
-- **Read the code:** [mcp/](../../../mcp/) — `server.ts` (entry/lifecycle), `protocol.ts` (framing), `registry.ts` (types/validation/toposort), `security.ts` (containment), `tools.ts` (the six tools), `snippet.ts` (validate_snippet engine)
+- **Read the code:** [mcp/](../../../mcp/) — `server.ts` (entry/lifecycle), `protocol.ts` (framing), `security.ts` (containment), `tools.ts` (the stdio adapter over the shared query layer), `snippet.ts` (validate_snippet engine); and [pattern-library/](../../../pattern-library/) — `schema.ts` (types/validation/toposort), `search.ts` (ranking), `query.ts` (tool contract + registry tools), `excerpt.ts` (excerpt rendering)
 - **The pattern this MCP itself follows:** [multi-client-core.md](./multi-client-core.md) — the registry's domain-shaped data plus a thin adapter is the same shape as every other pattern in this repo

@@ -63,7 +63,7 @@ describe('readAllowlistedExcerpt (served from the bundled snapshot, not the file
 	it('reads an allowlisted file from the snapshot', () => {
 		const path = [...SNAPSHOT_PATHS][0];
 		expect(path).toBeTruthy();
-		const result = readAllowlistedExcerpt(path, 1, 5);
+		const result = readAllowlistedExcerpt(path, { startLine: 1, lineCount: 5 });
 		expect(result.ok).toBe(true);
 		expect(result.text).toMatch(/lines 1-/);
 	});
@@ -92,7 +92,7 @@ describe('readAllowlistedExcerpt (served from the bundled snapshot, not the file
 
 	it('bounds the number of lines returned', () => {
 		const path = [...SNAPSHOT_PATHS][0];
-		const result = readAllowlistedExcerpt(path, 1, 10_000);
+		const result = readAllowlistedExcerpt(path, { startLine: 1, lineCount: 10_000 });
 		expect(result.ok).toBe(true);
 		// header + at most MAX_LINES(250) content lines
 		expect(result.text.split('\n').length).toBeLessThanOrEqual(251);

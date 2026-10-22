@@ -1,0 +1,180 @@
+{
+	"note": "Holdout set written blind to ranking changes: labels were assigned by reading registry records (summary, when_to_use) only, without reading or running any search or scoring code. Queries paraphrase needs and symptoms rather than copying titles or keywords. Queries with relevant: [] describe needs the registry does not cover and should surface no confident match.",
+	"queries": [
+		{
+			"id": "h01",
+			"query": "the UI should update instantly when I rename an item, but go back cleanly if the server request fails",
+			"relevant": ["optimistic-mutation"],
+			"acceptable": []
+		},
+		{
+			"id": "h02",
+			"query": "when a popular cache entry expires, hundreds of requests all hit the database at the same moment",
+			"relevant": ["singleflight"],
+			"acceptable": ["hierarchical-cache", "stale-while-revalidate"]
+		},
+		{
+			"id": "h03",
+			"query": "let an AI agent edit user records, but nothing destructive happens until a human signs off on it",
+			"relevant": ["deskbot-approval-gate"],
+			"acceptable": ["ai-tool-harness", "ai-deskbot"]
+		},
+		{
+			"id": "h04",
+			"query": "stop bots from spamming my signup form without making real people click on traffic lights",
+			"relevant": ["anti-abuse-honeypot", "anti-abuse-captcha"],
+			"acceptable": ["anti-abuse-rate-limiting"]
+		},
+		{
+			"id": "h05",
+			"query": "charge customers a monthly subscription with Stripe and handle failed card payments",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "h06",
+			"query": "my account dropdown has grown to twenty unrelated actions and nobody can find anything in it",
+			"relevant": ["ui-explosive-discovery"],
+			"acceptable": ["ui-menus", "desk-panel-menus"]
+		},
+		{
+			"id": "h07",
+			"query": "a user wants a copy of everything we store about them and then wants it all erased",
+			"relevant": ["admin-privacy-gdpr"],
+			"acceptable": ["identity-user-management", "analytics-my-data-transparency"]
+		},
+		{
+			"id": "h08",
+			"query": "let each user decide which kinds of alerts arrive by email and which by Telegram or Discord",
+			"relevant": ["notifications-settings-matrix"],
+			"acceptable": ["notifications-channels", "notifications-router-outbox"]
+		},
+		{
+			"id": "h09",
+			"query": "signup flow split over several screens where the city dropdown depends on the chosen country and users can add extra phone numbers",
+			"relevant": ["forms-multi-step-dynamic"],
+			"acceptable": ["forms-superforms-valibot"]
+		},
+		{
+			"id": "h10",
+			"query": "app should still open when the phone has no connection, without ever showing a stale personalised page from cache",
+			"relevant": ["pwa-service-worker"],
+			"acceptable": ["pwa-update-flow"]
+		},
+		{
+			"id": "h11",
+			"query": "transcode uploaded videos into adaptive bitrate HLS streams",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "h12",
+			"query": "two browser tabs editing the same note silently overwrite each other's changes",
+			"relevant": ["versioned-document-session"],
+			"acceptable": []
+		},
+		{
+			"id": "h13",
+			"query": "visualize how budget money flows between departments as bands whose width shows the amount",
+			"relevant": ["viz-graphs"],
+			"acceptable": ["viz-charts"]
+		},
+		{
+			"id": "h14",
+			"query": "an endpoint is slow and I can't tell whether the time goes to the database, the cache or the external API",
+			"relevant": ["latency-tracing"],
+			"acceptable": ["velocity-compute-locality"]
+		},
+		{
+			"id": "h15",
+			"query": "store product names in the database in several languages next to the English original",
+			"relevant": ["i18n-db-content"],
+			"acceptable": []
+		},
+		{
+			"id": "h16",
+			"query": "the big hero graphic only shows up after the JavaScript bundle runs, so the page looks empty at first",
+			"relevant": ["critical-rendering-path"],
+			"acceptable": ["velocity-asset-delivery"]
+		},
+		{
+			"id": "h17",
+			"query": "generate a PDF invoice from an HTML template on the server",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "h18",
+			"query": "know when stored embeddings are outdated because I changed the chunking code, not the documents",
+			"relevant": ["derivation-key"],
+			"acceptable": ["retrieval-endpoints"]
+		},
+		{
+			"id": "h19",
+			"query": "nightly cleanup task that should run the same way on Vercel and on a long-running Docker host",
+			"relevant": ["jobs-scheduler", "jobs-platform-scheduling"],
+			"acceptable": ["jobs-registered-catalog", "admin-privacy-data-retention"]
+		},
+		{
+			"id": "h20",
+			"query": "the frontend keeps its own copy of a server enum and the two keep drifting apart",
+			"relevant": ["source-of-truth-gate"],
+			"acceptable": ["reproducible-artifact-build"]
+		},
+		{
+			"id": "h21",
+			"query": "3D configurator where customers snap pipes and fittings together at defined connection points and save the assembly",
+			"relevant": ["product-connection-engine"],
+			"acceptable": ["3d-threlte-integration", "3d-model-viewer-customizer"]
+		},
+		{
+			"id": "h22",
+			"query": "invite teammates to an organization account and let users switch between tenants",
+			"relevant": [],
+			"acceptable": []
+		},
+		{ "id": "h23", "query": "N+1 queries", "relevant": ["query-budget"], "acceptable": [] },
+		{
+			"id": "h24",
+			"query": "Cmd+K command palette",
+			"relevant": ["app-shell-quick-search"],
+			"acceptable": ["app-shell-keyboard-shortcuts", "ui-composites"]
+		},
+		{
+			"id": "h25",
+			"query": "WebAuthn plus step-up re-auth",
+			"relevant": ["identity-passkeys"],
+			"acceptable": ["app-shell-session-lifecycle"]
+		},
+		{
+			"id": "h26",
+			"query": "remark rehype custom directives",
+			"relevant": ["content-markdown-pipeline"],
+			"acceptable": ["content-markdown-editor"]
+		},
+		{
+			"id": "h27",
+			"query": "streaming chatbot that falls back to another LLM provider when one is rate limited, and caps how much each user can spend per day",
+			"relevant": ["ai-provider-routing", "anti-abuse-ai-budget"],
+			"acceptable": ["ai-chat-assistant", "resilience-policy"]
+		},
+		{
+			"id": "h28",
+			"query": "count visitors myself without a third-party script, while respecting cookie consent and still counting people who decline",
+			"relevant": ["analytics-pageview-hook", "analytics-consent-sessions"],
+			"acceptable": ["admin-privacy-consent-cookies"]
+		},
+		{
+			"id": "h29",
+			"query": "IDE-like editor screen with resizable panes and draggable tabs that also has to work on a phone",
+			"relevant": ["desk-workspace"],
+			"acceptable": ["ui-split-panes", "desk-mobile-chrome"]
+		},
+		{
+			"id": "h30",
+			"query": "roll out a new feature to 10% of users and run an A/B experiment on it",
+			"relevant": [],
+			"acceptable": []
+		}
+	]
+}

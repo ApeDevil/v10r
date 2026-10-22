@@ -13,8 +13,8 @@
  */
 
 import { loadRegistry } from '../pattern-library/load.ts';
+import { QUERY_WORKFLOW } from '../pattern-library/query.ts';
 import { createLineBuffer, ERR, err, type Id, isNotification, ok, parseLine, type RpcMessage } from './protocol.ts';
-
 import { handleToolCall, TOOLS, type ToolContext } from './tools.ts';
 
 const SUPPORTED_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'];
@@ -23,10 +23,7 @@ const INSTRUCTIONS =
 	'The v10r-patterns server exposes this repository as a curated pattern library: proven full-stack patterns, ' +
 	'each paired with the docs that explain it, the code that implements it, the tests that pin it, and the showcase ' +
 	'route that proves it. Reach for it before building any feature that resembles something v10r already does — ' +
-	'auth-adjacent backends, AI tools and surfaces, RAG, design systems, background jobs. Call search_patterns or ' +
-	'trace_capability to find the canonical pattern, get_pattern for its full card with invariants, get_file_excerpt ' +
-	'to read the exact reference code, recommend_emulation_plan for a dependency-ordered build plan, and validate_snippet ' +
-	'to check code you wrote against v10r conventions (loop on it until clean). It complements ' +
+	`auth-adjacent backends, AI tools and surfaces, RAG, design systems, background jobs. ${QUERY_WORKFLOW} It complements ` +
 	'Read and Grep rather than replacing them: use it to discover the blessed pattern and its invariants, then explore freely.';
 
 const loaded = loadRegistry();

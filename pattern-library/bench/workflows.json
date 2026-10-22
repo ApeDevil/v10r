@@ -1,0 +1,299 @@
+{
+	"note": "Scripted agent tasks for scripts/mcp/retrieval-bench.ts. An oracle that already knows the right pattern: each variant lists the calls one interface generation needs to complete the task, so the comparison measures what the INTERFACE costs (calls, tokens), never how well a model chooses. `baseline` uses only the parameters that existed before the progressive-retrieval change; `progressive` uses the new ones (detail, ids, sections, browse, section, target_infra).",
+	"workflows": [
+		{
+			"id": "w1-fit-check",
+			"task": "Decide whether the cache-stampede pattern fits a target project that runs Postgres but no Redis.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "cache stampede protection"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "singleflight"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "hierarchical-cache"
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "cache stampede protection",
+							"detail": "compact",
+							"limit": 3
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "w2-pick-between-candidates",
+			"task": "Pick between the candidate chatbot patterns for a streaming assistant.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "chatbot with streaming responses"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "ai-chat-assistant"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "ai-surfaces"
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "chatbot with streaming responses",
+							"limit": 3
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "ai-chat-assistant"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "w3-read-kernel-function",
+			"task": "Read the implementation of retrieve() — the code entry point the layered-rag card names.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "src/lib/server/retrieval/index.ts"
+						}
+					},
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "src/lib/server/retrieval/index.ts",
+							"start_line": 101
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "src/lib/server/retrieval/index.ts",
+							"section": "retrieve"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "w4-read-doc-section",
+			"task": "Read the doc section a card cites with a fragment: docs/blueprint/velocity/data.md#singleflight--stampede-protection.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "docs/blueprint/velocity/data.md"
+						}
+					},
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "docs/blueprint/velocity/data.md",
+							"start_line": 101
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "docs/blueprint/velocity/data.md#singleflight--stampede-protection"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "w5-invariants-of-three",
+			"task": "Collect the invariants of three already-known patterns before a review.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "singleflight"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "deadline-propagation"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "resilience-policy"
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "get_pattern",
+						"args": {
+							"ids": ["singleflight", "deadline-propagation", "resilience-policy"],
+							"sections": ["invariants"]
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "w6-browse-category",
+			"task": "List what the velocity-data category offers.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "pattern",
+							"category": "velocity-data",
+							"limit": 20
+						}
+					},
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "cache data loading query",
+							"category": "velocity-data",
+							"limit": 20
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "*",
+							"category": "velocity-data",
+							"detail": "compact"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "w7-plan-two-capabilities",
+			"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "recommend_emulation_plan",
+						"args": {
+							"capabilities": ["background jobs", "layered RAG"]
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "recommend_emulation_plan",
+						"args": {
+							"capabilities": ["background jobs", "layered RAG"],
+							"target_infra": ["postgres"]
+						}
+					}
+				],
+				"progressive-outline": [
+					{
+						"tool": "recommend_emulation_plan",
+						"args": {
+							"capabilities": ["background jobs", "layered RAG"],
+							"target_infra": ["postgres"],
+							"detail": "outline"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"ids": ["multi-client-core", "jobs-scheduler"],
+							"sections": ["invariants", "code"]
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": "w8-emulate-one",
+			"task": "Find, ground and start emulating the jobs pattern: card plus the runner entry point.",
+			"variants": {
+				"baseline": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "background jobs"
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "jobs-scheduler"
+						}
+					},
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "src/lib/server/jobs/runner.ts"
+						}
+					}
+				],
+				"progressive": [
+					{
+						"tool": "search_patterns",
+						"args": {
+							"query": "background jobs",
+							"detail": "compact",
+							"limit": 3
+						}
+					},
+					{
+						"tool": "get_pattern",
+						"args": {
+							"id": "jobs-scheduler"
+						}
+					},
+					{
+						"tool": "get_file_excerpt",
+						"args": {
+							"path": "src/lib/server/jobs/runner.ts",
+							"section": "runJob"
+						}
+					}
+				]
+			}
+		}
+	]
+}

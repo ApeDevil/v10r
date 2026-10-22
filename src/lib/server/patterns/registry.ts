@@ -31,10 +31,3 @@ export const CATEGORIES: RegCategory[] = REGISTRY.categories;
 
 /** Deep tier only — the records that carry invariants/emulation notes (excerpt allowlist, DAG, plans). */
 export const DEEP_PATTERNS: PatternRecord[] = PATTERNS.filter((pattern) => pattern.tier === 'deep');
-
-export function buildById(): Map<string, PatternRecord> {
-	return new Map(PATTERNS.map((pattern) => [pattern.id, pattern]));
-}
-
-/** Registry declaration order — the deterministic tie-breaker for scoring and topo-sort. */
-export const REGISTRY_ORDER: string[] = PATTERNS.map((pattern) => pattern.id);

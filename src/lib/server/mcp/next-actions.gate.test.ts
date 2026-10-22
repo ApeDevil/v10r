@@ -1,16 +1,18 @@
 /**
  * NEXT-ACTIONS CONVENTION GATE.
  *
- * The hosted side enforces the recovery-step contract at compile time (`errorResult`'s
- * required third parameter). The stdio side (`mcp/`) cannot be imported from src/ — that
- * is a hard boundary — so its half of the contract is pinned here as a static scan, the
- * house style for cross-boundary invariants (see docs/blueprint/security/gate-tests.md).
+ * The registry tools live once in `pattern-library/query.ts`, where a failure without recovery
+ * steps is a type error (`QueryOutcome` requires `next`); the hosted side adds `errorResult`'s
+ * required third parameter. The stdio-only branches in `mcp/tools.ts` are pinned here as a
+ * static scan, the house style for cross-boundary invariants (see
+ * docs/blueprint/security/gate-tests.md).
  *
- * Three properties:
+ * Four properties:
  *  1. every `fail(` call in mcp/tools.ts passes an actions array — no error strands the caller;
- *  2. the heading literal matches the hosted one exactly — one grep-able anchor on both surfaces;
+ *  2. the heading is declared once, in the shared query layer, and stdio renders through it;
  *  3. the transport catch-all in mcp/server.ts stays bare, mirroring the hosted transport
- *     literals whose bareness is the telemetry discriminator.
+ *     literals whose bareness is the telemetry discriminator;
+ *  4. why-strings stay one short clause wherever they are written.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -18,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 import { NEXT_ACTIONS_HEADING } from './types';
 
 const TOOLS_PATH = join(process.cwd(), 'mcp', 'tools.ts');
+const QUERY_PATH = join(process.cwd(), 'pattern-library', 'query.ts');
 const SERVER_PATH = join(process.cwd(), 'mcp', 'server.ts');
 
 /** Balanced-paren argument extraction for every `fail(` CALL (the definition is skipped). */
@@ -40,20 +43,22 @@ function failCallArgs(source: string): string[] {
 	return calls;
 }
 
-describe('next-actions gate (stdio mirror)', () => {
+describe('next-actions gate', () => {
 	const tools = readFileSync(TOOLS_PATH, 'utf8');
 	const server = readFileSync(SERVER_PATH, 'utf8');
 
 	it('every fail() call in mcp/tools.ts hands the caller an actions array', () => {
 		const calls = failCallArgs(tools);
-		expect(calls.length).toBeGreaterThan(10);
+		expect(calls.length).toBeGreaterThan(3);
 		for (const call of calls) {
-			expect(call, `fail(${call.slice(0, 60)}…) is missing its actions array`).toMatch(/\[/);
+			expect(call, `fail(${call.slice(0, 60)}…) is missing its actions array`).toMatch(/\[|\.next\b/);
 		}
 	});
 
-	it('the heading literal matches the hosted convention exactly', () => {
-		expect(tools).toContain(`NEXT_ACTIONS_HEADING = '${NEXT_ACTIONS_HEADING}'`);
+	it('the heading is declared once, in the shared query layer, and stdio renders through it', () => {
+		expect(readFileSync(QUERY_PATH, 'utf8')).toContain(`NEXT_ACTIONS_HEADING = '${NEXT_ACTIONS_HEADING}'`);
+		expect(tools).not.toContain('NEXT_ACTIONS_HEADING =');
+		expect(tools).toMatch(/withNextActions,\n\} from '\.\.\/pattern-library\/query\.ts'/);
 	});
 
 	it('the stdio transport catch-all stays bare, like the hosted transport literals', () => {
@@ -63,7 +68,7 @@ describe('next-actions gate (stdio mirror)', () => {
 
 	it('why-strings stay one short clause on both surfaces', () => {
 		const hosted = readFileSync(join(process.cwd(), 'src', 'lib', 'server', 'mcp', 'patterns', 'tools.ts'), 'utf8');
-		for (const source of [tools, hosted]) {
+		for (const source of [tools, hosted, readFileSync(QUERY_PATH, 'utf8')]) {
 			for (const match of source.matchAll(/why: '([^']*)'/g)) {
 				expect(match[1].length, match[1]).toBeLessThanOrEqual(120);
 			}

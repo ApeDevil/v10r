@@ -351,7 +351,8 @@ Flagged by audit, examined, kept:
 
 - **MCP tool names** (`search_patterns`, `get_pattern`, `get_file_excerpt`,
   `trace_capability`, `recommend_emulation_plan`, `validate_snippet`) — external clients
-  call them, and `src/lib/server/mcp/patterns/parity.test.ts` guards stdio↔HTTP agreement.
+  call them; both transports serve them from `pattern-library/query.ts`, and
+  `src/lib/server/mcp/patterns/parity.test.ts` proves stdio↔HTTP agreement by running both.
 - **Pattern-registry `id`s** — the MCP surface, the generated docs pages and external
   agents all address patterns by id.
 - **Better Auth's tables** — vendor-owned.

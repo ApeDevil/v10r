@@ -18,9 +18,9 @@ one of these, listed from cheapest to most expensive:
 | Binding | How the copy stays true | v10r instance |
 |---|---|---|
 | **Typed** | The compiler refuses a missing or extra key | `retention-copy.ts` is typed `Record<RetentionRuleId, …>`, so a rule with no reader-facing copy does not compile |
-| **Imported** | The copy *is* the owner, reached by import | `doc-filter.ts` is imported by both the `/docs` routes and `scripts/db/ingest-docs.ts`; `content-hash.ts` is the one hash used by blog, retrieval and `content:check` |
+| **Imported** | The copy *is* the owner, reached by import | `doc-filter.ts` is imported by both the `/docs` routes and `scripts/db/ingest-docs.ts`; `content-hash.ts` is the one hash used by blog, retrieval and `content:check`; `pattern-library/query.ts` is the one implementation of the registry tools behind both MCP transports (`mcp/patterns/parity.test.ts` executes both and diffs the answers) |
 | **Generated + `--check`** | The copy is rebuilt from the owner and the gate diffs the bytes | README Pattern Index and `docs/pattern-library/` (`patterns:check`), `mcp/public-excerpts.snapshot.json` (`mcp:excerpts:check`) |
-| **Drift test** | The copy is hand-held, and a test compares it to the owner | `db-enums.drift.test.ts` (client enum mirror vs `pgEnum`, member order included), `schema-filter.gate.test.ts` (`drizzle.config.ts` vs declared `pgSchema`s), `credits/registry.gate.test.ts` (credited SPDX id vs the installed package), `mcp/patterns/parity.test.ts` (stdio vs hosted tool logic) |
+| **Drift test** | The copy is hand-held, and a test compares it to the owner | `db-enums.drift.test.ts` (client enum mirror vs `pgEnum`, member order included), `schema-filter.gate.test.ts` (`drizzle.config.ts` vs declared `pgSchema`s), `credits/registry.gate.test.ts` (credited SPDX id vs the installed package) |
 
 Two rules make a drift test trustworthy:
 

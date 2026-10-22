@@ -11,15 +11,13 @@
  * surface at all — only exact-match lookup against the registry-derived allowlist. The snapshot
  * generator already excludes binary/oversize files, so only vetted text reaches this reader.
  */
+
+import { type ExcerptRequest, renderExcerpt, splitFragment } from '$patterns/excerpt';
 import snapshotJson from '../../../../../mcp/public-excerpts.snapshot.json';
 import type { NextAction, ToolDiag } from '../types';
 import { EXCERPT_ALLOWLIST, isAllowlisted } from './allowlist';
 
 export { EXCERPT_ALLOWLIST, isAllowlisted };
-
-export const MAX_LINES = 250;
-export const DEFAULT_LINES = 100;
-const MAX_OUTPUT_BYTES = 36 * 1024;
 
 interface ExcerptSnapshot {
 	registryVersion: string;
@@ -42,7 +40,9 @@ export type ExcerptResult =
 	| { ok: true; text: string }
 	| { ok: false; text: string; diag: ToolDiag; next: readonly NextAction[] };
 
-export function readAllowlistedExcerpt(path: string, startLine = 1, lineCount = DEFAULT_LINES): ExcerptResult {
+/** `path` may carry the `#fragment` cards print; it is the request's section unless one is given. */
+export function readAllowlistedExcerpt(requested: string, request: ExcerptRequest = {}): ExcerptResult {
+	const { file: path, fragment } = splitFragment(typeof requested === 'string' ? requested : '');
 	if (typeof path !== 'string' || path.trim().length === 0) {
 		return {
 			ok: false,
@@ -84,27 +84,21 @@ export function readAllowlistedExcerpt(path: string, startLine = 1, lineCount = 
 			],
 		};
 	}
-	const lines = content.split('\n');
-	const total = lines.length;
-	const from = Math.max(1, Math.floor(startLine));
-	if (from > total) {
-		return {
-			ok: false,
-			text: `start_line ${from} is beyond EOF — '${path}' has ${total} lines.`,
-			diag: 'invalid_args',
-			next: [{ tool: 'get_file_excerpt', args: { start_line: 1 }, why: 'retry from line 1 with the same path.' }],
-		};
+	const rendered = renderExcerpt(path, content, { ...request, section: request.section ?? fragment });
+	if (!rendered.ok) {
+		return rendered.reason === 'no_section'
+			? {
+					ok: false,
+					text: rendered.text,
+					diag: 'not_found',
+					next: [{ tool: 'get_file_excerpt', args: { start_line: 1 }, why: 'read the file by line range instead.' }],
+				}
+			: {
+					ok: false,
+					text: rendered.text,
+					diag: 'invalid_args',
+					next: [{ tool: 'get_file_excerpt', args: { start_line: 1 }, why: 'retry from line 1 with the same path.' }],
+				};
 	}
-	const count = Math.min(Math.max(1, Math.floor(lineCount)), MAX_LINES);
-	const to = Math.min(from + count - 1, total);
-	const width = String(to).length;
-	const body = lines
-		.slice(from - 1, to)
-		.map((line, index) => `${String(from + index).padStart(width)}\t${line}`)
-		.join('\n');
-	let text = `# ${path} (lines ${from}-${to} of ${total})\n${body}`;
-	if (text.length > MAX_OUTPUT_BYTES) {
-		text = `${text.slice(0, MAX_OUTPUT_BYTES)}\n… [truncated at ${MAX_OUTPUT_BYTES} bytes — request a narrower range]`;
-	}
-	return { ok: true, text };
+	return { ok: true, text: rendered.text };
 }

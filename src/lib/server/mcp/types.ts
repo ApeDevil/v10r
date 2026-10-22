@@ -3,7 +3,20 @@
  * this transport contract but each supplies its OWN ToolRegistry — the registries and their
  * dispatch allowlists are separate, so a tool that is not in a registry cannot be dispatched
  * through it regardless of what a caller submits.
+ *
+ * The tool-definition shape and the next-actions convention are declared once in
+ * `pattern-library/query.ts` — the stdio server speaks them too — and re-exported here so the
+ * admin registry reads them from its own transport contract.
  */
+import { type NextAction, type ToolDef, withNextActions } from '$patterns/query';
+
+export {
+	MAX_NEXT_ACTIONS,
+	NEXT_ACTIONS_HEADING,
+	type NextAction,
+	type ToolDef,
+	withNextActions,
+} from '$patterns/query';
 
 /** JSON-RPC id: string, number, or null. Absent entirely on notifications. */
 export type JsonRpcId = string | number | null;
@@ -37,13 +50,6 @@ export const RPC = {
 	BAD_PARAMS: -32602,
 	INTERNAL: -32603,
 } as const;
-
-/** A tool definition — name/description/inputSchema only (MCP tools/list shape). */
-export interface ToolDef {
-	name: string;
-	description: string;
-	inputSchema: Record<string, unknown>;
-}
 
 /**
  * Why a tool result failed — INTERNAL telemetry, never serialized to the wire.
@@ -145,43 +151,6 @@ export const noopMcpObserver: McpCallObserver = Object.freeze({ observe: () => {
 
 export function textResult(body: string): ToolResult {
 	return { content: [{ type: 'text', text: body }] };
-}
-
-/**
- * A concrete next step handed to the caller on every registry-produced error (the
- * "self-reflective API" pattern: agents recover measurably better from a named next
- * call than from prose alone).
- *
- * `args` values are ALWAYS literals the registry wrote — never caller text. The
- * existing bounded-echo discipline (get_pattern's id reflection) is the ceiling;
- * this block must add no echo surface of its own.
- */
-export interface NextAction {
-	tool: string;
-	args?: Record<string, string | number | boolean | readonly string[]>;
-	why: string;
-}
-
-export const NEXT_ACTIONS_HEADING = '## Next actions';
-export const MAX_NEXT_ACTIONS = 3;
-
-/**
- * Renders the trailer as TEXT inside the body. Not a structured result field: both
- * surfaces are text-only by hard-won convention (structuredContent makes Claude Code
- * hide the text body entirely), and a markdown block with a fixed heading is exactly
- * as machine-parsable while staying visible.
- *
- * Never throws — a throw inside a handler would surface as a diag-less transport
- * error and be classified as `threw`. An empty array returns the body
- * unchanged; the gate test, not this function, forbids the empty case.
- */
-export function withNextActions(body: string, actions: readonly NextAction[]): string {
-	if (actions.length === 0) return body;
-	const lines = actions.slice(0, MAX_NEXT_ACTIONS).map((action, index) => {
-		const args = action.args ? ` ${JSON.stringify(action.args)}` : '';
-		return `${index + 1}. \`${action.tool}\`${args} — ${action.why}`;
-	});
-	return `${body}\n\n${NEXT_ACTIONS_HEADING}\n${lines.join('\n')}`;
 }
 
 /**

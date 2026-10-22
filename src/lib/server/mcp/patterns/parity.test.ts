@@ -1,64 +1,111 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { PATTERN_TOOLS } from './tools';
+import { REGISTRY } from '$lib/server/patterns';
+import { handleToolCall, TOOLS } from '../../../../../mcp/tools.ts';
+import devQueries from '../../../../../pattern-library/bench/dev-queries.json';
+import { EXCERPT_ALLOWLIST } from './excerpts';
+import { publicPatternRegistry } from './tools';
 
 /**
- * Drift guard between the two runtimes. The stdio server (`mcp/tools.ts`) and this hosted
- * registry deliberately keep separate copies of the pattern-tool logic (the container has no
- * `$lib` alias / bundler). This test reads the stdio source as TEXT — the same technique the
- * showcase drift test uses — and asserts the public tool SET is identical, so a tool added to
- * or renamed in one runtime cannot silently diverge from the other.
+ * Executable parity between the two runtimes. Both are thin readers over the one query layer
+ * (`pattern-library/query.ts`), so they SHOULD answer identically — this test makes them prove
+ * it, by running the same calls through the stdio handler and the hosted registry and comparing
+ * the bytes an agent would see. It replaced a source-text comparison that could only catch the
+ * drift somebody had already thought of.
+ *
+ * Only what is transport-specific may differ: the hosted `get_file_excerpt` reads an allowlisted
+ * snapshot, so files are compared on that allowlist (the snapshot is byte-identical to the tree,
+ * which `mcp:excerpts:check` enforces), and `validate_snippet` runs two engines.
  */
+const stdioContext = { registry: REGISTRY, loadError: null, root: process.cwd() };
+
+function both(tool: string, args: Record<string, unknown>) {
+	const stdio = handleToolCall(tool, args, stdioContext);
+	const hosted = publicPatternRegistry.dispatch(tool, args);
+	if (hosted instanceof Promise) throw new Error('pattern tools are synchronous');
+	return {
+		stdio: { text: stdio.content[0]?.text, isError: stdio.isError === true },
+		hosted: { text: hosted.content[0]?.text, isError: hosted.isError === true },
+	};
+}
+
 describe('hosted ↔ stdio pattern-tool parity', () => {
-	const stdioSource = readFileSync('mcp/tools.ts', 'utf8');
-	const stdioToolNames = new Set([...stdioSource.matchAll(/name:\s*'([a-z_]+)'/g)].map((m) => m[1]));
-	const hostedToolNames = PATTERN_TOOLS.map((t) => t.name);
-
-	it('exposes the same six tool names in both runtimes', () => {
-		expect([...stdioToolNames].sort()).toEqual([...hostedToolNames].sort());
+	it('advertises byte-identical tool definitions', () => {
+		expect(JSON.stringify(TOOLS)).toBe(JSON.stringify(publicPatternRegistry.tools));
 	});
 
-	it('has exactly six public pattern tools', () => {
-		expect(hostedToolNames).toHaveLength(6);
-	});
-
-	// Ranking is the other thing that must not diverge: the same query hitting the hosted
-	// and the stdio server should return the same order, and the tokenizer is where that
-	// silently breaks. It already did once — `n+1` split into two discarded characters —
-	// and a fix applied to one copy only would have made the two runtimes disagree about
-	// which pattern answers "N+1".
-	it('tokenizes queries identically in both runtimes', () => {
-		const hostedSource = readFileSync('src/lib/server/mcp/patterns/search.ts', 'utf8');
-		const bodyOf = (source: string) => {
-			const body = /export function tokenizePatternQuery\(input: string\): string\[\] \{([\s\S]*?)\n\}/.exec(source);
-			if (!body) throw new Error('tokenizePatternQuery not found');
-			return body[1];
-		};
-		expect(bodyOf(stdioSource)).toBe(bodyOf(hostedSource));
-	});
-
-	// The tool SET check above cannot catch a field rendered in one runtime's card
-	// but not the other's. Pin the maturity line the same way — by source text —
-	// in both copies of patternCard.
-	// The fitness block (requires / avoid when / alternatives) is how an agent rules a pattern
-	// OUT; it lives once in `pattern-library/fitness.ts`. Both runtimes must import it, never
-	// grow a local copy that could render differently.
-	it('renders the fitness block from the one shared module in both runtimes', () => {
-		const hostedSource = readFileSync('src/lib/server/mcp/patterns/tools.ts', 'utf8');
-		expect(stdioSource).toContain("from '../pattern-library/fitness.ts'");
-		expect(hostedSource).toContain("from '$patterns/fitness'");
-		for (const source of [stdioSource, hostedSource]) {
-			expect(source).not.toMatch(/\nfunction (fitnessLines|requiresLine)\(/);
-			expect(source).toContain('...fitnessLines(pattern),');
-			expect(source).toContain('requiresLine(order');
+	it('answers every benchmark query identically (search and trace)', () => {
+		for (const { query } of devQueries.queries) {
+			for (const [tool, args] of [
+				['search_patterns', { query }],
+				['search_patterns', { query, limit: 20 }],
+				['trace_capability', { capability: query }],
+			] as const) {
+				const { stdio, hosted } = both(tool, args);
+				expect(stdio, `${tool} ${query}`).toEqual(hosted);
+			}
 		}
 	});
 
-	it('renders the maturity grade in both runtimes', () => {
-		const hostedSource = readFileSync('src/lib/server/mcp/patterns/tools.ts', 'utf8');
-		for (const source of [stdioSource, hostedSource]) {
-			expect(source).toContain('**Maturity:** ${pattern.maturity}');
-			expect(source).toContain('${hit.pattern.tier}, ${hit.pattern.maturity}');
+	it('renders every pattern card identically', () => {
+		for (const pattern of REGISTRY.patterns) {
+			const { stdio, hosted } = both('get_pattern', { id: pattern.id });
+			expect(stdio, pattern.id).toEqual(hosted);
+		}
+	});
+
+	it('answers the progressive-disclosure parameters identically', () => {
+		for (const [tool, args] of [
+			['search_patterns', { query: '*' }],
+			['search_patterns', { query: '*', category: 'ai', detail: 'compact' }],
+			['search_patterns', { query: '*', tier: 'deep', maturity: 'proven', detail: 'ids' }],
+			['search_patterns', { query: 'cache', detail: 'ids', tier: 'light', limit: 50 }],
+			['get_pattern', { ids: ['singleflight', 'layered-rag', 'app-shell-toasts'], sections: ['fitness', 'code'] }],
+			['get_pattern', { id: 'deskbot-approval-gate', sections: ['invariants'] }],
+			['get_file_excerpt', { path: 'docs/blueprint/velocity/data.md#singleflight--stampede-protection' }],
+			['get_file_excerpt', { path: 'src/lib/server/cache/singleflight.ts', section: 'coalesce' }],
+			['get_file_excerpt', { path: 'src/lib/server/cache/singleflight.ts', section: 'no-such-symbol' }],
+			['recommend_emulation_plan', { capabilities: ['background jobs', 'layered RAG'], target_infra: ['postgres'] }],
+			['recommend_emulation_plan', { capabilities: ['approval gate for AI mutations'], detail: 'outline' }],
+			['recommend_emulation_plan', { capabilities: ['jobs'], target_infra: ['mysql'] }],
+		] as const) {
+			const { stdio, hosted } = both(tool, args);
+			expect(stdio, `${tool} ${JSON.stringify(args)}`).toEqual(hosted);
+		}
+	});
+
+	it('assembles every benchmark plan identically', () => {
+		for (const plan of devQueries.plans) {
+			for (const include_dependencies of [true, false]) {
+				const { stdio, hosted } = both('recommend_emulation_plan', {
+					capabilities: plan.capabilities,
+					include_dependencies,
+				});
+				expect(stdio, plan.id).toEqual(hosted);
+			}
+		}
+	});
+
+	it('excerpts every allowlisted file identically', () => {
+		for (const path of EXCERPT_ALLOWLIST) {
+			const { stdio, hosted } = both('get_file_excerpt', { path, start_line: 1, line_count: 40 });
+			expect(stdio, path).toEqual(hosted);
+		}
+	});
+
+	it('fails the same way on malformed and unknown input', () => {
+		for (const [tool, args] of [
+			['search_patterns', {}],
+			['search_patterns', { query: 'x'.repeat(600) }],
+			['search_patterns', { query: 'jobs', category: 'no-such-category' }],
+			['search_patterns', { query: 'quantum teleportation zebra' }],
+			['get_pattern', { id: 'no-such-pattern' }],
+			['trace_capability', { capability: '' }],
+			['recommend_emulation_plan', { capabilities: [] }],
+			['recommend_emulation_plan', { capabilities: Array.from({ length: 25 }, () => 'jobs') }],
+		] as const) {
+			const { stdio, hosted } = both(tool, args);
+			expect(stdio.isError, `${tool} ${JSON.stringify(args)}`).toBe(true);
+			expect(stdio, `${tool} ${JSON.stringify(args)}`).toEqual(hosted);
 		}
 	});
 });

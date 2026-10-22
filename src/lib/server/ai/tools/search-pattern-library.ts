@@ -18,8 +18,8 @@
 import { jsonSchema, tool } from 'ai';
 import type { Locale } from '$lib/i18n';
 import type { SearchResult } from '$lib/search/types';
-import { scorePatterns } from '$lib/server/mcp/patterns/search';
 import { CATEGORIES, PATTERNS, type PatternRecord } from '$lib/server/patterns';
+import { scorePatterns } from '$patterns/search';
 import type { CatalogSink } from './search-catalog';
 
 interface ToolInput {
@@ -133,7 +133,10 @@ export function createSearchPatternLibraryTool(locale: Locale, sink?: CatalogSin
 						return { results: browsed.map(toRow), total: pool.length };
 					}
 
-					const scored = scorePatterns(q, pool).slice(0, cap);
+					// The whole registry is the corpus (IDF is a property of the library), the category a filter.
+					const scored = scorePatterns(q, PATTERNS)
+						.filter((hit) => !category || hit.pattern.category === category)
+						.slice(0, cap);
 					sink?.record(
 						scored.map((hit) => toSinkRow(hit.pattern, locale, hit.score)),
 						toolCallId,

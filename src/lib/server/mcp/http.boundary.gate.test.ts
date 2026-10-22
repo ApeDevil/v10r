@@ -119,11 +119,17 @@ describe('MCP protocol layer import boundary', () => {
 		expect(/\$lib\/server\/cache\b/.test(readFileSync(join(HTTP_KIT_DIR, 'rate-limit.ts'), 'utf8'))).toBe(true);
 	});
 
-	it('keeps types.ts free of ALL imports (it is the zero-import leaf)', () => {
+	it('keeps types.ts a leaf: it imports only the shared pattern-library contract', () => {
 		// Everything else in the MCP tree may import types.ts, so an import here is the one edge that
-		// can reach every other module at once.
+		// can reach every other module at once. The single allowed edge is `$patterns/` — the
+		// framework-free, filesystem-free contract the stdio server also runs under bare Bun, which
+		// therefore cannot import anything of the app back.
 		const src = readProtocolFile('types.ts');
-		expect(/^\s*import\s/m.test(src), 'types.ts must not import anything').toBe(false);
+		const sources = [...src.matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s+'([^']+)'/gm)].map((match) => match[1]);
+		expect(sources.length, 'types.ts re-uses the shared next-actions contract').toBeGreaterThan(0);
+		for (const source of sources) {
+			expect(source, 'types.ts may import only $patterns/*').toMatch(/^\$patterns\/[a-z-]+$/);
+		}
 		expect(/\brequire\(/.test(src)).toBe(false);
 	});
 

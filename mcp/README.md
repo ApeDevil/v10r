@@ -23,7 +23,7 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 | `server.ts` | Entry: stdio loop, dispatch, lifecycle (exits on stdin EOF / SIGTERM — no orphan containers) |
 | `protocol.ts` | JSON-RPC framing and line buffering |
 | `security.ts` | Path containment (realpath prefix check) + secret denylist + bounded excerpts |
-| `tools.ts` | The six tools |
+| `tools.ts` | The six tools — a thin stdio adapter over the shared query layer in `../pattern-library/query.ts` (the hosted transport reads the same module) |
 | `snippet.ts` + `snippet-rules.json` | `validate_snippet` rule engine |
 | `public-excerpts.snapshot.json` | Generated excerpt snapshot served by the hosted transport |
 | `server.test.ts` / `smoke.ts` | `bun:test` units / spawned-subprocess handshake test |
@@ -33,11 +33,11 @@ The records, their schema, and the drift guard (`bun run patterns:validate`) liv
 
 ## Tools
 
-1. `search_patterns` — lexical search over the registry; lean ranked cards
-2. `get_pattern` — full card by id, invariants included
-3. `get_file_excerpt` — bounded line-numbered read of referenced repo files (max 250 lines; secrets denied)
+1. `search_patterns` — ranked lexical search, hits graded strong/partial/weak (weak-only = not covered); `detail` ids/compact/summary; `category`/`tier`/`maturity` facets; `query: "*"` browses the category map
+2. `get_pattern` — the card by `id`, or up to 5 by `ids`; `sections` returns part of each and names what it withheld
+3. `get_file_excerpt` — bounded line-numbered read of referenced repo files (max 250 lines; secrets denied); `section` (or a `#heading` on the path) reads one heading or declaration
 4. `trace_capability` — concept → docs → code → tests → showcase trail
-5. `recommend_emulation_plan` — deterministic, dependency-ordered plan assembly (no inference)
+5. `recommend_emulation_plan` — deterministic, dependency-ordered plan assembly (no inference); `target_infra` marks steps the target cannot support, `detail: "outline"` drops the per-step depth
 6. `validate_snippet` — checks a Svelte/TS snippet against v10r conventions (runes, component-first, tokens, Valibot); returns line-numbered findings with fixes — call it in a loop until clean
 
 ## Registration
@@ -51,6 +51,11 @@ claude mcp add --scope user --transport stdio v10r-patterns -- \
 ```
 
 No clone at all? The same six tools are served over HTTP at `POST https://www.v10r.dev/api/mcp/public` — no podman, no mount, no setup.
+
+Retrieval quality and token cost are measured, not assumed: `bun run mcp:bench` (see
+[`../pattern-library/bench/`](../pattern-library/bench/)) reports relevance on two labelled query
+sets, response sizes, latency and the cost of scripted agent workflows; `--compare
+pattern-library/bench/baseline.json` diffs against the pre-optimization baseline.
 
 ## Testing
 

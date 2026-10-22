@@ -1,0 +1,470 @@
+{
+	"note": "Dev relevance set for pattern search. Labelled from the registry BEFORE any ranking change (2026-10-22); ranking work may be tuned against it, so the blind holdout-queries.json is the honest generalization check. relevant = the answer an expert would pick; acceptable = a reasonable secondary answer. relevant: [] means the registry has no pattern for it.",
+	"queries": [
+		{ "id": "d01", "kind": "exact-id", "query": "layered-rag", "relevant": ["layered-rag"], "acceptable": [] },
+		{ "id": "d02", "kind": "exact-id", "query": "singleflight", "relevant": ["singleflight"], "acceptable": [] },
+		{
+			"id": "d03",
+			"kind": "exact-id",
+			"query": "multi-client-core",
+			"relevant": ["multi-client-core"],
+			"acceptable": []
+		},
+		{
+			"id": "d04",
+			"kind": "exact-id",
+			"query": "deskbot approval gate",
+			"relevant": ["deskbot-approval-gate"],
+			"acceptable": []
+		},
+		{
+			"id": "d05",
+			"kind": "exact-id",
+			"query": "durable-step-execution",
+			"relevant": ["durable-step-execution"],
+			"acceptable": []
+		},
+		{
+			"id": "d06",
+			"kind": "capability",
+			"query": "background jobs",
+			"relevant": ["jobs-scheduler"],
+			"acceptable": ["jobs-platform-scheduling", "jobs-registered-catalog"]
+		},
+		{
+			"id": "d07",
+			"kind": "capability",
+			"query": "cron job scheduling on vercel",
+			"relevant": ["jobs-platform-scheduling", "jobs-scheduler"],
+			"acceptable": []
+		},
+		{
+			"id": "d08",
+			"kind": "capability",
+			"query": "grounded answers over a corpus",
+			"relevant": ["layered-rag"],
+			"acceptable": ["retrieval-endpoints"]
+		},
+		{
+			"id": "d09",
+			"kind": "capability",
+			"query": "approval gate for AI tools",
+			"relevant": ["deskbot-approval-gate"],
+			"acceptable": ["ai-tool-harness"]
+		},
+		{
+			"id": "d10",
+			"kind": "capability",
+			"query": "rate limiting an API endpoint",
+			"relevant": ["anti-abuse-rate-limiting"],
+			"acceptable": ["architecture-rest-api"]
+		},
+		{
+			"id": "d11",
+			"kind": "capability",
+			"query": "cache stampede protection",
+			"relevant": ["singleflight"],
+			"acceptable": ["hierarchical-cache"]
+		},
+		{
+			"id": "d12",
+			"kind": "jargon",
+			"query": "N+1 queries",
+			"relevant": ["query-budget", "no-waterfall-loading"],
+			"acceptable": []
+		},
+		{
+			"id": "d13",
+			"kind": "capability",
+			"query": "optimistic UI updates with rollback",
+			"relevant": ["optimistic-mutation"],
+			"acceptable": []
+		},
+		{
+			"id": "d14",
+			"kind": "capability",
+			"query": "render a list of ten thousand rows",
+			"relevant": ["virtualized-rendering"],
+			"acceptable": []
+		},
+		{
+			"id": "d15",
+			"kind": "capability",
+			"query": "circuit breaker and retries for a flaky third-party API",
+			"relevant": ["resilience-policy"],
+			"acceptable": ["name-check"]
+		},
+		{
+			"id": "d16",
+			"kind": "capability",
+			"query": "timeout budget across downstream calls",
+			"relevant": ["deadline-propagation"],
+			"acceptable": ["resilience-policy"]
+		},
+		{
+			"id": "d17",
+			"kind": "capability",
+			"query": "design tokens",
+			"relevant": ["ui-design-tokens"],
+			"acceptable": ["ui-component-system", "ui-design-philosophy"]
+		},
+		{
+			"id": "d18",
+			"kind": "capability",
+			"query": "theme switching with a cookie",
+			"relevant": ["app-shell-settings"],
+			"acceptable": ["ui-design-philosophy"]
+		},
+		{
+			"id": "d19",
+			"kind": "capability",
+			"query": "magic link login",
+			"relevant": ["identity-passwordless-auth"],
+			"acceptable": ["forms-auth-forms"]
+		},
+		{
+			"id": "d20",
+			"kind": "jargon",
+			"query": "passkeys webauthn",
+			"relevant": ["identity-passkeys"],
+			"acceptable": []
+		},
+		{
+			"id": "d21",
+			"kind": "capability",
+			"query": "file upload to S3-compatible storage",
+			"relevant": ["forms-file-uploads", "databases-object-storage"],
+			"acceptable": []
+		},
+		{
+			"id": "d22",
+			"kind": "capability",
+			"query": "GDPR data export and deletion",
+			"relevant": ["admin-privacy-gdpr"],
+			"acceptable": ["identity-user-management"]
+		},
+		{
+			"id": "d23",
+			"kind": "capability",
+			"query": "cookie consent banner",
+			"relevant": ["admin-privacy-consent-cookies"],
+			"acceptable": ["analytics-consent-sessions"]
+		},
+		{
+			"id": "d24",
+			"kind": "capability",
+			"query": "command palette",
+			"relevant": ["app-shell-quick-search"],
+			"acceptable": ["app-shell-keyboard-shortcuts"]
+		},
+		{
+			"id": "d25",
+			"kind": "capability",
+			"query": "localized routing with a locale prefix in the URL",
+			"relevant": ["i18n-locale-routing"],
+			"acceptable": []
+		},
+		{
+			"id": "d26",
+			"kind": "capability",
+			"query": "translate database content",
+			"relevant": ["i18n-db-content"],
+			"acceptable": []
+		},
+		{
+			"id": "d27",
+			"kind": "capability",
+			"query": "multi-step form wizard",
+			"relevant": ["forms-multi-step-dynamic"],
+			"acceptable": []
+		},
+		{
+			"id": "d28",
+			"kind": "capability",
+			"query": "web push notifications",
+			"relevant": ["pwa-web-push"],
+			"acceptable": ["notifications-channels", "notifications-router-outbox"]
+		},
+		{
+			"id": "d29",
+			"kind": "capability",
+			"query": "offline service worker caching",
+			"relevant": ["pwa-service-worker"],
+			"acceptable": []
+		},
+		{
+			"id": "d30",
+			"kind": "capability",
+			"query": "server-sent events live updates",
+			"relevant": ["notifications-sse-stream", "analytics-live-feed"],
+			"acceptable": []
+		},
+		{
+			"id": "d31",
+			"kind": "capability",
+			"query": "bundle size regression gate",
+			"relevant": ["performance-budget-ratchet", "heavy-dependency-quarantine"],
+			"acceptable": []
+		},
+		{
+			"id": "d32",
+			"kind": "capability",
+			"query": "slow page because of sequential awaits",
+			"relevant": ["no-waterfall-loading"],
+			"acceptable": []
+		},
+		{
+			"id": "d33",
+			"kind": "jargon",
+			"query": "improve LCP",
+			"relevant": ["critical-rendering-path"],
+			"acceptable": ["velocity-asset-delivery"]
+		},
+		{
+			"id": "d34",
+			"kind": "capability",
+			"query": "fire and forget work after the response is sent",
+			"relevant": ["critical-path-deferred-tail"],
+			"acceptable": []
+		},
+		{
+			"id": "d35",
+			"kind": "capability",
+			"query": "move heavy computation off the main thread",
+			"relevant": ["main-thread-budget"],
+			"acceptable": ["architecture-wasm-kernel"]
+		},
+		{
+			"id": "d36",
+			"kind": "capability",
+			"query": "where should business logic live",
+			"relevant": ["multi-client-core"],
+			"acceptable": ["architecture-codebase-map", "architecture-runtime-layers"]
+		},
+		{
+			"id": "d37",
+			"kind": "jargon",
+			"query": "hexagonal architecture ports and adapters",
+			"relevant": ["multi-client-core"],
+			"acceptable": ["architecture-runtime-layers"]
+		},
+		{
+			"id": "d38",
+			"kind": "capability",
+			"query": "tool calling harness with risk tiers",
+			"relevant": ["ai-tool-harness"],
+			"acceptable": ["ai-harness-lens"]
+		},
+		{
+			"id": "d39",
+			"kind": "capability",
+			"query": "chatbot with streaming responses",
+			"relevant": ["ai-chat-assistant"],
+			"acceptable": ["ai-surfaces", "ai-chatbot-session"]
+		},
+		{
+			"id": "d40",
+			"kind": "capability",
+			"query": "audit trail of who changed what",
+			"relevant": ["admin-privacy-audit-log"],
+			"acceptable": ["provenance-record"]
+		},
+		{
+			"id": "d41",
+			"kind": "capability",
+			"query": "track lineage of AI-generated content",
+			"relevant": ["provenance-record"],
+			"acceptable": []
+		},
+		{
+			"id": "d42",
+			"kind": "capability",
+			"query": "autosave drafts with conflict detection",
+			"relevant": ["versioned-document-session"],
+			"acceptable": []
+		},
+		{
+			"id": "d43",
+			"kind": "capability",
+			"query": "detect drift between copies of the same data",
+			"relevant": ["source-of-truth-gate"],
+			"acceptable": ["databases-polyglot-freshness"]
+		},
+		{
+			"id": "d44",
+			"kind": "capability",
+			"query": "license attribution for third-party assets",
+			"relevant": ["asset-rights-manifest"],
+			"acceptable": []
+		},
+		{
+			"id": "d45",
+			"kind": "capability",
+			"query": "keyboard shortcuts",
+			"relevant": ["app-shell-keyboard-shortcuts"],
+			"acceptable": []
+		},
+		{
+			"id": "d46",
+			"kind": "capability",
+			"query": "3d model viewer",
+			"relevant": ["3d-model-viewer-customizer"],
+			"acceptable": ["3d-threlte-integration", "3d-static-animated-scenes"]
+		},
+		{
+			"id": "d47",
+			"kind": "capability",
+			"query": "charts for a dashboard",
+			"relevant": ["viz-charts"],
+			"acceptable": ["viz-plots"]
+		},
+		{
+			"id": "d48",
+			"kind": "capability",
+			"query": "dense menu with too many actions",
+			"relevant": ["ui-explosive-discovery"],
+			"acceptable": ["ui-menus", "desk-panel-menus"]
+		},
+		{
+			"id": "d49",
+			"kind": "capability",
+			"query": "make docs findable for coding agents",
+			"relevant": ["agent-experience", "docs-nav-hubs"],
+			"acceptable": []
+		},
+		{
+			"id": "d50",
+			"kind": "capability",
+			"query": "trademark name availability check",
+			"relevant": ["name-check"],
+			"acceptable": []
+		},
+		{
+			"id": "d51",
+			"kind": "capability",
+			"query": "freshness of derived artifacts by input hash",
+			"relevant": ["derivation-key"],
+			"acceptable": ["reproducible-artifact-build"]
+		},
+		{
+			"id": "d52",
+			"kind": "jargon",
+			"query": "server-timing latency spans",
+			"relevant": ["latency-tracing"],
+			"acceptable": []
+		},
+		{
+			"id": "d53",
+			"kind": "capability",
+			"query": "bot protection captcha",
+			"relevant": ["anti-abuse-captcha"],
+			"acceptable": ["anti-abuse-honeypot"]
+		},
+		{
+			"id": "d54",
+			"kind": "capability",
+			"query": "token-efficient prompt context format",
+			"relevant": ["ai-toon-format"],
+			"acceptable": []
+		},
+		{
+			"id": "d55",
+			"kind": "capability",
+			"query": "graph database traversal",
+			"relevant": ["databases-graph-traversal"],
+			"acceptable": ["databases-neo4j-connection", "databases-graph-modeling"]
+		},
+		{
+			"id": "d56",
+			"kind": "jargon",
+			"query": "idempotency key against double submit",
+			"relevant": ["optimistic-mutation"],
+			"acceptable": []
+		},
+		{
+			"id": "d57",
+			"kind": "jargon",
+			"query": "fencing token zombie worker",
+			"relevant": ["durable-step-execution"],
+			"acceptable": []
+		},
+		{
+			"id": "d58",
+			"kind": "jargon",
+			"query": "RRF fusion",
+			"relevant": ["layered-rag", "ai-graph-rag"],
+			"acceptable": []
+		},
+		{
+			"id": "d59",
+			"kind": "capability",
+			"query": "redis cache",
+			"relevant": ["hierarchical-cache", "databases-cache"],
+			"acceptable": []
+		},
+		{
+			"id": "d60",
+			"kind": "capability",
+			"query": "replacement for useEffect in svelte 5 runes",
+			"relevant": ["architecture-state-management"],
+			"acceptable": []
+		},
+		{
+			"id": "d61",
+			"kind": "multi",
+			"query": "approval-gated AI agent that writes to the database with durable steps",
+			"relevant": ["deskbot-approval-gate"],
+			"acceptable": ["durable-step-execution", "ai-tool-harness"]
+		},
+		{
+			"id": "d62",
+			"kind": "multi",
+			"query": "cached dashboard that stays fast when the origin is slow",
+			"relevant": ["stale-while-revalidate"],
+			"acceptable": ["hierarchical-cache", "velocity-screen-read-model"]
+		},
+		{ "id": "d63", "kind": "missing", "query": "kubernetes helm chart deployment", "relevant": [], "acceptable": [] },
+		{ "id": "d64", "kind": "missing", "query": "graphql federation gateway", "relevant": [], "acceptable": [] },
+		{ "id": "d65", "kind": "missing", "query": "stripe payment checkout", "relevant": [], "acceptable": [] },
+		{ "id": "d66", "kind": "missing", "query": "blockchain smart contract wallet", "relevant": [], "acceptable": [] }
+	],
+	"plans": [
+		{
+			"id": "p01",
+			"capabilities": ["background jobs", "layered RAG"],
+			"required": ["jobs-scheduler", "layered-rag", "multi-client-core"]
+		},
+		{
+			"id": "p02",
+			"capabilities": ["approval gate for AI mutations"],
+			"required": [
+				"deskbot-approval-gate",
+				"ai-tool-harness",
+				"ai-surfaces",
+				"durable-step-execution",
+				"multi-client-core"
+			]
+		},
+		{
+			"id": "p03",
+			"capabilities": ["cache stampede protection", "circuit breaker"],
+			"required": ["singleflight", "hierarchical-cache", "resilience-policy"]
+		},
+		{
+			"id": "p04",
+			"capabilities": ["optimistic updates", "virtual list for long lists"],
+			"required": ["optimistic-mutation", "virtualized-rendering", "ui-component-system"]
+		},
+		{
+			"id": "p05",
+			"capabilities": ["trademark name check", "fast slow-page loading"],
+			"required": [
+				"name-check",
+				"resilience-policy",
+				"deadline-propagation",
+				"hierarchical-cache",
+				"no-waterfall-loading"
+			]
+		}
+	]
+}
