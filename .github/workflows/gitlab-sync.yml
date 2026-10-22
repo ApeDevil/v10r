@@ -1,0 +1,34 @@
+# GitLab sync: copy GitHub `main` to GitLab `main`, the branch Vercel deploys.
+#
+# GitHub `main` is the source; GitLab is only the deploy feed (docs/stack/ops/shipping.md).
+# Not CI: nothing is installed, built or tested. workflow_dispatch re-runs it by hand.
+# The GitLab token lives in environment `gitlab-promotion`, which admits `main` only.
+name: GitLab sync
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitlab-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: gitlab-promotion
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Push to GitLab main
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_PROMOTION_TOKEN }}
+        run: git push --no-verify "https://oauth2:${GITLAB_TOKEN}@gitlab.com/ApeDevil/v10r.git" "HEAD:refs/heads/main"

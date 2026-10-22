@@ -23,7 +23,7 @@ Identify the capabilities your project needs, emulate only the relevant patterns
 
 **The live site** — [www.v10r.dev](https://www.v10r.dev/): the showcase pages running in production. Each pattern's evidence grade is machine-checked in the registry — *proven* means a linked test or showcase verified at a recorded date; the index below marks the exceptions.
 
-**The code** — clone or browse: `https://gitlab.com/ApeDevil/v10r` · `https://github.com/ApeDevil/v10r`
+**The code** — clone or browse: `https://github.com/ApeDevil/v10r` (GitLab `https://gitlab.com/ApeDevil/v10r` is the deploy mirror)
 
 **The Pattern MCP** — curated pattern cards instead of raw files: the invariants that must hold, notes on what to adapt, dependency-ordered emulation plans. Hosted, nothing to clone:
 

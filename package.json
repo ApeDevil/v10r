@@ -7,7 +7,7 @@
 	"author": "ApeDevil (https://github.com/ApeDevil)",
 	"repository": {
 		"type": "git",
-		"url": "https://gitlab.com/ApeDevil/v10r"
+		"url": "https://github.com/ApeDevil/v10r"
 	},
 	"keywords": [
 		"sveltekit",

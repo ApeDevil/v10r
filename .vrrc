@@ -1,0 +1,3 @@
+# v10r promotes main only through the conversation: Stas says "ship it", Claude squash-merges
+# on GitHub (docs/stack/ops/shipping.md). `vr ship` here gates and pushes the feature branch.
+PROMOTION=conversation

@@ -13,7 +13,9 @@ Velociraptor (v10r) is a SvelteKit pattern library for adaptation. Claude Code f
 
 ## Development and Validation
 
-Run tooling inside the `v10r` Podman container.
+Run tooling inside the `v10r` Podman container (local sessions). Claude Code cloud sessions
+have no container and follow the cloud column of
+[development-environment.md](docs/foundation/development-environment.md).
 Never run package managers on the host; keep `package.json` and `bun.lock` synchronized.
 
 ```bash
@@ -67,5 +69,8 @@ History mixes informal subjects with `feat(scope):` and `refactor(scope):`; pref
 descriptive subjects. PRs should explain behavior, link relevant issues,
 report validation, and include screenshots for UI changes.
 
-Preserve uncommitted work. Never stage, commit, push, stash, or reset without explicit
-instruction. Run a `vr` command only when specifically requested; `vr ship` deploys.
+Work on a feature branch: commit and push it, open a PR, then hand off and stop. GitHub
+`main` moves only when Stas explicitly says to ship in the conversation — then follow
+[shipping.md](docs/stack/ops/shipping.md) (squash merge → GitLab sync → Vercel). Never push
+`main` or GitLab, never force-push, stash, or reset. Run a `vr` command only when
+specifically requested.

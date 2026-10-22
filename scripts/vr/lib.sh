@@ -34,6 +34,12 @@ COMPOSE_SERVICE="${V10R_COMPOSE_SERVICE:-}"
 # the VERCEL_ORG_ID / VERCEL_PROJECT_ID pair. The token is deliberately NOT a
 # tunable: VERCEL_TOKEN comes from the launching shell, never from a committed file.
 DEPLOY_MODE="${V10R_DEPLOY_MODE:-}"
+# Empty ⇒ `vr ship` promotes main itself (the train). `conversation` ⇒ main moves only when
+# Claude squash-merges after Stas says "ship it" in the conversation; `vr ship` then gates
+# the feature branch and pushes that branch alone (docs/stack/ops/shipping.md). Read from
+# the committed .vrrc only — deliberately no V10R_* override, so no shell can switch the
+# rule off for one run.
+PROMOTION=""
 
 # Colors — only when stdout is a TTY and NO_COLOR is unset.
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
