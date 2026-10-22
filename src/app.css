@@ -208,6 +208,20 @@
 	--chart-bg: var(--surface-1);
 	--chart-tooltip-bg: var(--surface-3);
 
+	/* 3D scene surfaces: physical finishes products are made of, and the room a composition
+	   stands in. Metals keep their colour in every theme; the room turns to night in dark mode. */
+	--scene-enamel: oklch(0.96 0.004 95);
+	--scene-steel: oklch(0.72 0.01 250);
+	--scene-chrome: oklch(0.92 0.005 250);
+	--scene-copper: oklch(0.66 0.13 48);
+	--scene-brass: oklch(0.78 0.12 85);
+	--scene-glass: oklch(0.24 0.025 250);
+	--scene-rubber: oklch(0.27 0.005 250);
+	--scene-plaster: oklch(0.89 0.014 75);
+	--scene-tile: oklch(0.8 0.008 250);
+	--scene-trim: oklch(0.97 0.004 95);
+	--scene-window: oklch(0.93 0.045 225);
+
 	/* Scrollbar */
 	scrollbar-width: thin;
 	scrollbar-color: var(--color-border) transparent;
@@ -309,6 +323,12 @@
 	--chart-label: var(--color-muted);
 	--chart-bg: var(--surface-1);
 	--chart-tooltip-bg: var(--surface-3);
+
+	/* 3D scene room at night */
+	--scene-plaster: oklch(0.42 0.015 260);
+	--scene-tile: oklch(0.3 0.01 260);
+	--scene-trim: oklch(0.55 0.01 260);
+	--scene-window: oklch(0.3 0.07 270);
 
 	/* Elevation surfaces (Dark mode: higher = darker → black) */
 	--surface-1: oklch(0.15 0.008 250); /* Raised - cards, panels */

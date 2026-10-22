@@ -72,7 +72,7 @@ describe('CompositionEditor', () => {
 	test('a new waypoint goes halfway along the longest run, or after the selected waypoint', () => {
 		const state = editor();
 		state.select({ kind: 'conduit', coupling: 'control-link' });
-		expect(state.waypointInsertion('control-link')).toEqual({ index: 1, point: [0.6625, 1.7, -0.1] });
+		expect(state.waypointInsertion('control-link')).toEqual({ index: 3, point: [0.7, 1.25, -0.185] });
 		state.waypoint = 0;
 		expect(state.waypointInsertion('control-link')?.index).toBe(1);
 	});

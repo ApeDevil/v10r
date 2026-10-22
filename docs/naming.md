@@ -139,6 +139,8 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The interface kind a port speaks, and its coupling rules | `PortStandard` (`PortStandardRegistry`, supplied by the caller — domain content never enters the core) | `PortType` (`type` is a closed classification), `profile`, `connectionType` |
 | A logical edge between two ports | `Coupling` (`mode`: `mated` · `conduit`) | `connection` (provider/source connections own it), `link`, `edge`, `mate` as a type |
 | The physical pipe or cable path that realises a coupling | `Conduit` (`waypoints`; ends derived from the live ports) | `route` (SvelteKit's and the turn graph's), `path`, `run`, `track`, `pipe`/`cable` (domain words) |
+| A primitive's surface role, resolved to a material by the renderer | `finish` (beside `tone`, the colour role) | `material` (the customizer's material options own it), `texture` |
+| The architecture a composition is shown in — scenery, never part of the document | `RoomLayout` (`RoomBackdrop` draws it) | `scene`, `stage`, `environment` (the image-based light) |
 | Ports joined through a product's body | `passages` (on a geometry body) | `bridge`, `internalLink`, `throughPort` |
 | The ports a composed product offers to the outside | `exposedPorts` (each `from` an inner occurrence's port; it speaks that port's standard) | `externalPorts`, `boundary`, `pins` |
 | A connected set of ports, derived from couplings and passages | `PortNetwork` (derived, never stored) | `system`, `circuit` (IFC's explicitly assigned groups — and heating words), `net`, `graph` |

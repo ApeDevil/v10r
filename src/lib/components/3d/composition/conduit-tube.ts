@@ -37,9 +37,9 @@ export function filletedPath(
 }
 
 /** The tube to draw. The caller owns it and must `dispose()` it when replaced — the GC never frees GPU buffers. */
-export function conduitTube(points: readonly Vec3[]): TubeGeometry | undefined {
+export function conduitTube(points: readonly Vec3[], radius: number = CONDUIT_TUBE.radius): TubeGeometry | undefined {
 	const path = filletedPath(points);
 	if (!path) return undefined;
 	const segments = Math.min(400, Math.max(16, Math.ceil(path.getLength() / 0.01)));
-	return new TubeGeometry(path, segments, CONDUIT_TUBE.radius, 8, false);
+	return new TubeGeometry(path, segments, radius, 12, false);
 }

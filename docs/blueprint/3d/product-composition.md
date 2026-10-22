@@ -143,7 +143,23 @@ toggles `controls.enabled` on drag start and end; and on-demand rendering needs 
 `invalidate()` whenever the document, selection or theme changes.
 
 Colours are tokens: product tones map to theme tokens, port families to `--chart-N` by
-their sorted position, which keeps the renderer as domain-free as the core.
+their sorted position, which keeps the renderer as domain-free as the core. Physical tones
+(`enamel`, `copper`, `brass`, `chrome`, `steel`, `glass`, `rubber`) map to the `--scene-*`
+tokens, which keep their colour in every theme.
+
+Surfaces are roles too. A primitive's optional `finish` (`matte`, `satin`, `gloss`, `metal`,
+`brushed`) resolves in `surface-finish.ts` to physically based material parameters and
+procedural grey maps (tileable value noise in `DataTexture`s: no download, no DOM, same pixels
+every time); a box may round its edges (`radius`), and `torus` joins box, cylinder and sphere.
+`primitive-geometry.ts` shares one geometry per distinct shape across occurrences.
+
+Light and setting are the renderer's, never the document's: a generated studio environment
+(`RoomEnvironment` through PMREM), a shadow-casting key light aimed at the composition,
+Khronos PBR Neutral tone mapping. A caller may pass a `RoomLayout` — floor, back wall, corner,
+windows, plaster and tile, a night palette in the dark theme — so wall-hung products read as
+hung; with walls, the camera stays in front of them. `conduitSurfaces` draws a port family's
+conduits as a physical run (copper pipe, a slim cable) and keeps the family colour on the
+fittings at each end.
 
 Everything the canvas does has a keyboard path in the showcase's inspector: a products list,
 each product's ports, a picker of compatible partners, nudge and turn buttons, a waypoint

@@ -4,7 +4,9 @@ import {
 	CompositionCanvas,
 	type CompositionEditor,
 	type CompositionSelection,
+	type ConduitSurface,
 	type GizmoHandlers,
+	type RoomLayout,
 } from '$lib/components/3d/composition';
 import { Button, Select, ToggleGroup } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
@@ -33,9 +35,13 @@ interface Props {
 	/** Owned by the page, one per catalogue, so switching catalogues keeps each one's work and undo. */
 	editor: CompositionEditor;
 	standards: readonly PortStandard[];
+	/** The room the catalogue's products are set in: scenery, not part of the document. */
+	room?: RoomLayout;
+	/** What each port family's conduits are drawn as. */
+	conduitSurfaces?: Readonly<Record<string, ConduitSurface>>;
 }
 
-let { editor, standards }: Props = $props();
+let { editor, standards, room, conduitSurfaces }: Props = $props();
 
 const registry = $derived(editor.registry);
 let frameRequest = $state(0);
@@ -393,6 +399,8 @@ const otherEnd = (coupling: { a: PortRef; b: PortRef }, own: string) =>
 				onwaypointselect={(index) => (editor.waypoint = index)}
 				{gizmo}
 				{frameRequest}
+				{room}
+				{conduitSurfaces}
 				label={m.showcase_3d_compose_canvas_label()}
 				unavailableTitle={m.showcase_3d_compose_unavailable_title()}
 				unavailableDescription={m.showcase_3d_compose_unavailable_description()}
