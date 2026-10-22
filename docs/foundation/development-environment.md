@@ -28,8 +28,9 @@ Agents work in one of two places. Which one: `CLAUDE_CODE_REMOTE=true` means clo
 | Runs | everything | `validate`, `validate:build`, tests, builds |
 | Cannot run | — | `db:push`, `db:seed`, `refresh` (RAG ingest needs the DB), the dev server against Neon, anything needing a credential — report these as **not run**, never as passed |
 
-The cloud environment needs network access to `cdn.jsdelivr.net` (Paraglide's plugins) on
-top of the Trusted defaults.
+The cloud environment needs only the Trusted network defaults (the npm registry). Paraglide's
+inlang plugins are devDependencies loaded from `node_modules`, not fetched from a CDN
+([i18n.md](../blueprint/i18n.md#project-configuration)).
 
 ## Adding Dependencies
 
