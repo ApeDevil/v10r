@@ -31,28 +31,32 @@ output. Locally, `vr ship` gates and pushes the feature branch only (`.vrrc`
 ## The sync
 
 `gitlab-sync.yml` runs on every push to GitHub `main` (or by hand, *Run workflow*) and pushes
-it to GitLab `main` with a GitLab token. Nothing is installed or built.
+it to GitLab `main` with Stas's GitLab token. Nothing is installed or built.
 
 Why a GitHub Action and not a mirror setting: GitLab's pull mirror (GitLab fetches from GitHub)
 is Premium-only, and its free push mirror runs the wrong direction.
 
 ## One-time configuration
 
+The one credential: Stas's GitLab personal access token `v10r-gh` (scope `write_repository`,
+expires 2027-10-19), stored as secret `GITLAB_PROMOTION_TOKEN` on GitHub environment
+`gitlab-promotion`, which admits `main` only. As project owner he may push the protected
+GitLab `main`.
+
 | # | Where | Do |
 |---|---|---|
-| 1 | GitLab → avatar → Edit profile → Access tokens → Add new token | Name `v10r-sync`, scope **`write_repository`**, expiry up to a year. Copy the value. |
-| 2 | GitHub → v10r → Settings → Secrets and variables → Actions → New repository secret | Name `GITLAB_TOKEN`, value = the token |
-| 3 | GitLab → v10r → Settings → Repository → Mirroring repositories | Delete the push mirror to GitHub (it runs the old direction and would fight the sync). Then revoke the GitHub token it used. |
-| 4 | GitHub → v10r → Settings → General → Pull Requests (optional) | Tick **Automatically delete head branches** — merged branches clean themselves up |
+| 1 | GitHub → v10r → Settings → Environments → `gitlab-promotion` | Untick **Required reviewers**, *Save protection rules*. Keep deployment branch `main`. |
+| 2 | GitLab → v10r → Settings → Repository → Mirroring repositories | Delete the push mirror to GitHub (it runs the old direction and would fight the sync), then revoke the GitHub token it used. |
+| 3 | GitHub → v10r → Settings → General → Pull Requests (optional) | Tick **Automatically delete head branches**: merged branches clean themselves up. |
 
-Leftovers from the retired Pattern Incubator, safe to delete: GitHub environment
-`gitlab-promotion` with its secret, the GitLab token behind it, GitLab branch `dev`.
+Token expired: create a new one (GitLab → Edit profile → Access tokens, scope
+`write_repository`) and replace the environment secret.
 
 ## When something goes wrong
 
 | Symptom | Fix |
 |---|---|
-| Sync fails, push rejected or auth error | Token expired or missing — redo steps 1–2, then re-run the workflow. |
+| Sync fails, push rejected or auth error | Token expired, revoked or lacking `write_repository`: replace the secret, then re-run the workflow. |
 | Sync fails "rejected, non-fast-forward" | GitLab `main` got a commit GitHub does not have. Bring it into GitHub (or drop it on GitLab), re-run. |
 | Vercel build fails | Production keeps serving the previous deployment. Fix forward and ship, or promote the previous deployment in Vercel. |
 | Shipped something wrong | Revert it on a branch and ship that. |
