@@ -1,13 +1,7 @@
-# GitLab sync: carry GitHub `main` to GitLab `main`, the branch Vercel deploys.
+# GitLab sync: copy GitHub `main` to GitLab `main`, the branch Vercel deploys.
 #
-# GitHub `main` is the one authoritative branch; GitLab is only the deploy feed
-# (docs/stack/ops/shipping.md). Each push to `main` — a squash merge Claude makes when Stas
-# says "ship it" — sends that exact commit to GitLab, fast-forward only. Not CI: nothing is
-# installed, built or tested here.
-#
-# The deploy key lives in environment `gitlab-sync`, which admits `main` only, so a workflow
-# pushed on a feature branch can never read it. workflow_dispatch exists for one reason: to
-# re-run a failed sync from `main` after the cause (an expired key, a divergence) is fixed.
+# GitHub `main` is the source; GitLab is only the deploy feed (docs/stack/ops/shipping.md).
+# Not CI: nothing is installed, built or tested. workflow_dispatch re-runs it by hand.
 name: GitLab sync
 
 on:
@@ -18,72 +12,21 @@ on:
 permissions:
   contents: read
 
-# One sync at a time, none cancelled: a newer main always contains an older one, so a queued
-# run simply finds GitLab already there.
 concurrency:
   group: gitlab-sync
   cancel-in-progress: false
 
 jobs:
   sync:
-    name: sync
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    environment: gitlab-sync
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Push to GitLab main (fast-forward only)
+      - name: Push to GitLab main
         env:
-          GITLAB_DEPLOY_KEY: ${{ secrets.GITLAB_DEPLOY_KEY }}
-          GITLAB_REMOTE: git@gitlab.com:ApeDevil/v10r.git
-          # Published by GitLab (docs: user/gitlab_com, "SSH known_hosts entries");
-          # SHA256:eUXGGm1YGsMAS7vkcx6JOJdOGHPem5gQp4taiCfCLB8.
-          GITLAB_HOST_KEY: gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf
-        run: |
-          set -euo pipefail
-          fail() { echo "::error::$1"; exit 1; }
-
-          [ "$GITHUB_REF" = refs/heads/main ] || fail "Sync runs from main only (got $GITHUB_REF)."
-          [ -n "$GITLAB_DEPLOY_KEY" ] || fail "Secret GITLAB_DEPLOY_KEY is missing on environment gitlab-sync (docs/stack/ops/shipping.md, one-time setup)."
-          sha="$GITHUB_SHA"
-
-          key="$RUNNER_TEMP/gitlab-deploy-key"
-          hosts="$RUNNER_TEMP/gitlab-known-hosts"
-          install -m 600 /dev/null "$key"
-          printf '%s\n' "$GITLAB_DEPLOY_KEY" >"$key"
-          printf '%s\n' "$GITLAB_HOST_KEY" >"$hosts"
-          export GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o UserKnownHostsFile=$hosts -o StrictHostKeyChecking=yes"
-
-          gitlab_main() { git ls-remote "$GITLAB_REMOTE" refs/heads/main | cut -f1; }
-          before="$(gitlab_main)" || fail "Could not read GitLab main (deploy key removed or expired?)."
-
-          if [ "$before" = "$sha" ]; then
-            echo "GitLab main is already $sha."
-          elif [ -n "$before" ] && git cat-file -e "$before^{commit}" 2>/dev/null && git merge-base --is-ancestor "$sha" "$before"; then
-            # A newer main reached GitLab first (a queued run); it contains this commit.
-            echo "GitLab main ($before) already contains $sha."
-          else
-            if [ -n "$before" ]; then
-              git cat-file -e "$before^{commit}" 2>/dev/null \
-                || fail "GitLab main ($before) holds a commit GitHub does not — someone pushed GitLab directly. Recovery: docs/stack/ops/shipping.md."
-              git merge-base --is-ancestor "$before" "$sha" \
-                || fail "GitLab main ($before) and GitHub main ($sha) diverged. Nothing pushed. Recovery: docs/stack/ops/shipping.md."
-            fi
-            # Non-force refspec: GitLab rejects anything but a fast-forward.
-            git push --no-verify "$GITLAB_REMOTE" "$sha:refs/heads/main" \
-              || fail "Push to GitLab main was rejected (deploy key write access? branch rule allows the key?)."
-          fi
-
-          after="$(gitlab_main)"
-          if [ "$after" != "$sha" ] && ! git merge-base --is-ancestor "$sha" "$after" 2>/dev/null; then
-            fail "GitLab main reads $after after the push, expected $sha."
-          fi
-          {
-            echo "### GitLab main ← \`$sha\`"
-            echo "- Before: \`${before:-none}\` · after: \`$after\`"
-            echo "- Vercel deploys GitLab main on its own; Claude's ship check reports the deployment."
-          } >>"$GITHUB_STEP_SUMMARY"
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: git push --no-verify "https://oauth2:${GITLAB_TOKEN}@gitlab.com/ApeDevil/v10r.git" "HEAD:refs/heads/main"
