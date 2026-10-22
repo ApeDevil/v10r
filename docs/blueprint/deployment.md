@@ -508,7 +508,7 @@ Returns `401` if the token is missing or wrong. Returns `404` if the job slug is
 
 ## CI/CD Pipeline
 
-> Reference only — this project intentionally has no CI (solo dev; validate locally with `bun run validate`, see CLAUDE.md "No CI Pipeline"). No `.gitlab-ci.yml` or `.github/workflows/` exists in the repo. The pipelines below are templates for a future multi-target setup, not active config.
+> Reference only — this project intentionally has no CI (solo dev; validate locally with `bun run validate`, see CLAUDE.md "Verification"). There is no `.gitlab-ci.yml`; the one GitHub workflow, `.github/workflows/gitlab-sync.yml`, copies GitHub `main` to GitLab `main` and tests nothing ([shipping.md](../stack/ops/shipping.md)). The pipelines below are templates for a future multi-target setup, not active config.
 
 ### GitLab CI (All Targets)
 

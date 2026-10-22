@@ -64,12 +64,13 @@ Override the git facts (and, rarely, a non-`app` service) only when they differ,
    ```bash
    DEV_BRANCH=develop      # a repo that ships from `develop`
    COMPOSE_SERVICE=web     # only if the service isn't `app`
+   PROMOTION=conversation  # main moves only when Claude ships it (v10r) — see below
    ```
 2. **`V10R_*` env vars** — per-invocation: `V10R_REMOTE`, `V10R_DEV_BRANCH`,
    `V10R_MAIN_BRANCH`, `V10R_COMPOSE_SERVICE`.
 
-Both velociraptor and densho need no `.vrrc` — same `app` service, same `dev`/`main`, same
-`origin`.
+Densho needs no `.vrrc` — `app` service, `dev`/`main`, `origin`. Velociraptor's carries one
+line, `PROMOTION=conversation`.
 
 ## The ship train
 
@@ -80,6 +81,14 @@ Both velociraptor and densho need no `.vrrc` — same `app` service, same `dev`/
 | a feature branch | squash into `dev` → **gate** → fast-forward `main` → push both → delete the branch (local + remote) |
 | `dev` | **gate** `dev` → fast-forward `main` → push both (no squash) |
 | `main` | refused |
+
+**`PROMOTION=conversation` (v10r's committed `.vrrc`): no train.** `main` moves only when
+Claude squash-merges after Stas says "ship it" ([shipping.md](./shipping.md)). On a feature
+branch `vr ship` runs the same gate on the branch as it is, then pushes **that branch alone**
+to `origin`, which must be GitHub (it refuses a GitLab `origin` and prints the fix). It
+refuses on `dev` and `main`; `--deploy`, `--keep` and the message argument do not apply. The
+setting is read from `.vrrc` only — there is no `V10R_*` override — so no shell can switch the
+rule off for one run. Everything below describes the train, for repos without the setting.
 
 The gate runs `bun run validate` and then `bun run validate:build` against the **merged**
 state, not the feature branch alone — so `main` is always provably equal to a tested

@@ -13,6 +13,24 @@ Host Machine          Container (v10r)
 └─────────────┘      └──────────────────────┘
 ```
 
+## Local and cloud sessions
+
+Agents work in one of two places. Which one: `CLAUDE_CODE_REMOTE=true` means cloud.
+
+| | Local session | Cloud session (Claude Code on the web) |
+|---|---|---|
+| Runs in | the `v10r` Podman container (everything on this page) | an isolated VM — no container, no Podman |
+| Setup | `podman compose up -d` | automatic: SessionStart hook → `scripts/cloud/session-start.sh` (pinned Bun, frozen install, `.env` from `.env.placeholder`) |
+| Commands | `podman exec v10r bun run …` | `bun run …` directly |
+| Secrets | the real `.env` | none — fake values only |
+| Git | a feature branch, pushed to GitHub `origin` | a feature branch on GitHub |
+| Reaches `main` | only by shipping: Stas says "ship it" ([shipping.md](../stack/ops/shipping.md)) | the same |
+| Runs | everything | `validate`, `validate:build`, tests, builds |
+| Cannot run | — | `db:push`, `db:seed`, `refresh` (RAG ingest needs the DB), the dev server against Neon, anything needing a credential — report these as **not run**, never as passed |
+
+The cloud environment needs network access to `cdn.jsdelivr.net` (Paraglide's plugins) on
+top of the Trusted defaults.
+
 ## Adding Dependencies
 
 Never run `bun add` on the host. The workflow is:

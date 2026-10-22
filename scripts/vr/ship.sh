@@ -9,6 +9,10 @@
 #   dev             →  validate dev, fast-forward main, push (no squash)
 #   main            →  refused
 #
+# A repo whose .vrrc sets PROMOTION=conversation (v10r) has no train: main moves only when
+# Claude squash-merges after Stas says "ship it" (docs/stack/ops/shipping.md). There `vr ship`
+# runs the same gate on the feature branch and pushes that branch alone — never dev, never main.
+#
 # The gate runs inside the repo's container against the *merged* state, so main is
 # always provably equal to a tested commit: `bun run validate`, then
 # `bun run validate:build` — a production build and the perf ratchet scored against
@@ -34,6 +38,9 @@ Branch-aware:
   feature branch   squash into dev, validate, fast-forward main, push, delete branch (local + remote)
   dev              validate dev, fast-forward main, push (no squash)
   main             refused
+
+  With .vrrc PROMOTION=conversation: gate the feature branch, push only that branch;
+  main moves when Claude ships it (refused on dev/main; --deploy, --keep, message ignored).
 
 Flags:
   -n, --dry-run    merge + gate, then roll back and push nothing
@@ -226,6 +233,34 @@ promote_only() {
 	after_push
 }
 
+# PROMOTION=conversation: the gate on the branch as it is, then the branch goes to the
+# authority (GitHub) for Stas to inspect and for Claude to ship. Nothing here touches main.
+branch_only() {
+	local feature="$1" url
+	url="$(git remote get-url "$REMOTE")"
+	case "$url" in
+		*github.com[:/]*) ;;
+		*) die "$REMOTE is $url — feature branches go to GitHub, the authoritative repo. Fix with: git remote set-url $REMOTE https://github.com/ApeDevil/v10r.git" ;;
+	esac
+	[ "$DEPLOY_LOCAL" -eq 0 ] || die "--deploy does not apply: this repo deploys when Claude ships main."
+	if [ "$(git rev-list --count "$REMOTE/$MAIN_BRANCH..HEAD")" = 0 ]; then
+		info "'$feature' has nothing beyond $REMOTE/$MAIN_BRANCH — nothing to push."
+		exit 0
+	fi
+
+	info "Gate '$feature' at $(git rev-parse --short HEAD) (PROMOTION=conversation: main is Claude's to ship)"
+	gate || die "Gate failed. Nothing pushed."
+	ok "Gate passed."
+
+	if [ "$DRY_RUN" -eq 1 ]; then
+		ok "[dry-run] Nothing pushed."
+		exit 0
+	fi
+	run git push -u "$REMOTE" "$feature"
+	ok "Pushed '$feature' at $(git rev-parse HEAD)."
+	info "To ship it: tell Claude \"ship $feature\" — it squash-merges into $MAIN_BRANCH, then GitLab and Vercel follow."
+}
+
 # ---- preconditions ----
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "Not inside a git repository."
 
@@ -245,6 +280,13 @@ current="$(git symbolic-ref --short HEAD 2>/dev/null)" || die "Detached HEAD —
 
 info "Fetching $REMOTE…"
 run git fetch --quiet "$REMOTE"
+
+if [ "$PROMOTION" = "conversation" ]; then
+	case "$current" in
+		"$MAIN_BRANCH"|"$DEV_BRANCH") die "You're on $current. In this repo work happens on a feature branch, and main moves only when Claude ships it." ;;
+		*) branch_only "$current"; exit 0 ;;
+	esac
+fi
 
 case "$current" in
 	"$MAIN_BRANCH") die "You're on $MAIN_BRANCH. Switch to a feature branch or $DEV_BRANCH to ship." ;;

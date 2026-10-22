@@ -9,6 +9,8 @@ Multi-target deployment proving runtime portability via SvelteKit's adapter syst
 | Serverless | Node.js | Vercel | `adapter-vercel` | Live |
 | Container | Bun | Koyeb | `svelte-adapter-bun` (fallback `adapter-node`) | Planned |
 
+**How a change reaches production:** squash merge into GitHub `main` (when Stas says "ship it") → `gitlab-sync.yml` copies it to GitLab `main` → Vercel's GitLab integration builds and deploys `main`. Feature branches never deploy. Full flow, setup and recovery: [shipping.md](./shipping.md).
+
 `svelte.config.js` hardcodes `adapter-vercel` (`runtime: 'nodejs22.x'`). The container adapters (`svelte-adapter-bun`, `adapter-node`) are not installed and there is no `Dockerfile` or `DEPLOY_TARGET` switch yet. Swapping adapters needs no application code changes — that portability is the point.
 
 ## Known limitations

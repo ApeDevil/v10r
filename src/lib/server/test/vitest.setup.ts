@@ -11,6 +11,10 @@ globalThis.__v10r_delivery_scheduler = 'test' as never;
 // the real code path instead of per-test boilerplate. Only a fallback: a real
 // value in the environment still wins.
 process.env.BETTER_AUTH_SECRET ||= 'vitest-better-auth-secret-at-least-32-characters';
+// Same for `abuse/config.ts`: under vitest `dev` is false, so importing it runs the
+// production assertion (32+ chars, no placeholder-looking prefix). Without this the suite
+// passed only where a real .env was injected — a clean CI checkout failed.
+process.env.ALTCHA_HMAC_KEY ||= 'vitest-altcha-hmac-key-at-least-32-characters';
 
 // Hermeticity tripwire: every suite mocks its remote (PGlite for Postgres,
 // injected fakes for Redis, vi.mock for Neo4j/R2), so no test may ever reach a
