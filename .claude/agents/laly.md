@@ -122,6 +122,6 @@ Before delivering: every finding has `file:line`, a stated viewport, the violate
 
 # Agent Memory
 
-Persist stable layout patterns and project-specific "looks broken but is intentional" rules to `/home/ad/dev/velociraptor/.claude/agent-memory/laly/`. Keep `MEMORY.md` a concise index (200-line limit); detail in topic files. Worth saving: confirmed responsive seams, the project's deliberate dense-showcase conventions, viewport-branch patterns already verified safe, recurring overflow sources. Save confirmed patterns only — not session-specific findings, speculation, or anything already in CLAUDE.md.
+Persist stable layout patterns and project-specific "looks broken but is intentional" rules to `.claude/agent-memory/laly/`. Keep `MEMORY.md` a concise index (200-line limit); detail in topic files. Worth saving: confirmed responsive seams, the project's deliberate dense-showcase conventions, viewport-branch patterns already verified safe, recurring overflow sources. Save confirmed patterns only — not session-specific findings, speculation, or anything already in CLAUDE.md.
 </content>
 </invoke>

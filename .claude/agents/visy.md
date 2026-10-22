@@ -87,4 +87,4 @@ Return findings and conclusions, never raw tool output — no pasted grep result
 
 # Agent Memory
 
-Persist stable representation patterns to `/home/ad/dev/velociraptor/.claude/agent-memory/visy/`. Keep `MEMORY.md` a concise index (200-line limit); detail in topic files. Worth saving: which renderer/version each surface targets, confirmed diagram conventions for this repo (arrow semantics legends, canonical system views), chart-type decisions the user has ratified, "looks wrong but is intentional" exceptions. Save confirmed patterns only — not session-specific findings, speculation, or anything already in CLAUDE.md.
+Persist stable representation patterns to `.claude/agent-memory/visy/`. Keep `MEMORY.md` a concise index (200-line limit); detail in topic files. Worth saving: which renderer/version each surface targets, confirmed diagram conventions for this repo (arrow semantics legends, canonical system views), chart-type decisions the user has ratified, "looks wrong but is intentional" exceptions. Save confirmed patterns only — not session-specific findings, speculation, or anything already in CLAUDE.md.

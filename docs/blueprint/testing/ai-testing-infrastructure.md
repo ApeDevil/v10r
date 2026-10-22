@@ -23,7 +23,7 @@ Nothing is installed on the host machine except Podman. Claude Code runs on the 
 ```
 HOST (Podman + Claude Code only)
  │
- │  edits files at /home/ad/dev/velociraptor/
+ │  edits files at /home/ad/dev/v10r/
  │  runs: podman exec v10r <cmd>
  │
  └──► CONTAINER v10r (WORKDIR /app)

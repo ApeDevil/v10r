@@ -46,7 +46,7 @@ There is deliberately no committed project-scope `.mcp.json`. Inside this repo t
 
 ```bash
 claude mcp add --scope user --transport stdio v10r-patterns -- \
-  podman run -i --rm --network=none -v /home/ad/dev/velociraptor:/v10r:ro \
+  podman run -i --rm --network=none -v /home/ad/dev/v10r:/v10r:ro \
   docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
 ```
 

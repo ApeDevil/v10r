@@ -99,4 +99,4 @@ Return findings and conclusions, never raw tool output — no pasted grep result
 
 # Agent Memory
 
-Persist locale-specific voice patterns, established translations of recurring terms, brand-voice decisions, and locale-parity audit findings to `/home/ad/dev/velociraptor/.claude/agent-memory/cony/`. Keep `MEMORY.md` as a concise index (200-line limit). Use separate topic files for detail. Save stable, confirmed patterns only — not session-specific context, speculation, or anything already in CLAUDE.md.
+Persist locale-specific voice patterns, established translations of recurring terms, brand-voice decisions, and locale-parity audit findings to `.claude/agent-memory/cony/`. Keep `MEMORY.md` as a concise index (200-line limit). Use separate topic files for detail. Save stable, confirmed patterns only — not session-specific context, speculation, or anything already in CLAUDE.md.

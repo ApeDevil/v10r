@@ -17,123 +17,123 @@
 			"badge": "🥞"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/components/",
+			"folderPath": "v10r/src/lib/components/",
 			"badge": "🧩"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/",
+			"folderPath": "v10r/src/lib/",
 			"badge": "🏛️"
 		},
 		{
-			"folderPath": "velociraptor/src/routes/",
+			"folderPath": "v10r/src/routes/",
 			"badge": "🔱"
 		},
 		{
-			"folderPath": "velociraptor/docs/",
+			"folderPath": "v10r/docs/",
 			"badge": "📚"
 		},
 		{
-			"folderPath": "velociraptor/docs/guides/",
+			"folderPath": "v10r/docs/guides/",
 			"badge": "🧙‍♂️"
 		},
 		{
-			"folderPath": "velociraptor/static/",
+			"folderPath": "v10r/static/",
 			"badge": "🖼️"
 		},
 		{
-			"folderPath": "velociraptor/src/",
+			"folderPath": "v10r/src/",
 			"badge": "🔆"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/nav/",
+			"folderPath": "v10r/src/lib/nav/",
 			"badge": "🧭"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/i18n/",
+			"folderPath": "v10r/src/lib/i18n/",
 			"badge": "👄"
 		},
 		{
-			"folderPath": "velociraptor/messages/",
+			"folderPath": "v10r/messages/",
 			"badge": "👄"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/db/",
+			"folderPath": "v10r/src/lib/server/db/",
 			"badge": "🐘"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/graph/",
+			"folderPath": "v10r/src/lib/server/graph/",
 			"badge": "✳️"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/store/",
+			"folderPath": "v10r/src/lib/server/store/",
 			"badge": "🪣"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/auth/",
+			"folderPath": "v10r/src/lib/server/auth/",
 			"badge": "🛂"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/components/shell/",
+			"folderPath": "v10r/src/lib/components/shell/",
 			"badge": "🐚"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/ai/",
+			"folderPath": "v10r/src/lib/server/ai/",
 			"badge": "🤖"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/retrieval/",
+			"folderPath": "v10r/src/lib/server/retrieval/",
 			"badge": "♻️"
 		},
 		{
-			"folderPath": "velociraptor/scripts/",
+			"folderPath": "v10r/scripts/",
 			"badge": "📜"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/components/primitives/decorative/",
+			"folderPath": "v10r/src/lib/components/primitives/decorative/",
 			"badge": "🎀"
 		},
 		{
-			"folderPath": "velociraptor/src/routes/api/",
+			"folderPath": "v10r/src/routes/api/",
 			"badge": "☎️"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/notifications/",
+			"folderPath": "v10r/src/lib/server/notifications/",
 			"badge": "📟"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/jobs/",
+			"folderPath": "v10r/src/lib/server/jobs/",
 			"badge": "🐝"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/cache/",
+			"folderPath": "v10r/src/lib/server/cache/",
 			"badge": "🐿️"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/test/",
+			"folderPath": "v10r/src/lib/server/test/",
 			"badge": "🧪"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/errors/",
+			"folderPath": "v10r/src/lib/server/errors/",
 			"badge": "❗"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/analytics/",
+			"folderPath": "v10r/src/lib/server/analytics/",
 			"badge": "📊"
 		},
 		{
-			"folderPath": "velociraptor/src/lib/server/",
+			"folderPath": "v10r/src/lib/server/",
 			"badge": "⚙️"
 		},
 		{
-			"folderPath": "velociraptor/.claude/",
+			"folderPath": "v10r/.claude/",
 			"badge": "🤖"
 		},
 		{
-			"folderPath": "velociraptor/.claude/agent-memory/",
+			"folderPath": "v10r/.claude/agent-memory/",
 			"badge": "🤖🧠"
 		},
 		{
-			"folderPath": "velociraptor/crates/",
+			"folderPath": "v10r/crates/",
 			"badge": "🦀"
 		}
 	]
