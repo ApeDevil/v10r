@@ -84,7 +84,8 @@ line, `PROMOTION=conversation`.
 
 **`PROMOTION=conversation` (v10r's committed `.vrrc`): no train.** `main` moves only when
 Claude squash-merges after Stas says "ship it" ([shipping.md](./shipping.md)). On a feature
-branch `vr ship` runs the same gate on the branch as it is, then pushes **that branch alone**
+branch `vr ship` requires the branch to contain current `origin/main` (so the gate sees the
+tree the squash will produce), runs the same gate, then pushes **that branch alone**
 to `origin`, which must be GitHub (it refuses a GitLab `origin` and prints the fix). It
 refuses on `dev` and `main`; `--deploy`, `--keep` and the message argument do not apply. The
 setting is read from `.vrrc` only — there is no `V10R_*` override — so no shell can switch the

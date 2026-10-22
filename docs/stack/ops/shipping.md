@@ -81,7 +81,7 @@ the sentence.
 
 | # | Where | Setting | Why |
 |---|---|---|---|
-| 1 | GitHub → Settings → General → Pull Requests | Allow **squash merging** only (untick merge commits and rebase merging); default message *Pull request title and description*; tick **Automatically delete head branches** | one strategy; merged branches clean themselves up |
+| 1 | GitHub → Settings → General → Pull Requests | Allow **squash merging** only (untick merge commits and rebase merging); default message *Pull request title and description*; tick **Automatically delete head branches** | one strategy; merged branches clean themselves up — the only way they can: a cloud session cannot delete a branch |
 | 2 | GitHub → Settings → Rules → Rulesets → New branch ruleset | Name `main`, enforcement **Active**, target **Include default branch**; rules: **Restrict deletions**, **Block force pushes**, **Require a pull request before merging** with **0** required approvals and allowed merge methods **Squash** only. No status checks, no bypass list | `main` changes only by a PR merge — which Claude can perform — and never by force |
 | 3 | Your machine | `ssh-keygen -t ed25519 -N "" -C v10r-gitlab-sync -f v10r-gitlab-sync` | the deploy key pair |
 | 4 | GitLab → v10r → Settings → Repository → Deploy keys → Add new key | Title `v10r-gitlab-sync`, key = contents of `v10r-gitlab-sync.pub`, tick **Grant write permissions to this key** | the sync's only credential, valid for this project only |

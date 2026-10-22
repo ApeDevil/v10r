@@ -247,6 +247,10 @@ branch_only() {
 		info "'$feature' has nothing beyond $REMOTE/$MAIN_BRANCH — nothing to push."
 		exit 0
 	fi
+	# The squash lands on the current main, so the gate must see a tree that contains it —
+	# a branch on an older base would pass here and merge untested.
+	git merge-base --is-ancestor "$REMOTE/$MAIN_BRANCH" HEAD \
+		|| die "'$feature' does not contain current $REMOTE/$MAIN_BRANCH, so the gate would test a tree that will not ship. Bring it in first: git merge $REMOTE/$MAIN_BRANCH"
 
 	info "Gate '$feature' at $(git rev-parse --short HEAD) (PROMOTION=conversation: main is Claude's to ship)"
 	gate || die "Gate failed. Nothing pushed."

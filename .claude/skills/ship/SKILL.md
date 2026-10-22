@@ -34,6 +34,8 @@ Constants: repo `ApeDevil/v10r` · Vercel team `team_IVXwC6zuqs8ydqkq9advPv4w`, 
 5. **Mergeable.** `pull_request_read` shows it mergeable. Conflicts → resolve on the feature
    branch (merge `main` into it, never rebase a pushed branch), validate, push, present the new
    HEAD and **wait for a fresh "ship it"** — the resolution changed what he approved.
+   Behind `main` but conflict-free is fine to merge (no gate is mandatory) — but say in the
+   report that the combined tree was not validated as a whole.
 
 ## 3. Merge
 
@@ -49,7 +51,7 @@ push `main` directly, never force-push anything.
 | Hop | How | States |
 |---|---|---|
 | GitHub `main` | `get_commit main` — the squash commit is the tip and its tree carries the PR | merged / not merged |
-| Branch cleanup | the repo deletes merged branches; `list_branches` confirms | deleted / still there (say so; harmless) |
+| Branch cleanup | GitHub's *Automatically delete head branches* does it — this session cannot delete a branch (the git proxy ignores deletes, the API refuses them); `list_branches` confirms | deleted / still there (say so; harmless) |
 | GitLab sync | `actions_list` → `list_workflow_runs` for `gitlab-sync.yml`, `head_sha` = merge SHA; wait until `completed` | success / failed (read the job log) / never started |
 | GitLab `main` | `git ls-remote https://gitlab.com/ApeDevil/v10r.git refs/heads/main` | equals the merge SHA / differs |
 | Vercel | `list_deployments(projectId, teamId, sha=<merge SHA>)`, then `get_deployment` | not triggered / QUEUED·BUILDING / READY / ERROR·CANCELED |
