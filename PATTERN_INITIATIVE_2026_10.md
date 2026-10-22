@@ -239,5 +239,8 @@ Separate from P01–P15; same coordination rules (one writer on `registry.json`,
   hashed, hashed after the run, runner misrecorded), naming collisions (`adapter`,
   `scenario`, bare `Step`/`Refusal`). Domain decisions taken: refund after a paid
   cancellation is allowed; paying a paid order is `exceeds_balance`.
-- Perf ratchet: `total_client_js_kb` +7.5 KB from the new showcase route — re-accepted via
-  `perf:snapshot` (deliberate; recorded in the PR).
+- Perf ratchet: the lab's components imported ~100 Paraglide messages (all three locales
+  ship to the client), pushing `total_client_js_kb` to 2277.5 > 2270. Fixed, not re-accepted:
+  copy resolved server-side in `load` (`labels.ts`, the name-check precedent); route node
+  49.8 → 22.3 KB, total 2268.5 KB — **1.5 KB headroom left** under the ceiling; the next
+  feature will need a reviewed ceiling decision (budgets.json), not a snapshot regen.

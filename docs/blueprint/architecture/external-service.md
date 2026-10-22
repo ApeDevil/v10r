@@ -36,7 +36,7 @@ The browser never talks to the service: no CORS, no public proxy, no credential 
 | `…/targets.ts` + `targets.adapter.ts` | Where the service lives (`local`, `remote`) | The only `$env` read (the adapter); origin-only URLs; TLS off private hosts |
 | `…/contract.ts` | valibot mirrors of the contract + `contractDrift()` | Pinned to the generated types at compile time and to `openapi.json` at test time |
 | `…/lab.ts`, `…/presets.ts` | The showcase's checks, preset evaluations and drills | Demo code — not part of what you copy |
-| `src/lib/showcases/external-service/` | Generated types + page-safe vocabulary | No credential or URL can exist in these types |
+| `src/lib/showcases/external-service/` | Generated types + page-safe vocabulary; `labels.ts` resolves the page's copy in `load` | No credential or URL can exist in these types; components get strings, never per-locale message modules (each Paraglide message ships all three locales — the first version of this page cost 50 KB of client JS that way) |
 
 `services/` is new on purpose: a separately deployed process is not a library. `crates/kernel` is compiled *into* the app; `services/order-rules` runs *beside* it. The directory says which (`docs/codebase-organization.md`).
 
