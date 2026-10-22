@@ -22,7 +22,6 @@ const OWN_DIRS = [
 const ENV_READERS = [
 	'src/lib/server/showcases/external-service/targets.adapter.ts',
 	'src/lib/server/test/vitest.setup.ts',
-	'src/lib/server/showcases/external-service/isolation.gate.test.ts',
 ];
 
 function sourceFiles(): string[] {
@@ -48,8 +47,22 @@ describe('external service isolation', () => {
 		expect(offenders, 'only the External Service Lab may import its service client').toEqual([]);
 	});
 
+	it('ships copy as resolved strings, not per-locale message modules', () => {
+		// A Paraglide message bundles all three locales into the client; the lab resolves its
+		// copy in `load` instead (`labels.ts`). A component importing either would undo that —
+		// it is what pushed the client-JS ratchet over its ceiling once.
+		const svelte = files.filter((path) => path.endsWith('.svelte') && OWN_DIRS.some((dir) => path.startsWith(dir)));
+		expect(svelte.length).toBeGreaterThan(0);
+		// Value imports only: `import type { ExternalServiceCopy }` is erased and ships nothing.
+		const shipsMessages =
+			/^import (?!type )[^\n]*from ['"]\$lib\/(paraglide\/messages|showcases\/external-service\/labels)['"]/m;
+		expect(svelte.filter((path) => shipsMessages.test(readFileSync(path, 'utf8')))).toEqual([]);
+	});
+
 	it('names its environment variables in one server-only module', () => {
-		const readers = files.filter((path) => readFileSync(path, 'utf8').includes('EXTERNAL_SERVICE_'));
+		const readers = files.filter((path) =>
+			/EXTERNAL_SERVICE_(LOCAL|REMOTE)_(URL|TOKEN)/.test(readFileSync(path, 'utf8')),
+		);
 		expect(readers.sort()).toEqual([...ENV_READERS].sort());
 	});
 });

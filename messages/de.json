@@ -3180,7 +3180,7 @@
 	"showcase_external_service_label_service_time": "Verarbeitung im Dienst",
 	"showcase_external_service_label_client_time": "Client-Overhead",
 	"showcase_external_service_label_total": "Client gesamt",
-	"showcase_external_service_label_attempts": "Versuche: {count}",
+	"showcase_external_service_label_attempts": "Versuche",
 	"showcase_external_service_label_request_id": "Request-ID",
 	"showcase_external_service_evaluate_intro": "Sende eine vordefinierte Bestellung an die Regel-Engine. Die Seite sendet nur den Namen der Vorgabe; den Request-Body bestimmt der Server. Eine Ablehnung ist die Antwort der Engine, kein Fehler.",
 	"showcase_external_service_field_target": "Ziel",

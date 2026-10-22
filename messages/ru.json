@@ -3180,7 +3180,7 @@
 	"showcase_external_service_label_service_time": "Обработка в сервисе",
 	"showcase_external_service_label_client_time": "Накладные расходы клиента",
 	"showcase_external_service_label_total": "Всего в клиенте",
-	"showcase_external_service_label_attempts": "попыток: {count}",
+	"showcase_external_service_label_attempts": "Попытки",
 	"showcase_external_service_label_request_id": "ID запроса",
 	"showcase_external_service_evaluate_intro": "Отправьте заготовленный заказ в движок правил. Страница передаёт только имя заготовки; тело запроса формирует сервер. Отказ — это ответ движка, а не ошибка.",
 	"showcase_external_service_field_target": "Цель",

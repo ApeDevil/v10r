@@ -17,6 +17,7 @@ import {
 	runDrill,
 	WAKE_CEILING_MS,
 } from '$lib/server/showcases/external-service';
+import { externalServiceCopy } from '$lib/showcases/external-service/labels';
 import {
 	CHECK_PATIENCE,
 	type CheckPatience,
@@ -53,6 +54,8 @@ export const load: PageServerLoad = async () => {
 	const targets = readServiceTargets();
 	return {
 		title: 'External Service Lab - Showcases',
+		// Resolved here, in the request's locale: the client gets strings, not three dictionaries.
+		copy: externalServiceCopy(),
 		renderedAt: Date.now(),
 		targets: SERVICE_TARGET_IDS.map((id) => {
 			const resolved = targets[id];

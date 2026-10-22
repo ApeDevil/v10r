@@ -5,7 +5,6 @@ import { Alert, Card, DiagGrid, DiagRow, NavSection, ShowcaseLayout } from '$lib
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Select, Spinner } from '$lib/components/primitives';
 import { CallFigures, CallHistory, EvaluationSteps, OutcomeBadge } from '$lib/components/showcases/external-service';
-import * as m from '$lib/paraglide/messages';
 import { startedDuringCheck } from '$lib/showcases/external-service/cold-start';
 import {
 	type CheckPatience,
@@ -18,58 +17,18 @@ import {
 	SERVICE_DRILL_IDS,
 	type ServiceDrillId,
 	type ServiceTargetId,
-	type ServiceTargetProblem,
 } from '$lib/showcases/external-service/types';
 import { getShowcaseCard } from '../showcases';
 
 let { data, form } = $props();
 const card = getShowcaseCard('/showcases/external-service');
 
-const TARGET_LABELS: Record<ServiceTargetId, () => string> = {
-	local: m.showcase_external_service_target_local,
-	remote: m.showcase_external_service_target_remote,
-};
-const TARGET_HINTS: Record<ServiceTargetId, () => string> = {
-	local: m.showcase_external_service_target_local_hint,
-	remote: m.showcase_external_service_target_remote_hint,
-};
-const PROBLEMS: Record<ServiceTargetProblem, () => string> = {
-	incomplete: m.showcase_external_service_problem_incomplete,
-	invalid_url: m.showcase_external_service_problem_invalid_url,
-	not_an_origin: m.showcase_external_service_problem_not_an_origin,
-	insecure_url: m.showcase_external_service_problem_insecure_url,
-	short_token: m.showcase_external_service_problem_short_token,
-	malformed_token: m.showcase_external_service_problem_malformed_token,
-};
-const PRESETS: Record<EvaluationPresetId, () => string> = {
-	fulfilled: m.showcase_external_service_preset_fulfilled,
-	partial_refund: m.showcase_external_service_preset_partial_refund,
-	ship_unpaid: m.showcase_external_service_preset_ship_unpaid,
-	overpaid: m.showcase_external_service_preset_overpaid,
-};
-const DRILLS: Record<ServiceDrillId, { label: () => string; hint: () => string }> = {
-	deadline: {
-		label: m.showcase_external_service_drill_deadline,
-		hint: m.showcase_external_service_drill_deadline_hint,
-	},
-	credential: {
-		label: m.showcase_external_service_drill_credential,
-		hint: m.showcase_external_service_drill_credential_hint,
-	},
-	unvalidated: {
-		label: m.showcase_external_service_drill_unvalidated,
-		hint: m.showcase_external_service_drill_unvalidated_hint,
-	},
-};
-const REJECTIONS: Record<LabRejection, () => string> = {
-	rate_limited: m.showcase_external_service_rejected_rate_limited,
-	rejected: m.showcase_external_service_rejected_rejected,
-	invalid: m.showcase_external_service_rejected_invalid,
-};
+/** Copy resolved on the server in the visitor's locale (`labels.ts`), not shipped per locale. */
+const copy = $derived(data.copy);
 
 const configuredTargets = $derived(data.targets.filter((t) => t.setup === 'configured').map((t) => t.id));
-const targetOptions = $derived(data.targets.map((t) => ({ value: t.id, label: TARGET_LABELS[t.id]() })));
-const presetOptions = EVALUATION_PRESET_IDS.map((id) => ({ value: id, label: PRESETS[id]() }));
+const targetOptions = $derived(data.targets.map((t) => ({ value: t.id, label: copy[`target_${t.id}`] })));
+const presetOptions = $derived(EVALUATION_PRESET_IDS.map((id) => ({ value: id, label: copy[`preset_${id}`] })));
 
 // The latest result per section: what an enhanced submit produced, falling back to what
 // the server rendered for a no-JS submit (`form`). Enhanced submits never touch `form`,
@@ -152,13 +111,13 @@ function coldStart(check: PublicTargetCheck): boolean | null {
 
 const PATIENCE: CheckPatience[] = ['normal', 'wake'];
 
-const sections = [
-	{ id: 'es-targets', label: m.showcase_external_service_section_targets() },
-	{ id: 'es-evaluate', label: m.showcase_external_service_section_evaluate() },
-	{ id: 'es-drills', label: m.showcase_external_service_section_drills() },
-	{ id: 'es-history', label: m.showcase_external_service_section_history() },
-	{ id: 'es-boundary', label: m.showcase_external_service_section_boundary() },
-];
+const sections = $derived([
+	{ id: 'es-targets', label: copy.section_targets },
+	{ id: 'es-evaluate', label: copy.section_evaluate },
+	{ id: 'es-drills', label: copy.section_drills },
+	{ id: 'es-history', label: copy.section_history },
+	{ id: 'es-boundary', label: copy.section_boundary },
+]);
 </script>
 
 {#snippet guard()}
@@ -173,41 +132,41 @@ const sections = [
 	<NavSection {sections} />
 
 	<Stack gap="6">
-		<p class="lede">{m.showcase_external_service_lede()}</p>
+		<p class="lede">{copy.lede}</p>
 
-		<p class="path" aria-label={m.showcase_external_service_path_aria()}>
+		<p class="path" aria-label={copy.path_aria}>
 			<code>browser</code> → <code>+page.server.ts</code> → <code>client.ts</code> →
-			<code>order-rules</code> <span class="path-note">({m.showcase_external_service_path_note()})</span>
+			<code>order-rules</code> <span class="path-note">({copy.path_note})</span>
 		</p>
 
 		{#if rejection}
-			<Alert variant="warning" description={REJECTIONS[rejection]()} closable onclose={() => (rejectionDismissed = true)} />
+			<Alert variant="warning" description={copy[`rejected_${rejection}`]} closable onclose={() => (rejectionDismissed = true)} />
 		{/if}
 
 		<!-- Targets -->
 		<Card id="es-targets">
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">{m.showcase_external_service_section_targets()}</h2>
+				<h2 class="text-fluid-lg font-semibold">{copy.section_targets}</h2>
 			{/snippet}
 			<Stack gap="4">
-				<p class="muted">{m.showcase_external_service_targets_intro()}</p>
+				<p class="muted">{copy.targets_intro}</p>
 				<div class="targets">
 					{#each data.targets as target (target.id)}
 						{@const check = checks[target.id]}
 						<section class="target" aria-labelledby={`es-target-${target.id}`}>
 							<Cluster justify="between">
-								<h3 id={`es-target-${target.id}`} class="font-semibold">{TARGET_LABELS[target.id]()}</h3>
+								<h3 id={`es-target-${target.id}`} class="font-semibold">{copy[`target_${target.id}`]}</h3>
 								{#if target.setup === 'configured'}
-									<Badge variant="default">{m.showcase_external_service_setup_configured()}</Badge>
+									<Badge variant="default">{copy.setup_configured}</Badge>
 								{:else if target.setup === 'misconfigured'}
-									<Badge variant="warning">{m.showcase_external_service_setup_misconfigured()}</Badge>
+									<Badge variant="warning">{copy.setup_misconfigured}</Badge>
 								{:else}
-									<Badge variant="muted">{m.showcase_external_service_setup_unconfigured()}</Badge>
+									<Badge variant="muted">{copy.setup_unconfigured}</Badge>
 								{/if}
 							</Cluster>
-							<p class="muted small">{TARGET_HINTS[target.id]()}</p>
+							<p class="muted small">{copy[`target_${target.id}_hint`]}</p>
 							{#if target.problem}
-								<p class="small">{PROBLEMS[target.problem]()}</p>
+								<p class="small">{copy[`problem_${target.problem}`]}</p>
 							{/if}
 
 							<Cluster gap="2">
@@ -225,48 +184,48 @@ const sections = [
 											{#if pending === `check-${target.id}-${patience}`}<Spinner size="xs" class="mr-2" />{/if}
 											{#if patience === 'normal'}
 												<span class="i-lucide-activity h-4 w-4 mr-1"></span>
-												{m.showcase_external_service_action_check()}
+												{copy.action_check}
 											{:else}
 												<span class="i-lucide-alarm-clock h-4 w-4 mr-1"></span>
-												{m.showcase_external_service_action_wake()}
+												{copy.action_wake}
 											{/if}
 										</Button>
 									</form>
 								{/each}
 							</Cluster>
 							{#if pending === `check-${target.id}-wake`}
-								<p class="small muted">{m.showcase_external_service_wake_pending()}</p>
+								<p class="small muted">{copy.wake_pending}</p>
 							{/if}
 
 							{#if check}
-								<h4 class="subhead">{m.showcase_external_service_label_liveness()}</h4>
-								<CallFigures call={check.live} />
+								<h4 class="subhead">{copy.label_liveness}</h4>
+								<CallFigures call={check.live} {copy} />
 								{#if check.live.outcome === 'timed_out' && target.id === 'remote'}
-									<p class="small muted">{m.showcase_external_service_cold_start_hint()}</p>
+									<p class="small muted">{copy.cold_start_hint}</p>
 								{/if}
 								{#if check.status}
-									<h4 class="subhead">{m.showcase_external_service_label_status()}</h4>
+									<h4 class="subhead">{copy.label_status}</h4>
 									{#if check.status.data}
 										{@const woke = coldStart(check)}
 										<DiagGrid>
-											<DiagRow label={m.showcase_external_service_label_release()}>
+											<DiagRow label={copy.label_release}>
 												<code>{check.status.data.service} {check.status.data.release}</code>
 											</DiagRow>
-											<DiagRow label={m.showcase_external_service_label_uptime()}>
+											<DiagRow label={copy.label_uptime}>
 												<code>{Math.round(check.status.data.uptimeMs / 1000)} s</code>
 											</DiagRow>
 											{#if woke !== null}
-												<DiagRow label={m.showcase_external_service_label_cold_start()}>
+												<DiagRow label={copy.label_cold_start}>
 													{#if woke}
-														<Badge variant="warning">{m.showcase_external_service_cold_start_observed()}</Badge>
+														<Badge variant="warning">{copy.cold_start_observed}</Badge>
 													{:else}
-														<Badge variant="secondary">{m.showcase_external_service_cold_start_warm()}</Badge>
+														<Badge variant="secondary">{copy.cold_start_warm}</Badge>
 													{/if}
 												</DiagRow>
 											{/if}
 										</DiagGrid>
 									{/if}
-									<CallFigures call={check.status} />
+									<CallFigures call={check.status} {copy} />
 								{/if}
 							{/if}
 						</section>
@@ -278,17 +237,17 @@ const sections = [
 		<!-- Evaluate -->
 		<Card id="es-evaluate">
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">{m.showcase_external_service_section_evaluate()}</h2>
+				<h2 class="text-fluid-lg font-semibold">{copy.section_evaluate}</h2>
 			{/snippet}
 			<Stack gap="4">
-				<p class="muted">{m.showcase_external_service_evaluate_intro()}</p>
+				<p class="muted">{copy.evaluate_intro}</p>
 				<form method="POST" action="?/evaluate" use:enhance={submit('evaluate')} class="controls">
 					<label class="field">
-						<span class="small">{m.showcase_external_service_field_target()}</span>
+						<span class="small">{copy.field_target}</span>
 						<Select options={targetOptions} bind:value={evaluateTarget} />
 					</label>
 					<label class="field">
-						<span class="small">{m.showcase_external_service_field_preset()}</span>
+						<span class="small">{copy.field_preset}</span>
 						<Select options={presetOptions} bind:value={evaluatePreset} />
 					</label>
 					<input type="hidden" name="target" value={evaluateTarget} />
@@ -296,18 +255,18 @@ const sections = [
 					{@render guard()}
 					<Button type="submit" disabled={pending !== null}>
 						{#if pending === 'evaluate'}<Spinner size="xs" class="mr-2" />{/if}
-						{m.showcase_external_service_action_evaluate()}
+						{copy.action_evaluate}
 					</Button>
 				</form>
 
 				{#if evaluation}
 					<p class="small muted">
-						{TARGET_LABELS[evaluation.call.target]()} · {PRESETS[evaluation.preset]()}
+						{copy[`target_${evaluation.call.target}`]} · {copy[`preset_${evaluation.preset}`]}
 					</p>
 					{#if evaluation.call.data}
-						<EvaluationSteps evaluation={evaluation.call.data} />
+						<EvaluationSteps evaluation={evaluation.call.data} {copy} />
 					{/if}
-					<CallFigures call={evaluation.call} />
+					<CallFigures call={evaluation.call} {copy} />
 				{/if}
 			</Stack>
 		</Card>
@@ -315,12 +274,12 @@ const sections = [
 		<!-- Drills -->
 		<Card id="es-drills">
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">{m.showcase_external_service_section_drills()}</h2>
+				<h2 class="text-fluid-lg font-semibold">{copy.section_drills}</h2>
 			{/snippet}
 			<Stack gap="4">
-				<Alert variant="info" description={m.showcase_external_service_drills_notice()} />
+				<Alert variant="info" description={copy.drills_notice} />
 				<label class="field">
-					<span class="small">{m.showcase_external_service_field_target()}</span>
+					<span class="small">{copy.field_target}</span>
 					<Select options={targetOptions} bind:value={drillTarget} />
 				</label>
 				<div class="drills">
@@ -331,19 +290,19 @@ const sections = [
 							{@render guard()}
 							<Button type="submit" variant="outline" size="sm" disabled={pending !== null}>
 								{#if pending === `drill-${id}`}<Spinner size="xs" class="mr-2" />{/if}
-								{DRILLS[id].label()}
+								{copy[`drill_${id}`]}
 							</Button>
-							<p class="small muted">{DRILLS[id].hint()}</p>
+							<p class="small muted">{copy[`drill_${id}_hint`]}</p>
 						</form>
 					{/each}
 				</div>
 
 				{#if drill}
 					<p class="small muted">
-						<Badge variant="outline">{m.showcase_external_service_drill_badge()}</Badge>
-						{TARGET_LABELS[drill.call.target]()} · {DRILLS[drill.drill].label()}
+						<Badge variant="outline">{copy.drill_badge}</Badge>
+						{copy[`target_${drill.call.target}`]} · {copy[`drill_${drill.drill}`]}
 					</p>
-					<CallFigures call={drill.call} />
+					<CallFigures call={drill.call} {copy} />
 				{/if}
 			</Stack>
 		</Card>
@@ -351,14 +310,14 @@ const sections = [
 		<!-- History -->
 		<Card id="es-history">
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">{m.showcase_external_service_section_history()}</h2>
+				<h2 class="text-fluid-lg font-semibold">{copy.section_history}</h2>
 			{/snippet}
 			<Stack gap="4">
-				<p class="muted">{m.showcase_external_service_history_note()}</p>
+				<p class="muted">{copy.history_note}</p>
 				{#if history.length > 0}
-					<CallHistory calls={history} />
+					<CallHistory calls={history} {copy} />
 				{:else}
-					<p class="small muted">{m.showcase_external_service_history_empty()}</p>
+					<p class="small muted">{copy.history_empty}</p>
 				{/if}
 			</Stack>
 		</Card>
@@ -366,15 +325,15 @@ const sections = [
 		<!-- Boundary -->
 		<Card id="es-boundary">
 			{#snippet header()}
-				<h2 class="text-fluid-lg font-semibold">{m.showcase_external_service_section_boundary()}</h2>
+				<h2 class="text-fluid-lg font-semibold">{copy.section_boundary}</h2>
 			{/snippet}
 			<ul class="boundary">
-				<li>{m.showcase_external_service_boundary_contract()}</li>
-				<li>{m.showcase_external_service_boundary_auth()}</li>
-				<li>{m.showcase_external_service_boundary_targets()}</li>
-				<li>{m.showcase_external_service_boundary_failures()}</li>
-				<li>{m.showcase_external_service_boundary_optional()}</li>
-				<li>{m.showcase_external_service_boundary_container()}</li>
+				<li>{copy.boundary_contract}</li>
+				<li>{copy.boundary_auth}</li>
+				<li>{copy.boundary_targets}</li>
+				<li>{copy.boundary_failures}</li>
+				<li>{copy.boundary_optional}</li>
+				<li>{copy.boundary_container}</li>
 			</ul>
 		</Card>
 	</Stack>

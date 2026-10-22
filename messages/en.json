@@ -3180,7 +3180,7 @@
 	"showcase_external_service_label_service_time": "Service processing",
 	"showcase_external_service_label_client_time": "Client overhead",
 	"showcase_external_service_label_total": "Client total",
-	"showcase_external_service_label_attempts": "attempts: {count}",
+	"showcase_external_service_label_attempts": "Attempts",
 	"showcase_external_service_label_request_id": "Request id",
 	"showcase_external_service_evaluate_intro": "Send a preset order to the rules engine. The page sends only the preset's name; the server owns the request body. A refusal is the engine's answer, not an error.",
 	"showcase_external_service_field_target": "Target",
