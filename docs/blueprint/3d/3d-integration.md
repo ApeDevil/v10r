@@ -6,7 +6,7 @@ How v10r wires Threlte into SvelteKit. For Three.js / Threlte basics (scene grap
 
 - [What v10r Uses](#what-v10r-uses) - Threlte-only, no vanilla, no physics dep
 - [Route Structure](#route-structure) - Where 3D pages live
-- [Rendering Strategy](#rendering-strategy) - SSR/prerender off at the layout
+- [Rendering Strategy](#rendering-strategy) - SSR off at the layout
 - [Scene Pattern](#scene-pattern) - Canvas + T + useTask in this app
 - [Model Config Registry](#model-config-registry) - `$lib/3d/models.ts`
 - [Components](#components) - `$lib/components/3d/`
@@ -32,7 +32,7 @@ Threlte is the single approach. Do not mix imperative Three.js (`new THREE.Scene
 
 ```
 src/routes/[[locale=locale]]/(public)/showcases/3d/
-  +layout.ts                      # ssr=false, prerender=false (whole subtree)
+  +layout.ts                      # ssr=false (every page that keeps the layout)
   +page.svelte                    # index / scene gallery
   +page.ts
   static-scene/+page.svelte       # GLTF helmet, OrbitControls
@@ -40,6 +40,7 @@ src/routes/[[locale=locale]]/(public)/showcases/3d/
     +page.svelte
     Scene.svelte                  # scene snippet (split for code-splitting)
     +page.ts
+  compose/+page.svelte            # product composition editor (product-composition.md)
   [model]/+page@.svelte           # generic model viewer (config-driven)
   customize/[model]/+page@.svelte # GLTF customizer
 ```
@@ -48,15 +49,14 @@ src/routes/[[locale=locale]]/(public)/showcases/3d/
 
 ## Rendering Strategy
 
-SSR and prerender are disabled **once at `+layout.ts`**, covering the whole `3d/` subtree — not repeated per page:
+SSR is disabled **once at `+layout.ts`** for every page that keeps the layout — not repeated per page. Prerendering is off because SvelteKit's default is off and nothing in the tree turns it on:
 
 ```typescript
 // showcases/3d/+layout.ts
 export const ssr = false;
-export const prerender = false;
 ```
 
-WebGL needs `window`/`canvas`, which don't exist on the server, and the Three.js bundle should ship to the browser only. A leaf route that breaks out of the layout (e.g. `[model]/+page.ts`) repeats these flags because the layout no longer wraps it.
+WebGL needs `window`/`canvas`, which don't exist on the server, and the Three.js bundle should ship to the browser only. A leaf that breaks out with `+page@.svelte` (`[model]`, `customize/[model]`) also leaves this `+layout.ts`, and its `+page.ts` does not set `ssr = false` — so those viewers are server-rendered today, and Threlte's `<Canvas>` mounts its scene on the client. Set `ssr = false` in such a leaf's `+page.ts` when its scene code must never run on the server.
 
 ## Scene Pattern
 

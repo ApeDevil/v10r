@@ -130,6 +130,19 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Work kept only on this device that a sign-out would erase (today: undelivered spreadsheet drafts) | `unsaved work` (`UnsavedWork`, `$lib/state/unsaved-work.ts`; drained → confirmed → discarded) | — |
 | Where an agent runs — the Podman container vs Claude Code on the web | `local session` / `cloud session` (Claude Code's own terms; detected by `CLAUDE_CODE_REMOTE`) | `execution profile` (`profile` is spoken for), `environment` (collides with `$env` and GitHub environments) |
 | Moving an approved feature branch into production: squash merge into GitHub `main`, GitLab sync, Vercel deployment — only on Stas's explicit instruction in the conversation | `ship` / `shipping mode` (`docs/stack/ops/shipping.md`, skill `ship`); the default state is `development mode`. GitLab's copy of `main` is kept by the `GitLab sync` (`gitlab-sync.yml`) | `promote` / `promotion` / `candidate` for this flow (the retired Pattern Incubator's two-stage acceptance, never merged); `release`, `deploy` (Vercel's step, not Claude's). `PROMOTION` survives only as the `.vrrc` key that selects how `main` moves |
+| The persisted shape number of a document or file | `format` (`COMPOSITION_FORMAT`, `$lib/schemas/product-composition.ts`) | `version` (the optimistic-concurrency counter), `revision` (a stored snapshot row), `schemaVersion` |
+| The editable document of products and how they connect | `product composition` (`ProductComposition`, `$lib/product-composition/`) | `assembly` (the AI turn's word), `scene` (the renderer's), `layout` |
+| A reusable product a composition places | `ProductDefinition` — its `body` is its own geometry and ports, or an arrangement of other products (a subassembly is a definition, not a second type) | `component` (Svelte's), `part` (the part explorer's mesh group), `template` |
+| One placed use of a definition | `ProductOccurrence` (field `placement`) | `instance`, `node`, `item` |
+| The occurrences, couplings and conduits of one level | `Arrangement` | `scene`, `graph` |
+| A typed attachment point on a product | `ProductPort` (field `ports`; `PortRef` = occurrence + port) | bare `Port` (the hexagonal-architecture sense), `connector`, `socket`, `handle` (xyflow's) |
+| The interface kind a port speaks, and its coupling rules | `PortStandard` (`PortStandardRegistry`, supplied by the caller — domain content never enters the core) | `PortType` (`type` is a closed classification), `profile`, `connectionType` |
+| A logical edge between two ports | `Coupling` (`mode`: `mated` · `conduit`) | `connection` (provider/source connections own it), `link`, `edge`, `mate` as a type |
+| The physical pipe or cable path that realises a coupling | `Conduit` (`waypoints`; ends derived from the live ports) | `route` (SvelteKit's and the turn graph's), `path`, `run`, `track`, `pipe`/`cable` (domain words) |
+| Ports joined through a product's body | `passages` (on a geometry body) | `bridge`, `internalLink`, `throughPort` |
+| The ports a composed product offers to the outside | `exposedPorts` (each `from` an inner occurrence's port; it speaks that port's standard) | `externalPorts`, `boundary`, `pins` |
+| A connected set of ports, derived from couplings and passages | `PortNetwork` (derived, never stored) | `system`, `circuit` (IFC's explicitly assigned groups — and heating words), `net`, `graph` |
+| One finding of composition validation | `CompositionDiagnostic` (`code` · `severity` · `subject`; plausibility only, never a safety verdict) | `error`, `violation`, `issue` (`CompositionIssue` is a parse failure) |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 

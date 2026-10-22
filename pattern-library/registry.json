@@ -6262,6 +6262,153 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
+			"id": "product-connection-engine",
+			"tier": "deep",
+			"title": "Product composition engine (typed ports, couplings, conduits)",
+			"category": "3d",
+			"summary": "Reusable 3D products with typed connection ports join into an editable assembly: a framework-free core keeps definitions, occurrences, ports, couplings, conduit routes and port rules apart, validates and edits them deterministically, and a thin Threlte layer renders and edits the result.",
+			"when_to_use": "Use when users assemble products that connect through defined points — pipes and fittings, cables and devices, modular furniture — and the assembly must be saved, validated against port rules and edited by pointer and keyboard.",
+			"avoid_when": [
+				"One product on its own, viewed or customised — the model viewer and customizer patterns are enough",
+				"The result must be engineering- or electrically-validated (sizing, pressure, load, code compliance) — this engine checks plausibility of declared data, never physics",
+				"Parts must satisfy geometric constraints beyond face-to-face mates (distances, angles, parametric CAD) — there is no constraint solver",
+				"A BIM model is the source of truth — edit it in a BIM toolkit and treat this as a viewer at most"
+			],
+			"alternatives": [
+				{
+					"approach": "An IFC/BIM toolkit (IfcOpenShell, web-ifc) working on the IFC model directly",
+					"prefer_when": "the authoritative data is an IFC model that other trades also edit"
+				},
+				{
+					"approach": "CAD routing (SolidWorks Routing, Onshape mate connectors)",
+					"prefer_when": "routes need fittings catalogues, bend radii, sizing or certified drawings"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"product configurator",
+				"connectable 3d parts",
+				"port compatibility rules",
+				"pipe and cable routing",
+				"assembly editor",
+				"deterministic document model"
+			],
+			"keywords": [
+				"ports",
+				"coupling",
+				"conduit",
+				"waypoints",
+				"mate",
+				"assembly",
+				"threlte",
+				"transform controls",
+				"ifc",
+				"undo"
+			],
+			"depends_on": ["3d-threlte-integration"],
+			"docs": [
+				{
+					"path": "docs/blueprint/3d/product-composition.md",
+					"note": "The full pattern: layer split, frames + IFC mapping, invariants, operations, diagnostics, scope and emulation steps"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/product-composition",
+					"kind": "dir",
+					"note": "Framework-free core: frames, standards, serialisation, resolution, networks, validation, operations, conduits"
+				},
+				{
+					"path": "src/lib/product-composition/README.md",
+					"note": "The core's boundaries and one responsibility per file"
+				},
+				{
+					"path": "src/lib/schemas/product-composition.ts",
+					"note": "The persisted document (Valibot), with the port-frame convention"
+				},
+				{
+					"path": "src/lib/components/3d/composition",
+					"kind": "dir",
+					"note": "Threlte rendering and the CompositionEditor (undo, gestures, import/export)"
+				},
+				{
+					"path": "src/lib/showcases/3d/compose",
+					"kind": "dir",
+					"note": "Heating and shelving fixtures on the same engine"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/product-composition/frame.test.ts",
+					"note": "Canonical frames: quantise then fix the quaternion sign, so a half turn serialises one way; mates and the free-clocking snap"
+				},
+				{
+					"path": "src/lib/product-composition/standards.test.ts"
+				},
+				{
+					"path": "src/lib/product-composition/serialize.test.ts"
+				},
+				{
+					"path": "src/lib/product-composition/resolve.test.ts"
+				},
+				{
+					"path": "src/lib/product-composition/network.test.ts"
+				},
+				{
+					"path": "src/lib/product-composition/validate.test.ts"
+				},
+				{
+					"path": "src/lib/product-composition/operations.test.ts",
+					"note": "Connect/refuse rules, a mated snap moving the whole cluster, drift-free moves, a consistent ring of mates, the remove cascade"
+				},
+				{
+					"path": "src/lib/product-composition/conduit.test.ts"
+				},
+				{
+					"path": "src/lib/showcases/3d/compose/compose.test.ts",
+					"note": "Both fixtures valid on the unchanged core; the domain-neutrality and boundary gates; the six-step scenario on the core alone"
+				},
+				{
+					"path": "src/lib/components/3d/composition/composition-editor.svelte.test.ts",
+					"note": "Editor state: apply/refuse, undo, one undo step per drag gesture, import"
+				},
+				{
+					"path": "src/lib/components/3d/composition/conduit-tube.test.ts",
+					"note": "Filleted tube path through the conduit polyline"
+				},
+				{
+					"path": "tests/browser/compose.spec.ts",
+					"note": "Playwright: the scenario by keyboard plus a gizmo drag, asserted through Export JSON — bun run test:browser, outside validate"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/3d/compose",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"The core imports no framework, DOM or renderer — only its schema, Valibot and Three.js math — so any caller validates a document exactly as the editor does.",
+				"Compatibility comes from PortStandard data the caller supplies; the core names no domain (a gate fails on heating or shelving words in its code).",
+				"Operations are pure and deterministic: they return { composition, diagnostics }, never throw, refuse by returning the input unchanged, and the same edits give byte-identical documents (numbers quantised, quaternion sign fixed after quantising).",
+				"A coupling says which ports are joined; a conduit says where the pipe or cable runs. Conduit ends always derive from the live port frames.",
+				"Mates hold: a mated connect snaps the moving side's whole cluster, a move re-derives the cluster along a spanning tree with no drift, and a ring is accepted only if its mates already hold.",
+				"Removing a product removes its couplings and their conduits; no coupling joins one product to itself or the same pair twice; a mate uses its port exclusively.",
+				"Findings mean plausibility of declared data only — never certification — and the UI says so on screen."
+			],
+			"emulation_notes": [
+				"Fix the port frame convention first (+Z out, +Y clocking, mate = half turn about +Y) and write the IFC mapping down before any geometry.",
+				"Express every compatibility rule as PortStandard data; keep a grep gate for your own domain's words over the core.",
+				"Write the scenario test on the pure core before any UI; the browser spec then replays the same steps.",
+				"Route conduits by hand with waypoints; add auto-routing (bend-penalised A* on a voxel grid) only for obstacles, many conduits or fitting catalogues.",
+				"Give every canvas action a keyboard path (product list, port list, partner picker, nudge buttons) and pause camera controls during gizmo drags yourself if your Threlte version does not."
+			],
+			"risk": "low — frontend only; plausibility checks, not engineering certification",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-20",
+			"verifiedSha": "42d5b7c-dirty"
+		},
+		{
 			"id": "content-blog-engine",
 			"tier": "light",
 			"title": "Blog engine (posts, revisions, locale-aware publishing)",
