@@ -969,7 +969,7 @@
 			"risk": "medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; hosted behaviour (Render Free, ~1 min cold starts) is documented but not yet verified",
 			"maturity": "proven",
 			"verifiedAt": "2026-10-22",
-			"verifiedSha": "PENDING"
+			"verifiedSha": "f274c25"
 		},
 		{
 			"id": "app-shell-layout",
