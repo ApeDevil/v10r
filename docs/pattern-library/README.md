@@ -21,7 +21,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Pattern MCP (agent-queryable pattern registry, local stdio)](./architecture-pattern-mcp.md)
 - [Hosted MCP (two trust surfaces: public read-only · bearer admin)](./architecture-hosted-mcp.md)
 - [Rust→wasm compute kernel (vendored, plugin-free)](./architecture-wasm-kernel.md)
-- [**External service runtime (a separately deployed backend behind a typed adapter)**](./architecture-external-service.md)
+- [**External service runtime (a separately deployed backend behind a typed client)**](./architecture-external-service.md)
 
 ### App Shell & Navigation
 

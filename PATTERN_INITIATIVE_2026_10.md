@@ -230,3 +230,14 @@ Separate from P01–P15; same coordination rules (one writer on `registry.json`,
   itself was not available — local Podman run is for Stas.
 - Open: hosted verification on Render (owner-gated: create service, set secrets); Podman run
   of `smoke.sh` + compose profile on the host; `db:ingest-docs` for the new doc (needs DB).
+- Phase 6 review (secy, tesy, ary — read-only, fresh context): verified and fixed an
+  **unauthenticated panic** (byte-offset `truncate` inside a UTF-8 char in the access log;
+  same in the 400 message), missing header-read timeout/connection cap (slowloris), token
+  whitespace → permanent 401, honeypot bypass via missing `renderedAt` (`Number(null)` = 0),
+  three misclassifications in `callService`, drill-only options in the client signature,
+  `contractDrift` blind spots (`paths`, unmodelled keywords), manifest gaps (script not
+  hashed, hashed after the run, runner misrecorded), naming collisions (`adapter`,
+  `scenario`, bare `Step`/`Refusal`). Domain decisions taken: refund after a paid
+  cancellation is allowed; paying a paid order is `exceeds_balance`.
+- Perf ratchet: `total_client_js_kb` +7.5 KB from the new showcase route — re-accepted via
+  `perf:snapshot` (deliberate; recorded in the PR).

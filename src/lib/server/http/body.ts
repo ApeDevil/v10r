@@ -1,7 +1,6 @@
 /**
  * Bounded body readers — for requests we receive and, the same way, for responses from
- * services we call (`showcases/external-service/client.ts`): a body we did not write is
- * unbounded until something bounds it.
+ * services we call: a body we did not write is unbounded until something bounds it.
  *
  * `request.json()` buffers and parses whatever arrives. Vercel caps a
  * serverless request body at roughly 4.5 MB, so there is a ceiling — but it is
