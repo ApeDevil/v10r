@@ -20,7 +20,7 @@ Agents work in one of two places. Which one: `CLAUDE_CODE_REMOTE=true` means clo
 | | Local session | Cloud session (Claude Code on the web) |
 |---|---|---|
 | Runs in | the `v10r` Podman container (everything on this page) | an isolated VM — no container, no Podman |
-| Setup | `podman compose up -d` | automatic: SessionStart hook → `scripts/cloud/session-start.sh` (pinned Bun, frozen install, `.env` from `.env.placeholder`) |
+| Setup | `podman compose up -d` | automatic: SessionStart hook → `scripts/cloud/session-start.sh` (pinned Bun, frozen install, `.env` from `.env.placeholder`, `compose.yaml`'s heap cap appended to `NODE_OPTIONS`) |
 | Commands | `podman exec v10r bun run …` | `bun run …` directly |
 | Secrets | the real `.env` | none — fake values only |
 | Git | a feature branch, pushed to GitHub `origin` | a feature branch on GitHub |

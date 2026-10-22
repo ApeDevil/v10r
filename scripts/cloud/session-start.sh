@@ -27,6 +27,20 @@ fi
 
 bun install --frozen-lockfile
 
+# The container's heap cap (compose.yaml NODE_OPTIONS): without it svelte-check and vite build
+# die at V8's default old-space limit. Appended, not replaced — the cloud's own NODE_OPTIONS
+# (--use-openssl-ca, the proxy CA) must survive. CLAUDE_ENV_FILE is sourced before every
+# later Bash command of the session.
+heap="$(sed -n 's/.*NODE_OPTIONS=\(--max-old-space-size=[0-9]*\).*/\1/p' compose.yaml)"
+if [ -z "$heap" ]; then
+	echo "session-start: no --max-old-space-size in compose.yaml; heap cap not set" >&2
+elif [ -z "${CLAUDE_ENV_FILE:-}" ]; then
+	echo "session-start: CLAUDE_ENV_FILE unset; run with NODE_OPTIONS=\"\$NODE_OPTIONS $heap\"" >&2
+elif ! grep -qs -- "$heap" "$CLAUDE_ENV_FILE"; then
+	echo "export NODE_OPTIONS=\"\${NODE_OPTIONS:+\$NODE_OPTIONS }$heap\"" >>"$CLAUDE_ENV_FILE"
+	echo "session-start: NODE_OPTIONS += $heap (compose.yaml parity)"
+fi
+
 if [ ! -f .env ]; then
 	cp .env.placeholder .env
 	echo "session-start: wrote .env from .env.placeholder (fake values)"
