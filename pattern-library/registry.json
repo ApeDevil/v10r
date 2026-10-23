@@ -789,7 +789,7 @@
 			"tier": "deep",
 			"title": "External service runtime (a separately deployed backend behind a typed client)",
 			"category": "architecture",
-			"summary": "A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase) and in production on Render Free Frankfurt (end to end, failure paths measured); hosted cold-start and warm percentiles are still unmeasured.",
+			"summary": "A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Hardened by measurement: a log writer that can neither stall nor crash a request (reproduced both with println!), credential rotation via SERVICE_TOKEN_PREVIOUS, a 16 KiB request-head cap, contract releases recorded with skew reported as a diagnosis, cargo-deny, and a free-tier (0.1 CPU) benchmark profile. Verified locally (container, real client, showcase, controlled lab) and in production on Render Free Frankfurt (end to end, failure paths measured); hosted cold-start and warm percentiles are still unmeasured.",
 			"when_to_use": "Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.",
 			"avoid_when": [
 				"The work fits a $lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak",
@@ -834,13 +834,31 @@
 				"bearer token",
 				"cold start",
 				"request id",
-				"server-timing"
+				"server-timing",
+				"credential rotation",
+				"contract skew",
+				"expand contract",
+				"log backpressure",
+				"cargo-deny",
+				"cgroup cpu quota"
 			],
 			"depends_on": ["multi-client-core", "deadline-propagation", "resilience-policy", "latency-tracing"],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/external-service.md",
 					"note": "The pattern: contract chain, adapter guarantees, security model, failure model, container, measurements"
+				},
+				{
+					"path": "docs/blueprint/architecture/external-service.md#evolving-the-contract",
+					"note": "Release names the contract, append-only release record, expand/contract deploy order, contract skew as a diagnosis"
+				},
+				{
+					"path": "docs/blueprint/architecture/external-service.md#logging-never-stops-the-service",
+					"note": "Why println! is a dependency on the log reader, and the measured no-wake, timed-drain writer"
+				},
+				{
+					"path": "docs/blueprint/architecture/external-service.md#rotating-the-credential",
+					"note": "Zero-downtime bearer rotation with SERVICE_TOKEN_PREVIOUS (the key ring's _PREVIOUS convention), OWASP API Top 10 mapping, when to move to OIDC"
 				},
 				{
 					"path": "docs/blueprint/architecture/external-service.md#hosting-on-render",
@@ -863,15 +881,27 @@
 				},
 				{
 					"path": "services/runtime-lab/src/http.rs",
-					"note": "Bearer auth, body limit, request timeout, request id, Server-Timing, access log"
+					"note": "Bearer auth (current + previous credential, both compared), body limit, request timeout, request id, Server-Timing, access log"
 				},
 				{
 					"path": "services/runtime-lab/src/main.rs",
-					"note": "Accept loop: header-read timeout, connection cap, graceful drain"
+					"note": "Accept loop: header-read timeout, 16 KiB head cap, connection cap, graceful drain, worker count logged"
+				},
+				{
+					"path": "services/runtime-lab/src/log.rs",
+					"note": "The one log writer: bounded buffer, never blocks or wakes on the request path, drop-and-count, bounded exit flush"
 				},
 				{
 					"path": "services/runtime-lab/src/config.rs",
-					"note": "Fail-closed credential and bind configuration"
+					"note": "Fail-closed credential and bind configuration; optional SERVICE_TOKEN_PREVIOUS held to the same rules"
+				},
+				{
+					"path": "services/runtime-lab/contract-releases.json",
+					"note": "Append-only release → contract digest record; a patch never changes the contract"
+				},
+				{
+					"path": "services/runtime-lab/deny.toml",
+					"note": "cargo-deny policy: advisories, license allowlist, crates.io-only sources"
 				},
 				{
 					"path": "services/runtime-lab/openapi.json",
@@ -888,6 +918,10 @@
 				{
 					"path": "src/lib/server/showcases/external-service/contract.ts",
 					"note": "valibot mirrors pinned to the generated types + contractDrift()"
+				},
+				{
+					"path": "src/lib/server/showcases/external-service/contract-skew.ts",
+					"note": "contractSkew(): a running service's release against CONTRACT_RELEASE — a diagnosis, never a gate"
 				},
 				{
 					"path": "src/lib/server/showcases/external-service/targets.ts",
@@ -921,7 +955,23 @@
 				},
 				{
 					"path": "src/lib/server/showcases/external-service/contract-freshness.test.ts",
-					"note": "Generated types and check-manifest current; stamped checks = check.sh's; one Rust builder pin"
+					"note": "Generated types and check-manifest current; release record consistent (and its two failure cases caught); stamped checks = check.sh's; one Rust builder pin"
+				},
+				{
+					"path": "src/lib/server/showcases/external-service/contract-skew.test.ts",
+					"note": "Skew across patch, minor, major and 0.x releases, directional for additive changes"
+				},
+				{
+					"path": "src/lib/server/showcases/external-service/config.test.ts",
+					"note": "The lab's limiter policies against a slow, failing and absent limiter store"
+				},
+				{
+					"path": "services/runtime-lab/src/log.rs",
+					"note": "Rust tests: a blocking writer never blocks emit and every loss is counted; a failing writer never panics; order kept"
+				},
+				{
+					"path": "tests/browser/external-service.spec.ts",
+					"note": "A platform error page and a failed fetch are reported, spinner cleared, history kept (Playwright; not in validate)"
 				},
 				{
 					"path": "src/lib/server/showcases/external-service/isolation.gate.test.ts",
@@ -933,11 +983,19 @@
 				},
 				{
 					"path": "scripts/external-service/smoke.sh",
-					"note": "Container lifecycle over a real socket, incl. slowloris (not in validate)"
+					"note": "Container lifecycle over a real socket, read-only and capability-free: auth incl. rotation, bounds incl. 431, slowloris, SIGTERM (not in validate)"
 				},
 				{
 					"path": "scripts/external-service/verify.ts",
-					"note": "Real client against a running service, with measurements — run locally; the hosted run is still to record (not in validate)"
+					"note": "Real client against a running service: skew, negative paths, presets, lanes, idle gaps, measurements — run locally and under bench.sh; the hosted run is still to record (not in validate)"
+				},
+				{
+					"path": "scripts/external-service/bench.sh",
+					"note": "The image under the free-tier envelope (--cpus 0.1 --memory 512m) — controlled-lab figures (not in validate)"
+				},
+				{
+					"path": "scripts/external-service/audit.sh",
+					"note": "cargo-deny against deny.toml (needs the network; not in validate, like bun run audit)"
 				}
 			],
 			"showcases": [
@@ -952,7 +1010,10 @@
 				"Runtime validation mirrors are pinned to the generated types at compile time and compared with the spec at test time — every modelled keyword, unknown keywords reported; the client's operation table is pinned to the spec's paths; requests validate closed, responses open",
 				"Functional routes require the bearer credential checked by the service itself, in constant time; the service refuses to start without a printable credential of at least 32 characters; liveness is public, gets no credential, and says only 'live'",
 				"Every call runs inside the request deadline with a bounded response read and ends in exactly one failure kind; only operations declared idempotent are retried, once, and only when no response arrived",
-				"The service bounds what callers can make it hold: request heads must complete in 5 s (idle connections close too), connections are capped, and anything it logs from a request is clipped by characters",
+				"The service bounds what callers can make it hold: request heads must complete in 5 s (idle connections close too) and stay under 16 KiB, connections are capped, and anything it logs from a request is clipped by characters",
+				"Logging can neither block nor fail a request: lines go to a bounded buffer the request path never waits on or wakes, a full buffer drops and counts, and shutdown waits for logs at most 1 s",
+				"A credential rotates without a refusal window: the service also accepts SERVICE_TOKEN_PREVIOUS, held to the same rules and never equal to the current one, compared on every request",
+				"A release names its contract: a contract change without a version bump, or a patch release that changes the contract, fails the gate; skew between the running service and the app is reported, never used to refuse a call",
 				"Credentials and origins appear in no result, log line or error message; the environment is read in one server-only module; plain http carries the credential only to private hosts",
 				"The service is optional: one importer, configuration resolved per call, no network work on page load; neither the service nor the client has fault-injection switches"
 			],
@@ -964,9 +1025,13 @@
 				"Keep Rust out of the JS gate with a freshness manifest written only when fmt, clippy and tests pass, from hashes taken before they ran, covering the check script itself.",
 				"Truncate anything caller-controlled by characters, never bytes, and give the server a header-read timeout — both were real holes in the first version of this service.",
 				"Measure the boundary three ways — round trip, the service's own Server-Timing, client overhead — and read the process uptime to recognise a cold start; never claim a language is faster from these numbers.",
-				"A breaker fights a free host's cold start (it keeps refusing after the host wakes); add one only for an always-on service."
+				"A breaker fights a free host's cold start (it keeps refusing after the host wakes); add one only for an always-on service.",
+				"The log reader is a dependency: println! blocks a worker on a full pipe and panics on a closed one. Write through a bounded buffer one thread drains — and on a fractional CPU do not wake that thread per line: measured at 0.1 CPU, the wake-up cost a fifth of throughput, a 20 ms timed drain beat println! itself.",
+				"Measure under the host's envelope (a cgroup CPU quota and memory limit), not only on a workstation: Tokio sized itself to the quota (1 worker) and throttling, not the service, set the tail.",
+				"Release-profile tuning (LTO, codegen-units=1, panic=abort) bought 7 µs per call and cost twice the build minutes here; panic=abort would turn a handler panic into a crash. Leave it unless the service is CPU-bound.",
+				"Additive is directional: with responses read open, deploy the service before the app that relies on what it adds; expand, migrate, contract for anything that removes."
 			],
-			"risk": "medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; running on Render Free (Frankfurt) and verified end to end from production, where a sleeping service misses the normal 8 s budget (the wake check exists for it); cold-start duration and warm percentiles are not yet measured",
+			"risk": "medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable (rotation without downtime is supported); running on Render Free (Frankfurt) and verified end to end from production, where a sleeping service misses the normal 8 s budget (the wake check exists for it); cold-start duration, warm hosted percentiles and Render's proxy behaviour at the 5 s idle close are not yet measured",
 			"maturity": "proven",
 			"verifiedAt": "2026-10-22",
 			"verifiedSha": "f274c25"

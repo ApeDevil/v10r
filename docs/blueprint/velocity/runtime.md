@@ -446,7 +446,9 @@ second in the chain — a budget that starts partway down bounds a subset of the
 their sum, so a slow morning did not produce a timeout but a **kill** — the platform ended the
 function at `maxDuration`, the sources fetched so far were already committed, and the rest
 appeared nowhere. One 50s budget turns that into the outcome the job already knew how to
-report.
+report. The External Service Lab's actions are the second: each call to the separately deployed
+service runs under `locals.deadline.child(8 s, reserve 0.5 s)`, with retries inside the same
+budget (`docs/blueprint/architecture/external-service.md`).
 
 **Not yet adopted:** the AI chat orchestrator, where three providers × `AbortSignal.timeout(30_000)`
 per attempt is the largest unbounded sum in the codebase. Stamping the budget is cheap;
@@ -481,7 +483,7 @@ claim that was true once, and its failure mode is silent: nothing breaks when a 
 it just gets slower, which is the one class of change no test catches.
 
 ```text
-compute (functions)     —              Vercel          runtime only — project setting, not in the repo
+compute (functions)     —              Vercel          runtime only — declared in svelte.config.js, confirmed in situ
 relational database     eu-central-1   Neon            env:NEON_DATABASE_URL_PROD (host only)
 cache and rate limiter  —              Upstash Redis   env:UPSTASH_REDIS_REST_URL (newer databases omit the prefix)
 graph database          —              Neo4j Aura      configured, region not derivable
@@ -507,6 +509,7 @@ half that decides whether a region is worth moving.
 | blocking | function → Upstash | Rate limit check before auth, and every shared cache read |
 | blocking | function → Google / OpenAI / Anthropic | One embedding and one generation per chatbot turn — the longest hop, and the one a deadline bounds |
 | blocking | function → Neo4j Aura | Graph tier only, and only when a graph-sourced chunk survived fusion |
+| blocking | function → Render Frankfurt (`runtime-lab`) | `/showcases/external-service` actions only, under a sub-deadline of the request's budget; same metro as `fra1`, tens of ms per call, ~1 min when the free host is asleep (`external-service.md`) |
 | async | browser → R2 | Assets fetched directly by the browser, never through a function |
 
 **The question this map raised, answered.** The database is in `eu-central-1`; until
@@ -515,7 +518,11 @@ repository, and measured (`x-vercel-id: fra1::iad1::…`) it was the default `ia
 blocking hop above crossed an ocean, twice per page. The region is now declared in
 `svelte.config.js` (adapter `regions: ['fra1']`; route-level `config` exports merge over it), so
 the repository says where the code runs and only the deployment can contradict it. The probe
-still reads `VERCEL_REGION` in situ rather than asserting the declaration.
+still reads `VERCEL_REGION` in situ rather than asserting the declaration. A deployment's API
+object can still read `regions: ["iad1"]` — that field is the project's default region, while
+each built function carries its own `regions: ["fra1"]` in `.vc-config.json` (checked
+2026-10-23); the function's region, not the deployment's field, is where code runs. Setting the
+project's Function Region to `fra1` in the dashboard makes the two agree.
 
 **Invariants.**
 

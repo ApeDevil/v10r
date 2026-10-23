@@ -80,6 +80,12 @@ looked at and deliberately accepted.
   it would have blocked shipping this security work indefinitely. Run
   `bun run audit` deliberately; treat *direct* dependencies in the output as
   actionable and triage the transitive tail.
+- **The runtime lab's Rust tree is audited the same way, by `cargo-deny`.**
+  `bash scripts/external-service/audit.sh` checks `services/runtime-lab` against
+  `deny.toml` — RustSec advisories (vulnerable, yanked, unsound, unmaintained),
+  a license allowlist and crates.io-only sources. Outside `validate` for the same
+  reason: its verdict follows the advisory database, not the diff. Clean on
+  2026-10-23; run it before a Render deploy and whenever `Cargo.lock` changes.
 
 ## Deliberately not built
 
