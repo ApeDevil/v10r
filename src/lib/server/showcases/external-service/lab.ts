@@ -86,7 +86,14 @@ export async function checkTarget(resolved: ResolvedServiceTarget, deps: LabCall
 		'status',
 		await callService(target, SERVICE_OPERATIONS.status, undefined, deps),
 	);
-	return { live, status, contractSkew: status.data ? contractSkew(status.data.release, CONTRACT_RELEASE) : null };
+	// A status that answers off-contract is exactly when skew matters most, and its release
+	// cannot be read: say `unknown` rather than nothing.
+	const skew = status.data
+		? contractSkew(status.data.release, CONTRACT_RELEASE)
+		: status.outcome === 'malformed_response'
+			? 'unknown'
+			: null;
+	return { live, status, contractSkew: skew };
 }
 
 export async function evaluatePreset(

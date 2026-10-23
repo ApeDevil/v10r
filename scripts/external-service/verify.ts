@@ -19,9 +19,11 @@
  *                 service's own `Server-Timing: app`, client overhead (total − round trip).
  *                 p50/p95/max; p99 only from 100 samples, and it stays indicative.
  * - idle gaps   — `--idle-samples` calls, each after `--idle-gap-ms` of quiet (default off).
- *                 Past undici's 4 s keep-alive the client reconnects; past the service's 5 s
- *                 idle close, a host proxy that reuses its upstream connection can race the
- *                 close. Each call's round trip and outcome is printed — the evidence for both.
+ *                 Past the service's 5 s idle close, a host proxy that reuses its upstream
+ *                 connection can race the close; past the client's keep-alive, the call opens
+ *                 a new (TLS) connection. This runs on Bun's fetch, whose keep-alive is not
+ *                 Node's (undici: 4 s) that the deployed app uses — so the round trip after a
+ *                 gap approximates, not reproduces, the app's. Each call's outcome is printed.
  * - failure detection — time until a classified failure: connection refused (closed
  *                 local port) and a spent deadline; plus how often a 1 ms budget loses
  *                 the race to the service (why the lab's deadline drill does not use it).
@@ -66,7 +68,7 @@ for (let i = 0; i < argv.length; i++) {
 	const [flag, inline] = argv[i].split(/=(.*)/s, 2);
 	const name = flag.replace(/^--/, '') as OptionName;
 	const value = inline ?? argv[++i];
-	if (!flag.startsWith('--') || !OPTIONS.includes(name) || value === undefined) {
+	if (!flag.startsWith('--') || !OPTIONS.includes(name) || value === undefined || given.has(name)) {
 		console.error(`usage: verify.ts [--${OPTIONS.join(' <v>] [--')} <v>] — could not read "${flag}"`);
 		process.exit(2);
 	}
@@ -95,6 +97,10 @@ if (targetId === 'remote' && concurrency > REMOTE_MAX_CONCURRENCY) {
 }
 const idleGapMs = count('idle-gap-ms', 0, 0);
 const idleSamples = count('idle-samples', idleGapMs > 0 ? 3 : 0, 0);
+if (idleSamples > 0 && idleGapMs === 0) {
+	console.error('--idle-samples needs --idle-gap-ms > 0');
+	process.exit(2);
+}
 const prefix = `EXTERNAL_SERVICE_${targetId.toUpperCase()}`;
 
 const resolved = resolveServiceTarget(targetId, {

@@ -73,6 +73,13 @@ describe('lab — checkTarget', () => {
 			return checkTarget(configured, deps(fetch));
 		};
 		expect((await skewOf(CONTRACT_RELEASE)).contractSkew).toBe('none');
+		// Off-contract status (here: a release that is not a string) → skew unknown, not absent.
+		const offContract = await checkTarget(
+			configured,
+			deps(scriptedFetch(respond(200, { status: 'live' }), respond(200, { ...STATUS, release: 7 }))),
+		);
+		expect(offContract.status?.outcome).toBe('malformed_response');
+		expect(offContract.contractSkew).toBe('unknown');
 		const breaking = await skewOf('99.0.0');
 		expect(breaking.contractSkew).toBe('breaking');
 		expect(breaking.status?.outcome).toBe('ok');

@@ -10,9 +10,9 @@
 		"scripts/external-service/check.sh": "b0470e1c409a97a36aae3e6371834a6cde80c111f4d31cb5b9012dd3920a54a6",
 		"services/runtime-lab/src/config.rs": "77165a5bb95c2e1a0c41fe869c9edad1ae004200b54574f5fcb901728b8536fd",
 		"services/runtime-lab/src/contract.rs": "d1eb899103f4142754d015a1ad367ccdf35d00a05efaf76944c37c78a1bf14fc",
-		"services/runtime-lab/src/http.rs": "b9b8c7745c868d5da58c2e2f59b47ec5f6dea46dd2c6a9025be8fb33e3fe301d",
-		"services/runtime-lab/src/log.rs": "b93127d4bd133b5a026398987f108d998323b79b9784917eae6542de9dde09a8",
-		"services/runtime-lab/src/main.rs": "56ec6d07832731ab91e59e7527de3d68334712619668187a0d9b9c293508ccac",
+		"services/runtime-lab/src/http.rs": "1a658e75302d747fe49f370d2a3ee0d7a5eeb23fba95f8a308a21030fa82dcb6",
+		"services/runtime-lab/src/log.rs": "82aee3668ab819d890cb10769a0dd25108c628be25c6c80d1ccca30f9a9ad5f2",
+		"services/runtime-lab/src/main.rs": "b1419c779ad884a01aeba3564fc9d09997c4e1f326d4505be8a56764371bfb06",
 		"services/runtime-lab/src/order.rs": "bc1b7e12330b2bc06366cec84344eff581e7765e19c9ba1836905c0929882708"
 	},
 	"outputs": {

@@ -33,7 +33,10 @@ test('an error page from the platform is reported, not swallowed', async ({ page
 	);
 	await check(page);
 	await expect(page.getByText(/did not finish this action/)).toBeVisible();
-	await expect(page.locator('#es-targets [role="status"]')).toHaveCount(0);
+	// SvelteKit cannot read a status off an HTML page, so none is claimed.
+	await expect(page.getByText(/\(HTTP \d+\)/)).toHaveCount(0);
+	// Cleared, not merely absent: the buttons are disabled while an action is pending.
+	await expect(page.locator('#es-targets').getByRole('button', { name: 'Check', exact: true }).first()).toBeEnabled();
 	await expect(historyRows(page)).toHaveCount(before);
 
 	// A SvelteKit error result carries its status.
@@ -46,6 +49,19 @@ test('an error page from the platform is reported, not swallowed', async ({ page
 	);
 	await check(page);
 	await expect(page.getByText(/did not finish this action.*\(HTTP 500\)/)).toBeVisible();
+	await expect(historyRows(page)).toHaveCount(before);
+
+	// No lab action redirects: a redirect is reported, not followed.
+	await page.route(ACTION, (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify({ type: 'redirect', status: 303, location: '/elsewhere' }),
+		}),
+	);
+	await check(page);
+	await expect(page.getByText(/did not finish this action.*\(HTTP 303\)/)).toBeVisible();
+	await expect(page).toHaveURL(/\/showcases\/external-service/);
 	await expect(historyRows(page)).toHaveCount(before);
 });
 

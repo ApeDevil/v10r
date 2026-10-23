@@ -12,8 +12,10 @@
 //! buffer out and writes the batch in one `write`, ignoring errors — there is nowhere left
 //! to report them. A line that does not fit (`BACKLOG`) is dropped and counted, and the
 //! count is written as its own `{"event":"log_dropped","lines":n}` line once the writer
-//! catches up: losing a log line is the price of never losing a request to logging, and the
-//! loss is never silent.
+//! catches up: losing a log line is the price of never losing a request to logging. What the
+//! count cannot cover: a batch whose write fails (the reader is gone — there is no one to
+//! tell), lines emitted after the final flush, and a last line cut short when the process
+//! exits with the writer blocked.
 //!
 //! Why no channel: a first version woke the writer for every line. Under a 0.1 CPU quota
 //! that wake-up, paid from the same quota as the requests, cost a fifth of burst throughput
@@ -238,16 +240,21 @@ mod tests {
     #[test]
     fn a_stalled_reader_never_blocks_emit_and_every_loss_is_counted() {
         let gate = Gate::default();
-        let sink = Sink::spawn(gate.clone(), 4).unwrap();
+        let sink = Arc::new(Sink::spawn(gate.clone(), 4).unwrap());
 
-        let started = Instant::now();
-        for n in 0..100 {
-            sink.emit(&line(n));
-        }
+        // On a thread, so an emit that waits on the writer fails this test instead of hanging
+        // `cargo test` — the regression this test exists for.
+        let (done, emitted) = std::sync::mpsc::channel();
+        let emitter = sink.clone();
+        std::thread::spawn(move || {
+            for n in 0..100 {
+                emitter.emit(&line(n));
+            }
+            let _ = done.send(());
+        });
         assert!(
-            started.elapsed() < Duration::from_millis(500),
-            "emit waited on a stalled writer: {:?}",
-            started.elapsed()
+            emitted.recv_timeout(Duration::from_millis(500)).is_ok(),
+            "emit waited on a stalled writer"
         );
         // Nothing can be flushed while the reader is stalled — and flush says so in time.
         assert!(!sink.flush(Duration::from_millis(50)));

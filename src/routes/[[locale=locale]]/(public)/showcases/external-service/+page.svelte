@@ -39,6 +39,8 @@ let enhancedEvaluation = $state<{ preset: EvaluationPresetId; call: PublicServic
 let enhancedDrill = $state<{ drill: ServiceDrillId; call: PublicServiceCall } | null>(null);
 let enhancedRejection = $state<LabRejection | null>(null);
 let rejectionDismissed = $state(false);
+/** Once an enhanced submit has run, the server-rendered `form` result is history, not news. */
+let enhancedSubmitted = $state(false);
 /**
  * An enhanced action that produced no result. `answered`: the platform sent something other
  * than a result — an error page or a redirect (`status` when SvelteKit could read one); or
@@ -60,7 +62,8 @@ const drill = $derived(
 const rejection = $derived<LabRejection | null>(
 	rejectionDismissed
 		? null
-		: (enhancedRejection ?? (form && 'rejected' in form ? (form.rejected as LabRejection) : null)),
+		: (enhancedRejection ??
+				(!enhancedSubmitted && form && 'rejected' in form ? (form.rejected as LabRejection) : null)),
 );
 
 /** This browser session's calls, newest first. Measured, never stored, never invented. */
@@ -89,6 +92,7 @@ function submit(key: string): SubmitFunction {
 	// uses; a connection cut mid-request arrives here as an `error` result.
 	return () => {
 		pending = key;
+		enhancedSubmitted = true;
 		enhancedRejection = null;
 		rejectionDismissed = false;
 		unfinished = null;

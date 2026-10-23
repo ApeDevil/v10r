@@ -122,7 +122,8 @@ export function readServerTimingMetric(header: string | null, metric: string): n
 		const [name, ...params] = entry.split(';').map((part) => part.trim());
 		if (name !== metric) continue;
 		for (const param of params) {
-			const [key, value = ''] = param.split('=').map((part) => part.trim());
+			// A quoted value (`dur="1.5"`) is legal in the grammar; the quotes are not the number.
+			const [key, value = ''] = param.split('=').map((part) => part.trim().replace(/^"(.*)"$/, '$1'));
 			if (key === 'dur') {
 				// `Number('')` is 0: an empty value must read as absent, not as zero.
 				const ms = value === '' ? Number.NaN : Number(value);

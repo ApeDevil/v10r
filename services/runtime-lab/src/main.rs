@@ -74,6 +74,9 @@ fn main() -> ExitCode {
             ExitCode::FAILURE
         }
     };
+    // Stop connections a timed-out drain left running before the last flush, so their lines
+    // land before it — not after `stopped`, and not after the flush where nothing writes them.
+    runtime.shutdown_timeout(Duration::from_millis(100));
     // Bounded: a log reader that is gone must not hold the exit past the host's kill timer.
     log::flush();
     code
@@ -90,8 +93,10 @@ const MAX_HEADER_BYTES: usize = 16 * 1024;
 /// Open connections at once. Past it, new connections are closed on accept: the process
 /// stays responsive to the ones it has instead of exhausting file descriptors.
 const MAX_CONNECTIONS: usize = 256;
-/// Longest wait for in-flight requests after SIGTERM — inside the 30 s hosts allow.
-const DRAIN_LIMIT: Duration = Duration::from_secs(10);
+/// Longest wait for in-flight requests after SIGTERM. With the log flush after it
+/// (`log::FLUSH_LIMIT`, 1 s) the whole exit stays inside Docker's and Podman's default 10 s
+/// stop grace, and far inside Render's 30 s.
+const DRAIN_LIMIT: Duration = Duration::from_secs(8);
 
 /// The accept loop. Written out instead of `axum::serve` because the two protections
 /// above are connection-level settings `axum::serve` does not expose.

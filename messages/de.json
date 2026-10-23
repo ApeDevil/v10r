@@ -3186,7 +3186,7 @@
 	"showcase_external_service_skew_none": "Derselbe Vertrag wie diese App",
 	"showcase_external_service_skew_service_ahead": "Neuer und kompatibel — Ergänzungen, die diese App ignoriert",
 	"showcase_external_service_skew_service_behind": "Älter, als diese App erwartet — zuerst den Dienst ausrollen; Antworten können an der Validierung scheitern",
-	"showcase_external_service_skew_breaking": "Inkompatibel — die Hauptversion unterscheidet sich; Antworten werden an der Validierung scheitern",
+	"showcase_external_service_skew_breaking": "Inkompatibel — die Hauptversion (in 0.x die Nebenversion) unterscheidet sich; Antworten können an der Validierung scheitern",
 	"showcase_external_service_skew_unknown": "Unbekanntes Release — Kompatibilität unklar",
 	"showcase_external_service_label_uptime": "Prozess-Laufzeit",
 	"showcase_external_service_label_cold_start": "Kaltstart",

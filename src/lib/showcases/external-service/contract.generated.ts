@@ -306,4 +306,4 @@ export interface operations {
 }
 
 /** The contract release this app is built against (`info.version`). */
-export const CONTRACT_RELEASE = '0.1.1';
+export const CONTRACT_RELEASE = "0.1.1";

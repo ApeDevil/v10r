@@ -33,9 +33,10 @@ if [ -z "${SKIP_BUILD:-}" ]; then
 fi
 
 start=$(date +%s%N)
-"$ENGINE" run -d --name "$NAME" --cpus "$CPUS" --memory "$MEMORY" --pids-limit 64 \
+# The credential by name only (`-e NAME` reads this environment), never on the command line.
+SERVICE_TOKEN="$TOKEN" "$ENGINE" run -d --name "$NAME" --cpus "$CPUS" --memory "$MEMORY" --pids-limit 64 \
 	--read-only --cap-drop=ALL --security-opt=no-new-privileges \
-	-e SERVICE_TOKEN="$TOKEN" -e PORT=8080 -p "127.0.0.1:$PORT:8080" "$IMAGE" >/dev/null
+	-e SERVICE_TOKEN -e PORT=8080 -p "127.0.0.1:$PORT:8080" "$IMAGE" >/dev/null
 for _ in $(seq 1 1000); do
 	curl -sf -o /dev/null "http://127.0.0.1:$PORT/health/live" && break
 	sleep 0.01
@@ -46,7 +47,7 @@ echo "  $("$ENGINE" logs "$NAME" 2>&1 | grep '"event":"listening"')"
 echo "  memory idle: $(memory)"
 
 EXTERNAL_SERVICE_LOCAL_URL="http://127.0.0.1:$PORT" EXTERNAL_SERVICE_LOCAL_TOKEN="$TOKEN" \
-	bun run scripts/external-service/verify.ts --target local "$@"
+	bun run scripts/external-service/verify.ts --target local "$@"  # a second --target is refused
 
 echo "  memory after the run: $(memory)"
 "$ENGINE" stop -t 10 "$NAME" >/dev/null

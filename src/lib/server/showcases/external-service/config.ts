@@ -57,20 +57,28 @@ export const MAX_SERVICE_MESSAGE_LENGTH = 240;
 export const RATE_LIMIT_PREFIX = 'rl:external-service';
 export const RATE_LIMIT_MAX = 20;
 export const RATE_LIMIT_WINDOW = '60 s' as const;
-/**
- * A slow limiter store does not refuse an honest visitor here — the global bucket below
- * still decides, and closes on a slow store. An unavailable store refuses: with no store,
- * no bucket counts anything.
- */
-export const RATE_LIMIT_POLICY = { onTimeout: 'open', onError: 'closed' } as const satisfies LimiterOptions;
 
 /** Lab actions across ALL visitors — the ceiling a botnet of addresses cannot lift. */
 export const GLOBAL_RATE_LIMIT_PREFIX = 'rl:external-service:all';
 export const GLOBAL_RATE_LIMIT_MAX = 200;
+
 /**
- * Closed on a slow store too. This bucket is the only cap on the outbound calls the lab
- * makes — and so on the free host's monthly instance-hours, which anyone can otherwise
- * spend for us. A demo that refuses while its store is slow loses nothing that matters;
- * one that runs unbounded can exhaust the host for the month.
+ * A wake check holds a function for up to `WAKE_CEILING_MS` while it keeps the free host
+ * running — the costliest action, and one an honest visitor needs once. Its own, far smaller
+ * buckets, on top of the ordinary ones.
  */
-export const GLOBAL_RATE_LIMIT_POLICY = { onTimeout: 'closed', onError: 'closed' } as const satisfies LimiterOptions;
+export const WAKE_RATE_LIMIT_PREFIX = 'rl:external-service:wake';
+export const WAKE_RATE_LIMIT_MAX = 2;
+export const GLOBAL_WAKE_RATE_LIMIT_PREFIX = 'rl:external-service:wake:all';
+export const GLOBAL_WAKE_RATE_LIMIT_MAX = 10;
+
+/**
+ * Every lab bucket refuses when its store is slow or unavailable. They all read one store, so
+ * a slow store slows every bucket at once: letting one bucket open would only delay the
+ * refusal of the next. And these buckets are the only cap on the lab's outbound calls — so on
+ * the free host's monthly instance-hours, which anyone could otherwise spend for us. A demo
+ * that refuses while its store is unwell loses nothing that matters; one that runs unbounded
+ * can exhaust the host for the month. (The visitor then reads "rate limited" — imprecise,
+ * and the honest short answer.)
+ */
+export const LAB_LIMITER_POLICY = { onTimeout: 'closed', onError: 'closed' } as const satisfies LimiterOptions;

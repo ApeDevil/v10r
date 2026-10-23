@@ -124,6 +124,7 @@ describe('readServerTimingMetric', () => {
 		['app;dur=', null],
 		['app;dur', null],
 		['app; dur = 2.5', 2.5],
+		['app;dur="1.5"', 1.5],
 		[null, null],
 	])('%s → %s', (header, expected) => {
 		expect(readServerTimingMetric(header, 'app')).toBe(expected);

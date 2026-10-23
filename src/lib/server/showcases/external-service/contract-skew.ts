@@ -13,11 +13,12 @@
  */
 import type { ContractSkew } from '$lib/showcases/external-service/types';
 
-const RELEASE = /^(\d+)\.(\d+)\.(\d+)$/;
+/** A release: plain major.minor.patch, no pre-release tag. The generator refuses any other. */
+export const RELEASE_PATTERN = /^(\d+)\.(\d+)\.(\d+)$/;
 
 export function contractSkew(serviceRelease: string, appRelease: string): ContractSkew {
-	const service = RELEASE.exec(serviceRelease);
-	const app = RELEASE.exec(appRelease);
+	const service = RELEASE_PATTERN.exec(serviceRelease);
+	const app = RELEASE_PATTERN.exec(appRelease);
 	if (!service || !app) return 'unknown';
 	const [serviceMajor, serviceMinor] = [Number(service[1]), Number(service[2])];
 	const [appMajor, appMinor] = [Number(app[1]), Number(app[2])];

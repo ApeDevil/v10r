@@ -17,6 +17,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
 	type ContractReleaseRecord,
+	contractDigest,
 	RELEASES_PATH,
 	releaseRecordProblems,
 	renderContractTypes,
@@ -52,22 +53,57 @@ describe('external-service contract freshness', () => {
 		expect(read(`${CRATE}/Cargo.toml`)).toMatch(new RegExp(`^version = "${specRelease(read(SPEC_PATH))}"$`, 'm'));
 	});
 
-	it('the release rule catches an unversioned contract change and a contract-changing patch', () => {
+	describe('the release rule', () => {
 		const spec = JSON.parse(read(SPEC_PATH));
 		const record: ContractReleaseRecord = JSON.parse(read(RELEASES_PATH));
-		const changed = { ...spec, info: { ...spec.info }, paths: { ...spec.paths, '/v1/extra': {} } };
-		expect(releaseRecordProblems(record, JSON.stringify(changed))).toEqual([
-			expect.stringContaining(`the contract changed under release ${spec.info.version}`),
-		]);
 		const [major, minor, patch] = spec.info.version.split('.').map(Number);
-		const patched = { ...changed, info: { ...spec.info, version: `${major}.${minor}.${patch + 1}` } };
-		const patchedRecord = {
+		const withRoute = (version: string) =>
+			JSON.stringify({ ...spec, info: { ...spec.info, version }, paths: { ...spec.paths, '/v1/extra': {} } });
+		const recording = (specText: string) => ({
 			...record,
-			releases: { ...record.releases, [patched.info.version]: 'a-different-contract' },
-		};
-		expect(releaseRecordProblems(patchedRecord, JSON.stringify(patched)).join(' ')).toContain(
-			'a contract change needs a minor or major bump',
-		);
+			releases: { ...record.releases, [specRelease(specText)]: contractDigest(specText) },
+		});
+
+		it('refuses a contract change under a recorded release', () => {
+			expect(releaseRecordProblems(record, withRoute(spec.info.version))).toEqual([
+				expect.stringContaining(`the contract changed under release ${spec.info.version}`),
+			]);
+		});
+
+		it('refuses a patch release that changes the contract', () => {
+			const patched = withRoute(`${major}.${minor}.${patch + 1}`);
+			expect(releaseRecordProblems(recording(patched), patched)).toEqual([
+				expect.stringContaining('a contract change needs a minor or major bump'),
+			]);
+		});
+
+		it('accepts a minor or major release that changes the contract', () => {
+			for (const version of [`${major}.${minor + 1}.0`, `${major + 1}.0.0`]) {
+				const bumped = withRoute(version);
+				expect(releaseRecordProblems(recording(bumped), bumped), version).toEqual([]);
+			}
+		});
+
+		it('names an unrecorded release', () => {
+			const unrecorded = withRoute(`${major}.${minor + 1}.0`);
+			expect(releaseRecordProblems(record, unrecorded)).toEqual([expect.stringContaining('is not recorded')]);
+		});
+
+		it('hashes the contract, not its prose or key order', () => {
+			const reworded = structuredClone(spec);
+			reworded.paths['/v1/evaluate'].post.description = 'Reworded for people.';
+			reworded.info.title = 'renamed';
+			const reordered = JSON.stringify(Object.fromEntries(Object.entries(spec).reverse()));
+			expect(contractDigest(JSON.stringify(reworded))).toBe(contractDigest(read(SPEC_PATH)));
+			expect(contractDigest(reordered)).toBe(contractDigest(read(SPEC_PATH)));
+			expect(contractDigest(withRoute(spec.info.version))).not.toBe(contractDigest(read(SPEC_PATH)));
+		});
+
+		it('refuses a release that is not major.minor.patch', () => {
+			expect(() => specRelease(JSON.stringify({ ...spec, info: { ...spec.info, version: '1.5.0-rc.1' } }))).toThrow(
+				'major.minor.patch',
+			);
+		});
 	});
 
 	it.each(

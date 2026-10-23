@@ -47,8 +47,11 @@ set -e
 
 start=$(date +%s%N)
 # The hardening compose.yaml applies: read-only root, no capabilities, no privilege gain.
-"$ENGINE" run -d --name "$NAME" --read-only --cap-drop=ALL --security-opt=no-new-privileges \
-	-e SERVICE_TOKEN="$TOKEN" -e SERVICE_TOKEN_PREVIOUS="$PREVIOUS_TOKEN" \
+# Credentials by name only (`-e NAME` reads this environment), never on the command line,
+# where any local `ps` would show them.
+SERVICE_TOKEN="$TOKEN" SERVICE_TOKEN_PREVIOUS="$PREVIOUS_TOKEN" \
+	"$ENGINE" run -d --name "$NAME" --read-only --cap-drop=ALL --security-opt=no-new-privileges \
+	-e SERVICE_TOKEN -e SERVICE_TOKEN_PREVIOUS \
 	-e PORT=9090 -p "127.0.0.1:$PORT:9090" "$IMAGE" >/dev/null
 for _ in $(seq 1 500); do
 	[ "$(status_of "$BASE/health/live")" = 200 ] && break
@@ -61,6 +64,8 @@ echo "start: container run → first liveness answer in $(( ($(date +%s%N) - sta
 [ "$(status_of -H "Authorization: Bearer wrong-$TOKEN" "$BASE/v1/status")" = 401 ] && pass "status with wrong credential → 401" || fail "status wrong token"
 curl -s -H "Authorization: Bearer $TOKEN" "$BASE/v1/status" | grep -q '"service":"runtime-lab"' && pass "status with credential → identity" || fail "status authenticated"
 [ "$(status_of -H "Authorization: Bearer $PREVIOUS_TOKEN" "$BASE/v1/status")" = 200 ] && pass "status with the rotating-out credential → 200" || fail "previous token"
+sleep 0.1  # the log writer drains every 20 ms
+"$ENGINE" logs "$NAME" 2>&1 | grep '"path":"/v1/status"' | grep -q '"credential":"previous"' && pass "the access log names the credential used (previous), never its value" || fail "credential label"
 workers=$("$ENGINE" logs "$NAME" 2>&1 | grep '"event":"listening"' | grep -o '"workers":[0-9]*' | cut -d: -f2)
 [ -n "$workers" ] && pass "startup logs the Tokio worker count ($workers)" || fail "no worker count in the listening line"
 
