@@ -19,7 +19,7 @@ use axum::http::{HeaderValue, StatusCode, header};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::{Json, Router};
-use subtle::ConstantTimeEq;
+use subtle::{Choice, ConstantTimeEq};
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -43,6 +43,8 @@ const MAX_REQUEST_ID_LEN: usize = 64;
 
 pub struct AppState {
     pub token: Secret,
+    /// Accepted alongside `token` while a rotation is in progress (`config.rs`).
+    pub previous_token: Option<Secret>,
     pub started: Instant,
 }
 
@@ -204,7 +206,8 @@ fn error(status: StatusCode, code: ErrorCode, message: String) -> Response {
 
 /// Bearer authentication, enforced here — the caller's own checks are not trusted.
 /// The comparison is constant-time; only the length can leak, and the credential's
-/// length is not the secret.
+/// length is not the secret. During a rotation the previous credential is compared too,
+/// always — whether it is checked must not depend on whether the current one matched.
 async fn require_bearer(
     State(state): State<SharedState>,
     request: Request,
@@ -217,8 +220,16 @@ async fn require_bearer(
         .and_then(|value| value.split_once(' '))
         .filter(|(scheme, _)| scheme.eq_ignore_ascii_case("bearer"))
         .map(|(_, token)| token.trim());
-    let authorized =
-        presented.is_some_and(|token| bool::from(token.as_bytes().ct_eq(state.token.expose())));
+    let authorized = presented.is_some_and(|token| {
+        let presented = token.as_bytes();
+        let previous = state
+            .previous_token
+            .as_ref()
+            .map_or(Choice::from(0), |previous| {
+                presented.ct_eq(previous.expose())
+            });
+        bool::from(presented.ct_eq(state.token.expose()) | previous)
+    });
     if !authorized {
         let mut response = error(
             StatusCode::UNAUTHORIZED,
@@ -314,17 +325,14 @@ async fn observe(request: Request, next: Next) -> Response {
     }
     headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
 
-    println!(
-        "{}",
-        serde_json::json!({
-            "event": "request",
-            "requestId": request_id,
-            "method": method,
-            "path": path,
-            "status": response.status().as_u16(),
-            "ms": (elapsed_ms * 1000.0).round() / 1000.0,
-        })
-    );
+    crate::log::emit(serde_json::json!({
+        "event": "request",
+        "requestId": request_id,
+        "method": method,
+        "path": path,
+        "status": response.status().as_u16(),
+        "ms": (elapsed_ms * 1000.0).round() / 1000.0,
+    }));
     response
 }
 
@@ -338,13 +346,18 @@ mod tests {
 
     const TOKEN: &str = "test-token-0123456789abcdef0123456789";
 
+    const PREVIOUS_TOKEN: &str = "previous-token-0123456789abcdef01234";
+
     fn app() -> Router {
-        let config = crate::config::Config::from_lookup(|key| {
-            (key == "SERVICE_TOKEN").then(|| TOKEN.to_owned())
+        let config = crate::config::Config::from_lookup(|key| match key {
+            "SERVICE_TOKEN" => Some(TOKEN.to_owned()),
+            "SERVICE_TOKEN_PREVIOUS" => Some(PREVIOUS_TOKEN.to_owned()),
+            _ => None,
         })
         .expect("test config");
         router(Arc::new(AppState {
             token: config.token,
+            previous_token: config.previous_token,
             started: Instant::now(),
         }))
     }
@@ -415,6 +428,23 @@ mod tests {
             assert_eq!(error_code(&body), "unauthorized");
             assert_eq!(headers[header::WWW_AUTHENTICATE], "Bearer");
         }
+    }
+
+    #[tokio::test]
+    async fn the_previous_credential_is_accepted_during_a_rotation_and_nothing_else_is() {
+        assert_eq!(
+            send(get("/v1/status", Some(PREVIOUS_TOKEN))).await.0,
+            StatusCode::OK
+        );
+        let (status, _, body) = send(get(
+            "/v1/status",
+            Some(&PREVIOUS_TOKEN[..PREVIOUS_TOKEN.len() - 1]),
+        ))
+        .await;
+        assert_eq!(
+            (status, error_code(&body)),
+            (StatusCode::UNAUTHORIZED, "unauthorized")
+        );
     }
 
     #[tokio::test]
