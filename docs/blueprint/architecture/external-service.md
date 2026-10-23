@@ -239,7 +239,18 @@ Loopback figures in a shared sandbox move by ~2× between runs; read them as ord
 
 **Render Free, Frankfurt, 2026-10-23** — first deploy, from the build and runtime logs: dependencies compiled in 15.5 s and the crate in 4.4 s on Render's builder; Render exports the layer cache to its registry, so the manifest-only dependency layer is reused by later builds. The process bound `0.0.0.0:10000` from Render's `PORT` and logged `bootMs` 0.30 (process start to listening). Render probes `HEAD /` and `GET /` once at deploy — two `404` log lines, expected: the service has no route there.
 
-**Remote round trips: pending** — the `verify.ts --target remote` run and the lab's cold/warm checks; see [Hosted verification](#hosted-verification-the-evidence-that-promotes-the-remote-half).
+**Production, 2026-10-23** — the lab on `www.v10r.dev` (Vercel function in `fra1`, confirmed by the log's `region=fra1`) against the runtime lab on Render Frankfurt, used by hand. The service client logs one line per *failed* call (successes log nothing), so Vercel's runtime log holds the failure paths, with each call's total client time:
+
+| Call (drill or check) | Classified as | Client total |
+|---|---|---|
+| wrong credential → real `401` from Rust | `unauthorized` | 66.8 / 70.8 ms |
+| input that skips client validation → real `400` from Rust | `invalid_request` | 23.9 / 34.3 ms |
+| spent deadline — nothing sent | `timed_out` | 0.27–1.42 ms (4 runs) |
+| a plain **Check** against the sleeping service | `timed_out` at the 8 s ceiling | 8004.8 ms |
+
+The last row is the free tier's cold start meeting a normal budget: a sleeping Render Free service does not answer within 8 s, which is why **Wake and check** has its own 75 s deadline. The owner then confirmed the wake check, presets and drills working on the page. The `401` calls opened the sequence and carry a new TLS connection; the `400` calls that followed reused it — a cross-provider, same-city round trip of a few tens of milliseconds against ~1 ms on loopback.
+
+**Still unmeasured:** the cold-start duration itself and warm success-path percentiles with the `Server-Timing` split — the `verify.ts --target remote` run (step 1 of [Hosted verification](#hosted-verification-the-evidence-that-promotes-the-remote-half)) records them.
 
 What these numbers do **not** say: that Rust is faster. The evaluation is microseconds in any language; the boundary costs ~1 ms on loopback and will cost tens of milliseconds across a network, before any cold start. A service boundary is paid for in latency and operations — it is worth it for isolation, ownership or a runtime the app cannot host, not for speed of a small computation.
 
