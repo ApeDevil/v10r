@@ -92,6 +92,8 @@ describe('external-service contract freshness', () => {
 			`${CRATE}/Cargo.lock`,
 			`${CRATE}/Cargo.toml`,
 			`${CRATE}/Containerfile`,
+			// The allowlist that decides what reaches the image.
+			`${CRATE}/.dockerignore`,
 			`${CRATE}/rust-toolchain.toml`,
 			'scripts/external-service/check.sh',
 		]) {
@@ -114,6 +116,7 @@ describe('external-service contract freshness', () => {
 		expect(image).toMatch(/@sha256:[0-9a-f]{64}$/);
 		expect(read(`${CRATE}/Containerfile`)).toContain(`ARG RUST_IMAGE=${image}`);
 		expect(read('scripts/external-service/check.sh')).toContain(`RUST_IMAGE="${image}"`);
+		expect(read('scripts/external-service/audit.sh')).toContain(`RUST_IMAGE="${image}"`);
 
 		const channel = (path: string) => read(path).match(/^channel = "([^"]+)"/m)?.[1];
 		expect(channel(`${CRATE}/rust-toolchain.toml`)).toBe(channel('crates/kernel/rust-toolchain.toml'));

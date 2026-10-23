@@ -6,6 +6,7 @@ edition = "2024"
 # dependency at a release that still builds on it.
 rust-version = "1.97"
 publish = false
+license = "MIT"
 description = "v10r reference external service: a deterministic order-lifecycle rules engine behind an authenticated HTTP API"
 
 [dependencies]

@@ -28,7 +28,7 @@ CHECKS='cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings 
 sha() { sha256sum "$1" | cut -d' ' -f1; }
 # Everything the checks judge, plus the judge: the crate, its build definition, and this
 # script (so weakening CHECKS cannot pass unnoticed).
-inputs=("$CRATE/Cargo.lock" "$CRATE/Cargo.toml" "$CRATE/Containerfile" "$CRATE/rust-toolchain.toml" scripts/external-service/check.sh)
+inputs=("$CRATE/Cargo.lock" "$CRATE/Cargo.toml" "$CRATE/Containerfile" "$CRATE/.dockerignore" "$CRATE/rust-toolchain.toml" scripts/external-service/check.sh)
 while IFS= read -r file; do inputs+=("$file"); done < <(find "$CRATE/src" -type f | LC_ALL=C sort)
 # Hashed BEFORE the checks run and compared after: the tree may carry concurrent edits, and
 # a file changed mid-run must not be stamped as checked.

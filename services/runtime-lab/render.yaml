@@ -27,3 +27,6 @@ services:
       # Prompted once at Blueprint creation; never committed. Render injects PORT itself.
       - key: SERVICE_TOKEN
         sync: false
+      # During a rotation only, add SERVICE_TOKEN_PREVIOUS (the credential being retired) by
+      # hand in the dashboard, and remove it once Vercel sends the new one — see
+      # docs/blueprint/architecture/external-service.md#rotating-the-credential.

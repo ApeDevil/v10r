@@ -7,105 +7,137 @@
 //! reader that went away turned every request into a reset connection while the process
 //! still looked alive.
 //!
-//! Here a request only enqueues its line. One writer thread owns stdout. The queue is
-//! bounded (`BACKLOG` lines), so a stalled reader costs bounded memory; a line that does
-//! not fit is dropped and counted, and the count is written as its own
-//! `{"event":"log_dropped","lines":n}` line once the writer catches up — losing a log line
-//! is the price of never losing a request to logging, and the loss is never silent.
-//! Write errors are ignored by the writer: there is nowhere left to report them.
+//! Here a request appends its line to a bounded buffer under a short lock and returns; it
+//! never wakes anything. One writer thread owns stdout: every `DRAIN_INTERVAL` it swaps the
+//! buffer out and writes the batch in one `write`, ignoring errors — there is nowhere left
+//! to report them. A line that does not fit (`BACKLOG`) is dropped and counted, and the
+//! count is written as its own `{"event":"log_dropped","lines":n}` line once the writer
+//! catches up: losing a log line is the price of never losing a request to logging, and the
+//! loss is never silent.
+//!
+//! Why no channel: a first version woke the writer for every line. Under a 0.1 CPU quota
+//! that wake-up, paid from the same quota as the requests, cost a fifth of burst throughput
+//! and tripled p95; draining on a timer instead was faster than `println!` itself
+//! (docs/blueprint/architecture/external-service.md#measurement).
 
-use std::io::Write;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::mpsc::{self, Receiver, SyncSender, TrySendError};
-use std::sync::{Arc, OnceLock};
+use std::io::{BufWriter, Write};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
 /// Lines held while the writer is behind. An access-log line is ~200 bytes, so a stalled
-/// reader costs at most a few hundred KiB.
+/// reader costs at most two buffers of this — a few hundred KiB.
 pub const BACKLOG: usize = 1024;
+/// How often the writer drains: the most a line waits before it is written. 50 wake-ups a
+/// second on an idle service, a few microseconds each.
+const DRAIN_INTERVAL: Duration = Duration::from_millis(20);
+/// The writer's output buffer: one batch leaves in one `write`.
+const BATCH_BYTES: usize = 64 * 1024;
 /// Longest `flush` waits for queued lines to reach stdout before the process exits. Short
 /// on purpose: shutdown must not hang on a reader that is gone.
 pub const FLUSH_LIMIT: Duration = Duration::from_secs(1);
 
-enum Message {
-    Line(String),
-    Flush(mpsc::Sender<()>),
+#[derive(Default)]
+struct Pending {
+    lines: Vec<String>,
+    dropped: u64,
+    /// Flushes asked for, and how many of those the writer has completed.
+    flushes_requested: u64,
+    flushes_done: u64,
 }
 
 pub struct Sink {
-    queue: SyncSender<Message>,
-    dropped: Arc<AtomicU64>,
+    pending: Arc<(Mutex<Pending>, Condvar)>,
+    backlog: usize,
+}
+
+/// A writer that panicked mid-write must not take the request path with it.
+fn lock(mutex: &Mutex<Pending>) -> MutexGuard<'_, Pending> {
+    mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 impl Sink {
     pub fn spawn(out: impl Write + Send + 'static, backlog: usize) -> std::io::Result<Sink> {
-        let (queue, received) = mpsc::sync_channel(backlog);
-        let dropped = Arc::new(AtomicU64::new(0));
-        let counter = dropped.clone();
+        let pending = Arc::new((Mutex::new(Pending::default()), Condvar::new()));
+        let shared = pending.clone();
         std::thread::Builder::new()
             .name("log-writer".into())
-            .spawn(move || write_lines(out, received, &counter))?;
-        Ok(Sink { queue, dropped })
+            .spawn(move || write_lines(out, &shared))?;
+        Ok(Sink { pending, backlog })
     }
 
-    /// Enqueue one line; never waits. A full queue (or a dead writer) drops and counts it.
+    /// Append one line; never waits for the writer and never wakes it. A full buffer drops
+    /// and counts the line.
     pub fn emit(&self, event: &serde_json::Value) {
-        if self
-            .queue
-            .try_send(Message::Line(event.to_string()))
-            .is_err()
-        {
-            self.dropped.fetch_add(1, Ordering::Relaxed);
+        let line = event.to_string();
+        let mut pending = lock(&self.pending.0);
+        if pending.lines.len() < self.backlog {
+            pending.lines.push(line);
+        } else {
+            pending.dropped += 1;
         }
     }
 
-    /// Wait until every line queued so far — and any drop count — is written, for at most
-    /// `limit`. Returns whether it was. For process exit only.
+    /// Wake the writer and wait until every line appended so far — and any drop count — is
+    /// written, for at most `limit`. Returns whether it was. For process exit only.
     pub fn flush(&self, limit: Duration) -> bool {
         let deadline = Instant::now() + limit;
-        let (done, written) = mpsc::channel();
-        let mut message = Message::Flush(done);
-        // The queue may be full because the writer is stalled; retry until the deadline
-        // rather than block on `send`.
-        loop {
-            match self.queue.try_send(message) {
-                Ok(()) => break,
-                Err(TrySendError::Disconnected(_)) => return false,
-                Err(TrySendError::Full(returned)) => {
-                    if Instant::now() >= deadline {
-                        return false;
-                    }
-                    message = returned;
-                    std::thread::sleep(Duration::from_millis(5));
-                }
+        let (mutex, signal) = &*self.pending;
+        let mut pending = lock(mutex);
+        pending.flushes_requested += 1;
+        let ticket = pending.flushes_requested;
+        signal.notify_all();
+        while pending.flushes_done < ticket {
+            let left = deadline.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                return false;
             }
+            pending = signal
+                .wait_timeout(pending, left)
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .0;
         }
-        written
-            .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-            .is_ok()
+        true
     }
 }
 
-fn write_lines(mut out: impl Write, received: Receiver<Message>, dropped: &AtomicU64) {
-    for message in received {
-        let flushed = match message {
-            Message::Line(line) => {
-                let _ = writeln!(out, "{line}");
-                None
+fn write_lines(out: impl Write, pending: &(Mutex<Pending>, Condvar)) {
+    let (mutex, signal) = pending;
+    let mut out = BufWriter::with_capacity(BATCH_BYTES, out);
+    let mut batch = Vec::new();
+    loop {
+        let (dropped, ticket) = {
+            let mut pending = lock(mutex);
+            // Sleep the interval unless a flush is waiting; `emit` never cuts it short.
+            if pending.flushes_done == pending.flushes_requested {
+                pending = signal
+                    .wait_timeout(pending, DRAIN_INTERVAL)
+                    .unwrap_or_else(|poisoned| poisoned.into_inner())
+                    .0;
             }
-            Message::Flush(done) => Some(done),
+            std::mem::swap(&mut pending.lines, &mut batch);
+            (
+                std::mem::take(&mut pending.dropped),
+                pending.flushes_requested,
+            )
         };
-        let lost = dropped.swap(0, Ordering::Relaxed);
-        if lost > 0 {
+        // Written outside the lock: a stalled reader blocks this thread, never `emit`.
+        for line in batch.drain(..) {
+            let _ = writeln!(out, "{line}");
+        }
+        if dropped > 0 {
             let _ = writeln!(
                 out,
                 "{}",
-                serde_json::json!({ "event": "log_dropped", "lines": lost })
+                serde_json::json!({ "event": "log_dropped", "lines": dropped })
             );
         }
         let _ = out.flush();
-        if let Some(done) = flushed {
-            let _ = done.send(());
+        let mut pending = lock(mutex);
+        if pending.flushes_done < ticket {
+            pending.flushes_done = ticket;
+            signal.notify_all();
         }
     }
 }
@@ -229,7 +261,8 @@ mod tests {
             .filter(|l| l["event"] == "log_dropped")
             .map(|l| l["lines"].as_u64().unwrap())
             .sum();
-        assert!(written <= 6, "the queue is bounded: {written} written");
+        // At most the batch the writer held when it stalled plus one queue-full behind it.
+        assert!(written <= 4 * 2, "the queue is bounded: {written} written");
         assert_eq!(written + dropped, 100, "{lines:?}");
     }
 

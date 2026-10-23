@@ -39,10 +39,18 @@ services:
       dockerfile: Containerfile
     ports:
       - "127.0.0.1:8787:8080"
+    # The process needs nothing from the container but a socket: no writable filesystem,
+    # no capabilities, no privilege gain. Resources stay unlimited for development — the
+    # free-tier envelope (0.1 CPU, 512 MB) is a measurement, scripts/external-service/bench.sh.
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     environment:
       - PORT=8080
       # Same credential the app sends; read from .env by compose interpolation.
       - SERVICE_TOKEN=${EXTERNAL_SERVICE_LOCAL_TOKEN:-}
+      # Only during a rotation: the credential being retired, still accepted.
+      - SERVICE_TOKEN_PREVIOUS=${EXTERNAL_SERVICE_LOCAL_TOKEN_PREVIOUS:-}
 
 volumes:
   node_modules:  # Named volume keeps deps off your host system

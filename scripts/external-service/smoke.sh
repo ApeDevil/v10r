@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Container smoke test for services/runtime-lab: the image the hosts run, exercised the way
-# a host runs it. Proves what unit tests cannot — the built image starts as non-root,
-# refuses to start without a credential, answers on $PORT, enforces auth and bounds over a
-# real socket, and drains on SIGTERM.
+# a host runs it. Proves what unit tests cannot — the built image starts as non-root on a
+# read-only root with no capabilities, refuses to start without a credential, answers on
+# $PORT, enforces auth and bounds over a real socket, and drains on SIGTERM.
 #
 #   bash scripts/external-service/smoke.sh            # build, then test
 #   SKIP_BUILD=1 IMAGE=… bash scripts/external-service/smoke.sh   # test a prebuilt image
@@ -30,7 +30,8 @@ status_of() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 
 if [ -z "${SKIP_BUILD:-}" ]; then
 	start=$(date +%s)
-	"$ENGINE" build -t "$IMAGE" -f services/runtime-lab/Containerfile services/runtime-lab
+	# RUST_IMAGE: a registry mirror holding the same digest, when Docker Hub rate-limits.
+	"$ENGINE" build ${RUST_IMAGE:+--build-arg "RUST_IMAGE=$RUST_IMAGE"} -t "$IMAGE" -f services/runtime-lab/Containerfile services/runtime-lab
 	echo "build: $(( $(date +%s) - start ))s"
 fi
 echo "image: $IMAGE ($("$ENGINE" image inspect "$IMAGE" --format '{{.Size}}' | awk '{printf "%.1f MB", $1/1e6}'))"
@@ -45,7 +46,9 @@ set -e
 [ "$code" = 2 ] && pass "refuses to start without SERVICE_TOKEN (exit 2)" || fail "missing token exited $code, want 2"
 
 start=$(date +%s%N)
-"$ENGINE" run -d --name "$NAME" -e SERVICE_TOKEN="$TOKEN" -e SERVICE_TOKEN_PREVIOUS="$PREVIOUS_TOKEN" \
+# The hardening compose.yaml applies: read-only root, no capabilities, no privilege gain.
+"$ENGINE" run -d --name "$NAME" --read-only --cap-drop=ALL --security-opt=no-new-privileges \
+	-e SERVICE_TOKEN="$TOKEN" -e SERVICE_TOKEN_PREVIOUS="$PREVIOUS_TOKEN" \
 	-e PORT=9090 -p "127.0.0.1:$PORT:9090" "$IMAGE" >/dev/null
 for _ in $(seq 1 500); do
 	[ "$(status_of "$BASE/health/live")" = 200 ] && break

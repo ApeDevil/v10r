@@ -1,0 +1,37 @@
+# Supply-chain policy for runtime-lab, enforced by cargo-deny:
+#   bash scripts/external-service/audit.sh          # in the pinned Rust image
+#   bash scripts/external-service/audit.sh --host   # with the host's cargo-deny
+#
+# Outside `bun run validate`, like `bun run audit`: an advisory database is fetched over the
+# network and changes daily, so the same commit can pass today and fail tomorrow — an audit,
+# not a gate. Run it before a Render deploy and when Cargo.lock changes.
+
+[advisories]
+# Vulnerabilities always fail. Also fail on a yanked version, and on unsound or unmaintained
+# notices for any crate in the tree.
+yanked = "deny"
+unmaintained = "all"
+unsound = "all"
+
+[licenses]
+# Exactly the licenses in the tree today (the service itself is MIT). A new one fails until
+# someone reads it and adds it here.
+allow = [
+	"MIT",
+	"Apache-2.0",
+	"Apache-2.0 WITH LLVM-exception",
+	"BSD-3-Clause",
+	"BSL-1.0",
+	"Unicode-3.0",
+	"Unlicense",
+]
+
+[bans]
+# Two versions of one crate are worth noticing, not refusing.
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+# crates.io only: no git dependencies, no other registry.
+unknown-registry = "deny"
+unknown-git = "deny"
