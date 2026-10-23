@@ -61,6 +61,21 @@ export interface DeskToolMeta extends ToolMeta {
 }
 
 /**
+ * Where the content of a tool's result comes from. `system` — a corpus v10r owns (the catalog,
+ * the project docs, the pattern registry). `user` — anything a user wrote or ingested, file
+ * names included: it may carry text shaped like instructions, so it reaches the model wrapped
+ * in `<untrusted-content>` (`$lib/server/ai/untrusted-content.ts`).
+ */
+export type ToolResultOrigin = 'system' | 'user';
+
+/**
+ * Whether a tool can move data out of the deployment — a fetch, an email, a message, a
+ * webhook. `external` is the exfiltration leg of the lethal trifecta: such a tool must be
+ * approval-gated (`untrusted-content.gate.test.ts`). Every tool today is `internal`.
+ */
+export type ToolReach = 'internal' | 'external';
+
+/**
  * One entry in the declarative tool registry (`TOOL_MANIFEST` below) — the single source
  * of truth for a tool's surface + risk + owning capability (+ gating scope for deskbot).
  * The derived meta maps (`chatbotToolMeta`/`deskbotToolMeta`/`allToolMeta` in
@@ -69,8 +84,23 @@ export interface DeskToolMeta extends ToolMeta {
  * union.
  */
 export type ToolDescriptor =
-	| { name: string; surface: 'chatbot'; risk: ToolRisk; capability: CapabilityId }
-	| { name: string; surface: 'deskbot'; risk: ToolRisk; scope: DeskToolScope; capability: CapabilityId };
+	| {
+			name: string;
+			surface: 'chatbot';
+			risk: ToolRisk;
+			capability: CapabilityId;
+			resultOrigin: ToolResultOrigin;
+			reach: ToolReach;
+	  }
+	| {
+			name: string;
+			surface: 'deskbot';
+			risk: ToolRisk;
+			scope: DeskToolScope;
+			capability: CapabilityId;
+			resultOrigin: ToolResultOrigin;
+			reach: ToolReach;
+	  };
 
 /**
  * The one human label of a tool — the status row's verb ("Searching the catalog") — is the
@@ -96,36 +126,157 @@ export const toolLabelKey = (toolName: string) => `ai_tool_${toolName}`;
  */
 export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
 	// ── chatbot: read-only, grounded retrieval tools (no scope) ──
-	{ name: 'search_catalog', surface: 'chatbot', risk: 'read', capability: 'catalog' },
-	{ name: 'search_project_docs', surface: 'chatbot', risk: 'read', capability: 'project-docs' },
-	{ name: 'search_pattern_library', surface: 'chatbot', risk: 'read', capability: 'pattern-library' },
+	{
+		name: 'search_catalog',
+		surface: 'chatbot',
+		risk: 'read',
+		capability: 'catalog',
+		resultOrigin: 'system',
+		reach: 'internal',
+	},
+	{
+		name: 'search_project_docs',
+		surface: 'chatbot',
+		risk: 'read',
+		capability: 'project-docs',
+		resultOrigin: 'system',
+		reach: 'internal',
+	},
+	{
+		name: 'search_pattern_library',
+		surface: 'chatbot',
+		risk: 'read',
+		capability: 'pattern-library',
+		resultOrigin: 'system',
+		reach: 'internal',
+	},
 	// ── deskbot: scope-gated UI-parity tools ──
-	{ name: 'desk_list_files', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
-	{ name: 'desk_read_file', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
-	{ name: 'desk_file_tree', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
-	{ name: 'desk_search_files', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
-	{ name: 'desk_get_open_panels', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-files' },
-	{ name: 'desk_update_cells', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
-	{ name: 'desk_rename_file', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
-	{ name: 'desk_update_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
-	{ name: 'desk_edit_markdown', surface: 'deskbot', risk: 'write', scope: 'desk:write', capability: 'desk-edit' },
+	{
+		name: 'desk_list_files',
+		surface: 'deskbot',
+		risk: 'read',
+		scope: 'desk:read',
+		capability: 'desk-files',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_read_file',
+		surface: 'deskbot',
+		risk: 'read',
+		scope: 'desk:read',
+		capability: 'desk-files',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_file_tree',
+		surface: 'deskbot',
+		risk: 'read',
+		scope: 'desk:read',
+		capability: 'desk-files',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_search_files',
+		surface: 'deskbot',
+		risk: 'read',
+		scope: 'desk:read',
+		capability: 'desk-files',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_get_open_panels',
+		surface: 'deskbot',
+		risk: 'read',
+		scope: 'desk:read',
+		capability: 'desk-files',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_update_cells',
+		surface: 'deskbot',
+		risk: 'write',
+		scope: 'desk:write',
+		capability: 'desk-edit',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_rename_file',
+		surface: 'deskbot',
+		risk: 'write',
+		scope: 'desk:write',
+		capability: 'desk-edit',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_update_markdown',
+		surface: 'deskbot',
+		risk: 'write',
+		scope: 'desk:write',
+		capability: 'desk-edit',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
+	{
+		name: 'desk_edit_markdown',
+		surface: 'deskbot',
+		risk: 'write',
+		scope: 'desk:write',
+		capability: 'desk-edit',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
 	{
 		name: 'desk_create_spreadsheet',
 		surface: 'deskbot',
 		risk: 'create',
 		scope: 'desk:create',
 		capability: 'desk-create',
+		resultOrigin: 'user',
+		reach: 'internal',
 	},
-	{ name: 'desk_create_markdown', surface: 'deskbot', risk: 'create', scope: 'desk:create', capability: 'desk-create' },
+	{
+		name: 'desk_create_markdown',
+		surface: 'deskbot',
+		risk: 'create',
+		scope: 'desk:create',
+		capability: 'desk-create',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
 	{
 		name: 'desk_delete_file',
 		surface: 'deskbot',
 		risk: 'destructive',
 		scope: 'desk:delete',
 		capability: 'desk-delete',
+		resultOrigin: 'user',
+		reach: 'internal',
 	},
-	{ name: 'desk_search_knowledge', surface: 'deskbot', risk: 'read', scope: 'desk:ask', capability: 'desk-ask' },
+	{
+		name: 'desk_search_knowledge',
+		surface: 'deskbot',
+		risk: 'read',
+		scope: 'desk:ask',
+		capability: 'desk-ask',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
 	// desk_propose_plan is a read-risk primitive gated with the base read scope; its
 	// capability mounts it whenever a mutating scope is granted.
-	{ name: 'desk_propose_plan', surface: 'deskbot', risk: 'read', scope: 'desk:read', capability: 'desk-plan' },
+	{
+		name: 'desk_propose_plan',
+		surface: 'deskbot',
+		risk: 'read',
+		scope: 'desk:read',
+		capability: 'desk-plan',
+		resultOrigin: 'user',
+		reach: 'internal',
+	},
 ];

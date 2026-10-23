@@ -130,3 +130,11 @@ Chromium needs the SwiftShader launch args set in `playwright.config.ts`. The fi
 `mcp/server.test.ts` runs under `bun:test`, not vitest — its imports resolve without SvelteKit
 aliases. `bun run test:mcp` runs it and is wired into `validate`; it is not in the vitest
 include globs and must not be.
+
+## AI answer quality
+
+Unit tests mock the model, so they cannot notice an assistant that starts citing paths it
+never retrieved. That is the job of the AI eval suite: a golden set graded deterministically
+over recorded turns, with a pass-rate floor. Its graders run in `validate`; a live run needs a
+dev server with provider keys and runs locally (`bun run ai:eval`). See
+[ai/evals.md](../ai/evals.md).

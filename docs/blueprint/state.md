@@ -275,29 +275,50 @@ See: [SvelteKit State Management](https://svelte.dev/docs/kit/state-management),
 
 ---
 
-## URL State Synchronization
+## URL state
 
-Sync state to URL query parameters for shareable/bookmarkable state. **Always use `replaceState`/`pushState` from `$app/navigation`, not `history.pushState` directly** — direct history manipulation conflicts with SvelteKit's router.
+Search params are state a user can share, bookmark and reload. Agents (and people) get them
+wrong in three repeatable ways: parsing them by hand in every load (`Number(x) || 1`, three
+copies of the same sort whitelist), writing them with raw `history.replaceState` (which
+replaces the router's own history entry state), and picking the write that re-runs every load
+for state no load reads. v10r reads and writes every param through one typed spec.
 
-```svelte
-<script>
-  import { replaceState } from '$app/navigation';
-  import { page } from '$app/state';
+**Spec** (`src/lib/state/url-state.ts`, framework-free — loads and components share it):
 
-  // Initialize from URL
-  let search = $state(page.url.searchParams.get('q') ?? '');
-  let sort = $state(page.url.searchParams.get('sort') ?? 'newest');
-
-  // Sync to URL on change
-  $effect(() => {
-    const url = new URL(page.url);
-    if (search) url.searchParams.set('q', search);
-    else url.searchParams.delete('q');
-    url.searchParams.set('sort', sort);
-    replaceState(url, {});
-  });
-</script>
+```ts
+export const usersListParams = {
+  q: urlParam.text(),
+  page: urlParam.integer({ fallback: 1, min: 1 }),
+  sort: urlParam.oneOf(['email', 'name', 'createdAt'], 'createdAt'),
+};
+const { q, page, sort } = readUrlState(url.searchParams, usersListParams); // +page.server.ts
+<a href={urlStateHref(page.url, usersListParams, { sort: 'name', page: 1 })}>    // +page.svelte
 ```
+
+- Reading never throws: the URL is user input, so an invalid value is the param's fallback.
+- Writing drops every param equal to its fallback — one state, one URL — and keeps params the
+  spec does not name (`utm_*`, other components' params).
+- The spec lives beside the route (`admin/users/list-params.ts`) when only that page uses it.
+
+**Writes** (`src/lib/state/url-state.svelte.ts`, `createUrlState(spec, { write })`):
+
+| Mode | Use when | Reads from | Writes with | Load re-runs | Navigation hooks |
+|---|---|---|---|---|---|
+| `navigate` | A `load` reads the param — filter, page, range | `page.url` | `goto(url, { replaceState, keepFocus, noScroll })` | Yes | Fire |
+| `shallow` | Pure view state no load reads — selected part, open tab, picked font | local `$state`, seeded from the URL | `replaceState(url, page.state)` from `$app/navigation` | No | Do not fire |
+| link | The change is a click on a link | — | `<a href={state.href(patch)}>` | Yes | Fire |
+
+Under `shallow`, `page.url` keeps the URL the page loaded with, so read the values from the
+state object, never from `page.url`. `shallow` is also the only mode that leaves
+`beforeNavigate` alone — about twenty viz components (`components/viz/**`) tear down there, so
+a `goto` for view state would restart every chart on the page. `debounceMs` collapses typing into one write while `values` shows
+the latest input at once.
+
+**Never** call `history.replaceState`/`pushState` directly: SvelteKit stores its history index
+and shallow state in the entry, and a raw write replaces them with whatever the caller passes.
+
+Live: `/admin/users` (navigate by link), `/showcases/analytics/overview` (navigate),
+`/showcases/ui/typography` and the 3D customizer (shallow).
 
 ### State Behavior During Navigation
 
@@ -534,12 +555,14 @@ Language switching requires route navigation. See [i18n.md](./i18n.md) for the f
 ```
 src/lib/
 ├── state/
+│   ├── index.ts              # Barrel: layer stack, modals, session, sidebar, theme, toast
 │   ├── theme.svelte.ts       # Theme state (light/dark/system)
 │   ├── sidebar.svelte.ts     # Sidebar open/pinned state
 │   ├── toast.svelte.ts       # Toast notification queue
-│   ├── chat.svelte.ts        # AI assistant state (see ai/README.md)
-│   ├── ui.svelte.ts          # Re-exports theme + sidebar (convenience)
-│   └── context.ts            # Type-safe context helpers
+│   ├── chatbot-session.svelte.ts  # The live Vely chat (see ai/persistent-chatbot.md)
+│   ├── optimistic.svelte.ts  # Optimistic mutations (velocity/interaction.md)
+│   ├── url-state.ts          # URL state spec: read/write search params (framework-free)
+│   └── url-state.svelte.ts   # URL state bound to the router (navigate / shallow)
 └── components/
     └── ...
 ```
@@ -548,7 +571,6 @@ src/lib/
 - Easier to delete unused features (not using sidebar? delete one file)
 - Better tree-shaking potential
 - Clearer ownership (theme has its own file)
-- `ui.svelte.ts` re-exports for convenience: `import { createThemeStore, createSidebarStore } from '$lib/state/ui.svelte'`
 
 ---
 

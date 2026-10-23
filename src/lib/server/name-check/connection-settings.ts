@@ -12,7 +12,7 @@ import { type getAuditContext, recordAuditEvent } from '$lib/server/admin';
 import { db } from '$lib/server/db';
 import { classifyDbError } from '$lib/server/db/errors';
 import { removeNameSourceSecret, saveNameSourceConnection } from '$lib/server/db/name-check/source-connections';
-import { EncryptionError, encryptAesGcm, getEncryptionKey } from '$lib/server/security';
+import { EncryptionError, encryptAesGcm, getEncryptionKeyRing } from '$lib/server/security';
 import type { NameSourceVendor } from '$lib/types/db-enums';
 import { type NameSourceTestResult, testNameSourceConnection } from './connection-test';
 import type { NameSourceConnection } from './connections';
@@ -96,7 +96,7 @@ export async function saveNameSourceConnectionSettings(
 	let secretCiphertext: string | undefined;
 	if (replacingSecret) {
 		try {
-			secretCiphertext = await encryptAesGcm(input.secret as string, getEncryptionKey());
+			secretCiphertext = await encryptAesGcm(input.secret as string, getEncryptionKeyRing());
 		} catch (err) {
 			if (err instanceof EncryptionError) return { ok: false, rejected: 'encryption_unconfigured' };
 			throw err;

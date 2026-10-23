@@ -25,6 +25,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { fetchEnvelope } from '../../src/lib/server/ai/eval/run-eval';
 import { type InspectedTurn, scrubTurn, type ThreadMessage, turnOptions } from '../../src/lib/showcases/ai/inspector';
 import type { AssistantProfileManifest } from '../../src/lib/types/assistant-profile';
 import type { AiSurface } from '../../src/lib/types/db-enums';
@@ -73,12 +74,7 @@ async function get<T>(path: string): Promise<T> {
 		if (!file) throw new Error(`No saved response maps to ${path}`);
 		return (JSON.parse(readFileSync(join(from, file), 'utf8')) as { data: T }).data;
 	}
-	const res = await fetch(`${base}${path}`, {
-		headers: { cookie: cookie as string, 'X-Requested-With': 'sveltekit', accept: 'application/json' },
-	});
-	if (!res.ok) throw new Error(`GET ${path} → ${res.status} ${await res.text().catch(() => '')}`);
-	const envelope = (await res.json()) as { data: T };
-	return envelope.data;
+	return fetchEnvelope<T>(base, path, cookie as string);
 }
 
 const conversationId =

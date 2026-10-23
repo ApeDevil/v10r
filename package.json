@@ -59,6 +59,7 @@
 		"perf:scenarios": "bun run scripts/perf/scenarios.ts",
 		"perf:locality": "bun run scripts/perf/locality.ts",
 		"ai:record-turn": "bun run scripts/ai/record-turn-fixture.ts",
+		"ai:eval": "bun run scripts/ai/eval.ts",
 		"pwa:icons": "bun run scripts/pwa/generate-icons.ts",
 		"patterns:validate": "bun run pattern-library/validate.ts",
 		"mcp:excerpts:build": "bun run scripts/mcp/build-public-excerpts.ts",

@@ -9744,6 +9744,492 @@
 			"maturity": "proven",
 			"verifiedAt": "2026-10-10",
 			"verifiedSha": "91f61a76-dirty"
+		},
+		{
+			"id": "encryption-key-ring",
+			"tier": "deep",
+			"title": "Encryption key ring (envelopes name their key, rotation re-seals)",
+			"category": "admin-privacy",
+			"summary": "Stored credentials are AES-256-GCM envelopes that name the key sealing them (a derived key id), opened by a ring of current and previous keys, so rotating ENCRYPTION_KEY is a ring change plus a re-seal sweep with a compare-and-swap on the envelope — never a mass re-entry of secrets.",
+			"when_to_use": "Use when the app stores third-party credentials or other secrets encrypted under a deployment key that must be rotatable.",
+			"avoid_when": [
+				"The secrets can live in a managed KMS or secret store that does the envelope encryption and rotation for you",
+				"Nothing is stored encrypted — the only secrets are environment variables the platform already manages"
+			],
+			"alternatives": [
+				{
+					"approach": "KMS envelope encryption (a data key per secret wrapped by a KMS key)",
+					"prefer_when": "the key must be unreachable from the application process, or compliance requires audited key use"
+				},
+				{
+					"approach": "A database key-version column beside each ciphertext",
+					"prefer_when": "the envelope format cannot change, e.g. a third-party reader parses it"
+				}
+			],
+			"requires": ["postgres", "cron"],
+			"capabilities": ["key rotation", "credentials at rest", "envelope encryption", "re-encryption sweep", "key id"],
+			"keywords": [
+				"encryption",
+				"key rotation",
+				"rotate key",
+				"aes-gcm",
+				"envelope",
+				"kid",
+				"secret",
+				"credential",
+				"ciphertext",
+				"reseal",
+				"re-encrypt",
+				"keyring"
+			],
+			"depends_on": ["jobs-scheduler"],
+			"docs": [
+				{
+					"path": "docs/blueprint/security/key-ring.md#encryption-key-ring",
+					"note": "Envelope format, the ring, the re-seal sweep and its compare-and-swap"
+				},
+				{
+					"path": "docs/blueprint/security/key-ring.md#rotation",
+					"note": "The four-step operator runbook"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/security/aes-gcm.ts",
+					"note": "v2:<kid> envelope, parseKeyRing, openEnvelope (stale), resealEnvelope, openSecret"
+				},
+				{
+					"path": "src/lib/server/security/encryption-key.ts",
+					"note": "The one ENCRYPTION_KEY / ENCRYPTION_KEY_PREVIOUS read"
+				},
+				{
+					"path": "src/lib/server/security/envelope-reseal.ts",
+					"note": "The shared re-seal loop over owner-supplied rows"
+				},
+				{
+					"path": "src/lib/server/jobs/encryption-reseal.ts",
+					"note": "The daily sweep; fails loudly on an unreadable envelope"
+				},
+				{
+					"path": "src/lib/server/db/ai/provider-connections.ts",
+					"note": "replaceProviderKeyEnvelope: compare-and-swap on the envelope"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/security/aes-gcm.test.ts",
+					"note": "Legacy vector, kid routing, stale after rotation, unknown kid, tamper, ring parsing, re-seal loop"
+				},
+				{
+					"path": "src/lib/server/db/name-check/source-connections.pglite.test.ts",
+					"note": "Envelope swap keeps version and updatedAt, and loses to a concurrent write"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"Every new envelope is sealed under the current key and names it by a derived key id.",
+				"No key of the ring is stored in the database or sent to a client.",
+				"The re-seal sweep never changes a secret's plaintext, version or updatedAt, and swaps only the envelope it read.",
+				"An envelope no key opens is reported as undecryptable, never overwritten or deleted."
+			],
+			"emulation_notes": [
+				"Derive the key id from the key (a truncated hash) instead of letting operators name keys — a mislabelled key is then impossible.",
+				"Keep reading the pre-ring envelope format by trying every key, and count it as stale so the sweep migrates it.",
+				"Make the sweep fail after re-sealing what it can when some envelope opens under no key: that failed run is the signal not to drop the previous key yet."
+			],
+			"risk": "medium — dropping a previous key before the sweep ran makes the secrets it sealed undecryptable; the failed sweep and the admin pages' undecryptable status say so",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-23",
+			"verifiedSha": "95de612-dirty"
+		},
+		{
+			"id": "url-search-state",
+			"tier": "deep",
+			"title": "URL state (one typed spec for search params, navigate vs shallow writes)",
+			"category": "architecture",
+			"summary": "Search params are read and written through one typed spec shared by loads and components — invalid input falls back instead of throwing, defaults never reach the URL, foreign params survive — and every write picks navigate (goto, the load re-runs) or shallow (replaceState from $app/navigation, no load, no navigation hooks), never raw history.",
+			"when_to_use": "Use when sort, paging, a search term or a view selection must survive reload, sharing and back/forward.",
+			"avoid_when": [
+				"The state is private or sensitive — tokens, emails, anything that must not land in logs, referrers or shared links",
+				"The state is large or structured enough to hit URL length limits; keep it server-side and put an id in the URL"
+			],
+			"alternatives": [
+				{
+					"approach": "runed useSearchParams or sveltekit-search-params",
+					"prefer_when": "a dependency is acceptable and the app does not need the same spec in its server loads"
+				},
+				{
+					"approach": "Snapshots (export const snapshot)",
+					"prefer_when": "the state should survive back/forward but must not be shareable"
+				}
+			],
+			"requires": [],
+			"capabilities": ["url state", "search params", "shareable list state", "shallow routing", "typed query params"],
+			"keywords": [
+				"search params",
+				"query string",
+				"searchparams",
+				"replacestate",
+				"goto",
+				"shallow routing",
+				"sort",
+				"pagination params",
+				"bookmark"
+			],
+			"depends_on": ["architecture-state-management"],
+			"docs": [
+				{
+					"path": "docs/blueprint/state.md#url-state",
+					"note": "The spec, the write-mode table, and why raw history writes are banned"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/state/url-state.ts",
+					"note": "urlParam codecs, readUrlState, writeUrlState, urlStateHref"
+				},
+				{
+					"path": "src/lib/state/url-state.svelte.ts",
+					"note": "createUrlState: navigate vs shallow, debounce"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/admin/users/list-params.ts",
+					"note": "A route-local spec the load and the page share"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/state/url-state.test.ts",
+					"note": "Fallbacks on hostile input, clamping, canonical URLs, foreign params, round trip"
+				},
+				{
+					"path": "src/lib/state/url-state.svelte.test.ts",
+					"note": "navigate writes via goto, shallow via replaceState with page.state, debounce"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/ui/typography",
+					"kind": "route",
+					"note": "Shallow: the font picks mirror into the URL"
+				},
+				{
+					"path": "/showcases/analytics/overview",
+					"kind": "route",
+					"note": "Navigate: the range preset re-runs the load"
+				}
+			],
+			"invariants": [
+				"Every search param a page uses is parsed and written through one spec shared by its load and its component.",
+				"Reading never throws; an invalid value is the param's fallback.",
+				"A param equal to its fallback is never written, and params outside the spec are preserved.",
+				"No code writes history directly; view state uses shallow replaceState, load-driving state uses goto."
+			],
+			"emulation_notes": [
+				"Decide the write mode by asking whether any load reads the param — not by whether the URL should change.",
+				"Under shallow writes page.url stays at the loaded URL; read the values from the state object.",
+				"Give the component the same fallback the load parses with, or a param dropped from the URL means two different things."
+			],
+			"risk": "low — a wrong mode shows up as a load that never re-runs (shallow for data) or charts that restart on every pick (navigate for view state)",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-23",
+			"verifiedSha": "1a5496b-dirty"
+		},
+		{
+			"id": "form-draft-recovery",
+			"tier": "deep",
+			"title": "Form draft recovery (kept in the browser, offered back, guarded only when lost)",
+			"category": "forms",
+			"summary": "What a person types into a form is kept in localStorage per account and form, stripped of credential-like fields, offered back after a closed tab or crash (never applied on its own), cleared on a valid submit; the leave prompt fires only when the draft could not be kept.",
+			"when_to_use": "Use when a form takes long enough to fill that losing it to a closed tab, crash or expired session would hurt.",
+			"avoid_when": [
+				"The form holds secrets or regulated data a shared browser must never retain, beyond what field exclusion covers",
+				"The work must survive sign-out or move between devices — keep a server-side draft instead"
+			],
+			"alternatives": [
+				{
+					"approach": "Server-side drafts with a save queue (versioned-document-session)",
+					"prefer_when": "the draft must survive sign-out, sync across devices or be shared"
+				},
+				{
+					"approach": "SvelteKit snapshots (export const snapshot)",
+					"prefer_when": "restoring on back/forward within one session is enough"
+				},
+				{
+					"approach": "Superforms taintedMessage alone",
+					"prefer_when": "the form is short and a leave prompt is all the protection it needs"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"form drafts",
+				"draft recovery",
+				"unsaved changes guard",
+				"leave prompt",
+				"localStorage persistence"
+			],
+			"keywords": [
+				"draft",
+				"autosave form",
+				"restore draft",
+				"unsaved changes",
+				"leave page",
+				"beforeunload",
+				"beforenavigate",
+				"lost input",
+				"localstorage",
+				"tainted"
+			],
+			"depends_on": ["forms-superforms-valibot"],
+			"docs": [
+				{
+					"path": "docs/blueprint/forms.md#draft-recovery",
+					"note": "The store, the binding, the offer, and why the guard fires only on a refused write"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/state/form-draft.ts",
+					"note": "createFormDraftStore: keying, sanitising, credential filter, injected storage"
+				},
+				{
+					"path": "src/lib/state/form-draft.svelte.ts",
+					"note": "createFormDraft: Superforms binding, offer, clear on submit"
+				},
+				{
+					"path": "src/lib/state/leave-guard.svelte.ts",
+					"note": "guardUnsavedChanges / leaveDecision: one beforeNavigate, native prompt on leave"
+				},
+				{
+					"path": "src/lib/components/composites/draft-recovery-notice/DraftRecoveryNotice.svelte",
+					"note": "Restore or discard"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/state/form-draft.test.ts",
+					"note": "Credential and exclusion filter, per-account keys, version and type checks, refused writes"
+				},
+				{
+					"path": "src/lib/state/leave-guard.test.ts",
+					"note": "No prompt when clean; native prompt on leave; confirm in-app"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/forms/advanced/draft",
+					"kind": "route",
+					"note": "Type, reload, restore; the password never comes back"
+				}
+			],
+			"invariants": [
+				"A draft is offered, never applied on its own, and never offered when it equals the form.",
+				"No credential-like field and no field outside the form's shape is ever written to storage.",
+				"Drafts are keyed per account and form; another account in the same browser sees none.",
+				"The leave prompt fires only for work that could not be kept."
+			],
+			"emulation_notes": [
+				"Validate a stored draft against the form's own initial data, not a schema of its own — a form change then drops stale fields without a migration.",
+				"Touch storage only after mount; reading it during initialisation makes the server and client renders disagree.",
+				"Let the router own the unload prompt (cancel on type 'leave') instead of adding a beforeunload listener per form."
+			],
+			"risk": "low — a failed write degrades to the old behaviour (a leave prompt), and a bad draft is discarded by type checks",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-23",
+			"verifiedSha": "a1f1074-dirty"
+		},
+		{
+			"id": "ai-untrusted-content-boundary",
+			"tier": "deep",
+			"title": "Untrusted-content boundary (the lethal trifecta, one rule per leg)",
+			"category": "ai",
+			"summary": "Every AI tool declares where its result comes from and whether it can send data out; user-origin results reach the model as one escaped <untrusted-content> element (this turn via toModelOutput, replayed turns via the history), external-reach tools must be approval-gated, and model output renders no image or unlisted link — a gate test holds all three legs.",
+			"when_to_use": "Use when an assistant reads content a user or third party wrote — files, retrieved documents, web pages, tool output — and can also act or answer with links.",
+			"avoid_when": [
+				"The assistant only ever reads a corpus you own and has no tools that act or send — there is no untrusted leg to bound",
+				"You need to detect injection attempts for moderation; this bounds and removes legs, it does not classify"
+			],
+			"alternatives": [
+				{
+					"approach": "Dual-LLM or CaMeL-style quarantine (a privileged planner never sees untrusted text)",
+					"prefer_when": "the assistant must act on untrusted content and also hold external tools"
+				},
+				{
+					"approach": "Injection classifiers (Prompt Guard, Lakera)",
+					"prefer_when": "you want telemetry on attempts on top of the structural rule, never instead of it"
+				}
+			],
+			"requires": ["ai-provider"],
+			"capabilities": [
+				"prompt injection defense",
+				"lethal trifecta",
+				"tool result wrapping",
+				"exfiltration control",
+				"untrusted content"
+			],
+			"keywords": [
+				"prompt injection",
+				"indirect prompt injection",
+				"lethal trifecta",
+				"exfiltration",
+				"untrusted",
+				"tool result",
+				"tomodeloutput",
+				"jailbreak",
+				"poisoned document",
+				"delimiter"
+			],
+			"depends_on": ["ai-tool-harness", "deskbot-approval-gate"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/untrusted-content.md#untrusted-content-boundary",
+					"note": "The three legs, where each is enforced, what is not claimed"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/ai/untrusted-content.ts",
+					"note": "resultOriginOf, wrapUntrusted, withUntrustedBoundary, boundHistoryToolResults"
+				},
+				{
+					"path": "src/lib/types/ai-tools.ts",
+					"note": "TOOL_MANIFEST: resultOrigin and reach per tool"
+				},
+				{
+					"path": "src/lib/server/ai/profile/profile.ts",
+					"note": "composeTurn bounds the composed tool set"
+				},
+				{
+					"path": "src/lib/utils/markdown.ts",
+					"note": "Leg 3: no img, allowlisted link hosts for model output"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/untrusted-content.gate.test.ts",
+					"note": "Through the real streamText loop: wrapped for the model, raw for the loop; history; external reach gated; renderer"
+				},
+				{
+					"path": "src/lib/server/ai/prompt-injection.test.ts",
+					"note": "Prompt-block delimiter escaping and the data rule on both surfaces"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"Every tool declares its result origin and reach; an undeclared tool is treated as user-origin.",
+				"No user-origin tool result reaches the model unescaped, in the turn that ran it or a later one.",
+				"No tool that can send data out of the deployment runs without a human-approved proposal.",
+				"Model output renders no image and no link to an unlisted host."
+			],
+			"emulation_notes": [
+				"Bound at the model boundary (toModelOutput), not inside each tool — the loop's raw value then keeps feeding sentinels, effects and traces unchanged.",
+				"Remember replayed history: results rebuilt from stored messages skip toModelOutput and need the same wrapping.",
+				"Gate the legs you removed, not only the wrapper: a test that fails when an external tool appears ungated is what keeps the trifecta open."
+			],
+			"risk": "medium — the wrapper lowers but cannot remove the chance a model follows embedded text; the guarantee comes from leg 2 and leg 3 staying closed, which the gate holds",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-23",
+			"verifiedSha": "3cd3a97-dirty"
+		},
+		{
+			"id": "ai-eval-regression-suite",
+			"tier": "deep",
+			"title": "AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)",
+			"category": "ai",
+			"summary": "A committed golden set of questions, each with the facts its recorded turn must show — citations surfaced not recalled, the right tool called, no forbidden tool, an approval stop, no invented command — graded by pure functions over the turn trace, with a pass-rate floor that only rises; live runs go through the app's own routes against a local dev server.",
+			"when_to_use": "Use when prompts, retrieval, tools or models change often and unit tests mock the model, so quality regressions would ship unnoticed.",
+			"avoid_when": [
+				"Turns are not recorded — without a trace of tools and citations the graders have nothing deterministic to read",
+				"The quality question is open-ended style or tone that no fact in the trace can decide"
+			],
+			"alternatives": [
+				{
+					"approach": "LLM-as-judge suites (promptfoo, Braintrust, LangSmith)",
+					"prefer_when": "the facts to check are judgments no trace field records, and the judge is calibrated against human labels"
+				},
+				{
+					"approach": "Offline retrieval benchmarks (Acc@1, Recall@k)",
+					"prefer_when": "only the retrieval layer changes and no model call is needed to score it"
+				}
+			],
+			"requires": ["ai-provider", "postgres"],
+			"capabilities": ["ai evals", "golden set", "regression testing", "deterministic grading", "quality ratchet"],
+			"keywords": [
+				"eval",
+				"evals",
+				"golden set",
+				"llm evaluation",
+				"regression test",
+				"llm as judge",
+				"grader",
+				"hallucination",
+				"citation check",
+				"prompt regression",
+				"quality gate"
+			],
+			"depends_on": ["ai-turn-trace", "performance-budget-ratchet"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/evals.md#ai-eval-regression-suite",
+					"note": "Golden set, graders, floor ratchet, where it runs"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/ai/eval/eval-case.ts",
+					"note": "The case and expectation schema"
+				},
+				{
+					"path": "src/lib/server/ai/eval/graders.ts",
+					"note": "One pure grader per expectation kind"
+				},
+				{
+					"path": "src/lib/server/ai/eval/scorecard.ts",
+					"note": "Case pass, run pass rate, floor check"
+				},
+				{
+					"path": "src/lib/server/ai/eval/run-eval.ts",
+					"note": "HTTP client over the app's own routes; runEval"
+				},
+				{
+					"path": "src/lib/server/ai/eval/golden-cases.json",
+					"note": "The golden set"
+				},
+				{
+					"path": "scripts/ai/eval.ts",
+					"note": "bun run ai:eval [--check]"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/eval/graders.test.ts",
+					"note": "Graders over the committed turn fixtures and synthetic failures; scorecard and floor"
+				},
+				{
+					"path": "src/lib/server/ai/eval/golden-cases.test.ts",
+					"note": "Schema, unique ids, tools exist on the case's surface"
+				},
+				{
+					"path": "src/lib/server/ai/eval/run-eval.test.ts",
+					"note": "The runner against a stand-in HTTP server: cookie, CSRF header, envelopes, failed cases"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"Every expectation is a deterministic check over the recorded turn; no model grades a model.",
+				"A case names only tools that exist on its surface.",
+				"A run passes only at or above the committed floor, and the floor never moves down.",
+				"A case whose turn cannot be obtained fails with its reason and the run continues."
+			],
+			"emulation_notes": [
+				"Grade the trace (tools, citation matches, outcome), not the prose — those facts are stable across runs where wording is not.",
+				"Run evals through the app's real endpoints as a signed-in user, so the graded turn is exactly what a user's turn records.",
+				"Start the floor at the first honest run and log every raise; a floor set by hope fails the first time and gets ignored."
+			],
+			"risk": "low — the suite is advisory until the floor is raised; a flaky phrase check shows as a named failing fact, not a vague score",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-23",
+			"verifiedSha": "cf85a2c-dirty"
 		}
 	]
 }

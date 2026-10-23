@@ -154,6 +154,7 @@ src/lib/server/
     dbops-refresh.ts
     dbops-reaper.ts
     desk-retrieval-sync.ts
+    encryption-reseal.ts            ← Re-seals credential envelopes onto the current key
     desk-retention.ts
     ai-telemetry-retention.ts
     audit-log-retention.ts

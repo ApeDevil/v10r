@@ -14,7 +14,7 @@
  */
 import { db } from '$lib/server/db';
 import { listProviderConnections } from '$lib/server/db/ai/provider-connections';
-import { EncryptionError, getEncryptionKey } from '$lib/server/security';
+import { EncryptionError, type EncryptionKeyRing, getEncryptionKeyRing } from '$lib/server/security';
 import {
 	type EmbeddingConnection,
 	type ProviderEntry,
@@ -33,6 +33,7 @@ import {
 
 export type { EmbeddingConnection, ProviderEntry, ProviderRegistry, PublicProviderConnection } from './connections';
 export { EMBEDDING_UNAVAILABLE_MESSAGES, publicProviderConnection } from './connections';
+export { resealProviderKeys } from './provider-key-reseal';
 
 async function readRows() {
 	try {
@@ -44,10 +45,10 @@ async function readRows() {
 	}
 }
 
-/** The validated key, or null when the deployment has none — entries then report `undecryptable`. */
-function readEncryptionKeyOrNull(): string | null {
+/** The validated key ring, or null when the deployment has none — entries then report `undecryptable`. */
+function readKeyRingOrNull(): EncryptionKeyRing | null {
 	try {
-		return getEncryptionKey();
+		return getEncryptionKeyRing();
 	} catch (err) {
 		if (err instanceof EncryptionError) return null;
 		throw err;
@@ -56,12 +57,12 @@ function readEncryptionKeyOrNull(): string | null {
 
 /** Load the saved provider connections as the snapshot one AI operation will use. */
 export async function loadProviderRegistry(): Promise<ProviderRegistry> {
-	return resolveProviderRegistry(await readRows(), readEncryptionKeyOrNull());
+	return resolveProviderRegistry(await readRows(), readKeyRingOrNull());
 }
 
 /** The Google connection as the embedding path sees it (see `resolveEmbeddingConnection`). */
 export async function loadEmbeddingConnection(): Promise<EmbeddingConnection> {
-	return resolveEmbeddingConnection(await readRows(), readEncryptionKeyOrNull());
+	return resolveEmbeddingConnection(await readRows(), readKeyRingOrNull());
 }
 
 // Per-operation resolution over a loaded registry. Precedence everywhere:

@@ -7,6 +7,7 @@ them from silently regressing.
 |------|--------|
 | [topology.md](topology.md) | Where every security control lives · the two admin planes and why only one exists now · the `/api/auth/*` blind spot · guard families |
 | [threat-model.md](threat-model.md) | Assets and adversaries · trust boundaries · what is deliberately accepted · what is deliberately not built |
+| [key-ring.md](key-ring.md) | Credentials at rest under a key ring · envelopes that name their key · rotation without losing a secret · the re-seal sweep |
 | [gate-tests.md](gate-tests.md) | The static-scan-as-gate pattern · each gate and what it prevents · honest limits · how to add one |
 
 ## The one-paragraph version

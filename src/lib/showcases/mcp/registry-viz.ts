@@ -97,6 +97,11 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'durable-step-execution': 'Durable Steps',
 	'versioned-document-session': 'Doc Session',
 	'asset-rights-manifest': 'Asset Rights',
+	'encryption-key-ring': 'Key Ring',
+	'url-search-state': 'URL State',
+	'form-draft-recovery': 'Form Drafts',
+	'ai-untrusted-content-boundary': 'Untrusted',
+	'ai-eval-regression-suite': 'AI Evals',
 	'architecture-external-service': 'Ext Service',
 };
 

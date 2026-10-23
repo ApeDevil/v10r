@@ -6,9 +6,9 @@
  * Four domains now sign something — analytics visitor hashes, analytics confirm
  * tokens, blog upload tickets, the debug-owner pairing cookie — and they all reach
  * one implementation through this barrel rather than by file. And authenticated
- * encryption over `ENCRYPTION_KEY` for credentials at rest (Discord tokens, AI
- * provider keys, name-check vendor secrets): `aes-gcm.ts` takes the key as an argument so the bare-Bun ingest
- * scripts can reach it by relative path, and `encryption-key.ts` is the single
+ * encryption under the `ENCRYPTION_KEY` ring for credentials at rest (AI provider keys,
+ * name-check vendor secrets): `aes-gcm.ts` takes the ring as an argument so the bare-Bun
+ * ingest scripts can reach it by relative path, and `encryption-key.ts` is the single
  * environment read that supplies it inside the app.
  *
  * Two neighbours are deliberately NOT re-exported:
@@ -23,10 +23,12 @@ export {
 	decryptAesGcm,
 	EncryptionError,
 	type EncryptionErrorKind,
+	type EncryptionKeyRing,
 	encryptAesGcm,
 	type KeyStatus,
 	openSecret,
 } from './aes-gcm';
-export { getEncryptionKey } from './encryption-key';
+export { getEncryptionKeyRing } from './encryption-key';
+export { type ResealOutcome, resealEnvelopes } from './envelope-reseal';
 export { deriveSubkey, resetSubkeyCache, SUBKEY_PURPOSES, type SubkeyPurpose } from './subkey';
 export { signTicket, type TicketCheck, type TicketFields, verifyTicket } from './ticket';

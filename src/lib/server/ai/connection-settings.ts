@@ -12,7 +12,7 @@ import { recordAuditEvent } from '$lib/server/admin';
 import { db } from '$lib/server/db';
 import { removeProviderKey, saveProviderConnection, setDefaultProvider } from '$lib/server/db/ai/provider-connections';
 import { classifyDbError } from '$lib/server/db/errors';
-import { EncryptionError, encryptAesGcm, getEncryptionKey } from '$lib/server/security';
+import { EncryptionError, encryptAesGcm, getEncryptionKeyRing } from '$lib/server/security';
 import type { AiProviderId } from '$lib/types/db-enums';
 import { type ConnectionTestResult, testLanguageModel } from './connection-test';
 import { createProviderModel, type ProviderEntry } from './connections';
@@ -104,7 +104,7 @@ export async function saveProviderConnectionSettings(
 	let apiKeyCiphertext: string | undefined;
 	if (replacingKey) {
 		try {
-			apiKeyCiphertext = await encryptAesGcm(input.apiKey as string, getEncryptionKey());
+			apiKeyCiphertext = await encryptAesGcm(input.apiKey as string, getEncryptionKeyRing());
 		} catch (err) {
 			if (err instanceof EncryptionError) return { ok: false, rejected: 'encryption_unconfigured' };
 			throw err;

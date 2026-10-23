@@ -8,7 +8,7 @@
  * Writes are optimistic: each names the `version` it saw and matches zero rows when
  * another administrator got there first. Both operations are single guarded statements.
  */
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, sql } from 'drizzle-orm';
 import type { NameSourceVendor } from '../../../types/db-enums';
 import { type NameSourceConnectionRow, sourceConnection } from '../schema/name-check/source-connection';
 import type { Database } from '../types';
@@ -30,6 +30,33 @@ export type NameSourceConnectionWrite = { ok: true; version: number } | { confli
 
 export function listNameSourceConnections(database: Database): Promise<NameSourceConnectionRow[]> {
 	return database.select().from(sourceConnection);
+}
+
+/** Every stored secret envelope — what the re-seal sweep reads, and nothing else. */
+export function listNameSourceSecretEnvelopes(
+	database: Database,
+): Promise<{ vendor: NameSourceVendor; secretCiphertext: string | null }[]> {
+	return database
+		.select({ vendor: sourceConnection.vendor, secretCiphertext: sourceConnection.secretCiphertext })
+		.from(sourceConnection)
+		.where(isNotNull(sourceConnection.secretCiphertext));
+}
+
+/**
+ * Swap a secret envelope for the same secret re-sealed under the current key — only while
+ * the row still holds the envelope that was read (compare-and-swap on the envelope). The
+ * secret did not change, so neither do `version` and `updatedAt`.
+ */
+export async function replaceNameSourceSecretEnvelope(
+	database: Database,
+	input: { vendor: NameSourceVendor; from: string; to: string },
+): Promise<boolean> {
+	const updated = await database
+		.update(sourceConnection)
+		.set({ secretCiphertext: input.to })
+		.where(and(eq(sourceConnection.vendor, input.vendor), eq(sourceConnection.secretCiphertext, input.from)))
+		.returning({ vendor: sourceConnection.vendor });
+	return updated.length === 1;
 }
 
 export async function saveNameSourceConnection(

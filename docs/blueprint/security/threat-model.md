@@ -25,7 +25,7 @@ looked at and deliberately accepted.
 |---|---|
 | Unauthenticated internet | Public MCP, blog, auth endpoints, media proxies, pairing claim |
 | Authenticated low-privilege user | The largest surface — ~99 API endpoints, each self-guarded |
-| A document the user ingested | Prompt injection, with persistence: it fires on every later retrieval |
+| A document the user ingested | Prompt injection, with persistence: it fires on every later retrieval. Bounded by [the untrusted-content boundary](../ai/untrusted-content.md) |
 | A compromised npm dependency | Everything. This is why `bun audit` and the `minimumReleaseAge` install cooldown exist |
 | A stolen session cookie | Everything that user has, and — until step-up was added to passkey registration — durable access that survived signing out |
 | A leaked environment variable | `PAIRING_SECRET`, `MCP_ADMIN_TOKEN`, `MCP_PRIVATE_TOKEN`, `MCP_TELEMETRY_SALT`, `CRON_SECRET`, the Neon URL |

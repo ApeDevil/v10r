@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 176 patterns (43 deep cards / 133 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 181 patterns (48 deep cards / 133 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -22,6 +22,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Hosted MCP (two trust surfaces: public read-only · bearer admin)](./architecture-hosted-mcp.md)
 - [Rust→wasm compute kernel (vendored, plugin-free)](./architecture-wasm-kernel.md)
 - [**External service runtime (a separately deployed backend behind a typed client)**](./architecture-external-service.md)
+- [**URL state (one typed spec for search params, navigate vs shallow writes)**](./url-search-state.md)
 
 ### App Shell & Navigation
 
@@ -65,6 +66,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Advanced (confirm · reset · edit)](./forms-advanced-patterns.md)
 - [Auth forms (Better Auth client, not Superforms)](./forms-auth-forms.md)
 - [File uploads (withFiles + Sharp + R2)](./forms-file-uploads.md)
+- [**Form draft recovery (kept in the browser, offered back, guarded only when lost)**](./form-draft-recovery.md)
 
 ### Internationalization (i18n)
 
@@ -126,6 +128,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Style picking + custom palettes](./admin-privacy-style-picking.md)
 - [Audit log and announcements](./admin-privacy-audit-log.md)
 - [Feedback capture](./admin-privacy-feedback.md)
+- [**Encryption key ring (envelopes name their key, rotation re-seals)**](./encryption-key-ring.md)
 
 ### AI
 
@@ -145,6 +148,8 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [TOON token-efficient context format](./ai-toon-format.md)
 - [Deskbot (AI in the desk workspace)](./ai-deskbot.md)
 - [Agent-harness audit lens (loop/context/policy/tools)](./ai-harness-lens.md)
+- [**Untrusted-content boundary (the lethal trifecta, one rule per leg)**](./ai-untrusted-content-boundary.md)
+- [**AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)**](./ai-eval-regression-suite.md)
 
 ### Toolkits
 

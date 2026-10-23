@@ -1,7 +1,7 @@
 <script lang="ts">
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
+import { createUrlState } from '$lib/state/url-state.svelte';
 import { cn } from '$lib/utils/cn';
+import { rangeParams } from '../range-params';
 
 interface Props {
 	defaultRange?: '7' | '30' | '90';
@@ -16,12 +16,14 @@ const presets = [
 	{ label: '90d', value: '90' },
 ] as const;
 
-const activeRange = $derived(page.url.searchParams.get('range') ?? defaultRange);
+// The range is data the page's load reads, so a pick navigates and the load re-runs. The
+// fallback must equal the one the load parses with — `defaultRange` is that value.
+// svelte-ignore state_referenced_locally
+const rangeUrl = createUrlState(rangeParams(defaultRange), { write: 'navigate' });
+const activeRange = $derived(rangeUrl.values.range);
 
-function selectRange(value: string) {
-	const url = new URL(page.url);
-	url.searchParams.set('range', value);
-	goto(url.toString(), { replaceState: true, noScroll: true });
+function selectRange(value: (typeof presets)[number]['value']) {
+	rangeUrl.set({ range: value });
 }
 </script>
 

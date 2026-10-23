@@ -6,24 +6,14 @@ import { clearRevocation, stampRevocation } from '$lib/server/auth/revocation';
 import { db } from '$lib/server/db';
 import { session as sessionTable, user } from '$lib/server/db/schema/auth';
 import { requireAdmin } from '$lib/server/http/guards';
+import { readUrlState } from '$lib/state/url-state';
 import type { Actions, PageServerLoad } from './$types';
-
-const SORTABLE_COLUMNS = ['email', 'name', 'createdAt'] as const;
-type SortColumn = (typeof SORTABLE_COLUMNS)[number];
-
-function isSortColumn(v: string): v is SortColumn {
-	return (SORTABLE_COLUMNS as readonly string[]).includes(v);
-}
+import { usersListParams } from './list-params';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	requireAdmin(locals);
 
-	const q = url.searchParams.get('q') ?? '';
-	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-	const sortParam = url.searchParams.get('sort') ?? 'createdAt';
-	const sort: SortColumn = isSortColumn(sortParam) ? sortParam : 'createdAt';
-	const dir = url.searchParams.get('dir') === 'asc' ? 'asc' : 'desc';
-	const statusFilter = url.searchParams.get('status') ?? 'all';
+	const { q, page, sort, dir, status: statusFilter } = readUrlState(url.searchParams, usersListParams);
 	const offset = (page - 1) * USERS_PAGE_SIZE;
 
 	const conditions = [];

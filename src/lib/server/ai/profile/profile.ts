@@ -39,6 +39,7 @@ import type { DeskLayoutEntry, DeskToolScope } from '../tools/_types';
 import type { DocsSeed } from '../tools/search-docs';
 import type { TurnRecorder } from '../trace/recorder';
 import type { PanelContextEntry } from '../types';
+import { withUntrustedBoundary } from '../untrusted-content';
 
 /** Who the assistant is, and the rules it follows whatever the turn. */
 export interface AssistantIdentity {
@@ -446,14 +447,15 @@ export async function composeTurn(
 	const systemPrompt = blocks.map((b) => b.text).join('\n\n');
 
 	// 4. The tools — mounted by the capabilities that are active on a turn that has tools,
-	// compaction-wrapped once. `compaction` sits last, so it sees what mounted before it.
+	// compaction-wrapped once (`compaction` sits last, so it sees what mounted before it), then
+	// bounded: a result carrying user content reaches the model wrapped in <untrusted-content>.
 	if (turn.hasTools) {
 		for (const capability of profile.capabilities) {
 			if (!capability.tools || !isActive(capability.id)) continue;
 			Object.assign(state.tools, capability.tools(turn, state));
 		}
 	}
-	const tools = wrapToolsWithCompaction(state.tools, turn.onCompacted);
+	const tools = withUntrustedBoundary(wrapToolsWithCompaction(state.tools, turn.onCompacted));
 
 	// The completion guidance names the loop's end, so the profile version hashes the same
 	// text on every tool-mounted turn; the recorder folds the tool definitions in itself.

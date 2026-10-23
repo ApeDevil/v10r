@@ -67,6 +67,34 @@ export async function saveProviderConnection(
 	return updated ? { ok: true, version: updated.version } : { conflict: true };
 }
 
+/** Every stored key envelope — what the re-seal sweep reads, and nothing else. */
+export function listProviderKeyEnvelopes(
+	database: Database,
+): Promise<{ provider: AiProviderId; apiKeyCiphertext: string | null }[]> {
+	return database
+		.select({ provider: providerConnection.provider, apiKeyCiphertext: providerConnection.apiKeyCiphertext })
+		.from(providerConnection)
+		.where(isNotNull(providerConnection.apiKeyCiphertext));
+}
+
+/**
+ * Swap a key envelope for the same secret re-sealed under the current key — only while the
+ * row still holds the envelope that was read (compare-and-swap on the envelope itself). The
+ * secret did not change, so neither do `version` and `updatedAt`: an administrator's form
+ * open at the same time still saves, and a save that lands first makes this match nothing.
+ */
+export async function replaceProviderKeyEnvelope(
+	database: Database,
+	input: { provider: AiProviderId; from: string; to: string },
+): Promise<boolean> {
+	const updated = await database
+		.update(providerConnection)
+		.set({ apiKeyCiphertext: input.to })
+		.where(and(eq(providerConnection.provider, input.provider), eq(providerConnection.apiKeyCiphertext, input.from)))
+		.returning({ provider: providerConnection.provider });
+	return updated.length === 1;
+}
+
 export async function removeProviderKey(
 	database: Database,
 	input: { provider: AiProviderId; expectedVersion: number; updatedBy: string },

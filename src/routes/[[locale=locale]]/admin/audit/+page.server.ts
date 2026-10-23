@@ -1,16 +1,19 @@
 import { getDistinctActions, queryAuditLog } from '$lib/server/admin';
 import { requireAdmin } from '$lib/server/http/guards';
+import { readUrlState } from '$lib/state/url-state';
 import type { PageServerLoad } from './$types';
+import { auditListParams } from './list-params';
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	requireAdmin(locals);
 
-	const action = url.searchParams.get('action') || undefined;
-	const actor = url.searchParams.get('actor') || undefined;
-	const targetType = url.searchParams.get('target_type') || undefined;
-	const dateFrom = url.searchParams.get('from') || undefined;
-	const dateTo = url.searchParams.get('to') || undefined;
-	const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+	const params = readUrlState(url.searchParams, auditListParams);
+	const action = params.action || undefined;
+	const actor = params.actor || undefined;
+	const targetType = params.target_type || undefined;
+	const dateFrom = params.from || undefined;
+	const dateTo = params.to || undefined;
+	const page = params.page;
 
 	const [result, distinctActions] = await Promise.all([
 		queryAuditLog({ action, actorId: actor, targetType, dateFrom, dateTo, page }),

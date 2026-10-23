@@ -1,11 +1,14 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
 import { Dialog as DialogPrimitive } from 'bits-ui';
+import { untrack } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
 import type { Model3D } from '$lib/3d/models';
 import { resolveViewportConfig } from '$lib/3d/models';
 import { PART_EXPLORERS_BY_MODEL } from '$lib/3d/parts';
 import { BoundaryFallback } from '$lib/components/composites';
+import { urlParam } from '$lib/state/url-state';
+import { createUrlState } from '$lib/state/url-state.svelte';
 import PartInfoPanel from './PartInfoPanel.svelte';
 import ViewerOverlay from './ViewerOverlay.svelte';
 import ViewerScene from './ViewerScene.svelte';
@@ -32,16 +35,14 @@ const selectedPart = $derived(parts?.find((p) => p.id === selectedPartId) ?? nul
 
 const reducedMotion = new MediaQuery('(prefers-reduced-motion: reduce)');
 
+// `?part=` is view state no load reads, so it is written shallow: no navigation, no load.
+const partUrl = createUrlState({ part: urlParam.token() }, { write: 'shallow' });
+
 function selectPart(id: string | null) {
 	selectedPartId = id;
 	// Deep-link only in the standalone page; the landing-grid modal uses shallow
 	// routing for its own URL, so we keep selection local there.
-	if (standalone) {
-		const url = new URL(window.location.href);
-		if (id) url.searchParams.set('part', id);
-		else url.searchParams.delete('part');
-		history.replaceState(history.state, '', url.toString());
-	}
+	if (standalone) partUrl.set({ part: id });
 }
 
 // Restore selection from ?part= on first load (standalone only).
@@ -49,7 +50,7 @@ let urlApplied = false;
 $effect(() => {
 	if (!standalone || urlApplied || !parts?.length) return;
 	urlApplied = true;
-	const fromUrl = new URLSearchParams(window.location.search).get('part');
+	const fromUrl = untrack(() => partUrl.values.part);
 	if (fromUrl && parts.some((p) => p.id === fromUrl)) selectedPartId = fromUrl;
 });
 

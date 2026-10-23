@@ -1,4 +1,6 @@
 import { getFunnelSteps } from '$lib/server/db/analytics/aggregations';
+import { readUrlState } from '$lib/state/url-state';
+import { rangeParams } from '../range-params';
 import type { PageServerLoad } from './$types';
 
 const FUNNEL_STEPS = [
@@ -9,8 +11,7 @@ const FUNNEL_STEPS = [
 ];
 
 export const load: PageServerLoad = async ({ url }) => {
-	const range = Number(url.searchParams.get('range') ?? '90');
-	const days = [7, 30, 90].includes(range) ? range : 90;
+	const days = Number(readUrlState(url.searchParams, rangeParams('90')).range);
 	const start = performance.now();
 
 	try {

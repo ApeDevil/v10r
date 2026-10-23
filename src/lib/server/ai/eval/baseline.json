@@ -1,0 +1,4 @@
+{
+	"_comment": "The pass rate `bun run ai:eval -- --check` must reach. A ratchet: raise it to the rate a local run actually achieves, never lower it to make a run pass, and log each raise here. 2026-10-23: introduced at 0 — no live run has been recorded yet.",
+	"floor": 0
+}
