@@ -1035,8 +1035,8 @@
 			],
 			"risk": "medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable (rotation without downtime is supported); running on Render Free (Frankfurt) and verified end to end from production, where a sleeping service misses the normal 8 s budget (the wake check exists for it); cold-start duration, warm hosted percentiles and Render's proxy behaviour at the 5 s idle close are not yet measured",
 			"maturity": "proven",
-			"verifiedAt": "2026-10-22",
-			"verifiedSha": "f274c25"
+			"verifiedAt": "2026-10-23",
+			"verifiedSha": "aee98e2"
 		},
 		{
 			"id": "app-shell-layout",
