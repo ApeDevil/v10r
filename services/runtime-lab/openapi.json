@@ -1,0 +1,563 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "runtime-lab",
+    "description": "v10r reference external service: deterministic order-lifecycle rules behind a bearer-authenticated HTTP API.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health/live": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness: the process is up and serving. Public, and therefore says nothing else.",
+        "operationId": "live",
+        "responses": {
+          "200": {
+            "description": "The process is serving",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/evaluate": {
+      "post": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Evaluate order events against the lifecycle rules. Pure and deterministic, so\nrepeating a request is safe.",
+        "operationId": "evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Evaluation completed — accepted or refused",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request is malformed or out of bounds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong bearer credential",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "The request did not complete in time",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The request body is too large",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "tags": [
+          "service"
+        ],
+        "summary": "Service identity, release and limits.",
+        "operationId": "status",
+        "responses": {
+          "200": {
+            "description": "Service identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong bearer credential",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorCode": {
+        "type": "string",
+        "description": "Stable machine-readable error codes. Messages are for humans and may change.",
+        "enum": [
+          "invalid_request",
+          "unauthorized",
+          "not_found",
+          "method_not_allowed",
+          "payload_too_large",
+          "timeout"
+        ]
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "description": "v10r's API error envelope (`src/lib/server/http/response.ts`), reused so the\nservice does not introduce a second error convention.",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        }
+      },
+      "EvaluateRequest": {
+        "type": "object",
+        "description": "An order total and the events to evaluate against it, in order.",
+        "required": [
+          "totalCents",
+          "events"
+        ],
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventInput"
+            },
+            "maxItems": 64,
+            "minItems": 1
+          },
+          "totalCents": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Order total in cents.",
+            "maximum": 100000000,
+            "minimum": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "EvaluateResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "steps",
+              "finalState",
+              "paidCents",
+              "refundedCents",
+              "outcome"
+            ],
+            "properties": {
+              "finalState": {
+                "$ref": "#/components/schemas/OrderState"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "accepted"
+                ]
+              },
+              "paidCents": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              },
+              "refundedCents": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/OrderTransition"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "steps",
+              "refusal",
+              "paidCents",
+              "refundedCents",
+              "outcome"
+            ],
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "refused"
+                ]
+              },
+              "paidCents": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              },
+              "refundedCents": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              },
+              "refusal": {
+                "$ref": "#/components/schemas/RuleRefusal"
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/OrderTransition"
+                }
+              }
+            }
+          }
+        ],
+        "description": "A completed evaluation. `refused` is an answer, not an error: the request was valid\nand a rule said no."
+      },
+      "EventInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "amountCents",
+              "type"
+            ],
+            "properties": {
+              "amountCents": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 100000000,
+                "minimum": 1
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "pay"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "ship"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "deliver"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "cancel"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "amountCents",
+              "type"
+            ],
+            "properties": {
+              "amountCents": {
+                "type": "integer",
+                "format": "int64",
+                "maximum": 100000000,
+                "minimum": 1
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "refund"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "description": "One order event. `pay` and `refund` carry an amount; the others carry nothing."
+      },
+      "EventType": {
+        "type": "string",
+        "enum": [
+          "pay",
+          "ship",
+          "deliver",
+          "cancel",
+          "refund"
+        ]
+      },
+      "LiveResponse": {
+        "type": "object",
+        "description": "Liveness only. Deliberately carries nothing else: this route is public.",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/LiveStatus"
+          }
+        }
+      },
+      "LiveStatus": {
+        "type": "string",
+        "enum": [
+          "live"
+        ]
+      },
+      "Operation": {
+        "type": "string",
+        "enum": [
+          "evaluate"
+        ]
+      },
+      "OrderState": {
+        "type": "string",
+        "enum": [
+          "placed",
+          "partially_paid",
+          "paid",
+          "shipped",
+          "delivered",
+          "cancelled",
+          "refunded"
+        ]
+      },
+      "OrderTransition": {
+        "type": "object",
+        "description": "One applied event.",
+        "required": [
+          "index",
+          "event",
+          "from",
+          "to"
+        ],
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "from": {
+            "$ref": "#/components/schemas/OrderState"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "to": {
+            "$ref": "#/components/schemas/OrderState"
+          }
+        }
+      },
+      "RefusalReason": {
+        "type": "string",
+        "enum": [
+          "not_allowed_in_state",
+          "payment_incomplete",
+          "exceeds_balance"
+        ]
+      },
+      "RuleRefusal": {
+        "type": "object",
+        "description": "The first event a rule refused; evaluation stops there.",
+        "required": [
+          "index",
+          "event",
+          "state",
+          "reason"
+        ],
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/EventType"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "reason": {
+            "$ref": "#/components/schemas/RefusalReason"
+          },
+          "state": {
+            "$ref": "#/components/schemas/OrderState",
+            "description": "The state the order was in when the event was refused."
+          }
+        }
+      },
+      "ServiceLimits": {
+        "type": "object",
+        "required": [
+          "maxEvents",
+          "maxAmountCents",
+          "maxBodyBytes"
+        ],
+        "properties": {
+          "maxAmountCents": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "maxBodyBytes": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "maxEvents": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "StatusResponse": {
+        "type": "object",
+        "description": "Service identity for authenticated callers.",
+        "required": [
+          "service",
+          "release",
+          "uptimeMs",
+          "operations",
+          "limits"
+        ],
+        "properties": {
+          "limits": {
+            "$ref": "#/components/schemas/ServiceLimits"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            }
+          },
+          "release": {
+            "type": "string",
+            "description": "Semantic version of this build (Cargo package version)."
+          },
+          "service": {
+            "type": "string",
+            "description": "Stable service name."
+          },
+          "uptimeMs": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Milliseconds since the process started. A value smaller than the caller's\nround trip means this request woke the service (a cold start).",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

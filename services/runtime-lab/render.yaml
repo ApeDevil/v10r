@@ -1,0 +1,29 @@
+# Render Blueprint for the runtime-lab reference service. The live service was created by hand in
+# the dashboard with these same settings (2026-10-23); this file is the written record.
+#
+# Nothing reads this file automatically: Render only acts on a Blueprint the owner
+# creates in the dashboard (New → Blueprint, pointing at this file's path). Creating it
+# creates a web service. Do that only after the cost checklist in
+# docs/blueprint/architecture/external-service.md#cost-checklist — above all: no
+# payment method on the Render workspace.
+#
+# rootDir makes the image's build context this directory, which the Containerfile expects;
+# dockerfilePath and dockerContext are relative to it. Without it Render sends the whole
+# repository as the context and `COPY Cargo.toml` fails (observed on the first deploy).
+services:
+  - type: web
+    name: v10r-runtime-lab
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: services/runtime-lab
+    dockerfilePath: ./Containerfile
+    dockerContext: .
+    healthCheckPath: /health/live
+    # Deploy by hand: unrelated pushes must not spend free pipeline minutes. rootDir already
+    # limits what a push can trigger to this directory.
+    autoDeployTrigger: off
+    envVars:
+      # Prompted once at Blueprint creation; never committed. Render injects PORT itself.
+      - key: SERVICE_TOKEN
+        sync: false

@@ -185,6 +185,11 @@ fails if a sweep hard-codes a window or names a job that does not exist.
 9. **A policy constant?** → `server/[domain]/config.ts`. A retention window → `server/retention/schedule.ts`.
 10. **A catalogue two features share?** → directly under `src/lib/`, below the component
    layer (see `$lib/3d`, `$lib/desk`).
+11. **A separately deployed process?** → `services/<name>/`, with its own lockfile,
+   toolchain pin and container definition, built with that directory as the context
+   (`services/runtime-lab`). Rust compiled *into* the app → `crates/<name>/`
+   (`crates/kernel`). Its caller in the app is an ordinary domain: a service client
+   (`docs/blueprint/architecture/external-service.md`).
 
 ---
 
@@ -214,6 +219,12 @@ These are the reasons behind placements that otherwise look arbitrary.
   `auth/index.ts` builds.
 - **`server/mcp/` keeps `http.adapter.ts` DB-free** so the protocol tests need no mocks;
   `telemetry/writer.ts` is the only module there that touches the database.
+- **`scripts/external-service/verify.ts` installs a Bun plugin** mapping
+  `$env/dynamic/private` and `$app/environment` to the process environment — the same
+  shim `server/test/vitest.setup.ts` installs for tests — because it drives the real
+  service client, whose `resilience` import reaches `$env` through the cache client.
+  The alternative, an alias-free copy of the retry, would be a second retry. Not in
+  `validate`: a new virtual import in that graph surfaces only when the script runs.
 
 ---
 

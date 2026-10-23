@@ -538,6 +538,15 @@ export const showcases: ShowcaseCard[] = [
 		docs: [{ href: '/docs/blueprint/name-check', label: 'Name Check' }],
 	},
 	{
+		href: '/showcases/external-service',
+		icon: 'i-lucide-server-cog',
+		title: m.showcase_external_service_title,
+		description: m.showcase_external_service_description,
+		ariaLabel: m.showcase_external_service_aria,
+		domain: 'backend',
+		docs: [{ href: '/docs/blueprint/architecture/external-service', label: 'External Service' }],
+	},
+	{
 		href: '/showcases/observability',
 		icon: 'i-lucide-gauge',
 		title: m.showcase_observability_title,

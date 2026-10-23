@@ -97,6 +97,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'durable-step-execution': 'Durable Steps',
 	'versioned-document-session': 'Doc Session',
 	'asset-rights-manifest': 'Asset Rights',
+	'architecture-external-service': 'Ext Service',
 };
 
 /**

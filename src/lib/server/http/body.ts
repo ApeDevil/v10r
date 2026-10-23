@@ -1,5 +1,6 @@
 /**
- * Bounded request-body readers.
+ * Bounded body readers — for requests we receive and, the same way, for responses from
+ * services we call: a body we did not write is unbounded until something bounds it.
  *
  * `request.json()` buffers and parses whatever arrives. Vercel caps a
  * serverless request body at roughly 4.5 MB, so there is a ceiling — but it is
@@ -14,6 +15,9 @@
  * try/catch at a call site rather than sitting in front of one.
  */
 import { apiError } from './response';
+
+/** What a bounded read needs from a message. Both `Request` and `Response` satisfy it. */
+export type BodySource = Pick<Request, 'headers' | 'body' | 'arrayBuffer'>;
 
 export type BoundedText = { ok: true; value: string } | { ok: false; reason: 'too_large' };
 export type BoundedJson<T> = { ok: true; value: T } | { ok: false; reason: 'too_large' | 'invalid_json' };
@@ -39,7 +43,7 @@ export const MAX_AI_BODY_BYTES = 1024 * 1024;
  * Read at most `maxBytes` of the body as text. Returns `null` when the budget
  * is exceeded — the caller decides what that means.
  */
-async function readBounded(request: Request, maxBytes: number): Promise<string | null> {
+async function readBounded(request: BodySource, maxBytes: number): Promise<string | null> {
 	// A declared oversize is refused before a single byte is read. This is the
 	// cheap path and the common one for honest clients; it is not a control on
 	// its own, because chunked encoding omits the header entirely and it is
@@ -75,7 +79,7 @@ async function readBounded(request: Request, maxBytes: number): Promise<string |
 }
 
 /** Read the body as text, refusing anything over `maxBytes`. */
-export async function readTextBounded(request: Request, maxBytes: number): Promise<BoundedText> {
+export async function readTextBounded(request: BodySource, maxBytes: number): Promise<BoundedText> {
 	const text = await readBounded(request, maxBytes);
 	return text === null ? { ok: false, reason: 'too_large' } : { ok: true, value: text };
 }
@@ -85,7 +89,7 @@ export async function readTextBounded(request: Request, maxBytes: number): Promi
  * An empty body is `invalid_json` — it is not valid JSON, and treating it as
  * `{}` would hand schema validation something the client never sent.
  */
-export async function readJsonBounded<T = unknown>(request: Request, maxBytes: number): Promise<BoundedJson<T>> {
+export async function readJsonBounded<T = unknown>(request: BodySource, maxBytes: number): Promise<BoundedJson<T>> {
 	const text = await readBounded(request, maxBytes);
 	if (text === null) return { ok: false, reason: 'too_large' };
 	if (text.length === 0) return { ok: false, reason: 'invalid_json' };

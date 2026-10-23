@@ -1,0 +1,34 @@
+[package]
+name = "runtime-lab"
+version = "0.1.0"
+edition = "2024"
+# The pinned toolchain (rust-toolchain.toml) is the floor: the resolver keeps every
+# dependency at a release that still builds on it.
+rust-version = "1.97"
+publish = false
+description = "v10r reference external service: a deterministic order-lifecycle rules engine behind an authenticated HTTP API"
+
+[dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio", "query"] }
+# Already in axum's tree; named here because main.rs drives connections itself to get a
+# header-read timeout and a connection cap, which `axum::serve` does not expose.
+hyper = { version = "1", features = ["http1", "server"] }
+hyper-util = { version = "0.1", features = ["http1", "server", "server-graceful", "service", "tokio"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+subtle = "2.6"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+utoipa = "6"
+utoipa-axum = "0.3"
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+# A service binary, not a size-critical artifact: the defaults plus symbol stripping
+# (smaller image, nothing lost — panics print no backtrace in production anyway).
+strip = true

@@ -212,3 +212,35 @@ Recorded, not changed (with reason):
 **Experimental / unmeasured:** the effect of `avoid_when` on agent choices (no study shows it; A/B of 10–20 architecture prompts is next research).
 
 **Open for Stas:** F5 re-run ingest after quota reset · F6 drop redundant `agent_proposal_exec_unique_idx` · F11 click-test Undo · F14 format-version naming vs stored workspaces · F10 in-loop creates have no receipt/origin · digest-pinned base images · Resend idempotency key for email delivery (F8).
+
+## Follow-on: `architecture-external-service` (2026-10-22, branch `claude/eager-davinci-huj9oh`)
+
+Separate from P01–P15; same coordination rules (one writer on `registry.json`, gate per phase,
+`patterns:build` + `mcp:excerpts:build` after the registry edit). Plan of record:
+`docs/blueprint/architecture/external-service.md` (the doc is the decision record).
+
+- Phases 2–4 (Rust service + container, typed adapter + contract chain, showcase) committed;
+  evidence in the commit messages and the doc's Measurement section.
+- Registry: new deep record `architecture-external-service` (proven — local container, real
+  adapter, browser showcase; **remote Render verification pending**), new requirement
+  `container-host`, `DAG_SHORT_LABELS` entry.
+- Cloud-session notes: Docker Hub rate-limited (429) → the pinned builder digest was pulled
+  from `mirror.gcr.io` (same digest); image builds needed the sandbox proxy CA added in a
+  scratch copy of the Containerfile (not committed); `check.sh` ran in `--host` mode. Podman
+  itself was not available — local Podman run is for Stas.
+- Open: hosted verification on Render (owner-gated: create service, set secrets); Podman run
+  of `smoke.sh` + compose profile on the host; `db:ingest-docs` for the new doc (needs DB).
+- Phase 6 review (secy, tesy, ary — read-only, fresh context): verified and fixed an
+  **unauthenticated panic** (byte-offset `truncate` inside a UTF-8 char in the access log;
+  same in the 400 message), missing header-read timeout/connection cap (slowloris), token
+  whitespace → permanent 401, honeypot bypass via missing `renderedAt` (`Number(null)` = 0),
+  three misclassifications in `callService`, drill-only options in the client signature,
+  `contractDrift` blind spots (`paths`, unmodelled keywords), manifest gaps (script not
+  hashed, hashed after the run, runner misrecorded), naming collisions (`adapter`,
+  `scenario`, bare `Step`/`Refusal`). Domain decisions taken: refund after a paid
+  cancellation is allowed; paying a paid order is `exceeds_balance`.
+- Perf ratchet: the lab's components imported ~100 Paraglide messages (all three locales
+  ship to the client), pushing `total_client_js_kb` to 2277.5 > 2270. Fixed, not re-accepted:
+  copy resolved server-side in `load` (`labels.ts`, the name-check precedent); route node
+  49.8 → 22.3 KB, total 2268.5 KB — **1.5 KB headroom left** under the ceiling; the next
+  feature will need a reviewed ceiling decision (budgets.json), not a snapshot regen.
