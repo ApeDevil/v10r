@@ -163,7 +163,7 @@ We use a **multi-provider architecture** with Vercel AI SDK — chat routes acro
 
 | Feature | Details |
 |---------|---------|
-| Branching | Database branches for preview deploys |
+| Branching | Database branches (v10r: a `dev` branch reset from prod, [neon-branch-refresh.md](../blueprint/data/neon-branch-refresh.md)) |
 | Autoscaling | Scale to zero, scale up on demand |
 | Connection pooling | Built-in, PgBouncer-compatible |
 | Extensions | Most common extensions available |
@@ -194,7 +194,7 @@ We use a **multi-provider architecture** with Vercel AI SDK — chat routes acro
 |---------|---------|
 | Edge Network | Global CDN, automatic |
 | Runtime | Node.js 22 (`nodejs22.x` in `svelte.config.js`; Bun runtime doesn't support SvelteKit) |
-| Preview Deploys | Per-PR deployments |
+| Preview Deploys | Per-branch deployments — **switched off in v10r** (`vercel.json` deploys `main` only) |
 | Analytics | Built-in, cookieless |
 
 **Alternatives:**
@@ -208,7 +208,7 @@ We use a **multi-provider architecture** with Vercel AI SDK — chat routes acro
 **Vercel-specific features (not portable):**
 - `adapter-vercel` optimizations
 - Vercel Analytics integration
-- Preview deploy comments
+- Preview deploy comments (unused in v10r)
 
 **Migration:** Change adapter, update CI/CD, migrate env vars.
 

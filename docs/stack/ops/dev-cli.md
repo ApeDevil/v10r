@@ -31,7 +31,7 @@ repo you're in.
 
 | Command | Does |
 |---------|------|
-| `vr ship` / `vr s` | Gate + promote the current branch toward `main` (see below) |
+| `vr ship` / `vr s` | Gate + promote the current branch toward `main` (see below); in v10r (`PROMOTION=conversation`) gate + push the feature branch only |
 | `vr ship-local` / `vr sl` | The ship train plus a prebuilt deploy: build in the container after the gate, upload after the push (repos with `DEPLOY_MODE=prebuilt`) |
 | `vr deploy` / `vr dp` | Build + upload the pushed `main` HEAD prebuilt — the retry/redeploy path; `-n` builds only |
 | `vr validate` / `vr v` | Run the full gate (`bun run validate`) in the repo's container; `--build` adds `bun run validate:build` |
@@ -83,7 +83,7 @@ line, `PROMOTION=conversation`.
 | `main` | refused |
 
 **`PROMOTION=conversation` (v10r's committed `.vrrc`): no train.** `main` moves only when
-Claude squash-merges after Stas says "ship it" ([shipping.md](./shipping.md)). On a feature
+Claude squashes the branch into it after Stas says "ship it" ([shipping.md](./shipping.md)). On a feature
 branch `vr ship` requires the branch to contain current `origin/main` (so the gate sees the
 tree the squash will produce), runs the same gate, then pushes **that branch alone**
 to `origin`, which must be GitHub (it refuses a GitLab `origin` and prints the fix). It
@@ -94,7 +94,7 @@ rule off for one run. Everything below describes the train, for repos without th
 The gate runs `bun run validate` and then `bun run validate:build` against the **merged**
 state, not the feature branch alone — so `main` is always provably equal to a tested
 commit *and* a commit that builds for production within its perf ceilings. By default pushing `main`
-is what triggers the Vercel production deploy (`dev` triggers a preview). A repo whose
+is what triggers the Vercel production deploy (in a repo with previews, `dev` triggers one; v10r has none). A repo whose
 `.vrrc` sets `DEPLOY_MODE=prebuilt` has that integration switched off and deploys itself —
 see *Prebuilt deploy* below; there `vr s` only pushes, and says so.
 
@@ -212,7 +212,7 @@ pattern/doc edit. It runs `bun run refresh` in the container via the same `conta
 mechanics as the gate (warm `exec` or ephemeral one-shot); in v10r that script chains
 
 ```
-mcp:validate  →  patterns:build  →  mcp:excerpts:build  →  db:ingest-docs
+patterns:validate  →  patterns:build  →  mcp:excerpts:build  →  db:ingest-docs
 ```
 
 The ordering is deliberate: fail fast on the cheap registry validation, regenerate the
@@ -234,7 +234,8 @@ One refresh, two freshness horizons — and the script says which you got:
   and prod chatbots both read it).
 - **The committed artifacts** — `README.md` (generated index region),
   `docs/pattern-library/`, and `mcp/public-excerpts.snapshot.json`; the hosted MCP
-  and `/showcases/mcp` only pick up registry/snapshot changes on the next `vr ship`.
+  and `/showcases/mcp` only pick up registry/snapshot changes on the next deploy of `main` (in
+  v10r: the next ship, [shipping.md](./shipping.md)).
   After the chain, `refresh.sh` checks their git status on the host and nudges you to
   commit if anything changed. (The gate's `patterns:check` + `mcp:excerpts:check` block
   shipping stale surfaces regardless.)

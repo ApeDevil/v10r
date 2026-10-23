@@ -11,9 +11,9 @@ Tri-target deployment design: Vercel (Node.js), Vercel (Bun experimental), and K
 ## Quick Start
 
 ```bash
-# Vercel (Node.js) — Stable, the only target wired today
-bun run build
-# Deploy via Vercel dashboard or CLI
+# Vercel (Node.js) — Stable, the only target wired today. Never deployed by hand:
+# Stas says "ship it" → squash into GitHub main → GitLab sync → Vercel builds GitLab main
+bun run build   # the same build runs locally/in the cloud as `bun run validate:build`
 
 # Vercel (Bun) — PLANNED, experimental
 bun run build
@@ -54,7 +54,7 @@ export default {
 
 Dev dependencies (`svelte-adapter-bun` is not installed until the container target lands):
 ```json
-"@sveltejs/adapter-vercel": "^5.x",
+"@sveltejs/adapter-vercel": "^6.3.4",
 "svelte-adapter-bun": "^0.5.x"
 ```
 
@@ -80,10 +80,13 @@ Dev dependencies (`svelte-adapter-bun` is not installed until the container targ
 
 ### Setup
 
-1. **Connect repository** to Vercel dashboard
+1. **Git source:** the **GitLab** mirror `gitlab.com/ApeDevil/v10r`, production branch `main`.
+   GitHub is the development authority; `gitlab-sync.yml` copies its `main` there
+   ([shipping.md](../stack/ops/shipping.md)).
 2. **Framework preset:** SvelteKit (auto-detected)
 3. **Build command:** `bun run build` (default)
 4. **Output directory:** `.vercel/output` (auto-configured)
+5. **Node.js version:** 22.x — the engine the gate runs on ([Runtime parity](../stack/ops/deployment.md#runtime-parity))
 
 ### Function region
 
@@ -96,15 +99,9 @@ declaration the deployment ran on Vercel's default `iad1` (measured 2026-09-13 f
 
 ### vercel.json
 
-```json
-{
-  "framework": "sveltekit",
-  "crons": [
-    { "path": "/api/cron/due", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/bot-ranges-refresh", "schedule": "45 4 * * *" }
-  ]
-}
-```
+[`vercel.json`](../../vercel.json) holds three things: the `git.deploymentEnabled` guard
+(`"**": false, "main": true` — only `main` builds), the `no-cache` header for
+`/service-worker.js`, and the cron schedules. Read the file; it is short and is the only copy.
 
 Vercel cron calls are authenticated with `CRON_SECRET`. See [Scheduled Jobs](#scheduled-jobs) below.
 
@@ -156,15 +153,13 @@ export default {
 };
 ```
 
-### Preview Deploys
+### No preview deployments
 
-Vercel creates preview deployments for every PR:
-
-```
-https://velociraptor-<hash>-<team>.vercel.app
-```
-
-Configure preview environment variables separately in Vercel dashboard.
+Feature branches never deploy: the `vercel.json` guard switches the git integration off for
+every branch but `main`, and nothing is pushed to GitLab except `main`. A feature is seen on
+its branch (cloud or local session), then shipped. Every deployment in the project is a
+production deployment. The code still treats `VERCEL_ENV === 'preview'` defensively, for a
+manual `vercel deploy`.
 
 ---
 
@@ -175,7 +170,7 @@ Configure preview environment variables separately in Vercel dashboard.
 ### Why Try This?
 
 - 28% lower latency compared to Node.js (Vercel benchmarks)
-- Same Vercel DX (preview deploys, dashboard, analytics)
+- Same Vercel DX (dashboard, analytics)
 - One config line to enable
 - Easy to revert if issues arise
 
@@ -200,7 +195,7 @@ The key addition is `"bunVersion": "1.x"` which enables Bun runtime for all func
 
 | Aspect | Node.js | Bun |
 |--------|---------|-----|
-| Runtime | Node.js 20 | Bun 1.x |
+| Runtime | Node.js 22 | Bun 1.x |
 | Cold starts | ~200-500ms | ~150-350ms (estimated) |
 | Adapter | `adapter-vercel` | `adapter-vercel` (same) |
 | Build | `bun run build` | `bun run build` (same) |
@@ -208,7 +203,7 @@ The key addition is `"bunVersion": "1.x"` which enables Bun runtime for all func
 
 ### Testing Strategy
 
-1. **Deploy to preview first** — Don't go straight to production
+1. **Trial on a separate Vercel project first** — v10r has no preview deployments, and production is the only target
 2. **Test all routes** — Server functions, API endpoints, load functions
 3. **Check edge cases** — File uploads, WebSockets, streaming
 4. **Monitor errors** — Watch Vercel logs for Bun-specific issues
@@ -468,7 +463,7 @@ export const jobs: Record<string, Job> = {
 
 Container mode runs all registered jobs on the same interval (`JOB_INTERVAL_MS`, default 3 hours). Vercel crons can have independent schedules.
 
-> Sub-daily crons need Vercel Pro — Hobby allows daily only. Every cron in `vercel.json` is daily or weekly to stay within Hobby; the `dbops-reaper` job runs at `0 5 * * *`. See [data/neon-branch-refresh.md](./data/neon-branch-refresh.md).
+> Sub-daily crons need Vercel Pro — Hobby allows daily only. Every cron in `vercel.json` is daily or weekly to stay within Hobby; `dbops-reaper` is a daily job inside the `/api/cron/due` sweep (`src/lib/server/jobs/index.ts`). See [data/neon-branch-refresh.md](./data/neon-branch-refresh.md).
 
 ### HTTP endpoint
 
@@ -549,7 +544,7 @@ build:koyeb:
 # Deploy to Vercel
 deploy:vercel:
   stage: deploy
-  image: node:20-alpine
+  image: node:22-alpine
   script:
     - npx vercel --prod --token=$VERCEL_TOKEN
   needs:
@@ -626,13 +621,10 @@ jobs:
 
 ### Vercel
 
-Add to build command in Vercel dashboard:
-
-```bash
-bun run db:push && bun run build
-```
-
-Or use Vercel's build hooks:
+**Not used in v10r.** The Vercel build is `bun run build` only; the schema is pushed from a
+local session (`bun run db:push` needs the real database credentials, so a cloud session
+cannot run it). Push a schema change before shipping the code that needs it. The shape below
+is what a project that wants push-on-deploy would add — it would run on every production build:
 
 ```json
 {
@@ -727,14 +719,14 @@ export async function GET() {
 ### Vercel Logs
 
 ```bash
-# View logs (requires Vercel CLI on host machine)
+# View logs (Vercel CLI, local host only; cloud sessions use the Vercel MCP: get_runtime_logs)
 vercel logs <deployment-url>
 
 # Stream logs
 vercel logs <deployment-url> --follow
 ```
 
-> **Note:** Vercel CLI is installed globally on your host machine, not in the container.
+> **Note:** locally the Vercel CLI is installed on the host, not in the container.
 
 ### Koyeb Logs
 
@@ -803,8 +795,8 @@ koyeb service logs <service-name> --follow
 | Adapter | `adapter-vercel` | `adapter-vercel` | `svelte-adapter-bun` |
 | Build | `bun run build` | `bun run build` | `DEPLOY_TARGET=bun bun run build` |
 | Config | Default | Add `bunVersion: "1.x"` | Dockerfile |
-| Deploy | Git push | Git push | Dockerfile → dashboard |
-| Status | Stable | Experimental | Stable |
+| Deploy | ship → GitLab sync → Vercel builds `main` | same as Node.js | Dockerfile → dashboard |
+| Status | **Live** | Planned (experimental) | Planned |
 | Logs | `vercel logs` | `vercel logs` | `koyeb service logs` |
 | Scheduled jobs | HTTP cron via `vercel.json` | HTTP cron via `vercel.json` | `setInterval` in process |
 

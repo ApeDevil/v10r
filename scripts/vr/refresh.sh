@@ -52,7 +52,7 @@ generated=()
 [ -d "$REPO_ROOT/docs/pattern-library" ] && generated+=("README.md" "docs/pattern-library")
 if [ "${#generated[@]}" -gt 0 ]; then
 	if [ -n "$(git status --porcelain -- "${generated[@]}" 2>/dev/null)" ]; then
-		warn "Generated surfaces changed (${generated[*]}) — commit them; hosted MCP + /showcases/mcp update on the next 'vr ship'."
+		warn "Generated surfaces changed (${generated[*]}) — commit them; hosted MCP + /showcases/mcp update on the next deploy of main (v10r: the next ship)."
 	else
 		ok "Generated surfaces unchanged — nothing to commit."
 	fi
