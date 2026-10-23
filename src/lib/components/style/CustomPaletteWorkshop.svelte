@@ -7,12 +7,11 @@
  * which is what `canSave` gates.
  */
 
-import { browser } from '$app/environment';
-import { beforeNavigate } from '$app/navigation';
 import { apiFetch } from '$lib/api';
 import { Alert } from '$lib/components/composites';
 import { Button, Input, Spinner, ToggleGroup } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
+import { guardUnsavedChanges } from '$lib/state/leave-guard.svelte';
 import { getTheme } from '$lib/state/theme.svelte';
 import { getPalette } from '$lib/styles/random';
 import { applyPalettePreview, clearPalettePreview } from '$lib/styles/random/token-vars';
@@ -82,18 +81,10 @@ $effect(() => {
 	return () => clearPalettePreview();
 });
 
-beforeNavigate(({ cancel }) => {
-	if (dirty && !confirm(m.showcase_shell_style_unsaved_confirm())) cancel();
-});
-
-$effect(() => {
-	if (!browser || !dirty) return;
-	function onBeforeUnload(event: BeforeUnloadEvent) {
-		event.preventDefault();
-	}
-	window.addEventListener('beforeunload', onBeforeUnload);
-	return () => window.removeEventListener('beforeunload', onBeforeUnload);
-});
+guardUnsavedChanges(
+	() => dirty,
+	() => m.showcase_shell_style_unsaved_confirm(),
+);
 
 async function save() {
 	if (!canSave || saving || !lightColors || !darkColors) return;

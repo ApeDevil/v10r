@@ -65,32 +65,20 @@ Stores Telegram chat_id for sending messages.
 
 ### user_discord_accounts
 
-Stores Discord credentials with OAuth tokens.
+Links a v10r user to a Discord account for DM notifications. Only the identity is kept:
+DMs are sent with the bot token, so no user OAuth token is stored and nothing here is
+encrypted.
 
 | Column | Type | Constraints | Purpose |
 |--------|------|-------------|---------|
 | `id` | text | PK | `dca_xxxxx` |
-| `user_id` | text | FK → user, UNIQUE | One Discord per user |
+| `user_id` | text | FK → user, UNIQUE, cascade | One Discord per user |
 | `discord_user_id` | text | NOT NULL, UNIQUE | For DM channel creation |
 | `discord_username` | text | | Display in UI |
-| `access_token` | text | NOT NULL | Encrypted (AES-256-GCM) |
-| `refresh_token` | text | NOT NULL | Encrypted (AES-256-GCM) |
-| `token_expires_at` | timestamptz | NOT NULL | 7 days from issue |
-| `is_active` | boolean | NOT NULL, DEFAULT true | False if refresh fails |
-| `token_refresh_failed_at` | timestamptz | | Skip refresh if set |
+| `is_active` | boolean | NOT NULL, DEFAULT true | Linked and usable |
 | `linked_at` | timestamptz | NOT NULL, DEFAULT NOW() | Audit |
-| `tokens_refreshed_at` | timestamptz | | Last successful refresh |
-| `unlinked_at` | timestamptz | | Soft delete timestamp |
 
-**Indexes:**
-- `user_id` (unique) - lookup by user
-- `discord_user_id` (unique) - prevent duplicate linking
-- Partial index on `token_expires_at` WHERE `is_active = true AND token_refresh_failed_at IS NULL` - for refresh job
-
-**Token encryption:**
-- AES-256-GCM (Web Crypto) with unique 96-bit nonce per encryption
-- Key is a 64-char hex `ENCRYPTION_KEY` env var (raw 32-byte key, no KMS/KEK), shared with the AI provider keys in `ai.provider_connection` (`$lib/server/security/aes-gcm.ts`)
-- Storage format: `nonce:ciphertext` (Base64) — the GCM auth tag is appended to the ciphertext by Web Crypto, so there is no separate `:tag` segment
+**Indexes:** `user_id` (`discord_user_idx`).
 
 ---
 

@@ -18,7 +18,7 @@ exist. `ENCRYPTION_KEY` stays a deployment secret: the database cannot protect i
 |---|---|---|
 | Table `ai.provider_connection` | `db/schema/ai/provider-connection.ts` | One row per vendor: `enabled`, `model_id`, `api_key_ciphertext`, `is_default`, `version`, `updated_at/by`. Absent row = never configured. Constraints: at most one default (partial unique index); a default must be enabled with a key (CHECK). |
 | Reads/writes | `db/ai/provider-connections.ts` | Ciphertext in, ciphertext out. Every write is a compare-and-swap on `version`; moving the default is a two-statement transaction. Takes the `Database` explicitly so bare-Bun scripts can call it. |
-| Encryption | `security/aes-gcm.ts` + `security/encryption-key.ts` | AES-256-GCM with the key supplied by the caller; `encryption-key.ts` is the single `ENCRYPTION_KEY` read. Same envelope format as the Discord tokens. |
+| Encryption | `security/aes-gcm.ts` + `security/encryption-key.ts` | AES-256-GCM under the key ring supplied by the caller; `encryption-key.ts` is the single `ENCRYPTION_KEY` read. Same envelope format as the name-check vendor secrets; rotation in [`security/key-ring.md`](../security/key-ring.md). |
 | Registry | `ai/connections.ts` → `resolveProviderRegistry(rows, key)` | Decrypts, derives capabilities from the **model id** (`model-capabilities.ts`), builds `ProviderEntry` values whose `getInstance()` closes over the key. A key that will not decrypt marks the entry `undecryptable` and the registry `degraded` — never "empty". |
 | Composition | `ai/index.ts` → `loadProviderRegistry()` | The app-side door: `db` + `getEncryptionKey()`. Called at the **start of every AI operation** (the entry guard, page loads, embeddings, vision) and threaded through resolution, so a save reaches the next operation on every instance with no cache to invalidate. No registry exists at import time. |
 | Admin operations | `ai/connection-settings.ts` | Save / remove key / set default / test: encrypt → guarded write → best-effort audit (`ai.provider.*`), with discriminated results the route maps to form feedback. |
@@ -51,7 +51,7 @@ operator can always reach the form.
 **Bare-Bun scripts** (`scripts/db/ingest-docs.ts`, `seed-silly.ts`) read the
 same saved Google connection through `db/ai/provider-connections.ts` + `ai/connections.ts` by
 relative path (both are alias-free; `ai/connections.test.ts` walks the closure), decrypting with
-`process.env.ENCRYPTION_KEY`. Missing or unusable configuration prints a secret-free reason and
+the ring `tryParseKeyRing(process.env.ENCRYPTION_KEY, process.env.ENCRYPTION_KEY_PREVIOUS)` builds. Missing or unusable configuration prints a secret-free reason and
 exits 1 before any corpus write.
 
 ---

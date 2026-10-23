@@ -35,7 +35,7 @@ import { getCooldownResumeAt } from '$lib/server/ai/providers';
 import { requireAdmin } from '$lib/server/http/guards';
 import { createLimiter } from '$lib/server/http/rate-limit';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '$lib/server/retrieval-shared/embed-config';
-import { EncryptionError, getEncryptionKey } from '$lib/server/security';
+import { EncryptionError, getEncryptionKeyRing } from '$lib/server/security';
 import type { AiProviderId } from '$lib/types/db-enums';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -57,7 +57,7 @@ const testLimiter = createLimiter(
 
 function encryptionConfigured(): boolean {
 	try {
-		getEncryptionKey();
+		getEncryptionKeyRing();
 		return true;
 	} catch (err) {
 		if (err instanceof EncryptionError) return false;

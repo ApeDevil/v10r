@@ -12,7 +12,7 @@
  * id beside it. A source's `configured?` predicate then only asks whether its slot is null.
  */
 import type { NameSourceConnectionRow } from '$lib/server/db/schema/name-check/source-connection';
-import { type KeyStatus, openSecret } from '$lib/server/security';
+import { type EncryptionKeyRing, type KeyStatus, openSecret } from '$lib/server/security';
 import { NAME_SOURCE_VENDORS, type NameSourceVendor } from '$lib/types/db-enums';
 import type { NameSourceCredentials } from './name-source';
 import { EUIPO_DEFAULT_API_BASE, EUIPO_DEFAULT_TOKEN_URL } from './sources/euipo';
@@ -71,7 +71,7 @@ export interface PublicNameSourceConnection {
  */
 export async function resolveNameSourceConnections(
 	rows: NameSourceConnectionRow[],
-	encryptionKey: string | null,
+	keyRing: EncryptionKeyRing | null,
 ): Promise<NameSourceConnections> {
 	const byVendor = new Map(rows.map((row) => [row.vendor, row]));
 	const opened = new Map<NameSourceVendor, string | null>();
@@ -81,7 +81,7 @@ export async function resolveNameSourceConnections(
 	const entries = await Promise.all(
 		NAME_SOURCE_VENDORS.map(async (vendor): Promise<NameSourceConnection> => {
 			const row = byVendor.get(vendor);
-			const { plaintext, status } = await openSecret(row?.secretCiphertext, encryptionKey);
+			const { plaintext, status } = await openSecret(row?.secretCiphertext, keyRing);
 			if (status === 'undecryptable') degraded = true;
 
 			const enabled = row?.enabled ?? false;

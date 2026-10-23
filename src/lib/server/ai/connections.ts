@@ -18,7 +18,7 @@ import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
 import { AI_PROVIDER_IDS, type AiProviderId } from '../../types/db-enums';
 import type { ProviderConnectionRow } from '../db/schema/ai/provider-connection';
-import { type KeyStatus, openSecret } from '../security/aes-gcm';
+import { type EncryptionKeyRing, type KeyStatus, openSecret } from '../security/aes-gcm';
 import { capabilitiesFor, type ModelCapabilities } from './model-capabilities';
 
 export const PROVIDER_LABELS: Record<AiProviderId, string> = {
@@ -79,9 +79,9 @@ export function createProviderModel(provider: AiProviderId, modelId: string, api
 
 async function openKey(
 	row: ProviderConnectionRow | undefined,
-	encryptionKey: string | null,
+	keyRing: EncryptionKeyRing | null,
 ): Promise<{ apiKey: string | null; keyStatus: KeyStatus }> {
-	const { plaintext, status } = await openSecret(row?.apiKeyCiphertext, encryptionKey);
+	const { plaintext, status } = await openSecret(row?.apiKeyCiphertext, keyRing);
 	return { apiKey: plaintext, keyStatus: status };
 }
 
@@ -92,7 +92,7 @@ async function openKey(
  */
 export async function resolveProviderRegistry(
 	rows: ProviderConnectionRow[],
-	encryptionKey: string | null,
+	keyRing: EncryptionKeyRing | null,
 ): Promise<ProviderRegistry> {
 	const byProvider = new Map(rows.map((row) => [row.provider, row]));
 	let degraded = false;
@@ -100,7 +100,7 @@ export async function resolveProviderRegistry(
 	const resolved = await Promise.all(
 		AI_PROVIDER_IDS.map(async (id): Promise<{ entry: ProviderEntry; opened: OpenedConnection }> => {
 			const row = byProvider.get(id);
-			const { apiKey, keyStatus } = await openKey(row, encryptionKey);
+			const { apiKey, keyStatus } = await openKey(row, keyRing);
 			if (keyStatus === 'undecryptable') degraded = true;
 
 			const enabled = row?.enabled ?? false;
@@ -170,11 +170,11 @@ function embeddingConnectionOf(google: OpenedConnection | undefined): EmbeddingC
 /** The Google connection as the embedding path sees it, opened from the saved rows (the scripts' door). */
 export async function resolveEmbeddingConnection(
 	rows: ProviderConnectionRow[],
-	encryptionKey: string | null,
+	keyRing: EncryptionKeyRing | null,
 ): Promise<EmbeddingConnection> {
 	const google = rows.find((row) => row.provider === 'google');
 	if (!google?.enabled) return { unavailable: 'disabled' };
-	const { apiKey, keyStatus } = await openKey(google, encryptionKey);
+	const { apiKey, keyStatus } = await openKey(google, keyRing);
 	return embeddingConnectionOf({ enabled: true, apiKey, keyStatus });
 }
 

@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { parseKeyRing } from '$lib/server/security/aes-gcm';
 import type { NameSourceConnection, NameSourceConnections } from './connections';
 
-const KEY = '3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f';
+const KEY = parseKeyRing('3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f');
 const PLAINTEXT = 'tvly-brand-new-secret-value';
 
 const dbAccess = vi.hoisted(() => ({ saveNameSourceConnection: vi.fn(), removeNameSourceSecret: vi.fn() }));
 const admin = vi.hoisted(() => ({ recordAuditEvent: vi.fn() }));
-const security = vi.hoisted(() => ({ getEncryptionKey: vi.fn() }));
+const security = vi.hoisted(() => ({ getEncryptionKeyRing: vi.fn() }));
 const loader = vi.hoisted(() => ({ loadNameSourceConnections: vi.fn() }));
 const probe = vi.hoisted(() => ({ testNameSourceConnection: vi.fn() }));
 
@@ -15,7 +16,7 @@ vi.mock('$lib/server/db/name-check/source-connections', () => dbAccess);
 vi.mock('$lib/server/admin', () => admin);
 vi.mock('$lib/server/security', async (importOriginal) => ({
 	...(await importOriginal<typeof import('$lib/server/security')>()),
-	getEncryptionKey: security.getEncryptionKey,
+	getEncryptionKeyRing: security.getEncryptionKeyRing,
 }));
 vi.mock('./index', () => loader);
 vi.mock('./connection-test', async (importOriginal) => ({
@@ -60,7 +61,7 @@ function connectionsOf(entries: NameSourceConnection[], secrets: Partial<Record<
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	security.getEncryptionKey.mockReturnValue(KEY);
+	security.getEncryptionKeyRing.mockReturnValue(KEY);
 	admin.recordAuditEvent.mockResolvedValue(undefined);
 	loader.loadNameSourceConnections.mockResolvedValue(
 		connectionsOf(
@@ -127,7 +128,7 @@ describe('saveNameSourceConnectionSettings', () => {
 	});
 
 	it('reports a missing encryption key without writing', async () => {
-		security.getEncryptionKey.mockImplementation(() => {
+		security.getEncryptionKeyRing.mockImplementation(() => {
 			throw new EncryptionError('invalid_key', 'missing');
 		});
 		const result = await saveNameSourceConnectionSettings(

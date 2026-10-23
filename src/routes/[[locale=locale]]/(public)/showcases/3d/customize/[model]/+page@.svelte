@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
+import { untrack } from 'svelte';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { applyPreset, type CustomizationPreset, type CustomizationState, getDefaultState } from '$lib/3d/customization';
@@ -10,6 +11,8 @@ import ViewerOverlay from '$lib/components/3d/ViewerOverlay.svelte';
 import ViewerScene from '$lib/components/3d/ViewerScene.svelte';
 import { BoundaryFallback } from '$lib/components/composites';
 import { localizeHref } from '$lib/i18n';
+import { urlParam } from '$lib/state/url-state';
+import { createUrlState } from '$lib/state/url-state.svelte';
 
 const model = $derived(MODELS_BY_ID.get(page.params.model ?? ''));
 const customization = $derived(model?.customization);
@@ -32,10 +35,13 @@ let custState = $state<CustomizationState>(
 );
 let activePresetId = $state<string | undefined>(undefined);
 
+// `?preset=` is view state no load reads, so it is written shallow: no navigation, no load.
+const presetUrl = createUrlState({ preset: urlParam.token() }, { write: 'shallow' });
+
 // Apply preset from URL on load
 $effect(() => {
 	if (!customization?.presets) return;
-	const presetParam = new URLSearchParams(window.location.search).get('preset');
+	const presetParam = untrack(() => presetUrl.values.preset);
 	if (presetParam) {
 		const preset = customization.presets.find((p) => p.id === presetParam);
 		if (preset) {
@@ -73,9 +79,7 @@ function handlePresetSelect(preset: CustomizationPreset) {
 	if (!customization) return;
 	custState = applyPreset(getDefaultState(customization), preset);
 	activePresetId = preset.id;
-	const url = new URL(window.location.href);
-	url.searchParams.set('preset', preset.id);
-	history.replaceState(history.state, '', url.toString());
+	presetUrl.set({ preset: preset.id });
 }
 
 function handleReset() {
@@ -86,11 +90,7 @@ function handleReset() {
 }
 
 function clearPresetParam() {
-	const url = new URL(window.location.href);
-	if (url.searchParams.has('preset')) {
-		url.searchParams.delete('preset');
-		history.replaceState(history.state, '', url.toString());
-	}
+	if (presetUrl.values.preset !== null) presetUrl.set({ preset: null });
 }
 
 let currentAnimation = $state('');

@@ -176,6 +176,8 @@ const PUBLIC_SURFACES: Record<string, string> = {
 		'Confirmation-dialog demo. The destructive action is simulated and touches no store.',
 	'[[locale=locale]]/(public)/showcases/forms/advanced/reset/+page.server.ts':
 		'Form-reset demo. Returns a fresh default form; writes nothing anywhere.',
+	'[[locale=locale]]/(public)/showcases/forms/advanced/draft/+page.server.ts':
+		'Draft-recovery demo. Validates and echoes a success message; nothing is sent or stored server-side.',
 
 	// ── Showcase: cycle ───────────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/showcases/cycle/api/+page.server.ts':

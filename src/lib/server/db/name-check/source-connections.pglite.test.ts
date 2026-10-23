@@ -15,9 +15,13 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { listNameSourceConnections, removeNameSourceSecret, saveNameSourceConnection } = await import(
-	'./source-connections'
-);
+const {
+	listNameSourceConnections,
+	listNameSourceSecretEnvelopes,
+	removeNameSourceSecret,
+	replaceNameSourceSecretEnvelope,
+	saveNameSourceConnection,
+} = await import('./source-connections');
 const { db } = await import('$lib/server/db');
 
 const ADMIN = makeUser({ id: 'admin-1' });
@@ -216,5 +220,50 @@ describe('name source connections', () => {
 		});
 		const rows = await listNameSourceConnections(db);
 		expect(rows.map((r) => r.vendor).sort()).toEqual(['brave', 'tavily']);
+	});
+	describe('re-seal envelopes', () => {
+		const RESEALED = 'v2:0a1b2c3d:bm9uY2Vub25jZW5v:cmVzZWFsZWQtY2lwaGVydGV4dA==';
+
+		it('lists only rows holding an envelope', async () => {
+			await saveNameSourceConnection(db, {
+				vendor: 'tavily',
+				enabled: true,
+				...NO_EUIPO_FIELDS,
+				secretCiphertext: CIPHERTEXT,
+				expectedVersion: 0,
+				updatedBy: ADMIN.id,
+			});
+			await saveNameSourceConnection(db, {
+				vendor: 'brave',
+				enabled: false,
+				...NO_EUIPO_FIELDS,
+				expectedVersion: 0,
+				updatedBy: ADMIN.id,
+			});
+			expect(await listNameSourceSecretEnvelopes(db)).toEqual([{ vendor: 'tavily', secretCiphertext: CIPHERTEXT }]);
+		});
+
+		it('swaps the envelope without bumping the version, and only while it is still the one read', async () => {
+			await saveNameSourceConnection(db, {
+				vendor: 'tavily',
+				enabled: true,
+				...NO_EUIPO_FIELDS,
+				secretCiphertext: CIPHERTEXT,
+				expectedVersion: 0,
+				updatedBy: ADMIN.id,
+			});
+			const before = await rowFor('tavily');
+
+			expect(await replaceNameSourceSecretEnvelope(db, { vendor: 'tavily', from: CIPHERTEXT, to: RESEALED })).toBe(
+				true,
+			);
+			const after = await rowFor('tavily');
+			expect(after).toMatchObject({ secretCiphertext: RESEALED, version: before?.version });
+			expect(after?.updatedAt).toEqual(before?.updatedAt);
+
+			// The envelope read earlier is gone: a second sweep that raced the first changes nothing.
+			expect(await replaceNameSourceSecretEnvelope(db, { vendor: 'tavily', from: CIPHERTEXT, to: 'x:y' })).toBe(false);
+			expect((await rowFor('tavily'))?.secretCiphertext).toBe(RESEALED);
+		});
 	});
 });

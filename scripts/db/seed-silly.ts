@@ -25,6 +25,7 @@ import {
 	EMBEDDING_MODEL,
 	EMBEDDING_MODEL_ID,
 } from '../../src/lib/server/retrieval-shared/embed-config';
+import { tryParseKeyRing } from '../../src/lib/server/security/aes-gcm';
 
 neonConfig.poolQueryViaFetch = true;
 
@@ -40,7 +41,7 @@ const db = drizzle(pool, { schema });
 
 // The Google key is the one the administrator saved under Admin → AI → Models, read
 // through the same leaf the app uses so the two can never disagree about whether Google
-// is usable. Only the database URL and ENCRYPTION_KEY still come from the environment.
+// is usable. Only the database URL and the ENCRYPTION_KEY ring still come from the environment.
 const savedConnections = await listProviderConnections(db).catch((err: unknown) => {
 	const reason = err instanceof Error ? err.message : String(err);
 	console.error(
@@ -50,7 +51,10 @@ const savedConnections = await listProviderConnections(db).catch((err: unknown) 
 	);
 	process.exit(1);
 });
-const embeddingConnection = await resolveEmbeddingConnection(savedConnections, process.env.ENCRYPTION_KEY ?? null);
+const embeddingConnection = await resolveEmbeddingConnection(
+	savedConnections,
+	tryParseKeyRing(process.env.ENCRYPTION_KEY, process.env.ENCRYPTION_KEY_PREVIOUS),
+);
 if ('unavailable' in embeddingConnection) {
 	console.error(`[%s] ${EMBEDDING_UNAVAILABLE_MESSAGES[embeddingConnection.unavailable]}`, SCRIPT_NAME);
 	process.exit(1);

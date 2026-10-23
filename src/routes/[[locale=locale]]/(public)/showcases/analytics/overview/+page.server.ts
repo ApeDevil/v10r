@@ -9,11 +9,12 @@ import {
 } from '$lib/server/db/analytics/aggregations';
 import { reseedAnalytics } from '$lib/server/db/analytics/seed';
 import { isAdmin } from '$lib/server/http/guards';
+import { readUrlState } from '$lib/state/url-state';
+import { rangeParams } from '../range-params';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url }) => {
-	const range = Number(url.searchParams.get('range') ?? '30');
-	const days = [7, 30, 90].includes(range) ? range : 30;
+	const days = Number(readUrlState(url.searchParams, rangeParams('30')).range);
 	const start = performance.now();
 
 	try {

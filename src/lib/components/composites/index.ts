@@ -19,6 +19,7 @@ export * from './command-palette';
 export * from './confirm-dialog';
 export * from './context-menu';
 export * from './diag-grid';
+export * from './draft-recovery-notice';
 export * from './dropdown-menu';
 export * from './empty-state';
 export * from './error-display';

@@ -33,3 +33,10 @@ export const profileEditSchema = v.object({
 	bio: v.optional(v.pipe(v.string(), v.maxLength(300, 'Max 300 characters')), ''),
 	active: v.optional(v.boolean(), true),
 });
+
+/** The draft-recovery showcase: two text fields worth losing, and a password a draft must never keep. */
+export const draftMessageSchema = v.object({
+	subject: v.pipe(v.string(), v.trim(), v.nonEmpty('Subject is required'), v.maxLength(120)),
+	message: v.pipe(v.string(), v.trim(), v.nonEmpty('Message is required'), v.maxLength(2000, 'Max 2000 characters')),
+	password: v.optional(v.pipe(v.string(), v.maxLength(200)), ''),
+});

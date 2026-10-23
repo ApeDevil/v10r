@@ -76,6 +76,7 @@ import {
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
 import { traceModelCalls } from './trace/model-call-middleware';
 import { createTurnRecorder, historyChars } from './trace/recorder';
+import { boundHistoryToolResults } from './untrusted-content';
 
 /**
  * Which AI surface a turn belongs to — the explicit dispatch discriminant.
@@ -313,8 +314,9 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	const windowedMessages = windowMessages(rawMessages);
 
 	// Compact loaded history so oversized tool results from resumed conversations
-	// don't blow the context window before the first step even runs.
-	const messages = compactToolResults(await convertToModelMessages(windowedMessages));
+	// don't blow the context window before the first step even runs, then bound the ones that
+	// carry user content — the same <untrusted-content> wrapping as this turn's results.
+	const messages = boundHistoryToolResults(compactToolResults(await convertToModelMessages(windowedMessages)));
 
 	// Resolve the provider for this turn against the snapshot the guard loaded
 	// (request override → stored preference → project default → capability order).

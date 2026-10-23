@@ -8,7 +8,9 @@ import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
+import { type UrlStateValues, urlStateHref } from '$lib/state/url-state';
 import type { PageProps } from './$types';
+import { postsListParams } from './list-params';
 
 let { data }: PageProps = $props();
 const toast = getToast();
@@ -31,18 +33,12 @@ function relativeTime(iso: string | null): string {
 	return `${days}d ago`;
 }
 
-function buildUrl(params: Record<string, string>): string {
-	const u = new URL(page.url);
-	for (const [k, v] of Object.entries(params)) {
-		if (v) u.searchParams.set(k, v);
-		else u.searchParams.delete(k);
-	}
-	return u.pathname + u.search;
-}
+const listHref = (patch: Partial<UrlStateValues<typeof postsListParams>>) =>
+	urlStateHref(page.url, postsListParams, patch);
 
-function sortHref(col: string): string {
+function sortHref(col: typeof data.sort): string {
 	const newDir = data.sort === col && data.dir === 'asc' ? 'desc' : 'asc';
-	return buildUrl({ sort: col, dir: newDir, page: '1' });
+	return listHref({ sort: col, dir: newDir, page: 1 });
 }
 
 function sortIcon(col: string): string {
@@ -105,10 +101,10 @@ function submitHiddenForm(action: string, postId: string) {
 			</form>
 
 			<div class="status-filters">
-				<a href={buildUrl({ status: '', page: '1' })} class="filter-link" class:active={data.statusFilter === 'all'}>{m.admin_filter_all()}</a>
-				<a href={buildUrl({ status: 'draft', page: '1' })} class="filter-link" class:active={data.statusFilter === 'draft'}>{m.admin_status_draft()}</a>
-				<a href={buildUrl({ status: 'published', page: '1' })} class="filter-link" class:active={data.statusFilter === 'published'}>{m.admin_status_published()}</a>
-				<a href={buildUrl({ status: 'archived', page: '1' })} class="filter-link" class:active={data.statusFilter === 'archived'}>{m.admin_status_archived()}</a>
+				<a href={listHref({ status: 'all', page: 1 })} class="filter-link" class:active={data.statusFilter === 'all'}>{m.admin_filter_all()}</a>
+				<a href={listHref({ status: 'draft', page: 1 })} class="filter-link" class:active={data.statusFilter === 'draft'}>{m.admin_status_draft()}</a>
+				<a href={listHref({ status: 'published', page: 1 })} class="filter-link" class:active={data.statusFilter === 'published'}>{m.admin_status_published()}</a>
+				<a href={listHref({ status: 'archived', page: 1 })} class="filter-link" class:active={data.statusFilter === 'archived'}>{m.admin_status_archived()}</a>
 			</div>
 		</div>
 
@@ -262,13 +258,13 @@ function submitHiddenForm(action: string, postId: string) {
 			{#if data.totalPages > 1}
 				<div class="pagination">
 					{#if data.page > 1}
-						<a href={buildUrl({ page: String(data.page - 1) })} class="page-link">
+						<a href={listHref({ page: data.page - 1 })} class="page-link">
 							<span class="i-lucide-chevron-left h-4 w-4"></span> {m.admin_posts_pagination_prev()}
 						</a>
 					{/if}
 					<span class="page-info">{m.admin_posts_pagination_info({ page: data.page, total: data.totalPages })}</span>
 					{#if data.page < data.totalPages}
-						<a href={buildUrl({ page: String(data.page + 1) })} class="page-link">
+						<a href={listHref({ page: data.page + 1 })} class="page-link">
 							{m.admin_posts_pagination_next()} <span class="i-lucide-chevron-right h-4 w-4"></span>
 						</a>
 					{/if}

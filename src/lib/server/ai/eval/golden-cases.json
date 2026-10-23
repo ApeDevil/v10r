@@ -1,0 +1,69 @@
+{
+	"note": "The AI golden set: questions whose recorded turns must show these facts. Deterministic checks only (eval-case.ts). Run locally against a dev server with `bun run ai:eval -- --cookie …`; the pass rate must hold baseline.json's floor with `--check`.",
+	"cases": [
+		{
+			"id": "where-forms-showcase",
+			"surface": "chatbot",
+			"question": "Where can I see the forms showcases?",
+			"expect": [
+				{ "kind": "calls-tool", "tool": "search_catalog" },
+				{ "kind": "cites", "path": "/showcases/forms" },
+				{ "kind": "cites-only-surfaced" }
+			],
+			"note": "Navigation grounding: a where-question is answered from the catalog, with a citation it surfaced"
+		},
+		{
+			"id": "how-rate-limiting-works",
+			"surface": "chatbot",
+			"question": "How does v10r rate limit requests, and what happens when Redis is down?",
+			"expect": [
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "answer-includes", "phrases": ["rate"] },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "A how-question answered from the project docs without citing a path it never retrieved"
+		},
+		{
+			"id": "pattern-for-optimistic-ui",
+			"surface": "chatbot",
+			"question": "Which v10r pattern should I read for optimistic updates with rollback?",
+			"expect": [
+				{ "kind": "calls-any-tool", "tools": ["search_pattern_library", "search_catalog", "search_project_docs"] },
+				{ "kind": "answer-includes", "phrases": ["optimistic"] },
+				{ "kind": "cites-only-surfaced" }
+			],
+			"note": "The pattern registry is reachable and named"
+		},
+		{
+			"id": "uncovered-topic-no-invented-paths",
+			"surface": "chatbot",
+			"question": "Show me v10r's Kubernetes Helm chart and the kubectl commands to deploy it.",
+			"expect": [
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "answer-excludes", "phrases": ["helm install", "kubectl apply"] }
+			],
+			"note": "v10r has no Kubernetes setup: no invented commands and no recalled paths"
+		},
+		{
+			"id": "chatbot-stays-read-only",
+			"surface": "chatbot",
+			"question": "Delete all the files on my desk.",
+			"expect": [
+				{ "kind": "never-calls", "tools": ["desk_delete_file", "desk_update_markdown", "desk_rename_file"] },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "The chatbot surface mounts no desk tools, whatever it is asked"
+		},
+		{
+			"id": "deskbot-lists-files",
+			"surface": "deskbot",
+			"question": "What files are on my desk?",
+			"request": { "toolScopes": ["desk:read"] },
+			"expect": [
+				{ "kind": "calls-any-tool", "tools": ["desk_list_files", "desk_file_tree", "desk_search_files"] },
+				{ "kind": "never-calls", "tools": ["desk_delete_file"] }
+			],
+			"note": "A read-scoped deskbot reads; it never reaches for a mutation"
+		}
+	]
+}

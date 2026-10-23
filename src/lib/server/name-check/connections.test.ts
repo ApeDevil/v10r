@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { NameSourceConnectionRow } from '$lib/server/db/schema/name-check/source-connection';
 import { encryptAesGcm } from '$lib/server/security';
+import { parseKeyRing } from '$lib/server/security/aes-gcm';
 import { publicNameSourceConnection, resolveNameSourceConnections } from './connections';
 import { EUIPO_DEFAULT_API_BASE, EUIPO_DEFAULT_TOKEN_URL } from './sources/euipo';
 
-const KEY = '3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f';
-const OTHER_KEY = 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90';
+const KEY = parseKeyRing('3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f');
+const OTHER_KEY = parseKeyRing('a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90');
 
 function row(overrides: Partial<NameSourceConnectionRow> & { vendor: NameSourceConnectionRow['vendor'] }) {
 	return {

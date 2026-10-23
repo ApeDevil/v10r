@@ -248,6 +248,7 @@ export const showcases: ShowcaseCard[] = [
 					{ label: m.showcase_forms_tab_advanced_confirm, href: '/showcases/forms/advanced/confirm' },
 					{ label: m.showcase_forms_tab_advanced_reset, href: '/showcases/forms/advanced/reset' },
 					{ label: m.showcase_forms_tab_advanced_edit, href: '/showcases/forms/advanced/edit' },
+					{ label: m.showcase_forms_tab_advanced_draft, href: '/showcases/forms/advanced/draft' },
 				],
 				docs: [{ href: '/docs/blueprint/forms', label: 'Forms' }],
 			},

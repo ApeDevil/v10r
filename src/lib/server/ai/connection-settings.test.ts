@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { parseKeyRing } from '$lib/server/security/aes-gcm';
 import type { ProviderEntry, ProviderRegistry } from './connections';
 
-const KEY = '3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f';
+const KEY = parseKeyRing('3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f');
 const PLAINTEXT = 'gsk_brand_new_key_value';
 
 const dbAccess = vi.hoisted(() => ({
@@ -10,7 +11,7 @@ const dbAccess = vi.hoisted(() => ({
 	setDefaultProvider: vi.fn(),
 }));
 const admin = vi.hoisted(() => ({ recordAuditEvent: vi.fn() }));
-const security = vi.hoisted(() => ({ getEncryptionKey: vi.fn() }));
+const security = vi.hoisted(() => ({ getEncryptionKeyRing: vi.fn() }));
 const registryLoader = vi.hoisted(() => ({ loadProviderRegistry: vi.fn() }));
 const probe = vi.hoisted(() => ({ testLanguageModel: vi.fn() }));
 
@@ -19,7 +20,7 @@ vi.mock('$lib/server/db/ai/provider-connections', () => dbAccess);
 vi.mock('$lib/server/admin', () => admin);
 vi.mock('$lib/server/security', async (importOriginal) => ({
 	...(await importOriginal<typeof import('$lib/server/security')>()),
-	getEncryptionKey: security.getEncryptionKey,
+	getEncryptionKeyRing: security.getEncryptionKeyRing,
 }));
 vi.mock('./index', () => registryLoader);
 vi.mock('./connection-test', () => probe);
@@ -62,7 +63,7 @@ function registryOf(...entries: ProviderEntry[]): ProviderRegistry {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	security.getEncryptionKey.mockReturnValue(KEY);
+	security.getEncryptionKeyRing.mockReturnValue(KEY);
 	admin.recordAuditEvent.mockResolvedValue(undefined);
 	registryLoader.loadProviderRegistry.mockResolvedValue(
 		registryOf(entry({ id: 'groq', isDefault: true }), entry({ id: 'openai' }), entry({ id: 'google' })),
@@ -79,7 +80,7 @@ describe('saveProviderConnectionSettings', () => {
 		expect(result).toEqual({ ok: true, version: 3, auditRecorded: true });
 
 		const written = dbAccess.saveProviderConnection.mock.calls[0]?.[1];
-		expect(written.apiKeyCiphertext).toMatch(/^[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/);
+		expect(written.apiKeyCiphertext).toMatch(/^v2:[0-9a-f]{8}:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/);
 		expect(written.apiKeyCiphertext).not.toContain(PLAINTEXT);
 		expect(JSON.stringify(written)).not.toContain(PLAINTEXT);
 
@@ -110,7 +111,7 @@ describe('saveProviderConnectionSettings', () => {
 	});
 
 	it('refuses a new key when the deployment has no usable encryption key, writing nothing', async () => {
-		security.getEncryptionKey.mockImplementation(() => {
+		security.getEncryptionKeyRing.mockImplementation(() => {
 			throw new EncryptionError('invalid_key', 'missing');
 		});
 		const result = await saveProviderConnectionSettings(

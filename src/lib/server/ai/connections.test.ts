@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { ProviderConnectionRow } from '$lib/server/db/schema/ai/provider-connection';
-import { encryptAesGcm } from '$lib/server/security/aes-gcm';
+import { type EncryptionKeyRing, encryptAesGcm, parseKeyRing } from '$lib/server/security/aes-gcm';
 import {
 	embeddingStatusFrom,
 	publicProviderConnection,
@@ -11,8 +11,8 @@ import {
 	SUGGESTED_MODEL_IDS,
 } from './connections';
 
-const KEY = '3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f';
-const OTHER_KEY = 'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90';
+const KEY = parseKeyRing('3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f');
+const OTHER_KEY = parseKeyRing('a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90');
 const PLAINTEXT = 'gsk_live_plaintext_never_serialized';
 
 function row(
@@ -139,16 +139,16 @@ describe('registry.embeddingConnection', () => {
 
 	it('reports the same unavailability reasons as resolveEmbeddingConnection', async () => {
 		const ciphertext = await encryptAesGcm(PLAINTEXT, KEY);
-		const cases: Array<[ProviderConnectionRow[], string | null]> = [
+		const cases: Array<[ProviderConnectionRow[], EncryptionKeyRing | null]> = [
 			[[], KEY],
 			[[row({ provider: 'google', enabled: false })], KEY],
 			[[row({ provider: 'google' })], KEY],
 			[[row({ provider: 'google', apiKeyCiphertext: ciphertext })], OTHER_KEY],
 			[[row({ provider: 'google', apiKeyCiphertext: ciphertext })], null],
 		];
-		for (const [rows, encryptionKey] of cases) {
-			expect((await resolveProviderRegistry(rows, encryptionKey)).embeddingConnection()).toEqual(
-				await resolveEmbeddingConnection(rows, encryptionKey),
+		for (const [rows, keyRing] of cases) {
+			expect((await resolveProviderRegistry(rows, keyRing)).embeddingConnection()).toEqual(
+				await resolveEmbeddingConnection(rows, keyRing),
 			);
 		}
 	});

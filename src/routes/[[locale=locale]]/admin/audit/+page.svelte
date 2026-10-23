@@ -5,7 +5,9 @@ import { Card, EmptyState } from '$lib/components/composites';
 import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Select } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
+import { type UrlStateValues, urlStateHref } from '$lib/state/url-state';
 import type { PageProps } from './$types';
+import { auditListParams } from './list-params';
 
 let { data }: PageProps = $props();
 
@@ -26,23 +28,14 @@ function relativeTime(iso: string): string {
 	return `${days}d ago`;
 }
 
-function buildUrl(params: Record<string, string>): string {
-	const u = new URL(page.url);
-	for (const [k, v] of Object.entries(params)) {
-		if (v) u.searchParams.set(k, v);
-		else u.searchParams.delete(k);
-	}
-	return u.pathname + u.search;
-}
+const listHref = (patch: Partial<UrlStateValues<typeof auditListParams>>) =>
+	urlStateHref(page.url, auditListParams, patch);
 
 function exportUrl(): string {
-	const u = new URL(`${page.url.origin}/admin/audit/export`);
-	if (data.filters.action) u.searchParams.set('action', data.filters.action);
-	if (data.filters.actor) u.searchParams.set('actor', data.filters.actor);
-	if (data.filters.targetType) u.searchParams.set('target_type', data.filters.targetType);
-	if (data.filters.dateFrom) u.searchParams.set('from', data.filters.dateFrom);
-	if (data.filters.dateTo) u.searchParams.set('to', data.filters.dateTo);
-	return u.pathname + u.search;
+	// The export takes the filters, never the page: it streams every matching row.
+	const filters = new URL(page.url);
+	filters.pathname = '/admin/audit/export';
+	return urlStateHref(filters, auditListParams, { page: 1 });
 }
 
 function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'error' | 'success' {
@@ -176,13 +169,13 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 			{#if data.totalPages > 1}
 				<div class="pagination">
 					{#if data.page > 1}
-						<a href={buildUrl({ page: String(data.page - 1) })} class="page-link">
+						<a href={listHref({ page: data.page - 1 })} class="page-link">
 							<span class="i-lucide-chevron-left h-4 w-4"></span> {m.admin_audit_pagination_prev()}
 						</a>
 					{/if}
 					<span class="page-info">{m.admin_audit_pagination_info({ page: data.page, total: data.totalPages })}</span>
 					{#if data.page < data.totalPages}
-						<a href={buildUrl({ page: String(data.page + 1) })} class="page-link">
+						<a href={listHref({ page: data.page + 1 })} class="page-link">
 							{m.admin_audit_pagination_next()} <span class="i-lucide-chevron-right h-4 w-4"></span>
 						</a>
 					{/if}

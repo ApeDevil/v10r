@@ -7,7 +7,9 @@ import { Cluster, Stack } from '$lib/components/layout';
 import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
 import * as m from '$lib/paraglide/messages';
 import { getToast } from '$lib/state/toast.svelte';
+import { type UrlStateValues, urlStateHref } from '$lib/state/url-state';
 import type { PageProps } from './$types';
+import { usersListParams } from './list-params';
 
 let { data }: PageProps = $props();
 const toast = getToast();
@@ -28,18 +30,12 @@ function relativeTime(iso: string): string {
 	return `${days}d ago`;
 }
 
-function buildUrl(params: Record<string, string>): string {
-	const u = new URL(page.url);
-	for (const [k, v] of Object.entries(params)) {
-		if (v) u.searchParams.set(k, v);
-		else u.searchParams.delete(k);
-	}
-	return u.pathname + u.search;
-}
+const listHref = (patch: Partial<UrlStateValues<typeof usersListParams>>) =>
+	urlStateHref(page.url, usersListParams, patch);
 
-function sortHref(col: string): string {
+function sortHref(col: typeof data.sort): string {
 	const newDir = data.sort === col && data.dir === 'asc' ? 'desc' : 'asc';
-	return buildUrl({ sort: col, dir: newDir, page: '1' });
+	return listHref({ sort: col, dir: newDir, page: 1 });
 }
 
 function sortIcon(col: string): string {
@@ -77,9 +73,9 @@ function openBanDialog(userId: string) {
 			</form>
 
 			<div class="status-filters">
-				<a href={buildUrl({ status: '', page: '1' })} class="filter-link" class:active={data.statusFilter === 'all'}>{m.admin_filter_all()}</a>
-				<a href={buildUrl({ status: 'active', page: '1' })} class="filter-link" class:active={data.statusFilter === 'active'}>{m.admin_status_active()}</a>
-				<a href={buildUrl({ status: 'banned', page: '1' })} class="filter-link" class:active={data.statusFilter === 'banned'}>{m.admin_users_status_banned()}</a>
+				<a href={listHref({ status: 'all', page: 1 })} class="filter-link" class:active={data.statusFilter === 'all'}>{m.admin_filter_all()}</a>
+				<a href={listHref({ status: 'active', page: 1 })} class="filter-link" class:active={data.statusFilter === 'active'}>{m.admin_status_active()}</a>
+				<a href={listHref({ status: 'banned', page: 1 })} class="filter-link" class:active={data.statusFilter === 'banned'}>{m.admin_users_status_banned()}</a>
 			</div>
 		</div>
 
@@ -186,7 +182,7 @@ function openBanDialog(userId: string) {
 				<Pagination
 					currentPage={data.page}
 					totalPages={data.totalPages}
-					onPageChange={(p) => goto(buildUrl({ page: String(p) }))}
+					onPageChange={(p) => goto(listHref({ page: p }))}
 				/>
 			{/if}
 		{/if}

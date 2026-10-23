@@ -328,6 +328,41 @@ debounceTimer = setTimeout(async () => {
 
 ---
 
+## Draft recovery
+
+**Problem.** A long form is lost to a closed tab, a crash, a dead battery or an expired session,
+and the usual defence — a "Leave site?" prompt on every dirty form — guards none of those and
+trains people to click through it. The opposite mistake is just as common: a draft restored on
+its own, so a stale value is submitted without anyone noticing, or a draft written to a shared
+browser where the next account reads it.
+
+**Method.** Keep what was typed, offer it back, guard only what could not be kept.
+
+| Piece | Where | Rule |
+|---|---|---|
+| Draft store | `src/lib/state/form-draft.ts` | `localStorage` key `v10r:form-draft:<userId or anon>:<formId>`, envelope `{ v, savedAt, data }`. A read keeps only the form's own fields with the form's types; a write drops credential-like names (password, token, card, …) and `exclude`d fields. Storage is injected and every failure is "no draft" |
+| Superforms binding | `src/lib/state/form-draft.svelte.ts` | `createFormDraft(sf, { formId, owner })`: debounced writes while tainted, a stored draft that differs from the form becomes an **offer**, `clear()` in `onUpdated` on a valid submit. Storage is touched only in `$effect`, so SSR and hydration agree |
+| Offer UI | `DraftRecoveryNotice` (composite) | Restore or discard. A draft is never applied without a click |
+| Leave guard | `src/lib/state/leave-guard.svelte.ts` | `guardUnsavedChanges(isDirty, message)`: one `beforeNavigate` — a `confirm` for in-app navigation, `cancel()` for `type === 'leave'` so the browser shows its own unload prompt. No own `beforeunload` listener |
+
+**Guard only what is lost.** A form whose draft was written loses nothing on leave, so its guard
+predicate is `isTainted() && draft.saveFailed` — the prompt appears only when the browser refused
+the write (quota, private mode). A component with no draft (the palette workshop) guards plain
+`dirty`.
+
+**Sign-out erases drafts on purpose.** Sign-out sends `Clear-Site-Data: "storage"`; a draft is a
+convenience for the person at this browser, not a record, and it must not outlive their session
+on a shared machine. Work that has to survive sign-out is a server-side draft
+(`versioned-document-session`), not this.
+
+**Invariants.**
+- A draft is offered, never applied on its own, and never offered when it equals the form.
+- No credential-like field and no field outside the form's shape is ever written.
+- Drafts are keyed per account; another account in the same browser sees none.
+- A valid submit clears the draft.
+
+Live: `/showcases/forms/advanced/draft`.
+
 ## Mobile UX
 
 ### Input Types and inputmode

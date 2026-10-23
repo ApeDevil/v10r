@@ -29,7 +29,7 @@ import {
 	runNameSourceConnectionTest,
 	saveNameSourceConnectionSettings,
 } from '$lib/server/name-check/connection-settings';
-import { EncryptionError, getEncryptionKey } from '$lib/server/security';
+import { EncryptionError, getEncryptionKeyRing } from '$lib/server/security';
 import type { NameSourceVendor } from '$lib/types/db-enums';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -50,7 +50,7 @@ const testLimiter = createLimiter(
 
 function encryptionConfigured(): boolean {
 	try {
-		getEncryptionKey();
+		getEncryptionKeyRing();
 		return true;
 	} catch (err) {
 		if (err instanceof EncryptionError) return false;

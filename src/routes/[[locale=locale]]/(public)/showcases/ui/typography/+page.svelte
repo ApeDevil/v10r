@@ -1,32 +1,33 @@
 <script lang="ts">
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
 import * as m from '$lib/paraglide/messages';
+import { urlParam } from '$lib/state/url-state';
+import { createUrlState } from '$lib/state/url-state.svelte';
 import { type FontLoadState, findFont, isFontLoaded, loadFont } from '$lib/utils/fonts';
 import FontPicker from './_components/FontPicker.svelte';
 import FontPreview from './_components/FontPreview.svelte';
 import ProsePreview from './_components/ProsePreview.svelte';
 
-// svelte-ignore state_referenced_locally
-const urlHeading = page.url.searchParams.get('heading');
-// svelte-ignore state_referenced_locally
-const urlBody = page.url.searchParams.get('body');
-// svelte-ignore state_referenced_locally
-const urlView = page.url.searchParams.get('view');
+// The picks are view state no load reads, so the URL mirrors them with shallow writes.
+// `heading` and `body` together mean pairing mode; `font` is the single-font pick.
+const fontUrl = createUrlState(
+	{
+		font: urlParam.text('System'),
+		heading: urlParam.text(),
+		body: urlParam.text(),
+		view: urlParam.oneOf(['scale', 'prose'], 'scale'),
+	},
+	{ write: 'shallow' },
+);
+const fromUrl = fontUrl.values;
 
-// svelte-ignore state_referenced_locally
-let mode = $state<'single' | 'pairing'>(urlHeading && urlBody ? 'pairing' : 'single');
-// svelte-ignore state_referenced_locally
-let viewMode = $state<'scale' | 'prose'>(urlView === 'prose' ? 'prose' : 'scale');
+let mode = $state<'single' | 'pairing'>(fromUrl.heading && fromUrl.body ? 'pairing' : 'single');
+let viewMode = $state(fromUrl.view);
 
-// svelte-ignore state_referenced_locally
-let selectedFamily = $state(page.url.searchParams.get('font') ?? 'System');
+let selectedFamily = $state(fromUrl.font);
 let loadState = $state<FontLoadState>('idle');
 
-// svelte-ignore state_referenced_locally
-let headingFamily = $state(urlHeading ?? 'Playfair Display');
-// svelte-ignore state_referenced_locally
-let bodyFamily = $state(urlBody ?? 'Inter');
+let headingFamily = $state(fromUrl.heading || 'Playfair Display');
+let bodyFamily = $state(fromUrl.body || 'Inter');
 let headingLoadState = $state<FontLoadState>('idle');
 let bodyLoadState = $state<FontLoadState>('idle');
 
@@ -42,29 +43,12 @@ let fontStack = $derived(buildFontStack(selectedFamily));
 let headingFontStack = $derived(buildFontStack(headingFamily));
 let bodyFontStack = $derived(buildFontStack(bodyFamily));
 
-function syncUrl() {
-	const url = new URL(page.url);
-
-	// Clear all font params first
-	url.searchParams.delete('font');
-	url.searchParams.delete('heading');
-	url.searchParams.delete('body');
-	url.searchParams.delete('view');
-
-	if (mode === 'single') {
-		if (selectedFamily !== 'System') {
-			url.searchParams.set('font', selectedFamily);
-		}
-	} else {
-		url.searchParams.set('heading', headingFamily);
-		url.searchParams.set('body', bodyFamily);
-	}
-
-	if (viewMode === 'prose') {
-		url.searchParams.set('view', 'prose');
-	}
-
-	goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
+function mirrorPicksToUrl() {
+	fontUrl.set(
+		mode === 'single'
+			? { font: selectedFamily, heading: '', body: '', view: viewMode }
+			: { font: 'System', heading: headingFamily, body: bodyFamily, view: viewMode },
+	);
 }
 
 async function doLoadFont(family: string): Promise<void> {
@@ -74,9 +58,9 @@ async function doLoadFont(family: string): Promise<void> {
 	await loadFont(meta.family, meta.weights);
 }
 
-async function selectFont(family: string) {
+async function selectFont(family: string, mirror = true) {
 	selectedFamily = family;
-	syncUrl();
+	if (mirror) mirrorPicksToUrl();
 
 	if (family !== 'System' && !isFontLoaded(family)) {
 		loadState = 'loading';
@@ -91,9 +75,9 @@ async function selectFont(family: string) {
 	}
 }
 
-async function selectHeadingFont(family: string) {
+async function selectHeadingFont(family: string, mirror = true) {
 	headingFamily = family;
-	syncUrl();
+	if (mirror) mirrorPicksToUrl();
 
 	if (family !== 'System' && !isFontLoaded(family)) {
 		headingLoadState = 'loading';
@@ -108,9 +92,9 @@ async function selectHeadingFont(family: string) {
 	}
 }
 
-async function selectBodyFont(family: string) {
+async function selectBodyFont(family: string, mirror = true) {
 	bodyFamily = family;
-	syncUrl();
+	if (mirror) mirrorPicksToUrl();
 
 	if (family !== 'System' && !isFontLoaded(family)) {
 		bodyLoadState = 'loading';
@@ -132,21 +116,22 @@ function handleModeChange(newMode: 'single' | 'pairing') {
 		selectHeadingFont(headingFamily);
 		selectBodyFont(bodyFamily);
 	}
-	syncUrl();
+	mirrorPicksToUrl();
 }
 
 function handleViewChange(newView: 'scale' | 'prose') {
 	viewMode = newView;
-	syncUrl();
+	mirrorPicksToUrl();
 }
 
-// Load initial fonts if arriving via URL params
+// Load initial fonts if arriving via URL params. The URL already holds these picks, and the
+// router cannot take a write during initialisation, so they load without mirroring.
 // svelte-ignore state_referenced_locally
 if (mode === 'pairing') {
-	selectHeadingFont(headingFamily);
-	selectBodyFont(bodyFamily);
+	selectHeadingFont(headingFamily, false);
+	selectBodyFont(bodyFamily, false);
 } else if (selectedFamily !== 'System') {
-	selectFont(selectedFamily);
+	selectFont(selectedFamily, false);
 }
 </script>
 

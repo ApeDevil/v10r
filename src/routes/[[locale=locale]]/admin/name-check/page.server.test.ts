@@ -10,7 +10,7 @@ const settings = vi.hoisted(() => ({
 	runNameSourceConnectionTest: vi.fn(),
 }));
 const limiter = vi.hoisted(() => ({ limit: vi.fn(async () => ({ success: true, reset: 0 })) }));
-const security = vi.hoisted(() => ({ getEncryptionKey: vi.fn(() => 'k') }));
+const security = vi.hoisted(() => ({ getEncryptionKeyRing: vi.fn(() => ({ current: 'k', previous: [] })) }));
 
 vi.mock('$lib/server/http/guards', () => guards);
 vi.mock('$lib/server/name-check', async (importOriginal) => ({
@@ -21,7 +21,7 @@ vi.mock('$lib/server/name-check/connection-settings', () => settings);
 vi.mock('$lib/server/http/rate-limit', () => ({ createLimiter: () => limiter }));
 vi.mock('$lib/server/security', async (importOriginal) => ({
 	...(await importOriginal<typeof import('$lib/server/security')>()),
-	getEncryptionKey: security.getEncryptionKey,
+	getEncryptionKeyRing: security.getEncryptionKeyRing,
 }));
 vi.mock('$lib/server/db', () => ({ db: {} }));
 
@@ -71,7 +71,7 @@ const loadEvent = () => ({ locals: {} }) as unknown as Parameters<typeof load>[0
 beforeEach(() => {
 	vi.clearAllMocks();
 	guards.requireAdmin.mockImplementation(() => ADMIN);
-	security.getEncryptionKey.mockReturnValue('k');
+	security.getEncryptionKeyRing.mockReturnValue({ current: 'k', previous: [] });
 	limiter.limit.mockResolvedValue({ success: true, reset: 0 });
 	nameCheck.loadNameSourceConnections.mockResolvedValue(
 		connectionsOf(

@@ -378,28 +378,21 @@ First focusable element should be a skip link:
 
 ### Route Change Announcements
 
-Announce page changes for screen readers:
+SvelteKit announces every client-side navigation itself: the root component renders a
+visually hidden `#svelte-announcer` live region and writes the new page's `<title>` into it.
+Do not add a second `aria-live` region for route changes — screen readers would read every
+navigation twice. What the app owns is the title (unique and descriptive per page, which is
+what gets announced) and, where a layout keeps focus somewhere unhelpful, focus management:
 
 ```svelte
 <script lang="ts">
-  import { page } from '$app/state';
   import { afterNavigate } from '$app/navigation';
 
-  let announcement = $state('');
-
-  afterNavigate(({ to }) => {
-    // Announce new page
-    const title = document.title || to?.url.pathname;
-    announcement = `Navigated to ${title}`;
-
-    // Focus main content
-    document.getElementById('main-content')?.focus();
+  // Move focus to the main landmark after navigation; the announcement is SvelteKit's.
+  afterNavigate(({ type }) => {
+    if (type !== 'enter') document.getElementById('main-content')?.focus();
   });
 </script>
-
-<div role="status" aria-live="polite" class="sr-only">
-  {announcement}
-</div>
 ```
 
 ---

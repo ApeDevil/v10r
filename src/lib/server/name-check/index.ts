@@ -16,7 +16,7 @@
  */
 import { db } from '$lib/server/db';
 import { listNameSourceConnections } from '$lib/server/db/name-check/source-connections';
-import { EncryptionError, getEncryptionKey } from '$lib/server/security';
+import { EncryptionError, type EncryptionKeyRing, getEncryptionKeyRing } from '$lib/server/security';
 import { type NameSourceConnections, resolveNameSourceConnections } from './connections';
 import { NameSourceError } from './errors';
 import { type NameSourceCredentials, NO_CREDENTIALS } from './name-source';
@@ -39,6 +39,7 @@ export {
 } from './name-source';
 export { type NormalizedName, normalizeName } from './normalize';
 export { type NameCheckQuery, toNameCheckQuery } from './query';
+export { resealNameSourceSecrets } from './secret-reseal';
 export { conflictSignal } from './signal';
 export { bestSimilarity, colognePhonetic, scoreSimilarity } from './similarity';
 export { NAME_SOURCES } from './sources';
@@ -54,10 +55,10 @@ async function readRows() {
 	}
 }
 
-/** The validated key, or null when the deployment has none — entries then report `undecryptable`. */
-function readEncryptionKeyOrNull(): string | null {
+/** The validated key ring, or null when the deployment has none — entries then report `undecryptable`. */
+function readKeyRingOrNull(): EncryptionKeyRing | null {
 	try {
-		return getEncryptionKey();
+		return getEncryptionKeyRing();
 	} catch (err) {
 		if (err instanceof EncryptionError) return null;
 		throw err;
@@ -66,7 +67,7 @@ function readEncryptionKeyOrNull(): string | null {
 
 /** The saved source connections as one operation's snapshot. Throws when the table cannot be read. */
 export async function loadNameSourceConnections(): Promise<NameSourceConnections> {
-	return resolveNameSourceConnections(await readRows(), readEncryptionKeyOrNull());
+	return resolveNameSourceConnections(await readRows(), readKeyRingOrNull());
 }
 
 /**

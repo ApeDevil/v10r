@@ -9,6 +9,7 @@ import { dbopsReaper } from './dbops-reaper';
 import { dbopsRefresh } from './dbops-refresh';
 import { deskRetention } from './desk-retention';
 import { deskRetrievalSync } from './desk-retrieval-sync';
+import { encryptionReseal } from './encryption-reseal';
 import { grantRequestExpiry } from './grant-request-expiry';
 import { logCleanup } from './log-cleanup';
 import { mcpTelemetryRetention } from './mcp-telemetry-retention';
@@ -66,6 +67,9 @@ export const jobs: Record<string, Job> = {
 	'blog-orphan-reaper': { execute: blogOrphanReaper, cadence: 'daily' },
 	'dbops-refresh': { execute: dbopsRefresh, cadence: 'daily' },
 	'dbops-reaper': { execute: dbopsReaper, cadence: 'daily' },
+	// Moves credential envelopes onto the current ENCRYPTION_KEY after a rotation; a no-op
+	// re-check otherwise (docs/blueprint/security/key-ring.md).
+	'encryption-reseal': { execute: encryptionReseal, cadence: 'daily' },
 	'log-cleanup': { execute: logCleanup, cadence: 'weekly' },
 	'desk-retention': { execute: deskRetention, cadence: 'weekly' },
 	'ai-telemetry-retention': { execute: aiTelemetryRetention, cadence: 'weekly' },
