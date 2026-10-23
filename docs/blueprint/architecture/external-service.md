@@ -165,9 +165,9 @@ Rust checks never run in the app container (the wasm precedent: it stays Rust-fr
 
 `verify.ts` runs real `src/lib/server` modules under bare Bun. They reach SvelteKit's virtual `$env/dynamic/private` through the resilience barrel, so the script installs a two-module Bun plugin mapping `$env/dynamic/private` and `$app/environment` to the process environment — the same shim `src/lib/server/test/vitest.setup.ts` installs for tests (recorded in `docs/codebase-organization.md`).
 
-## Hosting on Render (prepared, not deployed)
+## Hosting on Render
 
-Render Free is the hosting candidate: a Docker web service, Frankfurt (next to v10r's Vercel functions in `fra1`). **Nothing has been created.** Creating the service is the owner's decision and a separate approval; a payment method on the Render account is the line not to cross (see the cost checklist).
+The `remote` target runs on Render Free: a Docker web service in Frankfurt (next to v10r's Vercel functions in `fra1`), `https://v10r-runtime-lab.onrender.com`, created by the owner on 2026-10-23 from the feature branch. Creating or changing it is the owner's decision; a payment method on the Render account is the line not to cross (see the cost checklist).
 
 What Render Free gives, per its docs (fetched 2026-10-22 through search summaries — the sandbox could not open render.com directly; re-check in the dashboard): 750 free instance-hours per workspace per month (suspended, not billed, when used up); spin-down after 15 minutes without inbound traffic and a cold start of about a minute; 500 build-pipeline minutes per month (overage is billed **only** with a payment method on file — without one, builds stop); no persistent disk, no SSH, single instance; must bind `0.0.0.0:$PORT` (default 10000); TLS terminated at Render's proxy; SIGTERM then SIGKILL after 30 s on deploys. **Unverified:** the Free instance's CPU/RAM (a Render article says 0.1 CPU / 512 MB), Render's request timeout, Free availability per region, and whether Render's proxy forwards raw non-ASCII bytes in paths (the service is safe either way since review).
 
@@ -180,24 +180,25 @@ What Render Free gives, per its docs (fetched 2026-10-22 through search summarie
 | Name | `v10r-runtime-lab` (becomes `https://v10r-runtime-lab.onrender.com` if free) |
 | Region | **Frankfurt (EU Central)** — cannot be changed later |
 | Instance type | **Free** |
-| Root directory | *(empty — repo root)* |
-| Dockerfile path | `./services/runtime-lab/Containerfile` |
-| Docker build context | `./services/runtime-lab` |
+| Root directory | `services/runtime-lab` — the other two paths are relative to it |
+| Dockerfile path | `./Containerfile` |
+| Docker build context | `.` (the service directory) |
+| Docker command | *(empty — the image's `ENTRYPOINT` starts the service)* |
 | Health check path | `/health/live` |
 | Auto-Deploy | **Off** (deploy manually; saves pipeline minutes) |
-| Build filters (included paths) | `services/runtime-lab/**` |
+| Build filters | none needed — with a root directory set, Render ignores changes outside it |
 | Environment | `SERVICE_TOKEN` = a fresh `openssl rand -hex 32`, **only** here and in Vercel. Do **not** set `PORT` — Render injects it |
 
-`services/runtime-lab/render.yaml` holds the same settings as a Blueprint, for reference or for a Blueprint created with that file path. Then, in **Vercel** (server-only env vars, Production): `EXTERNAL_SERVICE_REMOTE_URL=https://<service>.onrender.com` and `EXTERNAL_SERVICE_REMOTE_TOKEN=<same value>`.
+Set the root directory. The first deploy left it empty and gave repo-root paths for the Dockerfile and context; Render then sent the whole repository (8.87 MB) as the build context and the build failed at `COPY Cargo.toml` — the Containerfile expects the service directory as its context. `services/runtime-lab/render.yaml` holds the same settings as a Blueprint, for reference or for a Blueprint created with that file path. Then, in **Vercel** (server-only env vars, Production): `EXTERNAL_SERVICE_REMOTE_URL=https://<service>.onrender.com` and `EXTERNAL_SERVICE_REMOTE_TOKEN=<same value>`.
 
 ### Cost checklist
 
 - [ ] The Render workspace has **no payment method**; the plan is Hobby; the instance type reads **Free**.
 - [ ] No other paid resource is attached (no disk, no custom-domain upgrade, no paid workspace plan).
-- [ ] Auto-Deploy is **Off** and the build filter is set, so unrelated pushes spend no pipeline minutes.
+- [ ] Auto-Deploy is **Off** and the root directory is set, so unrelated pushes spend no pipeline minutes.
 - [ ] The workspace runs **no other free service**: anyone can keep this one awake by hitting its public URL every <15 minutes (~744 of the 750 monthly hours, shared across the workspace) — v10r's limiters cannot see those requests. Watch instance-hours in the dashboard.
 - [ ] Teardown is known: Settings → Delete Web Service; then remove the two Vercel env vars.
-- [ ] The vendor checklist in [`vendors.md`](../../stack/vendors.md#adding-new-vendors) is done before going live (GDPR page, DPA, `gdpr.md` row). The service receives only synthetic order events and stores nothing, but Render still sees request metadata (IPs of Vercel's functions, timing).
+- [x] The vendor checklist in [`vendors.md`](../../stack/vendors.md#adding-new-vendors): Render publishes a GDPR DPA and holds SOC 2 Type II; the compliance row, `gdpr.md` and the `/showcases/privacy/data` disclosure name it. The service receives only server-owned synthetic order events and stores nothing; Render sees request metadata (the IPs of Vercel's functions, timing), never a visitor's.
 
 ### Security checklist
 
@@ -236,7 +237,9 @@ What each figure is, and where it comes from — no figure here is estimated:
 
 Loopback figures in a shared sandbox move by ~2× between runs; read them as orders of magnitude. Failure detection: connection refused → `unreachable` in 3–34 ms (two attempts, jittered backoff); spent deadline → `timed_out` in 0.12–0.2 ms (nothing sent); a stopped container → `unreachable` in 23 ms. A **1 ms** budget lost the race to the warm local service 15–19 times in 20 across runs — which is why the lab's deadline drill uses a spent budget rather than a tiny one. Container start → first liveness answer: 318–362 ms (4 runs, image present). An unfinished request head and an idle keep-alive connection are both closed at 5.0 s. Image: 11.7 MB compressed, 46.4 MB unpacked. Build: 33 s with base images cached, 8 s for a source-only rebuild (dependency layer cached).
 
-**Remote: pending** — not deployed; see [Hosted verification](#hosted-verification-the-evidence-that-promotes-the-remote-half).
+**Render Free, Frankfurt, 2026-10-23** — first deploy, from the build and runtime logs: dependencies compiled in 15.5 s and the crate in 4.4 s on Render's builder; Render exports the layer cache to its registry, so the manifest-only dependency layer is reused by later builds. The process bound `0.0.0.0:10000` from Render's `PORT` and logged `bootMs` 0.30 (process start to listening). Render probes `HEAD /` and `GET /` once at deploy — two `404` log lines, expected: the service has no route there.
+
+**Remote round trips: pending** — the `verify.ts --target remote` run and the lab's cold/warm checks; see [Hosted verification](#hosted-verification-the-evidence-that-promotes-the-remote-half).
 
 What these numbers do **not** say: that Rust is faster. The evaluation is microseconds in any language; the boundary costs ~1 ms on loopback and will cost tens of milliseconds across a network, before any cold start. A service boundary is paid for in latency and operations — it is worth it for isolation, ownership or a runtime the app cannot host, not for speed of a small computation.
 

@@ -20,7 +20,7 @@ WORKDIR /build
 
 # Dependency layer: compile the locked dependency graph against a stub main, so source
 # edits rebuild only the crate itself. Plain layers, no BuildKit cache mounts — those are
-# not persisted on every builder (Render's is assumed cold), layers are.
+# not persisted on every builder; layers are (Render exports them to its registry).
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo 'fn main() {}' > src/main.rs \
 	&& cargo build --release --locked \

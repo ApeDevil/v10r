@@ -151,6 +151,23 @@ const categories: DataCategory[] = [
 		],
 	},
 	{
+		id: 'external-service',
+		icon: 'i-lucide-server-cog',
+		title: 'A call to the external service',
+		when: 'Only when you press a button on /showcases/external-service.',
+		basis: { article: 'Art. 6(1)(f)', label: 'Legitimate interest (abuse protection)' },
+		rows: [
+			{
+				field: 'ip bucket',
+				type: 'ip:<address> (v6 masked to /64)',
+				note: 'Rate-limit key only, in Redis for the 60-second window.',
+			},
+		],
+		notes: [
+			'Recipient: Render (Frankfurt) hosts the service. It receives server-chosen sample orders from our server, never anything you typed or your IP address.',
+		],
+	},
+	{
 		id: 'auth',
 		icon: 'i-lucide-key',
 		title: 'Account data (if you sign in)',

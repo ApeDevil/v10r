@@ -8,7 +8,7 @@ category: "Architecture & Request Pipeline"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-10-22 @ f274c25) · **Risk:** medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; hosted behaviour (Render Free, ~1 min cold starts) is documented but not yet verified
+**Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-10-22 @ f274c25) · **Risk:** medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; deployed on Render Free (Frankfurt) and observed to build and boot there, but hosted round trips and ~1 min cold starts are not yet measured
 
 A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase); hosted Render verification is pending.
 
@@ -31,7 +31,7 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 ## Docs
 
 - [docs/blueprint/architecture/external-service.md](/docs/blueprint/architecture/external-service) — The pattern: contract chain, adapter guarantees, security model, failure model, container, measurements ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/external-service.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/external-service.md))
-- [docs/blueprint/architecture/external-service.md#hosting-on-render-prepared-not-deployed](/docs/blueprint/architecture/external-service) — Exact Render Free setup, cost and security checklists, hosted-verification steps (pending) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/external-service.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/external-service.md))
+- [docs/blueprint/architecture/external-service.md#hosting-on-render](/docs/blueprint/architecture/external-service) — Exact Render Free setup (deployed 2026-10-23), cost and security checklists, hosted-verification steps (round trips pending) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/external-service.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/external-service.md))
 
 ## Code
 

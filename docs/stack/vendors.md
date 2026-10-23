@@ -27,7 +27,7 @@ All external services used by Velociraptor. This separates **what technology** w
 | Cache | Redis | **Upstash** | Easy |
 | App Hosting | SvelteKit + Node.js | **Vercel** | Medium |
 | App Hosting | SvelteKit + Bun | **Koyeb** *(planned — not deployed)* | Easy |
-| Separate service hosting | OCI container (`services/runtime-lab`, Rust) | **Render** Free, Frankfurt *(candidate — config prepared, not deployed)* | Easy — the same image runs under Podman |
+| Separate service hosting | OCI container (`services/runtime-lab`, Rust) | **Render** Free, Frankfurt (`v10r-runtime-lab`) | Easy — the same image runs under Podman |
 | Email | REST API | **Resend** (raw `fetch`, no SDK) | Easy |
 | Error Tracking | — | **None wired** — `handleError` logs structured JSON ([ops/logging.md](./ops/logging.md)) | — |
 | Analytics | Web Analytics | **Vercel Analytics** | Easy |
@@ -59,7 +59,7 @@ No image-generation or audio/STT provider is wired — [ai/ai-sdk.md](./ai/ai-sd
 | **Neon** | 0.5 GB, 100 CU-hours/mo | $19/mo | Sleeps after 5min inactivity |
 | **Vercel** | 100 GB bandwidth/mo | $20/mo | Hobby tier, 1 concurrent build |
 | **Koyeb** *(planned)* | 1 service, 512MB RAM | $5.50/mo | Nano instance, no credit card for free |
-| **Render** *(candidate)* | 750 instance-h/mo per workspace, 500 build min/mo | not evaluated | Sleeps after 15 min idle (~1 min cold start); suspends instead of billing when no card is on file — keep it that way ([setup](../blueprint/architecture/external-service.md#hosting-on-render-prepared-not-deployed)) |
+| **Render** | 750 instance-h/mo per workspace, 500 build min/mo | not evaluated | Sleeps after 15 min idle (~1 min cold start); suspends instead of billing when no card is on file — keep it that way ([setup](../blueprint/architecture/external-service.md#hosting-on-render)) |
 | **Cloudflare R2** | 10 GB, 10M reads, 1M writes | $0.015/GB/mo | Zero egress fees |
 | **Upstash** | 500K cmd/mo, 256MB | $0.20/100K cmd | Archived after 14d inactivity |
 | **Neo4j Aura** | 200K nodes, 400K relationships | $65/mo | Free tier is generous |
@@ -93,6 +93,7 @@ No image-generation or audio/STT provider is wired — [ai/ai-sdk.md](./ai/ai-sd
 | **GLEIF** | Yes (Swiss foundation, public data) | n/a — public register | Yes (Basel/Frankfurt) | n/a |
 | **Tavily** | Yes | Yes | No (US) | Yes |
 | **Brave Search** | Yes | Yes | No (US) | Yes |
+| **Render** | Yes | Yes (public DPA) | Yes (Frankfurt) | Yes (Type II) |
 
 All providers have Data Processing Agreements (DPAs) available. See [gdpr.md](./capabilities/gdpr.md) for compliance checklist.
 
@@ -438,7 +439,7 @@ There are **no local service containers** — dev runs against the same remote s
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | — (self-generated) | Web Push signing |
 | `CRON_SECRET` | — (self-generated) | Vercel cron endpoint auth |
 | `EXTERNAL_SERVICE_LOCAL_URL` / `_TOKEN` | — (self-hosted container) | External Service Lab, `local` target (optional) |
-| `EXTERNAL_SERVICE_REMOTE_URL` / `_TOKEN` | Render *(candidate)* | External Service Lab, `remote` target (optional; https only) |
+| `EXTERNAL_SERVICE_REMOTE_URL` / `_TOKEN` | Render | External Service Lab, `remote` target (optional; https only) |
 
 ---
 

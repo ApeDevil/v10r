@@ -843,8 +843,8 @@
 					"note": "The pattern: contract chain, adapter guarantees, security model, failure model, container, measurements"
 				},
 				{
-					"path": "docs/blueprint/architecture/external-service.md#hosting-on-render-prepared-not-deployed",
-					"note": "Exact Render Free setup, cost and security checklists, hosted-verification steps (pending)"
+					"path": "docs/blueprint/architecture/external-service.md#hosting-on-render",
+					"note": "Exact Render Free setup (deployed 2026-10-23), cost and security checklists, hosted-verification steps (round trips pending)"
 				}
 			],
 			"code": [
@@ -966,7 +966,7 @@
 				"Measure the boundary three ways — round trip, the service's own Server-Timing, client overhead — and read the process uptime to recognise a cold start; never claim a language is faster from these numbers.",
 				"A breaker fights a free host's cold start (it keeps refusing after the host wakes); add one only for an always-on service."
 			],
-			"risk": "medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; hosted behaviour (Render Free, ~1 min cold starts) is documented but not yet verified",
+			"risk": "medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; deployed on Render Free (Frankfurt) and observed to build and boot there, but hosted round trips and ~1 min cold starts are not yet measured",
 			"maturity": "proven",
 			"verifiedAt": "2026-10-22",
 			"verifiedSha": "f274c25"
