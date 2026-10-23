@@ -1,6 +1,6 @@
 # External service: a separately deployed backend behind a typed client
 
-How a SvelteKit app calls a backend that is **its own process, built, deployed and scaled on its own** — through one authoritative contract, one server-only service client, and a failure model that keeps the rest of the app alive when that process is not. The reference is a small Rust/Axum service (`services/order-rules/`), the service client is `src/lib/server/showcases/external-service/`, and the live proof is `/showcases/external-service`.
+How a SvelteKit app calls a backend that is **its own process, built, deployed and scaled on its own** — through one authoritative contract, one server-only service client, and a failure model that keeps the rest of the app alive when that process is not. The reference is a small Rust/Axum service, the **runtime lab** (`services/runtime-lab/`, an order-lifecycle rules engine), the service client is `src/lib/server/showcases/external-service/`, and the live proof is `/showcases/external-service`.
 
 This is a pattern for a *boundary*, not a migration: v10r stays one SvelteKit app, and Rust is incidental. The contract, service client, failure model and container would be the same for a Go or Python service.
 
@@ -17,7 +17,7 @@ Do not, when the work fits in a `$lib/server/[domain]/` module. A second deploya
 ## Architecture
 
 ```
-browser ── form POST ──▶ +page.server.ts ──▶ callService() ── HTTPS (+ Bearer) ──▶ order-rules (Rust)
+browser ── form POST ──▶ +page.server.ts ──▶ callService() ── HTTPS (+ Bearer) ──▶ runtime-lab (Rust)
            (ids only)    (honeypot, IP +      (deadline, validate,                (auth, bounds, rules,
                           global limit,        classify, time)                     Server-Timing, log)
                           sub-deadline)
@@ -27,20 +27,20 @@ The browser never talks to the service: no CORS, no public proxy, no credential 
 
 | Where | What | Rule it follows |
 |---|---|---|
-| `services/order-rules/src/order.rs` | The domain: a pure order-lifecycle state machine | No HTTP, no serde, no clock — the same domain/adapter split as `$lib/server/[domain]/` |
-| `services/order-rules/src/contract.rs` | Wire types + the OpenAPI document | The single authority for the API |
-| `services/order-rules/src/http.rs` | Routes, bearer auth, body limit, request timeout, request id, `Server-Timing`, one log line | Everything observable at the boundary, nowhere else |
-| `services/order-rules/src/main.rs` | The accept loop: header-read timeout, connection cap, graceful drain | Connection-level protection `axum::serve` does not expose |
-| `services/order-rules/src/config.rs` | `SERVICE_TOKEN`, `PORT`, `HOST` | Fail closed: no valid credential, no process |
+| `services/runtime-lab/src/order.rs` | The domain: a pure order-lifecycle state machine | No HTTP, no serde, no clock — the same domain/adapter split as `$lib/server/[domain]/` |
+| `services/runtime-lab/src/contract.rs` | Wire types + the OpenAPI document | The single authority for the API |
+| `services/runtime-lab/src/http.rs` | Routes, bearer auth, body limit, request timeout, request id, `Server-Timing`, one log line | Everything observable at the boundary, nowhere else |
+| `services/runtime-lab/src/main.rs` | The accept loop: header-read timeout, connection cap, graceful drain | Connection-level protection `axum::serve` does not expose |
+| `services/runtime-lab/src/config.rs` | `SERVICE_TOKEN`, `PORT`, `HOST` | Fail closed: no valid credential, no process |
 | `src/lib/server/showcases/external-service/client.ts` | `callService()` — the service client, the only way v10r calls the service | Framework-free; never throws for anything the network can do |
 | `…/targets.ts` + `targets.adapter.ts` | Where the service lives (`local`, `remote`) | The only `$env` read (the adapter); origin-only URLs; TLS off private hosts |
 | `…/contract.ts` | valibot mirrors of the contract + `contractDrift()` | Pinned to the generated types at compile time and to `openapi.json` at test time |
 | `…/lab.ts`, `…/presets.ts` | The showcase's checks, preset evaluations and drills | Demo code — not part of what you copy |
 | `src/lib/showcases/external-service/` | Generated types + page-safe vocabulary; `labels.ts` resolves the page's copy in `load` | No credential or URL can exist in these types; components get strings, never per-locale message modules (each Paraglide message ships all three locales — the first version of this page cost 50 KB of client JS that way) |
 
-`services/` is new on purpose: a separately deployed process is not a library. `crates/kernel` is compiled *into* the app; `services/order-rules` runs *beside* it. The directory says which (`docs/codebase-organization.md`).
+`services/` is new on purpose: a separately deployed process is not a library. `crates/kernel` is compiled *into* the app; `services/runtime-lab` runs *beside* it. The directory says which (`docs/codebase-organization.md`).
 
-**In a product**, the service client would be a domain named for the service — `src/lib/server/order-rules/` holding `client.ts`, `contract.ts`, `targets.ts`, `targets.adapter.ts` and `config.ts` — reached through its barrel like any other domain. Here it sits under `server/showcases/` because the showcase is its only caller, and `isolation.gate.test.ts` proves that.
+**In a product**, the service client would be a domain named for what the service does — `src/lib/server/order-rules/`, say — holding `client.ts`, `contract.ts`, `targets.ts`, `targets.adapter.ts` and `config.ts` — reached through its barrel like any other domain. Here it sits under `server/showcases/` because the showcase is its only caller, and `isolation.gate.test.ts` proves that.
 
 ### The API
 
@@ -148,10 +148,10 @@ The service is optional and behind a compose profile, so plain `podman compose u
 
 ```bash
 openssl rand -hex 32          # put it in .env as EXTERNAL_SERVICE_LOCAL_TOKEN
-# .env: EXTERNAL_SERVICE_LOCAL_URL=http://order-rules:8080
-podman compose --profile external-service up -d order-rules
+# .env: EXTERNAL_SERVICE_LOCAL_URL=http://runtime-lab:8080
+podman compose --profile external-service up -d runtime-lab
 podman compose up -d --force-recreate app   # env_file is read when the container is created
-podman compose stop order-rules             # the lab reports it unreachable; nothing else changes
+podman compose stop runtime-lab             # the lab reports it unreachable; nothing else changes
 ```
 
 Rust checks never run in the app container (the wasm precedent: it stays Rust-free):
@@ -177,18 +177,18 @@ What Render Free gives, per its docs (fetched 2026-10-22 through search summarie
 |---|---|
 | Source | the GitHub repository, branch `main` (or the feature branch for a trial) |
 | Runtime / Language | **Docker** |
-| Name | `v10r-order-rules` (becomes `https://v10r-order-rules.onrender.com` if free) |
+| Name | `v10r-runtime-lab` (becomes `https://v10r-runtime-lab.onrender.com` if free) |
 | Region | **Frankfurt (EU Central)** — cannot be changed later |
 | Instance type | **Free** |
 | Root directory | *(empty — repo root)* |
-| Dockerfile path | `./services/order-rules/Containerfile` |
-| Docker build context | `./services/order-rules` |
+| Dockerfile path | `./services/runtime-lab/Containerfile` |
+| Docker build context | `./services/runtime-lab` |
 | Health check path | `/health/live` |
 | Auto-Deploy | **Off** (deploy manually; saves pipeline minutes) |
-| Build filters (included paths) | `services/order-rules/**` |
+| Build filters (included paths) | `services/runtime-lab/**` |
 | Environment | `SERVICE_TOKEN` = a fresh `openssl rand -hex 32`, **only** here and in Vercel. Do **not** set `PORT` — Render injects it |
 
-`services/order-rules/render.yaml` holds the same settings as a Blueprint, for reference or for a Blueprint created with that file path. Then, in **Vercel** (server-only env vars, Production): `EXTERNAL_SERVICE_REMOTE_URL=https://<service>.onrender.com` and `EXTERNAL_SERVICE_REMOTE_TOKEN=<same value>`.
+`services/runtime-lab/render.yaml` holds the same settings as a Blueprint, for reference or for a Blueprint created with that file path. Then, in **Vercel** (server-only env vars, Production): `EXTERNAL_SERVICE_REMOTE_URL=https://<service>.onrender.com` and `EXTERNAL_SERVICE_REMOTE_TOKEN=<same value>`.
 
 ### Cost checklist
 

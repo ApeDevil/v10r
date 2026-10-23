@@ -3139,7 +3139,7 @@
 	"showcase_external_service_title": "External-Service-Labor",
 	"showcase_external_service_description": "SvelteKit ruft einen separat betriebenen Rust-Dienst über einen typisierten, authentifizierten serverseitigen Client auf — Live-Status, echte Latenz, Vertragsvalidierung und ehrliche Fehlerbehandlung.",
 	"showcase_external_service_aria": "Showcase: External-Service-Labor",
-	"showcase_external_service_lede": "Diese Seite spricht nie selbst mit dem Dienst. Jede Schaltfläche sendet an SvelteKit, dessen Server den order-rules-Dienst aufruft — einen eigenen Rust-Prozess in einem eigenen Container — mit einem Zugangsschlüssel, den der Browser nie sieht. Jeder Wert unten wird bei diesem Aufruf gemessen.",
+	"showcase_external_service_lede": "Diese Seite spricht nie selbst mit dem Dienst. Jede Schaltfläche sendet an SvelteKit, dessen Server den runtime-lab-Dienst aufruft — einen eigenen Rust-Prozess in einem eigenen Container — mit einem Zugangsschlüssel, den der Browser nie sieht. Jeder Wert unten wird bei diesem Aufruf gemessen.",
 	"showcase_external_service_path_aria": "Anfragepfad",
 	"showcase_external_service_path_note": "Rust, eigener Container",
 	"showcase_external_service_section_targets": "Ziele",

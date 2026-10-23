@@ -1,6 +1,6 @@
 ---
 title: "External service runtime (a separately deployed backend behind a typed client)"
-description: "A separately deployed service — reference: Rust/Axum order-rules in its own OCI container — is reached only through one server-only service client: a…"
+description: "A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one…"
 category: "Architecture & Request Pipeline"
 ---
 
@@ -10,7 +10,7 @@ category: "Architecture & Request Pipeline"
 
 **Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-10-22 @ f274c25) · **Risk:** medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; hosted behaviour (Render Free, ~1 min cold starts) is documented but not yet verified
 
-A separately deployed service — reference: Rust/Axum order-rules in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase); hosted Render verification is pending.
+A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase); hosted Render verification is pending.
 
 **When to use:** Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.
 
@@ -35,14 +35,14 @@ A separately deployed service — reference: Rust/Axum order-rules in its own OC
 
 ## Code
 
-- `services/order-rules/` — The reference service: own lockfile, toolchain pin, Containerfile, render.yaml ([GitHub](https://github.com/ApeDevil/v10r/tree/main/services/order-rules) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/services/order-rules))
-- `services/order-rules/src/order.rs` — The service's domain — pure order-lifecycle rules, no HTTP ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/order-rules/src/order.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/order-rules/src/order.rs))
-- `services/order-rules/src/contract.rs` — Wire types + OpenAPI document — the API's single authority ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/order-rules/src/contract.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/order-rules/src/contract.rs))
-- `services/order-rules/src/http.rs` — Bearer auth, body limit, request timeout, request id, Server-Timing, access log ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/order-rules/src/http.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/order-rules/src/http.rs))
-- `services/order-rules/src/main.rs` — Accept loop: header-read timeout, connection cap, graceful drain ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/order-rules/src/main.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/order-rules/src/main.rs))
-- `services/order-rules/src/config.rs` — Fail-closed credential and bind configuration ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/order-rules/src/config.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/order-rules/src/config.rs))
-- `services/order-rules/openapi.json` — The generated contract, committed ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/order-rules/openapi.json) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/order-rules/openapi.json))
-- `services/order-rules/Containerfile` — One distroless nonroot image for Podman and Render ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/order-rules/Containerfile) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/order-rules/Containerfile))
+- `services/runtime-lab/` — The reference service: own lockfile, toolchain pin, Containerfile, render.yaml ([GitHub](https://github.com/ApeDevil/v10r/tree/main/services/runtime-lab) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/services/runtime-lab))
+- `services/runtime-lab/src/order.rs` — The service's domain — pure order-lifecycle rules, no HTTP ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/runtime-lab/src/order.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/runtime-lab/src/order.rs))
+- `services/runtime-lab/src/contract.rs` — Wire types + OpenAPI document — the API's single authority ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/runtime-lab/src/contract.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/runtime-lab/src/contract.rs))
+- `services/runtime-lab/src/http.rs` — Bearer auth, body limit, request timeout, request id, Server-Timing, access log ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/runtime-lab/src/http.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/runtime-lab/src/http.rs))
+- `services/runtime-lab/src/main.rs` — Accept loop: header-read timeout, connection cap, graceful drain ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/runtime-lab/src/main.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/runtime-lab/src/main.rs))
+- `services/runtime-lab/src/config.rs` — Fail-closed credential and bind configuration ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/runtime-lab/src/config.rs) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/runtime-lab/src/config.rs))
+- `services/runtime-lab/openapi.json` — The generated contract, committed ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/runtime-lab/openapi.json) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/runtime-lab/openapi.json))
+- `services/runtime-lab/Containerfile` — One distroless nonroot image for Podman and Render ([GitHub](https://github.com/ApeDevil/v10r/blob/main/services/runtime-lab/Containerfile) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/services/runtime-lab/Containerfile))
 - `src/lib/server/showcases/external-service/client.ts` — callService — deadline, bounded read, validation, classification, retry policy ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/showcases/external-service/client.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/showcases/external-service/client.ts))
 - `src/lib/server/showcases/external-service/contract.ts` — valibot mirrors pinned to the generated types + contractDrift() ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/showcases/external-service/contract.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/showcases/external-service/contract.ts))
 - `src/lib/server/showcases/external-service/targets.ts` — Server-fixed targets: origin-only URLs, TLS off private hosts, credential rules ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/showcases/external-service/targets.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/showcases/external-service/targets.ts))

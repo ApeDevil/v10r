@@ -1,5 +1,5 @@
 /**
- * Verify a running order-rules service THROUGH THE REAL SERVICE CLIENT, and measure it.
+ * Verify a running runtime-lab service THROUGH THE REAL SERVICE CLIENT, and measure it.
  *
  *   bun run external-service:verify                    # target `local`
  *   bun run external-service:verify -- --target remote --samples 50

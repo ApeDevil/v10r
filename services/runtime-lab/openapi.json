@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "order-rules",
+    "title": "runtime-lab",
     "description": "v10r reference external service: deterministic order-lifecycle rules behind a bearer-authenticated HTTP API.",
     "license": {
       "name": "MIT",

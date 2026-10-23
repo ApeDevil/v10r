@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Container smoke test for services/order-rules: the image the hosts run, exercised the way
+# Container smoke test for services/runtime-lab: the image the hosts run, exercised the way
 # a host runs it. Proves what unit tests cannot — the built image starts as non-root,
 # refuses to start without a credential, answers on $PORT, enforces auth and bounds over a
 # real socket, and drains on SIGTERM.
@@ -14,9 +14,9 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 ENGINE="${CONTAINER_ENGINE:-$(command -v podman >/dev/null && echo podman || echo docker)}"
-IMAGE="${IMAGE:-localhost/order-rules:smoke}"
+IMAGE="${IMAGE:-localhost/runtime-lab:smoke}"
 PORT="${SMOKE_PORT:-18787}"
-NAME="order-rules-smoke-$$"
+NAME="runtime-lab-smoke-$$"
 TOKEN="smoke-$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 BASE="http://127.0.0.1:$PORT"
 
@@ -29,7 +29,7 @@ status_of() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
 
 if [ -z "${SKIP_BUILD:-}" ]; then
 	start=$(date +%s)
-	"$ENGINE" build -t "$IMAGE" -f services/order-rules/Containerfile services/order-rules
+	"$ENGINE" build -t "$IMAGE" -f services/runtime-lab/Containerfile services/runtime-lab
 	echo "build: $(( $(date +%s) - start ))s"
 fi
 echo "image: $IMAGE ($("$ENGINE" image inspect "$IMAGE" --format '{{.Size}}' | awk '{printf "%.1f MB", $1/1e6}'))"
@@ -54,7 +54,7 @@ echo "start: container run → first liveness answer in $(( ($(date +%s%N) - sta
 [ "$(curl -s "$BASE/health/live")" = '{"status":"live"}' ] && pass "liveness on \$PORT=9090, public, minimal" || fail "liveness"
 [ "$(status_of "$BASE/v1/status")" = 401 ] && pass "status without credential → 401" || fail "status unauthenticated"
 [ "$(status_of -H "Authorization: Bearer wrong-$TOKEN" "$BASE/v1/status")" = 401 ] && pass "status with wrong credential → 401" || fail "status wrong token"
-curl -s -H "Authorization: Bearer $TOKEN" "$BASE/v1/status" | grep -q '"service":"order-rules"' && pass "status with credential → identity" || fail "status authenticated"
+curl -s -H "Authorization: Bearer $TOKEN" "$BASE/v1/status" | grep -q '"service":"runtime-lab"' && pass "status with credential → identity" || fail "status authenticated"
 
 evaluate() { curl -s -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' --data "$1" "$BASE/v1/evaluate"; }
 evaluate '{"totalCents":100,"events":[{"type":"pay","amountCents":100},{"type":"ship"}]}' | grep -q '"outcome":"accepted"' && pass "evaluate → accepted" || fail "evaluate accepted"

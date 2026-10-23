@@ -321,7 +321,7 @@ pub fn complete(openapi: &mut utoipa::openapi::OpenApi) {
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title = "order-rules",
+        title = "runtime-lab",
         description = "v10r reference external service: deterministic order-lifecycle rules behind a bearer-authenticated HTTP API.",
         license(name = "MIT", identifier = "MIT")
     ),

@@ -1,7 +1,7 @@
-//! order-rules — v10r's reference external service.
+//! runtime-lab — v10r's reference external service.
 //!
-//! `order-rules`          serve HTTP until SIGTERM / Ctrl-C, then drain and exit 0
-//! `order-rules openapi`  print the OpenAPI document (the source of `openapi.json`)
+//! `runtime-lab`          serve HTTP until SIGTERM / Ctrl-C, then drain and exit 0
+//! `runtime-lab openapi`  print the OpenAPI document (the source of `openapi.json`)
 //!
 //! Configuration is environment-only (`config.rs`): `SERVICE_TOKEN` (required, ≥32
 //! characters), `PORT` (default 8080), `HOST` (default 0.0.0.0). Logs are one JSON
@@ -307,7 +307,7 @@ mod tests {
         check(
             "StatusResponse",
             serde_json::to_value(StatusResponse {
-                service: "order-rules".into(),
+                service: "runtime-lab".into(),
                 release: "0.1.0".into(),
                 uptime_ms: 1,
                 operations: vec![Operation::Evaluate],

@@ -1,6 +1,6 @@
-# order-rules
+# runtime-lab
 
-v10r's reference **external service**: a deterministic order-lifecycle rules engine behind an authenticated HTTP API, in its own container. The pattern, its contract chain, security model, Render setup and measurements: [`docs/blueprint/architecture/external-service.md`](../../docs/blueprint/architecture/external-service.md). The live demo: `/showcases/external-service`.
+v10r's reference **external service** — the second runtime v10r deploys and measures. What it serves: a deterministic order-lifecycle rules engine behind an authenticated HTTP API, in its own container. The pattern, its contract chain, security model, Render setup and measurements: [`docs/blueprint/architecture/external-service.md`](../../docs/blueprint/architecture/external-service.md). The live demo: `/showcases/external-service`.
 
 | File | Role |
 |---|---|
@@ -16,5 +16,5 @@ v10r's reference **external service**: a deterministic order-lifecycle rules eng
 ```bash
 bash scripts/external-service/check.sh    # Rust gate (pinned container; --host for local cargo)
 bash scripts/external-service/smoke.sh    # build + exercise the image
-podman compose --profile external-service up -d order-rules
+podman compose --profile external-service up -d runtime-lab
 ```

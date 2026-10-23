@@ -27,7 +27,7 @@ All external services used by Velociraptor. This separates **what technology** w
 | Cache | Redis | **Upstash** | Easy |
 | App Hosting | SvelteKit + Node.js | **Vercel** | Medium |
 | App Hosting | SvelteKit + Bun | **Koyeb** *(planned — not deployed)* | Easy |
-| Separate service hosting | OCI container (`services/order-rules`, Rust) | **Render** Free, Frankfurt *(candidate — config prepared, not deployed)* | Easy — the same image runs under Podman |
+| Separate service hosting | OCI container (`services/runtime-lab`, Rust) | **Render** Free, Frankfurt *(candidate — config prepared, not deployed)* | Easy — the same image runs under Podman |
 | Email | REST API | **Resend** (raw `fetch`, no SDK) | Easy |
 | Error Tracking | — | **None wired** — `handleError` logs structured JSON ([ops/logging.md](./ops/logging.md)) | — |
 | Analytics | Web Analytics | **Vercel Analytics** | Easy |

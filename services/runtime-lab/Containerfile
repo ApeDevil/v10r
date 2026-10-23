@@ -1,6 +1,6 @@
-# order-rules — one image for every host: local Podman/Docker and Render (runtime: docker).
+# runtime-lab — one image for every host: local Podman/Docker and Render (runtime: docker).
 #
-# Build context is THIS directory (services/order-rules), never the repository root: the
+# Build context is THIS directory (services/runtime-lab), never the repository root: the
 # allowlist .dockerignore admits only the manifests and src/, so an unrelated repo change
 # can neither invalidate the cache nor leak into the image.
 #
@@ -24,7 +24,7 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo 'fn main() {}' > src/main.rs \
 	&& cargo build --release --locked \
-	&& rm -rf src target/release/order-rules target/release/deps/order_rules-*
+	&& rm -rf src target/release/runtime-lab target/release/deps/runtime_lab-*
 
 COPY src ./src
 RUN cargo build --release --locked
@@ -33,9 +33,9 @@ RUN cargo build --release --locked
 # no package manager, uid 65532. The binary is PID 1 and handles SIGTERM itself
 # (src/main.rs shutdown_signal), so no init process is needed.
 FROM ${RUNTIME_IMAGE}
-COPY --from=build /build/target/release/order-rules /usr/local/bin/order-rules
+COPY --from=build /build/target/release/runtime-lab /usr/local/bin/runtime-lab
 USER nonroot
 # Default for local runs; hosts that assign a port (Render) override PORT.
 ENV PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/order-rules"]
+ENTRYPOINT ["/usr/local/bin/runtime-lab"]

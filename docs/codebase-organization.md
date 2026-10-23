@@ -187,7 +187,7 @@ fails if a sweep hard-codes a window or names a job that does not exist.
    layer (see `$lib/3d`, `$lib/desk`).
 11. **A separately deployed process?** → `services/<name>/`, with its own lockfile,
    toolchain pin and container definition, built with that directory as the context
-   (`services/order-rules`). Rust compiled *into* the app → `crates/<name>/`
+   (`services/runtime-lab`). Rust compiled *into* the app → `crates/<name>/`
    (`crates/kernel`). Its caller in the app is an ordinary domain: a service client
    (`docs/blueprint/architecture/external-service.md`).
 

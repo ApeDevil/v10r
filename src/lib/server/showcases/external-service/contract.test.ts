@@ -11,7 +11,7 @@ import { CONTRACT_MIRRORS, contractDrift } from './contract';
 
 // biome-ignore lint/suspicious/noExplicitAny: the spec is mutated as untyped JSON on purpose — that is the test.
 type Json = Record<string, any>;
-const spec: Json = JSON.parse(readFileSync('services/order-rules/openapi.json', 'utf8'));
+const spec: Json = JSON.parse(readFileSync('services/runtime-lab/openapi.json', 'utf8'));
 
 function mutated(change: (schemas: Json) => void): Json {
 	const copy = structuredClone(spec);

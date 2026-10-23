@@ -136,7 +136,7 @@ const sections = $derived([
 
 		<p class="path" aria-label={copy.path_aria}>
 			<code>browser</code> → <code>+page.server.ts</code> → <code>client.ts</code> →
-			<code>order-rules</code> <span class="path-note">({copy.path_note})</span>
+			<code>runtime-lab</code> <span class="path-note">({copy.path_note})</span>
 		</p>
 
 		{#if rejection}

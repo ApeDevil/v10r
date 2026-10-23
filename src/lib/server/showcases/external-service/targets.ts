@@ -62,7 +62,7 @@ export function resolveServiceTarget(id: ServiceTargetId, raw: RawServiceTarget)
 /**
  * Hosts a plain-http request cannot reach across the public internet: loopback, RFC 1918
  * and IPv6 unique-local addresses, `localhost`, and single-label names (a compose or
- * cluster network's service name, e.g. `order-rules`).
+ * cluster network's service name, e.g. `runtime-lab`).
  */
 export function isPrivateHost(hostname: string): boolean {
 	const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();

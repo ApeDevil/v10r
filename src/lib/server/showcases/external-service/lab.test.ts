@@ -9,7 +9,7 @@ import { UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './presets';
 import type { ResolvedServiceTarget } from './targets';
 
 const TOKEN = 'lab-test-credential-0123456789abcdef0123';
-const ORIGIN = 'https://order-rules.internal.example';
+const ORIGIN = 'https://runtime-lab.internal.example';
 const configured: ResolvedServiceTarget = {
 	id: 'remote',
 	setup: 'configured',
@@ -20,7 +20,7 @@ const respond = (status: number, body: unknown) =>
 	new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 const STATUS = {
-	service: 'order-rules',
+	service: 'runtime-lab',
 	release: '0.1.0',
 	uptimeMs: 10,
 	operations: ['evaluate'],

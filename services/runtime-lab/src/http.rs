@@ -38,7 +38,7 @@ pub const MAX_BODY_BYTES: usize = 8 * 1024;
 /// A client trickling its *head* is bounded by `main.rs` `HEADER_READ_TIMEOUT`.
 pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 pub const REQUEST_ID_HEADER: &str = "x-request-id";
-const SERVICE_NAME: &str = "order-rules";
+const SERVICE_NAME: &str = "runtime-lab";
 const MAX_REQUEST_ID_LEN: usize = 64;
 
 pub struct AppState {
@@ -421,7 +421,7 @@ mod tests {
     async fn status_reports_identity_and_limits() {
         let (status, _, body) = send(get("/v1/status", Some(TOKEN))).await;
         assert_eq!(status, StatusCode::OK);
-        assert_eq!(body["service"], "order-rules");
+        assert_eq!(body["service"], "runtime-lab");
         assert_eq!(body["release"], env!("CARGO_PKG_VERSION"));
         assert!(body["uptimeMs"].is_u64());
         assert_eq!(body["operations"], json!(["evaluate"]));

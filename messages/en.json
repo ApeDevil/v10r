@@ -3139,7 +3139,7 @@
 	"showcase_external_service_title": "External Service Lab",
 	"showcase_external_service_description": "SvelteKit calling a separately deployed Rust service through a typed, authenticated server-side client — live status, real latency, contract validation and honest failure handling.",
 	"showcase_external_service_aria": "External service lab showcase",
-	"showcase_external_service_lede": "This page never talks to the service itself. Every button posts to SvelteKit, whose server calls the order-rules service — a separate Rust process in its own container — with a credential the browser never sees. Every figure below is measured on that call.",
+	"showcase_external_service_lede": "This page never talks to the service itself. Every button posts to SvelteKit, whose server calls the runtime-lab service — a separate Rust process in its own container — with a credential the browser never sees. Every figure below is measured on that call.",
 	"showcase_external_service_path_aria": "Request path",
 	"showcase_external_service_path_note": "Rust, separate container",
 	"showcase_external_service_section_targets": "Targets",

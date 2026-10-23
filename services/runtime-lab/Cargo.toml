@@ -1,5 +1,5 @@
 [package]
-name = "order-rules"
+name = "runtime-lab"
 version = "0.1.0"
 edition = "2024"
 # The pinned toolchain (rust-toolchain.toml) is the floor: the resolver keeps every

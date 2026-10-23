@@ -1,5 +1,5 @@
 /**
- * GENERATED — do not edit. Source: services/order-rules/openapi.json
+ * GENERATED — do not edit. Source: services/runtime-lab/openapi.json
  * Regenerate: bun run external-service:contract
  */
 

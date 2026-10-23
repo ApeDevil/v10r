@@ -13,13 +13,13 @@ describe('resolveServiceTarget', () => {
 	});
 
 	it('accepts an https origin for remote and plain http for local only', () => {
-		expect(resolveServiceTarget('remote', { url: 'https://order-rules.onrender.com', token: TOKEN })).toEqual({
+		expect(resolveServiceTarget('remote', { url: 'https://runtime-lab.onrender.com', token: TOKEN })).toEqual({
 			id: 'remote',
 			setup: 'configured',
-			target: { id: 'remote', origin: 'https://order-rules.onrender.com', token: TOKEN },
+			target: { id: 'remote', origin: 'https://runtime-lab.onrender.com', token: TOKEN },
 		});
-		expect(resolveServiceTarget('local', { url: 'http://order-rules:8080', token: TOKEN }).setup).toBe('configured');
-		expect(resolveServiceTarget('remote', { url: 'http://order-rules.onrender.com', token: TOKEN })).toMatchObject({
+		expect(resolveServiceTarget('local', { url: 'http://runtime-lab:8080', token: TOKEN }).setup).toBe('configured');
+		expect(resolveServiceTarget('remote', { url: 'http://runtime-lab.onrender.com', token: TOKEN })).toMatchObject({
 			setup: 'misconfigured',
 			problem: 'insecure_url',
 		});
@@ -42,7 +42,7 @@ describe('resolveServiceTarget', () => {
 
 	it('allows plain http for local only to hosts off the public internet', () => {
 		for (const url of [
-			'http://order-rules:8080',
+			'http://runtime-lab:8080',
 			'http://127.0.0.1:8787',
 			'http://localhost:8787',
 			'http://192.168.1.20',
@@ -50,10 +50,10 @@ describe('resolveServiceTarget', () => {
 		]) {
 			expect(resolveServiceTarget('local', { url, token: TOKEN }).setup, url).toBe('configured');
 		}
-		for (const url of ['http://order-rules.example.com', 'http://8.8.8.8', 'http://172.32.0.1']) {
+		for (const url of ['http://runtime-lab.example.com', 'http://8.8.8.8', 'http://172.32.0.1']) {
 			expect(resolveServiceTarget('local', { url, token: TOKEN }), url).toMatchObject({ problem: 'insecure_url' });
 		}
-		expect(resolveServiceTarget('local', { url: 'https://order-rules.example.com', token: TOKEN }).setup).toBe(
+		expect(resolveServiceTarget('local', { url: 'https://runtime-lab.example.com', token: TOKEN }).setup).toBe(
 			'configured',
 		);
 	});
@@ -67,7 +67,7 @@ describe('resolveServiceTarget', () => {
 		['192.168.0.1', true],
 		['[::1]', true],
 		['[fd00::1]', true],
-		['order-rules', true],
+		['runtime-lab', true],
 		['172.15.0.1', false],
 		['example.com', false],
 		['[2001:db8::1]', false],

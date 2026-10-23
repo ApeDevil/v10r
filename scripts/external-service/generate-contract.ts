@@ -1,8 +1,8 @@
 /**
  * openapi.json → TypeScript types, the second link of the contract chain.
  *
- *   services/order-rules/src/contract.rs  (authority)
- *     └─ cargo test pins → services/order-rules/openapi.json
+ *   services/runtime-lab/src/contract.rs  (authority)
+ *     └─ cargo test pins → services/runtime-lab/openapi.json
  *          └─ this script → src/lib/showcases/external-service/contract.generated.ts
  *               └─ contract.ts valibot mirrors, held to these types by the compiler
  *
@@ -15,7 +15,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import openapiTS, { astToString } from 'openapi-typescript';
 
-export const SPEC_PATH = 'services/order-rules/openapi.json';
+export const SPEC_PATH = 'services/runtime-lab/openapi.json';
 export const TYPES_PATH = 'src/lib/showcases/external-service/contract.generated.ts';
 
 const HEADER = `/**

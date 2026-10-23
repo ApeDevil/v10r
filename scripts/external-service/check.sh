@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The Rust gate for services/order-rules: fmt, clippy, tests — then a freshness manifest.
+# The Rust gate for services/runtime-lab: fmt, clippy, tests — then a freshness manifest.
 #
 #   bash scripts/external-service/check.sh           # in the pinned rust container (local sessions)
 #   bash scripts/external-service/check.sh --host    # with the host's cargo (cloud sessions)
@@ -7,7 +7,7 @@
 #
 # Like scripts/wasm/build.sh, this keeps Rust out of `bun run validate`: the gate never
 # runs cargo. Instead this script, only when every check passes, records sha256 hashes of
-# the crate's inputs and of openapi.json in services/order-rules/check-manifest.json, and
+# the crate's inputs and of openapi.json in services/runtime-lab/check-manifest.json, and
 # contract-freshness.test.ts recomputes them. A Rust edit without a passing run of this
 # script turns `validate` red. Honest limit: the manifest proves "these files passed the
 # checks when this script last ran", trusting the script — not that they would pass again
@@ -22,7 +22,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 RUST_IMAGE="docker.io/library/rust:1.97-slim@sha256:8e8cf8f7fd54a2d23d5a743b3a03f56e26b6c774276c33fa0595111704ebb15c"
-CRATE=services/order-rules
+CRATE=services/runtime-lab
 CHECKS='cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked'
 
 sha() { sha256sum "$1" | cut -d' ' -f1; }

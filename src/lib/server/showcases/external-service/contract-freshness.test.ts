@@ -25,7 +25,7 @@ interface CheckManifest {
 	outputs: Record<string, string>;
 }
 
-const CRATE = 'services/order-rules';
+const CRATE = 'services/runtime-lab';
 const read = (path: string) => readFileSync(path, 'utf8');
 const sha256 = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const manifest: CheckManifest = JSON.parse(read(`${CRATE}/check-manifest.json`));

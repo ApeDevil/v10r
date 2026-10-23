@@ -1,7 +1,7 @@
 /**
  * External Service Lab — the server side of `/showcases/external-service`.
  *
- * A reference service client for a separately deployed service (`services/order-rules`),
+ * A reference service client for a separately deployed service (`services/runtime-lab`),
  * scoped to the showcase: nothing outside the route imports it (`isolation.gate.test.ts`),
  * so removing the service — or the whole showcase — cannot break anything else. In a
  * product, `client.ts`, `contract.ts`, `targets.ts`, `targets.adapter.ts` and `config.ts`

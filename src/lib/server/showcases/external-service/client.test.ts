@@ -35,7 +35,7 @@ const json = (res: http.ServerResponse, status: number, body: unknown, headers: 
 
 const LIVE = { status: 'live' };
 const STATUS = {
-	service: 'order-rules',
+	service: 'runtime-lab',
 	release: '0.1.0',
 	uptimeMs: 1234,
 	operations: ['evaluate'],

@@ -789,7 +789,7 @@
 			"tier": "deep",
 			"title": "External service runtime (a separately deployed backend behind a typed client)",
 			"category": "architecture",
-			"summary": "A separately deployed service — reference: Rust/Axum order-rules in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase); hosted Render verification is pending.",
+			"summary": "A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase); hosted Render verification is pending.",
 			"when_to_use": "Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.",
 			"avoid_when": [
 				"The work fits a $lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak",
@@ -849,36 +849,36 @@
 			],
 			"code": [
 				{
-					"path": "services/order-rules",
+					"path": "services/runtime-lab",
 					"kind": "dir",
 					"note": "The reference service: own lockfile, toolchain pin, Containerfile, render.yaml"
 				},
 				{
-					"path": "services/order-rules/src/order.rs",
+					"path": "services/runtime-lab/src/order.rs",
 					"note": "The service's domain — pure order-lifecycle rules, no HTTP"
 				},
 				{
-					"path": "services/order-rules/src/contract.rs",
+					"path": "services/runtime-lab/src/contract.rs",
 					"note": "Wire types + OpenAPI document — the API's single authority"
 				},
 				{
-					"path": "services/order-rules/src/http.rs",
+					"path": "services/runtime-lab/src/http.rs",
 					"note": "Bearer auth, body limit, request timeout, request id, Server-Timing, access log"
 				},
 				{
-					"path": "services/order-rules/src/main.rs",
+					"path": "services/runtime-lab/src/main.rs",
 					"note": "Accept loop: header-read timeout, connection cap, graceful drain"
 				},
 				{
-					"path": "services/order-rules/src/config.rs",
+					"path": "services/runtime-lab/src/config.rs",
 					"note": "Fail-closed credential and bind configuration"
 				},
 				{
-					"path": "services/order-rules/openapi.json",
+					"path": "services/runtime-lab/openapi.json",
 					"note": "The generated contract, committed"
 				},
 				{
-					"path": "services/order-rules/Containerfile",
+					"path": "services/runtime-lab/Containerfile",
 					"note": "One distroless nonroot image for Podman and Render"
 				},
 				{
