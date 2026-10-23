@@ -2,8 +2,8 @@
 	"runner": "host rustc 1.97.1 (8bab26f4f 2026-07-14)",
 	"checks": "cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked",
 	"inputs": {
-		"services/runtime-lab/Cargo.lock": "f8f0a439cdb48d5905e36f22f48eaaeb6df90b47e6ea5851368409446322a30b",
-		"services/runtime-lab/Cargo.toml": "14ddd1519bdb9853b92035b9f093e0ee4d67f5a108cfdffae591d2c7c07d3957",
+		"services/runtime-lab/Cargo.lock": "5f36dc9cd73c6feed8f4c88f07e24fd3c41f94e5aa9e386ee74440a5552565e6",
+		"services/runtime-lab/Cargo.toml": "5b98426fea3a6cc161784b01a3ba1adf8a7eebe1839356daf4876907a9af947c",
 		"services/runtime-lab/Containerfile": "a33836275083e93eaee0988c12757d3a4eb06c89c7768bfd3a1ddd6c53e154e0",
 		"services/runtime-lab/rust-toolchain.toml": "0e1df4765baf8734ca66b9217c5e3647c37a9fee6461bdc6ce7d4f002ed5f776",
 		"scripts/external-service/check.sh": "d709d9607a1cf9fa3aa332b6f07f2600cf383b35b11f13bfc4e433da0589c36e",
@@ -15,6 +15,6 @@
 		"services/runtime-lab/src/order.rs": "bc1b7e12330b2bc06366cec84344eff581e7765e19c9ba1836905c0929882708"
 	},
 	"outputs": {
-		"services/runtime-lab/openapi.json": "e769343c41ec454c096987aa391477cdea157c88618153be1055322554243d76"
+		"services/runtime-lab/openapi.json": "cc99eb74704fc1215eea31d8e586b9b1a43dc273a60960bde0721e339dbcde91"
 	}
 }

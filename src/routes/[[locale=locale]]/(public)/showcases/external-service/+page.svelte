@@ -259,6 +259,11 @@ const sections = $derived([
 											<DiagRow label={copy.label_release}>
 												<code>{check.status.data.service} {check.status.data.release}</code>
 											</DiagRow>
+											{#if check.contractSkew}
+												<DiagRow label={copy.label_contract}>
+													<span class:muted={check.contractSkew === 'none'}>{copy[`skew_${check.contractSkew}`]}</span>
+												</DiagRow>
+											{/if}
 											<DiagRow label={copy.label_uptime}>
 												<code>{Math.round(check.status.data.uptimeMs / 1000)} s</code>
 											</DiagRow>

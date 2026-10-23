@@ -5,6 +5,7 @@
  * adapter only parses the form, applies the rate limit and records timing spans.
  */
 import type { Deadline } from '$lib/server/http/deadline';
+import { CONTRACT_RELEASE } from '$lib/showcases/external-service/contract.generated';
 import type {
 	EvaluationPresetId,
 	OrderEvaluation,
@@ -16,6 +17,7 @@ import type {
 } from '$lib/showcases/external-service/types';
 import { callService, SERVICE_OPERATIONS, type ServiceCall } from './client';
 import { DRILL_DEADLINE_MS } from './config';
+import { contractSkew } from './contract-skew';
 import { EVALUATION_PRESETS, UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './presets';
 import type { ResolvedServiceTarget } from './targets';
 
@@ -65,11 +67,12 @@ function unattemptedCall<T>(resolved: ResolvedServiceTarget, operation: ServiceO
  * Liveness (public) then status (authenticated), sharing one deadline. Two calls on
  * purpose: "it is up" and "we may use it" are different facts, and the second proves the
  * credential works. Status is not attempted when liveness failed: an unanswered target
- * cannot authenticate.
+ * cannot authenticate. The status's `release` is then read against this app's contract
+ * release — a diagnosis shown on the page, never a reason to refuse a call.
  */
 export async function checkTarget(resolved: ResolvedServiceTarget, deps: LabCallDeps): Promise<PublicTargetCheck> {
 	if (resolved.setup !== 'configured') {
-		return { live: unattemptedCall(resolved, 'live'), status: null };
+		return { live: unattemptedCall(resolved, 'live'), status: null, contractSkew: null };
 	}
 	const { target } = resolved;
 	const live = toPublicServiceCall(
@@ -77,13 +80,13 @@ export async function checkTarget(resolved: ResolvedServiceTarget, deps: LabCall
 		'live',
 		await callService(target, SERVICE_OPERATIONS.live, undefined, deps),
 	);
-	if (live.outcome !== 'ok') return { live, status: null };
+	if (live.outcome !== 'ok') return { live, status: null, contractSkew: null };
 	const status = toPublicServiceCall(
 		target.id,
 		'status',
 		await callService(target, SERVICE_OPERATIONS.status, undefined, deps),
 	);
-	return { live, status };
+	return { live, status, contractSkew: status.data ? contractSkew(status.data.release, CONTRACT_RELEASE) : null };
 }
 
 export async function evaluatePreset(

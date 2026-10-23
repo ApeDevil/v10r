@@ -15,7 +15,15 @@
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { renderContractTypes, SPEC_PATH, TYPES_PATH } from '../../../../../scripts/external-service/generate-contract';
+import {
+	type ContractReleaseRecord,
+	RELEASES_PATH,
+	releaseRecordProblems,
+	renderContractTypes,
+	SPEC_PATH,
+	specRelease,
+	TYPES_PATH,
+} from '../../../../../scripts/external-service/generate-contract';
 
 interface CheckManifest {
 	/** What ran the checks: `container <image>` or `host <rustc --version>`. */
@@ -34,6 +42,31 @@ describe('external-service contract freshness', () => {
 	it('contract.generated.ts is what openapi.json generates', async () => {
 		expect(read(TYPES_PATH), 'stale — run: bun run external-service:contract').toBe(
 			await renderContractTypes(read(SPEC_PATH)),
+		);
+	});
+
+	it('every contract change carries a new release, and no patch release changes the contract', () => {
+		const record: ContractReleaseRecord = JSON.parse(read(RELEASES_PATH));
+		expect(releaseRecordProblems(record, read(SPEC_PATH))).toEqual([]);
+		// The service reports Cargo's version; the spec must carry the same one.
+		expect(read(`${CRATE}/Cargo.toml`)).toMatch(new RegExp(`^version = "${specRelease(read(SPEC_PATH))}"$`, 'm'));
+	});
+
+	it('the release rule catches an unversioned contract change and a contract-changing patch', () => {
+		const spec = JSON.parse(read(SPEC_PATH));
+		const record: ContractReleaseRecord = JSON.parse(read(RELEASES_PATH));
+		const changed = { ...spec, info: { ...spec.info }, paths: { ...spec.paths, '/v1/extra': {} } };
+		expect(releaseRecordProblems(record, JSON.stringify(changed))).toEqual([
+			expect.stringContaining(`the contract changed under release ${spec.info.version}`),
+		]);
+		const [major, minor, patch] = spec.info.version.split('.').map(Number);
+		const patched = { ...changed, info: { ...spec.info, version: `${major}.${minor}.${patch + 1}` } };
+		const patchedRecord = {
+			...record,
+			releases: { ...record.releases, [patched.info.version]: 'a-different-contract' },
+		};
+		expect(releaseRecordProblems(patchedRecord, JSON.stringify(patched)).join(' ')).toContain(
+			'a contract change needs a minor or major bump',
 		);
 	});
 

@@ -1,0 +1,7 @@
+{
+	"_comment": "Append-only, written by bun run external-service:contract: each runtime-lab release and the sha256 of its OpenAPI document without info.version. A release is never rewritten; releases sharing major.minor must share a digest (a patch never changes the contract). See docs/blueprint/architecture/external-service.md#evolving-the-contract.",
+	"releases": {
+		"0.1.0": "bb2dd41aebd454d60435f5a94194fba84271014f46d8408f7cd56b649e1afe85",
+		"0.1.1": "bb2dd41aebd454d60435f5a94194fba84271014f46d8408f7cd56b649e1afe85"
+	}
+}

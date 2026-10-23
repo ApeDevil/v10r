@@ -4,6 +4,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { startDeadline } from '$lib/server/http/deadline';
+import { CONTRACT_RELEASE } from '$lib/showcases/external-service/contract.generated';
 import { checkTarget, evaluatePreset, runDrill } from './lab';
 import { UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './presets';
 import type { ResolvedServiceTarget } from './targets';
@@ -48,7 +49,7 @@ describe('lab — targets that cannot be called', () => {
 		const evaluation = await evaluatePreset(resolved, 'fulfilled', deps(fetch));
 		const drill = await runDrill(resolved, 'credential', deps(fetch));
 		expect(fetch).not.toHaveBeenCalled();
-		expect(check).toMatchObject({ live: { outcome, requestId: null, timing: null }, status: null });
+		expect(check).toMatchObject({ live: { outcome, requestId: null, timing: null }, status: null, contractSkew: null });
 		expect(evaluation.outcome).toBe(outcome);
 		expect(drill.outcome).toBe(outcome);
 	});
@@ -64,6 +65,17 @@ describe('lab — checkTarget', () => {
 		const check = await checkTarget(configured, deps(up));
 		expect(check.live.outcome).toBe('ok');
 		expect(check.status).toMatchObject({ outcome: 'ok', data: STATUS });
+	});
+
+	it('reads the service release against this app’s contract — as a diagnosis, not a refusal', async () => {
+		const skewOf = async (release: string) => {
+			const fetch = scriptedFetch(respond(200, { status: 'live' }), respond(200, { ...STATUS, release }));
+			return checkTarget(configured, deps(fetch));
+		};
+		expect((await skewOf(CONTRACT_RELEASE)).contractSkew).toBe('none');
+		const breaking = await skewOf('99.0.0');
+		expect(breaking.contractSkew).toBe('breaking');
+		expect(breaking.status?.outcome).toBe('ok');
 	});
 });
 

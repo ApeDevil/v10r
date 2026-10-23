@@ -1,6 +1,6 @@
 [package]
 name = "runtime-lab"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 # The pinned toolchain (rust-toolchain.toml) is the floor: the resolver keeps every
 # dependency at a release that still builds on it.
