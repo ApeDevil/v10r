@@ -1,3 +1,5 @@
+import type { LimiterOptions } from '$lib/server/http/rate-limit';
+
 /**
  * Policy for the External Service Lab's calls. Every number here bounds something a
  * visitor can trigger; none of them is a product limit.
@@ -55,7 +57,20 @@ export const MAX_SERVICE_MESSAGE_LENGTH = 240;
 export const RATE_LIMIT_PREFIX = 'rl:external-service';
 export const RATE_LIMIT_MAX = 20;
 export const RATE_LIMIT_WINDOW = '60 s' as const;
+/**
+ * A slow limiter store does not refuse an honest visitor here — the global bucket below
+ * still decides, and closes on a slow store. An unavailable store refuses: with no store,
+ * no bucket counts anything.
+ */
+export const RATE_LIMIT_POLICY = { onTimeout: 'open', onError: 'closed' } as const satisfies LimiterOptions;
 
 /** Lab actions across ALL visitors — the ceiling a botnet of addresses cannot lift. */
 export const GLOBAL_RATE_LIMIT_PREFIX = 'rl:external-service:all';
 export const GLOBAL_RATE_LIMIT_MAX = 200;
+/**
+ * Closed on a slow store too. This bucket is the only cap on the outbound calls the lab
+ * makes — and so on the free host's monthly instance-hours, which anyone can otherwise
+ * spend for us. A demo that refuses while its store is slow loses nothing that matters;
+ * one that runs unbounded can exhaust the host for the month.
+ */
+export const GLOBAL_RATE_LIMIT_POLICY = { onTimeout: 'closed', onError: 'closed' } as const satisfies LimiterOptions;

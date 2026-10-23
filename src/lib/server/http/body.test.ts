@@ -23,12 +23,34 @@ describe('readJsonBounded', () => {
 		await expect(readJsonBounded(post('{"a":1}'), 1024)).resolves.toEqual({ ok: true, value: { a: 1 } });
 	});
 
-	it('refuses a declared oversize without reading the body', async () => {
+	it('refuses a declared oversize without reading the body, and releases it', async () => {
 		// Content-Length lies about a small body: if the check consulted the actual
 		// bytes it would pass, so a refusal proves the header short-circuit ran.
-		const request = post('{}', { 'content-length': '9999' });
-		await expect(readJsonBounded(request, 128)).resolves.toEqual({ ok: false, reason: 'too_large' });
-		expect(request.bodyUsed).toBe(false);
+		let pulls = 0;
+		let cancelled = false;
+		const body = new ReadableStream<Uint8Array<ArrayBuffer>>(
+			{
+				pull(controller) {
+					pulls++;
+					controller.enqueue(new TextEncoder().encode('{}'));
+					controller.close();
+				},
+				cancel() {
+					cancelled = true;
+				},
+				// No eager pull: `pulls` then counts only what the reader asked for.
+			},
+			{ highWaterMark: 0 },
+		);
+		const source = {
+			headers: new Headers({ 'content-length': '9999' }),
+			body,
+			arrayBuffer: async () => new ArrayBuffer(0),
+		};
+		await expect(readJsonBounded(source, 128)).resolves.toEqual({ ok: false, reason: 'too_large' });
+		expect(pulls).toBe(0);
+		// Cancelled, not abandoned — an abandoned fetch body pins its connection.
+		expect(cancelled).toBe(true);
 	});
 
 	it('refuses an undeclared oversize by counting bytes off the stream', async () => {

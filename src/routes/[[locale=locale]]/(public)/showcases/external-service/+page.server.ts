@@ -8,8 +8,10 @@ import {
 	checkTarget,
 	evaluatePreset,
 	GLOBAL_RATE_LIMIT_MAX,
+	GLOBAL_RATE_LIMIT_POLICY,
 	GLOBAL_RATE_LIMIT_PREFIX,
 	RATE_LIMIT_MAX,
+	RATE_LIMIT_POLICY,
 	RATE_LIMIT_PREFIX,
 	RATE_LIMIT_WINDOW,
 	RENDER_RESERVE_MS,
@@ -46,8 +48,13 @@ import type { Actions, PageServerLoad, RequestEvent } from './$types';
 /** Room for a `wake` check (WAKE_CEILING_MS) plus rendering; Vercel's own ceiling is 300 s. */
 export const config = { maxDuration: 90 };
 
-const limiter = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
-const globalLimiter = createLimiter(GLOBAL_RATE_LIMIT_PREFIX, GLOBAL_RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
+const limiter = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, RATE_LIMIT_POLICY);
+const globalLimiter = createLimiter(
+	GLOBAL_RATE_LIMIT_PREFIX,
+	GLOBAL_RATE_LIMIT_MAX,
+	RATE_LIMIT_WINDOW,
+	GLOBAL_RATE_LIMIT_POLICY,
+);
 const GLOBAL_KEY = 'all';
 
 export const load: PageServerLoad = async () => {
