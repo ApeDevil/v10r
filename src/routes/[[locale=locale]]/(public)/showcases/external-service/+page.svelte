@@ -39,6 +39,13 @@ let enhancedEvaluation = $state<{ preset: EvaluationPresetId; call: PublicServic
 let enhancedDrill = $state<{ drill: ServiceDrillId; call: PublicServiceCall } | null>(null);
 let enhancedRejection = $state<LabRejection | null>(null);
 let rejectionDismissed = $state(false);
+/**
+ * An enhanced action that produced no result. `answered`: the platform sent something other
+ * than a result — an error page or a redirect (`status` when SvelteKit could read one); or
+ * the request never got an answer at all. Earlier results stay on the page — this only says
+ * the latest action did not land.
+ */
+let unfinished = $state<{ answered: boolean; status: number | null } | null>(null);
 
 const checks = $derived<Partial<Record<ServiceTargetId, PublicTargetCheck>>>({
 	...(rendered?.kind === 'check' ? { [rendered.check.live.target]: rendered.check } : {}),
@@ -77,17 +84,34 @@ function remember(...calls: Array<PublicServiceCall | null>) {
 }
 
 function submit(key: string): SubmitFunction {
+	// Every outcome below clears `pending`. The one path that skips this callback is an
+	// aborted submission — `enhance` aborts only through `controller`, which this page never
+	// uses; a connection cut mid-request arrives here as an `error` result.
 	return () => {
 		pending = key;
 		enhancedRejection = null;
 		rejectionDismissed = false;
+		unfinished = null;
 		return async ({ result }) => {
 			pending = null;
 			if (result.type === 'failure') {
 				enhancedRejection = (result.data?.rejected as LabRejection | undefined) ?? 'invalid';
 				return;
 			}
-			if (result.type !== 'success' || !result.data) return;
+			// No lab action redirects, so a redirect is reported rather than followed.
+			if (result.type === 'redirect') {
+				unfinished = { answered: true, status: result.status };
+				return;
+			}
+			if (result.type === 'error') {
+				// `enhance` sets `status` only on a SvelteKit error result. A platform error page
+				// (Vercel's 504 at the function's time limit is HTML) fails to deserialize — a
+				// SyntaxError — while a fetch that got no answer at all rejects with a TypeError.
+				const answered = result.status !== undefined || result.error instanceof SyntaxError;
+				unfinished = { answered, status: result.status ?? null };
+				return;
+			}
+			if (!result.data) return;
 			const outcome = result.data as NonNullable<typeof form>;
 			if (!('kind' in outcome)) return;
 			if (outcome.kind === 'check') {
@@ -103,6 +127,18 @@ function submit(key: string): SubmitFunction {
 		};
 	};
 }
+
+/** Seconds a wake check has been waiting — a minute-long wait needs a visible pulse. */
+let wakeSeconds = $state(0);
+$effect(() => {
+	if (!pending?.endsWith('-wake')) return;
+	wakeSeconds = 0;
+	const started = performance.now();
+	const tick = setInterval(() => {
+		wakeSeconds = Math.floor((performance.now() - started) / 1000);
+	}, 1000);
+	return () => clearInterval(tick);
+});
 
 function coldStart(check: PublicTargetCheck): boolean | null {
 	if (!check.status?.data || !check.live.timing || !check.status.timing) return null;
@@ -141,6 +177,18 @@ const sections = $derived([
 
 		{#if rejection}
 			<Alert variant="warning" description={copy[`rejected_${rejection}`]} closable onclose={() => (rejectionDismissed = true)} />
+		{/if}
+		{#if unfinished}
+			<Alert
+				variant="error"
+				description={!unfinished.answered
+					? copy.unfinished_network
+					: unfinished.status === null
+						? copy.unfinished_server
+						: `${copy.unfinished_server} (HTTP ${unfinished.status})`}
+				closable
+				onclose={() => (unfinished = null)}
+			/>
 		{/if}
 
 		<!-- Targets -->
@@ -193,9 +241,9 @@ const sections = $derived([
 									</form>
 								{/each}
 							</Cluster>
-							{#if pending === `check-${target.id}-wake`}
-								<p class="small muted">{copy.wake_pending}</p>
-							{/if}
+							<p class="small muted" aria-live="polite">
+								{#if pending === `check-${target.id}-wake`}{copy.wake_pending} {wakeSeconds} s{/if}
+							</p>
 
 							{#if check}
 								<h4 class="subhead">{copy.label_liveness}</h4>

@@ -3243,6 +3243,8 @@
 	"showcase_external_service_rejected_rate_limited": "Zu viele Aufrufe von deiner Adresse — warte eine Minute und versuche es erneut.",
 	"showcase_external_service_rejected_rejected": "Die Anfrage wurde abgelehnt. Lade die Seite neu und versuche es erneut.",
 	"showcase_external_service_rejected_invalid": "Die Anfrage nannte ein unbekanntes Ziel, Szenario oder eine unbekannte Übung.",
+	"showcase_external_service_unfinished_server": "Der Server hat diese Aktion nicht abgeschlossen und kein Ergebnis gesendet. Deine bisherigen Ergebnisse bleiben erhalten; versuche es gleich noch einmal.",
+	"showcase_external_service_unfinished_network": "Diese Aktion hat keine Antwort bekommen — die Verbindung ist fehlgeschlagen oder abgebrochen. Deine bisherigen Ergebnisse bleiben erhalten; prüfe deine Verbindung und versuche es erneut.",
 	"showcase_external_service_boundary_contract": "Ein Vertrag: Die Rust-Typen erzeugen openapi.json, daraus entstehen die TypeScript-Typen, gegen die der Service-Client validiert. Eine Änderung auf einer Seite lässt einen Test scheitern, bevor sie eine Anfrage scheitern lässt.",
 	"showcase_external_service_boundary_auth": "Der Dienst prüft seinen Bearer-Schlüssel selbst und startet ohne ihn gar nicht. Der Schlüssel liegt in rein serverseitiger Konfiguration und erreicht nie diese Seite, eine Logzeile oder eine Fehlermeldung.",
 	"showcase_external_service_boundary_targets": "Ziele sind serverseitig festgelegt; diese Seite benennt sie nur und kann nirgendwohin zeigen. Es gibt keinen Proxy und kein CORS — der Browser spricht nie mit dem Dienst.",

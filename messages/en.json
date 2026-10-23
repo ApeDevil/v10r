@@ -3243,6 +3243,8 @@
 	"showcase_external_service_rejected_rate_limited": "Too many calls from your address — wait a minute and try again.",
 	"showcase_external_service_rejected_rejected": "The request was rejected. Reload the page and try again.",
 	"showcase_external_service_rejected_invalid": "The request named an unknown target, scenario or drill.",
+	"showcase_external_service_unfinished_server": "The server did not finish this action and sent no result. Your earlier results are kept; try again in a moment.",
+	"showcase_external_service_unfinished_network": "This action never got an answer — the connection failed or was cut off. Your earlier results are kept; check your connection and try again.",
 	"showcase_external_service_boundary_contract": "One contract: the Rust types generate openapi.json, which generates the TypeScript types the service client validates against. A change on either side fails a test before it fails a request.",
 	"showcase_external_service_boundary_auth": "The service enforces its own bearer credential and refuses to start without one. The credential lives in server-only configuration and never reaches this page, a log line or an error.",
 	"showcase_external_service_boundary_targets": "Targets are fixed on the server; this page names them, it cannot point anywhere. There is no proxy and no CORS — the browser never talks to the service.",
