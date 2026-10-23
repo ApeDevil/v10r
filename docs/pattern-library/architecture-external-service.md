@@ -8,9 +8,9 @@ category: "Architecture & Request Pipeline"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-**Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-10-22 @ f274c25) · **Risk:** medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; deployed on Render Free (Frankfurt) and observed to build and boot there, but hosted round trips and ~1 min cold starts are not yet measured
+**Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-10-22 @ f274c25) · **Risk:** medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable until rotated; running on Render Free (Frankfurt) and verified end to end from production, where a sleeping service misses the normal 8 s budget (the wake check exists for it); cold-start duration and warm percentiles are not yet measured
 
-A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase); hosted Render verification is pending.
+A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Verified locally (container, real client, showcase) and in production on Render Free Frankfurt (end to end, failure paths measured); hosted cold-start and warm percentiles are still unmeasured.
 
 **When to use:** Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.
 
@@ -31,7 +31,7 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 ## Docs
 
 - [docs/blueprint/architecture/external-service.md](/docs/blueprint/architecture/external-service) — The pattern: contract chain, adapter guarantees, security model, failure model, container, measurements ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/external-service.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/external-service.md))
-- [docs/blueprint/architecture/external-service.md#hosting-on-render](/docs/blueprint/architecture/external-service) — Exact Render Free setup (deployed 2026-10-23), cost and security checklists, hosted-verification steps (round trips pending) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/external-service.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/external-service.md))
+- [docs/blueprint/architecture/external-service.md#hosting-on-render](/docs/blueprint/architecture/external-service) — Exact Render Free setup (deployed 2026-10-23), cost and security checklists, hosted-verification steps and production figures ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/external-service.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/external-service.md))
 
 ## Code
 
@@ -59,7 +59,7 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 - `src/lib/server/showcases/external-service/isolation.gate.test.ts` — Only the showcase imports the client; env names in one module ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/showcases/external-service/isolation.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/showcases/external-service/isolation.gate.test.ts))
 - `src/lib/server/showcases/external-service/targets.test.ts` — Target rules: origins, TLS off private hosts, credential format ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/showcases/external-service/targets.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/showcases/external-service/targets.test.ts))
 - `scripts/external-service/smoke.sh` — Container lifecycle over a real socket, incl. slowloris (not in validate) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/external-service/smoke.sh) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/external-service/smoke.sh))
-- `scripts/external-service/verify.ts` — Real client against a running service, with measurements — run locally; the hosted run is pending (not in validate) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/external-service/verify.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/external-service/verify.ts))
+- `scripts/external-service/verify.ts` — Real client against a running service, with measurements — run locally; the hosted run is still to record (not in validate) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/external-service/verify.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/external-service/verify.ts))
 
 ## Proof
 
