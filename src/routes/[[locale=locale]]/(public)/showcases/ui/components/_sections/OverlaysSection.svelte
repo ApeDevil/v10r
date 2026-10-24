@@ -40,7 +40,7 @@ let tabValue = $state('account');
 				<Accordion
 					items={[
 						{ value: 'item-1', title: 'What is Velociraptor?', content: 'A full-stack template focused on performance and lightweight deployment.' },
-						{ value: 'item-2', title: 'What tech stack does it use?', content: 'SvelteKit 2, Bun, PostgreSQL (Neon), Neo4j, and more.' },
+						{ value: 'item-2', title: 'What tech stack does it use?', content: 'SvelteKit 3, Bun, PostgreSQL (Neon), Neo4j, and more.' },
 						{ value: 'item-3', title: 'How do I get started?', content: 'Clone the repo and run podman-compose up to start developing.' }
 					]}
 				/>

@@ -24,7 +24,7 @@ export async function reseedCache(): Promise<{ keyCount: number }> {
 			'showcase:json:stack-summary',
 			JSON.stringify({
 				runtime: 'Bun',
-				framework: 'SvelteKit 2',
+				framework: 'SvelteKit 3',
 				language: 'TypeScript',
 				styling: 'UnoCSS',
 				database: 'PostgreSQL + Neo4j + Redis',

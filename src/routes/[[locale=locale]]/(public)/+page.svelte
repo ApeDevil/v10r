@@ -75,7 +75,7 @@ const zones: Array<{
 	{
 		name: () => m.home_taxonomy_zone_structure(),
 		capabilities: [
-			{ icon: 'i-lucide-blocks', label: () => m.home_taxonomy_cap_framework_label(), desc: 'SvelteKit 2' },
+			{ icon: 'i-lucide-blocks', label: () => m.home_taxonomy_cap_framework_label(), desc: 'SvelteKit 3' },
 			{ icon: 'i-lucide-sparkles', label: () => m.home_taxonomy_cap_reactive_ui_label(), desc: 'Svelte 5 runes' },
 			{ icon: 'i-lucide-check-check', label: () => m.home_taxonomy_cap_lint_label(), desc: 'Biome' },
 		],

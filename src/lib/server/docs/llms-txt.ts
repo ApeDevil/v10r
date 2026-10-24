@@ -62,7 +62,7 @@ export function buildLlmsTxt(manifest: DocsManifest, origin: string = PROD_ORIGI
 	const lines: string[] = [
 		'# Velociraptor (v10r)',
 		'',
-		'> A full-stack SvelteKit 2 + Svelte 5 reference and test-sandbox: proven, high-performance',
+		'> A full-stack SvelteKit 3 + Svelte 5 reference and test-sandbox: proven, high-performance',
 		'> patterns an AI agent reads and adapts to a new project. Emulation, not cloning.',
 		'',
 		'Every documentation page below is also available as raw markdown by appending `.md` to its',
