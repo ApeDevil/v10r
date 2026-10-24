@@ -1,8 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
-import { localizeHref } from '$lib/i18n';
-import { db } from '$lib/server/db';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { db } from '#lib/server/db/index.ts';
+import { userDiscordAccounts } from '#lib/server/db/schema/notifications/discord.ts';
+import { DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI } from '$app/env/private';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals, cookies }) => {
@@ -27,9 +27,9 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 		error(403, 'Invalid OAuth state');
 	}
 
-	const clientId = env.DISCORD_CLIENT_ID;
-	const clientSecret = env.DISCORD_CLIENT_SECRET;
-	const redirectUri = env.DISCORD_REDIRECT_URI;
+	const clientId = DISCORD_CLIENT_ID;
+	const clientSecret = DISCORD_CLIENT_SECRET;
+	const redirectUri = DISCORD_REDIRECT_URI;
 
 	if (!clientId || !clientSecret || !redirectUri) {
 		error(503, 'Discord not configured');

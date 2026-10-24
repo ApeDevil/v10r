@@ -2,7 +2,7 @@
 
 The same backend logic must serve four client types: human UI (SvelteKit form actions and load functions), AI agents (Vercel AI SDK tool calls), external API (REST endpoints), and background jobs. The naive path is duplication — a form action, an API endpoint, and a tool each re-implementing the same operation. This document formalizes the pattern already in the codebase to prevent that.
 
-The answer is not a new architecture layer. Domain modules in `$lib/server/[domain]/` already are the operations layer. The job is to name that clearly, add AI tool definitions as thin wrappers, and enforce four invariants everywhere.
+The answer is not a new architecture layer. Domain modules in `#lib/server/[domain]/` already are the operations layer. The job is to name that clearly, add AI tool definitions as thin wrappers, and enforce four invariants everywhere.
 
 > For the full background jobs architecture (scheduled, reactive, manual), see [jobs.md](./jobs.md).
 
@@ -97,7 +97,7 @@ An orchestrating module exists only when a call spans multiple infrastructure ca
 
 ## The Four Invariants
 
-All code in `$lib/server/[domain]/` must follow these. Violations break cross-client reuse.
+All code in `#lib/server/[domain]/` must follow these. Violations break cross-client reuse.
 
 **1. No framework imports in domain modules.**
 
@@ -157,10 +157,10 @@ A domain module calls its own DB queries and infrastructure. To use another doma
 
 ```typescript
 // CORRECT — using barrel export
-import { sendNotification } from '$lib/server/notifications'; // index.ts barrel
+import { sendNotification } from '#lib/server/notifications/index.js'; // index.ts barrel
 
 // WRONG — reaching into internals
-import { createNotification } from '$lib/server/notifications/send'; // private
+import { createNotification } from '#lib/server/notifications/send.js'; // private
 ```
 
 ---
@@ -228,9 +228,9 @@ A tool is a thin wrapper: Zod schema describing parameters, description for the 
 // Illustrative — shipped tools live in src/lib/server/ai/tools/*.ts (e.g. search-docs.ts); none wraps notifications today
 import { tool } from 'ai';
 import { z } from 'zod';
-import { getNotifications, getUnreadCount } from '$lib/server/db/notifications/queries';
-import { markAsRead, markAllAsRead } from '$lib/server/db/notifications/mutations';
-import { PAGE_SIZE } from '$lib/server/notifications/config';
+import { getNotifications, getUnreadCount } from '#lib/server/db/notifications/queries.js';
+import { markAsRead, markAllAsRead } from '#lib/server/db/notifications/mutations.js';
+import { PAGE_SIZE } from '#lib/server/notifications/config.js';
 
 export function createNotificationTools(userId: string) {
   return {
@@ -289,7 +289,7 @@ Key points:
 - Tools return error objects, not throw. The LLM reads the error and communicates it to the user.
 - Date serialization happens inside the tool's `execute`, same as a load function.
 
-**Tool registry** in `$lib/server/ai/tools/index.ts`:
+**Tool registry** in `#lib/server/ai/tools/index.ts`:
 
 ```typescript
 // src/lib/server/ai/tools/index.ts
@@ -308,7 +308,7 @@ Wire into the chat endpoint:
 ```typescript
 // Illustrative — tools are wired in $lib/server/ai/chat-orchestrator.ts, reached
 // via the per-surface routes (src/routes/api/ai/{chatbot,deskbot}/+server.ts).
-import { createTools } from '$lib/server/ai/tools';
+import { createTools } from '#lib/server/ai/tools/index.js';
 
 const result = streamText({
   model: chatModel,
@@ -405,17 +405,17 @@ AI tools:       catch and RETURN structured error object — never throw
 
 ```typescript
 // DB errors → DbError
-import { classifyDbError } from '$lib/server/db/errors';
+import { classifyDbError } from '#lib/server/db/errors.js';
 const dbErr = classifyDbError(err);
 return json({ error: dbErr.message }, { status: dbErr.toStatus() });
 
 // AI provider errors → AiError
-import { classifyAiError } from '$lib/server/ai/errors';
+import { classifyAiError } from '#lib/server/ai/errors.js';
 const aiErr = classifyAiError(err);
 return json({ error: aiErr.message }, { status: aiErrorToStatus(aiErr.kind) });
 
 // Neo4j errors → Neo4jError
-import { classifyNeo4jError } from '$lib/server/graph/errors';
+import { classifyNeo4jError } from '#lib/server/graph/errors.js';
 const graphErr = classifyNeo4jError(err);
 ```
 
@@ -531,8 +531,8 @@ When domain modules need data from another domain:
 ```typescript
 // src/lib/server/notifications/send.ts
 // CORRECT — querying user data for delivery, one read hop
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { db } from '#lib/server/db/index.js';
+import { user } from '#lib/server/db/schema/auth/_better-auth.js';
 
 const [u] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId)).limit(1);
 ```
@@ -562,7 +562,7 @@ Extracting was justified because the same three-step sequence (DB insert → SSE
 ## Migration Path
 
 1. **Start with notifications.** The domain is already multi-consumer: UI, SSE, background cleanup, external channels. Adding AI tools is one more adapter.
-2. **Create `$lib/server/ai/tools/`** with `notifications.ts` and an `index.ts` registry.
+2. **Create `#lib/server/ai/tools/`** with `notifications.ts` and an `index.ts` registry.
 3. **Wire into the chat endpoint** via `createTools(user.id)` and `maxSteps: 5`.
 4. **Leave simple CRUD routes as-is.** A `+page.server.ts` that calls one query function is already correct. No wrapping needed.
 5. **Extract an orchestrating module only** when the second concrete consumer appears with the same multi-step need — and name it for the operation (`send.ts`), never `service.ts`.
@@ -573,7 +573,7 @@ Extracting was justified because the same three-step sequence (DB insert → SSE
 
 | Option | Why not |
 |--------|---------|
-| `$lib/server/operations/` directory | Domain colocation is better. Operations are inside their domain, not extracted to a parallel tree. |
+| `#lib/server/operations/` directory | Domain colocation is better. Operations are inside their domain, not extracted to a parallel tree. |
 | `op` prefix on functions | `sendNotification()` is already unambiguous. Prefixes add noise without clarity. |
 | Class-based DI containers | 50–200ms cold start penalty on serverless per container initialization. Plain module imports are zero-cost. |
 | CQRS infrastructure | Use the vocabulary (queries vs. mutations as directory names) but skip the infrastructure — no command buses, no event sourcing. |

@@ -1,6 +1,6 @@
-import { getNotifications, getUnreadCount } from '$lib/server/db/notifications/queries';
-import { PAGE_SIZE } from '$lib/server/notifications/config';
-import { renderNotification } from '$lib/server/notifications/render-message';
+import { getNotifications, getUnreadCount } from '#lib/server/db/notifications/queries.ts';
+import { PAGE_SIZE } from '#lib/server/notifications/config.ts';
+import { renderNotification } from '#lib/server/notifications/render-message.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url, depends }) => {
@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, url, depends }) => {
 
 	// Render each notification's message in the viewer's request locale.
 	// (Locale-rendering at delivery time uses recipient.preferences.locale instead — see
-	// $lib/server/jobs/notification-delivery.ts.)
+	// #lib/server/jobs/notification-delivery.ts.)
 	return {
 		notifications: notifications.map((n) => ({
 			...n,

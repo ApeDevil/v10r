@@ -1,5 +1,5 @@
 import { and, isNotNull, isNull, lt, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import {
 	botHits,
 	consentEvents,
@@ -8,8 +8,8 @@ import {
 	pairingCodes,
 	sessions,
 	userEvents,
-} from '$lib/server/db/schema/analytics';
-import { retentionCutoff } from '$lib/server/retention';
+} from '#lib/server/db/schema/analytics/index.ts';
+import { retentionCutoff } from '#lib/server/retention/index.ts';
 
 /**
  * Delete expired analytics rows. Every window comes from `retention/schedule.ts`;

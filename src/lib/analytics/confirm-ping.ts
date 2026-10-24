@@ -27,7 +27,7 @@
  * first interaction) while the page is demonstrably alive.
  */
 
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { beacon } from './transport';
 
 const ENDPOINT = '/api/analytics/journey/confirm';

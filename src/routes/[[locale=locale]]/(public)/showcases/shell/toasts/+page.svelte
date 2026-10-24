@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
 
 const toast = getToast();
 </script>

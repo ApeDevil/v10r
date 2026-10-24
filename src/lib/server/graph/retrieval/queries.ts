@@ -1,4 +1,4 @@
-import type { KnowledgeData } from '$lib/types/knowledge';
+import type { KnowledgeData } from '#lib/types/knowledge.ts';
 import { cypher } from '../index';
 import type { Neo4jNodeRecord, Neo4jRelRecord } from '../types';
 import { toKnowledgeData } from '../types';

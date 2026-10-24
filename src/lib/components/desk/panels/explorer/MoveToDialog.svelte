@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Dialog } from '$lib/components/primitives';
+import { Dialog } from '#lib/components/primitives/index.ts';
 import type { ExplorerState } from './explorer.state.svelte';
 import { isSameVirtualTree, VIRTUAL_ROOT } from './explorer-actions';
 import type { ExplorerNode } from './node';

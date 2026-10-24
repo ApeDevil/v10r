@@ -1,10 +1,10 @@
 <script lang="ts">
+import { Card, FormField, NavSection } from '#lib/components/composites/index.ts';
+import { NotificationCard } from '#lib/components/composites/notifications/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Select, Spinner, Textarea } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { enhance } from '$app/forms';
-import { Card, FormField, NavSection } from '$lib/components/composites';
-import { NotificationCard } from '$lib/components/composites/notifications';
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Select, Spinner, Textarea } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
 
 let { data, form } = $props();
 

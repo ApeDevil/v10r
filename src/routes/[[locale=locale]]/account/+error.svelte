@@ -1,9 +1,9 @@
 <script lang="ts">
+import { ErrorDisplay } from '#lib/components/composites/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { ErrorDisplay } from '$lib/components/composites';
-import { Button } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
 </script>
 
 <svelte:head>

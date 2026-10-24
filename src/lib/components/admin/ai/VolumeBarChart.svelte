@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Cluster } from '$lib/components/layout';
-import type { UsageVolumeDay } from '$lib/schemas/admin/model-usage';
+import { Cluster } from '#lib/components/layout/index.ts';
+import type { UsageVolumeDay } from '#lib/schemas/admin/model-usage.ts';
 
 /**
  * SSR bar chart for a daily count series. The bars are decorative (mouse-only); the

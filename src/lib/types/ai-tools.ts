@@ -4,12 +4,12 @@
  * Pure data + types, type-only imports. Safe for the client bundle BY CONSTRUCTION: the
  * manifest carries name/surface/risk/scope/capability only — no model-facing `description`
  * strings, no input schemas, no prompt text. The server tool factories
- * (`$lib/server/ai/tools/`) derive their meta maps from this list; the public
- * showcase topology (`$lib/showcases/ai/`) projects from it too; the capability that
- * mounts each tool (`$lib/server/ai/capabilities/`) is pinned to it by a drift test.
+ * (`#lib/server/ai/tools//index.ts`) derive their meta maps from this list; the public
+ * showcase topology (`#lib/showcases/ai/`) projects from it too; the capability that
+ * mounts each tool (`#lib/server/ai/capabilities/`) is pinned to it by a drift test.
  * One source, no drift.
  *
- * Follows the `$lib/types/retrieval-trace.ts` precedent: a contract module the server emits
+ * Follows the `#lib/types/retrieval-trace.ts` precedent: a contract module the server emits
  * against and the client renders from.
  */
 
@@ -64,7 +64,7 @@ export interface DeskToolMeta extends ToolMeta {
  * Where the content of a tool's result comes from. `system` — a corpus v10r owns (the catalog,
  * the project docs, the pattern registry). `user` — anything a user wrote or ingested, file
  * names included: it may carry text shaped like instructions, so it reaches the model wrapped
- * in `<untrusted-content>` (`$lib/server/ai/untrusted-content.ts`).
+ * in `<untrusted-content>` (`#lib/server/ai/untrusted-content.ts`).
  */
 export type ToolResultOrigin = 'system' | 'user';
 
@@ -79,7 +79,7 @@ export type ToolReach = 'internal' | 'external';
  * One entry in the declarative tool registry (`TOOL_MANIFEST` below) — the single source
  * of truth for a tool's surface + risk + owning capability (+ gating scope for deskbot).
  * The derived meta maps (`chatbotToolMeta`/`deskbotToolMeta`/`allToolMeta` in
- * `$lib/server/ai/tools/`) are projected from this, so they can't drift from the manifest.
+ * `#lib/server/ai/tools//index.ts`) are projected from this, so they can't drift from the manifest.
  * Chatbot tools carry no scope; deskbot tools always do — enforced by this discriminated
  * union.
  */
@@ -115,8 +115,8 @@ export const toolLabelKey = (toolName: string) => `ai_tool_${toolName}`;
  * DERIVED from this list, so a new tool can't drift out of sync with its meta: add one
  * entry here and the chatbot/deskbot/union maps pick it up automatically.
  *
- * The tool *factories* stay in `$lib/server/ai/tools/*` and are mounted by the capability
- * each entry names (`$lib/server/ai/capabilities/*`) — their signatures are heterogeneous
+ * The tool *factories* stay in `#lib/server/ai/tools/*` and are mounted by the capability
+ * each entry names (`#lib/server/ai/capabilities/*`) — their signatures are heterogeneous
  * (per-turn sinks for retrieval, scope + deskLayout for desk), so a uniform `factory` field
  * would force an awkward shape for no correctness gain. The capabilities are locked to this
  * manifest by the drift-guard test in `profile/profile.test.ts`, which asserts each

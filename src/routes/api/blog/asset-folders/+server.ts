@@ -1,10 +1,10 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { createAssetFolder, listAssetFolders } from '$lib/server/blog/asset-folders';
-import { FolderNameConflictError } from '$lib/server/db/shared/folder-tree';
-import { guardApiBlogAuthor } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { createAssetFolder, listAssetFolders } from '#lib/server/blog/asset-folders.ts';
+import { FolderNameConflictError } from '#lib/server/db/shared/folder-tree.ts';
+import { guardApiBlogAuthor } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:asset-folders', 10, '1 m');

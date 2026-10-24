@@ -1,9 +1,9 @@
 <script lang="ts">
-import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
-import { MarkdownProse } from '$lib/components/composites';
-import { PageContainer, Stack } from '$lib/components/layout';
-import { Typography } from '$lib/components/primitives';
-import { formatDate } from '$lib/i18n';
+import { hydrateEmbeds } from '#lib/actions/hydrate-embeds.ts';
+import { MarkdownProse } from '#lib/components/composites/index.ts';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import { Typography } from '#lib/components/primitives/index.ts';
+import { formatDate } from '#lib/i18n/index.ts';
 
 let { data } = $props();
 

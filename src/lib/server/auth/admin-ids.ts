@@ -5,7 +5,7 @@
  * immutable opaque tokens, so admin can't be transferred by re-claiming an email.
  *
  * This is a **leaf module** (zero framework imports): the framework-free AI orchestrator
- * imports it directly, while `auth/guards.ts` feeds it `$env/dynamic/private` through the
+ * imports it directly, while `auth/guards.ts` feeds it `$app/env/private` through the
  * pure `parseAdminIds`. Both share this one parser — no divergent copies.
  */
 
@@ -28,7 +28,7 @@ export function parseAdminIds(raw: string | undefined | null): string[] {
 /**
  * All configured admin ids, read from `process.env`. For framework-free callers (the AI
  * orchestrator). SvelteKit code should call `auth/guards.isAdmin`, which reads
- * `$env/dynamic/private` through the same `parseAdminIds`.
+ * `$app/env/private` through the same `parseAdminIds`.
  */
 export function getAdminUserIds(): string[] {
 	return parseAdminIds(process.env.ADMIN_USER_ID);

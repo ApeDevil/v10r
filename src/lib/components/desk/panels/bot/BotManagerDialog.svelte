@@ -1,8 +1,8 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
-import Dialog from '$lib/components/primitives/dialog/Dialog.svelte';
-import Drawer from '$lib/components/primitives/drawer/Drawer.svelte';
-import Tabs from '$lib/components/primitives/tabs/Tabs.svelte';
+import Dialog from '#lib/components/primitives/dialog/Dialog.svelte';
+import Drawer from '#lib/components/primitives/drawer/Drawer.svelte';
+import Tabs from '#lib/components/primitives/tabs/Tabs.svelte';
 import BotContextSection from './BotContextSection.svelte';
 import BotProviderSection from './BotProviderSection.svelte';
 import BotStorageSection from './BotStorageSection.svelte';

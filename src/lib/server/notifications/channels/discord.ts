@@ -1,9 +1,9 @@
-import { env } from '$env/dynamic/private';
+import { DISCORD_BOT_TOKEN } from '$app/env/private';
 import type { DeliveryChannel, DeliveryPayload, DeliveryResult } from './types';
 
 export class DiscordChannel implements DeliveryChannel {
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
-		const botToken = env.DISCORD_BOT_TOKEN;
+		const botToken = DISCORD_BOT_TOKEN;
 		if (!botToken) {
 			return {
 				success: false,

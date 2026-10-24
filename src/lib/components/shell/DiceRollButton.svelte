@@ -5,10 +5,10 @@
  * Follows SidebarTriggers.svelte pattern.
  */
 
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { getStyle } from '$lib/state/style.svelte';
-import { getToast } from '$lib/state/toast.svelte';
-import { cn } from '$lib/utils/cn';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { getStyle } from '#lib/state/style.svelte.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	forceExpanded?: boolean;

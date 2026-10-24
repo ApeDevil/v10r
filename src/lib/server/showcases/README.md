@@ -1,4 +1,4 @@
-# `$lib/server/showcases`
+# `#lib/server/showcases`
 
 Server code that exists to **demonstrate** a pattern, not to run the product.
 

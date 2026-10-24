@@ -2,8 +2,8 @@
  * Plain-language reasons for the composition core's diagnostic codes. The core speaks in
  * codes so every surface can word them for its own audience; this is the showcase's wording.
  */
-import * as m from '$lib/paraglide/messages';
-import type { CompositionDiagnostic, DiagnosticCode, PortMismatch } from '$lib/product-composition';
+import * as m from '#lib/paraglide/messages.js';
+import type { CompositionDiagnostic, DiagnosticCode, PortMismatch } from '#lib/product-composition/index.ts';
 
 const REASONS: Record<Exclude<DiagnosticCode, 'port.incompatible'>, () => string> = {
 	'definition.missing': m.showcase_3d_compose_diagnostic_definition_missing,

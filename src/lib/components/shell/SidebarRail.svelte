@@ -1,9 +1,9 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { page } from '$app/state';
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
 import DiceRollButton from './DiceRollButton.svelte';
 import SidebarLogo from './SidebarLogo.svelte';
 import SidebarNav from './SidebarNav.svelte';

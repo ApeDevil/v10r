@@ -9,9 +9,13 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { DEV_SCOPE_PATTERN, PROD_SCOPE_MARKER, type TelemetryOrigin } from '$lib/server/db/analytics/telemetry-origin';
-import { rowsOf } from '$lib/server/db/rows';
+import {
+	DEV_SCOPE_PATTERN,
+	PROD_SCOPE_MARKER,
+	type TelemetryOrigin,
+} from '#lib/server/db/analytics/telemetry-origin.ts';
+import { db } from '#lib/server/db/index.ts';
+import { rowsOf } from '#lib/server/db/rows.ts';
 
 /** Numeric-value guard — `metadata->>'value'` is untyped JSON text. */
 const NUMERIC = '^[0-9]+(\\.[0-9]+)?$';

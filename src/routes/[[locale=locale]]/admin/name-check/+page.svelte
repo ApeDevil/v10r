@@ -1,13 +1,13 @@
 <script lang="ts">
-import type { SubmitFunction } from '@sveltejs/kit';
+import { Alert, Card, ConfirmDialog, FormField } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Spinner, Switch, Typography } from '#lib/components/primitives/index.ts';
+import { formatRelative } from '#lib/i18n/index.ts';
+import type { NameSourceTestResult } from '#lib/name-check/connection.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import type { SubmitFunction } from '$app/forms';
 import { enhance } from '$app/forms';
 import { page } from '$app/state';
-import { Alert, Card, ConfirmDialog, FormField } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Spinner, Switch, Typography } from '$lib/components/primitives';
-import { formatRelative } from '$lib/i18n';
-import type { NameSourceTestResult } from '$lib/name-check/connection';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 
@@ -80,18 +80,18 @@ function enhanceCard(vendor: Vendor) {
 			update,
 		}: {
 			result: { type: string; data?: Record<string, unknown> };
-			update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+			update: (opts?: { reset?: boolean; refreshAll?: boolean }) => Promise<void>;
 		}) => {
 			submitting = null;
 			if (result.type === 'failure') {
 				const message = (result.data?.message as string | undefined) || copy.unavailable_title;
 				cardErrors[vendor] = message;
 				toast.error(message);
-				return update({ reset: false, invalidateAll: false });
+				return update({ reset: false, refreshAll: false });
 			}
 			if (kind === 'test') {
 				if (result.type === 'success' && result.data?.test) testResults[vendor] = result.data.test as TestView;
-				return update({ reset: false, invalidateAll: false });
+				return update({ reset: false, refreshAll: false });
 			}
 			if (result.type === 'success' && result.data?.message) toast.success(result.data.message as string);
 			return update();

@@ -12,7 +12,7 @@ This is a pattern for a *boundary*, not a migration: v10r stays one SvelteKit ap
 
 Reach for a separate service when one responsibility genuinely needs a **different runtime, release cadence or resource profile** from the app: a long-lived worker, a CPU-heavy engine, a component another team or product also calls, a language-specific library.
 
-Do not, when the work fits in a `$lib/server/[domain]/` module. A second deployable doubles the things that can be down, the configuration that can drift, and the places a credential lives. In-process alternatives are cheaper, in order: a domain module (`multi-client-core`), a Web Worker or wasm for client-side compute (`architecture-wasm-kernel`), a queue worker on the same host (`workers.md`). "Rust is faster" is not a reason by itself — see [Measurement](#measurement).
+Do not, when the work fits in a `#lib/server/[domain]/` module. A second deployable doubles the things that can be down, the configuration that can drift, and the places a credential lives. In-process alternatives are cheaper, in order: a domain module (`multi-client-core`), a Web Worker or wasm for client-side compute (`architecture-wasm-kernel`), a queue worker on the same host (`workers.md`). "Rust is faster" is not a reason by itself — see [Measurement](#measurement).
 
 ## Architecture
 
@@ -27,7 +27,7 @@ The browser never talks to the service: no CORS, no public proxy, no credential 
 
 | Where | What | Rule it follows |
 |---|---|---|
-| `services/runtime-lab/src/order.rs` | The domain: a pure order-lifecycle state machine | No HTTP, no serde, no clock — the same domain/adapter split as `$lib/server/[domain]/` |
+| `services/runtime-lab/src/order.rs` | The domain: a pure order-lifecycle state machine | No HTTP, no serde, no clock — the same domain/adapter split as `#lib/server/[domain]/` |
 | `services/runtime-lab/src/contract.rs` | Wire types + the OpenAPI document | The single authority for the API |
 | `services/runtime-lab/src/http.rs` | Routes, bearer auth, body limit, request timeout, request id, `Server-Timing`, one log line | Everything observable at the boundary, nowhere else |
 | `services/runtime-lab/src/main.rs` | The accept loop: header-read timeout, header-size cap, connection cap, graceful drain | Connection-level protection `axum::serve` does not expose |
@@ -175,7 +175,7 @@ Invariants, each with its proof:
 | Functional routes require the credential, checked by the service | `functional_routes_refuse_missing_and_wrong_credentials`; the `credential` drill; `verify.ts` |
 | Every protected path declares the bearer scheme in the contract, and the client agrees | `every_functional_route_requires_the_bearer_scheme_in_the_contract`; `contract.test.ts` operation table |
 | Missing, short or malformed credential fails closed | `config.rs` tests; smoke (exit 2); client: `short_token` / `malformed_token` → `misconfigured`, nothing sent |
-| Credentials never reach a client bundle, a result, a log or an error | env read only in `targets.adapter.ts` (`isolation.gate.test.ts`), `$lib/server` + `$env/dynamic/private`; client/lab tests assert absence on success and failure paths; smoke checks container logs; the built client bundle contains no `EXTERNAL_SERVICE_` name |
+| Credentials never reach a client bundle, a result, a log or an error | env read only in `targets.adapter.ts` (`isolation.gate.test.ts`), `#lib/server` + `$env/dynamic/private`; client/lab tests assert absence on success and failure paths; smoke checks container logs; the built client bundle contains no `EXTERNAL_SERVICE_` name |
 | Input is bounded and validated by the service itself | 8 KiB body, ≤64 events, value ranges, `deny_unknown_fields`; `invalid_input_never_reaches_the_rules`; the `unvalidated` drill |
 | Hostile bytes, slow clients and connection floods do not take the service down | `hostile_utf8_is_clipped_not_panicked_on`; smoke's unfinished-head and 20 KB-head (`431`) checks; the connection cap |
 | A rotation never refuses the caller, and never weakens the credential | `config.rs` `a_previous_credential_is_optional_and_held_to_the_same_rules`; `http.rs` `the_previous_credential_is_accepted_during_a_rotation_and_nothing_else_is`; smoke |

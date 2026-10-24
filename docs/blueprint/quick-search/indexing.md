@@ -2,7 +2,7 @@
 
 ## Lane-A Shard
 
-The Lane-A shard is a prerendered JSON array of `SearchRecord` objects — titles only, no body text. It is built at deploy time by `buildSearchIndex(locale)` in `$lib/server/search/query.ts` and served as a static CDN asset.
+The Lane-A shard is a prerendered JSON array of `SearchRecord` objects — titles only, no body text. It is built at deploy time by `buildSearchIndex(locale)` in `#lib/server/search/query.ts` and served as a static CDN asset.
 
 **Route:** `GET /api/search-index/[locale]`
 **Handler:** `src/routes/api/search-index/[locale]/+server.ts`
@@ -15,11 +15,11 @@ The shard is lazy-fetched on the first palette open and held in memory for the s
 
 ## Server Adapters
 
-All adapters live in `$lib/server/search/adapters/` and produce `SearchRecord[]`.
+All adapters live in `#lib/server/search/adapters/` and produce `SearchRecord[]`.
 
 ### `pages.ts`
 
-Source: the nav registry (`$lib/nav`). Paraglide labels — genuinely localized, no fallback badge.
+Source: the nav registry (`#lib/nav/index.js`). Paraglide labels — genuinely localized, no fallback badge.
 
 Also injects two public pages absent from the nav registry: `/auth/login` (Log in) and `/showcases/jobs` (Jobs). The index covers these public routes even though nav omits them.
 
@@ -27,7 +27,7 @@ Also injects two public pages absent from the nav registry: `/auth/login` (Log i
 
 ### `showcases.ts`
 
-Source: showcase card tree (`$lib/showcases/registry`) + curated in-page sections (`$lib/showcases/sections`).
+Source: showcase card tree (`#lib/showcases/registry`) + curated in-page sections (`$lib/showcases/sections`).
 
 Card and sublink titles are Paraglide message functions resolved per index shard — genuinely localized, `localeFallback: false`. Only the curated in-page section titles remain English-only: `localeFallback: true` for `de`/`ru`, rendered with an "EN" badge and a small rank penalty.
 
@@ -35,7 +35,7 @@ Sections produce `surface: 'section'` records with `anchor: '#anchorId'` for dee
 
 ### `docs.ts`
 
-Source: build-time markdown manifest (`$lib/server/docs/manifest`).
+Source: build-time markdown manifest (`#lib/server/docs/manifest.js`).
 
 Two output modes:
 - **Lane A** (`docTitleRecords`): title + description, no body. `localeFallback: true` for non-EN locales.

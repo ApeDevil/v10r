@@ -14,14 +14,14 @@
  *
  * See `docs/blueprint/ai/surfaces.md` (retrieval: one kernel, two profiles).
  */
-import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
-import { getMarkdownByFileId, getSpreadsheetByFileId, listFileTimestamps } from '$lib/server/db/desk/queries';
-import { deleteDocument, markDocumentCurrent } from '$lib/server/db/retrieval/mutations';
-import { getDocumentBySourcePath, listDocumentOrigins } from '$lib/server/db/retrieval/queries';
-import { deferAfterResponse } from '$lib/server/platform';
-import { retrieve } from '$lib/server/retrieval';
-import { ingestIfChanged } from '$lib/server/retrieval/ingest';
-import type { RankedChunk, RetrievalResult } from '$lib/server/retrieval/types';
+import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
+import { getMarkdownByFileId, getSpreadsheetByFileId, listFileTimestamps } from '#lib/server/db/desk/queries.ts';
+import { deleteDocument, markDocumentCurrent } from '#lib/server/db/retrieval/mutations.ts';
+import { getDocumentBySourcePath, listDocumentOrigins } from '#lib/server/db/retrieval/queries.ts';
+import { deferAfterResponse } from '#lib/server/platform/index.ts';
+import { retrieve } from '#lib/server/retrieval/index.ts';
+import { ingestIfChanged } from '#lib/server/retrieval/ingest/index.ts';
+import type { RankedChunk, RetrievalResult } from '#lib/server/retrieval/types.ts';
 
 /** Stable back-pointer from a retrieval document to its originating desk file. */
 export const deskSourcePath = (fileId: string) => `desk_file_${fileId}`;

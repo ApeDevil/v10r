@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 
 // The chatbot's trust gate: post-stream citation verification. The parallel slot on
 // the deskbot page is ApprovalLifecycle — one question ("what makes this surface

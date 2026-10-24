@@ -13,8 +13,8 @@ import {
 	createGridResolver,
 	isFormulaError,
 	parseCellRef,
-} from '$lib/desk/formula';
-import { persistedCell, rawText, type SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
+} from '#lib/desk/formula.ts';
+import { persistedCell, rawText, type SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
 
 export interface SpreadsheetCell {
 	/** What the user typed (may be a formula like "=SUM(A1:A3)") */

@@ -1,9 +1,9 @@
-import { env } from '$env/dynamic/private';
-import { normalizeIpKey } from '$lib/server/abuse';
-import { guardCronRequest } from '$lib/server/http/cron-guard';
-import { apiOk } from '$lib/server/http/response';
-import { jobsDueOn } from '$lib/server/jobs';
-import { type JobResult, runJob } from '$lib/server/jobs/runner';
+import { normalizeIpKey } from '#lib/server/abuse/index.ts';
+import { guardCronRequest } from '#lib/server/http/cron-guard.ts';
+import { apiOk } from '#lib/server/http/response.ts';
+import { jobsDueOn } from '#lib/server/jobs/index.ts';
+import { type JobResult, runJob } from '#lib/server/jobs/runner.ts';
+import { CRON_SECRET } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 /**
@@ -24,7 +24,7 @@ import type { RequestHandler } from './$types';
 export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
 
 export const GET: RequestHandler = async ({ request, locals }) => {
-	const denied = await guardCronRequest(request, normalizeIpKey(locals.clientIp) ?? 'anon', env.CRON_SECRET);
+	const denied = await guardCronRequest(request, normalizeIpKey(locals.clientIp) ?? 'anon', CRON_SECRET);
 	if (denied) return denied;
 
 	const results: JobResult[] = [];

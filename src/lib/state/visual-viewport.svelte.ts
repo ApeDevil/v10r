@@ -19,7 +19,7 @@
  */
 
 import { untrack } from 'svelte';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 const OPEN_THRESHOLD = 150;
 const CLOSE_THRESHOLD = 100;

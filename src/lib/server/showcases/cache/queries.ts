@@ -7,9 +7,8 @@ import type {
 	RateLimitResult,
 	RedisType,
 	TtlSnapshot,
-} from '$lib/server/cache';
-import { CacheError } from '$lib/server/cache';
-import { redis } from '$lib/server/cache/index';
+} from '#lib/server/cache/index.ts';
+import { CacheError, redis } from '#lib/server/cache/index.ts';
 import { SHOWCASE_CACHE_PREFIX } from './guards';
 
 // Module-level ephemeral cache for rate limiter (persists across warm invocations)

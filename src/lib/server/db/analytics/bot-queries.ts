@@ -12,8 +12,8 @@
  */
 
 import { and, count, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { botHits, botIpRanges } from '$lib/server/db/schema/analytics/bot-hits';
+import { db } from '#lib/server/db/index.ts';
+import { botHits, botIpRanges } from '#lib/server/db/schema/analytics/bot-hits.ts';
 
 function cutoff(days: number): Date {
 	return new Date(Date.now() - days * 86400000);

@@ -285,20 +285,20 @@ export type { CommandPaletteItem } from './types';
 
 ```typescript
 // ✅ Good: Import atoms from primitives
-import { Button, Input, Avatar } from '$lib/components/primitives';
+import { Button, Input, Avatar } from '#lib/components/primitives/index.js';
 
 // ✅ Good: Import molecules and organisms from composites
-import { FormField, Pagination, EmptyState } from '$lib/components/composites';
-import { CommandPalette } from '$lib/components/composites/command-palette';
+import { FormField, Pagination, EmptyState } from '#lib/components/composites/index.js';
+import { CommandPalette } from '#lib/components/composites/command-palette/index.js';
 
 // ✅ Good: Import templates from shell
-import { Sidebar, UserMenu, Footer } from '$lib/components/shell';
+import { Sidebar, UserMenu, Footer } from '#lib/components/shell/index.js';
 
 // ❌ Bad: Deep imports into component internals
-import CommandPalette from '$lib/components/composites/command-palette/CommandPalette.svelte';
+import CommandPalette from '#lib/components/composites/command-palette/CommandPalette.svelte';
 
 // ❌ Bad: Importing atom when you need molecule
-import { Input } from '$lib/components/primitives';  // Use FormField instead for forms
+import { Input } from '#lib/components/primitives/index.js';  // Use FormField instead for forms
 ```
 
 ---
@@ -346,7 +346,7 @@ Don't create a directory for single components with no relationships.
 | `ToastContainer.svelte` | `composites/toast/` | Singleton renderer in root layout |
 | `Toaster.svelte` | `composites/toast/` | Alternate display variant |
 
-Both live in `composites/toast/`. `shell/index.ts` re-exports `ToastContainer` so the root layout can import it from `$lib/components/shell` — there is no `shell/ToastContainer.svelte` file.
+Both live in `composites/toast/`. `shell/index.ts` re-exports `ToastContainer` so the root layout can import it from `#lib/components/shell` — there is no `shell/ToastContainer.svelte` file.
 
 ### Quick Search Trigger
 

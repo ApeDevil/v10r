@@ -20,10 +20,10 @@
  *               floating chrome).
  */
 import type { Snippet } from 'svelte';
-import type { ActivityBarItem } from '$lib/desk/layout.types';
-import * as m from '$lib/paraglide/messages';
-import { getModals } from '$lib/state/modals.svelte';
-import { cn } from '$lib/utils/cn';
+import type { ActivityBarItem } from '#lib/desk/layout.types.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getModals } from '#lib/state/modals.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 import DockMobileBar from './DockMobileBar.svelte';
 import DockMobileTabs from './DockMobileTabs.svelte';
 import { getDeskSettings } from './desk-settings.state.svelte';

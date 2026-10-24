@@ -2,11 +2,11 @@
 import type { Snippet } from 'svelte';
 import { untrack } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
-import { browser } from '$app/environment';
-import { apiFetch } from '$lib/api';
-import { ConfirmDialog } from '$lib/components/composites/confirm-dialog';
-import type { ActivityBarItem, LayoutNode, PanelDefinition } from '$lib/desk/layout.types';
-import * as m from '$lib/paraglide/messages';
+import { apiFetch } from '#lib/api.ts';
+import { ConfirmDialog } from '#lib/components/composites/confirm-dialog/index.ts';
+import type { ActivityBarItem, LayoutNode, PanelDefinition } from '#lib/desk/layout.types.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { browser } from '$app/env';
 import DeskPreferencesDialog from './DeskPreferencesDialog.svelte';
 import DeskShortcuts from './DeskShortcuts.svelte';
 import DockActivityBar from './DockActivityBar.svelte';

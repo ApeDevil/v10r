@@ -2,12 +2,12 @@ import { redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { localizeHref } from '$lib/i18n';
-import { notificationSettingsSchema } from '$lib/schemas/app/notification-settings';
-import { db } from '$lib/server/db';
-import { getOrCreateSettings, updateSettings } from '$lib/server/db/notifications/mutations';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { notificationSettingsSchema } from '#lib/schemas/app/notification-settings.ts';
+import { db } from '#lib/server/db/index.ts';
+import { getOrCreateSettings, updateSettings } from '#lib/server/db/notifications/mutations.ts';
+import { userDiscordAccounts } from '#lib/server/db/schema/notifications/discord.ts';
+import { userTelegramAccounts } from '#lib/server/db/schema/notifications/telegram.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {

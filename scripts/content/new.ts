@@ -15,7 +15,7 @@
 import { mkdir, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { v7 as uuidv7 } from 'uuid';
-import { serializeContentFile } from '$lib/server/content/frontmatter';
+import { serializeContentFile } from '#lib/server/content/frontmatter.ts';
 
 interface Args {
 	slug: string;

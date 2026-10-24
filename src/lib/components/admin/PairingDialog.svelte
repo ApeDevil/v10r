@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onDestroy } from 'svelte';
-import { Button, Dialog } from '$lib/components/primitives';
+import { Button, Dialog } from '#lib/components/primitives/index.ts';
 
 function formatCodeForDisplay(code: string): string {
 	return `${code.slice(0, 3)} ${code.slice(3)}`;

@@ -22,7 +22,11 @@ URL-based locale routing using an optional [[locale=locale]] catch-all segment a
 
 ## Code
 
-- `src/params/locale.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/params/locale.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/params/locale.ts))
+- `src/params.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/params.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/params.ts))
+
+## Tests
+
+- `src/params.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/params.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/params.test.ts))
 
 ## Proof
 

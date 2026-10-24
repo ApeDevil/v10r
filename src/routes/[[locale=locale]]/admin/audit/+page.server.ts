@@ -1,6 +1,6 @@
-import { getDistinctActions, queryAuditLog } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/http/guards';
-import { readUrlState } from '$lib/state/url-state';
+import { getDistinctActions, queryAuditLog } from '#lib/server/admin/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { readUrlState } from '#lib/state/url-state.ts';
 import type { PageServerLoad } from './$types';
 import { auditListParams } from './list-params';
 

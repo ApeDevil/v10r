@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
-import { getLatestRevision, getPostById, getTagsForPost, updatePostMetadata } from '$lib/server/blog';
-import { getPostFolder } from '$lib/server/blog/post-folders';
-import { db } from '$lib/server/db';
-import { domain } from '$lib/server/db/schema/blog';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
-import { SLUG_PATTERN } from '$lib/server/schemas';
+import { getLatestRevision, getPostById, getTagsForPost, updatePostMetadata } from '#lib/server/blog/index.ts';
+import { getPostFolder } from '#lib/server/blog/post-folders.ts';
+import { db } from '#lib/server/db/index.ts';
+import { domain } from '#lib/server/db/schema/blog/index.ts';
+import { guardApiBlogAuthor, guardPostOwnership } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import { SLUG_PATTERN } from '#lib/server/schemas/index.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:posts:update', 30, '1 m');

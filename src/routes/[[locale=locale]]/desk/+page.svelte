@@ -1,17 +1,17 @@
 <script lang="ts">
-import { replaceState } from '$app/navigation';
+import type { LayoutNode } from '#lib/components/desk/index.ts';
+import { DockLayout } from '#lib/components/desk/index.ts';
+import { ChatPanel } from '#lib/components/desk/panels/bot/index.ts';
+import { AuthorGate, EditorPanel } from '#lib/components/desk/panels/editor/index.ts';
+import { ExplorerPanel } from '#lib/components/desk/panels/explorer/index.ts';
+import IOLogPanel from '#lib/components/desk/panels/io-log/IOLogPanel.svelte';
+import { MarkdownPanel } from '#lib/components/desk/panels/markdown/index.ts';
+import { PreviewPanel } from '#lib/components/desk/panels/preview/index.ts';
+import { SpreadsheetPanel } from '#lib/components/desk/panels/spreadsheet/index.ts';
+import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '#lib/desk/panels.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import type { LayoutNode } from '$lib/components/desk';
-import { DockLayout } from '$lib/components/desk';
-import { ChatPanel } from '$lib/components/desk/panels/bot';
-import { AuthorGate, EditorPanel } from '$lib/components/desk/panels/editor';
-import { ExplorerPanel } from '$lib/components/desk/panels/explorer';
-import IOLogPanel from '$lib/components/desk/panels/io-log/IOLogPanel.svelte';
-import { MarkdownPanel } from '$lib/components/desk/panels/markdown';
-import { PreviewPanel } from '$lib/components/desk/panels/preview';
-import { SpreadsheetPanel } from '$lib/components/desk/panels/spreadsheet';
-import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '$lib/desk/panels';
-import { getToast } from '$lib/state/toast.svelte';
 
 const toast = getToast();
 
@@ -33,14 +33,17 @@ let openPostId = $derived.by(() => {
 	return id && /^pst_[A-Za-z0-9]+$/.test(id) ? id : null;
 });
 
-// Clean URL params after they're consumed. `replaceState`, not `goto`: a
-// cosmetic URL edit must not re-run loads or fire after/beforeNavigate
-// (which would e.g. auto-close the sidebar drawer). Deferred a macrotask so
-// DockLayout's param effects observe the values before they vanish.
+// Clean URL params after they're consumed. A shallow `goto`: a cosmetic URL edit must not
+// re-run loads, and every navigation hook here returns early on `shallow` (the sidebar
+// drawer would otherwise auto-close). Deferred a macrotask so DockLayout's param effects
+// observe the values before they vanish.
 $effect(() => {
 	if (!page.url.searchParams.has('open') && !page.url.searchParams.has('panel') && !page.url.searchParams.has('post'))
 		return;
-	const timer = setTimeout(() => replaceState(page.url.pathname, page.state ?? {}), 0);
+	const timer = setTimeout(
+		() => void goto(page.url.pathname, { shallow: true, replace: true, state: page.state ?? {} }),
+		0,
+	);
 	return () => clearTimeout(timer);
 });
 

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { renderRootDoc } from '$lib/server/docs/loader';
+import { renderRootDoc } from '#lib/server/docs/loader.ts';
 
 // Serves the repo-root entry-point docs (ROOT_DOCS: system-abstraction,
 // codebase-organization) as rendered pages — they live outside the manifest,

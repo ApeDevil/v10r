@@ -6,8 +6,8 @@
 <script lang="ts">
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
-import { Card } from '$lib/components/composites';
-import { Kbd } from '$lib/components/primitives';
+import { Card } from '#lib/components/composites/index.ts';
+import { Kbd } from '#lib/components/primitives/index.ts';
 
 interface Props {
 	title: string;

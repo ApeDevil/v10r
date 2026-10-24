@@ -19,7 +19,7 @@
  */
 import { toJsonSchema } from '@valibot/to-json-schema';
 import * as v from 'valibot';
-import type { components } from '$lib/showcases/external-service/contract.generated';
+import type { components } from '#lib/showcases/external-service/contract.generated.ts';
 
 type Schemas = components['schemas'];
 

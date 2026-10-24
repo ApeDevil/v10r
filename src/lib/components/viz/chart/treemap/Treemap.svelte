@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { HierarchyRectangularNode } from 'd3-hierarchy';
 import { onDestroy, onMount } from 'svelte';
+import { cn } from '#lib/utils/cn.ts';
 import { beforeNavigate } from '$app/navigation';
-import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 import { getVizPalette, vizColor } from '../../_shared/theme-bridge';
 import type { TreemapNode } from './types';
@@ -73,7 +73,9 @@ function cleanup() {
 	d3Mod = undefined;
 }
 
-beforeNavigate(cleanup);
+beforeNavigate(({ shallow }) => {
+	if (!shallow) cleanup();
+});
 onDestroy(cleanup);
 
 onMount(async () => {

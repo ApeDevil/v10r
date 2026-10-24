@@ -4,7 +4,7 @@
  * Shows when <5 minutes remain, allows extension or sign out
  */
 
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 
 type Props = {
 	timeRemaining: number; // seconds

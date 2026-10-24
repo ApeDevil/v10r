@@ -12,11 +12,11 @@
  */
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
-import type { EmbedNeighbor } from '$lib/schemas/showcase/image-kit';
-import { loadEmbeddingConnection } from '$lib/server/ai';
-import { incrEmbeddingCalls } from '$lib/server/ai/provider-usage';
-import { generateEmbedding, generateEmbeddings } from '$lib/server/retrieval/embed';
-import { EMBEDDING_MODEL } from '$lib/server/retrieval-shared/embed-config';
+import type { EmbedNeighbor } from '#lib/schemas/showcase/image-kit.ts';
+import { loadEmbeddingConnection } from '#lib/server/ai/index.ts';
+import { incrEmbeddingCalls } from '#lib/server/ai/provider-usage.ts';
+import { generateEmbedding, generateEmbeddings } from '#lib/server/retrieval/embed.ts';
+import { EMBEDDING_MODEL } from '#lib/server/retrieval-shared/embed-config.ts';
 import { type CorpusVector, getCorpus } from './corpus';
 
 const MULTIMODAL_MODEL = 'gemini-embedding-2-preview';

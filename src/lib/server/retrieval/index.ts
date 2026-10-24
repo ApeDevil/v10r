@@ -1,5 +1,5 @@
-import type { RetrievalStepEvent, StepDetail } from '$lib/types/retrieval-trace';
-import { escapeXmlText } from '$lib/utils/xml';
+import type { RetrievalStepEvent, StepDetail } from '#lib/types/retrieval-trace.ts';
+import { escapeXmlText } from '#lib/utils/xml.ts';
 import { EMBEDDING_DIMENSIONS, MAX_CONTEXT_CHUNKS, MAX_GRAPH_HOPS } from './config';
 
 // The query embedding is the engine's own door for its consumers (the chatbot profile's

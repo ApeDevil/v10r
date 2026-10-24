@@ -9,10 +9,10 @@
  * an `updatedAt` comparison alone never would. The desk mutation hot-path still never pays an
  * embedding round-trip. Returns the number of files (re)ingested this run.
  */
-import { deskSourcePath, syncDeskFileToRetrieval } from '$lib/server/ai/deskbot-retrieval';
-import { listAiContextFilesForSync } from '$lib/server/db/desk/queries';
-import { deleteDocument } from '$lib/server/db/retrieval/mutations';
-import { listDeskRetrievalDocs } from '$lib/server/db/retrieval/queries';
+import { deskSourcePath, syncDeskFileToRetrieval } from '#lib/server/ai/deskbot-retrieval.ts';
+import { listAiContextFilesForSync } from '#lib/server/db/desk/queries.ts';
+import { deleteDocument } from '#lib/server/db/retrieval/mutations.ts';
+import { listDeskRetrievalDocs } from '#lib/server/db/retrieval/queries.ts';
 
 export async function deskRetrievalSync(): Promise<number> {
 	const files = await listAiContextFilesForSync();

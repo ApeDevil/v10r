@@ -12,8 +12,8 @@ afterEach(() => {
 });
 
 async function loadWith(opts: { redis: unknown; dev: boolean }) {
-	vi.doMock('$lib/server/cache', () => ({ redis: opts.redis }));
-	vi.doMock('$app/environment', () => ({ dev: opts.dev, building: false, browser: false }));
+	vi.doMock('#lib/server/cache/index.ts', () => ({ redis: opts.redis }));
+	vi.doMock('$app/env', () => ({ dev: opts.dev, building: false, browser: false }));
 	return import('./step-up');
 }
 

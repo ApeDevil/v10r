@@ -134,8 +134,8 @@ The API is `{ items, success, error, warning, info, show, remove }`. Each toast 
 ```svelte
 <!-- src/lib/components/composites/toast/ToastContainer.svelte -->
 <script lang="ts">
-  import { Button } from '$lib/components/primitives';
-  import { getToast } from '$lib/state/toast.svelte';
+  import { Button } from '#lib/components/primitives/index.js';
+  import { getToast } from '#lib/state/toast.svelte.js';
   import { fly } from 'svelte/transition';
 
   const toast = getToast();
@@ -190,8 +190,8 @@ Create the context once in the root layout and render the container. `ToastConta
 ```svelte
 <!-- src/routes/[[locale=locale]]/+layout.svelte -->
 <script lang="ts">
-  import { setToastContext } from '$lib/state/toast.svelte';
-  import { ToastContainer } from '$lib/components/shell';
+  import { setToastContext } from '#lib/state/toast.svelte.js';
+  import { ToastContainer } from '#lib/components/shell/index.js';
 
   let { children } = $props();
 
@@ -217,7 +217,7 @@ Read the context with `getToast()`, then call `success`/`error`/`warning`/`info`
 
 ```svelte
 <script lang="ts">
-  import { getToast } from '$lib/state/toast.svelte';
+  import { getToast } from '#lib/state/toast.svelte.js';
   import { superForm } from 'sveltekit-superforms';
 
   const toast = getToast();
@@ -238,7 +238,7 @@ Read the context with `getToast()`, then call `success`/`error`/`warning`/`info`
 
 ```svelte
 <script lang="ts">
-  import { getToast } from '$lib/state/toast.svelte';
+  import { getToast } from '#lib/state/toast.svelte.js';
 
   const toast = getToast();
 
@@ -259,7 +259,7 @@ Read the context with `getToast()`, then call `success`/`error`/`warning`/`info`
 
 ```svelte
 <script lang="ts">
-  import { getToast } from '$lib/state/toast.svelte';
+  import { getToast } from '#lib/state/toast.svelte.js';
 
   const toast = getToast();
 
@@ -274,7 +274,7 @@ Read the context with `getToast()`, then call `success`/`error`/`warning`/`info`
 
 ```svelte
 <script lang="ts">
-  import { getToast } from '$lib/state/toast.svelte';
+  import { getToast } from '#lib/state/toast.svelte.js';
 
   const toast = getToast();
 
@@ -289,7 +289,7 @@ Read the context with `getToast()`, then call `success`/`error`/`warning`/`info`
 </script>
 ```
 
-Consumer: `$lib/components/shell/UpdatePrompt.svelte` shows exactly this toast — once per session, 30 minutes after `updated.current` (from `$app/state`) flips true and the user hasn't navigated.
+Consumer: `#lib/components/shell/UpdatePrompt.svelte` shows exactly this toast — once per session, 30 minutes after `updated.current` (from `$app/state`) flips true and the user hasn't navigated.
 
 ---
 

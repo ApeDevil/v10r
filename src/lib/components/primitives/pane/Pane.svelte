@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Pane } from 'paneforge';
 import type { Snippet } from 'svelte';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	defaultSize?: number;

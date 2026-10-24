@@ -21,7 +21,7 @@
  * target nobody keeps.
  */
 import { neon } from '@neondatabase/serverless';
-import { budgets, scoreBudget } from '$lib/server/perf/budgets';
+import { budgets, scoreBudget } from '#lib/server/perf/budgets.ts';
 
 const url = process.env.NEON_DATABASE_URL_PROD;
 if (!url) {

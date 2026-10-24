@@ -6,7 +6,7 @@
  * it was inlined in `ExplorerPanel.svelte`. The panel passes an `ActionContext`
  * for refresh + error reporting (same pattern as `dispatchMove`).
  */
-import { apiFetch } from '$lib/api';
+import { apiFetch } from '#lib/api.ts';
 import type { ActionContext } from './explorer-actions';
 import type { UploadingItem } from './types';
 

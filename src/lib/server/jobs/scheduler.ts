@@ -1,6 +1,6 @@
-import { building, dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { platform } from '$lib/server/platform';
+import { platform } from '#lib/server/platform/index.ts';
+import { building, dev } from '$app/env';
+import { JOB_INTERVAL_MS, JOBS_DEV_ENABLED } from '$app/env/private';
 import { DEFAULT_JOB_INTERVAL_MS, JOB_STARTUP_DELAY_MS } from './config';
 import { jobs } from './index';
 import { runJob } from './runner';
@@ -21,12 +21,12 @@ function runAll() {
 // and every job here runs against the ONE production database — including
 // analytics-cleanup, which DELETEs rows. JOBS_DEV_ENABLED='true' re-enables
 // the loop for deliberately testing job behaviour locally.
-if (!building && dev && env.JOBS_DEV_ENABLED !== 'true' && platform.persistent) {
+if (!building && dev && JOBS_DEV_ENABLED !== 'true' && platform.persistent) {
 	console.log('[scheduler] Muted in dev (set JOBS_DEV_ENABLED=true to run jobs against the shared DB)');
 }
 
-if (!building && platform.persistent && (!dev || env.JOBS_DEV_ENABLED === 'true') && !globalThis.__v10r_scheduler) {
-	const interval = Number(env.JOB_INTERVAL_MS) || DEFAULT_JOB_INTERVAL_MS;
+if (!building && platform.persistent && (!dev || JOBS_DEV_ENABLED === 'true') && !globalThis.__v10r_scheduler) {
+	const interval = Number(JOB_INTERVAL_MS) || DEFAULT_JOB_INTERVAL_MS;
 
 	console.log(`[scheduler] Starting on ${platform.id} platform, interval: ${interval / 1000}s`);
 

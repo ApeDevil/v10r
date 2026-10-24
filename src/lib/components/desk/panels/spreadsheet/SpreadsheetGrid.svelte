@@ -95,7 +95,7 @@ function handleGridKeydown(event: KeyboardEvent) {
 	}
 }
 
-function formatDisplay(value: import('$lib/desk/formula').CellValue): string {
+function formatDisplay(value: import('#lib/desk/formula.ts').CellValue): string {
 	if (value === null) return '';
 	if (typeof value === 'number') {
 		return value.toLocaleString();

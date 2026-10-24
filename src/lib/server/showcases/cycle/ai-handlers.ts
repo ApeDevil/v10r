@@ -8,13 +8,13 @@
  */
 
 import { streamText } from 'ai';
-import { getActiveProvider, getActiveProviderInfo, loadProviderRegistry } from '$lib/server/ai';
-import { db } from '$lib/server/db';
-import { cycleRun } from '$lib/server/db/schema';
-import { formatContextForPrompt, retrieve } from '$lib/server/retrieval';
-import { checkRowLimit } from '$lib/server/showcases/row-limit';
-import type { CycleSpan, CycleStageId, CycleTrace, SimulateAiError } from '$lib/showcases/cycle/types';
-import type { RetrievalStepEvent } from '$lib/types/retrieval-trace';
+import { getActiveProvider, getActiveProviderInfo, loadProviderRegistry } from '#lib/server/ai/index.ts';
+import { db } from '#lib/server/db/index.ts';
+import { cycleRun } from '#lib/server/db/schema/index.ts';
+import { formatContextForPrompt, retrieve } from '#lib/server/retrieval/index.ts';
+import { checkRowLimit } from '#lib/server/showcases/row-limit.ts';
+import type { CycleSpan, CycleStageId, CycleTrace, SimulateAiError } from '#lib/showcases/cycle/types.ts';
+import type { RetrievalStepEvent } from '#lib/types/retrieval-trace.ts';
 import { blockRemaining, createTrace, endSpan, failSpan, finalizeTrace, startSpan } from './trace';
 
 export interface AiCycleInput {

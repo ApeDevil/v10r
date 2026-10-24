@@ -5,7 +5,7 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '$lib/server/test/fixtures';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 import { user } from '../../db/schema/auth/_better-auth';
 import { chunk } from '../../db/schema/retrieval/chunk';
 import { document } from '../../db/schema/retrieval/document';
@@ -13,8 +13,8 @@ import { embeddingModel } from '../../db/schema/retrieval/embedding-model';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -22,7 +22,7 @@ vi.mock('$lib/server/db', async () => {
 
 const { searchContextual } = await import('./contextual');
 const { searchParentChild } = await import('./parent-child');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const OWNER = makeUser({ id: 'user-scope' });
 const OTHER = makeUser({ id: 'user-other' });

@@ -5,26 +5,25 @@
  * doesn't linger. A failed delete is swallowed — the R2 lifecycle TTL on the
  * `showcase/imagekit/` prefix is the safety net for abandoned sessions.
  */
-import { json } from '@sveltejs/kit';
-import { isImageId } from '$lib/schemas/showcase/image-kit';
-import { buildImagekitKey, deleteImagekitObject } from '$lib/server/showcases/image-kit/storage';
+import { isImageId } from '#lib/schemas/showcase/image-kit.ts';
+import { buildImagekitKey, deleteImagekitObject } from '#lib/server/showcases/image-kit/storage.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-	if (!locals.user) return json({ ok: false }, { status: 401 });
+	if (!locals.user) return Response.json({ ok: false }, { status: 401 });
 
 	let imageId: unknown;
 	try {
 		({ imageId } = (await request.json()) as { imageId?: unknown });
 	} catch {
-		return json({ ok: false }, { status: 400 });
+		return Response.json({ ok: false }, { status: 400 });
 	}
-	if (!isImageId(imageId)) return json({ ok: false }, { status: 400 });
+	if (!isImageId(imageId)) return Response.json({ ok: false }, { status: 400 });
 
 	try {
 		await deleteImagekitObject(buildImagekitKey(locals.user.id, imageId, 'webp'));
 	} catch {
 		// Swallow — the R2 lifecycle TTL reclaims anything we miss.
 	}
-	return json({ ok: true });
+	return Response.json({ ok: true });
 };

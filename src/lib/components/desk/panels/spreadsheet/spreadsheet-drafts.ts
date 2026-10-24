@@ -1,4 +1,4 @@
-import type { PersistedCell, SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
+import type { PersistedCell, SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
 
 export interface SpreadsheetDraft {
 	key: string;

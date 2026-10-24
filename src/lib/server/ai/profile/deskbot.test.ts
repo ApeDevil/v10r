@@ -4,16 +4,16 @@
  * DB modules are mocked — what mounts is tested, never a tool's `execute()`.
  */
 import { describe, expect, it, vi } from 'vitest';
-import type { DeskToolScope } from '$lib/types/ai-tools';
+import type { DeskToolScope } from '#lib/types/ai-tools.ts';
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	listFiles: vi.fn(),
 	getFile: vi.fn(),
 	getSpreadsheetByFileId: vi.fn(),
 	getMarkdownByFileId: vi.fn(),
 }));
-vi.mock('$lib/server/db/desk/mutations', () => ({
+vi.mock('#lib/server/db/desk/mutations.ts', () => ({
 	updateSpreadsheetByFileId: vi.fn(),
 	updateMarkdownByFileId: vi.fn(),
 	renameFile: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	createMarkdownFile: vi.fn(),
 	deleteFile: vi.fn(),
 }));
-vi.mock('$lib/server/db/ai/mutations', () => ({ saveTurnTrace: vi.fn() }));
+vi.mock('#lib/server/db/ai/mutations.ts', () => ({ saveTurnTrace: vi.fn() }));
 
 const { DESKBOT_PROFILE } = await import('./deskbot');
 const { composeTurn } = await import('./profile');

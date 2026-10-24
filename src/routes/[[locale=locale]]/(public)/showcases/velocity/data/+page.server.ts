@@ -1,4 +1,4 @@
-import { EXPIRY_WAIT_MS, ORIGIN_MS, STAMPEDE_CALLERS } from '$lib/server/showcases/velocity';
+import { EXPIRY_WAIT_MS, ORIGIN_MS, STAMPEDE_CALLERS } from '#lib/server/showcases/velocity/index.ts';
 import type { PageServerLoad } from './$types';
 
 /**

@@ -8,7 +8,7 @@ The full-stack meta-framework — file-based routing, SSR, deployment adapters. 
 - Rendering mode is per-route (SSR default, SSG, CSR), matching the showcase-as-documentation architecture.
 
 **Architecture features the project relies on:**
-- `$lib/server/` is blocked from client imports at build time — the load-bearing boundary for the multi-client core (see `docs/codebase-organization.md`).
+- `#lib/server/` is blocked from client imports at build time — the load-bearing boundary for the multi-client core (see `docs/codebase-organization.md`).
 - Route groups `(name)` organize routes without affecting URLs.
 
 ## Known limitations

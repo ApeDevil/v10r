@@ -1,8 +1,8 @@
-import { BOT_DETECTION_MODE, ipLimitKey } from '$lib/server/abuse';
-import { altchaChallengeHandler } from '$lib/server/abuse/altcha';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError } from '$lib/server/http/response';
+import { altchaChallengeHandler } from '#lib/server/abuse/altcha.ts';
+import { BOT_DETECTION_MODE, ipLimitKey } from '#lib/server/abuse/index.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 /**

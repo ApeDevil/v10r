@@ -24,9 +24,9 @@
  * is the whole point of buffering bot hits (see `bot-hit-buffer.ts`).
  */
 
-import { redis } from '$lib/server/cache';
-import { isValidPrefix } from '$lib/server/db/analytics/inet';
-import type { BotRangeSource } from '$lib/server/db/schema/analytics/bot-hits';
+import { redis } from '#lib/server/cache/index.ts';
+import { isValidPrefix } from '#lib/server/db/analytics/inet.ts';
+import type { BotRangeSource } from '#lib/server/db/schema/analytics/bot-hits.ts';
 import { BOT_RANGES_CACHE_TTL_MS, BOT_RANGES_PROJECTION_KEY_PREFIX } from './config';
 
 export interface BotRangeFeed {

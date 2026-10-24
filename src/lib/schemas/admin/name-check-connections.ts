@@ -6,7 +6,7 @@
  * the action's failure payload.
  */
 import * as v from 'valibot';
-import { NAME_SOURCE_VENDORS } from '$lib/types/db-enums';
+import { NAME_SOURCE_VENDORS } from '#lib/types/db-enums.ts';
 
 const CLIENT_ID_MAX = 200;
 const SECRET_MAX = 512;

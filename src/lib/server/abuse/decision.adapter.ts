@@ -7,7 +7,6 @@
  * `LAYER_CODE` lives here rather than beside `denied()` because the layer name is the
  * domain fact and the wire code is a presentation detail of this one transport.
  */
-import { json } from '@sveltejs/kit';
 import type { Decision } from './types';
 
 const LAYER_CODE: Record<'altcha' | 'honeypot' | 'rate-limit', string> = {
@@ -26,7 +25,7 @@ export function decisionResponse(d: Decision): Response {
 	if (d.retryAfterMs !== undefined) {
 		headers['Retry-After'] = String(Math.ceil(d.retryAfterMs / 1000));
 	}
-	return json({ error: { code: LAYER_CODE[d.layer], message: d.reason } }, { status: d.status, headers });
+	return Response.json({ error: { code: LAYER_CODE[d.layer], message: d.reason } }, { status: d.status, headers });
 }
 
 /**
@@ -42,7 +41,7 @@ export function authDecisionResponse(d: Decision): Response {
 	if (retryAfterSeconds !== undefined) {
 		headers['Retry-After'] = String(retryAfterSeconds);
 	}
-	return json(
+	return Response.json(
 		{ code: LAYER_CODE[d.layer], message: d.reason, ...(retryAfterSeconds !== undefined && { retryAfterSeconds }) },
 		{ status: d.status, headers },
 	);

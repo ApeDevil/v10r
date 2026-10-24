@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { parseKeyRing } from '$lib/server/security/aes-gcm';
+import { parseKeyRing } from '#lib/server/security/aes-gcm.ts';
 import type { ProviderEntry, ProviderRegistry } from './connections';
 
 const KEY = parseKeyRing('3f9c2a1b7e4d5c6f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f');
@@ -15,17 +15,17 @@ const security = vi.hoisted(() => ({ getEncryptionKeyRing: vi.fn() }));
 const registryLoader = vi.hoisted(() => ({ loadProviderRegistry: vi.fn() }));
 const probe = vi.hoisted(() => ({ testLanguageModel: vi.fn() }));
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/db/ai/provider-connections', () => dbAccess);
-vi.mock('$lib/server/admin', () => admin);
-vi.mock('$lib/server/security', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/security')>()),
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
+vi.mock('#lib/server/db/ai/provider-connections.ts', () => dbAccess);
+vi.mock('#lib/server/admin/index.ts', () => admin);
+vi.mock('#lib/server/security/index.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/security/index.ts')>()),
 	getEncryptionKeyRing: security.getEncryptionKeyRing,
 }));
 vi.mock('./index', () => registryLoader);
 vi.mock('./connection-test', () => probe);
 
-const { EncryptionError } = await import('$lib/server/security');
+const { EncryptionError } = await import('#lib/server/security/index.ts');
 const {
 	removeProviderConnectionKey,
 	runProviderConnectionTest,

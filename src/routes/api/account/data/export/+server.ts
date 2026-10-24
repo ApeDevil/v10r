@@ -5,9 +5,9 @@
  * Plain <a href> target — no fetch/toast ceremony needed in the UI.
  */
 
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { collectUserData } from '$lib/server/privacy';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { collectUserData } from '#lib/server/privacy/index.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:me-export', 5, '1m');

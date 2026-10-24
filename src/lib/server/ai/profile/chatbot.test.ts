@@ -12,7 +12,7 @@
  * tool). In `retrieval/index.test.ts`: a consumer handed a vector does not embed again.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { budgets, scoreBudget } from '$lib/server/perf';
+import { budgets, scoreBudget } from '#lib/server/perf/index.ts';
 
 const generateEmbedding = vi.fn();
 const retrieve = vi.fn();
@@ -20,18 +20,18 @@ const getCorpusMap = vi.fn();
 const formatContextForPrompt = vi.fn().mockReturnValue('');
 const searchCatalogRecords = vi.fn();
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/retrieval', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
+vi.mock('#lib/server/retrieval/index.ts', () => ({
 	generateEmbedding,
 	retrieve,
 	formatContextForPrompt,
 	contextChunkCut: (result: { chunks: unknown[] }) => result.chunks.length,
 }));
-vi.mock('$lib/server/db/retrieval/queries', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/db/retrieval/queries')>()),
+vi.mock('#lib/server/db/retrieval/queries.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/db/retrieval/queries.ts')>()),
 	getCorpusMap,
 }));
-vi.mock('$lib/server/search', () => ({
+vi.mock('#lib/server/search/index.ts', () => ({
 	formatCatalogMap: vi.fn(() => '<catalog-map></catalog-map>'),
 	buildSearchIndex: vi.fn(() => []),
 	searchContent: vi.fn(async () => []),
@@ -40,7 +40,7 @@ vi.mock('../tools/search-catalog', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../tools/search-catalog')>()),
 	searchCatalogRecords,
 }));
-vi.mock('$lib/server/db/ai/mutations', () => ({ saveTurnTrace: vi.fn() }));
+vi.mock('#lib/server/db/ai/mutations.ts', () => ({ saveTurnTrace: vi.fn() }));
 
 const { CHATBOT_PROFILE } = await import('./chatbot');
 const { composeTurn } = await import('./profile');

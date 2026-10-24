@@ -1,4 +1,4 @@
-import type { LimiterOptions } from '$lib/server/http/rate-limit';
+import type { LimiterOptions } from '#lib/server/http/rate-limit.ts';
 
 /**
  * Policy for the External Service Lab's calls. Every number here bounds something a

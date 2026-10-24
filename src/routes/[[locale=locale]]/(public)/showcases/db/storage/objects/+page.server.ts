@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import { generateDownloadUrl, getObjectDetail, listShowcaseObjects } from '$lib/server/showcases/store/queries';
-import { classifyS3Error } from '$lib/server/store/errors';
-import { formatBytes } from '$lib/server/store/types';
+import { generateDownloadUrl, getObjectDetail, listShowcaseObjects } from '#lib/server/showcases/store/queries.ts';
+import { classifyS3Error } from '#lib/server/store/errors.ts';
+import { formatBytes } from '#lib/server/store/types.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

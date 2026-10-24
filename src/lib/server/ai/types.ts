@@ -1,4 +1,4 @@
-import type { DeskFileType } from '$lib/types/db-enums';
+import type { DeskFileType } from '#lib/types/db-enums.ts';
 
 /**
  * One panel's context as the desk sends it (`DeskRequestSchema.panelContext`): the text the

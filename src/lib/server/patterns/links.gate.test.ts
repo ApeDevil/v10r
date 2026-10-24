@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { DocSection } from '$lib/docs/types';
-import { isBlocked, slugify } from '$lib/server/docs/doc-filter';
-import { getEntry } from '$lib/server/docs/manifest';
-import { ROOT_DOCS } from '$lib/server/docs/markdown-urls';
-import { CATEGORIES, PATTERNS } from '$lib/server/patterns';
+import type { DocSection } from '#lib/docs/types.ts';
+import { isBlocked, slugify } from '#lib/server/docs/doc-filter.ts';
+import { getEntry } from '#lib/server/docs/manifest.ts';
+import { ROOT_DOCS } from '#lib/server/docs/markdown-urls.ts';
+import { CATEGORIES, PATTERNS } from '#lib/server/patterns/index.ts';
 
 /**
  * Dead-link gate for the generated pattern surfaces: every docs ref in the

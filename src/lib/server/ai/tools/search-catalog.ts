@@ -21,10 +21,10 @@
  */
 
 import { jsonSchema, tool } from 'ai';
-import type { Locale } from '$lib/i18n';
-import { match, toResult } from '$lib/search/match';
-import type { SearchResult, SearchSurface } from '$lib/search/types';
-import { buildSearchIndex, searchContent } from '$lib/server/search';
+import type { Locale } from '#lib/i18n/index.ts';
+import { match, toResult } from '#lib/search/match.ts';
+import type { SearchResult, SearchSurface } from '#lib/search/types.ts';
+import { buildSearchIndex, searchContent } from '#lib/server/search/index.ts';
 
 // Tool metadata (name → risk) lives in the declarative `TOOL_MANIFEST` in `tools/index.ts`.
 

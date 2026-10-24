@@ -4,10 +4,10 @@
  */
 
 import { getContext, setContext } from 'svelte';
-import { browser } from '$app/environment';
-import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '$lib/analytics/consent-cookie';
-import type { ConsentTier } from '$lib/types/db-enums';
-import { getCookie, setCookie } from '$lib/utils/cookies';
+import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '#lib/analytics/consent-cookie.ts';
+import type { ConsentTier } from '#lib/types/db-enums.ts';
+import { getCookie, setCookie } from '#lib/utils/cookies.ts';
+import { browser } from '$app/env';
 
 export type { ConsentTier };
 

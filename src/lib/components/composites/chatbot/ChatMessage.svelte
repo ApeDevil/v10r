@@ -1,9 +1,9 @@
 <script lang="ts">
-import CitationChip from '$lib/components/composites/citation/CitationChip.svelte';
-import type { CatalogSource } from '$lib/components/composites/citation/citation-types';
-import * as m from '$lib/paraglide/messages';
-import type { TurnError } from '$lib/types/ai-error';
-import { cn } from '$lib/utils/cn';
+import CitationChip from '#lib/components/composites/citation/CitationChip.svelte';
+import type { CatalogSource } from '#lib/components/composites/citation/citation-types.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { TurnError } from '#lib/types/ai-error.ts';
+import { cn } from '#lib/utils/cn.ts';
 import StreamedMarkdown from './StreamedMarkdown.svelte';
 import ToolCallStatus from './ToolCallStatus.svelte';
 import { toolLabel } from './tool-label';

@@ -1,11 +1,11 @@
 import type { InferInsertModel } from 'drizzle-orm';
-import type { conversation } from '$lib/server/db/schema/ai/conversation';
-import type { user } from '$lib/server/db/schema/auth/_better-auth';
-import type { file } from '$lib/server/db/schema/desk/file';
-import type { folder } from '$lib/server/db/schema/desk/folder';
-import type { markdown } from '$lib/server/db/schema/desk/markdown';
-import type { spreadsheet } from '$lib/server/db/schema/desk/spreadsheet';
-import type { notifications } from '$lib/server/db/schema/notifications/notifications';
+import type { conversation } from '#lib/server/db/schema/ai/conversation.ts';
+import type { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import type { file } from '#lib/server/db/schema/desk/file.ts';
+import type { folder } from '#lib/server/db/schema/desk/folder.ts';
+import type { markdown } from '#lib/server/db/schema/desk/markdown.ts';
+import type { spreadsheet } from '#lib/server/db/schema/desk/spreadsheet.ts';
+import type { notifications } from '#lib/server/db/schema/notifications/notifications.ts';
 
 type UserInsert = InferInsertModel<typeof user>;
 type NotificationInsert = InferInsertModel<typeof notifications>;

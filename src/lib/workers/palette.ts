@@ -4,7 +4,7 @@
  * No DOM, no canvas, no `self` — so this runs identically on the main thread, in a
  * Web Worker, and in a node test. The browser-only half (decode, downscale) lives
  * in image-analysis.ts; the worker shell is image-analysis.worker.ts. Same
- * pure-core/impure-shell split as $lib/pwa/sw-policy.ts.
+ * pure-core/impure-shell split as #lib/pwa/sw-policy.ts.
  *
  * This is the expensive part: a full pass over every pixel, which is exactly the
  * kind of work that has no business on the main thread.

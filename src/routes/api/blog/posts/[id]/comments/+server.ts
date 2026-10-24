@@ -1,15 +1,15 @@
 import * as v from 'valibot';
-import { ipLimitKey } from '$lib/server/abuse';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
 import {
 	CommentOnUnpublishedError,
 	createComment,
 	createCommentSchema,
 	listComments,
 	listCommentsQuerySchema,
-} from '$lib/server/blog/comments';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+} from '#lib/server/blog/comments/index.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const userRateLimit = createLimiter('ratelimit:comment:user', 5, '1 m');

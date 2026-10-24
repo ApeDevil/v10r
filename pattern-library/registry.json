@@ -184,7 +184,7 @@
 			"tier": "deep",
 			"title": "Multi-client core (hexagonal domain modules)",
 			"category": "architecture",
-			"summary": "One backend operations layer ($lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.",
+			"summary": "One backend operations layer (#lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.",
 			"when_to_use": "Reach for this whenever a backend capability must be reachable from more than one entry point (page action, API route, AI tool, cron job). It is the foundation nearly every other v10r pattern builds on.",
 			"avoid_when": [
 				"An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped",
@@ -574,7 +574,7 @@
 			],
 			"code": [
 				{
-					"path": "svelte.config.js"
+					"path": "vite.config.ts"
 				},
 				{
 					"path": "vercel.json"
@@ -792,7 +792,7 @@
 			"summary": "A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Hardened by measurement: non-blocking stdout logging, SERVICE_TOKEN_PREVIOUS rotation, a 16 KiB head cap, a contract release record with skew diagnosis, cargo-deny, and a 0.1 CPU benchmark profile. Verified locally (container, real client, showcase, controlled lab) and in production on Render Free Frankfurt (end to end, failure paths measured); hosted cold-start and warm percentiles are still unmeasured.",
 			"when_to_use": "Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.",
 			"avoid_when": [
-				"The work fits a $lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak",
+				"The work fits a #lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak",
 				"The motive is the speed of a small computation — the boundary costs ~1 ms on loopback and tens of ms across a network, before any cold start",
 				"The browser must call the service directly — that puts the credential or an open endpoint within every visitor's reach"
 			],
@@ -2607,10 +2607,14 @@
 			],
 			"code": [
 				{
-					"path": "src/params/locale.ts"
+					"path": "src/params.ts"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/params.test.ts"
+				}
+			],
 			"showcases": [
 				{
 					"path": "/showcases/i18n",
@@ -6075,7 +6079,8 @@
 			],
 			"code": [
 				{
-					"path": "src/service-worker.ts"
+					"path": "src/service-worker/index.ts",
+					"note": "built on $app/manifest, $app/service-worker and $app/env (SvelteKit 3); its own tsconfig carries the WebWorker types"
 				},
 				{
 					"path": "src/lib/pwa/sw-policy.ts",
@@ -8132,7 +8137,7 @@
 			"tier": "deep",
 			"title": "Side-effect-free component tree (barrels that tree-shake)",
 			"category": "velocity-runtime",
-			"summary": "Compiled Svelte components run code at module scope, so Rollup keeps every component a barrel re-exports. Declaring the component directory side-effect free in the bundler makes an unused export droppable — and an import made for side effects alone silently vanishes, which a gate forbids.",
+			"summary": "Compiled Svelte components run code at module scope, so the bundler keeps every component a barrel re-exports. Declaring the component directory side-effect free in the bundler makes an unused export droppable — and an import made for side effects alone silently vanishes, which a gate forbids.",
 			"when_to_use": "Use when a Svelte component library is consumed through barrel files and the shared or per-route bundle carries components the page never renders.",
 			"avoid_when": [
 				"A module in the tree registers something at module scope (a custom element, a global listener, a plugin) — that import would be dropped without an error",
@@ -8156,6 +8161,7 @@
 				"sideEffects",
 				"moduleSideEffects",
 				"rollup",
+				"rolldown",
 				"vite",
 				"bundle",
 				"svelte components",
@@ -8171,7 +8177,7 @@
 			"code": [
 				{
 					"path": "vite.config.ts",
-					"note": "build.rollupOptions.treeshake.moduleSideEffects for src/lib/components/"
+					"note": "build.rolldownOptions.treeshake.moduleSideEffects rules for src/lib/components/ and Paraglide's compiled messages"
 				}
 			],
 			"tests": [
@@ -8187,8 +8193,9 @@
 				"The effect is held by a bundle ratchet, so removing the declaration fails a build rather than going unnoticed."
 			],
 			"emulation_notes": [
-				"The cause is the compiler output, not the authoring: $.delegate(...) and template factories at module scope make every compiled .svelte file side-effecting in Rollup's eyes. One `import { Button } from '$lib/components'` shipped v10r's whole primitives layer — culori and bits-ui's select and menu included — to 197 of 199 routes.",
-				"Use a function for moduleSideEffects, `(id, external) => external || !COMPONENT_MODULE.test(id)`, so only the component directory is declared and dependencies keep their own sideEffects metadata.",
+				"The cause is the compiler output, not the authoring: $.delegate(...) and template factories at module scope make every compiled .svelte file side-effecting in the bundler's eyes. One `import { Button } from '#lib/components/index.ts'` shipped v10r's whole primitives layer — culori and bits-ui's select and menu included — to 197 of 199 routes.",
+				"Under Vite 8 (Rolldown) declare it as a rule list, `[{ test: COMPONENT_MODULE, external: false, sideEffects: false }]`. A function that returns `true` for everything else pins those modules as side-effectful, overriding their package.json `sideEffects` and Rolldown's own analysis; a module no rule matches stays unclassified and keeps both.",
+				"Rolldown assigns a module to a chunk by who imports it, not by which exports survive. Generated code reached through one barrel needs the same declaration: Paraglide's ~3,260 compiled message modules, re-exported by `messages.js`, all landed in one 215 KB (gz) chunk every route loaded until they were declared side-effect free (median route 420 -> 226 KB).",
 				"Measured (production build, gzip, full route chain): median route 296.7 -> 241.9 KB, heaviest 562.8 -> 521.5 KB. The shared baseline grew 3 KB because finer chunks lengthen the per-node preload lists in the generated app.js; that raise was reviewed and recorded, not absorbed."
 			],
 			"risk": "medium — a module that relied on a side-effect import breaks silently; the gate test is the guard",

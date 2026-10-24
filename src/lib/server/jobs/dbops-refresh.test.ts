@@ -13,14 +13,14 @@ const startOperation = vi.fn(async (..._a: unknown[]) => ({
 const advanceOperation = vi.fn();
 const neonConfigured = vi.fn(() => true);
 
-vi.mock('$lib/server/dbops', () => ({
+vi.mock('#lib/server/dbops/index.ts', () => ({
 	startOperation: (...a: unknown[]) => startOperation(...a),
 	advanceOperation: (...a: unknown[]) => advanceOperation(...a),
 	isTerminal: (s: string) => ['succeeded', 'failed', 'canceled'].includes(s),
 	ConflictError: class ConflictError extends Error {},
 }));
 
-vi.mock('$lib/server/neon', () => ({ neonConfigured: () => neonConfigured() }));
+vi.mock('#lib/server/neon/index.ts', () => ({ neonConfigured: () => neonConfigured() }));
 
 const { dbopsRefresh } = await import('./dbops-refresh');
 

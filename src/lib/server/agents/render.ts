@@ -1,4 +1,4 @@
-import { renderBlogPost } from '$lib/server/blog/pipeline';
+import { renderBlogPost } from '#lib/server/blog/pipeline.ts';
 import { type AgentRecord, getAgent, getAgentRegistry } from './registry';
 
 export interface RenderedAgent {

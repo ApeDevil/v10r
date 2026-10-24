@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Dialog as DialogPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	open: boolean;

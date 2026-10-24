@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { renderDoc } from '$lib/server/docs/loader';
+import { renderDoc } from '#lib/server/docs/loader.ts';
 
 export const load = async ({ params }) => {
 	const rendered = await renderDoc('blueprint', params.slug);

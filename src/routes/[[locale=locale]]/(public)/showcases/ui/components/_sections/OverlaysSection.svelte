@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Accordion, Button, Dialog, Drawer, Popover, Tabs, Tooltip } from '$lib/components';
-import { InfoDialog } from '$lib/components/composites/info-dialog';
+import { InfoDialog } from '#lib/components/composites/info-dialog/index.ts';
+import { Accordion, Button, Dialog, Drawer, Popover, Tabs, Tooltip } from '#lib/components/index.ts';
 import { DemoCard } from '../_components';
 
 let dialogOpen = $state(false);

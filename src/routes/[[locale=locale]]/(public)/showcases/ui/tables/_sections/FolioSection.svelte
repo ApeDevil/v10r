@@ -6,8 +6,8 @@ import {
 	Header as TableHeader,
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
-} from '$lib/components';
-import { Button } from '$lib/components/primitives';
+} from '#lib/components/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
 import { DEPARTMENTS, type Department, EMPLOYEES, formatSalary, formatStartDate } from '../_data/mock-data';
 
 let expandedGroups = $state<Set<Department>>(new Set(DEPARTMENTS));

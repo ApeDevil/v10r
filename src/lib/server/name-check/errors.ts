@@ -1,4 +1,4 @@
-import { ServerError } from '$lib/server/errors';
+import { ServerError } from '#lib/server/errors/index.ts';
 
 /**
  * Why a source produced no answer. Each kind maps to exactly one coverage status in

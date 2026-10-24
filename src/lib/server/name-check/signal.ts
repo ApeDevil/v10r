@@ -17,7 +17,7 @@ import type {
 	NameConflictSignal,
 	NameMatch,
 	TrademarkNameMatch,
-} from '$lib/name-check/report';
+} from '#lib/name-check/report.ts';
 
 const NEAR_EXACT = 95;
 const CLOSE = 85;

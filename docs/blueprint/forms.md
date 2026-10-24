@@ -42,8 +42,8 @@ Schema definition is skill territory; **where** schemas live in v10r is not:
 | Schema Type | Location | Example |
 |-------------|----------|---------|
 | Route-specific | Top of `+page.server.ts` | Login form |
-| Shared/reused | `$lib/schemas/*.ts` | User profile |
-| Complex nested | `$lib/schemas/*.ts` | Address, wizard steps |
+| Shared/reused | `#lib/schemas/*.ts` | User profile |
+| Complex nested | `#lib/schemas/*.ts` | Address, wizard steps |
 
 Export `v.InferInput<typeof schema>` types alongside each schema for reuse.
 
@@ -280,7 +280,7 @@ These run alongside — not instead of — the synchronous Valibot schema: the s
 
 ### File Upload
 
-The real file-upload form in v10r is the **image-metadata showcase**: schema in `$lib/schemas/showcase/image-metadata.ts`, server resolver in `$lib/server/imagemeta/`. The upload is processed server-side with Sharp and stored in [R2](../stack/data/r2.md).
+The real file-upload form in v10r is the **image-metadata showcase**: schema in `#lib/schemas/showcase/image-metadata.ts`, server resolver in `$lib/server/imagemeta/`. The upload is processed server-side with Sharp and stored in [R2](../stack/data/r2.md).
 
 It validates the **metadata** about the image (title, alt text, keywords, category, optional GPS) through Superforms + Valibot — not the file bytes. The codebase does **not** use Valibot file validators (`v.file`, `v.mimeType`, `v.maxSize`) or `withFiles()` anywhere; file constraints are enforced in the server resolver.
 
@@ -311,7 +311,7 @@ For username availability / email uniqueness, v10r **does not** use a Valibot as
 
 The `/showcases/forms/validation/async` example wires it this way:
 
-1. The form validates against a plain sync `v.object` (`asyncSchema` in `$lib/schemas/showcase/validation.ts`) via `superValidate(request, valibot(asyncSchema))`.
+1. The form validates against a plain sync `v.object` (`asyncSchema` in `#lib/schemas/showcase/validation.ts`) via `superValidate(request, valibot(asyncSchema))`.
 2. An `oninput` handler debounces (~400ms), then `fetch`es `/api/showcases/check-username?u=…`, which returns `{ available }`.
 3. The endpoint (`src/routes/api/showcases/check-username/+server.ts`) is a rate-limited `GET` — the gate lives server-side, not in the form schema.
 
@@ -485,7 +485,7 @@ export const actions: Actions = { default: async () => { /* ... */ } };
 
 ## File Structure
 
-Schemas live nested by domain under `$lib/schemas/` — no barrel `index.ts`:
+Schemas live nested by domain under `#lib/schemas/` — no barrel `index.ts`:
 
 ```
 src/lib/schemas/

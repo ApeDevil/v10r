@@ -1,19 +1,19 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
-import { beforeNavigate } from '$app/navigation';
-import { page } from '$app/state';
-import { ConfirmDialog } from '$lib/components/composites/confirm-dialog';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { ConfirmDialog } from '#lib/components/composites/confirm-dialog/index.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { fileIdOfPanel } from '#lib/components/desk/file-panel.ts';
 import {
 	getDeskBus,
 	getDockContext,
 	getPanelMenus,
 	registerPanelContext,
 	updatePanelContext,
-} from '$lib/components/desk';
-import { fileIdOfPanel } from '$lib/components/desk/file-panel';
-import PanelEmptyState from '$lib/components/desk/PanelEmptyState.svelte';
-import { Button } from '$lib/components/primitives';
+} from '#lib/components/desk/index.ts';
+import PanelEmptyState from '#lib/components/desk/PanelEmptyState.svelte';
+import { Button } from '#lib/components/primitives/index.ts';
+import { beforeNavigate } from '$app/navigation';
+import { page } from '$app/state';
 import SpreadsheetFormulaBar from './SpreadsheetFormulaBar.svelte';
 import SpreadsheetGrid from './SpreadsheetGrid.svelte';
 import SpreadsheetStatusBar from './SpreadsheetStatusBar.svelte';
@@ -41,7 +41,9 @@ function flushEdits() {
 	void session?.autosave.flush();
 }
 
-beforeNavigate(({ cancel }) => {
+beforeNavigate(({ cancel, shallow }) => {
+	// A shallow navigation keeps the panel mounted.
+	if (shallow) return;
 	flushEdits();
 	// When storage is unavailable, keep the panel alive until save/export succeeds.
 	if (save?.unsaved && save.backupFailed) cancel();

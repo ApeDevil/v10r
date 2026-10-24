@@ -15,7 +15,7 @@
  * change to the document they saw, not to whatever it became.
  */
 import { tool } from 'ai';
-import { getMarkdownByFileId } from '$lib/server/db/desk/queries';
+import { getMarkdownByFileId } from '#lib/server/db/desk/queries.ts';
 import { DESK_READ_MAX_CHARS } from '../config';
 import { cancelledBefore } from './cancelled';
 import { DESK_MUTATION_INPUTS, toolInputSchema } from './desk-mutation-inputs';

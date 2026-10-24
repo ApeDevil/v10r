@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import { BLOCK_TAGS, COLUMN_LABELS, EDGE_KIND_LABELS, KIND_LABELS } from '$lib/showcases/ai/labels';
+import * as m from '#lib/paraglide/messages.js';
+import { BLOCK_TAGS, COLUMN_LABELS, EDGE_KIND_LABELS, KIND_LABELS } from '#lib/showcases/ai/labels.ts';
 import {
 	connectedIds,
 	type TurnGraph,
@@ -8,7 +8,7 @@ import {
 	type TurnGraphEdge,
 	type TurnGraphNode,
 	visibleTurnGraph,
-} from '$lib/showcases/ai/turn-graph';
+} from '#lib/showcases/ai/turn-graph.ts';
 import TurnGraphCard from './TurnGraphCard.svelte';
 
 // The turn graph as three lists in reading order — sources, context and model calls, tools —

@@ -1,8 +1,8 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import { BUILD_LABELS, LANE_LABELS } from '$lib/showcases/ai/labels';
-import { AI_LAYERS } from '$lib/showcases/ai/topology';
-import type { AiSurface } from '$lib/types/db-enums';
+import * as m from '#lib/paraglide/messages.js';
+import { BUILD_LABELS, LANE_LABELS } from '#lib/showcases/ai/labels.ts';
+import { AI_LAYERS } from '#lib/showcases/ai/topology.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 
 // The SHAPE of retrieval for this surface — no knobs, no chunk lists, no waterfall.
 // The most instructive fact is spatial: lanes that exist in the kernel and this

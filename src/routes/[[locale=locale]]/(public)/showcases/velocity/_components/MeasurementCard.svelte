@@ -1,9 +1,9 @@
 <script lang="ts">
-import { apiFetch } from '$lib/api';
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import type { VelocityMeasurement, VelocityMeasurementId } from '$lib/showcases/velocity/measurement';
+import { apiFetch } from '#lib/api.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { VelocityMeasurement, VelocityMeasurementId } from '#lib/showcases/velocity/measurement.ts';
 
 interface Props {
 	id: VelocityMeasurementId;

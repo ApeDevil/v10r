@@ -8,8 +8,8 @@
  * Tap = switch (focusPanel). Closing stays explicit in the panels drawer and
  * the commands sheet — no close targets in a 44px scrolling strip.
  */
-import * as m from '$lib/paraglide/messages';
-import { cn } from '$lib/utils/cn';
+import * as m from '#lib/paraglide/messages.js';
+import { cn } from '#lib/utils/cn.ts';
 import { getDockContext } from './dock.state.svelte';
 import { focusPanel } from './panel-actions';
 

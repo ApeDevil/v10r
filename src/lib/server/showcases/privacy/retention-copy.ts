@@ -9,7 +9,7 @@
  * to the public is a compile error rather than a silently missing table row.
  */
 
-import { type RetentionRuleId, retentionSchedule } from '$lib/server/retention';
+import { type RetentionRuleId, retentionSchedule } from '#lib/server/retention/index.ts';
 
 interface RetentionCopy {
 	icon: string;

@@ -1,9 +1,8 @@
 import { HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import type { PresignedUrlResult, UploadResult } from '$lib/server/store';
-import { assertShowcaseKey, checkObjectLimit, StoreError } from '$lib/server/store';
-import { MAX_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '$lib/server/store/config';
-import { BUCKET, s3 } from '$lib/server/store/index';
+import { MAX_UPLOAD_SIZE, PRESIGNED_URL_EXPIRY } from '#lib/server/store/config.ts';
+import type { PresignedUrlResult, UploadResult } from '#lib/server/store/index.ts';
+import { assertShowcaseKey, BUCKET, checkObjectLimit, StoreError, s3 } from '#lib/server/store/index.ts';
 
 function requireS3() {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');

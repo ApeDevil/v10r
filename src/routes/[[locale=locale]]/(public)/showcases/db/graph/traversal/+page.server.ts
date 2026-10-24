@@ -1,13 +1,13 @@
 import { fail } from '@sveltejs/kit';
-import { cypher } from '$lib/server/graph';
-import { Neo4jError } from '$lib/server/graph/errors';
-import { isAdmin } from '$lib/server/http/guards';
+import { Neo4jError } from '#lib/server/graph/errors.ts';
+import { cypher } from '#lib/server/graph/index.ts';
+import { isAdmin } from '#lib/server/http/guards.ts';
 import {
 	findDemoShortestPath,
 	getAllNodes,
 	getNodeWithConnections,
 	getRecommendations,
-} from '$lib/server/showcases/graph/queries';
+} from '#lib/server/showcases/graph/queries.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Block write operations in REPL */

@@ -11,11 +11,12 @@
  * accessible name so the ~28 routes registering two docs stay distinguishable
  * to screen readers (WCAG 2.4.4) despite reading identically on screen.
  */
+
+import { Button } from '#lib/components/primitives/index.ts';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { resolveShowcaseDocs } from '#lib/showcases/catalog/resolve-docs.ts';
 import { page } from '$app/state';
-import { Button } from '$lib/components/primitives';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { resolveShowcaseDocs } from '$lib/showcases/catalog/resolve-docs';
 
 const entries = $derived(resolveShowcaseDocs(deLocalizeHref(page.url.pathname)));
 </script>

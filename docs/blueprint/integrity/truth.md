@@ -101,10 +101,10 @@ were shown in the app with no attribution at all.
 interface AssetRights { author: string; license: string /* SPDX id */; source: string /* https */ }
 ```
 
-- `$lib/3d/models.ts` (`Model3D.rights`) and `$lib/3d/parts.ts` (`PartPhoto.rights`) are the
-  owners. `$lib/credits/asset-rights.ts` holds the type and the reading helpers
+- `#lib/3d/models.ts` (`Model3D.rights`) and `$lib/3d/parts.ts` (`PartPhoto.rights`) are the
+  owners. `#lib/credits/asset-rights.ts` holds the type and the reading helpers
   (`requiresAttribution`, `licenseLabel`, `creditLine`).
-- `$lib/credits/registry.ts` *derives* `assetCredits` from the owners. Nothing is re-typed.
+- `#lib/credits/registry.ts` *derives* `assetCredits` from the owners. Nothing is re-typed.
 - Every surface that shows an asset renders `creditLine(rights)`: the part-photo lightbox, and
   `/credits` for everything.
 - `credits/registry.gate.test.ts` lists every file under `static/models/` and

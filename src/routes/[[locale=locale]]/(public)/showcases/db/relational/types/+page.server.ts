@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import {
 	collectionShelf,
 	documentVault,
@@ -9,8 +9,8 @@ import {
 	showcaseAuditLog,
 	temporalRecord,
 	typeSpecimen,
-} from '$lib/server/db/schema';
-import { reseedShowcase } from '$lib/server/db/showcase/seed';
+} from '#lib/server/db/schema/index.ts';
+import { reseedShowcase } from '#lib/server/db/showcase/seed.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

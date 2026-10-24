@@ -2,7 +2,7 @@
  * Telemetry origin discrimination — which build produced a real-user sample.
  *
  * The dev server writes into this same production analytics database. That was
- * fixed at the source (`$lib/analytics/telemetry.ts` and `journey-beacon.ts` are
+ * fixed at the source (`#lib/analytics/telemetry.ts` and `journey-beacon.ts` are
  * both `dev`-gated now), but two things make a read-side filter permanent rather
  * than temporary:
  *

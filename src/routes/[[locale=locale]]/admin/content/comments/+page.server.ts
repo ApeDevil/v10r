@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import { hideComment, listForModeration, removeComment, unhideComment } from '$lib/server/blog/comments';
-import { requireAdmin } from '$lib/server/http/guards';
-import type { CommentStatus } from '$lib/types/db-enums';
+import { hideComment, listForModeration, removeComment, unhideComment } from '#lib/server/blog/comments/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import type { CommentStatus } from '#lib/types/db-enums.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const STATUSES = new Set(['visible', 'hidden', 'removed', 'all']);

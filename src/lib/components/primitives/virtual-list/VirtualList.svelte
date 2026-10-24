@@ -1,6 +1,6 @@
 <script lang="ts" generics="T">
 import type { Snippet } from 'svelte';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 import { computeWindow, DEFAULT_OVERSCAN, offsetForIndex } from './virtual-list';
 
 interface Props {

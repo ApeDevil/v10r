@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { chatbotGrounded } from '$lib/showcases/ai/fixtures/chatbot-grounded';
-import { deskbotPlan } from '$lib/showcases/ai/fixtures/deskbot-plan';
-import { deskbotSentinel } from '$lib/showcases/ai/fixtures/deskbot-sentinel';
+import { chatbotGrounded } from '#lib/showcases/ai/fixtures/chatbot-grounded.ts';
+import { deskbotPlan } from '#lib/showcases/ai/fixtures/deskbot-plan.ts';
+import { deskbotSentinel } from '#lib/showcases/ai/fixtures/deskbot-sentinel.ts';
 import type { EvalCase, Expectation } from './eval-case';
 import { type GradedTurn, grade } from './graders';
 import { checkFloor, scoreCase, scorecard } from './scorecard';

@@ -7,9 +7,9 @@
  * userId; the discard RPC + an R2 lifecycle TTL reclaim it.
  */
 
-import { ImageMetaError, processImage, sniffImageMime } from '$lib/server/imagemeta';
-import { ALLOWED_MIME, MAX_UPLOAD_SIZE } from '$lib/server/imagemeta/config';
-import { buildImagekitKey, putImagekitDerivative } from '$lib/server/showcases/image-kit/storage';
+import { ALLOWED_MIME, MAX_UPLOAD_SIZE } from '#lib/server/imagemeta/config.ts';
+import { ImageMetaError, processImage, sniffImageMime } from '#lib/server/imagemeta/index.ts';
+import { buildImagekitKey, putImagekitDerivative } from '#lib/server/showcases/image-kit/storage.ts';
 import type { EphemeralUpload } from './types';
 
 export async function ingestEphemeralImage(userId: string, file: File): Promise<EphemeralUpload> {

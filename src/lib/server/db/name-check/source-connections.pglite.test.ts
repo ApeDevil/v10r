@@ -1,15 +1,15 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '$lib/server/test/fixtures';
-import type { NameSourceVendor } from '$lib/types/db-enums';
+import { makeUser } from '#lib/server/test/fixtures.ts';
+import type { NameSourceVendor } from '#lib/types/db-enums.ts';
 import { user } from '../schema/auth/_better-auth';
 import { sourceConnection } from '../schema/name-check/source-connection';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -22,7 +22,7 @@ const {
 	replaceNameSourceSecretEnvelope,
 	saveNameSourceConnection,
 } = await import('./source-connections');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const ADMIN = makeUser({ id: 'admin-1' });
 const CIPHERTEXT = 'bm9uY2Vub25jZW5v:Y2lwaGVydGV4dC1ub3QtcGxhaW50ZXh0LXRhZ2dlZA==';

@@ -3,10 +3,10 @@
  * Called from /feedback form action and from /admin/feedback views.
  */
 import { desc, eq, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { createId } from '$lib/server/db/id';
-import { events, sessions } from '$lib/server/db/schema/analytics';
-import { feedback, type feedbackStatusEnum } from '$lib/server/db/schema/feedback';
+import { createId } from '#lib/server/db/id.ts';
+import { db } from '#lib/server/db/index.ts';
+import { events, sessions } from '#lib/server/db/schema/analytics/index.ts';
+import { feedback, type feedbackStatusEnum } from '#lib/server/db/schema/feedback/index.ts';
 
 type FeedbackStatus = (typeof feedbackStatusEnum.enumValues)[number];
 

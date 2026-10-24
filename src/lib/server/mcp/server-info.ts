@@ -3,8 +3,9 @@
  * instance answered. Surfaced in the `initialize` result, in the endpoint's GET metadata, and
  * (for the demo state) alongside every read/write.
  */
-import { env } from '$env/dynamic/private';
-import { REGISTRY } from '$lib/server/patterns';
+
+import { REGISTRY } from '#lib/server/patterns/index.ts';
+import { VERCEL_ENV, VERCEL_GIT_COMMIT_SHA } from '$app/env/private';
 
 /** Mirrors package.json "version". Kept as a constant to avoid bundling package.json here. */
 export const APP_VERSION = '0.0.1';
@@ -26,8 +27,8 @@ export function buildInfo() {
 	return {
 		app: APP_VERSION,
 		patternRegistry: REGISTRY.version,
-		commit: env.VERCEL_GIT_COMMIT_SHA || 'local',
-		environment: env.VERCEL_ENV || 'development',
+		commit: VERCEL_GIT_COMMIT_SHA || 'local',
+		environment: VERCEL_ENV || 'development',
 	};
 }
 

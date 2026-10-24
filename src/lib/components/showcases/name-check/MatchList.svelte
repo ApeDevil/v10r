@@ -5,9 +5,9 @@
  * and the record's own facts. Every row links to the authoritative record when the
  * source has one.
  */
-import { Badge } from '$lib/components/primitives';
-import type { NameCheckLabels } from '$lib/name-check/labels';
-import type { NameMatch } from '$lib/name-check/report';
+import { Badge } from '#lib/components/primitives/index.ts';
+import type { NameCheckLabels } from '#lib/name-check/labels.ts';
+import type { NameMatch } from '#lib/name-check/report.ts';
 
 interface Props {
 	matches: NameMatch[];

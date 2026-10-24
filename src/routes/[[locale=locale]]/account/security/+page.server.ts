@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
-import { localizeHref } from '$lib/i18n';
-import { passkeysEnabled } from '$lib/server/auth';
-import { requireStepUp } from '$lib/server/auth/step-up';
-import { getUserSessions, listPasskeyDtos, revokeSession } from '$lib/server/db/user';
-import { maskIp } from '$lib/server/privacy';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { passkeysEnabled } from '#lib/server/auth/index.ts';
+import { requireStepUp } from '#lib/server/auth/step-up.ts';
+import { getUserSessions, listPasskeyDtos, revokeSession } from '#lib/server/db/user/index.ts';
+import { maskIp } from '#lib/server/privacy/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Sessions are shown by an opaque digest — the raw token id never reaches the client list. */

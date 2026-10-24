@@ -1,8 +1,8 @@
 <script lang="ts">
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import type { AdminNavGroup } from '#lib/nav/admin.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import type { AdminNavGroup } from '$lib/nav/admin';
-import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	groups: AdminNavGroup[];

@@ -5,7 +5,7 @@
  * TRUNCATE + INSERT pattern, callable from form action.
  */
 import { sql } from 'drizzle-orm';
-import type { Database } from '$lib/server/db';
+import type { Database } from '#lib/server/db/index.ts';
 
 /** mulberry32 — simple, fast, deterministic 32-bit PRNG */
 function mulberry32(seed: number) {

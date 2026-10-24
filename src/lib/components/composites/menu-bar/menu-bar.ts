@@ -1,5 +1,5 @@
 import { cva } from 'class-variance-authority';
-import { floatingContentBase } from '$lib/styles/floating';
+import { floatingContentBase } from '#lib/styles/floating.ts';
 
 export const menuBarRootVariants = cva(['flex items-center gap-1', 'border-b border-border bg-surface-2', 'px-2 py-1']);
 

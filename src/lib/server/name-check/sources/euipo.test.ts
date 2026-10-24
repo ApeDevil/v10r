@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { startDeadline } from '$lib/server/http/deadline';
+import { startDeadline } from '#lib/server/http/deadline.ts';
 import { type NameSourceContext, NO_CREDENTIALS } from '../name-source';
 import { toNameCheckQuery } from '../query';
 import { euipoQueries, euipoSource, resetEuipoTokens, toEuipoDrafts } from './euipo';

@@ -1,6 +1,6 @@
 <script lang="ts">
-import { BackLink, PageHeader } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
+import { BackLink, PageHeader } from '#lib/components/composites/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
 
 let { data } = $props();
 

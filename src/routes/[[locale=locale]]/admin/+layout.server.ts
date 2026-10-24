@@ -1,4 +1,4 @@
-import { requireAdmin } from '$lib/server/http/guards';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {

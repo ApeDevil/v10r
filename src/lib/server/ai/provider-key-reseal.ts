@@ -2,9 +2,10 @@
  * The AI half of the `encryption-reseal` job: move every stored provider key onto the key
  * ring's current key (`docs/blueprint/security/key-ring.md`).
  */
-import { db } from '$lib/server/db';
-import { listProviderKeyEnvelopes, replaceProviderKeyEnvelope } from '$lib/server/db/ai/provider-connections';
-import { type EncryptionKeyRing, type ResealOutcome, resealEnvelopes } from '$lib/server/security';
+
+import { listProviderKeyEnvelopes, replaceProviderKeyEnvelope } from '#lib/server/db/ai/provider-connections.ts';
+import { db } from '#lib/server/db/index.ts';
+import { type EncryptionKeyRing, type ResealOutcome, resealEnvelopes } from '#lib/server/security/index.ts';
 
 /**
  * Unaudited by design: the secret and its version stay the same, only the key that seals it

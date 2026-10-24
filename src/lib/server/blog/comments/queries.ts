@@ -3,10 +3,10 @@
  */
 
 import { and, count, desc, eq, isNull, lt, or, type SQL, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { comment } from '$lib/server/db/schema/blog/comment';
-import type { CommentStatus } from '$lib/types/db-enums';
+import { db } from '#lib/server/db/index.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { comment } from '#lib/server/db/schema/blog/comment.ts';
+import type { CommentStatus } from '#lib/types/db-enums.ts';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;

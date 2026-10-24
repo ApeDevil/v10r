@@ -9,11 +9,11 @@
  * Audit: every grant/revoke writes one admin.audit_log row via recordAuditEvent.
  */
 import { and, eq, inArray, isNull } from 'drizzle-orm';
-import { recordAuditEvent } from '$lib/server/admin/audit';
-import { db } from '$lib/server/db';
-import { createId } from '$lib/server/db/id';
-import { session } from '$lib/server/db/schema/auth/_better-auth';
-import { grant } from '$lib/server/db/schema/auth/grant';
+import { recordAuditEvent } from '#lib/server/admin/audit.ts';
+import { createId } from '#lib/server/db/id.ts';
+import { db } from '#lib/server/db/index.ts';
+import { session } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { grant } from '#lib/server/db/schema/auth/grant.ts';
 
 /** v1 grant kinds. Extend the enum in src/lib/server/db/schema/auth/grant.ts before adding a new value here. */
 export type GrantKind = 'blog-author';

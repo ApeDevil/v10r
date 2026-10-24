@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
-import { tc } from '$lib/i18n/translate';
-import { getPublishedPostForSlug } from '$lib/server/blog';
+import { tc } from '#lib/i18n/translate.ts';
+import { getPublishedPostForSlug } from '#lib/server/blog/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {

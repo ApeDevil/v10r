@@ -1,6 +1,6 @@
-import { db } from '$lib/server/db';
-import { jobExecution } from '$lib/server/db/schema/jobs';
-import { deferAfterResponse } from '$lib/server/platform';
+import { db } from '#lib/server/db/index.ts';
+import { jobExecution } from '#lib/server/db/schema/jobs/index.ts';
+import { deferAfterResponse } from '#lib/server/platform/index.ts';
 import { jobs } from './index';
 
 export type TriggerType = 'cron' | 'scheduler' | 'manual';

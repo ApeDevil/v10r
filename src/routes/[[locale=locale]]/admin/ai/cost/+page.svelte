@@ -1,9 +1,9 @@
 <script lang="ts">
-import VolumeBarChart from '$lib/components/admin/ai/VolumeBarChart.svelte';
-import { Card } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge } from '$lib/components/primitives';
-import type { AiWorkload, UnifiedModelUsageRow } from '$lib/schemas/admin/model-usage';
+import VolumeBarChart from '#lib/components/admin/ai/VolumeBarChart.svelte';
+import { Card } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge } from '#lib/components/primitives/index.ts';
+import type { AiWorkload, UnifiedModelUsageRow } from '#lib/schemas/admin/model-usage.ts';
 
 let { data } = $props();
 

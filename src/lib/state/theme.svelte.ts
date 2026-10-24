@@ -3,10 +3,10 @@
  */
 
 import { getContext, setContext } from 'svelte';
-import { browser } from '$app/environment';
-import { apiFetch } from '$lib/api';
-import type { Theme } from '$lib/types/db-enums';
-import { setCookie } from '$lib/utils/cookies';
+import { apiFetch } from '#lib/api.ts';
+import type { Theme } from '#lib/types/db-enums.ts';
+import { setCookie } from '#lib/utils/cookies.ts';
+import { browser } from '$app/env';
 
 type ThemeMode = Theme;
 interface ThemeState {

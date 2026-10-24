@@ -1,9 +1,9 @@
 <script lang="ts">
-import { invalidateAll } from '$app/navigation';
-import { Card } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
+import { Card } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { refreshAll } from '$app/navigation';
 
 let { data } = $props();
 
@@ -16,7 +16,7 @@ const resourceById = $derived(new Map(data.resources.map((r) => [r.id, r])));
 		{#snippet header()}
 			<Cluster justify="between" align="center">
 				<h2 class="text-fluid-lg font-semibold">AI Overview</h2>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 					Refresh
 				</Button>

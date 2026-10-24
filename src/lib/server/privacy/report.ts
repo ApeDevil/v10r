@@ -8,7 +8,7 @@
  * hand-assemble this — they call collectUserData() so the definition of
  * "all my data" cannot drift between them.
  *
- * Import direction: this module reads ONLY from $lib/server/db (the import
+ * Import direction: this module reads ONLY from #lib/server/db (the import
  * sink) — never from peer domains.
  *
  * Hard rules (compliance, not style):
@@ -29,20 +29,20 @@
  *   the anonymous lane onto a different legal footing entirely.
  */
 import { and, count, eq, isNotNull, isNull, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { getPreferences } from '$lib/server/db/preferences';
-import { conversation } from '$lib/server/db/schema/ai/conversation';
-import { turn } from '$lib/server/db/schema/ai/turn';
-import { userEvents } from '$lib/server/db/schema/analytics';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { comment } from '$lib/server/db/schema/blog/comment';
-import { file as deskFile } from '$lib/server/db/schema/desk/file';
-import { deskWorkspace } from '$lib/server/db/schema/desk/workspace';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import { customPalettes } from '$lib/server/db/schema/personalization/custom-palettes';
-import { imageAsset, imageMetadata } from '$lib/server/db/schema/showcase/image-metadata';
-import { getUserOAuthSummary, getUserProfile, getUserSessions, listPasskeyDtos } from '$lib/server/db/user';
+import { db } from '#lib/server/db/index.ts';
+import { getPreferences } from '#lib/server/db/preferences/index.ts';
+import { conversation } from '#lib/server/db/schema/ai/conversation.ts';
+import { turn } from '#lib/server/db/schema/ai/turn.ts';
+import { userEvents } from '#lib/server/db/schema/analytics/index.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { comment } from '#lib/server/db/schema/blog/comment.ts';
+import { file as deskFile } from '#lib/server/db/schema/desk/file.ts';
+import { deskWorkspace } from '#lib/server/db/schema/desk/workspace.ts';
+import { userDiscordAccounts } from '#lib/server/db/schema/notifications/discord.ts';
+import { userTelegramAccounts } from '#lib/server/db/schema/notifications/telegram.ts';
+import { customPalettes } from '#lib/server/db/schema/personalization/custom-palettes.ts';
+import { imageAsset, imageMetadata } from '#lib/server/db/schema/showcase/image-metadata.ts';
+import { getUserOAuthSummary, getUserProfile, getUserSessions, listPasskeyDtos } from '#lib/server/db/user/index.ts';
 
 export const REPORT_SCHEMA_VERSION = '2026-07-25';
 

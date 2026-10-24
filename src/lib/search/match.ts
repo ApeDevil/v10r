@@ -1,6 +1,6 @@
 /**
  * Pure, client-safe lexical matcher for the Lane-A static index and the
- * server-side doc corpus. No I/O, no `$lib/server` import, no dependencies —
+ * server-side doc corpus. No I/O, no `#lib/server` import, no dependencies —
  * scoped to a few hundred small records, so a hand-rolled token scorer is
  * ample and avoids shipping a search library.
  */

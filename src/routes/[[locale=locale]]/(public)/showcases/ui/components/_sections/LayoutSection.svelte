@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Cluster, Stack } from '$lib/components';
+import { Cluster, Stack } from '#lib/components/index.ts';
 import { DemoCard } from '../_components';
 </script>
 

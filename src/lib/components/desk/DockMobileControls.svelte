@@ -11,7 +11,7 @@
  * dimmed + inert behind it, and tap-outside dismisses. They therefore never
  * show open/close state (a raised "X" here would be unreachable).
  */
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 import { getDockMobile } from './dock-mobile.state.svelte';
 
 interface Props {

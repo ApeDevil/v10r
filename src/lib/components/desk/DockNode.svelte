@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import type { LayoutNode } from '$lib/desk/layout.types';
+import type { LayoutNode } from '#lib/desk/layout.types.ts';
 import DockLeaf from './DockLeaf.svelte';
 import DockNode from './DockNode.svelte';
 import DockResizeHandle from './DockResizeHandle.svelte';

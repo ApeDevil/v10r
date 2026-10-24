@@ -1,4 +1,4 @@
-import { ServerError } from '$lib/server/errors';
+import { ServerError } from '#lib/server/errors/index.ts';
 
 export type CacheErrorKind = 'credentials' | 'command' | 'timeout' | 'limit' | 'unavailable' | 'unknown';
 

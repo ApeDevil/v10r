@@ -1,5 +1,5 @@
 /**
- * Seed runner — opens its own Pool (not via $env, since this runs outside
+ * Seed runner — opens its own Pool (not via `$app/env`, since this runs outside
  * the SvelteKit runtime) and calls runSeed.
  *
  *   podman exec v10r bun run scripts/db/seed.ts

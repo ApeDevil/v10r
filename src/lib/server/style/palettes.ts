@@ -1,8 +1,8 @@
 import { and, count, eq } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { createId } from '$lib/server/db/id';
-import { customPalettes } from '$lib/server/db/schema/personalization/custom-palettes';
-import type { PaletteColors } from '$lib/styles/random/types';
+import { createId } from '#lib/server/db/id.ts';
+import { db } from '#lib/server/db/index.ts';
+import { customPalettes } from '#lib/server/db/schema/personalization/custom-palettes.ts';
+import type { PaletteColors } from '#lib/styles/random/types.ts';
 
 export type CustomPaletteRow = typeof customPalettes.$inferSelect;
 

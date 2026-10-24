@@ -13,15 +13,15 @@
  * job through approved proposals; a text editor here is a later, separate decision.
  */
 import { onMount } from 'svelte';
-import { apiFetch } from '$lib/api';
-import { MarkdownProse } from '$lib/components/composites/markdown';
-import { getDeskBus, getDockContext, registerPanelContext } from '$lib/components/desk';
-import { estimateTokens } from '$lib/components/desk/desk-context.pure';
-import { fileIdOfPanel } from '$lib/components/desk/file-panel';
-import PanelEmptyState from '$lib/components/desk/PanelEmptyState.svelte';
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { renderMarkdown } from '$lib/utils/markdown';
+import { apiFetch } from '#lib/api.ts';
+import { MarkdownProse } from '#lib/components/composites/markdown/index.ts';
+import { estimateTokens } from '#lib/components/desk/desk-context.pure.ts';
+import { fileIdOfPanel } from '#lib/components/desk/file-panel.ts';
+import { getDeskBus, getDockContext, registerPanelContext } from '#lib/components/desk/index.ts';
+import PanelEmptyState from '#lib/components/desk/PanelEmptyState.svelte';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { renderMarkdown } from '#lib/utils/markdown.ts';
 
 interface Props {
 	panelId: string;

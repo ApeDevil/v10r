@@ -10,9 +10,15 @@
  * pool size. The retrieval is handed to the tool as its seed, so a call that asks the
  * same question again is answered without a second embedding.
  */
-import { contextChunkCut, formatContextForPrompt, type RetrievalResult, retrieve } from '$lib/server/retrieval';
-import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
-import type { GroundingItem } from '$lib/types/turn-trace';
+
+import { SYSTEM_DOCS_USER_ID } from '#lib/server/retrieval/config.ts';
+import {
+	contextChunkCut,
+	formatContextForPrompt,
+	type RetrievalResult,
+	retrieve,
+} from '#lib/server/retrieval/index.ts';
+import type { GroundingItem } from '#lib/types/turn-trace.ts';
 import {
 	type AssistantCapability,
 	catalogSink,

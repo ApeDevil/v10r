@@ -7,7 +7,7 @@
  * freshness, not the ceiling. Returns the number of entries flushed.
  */
 
-import { flushBotHits } from '$lib/server/analytics';
+import { flushBotHits } from '#lib/server/analytics/index.ts';
 
 export async function botHitsFlush(): Promise<number> {
 	return flushBotHits();

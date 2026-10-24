@@ -7,7 +7,7 @@
 // Pages import scenes by model ID via route-level mapping to avoid
 // circular dependencies and preserve code-splitting.
 
-import type { AssetRights } from '$lib/credits/asset-rights';
+import type { AssetRights } from '#lib/credits/asset-rights.ts';
 import type { CustomizationConfig } from './customization';
 import { FOX_CUSTOMIZATION, ROBOT_CUSTOMIZATION, SOFA_CUSTOMIZATION } from './customization';
 

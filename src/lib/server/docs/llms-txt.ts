@@ -1,4 +1,4 @@
-import type { DocEntry, DocsManifest } from '$lib/docs/types';
+import type { DocEntry, DocsManifest } from '#lib/docs/types.ts';
 import { markdownHrefFor, ROOT_DOCS } from './markdown-urls';
 
 /**
@@ -19,7 +19,7 @@ export const PROD_ORIGIN = 'https://www.v10r.dev';
 
 const AGENT_INSTRUCTIONS = [
 	'- **Svelte 5 runes, not Svelte 4.** `$state`/`$derived`/`$props`/`$effect`. Never `export let`, never `$:` reactive statements, never `svelte/store` in new code.',
-	'- **Component-first.** Never a raw `<button>`, `<input>`, `<select>` or `<textarea>` when a `$lib/components/` component exists.',
+	'- **Component-first.** Never a raw `<button>`, `<input>`, `<select>` or `<textarea>` when a `#lib/components//index.ts` component exists.',
 	'- **Valibot, not Zod.** Validation is Valibot v1 + Superforms throughout.',
 	// The example is deliberately `bg-<token>/10`, not a real token: the opacity-guard
 	// gate scans src/ for the real pattern and would flag its own warning text.

@@ -23,9 +23,9 @@
  */
 import type { Chat } from '@ai-sdk/svelte';
 import { untrack } from 'svelte';
-import { browser } from '$app/environment';
-import { CSRF_HEADER } from '$lib/api';
-import type { TurnSummary } from '$lib/types/turn-trace';
+import { CSRF_HEADER } from '#lib/api.ts';
+import type { TurnSummary } from '#lib/types/turn-trace.ts';
+import { browser } from '$app/env';
 
 export type ChatPhase = 'closed' | 'open' | 'minimized';
 

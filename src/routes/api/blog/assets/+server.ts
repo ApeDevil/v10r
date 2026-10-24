@@ -1,13 +1,13 @@
 import * as v from 'valibot';
-import { listAssets } from '$lib/server/blog';
-import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
-import { RequestUploadSchema } from '$lib/server/blog/schemas';
-import { guardApiBlogAuthor } from '$lib/server/http/guards';
-import { apiPaginated, parsePagination } from '$lib/server/http/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
-import { generateBlogDownloadUrl, generateBlogUploadUrl } from '$lib/server/store/blog';
-import { classifyS3Error } from '$lib/server/store/errors';
+import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '#lib/server/blog/config.ts';
+import { listAssets } from '#lib/server/blog/index.ts';
+import { RequestUploadSchema } from '#lib/server/blog/schemas.ts';
+import { guardApiBlogAuthor } from '#lib/server/http/guards.ts';
+import { apiPaginated, parsePagination } from '#lib/server/http/pagination.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiValidationError } from '#lib/server/http/response.ts';
+import { generateBlogDownloadUrl, generateBlogUploadUrl } from '#lib/server/store/blog/index.ts';
+import { classifyS3Error } from '#lib/server/store/errors.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);

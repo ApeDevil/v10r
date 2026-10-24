@@ -1,8 +1,8 @@
-import { baseLocale, locales } from '$lib/paraglide/runtime';
-import { listPublishedPostsForFeed } from '$lib/server/blog';
-import { REDIRECT_HREFS } from '$lib/server/search/adapters/_redirects';
-import { showcases } from '$lib/showcases/catalog/registry';
-import { escapeXmlAttr } from '$lib/utils/xml';
+import { baseLocale, locales } from '#lib/paraglide/runtime.js';
+import { listPublishedPostsForFeed } from '#lib/server/blog/index.ts';
+import { REDIRECT_HREFS } from '#lib/server/search/adapters/_redirects.ts';
+import { showcases } from '#lib/showcases/catalog/registry.ts';
+import { escapeXmlAttr } from '#lib/utils/xml.ts';
 import type { RequestHandler } from './$types';
 
 const PROD_ORIGIN = 'https://www.v10r.dev';

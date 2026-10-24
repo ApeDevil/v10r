@@ -6,7 +6,7 @@ import {
 	Header as TableHeader,
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
-} from '$lib/components';
+} from '#lib/components/index.ts';
 import { EMPLOYEES, formatSalary, formatStartDate, type SortDirection, type SortKey } from '../_data/mock-data';
 
 let sortKey = $state<SortKey | null>(null);

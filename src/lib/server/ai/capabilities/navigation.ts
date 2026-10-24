@@ -9,8 +9,8 @@
  * this turn exactly like `search_catalog` output — chips and the path verifier read the
  * same rows. Embedding-free, so it runs beside the embedding lanes at no quota cost.
  */
-import { tokenize } from '$lib/search/match';
-import type { SearchResult, SearchSurface } from '$lib/search/types';
+import { tokenize } from '#lib/search/match.ts';
+import type { SearchResult, SearchSurface } from '#lib/search/types.ts';
 import { type AssistantCapability, catalogSink, describeError } from '../profile/profile';
 import { searchCatalogRecords } from '../tools/search-catalog';
 import { catalogGroundingItem } from './catalog';

@@ -5,7 +5,7 @@
  * `retrieve` and the database are mocked.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RankedChunk, RetrievalResult } from '$lib/server/retrieval/types';
+import type { RankedChunk, RetrievalResult } from '#lib/server/retrieval/types.ts';
 
 const mocks = vi.hoisted(() => ({
 	retrieve: vi.fn(),
@@ -13,13 +13,13 @@ const mocks = vi.hoisted(() => ({
 	docRows: [] as Array<{ id: string; sourceUri: string }>,
 }));
 
-vi.mock('$lib/server/retrieval', () => ({ retrieve: mocks.retrieve }));
-vi.mock('$lib/server/db', () => ({
+vi.mock('#lib/server/retrieval/index.ts', () => ({ retrieve: mocks.retrieve }));
+vi.mock('#lib/server/db/index.ts', () => ({
 	db: { select: () => ({ from: () => ({ where: async () => mocks.docRows }) }) },
 }));
 
 const { createSearchDocsTool } = await import('./search-docs');
-const { SYSTEM_DOCS_USER_ID } = await import('$lib/server/retrieval/config');
+const { SYSTEM_DOCS_USER_ID } = await import('#lib/server/retrieval/config.ts');
 
 // biome-ignore lint/suspicious/noExplicitAny: invoking the AI SDK tool's execute directly in a unit test
 const exec = (tool: any, args: { query: string; limit?: number }) =>

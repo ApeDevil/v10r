@@ -1,7 +1,7 @@
 /**
  * The name-check query contract, shared by the showcase form and the JSON route.
  *
- * Lives in `$lib/schemas/` rather than `schemas/showcase/`: the JSON route is a product
+ * Lives in `#lib/schemas/` rather than `schemas/showcase/`: the JSON route is a product
  * surface (agents call it), and the same object is what `checkName()` accepts, so a
  * `showcase/` path would misreport a real contract as demo data.
  */

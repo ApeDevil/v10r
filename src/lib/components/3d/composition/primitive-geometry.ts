@@ -8,7 +8,7 @@
  */
 import { BoxGeometry, type BufferGeometry, CylinderGeometry, SphereGeometry, TorusGeometry } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import type { Primitive } from '$lib/product-composition';
+import type { Primitive } from '#lib/product-composition/index.ts';
 
 const cache = new Map<string, BufferGeometry>();
 

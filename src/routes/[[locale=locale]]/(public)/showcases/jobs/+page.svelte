@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Card, EmptyState, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { PageContainer, Stack } from '$lib/components/layout';
-import { Badge } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Card, EmptyState, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import { Badge } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let { data } = $props();
 

@@ -1,8 +1,8 @@
 <script lang="ts">
+import { Pagination } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import type { PostListItem } from '#lib/server/blog/types.ts';
 import { goto } from '$app/navigation';
-import { Pagination } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import type { PostListItem } from '$lib/server/blog/types';
 import PostCard from './PostCard.svelte';
 
 interface Props {

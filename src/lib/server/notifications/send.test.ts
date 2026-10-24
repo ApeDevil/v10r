@@ -14,7 +14,7 @@ const mockChannelSend = vi.fn();
 /** The settings row `getOrCreateSettings` returns. Quiet hours off by default. */
 let mockSettings: Record<string, unknown> = { quietStart: null, quietEnd: null };
 
-vi.mock('$lib/server/db/notifications/mutations', () => ({
+vi.mock('#lib/server/db/notifications/mutations.ts', () => ({
 	createNotification: mockCreateNotification,
 	getOrCreateSettings: vi.fn(async () => mockSettings),
 }));
@@ -39,7 +39,7 @@ vi.mock('./render-message', () => ({
 	renderNotification: vi.fn((key: string) => `rendered:${key}`),
 }));
 
-vi.mock('$lib/server/db', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({
 	db: {
 		select: vi.fn(() => ({
 			from: vi.fn(() => ({
@@ -60,11 +60,11 @@ vi.mock('drizzle-orm', async (importOriginal) => {
 	return { ...actual, eq: vi.fn() };
 });
 
-vi.mock('$lib/server/db/schema/auth/_better-auth', () => ({
+vi.mock('#lib/server/db/schema/auth/_better-auth.ts', () => ({
 	user: { id: 'id', email: 'email' },
 }));
 
-vi.mock('$lib/server/db/schema/personalization/user-preferences', () => ({
+vi.mock('#lib/server/db/schema/personalization/user-preferences.ts', () => ({
 	userPreferences: { userId: 'userId', locale: 'locale', timezone: 'timezone' },
 }));
 

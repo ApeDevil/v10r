@@ -1,11 +1,11 @@
 <script lang="ts">
+import { layerStack, setLayerScope } from '#lib/state/layer-stack.svelte.ts';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
+import { trapFocus } from '#lib/utils/focus-trap.ts';
 import { afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
-import { layerStack, setLayerScope } from '$lib/state/layer-stack.svelte';
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
-import { trapFocus } from '$lib/utils/focus-trap';
 import DiceRollButton from './DiceRollButton.svelte';
 import SidebarLogo from './SidebarLogo.svelte';
 import SidebarNav from './SidebarNav.svelte';
@@ -55,8 +55,9 @@ $effect(() => {
 
 // Close on navigation: a surviving drawer keeps its focus trap over the
 // destination page.
-afterNavigate(() => {
-	if (sidebar.mobileOpen) sidebar.closeMobile();
+afterNavigate(({ shallow }) => {
+	// A shallow navigation stays on the page the drawer belongs to.
+	if (!shallow && sidebar.mobileOpen) sidebar.closeMobile();
 });
 
 // Yield to a FOREIGN layer that opens above us (desk drawers/sheets, the command

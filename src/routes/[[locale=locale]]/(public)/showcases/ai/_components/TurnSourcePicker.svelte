@@ -1,8 +1,8 @@
 <script lang="ts">
+import { Button, Select } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import { Button, Select } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 import type { TurnInspectorState } from './turn-inspector.state.svelte';
 
 // Which turn the inspector opens: a recorded turn (anyone — the fixture, authored or

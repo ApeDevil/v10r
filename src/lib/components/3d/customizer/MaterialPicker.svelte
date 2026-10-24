@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { MaterialGroup } from '$lib/3d/customization';
+import type { MaterialGroup } from '#lib/3d/customization.ts';
 
 interface Props {
 	group: MaterialGroup;

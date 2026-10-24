@@ -15,24 +15,24 @@
  */
 
 import { DropdownMenu } from 'bits-ui';
-import { goto, invalidateAll } from '$app/navigation';
-import { page } from '$app/state';
-import { ConfirmDialog } from '$lib/components/composites/confirm-dialog';
-import { locales, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { signOutAndFlush } from '$lib/pwa/sign-out';
-import { getLayerScope, layerStack, setLayerScope } from '$lib/state/layer-stack.svelte';
-import { getTheme } from '$lib/state/theme.svelte';
+import { ConfirmDialog } from '#lib/components/composites/confirm-dialog/index.ts';
+import { locales, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { signOutAndFlush } from '#lib/pwa/sign-out.ts';
+import { getLayerScope, layerStack, setLayerScope } from '#lib/state/layer-stack.svelte.ts';
+import { getTheme } from '#lib/state/theme.svelte.ts';
 import {
 	collectUnsavedWork,
 	countUnsavedWork,
 	drainUnsavedWork,
 	signOutVerdict,
 	type UnsavedWork,
-} from '$lib/state/unsaved-work';
-import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
-import { floatingContentBase } from '$lib/styles/floating';
-import { cn } from '$lib/utils/cn';
+} from '#lib/state/unsaved-work.ts';
+import { elevationAttr, getParentLevel } from '#lib/styles/elevation.ts';
+import { floatingContentBase } from '#lib/styles/floating.ts';
+import { cn } from '#lib/utils/cn.ts';
+import { goto, refreshAll } from '$app/navigation';
+import { page } from '$app/state';
 
 interface User {
 	name: string;
@@ -168,7 +168,7 @@ async function handleSignOut() {
 	signOutWork = [];
 	// Refresh the shared root-layout `session` (reused across the client-side
 	// nav) so the shell drops back to the logged-out state without a reload.
-	await invalidateAll();
+	await refreshAll();
 	goto(localizeHref('/'));
 }
 

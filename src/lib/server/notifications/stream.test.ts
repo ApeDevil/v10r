@@ -14,13 +14,13 @@ const platformMock = { id: 'container', persistent: true };
 const redisMock = { publish: vi.fn(), subscribe: vi.fn() };
 let redisValue: unknown = redisMock;
 
-vi.mock('$lib/server/platform', () => ({
+vi.mock('#lib/server/platform/index.ts', () => ({
 	get platform() {
 		return platformMock;
 	},
 }));
 
-vi.mock('$lib/server/cache', () => ({
+vi.mock('#lib/server/cache/index.ts', () => ({
 	get redis() {
 		return redisValue;
 	},

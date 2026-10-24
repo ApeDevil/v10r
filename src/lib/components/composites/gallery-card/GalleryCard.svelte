@@ -1,6 +1,6 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
-import { Button } from '$lib/components/primitives';
+import { Button } from '#lib/components/primitives/index.ts';
 import type { GalleryCardCta, GalleryCardItem } from './gallery-card';
 
 interface Props {

@@ -1,7 +1,7 @@
 /**
  * Cycle showcase — shared types and constants.
  * These are used by both server and client code, so they live here
- * outside $lib/server/ to avoid SvelteKit's server-only guard.
+ * outside #lib/server/ to avoid SvelteKit's server-only guard.
  */
 
 export type CycleStageId =

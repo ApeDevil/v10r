@@ -7,11 +7,11 @@
  * Client-safe: pure constants, no server imports.
  *
  * The CORPUS axis (`RetrievalCorpus`/`RETRIEVAL_CORPORA`) lives in the shared
- * `$lib/types/retrieval-corpora.ts` so this admin diagram and the AI showcase consume one
+ * `#lib/types/retrieval-corpora.ts` so this admin diagram and the AI showcase consume one
  * taxonomy. Re-exported here for existing call sites.
  */
 
-export { RETRIEVAL_CORPORA, type RetrievalCorpus, type RetrievalCorpusId } from '$lib/types/retrieval-corpora';
+export { RETRIEVAL_CORPORA, type RetrievalCorpus, type RetrievalCorpusId } from '#lib/types/retrieval-corpora.ts';
 
 export interface ReadStep {
 	n: number;

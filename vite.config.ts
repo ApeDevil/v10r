@@ -1,5 +1,7 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
+import adapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import UnoCSS from 'unocss/vite';
 import { defineConfig } from 'vite';
 import { thirdPartyLicenses } from './scripts/build/third-party-licenses.ts';
@@ -12,7 +14,7 @@ const licenses = thirdPartyLicenses();
  *
  * A compiled Svelte component runs code at module scope (`$.delegate(...)`, template
  * factories), so the bundler must assume it has side effects and keeps every component a
- * barrel re-exports, used or not. One `import { Button } from '$lib/components'` then
+ * barrel re-exports, used or not. One `import { Button } from '#lib/components/index.ts'` then
  * shipped the whole primitives layer — culori, bits-ui select and menu, floating-ui —
  * to ~197 of 199 routes. Nothing in this tree registers anything at module scope
  * (registration happens inside functions and effects), so its modules are declared
@@ -39,11 +41,64 @@ export default defineConfig({
 			outdir: './src/lib/paraglide',
 			strategy: ['url', 'cookie', 'baseLocale'],
 		}),
-		sveltekit(),
+		sveltekit({
+			preprocess: vitePreprocess(),
+			// `fra1`: the functions sit next to the database. Neon runs in eu-central-1, and until
+			// 2026-09-13 every function ran in Vercel's default `iad1` (measured: `x-vercel-id:
+			// fra1::iad1::…`), so each query crossed the Atlantic. Route-level `config` exports
+			// merge over these defaults, so the region holds for the AI routes too.
+			adapter: adapter({ runtime: 'nodejs22.x', regions: ['fra1'] }),
+
+			// Deploy-accurate app version: powers `updated` polling (update prompts) and
+			// the service worker's cache names. Vercel injects the commit SHA at build.
+			version: {
+				name: process.env.VERCEL_GIT_COMMIT_SHA ?? String(Date.now()),
+				pollInterval: 60_000,
+			},
+			csp: {
+				mode: 'auto',
+				directives: {
+					'default-src': ['self'],
+					// The sha256 entry allowlists the theme-flash inline script in app.html
+					// (a nonce can't be used: /offline is prerendered — no request, no nonce).
+					// If that script's body changes, recompute from the repo root with:
+					//   python3 -c "import re,hashlib,base64;b=re.search(r'<script[^>]*>(.*?)</script>',open('src/app.html').read(),re.S).group(1);print('sha256-'+base64.b64encode(hashlib.sha256(b.encode()).digest()).decode())"
+					// Dev never enforces CSP, so a stale hash only surfaces in production.
+					'script-src': ['self', 'wasm-unsafe-eval', 'sha256-aeayArXAuaCRaYFGpT47t+MbCCMSeme0VkyIP8RT1Kw='],
+					'style-src': ['self', 'unsafe-inline'],
+					'img-src': [
+						'self',
+						'data:',
+						'blob:',
+						'https://*.r2.cloudflarestorage.com',
+						'https://basemaps.cartocdn.com',
+						'https://avatars.githubusercontent.com',
+						// Google OAuth account avatars
+						'https://lh3.googleusercontent.com',
+					],
+					// Vite inlines small fonts as data: URIs; without font-src they fall
+					// back to default-src 'self' and get blocked in production.
+					'font-src': ['self', 'data:'],
+					// maplibre.org serves the US-states GeoJSON behind the /showcases/viz/maps choropleth.
+					'connect-src': [
+						'self',
+						'blob:',
+						'https://basemaps.cartocdn.com',
+						'https://maplibre.org',
+						'https://*.r2.cloudflarestorage.com',
+					],
+					'worker-src': ['self', 'blob:'],
+					'object-src': ['none'],
+					'base-uri': ['self'],
+					'form-action': ['self'],
+					'frame-ancestors': ['none'],
+				},
+			},
+		}),
 		licenses.plugin,
 	],
 	ssr: {
-		noExternal: ['three'], // Required for Three.js/Threlte SSR compatibility
+		noExternal: ['three'], // Required for Three.js/Threlte SSR compatibility,
 	},
 	build: {
 		rolldownOptions: {

@@ -1,12 +1,12 @@
-import { AI_PAGE_SIZE } from '$lib/server/admin/config';
-import { getUsersNearConversationLimit } from '$lib/server/ai/conversation-quota';
+import { AI_PAGE_SIZE } from '#lib/server/admin/config.ts';
+import { getUsersNearConversationLimit } from '#lib/server/ai/conversation-quota.ts';
 import {
 	getConversationsList,
 	getMessageVolumeByDay,
 	getTopUsersByConversations,
-} from '$lib/server/db/ai/admin-queries';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
+} from '#lib/server/db/ai/admin-queries.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {

@@ -4,9 +4,8 @@
  */
 
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { getBotCategories } from '$lib/server/db/analytics/bot-queries';
-import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '$lib/server/db/analytics/sentinels';
+import { getBotCategories } from '#lib/server/db/analytics/bot-queries.ts';
+import { UNKNOWN_CLIENT, UNKNOWN_COUNTRY } from '#lib/server/db/analytics/sentinels.ts';
 import type {
 	AudienceBreakdown,
 	AudienceSplit,
@@ -21,10 +20,11 @@ import type {
 	TrafficTrendPoint,
 	TransitionRow,
 	UserLaneStats,
-} from '$lib/server/db/analytics/types';
-import { rowsOf } from '$lib/server/db/rows';
-import { dailyPageStats, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
-import { COMMAND_VIA, type CommandVia } from '$lib/types/journey-events';
+} from '#lib/server/db/analytics/types.ts';
+import { db } from '#lib/server/db/index.ts';
+import { rowsOf } from '#lib/server/db/rows.ts';
+import { dailyPageStats, events, sessions, userEvents } from '#lib/server/db/schema/analytics/index.ts';
+import { COMMAND_VIA, type CommandVia } from '#lib/types/journey-events.ts';
 
 function daysAgo(n: number): string {
 	const d = new Date();

@@ -50,7 +50,7 @@ A set of web capabilities that make your app installable, offline-capable, and n
 - Zero-config value evaporates for SSR apps (`generateSW` precaches a build glob; SSR routes aren't in it → you end up in `injectManifest` writing a custom SW anyway)
 - Known unfixed issue: infinite reload loop on SvelteKit error pages (#65)
 
-**SvelteKit built-in — what v10r uses** (`src/service-worker.ts`, policy in `$lib/pwa/sw-policy.ts`):
+**SvelteKit built-in — what v10r uses** (`src/service-worker.ts`, policy in `#lib/pwa/sw-policy.ts`):
 - `$service-worker` module provides `build`, `files`, `prerendered`, `version`
 - Readable, zero-dep, unit-testable caching policy — the SW file is itself the showcase
 - `version` is app-global, so every deploy replaces the cache; precache only the offline shell (the `/offline` page and the assets its HTML loads) and let hashed files fill in on use, so a deploy costs visitors nothing up front

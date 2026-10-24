@@ -9,7 +9,7 @@
  * Always auto-registered; not gated by scope. See `loop/compact.ts`.
  */
 import { jsonSchema, tool } from 'ai';
-import { resolveRef } from '$lib/server/ai/loop/compact';
+import { resolveRef } from '#lib/server/ai/loop/compact.ts';
 
 export function createResolveRefTool() {
 	return {

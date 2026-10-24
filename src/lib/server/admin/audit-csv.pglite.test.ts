@@ -5,18 +5,18 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import { adminAuditLog } from '$lib/server/db/schema/admin';
+import { adminAuditLog } from '#lib/server/db/schema/admin/index.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { streamAuditLogCsv } = await import('./audit');
 
 afterAll(async () => {

@@ -4,8 +4,8 @@
  * pattern). Heuristic, not a charge: Gemini bills image input by tiling (~258
  * tokens per 768px tile), plus a fixed output budget for the merged response.
  */
-import type { PreRunEstimate } from '$lib/schemas/showcase/image-kit';
-import { estimateCost } from '$lib/server/ai/pricing';
+import type { PreRunEstimate } from '#lib/schemas/showcase/image-kit.ts';
+import { estimateCost } from '#lib/server/ai/pricing.ts';
 
 const TILE_PX = 768;
 const TOKENS_PER_TILE = 258;

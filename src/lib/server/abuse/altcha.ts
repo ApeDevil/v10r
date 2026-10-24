@@ -1,6 +1,6 @@
 import { deriveKey } from 'altcha-lib/algorithms/pbkdf2';
 import { create } from 'altcha-lib/frameworks/sveltekit';
-import { redis } from '$lib/server/cache';
+import { redis } from '#lib/server/cache/index.ts';
 import { ALTCHA_HMAC_KEY, BOT_DETECTION_MODE } from './config';
 import { allowed, denied } from './decision';
 import type { Decision } from './types';

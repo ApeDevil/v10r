@@ -7,7 +7,7 @@ API patterns and service integrations — SvelteKit-native REST + server actions
 | Concern | Technology | Provider |
 |---------|------------|----------|
 | API style | REST + server actions | SvelteKit (framework-native) |
-| Analytics | In-app collector | `$lib/server/analytics/` + `/api/analytics/*` (server-side, consent-gated) |
+| Analytics | In-app collector | `#lib/server/analytics/` + `/api/analytics/*` (server-side, consent-gated) |
 | Errors | `handleError` hook | Console-only (`src/hooks.server.ts`); no external provider wired |
 | Email | SMTP/API | Resend |
 
@@ -16,7 +16,7 @@ API patterns and service integrations — SvelteKit-native REST + server actions
 | Complexity | Technology | Use case |
 |------------|------------|----------|
 | Default | Server actions | Fast, no deps |
-| Scheduled / async | Custom job runner | `$lib/server/jobs` (`runJob`) via the daily Vercel-cron sweep `/api/cron/due` (+ `/api/cron/[job]` by slug) |
+| Scheduled / async | Custom job runner | `#lib/server/jobs` (`runJob`) via the daily Vercel-cron sweep `/api/cron/due` (+ `/api/cron/[job]` by slug) |
 
 ## Known limitations
 

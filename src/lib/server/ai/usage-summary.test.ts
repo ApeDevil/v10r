@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ModelUsageRow } from '$lib/server/db/ai/admin-queries';
-import type { ImageModelUsageRow } from '$lib/server/db/ai/image-metadata-queries';
+import type { ModelUsageRow } from '#lib/server/db/ai/admin-queries.ts';
+import type { ImageModelUsageRow } from '#lib/server/db/ai/image-metadata-queries.ts';
 import { buildUnifiedModelUsage } from './usage-summary';
 
 const chat = (over: Partial<ModelUsageRow> = {}): ModelUsageRow => ({

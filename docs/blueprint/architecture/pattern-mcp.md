@@ -34,7 +34,7 @@ Every human- and agent-facing form of the pattern library is generated from this
 
 - the root **README Pattern Index** — the marker-delimited region is rendered from the registry's `groups`/`categories` blocks and rows; never hand-edit it
 - **`docs/pattern-library/<id>.md`** — one pointer page per record in the library's own top-level docs section, served at `/docs/pattern-library/<id>`, ingested into the RAG corpus, and listed first in `/llms.txt`
-- **`/docs/pattern-library`** — the section's catalog index (every pattern + purpose, grouped by category), a live route over the same registry import (`$lib/server/patterns/catalog.ts`), so it is current without a build step
+- **`/docs/pattern-library`** — the section's catalog index (every pattern + purpose, grouped by category), a live route over the same registry import (`#lib/server/patterns/catalog.ts`), so it is current without a build step
 - both **MCP runtimes** (stdio + hosted) and the **`/showcases/mcp`** visualization
 - Vely's **`search_pattern_library`** chatbot tool — the same static registry import the hosted MCP uses
 

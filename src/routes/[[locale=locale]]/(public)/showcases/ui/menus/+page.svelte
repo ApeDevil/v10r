@@ -1,5 +1,5 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
+import { NavSection } from '#lib/components/composites/index.ts';
 import CommandPaletteSection from './_sections/CommandPaletteSection.svelte';
 import ContextMenuSection from './_sections/ContextMenuSection.svelte';
 import MenuBarSection from './_sections/MenuBarSection.svelte';

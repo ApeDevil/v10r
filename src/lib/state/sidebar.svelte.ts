@@ -3,9 +3,9 @@
  */
 
 import { getContext, setContext } from 'svelte';
-import { browser } from '$app/environment';
-import { apiFetch } from '$lib/api';
-import { setCookie } from '$lib/utils/cookies';
+import { apiFetch } from '#lib/api.ts';
+import { setCookie } from '#lib/utils/cookies.ts';
+import { browser } from '$app/env';
 
 interface SidebarState {
 	expanded: boolean; // Rail vs full sidebar (desktop)

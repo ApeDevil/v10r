@@ -185,7 +185,7 @@ Shows during client-side navigation. Positioned at top of viewport.
 ```svelte
 <!-- src/routes/(app)/dashboard/+page.svelte -->
 <script lang="ts">
-  import { SkeletonCard } from '$lib/components/primitives/skeleton';
+  import { SkeletonCard } from '#lib/components/primitives/skeleton/index.js';
 
   let { data } = $props();
 </script>

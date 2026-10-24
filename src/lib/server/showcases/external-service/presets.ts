@@ -4,8 +4,8 @@
  * Each preset states the answer the rules must give, and `verify.ts` checks every one
  * against the real service — so these comments cannot quietly go stale.
  */
-import type { components } from '$lib/showcases/external-service/contract.generated';
-import type { EvaluationPresetId, OrderEvaluationRequest } from '$lib/showcases/external-service/types';
+import type { components } from '#lib/showcases/external-service/contract.generated.ts';
+import type { EvaluationPresetId, OrderEvaluationRequest } from '#lib/showcases/external-service/types.ts';
 
 type Schemas = components['schemas'];
 

@@ -8,7 +8,7 @@
  * of an outcome to a wire result that keeps `diag` for telemetry.
  */
 
-import { REGISTRY } from '$lib/server/patterns';
+import { REGISTRY } from '#lib/server/patterns/index.ts';
 import {
 	excerptRequest,
 	LIST_EVERYTHING,
@@ -17,7 +17,7 @@ import {
 	type QueryOutcome,
 	REGISTRY_QUERIES,
 	validateSnippetDef,
-} from '$patterns/query';
+} from '#patterns/query.ts';
 import { renderReport, validateSnippet } from '../snippet/engine';
 import { MAX_SNIPPET_CHARS } from '../snippet/rules';
 import { errorResult, type ToolDef, type ToolRegistry, type ToolResult, textResult } from '../types';

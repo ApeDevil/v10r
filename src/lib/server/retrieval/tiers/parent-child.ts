@@ -4,7 +4,7 @@
  * then returns their parent chunks (section) for context.
  */
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import { OVERFETCH_MULTIPLIER } from '../config';
 import { fetchChunksByIds } from '../queries';
 import type { DocumentSource, RankedChunk } from '../types';

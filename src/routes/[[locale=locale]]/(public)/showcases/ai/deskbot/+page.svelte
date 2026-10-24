@@ -1,11 +1,11 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
-import { Badge, Button, Typography } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { deskbotPlan } from '$lib/showcases/ai/fixtures/deskbot-plan';
-import { deskbotSentinel } from '$lib/showcases/ai/fixtures/deskbot-sentinel';
-import { guardPassed, spineOf } from '$lib/showcases/ai/inspector';
+import { NavSection } from '#lib/components/composites/index.ts';
+import { Badge, Button, Typography } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { deskbotPlan } from '#lib/showcases/ai/fixtures/deskbot-plan.ts';
+import { deskbotSentinel } from '#lib/showcases/ai/fixtures/deskbot-sentinel.ts';
+import { guardPassed, spineOf } from '#lib/showcases/ai/inspector.ts';
 import ApprovalLifecycle from '../_components/ApprovalLifecycle.svelte';
 import AwarenessPair from '../_components/AwarenessPair.svelte';
 import GuardChain from '../_components/GuardChain.svelte';

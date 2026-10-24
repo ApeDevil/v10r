@@ -8,7 +8,7 @@
  * (`shouldRequirePlan`, the `<planning>` guide) is the `desk-plan` capability's.
  */
 
-import type { ToolRisk } from '$lib/server/ai/tools/_types';
+import type { ToolRisk } from '#lib/server/ai/tools/_types.ts';
 
 /**
  * True when a desk tool's risk demands a human-approved proposal before it may

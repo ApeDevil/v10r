@@ -1,6 +1,6 @@
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { env } from '$env/dynamic/private';
-import { BUCKET, s3 } from '$lib/server/store';
+import { BUCKET, s3 } from '#lib/server/store/index.ts';
+import { CLOUDFLARE_ANALYTICS_TOKEN, R2_ACCOUNT_ID, R2_BUCKET_NAME } from '$app/env/private';
 import {
 	computePercentage,
 	computeThreshold,
@@ -94,11 +94,11 @@ export async function fetchR2Metrics(): Promise<DependencyResult<R2Metrics>> {
 	const start = performance.now();
 
 	try {
-		const analyticsToken = env.CLOUDFLARE_ANALYTICS_TOKEN;
+		const analyticsToken = CLOUDFLARE_ANALYTICS_TOKEN;
 		// One Cloudflare account, one env var. A second name for the same id lived here, was set
 		// by nobody, and so sent every call down the slow list-every-object fallback below.
-		const accountId = env.R2_ACCOUNT_ID;
-		const bucket = env.R2_BUCKET_NAME;
+		const accountId = R2_ACCOUNT_ID;
+		const bucket = R2_BUCKET_NAME;
 
 		let result: { storageBytes: number; objectCount: number };
 

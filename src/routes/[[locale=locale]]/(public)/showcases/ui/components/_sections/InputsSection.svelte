@@ -1,6 +1,16 @@
 <script lang="ts">
-import { Calendar, Checkbox, Combobox, Input, Select, Slider, Switch, Toggle, ToggleGroup } from '$lib/components';
-import { TagInput } from '$lib/components/composites';
+import { TagInput } from '#lib/components/composites/index.ts';
+import {
+	Calendar,
+	Checkbox,
+	Combobox,
+	Input,
+	Select,
+	Slider,
+	Switch,
+	Toggle,
+	ToggleGroup,
+} from '#lib/components/index.ts';
 import { DemoCard, VariantGrid } from '../_components';
 
 let textValue = $state('');

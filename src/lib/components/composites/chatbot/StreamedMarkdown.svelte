@@ -9,8 +9,8 @@
  * frame; when the part is done the exact final text renders immediately.
  */
 import { untrack } from 'svelte';
-import { createAnimationFrameCoalescer } from '$lib/utils/animation-frame-coalescer';
-import { renderMarkdown } from '$lib/utils/markdown';
+import { createAnimationFrameCoalescer } from '#lib/utils/animation-frame-coalescer.ts';
+import { renderMarkdown } from '#lib/utils/markdown.ts';
 
 interface Props {
 	text: string;

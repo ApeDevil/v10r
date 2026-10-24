@@ -84,7 +84,7 @@ export function createTodoStore(initial: Todo[] = []) {
 <!-- +layout.svelte -->
 <script>
   import { setContext } from 'svelte';
-  import { createTodoStore } from '$lib/state/todos.svelte';
+  import { createTodoStore } from '#lib/state/todos.svelte';
 
   setContext('todos', createTodoStore()); // per-request instance
 </script>
@@ -141,7 +141,7 @@ Pass initial state from the server, then hydrate a store on the client.
 <!-- +page.svelte -->
 <script>
   import { setContext } from 'svelte';
-  import { createItemStore } from '$lib/state/items.svelte';
+  import { createItemStore } from '#lib/state/items.svelte';
 
   let { data } = $props();
 
@@ -178,7 +178,7 @@ The safe approach populates `event.locals` (request-scoped) in hooks for SSR, wi
 
 ```typescript
 // src/hooks.server.ts
-import { auth } from '$lib/server/auth';
+import { auth } from '#lib/server/auth/index.js';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 
 export async function handle({ event, resolve }) {
@@ -233,7 +233,7 @@ For reactive updates after sign-in/sign-out (client-side only), use `useSession(
 ```svelte
 <script>
   import { page } from '$app/state';
-  import { useSession } from '$lib/auth-client';
+  import { useSession } from '#lib/auth-client.js';
   import { browser } from '$app/environment';
 
   // Server data (from load function) - SSR safe
@@ -361,7 +361,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 <!-- src/routes/+layout.svelte -->
 <script>
   import { setContext } from 'svelte';
-  import { createThemeStore, createSidebarStore } from '$lib/state/ui.svelte';
+  import { createThemeStore, createSidebarStore } from '#lib/state/ui.svelte';
 
   let { data, children } = $props();
 

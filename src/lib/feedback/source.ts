@@ -8,13 +8,13 @@
  * instead of failing validation.
  */
 
-import { sanitizeInternalPath } from '$lib/utils/safe-path';
+import { sanitizeInternalPath } from '#lib/utils/safe-path.ts';
 
 const MAX_SOURCE_LENGTH = 512;
 
 export function sanitizeFeedbackSource(raw: string | null | undefined): string {
 	// Full same-origin probe, not a "starts with /" check: `/\evil.com` is
-	// `//evil.com` after WHATWG backslash folding. See $lib/utils/safe-path.
+	// `//evil.com` after WHATWG backslash folding. See #lib/utils/safe-path.
 	const safe = sanitizeInternalPath((raw ?? '').trim());
 	return safe ? safe.slice(0, MAX_SOURCE_LENGTH) : '';
 }

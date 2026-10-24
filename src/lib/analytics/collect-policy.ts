@@ -3,27 +3,27 @@
  * recorded as anonymous pageviews, in ANY lane.
  *
  * Three collectors write anonymous pageviews and MUST agree:
- *   1. `$lib/server/analytics/collector.hook.ts`  — full page loads (server navigation)
+ *   1. `#lib/server/analytics/collector.hook.ts`  — full page loads (server navigation)
  *   2. `/api/analytics/journey`         — client-side navigations (SPA beacon)
- *   3. `$lib/analytics/vercel.ts`       — Vercel Web Analytics `beforeSend`
+ *   3. `#lib/analytics/vercel.ts`       — Vercel Web Analytics `beforeSend`
  *
  * They disagree easily: the beacon is initialised in the ROOT layout, so if the
  * hook excludes `/admin` and `/account` but the beacon endpoint filters nothing,
  * every client-side navigation into an authenticated surface still lands in the
  * anonymous lane.
  *
- * This module lives OUTSIDE `$lib/server` because collector (3) runs in the
- * browser and `$lib/server` is unimportable from client code. Everything here
+ * This module lives OUTSIDE `#lib/server` because collector (3) runs in the
+ * browser and `#lib/server` is unimportable from client code. Everything here
  * is a pure function over strings and `Headers`, so there is nothing
  * server-only about it.
  */
 
-import type { UserSurface } from '$lib/types/db-enums';
+import type { UserSurface } from '#lib/types/db-enums.ts';
 
 /**
  * Locale segments Paraglide may prefix onto any path (`/de/account`).
  *
- * Duplicated from `$lib/paraglide/runtime`'s `locales` deliberately: this
+ * Duplicated from `#lib/paraglide/runtime.js`'s `locales` deliberately: this
  * module is imported by framework-free domain code, which does not reach into
  * the i18n runtime (see the `event.locals.locale` handoff in `hooks.server.ts`).
  * `analytics.test.ts` asserts the two lists stay in sync, so drift fails the

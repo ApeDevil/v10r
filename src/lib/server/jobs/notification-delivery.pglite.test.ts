@@ -1,18 +1,18 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import type { DeliveryResult } from '$lib/server/notifications/channels/types';
-import { DELIVERY_CLAIM_LEASE_MS } from '$lib/server/notifications/config';
-import { makeNotification, makeUser } from '$lib/server/test/fixtures';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { notificationDeliveries } from '#lib/server/db/schema/notifications/deliveries.ts';
+import { notifications } from '#lib/server/db/schema/notifications/notifications.ts';
+import { userTelegramAccounts } from '#lib/server/db/schema/notifications/telegram.ts';
+import type { DeliveryResult } from '#lib/server/notifications/channels/types.ts';
+import { DELIVERY_CLAIM_LEASE_MS } from '#lib/server/notifications/config.ts';
+import { makeNotification, makeUser } from '#lib/server/test/fixtures.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -24,7 +24,7 @@ let sendImpl: (() => Promise<DeliveryResult>) | null = null;
 let sendCalls = 0;
 let knownChannels = new Set(['email', 'telegram', 'discord', 'push']);
 
-vi.mock('$lib/server/notifications/channels', () => ({
+vi.mock('#lib/server/notifications/channels/index.ts', () => ({
 	getChannel: (channel: string) =>
 		knownChannels.has(channel)
 			? {
@@ -38,7 +38,7 @@ vi.mock('$lib/server/notifications/channels', () => ({
 }));
 
 const { notificationDelivery } = await import('./notification-delivery');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER_A = makeUser({ id: 'user-delivery' });
 

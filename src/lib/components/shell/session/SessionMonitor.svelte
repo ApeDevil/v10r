@@ -6,13 +6,13 @@
  */
 
 import { onMount } from 'svelte';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { resetDeskBotSessions } from '#lib/state/desk-bot-session-registry.ts';
+import { getModals } from '#lib/state/index.ts';
+import type { Session } from '#lib/state/session.svelte.ts';
+import { setSessionContext } from '#lib/state/session.svelte.ts';
 import { goto } from '$app/navigation';
-import { localizeHref } from '$lib/i18n';
-import { getModals } from '$lib/state';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { resetDeskBotSessions } from '$lib/state/desk-bot-session-registry';
-import type { Session } from '$lib/state/session.svelte';
-import { setSessionContext } from '$lib/state/session.svelte';
 import SessionExpiryDialog from './SessionExpiryDialog.svelte';
 import SessionWarningBanner from './SessionWarningBanner.svelte';
 
@@ -74,7 +74,7 @@ async function extendSession() {
 		// Trigger session refresh via Better Auth client. Imported here, not at module
 		// scope: this monitor is part of every page's shell, and the client (better-auth,
 		// @simplewebauthn/browser, nanostores) is only needed once someone clicks extend.
-		const { authClient } = await import('$lib/auth-client');
+		const { authClient } = await import('#lib/auth-client.ts');
 		const result = await authClient.getSession();
 
 		if (result.data?.session) {

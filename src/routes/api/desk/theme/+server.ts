@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { createDeskPreset, migrateDeskTheme, saveDeskTheme } from '$lib/server/desk';
-import { CreatePresetSchema, MigrateThemeSchema, SaveThemeSchema } from '$lib/server/desk/schemas';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { createDeskPreset, migrateDeskTheme, saveDeskTheme } from '#lib/server/desk/index.ts';
+import { CreatePresetSchema, MigrateThemeSchema, SaveThemeSchema } from '#lib/server/desk/schemas.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:theme', 30, '1 m');

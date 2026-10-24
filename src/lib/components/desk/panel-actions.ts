@@ -7,7 +7,7 @@
  * over (root, panels); these functions mutate a DockState instance.
  */
 
-import type { ActivityBarItem } from '$lib/desk/layout.types';
+import type { ActivityBarItem } from '#lib/desk/layout.types.ts';
 import { collectLeaves, findLeafWithPanel, hasPanelType, nextPanelOfType } from './dock.operations';
 import type { DockState } from './dock.state.svelte';
 import { fileIdOfPanelDefinition, filePanelId } from './file-panel';

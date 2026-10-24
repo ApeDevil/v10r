@@ -31,7 +31,7 @@ Page hosts `<Canvas>` and wraps it in `<svelte:boundary>` for the WebGL fallback
 <!-- +page.svelte -->
 <script lang="ts">
 import { Canvas } from '@threlte/core';
-import { BoundaryFallback } from '$lib/components/composites';
+import { BoundaryFallback } from '#lib/components/composites/index.js';
 import Scene from './Scene.svelte';
 </script>
 
@@ -169,7 +169,7 @@ src/routes/[[locale=locale]]/(public)/showcases/3d/
 
 - **`useTask`, not `useFrame`** — Threlte 8 renamed the per-frame hook.
 - **`useGltf` is a store** — read `$gltf`, never render scene contents before it resolves.
-- **`makeDefault` type error** — Threlte's conditional prop type collapses to `undefined` under TypeScript; pass `makeDefault={THRELTE_MAKE_DEFAULT}` (the shared cast in `$lib/utils/threlte-workarounds.ts`) — markup `@ts-ignore` comments are not honored by svelte-check.
+- **`makeDefault` type error** — Threlte's conditional prop type collapses to `undefined` under TypeScript; pass `makeDefault={THRELTE_MAKE_DEFAULT}` (the shared cast in `#lib/utils/threlte-workarounds.ts`) — markup `@ts-ignore` comments are not honored by svelte-check.
 - **`state_referenced_locally`** — calling `useGltf(prop)` at script top reads a prop during init; silence with `// svelte-ignore state_referenced_locally`.
 - **Keep 3D imports per route** — don't pull Three.js into a shared `+layout`; that defeats code-splitting.
 

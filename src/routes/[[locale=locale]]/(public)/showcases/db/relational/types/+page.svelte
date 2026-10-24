@@ -1,7 +1,6 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
-import { Alert, Card, ConfirmDialog, NavSection } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
+import { Alert, Card, ConfirmDialog, NavSection } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
 import {
 	Badge,
 	Body,
@@ -13,9 +12,10 @@ import {
 	Table,
 	Tooltip,
 	Typography,
-} from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
+} from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { enhance } from '$app/forms';
 
 let { data } = $props();
 const toast = getToast();

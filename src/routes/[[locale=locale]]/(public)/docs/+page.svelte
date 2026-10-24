@@ -1,8 +1,8 @@
 <script lang="ts">
-import { LinkCard } from '$lib/components';
-import { BackLink, PageHeader } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import { DOCS_SECTIONS } from '$lib/docs/sections';
+import { BackLink, PageHeader } from '#lib/components/composites/index.ts';
+import { LinkCard } from '#lib/components/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import { DOCS_SECTIONS } from '#lib/docs/sections.ts';
 </script>
 <PageContainer width="wide" class="pt-7">
 	<PageHeader

@@ -1,4 +1,4 @@
-import { redis } from '$lib/server/cache';
+import { redis } from '#lib/server/cache/index.ts';
 
 /**
  * Per-provider daily usage signals that `model_call` can't capture.

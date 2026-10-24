@@ -1,10 +1,10 @@
 <script lang="ts">
-import { invalidateAll } from '$app/navigation';
-import { Card, EmptyState } from '$lib/components/composites';
-import { Cluster } from '$lib/components/layout';
-import { Badge, Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import type { BranchOperationStatus } from '$lib/server/dbops';
+import { Card, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster } from '#lib/components/layout/index.ts';
+import { Badge, Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { BranchOperationStatus } from '#lib/server/dbops/index.ts';
+import { refreshAll } from '$app/navigation';
 
 let { data } = $props();
 
@@ -45,7 +45,7 @@ function triggerVariant(t: string): 'default' | 'secondary' | 'warning' {
 	{#snippet header()}
 		<Cluster justify="between" align="center">
 			<h2 class="text-fluid-lg font-semibold">{m.admin_dbops_operations_heading()}</h2>
-			<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+			<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 				<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 				{m.admin_action_refresh()}
 			</Button>

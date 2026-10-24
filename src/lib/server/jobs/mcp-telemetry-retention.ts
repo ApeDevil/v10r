@@ -1,7 +1,7 @@
 import { and, isNotNull, lt, ne, or } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
-import { retentionCutoff } from '$lib/server/retention';
+import { db } from '#lib/server/db/index.ts';
+import { mcpCallLog } from '#lib/server/db/schema/mcp/call-log.ts';
+import { retentionCutoff } from '#lib/server/retention/index.ts';
 
 /**
  * Two-speed retention for `mcp.call_log`, in this order so the windows compose:

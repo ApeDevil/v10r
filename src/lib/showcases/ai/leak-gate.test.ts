@@ -1,7 +1,7 @@
 /**
  * Leak gate for the AI-surface showcase — modeled on `showcases/auth/leak-gate.test.ts`.
  *
- * Scans the client-bundled showcase modules (`$lib/showcases/ai`) and the public route
+ * Scans the client-bundled showcase modules (`#lib/showcases/ai`) and the public route
  * tree (`showcases/ai/**`) for anything that must never reach a public page:
  * server imports, the live prompt constants (the recorded fixture carries prompt TEXT on
  * purpose — decision D1 of `docs/ai-ref-plan.md` — but never imports the constant, which
@@ -14,7 +14,7 @@
  *
  * This gate spent its life scanning `src/lib/showcase/ai` — singular, a directory
  * that has never existed. `walk()` threw ENOENT, the per-root catch swallowed it,
- * and the whole `$lib/showcases/ai` tree went unscanned: `topology.ts`, `replay.ts`
+ * and the whole `#lib/showcases/ai` tree went unscanned: `topology.ts`, `replay.ts`
  * and the five recorded-turn fixtures, i.e. exactly the modules most likely to
  * carry a prompt constant. A single `files.length > 0` sentinel could not catch
  * that — the *other* root satisfied it. Non-emptiness is therefore asserted per
@@ -30,7 +30,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const SCAN_ROOTS = [
-	{ label: '$lib/showcases/ai', dir: join(process.cwd(), 'src/lib/showcases/ai') },
+	{ label: '#lib/showcases/ai', dir: join(process.cwd(), 'src/lib/showcases/ai') },
 	{ label: 'routes showcases/ai', dir: join(process.cwd(), 'src/routes/[[locale=locale]]/(public)/showcases/ai') },
 ];
 
@@ -56,7 +56,7 @@ const rel = (f: string) => f.replace(process.cwd(), '.');
 const FORBIDDEN: { label: string; re: RegExp }[] = [
 	// Import syntax only — fixture ANSWER TEXT may legitimately mention the path
 	// (the recorded turn teaches the leak-gate pattern itself).
-	{ label: 'server import ($lib/server)', re: /(?:from\s+['"]|import\s*\(\s*['"])\$lib\/server\b/ },
+	{ label: 'server import (#lib/server)', re: /(?:from\s+['"]|import\s*\(\s*['"])#lib\/server\b/ },
 	{
 		label: 'prompt body constant',
 		re: /\b(COMPLETION_GUIDANCE|PLANNING_GUIDE|DATA_BOUNDARY_RULE|CHATBOT_PROFILE|DESKBOT_PROFILE)\s*[,)=]/,
@@ -106,7 +106,7 @@ describe('ai showcase leak gate', () => {
 
 	it('the matchers actually fire (guards against a silently dead regex)', () => {
 		const bait = [
-			`import { x } from '$lib/server/ai/config';`,
+			`import { x } from '#lib/server/ai/config.ts';`,
 			`const PLANNING_GUIDE = 'you are';`,
 			`if (n > RATE_LIMIT_MAX) return;`,
 			`const id = '550e8400-e29b-41d4-a716-446655440000';`,

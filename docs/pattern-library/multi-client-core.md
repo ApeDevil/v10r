@@ -1,6 +1,6 @@
 ---
 title: "Multi-client core (hexagonal domain modules)"
-description: "One backend operations layer ($lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero…"
+description: "One backend operations layer (#lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero…"
 category: "Architecture & Request Pipeline"
 ---
 
@@ -10,7 +10,7 @@ category: "Architecture & Request Pipeline"
 
 **Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
-One backend operations layer ($lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.
+One backend operations layer (#lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.
 
 **When to use:** Reach for this whenever a backend capability must be reachable from more than one entry point (page action, API route, AI tool, cron job). It is the foundation nearly every other v10r pattern builds on.
 

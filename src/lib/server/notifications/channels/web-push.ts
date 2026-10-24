@@ -1,7 +1,7 @@
 import webpush from 'web-push';
-import { env } from '$env/dynamic/private';
-import { deletePushSubscriptionByEndpoint, touchPushSubscription } from '$lib/server/db/notifications/mutations';
-import { getPushSubscriptions } from '$lib/server/db/notifications/queries';
+import { deletePushSubscriptionByEndpoint, touchPushSubscription } from '#lib/server/db/notifications/mutations.ts';
+import { getPushSubscriptions } from '#lib/server/db/notifications/queries.ts';
+import { VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, VAPID_SUBJECT } from '$app/env/private';
 import type { DeliveryChannel, DeliveryPayload, DeliveryResult } from './types';
 
 /** Declarative Web Push format marker (WebKit explainer / W3C Push API draft). */
@@ -22,7 +22,6 @@ const DECLARATIVE_WEB_PUSH_VERSION = 8030;
  */
 export class WebPushChannel implements DeliveryChannel {
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
-		const { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } = env;
 		if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {
 			return {
 				success: false,

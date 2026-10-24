@@ -1,7 +1,11 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
-import { EMBEDDING_UNAVAILABLE_MESSAGES, type EmbeddingConnection, loadEmbeddingConnection } from '$lib/server/ai';
-import { incrEmbeddingCalls } from '$lib/server/ai/provider-usage';
+import {
+	EMBEDDING_UNAVAILABLE_MESSAGES,
+	type EmbeddingConnection,
+	loadEmbeddingConnection,
+} from '#lib/server/ai/index.ts';
+import { incrEmbeddingCalls } from '#lib/server/ai/provider-usage.ts';
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from './config';
 import { RetrievalError } from './errors';
 

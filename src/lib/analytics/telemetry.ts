@@ -44,9 +44,9 @@
  * buffered events delivered afterwards.
  */
 
-import { browser, dev } from '$app/environment';
-import type { CommandVia } from '$lib/types/journey-events';
-import { createAnimationFrameCoalescer } from '$lib/utils/animation-frame-coalescer';
+import type { CommandVia } from '#lib/types/journey-events.ts';
+import { createAnimationFrameCoalescer } from '#lib/utils/animation-frame-coalescer.ts';
+import { browser, dev } from '$app/env';
 import { userLaneSurface } from './collect-policy';
 import { beacon } from './transport';
 

@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { RETRIEVAL_PAGE_SIZE } from '$lib/server/admin/config';
-import { adminDeleteDocument, adminResetDocument } from '$lib/server/db/retrieval/admin-mutations';
+import { RETRIEVAL_PAGE_SIZE } from '#lib/server/admin/config.ts';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { adminDeleteDocument, adminResetDocument } from '#lib/server/db/retrieval/admin-mutations.ts';
 import {
 	getChunkCoverage,
 	getCollectionsAdmin,
@@ -9,12 +9,12 @@ import {
 	getDocumentsBySource,
 	getErrorDocuments,
 	getRetrievalOverviewStats,
-} from '$lib/server/db/retrieval/admin-queries';
-import { getRetrievalGraphStats } from '$lib/server/graph/retrieval/queries';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
-import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
-import { buildSearchIndex } from '$lib/server/search';
+} from '#lib/server/db/retrieval/admin-queries.ts';
+import { getRetrievalGraphStats } from '#lib/server/graph/retrieval/queries.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { SYSTEM_DOCS_USER_ID } from '#lib/server/retrieval/config.ts';
+import { buildSearchIndex } from '#lib/server/search/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {

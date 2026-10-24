@@ -1,14 +1,14 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '$lib/server/test/fixtures';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 import { providerConnection } from '../schema/ai/provider-connection';
 import { user } from '../schema/auth/_better-auth';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -17,7 +17,7 @@ vi.mock('$lib/server/db', async () => {
 const { listProviderConnections, removeProviderKey, saveProviderConnection, setDefaultProvider } = await import(
 	'./provider-connections'
 );
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const ADMIN = makeUser({ id: 'admin-1' });
 const CIPHERTEXT = 'bm9uY2Vub25jZW5v:Y2lwaGVydGV4dC1ub3QtcGxhaW50ZXh0LXRhZ2dlZA==';

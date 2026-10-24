@@ -1,12 +1,12 @@
 import { fail } from '@sveltejs/kit';
 import { and, asc, count, desc, eq, ilike, or, sql } from 'drizzle-orm';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { USERS_PAGE_SIZE } from '$lib/server/admin/config';
-import { clearRevocation, stampRevocation } from '$lib/server/auth/revocation';
-import { db } from '$lib/server/db';
-import { session as sessionTable, user } from '$lib/server/db/schema/auth';
-import { requireAdmin } from '$lib/server/http/guards';
-import { readUrlState } from '$lib/state/url-state';
+import { USERS_PAGE_SIZE } from '#lib/server/admin/config.ts';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { clearRevocation, stampRevocation } from '#lib/server/auth/revocation.ts';
+import { db } from '#lib/server/db/index.ts';
+import { session as sessionTable, user } from '#lib/server/db/schema/auth/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { readUrlState } from '#lib/state/url-state.ts';
 import type { Actions, PageServerLoad } from './$types';
 import { usersListParams } from './list-params';
 

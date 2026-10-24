@@ -14,24 +14,24 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const mockGetFile = vi.fn();
 const mockGetSpreadsheet = vi.fn();
 const mockGetMarkdown = vi.fn();
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	listFiles: vi.fn(),
 	getFile: mockGetFile,
 	getSpreadsheetByFileId: mockGetSpreadsheet,
 	getMarkdownByFileId: mockGetMarkdown,
 }));
-vi.mock('$lib/server/desk/file-tree', () => ({
+vi.mock('#lib/server/desk/file-tree.ts', () => ({
 	getFileTree: vi.fn(),
 	renderFileTreeWithIndex: vi.fn(),
 }));
 
 const mockDeleteFile = vi.fn();
-vi.mock('$lib/server/db/desk/mutations', () => ({
+vi.mock('#lib/server/db/desk/mutations.ts', () => ({
 	createMarkdownFile: vi.fn(),
 	createSpreadsheetFile: vi.fn(),
 	deleteFile: mockDeleteFile,

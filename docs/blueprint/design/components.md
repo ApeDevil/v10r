@@ -47,13 +47,13 @@ export * from './primitives';
 // viz/ and shell/ are intentionally excluded from the default barrel.
 ```
 
-`viz/` is excluded so Chart.js / Three.js don't enter the default bundle — import from `$lib/components/viz` directly. `shell/` is excluded because it's app-specific — import from `$lib/components/shell`. The same applies to `3d/`.
+`viz/` is excluded so Chart.js / Three.js don't enter the default bundle — import from `#lib/components/viz` directly. `shell/` is excluded because it's app-specific — import from `$lib/components/shell`. The same applies to `3d/`.
 
 ```svelte
 <script>
-  import { Button, Input, Card, FormField } from '$lib/components';
-  import { Chart } from '$lib/components/viz';
-  import { AppShell } from '$lib/components/shell';
+  import { Button, Input, Card, FormField } from '#lib/components/index.js';
+  import { Chart } from '#lib/components/viz/index.js';
+  import { AppShell } from '#lib/components/shell/index.js';
 </script>
 ```
 
@@ -80,7 +80,7 @@ Styling flows through **CVA → UnoCSS utilities → token-backed CSS variables*
 
 ### CVA Variant Pattern
 
-Variants are defined in a sibling `.ts` file, typed, and merged onto the element with `cn` (a `clsx` wrapper in `$lib/utils/cn.ts`).
+Variants are defined in a sibling `.ts` file, typed, and merged onto the element with `cn` (a `clsx` wrapper in `#lib/utils/cn.ts`).
 
 ```typescript
 // src/lib/components/primitives/button/button.ts
@@ -111,7 +111,7 @@ export type ButtonVariants = VariantProps<typeof buttonVariants>;
 <!-- Button.svelte (shape) -->
 <script lang="ts">
 import { buttonVariants, type ButtonVariants } from './button.ts';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.js';
 // props extend HTMLButtonAttributes & ButtonVariants
 </script>
 
@@ -209,7 +209,7 @@ The live inventory is the source tree, not this doc.
 
 A working showcase proves a feature. But "proven by use" and "found in the catalog" are different guarantees: a barrel export with no catalog entry is invisible to the gallery — and to the search/chatbot index built from it — even when it runs on every page.
 
-**Rule: barrel membership ⇒ catalog entry.** Anything exported from `$lib/components` is a copyable contract and earns an entry under `/showcases/ui/*` — a `DemoCard` carrying a live demo plus a `ComponentDoc` (props + notes).
+**Rule: barrel membership ⇒ catalog entry.** Anything exported from `#lib/components` is a copyable contract and earns an entry under `/showcases/ui/*` — a `DemoCard` carrying a live demo plus a `ComponentDoc` (props + notes).
 
 ### Meta-chrome exception
 

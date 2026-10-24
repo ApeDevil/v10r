@@ -30,7 +30,7 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 <!-- /account/+layout.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
-  import { PageHeader } from '$lib/components/composites';
+  import { PageHeader } from '#lib/components/composites/index.js';
 
   let { children, data } = $props();
 
@@ -123,7 +123,7 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 <script lang="ts">
   import { superForm } from 'sveltekit-superforms';
   import { valibotClient } from 'sveltekit-superforms/adapters';
-  import { profileSchema } from '$lib/schemas/user';
+  import { profileSchema } from '#lib/schemas/user';
 
   let { data } = $props();
 
@@ -263,12 +263,12 @@ await auth.api.revokeOtherSessions({
 
 ### Data Export Endpoint
 
-**Rate Limited:** Data export is computationally expensive. A per-IP limiter built with `createLimiter` from `$lib/server/http/rate-limit.ts` caps exports. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
+**Rate Limited:** Data export is computationally expensive. A per-IP limiter built with `createLimiter` from `#lib/server/http/rate-limit.ts` caps exports. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
 
 ```typescript
 // /api/account/data/export/+server.ts
 import { error } from '@sveltejs/kit';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
 import type { RequestHandler } from './$types';
 
 // Sliding-window: 3 exports per day, keyed on client IP

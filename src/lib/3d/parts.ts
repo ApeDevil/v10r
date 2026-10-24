@@ -9,7 +9,7 @@
 // unit-tested in parts.test.ts.
 
 import type { Mesh, Object3D } from 'three';
-import type { AssetRights } from '$lib/credits/asset-rights';
+import type { AssetRights } from '#lib/credits/asset-rights.ts';
 
 export interface PartPhoto {
 	/** Static asset path (under /images/parts/). */

@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Card, NavSection } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Button, Typography } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import type { VelocityMeasurementId } from '$lib/showcases/velocity/measurement';
+import { Card, NavSection } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Typography } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { VelocityMeasurementId } from '#lib/showcases/velocity/measurement.ts';
 import MeasurementCard from '../_components/MeasurementCard.svelte';
 import type { PageData } from './$types';
 

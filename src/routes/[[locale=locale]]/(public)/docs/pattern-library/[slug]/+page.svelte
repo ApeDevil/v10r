@@ -1,5 +1,5 @@
 <script lang="ts">
-import DocPage from '$lib/components/docs/DocPage.svelte';
+import DocPage from '#lib/components/docs/DocPage.svelte';
 
 let { data } = $props();
 </script>

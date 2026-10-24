@@ -1,19 +1,19 @@
 import { fail } from '@sveltejs/kit';
 import { message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { conflictReasonText, nameCheckLabels, resultsForText } from '$lib/name-check/labels';
-import { nameCheckFormSchema } from '$lib/schemas/name-check';
-import { checkHoneypot, ipLimitKey } from '$lib/server/abuse';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { createLimiter } from '$lib/server/http/rate-limit';
-import { checkName, loadNameSourceCredentials } from '$lib/server/name-check';
+import { conflictReasonText, nameCheckLabels, resultsForText } from '#lib/name-check/labels.ts';
+import { nameCheckFormSchema } from '#lib/schemas/name-check.ts';
+import { checkHoneypot, ipLimitKey } from '#lib/server/abuse/index.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
 import {
 	FAN_OUT_BUDGET_MS,
 	RATE_LIMIT_MAX,
 	RATE_LIMIT_PREFIX,
 	RATE_LIMIT_WINDOW,
 	RESPONSE_RESERVE_MS,
-} from '$lib/server/name-check/config';
+} from '#lib/server/name-check/config.ts';
+import { checkName, loadNameSourceCredentials } from '#lib/server/name-check/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -41,7 +41,7 @@ export const load: PageServerLoad = async () => {
 		{ errors: false },
 	);
 	// Labels resolve here, in the request's locale, so the client ships components rather
-	// than a three-language dictionary (see `$lib/name-check/labels`).
+	// than a three-language dictionary (see `#lib/name-check/labels.ts`).
 	return { title: 'Name Check - Showcases', form, labels: nameCheckLabels() };
 };
 

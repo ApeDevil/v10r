@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { localizeHref } from '$lib/i18n';
+import { localizeHref } from '#lib/i18n/index.ts';
 
 export const load = () => {
 	redirect(303, localizeHref('/showcases/db/relational/connection'));

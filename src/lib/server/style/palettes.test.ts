@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createId } from '$lib/server/db/id';
+import { createId } from '#lib/server/db/id.ts';
 
 /**
  * `getCustomPaletteById` runs on every request carrying a `CP_` style cookie, before auth
@@ -10,7 +10,7 @@ import { createId } from '$lib/server/db/id';
 
 const query = vi.hoisted(() => vi.fn(async (): Promise<unknown[]> => []));
 
-vi.mock('$lib/server/db', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({
 	db: { select: () => ({ from: () => ({ where: () => ({ limit: query }) }) }) },
 }));
 

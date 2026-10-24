@@ -6,8 +6,8 @@
  * without loading it — a DB read that grounds broad questions ("what is v10r?") with the
  * embedding quota exhausted. Static per locale, so it sits in the cache-stable prefix.
  */
-import { getCorpusMap } from '$lib/server/db/retrieval/queries';
-import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
+import { getCorpusMap } from '#lib/server/db/retrieval/queries.ts';
+import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '#lib/server/retrieval/config.ts';
 import { PROJECT_MAP_MAX_CHARS } from '../config';
 import type { AssistantCapability } from '../profile/profile';
 

@@ -9,11 +9,11 @@
  * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
 import { Dialog } from 'bits-ui';
-import { Alert } from '$lib/components/composites';
-import { Button, Spinner } from '$lib/components/primitives';
-import { CROP_RATIOS, type CropRatio, type EmbedOk, type VisionFields } from '$lib/schemas/showcase/image-kit';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { Alert } from '#lib/components/composites/index.ts';
+import { Button, Spinner } from '#lib/components/primitives/index.ts';
+import { CROP_RATIOS, type CropRatio, type EmbedOk, type VisionFields } from '#lib/schemas/showcase/image-kit.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface CropRect {
 	left: number;

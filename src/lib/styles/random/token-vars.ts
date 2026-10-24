@@ -7,7 +7,7 @@
  * silently stops matching what the server renders.
  */
 
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { VALID_TOKEN_KEYS } from './palette-sanitize';
 
 /** `surface-1` → `--surface-1`; everything else → `--color-<token>`. */

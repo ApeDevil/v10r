@@ -1,12 +1,12 @@
 <script lang="ts">
 import type { Component } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
-import { Alert, EmptyState } from '$lib/components/composites';
-import { Badge, Button, SkeletonCard, ToggleGroup } from '$lib/components/primitives';
-import { Waterfall } from '$lib/components/viz';
-import * as m from '$lib/paraglide/messages';
-import { findInspectorNode, nodeIdOfRow, servedBy, timelineRows } from '$lib/showcases/ai/inspector';
-import { OUTCOME_LABELS } from '$lib/showcases/ai/labels';
+import { Alert, EmptyState } from '#lib/components/composites/index.ts';
+import { Badge, Button, SkeletonCard, ToggleGroup } from '#lib/components/primitives/index.ts';
+import { Waterfall } from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { findInspectorNode, nodeIdOfRow, servedBy, timelineRows } from '#lib/showcases/ai/inspector.ts';
+import { OUTCOME_LABELS } from '#lib/showcases/ai/labels.ts';
 import ProvenanceBadge from './ProvenanceBadge.svelte';
 import TurnItemDetail from './TurnItemDetail.svelte';
 import TurnTree from './TurnTree.svelte';

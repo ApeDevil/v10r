@@ -10,7 +10,7 @@
  * cross-root forbid: both drag-drop (TreeNode.isValidDropTarget) and
  * MoveToDialog candidate filtering import from here.
  */
-import { apiFetch } from '$lib/api';
+import { apiFetch } from '#lib/api.ts';
 import type { ExplorerState } from './explorer.state.svelte';
 import type { ExplorerNode, NodeSource } from './node';
 import type { FileListItem } from './types';

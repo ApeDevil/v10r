@@ -16,8 +16,8 @@
  * ticket's own lifetime are candidates, so an upload that is legitimately
  * in-flight can never be reaped out from under its own confirm.
  */
-import { listAllAssetStorageKeys } from '$lib/server/blog/queries';
-import { deleteBlogObject, listBlogObjectsOlderThan, UPLOAD_TICKET_TTL_MS } from '$lib/server/store/blog';
+import { listAllAssetStorageKeys } from '#lib/server/blog/queries.ts';
+import { deleteBlogObject, listBlogObjectsOlderThan, UPLOAD_TICKET_TTL_MS } from '#lib/server/store/blog/index.ts';
 
 /**
  * Grace beyond the ticket TTL. A ticket that expires mid-upload is already

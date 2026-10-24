@@ -22,13 +22,13 @@
  */
 
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-import { apiFetch, CSRF_HEADER } from '$lib/api';
-import { isToolPart, toolNameOf } from '$lib/components/composites/chatbot/tool-part';
-import { Chat, DefaultChatTransport } from '$lib/state/chat-client';
-import { liveDeskBotSession, sessionKey } from '$lib/state/desk-bot-session-registry';
-import { parseAiErrorKind } from '$lib/types/ai-error';
-import type { ProposalOutcome, ProposalRun, ProposalRunPhase } from '$lib/types/ai-proposal';
-import type { DeskEffect } from '$lib/types/ai-tools';
+import { apiFetch, CSRF_HEADER } from '#lib/api.ts';
+import { isToolPart, toolNameOf } from '#lib/components/composites/chatbot/tool-part.ts';
+import { Chat, DefaultChatTransport } from '#lib/state/chat-client.ts';
+import { liveDeskBotSession, sessionKey } from '#lib/state/desk-bot-session-registry.ts';
+import { parseAiErrorKind } from '#lib/types/ai-error.ts';
+import type { ProposalOutcome, ProposalRun, ProposalRunPhase } from '#lib/types/ai-proposal.ts';
+import type { DeskEffect } from '#lib/types/ai-tools.ts';
 import { appendIOLog } from '../../io-log.state.svelte';
 
 export interface FileRefreshed {

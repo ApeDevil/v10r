@@ -3,12 +3,12 @@
  * The report's headline: a descriptive level with the evidence behind it. Colour is
  * doubled by the Alert's icon and the level's words, never carried alone, and the list
  * of reasons is what turns "strong conflict signals" into something a reader can check.
- * Level and reasons arrive as strings — resolved server-side by `$lib/name-check/labels`.
+ * Level and reasons arrive as strings — resolved server-side by `#lib/name-check/labels.ts`.
  */
-import { Alert } from '$lib/components/composites';
-import { Badge } from '$lib/components/primitives';
-import type { NameCheckLabels } from '$lib/name-check/labels';
-import type { NameConflictSignal } from '$lib/name-check/report';
+import { Alert } from '#lib/components/composites/index.ts';
+import { Badge } from '#lib/components/primitives/index.ts';
+import type { NameCheckLabels } from '#lib/name-check/labels.ts';
+import type { NameConflictSignal } from '#lib/name-check/report.ts';
 
 interface Props {
 	signal: NameConflictSignal;

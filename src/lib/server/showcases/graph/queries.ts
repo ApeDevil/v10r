@@ -1,7 +1,6 @@
-import type { Neo4jNodeRecord, Neo4jRelRecord } from '$lib/server/graph';
-import { toKnowledgeData } from '$lib/server/graph';
-import { cypher } from '$lib/server/graph/index';
-import type { KnowledgeData } from '$lib/types/knowledge';
+import type { Neo4jNodeRecord, Neo4jRelRecord } from '#lib/server/graph/index.ts';
+import { cypher, toKnowledgeData } from '#lib/server/graph/index.ts';
+import type { KnowledgeData } from '#lib/types/knowledge.ts';
 
 // This Neo4j instance is SHARED: alongside the public "Tech Stack" demo graph it
 // also holds per-user retrieval `:Entity`/`:Chunk` nodes (owned via an `ownerId` property).

@@ -18,8 +18,8 @@
  * rebuilds from stored messages without the tool set (so no `toModelOutput` runs for them).
  */
 import type { ModelMessage, ToolSet } from 'ai';
-import { TOOL_MANIFEST, type ToolResultOrigin } from '$lib/types/ai-tools';
-import { escapeXmlAttr, escapeXmlText } from '$lib/utils/xml';
+import { TOOL_MANIFEST, type ToolResultOrigin } from '#lib/types/ai-tools.ts';
+import { escapeXmlAttr, escapeXmlText } from '#lib/utils/xml.ts';
 
 export const UNTRUSTED_CONTENT_TAG = 'untrusted-content';
 

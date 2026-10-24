@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Badge } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Badge } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import {
 	BLOCK_TAGS,
 	KIND_LABELS,
@@ -8,9 +8,9 @@ import {
 	LEVEL_LABELS,
 	OUTCOME_LABELS,
 	STATE_LABELS,
-} from '$lib/showcases/ai/labels';
-import type { TurnGraphNode } from '$lib/showcases/ai/turn-graph';
-import type { TurnGraphCardVariant } from '$lib/showcases/ai/turn-graph-layout';
+} from '#lib/showcases/ai/labels.ts';
+import type { TurnGraphNode } from '#lib/showcases/ai/turn-graph.ts';
+import type { TurnGraphCardVariant } from '#lib/showcases/ai/turn-graph-layout.ts';
 
 // One record of the turn graph — presentational only. The canvas node, the group node and
 // the list row put the interaction around it (selection, focus, the expand toggle). Three

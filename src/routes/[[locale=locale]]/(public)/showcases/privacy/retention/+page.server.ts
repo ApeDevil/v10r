@@ -1,8 +1,8 @@
 import { desc, eq } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { jobExecution } from '$lib/server/db/schema/jobs';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { scheduledRetentionRows } from '$lib/server/showcases/privacy/retention-copy';
+import { db } from '#lib/server/db/index.ts';
+import { jobExecution } from '#lib/server/db/schema/jobs/index.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { scheduledRetentionRows } from '#lib/server/showcases/privacy/retention-copy.ts';
 import type { PageServerLoad } from './$types';
 
 async function getLastJobRun(slug: string) {

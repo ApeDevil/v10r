@@ -20,7 +20,7 @@
  * though the `.md` file is present on disk.
  */
 import { describe, expect, it } from 'vitest';
-import { getManifest } from '$lib/server/docs/manifest';
+import { getManifest } from '#lib/server/docs/manifest.ts';
 import { type ShowcaseDocLink, showcases } from './registry';
 import { resolveShowcaseDocs } from './resolve-docs';
 

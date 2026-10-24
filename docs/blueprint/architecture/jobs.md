@@ -371,7 +371,7 @@ export const actions: Actions = {
 For non-critical work that should not block the response (analytics, cache invalidation), use `waitUntil` from `@vercel/functions`. This is NOT a job system — it has no retries, no logging, and silently drops failures.
 
 ```typescript
-import { platform } from '$lib/server/platform';
+import { platform } from '#lib/server/platform/index.js';
 
 // Only available on Vercel — conditional import
 if (platform.id === 'vercel') {

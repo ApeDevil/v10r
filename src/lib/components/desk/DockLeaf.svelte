@@ -1,10 +1,10 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { InfoDialog } from '$lib/components/composites/info-dialog';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { DESK_PANEL_HELP } from '$lib/desk/help';
-import type { LeafNode } from '$lib/desk/layout.types';
-import type { DeskPanelType } from '$lib/desk/panels';
+import { InfoDialog } from '#lib/components/composites/info-dialog/index.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { DESK_PANEL_HELP } from '#lib/desk/help.ts';
+import type { LeafNode } from '#lib/desk/layout.types.ts';
+import type { DeskPanelType } from '#lib/desk/panels.ts';
 import { collectTypeInstances, composePanelMenus, shortcutTableMarkdown } from './compose-menus';
 import DockDropOverlay from './DockDropOverlay.svelte';
 import DockTabBar from './DockTabBar.svelte';

@@ -1,7 +1,7 @@
 <script lang="ts">
-import ToolTopologyView from '$lib/components/admin/ai/ToolTopologyView.svelte';
-import { Card } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
+import ToolTopologyView from '#lib/components/admin/ai/ToolTopologyView.svelte';
+import { Card } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
 
 let { data } = $props();
 </script>

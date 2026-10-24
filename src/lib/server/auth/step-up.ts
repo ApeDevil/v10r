@@ -14,8 +14,9 @@
  * This module must never import the Better Auth instance (cycle risk:
  * auth/index.ts imports from here via its hooks).
  */
-import { dev } from '$app/environment';
-import { redis } from '$lib/server/cache';
+
+import { redis } from '#lib/server/cache/index.ts';
+import { dev } from '$app/env';
 import { STEPUP_TTL } from './config';
 
 const key = (userId: string) => `stepup:${userId}`;

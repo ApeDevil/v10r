@@ -163,7 +163,7 @@ export const auth = betterAuth({
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { auth } from '$lib/server/auth';
+import { auth } from '#lib/server/auth/index.js';
 import type { Handle } from '@sveltejs/kit';
 
 // Rate limiting
@@ -203,7 +203,7 @@ The `authHandler` hook rate-limits every `/api/auth/*` request by client IP, the
 
 ```typescript
 // src/hooks.server.ts
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
 
 const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
@@ -378,7 +378,7 @@ The in-process job scheduler starts via a bare import at the top of `hooks.serve
 
 ```typescript
 // src/hooks.server.ts
-import '$lib/server/jobs/scheduler';
+import '#lib/server/jobs/scheduler.js';
 ```
 
 The import runs the scheduler module once at startup. The module itself guards against duplicate intervals (HMR) and skips execution during Vite builds. On Vercel (serverless), it detects `platform.persistent = false` and does nothing.
@@ -404,11 +404,11 @@ Complete `hooks.server.ts` with all patterns:
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { auth } from '$lib/server/auth';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { auth } from '#lib/server/auth/index.js';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
 import { ALLOWED_ORIGINS } from '$env/static/private';
 import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
-import '$lib/server/jobs/scheduler'; // starts in-process scheduler (container only, no-op on Vercel)
+import '#lib/server/jobs/scheduler.js'; // starts in-process scheduler (container only, no-op on Vercel)
 
 const allowedOrigins = new Set(ALLOWED_ORIGINS?.split(',') ?? []);
 const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
@@ -573,7 +573,7 @@ export const handleError: HandleServerError = async ({ error, event, status, mes
 ```typescript
 // src/app.d.ts
 import type { User, Session } from 'better-auth';
-import type { GrantKind } from '$lib/server/auth/grants';
+import type { GrantKind } from '#lib/server/auth/grants.js';
 
 declare global {
   namespace App {

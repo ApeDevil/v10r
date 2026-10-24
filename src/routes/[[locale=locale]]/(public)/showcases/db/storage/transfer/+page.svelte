@@ -1,11 +1,11 @@
 <script lang="ts">
+import { Alert, Card, NavSection } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Progress, Spinner, Typography } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { enhance } from '$app/forms';
 import { page } from '$app/state';
-import { Alert, Card, NavSection } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Progress, Spinner, Typography } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();

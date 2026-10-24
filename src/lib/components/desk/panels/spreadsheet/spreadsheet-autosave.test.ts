@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
+import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
 import { createSpreadsheetState } from './spreadsheet.state.svelte';
 import { createSpreadsheetAutosave } from './spreadsheet-autosave';
 import { createSpreadsheetDrafts, type SpreadsheetDraft } from './spreadsheet-drafts';

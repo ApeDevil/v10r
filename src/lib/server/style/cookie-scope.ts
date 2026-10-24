@@ -12,7 +12,7 @@
  * the structural fact: SvelteKit does not expose page-versus-endpoint to `handle`, and a
  * path list would silently miss the next endpoint someone adds.
  */
-import { STYLE_COOKIE_NAME } from '$lib/styles/random';
+import { STYLE_COOKIE_NAME } from '#lib/styles/random/index.ts';
 
 /** True when the response renders the app shell, the only consumer of the style. */
 export function rendersAppShell(response: Response, isDataRequest: boolean): boolean {

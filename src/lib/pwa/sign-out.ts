@@ -1,4 +1,4 @@
-import { discardUnsavedWork, type UnsavedWork } from '$lib/state/unsaved-work';
+import { discardUnsavedWork, type UnsavedWork } from '#lib/state/unsaved-work.ts';
 import { unsubscribeFromPush } from './push';
 
 /**
@@ -14,7 +14,7 @@ import { unsubscribeFromPush } from './push';
  * logged-out device must stop receiving pushes.
  *
  * `unsavedWork` is what the caller has already drained and the user has agreed to
- * lose (`$lib/state/unsaved-work.ts`). It is erased only once the server confirmed
+ * lose (`#lib/state/unsaved-work.ts`). It is erased only once the server confirmed
  * the sign-out — a failed sign-out leaves the user signed in, with their work.
  * Returns whether the sign-out succeeded.
  *
@@ -23,7 +23,7 @@ import { unsubscribeFromPush } from './push';
  */
 export async function signOutAndFlush(unsavedWork: readonly UnsavedWork[] = []): Promise<boolean> {
 	await unsubscribeFromPush().catch(() => {});
-	const { authClient } = await import('$lib/auth-client');
+	const { authClient } = await import('#lib/auth-client.ts');
 	const { error } = await authClient.signOut();
 	if (error) return false;
 	discardUnsavedWork(unsavedWork);

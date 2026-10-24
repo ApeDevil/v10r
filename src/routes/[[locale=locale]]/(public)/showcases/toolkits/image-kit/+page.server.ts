@@ -3,11 +3,11 @@
  * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
 import { fail, redirect } from '@sveltejs/kit';
-import { localizeHref } from '$lib/i18n';
-import { getVisionProvider, loadProviderRegistry, type ProviderEntry } from '$lib/server/ai';
-import { ImageMetaError } from '$lib/server/imagemeta';
-import { estimatePreRunCost, ingestEphemeralImage } from '$lib/server/showcases/image-kit';
-import { getImagekitReadUrl } from '$lib/server/showcases/image-kit/storage';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { getVisionProvider, loadProviderRegistry, type ProviderEntry } from '#lib/server/ai/index.ts';
+import { ImageMetaError } from '#lib/server/imagemeta/index.ts';
+import { estimatePreRunCost, ingestEphemeralImage } from '#lib/server/showcases/image-kit/index.ts';
+import { getImagekitReadUrl } from '#lib/server/showcases/image-kit/storage.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** The vision provider for this user, or null — including when the settings cannot be read. */

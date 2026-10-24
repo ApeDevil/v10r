@@ -1,10 +1,10 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { session, user } from '$lib/server/db/schema/auth/_better-auth';
-import { grant } from '$lib/server/db/schema/auth/grant';
-import { grantRequest } from '$lib/server/db/schema/auth/grant-request';
-import { makeUser } from '$lib/server/test/fixtures';
+import { session, user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { grant } from '#lib/server/db/schema/auth/grant.ts';
+import { grantRequest } from '#lib/server/db/schema/auth/grant-request.ts';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 
 /**
  * The capability-grant lifecycle, against real Postgres.
@@ -30,14 +30,14 @@ import { makeUser } from '$lib/server/test/fixtures';
  */
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 const audit = vi.hoisted(() => ({ events: [] as { action: string; targetId?: string }[] }));
-vi.mock('$lib/server/admin/audit', () => ({
+vi.mock('#lib/server/admin/audit.ts', () => ({
 	recordAuditEvent: vi.fn(async (e: { action: string; targetId?: string }) => {
 		audit.events.push(e);
 	}),
@@ -45,7 +45,7 @@ vi.mock('$lib/server/admin/audit', () => ({
 
 const grants = await import('./grants');
 const requests = await import('./grant-requests');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER = makeUser({ id: 'user-grantee' });
 const OTHER = makeUser({ id: 'user-other' });

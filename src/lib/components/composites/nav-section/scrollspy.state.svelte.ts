@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 export interface ScrollSpyOptions {
 	/** IntersectionObserver rootMargin. The default biases the "active" band to the

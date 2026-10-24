@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { createRevision, getPostById } from '$lib/server/blog';
-import { CreateRevisionSchema } from '$lib/server/blog/schemas';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
+import { createRevision, getPostById } from '#lib/server/blog/index.ts';
+import { CreateRevisionSchema } from '#lib/server/blog/schemas.ts';
+import { guardApiBlogAuthor, guardPostOwnership } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:revisions', 10, '1 m');

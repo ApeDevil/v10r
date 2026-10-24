@@ -8,8 +8,8 @@
  * work for ordinary visitors (no pending-login marker, no bfcache restore).
  */
 
-import { browser } from '$app/environment';
-import { invalidateAll } from '$app/navigation';
+import { browser } from '$app/env';
+import { refreshAll } from '$app/navigation';
 import { page } from '$app/state';
 
 const MARKER_KEY = 'v10r:auth-pending';
@@ -50,7 +50,7 @@ async function refresh(): Promise<void> {
 	const now = Date.now();
 	if (now - lastRefresh < MIN_REFRESH_INTERVAL_MS) return;
 	lastRefresh = now;
-	await invalidateAll();
+	await refreshAll();
 	if (page.data.session) clearAuthPendingMarker(); // login landed — done
 }
 

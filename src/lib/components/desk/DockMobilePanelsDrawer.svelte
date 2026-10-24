@@ -10,12 +10,12 @@
  * toggle (structural, data-destroying). Closing is explicit per instance and
  * routes through the dock's unsaved-close guard.
  */
-import { trackCommand } from '$lib/analytics/telemetry';
-import { Drawer } from '$lib/components/primitives';
-import type { ActivityBarItem } from '$lib/desk/layout.types';
-import * as m from '$lib/paraglide/messages';
-import { getModals } from '$lib/state/modals.svelte';
-import { cn } from '$lib/utils/cn';
+import { trackCommand } from '#lib/analytics/telemetry.ts';
+import { Drawer } from '#lib/components/primitives/index.ts';
+import type { ActivityBarItem } from '#lib/desk/layout.types.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getModals } from '#lib/state/modals.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { getDeskSettings } from './desk-settings.state.svelte';
 import { getDockContext } from './dock.state.svelte';
 import { getDockMobile } from './dock-mobile.state.svelte';

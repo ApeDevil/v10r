@@ -12,7 +12,7 @@
 			"flags": "",
 			"skipIf": ["type=\"hidden\"", "type='hidden'", "type=\"checkbox\"", "type='checkbox'"],
 			"message": "Raw <button>/<input>/<select>/<textarea> bypasses the design system.",
-			"fix": "Use the project primitive from $lib/components (Button, Input, Select, Textarea). Documented exceptions: hidden inputs, checkboxes in table rows, numeric-value selects, specialized interactive regions.",
+			"fix": "Use the project primitive from #lib/components (Button, Input, Select, Textarea). Documented exceptions: hidden inputs, checkboxes in table rows, numeric-value selects, specialized interactive regions.",
 			"docs": "/docs/blueprint/design/components.md"
 		},
 		{
@@ -216,7 +216,7 @@
 		{
 			"name": "runes-clean component passes",
 			"language": "svelte",
-			"snippet": "<script lang=\"ts\">\nimport { Button } from '$lib/components';\nlet { open = false } = $props();\nlet count = $state(0);\nconst doubled = $derived(count * 2);\n</script>\n<div class=\"bg-primary\">{doubled}</div>\n<Button onclick={() => count++}>Add</Button>",
+			"snippet": "<script lang=\"ts\">\nimport { Button } from '#lib/components/index.ts';\nlet { open = false } = $props();\nlet count = $state(0);\nconst doubled = $derived(count * 2);\n</script>\n<div class=\"bg-primary\">{doubled}</div>\n<Button onclick={() => count++}>Add</Button>",
 			"expect": []
 		}
 	]

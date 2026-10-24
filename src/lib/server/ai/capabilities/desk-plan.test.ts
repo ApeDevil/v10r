@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const { hasDestructiveIntent, hasMutatingScope, PLANNING_GUIDE, shouldRequirePlan } = await import('./desk-plan');
 

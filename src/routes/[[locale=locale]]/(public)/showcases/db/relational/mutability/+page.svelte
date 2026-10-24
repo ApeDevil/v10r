@@ -1,9 +1,6 @@
 <script lang="ts">
-import type { ActionResult } from '@sveltejs/kit';
-import { enhance } from '$app/forms';
-import { page } from '$app/state';
-import { Alert, Card, ConfirmDialog, FormField, NavSection } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
+import { Alert, Card, ConfirmDialog, FormField, NavSection } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
 import {
 	Badge,
 	Body,
@@ -18,9 +15,12 @@ import {
 	Switch,
 	Table,
 	Typography,
-} from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
+} from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import type { ActionResult } from '$app/forms';
+import { enhance } from '$app/forms';
+import { page } from '$app/state';
 
 let { data } = $props();
 const toast = getToast();
@@ -67,7 +67,7 @@ function handleActionResult(opts: { successMsg?: string } = {}) {
 		update,
 	}: {
 		result: ActionResult;
-		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+		update: (opts?: { reset?: boolean; refreshAll?: boolean }) => Promise<void>;
 	}) => {
 		if (result.type === 'success') {
 			const msg = (result.data?.message as string) || opts.successMsg || 'Done.';

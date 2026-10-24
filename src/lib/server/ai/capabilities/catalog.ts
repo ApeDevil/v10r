@@ -8,10 +8,10 @@
  * tool (or the navigation lane) surfaced this turn is `cited`; a path nothing surfaced is
  * recorded as exactly that — the answer's claim, not the turn's.
  */
-import type { SearchResult } from '$lib/search/types';
-import { buildSearchIndex, formatCatalogMap } from '$lib/server/search';
-import type { GroundingSourceId } from '$lib/types/assistant-profile';
-import type { CitationRecord, GroundingItem, GroundingSource } from '$lib/types/turn-trace';
+import type { SearchResult } from '#lib/search/types.ts';
+import { buildSearchIndex, formatCatalogMap } from '#lib/server/search/index.ts';
+import type { GroundingSourceId } from '#lib/types/assistant-profile.ts';
+import type { CitationRecord, GroundingItem, GroundingSource } from '#lib/types/turn-trace.ts';
 import { verifyCatalogCitations } from '../catalog-citations';
 import { type AssistantCapability, catalogSink } from '../profile/profile';
 import { createSearchCatalogTool } from '../tools/search-catalog';

@@ -12,7 +12,7 @@ import type {
 	LayoutNode,
 	LeafNode,
 	PanelDefinition,
-} from '$lib/desk/layout.types';
+} from '#lib/desk/layout.types.ts';
 import {
 	addPanelToLeaf,
 	collectLeaves,

@@ -103,16 +103,16 @@ describe('chunker output fingerprint', () => {
 
 describe('Bun-importable purity', () => {
 	// plan.ts + its pure deps are imported by the standalone Bun ingest script via relative
-	// path, which cannot resolve Vite aliases. A stray $lib / $env / import.meta would
-	// silently re-break `db:ingest-docs`. Guard the contract at the source level so a future
-	// careless import is caught here, not in production.
+	// path. A stray `#lib` import (its closure can reach SvelteKit's `$app/*` virtual modules),
+	// a `$app/*` import or import.meta would silently re-break `db:ingest-docs`. Guard the
+	// contract at the source level so a future careless import is caught here, not in production.
 	const pureModules = ['./plan.ts', './markdown-split.ts', '../retrieval-shared/embed-config.ts'];
 	for (const rel of pureModules) {
-		it(`${rel} imports no $lib / $env alias and uses no import.meta`, () => {
+		it(`${rel} imports no #lib / $app module and uses no import.meta`, () => {
 			const src = readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
 			// Match actual USAGE (static/dynamic alias imports, import.meta property access),
 			// not the prose mentions of these tokens in the modules' own purity-contract comments.
-			expect(src).not.toMatch(/(?:from|import)\s*\(?\s*['"]\$(?:lib|env)/);
+			expect(src).not.toMatch(/(?:from|import)\s*\(?\s*['"][#$]/);
 			expect(src).not.toMatch(/import\.meta\./);
 		});
 	}

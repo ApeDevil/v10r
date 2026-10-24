@@ -9,10 +9,10 @@
  * in `advanceOperation` plus `reapExpiredOperations` recover crashed/abandoned operations.
  */
 import { and, desc, eq, inArray, lt, or } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { createId } from '$lib/server/db/id';
-import { type DbopsOperation, dbopsOperation } from '$lib/server/db/schema/dbops/operation';
-import { sanitizeError } from '$lib/server/monitoring';
+import { createId } from '#lib/server/db/id.ts';
+import { db } from '#lib/server/db/index.ts';
+import { type DbopsOperation, dbopsOperation } from '#lib/server/db/schema/dbops/operation.ts';
+import { sanitizeError } from '#lib/server/monitoring/index.ts';
 import {
 	getOperation,
 	hasChildren,
@@ -21,7 +21,7 @@ import {
 	neonConfigured,
 	resolveTargets,
 	restoreBranchFromParent,
-} from '$lib/server/neon';
+} from '#lib/server/neon/index.ts';
 import {
 	ConflictError,
 	NotConfiguredError,

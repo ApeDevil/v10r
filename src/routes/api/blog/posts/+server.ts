@@ -1,12 +1,12 @@
 import * as v from 'valibot';
-import { createPost, isSlugTaken, listPosts } from '$lib/server/blog';
-import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
-import { getPostFolder } from '$lib/server/blog/post-folders';
-import { CreatePostSchema } from '$lib/server/blog/schemas';
-import { guardApiBlogAuthor } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
-import type { PostStatus } from '$lib/types/db-enums';
+import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '#lib/server/blog/config.ts';
+import { createPost, isSlugTaken, listPosts } from '#lib/server/blog/index.ts';
+import { getPostFolder } from '#lib/server/blog/post-folders.ts';
+import { CreatePostSchema } from '#lib/server/blog/schemas.ts';
+import { guardApiBlogAuthor } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import type { PostStatus } from '#lib/types/db-enums.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);

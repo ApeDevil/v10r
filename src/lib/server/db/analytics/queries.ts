@@ -3,11 +3,11 @@
  */
 
 import { and, asc, desc, eq, gt, gte, isNotNull, lte, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { events, sessions } from '$lib/server/db/schema/analytics';
-import type { LiveEvent } from '$lib/types/analytics-live';
+import { db } from '#lib/server/db/index.ts';
+import { events, sessions } from '#lib/server/db/schema/analytics/index.ts';
+import type { LiveEvent } from '#lib/types/analytics-live.ts';
 
-export type { LiveEvent } from '$lib/types/analytics-live';
+export type { LiveEvent } from '#lib/types/analytics-live.ts';
 
 /**
  * Get a session timeline: sessions ordered by start time with optional date range.

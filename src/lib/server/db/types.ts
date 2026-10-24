@@ -1,6 +1,6 @@
 /**
  * Standalone Database type — extracted so non-route consumers (CLI scripts, content
- * push primitives) can depend on the type without pulling in the `$env/dynamic/private`
+ * push primitives) can depend on the type without pulling in the `$app/env/private`
  * import that `./index.ts` requires.
  */
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 // Direct JSON import is fine here: vitest runs server-side, so the client-graph
 // fs.allow restriction that keeps this out of registry-viz.ts doesn't apply.
-import registryJson from '$patterns/registry.json';
-import type { Registry } from '$patterns/schema';
+import registryJson from '#patterns/registry.json';
+import type { Registry } from '#patterns/schema.ts';
 import { computeStats, DAG_SHORT_LABELS, toDagData } from './registry-viz';
 
 // The narrowed `tier` union makes the JSON-inferred `string` unassignable —

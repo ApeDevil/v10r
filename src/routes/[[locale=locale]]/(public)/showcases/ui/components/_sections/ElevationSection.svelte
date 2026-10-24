@@ -16,7 +16,7 @@
  * Theme + palette are scoped LOCALLY (the app's own `.dark` class + `data-palette`
  * attribute stamped on each stage), so the demo never fights the page's theme FAB.
  */
-import { Button, Cluster, Dialog, Select, Surface, Switch, ToggleGroup } from '$lib/components';
+import { Button, Cluster, Dialog, Select, Surface, Switch, ToggleGroup } from '#lib/components/index.ts';
 import { ContrastReadout, DemoCard, RungStack } from '../_components';
 import type { Rung } from '../_components/RungStack.svelte';
 

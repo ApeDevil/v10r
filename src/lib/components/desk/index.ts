@@ -9,7 +9,7 @@ export type {
 	LeafNode,
 	PanelDefinition,
 	SplitNode,
-} from '$lib/desk/layout.types';
+} from '#lib/desk/layout.types.ts';
 export { disableScope, enableScope, getEnabledScopes, isScopeEnabled } from './bot-config.state.svelte';
 export {
 	type ConversationSummary,

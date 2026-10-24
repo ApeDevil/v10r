@@ -207,7 +207,7 @@ avoids covering sticky bottom-right CTAs):
 pb-[max(env(safe-area-inset-bottom),12px)]`. (`inset-x-2` fixes a real pre-existing
 −12px horizontal-overflow bug; `svh` replaces a raw `vh` that slid under the iOS URL
 bar.) Dock-as-column does not apply on mobile. The sheet registers as a
-`chatbot-sheet` dismissal layer in `$lib/state/layer-stack.svelte.ts`, so Escape
+`chatbot-sheet` dismissal layer in `#lib/state/layer-stack.svelte.ts`, so Escape
 peels anything stacked above it (e.g. the ⌘K palette) before minimizing; the
 desktop dock never registers.
 

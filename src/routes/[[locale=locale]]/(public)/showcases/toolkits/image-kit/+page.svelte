@@ -3,10 +3,10 @@
  * Not localized: every user-facing string below is a literal or a humanized
  * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
-import { enhance } from '$app/forms';
-import { Alert, Card, FormField, NavSection, TagInput } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Select, Spinner, Textarea } from '$lib/components/primitives';
+
+import { Alert, Card, FormField, NavSection, TagInput } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Select, Spinner, Textarea } from '#lib/components/primitives/index.ts';
 import {
 	type AnalyzeUsage,
 	type ConfidenceTier,
@@ -22,7 +22,8 @@ import {
 	type MetadataFieldKey,
 	type PreRunEstimate,
 	type VisionResponse,
-} from '$lib/schemas/showcase/image-kit';
+} from '#lib/schemas/showcase/image-kit.ts';
+import { enhance } from '$app/forms';
 import ApproveDialog from './_components/ApproveDialog.svelte';
 import CropStudio from './_components/CropStudio.svelte';
 import EmbedViz from './_components/EmbedViz.svelte';

@@ -1,10 +1,10 @@
 /**
  * Pure derivation of the hosted `get_file_excerpt` allowlist from the curated registry. Kept
- * dependency-free (no `$env`, no Bun, no fs) so it can be imported BOTH by the runtime reader
+ * dependency-free (no `$app/env`, no Bun, no fs) so it can be imported BOTH by the runtime reader
  * (`excerpts.ts`) and by the build-time snapshot generator (`scripts/mcp/build-public-excerpts.ts`)
  * — one source of truth, so the snapshot and the runtime gate can never disagree.
  */
-import { DEEP_PATTERNS, type RegRef } from '$lib/server/patterns';
+import { DEEP_PATTERNS, type RegRef } from '#lib/server/patterns/index.ts';
 
 /** Files this size or larger are never snapshotted/served. */
 export const MAX_FILE_BYTES = 2 * 1024 * 1024;

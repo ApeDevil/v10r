@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { jobs } from '$lib/server/jobs';
+import { jobs } from '#lib/server/jobs/index.ts';
 import { retentionSchedule } from './schedule';
 
 const JOBS_DIR = join(process.cwd(), 'src/lib/server/jobs');
@@ -69,7 +69,7 @@ describe('retention schedule', () => {
 		const missing: string[] = [];
 		for (const slug of [...new Set(retentionSchedule.map((r) => r.job))]) {
 			const source = readFileSync(join(JOBS_DIR, `${slug}.ts`), 'utf8');
-			if (!/from '\$lib\/server\/retention'/.test(source)) missing.push(slug);
+			if (!/from '#lib\/server\/retention\/index\.ts'/.test(source)) missing.push(slug);
 		}
 		expect(missing).toEqual([]);
 	});

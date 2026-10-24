@@ -1,10 +1,10 @@
-import { ipLimitKey } from '$lib/server/abuse';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
-import { VELOCITY_MEASURE_RATE_LIMIT_MAX, VELOCITY_MEASURE_RATE_LIMIT_WINDOW } from '$lib/server/showcases/config';
-import { runVelocityMeasurement } from '$lib/server/showcases/velocity';
-import { isVelocityMeasurementId } from '$lib/showcases/velocity/measurement';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
+import { VELOCITY_MEASURE_RATE_LIMIT_MAX, VELOCITY_MEASURE_RATE_LIMIT_WINDOW } from '#lib/server/showcases/config.ts';
+import { runVelocityMeasurement } from '#lib/server/showcases/velocity/index.ts';
+import { isVelocityMeasurementId } from '#lib/showcases/velocity/measurement.ts';
 import type { RequestHandler } from './$types';
 
 /**

@@ -8,17 +8,17 @@
  */
 
 import * as v from 'valibot';
-import { customPaletteSchema } from '$lib/schemas/app/branding';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
-import { countCustomPalettes, createCustomPalette } from '$lib/server/style';
+import { customPaletteSchema } from '#lib/schemas/app/branding.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiValidationError } from '#lib/server/http/response.ts';
 import {
 	MAX_CUSTOM_PALETTES_PER_USER,
 	PALETTE_WRITE_RATE_LIMIT_MAX,
 	PALETTE_WRITE_RATE_LIMIT_PREFIX,
 	PALETTE_WRITE_RATE_LIMIT_WINDOW,
-} from '$lib/server/style/config';
+} from '#lib/server/style/config.ts';
+import { countCustomPalettes, createCustomPalette } from '#lib/server/style/index.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter(

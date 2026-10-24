@@ -1,5 +1,5 @@
-import type { EmbeddingConnection } from '$lib/server/ai';
-import type { ChunkLevel } from '$lib/types/turn-trace';
+import type { EmbeddingConnection } from '#lib/server/ai/index.ts';
+import type { ChunkLevel } from '#lib/types/turn-trace.ts';
 
 /** A retrieved chunk with relevance metadata */
 export interface RankedChunk {

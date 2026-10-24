@@ -1,9 +1,19 @@
 <script lang="ts">
-import { Alert, Card, NavSection } from '$lib/components/composites';
-import CodeBlock from '$lib/components/composites/info-dialog/CodeBlock.svelte';
-import { Stack } from '$lib/components/layout';
-import { Badge, Body, Cell, Header, HeaderCell, ModeChip, Row, Table, ToggleGroup } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Alert, Card, NavSection } from '#lib/components/composites/index.ts';
+import CodeBlock from '#lib/components/composites/info-dialog/CodeBlock.svelte';
+import { Stack } from '#lib/components/layout/index.ts';
+import {
+	Badge,
+	Body,
+	Cell,
+	Header,
+	HeaderCell,
+	ModeChip,
+	Row,
+	Table,
+	ToggleGroup,
+} from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 type Role = 'guest' | 'user' | 'blog-author' | 'admin';
 

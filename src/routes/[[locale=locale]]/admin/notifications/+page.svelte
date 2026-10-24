@@ -1,12 +1,12 @@
 <script lang="ts">
+import { Alert, Card, ConfirmDialog, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Skeleton, Spinner, Tag, Textarea } from '#lib/components/primitives/index.ts';
+import AnnouncementBanner from '#lib/components/shell/AnnouncementBanner.svelte';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { enhance } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
-import { Alert, Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Skeleton, Spinner, Tag, Textarea } from '$lib/components/primitives';
-import AnnouncementBanner from '$lib/components/shell/AnnouncementBanner.svelte';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
+import { refreshAll } from '$app/navigation';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -215,7 +215,7 @@ function resetComposeForm() {
 		{#snippet header()}
 			<Cluster justify="between" align="center">
 				<h2 class="text-fluid-lg font-semibold">{m.admin_notifications_delivery_log_heading()}</h2>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 					{m.admin_action_refresh()}
 				</Button>
@@ -352,7 +352,7 @@ function resetComposeForm() {
 			{/if}
 		{:catch}
 			<Alert variant="error" title={m.admin_notifications_load_error_title()} description={m.admin_notifications_load_error_desc()}>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.admin_notifications_try_again()}</Button>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>{m.admin_notifications_try_again()}</Button>
 			</Alert>
 		{/await}
 	</Card>

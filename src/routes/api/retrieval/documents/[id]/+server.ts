@@ -1,15 +1,15 @@
-import { deleteDocument } from '$lib/server/db/retrieval/mutations';
-import { getDocument } from '$lib/server/db/retrieval/queries';
-import { deleteDocumentGraph } from '$lib/server/graph/retrieval/mutations';
+import { deleteDocument } from '#lib/server/db/retrieval/mutations.ts';
+import { getDocument } from '#lib/server/db/retrieval/queries.ts';
+import { deleteDocumentGraph } from '#lib/server/graph/retrieval/mutations.ts';
 import {
 	READ_RATE_LIMIT_MAX,
 	READ_RATE_LIMIT_WINDOW,
 	WRITE_RATE_LIMIT_MAX,
 	WRITE_RATE_LIMIT_WINDOW,
-} from '$lib/server/http/config';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent, apiOk } from '$lib/server/http/response';
+} from '#lib/server/http/config.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const readLimiter = createLimiter('rl:retrieval:documents:read', READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW);

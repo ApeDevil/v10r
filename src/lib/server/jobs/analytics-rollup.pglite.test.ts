@@ -8,18 +8,18 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { dailyPageStats, events, sessions } from '$lib/server/db/schema/analytics';
+import { dailyPageStats, events, sessions } from '#lib/server/db/schema/analytics/index.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { analyticsRollup } = await import('./analytics-rollup');
 
 afterAll(async () => {
@@ -136,7 +136,7 @@ describe('analyticsRollup', () => {
 	});
 
 	it('excludes debug-owned events entirely', async () => {
-		const { user } = await import('$lib/server/db/schema');
+		const { user } = await import('#lib/server/db/schema/index.ts');
 		await db.insert(user).values({ id: 'admin-ro', name: 'A', email: 'ro@example.com' }).onConflictDoNothing();
 		await db.insert(events).values([
 			{

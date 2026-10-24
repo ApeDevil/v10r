@@ -2,7 +2,7 @@
  * The canonical View menu — ONE factory for every projection that renders or
  * matches it: the desktop kebab (DockLeaf) and the keyboard matcher
  * (DeskShortcuts). One factory, so the two cannot drift. Its toggle rows are
- * derived from the activity-bar items that declare a chord (`$lib/desk/panels`),
+ * derived from the activity-bar items that declare a chord (`#lib/desk/panels.ts`),
  * so the bar's tooltip and the menu's row are one declaration.
  *
  * The mobile commands sheet has no View section: every View command is a
@@ -16,8 +16,8 @@
  * `Close Panel` (Ctrl+W), so one decision has one row (compose-menus.ts).
  */
 
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import type { ActivityBarItem } from '$lib/desk/layout.types';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import type { ActivityBarItem } from '#lib/desk/layout.types.ts';
 
 /** Declared once; the tab context menu prints it beside its own Preferences row. */
 export const PREFERENCES_SHORTCUT = 'Ctrl+Shift+,';

@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Badge } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import type { InspectedTurn, InspectorNode } from '$lib/showcases/ai/inspector';
+import { Badge } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { InspectedTurn, InspectorNode } from '#lib/showcases/ai/inspector.ts';
 import {
 	BLOCK_TAGS,
 	GROUP_GLOSSES,
@@ -9,11 +9,11 @@ import {
 	LANE_LABELS,
 	LEVEL_LABELS,
 	STATE_LABELS,
-} from '$lib/showcases/ai/labels';
+} from '#lib/showcases/ai/labels.ts';
 
 // The detail pane opens CONTENT, not counts: block text, chunk body, tool schema, tool
 // input and output, call metadata. Field names are the trace contract's own
-// (`$lib/types/turn-trace.ts`) and render as code — the contract is the subject here.
+// (`#lib/types/turn-trace.ts`) and render as code — the contract is the subject here.
 let { node, turn }: { node: InspectorNode | null; turn: InspectedTurn } = $props();
 
 const fmt = (n: number) => n.toLocaleString();

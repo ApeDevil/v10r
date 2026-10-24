@@ -147,7 +147,7 @@ Enter and a second Send are held until the turn ends — one turn in flight (`su
 while `isStreaming`).
 
 **Stop stops the model, not just the fetch.** The dropped connection reaches the server as the
-turn's *cancellation* (`startCancellation`, `$lib/server/http/cancellation.ts`: the response
+turn's *cancellation* (`startCancellation`, `#lib/server/http/cancellation.ts`: the response
 body's `cancel()` — what the Node bridge calls when the socket closes — joined with the
 platform's `request.signal`). Every model call of the turn carries it, so the provider stops
 streaming instead of running on to its 30 s timeout. What had reached the client is persisted
@@ -173,7 +173,7 @@ and arrives in one of two shapes, decided by whether the answer had started:
 
 `chatbotSession.lastError` holds the frame text the SDK reports through `onError`; the panel
 reads it before `chat.error`, parses the `[kind]` prefix (`parseAiErrorKind`,
-`$lib/types/ai-error.ts`) and words the box itself — the user-safe server text is a fallback for
+`#lib/types/ai-error.ts`) and words the box itself — the user-safe server text is a fallback for
 other clients, not what Vely shows. Both are cleared by the next send and by a new chat.
 
 An `error` frame after content is never sent: the client would drop the partial answer on it
@@ -198,13 +198,13 @@ An `error` frame after content is never sent: the client would drop the partial 
 
 ### Implementation
 
-Limiters are built with `createLimiter` from `$lib/server/http/rate-limit.ts` and keyed on the user ID. Layer one limiter per window. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
+Limiters are built with `createLimiter` from `#lib/server/http/rate-limit.ts` and keyed on the user ID. Layer one limiter per window. See [abuse/rate-limits.md](../abuse/rate-limits.md) for the factory contract and limiter catalog.
 
 ```typescript
 // Illustrative — the live rate-limit preamble is shared across the per-surface AI
 // routes via guardAiRequest ($lib/server/ai/guard.ts). Sketch shown inline here.
 import { json } from '@sveltejs/kit';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
 
 // Sliding-window limiters, keyed on user ID
 const perMinute = createLimiter('rl:ai:chat:min', 10, '1 m');
@@ -278,7 +278,7 @@ export const POST: RequestHandler = async (event) => {
 **Never trust user input.** Sanitize before sending to AI provider.
 
 ```typescript
-import { sanitizeInput } from '$lib/server/ai/sanitize';
+import { sanitizeInput } from '#lib/server/ai/sanitize';
 
 // Before sending to AI
 const sanitizedMessage = sanitizeInput(message, {

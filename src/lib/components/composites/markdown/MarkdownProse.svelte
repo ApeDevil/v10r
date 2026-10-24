@@ -7,7 +7,7 @@
   here rather than inside any one of them.
 -->
 <script lang="ts">
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	/** Pre-sanitized HTML from the server-side markdown pipeline (`renderBlogPost`). */

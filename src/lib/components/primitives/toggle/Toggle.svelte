@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Toggle as TogglePrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 import { type ToggleVariants, toggleVariants } from './toggle';
 
 interface Props extends ToggleVariants {

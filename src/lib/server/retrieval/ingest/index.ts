@@ -3,12 +3,12 @@
  */
 import type { LanguageModel } from 'ai';
 import { eq } from 'drizzle-orm';
-import { getActiveProvider, loadProviderRegistry } from '$lib/server/ai';
-import { db } from '$lib/server/db';
-import { contentHash, derivationKey } from '$lib/server/db/content-hash';
-import { chunk, document } from '$lib/server/db/schema/retrieval';
-import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '$lib/types/ingest-pipeline';
-import type { ChunkLevel } from '$lib/types/turn-trace';
+import { getActiveProvider, loadProviderRegistry } from '#lib/server/ai/index.ts';
+import { contentHash, derivationKey } from '#lib/server/db/content-hash.ts';
+import { db } from '#lib/server/db/index.ts';
+import { chunk, document } from '#lib/server/db/schema/retrieval/index.ts';
+import type { IngestEvent, IngestStepEvent, IngestStepId, IngestStepStatus } from '#lib/types/ingest-pipeline.ts';
+import type { ChunkLevel } from '#lib/types/turn-trace.ts';
 import { chunkDocument } from '../chunk';
 import {
 	CHUNK_OVERLAP,

@@ -1,6 +1,6 @@
 <script lang="ts">
-import { disableScope, enableScope, isScopeEnabled } from '$lib/components/desk';
-import Switch from '$lib/components/primitives/switch/Switch.svelte';
+import { disableScope, enableScope, isScopeEnabled } from '#lib/components/desk/index.ts';
+import Switch from '#lib/components/primitives/switch/Switch.svelte';
 
 /**
  * `desk:read` and `desk:create` are always-on — safe because delete is soft and

@@ -8,19 +8,19 @@
  * the desk inventory is the viewer's own.
  */
 import { asSchema, type Tool } from 'ai';
-import type { Locale } from '$lib/i18n';
-import { countCorpus, countCorpusMaps } from '$lib/server/db/retrieval/queries';
-import { PATTERNS } from '$lib/server/patterns';
-import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
-import { buildSearchIndex } from '$lib/server/search';
-import { DESK_TOOL_SCOPES } from '$lib/types/ai-tools';
+import type { Locale } from '#lib/i18n/index.ts';
+import { countCorpus, countCorpusMaps } from '#lib/server/db/retrieval/queries.ts';
+import { PATTERNS } from '#lib/server/patterns/index.ts';
+import { PROJECT_DOCS_COLLECTION_ID, SYSTEM_DOCS_USER_ID } from '#lib/server/retrieval/config.ts';
+import { buildSearchIndex } from '#lib/server/search/index.ts';
+import { DESK_TOOL_SCOPES } from '#lib/types/ai-tools.ts';
 import type {
 	AssistantProfileManifest,
 	CapabilityManifest,
 	GroundingInventory,
 	GroundingSourceId,
 	ToolManifestEntry,
-} from '$lib/types/assistant-profile';
+} from '#lib/types/assistant-profile.ts';
 import { hashSystemPrompt } from '../context/history';
 import { type AssistantProfile, createTurnState, identityBlock, type TurnInput } from './profile';
 

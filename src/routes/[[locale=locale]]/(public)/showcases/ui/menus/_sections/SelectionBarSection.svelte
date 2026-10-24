@@ -1,6 +1,6 @@
 <script lang="ts">
-import { SelectionBar } from '$lib/components/composites';
-import type { SelectionBarAction } from '$lib/components/composites/selection-bar/types';
+import { SelectionBar } from '#lib/components/composites/index.ts';
+import type { SelectionBarAction } from '#lib/components/composites/selection-bar/types.ts';
 import { DemoCard } from '../../components/_components';
 
 interface ListItem {

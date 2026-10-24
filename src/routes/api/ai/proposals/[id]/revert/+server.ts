@@ -11,14 +11,14 @@
  * `revert_failed` first; its receipts say which steps were undone.
  */
 
-import { proposalOutcome } from '$lib/server/ai/proposals/proposal-outcome';
-import { revertProposal } from '$lib/server/ai/proposals/revert-proposal';
-import { getProposal, hasRecoveryPoints, markRevertInterruptedIfStale } from '$lib/server/db/ai/proposals';
-import { getConversation } from '$lib/server/db/ai/queries';
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { proposalOutcome } from '#lib/server/ai/proposals/proposal-outcome.ts';
+import { revertProposal } from '#lib/server/ai/proposals/revert-proposal.ts';
+import { getProposal, hasRecoveryPoints, markRevertInterruptedIfStale } from '#lib/server/db/ai/proposals.ts';
+import { getConversation } from '#lib/server/db/ai/queries.ts';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 // The undo runs inside this request, like the plan did; the same ceiling the approve route

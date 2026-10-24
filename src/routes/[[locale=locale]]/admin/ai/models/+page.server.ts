@@ -1,13 +1,27 @@
 import { fail } from '@sveltejs/kit';
 import * as v from 'valibot';
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 import {
 	AUTOMATIC_DEFAULT,
 	defaultProviderSchema,
 	providerConnectionSaveSchema,
 	providerConnectionTestSchema,
 	providerKeyRemoveSchema,
-} from '$lib/schemas/admin/ai-connections';
+} from '#lib/schemas/admin/ai-connections.ts';
+import {
+	CONNECTION_TEST_RATE_LIMIT_MAX,
+	CONNECTION_TEST_RATE_LIMIT_PREFIX,
+	CONNECTION_TEST_RATE_LIMIT_WINDOW,
+} from '#lib/server/ai/config.ts';
+import {
+	type ConnectionActor,
+	type ConnectionRejection,
+	removeProviderConnectionKey,
+	runProviderConnectionTest,
+	saveProviderConnectionSettings,
+	setProjectDefaultProvider,
+} from '#lib/server/ai/connection-settings.ts';
+import { embeddingStatusFrom, PROVIDER_LABELS } from '#lib/server/ai/connections.ts';
 import {
 	getActiveProviderInfo,
 	getFallbacksForUser,
@@ -16,27 +30,13 @@ import {
 	loadProviderRegistry,
 	type ProviderRegistry,
 	publicProviderConnection,
-} from '$lib/server/ai';
-import {
-	CONNECTION_TEST_RATE_LIMIT_MAX,
-	CONNECTION_TEST_RATE_LIMIT_PREFIX,
-	CONNECTION_TEST_RATE_LIMIT_WINDOW,
-} from '$lib/server/ai/config';
-import {
-	type ConnectionActor,
-	type ConnectionRejection,
-	removeProviderConnectionKey,
-	runProviderConnectionTest,
-	saveProviderConnectionSettings,
-	setProjectDefaultProvider,
-} from '$lib/server/ai/connection-settings';
-import { embeddingStatusFrom, PROVIDER_LABELS } from '$lib/server/ai/connections';
-import { getCooldownResumeAt } from '$lib/server/ai/providers';
-import { requireAdmin } from '$lib/server/http/guards';
-import { createLimiter } from '$lib/server/http/rate-limit';
-import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '$lib/server/retrieval-shared/embed-config';
-import { EncryptionError, getEncryptionKeyRing } from '$lib/server/security';
-import type { AiProviderId } from '$lib/types/db-enums';
+} from '#lib/server/ai/index.ts';
+import { getCooldownResumeAt } from '#lib/server/ai/providers.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
+import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from '#lib/server/retrieval-shared/embed-config.ts';
+import { EncryptionError, getEncryptionKeyRing } from '#lib/server/security/index.ts';
+import type { AiProviderId } from '#lib/types/db-enums.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /**

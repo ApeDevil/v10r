@@ -2,10 +2,10 @@
  * Admin pairing endpoint — generate a pairing code (+ its QR) for the current admin.
  */
 
-import { requireAdmin } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError } from '$lib/server/http/response';
-import { createPairingCode, qrSvg } from '$lib/server/pairing';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError } from '#lib/server/http/response.ts';
+import { createPairingCode, qrSvg } from '#lib/server/pairing/index.ts';
 import type { RequestHandler } from './$types';
 
 const generateLimit = createLimiter('rl:pair:generate', 5, '60 s');

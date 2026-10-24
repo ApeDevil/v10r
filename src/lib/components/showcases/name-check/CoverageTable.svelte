@@ -4,14 +4,14 @@
  * one of them. The manual link is unconditional: a complete row still deserves a way to
  * verify, and an incomplete one is exactly where the reader must go next.
  */
-import { Badge, Button } from '$lib/components/primitives';
-import { formatRelative } from '$lib/i18n';
-import type { NameCheckLabels } from '$lib/name-check/labels';
-import type { NameCheckCoverage } from '$lib/name-check/report';
+import { Badge, Button } from '#lib/components/primitives/index.ts';
+import { formatRelative } from '#lib/i18n/index.ts';
+import type { NameCheckLabels } from '#lib/name-check/labels.ts';
+import type { NameCheckCoverage } from '#lib/name-check/report.ts';
 
 interface Props {
 	coverage: NameCheckCoverage[];
-	/** Server-resolved label maps (`$lib/name-check/labels`). */
+	/** Server-resolved label maps (`#lib/name-check/labels.ts`). */
 	labels: Pick<NameCheckLabels, 'sources' | 'coverageStatuses' | 'copy'>;
 	/** App locale for relative times. */
 	locale: string;

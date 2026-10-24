@@ -10,20 +10,20 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { assetFolder, postFolder } from '$lib/server/db/schema/blog';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { assetFolder, postFolder } from '#lib/server/db/schema/blog/index.ts';
 import {
 	FolderCycleError,
 	FolderNameConflictError,
 	FolderNotEmptyError,
 	FolderNotFoundError,
-} from '$lib/server/db/shared/folder-tree';
-import { makeUser } from '$lib/server/test/fixtures';
+} from '#lib/server/db/shared/folder-tree.ts';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -31,7 +31,7 @@ vi.mock('$lib/server/db', async () => {
 
 const posts = await import('./post-folders');
 const assets = await import('./asset-folders');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER_A = makeUser({ id: 'user-a' });
 const USER_B = makeUser({ id: 'user-b' });

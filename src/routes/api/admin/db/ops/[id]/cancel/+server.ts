@@ -1,7 +1,7 @@
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { cancelOperation } from '$lib/server/dbops';
-import { guardApiAdmin } from '$lib/server/http/guards';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { cancelOperation } from '#lib/server/dbops/index.ts';
+import { guardApiAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async (event) => {

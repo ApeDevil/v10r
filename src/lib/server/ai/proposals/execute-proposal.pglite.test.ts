@@ -7,7 +7,7 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeConversation, makeUser } from '$lib/server/test/fixtures';
+import { makeConversation, makeUser } from '#lib/server/test/fixtures.ts';
 import { conversation, message } from '../../db/schema/ai/conversation';
 import { agentProposal } from '../../db/schema/ai/proposal';
 import { user } from '../../db/schema/auth/_better-auth';
@@ -15,8 +15,8 @@ import { file } from '../../db/schema/desk';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -24,8 +24,8 @@ vi.mock('$lib/server/db', async () => {
 
 /** The real receipt writer, with one seam: a test can make the next call throw. */
 let failNextReceipt = false;
-vi.mock('$lib/server/db/ai/proposals', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('$lib/server/db/ai/proposals')>();
+vi.mock('#lib/server/db/ai/proposals.ts', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('#lib/server/db/ai/proposals.ts')>();
 	return {
 		...actual,
 		recordProposalStep: async (...args: Parameters<typeof actual.recordProposalStep>) => {
@@ -41,11 +41,11 @@ vi.mock('$lib/server/db/ai/proposals', async (importOriginal) => {
 const { executeProposal, receiptText } = await import('./execute-proposal');
 const { proposalOutcome } = await import('./proposal-outcome');
 const { approveProposal, createProposal, getProposal, listProposalSteps, markExecuting, recordProposalStep } =
-	await import('$lib/server/db/ai/proposals');
-const { createSpreadsheetFile, updateSpreadsheetByFileId } = await import('$lib/server/db/desk/mutations');
-const { getFile, getSpreadsheetByFileId, listFiles } = await import('$lib/server/db/desk/queries');
+	await import('#lib/server/db/ai/proposals.ts');
+const { createSpreadsheetFile, updateSpreadsheetByFileId } = await import('#lib/server/db/desk/mutations.ts');
+const { getFile, getSpreadsheetByFileId, listFiles } = await import('#lib/server/db/desk/queries.ts');
 const { readProposedTarget } = await import('../tools/proposed-target');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER = makeUser({ id: 'user-replay' });
 let conversationId: string;

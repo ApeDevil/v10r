@@ -1,9 +1,9 @@
 <script lang="ts">
-import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
-import { DagGraph, KnowledgeGraph, NetworkGraph, SankeyDiagram, TreeGraph } from '$lib/components/viz';
-import type { DagData, KnowledgeData, NetworkData, SankeyData, TreeData } from '$lib/components/viz/graph';
-import * as m from '$lib/paraglide/messages';
+import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/table/index.ts';
+import type { DagData, KnowledgeData, NetworkData, SankeyData, TreeData } from '#lib/components/viz/graph/index.ts';
+import { DagGraph, KnowledgeGraph, NetworkGraph, SankeyDiagram, TreeGraph } from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [

@@ -528,7 +528,7 @@ Architecture x-ray of the two AI surfaces (see [ai/surfaces.md](./ai/surfaces.md
 | Tests | Stack |
 |-------|-------|
 | Turn inspector (both surfaces) | Persisted `TurnTrace` → pure projection (`inspector.ts`), APG treeview + detail pane + `Waterfall` timeline; owner-guarded turn/profile routes; the deskbot adds the proposal and its receipts as nodes |
-| Manifest-derived tool matrix | `TOOL_MANIFEST` (`$lib/types/ai-tools.ts`), drift tests |
+| Manifest-derived tool matrix | `TOOL_MANIFEST` (`#lib/types/ai-tools.ts`), drift tests |
 | Proposal lifecycle | The pg enum + approve-route transitions mirrored and pinned; the recorded turn's proposal lights its current state |
 
 **Sub-pages:**
@@ -782,7 +782,7 @@ All routes under `/account` require authentication.
 **Protection per-route** (not layout - see [auth.md](./auth.md#route-protection)):
 ```ts
 // /account/dashboard/+page.server.ts
-import { requireAuth } from '$lib/server/auth/guard';
+import { requireAuth } from '#lib/server/auth/guard';
 
 export async function load(event) {
   const { user } = await requireAuth(event);

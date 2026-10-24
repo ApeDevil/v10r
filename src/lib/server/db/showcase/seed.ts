@@ -3,7 +3,7 @@
  * Single source of truth for all showcase seed data.
  */
 import { sql } from 'drizzle-orm';
-import type { Database } from '$lib/server/db';
+import type { Database } from '#lib/server/db/index.ts';
 
 /**
  * Truncate all showcase tables and re-insert seed data.

@@ -1,4 +1,4 @@
-import { getAgentRegistry } from '$lib/server/agents/registry';
+import { getAgentRegistry } from '#lib/server/agents/registry.ts';
 
 const BUCKETS = [
 	{ id: 'architecture-data', members: ['ary', 'sys', 'daty', 'apy'] },

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { T } from '@threlte/core';
 import { useGltf } from '@threlte/extras';
-import type { Model3D } from '$lib/3d/models';
+import type { Model3D } from '#lib/3d/models.ts';
 
 interface Props {
 	model: Model3D;

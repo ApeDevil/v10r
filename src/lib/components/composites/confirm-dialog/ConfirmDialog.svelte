@@ -1,10 +1,10 @@
 <script lang="ts">
 import { Dialog } from 'bits-ui';
-import { Button } from '$lib/components/primitives/button';
-import * as m from '$lib/paraglide/messages';
-import { getLayerScope, layerStack } from '$lib/state/layer-stack.svelte';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getLayerScope, layerStack } from '#lib/state/layer-stack.svelte.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	open: boolean;

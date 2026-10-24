@@ -14,50 +14,50 @@ import {
 	streamText,
 	type UIMessage,
 } from 'ai';
-import type { HarnessMetadata } from '$lib/components/composites/chatbot/harness-types';
-import type { Locale } from '$lib/i18n';
-import {
-	getActiveProvider,
-	getActiveProviderInfo,
-	getToolProvider,
-	type ProviderEntry,
-	type ProviderRegistry,
-} from '$lib/server/ai';
-import { chargeTokens } from '$lib/server/ai/budget';
-import { CHATBOT_GENERATION_OPTIONS, MAX_TOKENS } from '$lib/server/ai/config';
-import { getMessageText, windowMessages } from '$lib/server/ai/context/history';
+import type { HarnessMetadata } from '#lib/components/composites/chatbot/harness-types.ts';
+import type { Locale } from '#lib/i18n/index.ts';
+import { chargeTokens } from '#lib/server/ai/budget.ts';
+import { CHATBOT_GENERATION_OPTIONS, MAX_TOKENS } from '#lib/server/ai/config.ts';
+import { getMessageText, windowMessages } from '#lib/server/ai/context/history.ts';
 import {
 	type AiErrorKind,
 	aiErrorFrameText,
 	aiErrorToStatus,
 	classifyAiError,
 	safeAiMessage,
-} from '$lib/server/ai/errors';
-import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '$lib/server/ai/loop/compact';
-import { answerOnLastStep } from '$lib/server/ai/policy';
-import { estimateTurnTokens, fitsTokenMinute } from '$lib/server/ai/provider-limits';
-import { incrProvider429 } from '$lib/server/ai/provider-usage';
-import { isCooledDown, markCooldown } from '$lib/server/ai/providers';
-import type { DeskToolScope } from '$lib/server/ai/tools';
-import type { PanelContextEntry } from '$lib/server/ai/types';
+} from '#lib/server/ai/errors.ts';
+import {
+	getActiveProvider,
+	getActiveProviderInfo,
+	getToolProvider,
+	type ProviderEntry,
+	type ProviderRegistry,
+} from '#lib/server/ai/index.ts';
+import { compactToolResults, DEFAULT_BUDGET, runWithCompaction } from '#lib/server/ai/loop/compact.ts';
+import { answerOnLastStep } from '#lib/server/ai/policy/index.ts';
+import { estimateTurnTokens, fitsTokenMinute } from '#lib/server/ai/provider-limits.ts';
+import { incrProvider429 } from '#lib/server/ai/provider-usage.ts';
+import { isCooledDown, markCooldown } from '#lib/server/ai/providers.ts';
+import type { DeskToolScope } from '#lib/server/ai/tools/index.ts';
+import type { PanelContextEntry } from '#lib/server/ai/types.ts';
 import {
 	createConversation,
 	refreshConversationTokens,
 	saveMessages,
 	updateMessageContent,
-} from '$lib/server/db/ai/mutations';
-import { createProposal } from '$lib/server/db/ai/proposals';
-import { getConversation } from '$lib/server/db/ai/queries';
-import { DbError, safeDbMessage } from '$lib/server/db/errors';
-import { observedQueryCount } from '$lib/server/db/query-census';
-import { deskCorpusState } from '$lib/server/db/retrieval/queries';
-import type { StoredMessagePart } from '$lib/server/db/schema/ai/conversation';
-import { type Cancellation, startCancellation } from '$lib/server/http/cancellation';
-import type { Deadline } from '$lib/server/http/deadline';
-import { holdOpenUntil } from '$lib/server/platform';
-import type { PageContext } from '$lib/server/search';
-import type { AiSurface } from '$lib/types/db-enums';
-import type { ToolExecutionRecord, TurnAwareness, TurnTimings } from '$lib/types/turn-trace';
+} from '#lib/server/db/ai/mutations.ts';
+import { createProposal } from '#lib/server/db/ai/proposals.ts';
+import { getConversation } from '#lib/server/db/ai/queries.ts';
+import { DbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { observedQueryCount } from '#lib/server/db/query-census.ts';
+import { deskCorpusState } from '#lib/server/db/retrieval/queries.ts';
+import type { StoredMessagePart } from '#lib/server/db/schema/ai/conversation.ts';
+import { type Cancellation, startCancellation } from '#lib/server/http/cancellation.ts';
+import type { Deadline } from '#lib/server/http/deadline.ts';
+import { holdOpenUntil } from '#lib/server/platform/index.ts';
+import type { PageContext } from '#lib/server/search/index.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
+import type { ToolExecutionRecord, TurnAwareness, TurnTimings } from '#lib/types/turn-trace.ts';
 import {
 	type AttemptFailure,
 	type PumpableTextResult,

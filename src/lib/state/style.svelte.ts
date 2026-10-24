@@ -4,9 +4,9 @@
  */
 
 import { getContext, setContext } from 'svelte';
-import { browser } from '$app/environment';
-import { apiFetch } from '$lib/api';
-import type { ResolvedStyle } from '$lib/styles/random/types';
+import { apiFetch } from '#lib/api.ts';
+import type { ResolvedStyle } from '#lib/styles/random/types.ts';
+import { browser } from '$app/env';
 
 const STYLE_CTX = Symbol('style');
 

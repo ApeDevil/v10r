@@ -1,6 +1,6 @@
-import { listGrantsForUser } from '$lib/server/auth/grants';
-import { guardApiAdmin } from '$lib/server/http/guards';
-import { apiOk } from '$lib/server/http/response';
+import { listGrantsForUser } from '#lib/server/auth/grants.ts';
+import { guardApiAdmin } from '#lib/server/http/guards.ts';
+import { apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals }) => {

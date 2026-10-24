@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { ChartData, Chart as ChartJS, ChartOptions } from 'chart.js';
 import { onDestroy, onMount, untrack } from 'svelte';
+import { cn } from '#lib/utils/cn.ts';
 import { beforeNavigate } from '$app/navigation';
-import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 import { buildChartTheme } from '../../_shared/chart-theme';
 import { getChartInfraColors, onThemeChange, resolveDatasetColors } from '../../_shared/theme-bridge';
@@ -58,7 +58,9 @@ function cleanup() {
 	chart = undefined;
 }
 
-beforeNavigate(cleanup);
+beforeNavigate(({ shallow }) => {
+	if (!shallow) cleanup();
+});
 onDestroy(cleanup);
 
 onMount(async () => {

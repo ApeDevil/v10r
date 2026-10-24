@@ -14,8 +14,8 @@
  * in separate sections for that reason.
  */
 import { resolveNs } from 'node:dns/promises';
-import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
-import { definePolicy, readThrough } from '$lib/server/cache';
+import { NAME_CHECK_TERRITORIES } from '#lib/schemas/name-check.ts';
+import { definePolicy, readThrough } from '#lib/server/cache/index.ts';
 import { DOMAIN_TLDS, RDAP_BOOTSTRAP_TTL_SECONDS, RDAP_LOOKUP_MS } from '../config';
 import { fetchJson } from '../fetch-json';
 import type { DomainDraft, LiveNameSource, NameSourceContext } from '../name-source';

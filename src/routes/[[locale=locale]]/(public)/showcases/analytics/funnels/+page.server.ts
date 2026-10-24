@@ -1,5 +1,5 @@
-import { getFunnelSteps } from '$lib/server/db/analytics/aggregations';
-import { readUrlState } from '$lib/state/url-state';
+import { getFunnelSteps } from '#lib/server/db/analytics/aggregations.ts';
+import { readUrlState } from '#lib/state/url-state.ts';
 import { rangeParams } from '../range-params';
 import type { PageServerLoad } from './$types';
 

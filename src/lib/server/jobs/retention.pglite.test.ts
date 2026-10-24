@@ -10,24 +10,24 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { adminAuditLog } from '$lib/server/db/schema/admin';
-import { conversation, message } from '$lib/server/db/schema/ai/conversation';
-import { modelCall, toolCall, turn } from '$lib/server/db/schema/ai/turn';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { file, fileRevision } from '$lib/server/db/schema/desk';
-import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
-import { retentionDays } from '$lib/server/retention';
+import { adminAuditLog } from '#lib/server/db/schema/admin/index.ts';
+import { conversation, message } from '#lib/server/db/schema/ai/conversation.ts';
+import { modelCall, toolCall, turn } from '#lib/server/db/schema/ai/turn.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { file, fileRevision } from '#lib/server/db/schema/desk/index.ts';
+import { mcpCallLog } from '#lib/server/db/schema/mcp/call-log.ts';
+import { retentionDays } from '#lib/server/retention/index.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { deskRetention } = await import('./desk-retention');
 const { aiTelemetryRetention } = await import('./ai-telemetry-retention');
 const { auditLogRetention } = await import('./audit-log-retention');

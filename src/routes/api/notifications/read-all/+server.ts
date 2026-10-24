@@ -1,9 +1,9 @@
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { markAllAsRead } from '$lib/server/db/notifications/mutations';
-import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/http/config';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { markAllAsRead } from '#lib/server/db/notifications/mutations.ts';
+import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW } from '#lib/server/http/config.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:read-all', WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);

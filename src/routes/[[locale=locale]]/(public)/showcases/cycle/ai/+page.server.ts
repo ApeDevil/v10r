@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
-import { executeAiCycle } from '$lib/server/showcases/cycle';
-import type { SimulateAiError } from '$lib/showcases/cycle/types';
+import { executeAiCycle } from '#lib/server/showcases/cycle/index.ts';
+import type { SimulateAiError } from '#lib/showcases/cycle/types.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => ({});

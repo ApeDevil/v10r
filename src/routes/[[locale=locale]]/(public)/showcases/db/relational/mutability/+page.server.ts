@@ -1,13 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import { desc, isNotNull, isNull } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import {
 	documentVault,
 	showcaseAuditLog,
 	temporalRecord,
 	typeSpecimen,
 	typeSpecimenHistory,
-} from '$lib/server/db/schema';
+} from '#lib/server/db/schema/index.ts';
 import {
 	addTemporalRecord,
 	appendAuditEntry,
@@ -18,9 +18,9 @@ import {
 	softDeleteDocument,
 	updateSpecimen,
 	updateWithHistory,
-} from '$lib/server/db/showcase/mutations';
-import { reseedShowcase } from '$lib/server/db/showcase/seed';
-import { checkRowLimit } from '$lib/server/showcases/row-limit';
+} from '#lib/server/db/showcase/mutations.ts';
+import { reseedShowcase } from '#lib/server/db/showcase/seed.ts';
+import { checkRowLimit } from '#lib/server/showcases/row-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

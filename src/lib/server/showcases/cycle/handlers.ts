@@ -7,11 +7,11 @@
  * the entire pipeline, not just a summary.
  */
 
-import type { CycleInput } from '$lib/schemas/showcase/cycle';
-import { db } from '$lib/server/db';
-import { cycleRun } from '$lib/server/db/schema';
-import { checkRowLimit } from '$lib/server/showcases/row-limit';
-import type { CycleSpan, CycleTrace } from '$lib/showcases/cycle/types';
+import type { CycleInput } from '#lib/schemas/showcase/cycle.ts';
+import { db } from '#lib/server/db/index.ts';
+import { cycleRun } from '#lib/server/db/schema/index.ts';
+import { checkRowLimit } from '#lib/server/showcases/row-limit.ts';
+import type { CycleSpan, CycleTrace } from '#lib/showcases/cycle/types.ts';
 import { blockRemaining, createTrace, endSpan, failSpan, finalizeTrace, startSpan } from './trace';
 
 export interface CycleResult {

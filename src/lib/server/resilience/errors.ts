@@ -1,4 +1,4 @@
-import { ServerError } from '$lib/server/errors';
+import { ServerError } from '#lib/server/errors/index.ts';
 
 /**
  * Why a call was refused before it was attempted.

@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit';
 import { count, desc, eq, max, sql } from 'drizzle-orm';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { db } from '$lib/server/db';
-import { jobExecution } from '$lib/server/db/schema/jobs';
-import { requireAdmin } from '$lib/server/http/guards';
-import { jobs } from '$lib/server/jobs';
-import { runJob } from '$lib/server/jobs/runner';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { db } from '#lib/server/db/index.ts';
+import { jobExecution } from '#lib/server/db/schema/jobs/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { jobs } from '#lib/server/jobs/index.ts';
+import { runJob } from '#lib/server/jobs/runner.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const PAGE_SIZE = 25;

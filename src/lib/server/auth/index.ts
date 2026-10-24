@@ -4,8 +4,17 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { emailOTP, magicLink, twoFactor } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
-import { env } from '$env/dynamic/private';
-// Use relative import — Better Auth CLI breaks on $lib aliases (Issue #2252)
+import {
+	BETTER_AUTH_SECRET,
+	BETTER_AUTH_URL,
+	GITHUB_CLIENT_ID,
+	GITHUB_CLIENT_SECRET,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET,
+	NODE_ENV,
+	VERCEL_ENV,
+} from '$app/env/private';
+// Use relative import — the Better Auth CLI resolves no import alias, `#lib` included (Issue #2252)
 import { db } from '../db';
 import { user as userTable } from '../db/schema/auth/_better-auth';
 import { countPasskeys, touchPasskeyLastUsed } from '../db/user/queries';
@@ -22,21 +31,20 @@ import { type FactorChangeAction, onFactorChanged } from './factor-changes';
 import { magicLinkTemplate, otpTemplate, sendAuthEmail } from './send-auth-email';
 import { isStepUpFresh, stampStepUp } from './step-up';
 
-function requireEnv(name: string): string {
-	const value = env[name];
+function requireEnv(name: string, value: string | undefined): string {
 	if (!value) throw new Error(`Missing required environment variable: ${name}`);
 	return value;
 }
 
-if (!env.BETTER_AUTH_SECRET || env.BETTER_AUTH_SECRET.length < 32) {
+if (!BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32) {
 	throw new Error('BETTER_AUTH_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32');
 }
 
-const baseURL = requireEnv('BETTER_AUTH_URL');
-const githubClientId = requireEnv('GITHUB_CLIENT_ID');
-const githubClientSecret = requireEnv('GITHUB_CLIENT_SECRET');
-const googleClientId = requireEnv('GOOGLE_CLIENT_ID');
-const googleClientSecret = requireEnv('GOOGLE_CLIENT_SECRET');
+const baseURL = requireEnv('BETTER_AUTH_URL', BETTER_AUTH_URL);
+const githubClientId = requireEnv('GITHUB_CLIENT_ID', GITHUB_CLIENT_ID);
+const githubClientSecret = requireEnv('GITHUB_CLIENT_SECRET', GITHUB_CLIENT_SECRET);
+const googleClientId = requireEnv('GOOGLE_CLIENT_ID', GOOGLE_CLIENT_ID);
+const googleClientSecret = requireEnv('GOOGLE_CLIENT_SECRET', GOOGLE_CLIENT_SECRET);
 
 /**
  * Passkeys are disabled on Vercel preview deployments at the plugin level
@@ -44,7 +52,7 @@ const googleClientSecret = requireEnv('GOOGLE_CLIENT_SECRET');
  * List, so a preview URL can never satisfy the production rpID and a
  * half-working ceremony surface would only invite confusion.
  */
-export const passkeysEnabled = env.VERCEL_ENV !== 'preview';
+export const passkeysEnabled = VERCEL_ENV !== 'preview';
 
 const baseUrlParsed = new URL(baseURL);
 
@@ -153,7 +161,7 @@ const afterHook = createAuthMiddleware(async (ctx) => {
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, { provider: 'pg' }),
-	secret: env.BETTER_AUTH_SECRET,
+	secret: BETTER_AUTH_SECRET,
 	baseURL,
 	trustedOrigins: [baseURL],
 
@@ -169,7 +177,7 @@ export const auth = betterAuth({
 		// Force the Secure cookie attribute explicitly rather than relying on
 		// baseURL-scheme inference (which silently drops Secure on a misconfigured
 		// http:// baseURL). Production is always https on Vercel.
-		useSecureCookies: env.NODE_ENV === 'production',
+		useSecureCookies: NODE_ENV === 'production',
 	},
 
 	emailAndPassword: { enabled: false },

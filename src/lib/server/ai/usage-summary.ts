@@ -8,10 +8,10 @@
  *  - Token totals are input+output ONLY — `reasoning` is a subset of output, never added.
  */
 
-import type { ModelUsageSummary, UnifiedModelUsageRow } from '$lib/schemas/admin/model-usage';
-import type { CostEstimate } from '$lib/schemas/image-metadata';
-import type { ModelUsageRow } from '$lib/server/db/ai/admin-queries';
-import type { ImageModelUsageRow } from '$lib/server/db/ai/image-metadata-queries';
+import type { ModelUsageSummary, UnifiedModelUsageRow } from '#lib/schemas/admin/model-usage.ts';
+import type { CostEstimate } from '#lib/schemas/image-metadata.ts';
+import type { ModelUsageRow } from '#lib/server/db/ai/admin-queries.ts';
+import type { ImageModelUsageRow } from '#lib/server/db/ai/image-metadata-queries.ts';
 import { estimateCost } from './pricing';
 
 function rowTotalTokens(r: { inputTokens: number | null; outputTokens: number | null }): number | null {

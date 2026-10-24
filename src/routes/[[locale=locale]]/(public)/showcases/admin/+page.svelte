@@ -1,7 +1,7 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
-import { Tag } from '$lib/components/primitives/tag';
-import * as m from '$lib/paraglide/messages';
+import { NavSection } from '#lib/components/composites/index.ts';
+import { Tag } from '#lib/components/primitives/tag/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 interface Group {
 	label: string;

@@ -13,7 +13,7 @@ import {
 	Tag,
 	TagGroup,
 	TagSelectable,
-} from '$lib/components';
+} from '#lib/components/index.ts';
 import { DemoCard, VariantGrid } from '../_components';
 
 let progressValue = $state(65);

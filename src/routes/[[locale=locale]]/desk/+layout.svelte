@@ -1,8 +1,8 @@
 <script lang="ts">
 import { untrack } from 'svelte';
-import { apiFetch } from '$lib/api';
-import { AppShell } from '$lib/components/shell';
-import { getToast } from '$lib/state/toast.svelte';
+import { apiFetch } from '#lib/api.ts';
+import { AppShell } from '#lib/components/shell/index.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import type { LayoutProps } from './$types';
 
 let { children, data }: LayoutProps = $props();

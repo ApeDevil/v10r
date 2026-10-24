@@ -4,8 +4,8 @@
  * Each returns `PublicServiceCall`s — the projection the page may see — so the route
  * adapter only parses the form, applies the rate limit and records timing spans.
  */
-import type { Deadline } from '$lib/server/http/deadline';
-import { CONTRACT_RELEASE } from '$lib/showcases/external-service/contract.generated';
+import type { Deadline } from '#lib/server/http/deadline.ts';
+import { CONTRACT_RELEASE } from '#lib/showcases/external-service/contract.generated.ts';
 import type {
 	EvaluationPresetId,
 	OrderEvaluation,
@@ -14,7 +14,7 @@ import type {
 	ServiceDrillId,
 	ServiceOperationName,
 	ServiceTargetId,
-} from '$lib/showcases/external-service/types';
+} from '#lib/showcases/external-service/types.ts';
 import { callService, SERVICE_OPERATIONS, type ServiceCall } from './client';
 import { DRILL_DEADLINE_MS } from './config';
 import { contractSkew } from './contract-skew';

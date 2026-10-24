@@ -1,11 +1,11 @@
 <script lang="ts">
-import { invalidateAll } from '$app/navigation';
+import { Card, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Select } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { type UrlStateValues, urlStateHref } from '#lib/state/url-state.ts';
+import { refreshAll } from '$app/navigation';
 import { page } from '$app/state';
-import { Card, EmptyState } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Select } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { type UrlStateValues, urlStateHref } from '$lib/state/url-state';
 import type { PageProps } from './$types';
 import { auditListParams } from './list-params';
 
@@ -33,7 +33,7 @@ const listHref = (patch: Partial<UrlStateValues<typeof auditListParams>>) =>
 
 function exportUrl(): string {
 	// The export takes the filters, never the page: it streams every matching row.
-	const filters = new URL(page.url);
+	const filters = new URL(page.url.href);
 	filters.pathname = '/admin/audit/export';
 	return urlStateHref(filters, auditListParams, { page: 1 });
 }
@@ -57,7 +57,7 @@ function actionVariant(action: string): 'default' | 'secondary' | 'warning' | 'e
 							{m.admin_audit_export_csv()}
 						</Button>
 					</a>
-					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+					<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 						{m.admin_action_refresh()}
 					</Button>

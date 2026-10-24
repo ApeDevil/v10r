@@ -17,9 +17,9 @@
  * treat audit persistence as guaranteed.
  */
 import { and, eq } from 'drizzle-orm';
-import { queryAuditLog, recordAuditEvent } from '$lib/server/admin/audit';
-import { db } from '$lib/server/db';
-import { type McpDemoStateRow, mcpDemoState } from '$lib/server/db/schema/mcp';
+import { queryAuditLog, recordAuditEvent } from '#lib/server/admin/audit.ts';
+import { db } from '#lib/server/db/index.ts';
+import { type McpDemoStateRow, mcpDemoState } from '#lib/server/db/schema/mcp/index.ts';
 import { INITIAL_DEMO_STATE, MCP_DEMO_STATE_ID } from './config';
 import { parseColor, parseMessage } from './validation';
 

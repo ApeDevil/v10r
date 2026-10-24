@@ -1,17 +1,17 @@
 <script lang="ts">
 /**
  * /credits — attribution/colophon for the stack. Fully static: every entry
- * comes from `$lib/credits/registry`, no load function needed. See
+ * comes from `#lib/credits/registry.ts`, no load function needed. See
  * `registry.gate.test.ts` for the drift checks (license/docs/showcase links).
  * The exhaustive per-package license texts live in the build-generated
  * `/third-party-licenses.txt`, linked from the outro.
  */
-import { Card, PageHeader } from '$lib/components/composites';
-import { PageContainer, Stack } from '$lib/components/layout';
-import { creditLine } from '$lib/credits/asset-rights';
-import { assetCredits, creditGroups, credits } from '$lib/credits/registry';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
+import { Card, PageHeader } from '#lib/components/composites/index.ts';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import { creditLine } from '#lib/credits/asset-rights.ts';
+import { assetCredits, creditGroups, credits } from '#lib/credits/registry.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 // Static input, computed once — no reactivity needed.
 const groupedCredits = creditGroups.map((group) => ({

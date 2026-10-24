@@ -4,9 +4,9 @@ import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
-} from '$lib/components/composites/context-menu';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+} from '#lib/components/composites/context-menu/index.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { getDeskSettings } from './desk-settings.state.svelte';
 import { getDockContext } from './dock.state.svelte';
 import { getWorkspaceContext } from './workspace.state.svelte';

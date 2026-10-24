@@ -56,11 +56,18 @@ function sourceFiles(dir: string, extensions: RegExp, out: string[] = []): strin
 	return out;
 }
 
-/** Resolve `$lib/…` and relative specifiers to repo-relative paths; null for packages. */
+/**
+ * Resolve `#lib/…` and relative specifiers to repo-relative paths; null for packages.
+ *
+ * The result is extension-less and names a barrel by its directory, so `#lib/server/db/index.ts`
+ * and `../db` are the same target. Specifiers carry their file extension since SvelteKit 3.
+ */
 function resolveSpecifier(fromFile: string, specifier: string): string | null {
-	if (specifier.startsWith('$lib/')) return relative(ROOT, join(ROOT, 'src/lib', specifier.slice('$lib/'.length)));
-	if (specifier.startsWith('.')) return relative(ROOT, resolve(dirname(fromFile), specifier));
-	return null;
+	let path: string;
+	if (specifier.startsWith('#lib/')) path = relative(ROOT, join(ROOT, 'src/lib', specifier.slice('#lib/'.length)));
+	else if (specifier.startsWith('.')) path = relative(ROOT, resolve(dirname(fromFile), specifier));
+	else return null;
+	return path.replace(/\.(ts|js)$/, '').replace(/\/index$/, '');
 }
 
 function edgesIn(root: string, extensions: RegExp): Edge[] {
@@ -124,15 +131,17 @@ describe('server domain boundaries', () => {
 	 *   *.adapter.ts      a domain-local adapter onto one transport (e.g. mcp/http.adapter.ts)
 	 *
 	 * The `dev`/`building` flags are build-time constants, not framework coupling, so
-	 * importing those alone stays inside the rule.
+	 * importing those alone stays inside the rule. Environment variables (`$app/env/private`,
+	 * `$app/env/public`) are a separate axis, ratcheted below.
 	 */
 	it('domain modules import no SvelteKit or $app surface', () => {
 		const violations: string[] = [];
 		for (const edge of serverEdges) {
 			if (edge.specifier !== '@sveltejs/kit' && !edge.specifier.startsWith('$app/')) continue;
+			if (ENV_MODULE.test(edge.specifier)) continue;
 			if (edge.from.startsWith('src/lib/server/http/')) continue;
 			if (/\.(hook|adapter)\.ts$/.test(edge.from)) continue;
-			if (edge.specifier === '$app/environment') {
+			if (edge.specifier === '$app/env') {
 				const named = (edge.statement.match(/import\s+(?:type\s+)?\{([^}]*)\}/)?.[1] ?? '')
 					.split(',')
 					.map((n) =>
@@ -152,7 +161,7 @@ describe('server domain boundaries', () => {
 	/**
 	 * Environment coupling — a second axis, deliberately separate from invariant 1.
 	 *
-	 * `$env/*` is as much a SvelteKit virtual module as `$app/*`: it does not resolve under
+	 * `$app/env/private` is as much a SvelteKit virtual module as the rest of `$app/*`: it does not resolve under
 	 * bare Bun, so a module importing it cannot be reached by the standalone ingest scripts
 	 * or the stdio MCP server. But it is not TRANSPORT coupling — reading a secret does not
 	 * tie a function to one caller shape the way `redirect()` does — so folding it into
@@ -165,7 +174,7 @@ describe('server domain boundaries', () => {
 	it('environment reads stay inside the recorded set', () => {
 		const violations: string[] = [];
 		for (const edge of serverEdges) {
-			if (!edge.specifier.startsWith('$env/')) continue;
+			if (!ENV_MODULE.test(edge.specifier)) continue;
 			if (edge.from.startsWith('src/lib/server/http/')) continue;
 			if (/\.(hook|adapter)\.ts$/.test(edge.from)) continue;
 			violations.push(`${edge.from} -> ${edge.specifier}`);
@@ -347,7 +356,7 @@ describe('component layering', () => {
 	 * `vite.config.ts` declares every module under `src/lib/components/` side-effect
 	 * free, which is what lets a barrel import ship only the components it names. The
 	 * price of that declaration: a module imported purely for its side effects —
-	 * `import '$lib/components/…'` with no bindings — is dropped from the build without
+	 * `import '#lib/components/…'` with no bindings — is dropped from the build without
 	 * a warning. Such an import must not exist; registration belongs inside a function
 	 * or an effect, where using the export keeps the module.
 	 */
@@ -378,42 +387,45 @@ const HEAVY_COMPOSITES = ['chatbot', 'info-dialog'] as const;
  */
 const KNOWN_FRAMEWORK_IMPORTS: readonly string[] = [];
 
+/** SvelteKit's environment-variable modules, declared by `src/env.ts`. */
+const ENV_MODULE = /^\$app\/env\/(private|public)$/;
+
 /**
- * Modules that read `$env/*` directly. Each one is a module the bare-Bun scripts cannot
+ * Modules that read `$app/env/private` directly. Each one is a module the bare-Bun scripts cannot
  * import. Shrink by threading the value in from the composition root, or by moving the read
  * to a `*.adapter.ts`; never grow.
  */
 const KNOWN_ENV_IMPORTS: readonly string[] = [
-	'src/lib/server/abuse/config.ts -> $env/dynamic/private',
-	'src/lib/server/auth/index.ts -> $env/dynamic/private',
-	'src/lib/server/auth/send-auth-email.ts -> $env/dynamic/private',
+	'src/lib/server/abuse/config.ts -> $app/env/private',
+	'src/lib/server/auth/index.ts -> $app/env/private',
+	'src/lib/server/auth/send-auth-email.ts -> $app/env/private',
 	// Moved from cache/index.ts, unchanged in kind: the Upstash client was split out of
 	// the barrel so the barrel can re-export the cache modules that need it. Same one read.
-	'src/lib/server/cache/client.ts -> $env/dynamic/private',
-	'src/lib/server/db/index.ts -> $env/dynamic/private',
-	'src/lib/server/graph/index.ts -> $env/dynamic/private',
-	'src/lib/server/jobs/dbops-refresh.ts -> $env/dynamic/private',
-	'src/lib/server/jobs/delivery-scheduler.ts -> $env/dynamic/private',
-	'src/lib/server/jobs/scheduler.ts -> $env/dynamic/private',
-	'src/lib/server/mcp/auth.ts -> $env/dynamic/private',
-	'src/lib/server/mcp/server-info.ts -> $env/dynamic/private',
-	'src/lib/server/mcp/telemetry/observer.ts -> $env/dynamic/private',
-	'src/lib/server/monitoring/r2.ts -> $env/dynamic/private',
-	'src/lib/server/monitoring/upstash.ts -> $env/dynamic/private',
-	'src/lib/server/neon/branches.ts -> $env/dynamic/private',
-	'src/lib/server/neon/client.ts -> $env/dynamic/private',
-	'src/lib/server/notifications/health.ts -> $env/dynamic/private',
-	'src/lib/server/notifications/channels/discord.ts -> $env/dynamic/private',
-	'src/lib/server/notifications/channels/email.ts -> $env/dynamic/private',
-	'src/lib/server/notifications/channels/telegram.ts -> $env/dynamic/private',
-	'src/lib/server/notifications/channels/web-push.ts -> $env/dynamic/private',
-	'src/lib/server/platform/index.ts -> $env/dynamic/private',
+	'src/lib/server/cache/client.ts -> $app/env/private',
+	'src/lib/server/db/index.ts -> $app/env/private',
+	'src/lib/server/graph/index.ts -> $app/env/private',
+	'src/lib/server/jobs/dbops-refresh.ts -> $app/env/private',
+	'src/lib/server/jobs/delivery-scheduler.ts -> $app/env/private',
+	'src/lib/server/jobs/scheduler.ts -> $app/env/private',
+	'src/lib/server/mcp/auth.ts -> $app/env/private',
+	'src/lib/server/mcp/server-info.ts -> $app/env/private',
+	'src/lib/server/mcp/telemetry/observer.ts -> $app/env/private',
+	'src/lib/server/monitoring/r2.ts -> $app/env/private',
+	'src/lib/server/monitoring/upstash.ts -> $app/env/private',
+	'src/lib/server/neon/branches.ts -> $app/env/private',
+	'src/lib/server/neon/client.ts -> $app/env/private',
+	'src/lib/server/notifications/health.ts -> $app/env/private',
+	'src/lib/server/notifications/channels/discord.ts -> $app/env/private',
+	'src/lib/server/notifications/channels/email.ts -> $app/env/private',
+	'src/lib/server/notifications/channels/telegram.ts -> $app/env/private',
+	'src/lib/server/notifications/channels/web-push.ts -> $app/env/private',
+	'src/lib/server/platform/index.ts -> $app/env/private',
 	// The one read of ENCRYPTION_KEY. It replaced notifications/crypto.ts's read when the
 	// AES-GCM primitive became caller-keyed so the bare-Bun ingest scripts can decrypt the
 	// stored AI provider connection; the app threads the key in from here.
-	'src/lib/server/security/encryption-key.ts -> $env/dynamic/private',
-	'src/lib/server/security/subkey.ts -> $env/dynamic/private',
-	'src/lib/server/store/index.ts -> $env/dynamic/private',
+	'src/lib/server/security/encryption-key.ts -> $app/env/private',
+	'src/lib/server/security/subkey.ts -> $app/env/private',
+	'src/lib/server/store/index.ts -> $app/env/private',
 ];
 
 /**

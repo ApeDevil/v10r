@@ -6,21 +6,21 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { feedback } from '$lib/server/db/schema/feedback';
+import { feedback } from '#lib/server/db/schema/feedback/index.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-// Dynamic imports AFTER the mock declaration: `./index` imports `$lib/server/db`
+// Dynamic imports AFTER the mock declaration: `./index` imports `#lib/server/db/index.ts`
 // at module scope, so a static import would run the (hoisted) mock factory
 // before `testClient` is initialized — the retention.pglite.test.ts pattern.
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { getFeedbackCounts, listFeedback, setFeedbackStatus, submitFeedback } = await import('./index');
 
 afterAll(async () => {

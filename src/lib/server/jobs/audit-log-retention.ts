@@ -1,7 +1,7 @@
 import { lt } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { adminAuditLog } from '$lib/server/db/schema/admin';
-import { retentionCutoff } from '$lib/server/retention';
+import { db } from '#lib/server/db/index.ts';
+import { adminAuditLog } from '#lib/server/db/schema/admin/index.ts';
+import { retentionCutoff } from '#lib/server/retention/index.ts';
 
 /**
  * Delete `admin.audit_log` rows past the `admin-audit-log` retention window. The audit log

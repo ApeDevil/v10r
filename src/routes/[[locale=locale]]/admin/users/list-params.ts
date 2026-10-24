@@ -1,4 +1,4 @@
-import { urlParam } from '$lib/state/url-state';
+import { urlParam } from '#lib/state/url-state.ts';
 
 /** `/admin/users` list state — the load parses it and the page links with it, from this one spec. */
 export const usersListParams = {

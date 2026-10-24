@@ -1,5 +1,5 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 import { fadeIn } from './fadeIn';
 
 const TOTAL_CAPABILITIES = 18;

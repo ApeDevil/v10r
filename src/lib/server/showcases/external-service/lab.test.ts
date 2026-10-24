@@ -3,8 +3,8 @@
  * setup and drill, and that the projection the page receives carries no secrets.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { startDeadline } from '$lib/server/http/deadline';
-import { CONTRACT_RELEASE } from '$lib/showcases/external-service/contract.generated';
+import { startDeadline } from '#lib/server/http/deadline.ts';
+import { CONTRACT_RELEASE } from '#lib/showcases/external-service/contract.generated.ts';
 import { checkTarget, evaluatePreset, runDrill } from './lab';
 import { UNVALIDATED_DRILL_REQUEST, WRONG_CREDENTIAL } from './presets';
 import type { ResolvedServiceTarget } from './targets';

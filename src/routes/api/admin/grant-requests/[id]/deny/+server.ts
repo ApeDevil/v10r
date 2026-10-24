@@ -1,7 +1,7 @@
 import * as v from 'valibot';
-import { denyRequest } from '$lib/server/auth/grant-requests';
-import { guardApiAdmin } from '$lib/server/http/guards';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { denyRequest } from '#lib/server/auth/grant-requests.ts';
+import { guardApiAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const denyInputSchema = v.object({

@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Card, DiagGrid, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import CodeBlock from '$lib/components/composites/info-dialog/CodeBlock.svelte';
-import { PageContainer, Stack } from '$lib/components/layout';
-import { Badge } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Card, DiagGrid, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import CodeBlock from '#lib/components/composites/info-dialog/CodeBlock.svelte';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import { Badge } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import ThreadDemo from './_components/ThreadDemo.svelte';
 
 let { data } = $props();

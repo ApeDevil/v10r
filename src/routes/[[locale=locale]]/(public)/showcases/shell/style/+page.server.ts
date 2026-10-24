@@ -1,4 +1,4 @@
-import { listCustomPalettes } from '$lib/server/style';
+import { listCustomPalettes } from '#lib/server/style/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

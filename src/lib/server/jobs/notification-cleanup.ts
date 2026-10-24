@@ -1,7 +1,7 @@
 import { and, eq, isNotNull, lt, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { retentionCutoff } from '$lib/server/retention';
+import { db } from '#lib/server/db/index.ts';
+import { notifications } from '#lib/server/db/schema/notifications/notifications.ts';
+import { retentionCutoff } from '#lib/server/retention/index.ts';
 
 export async function notificationCleanup(): Promise<number> {
 	const now = new Date();

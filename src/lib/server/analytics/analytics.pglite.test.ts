@@ -3,7 +3,7 @@
  *
  * Surfaces:
  * 1. consent.ts — parseConsentTier, hasConsent, hashVisitorId contracts
- * 2. $lib/analytics/collect-policy.ts — the shared admission rules for the
+ * 2. #lib/analytics/collect-policy.ts — the shared admission rules for the
  *    anonymous lane, shared with the browser collectors (authenticated-surface
  *    exclusion incl. locale prefixes, bot detection, prefetch/prerender)
  * 3. hook.ts — session cookie is consent-gated (TDDDG §25), IP never written
@@ -16,16 +16,16 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { consentEvents, events, sessions, userEvents } from '$lib/server/db/schema/analytics';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import type { ConsentTier } from '$lib/types/db-enums';
+import { consentEvents, events, sessions, userEvents } from '#lib/server/db/schema/analytics/index.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import type { ConsentTier } from '#lib/types/db-enums.ts';
 
 // DB setup (PGlite)
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -55,13 +55,13 @@ async function flushDeferred(): Promise<void> {
 	await Promise.allSettled(deferredWork.splice(0));
 }
 
-// vitest mocks $app/environment with dev:true, and the collectors are muted in
+// vitest mocks $app/env with dev:true, and the collectors are muted in
 // dev unless this override is set (they share one database with production).
 // Opt the whole suite in; the dev-gate describe block below flips it off
 // per-test to assert the refusal itself.
 process.env.ANALYTICS_DEV_TRACKING = 'true';
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { parseConsentTier, hasConsent, hashVisitorId, deriveCookielessSessionId } = await import('./consent');
 const { deriveVisitorId, deriveUaHash } = await import('./visitor');
 const {
@@ -73,15 +73,15 @@ const {
 	stripLocalePrefix,
 	userLaneSurface,
 	LOCALE_SEGMENTS,
-} = await import('$lib/analytics/collect-policy');
+} = await import('#lib/analytics/collect-policy.ts');
 const { classifyUserAgent, geoFromHeaders } = await import('./enrich');
 const { isKnownEvent, sanitizeProperties, templateRoute } = await import('./event-schema');
-const { recordEvent, upsertSession } = await import('$lib/server/db/analytics/mutations');
-const { getAudienceBreakdown, getCommandUsage } = await import('$lib/server/db/analytics/aggregations');
+const { recordEvent, upsertSession } = await import('#lib/server/db/analytics/mutations.ts');
+const { getAudienceBreakdown, getCommandUsage } = await import('#lib/server/db/analytics/aggregations.ts');
 const { analyticsCollector } = await import('./collector.hook');
-const { analyticsCleanup } = await import('$lib/server/jobs/analytics-cleanup');
+const { analyticsCleanup } = await import('#lib/server/jobs/analytics-cleanup.ts');
 const { CONSENT_COOKIE } = await import('./config');
-const { retentionDays } = await import('$lib/server/retention');
+const { retentionDays } = await import('#lib/server/retention/index.ts');
 
 afterAll(async () => {
 	delete process.env.ANALYTICS_DEV_TRACKING;
@@ -317,7 +317,7 @@ describe('stripLocalePrefix', () => {
 		// The prefix list is duplicated so domain code does not import the i18n
 		// runtime. Adding a locale to project.inlang without adding it here would
 		// silently reopen the authenticated-surface hole for that locale only.
-		const { locales } = await import('$lib/paraglide/runtime');
+		const { locales } = await import('#lib/paraglide/runtime.js');
 		expect([...LOCALE_SEGMENTS].sort()).toEqual([...locales].sort());
 	});
 
@@ -1500,7 +1500,7 @@ describe('upsertSession', () => {
 		// aggregates exclude on for the whole retention window. A follow-up write
 		// from the same session WITHOUT the tag (e.g. after the pairing cookie
 		// expired) must not launder the session back into the audience.
-		const { user } = await import('$lib/server/db/schema');
+		const { user } = await import('#lib/server/db/schema/index.ts');
 		await db.insert(user).values({ id: 'admin-dbg', name: 'Admin', email: 'dbg@example.com' }).onConflictDoNothing();
 
 		await upsertSession({
@@ -1635,7 +1635,7 @@ describe('analyticsCleanup — functional behaviour', () => {
 	});
 
 	it('sweeps daily_page_stats past the aggregate window — the promise the privacy page makes', async () => {
-		const { dailyPageStats } = await import('$lib/server/db/schema/analytics');
+		const { dailyPageStats } = await import('#lib/server/db/schema/analytics/index.ts');
 
 		const stale = new Date();
 		stale.setDate(stale.getDate() - (retentionDays('analytics-aggregates') + 5));
@@ -1663,8 +1663,8 @@ describe('aggregations — debug-owned traffic is not audience', () => {
 	});
 
 	it('getOverviewMetrics excludes events carrying debug_owner_id', async () => {
-		const { user } = await import('$lib/server/db/schema');
-		const { getOverviewMetrics } = await import('$lib/server/db/analytics/aggregations');
+		const { user } = await import('#lib/server/db/schema/index.ts');
+		const { getOverviewMetrics } = await import('#lib/server/db/analytics/aggregations.ts');
 		await db.insert(user).values({ id: 'admin-agg', name: 'Admin', email: 'agg@example.com' }).onConflictDoNothing();
 
 		await upsertSession({ id: 's_pub', visitorId: 'v_public01', entryPath: '/blog', humanConfirmedAt: new Date() });
@@ -1684,7 +1684,7 @@ describe('aggregations — debug-owned traffic is not audience', () => {
 	});
 
 	it('getOverviewMetrics splits confirmed from unconfirmed instead of merging them', async () => {
-		const { getOverviewMetrics } = await import('$lib/server/db/analytics/aggregations');
+		const { getOverviewMetrics } = await import('#lib/server/db/analytics/aggregations.ts');
 
 		await upsertSession({ id: 's_conf', visitorId: 'v_human01', entryPath: '/blog', humanConfirmedAt: new Date() });
 		// The spoofed-header crawler shape: browser-looking request, no JS ever ran.
@@ -1701,8 +1701,8 @@ describe('aggregations — debug-owned traffic is not audience', () => {
 	});
 
 	it('getTrafficComposition returns the three buckets with the ip_class ranking', async () => {
-		const { getTrafficComposition } = await import('$lib/server/db/analytics/aggregations');
-		const { datacenterIpRanges } = await import('$lib/server/db/schema/analytics');
+		const { getTrafficComposition } = await import('#lib/server/db/analytics/aggregations.ts');
+		const { datacenterIpRanges } = await import('#lib/server/db/schema/analytics/index.ts');
 
 		await db.insert(datacenterIpRanges).values([{ source: 'aws', prefix: '3.0.0.0/9' }]);
 		await upsertSession({ id: 's_c1', visitorId: 'v_h1', entryPath: '/', humanConfirmedAt: new Date() });

@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/private';
+import { UPSTASH_DB_ID, UPSTASH_EMAIL, UPSTASH_MGMT_API_KEY } from '$app/env/private';
 import {
 	computePercentage,
 	computeThreshold,
@@ -9,8 +9,6 @@ import {
 } from './index';
 
 export async function fetchUpstashMetrics(): Promise<DependencyResult<UpstashMetrics>> {
-	const { UPSTASH_MGMT_API_KEY, UPSTASH_EMAIL, UPSTASH_DB_ID } = env;
-
 	if (!UPSTASH_MGMT_API_KEY || !UPSTASH_EMAIL || !UPSTASH_DB_ID) {
 		return {
 			status: 'unavailable',

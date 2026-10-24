@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { PartDef } from '$lib/3d/parts';
+import type { PartDef } from '#lib/3d/parts.ts';
 import PartPhotoGallery from './PartPhotoGallery.svelte';
 
 interface Props {

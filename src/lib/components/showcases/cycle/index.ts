@@ -1,4 +1,4 @@
-export type { CycleStageState, CycleViewMode } from '$lib/showcases/cycle/types';
+export type { CycleStageState, CycleViewMode } from '#lib/showcases/cycle/types.ts';
 export { default as CycleDetail } from './CycleDetail.svelte';
 export { default as CyclePipeline } from './CyclePipeline.svelte';
 export { default as CycleVizCard } from './CycleVizCard.svelte';

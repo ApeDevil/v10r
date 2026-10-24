@@ -1,8 +1,8 @@
 <script lang="ts">
-import { LinkCard } from '$lib/components';
-import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import * as m from '$lib/paraglide/messages';
+import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { LinkCard } from '#lib/components/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 </script>
 <PageContainer class="py-7">
 	<PageHeader

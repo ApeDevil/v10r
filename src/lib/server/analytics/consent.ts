@@ -3,7 +3,7 @@
  * Fields are masked based on the visitor's consent level.
  */
 
-import type { ConsentTier } from '$lib/types/db-enums';
+import type { ConsentTier } from '#lib/types/db-enums.ts';
 
 export type { ConsentTier };
 

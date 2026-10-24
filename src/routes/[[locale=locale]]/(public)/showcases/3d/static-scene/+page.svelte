@@ -1,10 +1,10 @@
 <script lang="ts">
 import { Canvas, T } from '@threlte/core';
 import { GLTF, OrbitControls } from '@threlte/extras';
-import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components';
-import { BoundaryFallback } from '$lib/components/composites';
-import * as m from '$lib/paraglide/messages';
-import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
+import { BoundaryFallback } from '#lib/components/composites/index.ts';
+import { BackLink, PageHeader, ShowcaseDocs } from '#lib/components/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { THRELTE_MAKE_DEFAULT } from '#lib/utils/threlte-workarounds.ts';
 </script>
 <div class="page">
 	<PageHeader

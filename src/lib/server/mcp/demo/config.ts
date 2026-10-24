@@ -3,7 +3,7 @@
  * plus their validation bounds. Shared by the validation schema, the domain service,
  * the admin MCP tools, and the protected admin page so there is one source of truth.
  */
-import { MCP_DEMO_STATE_ID } from '$lib/server/db/schema/mcp';
+import { MCP_DEMO_STATE_ID } from '#lib/server/db/schema/mcp/index.ts';
 
 export { MCP_DEMO_STATE_ID };
 

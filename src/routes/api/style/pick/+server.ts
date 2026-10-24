@@ -11,13 +11,13 @@
  */
 
 import * as v from 'valibot';
-import { StylePickSchema } from '$lib/schemas/style';
-import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
-import { getCustomPaletteById } from '$lib/server/style';
-import { PICK_RATE_LIMIT_MAX, PICK_RATE_LIMIT_PREFIX, PICK_RATE_LIMIT_WINDOW } from '$lib/server/style/config';
-import { saveStyleToDb } from '$lib/server/style/persist';
+import { StylePickSchema } from '#lib/schemas/style.ts';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import { PICK_RATE_LIMIT_MAX, PICK_RATE_LIMIT_PREFIX, PICK_RATE_LIMIT_WINDOW } from '#lib/server/style/config.ts';
+import { getCustomPaletteById } from '#lib/server/style/index.ts';
+import { saveStyleToDb } from '#lib/server/style/persist.ts';
 import {
 	generateRandomStyle,
 	getRadius,
@@ -27,8 +27,8 @@ import {
 	STYLE_COOKIE_NAME,
 	STYLE_COOKIE_OPTIONS,
 	serializeStyleCookie,
-} from '$lib/styles/random';
-import { mergeStyleConfig } from '$lib/styles/random/merge';
+} from '#lib/styles/random/index.ts';
+import { mergeStyleConfig } from '#lib/styles/random/merge.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter(PICK_RATE_LIMIT_PREFIX, PICK_RATE_LIMIT_MAX, PICK_RATE_LIMIT_WINDOW);

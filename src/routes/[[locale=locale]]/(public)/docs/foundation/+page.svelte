@@ -1,7 +1,7 @@
 <script lang="ts">
-import { LinkCard } from '$lib/components';
-import { BackLink, PageHeader } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
+import { BackLink, PageHeader } from '#lib/components/composites/index.ts';
+import { LinkCard } from '#lib/components/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
 
 let { data } = $props();
 </script>

@@ -4,7 +4,7 @@ How v10r satisfies EU data-subject rights: one aggregator defines "all my data",
 
 ## What is it?
 
-A privacy domain (`$lib/server/privacy/`) that is the **single source of truth** for everything the app knows about a user. Every right-of-access, portability, and erasure surface calls it — so the definition of "all my data" cannot drift between them.
+A privacy domain (`#lib/server/privacy/`) that is the **single source of truth** for everything the app knows about a user. Every right-of-access, portability, and erasure surface calls it — so the definition of "all my data" cannot drift between them.
 
 | Right (GDPR Article) | Surface |
 |----------------------|---------|
@@ -25,7 +25,7 @@ Five surfaces, one definition:
 - `GET /api/account/data/export`
 - `DELETE /api/account`
 
-**Import direction:** the read aggregator (`report.ts` `collectUserData`) reads ONLY from `$lib/server/db` (the import sink) — never from peer domains — keeping it framework-free and reusable by any adapter (page, REST, future AI tool). The erasure mutation (`mutations.ts` `deleteUserData`) additionally imports `deleteUserGraph` from `$lib/server/graph/rag` because Postgres CASCADE cannot reach Neo4j; that is the one sanctioned cross-domain reach in this module.
+**Import direction:** the read aggregator (`report.ts` `collectUserData`) reads ONLY from `#lib/server/db` (the import sink) — never from peer domains — keeping it framework-free and reusable by any adapter (page, REST, future AI tool). The erasure mutation (`mutations.ts` `deleteUserData`) additionally imports `deleteUserGraph` from `$lib/server/graph/rag` because Postgres CASCADE cannot reach Neo4j; that is the one sanctioned cross-domain reach in this module.
 
 ### Hard rules (compliance, not style)
 

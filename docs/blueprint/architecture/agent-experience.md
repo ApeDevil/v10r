@@ -31,7 +31,7 @@ Every artifact derives from an existing single source of truth, because a parall
 | Agent pages (`/docs/programming/*.md`) | the agents registry body — never the raw files, whose frontmatter carries tool grants the HTML page has never published |
 | README Pattern Index (the marker-delimited region) | `pattern-library/registry.json` via `scripts/patterns/build-derived.ts` (`patterns:build`; staleness gated by `patterns:check`) |
 | `docs/pattern-library/*.md` (one page per pattern in its own docs section, → `/docs`, RAG, `/llms.txt`) | the same registry + generator — pointer pages only, never copied prose |
-| `/docs/pattern-library` (the section's catalog index: every pattern + purpose) | the same registry, projected live by `$lib/server/patterns/catalog.ts` — no build step |
+| `/docs/pattern-library` (the section's catalog index: every pattern + purpose) | the same registry, projected live by `#lib/server/patterns/catalog.ts` — no build step |
 
 ## The negotiation contract
 

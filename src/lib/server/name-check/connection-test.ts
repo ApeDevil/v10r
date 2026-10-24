@@ -13,9 +13,9 @@
  * Anything else non-OK is `unavailable` — a wrong host is not a wrong password. The
  * message itself travels as `detail`, since the EUIPO source names the failing step in it.
  */
-import type { NameSourceTestOutcome, NameSourceTestResult } from '$lib/name-check/connection';
-import { DeadlineExceededError, startDeadline } from '$lib/server/http/deadline';
-import type { NameSourceVendor } from '$lib/types/db-enums';
+import type { NameSourceTestOutcome, NameSourceTestResult } from '#lib/name-check/connection.ts';
+import { DeadlineExceededError, startDeadline } from '#lib/server/http/deadline.ts';
+import type { NameSourceVendor } from '#lib/types/db-enums.ts';
 import { SOURCE_TEST_BUDGET_MS } from './config';
 import { NameSourceError } from './errors';
 import { type NameSource, type NameSourceCredentials, NO_CREDENTIALS } from './name-source';
@@ -23,7 +23,7 @@ import { toNameCheckQuery } from './query';
 import { euipoSource, resetEuipoTokens } from './sources/euipo';
 import { webSource } from './sources/web';
 
-export type { NameSourceTestOutcome, NameSourceTestResult } from '$lib/name-check/connection';
+export type { NameSourceTestOutcome, NameSourceTestResult } from '#lib/name-check/connection.ts';
 
 /** A name that exists in every registry, so an empty answer cannot be mistaken for a working one. */
 const PROBE_QUERY = toNameCheckQuery({ query: 'velociraptor', territory: 'eu', category: null });

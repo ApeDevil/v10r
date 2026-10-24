@@ -2,7 +2,7 @@
 
 ## CommandPalette Component
 
-`$lib/components/composites/command-palette/`
+`#lib/components/composites/command-palette//index.js`
 
 | File | Role |
 |------|------|

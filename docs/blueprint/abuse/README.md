@@ -1,6 +1,6 @@
 # Anti-Abuse
 
-Four-layer defense against bot traffic, spam, and cost-amplification abuse. All layers share the `Decision` type from `$lib/server/abuse/` and honor `BOT_DETECTION_MODE` for safe rollout and emergency bypass.
+Four-layer defense against bot traffic, spam, and cost-amplification abuse. All layers share the `Decision` type from `#lib/server/abuse/` and honor `BOT_DETECTION_MODE` for safe rollout and emergency bypass.
 
 Live showcase: `/showcases/abuse`
 

@@ -10,7 +10,7 @@
  * handed a different registry.
  */
 
-import { sanitizeError } from '$lib/server/monitoring';
+import { sanitizeError } from '#lib/server/monitoring/index.ts';
 import { negotiateProtocolVersion } from './server-info';
 import { type JsonRpcId, type JsonRpcRequest, type JsonRpcResponse, RPC, type ToolRegistry } from './types';
 

@@ -1,6 +1,6 @@
 /**
  * Drift guards — pin the hand-mirrored halves of the showcase topology to their live
- * sources. Tests may import `$lib/server/*` freely (they are never bundled); the
+ * sources. Tests may import `#lib/server/*` freely (they are never bundled); the
  * modules under test must not. Mirrors the `tool-cards.drift.test.ts` technique for
  * text-scans: bracket a region, assert the anchors, match a narrow regex inside.
  * The prompt blocks are no longer mirrored — the tape renders a turn's recorded blocks.
@@ -9,10 +9,10 @@
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CHATBOT_MAX_STEPS, DESK_MUTATE_MAX_STEPS, DESK_READ_MAX_STEPS } from '$lib/server/ai/config';
-import { DESK_EXECUTABLE_TOOLS } from '$lib/server/ai/tools/desk-execute';
-import { proposalStatusEnum } from '$lib/server/db/schema/ai/proposal';
-import { TOOL_MANIFEST } from '$lib/types/ai-tools';
+import { CHATBOT_MAX_STEPS, DESK_MUTATE_MAX_STEPS, DESK_READ_MAX_STEPS } from '#lib/server/ai/config.ts';
+import { DESK_EXECUTABLE_TOOLS } from '#lib/server/ai/tools/desk-execute.ts';
+import { proposalStatusEnum } from '#lib/server/db/schema/ai/proposal.ts';
+import { TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
 import {
 	AI_LAYERS,
 	buildToolCards,

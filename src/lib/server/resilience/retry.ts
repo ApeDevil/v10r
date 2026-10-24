@@ -31,7 +31,7 @@
  * say the system already decided not to try, and asking again inside the same request
  * spends budget to receive the same answer.
  */
-import { type Deadline, DeadlineExceededError } from '$lib/server/http/deadline';
+import { type Deadline, DeadlineExceededError } from '#lib/server/http/deadline.ts';
 import { ResilienceError } from './errors';
 
 export interface RetryPolicy {

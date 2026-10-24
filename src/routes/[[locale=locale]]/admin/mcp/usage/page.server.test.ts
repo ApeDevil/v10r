@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const guards = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
-vi.mock('$lib/server/http/guards', () => guards);
+vi.mock('#lib/server/http/guards.ts', () => guards);
 
 const telemetry = vi.hoisted(() => ({
 	reachable: true,
 	calls: [] as string[],
 }));
-vi.mock('$lib/server/mcp/telemetry/queries', () => ({
+vi.mock('#lib/server/mcp/telemetry/queries.ts', () => ({
 	GAP_MIN_DISTINCT_CLIENTS: 3,
 	RESPONSE_PREVIEW_CHARS: 400,
 	windowStart: (w: string) => {

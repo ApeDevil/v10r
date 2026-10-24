@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { getAdjacentAgents, renderAgent } from '$lib/server/agents/render';
+import { getAdjacentAgents, renderAgent } from '#lib/server/agents/render.ts';
 
 export const load = async ({ params }) => {
 	const rendered = await renderAgent(params.slug);

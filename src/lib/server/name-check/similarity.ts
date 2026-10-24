@@ -12,7 +12,7 @@
  * the spec's examples (exact 100, close spelling 94, close pronunciation 88, shared
  * dominant token ~81, loose ~62) so the numbers read the same to a reader of both.
  */
-import type { NameSimilarity } from '$lib/name-check/report';
+import type { NameSimilarity } from '#lib/name-check/report.ts';
 import { type NormalizedName, normalizeName } from './normalize';
 
 export function levenshtein(a: string, b: string): number {

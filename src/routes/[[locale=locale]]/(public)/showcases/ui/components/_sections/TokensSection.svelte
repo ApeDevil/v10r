@@ -1,5 +1,5 @@
 <script lang="ts">
-import { breakpoints, containers, duration, fontSize, iconSize, layout, sidebar, spacing } from '$lib/styles/tokens';
+import { breakpoints, containers, duration, fontSize, iconSize, layout, sidebar, spacing } from '#lib/styles/tokens.ts';
 import { DemoCard, TokenSwatch } from '../_components';
 
 /** Border radius tokens (display-only, reference CSS variables from app.css) */

@@ -1,4 +1,4 @@
-import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '$lib/server/analytics/config';
+import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '#lib/server/analytics/config.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

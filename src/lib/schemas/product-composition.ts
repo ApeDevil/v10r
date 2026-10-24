@@ -1,5 +1,5 @@
 /**
- * The persisted shape of a product composition — the contract `$lib/product-composition`
+ * The persisted shape of a product composition — the contract `#lib/product-composition/index.ts`
  * operates on and an exported `.json` file carries.
  *
  * Units and axes: metres, right-handed, +Y up (Three.js convention). A port's frame points
@@ -138,7 +138,7 @@ export const primitiveSchema = v.variant('shape', [
 ]);
 export type Primitive = v.InferOutput<typeof primitiveSchema>;
 
-/** Where a product's look comes from: parametric solids, or a model in the `$lib/3d` catalogue. */
+/** Where a product's look comes from: parametric solids, or a model in the `#lib/3d` catalogue. */
 export const productGeometrySchema = v.variant('source', [
 	v.strictObject({ source: v.literal('primitives'), primitives: v.array(primitiveSchema) }),
 	v.strictObject({ source: v.literal('model'), modelId: idSchema, scale: v.optional(positive) }),

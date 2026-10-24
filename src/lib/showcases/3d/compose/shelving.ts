@@ -4,7 +4,7 @@
  * beside a lamp and two sofas that connect to nothing — one of them a glTF model, placed
  * twice. It uses the same core as the heating fixture with no change to it.
  */
-import type { RoomLayout } from '$lib/components/3d/composition';
+import type { RoomLayout } from '#lib/components/3d/composition/index.ts';
 import {
 	frameFromAxisAngle,
 	IDENTITY_FRAME,
@@ -13,7 +13,7 @@ import {
 	type ProductDefinition,
 	type ProductPort,
 	type Vec3,
-} from '$lib/product-composition';
+} from '#lib/product-composition/index.ts';
 
 export const SHELVING_STANDARDS: PortStandard[] = [
 	{
@@ -93,7 +93,7 @@ const lamp: ProductDefinition = {
 	},
 };
 
-/** A catalogue model from `$lib/3d/models.ts`, not parametric primitives. */
+/** A catalogue model from `#lib/3d/models.ts`, not parametric primitives. */
 const sofa: ProductDefinition = {
 	id: 'velvet-sofa',
 	label: 'Velvet sofa',

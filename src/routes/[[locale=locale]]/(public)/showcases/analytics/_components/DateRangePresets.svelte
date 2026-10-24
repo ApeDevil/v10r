@@ -1,6 +1,6 @@
 <script lang="ts">
-import { createUrlState } from '$lib/state/url-state.svelte';
-import { cn } from '$lib/utils/cn';
+import { createUrlState } from '#lib/state/url-state.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { rangeParams } from '../range-params';
 
 interface Props {

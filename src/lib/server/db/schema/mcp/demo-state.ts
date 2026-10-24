@@ -7,7 +7,7 @@
  * landed (monotonic version, timestamp, attribution).
  *
  * Attribution / history reuses the existing admin audit log (see
- * `$lib/server/admin/audit`) rather than a bespoke history table — every accepted
+ * `#lib/server/admin/audit.ts`) rather than a bespoke history table — every accepted
  * mutation records an `admin.audit_log` row with before/after detail.
  */
 import { sql } from 'drizzle-orm';
@@ -42,7 +42,7 @@ export const mcpDemoState = mcpSchema.table(
 		// The service layer validates via valibot; these CHECKs are the backstop for
 		// any bypass (future caller, SQL console) — same doctrine as mcp.call_log,
 		// which treats its text bounds as load-bearing DB facts. Keep the color list
-		// in sync with DEMO_COLORS in $lib/server/mcp/demo/config.ts.
+		// in sync with DEMO_COLORS in #lib/server/mcp/demo/config.ts.
 		check('mcp_demo_state_singleton', sql`${table.id} = 'singleton'`),
 		check('mcp_demo_color_allowed', sql`${table.color} IN ('blue', 'red', 'green', 'yellow', 'orange', 'purple')`),
 		check('mcp_demo_message_len', sql`char_length(${table.message}) <= 500`),

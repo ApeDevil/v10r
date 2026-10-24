@@ -17,17 +17,17 @@
  * session duration, exit pages, and the active-session count.
  */
 import * as v from 'valibot';
-import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { isBot, isExcludedPath } from '$lib/analytics/collect-policy';
-import { normalizeIpKey } from '$lib/server/abuse';
-import { SESSION_COOKIE } from '$lib/server/analytics/config';
-import { hasConsent } from '$lib/server/analytics/consent';
-import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { recordEvents, upsertSession } from '$lib/server/db/analytics/mutations';
-import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent } from '$lib/server/http/response';
+import { isBot, isExcludedPath } from '#lib/analytics/collect-policy.ts';
+import { normalizeIpKey } from '#lib/server/abuse/index.ts';
+import { SESSION_COOKIE } from '#lib/server/analytics/config.ts';
+import { hasConsent } from '#lib/server/analytics/consent.ts';
+import { deriveVisitorId } from '#lib/server/analytics/visitor.ts';
+import { recordEvents, upsertSession } from '#lib/server/db/analytics/mutations.ts';
+import { MAX_BEACON_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent } from '#lib/server/http/response.ts';
+import { dev } from '$app/env';
+import { ANALYTICS_DEV_TRACKING } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 const JourneyEvent = v.object({
@@ -56,7 +56,7 @@ const limiter = createLimiter('rl:analytics:journey', 30, '1 m', { onError: 'ope
 export const POST: RequestHandler = async ({ request, cookies, getClientAddress, locals, url }) => {
 	// Same dev gate as the server hook: one database for every environment, so
 	// an ungated dev server writes localhost navigation into production.
-	if (dev && env.ANALYTICS_DEV_TRACKING !== 'true') {
+	if (dev && ANALYTICS_DEV_TRACKING !== 'true') {
 		return apiNoContent();
 	}
 

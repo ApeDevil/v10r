@@ -1,15 +1,15 @@
 import { redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
-import { guardApiUser } from '$lib/server/http/guards';
-import { apiError } from '$lib/server/http/response';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { apiError } from '#lib/server/http/response.ts';
+import { DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, cookies }) => {
 	const guard = guardApiUser(locals);
 	if ('error' in guard) return guard.error;
 
-	const clientId = env.DISCORD_CLIENT_ID;
-	const redirectUri = env.DISCORD_REDIRECT_URI;
+	const clientId = DISCORD_CLIENT_ID;
+	const redirectUri = DISCORD_REDIRECT_URI;
 
 	if (!clientId || !redirectUri) {
 		return apiError(503, 'unavailable', 'Discord not configured');
@@ -34,5 +34,6 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
 		prompt: 'consent',
 	});
 
-	redirect(302, `https://discord.com/api/oauth2/authorize?${params}`);
+	// SvelteKit 3 refuses cross-origin redirects unless their origin is allowed by name.
+	redirect(302, `https://discord.com/api/oauth2/authorize?${params}`, { external: ['https://discord.com'] });
 };

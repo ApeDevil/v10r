@@ -22,7 +22,7 @@ relative path. The app reaches the same file through the `$patterns` alias
 (`svelte.config.js`). One record set, no copies — and the same holds for the code that
 answers queries over it: `search.ts`, `query.ts` and `excerpt.ts` are
 framework-free and filesystem-free, so the stdio server imports them by relative path and
-the app through `$patterns`. Nothing here may import `$lib` or a Bun-only API (`load.ts` and
+the app through `$patterns`. Nothing here may import `#lib` or a Bun-only API (`load.ts` and
 `validate.ts` are the two disk readers, never imported by the app).
 
 ## Readers

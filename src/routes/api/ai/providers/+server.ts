@@ -1,7 +1,7 @@
-import { getActiveProviderInfo, loadProviderRegistry } from '$lib/server/ai';
-import { getCooldownResumeAt, getUserPreference } from '$lib/server/ai/providers';
-import { guardApiUser } from '$lib/server/http/guards';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { getActiveProviderInfo, loadProviderRegistry } from '#lib/server/ai/index.ts';
+import { getCooldownResumeAt, getUserPreference } from '#lib/server/ai/providers.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 /**

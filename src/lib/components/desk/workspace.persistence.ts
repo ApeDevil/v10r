@@ -2,7 +2,7 @@
  * Workspace persistence via localStorage.
  * Follows desk-settings.persistence.ts pattern.
  */
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import type { Workspace } from './workspace.types';
 
 const DEFAULT_KEY = 'desk-workspaces';

@@ -1,4 +1,5 @@
 <script lang="ts">
+import { NavSection } from '#lib/components/composites/index.ts';
 import {
 	Asterism,
 	ConcentricRings,
@@ -10,8 +11,7 @@ import {
 	Marquee,
 	TickMarks,
 	WaveDivider,
-} from '$lib/components';
-import { NavSection } from '$lib/components/composites';
+} from '#lib/components/index.ts';
 import { DemoCard, VariantGrid } from '../../components/_components';
 
 const sections = [

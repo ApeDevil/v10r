@@ -7,9 +7,9 @@ import {
 	editCommentSchema,
 	editOwnComment,
 	softDeleteOwnComment,
-} from '$lib/server/blog/comments';
-import { guardApiUser } from '$lib/server/http/guards';
-import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
+} from '#lib/server/blog/comments/index.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 /** Edit own comment. 5-minute window from creation. */

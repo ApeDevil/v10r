@@ -8,7 +8,7 @@
  * carries a `toolName` field. `state` walks
  * input-streaming → input-available → output-available | output-error.
  */
-import type { DeskEffect } from '$lib/types/ai-tools';
+import type { DeskEffect } from '#lib/types/ai-tools.ts';
 
 export type ToolPartState = 'input-streaming' | 'input-available' | 'output-available' | 'output-error';
 

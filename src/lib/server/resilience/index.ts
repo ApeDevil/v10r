@@ -11,7 +11,7 @@
  *
  * They compose in that order and none of them is a substitute for another: a breaker
  * without a bulkhead still lets a merely-slow dependency exhaust the instance, and a
- * retry without a deadline (`$lib/server/http/deadline`) is the thing that turns a
+ * retry without a deadline (`#lib/server/http/deadline.ts`) is the thing that turns a
  * dependency's bad minute into an outage.
  *
  * Every one of them degrades rather than throws when Redis is missing, and each says

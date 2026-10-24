@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getModals } from '$lib/state/modals.svelte';
-import { getSession } from '$lib/state/session.svelte';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getModals } from '#lib/state/modals.svelte.ts';
+import { getSession } from '#lib/state/session.svelte.ts';
 
 const session = getSession();
 const modals = getModals();

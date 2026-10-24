@@ -1,9 +1,9 @@
 <script lang="ts">
+import { MODELS_BY_ID } from '#lib/3d/models.ts';
+import { ViewerDialog } from '#lib/components/3d/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { MODELS_BY_ID } from '$lib/3d/models';
-import { ViewerDialog } from '$lib/components/3d';
-import { localizeHref } from '$lib/i18n';
 
 const model = $derived(MODELS_BY_ID.get(page.params.model ?? ''));
 

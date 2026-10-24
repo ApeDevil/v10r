@@ -8,20 +8,19 @@
  * the rate-limited POST. It is handed only the admin state registry; the public pattern tools
  * are not reachable here.
  */
-import { json } from '@sveltejs/kit';
-import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { type BearerCheck, verifyAdminMcpBearer } from '$lib/server/mcp/auth';
+import { normalizeIpKey } from '#lib/server/abuse/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { type BearerCheck, verifyAdminMcpBearer } from '#lib/server/mcp/auth.ts';
 import {
 	ADMIN_MCP_ACTOR,
 	ADMIN_MCP_INSTRUCTIONS,
 	ADMIN_STATE_TOOLS,
 	createAdminStateRegistry,
-} from '$lib/server/mcp/demo/tools';
-import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http.adapter';
-import { buildInfo } from '$lib/server/mcp/server-info';
-import { createMcpObserver, recordMcpGateRejection } from '$lib/server/mcp/telemetry/observer';
-import type { McpServerIdentity } from '$lib/server/mcp/transport';
+} from '#lib/server/mcp/demo/tools.ts';
+import { mcpMethodNotAllowed, respondToMcpPost } from '#lib/server/mcp/http.adapter.ts';
+import { buildInfo } from '#lib/server/mcp/server-info.ts';
+import { createMcpObserver, recordMcpGateRejection } from '#lib/server/mcp/telemetry/observer.ts';
+import type { McpServerIdentity } from '#lib/server/mcp/transport.ts';
 import type { RequestHandler } from './$types';
 
 /** See the public endpoint: the shared `waitUntil` budget is stated, not inherited. */
@@ -31,7 +30,7 @@ const limiter = createLimiter('mcp-admin', 120, '1 m');
 
 function authFailure(check: Extract<BearerCheck, { ok: false }>): Response {
 	const headers = check.status === 401 ? { 'WWW-Authenticate': 'Bearer realm="v10r-mcp-admin"' } : undefined;
-	return json({ error: { code: check.code, message: check.message } }, { status: check.status, headers });
+	return Response.json({ error: { code: check.code, message: check.message } }, { status: check.status, headers });
 }
 
 function identity(): McpServerIdentity {

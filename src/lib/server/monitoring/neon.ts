@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import * as schema from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.ts';
+import * as schema from '#lib/server/db/schema/index.ts';
 import {
 	computePercentage,
 	computeThreshold,

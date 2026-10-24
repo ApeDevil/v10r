@@ -43,8 +43,8 @@ src/routes/
 // src/routes/api/items/+server.ts
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '$lib/server/db';
-import { items } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.js';
+import { items } from '#lib/server/db/schema/index.js';
 
 export const GET: RequestHandler = async ({ url }) => {
   const limit = Number(url.searchParams.get('limit')) || 20;
@@ -69,8 +69,8 @@ export const GET: RequestHandler = async ({ url }) => {
 // src/routes/api/items/+server.ts
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '$lib/server/db';
-import { items } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.js';
+import { items } from '#lib/server/db/schema/index.js';
 import * as v from 'valibot';
 
 const CreateItemSchema = v.object({
@@ -108,8 +108,8 @@ export const POST: RequestHandler = async ({ request }) => {
 // src/routes/api/items/[id]/+server.ts
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '$lib/server/db';
-import { items } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.js';
+import { items } from '#lib/server/db/schema/index.js';
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
@@ -147,8 +147,8 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 // src/routes/api/items/[id]/+server.ts
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '$lib/server/db';
-import { items } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.js';
+import { items } from '#lib/server/db/schema/index.js';
 import { eq } from 'drizzle-orm';
 
 export const DELETE: RequestHandler = async ({ params }) => {
@@ -309,8 +309,8 @@ export function validateQuery<T extends v.BaseSchema<unknown, unknown, v.BaseIss
 ### Usage
 
 ```typescript
-import { validateBody, validateQuery } from '$lib/server/http/validate';
-import { CreateItemSchema, PaginationSchema } from '$lib/server/http/schemas';
+import { validateBody, validateQuery } from '#lib/server/http/validate';
+import { CreateItemSchema, PaginationSchema } from '#lib/server/http/schemas';
 
 export const GET: RequestHandler = async ({ url }) => {
   const { limit, offset } = validateQuery(url, PaginationSchema);
@@ -456,7 +456,7 @@ export function verifyApiKey(providedKey: string | null): boolean {
 ```typescript
 // src/hooks.server.ts
 import type { Handle } from '@sveltejs/kit';
-import { verifyApiKey } from '$lib/server/auth/api-key';
+import { verifyApiKey } from '#lib/server/auth/api-key';
 
 export const handle: Handle = async ({ event, resolve }) => {
   // Check for API routes
@@ -527,8 +527,8 @@ export const corsHandle: Handle = async ({ event, resolve }) => {
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
-import { authHandle, sessionHandle } from '$lib/server/hooks/auth';
-import { corsHandle } from '$lib/server/hooks/cors';
+import { authHandle, sessionHandle } from '#lib/server/hooks/auth';
+import { corsHandle } from '#lib/server/hooks/cors';
 
 // Order matters: CORS first (handles OPTIONS), then auth
 export const handle = sequence(corsHandle, authHandle, sessionHandle);
@@ -570,7 +570,7 @@ export const OPTIONS: RequestHandler = async () => {
 
 ### Standard Response Wrapper
 
-`$lib/server/http/response.ts` exports the envelope helpers. Success is `{ data }`; error is `{ error: { code, message, fields? } }`.
+`#lib/server/http/response.ts` exports the envelope helpers. Success is `{ data }`; error is `{ error: { code, message, fields? } }`.
 
 ```typescript
 // src/lib/server/http/response.ts
@@ -586,7 +586,7 @@ export function apiValidationError(issues);            // Valibot issues → 400
 ### Usage
 
 ```typescript
-import { apiOk, apiError } from '$lib/server/http/response';
+import { apiOk, apiError } from '#lib/server/http/response.js';
 
 export const GET: RequestHandler = async ({ url }) => {
   const item = await getItem(url.searchParams.get('id'));
@@ -597,11 +597,11 @@ export const GET: RequestHandler = async ({ url }) => {
 
 ### Pagination
 
-`$lib/server/http/pagination.ts` provides both styles. Offset-based: `parsePagination(url)` + `apiPaginated(items, total, params)` → `{ data: { items, pagination: { page, pageSize, total, totalPages } } }`. Cursor-based: `parseLimit`/`parseCursor`/`encodeCursor`/`decodeCursor` + `paginatedResponse(items, limit, cursorFn)` → `{ items, has_more, cursor? }`.
+`#lib/server/http/pagination.ts` provides both styles. Offset-based: `parsePagination(url)` + `apiPaginated(items, total, params)` → `{ data: { items, pagination: { page, pageSize, total, totalPages } } }`. Cursor-based: `parseLimit`/`parseCursor`/`encodeCursor`/`decodeCursor` + `paginatedResponse(items, limit, cursorFn)` → `{ items, has_more, cursor? }`.
 
 ```typescript
-import { parseLimit, parseCursor, paginatedResponse } from '$lib/server/http/pagination';
-import { apiOk } from '$lib/server/http/response';
+import { parseLimit, parseCursor, paginatedResponse } from '#lib/server/http/pagination.js';
+import { apiOk } from '#lib/server/http/response.js';
 
 export const GET: RequestHandler = async ({ url }) => {
   const limit = parseLimit(url);
@@ -663,8 +663,8 @@ export async function validateFileContent(file: File): Promise<ValidatedFile> {
 // Illustrative — the shipped upload door is src/routes/api/blog/assets/+server.ts (ticket) + .../confirm
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { validateFileContent } from '$lib/server/upload/validate';
-import { uploadToR2 } from '$lib/server/storage';
+import { validateFileContent } from '#lib/server/upload/validate';
+import { uploadToR2 } from '#lib/server/storage';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -708,11 +708,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 ## Rate Limiting
 
-Limiters are built with the `createLimiter` factory (sliding window over `@upstash/ratelimit`, backed by Upstash Redis) in `$lib/server/http/rate-limit.ts`. See [abuse/rate-limits.md](./abuse/rate-limits.md) for the full limiter catalog.
+Limiters are built with the `createLimiter` factory (sliding window over `@upstash/ratelimit`, backed by Upstash Redis) in `#lib/server/http/rate-limit.ts`. See [abuse/rate-limits.md](./abuse/rate-limits.md) for the full limiter catalog.
 
 ```typescript
 // src/routes/api/items/+server.ts
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
 
 const limiter = createLimiter('rl:items', 30, '1 m');
 
@@ -793,8 +793,8 @@ GraphQL Yoga is lightweight (~15KB) and works well with SvelteKit.
 ```typescript
 // src/lib/server/graphql/schema.ts
 import { createSchema } from 'graphql-yoga';
-import { db } from '$lib/server/db';
-import { items, tags } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.js';
+import { items, tags } from '#lib/server/db/schema/index.js';
 import { eq } from 'drizzle-orm';
 
 export const schema = createSchema({
@@ -873,7 +873,7 @@ export const schema = createSchema({
 ```typescript
 // src/routes/api/graphql/+server.ts
 import { createYoga } from 'graphql-yoga';
-import { schema } from '$lib/server/graphql/schema';
+import { schema } from '#lib/server/graphql/schema';
 import type { RequestHandler } from './$types';
 
 const yoga = createYoga({
@@ -928,7 +928,7 @@ export async function graphql<T>(
 
 ```svelte
 <script lang="ts">
-  import { graphql } from '$lib/graphql-client';
+  import { graphql } from '#lib/graphql-client';
 
   const loadItems = async () => {
     const data = await graphql<{ items: Item[] }>(`
@@ -1044,7 +1044,7 @@ Mutating and long-lived endpoints bound their inputs and connections at the adap
 | `GET /api/ai/profiles/[surface]` | The surface's assistant profile manifest (`AssistantProfileManifest`): identity text, capabilities with guidance and tool definitions (description + JSON schema), grounding inventory for the viewer. Signed-in (`guardApiUser`), conversation rate limiter; an unknown surface is 404. See [ai/profiles.md](./ai/profiles.md). |
 | `GET /api/analytics/stream` (SSE) | Per-IP connect limit + global concurrent-connection cap + max-duration self-close. A client can't hold a slot forever or open unbounded streams. |
 
-Image processing is bounded in the domain layer, not at the route: `$lib/server/imagemeta/process.ts` calls `sharp(bytes, { limitInputPixels: 25_000_000, failOn: 'truncated' })` — a decompression-bomb guard (a small file that expands to a huge bitmap is rejected) plus rejection of truncated/corrupt input.
+Image processing is bounded in the domain layer, not at the route: `#lib/server/imagemeta/process.ts` calls `sharp(bytes, { limitInputPixels: 25_000_000, failOn: 'truncated' })` — a decompression-bomb guard (a small file that expands to a huge bitmap is rejected) plus rejection of truncated/corrupt input.
 
 > **Removed:** `/api/ai/chat` and `/api/ai/chat/stream` — replaced by the three per-surface routes above, which set an explicit `surface` and share one entry guard (`guardAiRequest`). See [ai/surfaces.md](./ai/surfaces.md).
 

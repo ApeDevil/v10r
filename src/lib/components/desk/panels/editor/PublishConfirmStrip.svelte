@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
-import type { PostStatus } from '$lib/types/db-enums';
+import { Button } from '#lib/components/primitives/index.ts';
+import type { PostStatus } from '#lib/types/db-enums.ts';
 
 interface Props {
 	postStatus: PostStatus;

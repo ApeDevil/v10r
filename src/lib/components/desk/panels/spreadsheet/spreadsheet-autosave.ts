@@ -1,4 +1,4 @@
-import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
+import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
 import type { SpreadsheetDraft, SpreadsheetDrafts } from './spreadsheet-drafts';
 
 interface SpreadsheetSnapshot {

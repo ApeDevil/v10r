@@ -22,12 +22,12 @@
 
 import { jsonSchema, tool } from 'ai';
 import { and, eq, inArray } from 'drizzle-orm';
-import type { Locale } from '$lib/i18n';
-import type { SearchResult } from '$lib/search/types';
-import { db } from '$lib/server/db';
-import { document } from '$lib/server/db/schema/retrieval';
-import { retrieve } from '$lib/server/retrieval';
-import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
+import type { Locale } from '#lib/i18n/index.ts';
+import type { SearchResult } from '#lib/search/types.ts';
+import { db } from '#lib/server/db/index.ts';
+import { document } from '#lib/server/db/schema/retrieval/index.ts';
+import { SYSTEM_DOCS_USER_ID } from '#lib/server/retrieval/config.ts';
+import { retrieve } from '#lib/server/retrieval/index.ts';
 import type { EmbeddingConnection } from '../connections';
 import type { CatalogSink } from './search-catalog';
 

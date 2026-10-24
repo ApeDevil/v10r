@@ -1,5 +1,5 @@
 <script lang="ts" module>
-import type { PortRef, PortStandard, ProductComposition, Vec3 } from '$lib/product-composition';
+import type { PortRef, PortStandard, ProductComposition, Vec3 } from '#lib/product-composition/index.ts';
 import type { RoomLayout } from './RoomBackdrop.svelte';
 
 /** What the viewer has picked: a top-level occurrence, a port, or a conduit coupling. */
@@ -57,8 +57,8 @@ import {
 	portUse,
 	resolveComposition,
 	resolvePort,
-} from '$lib/product-composition';
-import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
+} from '#lib/product-composition/index.ts';
+import { THRELTE_MAKE_DEFAULT } from '#lib/utils/threlte-workarounds.ts';
 import { FALLBACK_TOKEN, SCENE_TOKENS, SELECTION_TOKEN, standardTokens, toneToken } from './composition-palette';
 import { CONDUIT_TUBE } from './conduit-tube';
 import ConduitMesh from './ConduitMesh.svelte';

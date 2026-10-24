@@ -1,12 +1,22 @@
 <script lang="ts">
-import type { ActionResult } from '@sveltejs/kit';
+import { Alert, Card, ConfirmDialog, NavSection } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import {
+	Badge,
+	Body,
+	Button,
+	Cell,
+	Header,
+	HeaderCell,
+	Row,
+	Table,
+	Typography,
+} from '#lib/components/primitives/index.ts';
+import KnowledgeGraph from '#lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import type { ActionResult } from '$app/forms';
 import { enhance } from '$app/forms';
-import { Alert, Card, ConfirmDialog, NavSection } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Body, Button, Cell, Header, HeaderCell, Row, Table, Typography } from '$lib/components/primitives';
-import KnowledgeGraph from '$lib/components/viz/graph/knowledge/KnowledgeGraph.svelte';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();
@@ -49,7 +59,7 @@ function handleActionResult() {
 		update,
 	}: {
 		result: ActionResult;
-		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+		update: (opts?: { reset?: boolean; refreshAll?: boolean }) => Promise<void>;
 	}) => {
 		if (result.type === 'success') {
 			toast.success((result.data?.message as string) || 'Done.');

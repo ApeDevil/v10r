@@ -221,8 +221,8 @@ Extract:
 ```typescript
 // src/lib/server/graph/ingestion.ts
 import { embed } from 'ai';
-import { providers } from '$lib/server/ai/providers';
-import { extractEntities } from '$lib/server/ai/entity-extraction';
+import { providers } from '#lib/server/ai/providers.js';
+import { extractEntities } from '#lib/server/ai/entity-extraction';
 import { getSession } from './index';
 import { nanoid } from 'nanoid';
 
@@ -335,9 +335,9 @@ function chunkDocument(content: string, maxChars = 1000): string[] {
 ```typescript
 // src/lib/server/graph/retrieval.ts
 import { embed } from 'ai';
-import { providers } from '$lib/server/ai/providers';
+import { providers } from '#lib/server/ai/providers.js';
 import { getSession } from './index';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.js';
 import { sql } from 'drizzle-orm';
 
 interface RetrievalResult {
@@ -495,9 +495,9 @@ async function extractQueryEntities(query: string): Promise<string[]> {
 import { json } from '@sveltejs/kit';
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { encode } from '@toon-format/toon';
-import { providers } from '$lib/server/ai/providers';
-import { aiConfig } from '$lib/server/ai/config';
-import { hybridRetrieve } from '$lib/server/graph/retrieval';
+import { providers } from '#lib/server/ai/providers.js';
+import { aiConfig } from '#lib/server/ai/config.js';
+import { hybridRetrieve } from '#lib/server/graph/retrieval';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -567,7 +567,7 @@ Connect mentions in documents to canonical entities:
 ```typescript
 // src/lib/server/graph/entity-linking.ts
 import { generateObject } from 'ai';
-import { providers } from '$lib/server/ai/providers';
+import { providers } from '#lib/server/ai/providers.js';
 import { getSession } from './index';
 import * as v from 'valibot';
 
@@ -634,7 +634,7 @@ For global search, build community summaries:
 ```typescript
 // src/lib/server/graph/communities.ts
 import { generateText } from 'ai';
-import { providers } from '$lib/server/ai/providers';
+import { providers } from '#lib/server/ai/providers.js';
 import { getSession } from './index';
 
 export async function buildCommunitySummaries() {

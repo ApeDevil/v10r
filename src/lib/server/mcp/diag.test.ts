@@ -15,8 +15,8 @@ import { describe, expect, it, vi } from 'vitest';
  *
  * Mocked because importing the admin registry otherwise constructs a real Neon pool at module load.
  */
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
+vi.mock('#lib/server/admin/audit.ts', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 
 const { handleMcpMessage } = await import('./transport');
 const { publicPatternRegistry } = await import('./patterns/tools');

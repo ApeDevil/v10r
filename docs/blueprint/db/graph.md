@@ -28,7 +28,7 @@ No `neo4j-driver` dependency. The graph layer talks to Neo4j over the **HTTP Que
 ```typescript
 // src/lib/server/graph/index.ts
 import { env } from '$env/dynamic/private';
-import { TIMEOUT_MS } from '$lib/server/graph/config';
+import { TIMEOUT_MS } from '#lib/server/graph/config.js';
 import { classifyError, Neo4jError } from './errors';
 
 /** Derive HTTPS host from NEO4J_URI (neo4j+s://xxx → https://xxx) */
@@ -258,7 +258,7 @@ export async function getFeatureDependencies(featureName: string): Promise<Featu
 
 ## Write Operations
 
-> **Illustrative.** There is no `graph/mutations.ts`. Writes run through `cypher()` like reads; ID prefixes come from `$lib/server/db/id.ts` (`crypto.randomUUID()`-based, no `nanoid`).
+> **Illustrative.** There is no `graph/mutations.ts`. Writes run through `cypher()` like reads; ID prefixes come from `#lib/server/db/id.ts` (`crypto.randomUUID()`-based, no `nanoid`).
 
 ```typescript
 // Example only — real writes call cypher() over HTTP.
@@ -330,7 +330,7 @@ export async function setNextPage(
 
 ```typescript
 // Example only — call cypher() per statement; there is no getSession/closeDriver.
-import { cypher } from '$lib/server/graph';
+import { cypher } from '#lib/server/graph/index.js';
 
 async function seedGraph() {
   const session = await getSession();
@@ -404,7 +404,7 @@ seedGraph();
 ```typescript
 // src/routes/api/graph/features/+server.ts
 import { json } from '@sveltejs/kit';
-import { getPagesUsingFeature } from '$lib/server/graph/queries';
+import { getPagesUsingFeature } from '#lib/server/graph/queries';
 
 export async function GET({ url }) {
   const name = url.searchParams.get('name');
@@ -419,7 +419,7 @@ export async function GET({ url }) {
 
 ```typescript
 // src/routes/showcases/[slug]/+page.server.ts
-import { getPageFeatures, getRelatedPages } from '$lib/server/graph/queries';
+import { getPageFeatures, getRelatedPages } from '#lib/server/graph/queries';
 
 export async function load({ params }) {
   const path = `/showcases/${params.slug}`;

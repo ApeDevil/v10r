@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { GalleryCardItem } from '$lib/components';
-import { GalleryCard } from '$lib/components';
+import type { GalleryCardItem } from '#lib/components/index.ts';
+import { GalleryCard } from '#lib/components/index.ts';
 import { DemoCard } from '../_components';
 
 // Offline SVG placeholder helpers

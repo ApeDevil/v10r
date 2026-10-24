@@ -5,13 +5,13 @@ const registryLoader = vi.hoisted(() => ({ loadProviderRegistry: vi.fn() }));
 const budget = vi.hoisted(() => ({ checkUserBudget: vi.fn(async () => ({ allowed: true })) }));
 const limiter = vi.hoisted(() => ({ limit: vi.fn(async () => ({ success: true, reset: 0 })) }));
 
-vi.mock('$lib/server/ai', () => registryLoader);
-vi.mock('$lib/server/ai/budget', () => budget);
+vi.mock('#lib/server/ai/index.ts', () => registryLoader);
+vi.mock('#lib/server/ai/budget.ts', () => budget);
 // Both denials are 429s; the body tells them apart.
-vi.mock('$lib/server/abuse/decision.adapter', () => ({
+vi.mock('#lib/server/abuse/decision.adapter.ts', () => ({
 	decisionResponse: vi.fn(() => new Response('budget', { status: 429 })),
 }));
-vi.mock('$lib/server/http/rate-limit', () => ({
+vi.mock('#lib/server/http/rate-limit.ts', () => ({
 	createLimiter: () => limiter,
 	rateLimitResponse: () => new Response('rate-limit', { status: 429 }),
 }));

@@ -1,7 +1,7 @@
 /**
  * Canonical syntax definitions for custom markdown directives, consumed by the remark adapter
  * (server rendering). Adding a new syntax = one entry here + one embed component registered in
- * `$lib/components/blog/embeds/registry.ts` — a directive with no component renders nothing.
+ * `#lib/components/blog/embeds/registry.ts` — a directive with no component renders nothing.
  */
 
 export interface SyntaxDefinition {

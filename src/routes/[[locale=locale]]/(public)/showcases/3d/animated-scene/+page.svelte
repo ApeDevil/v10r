@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
-import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components';
-import { BoundaryFallback } from '$lib/components/composites';
-import * as m from '$lib/paraglide/messages';
+import { BoundaryFallback } from '#lib/components/composites/index.ts';
+import { BackLink, PageHeader, ShowcaseDocs } from '#lib/components/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import Scene from './Scene.svelte';
 
 let currentAnimation = $state('Survey');

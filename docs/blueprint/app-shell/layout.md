@@ -40,7 +40,7 @@ src/lib/components/
 ```svelte
 <!-- AppShell.svelte -->
 <script lang="ts">
-  import { Sidebar, Footer } from '$lib/components/shell';
+  import { Sidebar, Footer } from '#lib/components/shell/index.js';
 
   let { children } = $props();
 </script>
@@ -74,7 +74,7 @@ src/lib/components/
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
-  import { AppShell } from '$lib/components/shell';
+  import { AppShell } from '#lib/components/shell/index.js';
 
   let { children } = $props();
 </script>
@@ -227,7 +227,7 @@ What happens when viewport resizes across breakpoints:
 ```svelte
 <script lang="ts">
   import { MediaQuery } from 'svelte/reactivity';
-  import { getSidebar } from '$lib/state/sidebar.svelte';
+  import { getSidebar } from '#lib/state/sidebar.svelte.js';
 
   const sidebar = getSidebar();
 
@@ -298,7 +298,7 @@ When modals open/close, focus must be managed:
 
 ```svelte
 <script lang="ts">
-  import { trapFocus } from '$lib/utils/focus-trap';
+  import { trapFocus } from '#lib/utils/focus-trap.js';
 
   let modalRef: HTMLElement;
 

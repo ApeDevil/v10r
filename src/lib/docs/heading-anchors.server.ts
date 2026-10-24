@@ -7,7 +7,7 @@
  * may slug differently here. Readers: `pattern-library/validate.ts` (the anchor gate) and the
  * pattern pages' README TOC (`patterns/render.ts`).
  *
- * Vite-free leaf (no `$lib`, no `$env`) so `pattern-library/validate.ts` can import it by
+ * Vite-free leaf (no `#lib`, no `$app/env`) so `pattern-library/validate.ts` can import it by
  * relative path under bare Bun. It lives outside the server domains so the patterns domain
  * and the validator can share it without reaching into another domain's internals, and is
  * `.server.ts` so SvelteKit refuses it in any client bundle (it pulls the unified toolchain).

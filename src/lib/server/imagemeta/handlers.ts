@@ -10,10 +10,10 @@
  */
 
 import { and, eq, sql } from 'drizzle-orm';
-import type { FieldProvenance, ImageMetadataOutput } from '$lib/schemas/image-metadata';
-import { db } from '$lib/server/db';
-import { imageAiProposal, imageAsset, imageMetadata, imageMetadataTag, imageTag } from '$lib/server/db/schema';
-import { buildImagemetaKey, deleteImagemetaObject, putImagemetaDerivative } from '$lib/server/store/image';
+import type { FieldProvenance, ImageMetadataOutput } from '#lib/schemas/image-metadata.ts';
+import { db } from '#lib/server/db/index.ts';
+import { imageAiProposal, imageAsset, imageMetadata, imageMetadataTag, imageTag } from '#lib/server/db/schema/index.ts';
+import { buildImagemetaKey, deleteImagemetaObject, putImagemetaDerivative } from '#lib/server/store/image.ts';
 import { ALLOWED_MIME, MAX_UPLOAD_SIZE } from './config';
 import { ImageMetaError } from './errors';
 import { processImage, sniffImageMime } from './process';

@@ -2,10 +2,11 @@
  * Fast-interval delivery scheduler — runs notification delivery at 15s intervals.
  * Separate from the main job scheduler which runs every 3 hours.
  */
-import { building, dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
-import { DEFAULT_DELIVERY_INTERVAL_MS } from '$lib/server/notifications/config';
-import { platform } from '$lib/server/platform';
+
+import { DEFAULT_DELIVERY_INTERVAL_MS } from '#lib/server/notifications/config.ts';
+import { platform } from '#lib/server/platform/index.ts';
+import { building, dev } from '$app/env';
+import { DELIVERY_INTERVAL_MS, JOBS_DEV_ENABLED } from '$app/env/private';
 import { notificationDelivery } from './notification-delivery';
 
 declare global {
@@ -29,7 +30,7 @@ async function processDeliveries() {
 // which never lets the Neon endpoint reach its 5-minute scale-to-zero. That alone
 // kept it awake ~20 h/day in August 2026 and exhausted the Free compute quota.
 // JOBS_DEV_ENABLED='true' re-enables it for deliberately testing delivery locally.
-if (!building && dev && env.JOBS_DEV_ENABLED !== 'true' && platform.persistent) {
+if (!building && dev && JOBS_DEV_ENABLED !== 'true' && platform.persistent) {
 	console.log(
 		'[delivery-scheduler] Muted in dev (set JOBS_DEV_ENABLED=true to drain the outbox against the shared DB)',
 	);
@@ -38,10 +39,10 @@ if (!building && dev && env.JOBS_DEV_ENABLED !== 'true' && platform.persistent) 
 if (
 	!building &&
 	platform.persistent &&
-	(!dev || env.JOBS_DEV_ENABLED === 'true') &&
+	(!dev || JOBS_DEV_ENABLED === 'true') &&
 	!globalThis.__v10r_delivery_scheduler
 ) {
-	const interval = Number(env.DELIVERY_INTERVAL_MS) || DEFAULT_DELIVERY_INTERVAL_MS;
+	const interval = Number(DELIVERY_INTERVAL_MS) || DEFAULT_DELIVERY_INTERVAL_MS;
 
 	console.log(`[delivery-scheduler] Starting on ${platform.id} platform, interval: ${interval / 1000}s`);
 

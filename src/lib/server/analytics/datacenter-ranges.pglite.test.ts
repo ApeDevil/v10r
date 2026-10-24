@@ -7,7 +7,7 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { datacenterIpRanges, sessions } from '$lib/server/db/schema/analytics';
+import { datacenterIpRanges, sessions } from '#lib/server/db/schema/analytics/index.ts';
 import {
 	parseAwsRanges,
 	parseCsvPrefixColumn,
@@ -18,15 +18,15 @@ import {
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-const { db } = await import('$lib/server/db');
-const { upsertSession } = await import('$lib/server/db/analytics/mutations');
+const { db } = await import('#lib/server/db/index.ts');
+const { upsertSession } = await import('#lib/server/db/analytics/mutations.ts');
 
 afterAll(async () => {
 	await testClient?.close();

@@ -1,7 +1,7 @@
 /**
  * Turn inspector — the pure projection of ONE recorded turn into what the inspector renders.
  *
- * The input is the persisted contract (`TurnTrace`, `$lib/types/turn-trace.ts`) plus the
+ * The input is the persisted contract (`TurnTrace`, `#lib/types/turn-trace.ts`) plus the
  * profile it ran on (`AssistantProfileManifest`) and the words around it (question, answer).
  * The output is a tree of nodes in the five-state order — AVAILABLE (the profile) →
  * CONSIDERED (the grounding candidates) → INCLUDED (the prompt blocks, the history) →
@@ -11,21 +11,21 @@
  *
  * Nodes carry the underlying records, never copy: the components label them through
  * Paraglide, and code identifiers (block tags, tool names, capability ids, model ids) render
- * verbatim. Pure functions only — no `$lib/server/*`, no `$env/*`, no Paraglide — so the
+ * verbatim. Pure functions only — no `#lib/server/*`, no `$app/env/*`, no Paraglide — so the
  * recorded fixture, a live turn fetched by its owner and the recording script all share one
  * projection.
  */
 
-import type { WaterfallRow } from '$lib/components/viz/timeline/types';
-import type { AiErrorKind } from '$lib/types/ai-error';
-import type { ProposalCardStep, ProposalStepReceipt } from '$lib/types/ai-proposal';
+import type { WaterfallRow } from '#lib/components/viz/timeline/types.ts';
+import type { AiErrorKind } from '#lib/types/ai-error.ts';
+import type { ProposalCardStep, ProposalStepReceipt } from '#lib/types/ai-proposal.ts';
 import type {
 	AssistantProfileManifest,
 	CapabilityManifest,
 	GroundingInventory,
 	GroundingSourceId,
 	ToolManifestEntry,
-} from '$lib/types/assistant-profile';
+} from '#lib/types/assistant-profile.ts';
 import type {
 	Activation,
 	AttemptRecord,
@@ -43,7 +43,7 @@ import type {
 	TurnSummary,
 	TurnTrace,
 	TurnTraceSnapshot,
-} from '$lib/types/turn-trace';
+} from '#lib/types/turn-trace.ts';
 import { type AiLayerId, GUARD_STAGES, type GuardStageState, type TraceStatus } from './topology';
 
 /**

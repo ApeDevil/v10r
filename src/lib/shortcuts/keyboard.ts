@@ -3,7 +3,7 @@
  * Handles single key combos and sequences.
  */
 
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { findShortcutByKeys } from './registry';
 
 // Sequence state

@@ -3,14 +3,14 @@
  * Validates structure on load, prunes invalid panel references.
  */
 
-import { browser } from '$app/environment';
 import type {
 	ActivityBarPosition,
 	DockLayoutState,
 	LayoutNode,
 	LeafNode,
 	PanelDefinition,
-} from '$lib/desk/layout.types';
+} from '#lib/desk/layout.types.ts';
+import { browser } from '$app/env';
 
 const DEFAULT_KEY = 'dock-layout';
 const CURRENT_VERSION = 1;

@@ -1,8 +1,8 @@
 <script lang="ts">
-import { DiagGrid, DiagRow } from '$lib/components/composites';
-import { Badge, Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives';
-import type { ExternalServiceCopy } from '$lib/showcases/external-service/labels';
-import type { OrderEvaluation } from '$lib/showcases/external-service/types';
+import { DiagGrid, DiagRow } from '#lib/components/composites/index.ts';
+import { Badge, Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/index.ts';
+import type { ExternalServiceCopy } from '#lib/showcases/external-service/labels.ts';
+import type { OrderEvaluation } from '#lib/showcases/external-service/types.ts';
 
 interface Props {
 	evaluation: OrderEvaluation;

@@ -7,7 +7,7 @@ import {
 	Header as TableHeader,
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
-} from '$lib/components';
+} from '#lib/components/index.ts';
 import { EMPLOYEES, formatSalary, type SortDirection, type SortKey, type Status } from '../_data/mock-data';
 
 let currentPage = $state(1);

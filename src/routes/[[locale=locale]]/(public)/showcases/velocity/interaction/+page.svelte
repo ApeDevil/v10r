@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Card, NavSection } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Typography } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Card, NavSection } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Typography } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import OptimisticDemo from '../_components/OptimisticDemo.svelte';
 import PreloadTable from '../_components/PreloadTable.svelte';
 import PreloadTiming from '../_components/PreloadTiming.svelte';

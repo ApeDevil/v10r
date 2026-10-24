@@ -6,7 +6,7 @@
  * `invalidate('admin:dbops')` so the branch panel + operation list refresh). Visibility
  * aware: pauses while the tab is hidden. No SSE.
  */
-import type { BranchOperationStatus } from '$lib/server/dbops';
+import type { BranchOperationStatus } from '#lib/server/dbops/index.ts';
 
 const TERMINAL: BranchOperationStatus[] = ['succeeded', 'failed', 'canceled'];
 const POLL_MS = 1500;

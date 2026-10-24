@@ -1,9 +1,9 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { Typography } from '#lib/components/primitives/index.ts';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import { Typography } from '$lib/components/primitives';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 import type { LayoutData } from './$types';
 
 let { children, data }: { children: Snippet; data: LayoutData } = $props();

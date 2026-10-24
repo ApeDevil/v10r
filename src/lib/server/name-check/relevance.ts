@@ -7,8 +7,8 @@
  * which the search cannot see — hence "overlapping", never "same". Worldwide discovery
  * treats every jurisdiction as in scope, because that is what the user asked for.
  */
-import type { NameTerritoryRelevance } from '$lib/name-check/report';
-import type { NameCheckTerritory } from '$lib/schemas/name-check';
+import type { NameTerritoryRelevance } from '#lib/name-check/report.ts';
+import type { NameCheckTerritory } from '#lib/schemas/name-check.ts';
 
 export const EU_MEMBER_STATES = new Set([
 	'AT',

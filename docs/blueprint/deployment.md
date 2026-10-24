@@ -671,7 +671,7 @@ Configure in Koyeb dashboard → Service → Health checks:
 ```typescript
 // src/routes/api/health/+server.ts
 import { json } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.js';
 import { sql } from 'drizzle-orm';
 
 export async function GET() {

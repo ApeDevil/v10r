@@ -1,7 +1,7 @@
 <script lang="ts">
-import { PageHeader } from '$lib/components/composites';
-import { localizeHref } from '$lib/i18n/runtime';
-import { type SearchResult, type SearchSurface, SURFACE_ORDER } from '$lib/search/types';
+import { PageHeader } from '#lib/components/composites/index.ts';
+import { localizeHref } from '#lib/i18n/runtime.ts';
+import { type SearchResult, type SearchSurface, SURFACE_ORDER } from '#lib/search/types.ts';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

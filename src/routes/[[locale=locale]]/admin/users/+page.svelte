@@ -1,13 +1,13 @@
 <script lang="ts">
+import { Card, ConfirmDialog, EmptyState, Pagination } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { type UrlStateValues, urlStateHref } from '#lib/state/url-state.ts';
 import { enhance } from '$app/forms';
-import { goto, invalidateAll } from '$app/navigation';
+import { goto, refreshAll } from '$app/navigation';
 import { page } from '$app/state';
-import { Card, ConfirmDialog, EmptyState, Pagination } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
-import { type UrlStateValues, urlStateHref } from '$lib/state/url-state';
 import type { PageProps } from './$types';
 import { usersListParams } from './list-params';
 
@@ -54,7 +54,7 @@ function openBanDialog(userId: string) {
 		{#snippet header()}
 			<Cluster justify="between" align="center">
 				<h2 class="text-fluid-lg font-semibold">{m.admin_users_title()}</h2>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 					{m.admin_action_refresh()}
 				</Button>

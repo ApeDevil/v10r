@@ -3,27 +3,32 @@
 // (src/routes/+layout.svelte) so they survive `+page@.svelte` breakouts that
 // shed this chrome layer (the full-screen 3D viewer/customizer).
 import { Tooltip as TooltipPrimitive } from 'bits-ui';
+import { initConfirmPing } from '#lib/analytics/confirm-ping.ts';
+import { initJourneyBeacon } from '#lib/analytics/journey-beacon.ts';
+import {
+	initTelemetry,
+	setTelemetryConsent,
+	setTelemetrySession,
+	telemetryOnNavigate,
+} from '#lib/analytics/telemetry.ts';
+import { setVercelAnalyticsConsent, trackVercelPageview } from '#lib/analytics/vercel.ts';
+import { BRAND_NAME } from '#lib/branding.ts';
+import PairingStrip from '#lib/components/shell/PairingStrip.svelte';
+import UpdatePrompt from '#lib/components/shell/UpdatePrompt.svelte';
+import VelyMinimizedBubble from '#lib/components/shell/VelyMinimizedBubble.svelte';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { baseLocale, locales } from '#lib/paraglide/runtime.js';
+import { initSessionRefresh } from '#lib/pwa/session-refresh.ts';
+import { initKeyboardHandler, registerShortcut } from '#lib/shortcuts/index.ts';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { setConsentContext } from '#lib/state/consent.svelte.ts';
+import { setModalsContext } from '#lib/state/modals.svelte.ts';
+import { setSidebarContext } from '#lib/state/sidebar.svelte.ts';
+import { setStyleContext } from '#lib/state/style.svelte.ts';
+import { setThemeContext } from '#lib/state/theme.svelte.ts';
+import { setToastContext } from '#lib/state/toast.svelte.ts';
 import { afterNavigate, goto } from '$app/navigation';
 import { page } from '$app/state';
-import { initConfirmPing } from '$lib/analytics/confirm-ping';
-import { initJourneyBeacon } from '$lib/analytics/journey-beacon';
-import { initTelemetry, setTelemetryConsent, setTelemetrySession, telemetryOnNavigate } from '$lib/analytics/telemetry';
-import { setVercelAnalyticsConsent } from '$lib/analytics/vercel';
-import { BRAND_NAME } from '$lib/branding';
-import PairingStrip from '$lib/components/shell/PairingStrip.svelte';
-import UpdatePrompt from '$lib/components/shell/UpdatePrompt.svelte';
-import VelyMinimizedBubble from '$lib/components/shell/VelyMinimizedBubble.svelte';
-import { localizeHref } from '$lib/i18n';
-import { baseLocale, locales } from '$lib/paraglide/runtime';
-import { initSessionRefresh } from '$lib/pwa/session-refresh';
-import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { setConsentContext } from '$lib/state/consent.svelte';
-import { setModalsContext } from '$lib/state/modals.svelte';
-import { setSidebarContext } from '$lib/state/sidebar.svelte';
-import { setStyleContext } from '$lib/state/style.svelte';
-import { setThemeContext } from '$lib/state/theme.svelte';
-import { setToastContext } from '$lib/state/toast.svelte';
 
 let { children, data } = $props();
 
@@ -72,9 +77,13 @@ $effect(() => {
 	setTelemetrySession(data.session !== null);
 });
 
-// Close out the previous page's engagement window on SPA navigation.
-afterNavigate(() => {
+// Close out the previous page's engagement window on SPA navigation, and report the new
+// page to Vercel's lane (both stand aside for a shallow one: the page did not change).
+afterNavigate(({ shallow, type }) => {
+	if (shallow) return;
 	telemetryOnNavigate();
+	// The landing page is reported when the Vercel script is injected, not here.
+	if (type !== 'enter') trackVercelPageview();
 });
 
 // Wake-time session revalidation (idempotent): bfcache restores + logins that

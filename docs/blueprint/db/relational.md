@@ -474,8 +474,8 @@ export type UserWithProfile = User & { profile: UserProfile | null };
 
 ```typescript
 // src/lib/server/db/queries/items.ts
-import { db } from '$lib/server/db';
-import { items, tags, itemTags } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.js';
+import { items, tags, itemTags } from '#lib/server/db/schema/index.js';
 import { eq } from 'drizzle-orm';
 
 // Query function with typed return
@@ -496,7 +496,7 @@ export type ItemsWithTags = Awaited<ReturnType<typeof getItemsWithTags>>;
 
 ```typescript
 // src/routes/showcases/db/relational/+page.server.ts
-import { getItemsWithTags } from '$lib/server/db/queries/items';
+import { getItemsWithTags } from '#lib/server/db/queries/items';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -607,8 +607,8 @@ Use `db.transaction()` for operations that must be atomic.
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { db, createId, schema } from '$lib/server/db';
-import { itemSchema } from '$lib/schemas/item';
+import { db, createId, schema } from '#lib/server/db/index.js';
+import { itemSchema } from '#lib/schemas/item';
 
 export const actions = {
   default: async ({ request, locals }) => {
@@ -709,7 +709,7 @@ export function mapDbError(err: unknown): never {
 
 ```typescript
 // src/routes/showcases/db/relational/[id]/+page.server.ts
-import { mapDbError } from '$lib/server/db/errors';
+import { mapDbError } from '#lib/server/db/errors.js';
 
 export async function load({ params }) {
   try {
@@ -732,7 +732,7 @@ export async function load({ params }) {
 
 ```typescript
 // scripts/seed.ts
-import { db, createId, schema } from '$lib/server/db';
+import { db, createId, schema } from '#lib/server/db/index.js';
 
 async function seed() {
   // Create test user

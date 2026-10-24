@@ -1,7 +1,7 @@
 <script lang="ts">
-import { trackCommand } from '$lib/analytics/telemetry';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { registerShortcut } from '$lib/shortcuts';
+import { trackCommand } from '#lib/analytics/telemetry.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { registerShortcut } from '#lib/shortcuts/index.ts';
 import { collectTypeInstances, composePanelMenus } from './compose-menus';
 import { getDeskSettings } from './desk-settings.state.svelte';
 import { collectPanelIds } from './dock.operations';

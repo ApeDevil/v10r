@@ -30,12 +30,12 @@ import {
 	timestamp,
 	uniqueIndex,
 } from 'drizzle-orm/pg-core';
-import type { ConfidenceTier, FieldProvenance, ImageAnalysis, MetadataFieldKey } from '$lib/schemas/image-metadata';
+import type { ConfidenceTier, FieldProvenance, ImageAnalysis, MetadataFieldKey } from '#lib/schemas/image-metadata.ts';
 import { user } from '../auth/_better-auth';
 
 export const imageSchema = pgSchema('image');
 
-/** Keep in sync with IMAGE_CATEGORIES in $lib/schemas/image-metadata. */
+/** Keep in sync with IMAGE_CATEGORIES in #lib/schemas/image-metadata. */
 export const imageCategoryEnum = imageSchema.enum('image_category', [
 	'photo',
 	'illustration',

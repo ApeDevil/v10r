@@ -24,8 +24,8 @@
  * module via its hooks (same cycle constraint as step-up.ts).
  */
 import { createHash } from 'node:crypto';
-import { dev } from '$app/environment';
-import { redis } from '$lib/server/cache';
+import { redis } from '#lib/server/cache/index.ts';
+import { dev } from '$app/env';
 import { SESSION_EXPIRES_IN } from './config';
 
 const key = (userId: string) => `authepoch:${userId}`;

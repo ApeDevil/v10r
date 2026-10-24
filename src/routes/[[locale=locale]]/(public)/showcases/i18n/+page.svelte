@@ -1,9 +1,7 @@
 <script lang="ts">
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
-import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import { ErrorCode, errorMessage } from '$lib/errors';
+import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import { ErrorCode, errorMessage } from '#lib/errors/index.ts';
 import {
 	formatCurrency,
 	formatDate,
@@ -12,8 +10,8 @@ import {
 	formatRelative,
 	getFormattingLocale,
 	tc,
-} from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
+} from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import {
 	baseLocale,
 	cookieMaxAge,
@@ -22,8 +20,10 @@ import {
 	type Locale,
 	locales,
 	localizeHref,
-} from '$lib/paraglide/runtime';
-import { setCookie } from '$lib/utils/cookies';
+} from '#lib/paraglide/runtime.js';
+import { setCookie } from '#lib/utils/cookies.ts';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
 
 const LOCALE_NAMES: Record<string, string> = {
 	en: 'English',
@@ -47,7 +47,7 @@ async function switchLocale(event: Event, lang: Locale) {
 	switching = true;
 	// Update Paraglide's locale cookie so the server middleware resolves correctly
 	setCookie(cookieName, lang, { maxAge: cookieMaxAge });
-	await goto(localizeHref(page.url.pathname, { locale: lang }), { invalidateAll: true });
+	await goto(localizeHref(page.url.pathname, { locale: lang }), { refreshAll: true });
 	switching = false;
 }
 

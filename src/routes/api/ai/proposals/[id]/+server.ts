@@ -7,17 +7,17 @@
  * included, so a panel can still reload the file a completed step changed.
  */
 
-import { proposalOutcome } from '$lib/server/ai/proposals/proposal-outcome';
+import { proposalOutcome } from '#lib/server/ai/proposals/proposal-outcome.ts';
 import {
 	getProposal,
 	markExpiredIfPending,
 	markInterruptedIfStale,
 	markRevertInterruptedIfStale,
-} from '$lib/server/db/ai/proposals';
-import { getConversation } from '$lib/server/db/ai/queries';
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { guardApiUser } from '$lib/server/http/guards';
-import { apiError, apiOk } from '$lib/server/http/response';
+} from '#lib/server/db/ai/proposals.ts';
+import { getConversation } from '#lib/server/db/ai/queries.ts';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals }) => {

@@ -1,6 +1,6 @@
 import { APICallError, NoOutputGeneratedError } from 'ai';
-import { ServerError } from '$lib/server/errors';
-import type { AiErrorKind } from '$lib/types/ai-error';
+import { ServerError } from '#lib/server/errors/index.ts';
+import type { AiErrorKind } from '#lib/types/ai-error.ts';
 
 export type { AiErrorKind };
 

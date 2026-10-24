@@ -103,7 +103,7 @@ In-app notification system with a full-page notification center, preference mana
 ```svelte
 <script lang="ts">
   import { invalidate } from '$app/navigation';
-  import { getToast } from '$lib/state';
+  import { getToast } from '#lib/state/index.js';
 
   const toast = getToast();
   let { data } = $props();
@@ -254,8 +254,8 @@ export function unregisterStream(userId: string, ctrl: ReadableStreamDefaultCont
 ```typescript
 // src/routes/api/notifications/stream/+server.ts
 import type { RequestHandler } from './$types';
-import { registerStream, unregisterStream } from '$lib/server/notifications/stream';
-import { getUnreadCount } from '$lib/server/notifications/queries';
+import { registerStream, unregisterStream } from '#lib/server/notifications/stream.js';
+import { getUnreadCount } from '#lib/server/notifications/queries';
 
 const MAX_PER_USER = 3;
 
@@ -308,7 +308,7 @@ export const GET: RequestHandler = async ({ locals, request }) => {
 **Trigger from anywhere** — after creating a notification in any form action or API route:
 
 ```typescript
-import { notifyUser } from '$lib/server/notifications/stream';
+import { notifyUser } from '#lib/server/notifications/stream.js';
 
 // After DB insert:
 notifyUser(targetUserId, { type: 'new', count: newUnreadCount, title: notification.title });

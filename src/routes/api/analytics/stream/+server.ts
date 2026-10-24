@@ -5,9 +5,9 @@
  * hard max duration so an attacker can't pin open unbounded serverless functions.
  */
 
-import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { SSE_HEARTBEAT_MS } from '$lib/server/notifications/config';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { SSE_HEARTBEAT_MS } from '#lib/server/notifications/config.ts';
 import type { RequestHandler } from './$types';
 
 const connectLimiter = createLimiter('rl:analytics:stream', 10, '1 m');

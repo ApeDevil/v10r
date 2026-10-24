@@ -8,11 +8,11 @@
  * than 14 days. Runs every 6 hours via the existing job scheduler.
  */
 import { and, desc, eq, lt, sql } from 'drizzle-orm';
-import { recordAuditEvent } from '$lib/server/admin/audit';
-import { db } from '$lib/server/db';
-import { createId } from '$lib/server/db/id';
-import { user as userTable } from '$lib/server/db/schema/auth/_better-auth';
-import { grantRequest } from '$lib/server/db/schema/auth/grant-request';
+import { recordAuditEvent } from '#lib/server/admin/audit.ts';
+import { createId } from '#lib/server/db/id.ts';
+import { db } from '#lib/server/db/index.ts';
+import { user as userTable } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { grantRequest } from '#lib/server/db/schema/auth/grant-request.ts';
 import { type GrantKind, grantCapability } from './grants';
 
 export const REQUEST_EXPIRY_DAYS = 14;

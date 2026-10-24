@@ -1,13 +1,13 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { pushSubscriptions } from '$lib/server/db/schema/notifications/push-subscriptions';
-import { makeUser } from '$lib/server/test/fixtures';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { pushSubscriptions } from '#lib/server/db/schema/notifications/push-subscriptions.ts';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -17,7 +17,7 @@ const { createPushSubscription, deletePushSubscription, deletePushSubscriptionBy
 	'./mutations'
 );
 const { getPushSubscriptions } = await import('./queries');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER_A = makeUser({ id: 'user-push' });
 const USER_B = makeUser({ id: 'user-push-b', email: 'push-b@example.com' });

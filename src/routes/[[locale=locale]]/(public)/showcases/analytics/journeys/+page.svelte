@@ -1,9 +1,9 @@
 <script lang="ts">
+import { Alert, EmptyState } from '#lib/components/composites/index.ts';
+import { getFormattingLocale } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { baseLocale, extractLocaleFromUrl } from '#lib/paraglide/runtime.js';
 import { page } from '$app/state';
-import { Alert, EmptyState } from '$lib/components/composites';
-import { getFormattingLocale } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
 import ChartSection from '../_components/ChartSection.svelte';
 import QueryTime from '../_components/QueryTime.svelte';
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Stack } from '$lib/components/layout';
-import { Button, Spinner, Textarea, Typography } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
-import { getToast } from '$lib/state/toast.svelte';
-import type { CommentStatus } from '$lib/types/db-enums';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Spinner, Textarea, Typography } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import type { CommentStatus } from '#lib/types/db-enums.ts';
 
 interface PublicComment {
 	id: string;

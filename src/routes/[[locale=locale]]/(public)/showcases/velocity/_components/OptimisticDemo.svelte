@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner, Switch } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { OptimisticValue } from '$lib/state/optimistic.svelte';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Spinner, Switch } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { OptimisticValue } from '#lib/state/optimistic.svelte.ts';
 
 /** Artificial server latency, in ms. Stated on the page — nothing here hides it. */
 const LATENCY = 500;

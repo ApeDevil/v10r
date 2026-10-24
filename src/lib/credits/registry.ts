@@ -10,8 +10,8 @@
  * match the installed package's metadata, and every `docs`/`showcase` link
  * must resolve to a published doc / real showcase route.
  *
- * Lives in `$lib` (not the route tree) so the sitemap and tests can read it
- * without a `$lib → routes` back-edge — same reasoning as `../showcases/`.
+ * Lives in `#lib` (not the route tree) so the sitemap and tests can read it
+ * without a `#lib → routes` back-edge — same reasoning as `../showcases/`.
  * All human-visible copy is Paraglide message references (`LabelFn`); brand
  * names and SPDX license strings stay untranslated by design.
  */

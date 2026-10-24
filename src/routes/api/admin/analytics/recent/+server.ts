@@ -3,10 +3,10 @@
  * Returns events newer than `?since=<id>`, optionally filtered to paired sessions.
  */
 
-import { getActiveSessionCount, getPairedSessionCount, getRecentEvents } from '$lib/server/db/analytics/queries';
-import { requireAdmin } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { getActiveSessionCount, getPairedSessionCount, getRecentEvents } from '#lib/server/db/analytics/queries.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 export const config = { runtime: 'nodejs22.x', maxDuration: 10 };

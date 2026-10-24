@@ -16,8 +16,8 @@ afterEach(() => {
 type Store = 'slow' | 'failing' | 'absent';
 
 async function decide(store: Store) {
-	vi.doMock('$lib/server/cache', () => ({ redis: store === 'absent' ? null : {} }));
-	vi.doMock('$app/environment', () => ({ dev: false, building: false, browser: false }));
+	vi.doMock('#lib/server/cache/index.ts', () => ({ redis: store === 'absent' ? null : {} }));
+	vi.doMock('$app/env', () => ({ dev: false, building: false, browser: false }));
 	vi.doMock('@upstash/ratelimit', () => ({
 		Ratelimit: class {
 			static slidingWindow() {
@@ -29,7 +29,7 @@ async function decide(store: Store) {
 		},
 	}));
 	vi.spyOn(console, 'error').mockImplementation(() => {});
-	const { createLimiter } = await import('$lib/server/http/rate-limit');
+	const { createLimiter } = await import('#lib/server/http/rate-limit.ts');
 	const limiter = createLimiter('rl:test', 20, '60 s', LAB_LIMITER_POLICY);
 	vi.useFakeTimers();
 	const decision = limiter.limit('203.0.113.7');

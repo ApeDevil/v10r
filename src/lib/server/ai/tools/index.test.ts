@@ -4,7 +4,7 @@
  * profiles mount from the same manifest is `profile/profile.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
-import { TOOL_MANIFEST } from '$lib/types/ai-tools';
+import { TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
 import { chatbotToolMeta, deskbotToolMeta } from './index';
 
 describe('TOOL_MANIFEST ⇔ derived meta', () => {

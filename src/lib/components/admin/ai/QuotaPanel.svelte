@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Card } from '$lib/components/composites';
-import { Cluster } from '$lib/components/layout';
-import { Badge } from '$lib/components/primitives';
+import { Card } from '#lib/components/composites/index.ts';
+import { Cluster } from '#lib/components/layout/index.ts';
+import { Badge } from '#lib/components/primitives/index.ts';
 
 /**
  * Provider Resources & Limits board. Table-primary and honesty-first: documented

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onDestroy, onMount } from 'svelte';
+import { cn } from '#lib/utils/cn.ts';
 import { beforeNavigate } from '$app/navigation';
-import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 import { colorChannels, getChartInfraColors, getCssVar, type Rgb, readableTextOn } from '../../_shared/theme-bridge';
 import type { HeatMapData } from './types';
@@ -207,7 +207,9 @@ function cleanup() {
 	ctx = undefined;
 }
 
-beforeNavigate(cleanup);
+beforeNavigate(({ shallow }) => {
+	if (!shallow) cleanup();
+});
 onDestroy(cleanup);
 
 onMount(() => {

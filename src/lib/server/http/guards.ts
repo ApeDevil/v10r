@@ -1,8 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
-import { localizeHref } from '$lib/i18n';
-import { parseAdminIds } from '$lib/server/auth/admin-ids';
-import { apiError } from '$lib/server/http/response';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { parseAdminIds } from '#lib/server/auth/admin-ids.ts';
+import { apiError } from '#lib/server/http/response.ts';
+import { ADMIN_USER_ID } from '$app/env/private';
 
 /**
  * Admin gate. `ADMIN_USER_ID` semantics + parsing live in `./admin-ids` (single source of
@@ -12,7 +12,7 @@ import { apiError } from '$lib/server/http/response';
 export function isAdmin(user: { id: string } | null | undefined): boolean {
 	if (!user) return false;
 	// IDs are case-sensitive opaque tokens — compare exactly (parseAdminIds trims only).
-	return parseAdminIds(env.ADMIN_USER_ID).includes(user.id);
+	return parseAdminIds(ADMIN_USER_ID).includes(user.id);
 }
 
 export function requireAuth(locals: App.Locals, returnTo?: string) {

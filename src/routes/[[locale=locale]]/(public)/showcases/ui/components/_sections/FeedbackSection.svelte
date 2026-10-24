@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Alert, EmptyState } from '$lib/components';
-import { Button } from '$lib/components/primitives';
-import { getToast } from '$lib/state/toast.svelte';
+import { Alert, EmptyState } from '#lib/components/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { DemoCard, VariantGrid } from '../_components';
 
 const toast = getToast();

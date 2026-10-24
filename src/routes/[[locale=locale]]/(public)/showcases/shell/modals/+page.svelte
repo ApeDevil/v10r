@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Button, Kbd } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { getModals } from '$lib/state/modals.svelte';
+import { Button, Kbd } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { getModals } from '#lib/state/modals.svelte.ts';
 
 const modals = getModals();
 </script>

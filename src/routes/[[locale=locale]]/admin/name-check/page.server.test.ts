@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { NameSourceConnection, NameSourceConnections } from '$lib/server/name-check/connections';
+import type { NameSourceConnection, NameSourceConnections } from '#lib/server/name-check/connections.ts';
 
 const ADMIN = { user: { id: 'admin-1', email: 'admin@example.test' }, session: {} };
 const guards = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
@@ -12,18 +12,18 @@ const settings = vi.hoisted(() => ({
 const limiter = vi.hoisted(() => ({ limit: vi.fn(async () => ({ success: true, reset: 0 })) }));
 const security = vi.hoisted(() => ({ getEncryptionKeyRing: vi.fn(() => ({ current: 'k', previous: [] })) }));
 
-vi.mock('$lib/server/http/guards', () => guards);
-vi.mock('$lib/server/name-check', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/name-check')>()),
+vi.mock('#lib/server/http/guards.ts', () => guards);
+vi.mock('#lib/server/name-check/index.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/name-check/index.ts')>()),
 	loadNameSourceConnections: nameCheck.loadNameSourceConnections,
 }));
-vi.mock('$lib/server/name-check/connection-settings', () => settings);
-vi.mock('$lib/server/http/rate-limit', () => ({ createLimiter: () => limiter }));
-vi.mock('$lib/server/security', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/security')>()),
+vi.mock('#lib/server/name-check/connection-settings.ts', () => settings);
+vi.mock('#lib/server/http/rate-limit.ts', () => ({ createLimiter: () => limiter }));
+vi.mock('#lib/server/security/index.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/security/index.ts')>()),
 	getEncryptionKeyRing: security.getEncryptionKeyRing,
 }));
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const { actions, load } = await import('./+page.server');
 

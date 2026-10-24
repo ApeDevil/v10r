@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Button } from '$lib/components';
-import { Command, CommandPalette } from '$lib/components/composites';
-import type { CommandGroup } from '$lib/components/composites/command/types';
-import type { CommandPaletteItem } from '$lib/components/composites/command-palette/types';
-import { Kbd } from '$lib/components/primitives';
+import type { CommandGroup } from '#lib/components/composites/command/types.ts';
+import type { CommandPaletteItem } from '#lib/components/composites/command-palette/types.ts';
+import { Command, CommandPalette } from '#lib/components/composites/index.ts';
+import { Button } from '#lib/components/index.ts';
+import { Kbd } from '#lib/components/primitives/index.ts';
 import { DemoCard } from '../../components/_components';
 
 let paletteOpen = $state(false);

@@ -10,7 +10,7 @@
  * `agent_proposal.status` remains the state machine; this table is its evidence.
  */
 import { foreignKey, integer, jsonb, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
-import type { ProposalStepRecovery } from '$lib/types/ai-proposal';
+import type { ProposalStepRecovery } from '#lib/types/ai-proposal.ts';
 import { aiSchema } from './conversation';
 import { agentProposal } from './proposal';
 

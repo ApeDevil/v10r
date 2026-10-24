@@ -6,15 +6,15 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeConversation, makeUser } from '$lib/server/test/fixtures';
+import { makeConversation, makeUser } from '#lib/server/test/fixtures.ts';
 import { conversation, message } from '../../db/schema/ai/conversation';
 import { agentProposal } from '../../db/schema/ai/proposal';
 import { user } from '../../db/schema/auth/_better-auth';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -32,13 +32,13 @@ const {
 	markExecuting,
 	markRevertInterruptedIfStale,
 	recordProposalStep,
-} = await import('$lib/server/db/ai/proposals');
+} = await import('#lib/server/db/ai/proposals.ts');
 const { createMarkdownFile, createSpreadsheetFile, renameFile, updateSpreadsheetByFileId } = await import(
-	'$lib/server/db/desk/mutations'
+	'#lib/server/db/desk/mutations.ts'
 );
-const { getFile, getMarkdownByFileId, getSpreadsheetByFileId } = await import('$lib/server/db/desk/queries');
+const { getFile, getMarkdownByFileId, getSpreadsheetByFileId } = await import('#lib/server/db/desk/queries.ts');
 const { readProposedTarget } = await import('../tools/proposed-target');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER = makeUser({ id: 'user-revert' });
 const OTHER = makeUser({ id: 'user-revert-other', email: 'other-revert@example.com' });

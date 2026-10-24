@@ -1,6 +1,6 @@
 import { lt } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
+import { db } from '#lib/server/db/index.ts';
+import { telegramVerificationTokens } from '#lib/server/db/schema/notifications/telegram.ts';
 
 export async function telegramTokenCleanup(): Promise<number> {
 	// Delete expired tokens older than 1 day

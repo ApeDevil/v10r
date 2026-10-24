@@ -1,12 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { localizeHref } from '$lib/i18n';
-import { sendNotification } from '$lib/server/notifications';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { sendNotification } from '#lib/server/notifications/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
  * Showcase preset → Paraglide message key mapping.
  * Each preset uses a stable `notif_*` key; render at viewer/delivery time
- * via `renderNotification` (`$lib/server/notifications/render-message`).
+ * via `renderNotification` (`#lib/server/notifications/render-message.ts`).
  */
 const PRESETS: Record<string, string> = {
 	mention: 'notif_mention',

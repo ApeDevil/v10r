@@ -1,13 +1,13 @@
 # Rate Limits
 
-Sliding-window rate limits backed by Upstash Redis. All limiters are created with the `createLimiter` factory from `$lib/server/http/rate-limit.ts` — no global hook limiter, no cookie secrets, no `sveltekit-rate-limiter`.
+Sliding-window rate limits backed by Upstash Redis. All limiters are created with the `createLimiter` factory from `#lib/server/http/rate-limit.ts` — no global hook limiter, no cookie secrets, no `sveltekit-rate-limiter`.
 
 ---
 
 ## `createLimiter` Factory
 
 ```typescript
-import { createLimiter } from '$lib/server/http/rate-limit';
+import { createLimiter } from '#lib/server/http/rate-limit.js';
 
 const limiter = createLimiter(prefix, max, window);
 // prefix — Redis key namespace (string)
@@ -48,12 +48,12 @@ The Upstash client is constructed with `timeout: 1000` — a slow Redis cannot s
 
 ---
 
-## Per-Email Limiter (`$lib/server/abuse/rate-limit/per-email.ts`)
+## Per-Email Limiter (`#lib/server/abuse/rate-limit/per-email.ts`)
 
 Closes the email-bombing vector: an attacker rotating IPs can still drain email quota and hammer one victim's inbox without a per-target limit. Keying on a sha256 hash of the normalized email closes this regardless of source IP.
 
 ```typescript
-import { checkEmailRateLimit } from '$lib/server/abuse';
+import { checkEmailRateLimit } from '#lib/server/abuse/index.js';
 
 const decision = await checkEmailRateLimit(email);
 if (!decision.allowed) return decisionResponse(decision);
@@ -90,7 +90,7 @@ The email is extracted from the request body via `request.clone().json()` so Bet
 Standard 429 response builder. Used by endpoint handlers when a limiter returns `success: false`:
 
 ```typescript
-import { rateLimitResponse } from '$lib/server/http/rate-limit';
+import { rateLimitResponse } from '#lib/server/http/rate-limit.js';
 
 const { success, reset } = await limiter.limit(ip);
 if (!success) return rateLimitResponse(reset);

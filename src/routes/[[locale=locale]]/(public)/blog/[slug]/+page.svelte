@@ -1,12 +1,12 @@
 <script lang="ts">
+import { hydrateEmbeds } from '#lib/actions/hydrate-embeds.ts';
+import { BlogTag, CommentsIsland } from '#lib/components/blog/index.ts';
+import { MarkdownProse } from '#lib/components/composites/index.ts';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import { Asterism, Typography } from '#lib/components/primitives/index.ts';
+import { deLocalizeHref, formatDate, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import { hydrateEmbeds } from '$lib/actions/hydrate-embeds';
-import { BlogTag, CommentsIsland } from '$lib/components/blog';
-import { MarkdownProse } from '$lib/components/composites';
-import { PageContainer, Stack } from '$lib/components/layout';
-import { Asterism, Typography } from '$lib/components/primitives';
-import { deLocalizeHref, formatDate, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 

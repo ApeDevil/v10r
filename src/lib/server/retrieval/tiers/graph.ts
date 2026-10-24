@@ -4,9 +4,9 @@
  * Graph hops capped at 2 (non-negotiable).
  */
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { USER_TIMEOUT_MS } from '$lib/server/graph/config';
-import { expandViaGraph, getEntitiesForChunks } from '$lib/server/graph/retrieval/queries';
+import { db } from '#lib/server/db/index.ts';
+import { USER_TIMEOUT_MS } from '#lib/server/graph/config.ts';
+import { expandViaGraph, getEntitiesForChunks } from '#lib/server/graph/retrieval/queries.ts';
 import { fetchChunksByIds } from '../queries';
 import type { RankedChunk, RetrievedEntity } from '../types';
 

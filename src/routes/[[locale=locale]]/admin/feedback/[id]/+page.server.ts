@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
-import { deleteFeedback, getFeedback, getFeedbackJourney, setFeedbackStatus } from '$lib/server/feedback';
-import { requireAdmin } from '$lib/server/http/guards';
+import { deleteFeedback, getFeedback, getFeedbackJourney, setFeedbackStatus } from '#lib/server/feedback/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const VALID_STATUSES = new Set(['new', 'read', 'archived'] as const);

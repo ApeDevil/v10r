@@ -1,6 +1,6 @@
-import { DOCS_SECTIONS } from '$lib/docs/sections';
-import * as m from '$lib/paraglide/messages';
-import { groupByDomain } from '$lib/showcases/catalog/registry';
+import { DOCS_SECTIONS } from '#lib/docs/sections.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { groupByDomain } from '#lib/showcases/catalog/registry.ts';
 import { adminNavGroups } from './admin';
 import type { LabelFn, NavChild, NavItem } from './types';
 

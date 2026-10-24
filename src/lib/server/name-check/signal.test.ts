@@ -5,7 +5,7 @@ import type {
 	NameCheckCoverage,
 	TrademarkNameMatch,
 	WebNameMatch,
-} from '$lib/name-check/report';
+} from '#lib/name-check/report.ts';
 import { categoryRelevance } from './nice-classes';
 import { territoryRelevance } from './relevance';
 import { conflictSignal } from './signal';

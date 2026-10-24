@@ -1,10 +1,10 @@
-import { env } from '$env/dynamic/private';
+import { VERCEL_ENV } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 const SITEMAP_URL = 'https://www.v10r.dev/sitemap.xml';
 
 export const GET: RequestHandler = async () => {
-	const vercelEnv = env.VERCEL_ENV ?? 'development';
+	const vercelEnv = VERCEL_ENV ?? 'development';
 
 	let body: string;
 

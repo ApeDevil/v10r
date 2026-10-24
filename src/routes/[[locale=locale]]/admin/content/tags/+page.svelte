@@ -1,10 +1,7 @@
 <script lang="ts">
-import type { ActionResult } from '@sveltejs/kit';
-import { enhance } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
-import { BlogTag } from '$lib/components/blog';
-import { Card, ConfirmDialog, EmptyState, FormField } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
+import { BlogTag } from '#lib/components/blog/index.ts';
+import { Card, ConfirmDialog, EmptyState, FormField } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
 import {
 	Badge,
 	Body,
@@ -18,10 +15,13 @@ import {
 	Spinner,
 	Table,
 	Textarea,
-} from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
-import { ICON_OPTIONS } from '$lib/styles/icon-options';
+} from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { ICON_OPTIONS } from '#lib/styles/icon-options.ts';
+import type { ActionResult } from '$app/forms';
+import { enhance } from '$app/forms';
+import { refreshAll } from '$app/navigation';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -179,7 +179,7 @@ function handleDeleteEnhance() {
 		update,
 	}: {
 		result: ActionResult;
-		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+		update: (opts?: { reset?: boolean; refreshAll?: boolean }) => Promise<void>;
 	}) => {
 		if (result.type === 'success' && result.data) {
 			toast.success(result.data.message as string);
@@ -198,7 +198,7 @@ function handleDeleteDomainEnhance() {
 		update,
 	}: {
 		result: ActionResult;
-		update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+		update: (opts?: { reset?: boolean; refreshAll?: boolean }) => Promise<void>;
 	}) => {
 		if (result.type === 'success' && result.data) {
 			toast.success(result.data.message as string);
@@ -242,8 +242,8 @@ function handleDeleteDomainEnhance() {
 						<span class="i-lucide-plus h-4 w-4 mr-1"></span>
 						{m.admin_tags_new_domain()}
 					</Button>
-					<!-- One Refresh per page: invalidateAll() reloads both cards. -->
-					<Button variant="ghost" size="sm" onclick={() => invalidateAll()}>
+					<!-- One Refresh per page: refreshAll() reloads both cards. -->
+					<Button variant="ghost" size="sm" onclick={() => refreshAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 						{m.admin_action_refresh()}
 					</Button>

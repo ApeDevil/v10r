@@ -1,5 +1,5 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
+import { NavSection } from '#lib/components/composites/index.ts';
 import CartographSection from './_sections/CartographSection.svelte';
 import FolioSection from './_sections/FolioSection.svelte';
 import LedgerSection from './_sections/LedgerSection.svelte';

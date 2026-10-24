@@ -12,9 +12,10 @@
  * that will not decrypt marks the registry `degraded` — neither falls back to the
  * environment or reads as "nothing configured".
  */
-import { db } from '$lib/server/db';
-import { listProviderConnections } from '$lib/server/db/ai/provider-connections';
-import { EncryptionError, type EncryptionKeyRing, getEncryptionKeyRing } from '$lib/server/security';
+
+import { listProviderConnections } from '#lib/server/db/ai/provider-connections.ts';
+import { db } from '#lib/server/db/index.ts';
+import { EncryptionError, type EncryptionKeyRing, getEncryptionKeyRing } from '#lib/server/security/index.ts';
 import {
 	type EmbeddingConnection,
 	type ProviderEntry,

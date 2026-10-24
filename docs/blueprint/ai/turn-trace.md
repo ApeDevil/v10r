@@ -20,7 +20,7 @@ gated to dev builds and admins; the showcase's "Context orchestration" was a sep
 
 ## The contract
 
-`$lib/types/turn-trace.ts` — framework-free, imported by the server recorder, the chat
+`#lib/types/turn-trace.ts` — framework-free, imported by the server recorder, the chat
 components and the showcase's turn inspector.
 
 ```
@@ -166,7 +166,7 @@ the outcome, the calls, the tools, the citations and the provider.
 
 ### The turn graph
 
-Three fixed columns (`$lib/showcases/ai/turn-graph.ts`, the pure projection; its geometry in
+Three fixed columns (`#lib/showcases/ai/turn-graph.ts`, the pure projection; its geometry in
 `turn-graph-layout.ts`; rendered by `_components/turn-graph/*` through the shared `FlowDiagram`
 wrapper on a desktop canvas and as three stacked lists under 768 px):
 
@@ -237,7 +237,7 @@ tape and the deskbot's approval lifecycle all render the same trace — `spineOf
 band statuses from the recorded facts (the deskbot's gate band is the door: `skipped` when
 no proposal, `active` while pending, `not-taken` when the human rejected it or let it
 expire, `done` otherwise); a trace exists only past the guard, so the guard chain of a turn
-that exists has passed. The projection is pure (`$lib/showcases/ai/inspector.ts`): the
+that exists has passed. The projection is pure (`#lib/showcases/ai/inspector.ts`): the
 fixtures, a live turn and the recording script share it.
 
 **Sources.** `recorded`: `scripts/ai/record-turn-fixture.ts` reads a real dev turn through the

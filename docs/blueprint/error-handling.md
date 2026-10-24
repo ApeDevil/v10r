@@ -22,7 +22,7 @@ Use the `error()` helper for controlled errors:
 ```typescript
 // src/routes/items/[id]/+page.server.ts
 import { error } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.js';
 import { and, eq } from 'drizzle-orm';
 
 export async function load({ params, locals }) {
@@ -459,7 +459,7 @@ export async function apiFetch<T>(
 
 ```svelte
 <script lang="ts">
-  import { apiFetch, ApiError } from '$lib/api';
+  import { apiFetch, ApiError } from '#lib/api.js';
 
   let error = $state<string | null>(null);
   let loading = $state(false);
@@ -521,7 +521,7 @@ A boundary catches errors thrown **during rendering**: the initial render and te
 </svelte:boundary>
 ```
 
-`reset()` (passed into the `failed` snippet) discards the errored subtree and remounts it. `BoundaryFallback` (`$lib/components/composites`) is the shared fallback presentation — icon, title, optional description, retry button — so every boundary looks the same regardless of what failed.
+`reset()` (passed into the `failed` snippet) discards the errored subtree and remounts it. `BoundaryFallback` (`#lib/components/composites/index.js`) is the shared fallback presentation — icon, title, optional description, retry button — so every boundary looks the same regardless of what failed.
 
 ### Composing With the Other Layers
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Card, NavSection } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
+import { Card, NavSection } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
 import {
 	Badge,
 	Body,
@@ -12,10 +12,10 @@ import {
 	Row,
 	Select,
 	Table,
-} from '$lib/components/primitives';
-import { ErdDiagram } from '$lib/components/viz';
-import * as m from '$lib/paraglide/messages';
-import { authFixture } from '$lib/showcases/auth/fixture';
+} from '#lib/components/primitives/index.ts';
+import { ErdDiagram } from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { authFixture } from '#lib/showcases/auth/fixture.ts';
 
 // Working copy of fixture users — all mutations are local $state, reset on navigation.
 let users = $state(

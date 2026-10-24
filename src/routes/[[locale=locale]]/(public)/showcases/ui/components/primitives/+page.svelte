@@ -1,7 +1,7 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
-import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
-import * as m from '$lib/paraglide/messages';
+import { NavSection } from '#lib/components/composites/index.ts';
+import type { ComponentDoc } from '#lib/components/composites/info-dialog/types.ts';
+import * as m from '#lib/paraglide/messages.js';
 import ActionsSection from '../_sections/ActionsSection.svelte';
 import DataDisplaySection from '../_sections/DataDisplaySection.svelte';
 import InputsSection from '../_sections/InputsSection.svelte';

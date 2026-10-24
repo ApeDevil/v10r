@@ -1,12 +1,12 @@
-# `$lib/product-composition`
+# `#lib/product-composition/index.ts`
 
 Products that connect, independent of how they are drawn: a document of **definitions**
 (reusable catalogue entries with geometry and typed **ports**), **occurrences** (placed uses
 of a definition), **couplings** (logical edges between two ports) and **conduits** (the pipe
 or cable path that physically realises a coupling). The persisted shape is
-`$lib/schemas/product-composition.ts`; this directory is the arithmetic and the rules over it.
+`#lib/schemas/product-composition.ts`; this directory is the arithmetic and the rules over it.
 
-It sits below the component layer, like `$lib/desk/`, because more than one place needs the
+It sits below the component layer, like `#lib/desk/`, because more than one place needs the
 same answers: the Threlte editor renders and edits a composition, and anything that accepts a
 composition file — an import, an MCP or AI tool, a server write — must validate it exactly as
 the editor would. Nothing here imports Svelte, `$app`, the DOM or a WebGL object; Three.js is
@@ -35,5 +35,5 @@ Three boundaries hold the design together:
 | `diagnostics.ts` | Diagnostic codes, their fixed severity, and the stable sort |
 
 The heating and shelving fixtures that exercise it — and the gate proving it names no domain —
-live with their showcase in `$lib/showcases/3d/compose/`. The pattern as a whole — invariants,
+live with their showcase in `#lib/showcases/3d/compose/`. The pattern as a whole — invariants,
 scope, emulation steps — is `docs/blueprint/3d/product-composition.md`.

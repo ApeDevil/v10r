@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Button, CornerFrame, Divider, Input, RadialGlow, Spinner } from '$lib/components';
-import * as m from '$lib/paraglide/messages';
+import { Button, CornerFrame, Divider, Input, RadialGlow, Spinner } from '#lib/components/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 type FlowState = 'idle' | 'sending' | 'magic-link-sent' | 'otp-sent';
 

@@ -5,7 +5,7 @@
  * `unknown` until the status route answers, and nothing may start while one is in flight.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ProposalOutcome } from '$lib/types/ai-proposal';
+import type { ProposalOutcome } from '#lib/types/ai-proposal.ts';
 
 /**
  * The SDK's `Chat` stands in as the fields the session touches; the run under test is the

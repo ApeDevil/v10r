@@ -9,9 +9,9 @@
  * every open panel for direct disambiguation.
  */
 import { DropdownMenu } from 'bits-ui';
-import type { ActivityBarItem, PanelDefinition } from '$lib/desk/layout.types';
-import * as m from '$lib/paraglide/messages';
-import { useSurface } from '$lib/styles/elevation';
+import type { ActivityBarItem, PanelDefinition } from '#lib/desk/layout.types.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { useSurface } from '#lib/styles/elevation.ts';
 
 interface Props {
 	items: ActivityBarItem[];

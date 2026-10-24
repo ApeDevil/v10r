@@ -1,9 +1,9 @@
-import { env } from '$env/dynamic/private';
+import { TELEGRAM_BOT_TOKEN } from '$app/env/private';
 import type { DeliveryChannel, DeliveryPayload, DeliveryResult } from './types';
 
 export class TelegramChannel implements DeliveryChannel {
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
-		const botToken = env.TELEGRAM_BOT_TOKEN;
+		const botToken = TELEGRAM_BOT_TOKEN;
 		if (!botToken) {
 			return {
 				success: false,

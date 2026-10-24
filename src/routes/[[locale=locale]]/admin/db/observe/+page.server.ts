@@ -1,9 +1,9 @@
-import { requireAdmin } from '$lib/server/http/guards';
-import type { DependencyResult } from '$lib/server/monitoring';
-import { fetchNeo4jMetrics } from '$lib/server/monitoring/neo4j';
-import { fetchNeonMetrics } from '$lib/server/monitoring/neon';
-import { fetchR2Metrics } from '$lib/server/monitoring/r2';
-import { fetchUpstashMetrics } from '$lib/server/monitoring/upstash';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import type { DependencyResult } from '#lib/server/monitoring/index.ts';
+import { fetchNeo4jMetrics } from '#lib/server/monitoring/neo4j.ts';
+import { fetchNeonMetrics } from '#lib/server/monitoring/neon.ts';
+import { fetchR2Metrics } from '#lib/server/monitoring/r2.ts';
+import { fetchUpstashMetrics } from '#lib/server/monitoring/upstash.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 function settledToResult<T>(result: PromiseSettledResult<DependencyResult<T>>): DependencyResult<T> {

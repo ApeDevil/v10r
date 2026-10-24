@@ -9,7 +9,7 @@
  * itself is exercised on the composed prompt in `profile/deskbot.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
-import { escapeXmlText } from '$lib/utils/xml';
+import { escapeXmlText } from '#lib/utils/xml.ts';
 import { CHATBOT_PROFILE } from './profile/chatbot';
 import { DESKBOT_PROFILE } from './profile/deskbot';
 import { identityBlock } from './profile/profile';

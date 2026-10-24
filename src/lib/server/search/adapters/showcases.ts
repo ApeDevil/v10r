@@ -8,10 +8,10 @@
  * → those records keep `localeFallback` (rendered with an "EN" badge).
  */
 
-import type { Locale } from '$lib/i18n';
-import type { SearchRecord } from '$lib/search/types';
-import { type ShowcaseSublink, showcases } from '$lib/showcases/catalog/registry';
-import { showcaseSections } from '$lib/showcases/catalog/sections';
+import type { Locale } from '#lib/i18n/index.ts';
+import type { SearchRecord } from '#lib/search/types.ts';
+import { type ShowcaseSublink, showcases } from '#lib/showcases/catalog/registry.ts';
+import { showcaseSections } from '#lib/showcases/catalog/sections.ts';
 import { REDIRECT_HREFS } from './_redirects';
 
 function cardTitleFor(pageHref: string): string {

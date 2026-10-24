@@ -16,7 +16,7 @@
  * query and the whole trade mark lane went `unavailable`. Without credentials the source
  * reports `credentials_missing`; the check still runs everything else.
  */
-import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
+import { NAME_CHECK_TERRITORIES } from '#lib/schemas/name-check.ts';
 import { NameSourceError } from '../errors';
 import { fetchJson } from '../fetch-json';
 import type { EuipoCredentials, LiveNameSource, NameSourceContext, TrademarkDraft } from '../name-source';

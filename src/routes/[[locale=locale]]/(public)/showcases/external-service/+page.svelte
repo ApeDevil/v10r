@@ -1,11 +1,14 @@
 <script lang="ts">
-import type { SubmitFunction } from '@sveltejs/kit';
-import { enhance } from '$app/forms';
-import { Alert, Card, DiagGrid, DiagRow, NavSection, ShowcaseLayout } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Select, Spinner } from '$lib/components/primitives';
-import { CallFigures, CallHistory, EvaluationSteps, OutcomeBadge } from '$lib/components/showcases/external-service';
-import { startedDuringCheck } from '$lib/showcases/external-service/cold-start';
+import { Alert, Card, DiagGrid, DiagRow, NavSection, ShowcaseLayout } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Select, Spinner } from '#lib/components/primitives/index.ts';
+import {
+	CallFigures,
+	CallHistory,
+	EvaluationSteps,
+	OutcomeBadge,
+} from '#lib/components/showcases/external-service/index.ts';
+import { startedDuringCheck } from '#lib/showcases/external-service/cold-start.ts';
 import {
 	type CheckPatience,
 	EVALUATION_PRESET_IDS,
@@ -17,7 +20,9 @@ import {
 	SERVICE_DRILL_IDS,
 	type ServiceDrillId,
 	type ServiceTargetId,
-} from '$lib/showcases/external-service/types';
+} from '#lib/showcases/external-service/types.ts';
+import type { SubmitFunction } from '$app/forms';
+import { enhance } from '$app/forms';
 import { getShowcaseCard } from '../showcases';
 
 let { data, form } = $props();

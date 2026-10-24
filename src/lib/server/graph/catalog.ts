@@ -6,12 +6,12 @@
  * truth; the graph is a rebuildable derivation (no dual source-of-truth drift).
  *
  * The Cypher executor is INJECTED (`CypherRunner`) rather than imported, so this
- * module stays free of `$env/dynamic/private` and runs from the `db:catalog-sync`
- * Bun script as well as from the app (pass `cypher` from `$lib/server/graph`).
+ * module stays free of `$app/env/private` and runs from the `db:catalog-sync`
+ * Bun script as well as from the app (pass `cypher` from `#lib/server/graph/index.ts`).
  */
 import type { CatalogEdge, CatalogResourceNode } from '../search/catalog-projection';
 
-/** Matches the signature of `cypher()` from `$lib/server/graph`. */
+/** Matches the signature of `cypher()` from `#lib/server/graph/index.ts`. */
 export type CypherRunner = <T = Record<string, unknown>>(
 	statement: string,
 	parameters?: Record<string, unknown>,

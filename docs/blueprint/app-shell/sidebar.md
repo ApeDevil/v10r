@@ -159,7 +159,7 @@ right-anchored drawer), and Theme/Language open a second static panel **stacked
 on top of it**, staggered 8px right / 12px up, with a back row as the touch
 dismissal. Elevation strata: drawer E1 → menu E2 → panel E3. The drawer, each
 open menu, and the stacked panel register in the layer-stack singleton
-(`$lib/state/layer-stack.svelte.ts`), so Escape/overlay-click peel exactly one
+(`#lib/state/layer-stack.svelte.ts`), so Escape/overlay-click peel exactly one
 layer at a time — the panel stops Bits UI's escape-defer chain with
 `escapeKeydownBehavior="close"`. See the elevation ladder in
 [design/tokens.md](../design/tokens.md).

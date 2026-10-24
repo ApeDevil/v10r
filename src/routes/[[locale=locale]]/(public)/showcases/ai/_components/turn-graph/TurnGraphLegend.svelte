@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Badge } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { EDGE_KIND_LABELS, STATE_LABELS } from '$lib/showcases/ai/labels';
-import type { TurnGraphEdgeKind } from '$lib/showcases/ai/turn-graph';
-import type { TurnItemState } from '$lib/types/turn-trace';
+import { Badge } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { EDGE_KIND_LABELS, STATE_LABELS } from '#lib/showcases/ai/labels.ts';
+import type { TurnGraphEdgeKind } from '#lib/showcases/ai/turn-graph.ts';
+import type { TurnItemState } from '#lib/types/turn-trace.ts';
 
 // What the strokes and chips mean, always in view — one line under the canvas, words beside
 // every swatch so colour never carries it alone. Containment is a box inside a box (the

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resetLocalQuota, takeDailyQuota } from './quota';
 
-vi.mock('$lib/server/cache/client', () => ({ redis: null }));
+vi.mock('#lib/server/cache/client.ts', () => ({ redis: null }));
 
 afterEach(() => resetLocalQuota());
 

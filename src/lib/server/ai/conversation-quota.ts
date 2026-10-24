@@ -6,8 +6,8 @@
  * without the data layer needing to know why anyone is asking.
  */
 
-import { getUsersNearLimit } from '$lib/server/db/ai/admin-queries';
-import { countConversations, getConversationStats } from '$lib/server/db/ai/queries';
+import { getUsersNearLimit } from '#lib/server/db/ai/admin-queries.ts';
+import { countConversations, getConversationStats } from '#lib/server/db/ai/queries.ts';
 import { MAX_CONVERSATIONS_PER_USER } from './config';
 
 /** Null when the user may create another conversation; a reader-facing reason when not. */

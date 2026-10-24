@@ -11,9 +11,9 @@
  * `folder_id` via the asset.folder_id `SET NULL` FK.
  */
 import { and, count, eq, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { createId } from '$lib/server/db/id';
-import { asset, assetFolder } from '$lib/server/db/schema/blog';
+import { createId } from '#lib/server/db/id.ts';
+import { db } from '#lib/server/db/index.ts';
+import { asset, assetFolder } from '#lib/server/db/schema/blog/index.ts';
 import {
 	assertOwnedDestination,
 	collectSubtreeIds,
@@ -25,7 +25,7 @@ import {
 	isUniqueViolation,
 	lockFolderTree,
 	suggestNextName,
-} from '$lib/server/db/shared/folder-tree';
+} from '#lib/server/db/shared/folder-tree.ts';
 
 export const ASSET_FOLDER_LIST_CAP = 500;
 

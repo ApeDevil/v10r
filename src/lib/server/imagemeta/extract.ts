@@ -14,12 +14,12 @@ import {
 	IMAGE_CATEGORIES,
 	type ImageAnalysis,
 	imageAnalysisSchema,
-} from '$lib/schemas/image-metadata';
-import { getVisionProvider, type ProviderRegistry } from '$lib/server/ai';
-import { chargeTokens, checkUserBudget } from '$lib/server/ai/budget';
-import { MAX_TOKENS } from '$lib/server/ai/config';
-import { estimateCost } from '$lib/server/ai/pricing';
-import { getImagemetaBytes } from '$lib/server/store/image';
+} from '#lib/schemas/image-metadata.ts';
+import { chargeTokens, checkUserBudget } from '#lib/server/ai/budget.ts';
+import { MAX_TOKENS } from '#lib/server/ai/config.ts';
+import { getVisionProvider, type ProviderRegistry } from '#lib/server/ai/index.ts';
+import { estimateCost } from '#lib/server/ai/pricing.ts';
+import { getImagemetaBytes } from '#lib/server/store/image.ts';
 import type { ExtractFailureReason, ExtractResult } from './types';
 
 /**

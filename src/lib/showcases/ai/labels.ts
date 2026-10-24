@@ -7,10 +7,10 @@
  * are deliberately NOT translated — they render verbatim in all locales.
  */
 
-import type { LabelFn } from '$lib/nav/types';
-import * as m from '$lib/paraglide/messages';
-import type { AiSurface } from '$lib/types/db-enums';
-import type { ChunkLevel, PromptBlockId, TurnItemState, TurnOutcome } from '$lib/types/turn-trace';
+import type { LabelFn } from '#lib/nav/types.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { AiSurface } from '#lib/types/db-enums.ts';
+import type { ChunkLevel, PromptBlockId, TurnItemState, TurnOutcome } from '#lib/types/turn-trace.ts';
 import type { InspectorGroupId } from './inspector';
 import {
 	type AiBuildStatus,

@@ -2,9 +2,9 @@
  * Consent audit trail — records every consent grant, change, and withdrawal.
  */
 
-import { db } from '$lib/server/db';
-import { consentEvents } from '$lib/server/db/schema/analytics';
-import type { ConsentTier } from '$lib/types/db-enums';
+import { db } from '#lib/server/db/index.ts';
+import { consentEvents } from '#lib/server/db/schema/analytics/index.ts';
+import type { ConsentTier } from '#lib/types/db-enums.ts';
 
 export async function recordConsentEvent(event: {
 	visitorId: string;

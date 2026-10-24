@@ -1,10 +1,10 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { Typography } from '#lib/components/primitives/index.ts';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
-import { Typography } from '$lib/components/primitives';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 
 let { children }: { children: Snippet } = $props();
 
@@ -20,8 +20,8 @@ const activeTab = $derived(tabs.find((t) => isActive(t.href)));
 // screen-reader users lose their place each time they switch tab. Skip the
 // initial hydration ('enter') so we only move focus on real tab changes.
 let contentEl = $state<HTMLDivElement>();
-afterNavigate(({ type }) => {
-	if (type !== 'enter') contentEl?.focus();
+afterNavigate(({ type, shallow }) => {
+	if (type !== 'enter' && !shallow) contentEl?.focus();
 });
 </script>
 

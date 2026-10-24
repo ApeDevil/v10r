@@ -3,17 +3,17 @@
  * the drift tests read, derived from the client-safe `TOOL_MANIFEST`.
  *
  * The tool factories live one per family in this directory; the capability that mounts each
- * (`$lib/server/ai/capabilities/*`) imports its factory directly, and a profile's
+ * (`#lib/server/ai/capabilities/*`) imports its factory directly, and a profile's
  * `composeTurn` assembles the turn's tool set from the active capabilities.
  */
 
-import { TOOL_MANIFEST, type ToolDescriptor } from '$lib/types/ai-tools';
+import { TOOL_MANIFEST, type ToolDescriptor } from '#lib/types/ai-tools.ts';
 import type { DeskToolMeta, ToolMeta } from './_types';
 
-// The declarative tool registry lives in the client-safe `$lib/types/ai-tools.ts` (the
+// The declarative tool registry lives in the client-safe `#lib/types/ai-tools.ts` (the
 // showcase topology renders from the same source). Re-exported here so server-side
 // consumers keep one import site; the meta maps below are derived from it.
-export { TOOL_MANIFEST } from '$lib/types/ai-tools';
+export { TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
 export type {
 	DeskEffect,
 	DeskLayoutEntry,

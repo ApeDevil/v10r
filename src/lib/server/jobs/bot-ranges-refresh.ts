@@ -18,13 +18,13 @@
  */
 
 import { eq, sql } from 'drizzle-orm';
-import { publishBotRanges } from '$lib/server/analytics';
-import { BOT_RANGE_FEEDS, parsePrefixes } from '$lib/server/analytics/bot-ranges';
-import { DATACENTER_RANGE_FEEDS } from '$lib/server/analytics/datacenter-ranges';
-import { db } from '$lib/server/db';
-import { botIpRanges } from '$lib/server/db/schema/analytics/bot-hits';
-import { datacenterIpRanges } from '$lib/server/db/schema/analytics/dc-ranges';
-import { type Deadline, startDeadline } from '$lib/server/http/deadline';
+import { BOT_RANGE_FEEDS, parsePrefixes } from '#lib/server/analytics/bot-ranges.ts';
+import { DATACENTER_RANGE_FEEDS } from '#lib/server/analytics/datacenter-ranges.ts';
+import { publishBotRanges } from '#lib/server/analytics/index.ts';
+import { db } from '#lib/server/db/index.ts';
+import { botIpRanges } from '#lib/server/db/schema/analytics/bot-hits.ts';
+import { datacenterIpRanges } from '#lib/server/db/schema/analytics/dc-ranges.ts';
+import { type Deadline, startDeadline } from '#lib/server/http/deadline.ts';
 
 /** Generous but finite — these are small static documents on healthy CDNs. */
 const FETCH_TIMEOUT_MS = 10_000;

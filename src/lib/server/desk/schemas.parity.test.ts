@@ -8,7 +8,7 @@
 
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
-import type { DockLayoutState } from '$lib/components/desk';
+import type { DockLayoutState } from '#lib/components/desk/index.ts';
 import { CreateWorkspaceSchema, SyncWorkspaceSchema } from './schemas';
 
 const layout: Required<DockLayoutState> = {

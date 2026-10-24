@@ -1,13 +1,17 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { page } from '$app/state';
-import { Alert, Card, FormField, NavSection, ShowcaseLayout } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Button, Input, Select, Skeleton, Typography } from '$lib/components/primitives';
-import { ConflictSignalCard, CoverageTable, DomainTable, MatchList } from '$lib/components/showcases/name-check';
-import type { DomainNameMatch } from '$lib/name-check/report';
-import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
+import { Alert, Card, FormField, NavSection, ShowcaseLayout } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Input, Select, Skeleton, Typography } from '#lib/components/primitives/index.ts';
+import {
+	ConflictSignalCard,
+	CoverageTable,
+	DomainTable,
+	MatchList,
+} from '#lib/components/showcases/name-check/index.ts';
+import type { DomainNameMatch } from '#lib/name-check/report.ts';
+import { baseLocale, extractLocaleFromUrl } from '#lib/paraglide/runtime.js';
 import {
 	NAME_CHECK_CATEGORIES,
 	NAME_CHECK_QUERY_MAX_LENGTH,
@@ -15,7 +19,8 @@ import {
 	type NameCheckCategory,
 	type NameCheckTerritory,
 	nameCheckFormSchema,
-} from '$lib/schemas/name-check';
+} from '#lib/schemas/name-check.ts';
+import { page } from '$app/state';
 import { getShowcaseCard } from '../showcases';
 import type { PageProps } from './$types';
 

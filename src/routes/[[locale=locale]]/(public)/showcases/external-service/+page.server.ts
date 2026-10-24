@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit';
-import { checkHoneypot, ipLimitKey } from '$lib/server/abuse';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { startDeadline } from '$lib/server/http/deadline';
-import { createLimiter } from '$lib/server/http/rate-limit';
+import { checkHoneypot, ipLimitKey } from '#lib/server/abuse/index.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { startDeadline } from '#lib/server/http/deadline.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
 import {
 	CALL_CEILING_MS,
 	checkTarget,
@@ -21,8 +21,8 @@ import {
 	WAKE_CEILING_MS,
 	WAKE_RATE_LIMIT_MAX,
 	WAKE_RATE_LIMIT_PREFIX,
-} from '$lib/server/showcases/external-service';
-import { externalServiceCopy } from '$lib/showcases/external-service/labels';
+} from '#lib/server/showcases/external-service/index.ts';
+import { externalServiceCopy } from '#lib/showcases/external-service/labels.ts';
 import {
 	CHECK_PATIENCE,
 	type CheckPatience,
@@ -34,7 +34,7 @@ import {
 	SERVICE_TARGET_IDS,
 	type ServiceDrillId,
 	type ServiceTargetId,
-} from '$lib/showcases/external-service/types';
+} from '#lib/showcases/external-service/types.ts';
 import type { Actions, PageServerLoad, RequestEvent } from './$types';
 
 /**

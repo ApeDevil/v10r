@@ -1,6 +1,5 @@
 <script lang="ts">
-import { enhance } from '$app/forms';
-import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
+import { Alert, Card, DiagGrid, DiagRow } from '#lib/components/composites/index.ts';
 import {
 	Accordion,
 	Body,
@@ -14,9 +13,10 @@ import {
 	Spinner,
 	Table,
 	Tag,
-} from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import type { DependencyResult, ThresholdLevel } from '$lib/server/monitoring';
+} from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { DependencyResult, ThresholdLevel } from '#lib/server/monitoring/index.ts';
+import { enhance } from '$app/forms';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

@@ -1,9 +1,9 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { NavTab, PageHeader } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import { AppShell } from '$lib/components/shell';
-import * as m from '$lib/paraglide/messages';
+import { NavTab, PageHeader } from '#lib/components/composites/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import { AppShell } from '#lib/components/shell/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import type { LayoutData } from './$types';
 
 let { data, children }: { data: LayoutData; children: Snippet } = $props();

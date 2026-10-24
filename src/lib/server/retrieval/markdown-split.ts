@@ -3,7 +3,7 @@
  * retrieval ingest pipeline (`chunk.ts`) and the standalone docs-ingestion Bun script
  * (`scripts/db/ingest-docs.ts`).
  *
- * It MUST stay dependency-free — no `$lib`, no `$env`, no `import.meta` — because
+ * It MUST stay dependency-free — no `#lib`, no `$app/env`, no `import.meta` — because
  * the Bun script imports it by relative path and cannot resolve Vite aliases. All
  * tuning (target/overlap tokens) arrives as parameters, never from config imports.
  *

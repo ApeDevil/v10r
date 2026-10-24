@@ -3,18 +3,18 @@
  * with the card's steps derived from the tool and the receipts in execution order.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TurnTrace } from '$lib/types/turn-trace';
+import type { TurnTrace } from '#lib/types/turn-trace.ts';
 
 const mocks = vi.hoisted(() => ({
 	getProposal: vi.fn(),
 	listProposalSteps: vi.fn(),
 }));
 
-vi.mock('$lib/server/db/ai/proposals', () => ({
+vi.mock('#lib/server/db/ai/proposals.ts', () => ({
 	getProposal: mocks.getProposal,
 	listProposalSteps: mocks.listProposalSteps,
 }));
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const { resolveTurnProposal } = await import('./turn-proposal');
 

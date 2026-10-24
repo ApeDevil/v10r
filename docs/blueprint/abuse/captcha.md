@@ -37,7 +37,7 @@ This ensures misconfigured production deploys fail fast rather than silently all
 
 ---
 
-## Server Library (`$lib/server/abuse/altcha.ts`)
+## Server Library (`#lib/server/abuse/altcha.ts`)
 
 ```typescript
 // Algorithm
@@ -53,10 +53,10 @@ The `altcha` instance is created via `create()` from `altcha-lib/frameworks/svel
 
 ### `verifyAltcha(payload)`
 
-Public function exported from `$lib/server/abuse/`. Wraps internal verification with `BOT_DETECTION_MODE` behavior:
+Public function exported from `#lib/server/abuse/`. Wraps internal verification with `BOT_DETECTION_MODE` behavior:
 
 ```typescript
-import { verifyAltcha } from '$lib/server/abuse';
+import { verifyAltcha } from '#lib/server/abuse/index.js';
 
 const decision = await verifyAltcha(request.headers.get('x-altcha-token'));
 if (!decision.allowed) return decisionResponse(decision);
@@ -82,7 +82,7 @@ Returns 503 if `BOT_DETECTION_MODE === 'off'`.
 
 ## `<Altcha />` Composite
 
-`$lib/components/composites/altcha/Altcha.svelte` wraps the `<altcha-widget>` custom element.
+`#lib/components/composites/altcha/Altcha.svelte` wraps the `<altcha-widget>` custom element.
 
 ### Props
 

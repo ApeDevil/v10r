@@ -9,10 +9,10 @@
  * losing to plain JS IS the exhibit — do not "fix" it.
  */
 import { onMount } from 'svelte';
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { formatMs, median } from '$lib/wasm/bench';
-import { checksum, makeFloatData, scaleInPlace } from '$lib/wasm/filters';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { formatMs, median } from '#lib/wasm/bench.ts';
+import { checksum, makeFloatData, scaleInPlace } from '#lib/wasm/filters.ts';
 
 const LEN = 1_000_000;
 const WARMUP = 3;
@@ -51,7 +51,7 @@ async function run() {
 	lanes = null;
 
 	try {
-		const { loadKernel } = await import('$lib/wasm');
+		const { loadKernel } = await import('#lib/wasm/index.ts');
 		const kernel = await loadKernel();
 
 		const jsData = makeFloatData(LEN);

@@ -5,21 +5,21 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const mockListFiles = vi.fn();
 const mockSearchFiles = vi.fn();
 const mockGetFile = vi.fn();
 const mockGetSpreadsheet = vi.fn();
 const mockGetMarkdown = vi.fn();
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	listFiles: mockListFiles,
 	searchFiles: mockSearchFiles,
 	getFile: mockGetFile,
 	getSpreadsheetByFileId: mockGetSpreadsheet,
 	getMarkdownByFileId: mockGetMarkdown,
 }));
-vi.mock('$lib/server/desk/file-tree', () => ({ getFileTree: vi.fn(), renderFileTreeWithIndex: vi.fn() }));
+vi.mock('#lib/server/desk/file-tree.ts', () => ({ getFileTree: vi.fn(), renderFileTreeWithIndex: vi.fn() }));
 
 const { createReadTools } = await import('./desk-read');
 const { DESK_READ_MAX_CHARS } = await import('../config');

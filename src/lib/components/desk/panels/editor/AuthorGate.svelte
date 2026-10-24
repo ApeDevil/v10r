@@ -1,8 +1,8 @@
 <script lang="ts">
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Textarea, Typography } from '#lib/components/primitives/index.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { page } from '$app/state';
-import { Stack } from '$lib/components/layout';
-import { Button, Textarea, Typography } from '$lib/components/primitives';
-import { getToast } from '$lib/state/toast.svelte';
 
 interface Props {
 	children: import('svelte').Snippet;

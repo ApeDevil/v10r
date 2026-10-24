@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { HierarchyPointLink, HierarchyPointNode } from 'd3-hierarchy';
 import { onDestroy, onMount } from 'svelte';
+import { cn } from '#lib/utils/cn.ts';
 import { beforeNavigate } from '$app/navigation';
-import { cn } from '$lib/utils/cn';
 import type { ChartContainerVariants } from '../../_shared/chart-container';
 import { getVizPalette, vizColor } from '../../_shared/theme-bridge';
 import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
@@ -39,7 +39,9 @@ function cleanup() {
 	d3HierarchyModule = undefined;
 }
 
-beforeNavigate(cleanup);
+beforeNavigate(({ shallow }) => {
+	if (!shallow) cleanup();
+});
 onDestroy(cleanup);
 
 onMount(async () => {

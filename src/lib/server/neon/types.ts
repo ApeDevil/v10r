@@ -4,7 +4,7 @@
  * These are the only shapes that leave the `neon/` domain. They never carry
  * connection strings / DSNs — only branch + operation metadata.
  */
-import type { ThresholdLevel } from '$lib/server/monitoring';
+import type { ThresholdLevel } from '#lib/server/monitoring/index.ts';
 
 export interface NeonBranch {
 	id: string;

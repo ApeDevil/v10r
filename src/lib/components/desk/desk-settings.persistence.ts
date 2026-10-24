@@ -3,7 +3,7 @@
  * Follows the same pattern as dock.persistence.ts.
  */
 
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import type { DeskPreset, DeskTheme } from './desk-settings.types';
 
 const DEFAULT_KEY = 'desk-theme';

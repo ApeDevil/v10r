@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AiProviderId } from '$lib/types/db-enums';
+import type { AiProviderId } from '#lib/types/db-enums.ts';
 import type { ProviderEntry, ProviderRegistry } from './connections';
 import {
 	clearUserPreference,
@@ -18,7 +18,7 @@ import {
 // Force the in-memory cooldown fallback: deterministic + never touches the
 // app's real Redis (a test markCooldown('groq') against live Redis would cool
 // the provider for the running app and leak across test runs).
-vi.mock('$lib/server/cache', () => ({ redis: null }));
+vi.mock('#lib/server/cache/index.ts', () => ({ redis: null }));
 
 function makeEntry(overrides: Partial<ProviderEntry> & { id: AiProviderId }): ProviderEntry {
 	return {

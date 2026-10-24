@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isImmutableAsset, mayCache, offlineShellAssets, shouldHandle } from './sw-policy';
+import { isImmutableAsset, manifestPathname, mayCache, offlineShellAssets, shouldHandle } from './sw-policy';
 
 const ORIGIN = 'https://www.v10r.dev';
 
@@ -103,5 +103,27 @@ describe('offlineShellAssets', () => {
 	it('ignores references that are not in the build, and duplicates', () => {
 		const html = `"./_app/immutable/chunks/evil.js" "./_app/immutable/nodes/0.def.js" "./_app/immutable/nodes/0.def.js"`;
 		expect(offlineShellAssets(html, build)).toEqual(['/_app/immutable/nodes/0.def.js']);
+	});
+});
+
+describe('manifestPathname', () => {
+	it('turns base-relative manifest paths into the pathnames requests carry', () => {
+		const worker = `${ORIGIN}/service-worker.js`;
+		expect(manifestPathname('_app/immutable/entry/start.abc.js', worker)).toBe('/_app/immutable/entry/start.abc.js');
+		expect(manifestPathname('icons/icon-192.png', worker)).toBe('/icons/icon-192.png');
+		expect(manifestPathname('offline', worker)).toBe('/offline');
+	});
+
+	it('keeps a base path, which the worker is served under', () => {
+		expect(manifestPathname('offline', `${ORIGIN}/base/service-worker.js`)).toBe('/base/offline');
+	});
+
+	it('feeds offlineShellAssets the shape its allowlist expects', () => {
+		const immutable = ['_app/immutable/nodes/0.def.js'].map((path) =>
+			manifestPathname(path, `${ORIGIN}/service-worker.js`),
+		);
+		expect(offlineShellAssets(`"./_app/immutable/nodes/0.def.js"`, immutable)).toEqual([
+			'/_app/immutable/nodes/0.def.js',
+		]);
 	});
 });

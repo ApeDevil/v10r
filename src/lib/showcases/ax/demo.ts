@@ -1,5 +1,5 @@
 /**
- * Pure helpers for the /showcases/ax live demos. Client-bundled — no $lib/server,
+ * Pure helpers for the /showcases/ax live demos. Client-bundled — no #lib/server,
  * no mcp/*.ts imports; everything here works on strings the browser fetched itself.
  *
  * The dirty demo snippet lives here (not in the page) because it contains a

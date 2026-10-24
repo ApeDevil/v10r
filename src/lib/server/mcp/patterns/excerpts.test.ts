@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PATTERNS } from '$lib/server/patterns';
+import { PATTERNS } from '#lib/server/patterns/index.ts';
 import { deriveExcerptAllowlist, excerptPath, isFileRef } from './allowlist';
 import { EXCERPT_ALLOWLIST, isAllowlisted, readAllowlistedExcerpt, SNAPSHOT_PATHS } from './excerpts';
 

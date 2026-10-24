@@ -1,10 +1,19 @@
 import { fail } from '@sveltejs/kit';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { CACHE_PAGE_SIZE } from '$lib/server/admin/config';
-import { adminDeleteKey, adminFlushByPrefix, adminInvalidateInProcessCaches } from '$lib/server/cache/admin/mutations';
-import { getAllKeys, getCacheOverview, getInProcessCacheStatus, getKeyDetail } from '$lib/server/cache/admin/queries';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
+import { CACHE_PAGE_SIZE } from '#lib/server/admin/config.ts';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import {
+	adminDeleteKey,
+	adminFlushByPrefix,
+	adminInvalidateInProcessCaches,
+} from '#lib/server/cache/admin/mutations.ts';
+import {
+	getAllKeys,
+	getCacheOverview,
+	getInProcessCacheStatus,
+	getKeyDetail,
+} from '#lib/server/cache/admin/queries.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const ALLOWED_FLUSH_PREFIXES = ['showcase:', 'ratelimit:'];

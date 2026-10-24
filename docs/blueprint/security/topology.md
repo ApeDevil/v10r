@@ -9,25 +9,25 @@ this endpoint?" has no index to consult. This is that index.
 
 | Concern | Home |
 |---|---|
-| Admin authority | `$lib/server/auth/admin-ids.ts` — parses `ADMIN_USER_ID`; the single source |
-| Route/endpoint guards | `$lib/server/http/guards.ts` |
-| Session revocation + ban | `$lib/server/auth/revocation.ts`, enforced in `sessionPopulate` |
-| Step-up freshness | `$lib/server/auth/step-up.ts` |
-| Factor-change side effects | `$lib/server/auth/factor-changes.ts` (audit, notify, revoke) |
-| Credentials at rest | `$lib/server/security/aes-gcm.ts` (AES-256-GCM under a key ring supplied by the caller; envelopes name their key; `openSecret` answers none / ready / undecryptable) + `security/encryption-key.ts` (the single `ENCRYPTION_KEY` / `ENCRYPTION_KEY_PREVIOUS` read). Seals the AI provider keys in `ai.provider_connection` and the name-check vendor secrets in `name_check.source_connection`; the key never enters the database. Rotation: [key-ring.md](key-ring.md) |
-| AI provider settings | `$lib/server/ai/connection-settings.ts` behind `requireAdmin` on `/admin/ai/models`; `PublicProviderConnection` is the only client-facing shape (`load-leak-gate` refuses `apiKeyCiphertext`); every change audited as `ai.provider.*` |
-| Name-check source settings | `$lib/server/name-check/connection-settings.ts` behind `requireAdmin` on `/admin/name-check`; `PublicNameSourceConnection` is the only client-facing shape (`load-leak-gate` refuses `secretCiphertext`); every change audited as `name_check.source.*`; the connection test is rate-limited per admin |
-| CSRF predicates | `$lib/server/security/csrf.ts` |
-| Redirect-target validation | `$lib/server/security/safe-path.ts` |
+| Admin authority | `#lib/server/auth/admin-ids.ts` — parses `ADMIN_USER_ID`; the single source |
+| Route/endpoint guards | `#lib/server/http/guards.ts` |
+| Session revocation + ban | `#lib/server/auth/revocation.ts`, enforced in `sessionPopulate` |
+| Step-up freshness | `#lib/server/auth/step-up.ts` |
+| Factor-change side effects | `#lib/server/auth/factor-changes.ts` (audit, notify, revoke) |
+| Credentials at rest | `#lib/server/security/aes-gcm.ts` (AES-256-GCM under a key ring supplied by the caller; envelopes name their key; `openSecret` answers none / ready / undecryptable) + `security/encryption-key.ts` (the single `ENCRYPTION_KEY` / `ENCRYPTION_KEY_PREVIOUS` read). Seals the AI provider keys in `ai.provider_connection` and the name-check vendor secrets in `name_check.source_connection`; the key never enters the database. Rotation: [key-ring.md](key-ring.md) |
+| AI provider settings | `#lib/server/ai/connection-settings.ts` behind `requireAdmin` on `/admin/ai/models`; `PublicProviderConnection` is the only client-facing shape (`load-leak-gate` refuses `apiKeyCiphertext`); every change audited as `ai.provider.*` |
+| Name-check source settings | `#lib/server/name-check/connection-settings.ts` behind `requireAdmin` on `/admin/name-check`; `PublicNameSourceConnection` is the only client-facing shape (`load-leak-gate` refuses `secretCiphertext`); every change audited as `name_check.source.*`; the connection test is rate-limited per admin |
+| CSRF predicates | `#lib/server/security/csrf.ts` |
+| Redirect-target validation | `#lib/server/security/safe-path.ts` |
 | Response headers | `securityHeaders` in `src/hooks.server.ts` |
 | CSP | `svelte.config.js` (not a hook — it is build config) |
-| Rate limiting | `$lib/server/http/rate-limit.ts` + per-route limiters |
-| Abuse (captcha, honeypot, per-email) | `$lib/server/abuse/` |
-| MCP bearer | `$lib/server/mcp/auth.ts` |
-| AI entry guard + budget | `$lib/server/ai/guard.ts` |
-| Tool scope enforcement | `$lib/server/ai/tools/desk-execute.ts` |
-| Tenancy in the data layer | `$lib/server/db/shared/folder-tree.ts` (`assertOwnedDestination`) |
-| The gates | `$lib/server/security/*.gate.test.ts` |
+| Rate limiting | `#lib/server/http/rate-limit.ts` + per-route limiters |
+| Abuse (captcha, honeypot, per-email) | `#lib/server/abuse//index.js` |
+| MCP bearer | `#lib/server/mcp/auth.ts` |
+| AI entry guard + budget | `#lib/server/ai/guard.ts` |
+| Tool scope enforcement | `#lib/server/ai/tools/desk-execute.ts` |
+| Tenancy in the data layer | `#lib/server/db/shared/folder-tree.ts` (`assertOwnedDestination`) |
+| The gates | `#lib/server/security/*.gate.test.ts` |
 
 ## The two admin planes, and why there is now one
 
@@ -78,7 +78,7 @@ earlier `requireApi*` family did exactly that, so 59 endpoints answered 500
 instead of 401/403 to unauthenticated callers. `guard-contract.gate.test.ts`
 pins this shut.
 
-## Why `$lib/server/security/` is thin
+## Why `#lib/server/security//index.js` is thin
 
 It holds cross-cutting primitives with no domain owner (CSRF predicates, path
 sanitisation) plus the gate tests. Everything else stays with its domain, because

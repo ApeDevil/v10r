@@ -1,9 +1,9 @@
 /**
  * Shared Valibot schemas for blog comments — safe to import from client code.
- * The server-side wrapper at $lib/server/blog/comments re-exports these.
+ * The server-side wrapper at #lib/server/blog/comments re-exports these.
  */
 import * as v from 'valibot';
-import { locales } from '$lib/i18n';
+import { locales } from '#lib/i18n/index.ts';
 
 export const localeSchema = v.picklist(locales as readonly string[]);
 

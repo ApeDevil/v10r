@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
-import { localizeHref } from '$lib/i18n';
-import { consumeTransparencyMarker, hasSeenTransparency } from '$lib/server/db/preferences';
-import { requireAuth } from '$lib/server/http/guards';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { consumeTransparencyMarker, hasSeenTransparency } from '#lib/server/db/preferences/index.ts';
+import { requireAuth } from '#lib/server/http/guards.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {

@@ -1,14 +1,14 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
+import { apiFetch } from '#lib/api.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { isSiteAwareRoute, resolveRouteLabel } from '#lib/search/route-id.ts';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { layerStack } from '#lib/state/layer-stack.svelte.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { page } from '$app/state';
-import { apiFetch } from '$lib/api';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { layerStack } from '$lib/state/layer-stack.svelte';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
 import ChatInput from './ChatInput.svelte';
 import ChatThread from './ChatThread.svelte';
 

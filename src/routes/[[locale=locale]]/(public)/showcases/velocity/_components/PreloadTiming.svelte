@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner } from '$lib/components/primitives';
-import { preloadNow } from '$lib/nav';
-import * as m from '$lib/paraglide/messages';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Spinner } from '#lib/components/primitives/index.ts';
+import { preloadNow } from '#lib/nav/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 /**
  * What a navigation's data fetch costs, with and without a preload having already run.

@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { HTMLInputAttributes } from 'svelte/elements';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props extends Omit<HTMLInputAttributes, 'value'> {
 	// null is accepted (renders empty) so DB-backed nullable form fields can bind

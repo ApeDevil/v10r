@@ -1,7 +1,7 @@
-import { deleteDeskPreset } from '$lib/server/desk';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent } from '$lib/server/http/response';
+import { deleteDeskPreset } from '#lib/server/desk/index.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:theme:presets', 30, '1 m');

@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { env } from '$env/dynamic/private';
-import { createPushSubscription, deletePushSubscription } from '$lib/server/db/notifications/mutations';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { createPushSubscription, deletePushSubscription } from '#lib/server/db/notifications/mutations.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
+import { VAPID_PUBLIC_KEY } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:push', 10, '1 m');
@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	const guard = guardApiUser(locals);
 	if ('error' in guard) return guard.error;
 
-	const publicKey = env.VAPID_PUBLIC_KEY;
+	const publicKey = VAPID_PUBLIC_KEY;
 	if (!publicKey) return apiError(503, 'unavailable', 'Push not configured');
 
 	return apiOk({ publicKey });

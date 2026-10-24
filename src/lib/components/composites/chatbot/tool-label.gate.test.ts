@@ -6,7 +6,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { TOOL_MANIFEST, toolLabelKey } from '$lib/types/ai-tools';
+import { TOOL_MANIFEST, toolLabelKey } from '#lib/types/ai-tools.ts';
 import { LABELED_TOOLS } from './tool-label';
 
 const LOCALES = ['en', 'de', 'ru'] as const;

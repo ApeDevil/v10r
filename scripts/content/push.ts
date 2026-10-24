@@ -14,7 +14,7 @@
  *   2  one or more slugs failed (others may have succeeded)
  */
 
-import { listContentSlugs, pushPost, summarizeActions } from '$lib/server/content';
+import { listContentSlugs, pushPost, summarizeActions } from '#lib/server/content/index.ts';
 import { createR2, db, pool } from './_db';
 
 interface CliFlags {

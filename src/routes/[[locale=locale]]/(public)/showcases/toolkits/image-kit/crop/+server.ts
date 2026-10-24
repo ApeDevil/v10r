@@ -6,15 +6,19 @@
  * and download. The incoming rect is re-clamped server-side against the real image
  * dimensions — a client can never produce an out-of-bounds or wrong-ratio crop.
  */
-import { json } from '@sveltejs/kit';
-import { type CropDerivativeResponse, type CropRatio, isCropRatio, isImageId } from '$lib/schemas/showcase/image-kit';
+import {
+	type CropDerivativeResponse,
+	type CropRatio,
+	isCropRatio,
+	isImageId,
+} from '#lib/schemas/showcase/image-kit.ts';
 import {
 	generateAttentionCrop,
 	generateCropDerivative,
 	imageDimensions,
 	toDataUrl,
-} from '$lib/server/showcases/image-kit';
-import { buildImagekitKey, getImagekitBytes } from '$lib/server/showcases/image-kit/storage';
+} from '#lib/server/showcases/image-kit/index.ts';
+import { buildImagekitKey, getImagekitBytes } from '#lib/server/showcases/image-kit/storage.ts';
 import type { RequestHandler } from './$types';
 
 interface RectInput {
@@ -40,7 +44,7 @@ function clampRect(rect: Partial<RectInput> | undefined, W: number, H: number): 
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
-		return json({ ok: false, reason: 'error', message: 'Not signed in.' } satisfies CropDerivativeResponse, {
+		return Response.json({ ok: false, reason: 'error', message: 'Not signed in.' } satisfies CropDerivativeResponse, {
 			status: 401,
 		});
 	}
@@ -49,13 +53,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		body = await request.json();
 	} catch {
-		return json({ ok: false, reason: 'error', message: 'Invalid request body.' } satisfies CropDerivativeResponse, {
-			status: 400,
-		});
+		return Response.json(
+			{ ok: false, reason: 'error', message: 'Invalid request body.' } satisfies CropDerivativeResponse,
+			{
+				status: 400,
+			},
+		);
 	}
 	const { imageId, ratio, rect } = body;
 	if (!isImageId(imageId) || !isCropRatio(ratio)) {
-		return json(
+		return Response.json(
 			{ ok: false, reason: 'error', message: 'Missing or invalid imageId/ratio.' } satisfies CropDerivativeResponse,
 			{
 				status: 400,
@@ -68,7 +75,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		bytes = await getImagekitBytes(key);
 	} catch {
-		return json(
+		return Response.json(
 			{
 				ok: false,
 				reason: 'not_found',
@@ -87,7 +94,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			generateCropDerivative(bytes, clamped),
 			generateAttentionCrop(bytes, ratio as CropRatio, W, H),
 		]);
-		return json(
+		return Response.json(
 			{
 				ok: true,
 				ratio: ratio as CropRatio,
@@ -99,6 +106,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : 'Crop failed.';
-		return json({ ok: false, reason: 'error', message } satisfies CropDerivativeResponse, { status: 500 });
+		return Response.json({ ok: false, reason: 'error', message } satisfies CropDerivativeResponse, { status: 500 });
 	}
 };

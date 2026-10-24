@@ -1,7 +1,7 @@
 <script lang="ts">
 import { T } from '@threlte/core';
 import { CylinderGeometry, Quaternion, Vector3 } from 'three';
-import type { Vec3 } from '$lib/product-composition';
+import type { Vec3 } from '#lib/product-composition/index.ts';
 import { conduitTube } from './conduit-tube';
 import type { SurfaceFinish } from './surface-finish';
 

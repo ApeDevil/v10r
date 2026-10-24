@@ -1,11 +1,11 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 import {
 	type PortStandardRegistry,
 	type ProductComposition,
 	portNetworks,
 	validateComposition,
-} from '$lib/product-composition';
+} from '#lib/product-composition/index.ts';
 import { diagnosticText } from './diagnostic-copy';
 
 interface Props {

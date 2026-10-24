@@ -10,7 +10,7 @@
  * algebra cares), `hsplit()` is the horizontal shorthand the focus cases read better with.
  */
 import { describe, expect, it } from 'vitest';
-import type { ActivityBarItem, LayoutNode, LeafNode, PanelDefinition, SplitNode } from '$lib/desk/layout.types';
+import type { ActivityBarItem, LayoutNode, LeafNode, PanelDefinition, SplitNode } from '#lib/desk/layout.types.ts';
 import {
 	addPanelToLeaf,
 	collectLeaves,

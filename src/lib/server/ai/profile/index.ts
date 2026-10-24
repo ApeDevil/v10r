@@ -1,5 +1,5 @@
 /** The profiles, by surface — the orchestrator's one door to what each assistant is. */
-import type { AiSurface } from '$lib/types/db-enums';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 import { CHATBOT_PROFILE } from './chatbot';
 import { DESKBOT_PROFILE } from './deskbot';
 import type { AssistantProfile } from './profile';

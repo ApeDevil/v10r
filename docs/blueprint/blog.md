@@ -95,15 +95,15 @@ Cached on immutable revision row (never re-processed on read)
 
 ### What stays on marked
 
-`renderMarkdown()` in `$lib/utils/markdown.ts` stays as-is for chat rendering. Simple, synchronous, client-safe. No directives or AST access needed there. **Important**: verify that `marked` passes `[1]`, `[2]` citation notation through as literal text without attempting link resolution — if it converts them, the citation system breaks silently.
+`renderMarkdown()` in `#lib/utils/markdown.ts` stays as-is for chat rendering. Simple, synchronous, client-safe. No directives or AST access needed there. **Important**: verify that `marked` passes `[1]`, `[2]` citation notation through as literal text without attempting link resolution — if it converts them, the citation system breaks silently.
 
 ### Shiki Integration
 
-The project already has a Shiki singleton in `$lib/server/shiki.ts`. Use `@shikijs/rehype/core` which accepts an external `Highlighter` instance — no second instantiation.
+The project already has a Shiki singleton in `#lib/server/shiki.ts`. Use `@shikijs/rehype/core` which accepts an external `Highlighter` instance — no second instantiation.
 
 ```typescript
 import rehypeShikiFromHighlighter from '@shikijs/rehype/core';
-import { getHighlighter } from '$lib/server/shiki';
+import { getHighlighter } from '#lib/server/shiki.js';
 
 const highlighter = await getHighlighter();
 // ...pass to unified pipeline
@@ -123,7 +123,7 @@ Blog posts use `{@html}` for prose content + dynamic `import()` for embed compon
 <!-- Each embed placeholder: <div data-embed="id" data-embed-tag="chart"> -->
 ```
 
-The embed registry maps `kind -> () => import('$lib/components/blog/embeds/ChartEmbed.svelte')`. Vite tree-shakes unused embeds. Heavy components (charts, 3D) only download when a post actually contains them.
+The embed registry maps `kind -> () => import('#lib/components/blog/embeds/ChartEmbed.svelte')`. Vite tree-shakes unused embeds. Heavy components (charts, 3D) only download when a post actually contains them.
 
 ### svelte-exmarkdown: Rejected
 
@@ -267,9 +267,9 @@ The preview panel is **content-type-agnostic** — it renders whatever the edito
 
 ```typescript
 const renderers: Record<string, () => Promise<typeof import('*.svelte')>> = {
-  'blog-post': () => import('$lib/components/composites/markdown/MarkdownProse.svelte'),
-  'note':      () => import('$lib/components/editor/SimpleRenderer.svelte'),
-  'doc':       () => import('$lib/components/editor/SimpleRenderer.svelte'),
+  'blog-post': () => import('#lib/components/composites/markdown/MarkdownProse.svelte'),
+  'note':      () => import('#lib/components/editor/SimpleRenderer.svelte'),
+  'doc':       () => import('#lib/components/editor/SimpleRenderer.svelte'),
 };
 ```
 
@@ -968,7 +968,7 @@ interface EditorDocument {
 }
 ```
 
-Blog posts are the first implementation. The domain module (`$lib/server/blog/`) handles persistence. The editor delegates save/publish to the appropriate domain module via the `type` discriminator.
+Blog posts are the first implementation. The domain module (`#lib/server/blog/`) handles persistence. The editor delegates save/publish to the appropriate domain module via the `type` discriminator.
 
 ### Document Lifecycle
 
@@ -1203,9 +1203,9 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 ### Phase 1: Pipeline + Public Blog
 
 4. `blog` schema migration (0002-0009: 8 tables + seed)
-5. `$lib/server/blog/` domain module with render pipeline
-6. `$lib/content-syntax/` with initial directive definitions (callout, chart, code)
-7. `$lib/components/composites/markdown/MarkdownProse.svelte` + embed registry
+5. `#lib/server/blog//index.js` domain module with render pipeline
+6. `#lib/content-syntax//index.js` with initial directive definitions (callout, chart, code)
+7. `#lib/components/composites/markdown/MarkdownProse.svelte` + embed registry
 8. Public routes: `/blog/`, `/blog/[slug]` (with JSON-LD + OG meta), `/blog/tag/[tag]`, `/blog/feed.xml`, `/blog/sitemap.xml`
 9. Admin content page: `/admin/content` (post list + status management via form actions)
 10. API endpoints: `POST /api/blog/posts` (create), `PATCH /api/blog/posts/[id]` (metadata), `POST /api/blog/posts/[id]/revisions`, `POST /api/blog/posts/[id]/publish`
@@ -1216,8 +1216,8 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 
 13. Typed DeskBus: `desk-bus.svelte.ts` with `DeskEvents` interface + `replayLast` option
 14. Layout presets: `layout-presets.ts` with writing preset (Editor | Preview)
-15. `$lib/components/editor/` — EditorPanel (with panel-menus registration for File/Post menus), PublishConfirmStrip, MarkdownSource (Textarea), SlashMenu
-16. `$lib/components/preview/` — PreviewPanel with loading/error/placeholder states + renderer registry
+15. `#lib/components/editor/` — EditorPanel (with panel-menus registration for File/Post menus), PublishConfirmStrip, MarkdownSource (Textarea), SlashMenu
+16. `#lib/components/preview/` — PreviewPanel with loading/error/placeholder states + renderer registry
 17. Documents panel: renamed from Files, `i-lucide-file-text`, "New" button in header
 18. Add `editor` + `preview` + `documents` panel types to desk configuration
 19. Preview API endpoint: `/api/blog/preview`
@@ -1226,7 +1226,7 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 
 ### Phase 3: AI Integration
 
-22. `$lib/server/blog/ai-sync.ts` — `syncBlogGraph()`, `linkPostToChunks()`, `removeBlogFromGraph()`
+22. `#lib/server/blog/ai-sync.ts` — `syncBlogGraph()`, `linkPostToChunks()`, `removeBlogFromGraph()`
 23. Neo4j blog nodes: `:Post`, `:Tag`, `:Author` + `HAS_CHUNK` bridge edges
 24. Slug-change handling: update `rag.document.source_uri` in-place
 25. Extend `RankedChunk` with `sourceType` + `sourceUri` (propagate from `rag.document`)
@@ -1239,7 +1239,7 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 29. Upgrade MarkdownSource to CodeMirror 6 (spike `optimizeDeps.exclude` first)
 30. CM6 keyboard policy: editor-focused vs desk shortcuts, `Cmd+S` as keymap entry
 31. Lezer grammar extensions for custom syntax highlighting
-32. `$lib/content-syntax/codemirror-adapter.ts`
+32. `#lib/content-syntax/codemirror-adapter.ts`
 33. Inline Combobox for embed parameter autocompletion
 
 ### Phase 5: Content Graph (v2 Tables)
@@ -1262,7 +1262,7 @@ Nobody has shipped a complete solution for custom syntax highlighting in a sourc
 ~40-60KB gzipped if the unified pipeline ran client-side. **Mitigation**: preview panel hits `/api/blog/preview` server-side — zero pipeline code ships to the browser. Public blog pages use pre-rendered HTML from DB. The only trade-off is preview latency (~300ms debounce + ~200ms round-trip = ~500ms), which is acceptable for a writing tool. No optimistic client-side preview — `marked` can't render directives/wikilinks, so the output would be visibly wrong.
 
 ### 3. Lezer/Remark Syntax Drift
-Two parser implementations for the same custom syntax. **Mitigation**: shared `$lib/content-syntax/` definitions + integration tests comparing parse output for identical input.
+Two parser implementations for the same custom syntax. **Mitigation**: shared `#lib/content-syntax//index.js` definitions + integration tests comparing parse output for identical input.
 
 ### 4. Bun + Unified Compatibility
 Unified is ESM-only, which is actually a better fit for Bun than Node/CJS. No known issues. **Mitigation**: run pipeline server-side in SvelteKit load functions, not in Vite transform steps where Bun/Vite interaction adds complexity.

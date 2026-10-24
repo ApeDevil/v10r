@@ -25,15 +25,15 @@
  * batch beat lost ones for a lane whose only readers are dashboards.
  */
 
-import { redis } from '$lib/server/cache';
-import { insertBotHits } from '$lib/server/db/analytics/bot-mutations';
+import { redis } from '#lib/server/cache/index.ts';
+import { insertBotHits } from '#lib/server/db/analytics/bot-mutations.ts';
 import {
 	type BotCategory,
 	type BotHitInsert,
 	type BotVerification,
 	botCategoryEnum,
 	botVerificationEnum,
-} from '$lib/server/db/schema/analytics/bot-hits';
+} from '#lib/server/db/schema/analytics/bot-hits.ts';
 import type { BotIdentity } from './bot-classify';
 import { publishedBotRanges } from './bot-ranges';
 import { verifyBotIdentity } from './bot-verification';

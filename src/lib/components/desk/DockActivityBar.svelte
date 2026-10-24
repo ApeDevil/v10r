@@ -1,11 +1,11 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
-import { trackCommand } from '$lib/analytics/telemetry';
-import { contextMenuContentVariants, contextMenuItemVariants } from '$lib/components/composites/context-menu';
-import type { ActivityBarItem, ActivityBarPosition } from '$lib/desk/layout.types';
-import * as m from '$lib/paraglide/messages';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { trackCommand } from '#lib/analytics/telemetry.ts';
+import { contextMenuContentVariants, contextMenuItemVariants } from '#lib/components/composites/context-menu/index.ts';
+import type { ActivityBarItem, ActivityBarPosition } from '#lib/desk/layout.types.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { getDeskSettings } from './desk-settings.state.svelte';
 import { hasPanelType } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';

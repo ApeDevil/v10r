@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 async function verifyConnection() {

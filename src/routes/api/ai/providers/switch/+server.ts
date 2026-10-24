@@ -1,11 +1,11 @@
 import * as v from 'valibot';
-import { getActiveProviderInfo, loadProviderRegistry } from '$lib/server/ai';
-import { clearUserPreference, setUserPreference } from '$lib/server/ai/providers';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
-import { AI_PROVIDER_IDS } from '$lib/types/db-enums';
+import { getActiveProviderInfo, loadProviderRegistry } from '#lib/server/ai/index.ts';
+import { clearUserPreference, setUserPreference } from '#lib/server/ai/providers.ts';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import { AI_PROVIDER_IDS } from '#lib/types/db-enums.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:ai:providers:switch', 60, '1 m');

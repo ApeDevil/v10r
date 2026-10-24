@@ -1,9 +1,21 @@
 import { GetObjectCommand, HeadBucketCommand, HeadObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import type { BucketStats, ObjectDetail, ObjectInfo, PresignedUrlResult, RangeResult } from '$lib/server/store';
-import { assertShowcaseKey, isPublicShowcaseKey, SHOWCASE_PREFIX, StoreError } from '$lib/server/store';
-import { PRESIGNED_URL_EXPIRY } from '$lib/server/store/config';
-import { BUCKET, s3 } from '$lib/server/store/index';
+import { PRESIGNED_URL_EXPIRY } from '#lib/server/store/config.ts';
+import type {
+	BucketStats,
+	ObjectDetail,
+	ObjectInfo,
+	PresignedUrlResult,
+	RangeResult,
+} from '#lib/server/store/index.ts';
+import {
+	assertShowcaseKey,
+	BUCKET,
+	isPublicShowcaseKey,
+	SHOWCASE_PREFIX,
+	StoreError,
+	s3,
+} from '#lib/server/store/index.ts';
 
 function requireS3() {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');

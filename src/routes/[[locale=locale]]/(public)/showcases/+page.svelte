@@ -1,8 +1,8 @@
 <script lang="ts">
-import { LinkCard } from '$lib/components';
-import { BackLink, NavGrid, NavSection, PageHeader } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import * as m from '$lib/paraglide/messages';
+import { BackLink, NavGrid, NavSection, PageHeader } from '#lib/components/composites/index.ts';
+import { LinkCard } from '#lib/components/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { groupByDomain } from './showcases';
 
 const domainGroups = groupByDomain();

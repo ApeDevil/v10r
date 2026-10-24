@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
  *
  * `http.test.ts` and `sdk-interop.test.ts` deliberately contain ZERO `vi.mock` calls: they import
  * `http.adapter.ts` statically and drive the real production path. That only works while nothing reachable
- * from `http.adapter.ts` touches `$lib/server/db` — which executes `new Pool(...)` at module load — or
+ * from `http.adapter.ts` touches `#lib/server/db/index.ts` — which executes `new Pool(...)` at module load — or
  * Redis, or `@vercel/functions`. The moment one of those edges appears, two protocol test files
  * start constructing a real Neon pool, and the failure reads as an unrelated connection error
  * rather than as the boundary violation it is.
@@ -24,10 +24,10 @@ import { describe, expect, it } from 'vitest';
 const PROTOCOL_FILES = ['http.adapter.ts', 'transport.ts', 'types.ts'];
 
 const FORBIDDEN: Array<{ label: string; re: RegExp }> = [
-	{ label: '$lib/server/db (constructs a Neon pool at module load)', re: /\$lib\/server\/db\b/ },
+	{ label: '#lib/server/db (constructs a Neon pool at module load)', re: /#lib\/server\/db\b/ },
 	{ label: '@vercel/functions (platform edge — belongs in the route adapter)', re: /@vercel\/functions/ },
 	{ label: '@upstash/* (Redis client)', re: /@upstash\// },
-	{ label: '$lib/server/cache (Redis client)', re: /\$lib\/server\/cache\b/ },
+	{ label: '#lib/server/cache (Redis client)', re: /#lib\/server\/cache\b/ },
 ];
 
 function readProtocolFile(name: string): string {
@@ -35,14 +35,14 @@ function readProtocolFile(name: string): string {
 }
 
 /**
- * `$lib/server/http/*` (the shared adapter kit, formerly `server/api/`) used to be
+ * `#lib/server/http/*` (the shared adapter kit, formerly `server/api/`) used to be
  * banned as a whole directory. The reason given was "pulls Upstash +
- * $app/environment" — but that is a property of `rate-limit.ts`, not of the
+ * $app/env" — but that is a property of `rate-limit.ts`, not of the
  * directory, and a directory-shaped rule states the wrong invariant. `http/body.ts`
  * (bounded request readers) has no such edge and the protocol layer has a real need
  * for it.
  *
- * So the rule is now: an `$lib/server/http/*` import is allowed only if the
+ * So the rule is now: an `#lib/server/http/*` import is allowed only if the
  * imported module — and everything it reaches inside that directory — is itself
  * free of the forbidden edges. VERIFIED, not trusted: if `http/body.ts` ever
  * acquires a Redis import, this test fails here, naming the boundary, instead of
@@ -54,7 +54,7 @@ function readProtocolFile(name: string): string {
 const HTTP_KIT_DIR = join(process.cwd(), 'src', 'lib', 'server', 'http');
 
 function httpKitModulesReachableFrom(source: string, seen = new Set<string>()): string[] {
-	const direct = [...source.matchAll(/from '\$lib\/server\/http\/([\w-]+)'/g)].map((match) => match[1]);
+	const direct = [...source.matchAll(/from '#lib\/server\/http\/([\w-]+)\.ts'/g)].map((match) => match[1]);
 	const out: string[] = [];
 	for (const name of direct) {
 		if (seen.has(name)) continue;
@@ -62,7 +62,7 @@ function httpKitModulesReachableFrom(source: string, seen = new Set<string>()): 
 		out.push(name);
 		const nested = readFileSync(join(HTTP_KIT_DIR, `${name}.ts`), 'utf8');
 		// Relative siblings inside the same directory count as reachable too.
-		const relatives = [...nested.matchAll(/from '\.\/([\w-]+)'/g)].map((match) => match[1]);
+		const relatives = [...nested.matchAll(/from '\.\/([\w-]+)(?:\.ts)?'/g)].map((match) => match[1]);
 		for (const relative of relatives) {
 			if (seen.has(relative)) continue;
 			seen.add(relative);
@@ -92,7 +92,7 @@ describe('MCP protocol layer import boundary', () => {
 		});
 	}
 
-	it('only reaches $lib/server/http modules that are themselves edge-free', () => {
+	it('only reaches #lib/server/http modules that are themselves edge-free', () => {
 		const reached = new Set<string>();
 		for (const name of PROTOCOL_FILES) {
 			for (const module of httpKitModulesReachableFrom(readProtocolFile(name))) reached.add(module);
@@ -104,31 +104,31 @@ describe('MCP protocol layer import boundary', () => {
 		for (const module of reached) {
 			const src = readFileSync(join(HTTP_KIT_DIR, `${module}.ts`), 'utf8');
 			for (const { label, re } of FORBIDDEN) {
-				expect(re.test(src), `$lib/server/http/${module}.ts imports ${label}`).toBe(false);
+				expect(re.test(src), `#lib/server/http/${module}.ts imports ${label}`).toBe(false);
 			}
 		}
 	});
 
 	it('still refuses the rate limiter, which is the module the old blanket ban was really about', () => {
 		for (const name of PROTOCOL_FILES) {
-			expect(/\$lib\/server\/http\/rate-limit/.test(readProtocolFile(name)), `${name} imports the rate limiter`).toBe(
+			expect(/#lib\/server\/http\/rate-limit/.test(readProtocolFile(name)), `${name} imports the rate limiter`).toBe(
 				false,
 			);
 		}
 		// And the reason, asserted rather than asserted-about: it does carry the edge.
-		expect(/\$lib\/server\/cache\b/.test(readFileSync(join(HTTP_KIT_DIR, 'rate-limit.ts'), 'utf8'))).toBe(true);
+		expect(/#lib\/server\/cache\b/.test(readFileSync(join(HTTP_KIT_DIR, 'rate-limit.ts'), 'utf8'))).toBe(true);
 	});
 
 	it('keeps types.ts a leaf: it imports only the shared pattern-library contract', () => {
 		// Everything else in the MCP tree may import types.ts, so an import here is the one edge that
-		// can reach every other module at once. The single allowed edge is `$patterns/` — the
+		// can reach every other module at once. The single allowed edge is `#patterns/` — the
 		// framework-free, filesystem-free contract the stdio server also runs under bare Bun, which
 		// therefore cannot import anything of the app back.
 		const src = readProtocolFile('types.ts');
 		const sources = [...src.matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s+'([^']+)'/gm)].map((match) => match[1]);
 		expect(sources.length, 'types.ts re-uses the shared next-actions contract').toBeGreaterThan(0);
 		for (const source of sources) {
-			expect(source, 'types.ts may import only $patterns/*').toMatch(/^\$patterns\/[a-z-]+$/);
+			expect(source, 'types.ts may import only #patterns/*').toMatch(/^#patterns\/[a-z-]+\.ts$/);
 		}
 		expect(/\brequire\(/.test(src)).toBe(false);
 	});

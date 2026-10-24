@@ -6,7 +6,7 @@ import {
 	batchCreateHasChild,
 	batchCreateNextChunk,
 	storeDocumentGraph,
-} from '$lib/server/graph/retrieval/mutations';
+} from '#lib/server/graph/retrieval/mutations.ts';
 import type { RawChunk } from '../types';
 import type { ExtractionResult } from './entity-extract';
 

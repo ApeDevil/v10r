@@ -24,7 +24,7 @@
  * effects the live response did. A gated tool never reaches the desk in the loop, so
  * this is the only place a replayed mutation can tell an open panel to refresh.
  */
-import { type DbHandle, db } from '$lib/server/db';
+
 import {
 	createMarkdownFile,
 	createSpreadsheetFile,
@@ -33,11 +33,12 @@ import {
 	renameFile,
 	updateMarkdownByFileId,
 	updateSpreadsheetByFileId,
-} from '$lib/server/db/desk/mutations';
-import { getMarkdownByFileId, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
-import type { ProposedTarget } from '$lib/server/db/schema/ai/proposal';
-import type { StepRecoveryPoint } from '$lib/server/db/schema/ai/proposal-step';
-import type { ProposalStepRecovery } from '$lib/types/ai-proposal';
+} from '#lib/server/db/desk/mutations.ts';
+import { getMarkdownByFileId, getSpreadsheetByFileId } from '#lib/server/db/desk/queries.ts';
+import { type DbHandle, db } from '#lib/server/db/index.ts';
+import type { ProposedTarget } from '#lib/server/db/schema/ai/proposal.ts';
+import type { StepRecoveryPoint } from '#lib/server/db/schema/ai/proposal-step.ts';
+import type { ProposalStepRecovery } from '#lib/types/ai-proposal.ts';
 import { DESK_READ_MAX_CHARS } from '../config';
 import { followAiContextChange } from '../deskbot-retrieval';
 import type { DeskEffect, DeskToolScope } from './_types';

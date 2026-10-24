@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Combobox as ComboboxPrimitive } from 'bits-ui';
-import * as m from '$lib/paraglide/messages';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import * as m from '#lib/paraglide/messages.js';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Option {
 	value: string;

@@ -10,14 +10,14 @@
  */
 
 import { fail } from '@sveltejs/kit';
-import { ipLimitKey } from '$lib/server/abuse';
-import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '$lib/server/analytics/config';
-import { parseConsentTier } from '$lib/server/analytics/consent';
-import { deriveUaHash, deriveVisitorId } from '$lib/server/analytics/visitor';
-import { recordConsentEvent } from '$lib/server/db/analytics/consent-mutations';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { createLimiter } from '$lib/server/http/rate-limit';
-import { deferAfterResponse } from '$lib/server/platform';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { CONSENT_COOKIE, CONSENT_MAX_AGE } from '#lib/server/analytics/config.ts';
+import { parseConsentTier } from '#lib/server/analytics/consent.ts';
+import { deriveUaHash, deriveVisitorId } from '#lib/server/analytics/visitor.ts';
+import { recordConsentEvent } from '#lib/server/db/analytics/consent-mutations.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
+import { deferAfterResponse } from '#lib/server/platform/index.ts';
 import type { Actions } from './$types';
 
 const limiter = createLimiter('rl:consent:set', 10, '1 h');

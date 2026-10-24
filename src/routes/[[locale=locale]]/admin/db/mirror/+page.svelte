@@ -1,14 +1,14 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
+import { Alert, Card, ConfirmDialog, DiagGrid, DiagRow } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Progress, Skeleton, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { BranchOperationStatus } from '#lib/server/dbops/index.ts';
+import type { ThresholdLevel } from '#lib/server/monitoring/index.ts';
+import { BranchOperationMonitor } from '#lib/state/branch-operation-monitor.svelte.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { invalidate } from '$app/navigation';
-import { Alert, Card, ConfirmDialog, DiagGrid, DiagRow } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Progress, Skeleton, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import type { BranchOperationStatus } from '$lib/server/dbops';
-import type { ThresholdLevel } from '$lib/server/monitoring';
-import { BranchOperationMonitor } from '$lib/state/branch-operation-monitor.svelte';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 const toast = getToast();

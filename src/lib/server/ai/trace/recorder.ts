@@ -3,7 +3,7 @@
  *
  * The orchestrator, the context assembly, the model-call middleware and the AI SDK hooks
  * each report what only they see; the recorder folds it into one `TurnTrace`
- * (`$lib/types/turn-trace.ts`), hands the client a bodies-free `snapshot()` on every
+ * (`#lib/types/turn-trace.ts`), hands the client a bodies-free `snapshot()` on every
  * change (the orchestrator micro-batches those into `message-metadata` frames), and
  * writes the whole thing once, at the end (`persist()` — idempotent, never throws into
  * the answer).
@@ -14,12 +14,12 @@
  * actual execution — the recorder never runs anything itself.
  */
 import type { LanguageModelUsage, ModelMessage, ToolSet } from 'ai';
-import { hashSystemPrompt } from '$lib/server/ai/context/history';
-import { saveTurnTrace } from '$lib/server/db/ai/mutations';
-import { createId } from '$lib/server/db/id';
-import type { AiErrorKind } from '$lib/types/ai-error';
-import type { CapabilityId } from '$lib/types/assistant-profile';
-import type { AiSurface } from '$lib/types/db-enums';
+import { hashSystemPrompt } from '#lib/server/ai/context/history.ts';
+import { saveTurnTrace } from '#lib/server/db/ai/mutations.ts';
+import { createId } from '#lib/server/db/id.ts';
+import type { AiErrorKind } from '#lib/types/ai-error.ts';
+import type { CapabilityId } from '#lib/types/assistant-profile.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 import type {
 	Activation,
 	AttemptOutcome,
@@ -40,7 +40,7 @@ import type {
 	TurnTimings,
 	TurnTrace,
 	TurnTraceSnapshot,
-} from '$lib/types/turn-trace';
+} from '#lib/types/turn-trace.ts';
 
 /** Model-facing tool results above this size are stored as a capped preview. */
 export const TOOL_RESULT_CAP_CHARS = 8_000;

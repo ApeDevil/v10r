@@ -151,7 +151,7 @@ never came, the first open waits on the network.
 
 **A barrel of Svelte components is not tree-shakeable by default.** A compiled component
 runs code at module scope (`$.delegate(...)`, template factories), so Rollup must keep every
-component a barrel re-exports — one `import { Button } from '$lib/components'` shipped the
+component a barrel re-exports — one `import { Button } from '#lib/components'` shipped the
 whole primitives layer, culori and bits-ui's select and menu included, to 197 of 199 routes.
 Rewriting the shell's imports as leaf imports changed nothing (299.4 KB), because pages import
 the barrel too.

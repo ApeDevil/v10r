@@ -1,5 +1,5 @@
-import { ALTCHA_CHALLENGE_EXPIRY_MS, ALTCHA_HMAC_KEY, BOT_DETECTION_MODE } from '$lib/server/abuse';
-import { redis } from '$lib/server/cache';
+import { ALTCHA_CHALLENGE_EXPIRY_MS, ALTCHA_HMAC_KEY, BOT_DETECTION_MODE } from '#lib/server/abuse/index.ts';
+import { redis } from '#lib/server/cache/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

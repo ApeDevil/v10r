@@ -20,8 +20,8 @@
  * Pure — no runes, node-testable.
  */
 
-import type { MenuBarItem, MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import type { PanelDefinition } from '$lib/desk/layout.types';
+import type { MenuBarItem, MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import type { PanelDefinition } from '#lib/desk/layout.types.ts';
 
 /** Declared once; the tab context menu prints it beside its own Close row. */
 export const CLOSE_PANEL_SHORTCUT = 'Ctrl+W';

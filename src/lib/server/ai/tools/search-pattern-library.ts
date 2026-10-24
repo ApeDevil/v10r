@@ -16,10 +16,10 @@
  */
 
 import { jsonSchema, tool } from 'ai';
-import type { Locale } from '$lib/i18n';
-import type { SearchResult } from '$lib/search/types';
-import { CATEGORIES, PATTERNS, type PatternRecord } from '$lib/server/patterns';
-import { scorePatterns } from '$patterns/search';
+import type { Locale } from '#lib/i18n/index.ts';
+import type { SearchResult } from '#lib/search/types.ts';
+import { CATEGORIES, PATTERNS, type PatternRecord } from '#lib/server/patterns/index.ts';
+import { scorePatterns } from '#patterns/search.ts';
 import type { CatalogSink } from './search-catalog';
 
 interface ToolInput {

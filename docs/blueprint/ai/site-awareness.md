@@ -271,7 +271,7 @@ ai.message.route  text  NULL   -- the resolved, allowlisted route key only (e.g.
 - Stamped **only** on the **user** message in `saveMessages`. Not on `model_call`
   (that table is assistant-keyed per-step telemetry — wrong grain).
 - Stores the **server-resolved key**, never the client string, never a URL/params/query,
-  never ids. The bubble label is **derived at render** from the key via the `$lib`
+  never ids. The bubble label is **derived at render** from the key via the `#lib`
   registry (no title duplication/drift).
 - On miss / tier (b) coarse / tier (c) → `NULL`.
 - Additive `db:push` (PTY prompt for the raw-TTY interaction).

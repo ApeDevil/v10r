@@ -6,7 +6,7 @@
 
 import type { Snippet } from 'svelte';
 import type { HTMLAttributes } from 'svelte/elements';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 type Gap = '0' | '1' | '2' | '3' | '4' | '5' | '6';
 type Justify = 'start' | 'center' | 'end' | 'between' | 'around';

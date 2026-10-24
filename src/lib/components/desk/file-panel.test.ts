@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LayoutNode } from '$lib/desk/layout.types';
+import type { LayoutNode } from '#lib/desk/layout.types.ts';
 import { fileIdOfPanel, fileIdOfPanelDefinition, filePanelId, findFilePanel } from './file-panel';
 
 describe('file panel identity', () => {

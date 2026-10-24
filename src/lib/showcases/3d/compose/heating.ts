@@ -3,7 +3,7 @@
  * a floor-standing buffer tank, panel radiators under the windows, a towel radiator and a room
  * thermostat, coupled by fluid and control conduits — set in a room, against its back wall.
  *
- * Domain content lives here, never in `$lib/product-composition`: the port standards below are
+ * Domain content lives here, never in `#lib/product-composition/index.ts`: the port standards below are
  * this fixture's vocabulary. Couplings check declared data only — nominal size, thread gender,
  * design flow direction. Nothing here sizes, rates or approves a heating installation.
  *
@@ -17,7 +17,7 @@
  * floor (y = 0). The room itself is `HEATING_ROOM` — scenery the page passes to the renderer,
  * not part of the document.
  */
-import type { ConduitSurface, RoomLayout } from '$lib/components/3d/composition';
+import type { ConduitSurface, RoomLayout } from '#lib/components/3d/composition/index.ts';
 import {
 	composeFrames,
 	frameFromAxisAngle,
@@ -29,7 +29,7 @@ import {
 	type ProductDefinition,
 	type ProductPort,
 	type Vec3,
-} from '$lib/product-composition';
+} from '#lib/product-composition/index.ts';
 
 export const HEATING_STANDARDS: PortStandard[] = [
 	{

@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { error } from '@sveltejs/kit';
-import { isLocale, locales } from '$lib/i18n/runtime';
-import { renderBlogPost } from '$lib/server/blog/pipeline';
-import { getPreviewDrift, parseContentFile } from '$lib/server/content';
-import { db } from '$lib/server/db';
-import { contentHash } from '$lib/server/db/content-hash';
+import { isLocale, locales } from '#lib/i18n/runtime.ts';
+import { renderBlogPost } from '#lib/server/blog/pipeline.ts';
+import { getPreviewDrift, parseContentFile } from '#lib/server/content/index.ts';
+import { contentHash } from '#lib/server/db/content-hash.ts';
+import { db } from '#lib/server/db/index.ts';
 import type { PageServerLoad } from './$types';
 
 /**

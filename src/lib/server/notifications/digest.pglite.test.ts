@@ -1,24 +1,24 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { notificationSettings } from '$lib/server/db/schema/notifications/notification-settings';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
-import { makeUser } from '$lib/server/test/fixtures';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { notificationDeliveries } from '#lib/server/db/schema/notifications/deliveries.ts';
+import { notificationSettings } from '#lib/server/db/schema/notifications/notification-settings.ts';
+import { notifications } from '#lib/server/db/schema/notifications/notifications.ts';
+import { userPreferences } from '#lib/server/db/schema/personalization/user-preferences.ts';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
 const { runDigest } = await import('./digest');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER = makeUser({ id: 'user-digest' });
 

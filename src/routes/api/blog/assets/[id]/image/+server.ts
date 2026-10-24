@@ -1,9 +1,9 @@
 import { redirect } from '@sveltejs/kit';
-import { ipLimitKey } from '$lib/server/abuse';
-import { getPublicAssetById } from '$lib/server/blog';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError } from '$lib/server/http/response';
-import { generatePublicBlogImageUrl, PUBLIC_BLOG_IMAGE_CACHE_CONTROL } from '$lib/server/store/blog';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { getPublicAssetById } from '#lib/server/blog/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError } from '#lib/server/http/response.ts';
+import { generatePublicBlogImageUrl, PUBLIC_BLOG_IMAGE_CACHE_CONTROL } from '#lib/server/store/blog/index.ts';
 import type { RequestHandler } from './$types';
 
 // Unauthenticated and cost-bearing (a DB read plus an R2 presign per hit), so
@@ -45,5 +45,7 @@ export const GET: RequestHandler = async ({ params, setHeaders, locals }) => {
 	// carries no Cache-Control, so `securityHeaders` stamps it `no-store, private`.
 	setHeaders({ 'Cache-Control': PUBLIC_BLOG_IMAGE_CACHE_CONTROL });
 
-	redirect(302, url);
+	// Cross-origin (the R2 bucket host), which SvelteKit 3 refuses unless told. The URL is one
+	// our store signed from server config, never request input.
+	redirect(302, url, { external: true });
 };

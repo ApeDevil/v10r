@@ -1,4 +1,4 @@
-import type { NameCheckCategory, NameCheckQueryOutput, NameCheckTerritory } from '$lib/schemas/name-check';
+import type { NameCheckCategory, NameCheckQueryOutput, NameCheckTerritory } from '#lib/schemas/name-check.ts';
 import { type NormalizedName, normalizeName } from './normalize';
 
 /** A validated query, normalised once, handed to every source unchanged. */

@@ -14,9 +14,9 @@
  * invalidate. The public check uses the forgiving twin: a settings table it cannot read
  * turns two sources into `credentials_missing` rows, it does not fail the search.
  */
-import { db } from '$lib/server/db';
-import { listNameSourceConnections } from '$lib/server/db/name-check/source-connections';
-import { EncryptionError, type EncryptionKeyRing, getEncryptionKeyRing } from '$lib/server/security';
+import { db } from '#lib/server/db/index.ts';
+import { listNameSourceConnections } from '#lib/server/db/name-check/source-connections.ts';
+import { EncryptionError, type EncryptionKeyRing, getEncryptionKeyRing } from '#lib/server/security/index.ts';
 import { type NameSourceConnections, resolveNameSourceConnections } from './connections';
 import { NameSourceError } from './errors';
 import { type NameSourceCredentials, NO_CREDENTIALS } from './name-source';

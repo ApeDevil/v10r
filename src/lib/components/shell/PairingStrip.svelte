@@ -1,5 +1,5 @@
 <script lang="ts">
-import { invalidateAll } from '$app/navigation';
+import { refreshAll } from '$app/navigation';
 
 let dismissed = $state(false);
 let busy = $state(false);
@@ -16,7 +16,7 @@ async function disconnect() {
 		});
 		if (!res.ok) throw new Error(String(res.status));
 		dismissed = true;
-		await invalidateAll();
+		await refreshAll();
 	} catch {
 		error = true;
 	} finally {

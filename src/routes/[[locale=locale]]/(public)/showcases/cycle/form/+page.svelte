@@ -1,14 +1,14 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { Alert, Card, FormField } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Button, Input, Select, Spinner } from '$lib/components/primitives';
-import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/showcases/cycle';
-import { createCycleState } from '$lib/components/showcases/cycle/cycle.state.svelte';
-import * as m from '$lib/paraglide/messages';
-import { cycleSchema } from '$lib/schemas/showcase/cycle';
-import type { CycleSpan, CycleTrace } from '$lib/showcases/cycle/types';
+import { Alert, Card, FormField } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Input, Select, Spinner } from '#lib/components/primitives/index.ts';
+import { createCycleState } from '#lib/components/showcases/cycle/cycle.state.svelte.ts';
+import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '#lib/components/showcases/cycle/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { cycleSchema } from '#lib/schemas/showcase/cycle.ts';
+import type { CycleSpan, CycleTrace } from '#lib/showcases/cycle/types.ts';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

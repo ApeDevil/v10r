@@ -1,9 +1,8 @@
 import { timingSafeEqual } from 'node:crypto';
-import { json } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
-import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter } from '$lib/server/http/rate-limit';
-import { linkTelegramAccount, sendTelegramMessage } from '$lib/server/notifications/telegram-linking';
+import { normalizeIpKey } from '#lib/server/abuse/index.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
+import { linkTelegramAccount, sendTelegramMessage } from '#lib/server/notifications/telegram-linking.ts';
+import { TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 // Telegram delivers updates one at a time per chat; 120/min is far above real
@@ -30,21 +29,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// route: a shared secret with nothing in front of it is an unbounded
 	// guessing surface. Telegram's real delivery rate sits far under this.
 	const { success } = await limiter.limit(normalizeIpKey(locals.clientIp) ?? 'anon');
-	if (!success) return json({ ok: false }, { status: 429 });
+	if (!success) return Response.json({ ok: false }, { status: 429 });
 
-	const botToken = env.TELEGRAM_BOT_TOKEN;
+	const botToken = TELEGRAM_BOT_TOKEN;
 	if (!botToken) {
-		return json({ ok: false }, { status: 503 });
+		return Response.json({ ok: false }, { status: 503 });
 	}
 
 	// Verify request originates from Telegram via secret token
-	const webhookSecret = env.TELEGRAM_WEBHOOK_SECRET;
+	const webhookSecret = TELEGRAM_WEBHOOK_SECRET;
 	if (!webhookSecret) {
-		return json({ ok: false }, { status: 503 });
+		return Response.json({ ok: false }, { status: 503 });
 	}
 	const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
 	if (!secretHeader || !safeEqual(secretHeader, webhookSecret)) {
-		return json({ ok: false }, { status: 401 });
+		return Response.json({ ok: false }, { status: 401 });
 	}
 
 	const rawBody = await request.text().catch(() => '');
@@ -53,10 +52,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		body = rawBody ? (JSON.parse(rawBody) as TelegramUpdate) : null;
 	} catch {
 		// Malformed JSON from a secret-token holder — ack so Telegram stops retrying.
-		return json({ ok: true });
+		return Response.json({ ok: true });
 	}
 	if (!body?.message?.text) {
-		return json({ ok: true });
+		return Response.json({ ok: true });
 	}
 
 	const chatId = String(body.message.chat.id);
@@ -65,13 +64,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	// Only handle /start TOKEN command
 	if (!text.startsWith('/start ')) {
-		return json({ ok: true });
+		return Response.json({ ok: true });
 	}
 
 	const token = text.slice(7).trim();
 	if (!token) {
 		await sendTelegramMessage(botToken, chatId, 'Invalid token. Please use the link from your notification settings.');
-		return json({ ok: true });
+		return Response.json({ ok: true });
 	}
 
 	const result = await linkTelegramAccount({ token, chatId, username });
@@ -82,9 +81,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			chatId,
 			'Token expired or invalid. Please generate a new link from notification settings.',
 		);
-		return json({ ok: true });
+		return Response.json({ ok: true });
 	}
 
 	await sendTelegramMessage(botToken, chatId, 'Connected! You will now receive notifications here.');
-	return json({ ok: true });
+	return Response.json({ ok: true });
 };

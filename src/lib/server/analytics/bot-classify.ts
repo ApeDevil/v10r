@@ -27,7 +27,7 @@
  * into a verdict. Read `family` and `verification` together or not at all.
  */
 
-import type { BotCategory, BotRangeSource } from '$lib/server/db/schema/analytics/bot-hits';
+import type { BotCategory, BotRangeSource } from '#lib/server/db/schema/analytics/bot-hits.ts';
 
 export interface BotIdentity {
 	family: string;

@@ -1,8 +1,8 @@
-import { R2_ACCOUNT_ID } from '$env/static/private';
-import { verifyConnection } from '$lib/server/showcases/store/queries';
-import { reseedBucket } from '$lib/server/showcases/store/seed';
-import { classifyS3Error } from '$lib/server/store/errors';
-import { formatBytes } from '$lib/server/store/types';
+import { verifyConnection } from '#lib/server/showcases/store/queries.ts';
+import { reseedBucket } from '#lib/server/showcases/store/seed.ts';
+import { classifyS3Error } from '#lib/server/store/errors.ts';
+import { formatBytes } from '#lib/server/store/types.ts';
+import { R2_ACCOUNT_ID } from '$app/env/private';
 import type { Actions, PageServerLoad } from './$types';
 
 async function measureConnection() {

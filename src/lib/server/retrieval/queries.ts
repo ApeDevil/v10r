@@ -3,7 +3,7 @@
  * neighbours back into a result read chunk bodies by id through here.
  */
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 
 /** A raw chunk with its document context. */
 export type RawChunkRow = {

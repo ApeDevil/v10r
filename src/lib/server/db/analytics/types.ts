@@ -5,7 +5,7 @@
  * have the sink importing upward for a shape only the sink fills in.
  */
 
-import type { CommandVia } from '$lib/types/journey-events';
+import type { CommandVia } from '#lib/types/journey-events.ts';
 
 export interface TrafficTrendPoint {
 	date: string;

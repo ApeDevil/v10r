@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { goto, replaceState } from '$app/navigation';
+import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { urlParam } from './url-state';
 import { createUrlState } from './url-state.svelte';
 
-vi.mock('$app/environment', () => ({ browser: true }));
-vi.mock('$app/navigation', () => ({ goto: vi.fn(() => Promise.resolve()), replaceState: vi.fn() }));
+vi.mock('$app/env', () => ({ browser: true }));
+vi.mock('$app/navigation', () => ({ goto: vi.fn(() => Promise.resolve()) }));
 vi.mock('$app/state', () => ({ page: { url: new URL('https://v10r.dev/'), state: {} } }));
 
 const spec = { q: urlParam.text(), range: urlParam.oneOf(['7', '30', '90'], '30') };
@@ -19,7 +19,6 @@ function at(href: string): void {
 
 beforeEach(() => {
 	vi.mocked(goto).mockClear();
-	vi.mocked(replaceState).mockClear();
 	at('https://v10r.dev/showcases/analytics?range=7&ref=nav');
 });
 
@@ -38,8 +37,7 @@ describe('createUrlState — navigate', () => {
 		expect(goto).toHaveBeenCalledTimes(1);
 		const [url, opts] = vi.mocked(goto).mock.calls[0] as [URL, object];
 		expect(url.search).toBe('?ref=nav');
-		expect(opts).toEqual({ replaceState: true, keepFocus: true, noScroll: true });
-		expect(replaceState).not.toHaveBeenCalled();
+		expect(opts).toEqual({ replace: true, reset: false });
 	});
 
 	it('shows a debounced write at once and navigates once for a burst', () => {
@@ -58,27 +56,26 @@ describe('createUrlState — navigate', () => {
 
 	it('adds a history entry when asked to', () => {
 		createUrlState(spec, { write: 'navigate', history: 'push' }).set({ range: '90' });
-		expect(vi.mocked(goto).mock.calls[0]?.[1]).toMatchObject({ replaceState: false });
+		expect(vi.mocked(goto).mock.calls[0]?.[1]).toMatchObject({ replace: false });
 	});
 });
 
 describe('createUrlState — shallow', () => {
-	it('keeps the values locally and mirrors them with a shallow replaceState that preserves page.state', () => {
+	it('keeps the values locally and mirrors them with a shallow goto that preserves page.state', () => {
 		const state = createUrlState(spec, { write: 'shallow' });
 		state.set({ q: 'chair' });
 
 		expect(state.values).toEqual({ q: 'chair', range: '7' });
-		expect(goto).not.toHaveBeenCalled();
-		const [url, pageState] = vi.mocked(replaceState).mock.calls[0] as [URL, unknown];
+		const [url, opts] = vi.mocked(goto).mock.calls[0] as [URL, object];
 		expect(url.search).toBe('?range=7&ref=nav&q=chair');
-		expect(pageState).toEqual({ viewerOpen: true });
+		expect(opts).toEqual({ shallow: true, replace: true, state: { viewerOpen: true } });
 	});
 
 	it('builds on the address bar, which carries earlier shallow writes that page.url never sees', () => {
 		const state = createUrlState(spec, { write: 'shallow' });
 		vi.stubGlobal('window', { location: { href: 'https://v10r.dev/showcases/analytics?range=7&ref=nav&q=a' } });
 		state.set({ range: '90' });
-		const url = vi.mocked(replaceState).mock.calls[0]?.[0] as URL;
+		const url = vi.mocked(goto).mock.calls[0]?.[0] as URL;
 		expect(url.searchParams.get('ref')).toBe('nav');
 		expect(url.searchParams.get('range')).toBe('90');
 	});

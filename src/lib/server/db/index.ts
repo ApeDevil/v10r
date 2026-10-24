@@ -1,7 +1,7 @@
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle, type NeonQueryResultHKT } from 'drizzle-orm/neon-serverless';
 import type { PgDatabase } from 'drizzle-orm/pg-core';
-import { env } from '$env/dynamic/private';
+import { NEON_DATABASE_URL_PROD } from '$app/env/private';
 import { queryCensusLogger } from './query-census';
 import * as schema from './schema';
 
@@ -10,7 +10,7 @@ import * as schema from './schema';
 // Same approach used in drizzle.config.ts.
 neonConfig.poolQueryViaFetch = true;
 
-const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
+const pool = new Pool({ connectionString: NEON_DATABASE_URL_PROD });
 
 // `logger` is not logging — it is the only seam Drizzle offers that sees every
 // statement from every domain, including Better Auth's. It counts round trips into

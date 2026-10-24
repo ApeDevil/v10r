@@ -1,10 +1,10 @@
 import * as v from 'valibot';
-import type { WorkspaceLayoutJson } from '$lib/server/db/schema/desk/workspace';
-import { createWorkspace } from '$lib/server/desk';
-import { CreateWorkspaceSchema } from '$lib/server/desk/schemas';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
+import type { WorkspaceLayoutJson } from '#lib/server/db/schema/desk/workspace.ts';
+import { createWorkspace } from '#lib/server/desk/index.ts';
+import { CreateWorkspaceSchema } from '#lib/server/desk/schemas.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:workspaces', 10, '1 m');

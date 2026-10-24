@@ -10,7 +10,7 @@
  * as `localeFallback: true` (rendered with an "EN" badge). The whole layer is
  * locale-parameterized so authoring native de/ru content later needs no rework.
  */
-import type { Locale } from '$lib/i18n';
+import type { Locale } from '#lib/i18n/index.ts';
 
 export type SearchSurface = 'page' | 'showcase' | 'section' | 'doc' | 'blog';
 

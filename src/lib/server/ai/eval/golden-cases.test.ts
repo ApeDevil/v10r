@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
-import { TOOL_MANIFEST } from '$lib/types/ai-tools';
+import { TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
 import baseline from './baseline.json';
 import { GoldenSetSchema } from './eval-case';
 import golden from './golden-cases.json';

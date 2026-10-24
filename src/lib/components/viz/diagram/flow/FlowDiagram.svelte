@@ -2,7 +2,7 @@
 import type { DefaultEdgeOptions, Edge, EdgeTypes, FitViewOptions, Node, NodeTypes } from '@xyflow/svelte';
 import type { Component } from 'svelte';
 import { onMount } from 'svelte';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 
 interface Props {

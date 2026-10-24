@@ -9,9 +9,9 @@
  * ring: that is a key dropped from `ENCRYPTION_KEY_PREVIOUS` too early, and a failed run on
  * `/admin/jobs` is where the operator looks before removing the previous key.
  */
-import { resealProviderKeys } from '$lib/server/ai';
-import { resealNameSourceSecrets } from '$lib/server/name-check';
-import { getEncryptionKeyRing } from '$lib/server/security';
+import { resealProviderKeys } from '#lib/server/ai/index.ts';
+import { resealNameSourceSecrets } from '#lib/server/name-check/index.ts';
+import { getEncryptionKeyRing } from '#lib/server/security/index.ts';
 
 export async function encryptionReseal(): Promise<number> {
 	const ring = getEncryptionKeyRing();

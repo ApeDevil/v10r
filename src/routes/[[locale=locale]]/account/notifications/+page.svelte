@@ -1,11 +1,11 @@
 <script lang="ts">
+import { EmptyState, NotificationCenter } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Button, buttonVariants } from '#lib/components/primitives/button/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/index.ts';
 import { invalidate } from '$app/navigation';
 import { page } from '$app/state';
-import { EmptyState, NotificationCenter } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Button, buttonVariants } from '$lib/components/primitives/button';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state';
 
 let { data } = $props();
 

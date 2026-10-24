@@ -1,20 +1,20 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeNotification, makeUser } from '$lib/server/test/fixtures';
+import { makeNotification, makeUser } from '#lib/server/test/fixtures.ts';
 import { user } from '../schema/auth/_better-auth';
 import { notifications } from '../schema/notifications/notifications';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
 const { getNotifications, getUnreadCount } = await import('./queries');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER_A = makeUser({ id: 'user-a' });
 const USER_B = makeUser({ id: 'user-b' });

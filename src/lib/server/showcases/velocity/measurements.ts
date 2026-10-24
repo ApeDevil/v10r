@@ -3,7 +3,7 @@
  *
  * Every number this returns was measured on the request that asked for it — a
  * `performance.now()` pair around real `await`s, running the real
- * `$lib/server/cache` code. Nothing here is a stored figure or an animation timed
+ * `#lib/server/cache/index.ts` code. Nothing here is a stored figure or an animation timed
  * to look convincing. That is the point of the page: a claim about latency is worth
  * exactly as much as the measurement behind it.
  *
@@ -19,11 +19,11 @@
  * a hundred rebuilds finish in about the wall-clock time of one while still costing a
  * hundred round trips upstream; the count is what the dependency actually felt.
  */
-import { coalesce, definePolicy, readThrough } from '$lib/server/cache';
-import { startDeadline } from '$lib/server/http/deadline';
-import type { RequestTiming } from '$lib/server/http/request-timing';
-import { defineBreaker, defineBulkhead } from '$lib/server/resilience';
-import type { VelocityMeasurement, VelocityMeasurementId } from '$lib/showcases/velocity/measurement';
+import { coalesce, definePolicy, readThrough } from '#lib/server/cache/index.ts';
+import { startDeadline } from '#lib/server/http/deadline.ts';
+import type { RequestTiming } from '#lib/server/http/request-timing.ts';
+import { defineBreaker, defineBulkhead } from '#lib/server/resilience/index.ts';
+import type { VelocityMeasurement, VelocityMeasurementId } from '#lib/showcases/velocity/measurement.ts';
 
 /**
  * Cost of one simulated dependency call.

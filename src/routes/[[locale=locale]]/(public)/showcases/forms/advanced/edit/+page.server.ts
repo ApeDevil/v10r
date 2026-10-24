@@ -1,6 +1,6 @@
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { profileEditSchema } from '$lib/schemas/showcase/advanced';
+import { profileEditSchema } from '#lib/schemas/showcase/advanced.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const mockProfile = {

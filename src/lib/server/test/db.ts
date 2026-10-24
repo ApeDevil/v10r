@@ -4,7 +4,7 @@ import { vector } from '@electric-sql/pglite/vector';
 import type { Logger } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/pglite';
 import { inject } from 'vitest';
-import * as schema from '$lib/server/db/schema';
+import * as schema from '#lib/server/db/schema/index.ts';
 
 /**
  * `logger` is the seam the query-budget gate needs: the production `db` wires the

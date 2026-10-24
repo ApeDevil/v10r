@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Card, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import CodeBlock from '$lib/components/composites/info-dialog/CodeBlock.svelte';
-import { PageContainer, Stack } from '$lib/components/layout';
-import * as m from '$lib/paraglide/messages';
+import { Card, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import CodeBlock from '#lib/components/composites/info-dialog/CodeBlock.svelte';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import BoundaryDemo from './_components/BoundaryDemo.svelte';
 import FilterLab from './_components/FilterLab.svelte';
 

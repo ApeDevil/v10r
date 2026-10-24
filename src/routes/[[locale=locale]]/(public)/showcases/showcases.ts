@@ -1,14 +1,14 @@
 /**
  * Showcase route navigation helpers.
  *
- * The card tree itself lives in `$lib/showcases/registry` (so non-route
- * consumers like the search adapters can read it without a `$lib → routes`
+ * The card tree itself lives in `#lib/showcases/registry` (so non-route
+ * consumers like the search adapters can read it without a `#lib → routes`
  * back-edge). This module re-exports it and adds the route-only helpers that
  * resolve the registry's Paraglide label functions into plain strings for
  * `ShowcaseLayout` / `NavTab` / `PageHeader`.
  */
-import * as m from '$lib/paraglide/messages';
-import { groupByDomain, type ShowcaseCard, showcases } from '$lib/showcases/catalog/registry';
+import * as m from '#lib/paraglide/messages.js';
+import { groupByDomain, type ShowcaseCard, showcases } from '#lib/showcases/catalog/registry.ts';
 
 export { groupByDomain };
 

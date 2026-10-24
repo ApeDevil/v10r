@@ -1,4 +1,4 @@
-import { urlParam } from '$lib/state/url-state';
+import { urlParam } from '#lib/state/url-state.ts';
 
 export const ANALYTICS_SHOWCASE_RANGES = ['7', '30', '90'] as const;
 export type AnalyticsShowcaseRange = (typeof ANALYTICS_SHOWCASE_RANGES)[number];

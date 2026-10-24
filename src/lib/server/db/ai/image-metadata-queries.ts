@@ -14,7 +14,7 @@
  */
 
 import { count, desc, eq, gte, sql } from 'drizzle-orm';
-import type { ImageConversionFunnel, ImageUsageKpis, UsageVolumeDay } from '$lib/schemas/admin/model-usage';
+import type { ImageConversionFunnel, ImageUsageKpis, UsageVolumeDay } from '#lib/schemas/admin/model-usage.ts';
 import { db } from '../index';
 import { imageAiProposal, imageMetadata } from '../schema/showcase/image-metadata';
 

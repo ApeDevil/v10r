@@ -14,8 +14,8 @@ const sendAuthEmail = vi.fn(async (_params: unknown) => {});
 const deleteWhere = vi.fn(async (_condition: unknown) => []);
 const redisSet = vi.fn(async (..._args: unknown[]) => 'OK');
 
-vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: (input: unknown) => recordAuditEvent(input) }));
-vi.mock('$lib/server/db', () => ({
+vi.mock('#lib/server/admin/audit.ts', () => ({ recordAuditEvent: (input: unknown) => recordAuditEvent(input) }));
+vi.mock('#lib/server/db/index.ts', () => ({
 	db: { delete: vi.fn(() => ({ where: deleteWhere })) },
 }));
 vi.mock('./send-auth-email', () => ({
@@ -25,7 +25,7 @@ vi.mock('./send-auth-email', () => ({
 // Without this, the revokeSiblings path falls through stampRevocation() to the
 // REAL Upstash client — an unbounded network call that hangs the test whenever
 // Upstash is reachable but stalling (same stub shape as revocation.test.ts).
-vi.mock('$lib/server/cache', () => ({
+vi.mock('#lib/server/cache/index.ts', () => ({
 	redis: {
 		get: vi.fn(async () => null),
 		set: (...args: unknown[]) => redisSet(...args),

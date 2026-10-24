@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COMMAND_VIA } from '$lib/types/journey-events';
+import { COMMAND_VIA } from '#lib/types/journey-events.ts';
 import { isKnownEvent, sanitizeProperties } from './event-schema';
 
 describe('command_invoked — the menu-review evidence event', () => {

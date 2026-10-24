@@ -1,6 +1,6 @@
 /**
  * The External Service Lab's copy, resolved to the visitor's language once per request,
- * on the server — the name-check precedent (`$lib/name-check/labels.ts`).
+ * on the server — the name-check precedent (`#lib/name-check/labels.ts`).
  *
  * A Paraglide message ships all three locales to the client, and this page has ~100 of
  * them: as component imports they were most of the route's 50 KB and pushed the client-JS
@@ -8,7 +8,7 @@
  * Server-only in practice: only `+page.server.ts` imports it — a `.svelte` file importing
  * it would ship every locale again.
  */
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 
 export const EXTERNAL_SERVICE_COPY_KEYS = [
 	'lede',

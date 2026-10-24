@@ -1,6 +1,6 @@
-import type { DocEntry, DocSection } from '$lib/docs/types';
-import { renderBlogPost } from '$lib/server/blog/pipeline';
-import type { TocEntry } from '$lib/server/blog/types';
+import type { DocEntry, DocSection } from '#lib/docs/types.ts';
+import { renderBlogPost } from '#lib/server/blog/pipeline.ts';
+import type { TocEntry } from '#lib/server/blog/types.ts';
 import { getEntry, getManifest, getRawMarkdown } from './manifest';
 import { ROOT_DOCS, type RootDoc } from './markdown-urls';
 

@@ -3,7 +3,7 @@
  * route tree ever regains a server attack surface or leaks an identifier.
  *
  * The auth showcase is `(public)`, has no `+page.server.ts`, and must
- * never import `$lib/server/*` nor render real secrets/PII. This test is
+ * never import `#lib/server/*` nor render real secrets/PII. This test is
  * the durable enforcement so the self-documenting architecture cannot
  * silently re-introduce the leaks the redesign removed.
  */
@@ -24,7 +24,7 @@ function walk(dir: string): string[] {
 }
 
 const FORBIDDEN: { label: string; re: RegExp }[] = [
-	{ label: '$lib/server import (server attack surface)', re: /\$lib\/server\b/ },
+	{ label: '#lib/server import (server attack surface)', re: /#lib\/server\b/ },
 	{ label: 'betterAuthVersion disclosure', re: /betterAuthVersion/ },
 	{ label: 'BETTER_AUTH_URL / SECRET', re: /BETTER_AUTH_(URL|SECRET)/ },
 	{ label: 'ADMIN_EMAIL / ADMIN_USER_ID', re: /ADMIN_(EMAIL|USER_ID)/ },
@@ -75,13 +75,13 @@ describe('Identity & Access showcase leak-gate', () => {
 
 	it('the matchers actually fire (guards against a silently dead regex)', () => {
 		const bait = [
-			`import { db } from '$lib/server/db';`,
+			`import { db } from '#lib/server/db/index.ts';`,
 			'const v = betterAuthVersion;',
 			'env.BETTER_AUTH_SECRET',
 			'env.ADMIN_USER_ID',
 			'stas-k@gmx.de',
 			"'550e8400-e29b-41d4-a716-446655440000'",
-			"from '$lib/server/db/schema/auth/_better-auth'",
+			"from '#lib/server/db/schema/auth/_better-auth.ts'",
 		];
 		expect(FORBIDDEN.map(({ re }, i) => re.test(bait[i]))).toEqual(FORBIDDEN.map(() => true));
 		expect('a@evil.com'.match(EMAIL_RE)).toEqual(['a@evil.com']);

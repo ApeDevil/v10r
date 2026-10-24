@@ -34,7 +34,7 @@ src/lib/server/ai/capabilities/      one file per capability, each exporting one
 |---|---|
 | **profile** — identity + capabilities of one surface's assistant | `AssistantProfile` |
 | **identity** — who it is and the rules it always follows; the `<role>` + `<instructions>` block every turn of a profile shares verbatim | `AssistantIdentity`, `identityBlock()` |
-| **capability** — one thing it can do: tools (description + schema live on the tool), when-to-use **guidance** (one cache-stable block), the rule that **activates** it, its **grounding** source, an on-demand **guide**, a **verifier** | `AssistantCapability`, `CapabilityId` (`$lib/types/assistant-profile.ts`) |
+| **capability** — one thing it can do: tools (description + schema live on the tool), when-to-use **guidance** (one cache-stable block), the rule that **activates** it, its **grounding** source, an on-demand **guide**, a **verifier** | `AssistantCapability`, `CapabilityId` (`#lib/types/assistant-profile.ts`) |
 | **awareness** — what it is told about the user's situation, per request | `TurnAwareness` (the trace), the `awareness()` hook (`<current-page>`, `<permissions>`, `<desk-context>`, `<desk-layout>`) |
 | **grounding** — retrieved material for the turn | `GroundingSource` per lane, `grounding()` hook |
 | **turn input** — what a turn brings to the profile | `TurnInput`: user, message, locale, ceiling, `hasTools`/`toolsCooled`, page, scopes, panels, layout, workspace |

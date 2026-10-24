@@ -1,9 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import { and, eq, inArray } from 'drizzle-orm';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { createAnnouncement, deactivateAnnouncement, getAllAnnouncementsAdmin } from '$lib/server/admin/announcements';
-import { DELIVERY_PAGE_SIZE } from '$lib/server/admin/config';
-import { db } from '$lib/server/db';
+import {
+	createAnnouncement,
+	deactivateAnnouncement,
+	getAllAnnouncementsAdmin,
+} from '#lib/server/admin/announcements.ts';
+import { DELIVERY_PAGE_SIZE } from '#lib/server/admin/config.ts';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { db } from '#lib/server/db/index.ts';
 import {
 	type DeadDeliveryEntry,
 	type DeliveryLogEntry,
@@ -11,12 +15,12 @@ import {
 	getConnectedAccountsCounts,
 	getDeadDeliveries,
 	getDeliveryLog,
-} from '$lib/server/db/notifications/admin-queries';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
-import { probeChannels } from '$lib/server/notifications/health';
-import { renderNotification } from '$lib/server/notifications/render-message';
+} from '#lib/server/db/notifications/admin-queries.ts';
+import { notificationDeliveries } from '#lib/server/db/schema/notifications/deliveries.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { probeChannels } from '#lib/server/notifications/health.ts';
+import { renderNotification } from '#lib/server/notifications/render-message.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /**

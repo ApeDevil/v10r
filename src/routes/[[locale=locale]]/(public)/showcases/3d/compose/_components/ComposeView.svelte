@@ -7,9 +7,9 @@ import {
 	type ConduitSurface,
 	type GizmoHandlers,
 	type RoomLayout,
-} from '$lib/components/3d/composition';
-import { Button, Select, ToggleGroup } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+} from '#lib/components/3d/composition/index.ts';
+import { Button, Select, ToggleGroup } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import {
 	type CompositionDiagnostic,
 	conduitPolyline,
@@ -27,7 +27,7 @@ import {
 	rotateOccurrence,
 	setConduitWaypoints,
 	type Vec3,
-} from '$lib/product-composition';
+} from '#lib/product-composition/index.ts';
 import CompositionFindings from './CompositionFindings.svelte';
 import { diagnosticText } from './diagnostic-copy';
 

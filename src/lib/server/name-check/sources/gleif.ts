@@ -8,7 +8,7 @@
  * endpoint that catches near-spellings. Either may fail alone; both failing fails the
  * source. GLEIF asks for 60 requests a minute, which the daily quota keeps well under.
  */
-import { NAME_CHECK_TERRITORIES } from '$lib/schemas/name-check';
+import { NAME_CHECK_TERRITORIES } from '#lib/schemas/name-check.ts';
 import { NameSourceError } from '../errors';
 import { fetchJson } from '../fetch-json';
 import type { CompanyDraft, LiveNameSource } from '../name-source';

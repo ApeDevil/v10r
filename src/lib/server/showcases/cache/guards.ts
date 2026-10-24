@@ -1,4 +1,4 @@
-import { CacheError } from '$lib/server/cache';
+import { CacheError } from '#lib/server/cache/index.ts';
 
 export const SHOWCASE_CACHE_PREFIX = 'showcase:';
 

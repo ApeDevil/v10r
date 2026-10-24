@@ -1,7 +1,7 @@
 // Core shell
 
 // Toasts
-export { ToastContainer } from '$lib/components/composites/toast';
+export { ToastContainer } from '#lib/components/composites/toast/index.ts';
 export { default as AdminSidebar } from './AdminSidebar.svelte';
 export { default as AnnouncementBanner } from './AnnouncementBanner.svelte';
 export { default as AppShell } from './AppShell.svelte';

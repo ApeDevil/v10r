@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { CustomizationConfig, CustomizationPreset, CustomizationState } from '$lib/3d/customization';
-import { checkConflicts } from '$lib/3d/customization';
+import type { CustomizationConfig, CustomizationPreset, CustomizationState } from '#lib/3d/customization.ts';
+import { checkConflicts } from '#lib/3d/customization.ts';
 import AccessoryPicker from './AccessoryPicker.svelte';
 import MaterialPicker from './MaterialPicker.svelte';
 import MorphTargetSliders from './MorphTargetSliders.svelte';

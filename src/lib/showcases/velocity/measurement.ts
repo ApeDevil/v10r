@@ -2,7 +2,7 @@
  * The wire contract for a Velocity measurement.
  *
  * Client-side because the showcase page renders these and a `.svelte` file may never
- * reach into `$lib/server/` — the path IS the server/client boundary, and a type-only
+ * reach into `#lib/server/` — the path IS the server/client boundary, and a type-only
  * import still crosses it in the source. The server module that produces these
  * imports the shape from here, so there is one declaration rather than two that drift.
  */

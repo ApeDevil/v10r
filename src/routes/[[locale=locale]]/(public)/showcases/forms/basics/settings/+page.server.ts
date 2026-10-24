@@ -1,6 +1,6 @@
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { settingsSchema } from '$lib/schemas/showcase/basics';
+import { settingsSchema } from '#lib/schemas/showcase/basics.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const mockSettings = {

@@ -5,12 +5,12 @@ import {
 	FolderNameConflictError,
 	FolderNotEmptyError,
 	FolderNotFoundError,
-} from '$lib/server/db/desk/errors';
-import { deleteFolder, moveFolder, renameFolder } from '$lib/server/db/desk/mutations';
-import { getFolder } from '$lib/server/db/desk/queries';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+} from '#lib/server/db/desk/errors.ts';
+import { deleteFolder, moveFolder, renameFolder } from '#lib/server/db/desk/mutations.ts';
+import { getFolder } from '#lib/server/db/desk/queries.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 // Raised from 30/min — drag-drop bursts are legitimate user intent, not abuse.

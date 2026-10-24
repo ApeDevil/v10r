@@ -1,21 +1,21 @@
 import { eq } from 'drizzle-orm';
-import { env } from '$env/dynamic/private';
-import { db } from '$lib/server/db';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import { db } from '#lib/server/db/index.ts';
+import { userDiscordAccounts } from '#lib/server/db/schema/notifications/discord.ts';
+import { userTelegramAccounts } from '#lib/server/db/schema/notifications/telegram.ts';
 import {
 	DEFAULT_DELIVERY_INTERVAL_MS,
 	DELIVERY_MAX_ATTEMPTS,
 	SSE_HEARTBEAT_MS,
 	SSE_MAX_PER_USER,
-} from '$lib/server/notifications/config';
+} from '#lib/server/notifications/config.ts';
+import { DISCORD_BOT_TOKEN, RESEND_API_KEY, TELEGRAM_BOT_TOKEN } from '$app/env/private';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const providers = {
-		email: { configured: !!env.RESEND_API_KEY, name: 'Resend' },
-		telegram: { configured: !!env.TELEGRAM_BOT_TOKEN, name: 'Telegram Bot API' },
-		discord: { configured: !!env.DISCORD_BOT_TOKEN, name: 'Discord Bot' },
+		email: { configured: !!RESEND_API_KEY, name: 'Resend' },
+		telegram: { configured: !!TELEGRAM_BOT_TOKEN, name: 'Telegram Bot API' },
+		discord: { configured: !!DISCORD_BOT_TOKEN, name: 'Discord Bot' },
 	};
 
 	let userChannels = null;

@@ -6,8 +6,8 @@
  * user's classes; "possibly" means a neighbouring one; "unrelated" is still shown, never
  * dismissed — the spec is explicit that an identical word in another class is a finding.
  */
-import type { NameCategoryRelevance } from '$lib/name-check/report';
-import type { NameCheckCategory } from '$lib/schemas/name-check';
+import type { NameCategoryRelevance } from '#lib/name-check/report.ts';
+import type { NameCheckCategory } from '#lib/schemas/name-check.ts';
 
 export const NICE_CLASSES_BY_CATEGORY: Record<NameCheckCategory, readonly number[]> = {
 	software: [9, 42, 38],

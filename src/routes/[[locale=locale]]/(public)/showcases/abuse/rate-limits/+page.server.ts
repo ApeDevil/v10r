@@ -1,11 +1,11 @@
-import { PER_EMAIL_LIMIT_MAX, PER_EMAIL_LIMIT_PREFIX, PER_EMAIL_LIMIT_WINDOW } from '$lib/server/abuse';
+import { PER_EMAIL_LIMIT_MAX, PER_EMAIL_LIMIT_PREFIX, PER_EMAIL_LIMIT_WINDOW } from '#lib/server/abuse/index.ts';
 // Namespaced, because this page is the one place that shows four domains' limits side by
 // side — `aiPolicy.RATE_LIMIT_MAX` vs `authPolicy.RATE_LIMIT_MAX` is the distinction the
 // table is about.
-import * as aiPolicy from '$lib/server/ai/config';
-import * as authPolicy from '$lib/server/auth/config';
-import * as feedbackPolicy from '$lib/server/feedback/config';
-import { USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW } from '$lib/server/showcases/config';
+import * as aiPolicy from '#lib/server/ai/config.ts';
+import * as authPolicy from '#lib/server/auth/config.ts';
+import * as feedbackPolicy from '#lib/server/feedback/config.ts';
+import { USERNAME_CHECK_RATE_LIMIT_MAX, USERNAME_CHECK_RATE_LIMIT_WINDOW } from '#lib/server/showcases/config.ts';
 import type { PageServerLoad } from './$types';
 
 interface LimiterRow {

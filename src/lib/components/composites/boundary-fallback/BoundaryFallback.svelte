@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 interface Props {
 	title?: string;

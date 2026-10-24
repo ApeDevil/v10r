@@ -18,13 +18,13 @@ const { connectionHolder, embedFn, embedManyFn, incrFn, loadConnectionFn } = vi.
 	};
 });
 
-vi.mock('$lib/server/ai', () => ({
+vi.mock('#lib/server/ai/index.ts', () => ({
 	loadEmbeddingConnection: loadConnectionFn,
 	EMBEDDING_UNAVAILABLE_MESSAGES: { no_key: 'no key', disabled: 'disabled', undecryptable: 'undecryptable' },
 }));
 vi.mock('ai', () => ({ embed: embedFn, embedMany: embedManyFn }));
 vi.mock('@ai-sdk/google', () => ({ createGoogleGenerativeAI: () => ({ embedding: () => ({}) }) }));
-vi.mock('$lib/server/ai/provider-usage', () => ({ incrEmbeddingCalls: incrFn }));
+vi.mock('#lib/server/ai/provider-usage.ts', () => ({ incrEmbeddingCalls: incrFn }));
 
 const { generateEmbedding, generateEmbeddings } = await import('./embed');
 const { RetrievalError } = await import('./errors');

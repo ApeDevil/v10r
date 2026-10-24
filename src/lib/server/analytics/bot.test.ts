@@ -9,7 +9,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { isAgentSurface, isBotTrackablePath } from '$lib/analytics/collect-policy';
+import { isAgentSurface, isBotTrackablePath } from '#lib/analytics/collect-policy.ts';
 import { classifyBot, KNOWN_BOT_FAMILIES } from './bot-classify';
 import { parsePrefixes } from './bot-ranges';
 

@@ -8,7 +8,7 @@
  *   5. the trimmed PublicBranchOperation never carries raw branch / op ids (Finding A regression)
  *
  * Runs against a real PGlite database — the partial-unique index IS the unit under
- * test — with the Neon Management API mocked at the `$lib/server/neon` boundary.
+ * test — with the Neon Management API mocked at the `#lib/server/neon/index.ts` boundary.
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -24,14 +24,14 @@ const restoreBranchFromParent = vi.fn(async (_dev: string, _parent: string) => (
 }));
 const getOperation = vi.fn(async (id: string) => ({ id, action: 'restore', status: 'finished', branchId: 'br-dev' }));
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-vi.mock('$lib/server/neon', () => ({
+vi.mock('#lib/server/neon/index.ts', () => ({
 	neonConfigured: () => neonConfigured(),
 	resolveTargets: () => resolveTargets(),
 	hasChildren: (id: string) => hasChildren(id),
@@ -41,12 +41,12 @@ vi.mock('$lib/server/neon', () => ({
 	NEON_OP_TERMINAL_FAIL: ['failed', 'cancelled'],
 }));
 
-vi.mock('$lib/server/monitoring', () => ({
+vi.mock('#lib/server/monitoring/index.ts', () => ({
 	sanitizeError: (e: unknown) => (e instanceof Error ? e.message : String(e)),
 }));
 
-const { db } = await import('$lib/server/db');
-const { dbopsOperation } = await import('$lib/server/db/schema/dbops/operation');
+const { db } = await import('#lib/server/db/index.ts');
+const { dbopsOperation } = await import('#lib/server/db/schema/dbops/operation.ts');
 const { startOperation, advanceOperation } = await import('./operations');
 const { ConflictError } = await import('./types');
 

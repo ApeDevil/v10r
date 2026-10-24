@@ -71,7 +71,7 @@ describe('authDecisionResponse', () => {
 describe('verifyAltcha — configuration and bypass modes', () => {
 	async function loadAltcha(mode: 'live' | 'dry_run' | 'off', hmacKey: string | undefined) {
 		vi.resetModules();
-		vi.doMock('$lib/server/cache', () => ({ redis: null }));
+		vi.doMock('#lib/server/cache/index.ts', () => ({ redis: null }));
 		vi.doMock('./config', () => ({ BOT_DETECTION_MODE: mode, ALTCHA_HMAC_KEY: hmacKey }));
 		return import('./altcha');
 	}
@@ -82,7 +82,7 @@ describe('verifyAltcha — configuration and bypass modes', () => {
 	});
 
 	afterEach(() => {
-		vi.doUnmock('$lib/server/cache');
+		vi.doUnmock('#lib/server/cache/index.ts');
 		vi.doUnmock('./config');
 		vi.restoreAllMocks();
 		vi.resetModules();

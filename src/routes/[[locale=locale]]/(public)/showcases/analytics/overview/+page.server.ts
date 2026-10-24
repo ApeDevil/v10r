@@ -1,15 +1,15 @@
 import { fail } from '@sveltejs/kit';
-import { dev } from '$app/environment';
-import { db } from '$lib/server/db';
 import {
 	getAudienceBreakdown,
 	getOverviewMetrics,
 	getTopPages,
 	getTrafficTrend,
-} from '$lib/server/db/analytics/aggregations';
-import { reseedAnalytics } from '$lib/server/db/analytics/seed';
-import { isAdmin } from '$lib/server/http/guards';
-import { readUrlState } from '$lib/state/url-state';
+} from '#lib/server/db/analytics/aggregations.ts';
+import { reseedAnalytics } from '#lib/server/db/analytics/seed.ts';
+import { db } from '#lib/server/db/index.ts';
+import { isAdmin } from '#lib/server/http/guards.ts';
+import { readUrlState } from '#lib/state/url-state.ts';
+import { dev } from '$app/env';
 import { rangeParams } from '../range-params';
 import type { Actions, PageServerLoad } from './$types';
 

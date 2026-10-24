@@ -6,13 +6,13 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '$lib/server/test/fixtures';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 import { user } from '../../db/schema/auth/_better-auth';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -23,10 +23,10 @@ const { createReadTools } = await import('./desk-read');
 const { readProposedTarget } = await import('./proposed-target');
 const { DESK_READ_MAX_CHARS } = await import('../config');
 const { createMarkdownFile, createSpreadsheetFile, updateSpreadsheetByFileId } = await import(
-	'$lib/server/db/desk/mutations'
+	'#lib/server/db/desk/mutations.ts'
 );
-const { getMarkdownByFileId } = await import('$lib/server/db/desk/queries');
-const { db } = await import('$lib/server/db');
+const { getMarkdownByFileId } = await import('#lib/server/db/desk/queries.ts');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER = makeUser({ id: 'user-ai-writer' });
 const ctx: Parameters<typeof executeDeskToolCall>[0] = {

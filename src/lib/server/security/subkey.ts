@@ -24,7 +24,13 @@
  * rotation stays available without being mandatory.
  */
 import { createHmac } from 'node:crypto';
-import { env } from '$env/dynamic/private';
+import {
+	ANALYTICS_CONFIRM_SECRET,
+	ANALYTICS_VISITOR_SALT,
+	BETTER_AUTH_SECRET,
+	BLOG_UPLOAD_TICKET_SECRET,
+	PAIRING_SECRET,
+} from '$app/env/private';
 
 export const SUBKEY_PURPOSES = {
 	analyticsVisitor: 'v10r:analytics-visitor:v1',
@@ -35,12 +41,12 @@ export const SUBKEY_PURPOSES = {
 
 export type SubkeyPurpose = (typeof SUBKEY_PURPOSES)[keyof typeof SUBKEY_PURPOSES];
 
-/** Optional per-purpose override, for rotating one key without the root. */
-const OVERRIDE_VAR: Record<SubkeyPurpose, string> = {
-	[SUBKEY_PURPOSES.analyticsVisitor]: 'ANALYTICS_VISITOR_SALT',
-	[SUBKEY_PURPOSES.analyticsConfirm]: 'ANALYTICS_CONFIRM_SECRET',
-	[SUBKEY_PURPOSES.blogUploadTicket]: 'BLOG_UPLOAD_TICKET_SECRET',
-	[SUBKEY_PURPOSES.pairingOwner]: 'PAIRING_SECRET',
+/** Optional per-purpose override, for rotating one key without the root: its name, and a read of it. */
+const OVERRIDE_VAR: Record<SubkeyPurpose, { name: string; read: () => string | undefined }> = {
+	[SUBKEY_PURPOSES.analyticsVisitor]: { name: 'ANALYTICS_VISITOR_SALT', read: () => ANALYTICS_VISITOR_SALT },
+	[SUBKEY_PURPOSES.analyticsConfirm]: { name: 'ANALYTICS_CONFIRM_SECRET', read: () => ANALYTICS_CONFIRM_SECRET },
+	[SUBKEY_PURPOSES.blogUploadTicket]: { name: 'BLOG_UPLOAD_TICKET_SECRET', read: () => BLOG_UPLOAD_TICKET_SECRET },
+	[SUBKEY_PURPOSES.pairingOwner]: { name: 'PAIRING_SECRET', read: () => PAIRING_SECRET },
 };
 
 const cache = new Map<SubkeyPurpose, string>();
@@ -58,16 +64,16 @@ export function deriveSubkey(purpose: SubkeyPurpose): string {
 	const cached = cache.get(purpose);
 	if (cached) return cached;
 
-	const override = env[OVERRIDE_VAR[purpose]];
+	const override = OVERRIDE_VAR[purpose].read();
 	if (override) {
 		cache.set(purpose, override);
 		return override;
 	}
 
-	const root = env.BETTER_AUTH_SECRET;
+	const root = BETTER_AUTH_SECRET;
 	if (!root) {
 		throw new Error(
-			`deriveSubkey(${purpose}): neither ${OVERRIDE_VAR[purpose]} nor BETTER_AUTH_SECRET is set. ` +
+			`deriveSubkey(${purpose}): neither ${OVERRIDE_VAR[purpose].name} nor BETTER_AUTH_SECRET is set. ` +
 				'BETTER_AUTH_SECRET is required for the app to boot, so reaching this is a configuration bug.',
 		);
 	}

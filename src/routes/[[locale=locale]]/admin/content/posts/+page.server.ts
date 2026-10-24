@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { BLOG_PAGE_SIZE } from '$lib/server/admin/config';
+import { BLOG_PAGE_SIZE } from '#lib/server/admin/config.ts';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
 import {
 	getLatestRevision,
 	listPosts,
@@ -8,9 +8,9 @@ import {
 	softDeletePost,
 	unpublishPost,
 	updatePostMetadata,
-} from '$lib/server/blog';
-import { requireAdmin } from '$lib/server/http/guards';
-import { readUrlState } from '$lib/state/url-state';
+} from '#lib/server/blog/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { readUrlState } from '#lib/state/url-state.ts';
 import type { Actions, PageServerLoad } from './$types';
 import { postsListParams } from './list-params';
 

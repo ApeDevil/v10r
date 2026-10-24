@@ -4,7 +4,7 @@ Two-signal bot detection that requires no user interaction: a hidden field that 
 
 ---
 
-## Constants (`$lib/server/abuse/honeypot.ts`)
+## Constants (`#lib/server/abuse/honeypot.ts`)
 
 | Constant | Value | Purpose |
 |----------|-------|---------|
@@ -18,7 +18,7 @@ The field name `bookmark` was chosen to avoid common bot blocklists (`website`, 
 ## `checkHoneypot(input)`
 
 ```typescript
-import { checkHoneypot } from '$lib/server/abuse';
+import { checkHoneypot } from '#lib/server/abuse/index.js';
 
 const decision = checkHoneypot({
     honeypot: form.data.bookmark,   // value of the hidden field

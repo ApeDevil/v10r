@@ -1,8 +1,8 @@
 import * as v from 'valibot';
-import { acknowledgeGrantNotifications, GRANT_KINDS } from '$lib/server/auth/grants';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent, apiValidationError } from '$lib/server/http/response';
+import { acknowledgeGrantNotifications, GRANT_KINDS } from '#lib/server/auth/grants.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('ratelimit:grant-notification-ack:user', 20, '1 m');

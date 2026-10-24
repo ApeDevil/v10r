@@ -1,5 +1,5 @@
 <script lang="ts">
-import { contrastRatio } from '$lib/styles/random/contrast';
+import { contrastRatio } from '#lib/styles/random/contrast.ts';
 
 interface Props {
 	fgColor: string;

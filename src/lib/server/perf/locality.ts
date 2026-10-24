@@ -60,11 +60,9 @@ export function describeLocality(env: Record<string, string | undefined>): Local
 			provider: 'Vercel',
 			region: env.VERCEL_REGION ?? null,
 			// Absent locally by design: this only exists inside a running function. The region
-			// is DECLARED in `svelte.config.js` (adapter `regions`), so what is unknown here is
+			// is DECLARED in `vite.config.ts` (adapter `regions`), so what is unknown here is
 			// only whether the deployment honours the declaration — which this row answers in situ.
-			source: env.VERCEL_REGION
-				? 'env:VERCEL_REGION'
-				: 'runtime only — declared in svelte.config.js, confirmed in situ',
+			source: env.VERCEL_REGION ? 'env:VERCEL_REGION' : 'runtime only — declared in vite.config.ts, confirmed in situ',
 		},
 		{
 			system: 'relational database',

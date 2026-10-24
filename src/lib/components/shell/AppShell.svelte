@@ -1,22 +1,22 @@
 <script lang="ts">
 import { onDestroy, onMount } from 'svelte';
+import type { CommandPaletteItem } from '#lib/components/composites/command-palette/index.ts';
+import { ToastContainer } from '#lib/components/composites/toast/index.ts';
+import { DESK_PANELS } from '#lib/desk/panels.ts';
+import type { Locale } from '#lib/i18n/index.ts';
+import { localizeHref } from '#lib/i18n/runtime.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { SearchResult } from '#lib/search/types.ts';
+import type { ResolvedAnnouncement } from '#lib/server/admin/announcements.ts';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { getModals } from '#lib/state/modals.svelte.ts';
+import { createSearchEngine } from '#lib/state/search.svelte.ts';
+import { type Session, setSessionContext } from '#lib/state/session.svelte.ts';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { getTheme } from '#lib/state/theme.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import type { CommandPaletteItem } from '$lib/components/composites/command-palette';
-import { ToastContainer } from '$lib/components/composites/toast';
-import { DESK_PANELS } from '$lib/desk/panels';
-import type { Locale } from '$lib/i18n';
-import { localizeHref } from '$lib/i18n/runtime';
-import * as m from '$lib/paraglide/messages';
-import type { SearchResult } from '$lib/search/types';
-import type { ResolvedAnnouncement } from '$lib/server/admin/announcements';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { getModals } from '$lib/state/modals.svelte';
-import { createSearchEngine } from '$lib/state/search.svelte';
-import { type Session, setSessionContext } from '$lib/state/session.svelte';
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { getTheme } from '$lib/state/theme.svelte';
-import { cn } from '$lib/utils/cn';
 import AnnouncementBanner from './AnnouncementBanner.svelte';
 import ConsentBanner from './ConsentBanner.svelte';
 import Footer from './Footer.svelte';
@@ -53,11 +53,11 @@ const theme = getTheme();
 // Dynamic Chatbot — loads the chatbot view graph only once the assistant is non-closed.
 // The heavy ai / @ai-sdk/svelte graph itself is pulled lazily inside the chatbot-session
 // singleton's ensureChat() (first open), keeping it out of the initial page payload.
-let ChatbotComponent: typeof import('$lib/components/composites/chatbot').Chatbot | null = $state(null);
+let ChatbotComponent: typeof import('#lib/components/composites/chatbot/index.ts').Chatbot | null = $state(null);
 
 $effect(() => {
 	if (chatbotSession.phase !== 'closed' && !ChatbotComponent) {
-		import('$lib/components/composites/chatbot').then((m) => {
+		import('#lib/components/composites/chatbot/index.ts').then((m) => {
 			ChatbotComponent = m.Chatbot;
 		});
 	}
@@ -70,7 +70,7 @@ const chatDocked = $derived(chatbotSession.phase === 'open' && !chatbotSession.e
 
 // Hand the singleton the live user id (resume pointer + cross-user guard + sign-in
 // gate). Reactive, not onMount-only: client-side logout (signOutAndFlush →
-// invalidateAll → goto) updates the session prop WITHOUT remounting this shell, and
+// refreshAll → goto) updates the session prop WITHOUT remounting this shell, and
 // the gate must flip to 'auth_required' right then.
 $effect(() => {
 	chatbotSession.setUser(session?.user?.id);
@@ -91,11 +91,11 @@ onMount(() => {
 // command + dialog machinery (~10 KB gz) that nothing else in the shell needs. It is
 // imported on first open, and warmed once the browser is idle so ⌘K does not wait on
 // the network: the bytes still arrive, but after hydration rather than competing with it.
-let CommandPalette: typeof import('$lib/components/composites/command-palette/CommandPalette.svelte').default | null =
+let CommandPalette: typeof import('#lib/components/composites/command-palette/CommandPalette.svelte').default | null =
 	$state(null);
 function loadCommandPalette(): void {
 	if (CommandPalette) return;
-	import('$lib/components/composites/command-palette/CommandPalette.svelte').then((mod) => {
+	import('#lib/components/composites/command-palette/CommandPalette.svelte').then((mod) => {
 		CommandPalette = mod.default;
 	});
 }

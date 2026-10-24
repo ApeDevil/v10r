@@ -11,7 +11,7 @@
  * a service AHEAD of the app adds what the app ignores, while one BEHIND it lacks what the
  * app expects — the reason to deploy the service first (expand, then contract).
  */
-import type { ContractSkew } from '$lib/showcases/external-service/types';
+import type { ContractSkew } from '#lib/showcases/external-service/types.ts';
 
 /** A release: plain major.minor.patch, no pre-release tag. The generator refuses any other. */
 export const RELEASE_PATTERN = /^(\d+)\.(\d+)\.(\d+)$/;

@@ -1,17 +1,16 @@
-import { json } from '@sveltejs/kit';
 import {
 	CONVERSATION_RATE_LIMIT_MAX,
 	CONVERSATION_RATE_LIMIT_PREFIX,
 	CONVERSATION_RATE_LIMIT_WINDOW,
-} from '$lib/server/ai/config';
-import { getConversationQuota } from '$lib/server/ai/conversation-quota';
-import type { ConversationSort } from '$lib/server/db/ai/queries';
-import { listConversations } from '$lib/server/db/ai/queries';
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { guardApiUser } from '$lib/server/http/guards';
-import { parsePagination } from '$lib/server/http/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError } from '$lib/server/http/response';
+} from '#lib/server/ai/config.ts';
+import { getConversationQuota } from '#lib/server/ai/conversation-quota.ts';
+import type { ConversationSort } from '#lib/server/db/ai/queries.ts';
+import { listConversations } from '#lib/server/db/ai/queries.ts';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { parsePagination } from '#lib/server/http/pagination.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(
@@ -36,7 +35,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			listConversations(user.id, sort, pagination.offset, pagination.pageSize),
 			getConversationQuota(user.id),
 		]);
-		return json({
+		return Response.json({
 			data: {
 				items: conversations,
 				meta,

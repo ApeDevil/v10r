@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { startDeadline } from '$lib/server/http/deadline';
+import { startDeadline } from '#lib/server/http/deadline.ts';
 import { type NameSourceContext, NO_CREDENTIALS } from '../name-source';
 import { toNameCheckQuery } from '../query';
 import { parseRdapBootstrap, RDAP_STATIC_BOOTSTRAP, rdapBaseFor, rdapSource } from './rdap';
 
-vi.mock('$lib/server/cache/client', () => ({ redis: null }));
-vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
+vi.mock('#lib/server/cache/client.ts', () => ({ redis: null }));
+vi.mock('#lib/server/platform/after-response.ts', () => ({ deferAfterResponse: vi.fn() }));
 
 const BOOTSTRAP = {
 	services: [

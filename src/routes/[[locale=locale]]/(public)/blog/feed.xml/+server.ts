@@ -1,5 +1,5 @@
-import { BRAND_NAME } from '$lib/branding';
-import { listPublishedPostsForFeed } from '$lib/server/blog';
+import { BRAND_NAME } from '#lib/branding.ts';
+import { listPublishedPostsForFeed } from '#lib/server/blog/index.ts';
 import type { RequestHandler } from './$types';
 
 function escapeCdata(s: string): string {

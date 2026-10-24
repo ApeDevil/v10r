@@ -7,10 +7,10 @@
  * docs/blueprint/architecture/workers.md.
  */
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { rowsOf } from '$lib/server/db/rows';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import type { NotificationParams } from '$lib/server/db/schema/notifications/notifications';
+import { db } from '#lib/server/db/index.ts';
+import { rowsOf } from '#lib/server/db/rows.ts';
+import { notificationDeliveries } from '#lib/server/db/schema/notifications/deliveries.ts';
+import type { NotificationParams } from '#lib/server/db/schema/notifications/notifications.ts';
 import { backoffMs, decideFailure, type FailureDecision } from './backoff';
 import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from './config';
 
@@ -63,8 +63,8 @@ export async function createDeliveries(notificationId: string, channels: Channel
  *
  * ONE statement, deliberately: `poolQueryViaFetch` only redirects single stateless
  * Pool.query() calls to HTTP — db.transaction() takes the WebSocket path that Bun
- * mishandles (see the comment in $lib/server/db/index.ts). Same reasoning as
- * $lib/server/mcp/demo/state.ts. A single statement is its own transaction, so the
+ * mishandles (see the comment in #lib/server/db/index.ts). Same reasoning as
+ * #lib/server/mcp/demo/state.ts. A single statement is its own transaction, so the
  * row locks taken by the subquery are held for the statement and released at commit,
  * which is exactly the window the UPDATE needs.
  *

@@ -15,7 +15,7 @@
  * per-request Redis lookup to revoke a short-lived, admin-only debug marker
  * would cost every request for very little. Expiry is the control; keep it short.
  */
-import { SUBKEY_PURPOSES, signTicket, verifyTicket } from '$lib/server/security';
+import { SUBKEY_PURPOSES, signTicket, verifyTicket } from '#lib/server/security/index.ts';
 
 export const PAIRING_COOKIE = 'v10r_debug_owner';
 

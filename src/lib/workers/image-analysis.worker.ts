@@ -4,7 +4,7 @@
  * All the real work is in image-analysis.ts (browser APIs) and palette.ts (pure).
  * Keeping this file trivial is deliberate: `self`/`postMessage` cannot be exercised
  * by the node-environment vitest harness, so nothing that needs testing may live
- * here. Same reasoning as src/service-worker.ts ↔ $lib/pwa/sw-policy.ts.
+ * here. Same reasoning as src/service-worker/index.ts ↔ #lib/pwa/sw-policy.ts.
  */
 import { type AnalysisRequest, type AnalysisResult, analyseImage } from './image-analysis';
 

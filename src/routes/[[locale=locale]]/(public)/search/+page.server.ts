@@ -1,7 +1,7 @@
-import type { Locale } from '$lib/i18n';
-import { match } from '$lib/search/match';
-import type { SearchResult } from '$lib/search/types';
-import { buildSearchIndex, searchContent } from '$lib/server/search';
+import type { Locale } from '#lib/i18n/index.ts';
+import { match } from '#lib/search/match.ts';
+import type { SearchResult } from '#lib/search/types.ts';
+import { buildSearchIndex, searchContent } from '#lib/server/search/index.ts';
 import type { PageServerLoad } from './$types';
 
 const key = (r: SearchResult) => `${r.surface}:${r.path}:${r.anchor ?? ''}`;

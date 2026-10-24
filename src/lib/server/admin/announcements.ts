@@ -1,8 +1,8 @@
 import { and, count, desc, eq, sql } from 'drizzle-orm';
-import type { TranslationMap } from '$lib/i18n/translate';
-import { db } from '$lib/server/db';
-import { announcementDismissals, announcements } from '$lib/server/db/schema/admin';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
+import type { TranslationMap } from '#lib/i18n/translate.ts';
+import { db } from '#lib/server/db/index.ts';
+import { announcementDismissals, announcements } from '#lib/server/db/schema/admin/index.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
 import { ANNOUNCEMENT_CACHE_TTL_MS } from './config';
 
 export interface ActiveAnnouncement {

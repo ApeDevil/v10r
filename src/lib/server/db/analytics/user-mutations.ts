@@ -5,9 +5,9 @@
  * where a `userId` belongs.
  */
 
-import { db } from '$lib/server/db';
-import { userEvents } from '$lib/server/db/schema/analytics';
-import type { UserSurface } from '$lib/types/db-enums';
+import { db } from '#lib/server/db/index.ts';
+import { userEvents } from '#lib/server/db/schema/analytics/index.ts';
+import type { UserSurface } from '#lib/types/db-enums.ts';
 
 /** Record one authenticated event. Idempotent on `eventId` when supplied. */
 export async function recordUserEvent(event: {

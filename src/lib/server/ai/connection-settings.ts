@@ -8,12 +8,16 @@
  * Audit detail is deliberately shallow: provider, version, which fields changed and how
  * the key changed. Never the key, never the ciphertext, never a provider response.
  */
-import { recordAuditEvent } from '$lib/server/admin';
-import { db } from '$lib/server/db';
-import { removeProviderKey, saveProviderConnection, setDefaultProvider } from '$lib/server/db/ai/provider-connections';
-import { classifyDbError } from '$lib/server/db/errors';
-import { EncryptionError, encryptAesGcm, getEncryptionKeyRing } from '$lib/server/security';
-import type { AiProviderId } from '$lib/types/db-enums';
+import { recordAuditEvent } from '#lib/server/admin/index.ts';
+import {
+	removeProviderKey,
+	saveProviderConnection,
+	setDefaultProvider,
+} from '#lib/server/db/ai/provider-connections.ts';
+import { classifyDbError } from '#lib/server/db/errors.ts';
+import { db } from '#lib/server/db/index.ts';
+import { EncryptionError, encryptAesGcm, getEncryptionKeyRing } from '#lib/server/security/index.ts';
+import type { AiProviderId } from '#lib/types/db-enums.ts';
 import { type ConnectionTestResult, testLanguageModel } from './connection-test';
 import { createProviderModel, type ProviderEntry } from './connections';
 import { loadProviderRegistry } from './index';

@@ -1,4 +1,4 @@
-import { getOriginHealth } from '$lib/server/perf';
+import { getOriginHealth } from '#lib/server/perf/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

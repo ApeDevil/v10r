@@ -8,10 +8,10 @@
  * posts/grants that have nobody to be reassigned to.
  */
 
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent } from '$lib/server/http/response';
-import { deleteUserData, SoleAdminBlockedError } from '$lib/server/privacy';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent } from '#lib/server/http/response.ts';
+import { deleteUserData, SoleAdminBlockedError } from '#lib/server/privacy/index.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:me-delete', 3, '1m');

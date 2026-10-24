@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { getPostById, setPostDomain } from '$lib/server/blog';
-import { SetDomainSchema } from '$lib/server/blog/schemas';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent, apiValidationError } from '$lib/server/http/response';
+import { getPostById, setPostDomain } from '#lib/server/blog/index.ts';
+import { SetDomainSchema } from '#lib/server/blog/schemas.ts';
+import { guardApiBlogAuthor, guardPostOwnership } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:domain', 30, '1 m');

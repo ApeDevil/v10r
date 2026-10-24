@@ -1,6 +1,6 @@
 /**
  * The failure classes an AI turn can end in — one vocabulary for the server classifier
- * (`$lib/server/ai/errors`), the `[kind] message` text of a stream's `error` frame, the
+ * (`#lib/server/ai/errors.ts`), the `[kind] message` text of a stream's `error` frame, the
  * `X-AI-Error-Kind` header of a pre-stream refusal, and the `turnError` a partial answer
  * carries. Framework-free so the chat components can read it without crossing the
  * server boundary.

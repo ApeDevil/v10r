@@ -29,8 +29,8 @@
  * ./log/+server.ts, which prints it to the dev server's stdout.
  */
 import { onMount } from 'svelte';
-import { Button, Input } from '$lib/components/primitives';
-import { visualViewportWatcher } from '$lib/state/visual-viewport.svelte';
+import { Button, Input } from '#lib/components/primitives/index.ts';
+import { visualViewportWatcher } from '#lib/state/visual-viewport.svelte.ts';
 
 const MAX_LINES = 80;
 

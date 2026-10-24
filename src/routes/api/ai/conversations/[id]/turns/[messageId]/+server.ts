@@ -1,7 +1,7 @@
 /**
  * GET /api/ai/conversations/[id]/turns/[messageId] — one turn's full trace, for its owner.
  *
- * The recorded account of what the turn did (`$lib/types/turn-trace.ts`): the prompt blocks
+ * The recorded account of what the turn did (`#lib/types/turn-trace.ts`): the prompt blocks
  * with their text, every model call's request outline and usage, every tool execution with
  * its model-facing result, the grounding candidates with bodies resolved by id, the
  * attempts and the citations. Owner-scoped twice over — the turn row's own `user_id` and the
@@ -17,14 +17,14 @@ import {
 	CONVERSATION_RATE_LIMIT_MAX,
 	CONVERSATION_RATE_LIMIT_PREFIX,
 	CONVERSATION_RATE_LIMIT_WINDOW,
-} from '$lib/server/ai/config';
-import { resolveTurnProposal } from '$lib/server/ai/proposals/turn-proposal';
-import { getTurn, resolveGroundingBodies } from '$lib/server/db/ai/queries';
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
-import { SYSTEM_DOCS_USER_ID } from '$lib/server/retrieval/config';
+} from '#lib/server/ai/config.ts';
+import { resolveTurnProposal } from '#lib/server/ai/proposals/turn-proposal.ts';
+import { getTurn, resolveGroundingBodies } from '#lib/server/db/ai/queries.ts';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
+import { SYSTEM_DOCS_USER_ID } from '#lib/server/retrieval/config.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(

@@ -379,7 +379,7 @@ export const POST: RequestHandler = async ({ locals, cookies }) => {
 ```typescript
 // src/routes/api/auth/send-reauth-code/+server.ts
 import { json, error } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
+import { auth } from '#lib/server/auth/index.js';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ cookies }) => {
@@ -416,7 +416,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
 ```typescript
 // src/routes/api/auth/reauthenticate/+server.ts
 import { json, error } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
+import { auth } from '#lib/server/auth/index.js';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
@@ -493,7 +493,7 @@ The key advantage of the modal approach: unsaved form data is preserved.
 ```svelte
 <script lang="ts">
   import { superForm } from 'sveltekit-superforms';
-  import { getSession } from '$lib/state/session.svelte';
+  import { getSession } from '#lib/state/session.svelte.js';
 
   const session = getSession();
 
@@ -540,7 +540,7 @@ if (response.status === 401) {
 
 ```typescript
 // Strict limiter on the re-auth endpoint — see ../abuse/rate-limits.md
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
 
 const reauthLimiter = createLimiter('rl:auth:reauth', 5, '15 m');
 
@@ -585,7 +585,7 @@ Add SessionMonitor to root app layout:
 ```svelte
 <!-- src/routes/(app)/+layout.svelte -->
 <script lang="ts">
-  import { SessionMonitor } from '$lib/components/shell';
+  import { SessionMonitor } from '#lib/components/shell/index.js';
 
   let { data, children } = $props();
 </script>

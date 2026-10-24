@@ -1,14 +1,14 @@
 <script lang="ts">
 import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
-import { trackCommand } from '$lib/analytics/telemetry';
+import { trackCommand } from '#lib/analytics/telemetry.ts';
 import {
 	dropdownMenuContentVariants,
 	dropdownMenuItemVariants,
 	dropdownMenuSeparatorVariants,
-} from '$lib/components/composites/dropdown-menu/dropdown-menu';
-import type { MenuBarItem, MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { elevationAttr, useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+} from '#lib/components/composites/dropdown-menu/dropdown-menu.ts';
+import type { MenuBarItem, MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { elevationAttr, useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	menus: MenuBarMenu[];

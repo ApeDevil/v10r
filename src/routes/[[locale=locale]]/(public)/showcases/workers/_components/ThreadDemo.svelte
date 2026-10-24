@@ -3,14 +3,14 @@
  * Worker A demo — the same image analysis run two ways.
  *
  * The point is not the palette; it is the jank meter. Both buttons call the exact
- * same analyseImage() from $lib/workers/image-analysis.ts, so the only variable is
+ * same analyseImage() from #lib/workers/image-analysis.ts, so the only variable is
  * WHERE it runs. On the main thread the rAF loop below stops being serviced and the
  * spinner freezes; in the worker it keeps ticking.
  */
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { type AnalysisResult, analyseImage, canAnalyseImages } from '$lib/workers/image-analysis';
-import type { WorkerRequest, WorkerResponse } from '$lib/workers/image-analysis.worker';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { type AnalysisResult, analyseImage, canAnalyseImages } from '#lib/workers/image-analysis.ts';
+import type { WorkerRequest, WorkerResponse } from '#lib/workers/image-analysis.worker.ts';
 
 /** Frame gaps above this are visible stutter rather than normal scheduling noise. */
 const SMOOTH_FRAME_MS = 32;
@@ -100,7 +100,7 @@ async function getWorker(): Promise<Worker> {
 	// alive once spawned: a worker per run would charge every run the module boot
 	// cost and make the comparison dishonest.
 	if (!worker) {
-		const { default: ImageAnalysisWorker } = await import('$lib/workers/image-analysis.worker?worker');
+		const { default: ImageAnalysisWorker } = await import('#lib/workers/image-analysis.worker.ts?worker');
 		worker = new ImageAnalysisWorker();
 	}
 	return worker;
