@@ -9,6 +9,9 @@ import {
 	evaluatePreset,
 	GLOBAL_RATE_LIMIT_MAX,
 	GLOBAL_RATE_LIMIT_PREFIX,
+	GLOBAL_WAKE_RATE_LIMIT_MAX,
+	GLOBAL_WAKE_RATE_LIMIT_PREFIX,
+	LAB_LIMITER_POLICY,
 	RATE_LIMIT_MAX,
 	RATE_LIMIT_PREFIX,
 	RATE_LIMIT_WINDOW,
@@ -16,6 +19,8 @@ import {
 	readServiceTargets,
 	runDrill,
 	WAKE_CEILING_MS,
+	WAKE_RATE_LIMIT_MAX,
+	WAKE_RATE_LIMIT_PREFIX,
 } from '$lib/server/showcases/external-service';
 import { externalServiceCopy } from '$lib/showcases/external-service/labels';
 import {
@@ -38,16 +43,28 @@ import type { Actions, PageServerLoad, RequestEvent } from './$types';
  * `load` reports only what the server knows without calling anything: which targets are
  * configured. A page view never reaches the service — otherwise every crawler visit would
  * be an outbound call and would wake a sleeping free host. Calls happen in the actions,
- * behind the honeypot, a per-IP and a global limiter, each with a sub-budget of the
- * request deadline. The form carries ids from closed lists (target, preset, drill,
+ * behind the honeypot, a per-IP and a global limiter (and, for a wake check, two smaller
+ * ones of its own), each with a sub-budget of the request deadline. The form carries ids from closed lists (target, preset, drill,
  * patience), never a URL or a body.
  */
 
 /** Room for a `wake` check (WAKE_CEILING_MS) plus rendering; Vercel's own ceiling is 300 s. */
 export const config = { maxDuration: 90 };
 
-const limiter = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
-const globalLimiter = createLimiter(GLOBAL_RATE_LIMIT_PREFIX, GLOBAL_RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
+const limiter = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, LAB_LIMITER_POLICY);
+const globalLimiter = createLimiter(
+	GLOBAL_RATE_LIMIT_PREFIX,
+	GLOBAL_RATE_LIMIT_MAX,
+	RATE_LIMIT_WINDOW,
+	LAB_LIMITER_POLICY,
+);
+const wakeLimiter = createLimiter(WAKE_RATE_LIMIT_PREFIX, WAKE_RATE_LIMIT_MAX, RATE_LIMIT_WINDOW, LAB_LIMITER_POLICY);
+const globalWakeLimiter = createLimiter(
+	GLOBAL_WAKE_RATE_LIMIT_PREFIX,
+	GLOBAL_WAKE_RATE_LIMIT_MAX,
+	RATE_LIMIT_WINDOW,
+	LAB_LIMITER_POLICY,
+);
 const GLOBAL_KEY = 'all';
 
 export const load: PageServerLoad = async () => {
@@ -121,6 +138,12 @@ export const actions: Actions = {
 		const admitted = await admit(event);
 		if ('rejected' in admitted) return admitted.rejected;
 		const patience = pick<CheckPatience>(admitted.form, 'patience', CHECK_PATIENCE) ?? 'normal';
+		if (patience === 'wake') {
+			const perIp = await wakeLimiter.limit(ipLimitKey(getClientIp(event)));
+			if (!perIp.success) return fail(429, { rejected: 'rate_limited' as LabRejection });
+			const overall = await globalWakeLimiter.limit(GLOBAL_KEY);
+			if (!overall.success) return fail(429, { rejected: 'rate_limited' as LabRejection });
+		}
 		// A wake check gets its own wider deadline: the request's 10 s budget cannot hold a
 		// cold start, and observing one is the point.
 		const deps = patience === 'wake' ? { deadline: startDeadline(WAKE_CEILING_MS) } : admitted.deps;

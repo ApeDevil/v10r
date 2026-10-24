@@ -19,7 +19,7 @@ use axum::http::{HeaderValue, StatusCode, header};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::{Json, Router};
-use subtle::ConstantTimeEq;
+use subtle::{Choice, ConstantTimeEq};
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -43,10 +43,29 @@ const MAX_REQUEST_ID_LEN: usize = 64;
 
 pub struct AppState {
     pub token: Secret,
+    /// Accepted alongside `token` while a rotation is in progress (`config.rs`).
+    pub previous_token: Option<Secret>,
     pub started: Instant,
 }
 
 pub type SharedState = Arc<AppState>;
+
+/// Which configured credential a request presented. Logged by name, never by value, so the
+/// access log shows when the previous one has stopped arriving and can be removed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Credential {
+    Current,
+    Previous,
+}
+
+impl Credential {
+    fn label(self) -> &'static str {
+        match self {
+            Credential::Current => "current",
+            Credential::Previous => "previous",
+        }
+    }
+}
 
 fn public_routes() -> OpenApiRouter<SharedState> {
     OpenApiRouter::new().routes(routes!(live))
@@ -204,7 +223,9 @@ fn error(status: StatusCode, code: ErrorCode, message: String) -> Response {
 
 /// Bearer authentication, enforced here — the caller's own checks are not trusted.
 /// The comparison is constant-time; only the length can leak, and the credential's
-/// length is not the secret.
+/// length is not the secret. During a rotation the previous credential is compared too,
+/// always — whether it is checked must not depend on whether the current one matched. Only
+/// once both comparisons have run is the outcome branched on, to name the credential used.
 async fn require_bearer(
     State(state): State<SharedState>,
     request: Request,
@@ -217,9 +238,24 @@ async fn require_bearer(
         .and_then(|value| value.split_once(' '))
         .filter(|(scheme, _)| scheme.eq_ignore_ascii_case("bearer"))
         .map(|(_, token)| token.trim());
-    let authorized =
-        presented.is_some_and(|token| bool::from(token.as_bytes().ct_eq(state.token.expose())));
-    if !authorized {
+    let matched = presented.and_then(|token| {
+        let presented = token.as_bytes();
+        let current = presented.ct_eq(state.token.expose());
+        let previous = state
+            .previous_token
+            .as_ref()
+            .map_or(Choice::from(0), |previous| {
+                presented.ct_eq(previous.expose())
+            });
+        if bool::from(current) {
+            Some(Credential::Current)
+        } else if bool::from(previous) {
+            Some(Credential::Previous)
+        } else {
+            None
+        }
+    });
+    let Some(credential) = matched else {
         let mut response = error(
             StatusCode::UNAUTHORIZED,
             ErrorCode::Unauthorized,
@@ -229,8 +265,10 @@ async fn require_bearer(
             .headers_mut()
             .insert(header::WWW_AUTHENTICATE, HeaderValue::from_static("Bearer"));
         return response;
-    }
-    next.run(request).await
+    };
+    let mut response = next.run(request).await;
+    response.extensions_mut().insert(credential);
+    response
 }
 
 async fn time_limit(request: Request, next: Next) -> Response {
@@ -286,7 +324,8 @@ fn mint_request_id() -> String {
 /// threads both processes' logs; otherwise one is minted. `Server-Timing: app` is the
 /// service's own processing time — the caller subtracts it from its round trip to see
 /// what the network and the host's proxy cost. The log line carries method, path,
-/// status, duration and request id: never headers (the credential), never a body, never
+/// status, duration, request id and — on authenticated routes — which credential was used
+/// (`current` / `previous`, a name): never headers (the credential), never a body, never
 /// a query string.
 async fn observe(request: Request, next: Next) -> Response {
     let started = Instant::now();
@@ -314,17 +353,18 @@ async fn observe(request: Request, next: Next) -> Response {
     }
     headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
 
-    println!(
-        "{}",
-        serde_json::json!({
-            "event": "request",
-            "requestId": request_id,
-            "method": method,
-            "path": path,
-            "status": response.status().as_u16(),
-            "ms": (elapsed_ms * 1000.0).round() / 1000.0,
-        })
-    );
+    let mut line = serde_json::json!({
+        "event": "request",
+        "requestId": request_id,
+        "method": method,
+        "path": path,
+        "status": response.status().as_u16(),
+        "ms": (elapsed_ms * 1000.0).round() / 1000.0,
+    });
+    if let Some(credential) = response.extensions().get::<Credential>() {
+        line["credential"] = credential.label().into();
+    }
+    crate::log::emit(line);
     response
 }
 
@@ -338,13 +378,23 @@ mod tests {
 
     const TOKEN: &str = "test-token-0123456789abcdef0123456789";
 
+    const PREVIOUS_TOKEN: &str = "previous-token-0123456789abcdef01234";
+
+    /// The service mid-rotation: both credentials configured.
     fn app() -> Router {
-        let config = crate::config::Config::from_lookup(|key| {
-            (key == "SERVICE_TOKEN").then(|| TOKEN.to_owned())
+        app_with(Some(PREVIOUS_TOKEN))
+    }
+
+    fn app_with(previous: Option<&'static str>) -> Router {
+        let config = crate::config::Config::from_lookup(|key| match key {
+            "SERVICE_TOKEN" => Some(TOKEN.to_owned()),
+            "SERVICE_TOKEN_PREVIOUS" => previous.map(str::to_owned),
+            _ => None,
         })
         .expect("test config");
         router(Arc::new(AppState {
             token: config.token,
+            previous_token: config.previous_token,
             started: Instant::now(),
         }))
     }
@@ -352,7 +402,14 @@ mod tests {
     async fn send(
         request: axum::http::Request<Body>,
     ) -> (StatusCode, axum::http::HeaderMap, Value) {
-        let response = app().oneshot(request).await.expect("infallible");
+        send_to(app(), request).await
+    }
+
+    async fn send_to(
+        app: Router,
+        request: axum::http::Request<Body>,
+    ) -> (StatusCode, axum::http::HeaderMap, Value) {
+        let response = app.oneshot(request).await.expect("infallible");
         let status = response.status();
         let headers = response.headers().clone();
         let bytes = response.into_body().collect().await.unwrap().to_bytes();
@@ -415,6 +472,60 @@ mod tests {
             assert_eq!(error_code(&body), "unauthorized");
             assert_eq!(headers[header::WWW_AUTHENTICATE], "Bearer");
         }
+    }
+
+    /// The usual production setup: no rotation under way. Every auth test above runs mid-rotation,
+    /// so this one pins the plain case — a wrong credential, and the would-be previous one, are refused.
+    #[tokio::test]
+    async fn without_a_previous_credential_only_the_current_one_is_accepted() {
+        for (presented, expected) in [
+            (Some(TOKEN), StatusCode::OK),
+            (Some(PREVIOUS_TOKEN), StatusCode::UNAUTHORIZED),
+            (
+                Some("wrong-token-0123456789abcdef0123456789"),
+                StatusCode::UNAUTHORIZED,
+            ),
+            (None, StatusCode::UNAUTHORIZED),
+        ] {
+            let (status, _, _) = send_to(app_with(None), get("/v1/status", presented)).await;
+            assert_eq!(status, expected, "{presented:?}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_credential_used_is_named_for_the_access_log() {
+        for (presented, expected) in [
+            (TOKEN, Credential::Current),
+            (PREVIOUS_TOKEN, Credential::Previous),
+        ] {
+            let response = app()
+                .oneshot(get("/v1/status", Some(presented)))
+                .await
+                .expect("infallible");
+            assert_eq!(response.extensions().get::<Credential>(), Some(&expected));
+        }
+        let public = app()
+            .oneshot(get("/health/live", None))
+            .await
+            .expect("infallible");
+        assert_eq!(public.extensions().get::<Credential>(), None);
+    }
+
+    #[tokio::test]
+    async fn the_previous_credential_is_accepted_during_a_rotation_and_nothing_else_is() {
+        assert_eq!(
+            send(get("/v1/status", Some(PREVIOUS_TOKEN))).await.0,
+            StatusCode::OK
+        );
+        let (status, _, body) = send(get(
+            "/v1/status",
+            Some(&PREVIOUS_TOKEN[..PREVIOUS_TOKEN.len() - 1]),
+        ))
+        .await;
+        assert_eq!(
+            (status, error_code(&body)),
+            (StatusCode::UNAUTHORIZED, "unauthorized")
+        );
     }
 
     #[tokio::test]

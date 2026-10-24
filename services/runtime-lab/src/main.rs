@@ -4,12 +4,14 @@
 //! `runtime-lab openapi`  print the OpenAPI document (the source of `openapi.json`)
 //!
 //! Configuration is environment-only (`config.rs`): `SERVICE_TOKEN` (required, ≥32
-//! characters), `PORT` (default 8080), `HOST` (default 0.0.0.0). Logs are one JSON
-//! object per line on stdout, the format container hosts collect without an agent.
+//! characters), `SERVICE_TOKEN_PREVIOUS` (optional, during a rotation), `PORT` (default 8080), `HOST` (default 0.0.0.0). Logs are one JSON
+//! object per line on stdout, the format container hosts collect without an agent, written
+//! through `log.rs` so a slow or vanished log reader can never stall or crash a request.
 
 mod config;
 mod contract;
 mod http;
+mod log;
 mod order;
 
 use std::process::ExitCode;
@@ -24,10 +26,6 @@ use tokio::sync::Semaphore;
 
 use crate::config::Config;
 use crate::http::AppState;
-
-fn log(event: serde_json::Value) {
-    println!("{event}");
-}
 
 fn openapi_json() -> String {
     http::openapi()
@@ -49,7 +47,10 @@ fn main() -> ExitCode {
         Ok(config) => config,
         Err(reason) => {
             // Fail closed: no credential, no service. Exit code 2 = configuration.
-            log(serde_json::json!({ "event": "config_refused", "reason": reason.to_string() }));
+            log::emit(
+                serde_json::json!({ "event": "config_refused", "reason": reason.to_string() }),
+            );
+            log::flush();
             return ExitCode::from(2);
         }
     };
@@ -60,43 +61,61 @@ fn main() -> ExitCode {
     {
         Ok(runtime) => runtime,
         Err(err) => {
-            log(serde_json::json!({ "event": "runtime_failed", "reason": err.to_string() }));
+            log::emit(serde_json::json!({ "event": "runtime_failed", "reason": err.to_string() }));
+            log::flush();
             return ExitCode::FAILURE;
         }
     };
 
-    match runtime.block_on(serve(config, started)) {
+    let code = match runtime.block_on(serve(config, started)) {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
-            log(serde_json::json!({ "event": "serve_failed", "reason": err.to_string() }));
+            log::emit(serde_json::json!({ "event": "serve_failed", "reason": err.to_string() }));
             ExitCode::FAILURE
         }
-    }
+    };
+    // Stop connections a timed-out drain left running before the last flush, so their lines
+    // land before it — not after `stopped`, and not after the flush where nothing writes them.
+    runtime.shutdown_timeout(Duration::from_millis(100));
+    // Bounded: a log reader that is gone must not hold the exit past the host's kill timer.
+    log::flush();
+    code
 }
 
 /// A client must finish sending a request head within this, and an idle keep-alive
 /// connection is closed after it. `REQUEST_TIMEOUT` only starts once a head is parsed, so
 /// without this a client trickling header bytes (slowloris) holds a socket forever.
 const HEADER_READ_TIMEOUT: Duration = Duration::from_secs(5);
+/// Largest request head (request line + headers) read from a client; past it hyper answers
+/// 431 and closes. Without it a connection may buffer ~400 KiB of head before hyper refuses
+/// — times `MAX_CONNECTIONS`, a fifth of a 512 MB free instance. 16 KiB is Node's default.
+const MAX_HEADER_BYTES: usize = 16 * 1024;
 /// Open connections at once. Past it, new connections are closed on accept: the process
 /// stays responsive to the ones it has instead of exhausting file descriptors.
 const MAX_CONNECTIONS: usize = 256;
-/// Longest wait for in-flight requests after SIGTERM — inside the 30 s hosts allow.
-const DRAIN_LIMIT: Duration = Duration::from_secs(10);
+/// Longest wait for in-flight requests after SIGTERM. With the log flush after it
+/// (`log::FLUSH_LIMIT`, 1 s) the whole exit stays inside Docker's and Podman's default 10 s
+/// stop grace, and far inside Render's 30 s.
+const DRAIN_LIMIT: Duration = Duration::from_secs(8);
 
 /// The accept loop. Written out instead of `axum::serve` because the two protections
 /// above are connection-level settings `axum::serve` does not expose.
 async fn serve(config: Config, started: Instant) -> std::io::Result<()> {
     let listener = tokio::net::TcpListener::bind(config.addr).await?;
-    log(serde_json::json!({
+    log::emit(serde_json::json!({
         "event": "listening",
         "addr": config.addr.to_string(),
         "release": env!("CARGO_PKG_VERSION"),
         "bootMs": started.elapsed().as_secs_f64() * 1000.0,
+        // What the host really grants: Tokio sizes its workers from the CPU quota it can see,
+        // and a free tier's "0.1 CPU" may or may not be one.
+        "workers": tokio::runtime::Handle::current().metrics().num_workers(),
+        "previousToken": config.previous_token.is_some(),
     }));
 
     let app = http::router(Arc::new(AppState {
         token: config.token,
+        previous_token: config.previous_token,
         started,
     }));
     let slots = Arc::new(Semaphore::new(MAX_CONNECTIONS));
@@ -121,6 +140,7 @@ async fn serve(config: Config, started: Instant) -> std::io::Result<()> {
                 let connection = http1::Builder::new()
                     .timer(TokioTimer::new())
                     .header_read_timeout(HEADER_READ_TIMEOUT)
+                    .max_header_size(MAX_HEADER_BYTES)
                     .serve_connection(TokioIo::new(stream), TowerToHyperService::new(app.clone()));
                 let connection = graceful.watch(connection);
                 tokio::spawn(async move {
@@ -137,9 +157,9 @@ async fn serve(config: Config, started: Instant) -> std::io::Result<()> {
         .await
         .is_err()
     {
-        log(serde_json::json!({ "event": "drain_timeout" }));
+        log::emit(serde_json::json!({ "event": "drain_timeout" }));
     }
-    log(serde_json::json!({ "event": "stopped" }));
+    log::emit(serde_json::json!({ "event": "stopped" }));
     Ok(())
 }
 
@@ -166,7 +186,7 @@ async fn shutdown_signal() {
         () = interrupt => {}
         () = terminate => {}
     }
-    log(serde_json::json!({ "event": "draining" }));
+    log::emit(serde_json::json!({ "event": "draining" }));
 }
 
 #[cfg(test)]

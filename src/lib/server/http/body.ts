@@ -47,9 +47,14 @@ async function readBounded(request: BodySource, maxBytes: number): Promise<strin
 	// A declared oversize is refused before a single byte is read. This is the
 	// cheap path and the common one for honest clients; it is not a control on
 	// its own, because chunked encoding omits the header entirely and it is
-	// optional in HTTP/2.
+	// optional in HTTP/2. The unread body is cancelled, not abandoned: an
+	// abandoned `fetch` response body keeps its pooled connection busy until
+	// garbage collection.
 	const declared = Number(request.headers.get('content-length'));
-	if (Number.isFinite(declared) && declared > maxBytes) return null;
+	if (Number.isFinite(declared) && declared > maxBytes) {
+		await request.body?.cancel().catch(() => {});
+		return null;
+	}
 
 	const body = request.body;
 	if (!body || typeof body.getReader !== 'function') {

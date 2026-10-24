@@ -15,7 +15,16 @@
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { renderContractTypes, SPEC_PATH, TYPES_PATH } from '../../../../../scripts/external-service/generate-contract';
+import {
+	type ContractReleaseRecord,
+	contractDigest,
+	RELEASES_PATH,
+	releaseRecordProblems,
+	renderContractTypes,
+	SPEC_PATH,
+	specRelease,
+	TYPES_PATH,
+} from '../../../../../scripts/external-service/generate-contract';
 
 interface CheckManifest {
 	/** What ran the checks: `container <image>` or `host <rustc --version>`. */
@@ -35,6 +44,66 @@ describe('external-service contract freshness', () => {
 		expect(read(TYPES_PATH), 'stale — run: bun run external-service:contract').toBe(
 			await renderContractTypes(read(SPEC_PATH)),
 		);
+	});
+
+	it('every contract change carries a new release, and no patch release changes the contract', () => {
+		const record: ContractReleaseRecord = JSON.parse(read(RELEASES_PATH));
+		expect(releaseRecordProblems(record, read(SPEC_PATH))).toEqual([]);
+		// The service reports Cargo's version; the spec must carry the same one.
+		expect(read(`${CRATE}/Cargo.toml`)).toMatch(new RegExp(`^version = "${specRelease(read(SPEC_PATH))}"$`, 'm'));
+	});
+
+	describe('the release rule', () => {
+		const spec = JSON.parse(read(SPEC_PATH));
+		const record: ContractReleaseRecord = JSON.parse(read(RELEASES_PATH));
+		const [major, minor, patch] = spec.info.version.split('.').map(Number);
+		const withRoute = (version: string) =>
+			JSON.stringify({ ...spec, info: { ...spec.info, version }, paths: { ...spec.paths, '/v1/extra': {} } });
+		const recording = (specText: string) => ({
+			...record,
+			releases: { ...record.releases, [specRelease(specText)]: contractDigest(specText) },
+		});
+
+		it('refuses a contract change under a recorded release', () => {
+			expect(releaseRecordProblems(record, withRoute(spec.info.version))).toEqual([
+				expect.stringContaining(`the contract changed under release ${spec.info.version}`),
+			]);
+		});
+
+		it('refuses a patch release that changes the contract', () => {
+			const patched = withRoute(`${major}.${minor}.${patch + 1}`);
+			expect(releaseRecordProblems(recording(patched), patched)).toEqual([
+				expect.stringContaining('a contract change needs a minor or major bump'),
+			]);
+		});
+
+		it('accepts a minor or major release that changes the contract', () => {
+			for (const version of [`${major}.${minor + 1}.0`, `${major + 1}.0.0`]) {
+				const bumped = withRoute(version);
+				expect(releaseRecordProblems(recording(bumped), bumped), version).toEqual([]);
+			}
+		});
+
+		it('names an unrecorded release', () => {
+			const unrecorded = withRoute(`${major}.${minor + 1}.0`);
+			expect(releaseRecordProblems(record, unrecorded)).toEqual([expect.stringContaining('is not recorded')]);
+		});
+
+		it('hashes the contract, not its prose or key order', () => {
+			const reworded = structuredClone(spec);
+			reworded.paths['/v1/evaluate'].post.description = 'Reworded for people.';
+			reworded.info.title = 'renamed';
+			const reordered = JSON.stringify(Object.fromEntries(Object.entries(spec).reverse()));
+			expect(contractDigest(JSON.stringify(reworded))).toBe(contractDigest(read(SPEC_PATH)));
+			expect(contractDigest(reordered)).toBe(contractDigest(read(SPEC_PATH)));
+			expect(contractDigest(withRoute(spec.info.version))).not.toBe(contractDigest(read(SPEC_PATH)));
+		});
+
+		it('refuses a release that is not major.minor.patch', () => {
+			expect(() => specRelease(JSON.stringify({ ...spec, info: { ...spec.info, version: '1.5.0-rc.1' } }))).toThrow(
+				'major.minor.patch',
+			);
+		});
 	});
 
 	it.each(
@@ -59,6 +128,8 @@ describe('external-service contract freshness', () => {
 			`${CRATE}/Cargo.lock`,
 			`${CRATE}/Cargo.toml`,
 			`${CRATE}/Containerfile`,
+			// The allowlist that decides what reaches the image.
+			`${CRATE}/.dockerignore`,
 			`${CRATE}/rust-toolchain.toml`,
 			'scripts/external-service/check.sh',
 		]) {
@@ -81,6 +152,7 @@ describe('external-service contract freshness', () => {
 		expect(image).toMatch(/@sha256:[0-9a-f]{64}$/);
 		expect(read(`${CRATE}/Containerfile`)).toContain(`ARG RUST_IMAGE=${image}`);
 		expect(read('scripts/external-service/check.sh')).toContain(`RUST_IMAGE="${image}"`);
+		expect(read('scripts/external-service/audit.sh')).toContain(`RUST_IMAGE="${image}"`);
 
 		const channel = (path: string) => read(path).match(/^channel = "([^"]+)"/m)?.[1];
 		expect(channel(`${CRATE}/rust-toolchain.toml`)).toBe(channel('crates/kernel/rust-toolchain.toml'));

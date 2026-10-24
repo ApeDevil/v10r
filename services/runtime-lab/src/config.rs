@@ -32,6 +32,9 @@ impl fmt::Debug for Secret {
 pub struct Config {
     pub addr: SocketAddr,
     pub token: Secret,
+    /// The credential being rotated out (`SERVICE_TOKEN_PREVIOUS`), still accepted so the
+    /// caller can switch after the service — the `_PREVIOUS` convention of v10r's key ring.
+    pub previous_token: Option<Secret>,
 }
 
 /// Why startup was refused. The messages name the variable, never its value.
@@ -40,6 +43,9 @@ pub enum ConfigError {
     MissingToken,
     ShortToken,
     MalformedToken,
+    ShortPreviousToken,
+    MalformedPreviousToken,
+    RepeatedPreviousToken,
     InvalidHost,
     InvalidPort,
 }
@@ -51,6 +57,15 @@ impl fmt::Display for ConfigError {
             ConfigError::ShortToken => "SERVICE_TOKEN is shorter than 32 characters",
             ConfigError::MalformedToken => {
                 "SERVICE_TOKEN must be printable ASCII without spaces (check for a trailing newline)"
+            }
+            ConfigError::ShortPreviousToken => {
+                "SERVICE_TOKEN_PREVIOUS is shorter than 32 characters"
+            }
+            ConfigError::MalformedPreviousToken => {
+                "SERVICE_TOKEN_PREVIOUS must be printable ASCII without spaces (check for a trailing newline)"
+            }
+            ConfigError::RepeatedPreviousToken => {
+                "SERVICE_TOKEN_PREVIOUS equals SERVICE_TOKEN — a rotation needs a new credential"
             }
             ConfigError::InvalidHost => "HOST is not an IP address",
             ConfigError::InvalidPort => "PORT is not a port number",
@@ -73,21 +88,49 @@ impl Config {
         let token = lookup("SERVICE_TOKEN")
             .filter(|t| !t.is_empty())
             .ok_or(ConfigError::MissingToken)?;
-        // Printable ASCII, no whitespace: exactly what travels unchanged in an
-        // `Authorization` header. A stray newline from `echo` would otherwise make every
-        // caller's (trimmed) credential mismatch — a service that reports live and refuses
-        // everyone.
-        if !token.bytes().all(|b| b.is_ascii_graphic()) {
-            return Err(ConfigError::MalformedToken);
-        }
-        if token.len() < MIN_TOKEN_LEN {
-            return Err(ConfigError::ShortToken);
-        }
+        check_token(&token).map_err(|problem| match problem {
+            TokenProblem::Malformed => ConfigError::MalformedToken,
+            TokenProblem::Short => ConfigError::ShortToken,
+        })?;
+        // Optional, and held to the same rules: a rotation must not quietly weaken the
+        // credential the service accepts.
+        let previous_token = match lookup("SERVICE_TOKEN_PREVIOUS").filter(|t| !t.is_empty()) {
+            None => None,
+            Some(previous) => {
+                check_token(&previous).map_err(|problem| match problem {
+                    TokenProblem::Malformed => ConfigError::MalformedPreviousToken,
+                    TokenProblem::Short => ConfigError::ShortPreviousToken,
+                })?;
+                if previous == token {
+                    return Err(ConfigError::RepeatedPreviousToken);
+                }
+                Some(Secret(previous))
+            }
+        };
         Ok(Config {
             addr: SocketAddr::new(host, port),
             token: Secret(token),
+            previous_token,
         })
     }
+}
+
+enum TokenProblem {
+    Malformed,
+    Short,
+}
+
+fn check_token(token: &str) -> Result<(), TokenProblem> {
+    // Printable ASCII, no whitespace: exactly what travels unchanged in an `Authorization`
+    // header. A stray newline from `echo` would otherwise make every caller's (trimmed)
+    // credential mismatch — a service that reports live and refuses everyone.
+    if !token.bytes().all(|b| b.is_ascii_graphic()) {
+        return Err(TokenProblem::Malformed);
+    }
+    if token.len() < MIN_TOKEN_LEN {
+        return Err(TokenProblem::Short);
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -159,8 +202,57 @@ mod tests {
     }
 
     #[test]
+    fn a_previous_credential_is_optional_and_held_to_the_same_rules() {
+        const PREVIOUS: &str = "fedcba9876543210fedcba9876543210";
+        assert!(
+            config(&[("SERVICE_TOKEN", TOKEN)])
+                .unwrap()
+                .previous_token
+                .is_none()
+        );
+        assert!(
+            config(&[("SERVICE_TOKEN", TOKEN), ("SERVICE_TOKEN_PREVIOUS", "")])
+                .unwrap()
+                .previous_token
+                .is_none()
+        );
+        let rotating = config(&[
+            ("SERVICE_TOKEN", TOKEN),
+            ("SERVICE_TOKEN_PREVIOUS", PREVIOUS),
+        ]);
+        assert_eq!(
+            rotating.unwrap().previous_token.unwrap().expose(),
+            PREVIOUS.as_bytes()
+        );
+        for (previous, refused) in [
+            ("short", ConfigError::ShortPreviousToken),
+            (
+                "fedcba9876543210fedcba987654321\n",
+                ConfigError::MalformedPreviousToken,
+            ),
+            (TOKEN, ConfigError::RepeatedPreviousToken),
+        ] {
+            assert_eq!(
+                config(&[
+                    ("SERVICE_TOKEN", TOKEN),
+                    ("SERVICE_TOKEN_PREVIOUS", previous)
+                ])
+                .unwrap_err(),
+                refused,
+                "{previous:?}"
+            );
+        }
+    }
+
+    #[test]
     fn the_credential_never_reaches_debug_output() {
-        let config = config(&[("SERVICE_TOKEN", TOKEN)]).unwrap();
-        assert!(!format!("{config:?}").contains(TOKEN));
+        const PREVIOUS: &str = "fedcba9876543210fedcba9876543210";
+        let config = config(&[
+            ("SERVICE_TOKEN", TOKEN),
+            ("SERVICE_TOKEN_PREVIOUS", PREVIOUS),
+        ])
+        .unwrap();
+        let printed = format!("{config:?}");
+        assert!(!printed.contains(TOKEN) && !printed.contains(PREVIOUS));
     }
 }

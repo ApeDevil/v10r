@@ -12,11 +12,16 @@ export {
 	CALL_CEILING_MS,
 	GLOBAL_RATE_LIMIT_MAX,
 	GLOBAL_RATE_LIMIT_PREFIX,
+	GLOBAL_WAKE_RATE_LIMIT_MAX,
+	GLOBAL_WAKE_RATE_LIMIT_PREFIX,
+	LAB_LIMITER_POLICY,
 	RATE_LIMIT_MAX,
 	RATE_LIMIT_PREFIX,
 	RATE_LIMIT_WINDOW,
 	RENDER_RESERVE_MS,
 	WAKE_CEILING_MS,
+	WAKE_RATE_LIMIT_MAX,
+	WAKE_RATE_LIMIT_PREFIX,
 } from './config';
 export { checkTarget, evaluatePreset, runDrill, toPublicServiceCall } from './lab';
 export type { ResolvedServiceTarget, ServiceTarget } from './targets';

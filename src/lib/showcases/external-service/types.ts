@@ -97,9 +97,18 @@ export interface PublicServiceCall<T = unknown> {
 }
 
 /** A target check: liveness (public), then status (authenticated) once liveness answered. */
+/**
+ * A running service's contract relative to the one this app was built against
+ * (`contract-skew.ts`). A diagnosis shown beside the release — calls are never refused on it.
+ */
+export const CONTRACT_SKEWS = ['none', 'service_ahead', 'service_behind', 'breaking', 'unknown'] as const;
+export type ContractSkew = (typeof CONTRACT_SKEWS)[number];
+
 export interface PublicTargetCheck {
 	live: PublicServiceCall<ServiceLiveness>;
 	status: PublicServiceCall<ServiceStatus> | null;
+	/** Present when status answered: its `release` against this app's `CONTRACT_RELEASE`. */
+	contractSkew: ContractSkew | null;
 }
 
 /**

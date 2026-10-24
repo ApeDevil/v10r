@@ -2,18 +2,20 @@
 	"runner": "host rustc 1.97.1 (8bab26f4f 2026-07-14)",
 	"checks": "cargo fmt --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked",
 	"inputs": {
-		"services/runtime-lab/Cargo.lock": "f8f0a439cdb48d5905e36f22f48eaaeb6df90b47e6ea5851368409446322a30b",
-		"services/runtime-lab/Cargo.toml": "14ddd1519bdb9853b92035b9f093e0ee4d67f5a108cfdffae591d2c7c07d3957",
+		"services/runtime-lab/Cargo.lock": "5f36dc9cd73c6feed8f4c88f07e24fd3c41f94e5aa9e386ee74440a5552565e6",
+		"services/runtime-lab/Cargo.toml": "1257026dffc12e6e4d7703a993ed721f30f08295dd7982ca17d5ba752a9c662a",
 		"services/runtime-lab/Containerfile": "a33836275083e93eaee0988c12757d3a4eb06c89c7768bfd3a1ddd6c53e154e0",
+		"services/runtime-lab/.dockerignore": "004338ffb4345d29451a2d770467ee03da28e7395d400bc43a0adbc3ade7f4f8",
 		"services/runtime-lab/rust-toolchain.toml": "0e1df4765baf8734ca66b9217c5e3647c37a9fee6461bdc6ce7d4f002ed5f776",
-		"scripts/external-service/check.sh": "d709d9607a1cf9fa3aa332b6f07f2600cf383b35b11f13bfc4e433da0589c36e",
-		"services/runtime-lab/src/config.rs": "4cfa5aceaded27be588b5e6b21c926672b90826c8588756412fe837495ac4f6b",
+		"scripts/external-service/check.sh": "b0470e1c409a97a36aae3e6371834a6cde80c111f4d31cb5b9012dd3920a54a6",
+		"services/runtime-lab/src/config.rs": "77165a5bb95c2e1a0c41fe869c9edad1ae004200b54574f5fcb901728b8536fd",
 		"services/runtime-lab/src/contract.rs": "d1eb899103f4142754d015a1ad367ccdf35d00a05efaf76944c37c78a1bf14fc",
-		"services/runtime-lab/src/http.rs": "9d8a08d1b8aad8626486a0c3d47775f78c14bef40c0cb834b039a7d9f74cabfc",
-		"services/runtime-lab/src/main.rs": "e670d2c806ef46bac86e5a414d328a25d57a2c1860c0cb8876d9a0dccdf7cee2",
+		"services/runtime-lab/src/http.rs": "1a658e75302d747fe49f370d2a3ee0d7a5eeb23fba95f8a308a21030fa82dcb6",
+		"services/runtime-lab/src/log.rs": "82aee3668ab819d890cb10769a0dd25108c628be25c6c80d1ccca30f9a9ad5f2",
+		"services/runtime-lab/src/main.rs": "b1419c779ad884a01aeba3564fc9d09997c4e1f326d4505be8a56764371bfb06",
 		"services/runtime-lab/src/order.rs": "bc1b7e12330b2bc06366cec84344eff581e7765e19c9ba1836905c0929882708"
 	},
 	"outputs": {
-		"services/runtime-lab/openapi.json": "e769343c41ec454c096987aa391477cdea157c88618153be1055322554243d76"
+		"services/runtime-lab/openapi.json": "cc99eb74704fc1215eea31d8e586b9b1a43dc273a60960bde0721e339dbcde91"
 	}
 }

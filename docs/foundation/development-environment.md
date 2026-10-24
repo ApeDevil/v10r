@@ -32,6 +32,10 @@ A check that could not run is reported as **not run**, never as passed.
 | `refresh` (its last step, `db:ingest-docs`, needs the database and the Gemini key) | build steps only | yes |
 | `content:check:db`, `content:push`, the dev server against Neon, anything with a real credential | no | yes |
 | `vr …` (Stas's host dispatcher) | no | only when Stas names the command |
+| runtime-lab Rust gate `bash scripts/external-service/check.sh` | `--host` (cargo is installed; the manifest records the host rustc) | yes, in the pinned Rust image |
+| runtime-lab `smoke.sh`, `bench.sh` (containers) | with Docker: start `dockerd` first. The build container cannot reach crates through the session's egress proxy — build from a scratch context with the proxy CA, then `SKIP_BUILD=1` (verified 2026-10-23) | yes (Podman) |
+| `external-service:verify` against a local service; `audit.sh --host` (cargo-deny, needs the network) | yes | yes |
+| `external-service:verify --target remote`, anything against `*.onrender.com` or `www.v10r.dev` | no — the egress proxy refuses both hosts | yes |
 
 ## The local container
 
