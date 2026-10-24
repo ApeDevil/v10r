@@ -186,8 +186,16 @@ All measured in this container with the same comparator.
 
 `DEV` branches are folded out: the production bundles carry only short error-code URLs, and the
 same Svelte codes as A. The ceiling moved 85 → 97 (94.1 + ~3%), with the reasoning in
-`src/lib/server/perf/budgets.json`. No other ceiling moved. The improvements on the other four
-metrics could be banked by lowering their ceilings; that is left to review.
+`src/lib/server/perf/budgets.json`. Stas approved the raise on 2026-10-24, and with it banked the
+gains on two ceilings, back to ~3% headroom over the measured values:
+
+| Ceiling | Before | Approved | Measured |
+|---|---:|---:|---:|
+| `baseline_js_kb` | 85 | 97 | 94.1 |
+| `route_js_kb` | 527 | 520 | 502.1 |
+| `median_route_js_kb` | 238 | 238 | 229.7 |
+| `total_client_js_kb` | 2340 | 2210 | 2140.8 |
+| `doc_html_kb` | 5 | 5 | 3.6 |
 
 **Server side.**
 
@@ -209,6 +217,21 @@ metrics could be banked by lowering their ceilings; that is left to review.
   - registry, pattern surfaces, excerpts, i18n, content and opacity: all OK.
   - Biome: the 2 warnings main already has.
 - `bun run validate:build`: green, all five ratchets within ceilings.
+
+**Release-preparation re-run (2026-10-24, approved ceilings applied).** On the tree with the
+banked ceilings:
+
+- `bun run validate`: green. 304 files and 3,425 tests, svelte-check 0 errors.
+- `bun run validate:build`: green. The ratchets read route 502.1/520, baseline 94.1/97,
+  median 229.7/238, total 2140.8/2210 and document 3.6/5. `snapshot.json` is unchanged.
+- The runtime smoke: 22/22.
+- Browser specs, the same as main:
+  - external-service passes 2/2;
+  - compose fails 2/2 here and on main; the dev server has no database
+    (`consent:record … fetch failed`).
+- `knip`: the same 2 unused devDependencies as main.
+- `bun audit`: 54 advisories, against 64 on main.
+- Every `.vc-config.json` says `nodejs22.x` and `fra1`.
 
 **Runtime smoke (22/22).** Run on `vite preview` of the production build, with Playwright:
 
@@ -271,7 +294,6 @@ license file lists 143 packages (A: 141).
 - **@vercel/analytics:** return to the `/sveltekit` entry once a stable release supports Kit 3.
 - **knip ≥ 6.43** reads `sveltekit()` from `vite.config.ts`. Once it clears the 24-hour cooldown,
   re-check which explicit entries are still needed.
-- **Ceilings:** decide whether to bank the improvements on heaviest, median and total.
 - **Consider removing the superforms adapters the app does not use from the client graph.**
   `@vinejs/vine`, `arktype` and `effect` ship today, and did before the migration.
 - **After the ship, run the RAG ingest locally** (`bun run refresh`). The docs changed, and the
@@ -281,9 +303,8 @@ license file lists 143 packages (A: 141).
 
 Ready for a user-authorized ship. Every gate that runs in the cloud is green, and the runtime
 smoke passes on the production build. Every regression found along the way was investigated and
-fixed at its cause. Five things stay open:
+fixed at its cause. The budget ceilings are approved (see Performance). Four things stay open:
 
-- the baseline ceiling raise, which needs Stas's review;
 - the live auth flows;
 - the database-backed checks;
 - the RAG ingest;
