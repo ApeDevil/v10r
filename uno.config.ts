@@ -73,6 +73,12 @@ export default defineConfig({
 			'bg-[linear-gradient(currentColor_1px,transparent_1px),linear-gradient(to_right,currentColor_1px,transparent_1px)] bg-[length:30px_30px]',
 	},
 
+	// Clock-time literals in the scanned sources (quiet-hours `08:00`/`22:00`) extract as arbitrary
+	// properties — `.\[08\:00\]{08:00;}` — which no CSS property name can start with a digit
+	// to make valid. esbuild's minifier warned and kept them; lightningcss (Vite 8) fails the
+	// build on them. Refuse the shape at extraction rather than loosen the minifier.
+	blocklist: [/^\[\d/],
+
 	// Safelist dynamic classes that can't be statically extracted.
 	safelist: [
 		...Object.keys(fontSize).map((k) => `text-${k}`),
