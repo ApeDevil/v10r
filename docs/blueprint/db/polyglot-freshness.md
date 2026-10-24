@@ -41,7 +41,7 @@ Choose based on consistency requirements and complexity tolerance:
 
 ---
 
-> **Neo4j call style.** The snippets below use a generic `getSession()`/`session.run()` driver style for illustration. The shipped graph client has no driver or session — it exposes `cypher(statement, parameters?)` over the HTTP Query API (`#lib/server/graph/index.ts`). Substitute `cypher()` when applying these patterns. The referenced `files` / `outbox` tables and `$lib/server/storage` are also illustrative, not shipped.
+> **Neo4j call style.** The snippets below use a generic `getSession()`/`session.run()` driver style for illustration. The shipped graph client has no driver or session — it exposes `cypher(statement, parameters?)` over the HTTP Query API (`#lib/server/graph/index.ts`). Substitute `cypher()` when applying these patterns. The referenced `files` / `outbox` tables and `#lib/server/storage` are also illustrative, not shipped.
 
 ## Pattern 1: Read-Time Validation
 
@@ -49,8 +49,8 @@ Check reference validity when reading. Simplest approach, handles stale refs gra
 
 ```typescript
 // src/lib/server/graph/queries.ts
-import { db } from '#lib/server/db/index.js';
-import { user } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { user } from '#lib/server/db/schema/index.ts';
 import { eq } from 'drizzle-orm';
 
 export async function getPageWithFeatures(pagePath: string) {
@@ -140,10 +140,10 @@ export function notDeleted<T extends PgTable>(table: T) {
 
 ```typescript
 // src/lib/server/services/deletion-propagation.ts
-import { db } from '#lib/server/db/index.js';
-import { user } from '#lib/server/db/schema/index.js';
-import { getSession } from '#lib/server/graph/index.js';
-import { deleteR2Object } from '#lib/server/storage';
+import { db } from '#lib/server/db/index.ts';
+import { user } from '#lib/server/db/schema/index.ts';
+import { getSession } from '#lib/server/graph/index.ts';
+import { deleteR2Object } from '#lib/server/storage/index.ts';
 import { eq, and, isNotNull } from 'drizzle-orm';
 
 export async function propagateUserDeletion(userId: string) {
@@ -214,8 +214,8 @@ export const outbox = pgTable('outbox', {
 
 ```typescript
 // src/lib/server/services/user.ts
-import { db } from '#lib/server/db/index.js';
-import { user, outbox } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { user, outbox } from '#lib/server/db/schema/index.ts';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
@@ -244,8 +244,8 @@ export async function deleteUser(userId: string) {
 
 ```typescript
 // src/lib/server/jobs/outbox-processor.ts
-import { db } from '#lib/server/db/index.js';
-import { outbox } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { outbox } from '#lib/server/db/schema/index.ts';
 import { eq, and, lt } from 'drizzle-orm';
 import { propagateUserDeletion } from '../services/deletion-propagation';
 
@@ -307,18 +307,18 @@ export async function processOutbox() {
 
 ```typescript
 // src/routes/api/cron/outbox/+server.ts
-import { json } from '@sveltejs/kit';
-import { processOutbox } from '#lib/server/jobs/outbox-processor';
+import { CRON_SECRET } from '$app/env/private';
+import { processOutbox } from '#lib/server/jobs/outbox-processor.ts';
 
 // Secure with API key or Vercel Cron
 export async function GET({ request }) {
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return json({ error: 'Unauthorized' }, { status: 401 });
+  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   await processOutbox();
-  return json({ success: true });
+  return Response.json({ success: true });
 }
 ```
 
@@ -345,10 +345,10 @@ Batch detection and cleanup of orphaned records. Run hourly or daily.
 
 ```typescript
 // src/lib/server/jobs/reconciliation.ts
-import { db } from '#lib/server/db/index.js';
-import { files, user } from '#lib/server/db/schema/index.js';
-import { getSession } from '#lib/server/graph/index.js';
-import { listR2Objects, deleteR2Object } from '#lib/server/storage';
+import { db } from '#lib/server/db/index.ts';
+import { files, user } from '#lib/server/db/schema/index.ts';
+import { getSession } from '#lib/server/graph/index.ts';
+import { listR2Objects, deleteR2Object } from '#lib/server/storage/index.ts';
 import { sql, notInArray } from 'drizzle-orm';
 
 export async function reconcileOrphans() {
@@ -420,13 +420,13 @@ export async function reconcileOrphans() {
 
 ```typescript
 // src/routes/api/cron/reconcile/+server.ts
-import { json } from '@sveltejs/kit';
-import { reconcileOrphans } from '#lib/server/jobs/reconciliation';
+import { CRON_SECRET } from '$app/env/private';
+import { reconcileOrphans } from '#lib/server/jobs/reconciliation.ts';
 
 export async function GET({ request }) {
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return json({ error: 'Unauthorized' }, { status: 401 });
+  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const results = await reconcileOrphans();
@@ -434,7 +434,7 @@ export async function GET({ request }) {
   // Log for monitoring
   console.log('[Reconciliation]', results);
 
-  return json({ success: true, ...results });
+  return Response.json({ success: true, ...results });
 }
 ```
 
@@ -592,10 +592,10 @@ Need cross-store consistency?
 ```typescript
 // tests/integration/user-deletion.test.ts
 import { describe, it, expect } from 'vitest';
-import { db, schema } from '#lib/server/db/index.js';
-import { getSession } from '#lib/server/graph/index.js';
-import { deleteUser } from '#lib/server/services/user';
-import { processOutbox } from '#lib/server/jobs/outbox-processor';
+import { db, schema } from '#lib/server/db/index.ts';
+import { getSession } from '#lib/server/graph/index.ts';
+import { deleteUser } from '#lib/server/services/user.ts';
+import { processOutbox } from '#lib/server/jobs/outbox-processor.ts';
 
 describe('User deletion cascade', () => {
   it('should clean up Neo4j nodes when user is deleted', async () => {

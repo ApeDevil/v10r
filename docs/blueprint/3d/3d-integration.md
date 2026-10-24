@@ -9,7 +9,7 @@ How v10r wires Threlte into SvelteKit. For Three.js / Threlte basics (scene grap
 - [Rendering Strategy](#rendering-strategy) - SSR off at the layout
 - [Scene Pattern](#scene-pattern) - Canvas + T + useTask in this app
 - [Model Config Registry](#model-config-registry) - `#lib/3d/models.ts`
-- [Components](#components) - `#lib/components/3d//index.js`
+- [Components](#components) - `#lib/components/3d/`
 - [Part Explorer](#part-explorer) - opt-in click-to-inspect (sofa)
 - [Asset Pipeline](#asset-pipeline) - GLB assets in `static/models/`
 - [WebGL Fallback](#webgl-fallback) - `<svelte:boundary>`, not manual detection
@@ -114,11 +114,11 @@ Camera, lights, controls, and render behavior for each model live in **`#lib/3d/
 
 **Scene snippets are NOT referenced from the config.** Pages map a model ID to its scene component at the route level. This avoids a circular dependency and preserves per-route code-splitting (a model's Three.js scene only loads on its own route).
 
-Customizer config (materials, parts, morph targets, presets) lives alongside in `#lib/3d/customization.ts`. The click-to-inspect part-explorer registry lives in `$lib/3d/parts.ts` — see [Part Explorer](#part-explorer).
+Customizer config (materials, parts, morph targets, presets) lives alongside in `#lib/3d/customization.ts`. The click-to-inspect part-explorer registry lives in `#lib/3d/parts.ts` — see [Part Explorer](#part-explorer).
 
 ## Components
 
-Reusable 3D building blocks live in **`#lib/components/3d/`** (barrel: `$lib/components/3d/index.ts`). Read the source for current props.
+Reusable 3D building blocks live in **`#lib/components/3d/`** (barrel: `#lib/components/3d/index.ts`). Read the source for current props.
 
 | Component | Role |
 |-----------|------|
@@ -130,7 +130,7 @@ Reusable 3D building blocks live in **`#lib/components/3d/`** (barrel: `$lib/com
 | `PartInfoPanel` / `PartPhotoGallery` | Non-modal part info panel (label, description, photo thumbnails) + full-size photo lightbox |
 | `customizer/` | GLTF customizer (`GltfCustomizer`, `CustomizerLayer`, material/part/accessory pickers, morph-target sliders, preset bar) |
 
-`viz/` and `3d/` are intentionally excluded from the default `#lib/components` barrel so Three.js / Chart.js don't get bundled into surfaces that don't use them. Import 3D components from `$lib/components/3d` directly.
+`viz/` and `3d/` are intentionally excluded from the default `#lib/components` barrel so Three.js / Chart.js don't get bundled into surfaces that don't use them. Import 3D components from `#lib/components/3d` directly.
 
 ## Part Explorer
 
@@ -176,7 +176,7 @@ This project does **not** hand-roll WebGL feature detection. Scenes are wrapped 
 </svelte:boundary>
 ```
 
-`BoundaryFallback` is in `#lib/components/composites/index.js`.
+`BoundaryFallback` is in `#lib/components/composites/index.ts`.
 
 ## Gotchas
 

@@ -55,7 +55,7 @@ Per-page header inside the main content area. **Not a global header** — each p
 <!-- src/lib/components/composites/page-header/PageHeader.svelte -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { cn } from '#lib/utils/cn.js';
+  import { cn } from '#lib/utils/cn.ts';
 
   interface Breadcrumb {
     label: string;
@@ -118,8 +118,8 @@ Per-page header inside the main content area. **Not a global header** — each p
 ```svelte
 <!-- Illustrative page — compare src/routes/[[locale=locale]]/admin/feedback/[id]/+page.svelte -->
 <script>
-  import { PageHeader } from '#lib/components/composites/index.js';
-  import { Button, DropdownMenu } from '#lib/components/primitives/index.js';
+  import { PageHeader } from '#lib/components/composites/index.ts';
+  import { Button, DropdownMenu } from '#lib/components/primitives/index.ts';
 
   let { data } = $props();
 </script>

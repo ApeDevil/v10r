@@ -32,7 +32,7 @@ The `{YYYY-MM-DD}` segment is derived from `new Date().toISOString().slice(0, 10
 Call at request entry — before any expensive model invocation:
 
 ```typescript
-import { checkUserBudget } from '#lib/server/ai/budget.js';
+import { checkUserBudget } from '#lib/server/ai/budget.ts';
 
 const budget = await checkUserBudget(userId);
 if (!budget.allowed) return decisionResponse(budget);
@@ -52,7 +52,7 @@ Returns a `Decision`. On denial, `retryAfterMs` is set to milliseconds until UTC
 Call once the model is done, while the response is still open (the chatbot's post-text stage runs it alongside the message backfill, before `finish`):
 
 ```typescript
-import { chargeTokens } from '#lib/server/ai/budget.js';
+import { chargeTokens } from '#lib/server/ai/budget.ts';
 
 // After the model's total usage is known, before the stream closes:
 await chargeTokens(userId, usage.totalTokens);

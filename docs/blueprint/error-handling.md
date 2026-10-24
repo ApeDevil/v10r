@@ -11,7 +11,7 @@ SvelteKit error handling patterns for pages, forms, and API routes.
 | **Expected** | Validation, auth, not found | `error()` helper |
 | **Unexpected** | Bugs, crashes, DB failures | `handleError` hook |
 | **Form** | Action validation failures | `fail()` helper |
-| **API** | Endpoint errors | `json()` with status |
+| **API** | Endpoint errors | `Response.json()` with status |
 
 ---
 
@@ -22,12 +22,12 @@ Use the `error()` helper for controlled errors:
 ```typescript
 // src/routes/items/[id]/+page.server.ts
 import { error } from '@sveltejs/kit';
-import { db } from '#lib/server/db/index.js';
+import { db } from '#lib/server/db/index.ts';
 import { and, eq } from 'drizzle-orm';
 
 export async function load({ params, locals }) {
   if (!locals.user) {
-    error(401, { message: 'Authentication required' });
+    error(401, 'Authentication required');
   }
 
   // Include ownership in query to prevent IDOR enumeration
@@ -41,7 +41,7 @@ export async function load({ params, locals }) {
   // Return 404 for both "not found" and "not authorized"
   // This prevents attackers from enumerating valid item IDs
   if (!item) {
-    error(404, { message: 'Item not found' });
+    error(404, 'Item not found');
   }
 
   return { item };
@@ -121,45 +121,38 @@ declare global {
 ```
 
 ```typescript
-// Usage in load function
-error(400, {
-  message: 'Invalid email format',
-  code: 'INVALID_EMAIL'
-});
+// Usage in load function — message second, extra App.Error props third
+error(400, 'Invalid email format', { code: 'INVALID_EMAIL' });
 ```
+
+SvelteKit adds `status` to `App.Error` itself; the interface declares only what the app adds.
 
 ---
 
 ## Handle Error Hook
 
-Catch unexpected errors globally:
+SvelteKit passes every error except redirects through `handleError`, tagged with `kind`: `app` (thrown on purpose with `error()`), `framework` (SvelteKit's own responses — an unmatched route's 404, a 405), `validation` (bad remote-function input) or `unknown` (a fault in our code). There is no top-level `status`/`message`; a framework error carries them on `error`.
+
+v10r's hook is `reportServerError` in `src/lib/server/http/error-report.ts`, exported from `hooks.server.ts` as `handleError`. Only `unknown` errors and non-404 framework errors get an `errorId` and one JSON log line; app errors keep their `error()` body, so an intended 404 never reaches the error log.
 
 ```typescript
-// src/hooks.server.ts
-import type { HandleServerError } from '@sveltejs/kit';
+// src/lib/server/http/error-report.ts (abridged)
+import type { HandleServerError } from '@sveltejs/kit/hooks';
 
-export const handleError: HandleServerError = ({ error, event, status, message }) => {
-  // 404s from unknown routes — no errorId needed
-  if (status === 404 && event.route.id === null) {
-    return { message: 'Page not found' };
+export const reportServerError: HandleServerError = ({ kind, error, event }) => {
+  if (kind === 'framework') {
+    // 404s from unknown routes — no errorId needed
+    if (error.status === 404 && event.route.id === null) return { message: 'Page not found' };
+    return logged(error.status, error.message, event);
   }
-
-  const errorId = crypto.randomUUID();
-
-  console.error(
-    JSON.stringify({
-      errorId,
-      status,
-      path: event.url.pathname,
-      route: event.route.id,
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    }),
-  );
-
-  return { message, errorId };
+  if (kind === 'unknown') return logged(500, error, event);
+  return undefined; // app / validation: SvelteKit's default body
 };
+// logged() mints crypto.randomUUID(), writes one JSON line { errorId, status, path, route,
+// message, stack } and returns { errorId }.
 ```
+
+The client `handleError` (`hooks.client.ts`) receives the same `kind`.
 
 ---
 
@@ -211,6 +204,8 @@ export const actions = {
 };
 ```
 
+On the enhanced (`use:enhance`) path, `fail(n)` answers with HTTP status `n`; before SvelteKit 3 it was 200 with the failure in the body.
+
 ### Displaying Form Errors
 
 ```svelte
@@ -247,39 +242,39 @@ export const actions = {
 
 ```typescript
 // src/routes/api/items/+server.ts
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 
 export async function GET({ locals, url }) {
   if (!locals.user) {
-    error(401, { message: 'Unauthorized' });
+    error(401, 'Unauthorized');
   }
 
   try {
     const items = await db.query.items.findMany({
       where: eq(items.userId, locals.user.id)
     });
-    return json({ items });
+    return Response.json({ items });
   } catch (e) {
     console.error('Failed to fetch items:', e);
-    error(500, { message: 'Failed to fetch items' });
+    error(500, 'Failed to fetch items');
   }
 }
 
 export async function POST({ request, locals }) {
   if (!locals.user) {
-    error(401, { message: 'Unauthorized' });
+    error(401, 'Unauthorized');
   }
 
   let body;
   try {
     body = await request.json();
   } catch {
-    error(400, { message: 'Invalid JSON' });
+    error(400, 'Invalid JSON');
   }
 
   const result = v.safeParse(createItemSchema, body);
   if (!result.success) {
-    return json({
+    return Response.json({
       error: 'Validation failed',
       issues: result.issues
     }, { status: 422 });
@@ -292,10 +287,10 @@ export async function POST({ request, locals }) {
       ...result.output
     }).returning();
 
-    return json({ item: item[0] }, { status: 201 });
+    return Response.json({ item: item[0] }, { status: 201 });
   } catch (e) {
     console.error('Failed to create item:', e);
-    error(500, { message: 'Failed to create item' });
+    error(500, 'Failed to create item');
   }
 }
 ```
@@ -304,15 +299,13 @@ export async function POST({ request, locals }) {
 
 ```typescript
 // Illustrative — see ServerError in src/lib/server/errors/index.ts
-import { json } from '@sveltejs/kit';
-
 export function apiError(
   status: number,
   code: string,
   message: string,
   details?: Record<string, unknown>
 ) {
-  return json({
+  return Response.json({
     error: {
       code,
       message,
@@ -376,37 +369,37 @@ export async function withTransaction<T>(
 
 ```typescript
 // src/routes/api/upload/+server.ts
-import { error, json } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export async function POST({ request, locals }) {
   if (!locals.user) {
-    error(401, { message: 'Unauthorized' });
+    error(401, 'Unauthorized');
   }
 
   const formData = await request.formData();
   const file = formData.get('file');
 
   if (!file || !(file instanceof File)) {
-    error(400, { message: 'No file provided' });
+    error(400, 'No file provided');
   }
 
   if (file.size > MAX_SIZE) {
-    error(413, { message: 'File too large. Max size is 5MB' });
+    error(413, 'File too large. Max size is 5MB');
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    error(415, { message: 'Invalid file type. Allowed: JPEG, PNG, WebP' });
+    error(415, 'Invalid file type. Allowed: JPEG, PNG, WebP');
   }
 
   try {
     const result = await uploadToR2(file);
-    return json({ url: result.url }, { status: 201 });
+    return Response.json({ url: result.url }, { status: 201 });
   } catch (e) {
     console.error('Upload failed:', e);
-    error(500, { message: 'Upload failed. Please try again.' });
+    error(500, 'Upload failed. Please try again.');
   }
 }
 ```
@@ -459,7 +452,7 @@ export async function apiFetch<T>(
 
 ```svelte
 <script lang="ts">
-  import { apiFetch, ApiError } from '#lib/api.js';
+  import { apiFetch, ApiError } from '#lib/api.ts';
 
   let error = $state<string | null>(null);
   let loading = $state(false);
@@ -521,7 +514,7 @@ A boundary catches errors thrown **during rendering**: the initial render and te
 </svelte:boundary>
 ```
 
-`reset()` (passed into the `failed` snippet) discards the errored subtree and remounts it. `BoundaryFallback` (`#lib/components/composites/index.js`) is the shared fallback presentation — icon, title, optional description, retry button — so every boundary looks the same regardless of what failed.
+`reset()` (passed into the `failed` snippet) discards the errored subtree and remounts it. `BoundaryFallback` (`#lib/components/composites/index.ts`) is the shared fallback presentation — icon, title, optional description, retry button — so every boundary looks the same regardless of what failed.
 
 ### Composing With the Other Layers
 
@@ -553,13 +546,12 @@ AI requests have unique failure modes. Handle them gracefully.
 
 ```typescript
 // Illustrative — the shipped route is src/routes/api/ai/chatbot/+server.ts → chat-orchestrator.ts
-import { json } from '@sveltejs/kit';
 import { streamText } from 'ai';
 import { APIError } from '@ai-sdk/provider';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) {
-    return json({ error: 'Unauthorized' }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -576,14 +568,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       });
 
       if (error.status === 429) {
-        return json(
+        return Response.json(
           { error: 'Too many requests. Please try again shortly.' },
           { status: 429 }
         );
       }
 
       if (error.status === 401 || error.status === 403) {
-        return json(
+        return Response.json(
           { error: 'AI service configuration error' },
           { status: 503 }
         );
@@ -592,7 +584,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
     // Generic fallback
     console.error('Chat error:', error);
-    return json(
+    return Response.json(
       { error: 'Failed to get AI response. Please try again.' },
       { status: 500 }
     );
@@ -687,10 +679,10 @@ describe('Item page', () => {
 | Layer | Pattern |
 |-------|---------|
 | Component render | `<svelte:boundary>` + `BoundaryFallback` |
-| Load functions | `error(status, { message })` |
+| Load functions | `error(status, 'message')` |
 | Form actions | `fail(status, { form, message })` |
-| API routes | `error()` or `json({ error }, { status })` |
-| Global handler | `handleError` hook |
+| API routes | `error()` or `Response.json({ error }, { status })` |
+| Global handler | `handleError` hook, branching on `kind` |
 | Client fetch | Custom `ApiError` class |
 | Database | Catch and translate `PostgresError` |
 

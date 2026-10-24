@@ -32,7 +32,7 @@ Representative paths driven under one adverse condition at a time — cold cache
 ## Code
 
 - `src/lib/server/perf/scenarios.ts` — Nine scenarios against the real mechanisms, plus the committed-run comparison ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/perf/scenarios.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/perf/scenarios.ts))
-- `scripts/perf/scenarios.ts` — The door: spawns the gate in write mode, because the harness needs Vite to resolve $env ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/perf/scenarios.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/perf/scenarios.ts))
+- `scripts/perf/scenarios.ts` — The door: spawns the gate in write mode, because the harness needs Vite to resolve $app/env ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/perf/scenarios.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/perf/scenarios.ts))
 
 ## Tests
 

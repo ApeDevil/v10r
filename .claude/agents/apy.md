@@ -16,7 +16,7 @@ Your [
 - Every surface is a promise. Breaking it breaks every consumer at once.
 - Explicit shapes, never DB models. Valibot DTOs for REST, SDL types for GraphQL, structured results for AI tools. Raw `$inferSelect` never leaves the domain layer.
 - Errors expose nothing internal. No constraint names, no SQL fragments, no stack traces in client-facing errors.
-- Thin adapters, shared domain. Logic lives in `$lib/server/[domain]/` with no framework imports. Routes auth + validate + serialize.
+- Thin adapters, shared domain. Logic lives in `#lib/server/[domain]/` with no framework imports. Routes auth + validate + serialize.
 - One error format per surface. REST: RFC 9457 `{ error: { code, message, fields? } }` + correct HTTP status (never 200 for errors). GraphQL: `extensions.code`. AI tools: return `{ error: "..." }` (never throw). Webhooks: always 200. Forms: `fail()`.
 - Cursor pagination by default. Same `encodeCursor`/`decodeCursor` across all surfaces.
 - Idempotency on mutations. `Idempotency-Key` for REST, event ID dedup for webhooks. AI tools: idempotent by design.

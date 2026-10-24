@@ -66,7 +66,7 @@ CRUD lives in `src/lib/server/style/palettes.ts`. Every mutation carries an `AND
 
 ### SSR-only CSS injection — the constraint that shapes the UI
 
-A custom palette has no rule in `app.css`. Its CSS is a `<style>` block built in the `i18n` handle and injected at `</head>` on a **full document render only**. Client-side navigation and `invalidateAll()` do not re-run `transformPageChunk`.
+A custom palette has no rule in `app.css`. Its CSS is a `<style>` block built in the `i18n` handle and injected at `</head>` on a **full document render only**. Client-side navigation and `refreshAll()` do not re-run `transformPageChunk`.
 
 Consequence: setting `data-palette="CP_…"` from the client finds no matching rule, and every `--color-*` falls back to the `:root` defaults — the page *loses* its palette instead of gaining one. Applying a custom palette therefore triggers a full reload; the cookie is already written by then, so SSR renders it correctly in both light and dark. The live preview inside the editor sidesteps this entirely by writing inline custom properties on `<html>` (see `styles/random/token-vars.ts`), which outrank every `[data-palette]` rule.
 

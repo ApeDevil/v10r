@@ -402,8 +402,9 @@ Stable rules only. Session findings live in the parent's ledger, not here.
 - Injection seams that look test-only but are the design: `now`/`storageKey`/`registry`/`snap`/
   `leaseMs`/`durationMs`/`maxTurns` defaults, `createProposal.expiresInMs`, `deriveSubkey` env
   override (`ANALYTICS_VISITOR_SALT`), `createLimiter` string form (`per-email.ts:21 'closed'`).
-- `vitest.setup.ts` mocks `$env/static/private`, but its only two importers are untested showcase
-  `+page.server.ts` files; `$app/environment.version` is imported by nobody. Harmless, not dead-code.
+- (Before SvelteKit 3) `vitest.setup.ts` mocked `$env/static/private`, but its only two importers
+  were untested showcase `+page.server.ts` files; `$app/environment.version` was imported by nobody.
+  Since SvelteKit 3 it mocks `$app/env/private` via `env-mock.ts`.
 - Fixture liveness reduces to type liveness: `showcases/ai/fixtures/*` are typed `InspectedTurn`;
   the only unread keys are `timings.{preStreamMs,embedMs,generateMs,finalize.*}` + `profileVersion`
   (ledger's TurnTimings item), plus JSON-schema keys inside tool definitions.

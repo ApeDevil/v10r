@@ -18,7 +18,7 @@ The field name `bookmark` was chosen to avoid common bot blocklists (`website`, 
 ## `checkHoneypot(input)`
 
 ```typescript
-import { checkHoneypot } from '#lib/server/abuse/index.js';
+import { checkHoneypot } from '#lib/server/abuse/index.ts';
 
 const decision = checkHoneypot({
     honeypot: form.data.bookmark,   // value of the hidden field

@@ -175,9 +175,9 @@ describe('publicProviderConnection', () => {
 });
 
 /**
- * The bare-Bun ingest scripts import these leaves by relative path and cannot resolve
- * Vite aliases; a `#lib`/`$app` import anywhere in their closure breaks
- * `db:ingest-docs` at startup. Type-only imports are erased and do not count.
+ * The bare-Bun ingest scripts import these leaves by relative path. A `$app` import anywhere
+ * in their closure breaks `db:ingest-docs` at startup (it exists only inside Vite), and a
+ * `#lib` import is how one usually arrives, so both count. Type-only imports are erased.
  */
 describe('script reachability', () => {
 	const ROOTS = ['src/lib/server/ai/connections.ts', 'src/lib/server/db/ai/provider-connections.ts'];

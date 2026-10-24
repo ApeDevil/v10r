@@ -48,8 +48,8 @@ let rejectionDismissed = $state(false);
 let enhancedSubmitted = $state(false);
 /**
  * An enhanced action that produced no result. `answered`: the platform sent something other
- * than a result — an error page or a redirect (`status` when SvelteKit could read one); or
- * the request never got an answer at all. Earlier results stay on the page — this only says
+ * than a result — an error page or a redirect, with its HTTP status; or the request never got
+ * an answer at all. Earlier results stay on the page — this only says
  * the latest action did not land.
  */
 let unfinished = $state<{ answered: boolean; status: number | null } | null>(null);
@@ -91,6 +91,11 @@ function remember(...calls: Array<PublicServiceCall | null>) {
 	history = [...made.reverse(), ...history].slice(0, 20);
 }
 
+/** What SvelteKit reports when the client hook passes an unexpected error (a rejected fetch) through. */
+function isUnexpectedErrorDefault(error: App.Error): boolean {
+	return error.status === 500 && error.message === 'Internal Error';
+}
+
 function submit(key: string): SubmitFunction {
 	// Every outcome below clears `pending`. The one path that skips this callback is an
 	// aborted submission — `enhance` aborts only through `controller`, which this page never
@@ -113,11 +118,12 @@ function submit(key: string): SubmitFunction {
 				return;
 			}
 			if (result.type === 'error') {
-				// `enhance` sets `status` only on a SvelteKit error result. A platform error page
-				// (Vercel's 504 at the function's time limit is HTML) fails to deserialize — a
-				// SyntaxError — while a fetch that got no answer at all rejects with a TypeError.
-				const answered = result.status !== undefined || result.error instanceof SyntaxError;
-				unfinished = { answered, status: result.status ?? null };
+				// `enhance` sets `status` on a SvelteKit error result. Any other response — a platform
+				// error page, such as Vercel's HTML 504 at the function's time limit — arrives since
+				// SvelteKit 3 as an error carrying that response's status. A fetch that got no answer
+				// at all rejects instead, and reaches us as the unexpected-error default.
+				const answered = result.status !== undefined || !isUnexpectedErrorDefault(result.error);
+				unfinished = { answered, status: answered ? (result.status ?? result.error.status) : null };
 				return;
 			}
 			if (!result.data) return;

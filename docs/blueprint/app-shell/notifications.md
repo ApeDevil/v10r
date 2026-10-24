@@ -103,7 +103,7 @@ In-app notification system with a full-page notification center, preference mana
 ```svelte
 <script lang="ts">
   import { invalidate } from '$app/navigation';
-  import { getToast } from '#lib/state/index.js';
+  import { getToast } from '#lib/state/index.ts';
 
   const toast = getToast();
   let { data } = $props();
@@ -254,8 +254,8 @@ export function unregisterStream(userId: string, ctrl: ReadableStreamDefaultCont
 ```typescript
 // src/routes/api/notifications/stream/+server.ts
 import type { RequestHandler } from './$types';
-import { registerStream, unregisterStream } from '#lib/server/notifications/stream.js';
-import { getUnreadCount } from '#lib/server/notifications/queries';
+import { registerStream, unregisterStream } from '#lib/server/notifications/stream.ts';
+import { getUnreadCount } from '#lib/server/notifications/queries.ts';
 
 const MAX_PER_USER = 3;
 
@@ -308,7 +308,7 @@ export const GET: RequestHandler = async ({ locals, request }) => {
 **Trigger from anywhere** — after creating a notification in any form action or API route:
 
 ```typescript
-import { notifyUser } from '#lib/server/notifications/stream.js';
+import { notifyUser } from '#lib/server/notifications/stream.ts';
 
 // After DB insert:
 notifyUser(targetUserId, { type: 'new', count: newUnreadCount, title: notification.title });
@@ -409,7 +409,7 @@ Replace the in-memory map with a pub/sub broker; the rest of the architecture st
 // src/routes/api/notifications/[id]/read/+server.ts
 export const POST: RequestHandler = async ({ params, locals }) => {
   if (!locals.user) {
-    return json({ error: 'Unauthorized' }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const notification = await db.query.notifications.findFirst({
@@ -418,14 +418,14 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
   // IDOR prevention: verify ownership
   if (!notification || notification.userId !== locals.user.id) {
-    return json({ error: 'Not found' }, { status: 404 });
+    return Response.json({ error: 'Not found' }, { status: 404 });
   }
 
   await db.update(notifications)
     .set({ isRead: true, readAt: new Date() })
     .where(eq(notifications.id, params.id));
 
-  return json({ success: true });
+  return Response.json({ success: true });
 };
 ```
 

@@ -41,7 +41,7 @@ Your [
 - Escalate to user: every deletion proposal — clyn detects, never deletes
 
 # Method
-1. Map entry points — `package.json` scripts, `vite.config.ts`, `svelte.config.js`, `src/hooks.*.ts`, route files (`+page.*`, `+layout.*`, `+server.*`), CLI/script entries.
+1. Map entry points — `package.json` scripts and `imports`, `vite.config.ts` (holds the SvelteKit config), `src/hooks.*.ts`, `src/params.ts`, `src/env.ts`, `src/service-worker/index.ts`, route files (`+page.*`, `+layout.*`, `+server.*`), CLI/script entries.
 2. Build the import graph — `grep -rn "from ['\"]" src/` for explicit imports; check re-exports in barrel files (`index.ts`).
 3. Cross-check framework conventions — SvelteKit exports (`load`, `actions`, HTTP verbs, `prerender`, `ssr`, `csr`, `entries`), Svelte component default exports, Paraglide-generated modules, Drizzle schema objects passed to `pgSchema()`/`pgEnum()`.
 4. Run available static analyzers — `bunx knip`, `bunx ts-prune`, `bunx biome check`. Output is candidates, not verdicts.
@@ -67,7 +67,7 @@ Evidence > Confidence ranking > Coverage > Volume of findings.
 - Framework-required exports: Svelte component default exports, SvelteKit route module exports, hooks file exports, `+server.ts` HTTP verb exports.
 - `pgSchema()`/`pgEnum()` exports in Drizzle — required by `db:push` even when no TS code imports them.
 - Test fixtures and helpers referenced by file path / discovery, not import.
-- Public API surfaces — anything re-exported from `$lib/components/index.ts` or similar barrels intended for external consumption.
+- Public API surfaces — anything re-exported from `#lib/components/index.ts` or similar barrels intended for external consumption.
 - Showcase pages and template/reference code — Velociraptor is a self-documenting template; showcase routes are the documentation. Do not propose deleting showcases.
 - Generated code: Paraglide messages, type artifacts, `.svelte-kit/` outputs.
 

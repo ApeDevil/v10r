@@ -54,7 +54,7 @@ Orchestration of state across app shell components: sidebar, modals, theme, toas
 
 ```typescript
 // src/lib/state/sidebar.svelte.ts
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { getContext, setContext } from 'svelte';
 
 interface SidebarState {
@@ -117,7 +117,7 @@ export function getSidebar() {
 
 ```svelte
 <script lang="ts">
-  import { getSidebar } from '#lib/state/sidebar.svelte.js';
+  import { getSidebar } from '#lib/state/sidebar.svelte.ts';
   import { MediaQuery } from 'svelte/reactivity';
 
   const sidebar = getSidebar(); // Get from context (SSR-safe)
@@ -143,10 +143,10 @@ export function getSidebar() {
 ```typescript
 // src/lib/state/theme.svelte.ts
 import { getContext, setContext } from 'svelte';
-import { browser } from '$app/environment';
-import { apiFetch } from '#lib/api.js';
-import type { Theme } from '#lib/types/db-enums.js';
-import { setCookie } from '#lib/utils/cookies.js';
+import { browser } from '$app/env';
+import { apiFetch } from '#lib/api.ts';
+import type { Theme } from '#lib/types/db-enums.ts';
+import { setCookie } from '#lib/utils/cookies.ts';
 
 type ThemeMode = Theme;
 interface ThemeState {
@@ -308,7 +308,7 @@ export function getModals() {
 
 ```svelte
 <script lang="ts">
-  import { getModals } from '#lib/state/modals.svelte.js';
+  import { getModals } from '#lib/state/modals.svelte.ts';
 
   const modals = getModals(); // Get from context (SSR-safe)
 
@@ -368,7 +368,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 ```svelte
 <!-- src/lib/components/shell/AppShell.svelte -->
 <script lang="ts">
-  import { setSessionContext } from '#lib/state/session.svelte.js';
+  import { setSessionContext } from '#lib/state/session.svelte.ts';
 
   let { session, children } = $props();
 
@@ -389,11 +389,11 @@ Shell initialization happens in a specific order to prevent flashes and ensure d
 <!-- src/routes/[[locale=locale]]/+layout.svelte -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { setSidebarContext } from '#lib/state/sidebar.svelte.js';
-  import { setThemeContext } from '#lib/state/theme.svelte.js';
-  import { setModalsContext } from '#lib/state/modals.svelte.js';
-  import { setToastContext } from '#lib/state/toast.svelte.js';
-  import { initKeyboardHandler } from '#lib/shortcuts/index.js';
+  import { setSidebarContext } from '#lib/state/sidebar.svelte.ts';
+  import { setThemeContext } from '#lib/state/theme.svelte.ts';
+  import { setModalsContext } from '#lib/state/modals.svelte.ts';
+  import { setToastContext } from '#lib/state/toast.svelte.ts';
+  import { initKeyboardHandler } from '#lib/shortcuts/index.ts';
 
   let { data, children } = $props();
 
@@ -475,10 +475,10 @@ Add a debug panel in development:
 ```svelte
 <!-- Illustrative — a dev-only panel; not shipped -->
 <script lang="ts">
-  import { dev } from '$app/environment';
-  import { getSidebar } from '#lib/state/sidebar.svelte.js';
-  import { getTheme } from '#lib/state/theme.svelte.js';
-  import { getModals } from '#lib/state/modals.svelte.js';
+  import { dev } from '$app/env';
+  import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+  import { getTheme } from '#lib/state/theme.svelte.ts';
+  import { getModals } from '#lib/state/modals.svelte.ts';
 
   // Get all state from context (SSR-safe)
   const sidebar = getSidebar();

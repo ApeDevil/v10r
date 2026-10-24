@@ -12,7 +12,7 @@ The showcase is `/showcases/workers`. For scheduled background work — which is
 |------|-----------|---------------|---------|
 | **Web Worker** | A second JS thread in the browser | Client | `#lib/workers/` — image analysis offload |
 | **Queue worker** | A consumer that pulls units of work off a queue | Server | `notificationDelivery()` over the outbox |
-| **Service worker** | A network proxy for a PWA | Client | `src/service-worker.ts` — see `docs/blueprint/pwa.md` |
+| **Service worker** | A network proxy for a PWA | Client | `src/service-worker/index.ts` — see `docs/blueprint/pwa.md` |
 
 They share a word and nothing else. Service workers proxy fetches; Web Workers run computation; queue workers consume messages.
 
@@ -44,7 +44,7 @@ src/lib/workers/
   image-analysis.worker.ts    ← worker shell: onmessage plumbing ONLY
 ```
 
-The split is the same pure-core/impure-shell convention as `src/service-worker.ts` ↔ `#lib/pwa/sw-policy.ts`, and for the same reason: the vitest harness is node-environment, so `self`, `postMessage`, `OffscreenCanvas`, and `createImageBitmap` cannot be exercised. Anything worth testing must live outside the shell — `palette.test.ts` covers the arithmetic.
+The split is the same pure-core/impure-shell convention as `src/service-worker/index.ts` ↔ `#lib/pwa/sw-policy.ts`, and for the same reason: the vitest harness is node-environment, so `self`, `postMessage`, `OffscreenCanvas`, and `createImageBitmap` cannot be exercised. Anything worth testing must live outside the shell — `palette.test.ts` covers the arithmetic.
 
 `image-analysis.ts` is shared by both execution paths, so the showcase compares *identical work* in two places rather than two implementations.
 
@@ -58,13 +58,13 @@ worker: { format: 'es' },
 **Required.** Vite defaults worker bundles to `iife`, which cannot carry `import` statements. An ES-module worker therefore works in dev (native ESM, no bundling) and breaks **only in the production build** — the worst possible failure timing. Spawn with the `?worker` suffix:
 
 ```ts
-import ImageAnalysisWorker from '#lib/workers/image-analysis.worker?worker';
+import ImageAnalysisWorker from '#lib/workers/image-analysis.worker.ts?worker';
 const worker = new ImageAnalysisWorker();
 ```
 
 ### CSP
 
-Already permitted — `svelte.config.js` sets `worker-src: ['self', 'blob:']`. `?worker` emits a same-origin chunk under `/_app/immutable/`; `?worker&inline` produces a `blob:` URL. Both are covered, and neither needs a CSP change.
+Already permitted — the `sveltekit({ csp })` options in `vite.config.ts` set `worker-src: ['self', 'blob:']`. `?worker` emits a same-origin chunk under `/_app/immutable/`; `?worker&inline` produces a `blob:` URL. Both are covered, and neither needs a CSP change.
 
 Note that CSP is **not enforced in dev**, so worker-related CSP breakage would only appear in `vite build && vite preview`.
 
@@ -79,7 +79,7 @@ Without the second argument the `ArrayBuffer` is **structured-cloned** — a ful
 
 ### Service worker interaction
 
-None to worry about. `src/service-worker.ts` treats `/_app/immutable/` as cache-first, so a `?worker` chunk is precached on install and boots from cache on repeat visits. An inline (`blob:`) worker is never intercepted at all — the SW early-outs on cross-origin. The `message` handler only understands `SKIP_WAITING` and `FLUSH`, so there is no protocol collision.
+None to worry about. `src/service-worker/index.ts` treats `/_app/immutable/` as cache-first, so a `?worker` chunk is precached on install and boots from cache on repeat visits. An inline (`blob:`) worker is never intercepted at all — the SW early-outs on cross-origin. The `message` handler only understands `SKIP_WAITING` and `FLUSH`, so there is no protocol collision.
 
 ---
 

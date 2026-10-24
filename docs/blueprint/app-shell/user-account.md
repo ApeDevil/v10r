@@ -30,7 +30,7 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 <!-- /account/+layout.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
-  import { PageHeader } from '#lib/components/composites/index.js';
+  import { PageHeader } from '#lib/components/composites/index.ts';
 
   let { children, data } = $props();
 
@@ -123,7 +123,7 @@ The account section uses a tabbed layout with sub-routes. Each tab has distinct 
 <script lang="ts">
   import { superForm } from 'sveltekit-superforms';
   import { valibotClient } from 'sveltekit-superforms/adapters';
-  import { profileSchema } from '#lib/schemas/user';
+  import { profileSchema } from '#lib/schemas/user.ts';
 
   let { data } = $props();
 
@@ -268,7 +268,7 @@ await auth.api.revokeOtherSessions({
 ```typescript
 // /api/account/data/export/+server.ts
 import { error } from '@sveltejs/kit';
-import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 import type { RequestHandler } from './$types';
 
 // Sliding-window: 3 exports per day, keyed on client IP
@@ -278,7 +278,7 @@ export const GET: RequestHandler = async (event) => {
   const { locals } = event;
 
   if (!locals.user) {
-    throw error(401, 'Unauthorized');
+    error(401, 'Unauthorized');
   }
 
   const { success, reset } = await exportLimiter.limit(event.getClientAddress());
@@ -313,7 +313,7 @@ For accounts with significant data, use background job + notification:
 ```typescript
 // For large exports, queue a job instead of blocking
 export const POST: RequestHandler = async ({ locals }) => {
-  if (!locals.user) throw error(401);
+  if (!locals.user) error(401, 'Unauthorized');
 
   // Check if export already in progress
   const pendingExport = await db.query.exportJobs.findFirst({
@@ -324,7 +324,7 @@ export const POST: RequestHandler = async ({ locals }) => {
   });
 
   if (pendingExport) {
-    return json({ status: 'already_pending', jobId: pendingExport.id });
+    return Response.json({ status: 'already_pending', jobId: pendingExport.id });
   }
 
   // Create export job
@@ -337,7 +337,7 @@ export const POST: RequestHandler = async ({ locals }) => {
   // Trigger background job (e.g., via Upstash QStash)
   await queueExportJob(job[0].id);
 
-  return json({ status: 'queued', jobId: job[0].id });
+  return Response.json({ status: 'queued', jobId: job[0].id });
 };
 ```
 

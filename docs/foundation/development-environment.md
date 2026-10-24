@@ -99,7 +99,7 @@ Project files are bind-mounted at `/app` for hot reload. `node_modules` uses a n
 
 ## Cold-start expectations
 
-First `podman compose up` on a fresh container takes ~30-40 s to reach `ready in Xms` in the Vite logs. This is the established baseline, not a regression.
+First `podman compose up` on a fresh container takes ~30-40 s to reach `ready in Xms` in the Vite logs. This is the established baseline, not a regression. Baseline and breakdown were measured on Vite 7; the move to Vite 8 (Rolldown, which also replaces esbuild in the dep prebundle) has not been re-measured.
 
 | Cost | Approx. share |
 |------|--------------|
@@ -117,7 +117,7 @@ After `ready`, HMR is fast. Subsequent restarts on the same container are simila
 bun run perf:cold-start
 ```
 
-Drives `podman compose down && up`, parses Vite logs, and reports `install_ms`, `vite_ready_ms`, `first_ssr_ttfb_ms`, `ssr_reload_count`. The 15 s warn / 25 s fail thresholds in `budgets.json` are **targets** the current stack does not meet — the measured baseline is ~36 s, so a run "failing" the target is the expected, honest state until Vite 8 / Rolldown lands. The probe is a manual trend check, not part of `validate`.
+Drives `podman compose down && up`, parses Vite logs, and reports `install_ms`, `vite_ready_ms`, `first_ssr_ttfb_ms`, `ssr_reload_count`. The 15 s warn / 25 s fail thresholds in `budgets.json` are **targets** the current stack does not meet — the last measured baseline is ~36 s (Vite 7), so a run "failing" the target is the expected, honest state until a run on Vite 8 shows otherwise. The probe is a manual trend check, not part of `validate`.
 
 ## Running Commands Inside Container
 

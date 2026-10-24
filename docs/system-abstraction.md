@@ -11,13 +11,13 @@ Two physical spines hold all seven layers together: a **composition root** (`src
 ```
 Layer                    Canonical Home
 ─────────────────────────────────────────────────────────────────────────────
-1  Tech Stack            root config (svelte.config.js, vite.config.ts,
+1  Tech Stack            root config (vite.config.ts incl. sveltekit({...}),
                          uno.config.ts, drizzle.config.ts, package.json)
                          + Containerfile.dev / compose.yaml
 
 2  Architecture          src/hooks.server.ts  (composition root)
                          + multi-client-core pattern
-                         server/client boundary = the $lib/server/ path
+                         server/client boundary = the src/lib/server/ path
 
 3  Services/Applications src/routes/[[locale=locale]]/  (account/, admin/, desk/,
                          auth/, (public)/showcases/)
@@ -55,7 +55,7 @@ The foundation is declared in root config files and `Containerfile.dev`; nothing
 |---------|-----------|
 | Container | Podman (`Containerfile.dev`, `compose.yaml`) |
 | Runtime | Bun |
-| Framework | SvelteKit 2 + Svelte 5 (runes) |
+| Framework | SvelteKit 3 + Svelte 5 (runes), on Vite 8 (Rolldown) |
 | Host | Vercel (`@sveltejs/adapter-vercel`, nodejs22.x) |
 | Code quality | Biome |
 
@@ -99,8 +99,8 @@ Two architectural spines impose order on every request.
 
 ```
 import '#lib/server/agents'
-import '#lib/server/jobs/scheduler.js'
-import '#lib/server/jobs/delivery-scheduler.js'
+import '#lib/server/jobs/scheduler.ts'
+import '#lib/server/jobs/delivery-scheduler.ts'
 ```
 
 The main export is a `sequence()` of fourteen `Handle` middlewares that mutate the shared `event.locals` bus in order. Each handler writes named fields and, in some cases, short-circuits the chain with a response before downstream handlers run.
@@ -141,7 +141,7 @@ The terminating error handler `handleError` mints an `errorId` (`crypto.randomUU
 | `Cache-Control` | `no-store, private` | **Conditional** — only on authed responses or any `/api/` path, and only via `!response.headers.has('Cache-Control')` so an explicit per-route setter wins |
 | `Clear-Site-Data` | `"cache","cookies","storage"` | **Conditional** — only on a successful `/api/auth/sign-out` |
 
-CSP itself is configured in `svelte.config.js` (nonce/hash mode), not here.
+CSP itself is configured in the `sveltekit({ csp })` options in `vite.config.ts` (nonce/hash mode), not here.
 
 #### Extracted handler helpers
 
@@ -169,7 +169,7 @@ All business logic lives in `#lib/server/[domain]/`. Thin **adapters** wrap it f
        ▼               ▼           ▼              ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                      DOMAIN MODULES                          │
-│                 $lib/server/[domain]/                         │
+│                 #lib/server/[domain]/                         │
 │                                                              │
 │  notifications/    auth/         retrieval/      graph/          │
 │  ├── index.ts      ├── index.ts  ├── index.ts ├── index.ts   │
@@ -347,9 +347,9 @@ export * from './composites';
 export * from './layout';
 export * from './primitives';
 
-// viz/ excluded — import from '#lib/components/viz/index.js' directly
+// viz/ excluded — import from '#lib/components/viz/index.ts' directly
 //   (avoids bundling Chart.js/Three.js into the default surface)
-// shell/ excluded — app-specific chrome, import from '#lib/components/shell/index.js'
+// shell/ excluded — app-specific chrome, import from '#lib/components/shell/index.ts'
 ```
 
 `viz/` and `shell/` are intentionally excluded from the default barrel. This is a bundle-size boundary: Chart.js, Three.js, and app-specific chrome should not load on every page.
@@ -443,7 +443,7 @@ Route adapter  (event.locals fully populated)                          │
   │  +page.server.ts  |  +server.ts  |  ai/tools/  |  jobs/           │
   │                                                                    │
   ▼                                                                    │
-Domain module  $lib/server/[domain]/  (no framework imports)           │
+Domain module  #lib/server/[domain]/  (no framework imports)           │
   │  Pure TypeScript; calls db/, calls infra via injected clients      │
   │                                                                    │
   ▼                                                                    │

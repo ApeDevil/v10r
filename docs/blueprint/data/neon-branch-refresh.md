@@ -78,7 +78,7 @@ admin/db routes ──▶ dbops/ (orchestrate) ──▶ neon/ (Neon Management 
                   dbops.run (Postgres ledger)
 ```
 
-### `#lib/server/neon//index.js`
+### `#lib/server/neon/`
 
 The Management-API client. **Sole holder** of `NEON_API_KEY` / `NEON_PROJECT_ID`. Never returns connection strings in any payload.
 
@@ -86,7 +86,7 @@ The Management-API client. **Sole holder** of `NEON_API_KEY` / `NEON_PROJECT_ID`
 
 When unconfigured it degrades to `status: 'unavailable'` rather than throwing — the same pattern as `#lib/server/monitoring/upstash.ts`.
 
-### `#lib/server/dbops//index.js`
+### `#lib/server/dbops/`
 
 The operate orchestrator. Depends on the read-only `monitoring/` layer; the reverse import (`monitoring → dbops`) is forbidden.
 

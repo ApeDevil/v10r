@@ -424,7 +424,7 @@
 			"tier": "light",
 			"title": "Error handling (expected/unexpected/form/API)",
 			"category": "architecture",
-			"summary": "Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail(), json()).",
+			"summary": "Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail(), Response.json()).",
 			"when_to_use": "Reach for it when deciding how to surface a failure from a load function, form action, or API endpoint.",
 			"avoid_when": [],
 			"alternatives": [],
@@ -8825,7 +8825,7 @@
 				},
 				{
 					"path": "scripts/perf/scenarios.ts",
-					"note": "The door: spawns the gate in write mode, because the harness needs Vite to resolve $env"
+					"note": "The door: spawns the gate in write mode, because the harness needs Vite to resolve $app/env"
 				}
 			],
 			"tests": [

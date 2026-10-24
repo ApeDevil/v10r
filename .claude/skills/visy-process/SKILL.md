@@ -41,4 +41,4 @@ Use real names from the repo: `authCaptchaGate → authHandler`, `POST /api/mcp/
 
 ## Interactive process diagrams in-app
 
-Use `FlowDiagram` / `StateDiagram` (`$lib/components/viz`, @xyflow/svelte) — deep import only, and the parent must set an explicit height; the component fills it. Static Mermaid is for docs and PRs, not app pages.
+Use `FlowDiagram` / `StateDiagram` (`#lib/components/viz`, @xyflow/svelte) — deep import only, and the parent must set an explicit height; the component fills it. Static Mermaid is for docs and PRs, not app pages.

@@ -226,7 +226,7 @@ The Explorer's `data/` section shows desk folders and spreadsheet files. Folders
 ## File Structure
 
 ```
-$lib/server/db/schema/desk/
+#lib/server/db/schema/desk/
   schema.ts                          # deskSchema = pgSchema('desk')
   file.ts                            # desk.file table + file_type enum ('spreadsheet' | 'markdown')
   folder.ts                          # desk.folder table
@@ -234,7 +234,7 @@ $lib/server/db/schema/desk/
   markdown.ts                        # desk.markdown detail table (file_id FK NOT NULL)
   index.ts                           # Re-exports all desk schema objects
 
-$lib/server/db/desk/
+#lib/server/db/desk/
   queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId, listFolders, getFolder
   mutations.ts                       # createSpreadsheetFile, createMarkdownFile, renameFile, deleteFile, updateSpreadsheetByFileId, updateMarkdownByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
 
@@ -246,21 +246,21 @@ src/routes/api/desk/folders/
   +server.ts                         # GET (list) + POST (create)
   [id]/+server.ts                    # GET + PUT + DELETE
 
-$lib/desk/
+#lib/desk/
   formula.ts                         # Expression evaluator + grid resolver (dependency order, cycles)
   spreadsheet-cells.ts               # PersistedCell contract + recalculateCells (the write door's pass)
 
-$lib/components/desk/panels/spreadsheet/
+#lib/components/desk/panels/spreadsheet/
   SpreadsheetPanel.svelte            # Lifecycle, recovery and conflict UI
   spreadsheet-session.svelte.ts      # Per-user/file shared browser document
   spreadsheet-autosave.ts            # Serialized queue and refresh/conflict state machine
   spreadsheet-drafts.ts              # Isolated localStorage draft slots
   spreadsheet.state.svelte.ts        # Sparse SvelteMap of cells, selection, recalculation pass
 
-$lib/server/ai/tools/
+#lib/server/ai/tools/
   cell-updates.ts                    # {cell, value}[] → map; canonical addresses, refused ones named
 
-$lib/components/explorer/
+#lib/components/explorer/
   ExplorerPanel.svelte               # Orchestrator: fetch, adapt, dispatch
   ExplorerTree.svelte                # Thin root iterator + keyboard shortcuts
   TreeNode.svelte                    # Recursive node: context menu, rename, delete, DnD

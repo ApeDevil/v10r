@@ -782,7 +782,7 @@ All routes under `/account` require authentication.
 **Protection per-route** (not layout - see [auth.md](./auth.md#route-protection)):
 ```ts
 // /account/dashboard/+page.server.ts
-import { requireAuth } from '#lib/server/auth/guard';
+import { requireAuth } from '#lib/server/auth/guard.ts';
 
 export async function load(event) {
   const { user } = await requireAuth(event);

@@ -60,9 +60,9 @@ Two tools. No more.
 
 ### Why Vitest and not Bun test
 
-Every module in `#lib/server/` eventually imports `$env/static/private` or `$env/dynamic/private`. These are SvelteKit virtual modules — Vite resolves them at build time. Bun test has no Vite plugin system and cannot resolve them. Tests fail immediately on import ([oven-sh/bun#5541](https://github.com/oven-sh/bun/issues/5541), [oven-sh/bun#10712](https://github.com/oven-sh/bun/issues/10712) — both still open as of early 2026). Additionally, PGlite itself produces out-of-bounds WASM errors with `bun test` ([oven-sh/bun#15032](https://github.com/oven-sh/bun/issues/15032)).
+Every module in `#lib/server/` eventually imports `$app/env/private`. It is a SvelteKit virtual module — Vite resolves it at build time. Bun test has no Vite plugin system and cannot resolve it. Tests fail immediately on import ([oven-sh/bun#5541](https://github.com/oven-sh/bun/issues/5541), [oven-sh/bun#10712](https://github.com/oven-sh/bun/issues/10712) — both still open as of early 2026). Additionally, PGlite itself produces out-of-bounds WASM errors with `bun test` ([oven-sh/bun#15032](https://github.com/oven-sh/bun/issues/15032)).
 
-Vitest with the `@sveltejs/kit/vite` plugin resolves `#lib/*`, `$env/*`, and all SvelteKit aliases automatically. Same tool handles both server-side unit/integration tests and Svelte component tests.
+Vitest with the `@sveltejs/kit/vite` plugin resolves the `$app/*` virtual modules; `#lib/*` is a package.json subpath import any resolver follows. Same tool handles both server-side unit/integration tests and Svelte component tests.
 
 **Vitest 4.x:** Use the `projects` field (not `workspace`, deprecated in Vitest 3.2) for multi-project configuration. Browser Mode is now stable in Vitest 4.0 but not needed for this project's initial phases.
 
@@ -158,7 +158,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { vector } from '@electric-sql/pglite/vector';
 import { pushSchema } from 'drizzle-kit/api';
 import { drizzle } from 'drizzle-orm/pglite';
-import * as schema from '#lib/server/db/schema/index.js';
+import * as schema from '#lib/server/db/schema/index.ts';
 
 export async function createTestDb() {
   const client = new PGlite({ extensions: { vector } });
@@ -190,8 +190,8 @@ The `db as any` cast is needed because PGlite's `db` type doesn't match `pushSch
 
 ```typescript
 // In any test file that needs the DB
-vi.mock('#lib/server/db/index.js', async () => {
-  const { createTestDb } = await import('#lib/server/test/db.js');
+vi.mock('#lib/server/db/index.ts', async () => {
+  const { createTestDb } = await import('#lib/server/test/db.ts');
   const { db } = await createTestDb();
   return { db };
 });
@@ -203,8 +203,8 @@ vi.mock('#lib/server/db/index.js', async () => {
 // In test files using PGlite
 let testClient: PGlite;
 
-vi.mock('#lib/server/db/index.js', async () => {
-  const { createTestDb } = await import('#lib/server/test/db.js');
+vi.mock('#lib/server/db/index.ts', async () => {
+  const { createTestDb } = await import('#lib/server/test/db.ts');
   const { db, client } = await createTestDb();
   testClient = client;
   return { db };
@@ -220,7 +220,7 @@ afterAll(async () => {
 Mock the `cypher()` function. It's a single import — one mock covers all graph calls.
 
 ```typescript
-vi.mock('#lib/server/graph/index.js', () => ({
+vi.mock('#lib/server/graph/index.ts', () => ({
   cypher: vi.fn().mockResolvedValue({ records: [] }),
 }));
 ```
@@ -244,8 +244,8 @@ Factories produce valid test objects with sensible defaults. Override only what 
 ```typescript
 // src/lib/server/test/fixtures.ts
 import type { InferInsertModel } from 'drizzle-orm';
-import type { user } from '#lib/server/db/schema/auth/_better-auth.js';
-import type { notifications } from '#lib/server/db/schema/notifications/notifications.js';
+import type { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import type { notifications } from '#lib/server/db/schema/notifications/notifications.ts';
 
 type UserInsert = InferInsertModel<typeof user>;
 type NotificationInsert = InferInsertModel<typeof notifications>;
@@ -342,7 +342,7 @@ export default defineConfig({
 });
 ```
 
-The `sveltekit()` plugin resolves all SvelteKit virtual modules — `#lib/*`, `$env/*`, `$app/*`. Without it, every server-side test fails on import.
+The `sveltekit()` plugin resolves the SvelteKit virtual modules (`$app/*`). Without it, every server-side test fails on import.
 
 **`testTimeout: 15_000`:** PGlite WASM startup + schema push can take 3–5 seconds per test file. The default 5000ms timeout causes false failures. Set higher globally, keep individual tests fast.
 
@@ -353,30 +353,24 @@ The `sveltekit()` plugin resolves all SvelteKit virtual modules — `#lib/*`, `$
 ### vitest.setup.ts
 
 ```typescript
-// src/lib/server/test/vitest.setup.ts
+// src/lib/server/test/vitest.setup.ts (abridged)
 import { vi } from 'vitest';
 
-// Prevent job schedulers from starting. Both check globalThis
-// sentinels before starting setInterval loops. Without this,
-// any transitive import of hooks.server.ts starts real schedulers.
-globalThis.__v10r_scheduler = 'test';
-globalThis.__v10r_delivery_scheduler = 'test';
+// Prevent job schedulers from starting setInterval during tests
+globalThis.__v10r_scheduler = 'test' as never;
+globalThis.__v10r_delivery_scheduler = 'test' as never;
 
-// $env/dynamic/private resolves to an empty object in Vitest because
-// no SvelteKit adapter calls server.init(). Redirect to process.env
-// so that values from .env.test are available.
-vi.mock('$env/dynamic/private', () => ({
-  env: new Proxy({}, { get: (_target, prop: string) => process.env[prop] }),
-}));
+// Secrets modules check at load; a real value in the environment still wins
+process.env.BETTER_AUTH_SECRET ||= 'vitest-better-auth-secret-at-least-32-characters';
+process.env.ALTCHA_HMAC_KEY ||= 'vitest-altcha-hmac-key-at-least-32-characters';
 
-// $env/static/private — same redirect, for modules that read it at load time
-vi.mock(
-  '$env/static/private',
-  () => new Proxy({}, { get: (_target, prop: string) => process.env[prop] }),
-);
+// Hermeticity tripwire: remote-service credentials are deleted
+// (NEON_DATABASE_URL_PROD, NEO4J_*, UPSTASH_*, EXTERNAL_SERVICE_*)
 
-// $app/environment — needed if any import chain touches schedulers or SSR guards
-vi.mock('$app/environment', () => ({
+// Every variable declared in src/env.ts, as a getter reading process.env live
+vi.mock('$app/env/private', async () => (await import('./env-mock.ts')).envModule((name) => process.env[name]));
+
+vi.mock('$app/env', () => ({
   building: false,
   browser: false,
   dev: true,
@@ -384,31 +378,15 @@ vi.mock('$app/environment', () => ({
 }));
 ```
 
-**Why `$env/dynamic/private` mock:** `$env/static/private` works via the `sveltekit()` plugin (reads `.env` at Vite startup). But `$env/dynamic/private` depends on adapter initialization that never happens during `vitest run`. Without this mock, any module importing `env` from `$env/dynamic/private` gets an empty object. Known open issue: [sveltejs/kit#9564](https://github.com/sveltejs/kit/issues/9564).
+**Why the `$app/env/private` mock:** SvelteKit validates the variables `src/env.ts` declares when the server starts and fixes them for the process. Tests set and delete `process.env.X` between cases, so `envModule()` (`src/lib/server/test/env-mock.ts`) exposes each declared variable as a getter that reads `process.env` on every access. A variable missing from `src/env.ts` is not exported at all.
 
-**Why scheduler sentinels:** `hooks.server.ts` imports `#lib/server/jobs/scheduler` and `$lib/server/jobs/delivery-scheduler` as side effects. Both start `setInterval` loops unless a `globalThis` sentinel is set. The sentinels are the cleanest containment — no need to mock the platform module.
+**Why scheduler sentinels:** `hooks.server.ts` imports `#lib/server/jobs/scheduler` and `#lib/server/jobs/delivery-scheduler` as side effects. Both start `setInterval` loops unless a `globalThis` sentinel is set. The sentinels are the cleanest containment — no need to mock the platform module.
 
-**Why `$app/environment` mock:** Both schedulers check `building` from `$app/environment`. Other modules (`sidebar.svelte.ts`) check `browser`. Providing deterministic values prevents runtime detection logic from firing.
+**Why the `$app/env` mock:** Both schedulers check `building` from `$app/env`. Other modules (`sidebar.svelte.ts`) check `browser`. Providing deterministic values prevents runtime detection logic from firing.
 
-### .env.test
+### Load-time secrets
 
-```bash
-# Fake values for $env/static/private — only needed when tests import
-# modules that read these at module load time. Pure logic tests
-# (rank.ts, chunk.ts, errors/) don't need any of these.
-NEON_DATABASE_URL_PROD=postgresql://test:test@localhost/test
-BETTER_AUTH_SECRET=a-test-secret-that-is-at-least-32-chars
-BETTER_AUTH_URL=http://localhost:5173
-GITHUB_CLIENT_ID=test
-GITHUB_CLIENT_SECRET=test
-GOOGLE_CLIENT_ID=test
-GOOGLE_CLIENT_SECRET=test
-NEO4J_URI=neo4j+s://test.databases.neo4j.io
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=test
-```
-
-**Why this is needed:** `#lib/server/auth/index.ts` throws at module load if `BETTER_AUTH_SECRET` is shorter than 32 characters. `$lib/server/db/index.ts` reads `NEON_DATABASE_URL_PROD` at module load. The `sveltekit()` plugin reads `.env.test` automatically for `$env/static/private` values. These are never used for real connections — PGlite replaces the DB, and auth is mocked.
+There is no `.env.test`. The `$app/env/private` mock reads `process.env`, and the load-time secrets are set there by `vitest.setup.ts`: `#lib/server/auth/index.ts` throws at module load if `BETTER_AUTH_SECRET` is shorter than 32 characters, and `abuse/config.ts` asserts `ALTCHA_HMAC_KEY`. `#lib/server/db/index.ts` reads `NEON_DATABASE_URL_PROD` at module load, and the setup deletes it on purpose — PGlite replaces the DB, so a test that reaches the real client fails loudly.
 
 ### package.json scripts
 
@@ -435,7 +413,7 @@ There is no schema-gen step. `createTestDb()` builds the schema in-process via `
 1. Add `vitest` to `devDependencies` in `package.json`
 2. Create `vitest.config.ts` with `sveltekit()` plugin, `testTimeout`, and `setupFiles`
 3. Create `src/lib/server/test/vitest.setup.ts` — global mocks and scheduler sentinels
-4. Create `.env.test` with fake values for `$env/static/private` modules
+4. Set the load-time secrets in `vitest.setup.ts` (no `.env.test`; see above)
 5. Add test scripts to `package.json` (`test`, `test:watch`)
 6. Restart container so deps install: `podman compose down && podman compose up -d`
 7. Ensure `.svelte-kit/` types exist — the `sveltekit()` plugin needs them. The dev server creates them automatically on startup (`svelte-kit sync`). If running tests before the dev server has started, run `podman exec v10r bun run check` first (which triggers `svelte-kit sync`).
@@ -508,10 +486,10 @@ Goal: verify the full pipeline works end-to-end. Claude Code (host) runs `podman
 ```typescript
 // Illustrative — the shipped equivalent is src/lib/server/db/notifications/queries.pglite.test.ts (PGlite lane)
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeUser, makeNotification } from '#lib/server/test/fixtures.js';
+import { makeUser, makeNotification } from '#lib/server/test/fixtures.ts';
 
-vi.mock('#lib/server/db/index.js', async () => {
-  const { createTestDb } = await import('#lib/server/test/db.js');
+vi.mock('#lib/server/db/index.ts', async () => {
+  const { createTestDb } = await import('#lib/server/test/db.ts');
   const { db } = await createTestDb();
   return { db };
 });
@@ -588,8 +566,8 @@ The live file is the root [AGENTS.md](../../../AGENTS.md); the template that use
 
 | Issue | Impact | Mitigation |
 |-------|--------|------------|
-| `vi.stubEnv()` does not affect `$env` modules | Env var mocking broken | Mock `$env/dynamic/private` in `vitest.setup.ts` ([sveltejs/kit#9564](https://github.com/sveltejs/kit/issues/9564)) |
-| `#lib/server/auth` throws if `BETTER_AUTH_SECRET` < 32 chars | Module load crash in tests | `.env.test` with a 32+ char fake secret |
+| `$app/env/private` fixes values at start-up | Per-test env changes invisible | Mock it in `vitest.setup.ts` with `envModule()` getters over `process.env` |
+| `#lib/server/auth` throws if `BETTER_AUTH_SECRET` < 32 chars | Module load crash in tests | `vitest.setup.ts` sets a 32+ char fake secret when unset |
 | Job schedulers start on import of `hooks.server.ts` | Real `setInterval` loops in tests | `globalThis.__v10r_scheduler = 'test'` sentinel in setup file |
 | RAG setup SQL lives outside Drizzle schema | `pushSchema` doesn't create tsvector, HNSW, GIN | Separate `client.exec(sql)` after the push, for RAG tests only |
 | `pushSchema` `apply` helper fails on unqualified enums | Schema setup throws | Execute the returned `statementsToExecute` manually; don't call `apply` |

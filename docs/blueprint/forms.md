@@ -135,13 +135,13 @@ const { form, errors, enhance, message } = superForm(data.form, {
 
 ## Data Invalidation After Form Actions
 
-Form actions using `use:enhance` trigger `invalidateAll()` after a successful submission, re-running all load functions on the current page.
+Form actions using `use:enhance` call `refreshAll()` after a successful submission, re-running all load functions on the current page (`page.state` survives). SvelteKit's own `enhance` callback opts out with `update({ refreshAll: false })`; Superforms 3 keeps its option name, `invalidateAll`. Outside a form, call `refreshAll()` from `$app/navigation`; it replaces Kit's `invalidateAll()`.
 
 | Pattern | Use Case | Example |
 |---------|----------|---------|
-| `invalidateAll: true` (default) | User login/logout | Update global user state |
+| Superforms `invalidateAll: true` (default) | User login/logout | Update global user state |
 | `invalidate('/api/items')` | Item CRUD on list page | Refresh items list only |
-| `invalidateAll: false` + local state | Real-time preview | Update component state without refetch |
+| Superforms `invalidateAll: false` + local state | Real-time preview | Update component state without refetch |
 | `goto()` + automatic invalidation | Create → Detail page | Navigate + fresh data |
 | Redirect from server | Create → List page | `redirect(303, '/items')` |
 
@@ -280,7 +280,7 @@ These run alongside — not instead of — the synchronous Valibot schema: the s
 
 ### File Upload
 
-The real file-upload form in v10r is the **image-metadata showcase**: schema in `#lib/schemas/showcase/image-metadata.ts`, server resolver in `$lib/server/imagemeta/`. The upload is processed server-side with Sharp and stored in [R2](../stack/data/r2.md).
+The real file-upload form in v10r is the **image-metadata showcase**: schema in `#lib/schemas/showcase/image-metadata.ts`, server resolver in `#lib/server/imagemeta/`. The upload is processed server-side with Sharp and stored in [R2](../stack/data/r2.md).
 
 It validates the **metadata** about the image (title, alt text, keywords, category, optional GPS) through Superforms + Valibot — not the file bytes. The codebase does **not** use Valibot file validators (`v.file`, `v.mimeType`, `v.maxSize`) or `withFiles()` anywhere; file constraints are enforced in the server resolver.
 

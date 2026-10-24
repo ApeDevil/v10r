@@ -103,7 +103,7 @@ The project already has a Shiki singleton in `#lib/server/shiki.ts`. Use `@shiki
 
 ```typescript
 import rehypeShikiFromHighlighter from '@shikijs/rehype/core';
-import { getHighlighter } from '#lib/server/shiki.js';
+import { getHighlighter } from '#lib/server/shiki.ts';
 
 const highlighter = await getHighlighter();
 // ...pass to unified pipeline
@@ -364,7 +364,7 @@ Custom syntax must be understood by both the remark pipeline (server rendering) 
 Dual-definition is structurally unavoidable — Lezer and micromark are architecturally incompatible parser models. The mitigation is a **shared specification** that both consumers translate independently.
 
 ```
-$lib/content-syntax/
+#lib/content-syntax/
   index.ts              # Canonical syntax definitions (declarative)
   remark-adapter.ts     # Definitions -> remark-directive handlers
   codemirror-adapter.ts # Definitions -> CM6 decorations (Phase 3)
@@ -900,7 +900,7 @@ Blog posts auto-join a `"blog"` collection (`col_blog`) in `rag.collection` on p
 Items marked **(planned)** are part of the blueprint target but not yet built; everything else reflects the current tree.
 
 ```
-$lib/server/blog/                  # Domain module (multi-client core pattern)
+#lib/server/blog/                  # Domain module (multi-client core pattern)
   index.ts                          # Public API: getPosts, getPost, createPost, updatePost,
                                     #   publishPost, unpublishPost
   queries.ts                        # Drizzle queries (blog schema)
@@ -915,12 +915,12 @@ $lib/server/blog/                  # Domain module (multi-client core pattern)
     schemas.ts                      # Valibot schemas for comment payloads
     index.ts                        # Barrel
 
-$lib/content-syntax/               # Shared syntax definitions
+#lib/content-syntax/               # Shared syntax definitions
   index.ts                          # Canonical directive specs
   remark-adapter.ts                 # Specs -> remark-directive handlers
   codemirror-adapter.ts             # (planned) Specs -> CM6 decorations (Phase 3)
 
-$lib/components/blog/              # Rendering (the post page renders `html` through
+#lib/components/blog/              # Rendering (the post page renders `html` through
                                     #   composites/markdown/MarkdownProse + actions/hydrate-embeds)
   CommentsIsland.svelte             # Client island: fetches + renders comments after mount
   BlogTag.svelte                    # Tag chip
@@ -932,7 +932,7 @@ $lib/components/blog/              # Rendering (the post page renders `html` thr
     EmbedSceneContent.svelte        # Scene contents
     resolve-scene.ts                # Scene descriptor resolution
 
-$lib/components/editor/            # Authoring (desk panel)
+#lib/components/editor/            # Authoring (desk panel)
   EditorPanel.svelte                # Panel wrapper (documentId, documentType, menus, publish flow)
   AuthorGate.svelte                 # Wraps editor; shows request-access empty state when grant absent
   PublishConfirmStrip.svelte        # Inline confirm/cancel strip for publish action
@@ -941,15 +941,15 @@ $lib/components/editor/            # Authoring (desk panel)
   types.ts                          # EditorDocument interface
   SlashMenu.svelte                  # (planned) Slash command palette
 
-$lib/components/preview/           # Multipurpose preview (desk panel)
+#lib/components/preview/           # Multipurpose preview (desk panel)
   PreviewPanel.svelte               # Subscribes to editor:content, delegates to renderer
   renderers.ts                      # (planned) type -> dynamic import() registry
 
-$lib/components/desk/
+#lib/components/desk/
   desk-bus.svelte.ts                # Typed cross-panel pub/sub (DeskEvents)
   layout-presets.ts                 # Writing, reviewing, dashboard presets
 
-$lib/3d/desk-panels.ts         # Add 'editor' + 'preview' + 'documents' panel types
+#lib/3d/desk-panels.ts         # Add 'editor' + 'preview' + 'documents' panel types
 ```
 
 `syncBlogGraph()`, `linkPostToChunks()`, `removeBlogFromGraph()` (the Phase 3 AI graph sync) are **planned** — there is no `ai-sync.ts` yet.
@@ -1203,8 +1203,8 @@ Approximate bundle: ~40-60KB minified + gzipped (server-side only). Public pages
 ### Phase 1: Pipeline + Public Blog
 
 4. `blog` schema migration (0002-0009: 8 tables + seed)
-5. `#lib/server/blog//index.js` domain module with render pipeline
-6. `#lib/content-syntax//index.js` with initial directive definitions (callout, chart, code)
+5. `#lib/server/blog/` domain module with render pipeline
+6. `#lib/content-syntax/` with initial directive definitions (callout, chart, code)
 7. `#lib/components/composites/markdown/MarkdownProse.svelte` + embed registry
 8. Public routes: `/blog/`, `/blog/[slug]` (with JSON-LD + OG meta), `/blog/tag/[tag]`, `/blog/feed.xml`, `/blog/sitemap.xml`
 9. Admin content page: `/admin/content` (post list + status management via form actions)
@@ -1262,7 +1262,7 @@ Nobody has shipped a complete solution for custom syntax highlighting in a sourc
 ~40-60KB gzipped if the unified pipeline ran client-side. **Mitigation**: preview panel hits `/api/blog/preview` server-side — zero pipeline code ships to the browser. Public blog pages use pre-rendered HTML from DB. The only trade-off is preview latency (~300ms debounce + ~200ms round-trip = ~500ms), which is acceptable for a writing tool. No optimistic client-side preview — `marked` can't render directives/wikilinks, so the output would be visibly wrong.
 
 ### 3. Lezer/Remark Syntax Drift
-Two parser implementations for the same custom syntax. **Mitigation**: shared `#lib/content-syntax//index.js` definitions + integration tests comparing parse output for identical input.
+Two parser implementations for the same custom syntax. **Mitigation**: shared `#lib/content-syntax/` definitions + integration tests comparing parse output for identical input.
 
 ### 4. Bun + Unified Compatibility
 Unified is ESM-only, which is actually a better fit for Bun than Node/CJS. No known issues. **Mitigation**: run pipeline server-side in SvelteKit load functions, not in Vite transform steps where Bun/Vite interaction adds complexity.

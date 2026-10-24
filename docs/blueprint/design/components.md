@@ -47,13 +47,13 @@ export * from './primitives';
 // viz/ and shell/ are intentionally excluded from the default barrel.
 ```
 
-`viz/` is excluded so Chart.js / Three.js don't enter the default bundle — import from `#lib/components/viz` directly. `shell/` is excluded because it's app-specific — import from `$lib/components/shell`. The same applies to `3d/`.
+`viz/` is excluded so Chart.js / Three.js don't enter the default bundle — import from `#lib/components/viz` directly. `shell/` is excluded because it's app-specific — import from `#lib/components/shell`. The same applies to `3d/`.
 
 ```svelte
 <script>
-  import { Button, Input, Card, FormField } from '#lib/components/index.js';
-  import { Chart } from '#lib/components/viz/index.js';
-  import { AppShell } from '#lib/components/shell/index.js';
+  import { Button, Input, Card, FormField } from '#lib/components/index.ts';
+  import { Chart } from '#lib/components/viz/index.ts';
+  import { AppShell } from '#lib/components/shell/index.ts';
 </script>
 ```
 
@@ -111,7 +111,7 @@ export type ButtonVariants = VariantProps<typeof buttonVariants>;
 <!-- Button.svelte (shape) -->
 <script lang="ts">
 import { buttonVariants, type ButtonVariants } from './button.ts';
-import { cn } from '#lib/utils/cn.js';
+import { cn } from '#lib/utils/cn.ts';
 // props extend HTMLButtonAttributes & ButtonVariants
 </script>
 

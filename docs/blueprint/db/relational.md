@@ -474,8 +474,8 @@ export type UserWithProfile = User & { profile: UserProfile | null };
 
 ```typescript
 // src/lib/server/db/queries/items.ts
-import { db } from '#lib/server/db/index.js';
-import { items, tags, itemTags } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { items, tags, itemTags } from '#lib/server/db/schema/index.ts';
 import { eq } from 'drizzle-orm';
 
 // Query function with typed return
@@ -496,7 +496,7 @@ export type ItemsWithTags = Awaited<ReturnType<typeof getItemsWithTags>>;
 
 ```typescript
 // src/routes/showcases/db/relational/+page.server.ts
-import { getItemsWithTags } from '#lib/server/db/queries/items';
+import { getItemsWithTags } from '#lib/server/db/queries/items.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -529,7 +529,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 // src/lib/server/db/index.ts
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { env } from '$env/dynamic/private';
+import { NEON_DATABASE_URL_PROD } from '$app/env/private';
 import * as schema from './schema';
 
 // Route Pool queries over HTTP fetch instead of WebSocket.
@@ -537,7 +537,7 @@ import * as schema from './schema';
 // Same approach used in drizzle.config.ts.
 neonConfig.poolQueryViaFetch = true;
 
-const pool = new Pool({ connectionString: env.NEON_DATABASE_URL_PROD });
+const pool = new Pool({ connectionString: NEON_DATABASE_URL_PROD });
 
 export const db = drizzle(pool, { schema });
 
@@ -607,8 +607,8 @@ Use `db.transaction()` for operations that must be atomic.
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { db, createId, schema } from '#lib/server/db/index.js';
-import { itemSchema } from '#lib/schemas/item';
+import { db, createId, schema } from '#lib/server/db/index.ts';
+import { itemSchema } from '#lib/schemas/item.ts';
 
 export const actions = {
   default: async ({ request, locals }) => {
@@ -709,7 +709,7 @@ export function mapDbError(err: unknown): never {
 
 ```typescript
 // src/routes/showcases/db/relational/[id]/+page.server.ts
-import { mapDbError } from '#lib/server/db/errors.js';
+import { mapDbError } from '#lib/server/db/errors.ts';
 
 export async function load({ params }) {
   try {
@@ -732,7 +732,7 @@ export async function load({ params }) {
 
 ```typescript
 // scripts/seed.ts
-import { db, createId, schema } from '#lib/server/db/index.js';
+import { db, createId, schema } from '#lib/server/db/index.ts';
 
 async function seed() {
   // Create test user

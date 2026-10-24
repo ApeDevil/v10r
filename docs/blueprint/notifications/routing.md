@@ -193,7 +193,7 @@ On serverless (no persistent process), `notification-delivery` is a registered d
 
 ### Retry Configuration
 
-Policy lives in `#lib/server/notifications/backoff.ts` (pure) with its constants alongside it in `$lib/server/notifications/config.ts`. The delay is applied against the **database** clock, so a skewed app server cannot shift the queue.
+Policy lives in `#lib/server/notifications/backoff.ts` (pure) with its constants alongside it in `#lib/server/notifications/config.ts`. The delay is applied against the **database** clock, so a skewed app server cannot shift the queue.
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
@@ -301,7 +301,7 @@ src/lib/server/notifications/
 ├── router.ts               # Preference resolution, channel selection
 ├── outbox.ts               # Delivery record management
 ├── stream.ts               # SSE: notifyUser() + connection registry (container only)
-├── health.ts               # Channel health stats   (token encryption: $lib/server/security/aes-gcm.ts)
+├── health.ts               # Channel health stats   (token encryption: #lib/server/security/aes-gcm.ts)
 ├── render-message.ts       # Notification → channel message body
 ├── telegram.ts             # Telegram link/verification helpers
 └── providers/
@@ -315,7 +315,7 @@ src/lib/server/notifications/
 
 DB read/write helpers live under `#lib/server/db/notifications/{queries,mutations,admin-queries}.ts`.
 
-The delivery worker is `#lib/server/jobs/notification-delivery.ts`, driven by `$lib/server/jobs/delivery-scheduler.ts`. There is no Inngest function — Inngest is not wired.
+The delivery worker is `#lib/server/jobs/notification-delivery.ts`, driven by `#lib/server/jobs/delivery-scheduler.ts`. There is no Inngest function — Inngest is not wired.
 
 ### Runtime Detection
 

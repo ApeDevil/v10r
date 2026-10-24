@@ -84,7 +84,7 @@ export function createTodoStore(initial: Todo[] = []) {
 <!-- +layout.svelte -->
 <script>
   import { setContext } from 'svelte';
-  import { createTodoStore } from '#lib/state/todos.svelte';
+  import { createTodoStore } from '#lib/state/todos.svelte.ts';
 
   setContext('todos', createTodoStore()); // per-request instance
 </script>
@@ -141,7 +141,7 @@ Pass initial state from the server, then hydrate a store on the client.
 <!-- +page.svelte -->
 <script>
   import { setContext } from 'svelte';
-  import { createItemStore } from '#lib/state/items.svelte';
+  import { createItemStore } from '#lib/state/items.svelte.ts';
 
   let { data } = $props();
 
@@ -178,7 +178,7 @@ The safe approach populates `event.locals` (request-scoped) in hooks for SSR, wi
 
 ```typescript
 // src/hooks.server.ts
-import { auth } from '#lib/server/auth/index.js';
+import { auth } from '#lib/server/auth/index.ts';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 
 export async function handle({ event, resolve }) {
@@ -233,8 +233,8 @@ For reactive updates after sign-in/sign-out (client-side only), use `useSession(
 ```svelte
 <script>
   import { page } from '$app/state';
-  import { useSession } from '#lib/auth-client.js';
-  import { browser } from '$app/environment';
+  import { useSession } from '#lib/auth-client.ts';
+  import { browser } from '$app/env';
 
   // Server data (from load function) - SSR safe
   const serverUser = $derived(page.data.user);
@@ -304,15 +304,17 @@ const { q, page, sort } = readUrlState(url.searchParams, usersListParams); // +p
 
 | Mode | Use when | Reads from | Writes with | Load re-runs | Navigation hooks |
 |---|---|---|---|---|---|
-| `navigate` | A `load` reads the param — filter, page, range | `page.url` | `goto(url, { replaceState, keepFocus, noScroll })` | Yes | Fire |
-| `shallow` | Pure view state no load reads — selected part, open tab, picked font | local `$state`, seeded from the URL | `replaceState(url, page.state)` from `$app/navigation` | No | Do not fire |
+| `navigate` | A `load` reads the param — filter, page, range | `page.url` | `goto(url, { replace, reset: false })` (scroll and focus stay) | Yes | Fire |
+| `shallow` | Pure view state no load reads — selected part, open tab, picked font | local `$state`, seeded from the URL | `goto(url, { shallow: true, replace: true, state: page.state })` | No | Fire with `navigation.shallow`; every v10r hook returns early |
 | link | The change is a click on a link | — | `<a href={state.href(patch)}>` | Yes | Fire |
 
 Under `shallow`, `page.url` keeps the URL the page loaded with, so read the values from the
-state object, never from `page.url`. `shallow` is also the only mode that leaves
-`beforeNavigate` alone — about twenty viz components (`components/viz/**`) tear down there, so
-a `goto` for view state would restart every chart on the page. `debounceMs` collapses typing into one write while `values` shows
-the latest input at once.
+state object, never from `page.url` (which is read-only — copy it with `new URL(page.url.href)`
+to build a new one). SvelteKit 3 runs `before`/`on`/`afterNavigate` for shallow navigations
+too, so every hook in v10r checks `navigation.shallow` and stands aside — about twenty viz
+components (`components/viz/**`) tear down in `beforeNavigate`, and a view-state write must not
+restart every chart on the page. `debounceMs` collapses typing into one write while `values`
+shows the latest input at once.
 
 **Never** call `history.replaceState`/`pushState` directly: SvelteKit stores its history index
 and shallow state in the entry, and a raw write replaces them with whatever the caller passes.
@@ -361,7 +363,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 <!-- src/routes/+layout.svelte -->
 <script>
   import { setContext } from 'svelte';
-  import { createThemeStore, createSidebarStore } from '#lib/state/ui.svelte';
+  import { createThemeStore, createSidebarStore } from '#lib/state/ui.svelte.ts';
 
   let { data, children } = $props();
 
@@ -394,7 +396,7 @@ App-wide UI state for sidebar, theme, and locale. Uses cookies for SSR-affecting
 Define explicit TypeScript interfaces for type-safe context usage:
 
 ```typescript
-// Illustrative — v10r keeps each store's types beside it; Theme comes from $lib/types/db-enums
+// Illustrative — v10r keeps each store's types beside it; Theme comes from #lib/types/db-enums.ts
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -428,7 +430,7 @@ export interface ToastStore {
 ```typescript
 // Illustrative — compare src/lib/state/sidebar.svelte.ts
 
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import type { Theme, ThemeStore, SidebarStore } from './types';
 
 function applyTheme(theme: Theme) {
@@ -525,13 +527,14 @@ Language switching requires route navigation. See [i18n.md](./i18n.md) for the f
 <!-- AppShell.svelte -->
 <script>
   import { getContext } from 'svelte';
-  import { browser } from '$app/environment';
+  import { browser } from '$app/env';
   import { afterNavigate } from '$app/navigation';
 
   const sidebar = getContext('sidebar');
 
-  // Close sidebar on mobile when route changes
-  afterNavigate(() => {
+  // Close sidebar on mobile when route changes (not on a shallow view-state write)
+  afterNavigate((navigation) => {
+    if (navigation.shallow) return;
     if (browser && window.innerWidth < 768) {
       sidebar.close();
     }

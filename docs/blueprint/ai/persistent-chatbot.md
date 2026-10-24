@@ -137,7 +137,7 @@ never writes it and never branches on it**:
 1. Module top-level declares only inert primitives (`phase = 'closed'`, `chat = null`).
    **No `@ai-sdk/svelte` import at top level.**
 2. `@ai-sdk/svelte` + `ai` are pulled **only** via `await import()` inside
-   `ensureChat()`, whose first line is `if (!browser) return` (`$app/environment`) — a
+   `ensureChat()`, whose first line is `if (!browser) return` (`$app/env`) — a
    dynamic import behind a browser gate never enters the SSR module graph.
 3. Every mutator is browser-gated (server no-op). The view that reads `session.chat`
    is client-dynamic-imported. `SidebarTriggers` *does* SSR but reads only the inert

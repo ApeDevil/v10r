@@ -285,20 +285,20 @@ export type { CommandPaletteItem } from './types';
 
 ```typescript
 // ✅ Good: Import atoms from primitives
-import { Button, Input, Avatar } from '#lib/components/primitives/index.js';
+import { Button, Input, Avatar } from '#lib/components/primitives/index.ts';
 
 // ✅ Good: Import molecules and organisms from composites
-import { FormField, Pagination, EmptyState } from '#lib/components/composites/index.js';
-import { CommandPalette } from '#lib/components/composites/command-palette/index.js';
+import { FormField, Pagination, EmptyState } from '#lib/components/composites/index.ts';
+import { CommandPalette } from '#lib/components/composites/command-palette/index.ts';
 
 // ✅ Good: Import templates from shell
-import { Sidebar, UserMenu, Footer } from '#lib/components/shell/index.js';
+import { Sidebar, UserMenu, Footer } from '#lib/components/shell/index.ts';
 
 // ❌ Bad: Deep imports into component internals
 import CommandPalette from '#lib/components/composites/command-palette/CommandPalette.svelte';
 
 // ❌ Bad: Importing atom when you need molecule
-import { Input } from '#lib/components/primitives/index.js';  // Use FormField instead for forms
+import { Input } from '#lib/components/primitives/index.ts';  // Use FormField instead for forms
 ```
 
 ---

@@ -38,6 +38,6 @@ When a graph view is unreadable, apply in order — styling last, not first:
 ## Reading this repo's own graphs
 
 - The import graph is a DAG **by invariant** — depict its direction; `db/` is the sink everything flows toward. A cycle in a depiction of it is a bug report, not a style choice.
-- Interactive components live in `$lib/components/viz` (deep import only — bundle boundary): `NetworkGraph`, `TreeGraph`, `DagGraph`, `SankeyDiagram`, `KnowledgeGraph`, all taking `GraphData` (`{nodes, edges}`). D3 computes positions; Svelte renders the SVG — keep that split.
+- Interactive components live in `#lib/components/viz` (deep import only — bundle boundary): `NetworkGraph`, `TreeGraph`, `DagGraph`, `SankeyDiagram`, `KnowledgeGraph`, all taking `GraphData` (`{nodes, edges}`). D3 computes positions; Svelte renders the SVG — keep that split.
 - `d3-dag` costs ~80KB minified: import `DagGraph` page-locally, never through a shared barrel.
 - D3 force/zoom need `browser` guards (SSR).

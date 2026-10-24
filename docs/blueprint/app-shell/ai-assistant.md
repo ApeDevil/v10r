@@ -202,9 +202,8 @@ Limiters are built with `createLimiter` from `#lib/server/http/rate-limit.ts` an
 
 ```typescript
 // Illustrative — the live rate-limit preamble is shared across the per-surface AI
-// routes via guardAiRequest ($lib/server/ai/guard.ts). Sketch shown inline here.
-import { json } from '@sveltejs/kit';
-import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
+// routes via guardAiRequest (#lib/server/ai/guard.ts). Sketch shown inline here.
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 
 // Sliding-window limiters, keyed on user ID
 const perMinute = createLimiter('rl:ai:chat:min', 10, '1 m');
@@ -223,7 +222,7 @@ export const POST: RequestHandler = async (event) => {
   // Validate input length
   const { message } = await event.request.json();
   if (message.length > 4000) {
-    return json({ error: 'Message too long' }, { status: 400 });
+    return Response.json({ error: 'Message too long' }, { status: 400 });
   }
 
   // ... process AI request
@@ -278,7 +277,7 @@ export const POST: RequestHandler = async (event) => {
 **Never trust user input.** Sanitize before sending to AI provider.
 
 ```typescript
-import { sanitizeInput } from '#lib/server/ai/sanitize';
+import { sanitizeInput } from '#lib/server/ai/sanitize.ts';
 
 // Before sending to AI
 const sanitizedMessage = sanitizeInput(message, {

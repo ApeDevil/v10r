@@ -41,10 +41,9 @@ src/routes/
 
 ```typescript
 // src/routes/api/items/+server.ts
-import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '#lib/server/db/index.js';
-import { items } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { items } from '#lib/server/db/schema/index.ts';
 
 export const GET: RequestHandler = async ({ url }) => {
   const limit = Number(url.searchParams.get('limit')) || 20;
@@ -56,7 +55,7 @@ export const GET: RequestHandler = async ({ url }) => {
     .limit(limit)
     .offset(offset);
 
-  return json({
+  return Response.json({
     data: results,
     meta: { limit, offset },
   });
@@ -67,10 +66,10 @@ export const GET: RequestHandler = async ({ url }) => {
 
 ```typescript
 // src/routes/api/items/+server.ts
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '#lib/server/db/index.js';
-import { items } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { items } from '#lib/server/db/schema/index.ts';
 import * as v from 'valibot';
 
 const CreateItemSchema = v.object({
@@ -84,8 +83,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
   const result = v.safeParse(CreateItemSchema, body);
   if (!result.success) {
-    error(400, {
-      message: 'Validation failed',
+    error(400, 'Validation failed', {
       errors: result.issues.map(i => ({
         path: i.path?.map(p => p.key).join('.'),
         message: i.message,
@@ -98,7 +96,7 @@ export const POST: RequestHandler = async ({ request }) => {
     .values(result.output)
     .returning();
 
-  return json(item, { status: 201 });
+  return Response.json(item, { status: 201 });
 };
 ```
 
@@ -106,10 +104,10 @@ export const POST: RequestHandler = async ({ request }) => {
 
 ```typescript
 // src/routes/api/items/[id]/+server.ts
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '#lib/server/db/index.js';
-import { items } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { items } from '#lib/server/db/schema/index.ts';
 import { eq } from 'drizzle-orm';
 import * as v from 'valibot';
 
@@ -124,7 +122,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
   const result = v.safeParse(UpdateItemSchema, body);
   if (!result.success) {
-    error(400, { message: 'Validation failed' });
+    error(400, 'Validation failed');
   }
 
   const [updated] = await db
@@ -134,10 +132,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
     .returning();
 
   if (!updated) {
-    error(404, { message: 'Item not found' });
+    error(404, 'Item not found');
   }
 
-  return json(updated);
+  return Response.json(updated);
 };
 ```
 
@@ -145,10 +143,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 
 ```typescript
 // src/routes/api/items/[id]/+server.ts
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { db } from '#lib/server/db/index.js';
-import { items } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { items } from '#lib/server/db/schema/index.ts';
 import { eq } from 'drizzle-orm';
 
 export const DELETE: RequestHandler = async ({ params }) => {
@@ -158,10 +156,10 @@ export const DELETE: RequestHandler = async ({ params }) => {
     .returning();
 
   if (!deleted) {
-    error(404, { message: 'Item not found' });
+    error(404, 'Item not found');
   }
 
-  return json({ success: true });
+  return Response.json({ success: true });
 };
 ```
 
@@ -270,8 +268,7 @@ export function validate<T extends v.BaseSchema<unknown, unknown, v.BaseIssue<un
   const result = v.safeParse(schema, data);
 
   if (!result.success) {
-    error(400, {
-      message: 'Validation failed',
+    error(400, 'Validation failed', {
       errors: result.issues.map(issue => ({
         path: issue.path?.map(p => p.key).join('.') ?? '',
         message: issue.message,
@@ -291,7 +288,7 @@ export async function validateBody<T extends v.BaseSchema<unknown, unknown, v.Ba
     return validate(schema, body);
   } catch (e) {
     if (e instanceof SyntaxError) {
-      error(400, { message: 'Invalid JSON' });
+      error(400, 'Invalid JSON');
     }
     throw e;
   }
@@ -309,8 +306,8 @@ export function validateQuery<T extends v.BaseSchema<unknown, unknown, v.BaseIss
 ### Usage
 
 ```typescript
-import { validateBody, validateQuery } from '#lib/server/http/validate';
-import { CreateItemSchema, PaginationSchema } from '#lib/server/http/schemas';
+import { validateBody, validateQuery } from '#lib/server/http/validate.ts';
+import { CreateItemSchema, PaginationSchema } from '#lib/server/http/schemas.ts';
 
 export const GET: RequestHandler = async ({ url }) => {
   const { limit, offset } = validateQuery(url, PaginationSchema);
@@ -339,14 +336,14 @@ export const GET: RequestHandler = async ({ params }) => {
 
   if (!item) {
     // 4xx errors - client's fault
-    error(404, { message: 'Item not found' });
+    error(404, 'Item not found');
   }
 
   if (!item.published) {
-    error(403, { message: 'Item not accessible' });
+    error(403, 'Item not accessible');
   }
 
-  return json(item);
+  return Response.json(item);
 };
 ```
 
@@ -363,9 +360,8 @@ interface ApiError {
   }>;
 }
 
-// Usage
-error(400, {
-  message: 'Validation failed',
+// Usage — message second, extra App.Error props third
+error(400, 'Validation failed', {
   code: 'VALIDATION_ERROR',
   errors: [
     { path: 'email', message: 'Invalid email format' },
@@ -378,20 +374,18 @@ error(400, {
 
 ```typescript
 // src/hooks.server.ts
-import type { HandleServerError } from '@sveltejs/kit';
+// Illustrative — the shipped hook is reportServerError in src/lib/server/http/error-report.ts
+import type { HandleServerError } from '@sveltejs/kit/hooks';
 
-export const handleError: HandleServerError = async ({ error, event, status, message }) => {
-  // Log unexpected errors (5xx)
-  if (status >= 500) {
-    console.error('Server error:', error);
-    // Send to error tracking service
-    // await sentry.captureException(error);
-  }
+// Sees every error except redirects; `kind` says whose it is.
+export const handleError: HandleServerError = async ({ kind, error, event }) => {
+  // `app` errors come from error() on purpose — returning nothing keeps their body
+  if (kind !== 'unknown') return;
 
-  return {
-    message: status >= 500 ? 'Internal server error' : message,
-    code: status >= 500 ? 'INTERNAL_ERROR' : undefined,
-  };
+  console.error('Server error:', error);
+  // Send to error tracking service
+  // await sentry.captureException(error);
+  return { message: 'Internal server error', code: 'INTERNAL_ERROR' };
 };
 ```
 
@@ -409,12 +403,12 @@ import type { RequestHandler } from './$types';
 export const POST: RequestHandler = async ({ locals, request }) => {
   // Check auth from hooks.server.ts
   if (!locals.user) {
-    error(401, { message: 'Unauthorized' });
+    error(401, 'Unauthorized');
   }
 
   // Check permissions
   if (!locals.user.canCreateItems) {
-    error(403, { message: 'Forbidden' });
+    error(403, 'Forbidden');
   }
 
   // Proceed with authenticated request
@@ -430,7 +424,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 ```typescript
 // Illustrative — the shipped bearer check is the MCP token guard in src/lib/server/mcp/
 import { timingSafeEqual } from 'crypto';
-import { API_SECRET_KEY } from '$env/static/private';
+import { API_SECRET_KEY } from '$app/env/private'; // declared in src/env.ts
 
 /**
  * Timing-safe API key verification.
@@ -455,8 +449,8 @@ export function verifyApiKey(providedKey: string | null): boolean {
 
 ```typescript
 // src/hooks.server.ts
-import type { Handle } from '@sveltejs/kit';
-import { verifyApiKey } from '#lib/server/auth/api-key';
+import type { Handle } from '@sveltejs/kit/hooks';
+import { verifyApiKey } from '#lib/server/auth/api-key.ts';
 
 export const handle: Handle = async ({ event, resolve }) => {
   // Check for API routes
@@ -482,7 +476,7 @@ CORS is implemented as a composable handler using `sequence`. See [auth.md](./au
 
 ```typescript
 // Illustrative — CORS is not a shipped hook; the pipeline is src/hooks.server.ts
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 
 const ALLOWED_ORIGINS = [
   'https://example.com',
@@ -527,8 +521,8 @@ export const corsHandle: Handle = async ({ event, resolve }) => {
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
-import { authHandle, sessionHandle } from '#lib/server/hooks/auth';
-import { corsHandle } from '#lib/server/hooks/cors';
+import { authHandle, sessionHandle } from '#lib/server/hooks/auth.ts';
+import { corsHandle } from '#lib/server/hooks/cors.ts';
 
 // Order matters: CORS first (handles OPTIONS), then auth
 export const handle = sequence(corsHandle, authHandle, sessionHandle);
@@ -540,13 +534,12 @@ export const handle = sequence(corsHandle, authHandle, sessionHandle);
 
 ```typescript
 // Illustrative per-route CORS
-import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async () => {
   const data = { /* ... */ };
 
-  return json(data, {
+  return Response.json(data, {
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
@@ -586,7 +579,7 @@ export function apiValidationError(issues);            // Valibot issues → 400
 ### Usage
 
 ```typescript
-import { apiOk, apiError } from '#lib/server/http/response.js';
+import { apiOk, apiError } from '#lib/server/http/response.ts';
 
 export const GET: RequestHandler = async ({ url }) => {
   const item = await getItem(url.searchParams.get('id'));
@@ -600,8 +593,8 @@ export const GET: RequestHandler = async ({ url }) => {
 `#lib/server/http/pagination.ts` provides both styles. Offset-based: `parsePagination(url)` + `apiPaginated(items, total, params)` → `{ data: { items, pagination: { page, pageSize, total, totalPages } } }`. Cursor-based: `parseLimit`/`parseCursor`/`encodeCursor`/`decodeCursor` + `paginatedResponse(items, limit, cursorFn)` → `{ items, has_more, cursor? }`.
 
 ```typescript
-import { parseLimit, parseCursor, paginatedResponse } from '#lib/server/http/pagination.js';
-import { apiOk } from '#lib/server/http/response.js';
+import { parseLimit, parseCursor, paginatedResponse } from '#lib/server/http/pagination.ts';
+import { apiOk } from '#lib/server/http/response.ts';
 
 export const GET: RequestHandler = async ({ url }) => {
   const limit = parseLimit(url);
@@ -661,16 +654,16 @@ export async function validateFileContent(file: File): Promise<ValidatedFile> {
 
 ```typescript
 // Illustrative — the shipped upload door is src/routes/api/blog/assets/+server.ts (ticket) + .../confirm
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { validateFileContent } from '#lib/server/upload/validate';
-import { uploadToR2 } from '#lib/server/storage';
+import { validateFileContent } from '#lib/server/upload/validate.ts';
+import { uploadToR2 } from '#lib/server/storage/index.ts';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) {
-    error(401, { message: 'Unauthorized' });
+    error(401, 'Unauthorized');
   }
 
   const formData = await request.formData();
@@ -678,13 +671,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   // Validate file exists and is actually a File (not a string)
   if (!fileEntry || typeof fileEntry === 'string') {
-    error(400, { message: 'No file provided' });
+    error(400, 'No file provided');
   }
 
   const file = fileEntry as File;
 
   if (file.size > MAX_FILE_SIZE) {
-    error(400, { message: 'File too large (max 10MB)' });
+    error(400, 'File too large (max 10MB)');
   }
 
   // Validate actual file content using magic bytes
@@ -692,7 +685,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   try {
     validated = await validateFileContent(file);
   } catch (e) {
-    error(400, { message: e instanceof Error ? e.message : 'Invalid file type' });
+    error(400, e instanceof Error ? e.message : 'Invalid file type');
   }
 
   // Generate safe filename (never use client-provided name)
@@ -700,7 +693,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   const url = await uploadToR2(validated.buffer, safeFilename, locals.user.id);
 
-  return json({ url }, { status: 201 });
+  return Response.json({ url }, { status: 201 });
 };
 ```
 
@@ -712,7 +705,7 @@ Limiters are built with the `createLimiter` factory (sliding window over `@upsta
 
 ```typescript
 // src/routes/api/items/+server.ts
-import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.js';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 
 const limiter = createLimiter('rl:items', 30, '1 m');
 
@@ -793,8 +786,8 @@ GraphQL Yoga is lightweight (~15KB) and works well with SvelteKit.
 ```typescript
 // src/lib/server/graphql/schema.ts
 import { createSchema } from 'graphql-yoga';
-import { db } from '#lib/server/db/index.js';
-import { items, tags } from '#lib/server/db/schema/index.js';
+import { db } from '#lib/server/db/index.ts';
+import { items, tags } from '#lib/server/db/schema/index.ts';
 import { eq } from 'drizzle-orm';
 
 export const schema = createSchema({
@@ -873,7 +866,7 @@ export const schema = createSchema({
 ```typescript
 // src/routes/api/graphql/+server.ts
 import { createYoga } from 'graphql-yoga';
-import { schema } from '#lib/server/graphql/schema';
+import { schema } from '#lib/server/graphql/schema.ts';
 import type { RequestHandler } from './$types';
 
 const yoga = createYoga({
@@ -928,7 +921,7 @@ export async function graphql<T>(
 
 ```svelte
 <script lang="ts">
-  import { graphql } from '#lib/graphql-client';
+  import { graphql } from '#lib/graphql-client.ts';
 
   const loadItems = async () => {
     const data = await graphql<{ items: Item[] }>(`

@@ -20,9 +20,9 @@ this endpoint?" has no index to consult. This is that index.
 | CSRF predicates | `#lib/server/security/csrf.ts` |
 | Redirect-target validation | `#lib/server/security/safe-path.ts` |
 | Response headers | `securityHeaders` in `src/hooks.server.ts` |
-| CSP | `svelte.config.js` (not a hook — it is build config) |
+| CSP | `sveltekit({ csp })` in `vite.config.ts` (not a hook — it is build config) |
 | Rate limiting | `#lib/server/http/rate-limit.ts` + per-route limiters |
-| Abuse (captcha, honeypot, per-email) | `#lib/server/abuse//index.js` |
+| Abuse (captcha, honeypot, per-email) | `#lib/server/abuse/index.ts` |
 | MCP bearer | `#lib/server/mcp/auth.ts` |
 | AI entry guard + budget | `#lib/server/ai/guard.ts` |
 | Tool scope enforcement | `#lib/server/ai/tools/desk-execute.ts` |
@@ -78,7 +78,7 @@ earlier `requireApi*` family did exactly that, so 59 endpoints answered 500
 instead of 401/403 to unauthenticated callers. `guard-contract.gate.test.ts`
 pins this shut.
 
-## Why `#lib/server/security//index.js` is thin
+## Why `#lib/server/security/index.ts` is thin
 
 It holds cross-cutting primitives with no domain owner (CSRF predicates, path
 sanitisation) plus the gate tests. Everything else stays with its domain, because

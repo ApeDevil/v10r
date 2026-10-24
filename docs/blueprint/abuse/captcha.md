@@ -56,7 +56,7 @@ The `altcha` instance is created via `create()` from `altcha-lib/frameworks/svel
 Public function exported from `#lib/server/abuse/`. Wraps internal verification with `BOT_DETECTION_MODE` behavior:
 
 ```typescript
-import { verifyAltcha } from '#lib/server/abuse/index.js';
+import { verifyAltcha } from '#lib/server/abuse/index.ts';
 
 const decision = await verifyAltcha(request.headers.get('x-altcha-token'));
 if (!decision.allowed) return decisionResponse(decision);

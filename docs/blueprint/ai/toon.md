@@ -129,7 +129,7 @@ TOON is ideal for formatting retrieved documents before sending to the LLM.
 // per-surface routes (e.g. src/routes/api/ai/chatbot/+server.ts).
 import { encode } from '@toon-format/toon';
 import { streamText } from 'ai';
-import { providers } from '#lib/server/ai/providers.js';
+import { providers } from '#lib/server/ai/providers.ts';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   const { question } = await request.json();

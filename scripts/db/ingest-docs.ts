@@ -8,7 +8,7 @@
  *
  * Design (mirrors scripts/db/catalog-sync.ts):
  *   - Hand-rolls its OWN Neon pool + Gemini embedder from process.env — the app's
- *     retrieval `ingest()` / `embed.ts` import `#lib`/`$app/env` and cannot run under Bun.
+ *     retrieval `ingest()` / `embed.ts` reach `$app/env`, which exists only inside Vite.
  *   - Reuses the Vite-free `planChunks` (the SAME hierarchical section/paragraph
  *     chunker the app `ingest()` uses) + `doc-filter` (relative imports). Replicates
  *     the canonical-path derivation from `src/lib/server/docs/manifest.ts` (Vite-only).

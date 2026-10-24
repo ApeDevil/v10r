@@ -548,7 +548,7 @@ Global CSS variables defined in `app.css`. All colors are **OKLCH**, not hex. Va
 
 ```svelte
 <script>
-  import { sidebar, zIndex } from '#lib/styles/tokens.js';
+  import { sidebar, zIndex } from '#lib/styles/tokens.ts';
 </script>
 
 <aside
@@ -575,7 +575,7 @@ Global CSS variables defined in `app.css`. All colors are **OKLCH**, not hex. Va
 ### In JavaScript
 
 ```typescript
-import { breakpoints } from '#lib/styles/tokens.js';
+import { breakpoints } from '#lib/styles/tokens.ts';
 
 // Media query matching
 const isMobile = window.matchMedia(`(max-width: ${breakpoints.md})`).matches;

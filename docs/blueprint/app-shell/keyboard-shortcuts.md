@@ -165,7 +165,7 @@ export function getShortcutsByCategory(): Record<string, Shortcut[]> {
 
 ```typescript
 // src/lib/shortcuts/keyboard.ts
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 let sequenceBuffer: string[] = [];
 let sequenceTimeout: ReturnType<typeof setTimeout>;
@@ -273,9 +273,9 @@ function normalizeKey(event: KeyboardEvent): string {
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { initKeyboardHandler, registerShortcut } from '#lib/shortcuts/index.js';
-  import { ShortcutsModal } from '#lib/components/shell/index.js';
-  import { getModals } from '#lib/state/modals.svelte.js';
+  import { initKeyboardHandler, registerShortcut } from '#lib/shortcuts/index.ts';
+  import { ShortcutsModal } from '#lib/components/shell/index.ts';
+  import { getModals } from '#lib/state/modals.svelte.ts';
 
   const modals = getModals();
 
@@ -343,7 +343,7 @@ function normalizeKey(event: KeyboardEvent): string {
 <!-- src/lib/components/shell/ShortcutsDialog.svelte -->
 <script lang="ts">
   import { Dialog } from 'bits-ui';
-  import { getShortcutsByCategory } from '#lib/shortcuts/index.js';
+  import { getShortcutsByCategory } from '#lib/shortcuts/index.ts';
 
   let { open = $bindable(false) } = $props();
 
@@ -450,7 +450,7 @@ Display platform-appropriate symbols:
 
 ```typescript
 // src/lib/shortcuts/platform.ts
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 export function isMac(): boolean {
   if (!browser) return false;

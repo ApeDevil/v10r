@@ -32,9 +32,8 @@ test('an error page from the platform is reported, not swallowed', async ({ page
 		route.fulfill({ status: 504, contentType: 'text/html', body: 'An error occurred with your deployment' }),
 	);
 	await check(page);
-	await expect(page.getByText(/did not finish this action/)).toBeVisible();
-	// SvelteKit cannot read a status off an HTML page, so none is claimed.
-	await expect(page.getByText(/\(HTTP \d+\)/)).toHaveCount(0);
+	// Since SvelteKit 3 a non-result response reaches `enhance` with its status.
+	await expect(page.getByText(/did not finish this action.*\(HTTP 504\)/)).toBeVisible();
 	// Cleared, not merely absent: the buttons are disabled while an action is pending.
 	await expect(page.locator('#es-targets').getByRole('button', { name: 'Check', exact: true }).first()).toBeEnabled();
 	await expect(historyRows(page)).toHaveCount(before);

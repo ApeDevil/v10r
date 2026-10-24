@@ -67,7 +67,7 @@ The parity + protocol rules the showcase enforces, reusable for any future kerne
 
 ## Production notes
 
-- **CSP**: `script-src 'wasm-unsafe-eval'` is required and already set in `svelte.config.js`. Never "fix" an eval problem by adding `'unsafe-eval'` — it overrides and widens the wasm grant.
+- **CSP**: `script-src 'wasm-unsafe-eval'` is required and already set in the `sveltekit({ csp })` options in `vite.config.ts`. Never "fix" an eval problem by adding `'unsafe-eval'` — it overrides and widens the wasm grant.
 - **MIME**: `WebAssembly.instantiateStreaming` requires `Content-Type: application/wasm`; the glue falls back to `ArrayBuffer` instantiation with a console warning if a host mis-serves it. A wasm error quoting unexpected magic bytes is a mis-served *body*: `4e 6f 74 20` is "Not " (a 404 page), `3c 21 44 4f` is "<!DO" (an HTML error page).
 - **Service worker**: the `?url` asset is Vite build output and therefore precached by the PWA service worker — ~20 KB per deploy, accepted. A multi-MB module should move to `static/` + manual fetch instead (not precached, but also not hashed).
 - **Old Safari tail**: Rust ≥1.82 emits reference-types and multivalue by default, and the wasm32 default feature set keeps growing (bulk memory, non-trapping float-to-int are also on). Per webassembly.org's feature table all of these landed by **Safari 15**, so Safari ≤14 fails to instantiate — 16.4 is the fixed-width-SIMD milestone and irrelevant to this artifact. Init failures surface as the showcase's unsupported/error state, not a blank page.

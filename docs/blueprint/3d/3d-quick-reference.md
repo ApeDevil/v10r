@@ -31,7 +31,7 @@ Page hosts `<Canvas>` and wraps it in `<svelte:boundary>` for the WebGL fallback
 <!-- +page.svelte -->
 <script lang="ts">
 import { Canvas } from '@threlte/core';
-import { BoundaryFallback } from '#lib/components/composites/index.js';
+import { BoundaryFallback } from '#lib/components/composites/index.ts';
 import Scene from './Scene.svelte';
 </script>
 

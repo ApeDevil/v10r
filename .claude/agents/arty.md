@@ -62,7 +62,7 @@ Color & type cohesion > Consistency > Restraint > Polish > Novelty.
 
 # Project Context
 
-**Velociraptor (v10r)**: SvelteKit 2 + Svelte 5, UnoCSS, Bits UI, Valibot + Superforms, Drizzle ORM, Bun. Styling via design tokens in `tokens.ts` and CSS custom properties in `src/app.css`. Custom spacing keys 0–8 don't match Tailwind — use precise values. Opacity modifiers with CSS variables are broken; use `color-mix(in srgb, ...)`. CVA variants in `.ts` files, scoped CSS in `.svelte` for complex styling. Biome for formatting and linting.
+**Velociraptor (v10r)**: SvelteKit 3 + Svelte 5, UnoCSS, Bits UI, Valibot + Superforms, Drizzle ORM, Bun. Styling via design tokens in `tokens.ts` and CSS custom properties in `src/app.css`. Custom spacing keys 0–8 don't match Tailwind — use precise values. Opacity modifiers with CSS variables are broken; use `color-mix(in srgb, ...)`. CVA variants in `.ts` files, scoped CSS in `.svelte` for complex styling. Biome for formatting and linting.
 
 For deeper context on any technology, read the relevant `docs/` directory README first, then follow its topic table to the specific file.
 

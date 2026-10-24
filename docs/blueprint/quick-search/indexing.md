@@ -19,7 +19,7 @@ All adapters live in `#lib/server/search/adapters/` and produce `SearchRecord[]`
 
 ### `pages.ts`
 
-Source: the nav registry (`#lib/nav/index.js`). Paraglide labels — genuinely localized, no fallback badge.
+Source: the nav registry (`#lib/nav/index.ts`). Paraglide labels — genuinely localized, no fallback badge.
 
 Also injects two public pages absent from the nav registry: `/auth/login` (Log in) and `/showcases/jobs` (Jobs). The index covers these public routes even though nav omits them.
 
@@ -27,7 +27,7 @@ Also injects two public pages absent from the nav registry: `/auth/login` (Log i
 
 ### `showcases.ts`
 
-Source: showcase card tree (`#lib/showcases/registry`) + curated in-page sections (`$lib/showcases/sections`).
+Source: showcase card tree (`#lib/showcases/registry`) + curated in-page sections (`#lib/showcases/sections`).
 
 Card and sublink titles are Paraglide message functions resolved per index shard — genuinely localized, `localeFallback: false`. Only the curated in-page section titles remain English-only: `localeFallback: true` for `de`/`ru`, rendered with an "EN" badge and a small rank penalty.
 
@@ -35,7 +35,7 @@ Sections produce `surface: 'section'` records with `anchor: '#anchorId'` for dee
 
 ### `docs.ts`
 
-Source: build-time markdown manifest (`#lib/server/docs/manifest.js`).
+Source: build-time markdown manifest (`#lib/server/docs/manifest.ts`).
 
 Two output modes:
 - **Lane A** (`docTitleRecords`): title + description, no body. `localeFallback: true` for non-EN locales.
