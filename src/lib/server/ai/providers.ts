@@ -8,8 +8,8 @@
  * explicit preference → the administrator's project default → the capability order.
  */
 
-import { defineBreaker, resetBreakers } from '$lib/server/resilience';
-import type { AiProviderId } from '$lib/types/db-enums';
+import { defineBreaker, resetBreakers } from '#lib/server/resilience/index.ts';
+import type { AiProviderId } from '#lib/types/db-enums.ts';
 import type { ProviderEntry, ProviderRegistry } from './connections';
 
 function preferred(
@@ -73,7 +73,7 @@ export function resolveVisionProvider(registry: ProviderRegistry, preference?: s
 // Provider cooldown — this domain's use of the general circuit breaker.
 //
 // "Cooldown" stays the AI vocabulary because it is what the surfaces say (the admin
-// models board, the desk provider list, the chat fallback log); `$lib/server/resilience`
+// models board, the desk provider list, the chat fallback log); `#lib/server/resilience/index.ts`
 // owns the mechanism, this owns the policy and the words.
 //
 // The breaker's shared-state and fallback behaviour is documented there — including

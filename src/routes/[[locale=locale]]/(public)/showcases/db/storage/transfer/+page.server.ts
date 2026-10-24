@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit';
-import { confirmUpload, generateUploadUrl } from '$lib/server/showcases/store/mutations';
-import { getObjectRange } from '$lib/server/showcases/store/queries';
-import { classifyS3Error } from '$lib/server/store/errors';
-import { formatBytes } from '$lib/server/store/types';
+import { confirmUpload, generateUploadUrl } from '#lib/server/showcases/store/mutations.ts';
+import { getObjectRange } from '#lib/server/showcases/store/queries.ts';
+import { classifyS3Error } from '#lib/server/store/errors.ts';
+import { formatBytes } from '#lib/server/store/types.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

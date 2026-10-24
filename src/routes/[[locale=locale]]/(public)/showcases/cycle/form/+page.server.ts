@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { cycleSchema } from '$lib/schemas/showcase/cycle';
-import { executeCycle } from '$lib/server/showcases/cycle';
+import { cycleSchema } from '#lib/schemas/showcase/cycle.ts';
+import { executeCycle } from '#lib/server/showcases/cycle/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

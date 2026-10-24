@@ -1,14 +1,14 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, DraftRecoveryNotice, FormField } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Spinner, Textarea } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { draftMessageSchema } from '#lib/schemas/showcase/advanced.ts';
+import { createFormDraft } from '#lib/state/form-draft.svelte.ts';
+import { guardUnsavedChanges } from '#lib/state/leave-guard.svelte.ts';
 import { page } from '$app/state';
-import { Alert, Card, DraftRecoveryNotice, FormField } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Spinner, Textarea } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { draftMessageSchema } from '$lib/schemas/showcase/advanced';
-import { createFormDraft } from '$lib/state/form-draft.svelte';
-import { guardUnsavedChanges } from '$lib/state/leave-guard.svelte';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

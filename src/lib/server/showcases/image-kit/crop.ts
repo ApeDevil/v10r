@@ -7,7 +7,7 @@
  * with the AI crop so the showcase demonstrates "deterministic vs AI".
  */
 import sharp from 'sharp';
-import { CROP_RATIO_VALUE, type CropRatio, largestRatioRect } from '$lib/schemas/showcase/image-kit';
+import { CROP_RATIO_VALUE, type CropRatio, largestRatioRect } from '#lib/schemas/showcase/image-kit.ts';
 import type { PixelRect } from './geometry';
 
 /** Extract a pixel rectangle and re-encode as WebP. */

@@ -11,9 +11,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const store = new Map<string, string>();
 
-vi.mock('$app/environment', () => ({ dev: false }));
+vi.mock('$app/env', () => ({ dev: false }));
 vi.mock('./config', () => ({ SESSION_EXPIRES_IN: 604800 }));
-vi.mock('$lib/server/cache', () => ({
+vi.mock('#lib/server/cache/index.ts', () => ({
 	redis: {
 		get: async (k: string) => store.get(k) ?? null,
 		set: async (k: string, v: string) => void store.set(k, v),

@@ -6,12 +6,12 @@
  */
 
 import type { Snippet } from 'svelte';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import type { LabelFn, NavChild } from '#lib/nav/index.ts';
+import { layerStack } from '#lib/state/layer-stack.svelte.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { page } from '$app/state';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import type { LabelFn, NavChild } from '$lib/nav';
-import { layerStack } from '$lib/state/layer-stack.svelte';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
 import NavLink from './NavLink.svelte';
 
 interface Props {

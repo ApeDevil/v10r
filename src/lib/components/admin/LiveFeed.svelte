@@ -1,8 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { EmptyState } from '$lib/components/composites';
-import { Switch } from '$lib/components/primitives';
-import type { LiveEvent } from '$lib/types/analytics-live';
+import { EmptyState } from '#lib/components/composites/index.ts';
+import { Switch } from '#lib/components/primitives/index.ts';
+import type { LiveEvent } from '#lib/types/analytics-live.ts';
 import FeedRow from './FeedRow.svelte';
 import PairingDialog from './PairingDialog.svelte';
 

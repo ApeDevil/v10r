@@ -3,15 +3,15 @@
  * See `docs/blueprint/ai/surfaces.md`.
  */
 import { safeParse } from 'valibot';
-import type { Locale } from '$lib/i18n';
-import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
-import { guardAiRequest } from '$lib/server/ai/guard';
-import { ChatbotRequestSchema } from '$lib/server/ai/validation';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
-import { startDeadline } from '$lib/server/http/deadline';
-import { isAdmin } from '$lib/server/http/guards';
-import { apiError, apiValidationError } from '$lib/server/http/response';
-import { resolvePageContext } from '$lib/server/search';
+import type { Locale } from '#lib/i18n/index.ts';
+import { orchestrateChat } from '#lib/server/ai/chat-orchestrator.ts';
+import { guardAiRequest } from '#lib/server/ai/guard.ts';
+import { ChatbotRequestSchema } from '#lib/server/ai/validation.ts';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
+import { startDeadline } from '#lib/server/http/deadline.ts';
+import { isAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiValidationError } from '#lib/server/http/response.ts';
+import { resolvePageContext } from '#lib/server/search/index.ts';
 import type { RequestHandler } from './$types';
 
 // Node runtime + extended duration: an LLM stream routinely outlives the Vercel

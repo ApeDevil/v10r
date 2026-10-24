@@ -10,7 +10,7 @@
  * search API. The Handelsregister has no API; OpenCorporates' free API tier is closed
  * to general use.
  */
-import type { NameCheckTerritory } from '$lib/schemas/name-check';
+import type { NameCheckTerritory } from '#lib/schemas/name-check.ts';
 import type { NameSource } from '../name-source';
 
 const ALL: readonly NameCheckTerritory[] = ['de', 'eu', 'worldwide'];

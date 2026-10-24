@@ -10,7 +10,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
-import type { TranslationMap } from '$lib/i18n/translate';
+import type { TranslationMap } from '#lib/i18n/translate.ts';
 import { user } from '../auth/_better-auth';
 import { postFolder } from './post-folder';
 import { blogSchema } from './schema';

@@ -6,8 +6,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { TOOL_MANIFEST } from '$lib/types/ai-tools';
-import type { TurnTrace } from '$lib/types/turn-trace';
+import { TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
+import type { TurnTrace } from '#lib/types/turn-trace.ts';
 import { chatbotGrounded } from './fixtures/chatbot-grounded';
 import { deskbotPlan } from './fixtures/deskbot-plan';
 import { deskbotSentinel } from './fixtures/deskbot-sentinel';

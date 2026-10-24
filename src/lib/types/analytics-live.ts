@@ -1,4 +1,4 @@
-import type { ConsentTier } from '$lib/types/db-enums';
+import type { ConsentTier } from '#lib/types/db-enums.ts';
 /**
  * Shared types for the live admin activity feed. Importable from both server
  * and client (no runtime code).

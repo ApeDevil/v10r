@@ -6,15 +6,16 @@
  * manual path, then drives `advanceOperation` to a terminal state itself (no browser
  * polls it). Returns 1 on a successful reset, else 0 (the job's resultCount).
  */
-import { env } from '$env/dynamic/private';
+
 import {
 	advanceOperation,
 	ConflictError,
 	isTerminal,
 	type PublicBranchOperation,
 	startOperation,
-} from '$lib/server/dbops';
-import { neonConfigured } from '$lib/server/neon';
+} from '#lib/server/dbops/index.ts';
+import { neonConfigured } from '#lib/server/neon/index.ts';
+import { DBOPS_AUTO_REFRESH_ENABLED } from '$app/env/private';
 
 const DRIVE_TIMEOUT_MS = 90_000;
 const DRIVE_INTERVAL_MS = 1500;
@@ -22,7 +23,7 @@ const DRIVE_INTERVAL_MS = 1500;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function dbopsRefresh(): Promise<number> {
-	if (env.DBOPS_AUTO_REFRESH_ENABLED !== 'true') return 0;
+	if (DBOPS_AUTO_REFRESH_ENABLED !== 'true') return 0;
 	if (!neonConfigured()) return 0;
 
 	let started: { operation: PublicBranchOperation; replayed: boolean };

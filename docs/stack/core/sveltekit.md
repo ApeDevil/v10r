@@ -1,6 +1,8 @@
 # SvelteKit
 
-The full-stack meta-framework — file-based routing, SSR, deployment adapters. See the `sveltekit` skill for routing and load-function patterns.
+The full-stack meta-framework — file-based routing, SSR, deployment adapters. v10r runs SvelteKit 3.1; its config (adapter, `version`, `csp`, `preprocess`) is the `sveltekit({...})` call in `vite.config.ts` — there is no `svelte.config.js`. See the `sveltekit` skill for routing and load-function patterns.
+
+The 2 → 3 move, with every behaviour change it forced: [SVELTEKIT_3_MIGRATION_2026_10.md](../../../SVELTEKIT_3_MIGRATION_2026_10.md).
 
 ## Why was it chosen?
 
@@ -8,7 +10,8 @@ The full-stack meta-framework — file-based routing, SSR, deployment adapters. 
 - Rendering mode is per-route (SSR default, SSG, CSR), matching the showcase-as-documentation architecture.
 
 **Architecture features the project relies on:**
-- `$lib/server/` is blocked from client imports at build time — the load-bearing boundary for the multi-client core (see `docs/codebase-organization.md`).
+- `src/lib/server/**` and `*.server.ts` are blocked from client imports at build time, whether reached through `#lib/server/` or a relative path — the load-bearing boundary for the multi-client core (see `docs/codebase-organization.md`).
+- Node subpath imports (`#lib/*`, `#patterns/*` in package.json `imports`) replace the `$lib` alias, so app code, Vitest and bare-Bun scripts resolve the same specifiers. Specifiers carry the real extension (`#lib/server/db/index.ts`): Bun does not map `.js` to `.ts` through package imports.
 - Route groups `(name)` organize routes without affecting URLs.
 
 ## Known limitations

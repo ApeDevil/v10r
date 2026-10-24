@@ -1,13 +1,13 @@
-import { buildUnifiedModelUsage } from '$lib/server/ai/usage-summary';
-import { getModelUsage } from '$lib/server/db/ai/admin-queries';
+import { buildUnifiedModelUsage } from '#lib/server/ai/usage-summary.ts';
+import { getModelUsage } from '#lib/server/db/ai/admin-queries.ts';
 import {
 	getImageConversionFunnel,
 	getImageModelUsage,
 	getImageUsageKpis,
 	getImageVolumeByDay,
-} from '$lib/server/db/ai/image-metadata-queries';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
+} from '#lib/server/db/ai/image-metadata-queries.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { PageServerLoad } from './$types';
 
 /**

@@ -29,10 +29,10 @@
  * stays the thing to copy.
  */
 import * as v from 'valibot';
-import { readTextBounded } from '$lib/server/http/body';
-import type { Deadline } from '$lib/server/http/deadline';
-import { readServerTimingMetric } from '$lib/server/http/request-timing';
-import { retryWithin } from '$lib/server/resilience';
+import { readTextBounded } from '#lib/server/http/body.ts';
+import type { Deadline } from '#lib/server/http/deadline.ts';
+import { readServerTimingMetric } from '#lib/server/http/request-timing.ts';
+import { retryWithin } from '#lib/server/resilience/index.ts';
 import type {
 	OrderEvaluation,
 	OrderEvaluationRequest,
@@ -41,7 +41,7 @@ import type {
 	ServiceLiveness,
 	ServiceOperationName,
 	ServiceStatus,
-} from '$lib/showcases/external-service/types';
+} from '#lib/showcases/external-service/types.ts';
 import {
 	MAX_RESPONSE_BYTES,
 	MAX_SERVICE_MESSAGE_LENGTH,

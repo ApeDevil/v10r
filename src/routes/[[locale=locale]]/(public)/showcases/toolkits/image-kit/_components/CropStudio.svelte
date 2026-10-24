@@ -14,8 +14,8 @@
  * Not localized: every user-facing string below is a literal or a humanized
  * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
-import { Alert } from '$lib/components/composites';
-import { Badge, Button, Slider, Spinner, ToggleGroup } from '$lib/components/primitives';
+import { Alert } from '#lib/components/composites/index.ts';
+import { Badge, Button, Slider, Spinner, ToggleGroup } from '#lib/components/primitives/index.ts';
 import {
 	CROP_RATIO_VALUE,
 	CROP_RATIOS,
@@ -23,7 +23,7 @@ import {
 	type CropFrame,
 	type CropRatio,
 	largestRatioRect,
-} from '$lib/schemas/showcase/image-kit';
+} from '#lib/schemas/showcase/image-kit.ts';
 
 interface CropRect {
 	left: number;

@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { SearchResult } from '$lib/search/types';
+import type { SearchResult } from '#lib/search/types.ts';
 import type { CatalogSink } from './search-catalog';
 import { createSearchPatternLibraryTool } from './search-pattern-library';
 

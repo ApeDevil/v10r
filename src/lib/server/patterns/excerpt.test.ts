@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { PATTERNS } from '$lib/server/patterns';
-import { renderExcerpt, splitFragment } from '$patterns/excerpt';
+import { PATTERNS } from '#lib/server/patterns/index.ts';
+import { renderExcerpt, splitFragment } from '#patterns/excerpt.ts';
 
 const CODE = [
 	"import { x } from './x';",

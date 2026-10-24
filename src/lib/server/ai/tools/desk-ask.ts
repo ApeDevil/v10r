@@ -12,7 +12,7 @@
  */
 import { tool } from 'ai';
 import * as v from 'valibot';
-import { attributeDeskHits, retrieveDeskDocs } from '$lib/server/ai/deskbot-retrieval';
+import { attributeDeskHits, retrieveDeskDocs } from '#lib/server/ai/deskbot-retrieval.ts';
 import type { SurfacedDeskChunk } from '../profile/profile';
 import { cancelledBefore } from './cancelled';
 import { toolInputSchema } from './desk-mutation-inputs';

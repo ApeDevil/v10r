@@ -41,7 +41,7 @@ Weights: title=A (highest), summary=B, markdown body=C (lowest). The `cfg` value
 
 ## `localeRegconfig`
 
-`$lib/server/db/regconfig.ts` maps app locales to Postgres FTS configurations:
+`#lib/server/db/regconfig.ts` maps app locales to Postgres FTS configurations:
 
 | Locale | Regconfig |
 |--------|-----------|
@@ -54,7 +54,7 @@ The same `regconfig` MUST be used at write time (`to_tsvector`) and query time (
 
 ## Query: `searchPublishedRevisions`
 
-`src/lib/server/blog/queries.ts`, called by `$lib/server/search/adapters/blog.ts`.
+`src/lib/server/blog/queries.ts`, called by `#lib/server/search/adapters/blog.ts`.
 
 ```ts
 export async function searchPublishedRevisions(
@@ -87,7 +87,7 @@ Instead, non-printing sentinel characters are used as delimiters:
 
 These are passed as `StartSel`/`StopSel` options to `ts_headline`. They cannot appear in real content, so splitting on them is unambiguous.
 
-The blog adapter (`$lib/server/search/adapters/blog.ts`) strips the sentinels into a plain `snippet` string + `highlight: [number, number][]` character ranges. The palette and `/search` page iterate these ranges to wrap matched text in `<mark>` elements — no raw HTML injection.
+The blog adapter (`#lib/server/search/adapters/blog.ts`) strips the sentinels into a plain `snippet` string + `highlight: [number, number][]` character ranges. The palette and `/search` page iterate these ranges to wrap matched text in `<mark>` elements — no raw HTML injection.
 
 Headline options: `MaxFragments=1, MinWords=6, MaxWords=26, ShortWord=2`.
 

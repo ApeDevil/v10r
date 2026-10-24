@@ -26,7 +26,7 @@ export interface Rung {
  * Channel isolation + vision sims are driven by classes on the root; the actual
  * override rules live once, section-scoped, in ElevationSection (see that file).
  */
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Channels {
 	rim: boolean;

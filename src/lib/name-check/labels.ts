@@ -17,9 +17,9 @@ import type {
 	NameSimilarityBasis,
 	NameSourceId,
 	NameTerritoryRelevance,
-} from '$lib/name-check/report';
-import * as m from '$lib/paraglide/messages';
-import type { NameCheckCategory, NameCheckTerritory } from '$lib/schemas/name-check';
+} from '#lib/name-check/report.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { NameCheckCategory, NameCheckTerritory } from '#lib/schemas/name-check.ts';
 
 export const NAME_CHECK_COPY_KEYS = [
 	'section_signal',

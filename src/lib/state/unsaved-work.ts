@@ -35,7 +35,7 @@ type UnsavedWorkSource = (userId: string) => Promise<UnsavedWork>;
 
 const SOURCES: readonly UnsavedWorkSource[] = [
 	(userId) =>
-		import('$lib/components/desk/panels/spreadsheet/spreadsheet-unsaved-work').then((source) =>
+		import('#lib/components/desk/panels/spreadsheet/spreadsheet-unsaved-work.ts').then((source) =>
 			source.spreadsheetUnsavedWork(userId),
 		),
 ];

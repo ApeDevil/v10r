@@ -22,7 +22,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { getManifest } from '$lib/server/docs/manifest';
+import { getManifest } from '#lib/server/docs/manifest.ts';
 import { showcases } from '../showcases/catalog/registry';
 import { requiresAttribution } from './asset-rights';
 import { assetCredits, creditGroups, credits } from './registry';

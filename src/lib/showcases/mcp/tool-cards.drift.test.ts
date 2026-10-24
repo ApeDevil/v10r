@@ -5,7 +5,7 @@
  * the hosted list stands for both.
  */
 import { describe, expect, it } from 'vitest';
-import { PATTERN_TOOLS } from '$lib/server/mcp/patterns/tools';
+import { PATTERN_TOOLS } from '#lib/server/mcp/patterns/tools.ts';
 import { TOOL_CARDS } from './tool-cards';
 
 describe('tool card drift', () => {

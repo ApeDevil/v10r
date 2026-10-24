@@ -4,11 +4,11 @@
  */
 
 import { and, count, desc, eq, gte, max, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { userDiscordAccounts } from '$lib/server/db/schema/notifications/discord';
-import { type NotificationParams, notifications } from '$lib/server/db/schema/notifications/notifications';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
+import { db } from '#lib/server/db/index.ts';
+import { notificationDeliveries } from '#lib/server/db/schema/notifications/deliveries.ts';
+import { userDiscordAccounts } from '#lib/server/db/schema/notifications/discord.ts';
+import { type NotificationParams, notifications } from '#lib/server/db/schema/notifications/notifications.ts';
+import { userTelegramAccounts } from '#lib/server/db/schema/notifications/telegram.ts';
 
 // Per-user error codes excluded from channel health calculation
 const PER_USER_ERROR_CODES = ['50007', '403'];

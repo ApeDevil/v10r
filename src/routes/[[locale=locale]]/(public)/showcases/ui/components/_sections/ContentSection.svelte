@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Card, Carousel, CarouselItem, ConfirmDialog, LinkCard, Pagination } from '$lib/components';
+import { Button, Card, Carousel, CarouselItem, ConfirmDialog, LinkCard, Pagination } from '#lib/components/index.ts';
 import { DemoCard } from '../_components';
 
 let currentPage = $state(1);

@@ -1,13 +1,19 @@
 import * as v from 'valibot';
-import { startOperationSchema } from '$lib/schemas/dbops/operation';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { createId } from '$lib/server/db/id';
-import { ConflictError, listOperations, NotConfiguredError, RefusedError, startOperation } from '$lib/server/dbops';
-import { guardApiAdmin } from '$lib/server/http/guards';
-import { paginatedResponse, parseCursor, parseLimit } from '$lib/server/http/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
-import { TargetsError } from '$lib/server/neon';
+import { startOperationSchema } from '#lib/schemas/dbops/operation.ts';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { createId } from '#lib/server/db/id.ts';
+import {
+	ConflictError,
+	listOperations,
+	NotConfiguredError,
+	RefusedError,
+	startOperation,
+} from '#lib/server/dbops/index.ts';
+import { guardApiAdmin } from '#lib/server/http/guards.ts';
+import { paginatedResponse, parseCursor, parseLimit } from '#lib/server/http/pagination.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import { TargetsError } from '#lib/server/neon/index.ts';
 import type { RequestHandler } from './$types';
 
 const startLimiter = createLimiter('dbops-start', 5, '1 m');

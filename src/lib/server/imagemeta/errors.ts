@@ -1,4 +1,4 @@
-import { ServerError } from '$lib/server/errors';
+import { ServerError } from '#lib/server/errors/index.ts';
 
 export type ImageMetaErrorKind = 'validation' | 'forbidden' | 'not_found' | 'unsupported' | 'too_large';
 

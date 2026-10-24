@@ -7,7 +7,7 @@ import {
 	SLOW_CALLERS,
 	SLOW_MS,
 	STEP_TIMEOUT_MS,
-} from '$lib/server/showcases/velocity';
+} from '#lib/server/showcases/velocity/index.ts';
 import type { PageServerLoad } from './$types';
 
 /**

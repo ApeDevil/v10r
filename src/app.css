@@ -120,7 +120,7 @@
 	   Rung semantics: E1 raised chrome (cards, rail) · E2 floating/docked (menus, popovers,
 	   drawer, panels) · E3 true modals (dialog, palette) · E4 floating-over-floating (submenu
 	   over menu, select inside dialog). E0 = the page plane (--surface-0). Levels are RESOLVED
-	   relatively at runtime ($lib/styles/elevation.ts — each surface = parent + 1) and stamped as
+	   relatively at runtime (#lib/styles/elevation.ts — each surface = parent + 1) and stamped as
 	   a clamped data-elevation; the tokens below are the appearance for each resolved rung.
 
 	   (1) FILL (--eN-bg) — climbs monotonically to the tonal ceiling at E4 (pure white light /

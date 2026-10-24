@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/private';
+import { RESEND_API_KEY, RESEND_FROM_EMAIL } from '$app/env/private';
 import type { DeliveryChannel, DeliveryPayload, DeliveryResult } from './types';
 
 /**
@@ -45,8 +45,8 @@ function buildHtml(subject: string, body: string): string {
 
 export class EmailChannel implements DeliveryChannel {
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
-		const apiKey = env.RESEND_API_KEY;
-		const fromEmail = env.RESEND_FROM_EMAIL ?? 'notifications@example.com';
+		const apiKey = RESEND_API_KEY;
+		const fromEmail = RESEND_FROM_EMAIL ?? 'notifications@example.com';
 
 		if (!apiKey) {
 			return {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { REGISTRY } from '$lib/server/patterns';
+import { REGISTRY } from '#lib/server/patterns/index.ts';
 import { handleToolCall, TOOLS } from '../../../../../mcp/tools.ts';
 import devQueries from '../../../../../pattern-library/bench/dev-queries.json';
 import { EXCERPT_ALLOWLIST } from './excerpts';

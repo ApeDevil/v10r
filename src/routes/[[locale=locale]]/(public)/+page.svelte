@@ -1,14 +1,14 @@
 <script lang="ts">
+import { Divider, DropdownMenu } from '#lib/components/index.ts';
+import { LogoHero } from '#lib/components/primitives/index.ts';
+import { cookieMaxAge, cookieName, type Locale, locales, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { showcases } from '#lib/showcases/catalog/registry.ts';
+import { getStyle } from '#lib/state/style.svelte.ts';
+import { getTheme } from '#lib/state/theme.svelte.ts';
+import { setCookie } from '#lib/utils/cookies.ts';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { Divider, DropdownMenu } from '$lib/components';
-import { LogoHero } from '$lib/components/primitives';
-import { cookieMaxAge, cookieName, type Locale, locales, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { showcases } from '$lib/showcases/catalog/registry';
-import { getStyle } from '$lib/state/style.svelte';
-import { getTheme } from '$lib/state/theme.svelte';
-import { setCookie } from '$lib/utils/cookies';
 import { fadeIn } from './_components/fadeIn';
 import InstancesSection from './_components/InstancesSection.svelte';
 
@@ -47,7 +47,7 @@ function localeLabel(locale: string): string {
 async function switchLocale(locale: Locale) {
 	if (locale === currentLocale) return;
 	setCookie(cookieName, locale, { maxAge: cookieMaxAge });
-	await goto(localizeHref(currentHref, { locale }), { invalidateAll: true });
+	await goto(localizeHref(currentHref, { locale }), { refreshAll: true });
 }
 
 const localeItems = $derived(

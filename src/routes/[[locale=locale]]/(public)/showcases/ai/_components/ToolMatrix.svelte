@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Badge } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { buildToolCards, toolCounts } from '$lib/showcases/ai/topology';
-import type { AiSurface } from '$lib/types/db-enums';
+import { Badge } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { buildToolCards, toolCounts } from '#lib/showcases/ai/topology.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 
 // Manifest-derived, never hand-copied: rows come from TOOL_MANIFEST via
 // buildToolCards(), so a renamed tool updates this page in the same commit.

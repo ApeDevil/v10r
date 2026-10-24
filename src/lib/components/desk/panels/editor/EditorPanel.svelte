@@ -1,7 +1,8 @@
 <script lang="ts">
 import { onDestroy, untrack } from 'svelte';
-import { apiFetch } from '$lib/api';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { apiFetch } from '#lib/api.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { fileIdOfPanel } from '#lib/components/desk/file-panel.ts';
 import {
 	findLeafWithPanel,
 	getDeskBus,
@@ -9,12 +10,11 @@ import {
 	getPanelMenus,
 	registerPanelContext,
 	updatePanelContext,
-} from '$lib/components/desk';
-import { fileIdOfPanel } from '$lib/components/desk/file-panel';
-import PanelEmptyState from '$lib/components/desk/PanelEmptyState.svelte';
-import { Button, Spinner } from '$lib/components/primitives';
-import { isLocale, localizeHref } from '$lib/i18n';
-import type { PostStatus } from '$lib/types/db-enums';
+} from '#lib/components/desk/index.ts';
+import PanelEmptyState from '#lib/components/desk/PanelEmptyState.svelte';
+import { Button, Spinner } from '#lib/components/primitives/index.ts';
+import { isLocale, localizeHref } from '#lib/i18n/index.ts';
+import type { PostStatus } from '#lib/types/db-enums.ts';
 import MarkdownSource from './MarkdownSource.svelte';
 import MetadataDrawer from './MetadataDrawer.svelte';
 import PublishConfirmStrip from './PublishConfirmStrip.svelte';

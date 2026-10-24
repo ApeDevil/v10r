@@ -1,6 +1,6 @@
 import * as v from 'valibot';
-import { parseCellRef } from '$lib/desk/formula';
-import { followAiContextChange } from '$lib/server/ai/deskbot-retrieval';
+import { parseCellRef } from '#lib/desk/formula.ts';
+import { followAiContextChange } from '#lib/server/ai/deskbot-retrieval.ts';
 import {
 	deleteFile,
 	duplicateSpreadsheetFile,
@@ -8,11 +8,11 @@ import {
 	renameFile,
 	toggleFileAiContext,
 	updateSpreadsheetByFileId,
-} from '$lib/server/db/desk/mutations';
-import { getFile, getMarkdownByFileId, getSpreadsheetByFileId } from '$lib/server/db/desk/queries';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
+} from '#lib/server/db/desk/mutations.ts';
+import { getFile, getMarkdownByFileId, getSpreadsheetByFileId } from '#lib/server/db/desk/queries.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 /** Constrained meta value — allows primitives and shallow objects, capped by JSON size. */

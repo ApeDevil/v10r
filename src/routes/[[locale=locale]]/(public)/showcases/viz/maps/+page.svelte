@@ -1,11 +1,11 @@
 <script lang="ts">
 import type { Component } from 'svelte';
 import { onMount } from 'svelte';
-import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
-import { GeoMap, MapMarker, MapPopup } from '$lib/components/viz';
-import { getVizPalette, toRgba, vizColor } from '$lib/components/viz/_shared/theme-bridge';
-import * as m from '$lib/paraglide/messages';
+import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/table/index.ts';
+import { getVizPalette, toRgba, vizColor } from '#lib/components/viz/_shared/theme-bridge.ts';
+import { GeoMap, MapMarker, MapPopup } from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [
@@ -267,7 +267,7 @@ const choroplethRegions = [
 ${"<"}script>
   import { GeoJSONSource, FillLayer, LineLayer,
     FeatureState, Popup } from 'svelte-maplibre-gl';
-  import { getCssVar, toRgba } from '$lib/components/viz/_shared/theme-bridge';
+  import { getCssVar, toRgba } from '#lib/components/viz/_shared/theme-bridge.ts';
 
   // A token, read at mount — as rgba(), because MapLibre does not parse oklch().
   const primary = toRgba(getCssVar('color-primary'));

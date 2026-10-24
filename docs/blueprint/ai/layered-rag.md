@@ -242,7 +242,7 @@ Every RAG graph read in `src/lib/server/graph/retrieval/queries.ts` is scoped `W
 | `deleteDocumentGraph(documentId, ownerId)` | One document's nodes, owner-scoped. |
 | `deleteUserGraph(ownerId)` | All of a user's nodes. |
 
-User deletion (`$lib/server/privacy` `deleteUserData`) sweeps the user's Neo4j nodes via `deleteUserGraph`. The Postgres CASCADE erases relational rows; Neo4j has no foreign keys, so this sweep is the graph-side erasure. See [../../stack/capabilities/gdpr.md](../../stack/capabilities/gdpr.md).
+User deletion (`#lib/server/privacy` `deleteUserData`) sweeps the user's Neo4j nodes via `deleteUserGraph`. The Postgres CASCADE erases relational rows; Neo4j has no foreign keys, so this sweep is the graph-side erasure. See [../../stack/capabilities/gdpr.md](../../stack/capabilities/gdpr.md).
 
 ### Ingestion (`db:ingest-docs`)
 
@@ -255,7 +255,7 @@ podman exec v10r bun run db:ingest-docs
 (Or `vr ref`, which chains this after the MCP registry/excerpt-snapshot steps — see
 [dev-cli.md](../../stack/ops/dev-cli.md).)
 
-- Hand-rolls its own Neon pool from `process.env.NEON_DATABASE_URL_PROD` (the app's `retrieval` modules import `$lib`/`$env` and can't run under bare Bun), then reads the **saved Google connection** through the alias-free `db/ai/provider-connections.ts` + `ai/connections.ts` leaves, decrypting with `process.env.ENCRYPTION_KEY` — the same reading the app uses. Google disabled, keyless or undecryptable → secret-free message, exit 1, corpus untouched. Reuses the Vite-free `planChunks`.
+- Hand-rolls its own Neon pool from `process.env.NEON_DATABASE_URL_PROD` (the app's `retrieval` modules import `$app/env/private` and can't run under bare Bun), then reads the **saved Google connection** through the alias-free `db/ai/provider-connections.ts` + `ai/connections.ts` leaves, decrypting with `process.env.ENCRYPTION_KEY` — the same reading the app uses. Google disabled, keyless or undecryptable → secret-free message, exit 1, corpus untouched. Reuses the Vite-free `planChunks`.
 - Enumerates `docs/**/*.md`, importing the blocklist + canonical-path derivation (`isBlocked`, `parseFrontmatter`, `slugify`, `deriveTitle`) from the Vite-free SSOT `src/lib/server/docs/doc-filter.ts` — the same module the `/docs` manifest imports, so there is no manual sync. Only `RAG_ONLY_BLOCK` (docs rendered in `/docs` but withheld from the chatbot) is ingest-local.
 - Idempotent: content-hash skip, soft-delete + re-insert on change, soft-delete-not-seen for removed files.
 - Writes the corpus map (`writeProjectMap` → `retrieval.corpus_map`, upsert on `collection_id`) from the manifest — deterministic, no LLM, no embedding.

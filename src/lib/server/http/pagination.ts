@@ -10,8 +10,6 @@
  *   Response: { items: T[], has_more: boolean, cursor?: string }
  */
 
-import { json } from '@sveltejs/kit';
-
 // Offset-based pagination
 
 const DEFAULT_PAGE_SIZE = 50;
@@ -32,7 +30,7 @@ export function parsePagination(url: URL, defaultPageSize = DEFAULT_PAGE_SIZE): 
 
 /** Return a standardized paginated JSON response. */
 export function apiPaginated<T>(items: T[], total: number, params: PaginationParams) {
-	return json({
+	return Response.json({
 		data: {
 			items,
 			pagination: {

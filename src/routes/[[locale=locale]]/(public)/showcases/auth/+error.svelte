@@ -1,9 +1,9 @@
 <script lang="ts">
+import { ErrorDisplay } from '#lib/components/composites/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import { ErrorDisplay } from '$lib/components/composites';
-import { Button } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 
 let heading = $state<HTMLHeadingElement | null>(null);
 

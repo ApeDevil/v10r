@@ -1,12 +1,18 @@
 import { fail } from '@sveltejs/kit';
 import { message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { startOperationSchema } from '$lib/schemas/dbops/operation';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { createId } from '$lib/server/db/id';
-import { ConflictError, listOperations, NotConfiguredError, RefusedError, startOperation } from '$lib/server/dbops';
-import { requireAdmin } from '$lib/server/http/guards';
-import { fetchBranchStatus, neonConfigured, TargetsError } from '$lib/server/neon';
+import { startOperationSchema } from '#lib/schemas/dbops/operation.ts';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { createId } from '#lib/server/db/id.ts';
+import {
+	ConflictError,
+	listOperations,
+	NotConfiguredError,
+	RefusedError,
+	startOperation,
+} from '#lib/server/dbops/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { fetchBranchStatus, neonConfigured, TargetsError } from '#lib/server/neon/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ depends, locals }) => {

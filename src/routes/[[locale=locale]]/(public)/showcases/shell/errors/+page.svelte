@@ -1,8 +1,8 @@
 <script lang="ts">
-import { goto } from '$app/navigation';
-import { BoundaryFallback, NavSection } from '$lib/components/composites';
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { BoundaryFallback, NavSection } from '#lib/components/composites/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import { followHref } from '#lib/nav/follow.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 const sections = $derived([
 	{ id: 'shell-errors-boundary', label: m.showcase_shell_errors_section_boundary() },
@@ -122,19 +122,19 @@ function handleReset() {
 		<div class="route-links">
 			<p class="route-links-label">{m.showcase_shell_errors_trigger_label()}</p>
 			<div class="button-group">
-				<Button variant="secondary" size="sm" onclick={() => goto('/this-does-not-exist')}>
+				<Button variant="secondary" size="sm" onclick={() => followHref('/this-does-not-exist')}>
 					<span class="i-lucide-compass mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
 					{m.showcase_shell_errors_btn_root404()}
 				</Button>
-				<Button variant="secondary" size="sm" onclick={() => goto('/account/nonexistent')}>
+				<Button variant="secondary" size="sm" onclick={() => followHref('/account/nonexistent')}>
 					<span class="i-lucide-layout-dashboard mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
 					{m.showcase_shell_errors_btn_account404()}
 				</Button>
-				<Button variant="secondary" size="sm" onclick={() => goto('/auth/nonexistent')}>
+				<Button variant="secondary" size="sm" onclick={() => followHref('/auth/nonexistent')}>
 					<span class="i-lucide-log-in mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
 					{m.showcase_shell_errors_btn_auth404()}
 				</Button>
-				<Button variant="secondary" size="sm" onclick={() => goto('/showcases/nonexistent')}>
+				<Button variant="secondary" size="sm" onclick={() => followHref('/showcases/nonexistent')}>
 					<span class="i-lucide-lightbulb mr-2 h-3.5 w-3.5" aria-hidden="true"></span>
 					{m.showcase_shell_errors_btn_showcase404()}
 				</Button>

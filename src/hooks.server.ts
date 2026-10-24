@@ -1,9 +1,9 @@
-import { error, type Handle, type HandleServerError, type RequestEvent } from '@sveltejs/kit';
-import { sequence } from '@sveltejs/kit/hooks';
+import { error, type RequestEvent } from '@sveltejs/kit';
+import { type Handle, sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { building } from '$app/environment';
-import { cookieMaxAge, locales, localizeHref, cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
-import { paraglideMiddleware } from '$lib/paraglide/server';
+import { cookieMaxAge, locales, localizeHref, cookieName as PARAGLIDE_LOCALE_COOKIE } from '#lib/i18n/index.ts';
+import { paraglideMiddleware } from '#lib/paraglide/server.js';
+import { authDecisionResponse } from '#lib/server/abuse/decision.adapter.ts';
 import {
 	checkEmailRateLimit,
 	denied,
@@ -11,13 +11,11 @@ import {
 	normalizeIpKey,
 	recordEmailSend,
 	verifyAltcha,
-} from '$lib/server/abuse';
-import { authDecisionResponse } from '$lib/server/abuse/decision.adapter';
-import { analyticsCollector } from '$lib/server/analytics/collector.hook';
-import { CONSENT_COOKIE } from '$lib/server/analytics/config';
-import { parseConsentTier } from '$lib/server/analytics/consent';
-import { auth } from '$lib/server/auth';
-import { isAdminUserId, logAdminConfig } from '$lib/server/auth/admin-ids';
+} from '#lib/server/abuse/index.ts';
+import { analyticsCollector } from '#lib/server/analytics/collector.hook.ts';
+import { CONSENT_COOKIE } from '#lib/server/analytics/config.ts';
+import { parseConsentTier } from '#lib/server/analytics/consent.ts';
+import { isAdminUserId, logAdminConfig } from '#lib/server/auth/admin-ids.ts';
 import {
 	CALLBACK_RATE_LIMIT_MAX,
 	CALLBACK_RATE_LIMIT_WINDOW,
@@ -25,27 +23,30 @@ import {
 	RATE_LIMIT_WINDOW,
 	STEPUP_VERIFY_RATE_LIMIT_MAX,
 	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
-} from '$lib/server/auth/config';
-import { listActiveGrantKinds } from '$lib/server/auth/grants';
-import { isSessionRevoked } from '$lib/server/auth/revocation';
-import { readRequestSession } from '$lib/server/auth/session.adapter';
-import { twoFactorVerifyLimitKey } from '$lib/server/auth/step-up';
-import { REQUEST_QUERY_CEILING } from '$lib/server/db/query-budget';
-import { startQueryCensus } from '$lib/server/db/query-census';
+} from '#lib/server/auth/config.ts';
+import { listActiveGrantKinds } from '#lib/server/auth/grants.ts';
+import { auth } from '#lib/server/auth/index.ts';
+import { isSessionRevoked } from '#lib/server/auth/revocation.ts';
+import { readRequestSession } from '#lib/server/auth/session.adapter.ts';
+import { twoFactorVerifyLimitKey } from '#lib/server/auth/step-up.ts';
+import { REQUEST_QUERY_CEILING } from '#lib/server/db/query-budget.ts';
+import { startQueryCensus } from '#lib/server/db/query-census.ts';
 // The agent-facing `.md` layer over /docs. Lives in its own
 // module so its tests never import this file's heavy graph (schedulers, auth).
-import { docsMarkdown } from '$lib/server/docs/markdown.hook';
-import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '$lib/server/http/body';
-import { startDeadline } from '$lib/server/http/deadline';
-import { readsGrants } from '$lib/server/http/guards';
-import { createLimiter, isDocumentRequest } from '$lib/server/http/rate-limit';
-import { startRequestTiming, toServerTimingHeader } from '$lib/server/http/request-timing';
-import { apiError } from '$lib/server/http/response';
-import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '$lib/server/pairing/cookie';
-import { platform } from '$lib/server/platform';
-import { HSTS_MAX_AGE } from '$lib/server/security/config';
-import { isSameHost, needsCsrf } from '$lib/server/security/csrf';
-import { getCustomPaletteById, scopeStyleCookie } from '$lib/server/style';
+import { docsMarkdown } from '#lib/server/docs/markdown.hook.ts';
+import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '#lib/server/http/body.ts';
+import { startDeadline } from '#lib/server/http/deadline.ts';
+import { reportServerError } from '#lib/server/http/error-report.ts';
+import { readsGrants } from '#lib/server/http/guards.ts';
+import { createLimiter, isDocumentRequest } from '#lib/server/http/rate-limit.ts';
+import { startRequestTiming, toServerTimingHeader } from '#lib/server/http/request-timing.ts';
+import { apiError } from '#lib/server/http/response.ts';
+import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '#lib/server/pairing/cookie.ts';
+import { platform } from '#lib/server/platform/index.ts';
+import { HSTS_MAX_AGE } from '#lib/server/security/config.ts';
+import { isSameHost, needsCsrf } from '#lib/server/security/csrf.ts';
+import { getCustomPaletteById, scopeStyleCookie } from '#lib/server/style/index.ts';
+import { deriveAccentTokens } from '#lib/styles/random/accent.ts';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -53,14 +54,14 @@ import {
 	STYLE_COOKIE_NAME,
 	STYLE_COOKIE_OPTIONS,
 	serializeStyleCookie,
-} from '$lib/styles/random';
-import { deriveAccentTokens } from '$lib/styles/random/accent';
-import { safeEntries } from '$lib/styles/random/palette-sanitize';
-import { getRadius } from '$lib/styles/random/radius-registry';
-import { tokenToCssVar } from '$lib/styles/random/token-vars';
-import type { PaletteId, ResolvedStyle } from '$lib/styles/random/types';
-import { getTypography } from '$lib/styles/random/typography-registry';
-import { sanitizeInternalPath } from '$lib/utils/safe-path';
+} from '#lib/styles/random/index.ts';
+import { safeEntries } from '#lib/styles/random/palette-sanitize.ts';
+import { getRadius } from '#lib/styles/random/radius-registry.ts';
+import { tokenToCssVar } from '#lib/styles/random/token-vars.ts';
+import type { PaletteId, ResolvedStyle } from '#lib/styles/random/types.ts';
+import { getTypography } from '#lib/styles/random/typography-registry.ts';
+import { sanitizeInternalPath } from '#lib/utils/safe-path.ts';
+import { building } from '$app/env';
 
 // Both schedulers are `setInterval` loops that only ever arm on a persistent
 // platform — on Vercel `platform.persistent` is false and they do nothing. Left
@@ -69,8 +70,8 @@ import { sanitizeInternalPath } from '$lib/utils/safe-path';
 // into Lambda init for EVERY page render. Behind a gated dynamic import Rollup
 // splits them into their own chunk, so serverless cold starts never load them.
 if (platform.persistent) {
-	await import('$lib/server/jobs/scheduler');
-	await import('$lib/server/jobs/delivery-scheduler');
+	await import('#lib/server/jobs/scheduler.ts');
+	await import('#lib/server/jobs/delivery-scheduler.ts');
 }
 
 logAdminConfig();
@@ -398,12 +399,12 @@ const stripBaseLocalePrefix: Handle = ({ event, resolve }) => {
  * i18n — Paraglide locale detection + HTML lang attribute + style attrs
  *
  * Stamps event.locals.locale (canonical adapter handoff so domain code never
- * imports from $lib/paraglide). Persists URL-resolved locale to the
+ * imports from #lib/paraglide). Persists URL-resolved locale to the
  * PARAGLIDE_LOCALE cookie when it diverges, so later non-prefixed requests
  * resolve consistently (Paraglide v2 does not auto-write on URL resolution).
  */
 const i18n: Handle = ({ event, resolve }) =>
-	paraglideMiddleware(event.request, ({ request, locale }) => {
+	paraglideMiddleware(event.request, ({ locale }) => {
 		const safeLocale = (ALLOWED_LOCALES.has(locale) ? locale : 'en') as App.Locals['locale'];
 		event.locals.locale = safeLocale;
 		// Skip Set-Cookie when the resolved locale equals baseLocale AND no cookie
@@ -420,7 +421,10 @@ const i18n: Handle = ({ event, resolve }) =>
 				maxAge: cookieMaxAge,
 			});
 		}
-		event.request = request;
+		// The callback's `request` carries the de-localized URL (`/de/blog` → `/blog`), which only
+		// matters to apps that route on it. Locale is a route segment here (`[[locale=locale]]`), so
+		// routing has already matched, and `event.request` (read-only since SvelteKit 3) keeps the
+		// URL the client sent. Nothing downstream reads its path; the MCP adapter reads its origin.
 
 		// All per-response derivations stay OUT of the per-chunk callback: computing
 		// the custom-palette <style> block there (two culori-backed
@@ -691,7 +695,7 @@ const sessionPopulate: Handle = async ({ event, resolve }) => {
 
 /**
  * CSRF protection — defense in depth on mutating API calls. Predicates
- *    (needsCsrf / isSameHost / exempt set) live in $lib/server/security/csrf
+ *    (needsCsrf / isSameHost / exempt set) live in #lib/server/security/csrf
  *    where they are unit-tested; this handler just wires them.
  *
  *    Both rejections answer `{ error: { code, message } }` like every other
@@ -788,24 +792,4 @@ export const handle = sequence(
 	analyticsCollector,
 );
 
-export const handleError: HandleServerError = ({ error, event, status, message }) => {
-	// 404s from unknown routes — no errorId needed
-	if (status === 404 && event.route.id === null) {
-		return { message: 'Page not found' };
-	}
-
-	const errorId = crypto.randomUUID();
-
-	console.error(
-		JSON.stringify({
-			errorId,
-			status,
-			path: event.url.pathname,
-			route: event.route.id,
-			message: error instanceof Error ? error.message : String(error),
-			stack: error instanceof Error ? error.stack : undefined,
-		}),
-	);
-
-	return { message, errorId };
-};
+export const handleError = reportServerError;

@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit';
-import { ipLimitKey } from '$lib/server/abuse';
-import { classifyCacheError } from '$lib/server/cache/errors';
-import { setString, slideTtl } from '$lib/server/showcases/cache/mutations';
-import { checkRateLimit, getTtlSnapshot, listShowcaseEntries } from '$lib/server/showcases/cache/queries';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { classifyCacheError } from '#lib/server/cache/errors.ts';
+import { setString, slideTtl } from '#lib/server/showcases/cache/mutations.ts';
+import { checkRateLimit, getTtlSnapshot, listShowcaseEntries } from '#lib/server/showcases/cache/queries.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

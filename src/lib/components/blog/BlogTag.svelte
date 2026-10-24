@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Tag } from '$lib/components/primitives';
+import { Tag } from '#lib/components/primitives/index.ts';
 
 interface Props {
 	tag: { slug: string; name: string; icon?: string | null; color?: number | null; glyph?: string | null };

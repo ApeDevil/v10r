@@ -15,9 +15,9 @@ import type {
 	NameSourceId,
 	TrademarkNameMatch,
 	WebNameMatch,
-} from '$lib/name-check/report';
-import type { NameCheckTerritory } from '$lib/schemas/name-check';
-import type { Deadline } from '$lib/server/http/deadline';
+} from '#lib/name-check/report.ts';
+import type { NameCheckTerritory } from '#lib/schemas/name-check.ts';
+import type { Deadline } from '#lib/server/http/deadline.ts';
 import type { NameCheckQuery } from './query';
 
 export interface EuipoCredentials {

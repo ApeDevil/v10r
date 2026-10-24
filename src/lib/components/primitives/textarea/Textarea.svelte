@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { HTMLTextareaAttributes } from 'svelte/elements';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props extends Omit<HTMLTextareaAttributes, 'value'> {
 	value?: string;

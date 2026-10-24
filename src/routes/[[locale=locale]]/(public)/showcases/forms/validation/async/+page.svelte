@@ -1,11 +1,11 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { Alert, Card, FormField } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { asyncSchema } from '$lib/schemas/showcase/validation';
+import { Alert, Card, FormField } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { asyncSchema } from '#lib/schemas/showcase/validation.ts';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

@@ -5,8 +5,8 @@
  */
 
 import matter from 'gray-matter';
-import { isLocale, type Locale } from '$lib/i18n/runtime';
-import { SLUG_PATTERN } from '$lib/server/schemas';
+import { isLocale, type Locale } from '#lib/i18n/runtime.ts';
+import { SLUG_PATTERN } from '#lib/server/schemas/index.ts';
 import type { FrontmatterMeta } from './types';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

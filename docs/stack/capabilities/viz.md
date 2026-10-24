@@ -46,7 +46,7 @@ Shared components in `_components/`:
 - `VizDemoCard` — wraps each demo with visualization, data table, and code tabs
 - `DataControls` — dataset and animation toggles used by the charts page
 
-The `theme-bridge` utility (`$lib/components/viz/_shared/theme-bridge`) reads CSS custom properties at runtime to derive the visualization color palette from the app's design tokens.
+The `theme-bridge` utility (`#lib/components/viz/_shared/theme-bridge`) reads CSS custom properties at runtime to derive the visualization color palette from the app's design tokens.
 
 ## Known limitations
 

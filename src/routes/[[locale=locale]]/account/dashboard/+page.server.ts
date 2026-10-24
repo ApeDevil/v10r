@@ -1,11 +1,11 @@
 import { redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { localizeHref } from '$lib/i18n';
-import { passkeysEnabled } from '$lib/server/auth';
-import { publicUser } from '$lib/server/auth/public-user';
-import { db } from '$lib/server/db';
-import { account } from '$lib/server/db/schema/auth/_better-auth';
-import { countPasskeys } from '$lib/server/db/user';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { passkeysEnabled } from '#lib/server/auth/index.ts';
+import { publicUser } from '#lib/server/auth/public-user.ts';
+import { db } from '#lib/server/db/index.ts';
+import { account } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { countPasskeys } from '#lib/server/db/user/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

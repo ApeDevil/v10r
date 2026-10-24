@@ -1,6 +1,5 @@
 import { DeleteObjectsCommand, ListObjectsV2Command, PutObjectCommand } from '@aws-sdk/client-s3';
-import { SHOWCASE_PREFIX, StoreError } from '$lib/server/store';
-import { BUCKET, s3 } from '$lib/server/store/index';
+import { BUCKET, SHOWCASE_PREFIX, StoreError, s3 } from '#lib/server/store/index.ts';
 
 function requireS3() {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');

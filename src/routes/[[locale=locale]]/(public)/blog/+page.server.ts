@@ -1,5 +1,5 @@
-import { tc } from '$lib/i18n/translate';
-import { listPosts } from '$lib/server/blog';
+import { tc } from '#lib/i18n/translate.ts';
+import { listPosts } from '#lib/server/blog/index.ts';
 import type { PageServerLoad } from './$types';
 
 const PAGE_SIZE = 12;

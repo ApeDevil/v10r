@@ -1,7 +1,7 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeFile, makeFolder, makeUser } from '$lib/server/test/fixtures';
+import { makeFile, makeFolder, makeUser } from '#lib/server/test/fixtures.ts';
 import { user } from '../schema/auth/_better-auth';
 import { file } from '../schema/desk/file';
 import { folder } from '../schema/desk/folder';
@@ -11,8 +11,8 @@ import { spreadsheet } from '../schema/desk/spreadsheet';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -34,7 +34,7 @@ const {
 	createMarkdownFile,
 	updateMarkdownByFileId,
 } = await import('./mutations');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER_A = makeUser({ id: 'user-a' });
 const USER_B = makeUser({ id: 'user-b' });

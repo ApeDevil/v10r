@@ -3,11 +3,11 @@
  * Each data point is grouped by the consent tier that would enable it.
  */
 
-import { CONSENT_COOKIE, SESSION_COOKIE } from '$lib/server/analytics/config';
-import { parseConsentTier } from '$lib/server/analytics/consent';
-import { classifyUserAgent, geoFromHeaders } from '$lib/server/analytics/enrich';
-import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { maskIp } from '$lib/server/privacy';
+import { CONSENT_COOKIE, SESSION_COOKIE } from '#lib/server/analytics/config.ts';
+import { parseConsentTier } from '#lib/server/analytics/consent.ts';
+import { classifyUserAgent, geoFromHeaders } from '#lib/server/analytics/enrich.ts';
+import { deriveVisitorId } from '#lib/server/analytics/visitor.ts';
+import { maskIp } from '#lib/server/privacy/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ request, cookies, getClientAddress, locals, setHeaders }) => {

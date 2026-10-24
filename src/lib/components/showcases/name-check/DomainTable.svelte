@@ -4,10 +4,10 @@
  * this stays its own section: an available `.com` says nothing about a trade mark, and
  * a taken one is a signal to investigate, not a verdict.
  */
-import { Badge } from '$lib/components/primitives';
-import { formatDate } from '$lib/i18n';
-import type { NameCheckLabels } from '$lib/name-check/labels';
-import type { DomainNameMatch } from '$lib/name-check/report';
+import { Badge } from '#lib/components/primitives/index.ts';
+import { formatDate } from '#lib/i18n/index.ts';
+import type { NameCheckLabels } from '#lib/name-check/labels.ts';
+import type { DomainNameMatch } from '#lib/name-check/report.ts';
 
 interface Props {
 	domains: DomainNameMatch[];

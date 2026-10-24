@@ -12,10 +12,10 @@
  * dimension; this adapter and the query layer are unchanged.
  */
 
-import type { Locale } from '$lib/i18n';
-import { extractSnippet, scoreRecords, toResult } from '$lib/search/match';
-import type { SearchRecord, SearchResult } from '$lib/search/types';
-import { getManifest, getRawMarkdown } from '$lib/server/docs/manifest';
+import type { Locale } from '#lib/i18n/index.ts';
+import { extractSnippet, scoreRecords, toResult } from '#lib/search/match.ts';
+import type { SearchRecord, SearchResult } from '#lib/search/types.ts';
+import { getManifest, getRawMarkdown } from '#lib/server/docs/manifest.ts';
 
 const SECTION_LABEL: Record<string, string> = {
 	foundation: 'Foundation',

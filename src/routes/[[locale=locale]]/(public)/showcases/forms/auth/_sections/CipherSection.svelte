@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Button, GeometricMark, GridPattern, Spinner, TickMarks } from '$lib/components';
-import * as m from '$lib/paraglide/messages';
+import { Button, GeometricMark, GridPattern, Spinner, TickMarks } from '#lib/components/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 const simulate = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

@@ -7,7 +7,7 @@
  * shell stays small and `fetchAll` is independently callable from the dock
  * `ai:refresh_explorer` bus event without re-mounting the component.
  */
-import { apiFetch } from '$lib/api';
+import { apiFetch } from '#lib/api.ts';
 import {
 	adaptAssetFolders,
 	adaptBlogAssets,

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ScrollArea } from '$lib/components/primitives/scroll-area';
+import { ScrollArea } from '#lib/components/primitives/scroll-area/index.ts';
 import {
 	Table,
 	Body as TableBody,
@@ -7,8 +7,8 @@ import {
 	Header as TableHeader,
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
-} from '$lib/components/primitives/table';
-import { cn } from '$lib/utils/cn';
+} from '#lib/components/primitives/table/index.ts';
+import { cn } from '#lib/utils/cn.ts';
 import type { PropDef } from './types';
 
 interface Props {

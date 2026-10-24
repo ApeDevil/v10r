@@ -35,31 +35,12 @@ for (const key of [
 	delete process.env[key];
 }
 
-// Mock SvelteKit $env/dynamic/private — redirects to process.env
-// https://github.com/sveltejs/kit/issues/9564
-vi.mock('$env/dynamic/private', () => ({
-	env: new Proxy(
-		{},
-		{
-			get: (_target, prop: string) => process.env[prop],
-		},
-	),
-}));
+// SvelteKit's `$app/env/private` holds the values it validated at start-up; under test every
+// declared variable reads `process.env` live instead, so a case can set or delete one.
+vi.mock('$app/env/private', async () => (await import('./env-mock.ts')).envModule((name) => process.env[name]));
 
-// Mock SvelteKit $env/static/private — same redirect
-vi.mock(
-	'$env/static/private',
-	() =>
-		new Proxy(
-			{},
-			{
-				get: (_target, prop: string) => process.env[prop],
-			},
-		),
-);
-
-// Mock $app/environment
-vi.mock('$app/environment', () => ({
+// Mock $app/env
+vi.mock('$app/env', () => ({
 	building: false,
 	browser: false,
 	dev: true,

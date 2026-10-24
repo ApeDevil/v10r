@@ -1,7 +1,7 @@
 import { desc } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { jobExecution } from '$lib/server/db/schema/jobs';
-import { jobs } from '$lib/server/jobs';
+import { db } from '#lib/server/db/index.ts';
+import { jobExecution } from '#lib/server/db/schema/jobs/index.ts';
+import { jobs } from '#lib/server/jobs/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

@@ -6,7 +6,7 @@
  * each excerpt is trimmed to exactly that move. The full sources are one docs
  * click away.
  */
-import { highlight } from '$lib/server/shiki';
+import { highlight } from '#lib/server/shiki.ts';
 import type { PageServerLoad } from './$types';
 
 const KERNEL_RS = `#[wasm_bindgen]

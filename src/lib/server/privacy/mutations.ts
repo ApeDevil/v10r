@@ -44,16 +44,16 @@
 
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { eq } from 'drizzle-orm';
-import { getAdminUserIds } from '$lib/server/auth/admin-ids';
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { grant } from '$lib/server/db/schema/auth/grant';
-import { comment } from '$lib/server/db/schema/blog/comment';
-import { post } from '$lib/server/db/schema/blog/post';
-import { imageAsset } from '$lib/server/db/schema/showcase/image-metadata';
-import { deleteUserGraph } from '$lib/server/graph/retrieval/mutations';
-import { BUCKET, s3 } from '$lib/server/store';
-import { deleteImagemetaObject } from '$lib/server/store/image';
+import { getAdminUserIds } from '#lib/server/auth/admin-ids.ts';
+import { db } from '#lib/server/db/index.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { grant } from '#lib/server/db/schema/auth/grant.ts';
+import { comment } from '#lib/server/db/schema/blog/comment.ts';
+import { post } from '#lib/server/db/schema/blog/post.ts';
+import { imageAsset } from '#lib/server/db/schema/showcase/image-metadata.ts';
+import { deleteUserGraph } from '#lib/server/graph/retrieval/mutations.ts';
+import { deleteImagemetaObject } from '#lib/server/store/image.ts';
+import { BUCKET, s3 } from '#lib/server/store/index.ts';
 
 /**
  * Erasure refused: the user is the only configured admin AND owns rows that must be

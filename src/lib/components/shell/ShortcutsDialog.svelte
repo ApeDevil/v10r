@@ -1,10 +1,10 @@
 <script lang="ts">
-import { Kbd } from '$lib/components/primitives/kbd';
-import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
-import { layerStack } from '$lib/state/layer-stack.svelte';
-import { getModals } from '$lib/state/modals.svelte';
-import { cn } from '$lib/utils/cn';
-import { trapFocus } from '$lib/utils/focus-trap';
+import { Kbd } from '#lib/components/primitives/kbd/index.ts';
+import { formatShortcut, getShortcutsByCategory } from '#lib/shortcuts/index.ts';
+import { layerStack } from '#lib/state/layer-stack.svelte.ts';
+import { getModals } from '#lib/state/modals.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
+import { trapFocus } from '#lib/utils/focus-trap.ts';
 
 interface Props {
 	class?: string;

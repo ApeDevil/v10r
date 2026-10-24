@@ -1,8 +1,8 @@
-import { getUnreadCount } from '$lib/server/db/notifications/queries';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { encodeEvent, registerStream, subscribeUser, unregisterStream } from '$lib/server/notifications';
-import { SSE_HEARTBEAT_MS, SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW } from '$lib/server/notifications/config';
+import { getUnreadCount } from '#lib/server/db/notifications/queries.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { SSE_HEARTBEAT_MS, SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW } from '#lib/server/notifications/config.ts';
+import { encodeEvent, registerStream, subscribeUser, unregisterStream } from '#lib/server/notifications/index.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:stream', SSE_RATE_LIMIT_MAX, SSE_RATE_LIMIT_WINDOW);

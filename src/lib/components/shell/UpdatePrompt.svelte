@@ -14,10 +14,11 @@
  * over — this closes the multi-tab skew hole (tab A updates, tab B would keep
  * running old code against deleted caches).
  */
+
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { beforeNavigate } from '$app/navigation';
 import { updated } from '$app/state';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
 
 const IDLE_PROMPT_MS = 30 * 60 * 1000;
 
@@ -55,7 +56,9 @@ $effect(() => {
 // Tier 1 — ride the user's own navigation.
 beforeNavigate((nav) => {
 	if (!updated.current) return;
-	// Full-page loads and external leaves already fetch fresh assets.
+	// Full-page loads and external leaves already fetch fresh assets; a shallow navigation
+	// loads nothing, so it is no moment to swap the build.
+	if (nav.shallow) return;
 	if (!nav.to?.url || nav.willUnload || nav.type === 'leave') return;
 	registration?.waiting?.postMessage('SKIP_WAITING');
 	nav.cancel();

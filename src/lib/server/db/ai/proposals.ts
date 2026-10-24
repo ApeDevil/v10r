@@ -13,7 +13,7 @@
  * commit another step. Lease time is the DATABASE clock throughout.
  */
 import { and, asc, eq, gt, inArray, isNull, lt, sql } from 'drizzle-orm';
-import type { ProposalStepKind } from '$lib/types/db-enums';
+import type { ProposalStepKind } from '#lib/types/db-enums.ts';
 import { createId } from '../id';
 import { type DbHandle, db } from '../index';
 import { conversation } from '../schema/ai/conversation';

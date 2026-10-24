@@ -9,7 +9,7 @@
  * and ships every message of every locale into each route that renders a tool row
  * (+240 KB gzipped on `/desk` when it was written that way).
  */
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 
 const TOOL_LABELS: Record<string, () => string> = {
 	search_catalog: m.ai_tool_search_catalog,

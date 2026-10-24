@@ -2,8 +2,8 @@
  * Phone-side: clear the debug-owner cookie. Holder of the cookie is the actor.
  * Requires X-Requested-With for parity with other mutations.
  */
-import { apiError, apiNoContent } from '$lib/server/http/response';
-import { clearOwnerCookie } from '$lib/server/pairing';
+import { apiError, apiNoContent } from '#lib/server/http/response.ts';
+import { clearOwnerCookie } from '#lib/server/pairing/index.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ cookies, request }) => {

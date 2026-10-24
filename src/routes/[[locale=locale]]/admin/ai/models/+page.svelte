@@ -1,15 +1,15 @@
 <script lang="ts">
-import type { SubmitFunction } from '@sveltejs/kit';
+import QuotaPanel from '#lib/components/admin/ai/QuotaPanel.svelte';
+import { Alert, Card, ConfirmDialog, FormField } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Select, Spinner, Switch } from '#lib/components/primitives/index.ts';
+import { formatRelative } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { AUTOMATIC_DEFAULT } from '#lib/schemas/admin/ai-connections.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import type { SubmitFunction } from '$app/forms';
 import { enhance } from '$app/forms';
 import { page } from '$app/state';
-import QuotaPanel from '$lib/components/admin/ai/QuotaPanel.svelte';
-import { Alert, Card, ConfirmDialog, FormField } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Select, Spinner, Switch } from '$lib/components/primitives';
-import { formatRelative } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { AUTOMATIC_DEFAULT } from '$lib/schemas/admin/ai-connections';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 
@@ -147,18 +147,18 @@ function enhanceCard(provider: ProviderId) {
 			update,
 		}: {
 			result: { type: string; data?: Record<string, unknown> };
-			update: (opts?: { reset?: boolean; invalidateAll?: boolean }) => Promise<void>;
+			update: (opts?: { reset?: boolean; refreshAll?: boolean }) => Promise<void>;
 		}) => {
 			submitting = null;
 			if (result.type === 'failure') {
 				const message = (result.data?.message as string | undefined) || m.admin_action_failed_generic();
 				cardErrors[provider] = message;
 				toast.error(message);
-				return update({ reset: false, invalidateAll: false });
+				return update({ reset: false, refreshAll: false });
 			}
 			if (kind === 'test') {
 				if (result.type === 'success' && result.data?.test) testResults[provider] = result.data.test as TestView;
-				return update({ reset: false, invalidateAll: false });
+				return update({ reset: false, refreshAll: false });
 			}
 			if (result.type === 'success' && result.data?.message) toast.success(result.data.message as string);
 			return update();

@@ -12,8 +12,8 @@
  * rightful uploader's own confirm came back as a 409.
  */
 import { describe, expect, it } from 'vitest';
-import { SUBKEY_PURPOSES } from '$lib/server/security/subkey';
-import { signTicket } from '$lib/server/security/ticket';
+import { SUBKEY_PURPOSES } from '#lib/server/security/subkey.ts';
+import { signTicket } from '#lib/server/security/ticket.ts';
 import { StoreError } from '../errors';
 import { type UploadTicketClaims, verifyUploadTicket } from './mutations';
 

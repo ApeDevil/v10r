@@ -5,7 +5,7 @@
  * with Vitest. The reactive layer in desk-context.svelte.ts delegates to these.
  */
 
-import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES, CONTEXT_TOKEN_BUDGET } from '$lib/types/desk-context-limits';
+import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES, CONTEXT_TOKEN_BUDGET } from '#lib/types/desk-context-limits.ts';
 import type { ContextChip, ContextStatus, PanelContext } from './desk-context.state.svelte';
 
 export { CONTEXT_TOKEN_BUDGET };

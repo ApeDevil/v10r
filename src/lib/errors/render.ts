@@ -6,7 +6,7 @@
  * locale. Pure domain code never calls this — it throws codes; adapters render.
  */
 
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 import type { ErrorCode } from './codes';
 
 const RESOLVERS: Record<ErrorCode, () => string> = {

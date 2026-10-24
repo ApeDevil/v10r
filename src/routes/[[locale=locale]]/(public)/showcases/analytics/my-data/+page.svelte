@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives/button';
-import * as m from '$lib/paraglide/messages';
-import { getConsent } from '$lib/state/consent.svelte';
-import { getToast } from '$lib/state/toast.svelte';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getConsent } from '#lib/state/consent.svelte.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 
 let { data } = $props();
 

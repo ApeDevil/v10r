@@ -5,17 +5,17 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const mockGetFile = vi.fn();
 const mockGetSpreadsheet = vi.fn();
 const mockGetMarkdown = vi.fn();
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	getFile: mockGetFile,
 	getSpreadsheetByFileId: mockGetSpreadsheet,
 	getMarkdownByFileId: mockGetMarkdown,
 }));
-vi.mock('$lib/server/db/desk/mutations', () => ({}));
+vi.mock('#lib/server/db/desk/mutations.ts', () => ({}));
 
 const { validateProposedPlan, MAX_PLAN_STEPS } = await import('./plan-validation');
 

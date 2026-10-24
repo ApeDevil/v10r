@@ -19,7 +19,7 @@
  */
 import { untrack } from 'svelte';
 import type { SuperFormData } from 'sveltekit-superforms/client';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 import { createFormDraftStore, draftDiffers, type FormDraft } from './form-draft';
 
 /** The two parts of a `superForm()` result a draft needs. */

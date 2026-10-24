@@ -1,6 +1,6 @@
 ---
 title: "Side-effect-free component tree (barrels that tree-shake)"
-description: "Compiled Svelte components run code at module scope, so Rollup keeps every component a barrel re-exports. Declaring the component directory side-effect free…"
+description: "Compiled Svelte components run code at module scope, so the bundler keeps every component a barrel re-exports. Declaring the component directory side-effect…"
 category: "Runtime Velocity"
 ---
 
@@ -10,7 +10,7 @@ category: "Runtime Velocity"
 
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** medium — a module that relied on a side-effect import breaks silently; the gate test is the guard
 
-Compiled Svelte components run code at module scope, so Rollup keeps every component a barrel re-exports. Declaring the component directory side-effect free in the bundler makes an unused export droppable — and an import made for side effects alone silently vanishes, which a gate forbids.
+Compiled Svelte components run code at module scope, so the bundler keeps every component a barrel re-exports. Declaring the component directory side-effect free in the bundler makes an unused export droppable — and an import made for side effects alone silently vanishes, which a gate forbids.
 
 **When to use:** Use when a Svelte component library is consumed through barrel files and the shared or per-route bundle carries components the page never renders.
 
@@ -30,7 +30,7 @@ Compiled Svelte components run code at module scope, so Rollup keeps every compo
 
 ## Code
 
-- `vite.config.ts` — build.rollupOptions.treeshake.moduleSideEffects for src/lib/components/ ([GitHub](https://github.com/ApeDevil/v10r/blob/main/vite.config.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/vite.config.ts))
+- `vite.config.ts` — build.rolldownOptions.treeshake.moduleSideEffects rules for src/lib/components/ and Paraglide's compiled messages ([GitHub](https://github.com/ApeDevil/v10r/blob/main/vite.config.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/vite.config.ts))
 
 ## Tests
 
@@ -44,8 +44,9 @@ Compiled Svelte components run code at module scope, so Rollup keeps every compo
 
 ## Emulation notes
 
-- The cause is the compiler output, not the authoring: $.delegate(...) and template factories at module scope make every compiled .svelte file side-effecting in Rollup's eyes. One `import { Button } from '$lib/components'` shipped v10r's whole primitives layer — culori and bits-ui's select and menu included — to 197 of 199 routes.
-- Use a function for moduleSideEffects, `(id, external) => external || !COMPONENT_MODULE.test(id)`, so only the component directory is declared and dependencies keep their own sideEffects metadata.
+- The cause is the compiler output, not the authoring: $.delegate(...) and template factories at module scope make every compiled .svelte file side-effecting in the bundler's eyes. One `import { Button } from '#lib/components/index.ts'` shipped v10r's whole primitives layer — culori and bits-ui's select and menu included — to 197 of 199 routes.
+- Under Vite 8 (Rolldown) declare it as a rule list, `[{ test: COMPONENT_MODULE, external: false, sideEffects: false }]`. A function that returns `true` for everything else pins those modules as side-effectful, overriding their package.json `sideEffects` and Rolldown's own analysis; a module no rule matches stays unclassified and keeps both.
+- Rolldown assigns a module to a chunk by who imports it, not by which exports survive. Generated code reached through one barrel needs the same declaration: Paraglide's ~3,260 compiled message modules, re-exported by `messages.js`, all landed in one 215 KB (gz) chunk every route loaded until they were declared side-effect free (median route 420 -> 226 KB).
 - Measured (production build, gzip, full route chain): median route 296.7 -> 241.9 KB, heaviest 562.8 -> 521.5 KB. The shared baseline grew 3 KB because finer chunks lengthen the per-node preload lists in the generated app.js; that raise was reviewed and recorded, not absorbed.
 
 ## Depends on

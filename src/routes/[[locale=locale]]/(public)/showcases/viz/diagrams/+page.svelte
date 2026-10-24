@@ -1,9 +1,9 @@
 <script lang="ts">
 import type { Edge, Node } from '@xyflow/svelte';
-import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
-import { FlowDiagram, StateDiagram } from '$lib/components/viz';
-import * as m from '$lib/paraglide/messages';
+import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/table/index.ts';
+import { FlowDiagram, StateDiagram } from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [

@@ -1,7 +1,7 @@
 <script lang="ts">
+import { Button, Typography } from '#lib/components/primitives/index.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { enhance } from '$app/forms';
-import { Button, Typography } from '$lib/components/primitives';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data, form } = $props();
 

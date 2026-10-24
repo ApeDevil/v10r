@@ -4,12 +4,12 @@
  * the auth-gated retrieval endpoint `/api/retrieval/search`.
  */
 import * as v from 'valibot';
-import { type Locale, locales } from '$lib/i18n';
-import { ipLimitKey } from '$lib/server/abuse';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiOk, apiValidationError } from '$lib/server/http/response';
-import { searchContent } from '$lib/server/search';
+import { type Locale, locales } from '#lib/i18n/index.ts';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import { searchContent } from '#lib/server/search/index.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:search', 40, '10 s');

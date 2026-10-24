@@ -7,8 +7,8 @@
 
 import type { Snippet } from 'svelte';
 import type { HTMLAttributes } from 'svelte/elements';
-import { layout } from '$lib/styles/tokens';
-import { cn } from '$lib/utils/cn';
+import { layout } from '#lib/styles/tokens.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 type Width = 'content' | 'default' | 'wide';
 

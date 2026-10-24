@@ -1,9 +1,9 @@
 <script lang="ts">
-import { browser } from '$app/environment';
-import { Button } from '$lib/components/primitives/button';
-import { Switch } from '$lib/components/primitives/switch';
-import * as m from '$lib/paraglide/messages';
-import { type ConsentTier, getConsent } from '$lib/state/consent.svelte';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import { Switch } from '#lib/components/primitives/switch/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { type ConsentTier, getConsent } from '#lib/state/consent.svelte.ts';
+import { browser } from '$app/env';
 
 const consent = getConsent();
 

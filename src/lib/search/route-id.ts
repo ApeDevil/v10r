@@ -6,11 +6,11 @@
  * `[param]` segments. `normalizeRouteId` strips the noise to the locale-bare public path that
  * the search catalog is keyed on, and refuses dynamic routes (which would otherwise carry a
  * concrete slug/id). Pure + dependency-light so BOTH the client chip and the server resolver
- * (`$lib/server/search/page-context.ts`) share one normalization. See
+ * (`#lib/server/search/page-context.ts`) share one normalization. See
  * `docs/blueprint/ai/site-awareness.md`.
  */
-import { navItems } from '$lib/nav';
-import { showcases } from '$lib/showcases/catalog/registry';
+import { navItems } from '#lib/nav/index.ts';
+import { showcases } from '#lib/showcases/catalog/registry.ts';
 
 /**
  * `page.route.id` → locale-bare public path (`/showcases/forms`), or `null` when the route has

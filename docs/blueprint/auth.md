@@ -141,7 +141,7 @@ export type Auth = typeof auth;
 ```
 
 > **The cookie cache only works if its cookie is forwarded.** `sessionPopulate` calls
-> `getSession` through `readRequestSession` (`$lib/server/auth/session.adapter.ts`), which asks
+> `getSession` through `readRequestSession` (`#lib/server/auth/session.adapter.ts`), which asks
 > for `returnHeaders: true` and copies every `Set-Cookie` onto `event.cookies`. A bare
 > `auth.api.getSession()` discards the refreshed `session_data` cookie (and the `updateAge`
 > refresh of `session_token`), so every signed-in request after the first five minutes pays
@@ -210,10 +210,10 @@ export async function sendAuthEmail({ to, subject, magicLinkUrl, otpCode }: Auth
 ```typescript
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
-import { auth } from '$lib/server/auth';
+import { auth } from '#lib/server/auth/index.ts';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { building } from '$app/environment';
-import { authLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { building } from '$app/env';
+import { authLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 
 // Rate limiting (BEFORE auth - block brute force early)
 const rateLimitHandle = async ({ event, resolve }) => {
@@ -313,7 +313,7 @@ export async function load({ locals }) {
 
 ### The `publicUser()` projector
 
-Never return raw `locals.user` from a `load`. Better Auth's user object carries fields that should not cross the server→client boundary. `publicUser()` (`$lib/server/auth/public-user.ts`) is the **canonical client-safe shape**:
+Never return raw `locals.user` from a `load`. Better Auth's user object carries fields that should not cross the server→client boundary. `publicUser()` (`#lib/server/auth/public-user.ts`) is the **canonical client-safe shape**:
 
 ```typescript
 publicUser(locals.user) // → { id, email, name, image, emailVerified } | null
@@ -386,7 +386,7 @@ export const userProfile = pgTable('user_profile', {
 ```svelte
 <!-- src/routes/[[locale=locale]]/auth/login/+page.svelte -->
 <script lang="ts">
-  import { authClient, signIn } from '$lib/auth-client';
+  import { authClient, signIn } from '#lib/auth-client.ts';
   import { goto } from '$app/navigation';
 
   let email = $state('');
@@ -460,7 +460,7 @@ export const userProfile = pgTable('user_profile', {
 ```svelte
 <!-- src/routes/[[locale=locale]]/auth/verify/+page.svelte -->
 <script lang="ts">
-  import { authClient } from '$lib/auth-client';
+  import { authClient } from '#lib/auth-client.ts';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
 
@@ -565,17 +565,17 @@ export const userProfile = pgTable('user_profile', {
 
 ### Sign Out
 
-The user menu (`$lib/components/shell/UserMenu.svelte`) is the one interactive door. It does
+The user menu (`#lib/components/shell/UserMenu.svelte`) is the one interactive door. It does
 not call the auth client directly:
 
-1. **Drain** — `$lib/state/unsaved-work.ts` loads every unsaved-work source on demand and
+1. **Drain** — `#lib/state/unsaved-work.ts` loads every unsaved-work source on demand and
    gives pending saves up to `DRAIN_TIMEOUT_MS` to land. The server answers sign-out with
    `Clear-Site-Data: "cache", "cookies", "storage"`, which erases the spreadsheet drafts kept
    in localStorage, so they must be delivered first.
 2. **Confirm** — the sign-out `ConfirmDialog` names whatever is still unsaved ("Discard and
    sign out"); cancelling keeps the user signed in with their work. A count that grew
    between dialog and click re-asks (`signOutVerdict`).
-3. **Sign out** — `$lib/pwa/sign-out.ts` `signOutAndFlush(work)` drops this device's push
+3. **Sign out** — `#lib/pwa/sign-out.ts` `signOutAndFlush(work)` drops this device's push
    subscription, signs out, and only on success erases that user's draft slots
    (shared-device hygiene where a browser ignores the header) and flushes SW caches.
 
@@ -621,7 +621,7 @@ Partial UNIQUE on `(user_id, kind) WHERE status = 'pending'` — one pending req
 ### Domain Modules
 
 ```
-$lib/server/auth/
+#lib/server/auth/
   grants.ts           — grantCapability, revokeCapability, hasGrant,
                         listActiveGrantKinds, listPendingGrantNotifications,
                         acknowledgeGrantNotifications
@@ -630,7 +630,7 @@ $lib/server/auth/
 
 ### Per-Request Populate
 
-`hooks.server.ts` `sessionPopulate` sets `event.locals.grants: GrantKind[]` (single PK-indexed query) only where something reads it: `readsGrants()` in `$lib/server/http/guards.ts` admits `/api/blog/*`, the home of every `guardApiBlogAuthor` caller. Everywhere else the array is empty — the desk layout asks `hasGrant()` directly — and `guards.test.ts` fails if a grant reader appears outside the predicate. `App.Locals` has a `grants: GrantKind[]` field.
+`hooks.server.ts` `sessionPopulate` sets `event.locals.grants: GrantKind[]` (single PK-indexed query) only where something reads it: `readsGrants()` in `#lib/server/http/guards.ts` admits `/api/blog/*`, the home of every `guardApiBlogAuthor` caller. Everywhere else the array is empty — the desk layout asks `hasGrant()` directly — and `guards.test.ts` fails if a grant reader appears outside the predicate. `App.Locals` has a `grants: GrantKind[]` field.
 
 On grant/revoke: the mutation deletes all sessions for the affected user. Next sign-in re-populates grants.
 
@@ -651,10 +651,10 @@ Admin (env-pinned via `ADMIN_USER_ID`, a comma-separated list of admin user ids 
 
 ```typescript
 // src/lib/server/http/guards.ts (excerpt)
-export function requireAdmin(locals: App.Locals) {
-  const user = requireAuth(locals);
-  if (!isAdmin(user)) throw error(404, 'Not Found'); // 404, NOT 403
-  return user;
+export function requireAdmin(locals: App.Locals, returnTo?: string) {
+  const { user, session } = requireAuth(locals, returnTo);
+  if (!isAdmin(user)) error(404, 'Not Found'); // 404, NOT 403
+  return { user, session };
 }
 ```
 
@@ -696,7 +696,7 @@ DELETE /api/admin/users/[id]/grants/[kind]  — revoke capability
 ```typescript
 // src/routes/[[locale=locale]]/account/dashboard/+page.server.ts
 import { redirect } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
+import { auth } from '#lib/server/auth/index.ts';
 
 export async function load({ request }) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -716,7 +716,7 @@ export async function load({ request }) {
 ```typescript
 // Illustrative — the shipped guards are requireAuth/requireAdmin in src/lib/server/http/guards.ts
 import { redirect } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
+import { auth } from '#lib/server/auth/index.ts';
 import type { RequestEvent } from '@sveltejs/kit';
 
 export async function requireAuth(event: RequestEvent) {
@@ -735,7 +735,7 @@ export async function requireAuth(event: RequestEvent) {
 
 ```typescript
 // src/routes/[[locale=locale]]/account/settings/+page.server.ts
-import { requireAuth } from '$lib/server/auth/guard';
+import { requireAuth } from '#lib/server/auth/guard.ts';
 
 export async function load(event) {
   const { user } = await requireAuth(event);
@@ -750,7 +750,7 @@ export async function load(event) {
 <script lang="ts">
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { browser } from '$app/environment';
+  import { browser } from '$app/env';
 
   const user = $derived(page.data.user);
 
@@ -852,8 +852,8 @@ A mail outage can never block a security event from being recorded.
 
 Route `/account/security` (a Card link from `/account`):
 
-- **Passkeys** — list / add / rename / delete, **client-call-driven + `invalidateAll`**, not Superforms. Deliberate: matches the login/verify client-call precedent (the WebAuthn ceremony is a browser API call, not a form post).
-- **TOTP enroll** — `enable()` → `totpURI` + backup codes shown **once** → QR via `POST /api/account/two-factor/qr` (server-rendered with the existing `qrSvg()`) → `verifyTotp` confirm → `getSession({ disableCookieCache: true })` → `invalidateAll`.
+- **Passkeys** — list / add / rename / delete, **client-call-driven + `refreshAll`**, not Superforms. Deliberate: matches the login/verify client-call precedent (the WebAuthn ceremony is a browser API call, not a form post).
+- **TOTP enroll** — `enable()` → `totpURI` + backup codes shown **once** → QR via `POST /api/account/two-factor/qr` (server-rendered with the existing `qrSvg()`) → `verifyTotp` confirm → `getSession({ disableCookieCache: true })` → `refreshAll`.
 
 > **`enable()` is not idempotent** — re-calling rotates the secret. The UI locks the button to prevent an accidental re-roll.
 
@@ -861,7 +861,7 @@ A dismissable **enrollment nudge** (sessionStorage, shown when the user has 0 pa
 
 ### Step-up dialog
 
-Composite `$lib/components/composites/step-up-dialog`: TOTP-or-backup-code entry. Account-area actions (`revokeSession` on /account/security, `deleteAccount` on /account/settings) return `fail(403, { stepUpRequired })` when the user is enrolled and stale → the dialog opens → the form resubmits after a fresh verification.
+Composite `#lib/components/composites/step-up-dialog`: TOTP-or-backup-code entry. Account-area actions (`revokeSession` on /account/security, `deleteAccount` on /account/settings) return `fail(403, { stepUpRequired })` when the user is enrolled and stale → the dialog opens → the form resubmits after a fresh verification.
 
 ### Login surface
 
@@ -903,7 +903,7 @@ The session is resolved **inline in `authHandler`** because `sessionPopulate` ru
 >    ```typescript
 >    // In +server.ts
 >    if (!request.headers.get('x-requested-with')) {
->      return json({ error: 'Missing CSRF header' }, { status: 403 });
+>      return Response.json({ error: 'Missing CSRF header' }, { status: 403 });
 >    }
 >    ```
 >    Client must send: `fetch(url, { headers: { 'x-requested-with': 'fetch' } })`
@@ -915,7 +915,7 @@ The session is resolved **inline in `authHandler`** because `sessionPopulate` ru
 
 Better Auth's built-in `rateLimit` is **not used**. Auth paths are limited by an Upstash limiter wired in `hooks.server.ts`.
 
-- `authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)` — 5 per 60s (`createLimiter` from `$lib/server/http/rate-limit`).
+- `authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)` — 5 per 60s (`createLimiter` from `#lib/server/http/rate-limit.ts`).
 - The hook calls `authRatelimit.limit(event.locals.clientIp)` on `/api/auth/*` before Better Auth runs.
 - `event.locals.clientIp` is stamped once in `securityHeaders` from `event.getClientAddress()` — downstream code reads it, never the attacker-mutable forwarded-for chain.
 - Better Auth's `advanced.ipAddress.ipAddressHeaders` is pinned to `['x-client-ip']`, so any IP Better Auth records comes from that single trusted stamp.
@@ -951,8 +951,8 @@ There is no `revokeOtherSessions` config flag. Sibling-session revocation is man
 
 ```typescript
 // src/lib/server/jobs/session-cleanup.ts
-import { db } from '$lib/server/db';
-import { session } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.ts';
+import { session } from '#lib/server/db/schema/index.ts';
 import { lt } from 'drizzle-orm';
 
 export async function cleanupExpiredSessions() {
@@ -974,10 +974,10 @@ export async function cleanupExpiredSessions() {
 
 ```typescript
 // Illustrative — shipped as the `session-cleanup` job in src/lib/server/jobs/index.ts, served by /api/cron/[job]
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { timingSafeEqual } from 'crypto';
-import { CRON_SECRET } from '$env/static/private';
-import { cleanupExpiredSessions } from '$lib/server/jobs/session-cleanup';
+import { CRON_SECRET } from '$app/env/private'; // declared in src/env.ts
+import { cleanupExpiredSessions } from '#lib/server/jobs/session-cleanup.ts';
 
 function verifyCronSecret(authHeader: string | null): boolean {
   if (!authHeader || !CRON_SECRET) {
@@ -1002,7 +1002,7 @@ export async function GET({ request }) {
   }
 
   const result = await cleanupExpiredSessions();
-  return json({ success: true, ...result });
+  return Response.json({ success: true, ...result });
 }
 ```
 

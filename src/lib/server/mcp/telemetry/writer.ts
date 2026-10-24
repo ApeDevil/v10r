@@ -18,9 +18,9 @@
  * than merely slow.
  */
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { type McpCallLogInsert, mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
-import { sanitizeError } from '$lib/server/monitoring';
+import { db } from '#lib/server/db/index.ts';
+import { type McpCallLogInsert, mcpCallLog } from '#lib/server/db/schema/mcp/call-log.ts';
+import { sanitizeError } from '#lib/server/monitoring/index.ts';
 
 /** Abandon the insert after this. Mirrors the rate limiter's own decision-deadline shape. */
 const WRITE_DEADLINE_MS = 500;

@@ -1,8 +1,8 @@
 <script lang="ts">
-import { BackLink, createScrollSpy, MarkdownProse, NavSection, PageHeader } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import type { DocEntry } from '$lib/docs/types';
-import type { TocEntry } from '$lib/server/blog/types';
+import { BackLink, createScrollSpy, MarkdownProse, NavSection, PageHeader } from '#lib/components/composites/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import type { DocEntry } from '#lib/docs/types.ts';
+import type { TocEntry } from '#lib/server/blog/types.ts';
 
 interface Breadcrumb {
 	label: string;

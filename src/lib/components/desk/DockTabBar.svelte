@@ -1,16 +1,16 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive } from 'bits-ui';
-import { trackCommand } from '$lib/analytics/telemetry';
+import { trackCommand } from '#lib/analytics/telemetry.ts';
 import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
 	contextMenuShortcutVariants,
-} from '$lib/components/composites/context-menu';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import type { LeafNode } from '$lib/desk/layout.types';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+} from '#lib/components/composites/context-menu/index.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import type { LeafNode } from '#lib/desk/layout.types.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { CLOSE_PANEL_SHORTCUT } from './compose-menus';
 import DockLeafMenu from './DockLeafMenu.svelte';
 import { getDeskSettings } from './desk-settings.state.svelte';

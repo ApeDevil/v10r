@@ -18,7 +18,7 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeFile, makeFolder, makeUser } from '$lib/server/test/fixtures';
+import { makeFile, makeFolder, makeUser } from '#lib/server/test/fixtures.ts';
 import { type BudgetedOperation, budgetedOperations, QUERY_BUDGETS, scoreQueryCensus } from './query-budget';
 import { type QueryCensus, startQueryCensus } from './query-census';
 import { user } from './schema/auth/_better-auth';
@@ -28,9 +28,9 @@ import { folder } from './schema/desk/folder';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
-	const { queryCensusLogger } = await import('$lib/server/db/query-census');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
+	const { queryCensusLogger } = await import('#lib/server/db/query-census.ts');
 	// The same logger the production `db` wires up. Wiring a different one here would
 	// prove that a test double counts, which is not the claim.
 	const { db, client } = await createTestDb({ logger: queryCensusLogger });
@@ -38,9 +38,9 @@ vi.mock('$lib/server/db', async () => {
 	return { db };
 });
 
-const { getPublishedPostForSlug, listPosts } = await import('$lib/server/blog/queries');
+const { getPublishedPostForSlug, listPosts } = await import('#lib/server/blog/queries.ts');
 const { getFile, listFiles, listFolders } = await import('./desk/queries');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const OWNER = makeUser({ id: 'query-budget-owner' });
 const DOMAIN_ID = 'dom-query-budget';

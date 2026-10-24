@@ -10,9 +10,10 @@
  *
  * Source of truth is the client module graph (`getModuleIds()`), not `package.json`, so the file
  * names exactly what was bundled, transitive dependencies included. `?worker` bundles are separate
- * Rollup builds; `workerPlugin()` feeds their graphs into the same collection before the main
- * client build emits. SvelteKit's service-worker build runs without user plugins and imports no
- * npm packages.
+ * Rolldown builds; `workerPlugin()` feeds their graphs into the same collection before the main client
+ * build emits. SvelteKit 3 builds the service worker as one more client-consumer environment with
+ * the user plugins, so its graph joins the collection and its emit rewrites the file with the
+ * union: the worker is redistributed to browsers too.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

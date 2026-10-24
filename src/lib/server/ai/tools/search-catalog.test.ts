@@ -1,18 +1,18 @@
 /**
  * search_catalog tool — merge/dedupe, surface facet → scope mapping, authScope gate,
- * sink capture, and never-throws. The coordinator (`$lib/server/search`) is mocked;
+ * sink capture, and never-throws. The coordinator (`#lib/server/search/index.ts`) is mocked;
  * the real lexical `match()` runs over the mocked records.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SearchRecord, SearchResult } from '$lib/search/types';
+import type { SearchRecord, SearchResult } from '#lib/search/types.ts';
 
 const mocks = vi.hoisted(() => ({
 	buildSearchIndex: vi.fn(),
 	searchContent: vi.fn(),
 }));
 
-vi.mock('$lib/server/search', () => ({
+vi.mock('#lib/server/search/index.ts', () => ({
 	buildSearchIndex: mocks.buildSearchIndex,
 	searchContent: mocks.searchContent,
 }));

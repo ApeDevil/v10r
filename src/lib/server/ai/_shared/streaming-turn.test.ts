@@ -7,7 +7,7 @@ import {
 } from 'ai';
 import { MockLanguageModelV3, simulateReadableStream } from 'ai/test';
 import { describe, expect, it, vi } from 'vitest';
-import { AiError, aiErrorFrameText } from '$lib/server/ai/errors';
+import { AiError, aiErrorFrameText } from '#lib/server/ai/errors.ts';
 import {
 	type AttemptFailure,
 	type PumpableTextResult,

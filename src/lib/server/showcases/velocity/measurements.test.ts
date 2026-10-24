@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { startRequestTiming } from '$lib/server/http/request-timing';
-import { isVelocityMeasurementId, VELOCITY_MEASUREMENT_IDS } from '$lib/showcases/velocity/measurement';
+import { startRequestTiming } from '#lib/server/http/request-timing.ts';
+import { isVelocityMeasurementId, VELOCITY_MEASUREMENT_IDS } from '#lib/showcases/velocity/measurement.ts';
 import {
 	BREAKER_CALLERS,
 	BREAKER_THRESHOLD,
@@ -14,8 +14,8 @@ import {
 /** Every measurement records into the request's tracer; tests supply a standalone one. */
 const run = (id: Parameters<typeof runVelocityMeasurement>[0]) => runVelocityMeasurement(id, startRequestTiming());
 
-vi.mock('$lib/server/cache/client', () => ({ redis: null }));
-vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
+vi.mock('#lib/server/cache/client.ts', () => ({ redis: null }));
+vi.mock('#lib/server/platform/after-response.ts', () => ({ deferAfterResponse: vi.fn() }));
 
 describe('isVelocityMeasurementId', () => {
 	it('accepts every declared id and nothing else', () => {

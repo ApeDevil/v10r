@@ -1,10 +1,10 @@
 <script lang="ts">
 import type { Component, Snippet } from 'svelte';
 import { onMount } from 'svelte';
+import * as m from '#lib/paraglide/messages.js';
+import { getTheme } from '#lib/state/theme.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { beforeNavigate } from '$app/navigation';
-import * as m from '$lib/paraglide/messages';
-import { getTheme } from '$lib/state/theme.svelte';
-import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 import { CARTO_DARK_MATTER, CARTO_VOYAGER, fetchRewrittenStyle } from './map-theme';
 
@@ -48,8 +48,8 @@ let resolvedStyle: object | string | undefined = $state();
 const theme = getTheme();
 const currentStyleUrl = $derived(styleProp ?? (theme.isDark ? darkStyle : lightStyle));
 
-beforeNavigate(() => {
-	ready = false;
+beforeNavigate(({ shallow }) => {
+	if (!shallow) ready = false;
 });
 
 // Re-resolve style when theme changes (fall back to raw URL if rewrite fails)

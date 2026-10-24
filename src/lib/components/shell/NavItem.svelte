@@ -6,11 +6,11 @@
  */
 
 import { untrack } from 'svelte';
+import { Tooltip } from '#lib/components/primitives/tooltip/index.ts';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import type { LabelFn, NavChild } from '#lib/nav/index.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { page } from '$app/state';
-import { Tooltip } from '$lib/components/primitives/tooltip';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import type { LabelFn, NavChild } from '$lib/nav';
-import { cn } from '$lib/utils/cn';
 import NavAccordion from './NavAccordion.svelte';
 import NavFlyout from './NavFlyout.svelte';
 import NavLink from './NavLink.svelte';

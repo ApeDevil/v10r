@@ -18,7 +18,7 @@ security change, or anything whose server-side outcome the client cannot predict
 Authorization is never optimistic — a rollback that "restores" a privilege the user never
 had is worse than a wait.
 
-**Architecture.** `$lib/state/optimistic.svelte.ts` keeps the confirmed value and the pending
+**Architecture.** `#lib/state/optimistic.svelte.ts` keeps the confirmed value and the pending
 intents *separately*, and what the UI reads is the fold of one over the other:
 
 ```text
@@ -95,7 +95,7 @@ critical render.
 bandwidth may be constrained; or when preloading would pollute a cache or create real
 backend work on a guess.
 
-**Levels.** `$lib/nav/preload.ts` maps intent onto SvelteKit's own triggers:
+**Levels.** `#lib/nav/preload.ts` maps intent onto SvelteKit's own triggers:
 
 | Intent | Code | Data | For |
 |---|---|---|---|
@@ -175,8 +175,8 @@ critical render → interactive → idle capacity → speculative preparation
 Where v10r does this: the app shell warms the command palette once the browser is idle
 (`AppShell.svelte` — `requestIdleCallback` with a timer fallback, because Safari still lacks
 it; late rather than never is the right failure for work nobody waits on), and
-`$lib/actions/hydrate-embeds.ts` hydrates embeds on intersection rather than on load.
-`preloadOnIdle` (`$lib/nav/preload.ts`) is the route-level helper; today only the velocity
+`#lib/actions/hydrate-embeds.ts` hydrates embeds on intersection rather than on load.
+`preloadOnIdle` (`#lib/nav/preload.ts`) is the route-level helper; today only the velocity
 showcase calls it. The PWA update toast never forces activation mid-task: it posts
 `SKIP_WAITING` on the next navigation the user starts (`UpdatePrompt.svelte`).
 

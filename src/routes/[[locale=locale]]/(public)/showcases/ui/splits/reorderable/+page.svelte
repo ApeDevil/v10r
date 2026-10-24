@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Card, ReorderablePaneLayout } from '$lib/components';
-import { NavSection } from '$lib/components/composites';
-import type { PaneDefinition } from '$lib/components/composites/reorderable-panes';
-import * as m from '$lib/paraglide/messages';
+import { NavSection } from '#lib/components/composites/index.ts';
+import type { PaneDefinition } from '#lib/components/composites/reorderable-panes/index.ts';
+import { Card, ReorderablePaneLayout } from '#lib/components/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 const sections = $derived([
 	{ id: 'splits-reorderable-basic', label: m.showcase_ui_reorderable_section_basic() },

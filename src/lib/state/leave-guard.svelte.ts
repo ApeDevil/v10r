@@ -23,6 +23,8 @@ export function leaveDecision(dirty: boolean, type: string, confirmLeave: () => 
 
 export function guardUnsavedChanges(isDirty: () => boolean, message: () => string): void {
 	beforeNavigate((navigation) => {
+		// A shallow navigation stays on the page, edits and all.
+		if (navigation.shallow) return;
 		if (leaveDecision(isDirty(), navigation.type, () => window.confirm(message())) === 'cancel') {
 			navigation.cancel();
 		}

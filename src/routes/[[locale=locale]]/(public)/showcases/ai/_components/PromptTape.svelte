@@ -1,8 +1,8 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import { BLOCK_TAGS } from '$lib/showcases/ai/labels';
-import type { AiSurface } from '$lib/types/db-enums';
-import type { PromptBlock } from '$lib/types/turn-trace';
+import * as m from '#lib/paraglide/messages.js';
+import { BLOCK_TAGS } from '#lib/showcases/ai/labels.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
+import type { PromptBlock } from '#lib/types/turn-trace.ts';
 
 // An ordered band stack (HTML, not SVG) over the blocks a turn's trace recorded — the
 // prompt as it was sent, in the composer's cache order, with the cache boundary drawn

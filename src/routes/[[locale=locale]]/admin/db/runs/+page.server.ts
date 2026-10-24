@@ -1,7 +1,7 @@
 import { count, desc } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { dbopsOperation } from '$lib/server/db/schema/dbops/operation';
-import { requireAdmin } from '$lib/server/http/guards';
+import { db } from '#lib/server/db/index.ts';
+import { dbopsOperation } from '#lib/server/db/schema/dbops/operation.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { PageServerLoad } from './$types';
 
 const PAGE_SIZE = 25;

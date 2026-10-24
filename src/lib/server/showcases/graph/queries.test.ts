@@ -13,8 +13,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const cypherMock = vi.fn();
-vi.mock('$lib/server/graph', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/graph')>()),
+vi.mock('#lib/server/graph/index.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/graph/index.ts')>()),
 	cypher: (...args: unknown[]) => cypherMock(...args),
 }));
 

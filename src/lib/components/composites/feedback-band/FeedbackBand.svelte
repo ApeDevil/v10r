@@ -5,12 +5,13 @@
  * route is a showcase or docs page (see `isFeedbackBandPath`). The CTA links
  * to /feedback with the current path pre-filled via `?from=`.
  */
+
+import PageContainer from '#lib/components/layout/PageContainer.svelte';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import { isFeedbackBandPath } from '#lib/feedback/source.ts';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import PageContainer from '$lib/components/layout/PageContainer.svelte';
-import { Button } from '$lib/components/primitives/button';
-import { isFeedbackBandPath } from '$lib/feedback/source';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 
 const pathname = $derived(deLocalizeHref(page.url.pathname));
 const visible = $derived(isFeedbackBandPath(pathname));

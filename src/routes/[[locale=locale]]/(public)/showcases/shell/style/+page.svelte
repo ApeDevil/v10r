@@ -1,14 +1,14 @@
 <script lang="ts">
-import { invalidateAll } from '$app/navigation';
-import { apiFetch } from '$lib/api';
-import { ConfirmDialog, NavSection } from '$lib/components/composites';
-import { Button } from '$lib/components/primitives';
-import { CustomPaletteWorkshop, type OwnedPalette, StylePicker } from '$lib/components/style';
-import * as m from '$lib/paraglide/messages';
-import { getStyle } from '$lib/state/style.svelte';
-import { getTheme } from '$lib/state/theme.svelte';
-import { getToast } from '$lib/state/toast.svelte';
-import { PALETTE_REGISTRY, RADIUS_REGISTRY, TYPOGRAPHY_REGISTRY } from '$lib/styles/random';
+import { apiFetch } from '#lib/api.ts';
+import { ConfirmDialog, NavSection } from '#lib/components/composites/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import { CustomPaletteWorkshop, type OwnedPalette, StylePicker } from '#lib/components/style/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getStyle } from '#lib/state/style.svelte.ts';
+import { getTheme } from '#lib/state/theme.svelte.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { PALETTE_REGISTRY, RADIUS_REGISTRY, TYPOGRAPHY_REGISTRY } from '#lib/styles/random/index.ts';
+import { refreshAll } from '$app/navigation';
 import type { PageData } from './$types';
 
 let { data }: { data: PageData } = $props();
@@ -49,7 +49,7 @@ async function confirmDelete() {
 		location.reload();
 		return;
 	}
-	await invalidateAll();
+	await refreshAll();
 }
 
 const sections = $derived([
@@ -145,7 +145,7 @@ const sections = $derived([
 				onclose={() => (workshopOpen = false)}
 				onsaved={async (palette) => {
 					workshopOpen = false;
-					await invalidateAll();
+					await refreshAll();
 					await style.pick({ paletteId: palette.id, paletteName: palette.name }, toast);
 					// A custom palette's CSS block is injected only by a full document
 					// render, so applying one client-side needs a reload to take effect.

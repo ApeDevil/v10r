@@ -6,7 +6,7 @@
  */
 
 import type { PgTable } from 'drizzle-orm/pg-core';
-import { countRows } from '$lib/server/db/showcase/guards';
+import { countRows } from '#lib/server/db/showcase/guards.ts';
 import { MAX_SHOWCASE_ROWS } from './config';
 
 /** Null when there is room; a reader-facing reason when the table is full. */

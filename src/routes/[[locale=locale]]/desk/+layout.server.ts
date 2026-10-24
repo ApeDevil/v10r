@@ -1,8 +1,8 @@
-import { getMyPendingRequest } from '$lib/server/auth/grant-requests';
-import { hasGrant, listPendingGrantNotifications } from '$lib/server/auth/grants';
-import { getDeskTheme, listDeskPresets } from '$lib/server/db/desk/theme-queries';
-import { getActiveWorkspaceId, listWorkspaces } from '$lib/server/db/desk/workspace-queries';
-import { requireAuth } from '$lib/server/http/guards';
+import { getMyPendingRequest } from '#lib/server/auth/grant-requests.ts';
+import { hasGrant, listPendingGrantNotifications } from '#lib/server/auth/grants.ts';
+import { getDeskTheme, listDeskPresets } from '#lib/server/db/desk/theme-queries.ts';
+import { getActiveWorkspaceId, listWorkspaces } from '#lib/server/db/desk/workspace-queries.ts';
+import { requireAuth } from '#lib/server/http/guards.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {

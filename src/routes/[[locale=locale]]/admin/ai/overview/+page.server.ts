@@ -1,7 +1,7 @@
-import { getAiOverviewStats } from '$lib/server/db/ai/admin-queries';
-import { getImageUsageKpis } from '$lib/server/db/ai/image-metadata-queries';
-import { getRetrievalOverviewStats } from '$lib/server/db/retrieval/admin-queries';
-import { requireAdmin } from '$lib/server/http/guards';
+import { getAiOverviewStats } from '#lib/server/db/ai/admin-queries.ts';
+import { getImageUsageKpis } from '#lib/server/db/ai/image-metadata-queries.ts';
+import { getRetrievalOverviewStats } from '#lib/server/db/retrieval/admin-queries.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

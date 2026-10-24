@@ -10,8 +10,8 @@
  * - Unmount on viewport exit (context exhaustion guard)
  * - Full cleanup on action destroy
  */
-import { embedRegistry } from '$lib/components/blog/embeds/registry';
-import type { EmbedDescriptor } from '$lib/server/blog/types';
+import { embedRegistry } from '#lib/components/blog/embeds/registry.ts';
+import type { EmbedDescriptor } from '#lib/server/blog/types.ts';
 
 const DEFAULT_HEIGHT = '400px';
 const STAGGER_MS = 300;

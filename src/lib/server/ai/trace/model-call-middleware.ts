@@ -13,8 +13,8 @@
  * closed by the recorder's `attemptEnd`.
  */
 import { type LanguageModel, type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
-import { hashSystemPrompt } from '$lib/server/ai/context/history';
-import type { ModelCallRequest, PromptBlockId, ToolDefinitionRecord } from '$lib/types/turn-trace';
+import { hashSystemPrompt } from '#lib/server/ai/context/history.ts';
+import type { ModelCallRequest, PromptBlockId, ToolDefinitionRecord } from '#lib/types/turn-trace.ts';
 import type { TurnRecorder } from './recorder';
 
 /** The provider-level call, as the middleware sees it — derived from the SDK's own middleware type. */

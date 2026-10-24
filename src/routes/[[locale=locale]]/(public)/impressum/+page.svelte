@@ -24,8 +24,8 @@
  * NOTE: no schema.org/PostalAddress JSON-LD. Structured data would hand a
  * harvester a typed, parsed record instead of prose. Do not add it.
  */
-import { Card, PageHeader } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
+import { Card, PageHeader } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
 
 /**
  * Contact address, used for both the § 5 DDG contact and the DSA Art. 11/12

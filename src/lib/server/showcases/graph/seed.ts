@@ -1,4 +1,4 @@
-import { cypher } from '$lib/server/graph/index';
+import { cypher } from '#lib/server/graph/index.ts';
 import { ensureConstraints } from './constraints';
 
 /**

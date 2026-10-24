@@ -1,4 +1,4 @@
-import { type DocEntry, type DocSection, type DocsManifest, STACK_LAYER_ORDER } from '$lib/docs/types';
+import { type DocEntry, type DocSection, type DocsManifest, STACK_LAYER_ORDER } from '#lib/docs/types.ts';
 import { deriveTitle, isBlocked, parseFrontmatter, slugify } from './doc-filter';
 
 const rawModules = import.meta.glob('/docs/**/*.md', {

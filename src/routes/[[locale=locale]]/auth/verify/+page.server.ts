@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
-import { localizeHref } from '$lib/i18n';
-import { sanitizeInternalPath } from '$lib/utils/safe-path';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { sanitizeInternalPath } from '#lib/utils/safe-path.ts';
 import type { PageServerLoad } from './$types';
 
 const DEFAULT_REDIRECT = '/account/dashboard';

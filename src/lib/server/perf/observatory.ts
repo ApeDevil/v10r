@@ -16,7 +16,7 @@ import {
 	type OriginCensus,
 	type RouteHotPath,
 	type VitalTrendPoint,
-} from '$lib/server/db/analytics/perf-queries';
+} from '#lib/server/db/analytics/perf-queries.ts';
 import {
 	type BudgetVerdict,
 	budgets,

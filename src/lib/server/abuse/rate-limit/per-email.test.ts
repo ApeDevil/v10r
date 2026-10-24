@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { peek, limit } = vi.hoisted(() => ({ peek: vi.fn(), limit: vi.fn() }));
 
-vi.mock('$lib/server/http/rate-limit', () => ({
+vi.mock('#lib/server/http/rate-limit.ts', () => ({
 	createLimiter: () => ({ peek, limit }),
 }));
 

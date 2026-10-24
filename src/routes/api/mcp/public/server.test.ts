@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const limiterState = vi.hoisted(() => ({ success: true }));
-vi.mock('$lib/server/http/rate-limit', () => ({
+vi.mock('#lib/server/http/rate-limit.ts', () => ({
 	createLimiter: () => ({ limit: async () => ({ success: limiterState.success, reset: 0 }) }),
 	rateLimitResponse: () => new Response('{}', { status: 429 }),
 }));
@@ -9,13 +9,13 @@ vi.mock('$lib/server/http/rate-limit', () => ({
 /**
  * Mock the telemetry SEAM, not the database.
  *
- * Because `vi.mock` is hoisted above the dynamic import below, this keeps `$lib/server/db` out of
+ * Because `vi.mock` is hoisted above the dynamic import below, this keeps `#lib/server/db/index.ts` out of
  * this file's module graph ENTIRELY — the route no longer reaches the module that constructs a Neon
- * pool at load. Mocking `$lib/server/db` instead would work, but it would let the DB edge into the
+ * pool at load. Mocking `#lib/server/db/index.ts` instead would work, but it would let the DB edge into the
  * graph and then neutralise it, which is strictly weaker.
  */
 const telemetry = vi.hoisted(() => ({ observed: [] as unknown[], gateRejections: [] as unknown[] }));
-vi.mock('$lib/server/mcp/telemetry/observer', () => ({
+vi.mock('#lib/server/mcp/telemetry/observer.ts', () => ({
 	createMcpObserver: () => ({ observe: (o: unknown) => telemetry.observed.push(o) }),
 	recordMcpGateRejection: (...args: unknown[]) => telemetry.gateRejections.push(args),
 }));

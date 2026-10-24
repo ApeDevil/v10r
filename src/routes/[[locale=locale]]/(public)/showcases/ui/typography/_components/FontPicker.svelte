@@ -6,7 +6,7 @@ import {
 	findFont,
 	fontPairings,
 	getFontsByCategory,
-} from '$lib/utils/fonts';
+} from '#lib/utils/fonts/index.ts';
 
 interface Props {
 	mode: 'single' | 'pairing';

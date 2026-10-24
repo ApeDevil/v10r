@@ -10,7 +10,7 @@
 
 import { sql } from 'drizzle-orm';
 import { check, index, jsonb, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
-import type { DockLayoutState } from '$lib/desk/layout.types';
+import type { DockLayoutState } from '#lib/desk/layout.types.ts';
 import { user } from '../auth/_better-auth';
 import { deskSchema } from './schema';
 

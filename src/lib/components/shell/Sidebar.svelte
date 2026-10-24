@@ -1,6 +1,6 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
-import { getSidebar } from '$lib/state/sidebar.svelte';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
 import SidebarDrawer from './SidebarDrawer.svelte';
 import SidebarFab from './SidebarFab.svelte';
 import SidebarRail from './SidebarRail.svelte';

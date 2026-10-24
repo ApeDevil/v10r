@@ -2,8 +2,8 @@
 import { T, useTask, useThrelte } from '@threlte/core';
 import { useGltf } from '@threlte/extras';
 import { AnimationMixer, type PerspectiveCamera, Vector3 } from 'three';
-import type { Model3D, ResolvedCardConfig } from '$lib/3d/models';
-import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
+import type { Model3D, ResolvedCardConfig } from '#lib/3d/models.ts';
+import { THRELTE_MAKE_DEFAULT } from '#lib/utils/threlte-workarounds.ts';
 
 interface Props {
 	model: Model3D;

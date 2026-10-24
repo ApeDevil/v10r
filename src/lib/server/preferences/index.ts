@@ -1,1 +1,1 @@
-export * from '$lib/server/db/preferences/mutations';
+export * from '#lib/server/db/preferences/mutations.ts';

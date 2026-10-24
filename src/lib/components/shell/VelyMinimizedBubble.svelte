@@ -6,8 +6,8 @@
  * it is cheap to have present everywhere. Hidden at md+ (desktop restores via the
  * sidebar trigger). Stacks above the 56px mobile menu FAB.
  */
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { cn } from '$lib/utils/cn';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 </script>
 
 {#if chatbotSession.phase === 'minimized' && !chatbotSession.embedded}

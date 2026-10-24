@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import { cn } from '$lib/utils/cn';
+import * as m from '#lib/paraglide/messages.js';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	id: string;

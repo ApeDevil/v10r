@@ -1,4 +1,4 @@
-import type { DocEntry, DocSection } from '$lib/docs/types';
+import type { DocEntry, DocSection } from '#lib/docs/types.ts';
 import { getAgent } from '../agents/registry';
 import { getEntry, getRawMarkdown } from './manifest';
 

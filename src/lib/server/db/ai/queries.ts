@@ -1,5 +1,11 @@
 import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { ChunkLevel, ModelCallRecord, ToolExecutionRecord, TurnSummary, TurnTrace } from '$lib/types/turn-trace';
+import type {
+	ChunkLevel,
+	ModelCallRecord,
+	ToolExecutionRecord,
+	TurnSummary,
+	TurnTrace,
+} from '#lib/types/turn-trace.ts';
 import { db } from '../index';
 import { conversation, message } from '../schema/ai/conversation';
 import { modelCall, toolCall, turn } from '../schema/ai/turn';

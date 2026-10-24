@@ -1,7 +1,7 @@
 <script lang="ts">
 import { PaneGroup } from 'paneforge';
 import type { Snippet } from 'svelte';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 import type { PaneGroupHandle } from './types';
 
 interface Props {

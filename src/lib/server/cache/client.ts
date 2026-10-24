@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis';
-import { env } from '$env/dynamic/private';
+import { UPSTASH_REDIS_REST_TOKEN, UPSTASH_REDIS_REST_URL } from '$app/env/private';
 
 /**
  * The Upstash client, or `null` when this deployment has no Redis configured.
@@ -13,8 +13,8 @@ import { env } from '$env/dynamic/private';
  * client without the barrel importing itself through them.
  */
 function createRedis(): Redis | null {
-	const url = env.UPSTASH_REDIS_REST_URL;
-	const token = env.UPSTASH_REDIS_REST_TOKEN;
+	const url = UPSTASH_REDIS_REST_URL;
+	const token = UPSTASH_REDIS_REST_TOKEN;
 	if (!url || !token) return null;
 	return new Redis({ url, token });
 }

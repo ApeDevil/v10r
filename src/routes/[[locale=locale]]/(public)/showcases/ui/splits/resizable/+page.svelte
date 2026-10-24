@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Card } from '$lib/components';
-import { NavSection } from '$lib/components/composites';
-import { Pane, PaneGroup, PaneResizer } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { NavSection } from '#lib/components/composites/index.ts';
+import { Card } from '#lib/components/index.ts';
+import { Pane, PaneGroup, PaneResizer } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 const sections = $derived([
 	{ id: 'splits-resizable-horizontal', label: m.showcase_ui_resizable_section_horizontal() },

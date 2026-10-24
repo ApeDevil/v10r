@@ -3,7 +3,7 @@
  * A workspace stores a complete DockLayoutState snapshot that can be
  * restored by switching. Max 9 per user.
  */
-import type { DockLayoutState } from '$lib/desk/layout.types';
+import type { DockLayoutState } from '#lib/desk/layout.types.ts';
 
 /** A saved workspace with its full layout snapshot */
 export interface Workspace {

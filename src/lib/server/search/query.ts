@@ -10,9 +10,9 @@
  * cold-start never blocks instant results.
  */
 
-import type { Locale } from '$lib/i18n';
-import { getLocale, overwriteGetLocale } from '$lib/paraglide/runtime';
-import type { SearchRecord, SearchResult } from '$lib/search/types';
+import type { Locale } from '#lib/i18n/index.ts';
+import { getLocale, overwriteGetLocale } from '#lib/paraglide/runtime.js';
+import type { SearchRecord, SearchResult } from '#lib/search/types.ts';
 import { searchBlog } from './adapters/blog';
 import { docTitleRecords, searchDocs } from './adapters/docs';
 import { pageRecords } from './adapters/pages';

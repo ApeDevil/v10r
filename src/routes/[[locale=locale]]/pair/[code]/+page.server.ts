@@ -23,14 +23,14 @@
  * cap. Accepted — the alternative is exactly the consent bypass this removes.
  */
 import { fail, redirect } from '@sveltejs/kit';
-import { localizeHref } from '$lib/i18n';
-import { ipLimitKey } from '$lib/server/abuse';
-import { SESSION_COOKIE, SESSION_TIMEOUT_MS } from '$lib/server/analytics/config';
-import { deriveCookielessSessionId, hasConsent } from '$lib/server/analytics/consent';
-import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { createLimiter } from '$lib/server/http/rate-limit';
-import { claimPairingCode, PAIRED_SESSION_TTL_MS, setOwnerCookie, signOwnerCookie } from '$lib/server/pairing';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { SESSION_COOKIE, SESSION_TIMEOUT_MS } from '#lib/server/analytics/config.ts';
+import { deriveCookielessSessionId, hasConsent } from '#lib/server/analytics/consent.ts';
+import { deriveVisitorId } from '#lib/server/analytics/visitor.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
+import { claimPairingCode, PAIRED_SESSION_TTL_MS, setOwnerCookie, signOwnerCookie } from '#lib/server/pairing/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const CODE_SHAPE = /^[2-9]{6}$/;

@@ -9,11 +9,11 @@ import {
 	NavSection,
 	PageHeader,
 	ShowcaseDocs,
-} from '$lib/components/composites';
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
-import { DagGraph, FlowDiagram, StateDiagram } from '$lib/components/viz';
-import * as m from '$lib/paraglide/messages';
-import { HANDSHAKE_STEPS, TOOL_CARDS } from '$lib/showcases/mcp/tool-cards';
+} from '#lib/components/composites/index.ts';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/table/index.ts';
+import { DagGraph, FlowDiagram, StateDiagram } from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { HANDSHAKE_STEPS, TOOL_CARDS } from '#lib/showcases/mcp/tool-cards.ts';
 import VizDemoCard from './_components/VizDemoCard.svelte';
 
 // Registry data arrives projected from +page.server.ts — the registry JSON
@@ -199,7 +199,7 @@ const handshakeEdges: Edge[] = [
 						</Table>
 					{/snippet}
 					{#snippet code()}
-						<pre><code>{`// $lib/showcases/mcp/registry-viz.ts — fed by a build-time JSON import
+						<pre><code>{`// #lib/showcases/mcp/registry-viz.ts — fed by a build-time JSON import
 const dagData = toDagData(registry); // deep-tier subgraph only
 // nodes: deep.map((p) => ({ id: p.id, label: SHORT_LABELS[p.id], group: p.category }))
 // edges: deep.flatMap((p) => p.depends_on.map((dep) => ({ source: dep, target: p.id })))

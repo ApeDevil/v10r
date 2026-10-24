@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { update, move, toggle } = vi.hoisted(() => ({ update: vi.fn(), move: vi.fn(), toggle: vi.fn() }));
-vi.mock('$lib/server/db/desk/mutations', () => ({
+vi.mock('#lib/server/db/desk/mutations.ts', () => ({
 	updateSpreadsheetByFileId: update,
 	moveFile: move,
 	toggleFileAiContext: toggle,
@@ -9,13 +9,13 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	deleteFile: vi.fn(),
 	duplicateSpreadsheetFile: vi.fn(),
 }));
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	getFile: vi.fn(),
 	getMarkdownByFileId: vi.fn(),
 	getSpreadsheetByFileId: vi.fn(),
 }));
-vi.mock('$lib/server/http/guards', () => ({ guardApiUser: () => ({ user: { id: 'user' } }) }));
-vi.mock('$lib/server/http/rate-limit', () => ({
+vi.mock('#lib/server/http/guards.ts', () => ({ guardApiUser: () => ({ user: { id: 'user' } }) }));
+vi.mock('#lib/server/http/rate-limit.ts', () => ({
 	createLimiter: () => ({ limit: async () => ({ success: true }) }),
 	rateLimitResponse: vi.fn(),
 }));

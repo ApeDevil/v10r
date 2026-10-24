@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives/button';
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { cn } from '$lib/utils/cn';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	class?: string;

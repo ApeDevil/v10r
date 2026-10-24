@@ -7,10 +7,10 @@
  * `PatternRecord` here, which is the kind of copy that silently drifts.
  *
  * The JSON enters as a build-time static import (Vite inlines it): Vercel-safe, no runtime
- * filesystem access. This module is under `$lib/server`, so it never reaches a client bundle.
+ * filesystem access. This module is under `#lib/server`, so it never reaches a client bundle.
  */
-import registryJson from '$patterns/registry.json';
-import type { PatternRecord, RegCategory, Registry } from '$patterns/schema';
+import registryJson from '#patterns/registry.json';
+import type { PatternRecord, RegCategory, Registry } from '#patterns/schema.ts';
 
 export type {
 	PatternMaturity,
@@ -21,7 +21,7 @@ export type {
 	RegGroup,
 	Registry,
 	RegRef,
-} from '$patterns/schema';
+} from '#patterns/schema.ts';
 
 export const REGISTRY = registryJson as unknown as Registry;
 

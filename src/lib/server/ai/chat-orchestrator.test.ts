@@ -3,7 +3,7 @@
  *
  * The forty pure cases that used to share this file moved to `context/system-prompt.test.ts`,
  * where they run with none of the mocks below. What is left genuinely needs them:
- * `chat-orchestrator.ts` transitively imports `$lib/server/ai/providers`, whose graph reaches
+ * `chat-orchestrator.ts` transitively imports `#lib/server/ai/providers.ts`, whose graph reaches
  * Neon, Redis and the AI SDK. All `vi.mock()` calls are hoisted before any import, and every
  * module import is dynamic so it resolves after that hoisting.
  *
@@ -12,7 +12,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { TurnTrace, TurnTraceSnapshot } from '$lib/types/turn-trace';
+import type { TurnTrace, TurnTraceSnapshot } from '#lib/types/turn-trace.ts';
 
 // Mocks (hoisted before dynamic imports)
 
@@ -44,7 +44,7 @@ const streamRun = vi.hoisted(() => ({
 	toolFinish: true,
 }));
 
-vi.mock('$lib/server/db/ai/mutations', () => ({
+vi.mock('#lib/server/db/ai/mutations.ts', () => ({
 	createConversation: vi.fn(() => ({ id: 'conv-new' })),
 	saveMessages: vi.fn(),
 	saveTurnTrace: vi.fn(),
@@ -52,11 +52,11 @@ vi.mock('$lib/server/db/ai/mutations', () => ({
 	refreshConversationTokens: vi.fn(),
 }));
 
-vi.mock('$lib/server/db/ai/queries', () => ({
+vi.mock('#lib/server/db/ai/queries.ts', () => ({
 	getConversation: vi.fn(),
 }));
 
-vi.mock('$lib/server/db/ai/proposals', () => ({
+vi.mock('#lib/server/db/ai/proposals.ts', () => ({
 	createProposal: vi.fn(async () => ({ id: 'prp_1', riskTier: 'medium' })),
 }));
 
@@ -64,28 +64,28 @@ vi.mock('./conversation-quota', () => ({
 	checkConversationLimit: vi.fn(() => null),
 }));
 
-vi.mock('$lib/server/ai', () => ({
+vi.mock('#lib/server/ai/index.ts', () => ({
 	getActiveProvider: vi.fn(),
 	getActiveProviderInfo: vi.fn(),
 	getFallbacksForUser: vi.fn(() => []),
 	getToolProvider: vi.fn(),
 }));
 
-vi.mock('$lib/server/ai/providers', () => ({
+vi.mock('#lib/server/ai/providers.ts', () => ({
 	isCooledDown: vi.fn(() => false),
 	markCooldown: vi.fn(),
 }));
 
-vi.mock('$lib/server/ai/provider-usage', () => ({
+vi.mock('#lib/server/ai/provider-usage.ts', () => ({
 	incrProvider429: vi.fn(),
 	incrEmbeddingCalls: vi.fn(),
 }));
 
-vi.mock('$lib/server/ai/budget', () => ({
+vi.mock('#lib/server/ai/budget.ts', () => ({
 	chargeTokens: vi.fn(async () => undefined),
 }));
 
-vi.mock('$lib/server/retrieval', () => ({
+vi.mock('#lib/server/retrieval/index.ts', () => ({
 	generateEmbedding: vi.fn(async () => []),
 	retrieve: vi.fn(async () => ({ chunks: [], totalFound: 0 })),
 	formatContextForPrompt: vi.fn(() => ''),
@@ -94,14 +94,14 @@ vi.mock('$lib/server/retrieval', () => ({
 
 // The profiles mount the real tool factories; their DB modules are mocked so the modules
 // import without a connection — no tool's `execute` runs in these tests.
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	listFiles: vi.fn(),
 	getFile: vi.fn(),
 	getSpreadsheetByFileId: vi.fn(),
 	getMarkdownByFileId: vi.fn(),
 }));
-vi.mock('$lib/server/db/desk/mutations', () => ({
+vi.mock('#lib/server/db/desk/mutations.ts', () => ({
 	updateSpreadsheetByFileId: vi.fn(),
 	updateMarkdownByFileId: vi.fn(),
 	renameFile: vi.fn(),
@@ -110,18 +110,18 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	deleteFile: vi.fn(),
 }));
 
-vi.mock('$lib/server/search', () => ({
+vi.mock('#lib/server/search/index.ts', () => ({
 	buildSearchIndex: vi.fn(() => []),
 	formatCatalogMap: vi.fn(() => '<catalog-map></catalog-map>'),
 	searchContent: vi.fn(async () => []),
 }));
 
-vi.mock('$lib/server/db/retrieval/queries', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/db/retrieval/queries')>()),
+vi.mock('#lib/server/db/retrieval/queries.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/db/retrieval/queries.ts')>()),
 	getCorpusMap: vi.fn(async () => null),
 }));
 
-vi.mock('$lib/server/ai/errors', () => ({
+vi.mock('#lib/server/ai/errors.ts', () => ({
 	// Classified by an explicit `kind` on the error object (the real classifier's status rules
 	// are its own test); anything else is `unknown`, the catch-all.
 	classifyAiError: vi.fn((err: unknown) => ({
@@ -257,12 +257,12 @@ vi.mock('ai', async (importOriginal) => ({
 
 const { orchestrateChat } = await import('./chat-orchestrator');
 
-const mutations = await import('$lib/server/db/ai/mutations');
-const queries = await import('$lib/server/db/ai/queries');
+const mutations = await import('#lib/server/db/ai/mutations.ts');
+const queries = await import('#lib/server/db/ai/queries.ts');
 const limits = await import('./conversation-quota');
-const providers = await import('$lib/server/ai');
-const providerRegistry = await import('$lib/server/ai/providers');
-const { DbError } = await import('$lib/server/db/errors');
+const providers = await import('#lib/server/ai/index.ts');
+const providerRegistry = await import('#lib/server/ai/providers.ts');
+const { DbError } = await import('#lib/server/db/errors.ts');
 
 const saveMessages = mutations.saveMessages as ReturnType<typeof vi.fn>;
 const saveTurnTrace = mutations.saveTurnTrace as ReturnType<typeof vi.fn>;
@@ -286,7 +286,7 @@ const getActiveProvider = providers.getActiveProvider as ReturnType<typeof vi.fn
 const getActiveProviderInfo = providers.getActiveProviderInfo as ReturnType<typeof vi.fn>;
 const getToolProvider = providers.getToolProvider as ReturnType<typeof vi.fn>;
 const markCooldown = providerRegistry.markCooldown as ReturnType<typeof vi.fn>;
-const { chargeTokens } = await import('$lib/server/ai/budget');
+const { chargeTokens } = await import('#lib/server/ai/budget.ts');
 
 /** The snapshot the guard would have loaded; the mocked facade ignores its contents. */
 const registry = {
@@ -643,7 +643,7 @@ describe('chatbot turn steps', () => {
 		streamRun.toolFinish = true;
 		streamRun.writes = [];
 		streamRun.answer = 'Hi';
-		const search = await import('$lib/server/search');
+		const search = await import('#lib/server/search/index.ts');
 		(search.buildSearchIndex as ReturnType<typeof vi.fn>).mockReset().mockReturnValue([]);
 	});
 
@@ -651,7 +651,7 @@ describe('chatbot turn steps', () => {
 		const ai = await import('ai');
 		const streamText = ai.streamText as ReturnType<typeof vi.fn>;
 		streamText.mockClear();
-		const { CHATBOT_GENERATION_OPTIONS, CHATBOT_MAX_STEPS } = await import('$lib/server/ai/config');
+		const { CHATBOT_GENERATION_OPTIONS, CHATBOT_MAX_STEPS } = await import('#lib/server/ai/config.ts');
 
 		await orchestrateChat({
 			userId: 'user-1',
@@ -674,7 +674,7 @@ describe('chatbot turn steps', () => {
 	// catalog before generation, the rows were surfaced through the tool factory, and the
 	// path the model then cited verifies as `exists` — with no tool call in the turn.
 	it('grounds a navigation question before generation, so the cited path verifies without a tool call', async () => {
-		const search = await import('$lib/server/search');
+		const search = await import('#lib/server/search/index.ts');
 		(search.buildSearchIndex as ReturnType<typeof vi.fn>).mockReturnValue([authn]);
 		streamRun.answer = 'The auth showcase is at /showcases/auth/authn.';
 		streamRun.toolFinish = false;
@@ -995,7 +995,7 @@ describe('desk turn streaming', () => {
 		refreshConversationTokens.mockReset().mockResolvedValue(undefined as never);
 		(chargeTokens as ReturnType<typeof vi.fn>).mockReset();
 		markCooldown.mockReset();
-		const proposals = await import('$lib/server/db/ai/proposals');
+		const proposals = await import('#lib/server/db/ai/proposals.ts');
 		(proposals.createProposal as ReturnType<typeof vi.fn>)
 			.mockReset()
 			.mockResolvedValue({ id: 'prp_1', riskTier: 'medium' } as never);
@@ -1070,7 +1070,7 @@ describe('desk turn streaming', () => {
 				{ tool: 'desk_update_cells', risk: 'write', recovery: 'revision', target: { fileId: 'fil_a', version: 3 } },
 			],
 		});
-		const proposals = await import('$lib/server/db/ai/proposals');
+		const proposals = await import('#lib/server/db/ai/proposals.ts');
 		expect(proposals.createProposal).toHaveBeenCalledWith(
 			expect.objectContaining({
 				grantedScopes: ['desk:read', 'desk:write'],
@@ -1088,7 +1088,7 @@ describe('desk turn streaming', () => {
 	});
 
 	it('shows no card when the proposal row could not be written, and marks the tool record', async () => {
-		const proposals = await import('$lib/server/db/ai/proposals');
+		const proposals = await import('#lib/server/db/ai/proposals.ts');
 		(proposals.createProposal as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('db down'));
 		streamRun.toolResults = [
 			{

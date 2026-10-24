@@ -8,7 +8,7 @@
  * `pattern-library/query.ts` — the stdio server speaks them too — and re-exported here so the
  * admin registry reads them from its own transport contract.
  */
-import { type NextAction, type ToolDef, withNextActions } from '$patterns/query';
+import { type NextAction, type ToolDef, withNextActions } from '#patterns/query.ts';
 
 export {
 	MAX_NEXT_ACTIONS,
@@ -16,7 +16,7 @@ export {
 	type NextAction,
 	type ToolDef,
 	withNextActions,
-} from '$patterns/query';
+} from '#patterns/query.ts';
 
 /** JSON-RPC id: string, number, or null. Absent entirely on notifications. */
 export type JsonRpcId = string | number | null;

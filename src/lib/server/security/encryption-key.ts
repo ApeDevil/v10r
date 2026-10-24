@@ -15,17 +15,17 @@
  * `abuse/config.ts`'s `assertProductionConfig`, including the `dev` gate — an env var can
  * arrive wrong in the direction that skips the check, a build-mode constant cannot.
  */
-import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
+import { dev } from '$app/env';
+import { ENCRYPTION_KEY, ENCRYPTION_KEY_PREVIOUS } from '$app/env/private';
 import { type EncryptionKeyRing, parseKeyRing } from './aes-gcm';
 
 function assertProductionConfig(): void {
 	if (dev) return;
-	parseKeyRing(env.ENCRYPTION_KEY, env.ENCRYPTION_KEY_PREVIOUS);
+	parseKeyRing(ENCRYPTION_KEY, ENCRYPTION_KEY_PREVIOUS);
 }
 assertProductionConfig();
 
 /** The validated key ring, or an `EncryptionError('invalid_key')` — never a placeholder. */
 export function getEncryptionKeyRing(): EncryptionKeyRing {
-	return parseKeyRing(env.ENCRYPTION_KEY, env.ENCRYPTION_KEY_PREVIOUS);
+	return parseKeyRing(ENCRYPTION_KEY, ENCRYPTION_KEY_PREVIOUS);
 }

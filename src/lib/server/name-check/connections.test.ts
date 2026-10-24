@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { NameSourceConnectionRow } from '$lib/server/db/schema/name-check/source-connection';
-import { encryptAesGcm } from '$lib/server/security';
-import { parseKeyRing } from '$lib/server/security/aes-gcm';
+import type { NameSourceConnectionRow } from '#lib/server/db/schema/name-check/source-connection.ts';
+import { parseKeyRing } from '#lib/server/security/aes-gcm.ts';
+import { encryptAesGcm } from '#lib/server/security/index.ts';
 import { publicNameSourceConnection, resolveNameSourceConnections } from './connections';
 import { EUIPO_DEFAULT_API_BASE, EUIPO_DEFAULT_TOKEN_URL } from './sources/euipo';
 

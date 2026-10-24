@@ -15,8 +15,8 @@
  *     lie-by-omission this table exists to prevent.
  */
 import { and, count, countDistinct, desc, eq, gte, isNotNull, max, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
+import { db } from '#lib/server/db/index.ts';
+import { mcpCallLog } from '#lib/server/db/schema/mcp/call-log.ts';
 
 /** Bounded windows: three cacheable plans instead of an unbounded range scan. */
 export type McpWindow = '24h' | '7d' | '30d';

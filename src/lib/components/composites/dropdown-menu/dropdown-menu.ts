@@ -1,5 +1,5 @@
 import { cva } from 'class-variance-authority';
-import { floatingContentBase } from '$lib/styles/floating';
+import { floatingContentBase } from '#lib/styles/floating.ts';
 
 export const dropdownMenuContentVariants = cva([
 	floatingContentBase(),

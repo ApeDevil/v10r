@@ -1,6 +1,6 @@
-import { approveRequest } from '$lib/server/auth/grant-requests';
-import { guardApiAdmin } from '$lib/server/http/guards';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { approveRequest } from '#lib/server/auth/grant-requests.ts';
+import { guardApiAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ params, locals }) => {

@@ -1,6 +1,6 @@
 /**
  * Service-worker caching policy — pure, unit-testable, imported by
- * src/service-worker.ts. The policy is deliberately strict:
+ * src/service-worker/index.ts. The policy is deliberately strict:
  *
  * - HTML and __data.json are NEVER cached (every HTML response is personalized
  *   via the palette transformPageChunk, and __data.json carries root-layout
@@ -51,15 +51,28 @@ export function mayCache(response: Response): boolean {
  * is gone, SvelteKit checks `version.json`, updates the worker and reloads natively.
  * Everything else enters the cache cache-first, as it is used (`handleImmutable`).
  *
- * Only paths present in `build` are returned, so a malformed or unexpected reference
- * cannot make the worker fetch something outside the hashed output.
+ * Only paths present in `immutable` (the build's hashed files) are returned, so a
+ * malformed or unexpected reference cannot make the worker fetch something outside the
+ * hashed output.
  */
-export function offlineShellAssets(html: string, build: readonly string[]): string[] {
-	const known = new Set(build);
+export function offlineShellAssets(html: string, immutable: readonly string[]): string[] {
+	const known = new Set(immutable);
 	const found = new Set<string>();
 	for (const match of html.matchAll(/_app\/immutable\/[^"'`\s)]+/g)) {
 		const path = `/${match[0]}`;
 		if (known.has(path)) found.add(path);
 	}
 	return [...found];
+}
+
+/**
+ * The absolute pathname of a `$app/manifest` entry.
+ *
+ * The manifest lists paths relative to the base path, without a leading slash
+ * (`_app/immutable/…`, `icons/icon-192.png`, `offline`). The worker is served from the base
+ * path, so resolving against its own URL gives the pathname each fetch and cache entry is
+ * keyed by, whatever the base.
+ */
+export function manifestPathname(path: string, workerUrl: string): string {
+	return new URL(path, workerUrl).pathname;
 }

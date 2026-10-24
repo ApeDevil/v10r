@@ -1,6 +1,6 @@
 <script lang="ts">
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import {
 	selectionBarActionVariants,
 	selectionBarCountVariants,

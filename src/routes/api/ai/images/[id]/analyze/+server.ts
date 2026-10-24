@@ -9,11 +9,11 @@
  * also the idempotency key.
  */
 
-import { guardAiRequest } from '$lib/server/ai/guard';
-import { redis } from '$lib/server/cache';
-import { apiError, apiOk } from '$lib/server/http/response';
-import type { ExtractFailureReason } from '$lib/server/imagemeta';
-import { extractImageMetadata, getUserImage, recordProposal } from '$lib/server/imagemeta';
+import { guardAiRequest } from '#lib/server/ai/guard.ts';
+import { redis } from '#lib/server/cache/index.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
+import type { ExtractFailureReason } from '#lib/server/imagemeta/index.ts';
+import { extractImageMetadata, getUserImage, recordProposal } from '#lib/server/imagemeta/index.ts';
 import type { RequestHandler } from './$types';
 
 /** Map a vision-extraction failure reason to an HTTP status. */

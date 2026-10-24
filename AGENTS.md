@@ -32,7 +32,7 @@ checks. No CI pipeline exists. Report failures accurately.
 ## Architecture and Coding Style
 
 Keep domains framework-free; adapters own HTTP responses, redirects, and date
-serialization. Never import `$lib/server/` into `.svelte` or universal `+page.ts`.
+serialization. Never import `#lib/server/` into `.svelte` or universal `+page.ts`.
 Change code directly: no compatibility layers, migration shims, or deprecation paths.
 
 Follow `biome.json`: tabs, LF, 120-column width, single JS quotes, semicolons, trailing

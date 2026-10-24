@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ActivityBarItem, PanelDefinition } from '$lib/desk/layout.types';
+import type { ActivityBarItem, PanelDefinition } from '#lib/desk/layout.types.ts';
 import { collectTypeInstances, composePanelMenus, shortcutTableMarkdown } from './compose-menus';
 import { buildViewMenu } from './view-menu';
 

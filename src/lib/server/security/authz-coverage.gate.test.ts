@@ -95,7 +95,7 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
 	'search-index/[locale]/+server.ts': 'Prerendered static index of public titles.',
 	'showcases/check-username/+server.ts': 'Fixed word list, no database access.',
 	'showcases/velocity/+server.ts':
-		'Runs one Velocity measurement — in-process arithmetic, setTimeout sleeps and the $lib/server/cache modules. No database, no user data, no caller-supplied key reaches a store: the measurement id is checked against a closed list. IP-rate-limited BEFORE the sleeps so the deliberate latency cannot amplify function-time cost.',
+		'Runs one Velocity measurement — in-process arithmetic, setTimeout sleeps and the #lib/server/cache modules. No database, no user data, no caller-supplied key reaches a store: the measurement id is checked against a closed list. IP-rate-limited BEFORE the sleeps so the deliberate latency cannot amplify function-time cost.',
 	'name-check/+server.ts':
 		"Anonymous by design: a public brand-name pre-screen. IP-rate-limited BEFORE any upstream call; each external source has a daily quota, a breaker and a deadline. The one table read is the administrator's source connections (opened server-side, never returned); nothing is written but a cache keyed by a sha256 of the normalised name; no user data.",
 	'analytics/journey/+server.ts': 'sendBeacon ingest; cannot set headers. Origin-checked, consent-gated, rate-limited.',
@@ -432,7 +432,7 @@ describe('authz coverage — the gate itself', () => {
 		// The blindness this replaces: one regex over the whole file body meant a
 		// guarded GET vouched for an unguarded DELETE beside it.
 		const source = [
-			"import { guardApiUser } from '$lib/server/http/guards';",
+			"import { guardApiUser } from '#lib/server/http/guards.ts';",
 			'export const GET = async ({ locals }) => guardApiUser(locals);',
 			'export const DELETE = async () => dropEverything();',
 		].join('\n');
@@ -447,7 +447,7 @@ describe('authz coverage — the gate itself', () => {
 		// file imports the guard it uses, so the symbol sat in the preamble of an
 		// unguarded neighbour. Two endpoints were passing on exactly this.
 		const source = [
-			"import { guardApiUser } from '$lib/server/http/guards';",
+			"import { guardApiUser } from '#lib/server/http/guards.ts';",
 			'export const DELETE = async () => dropEverything();',
 		].join('\n');
 		expect(classify(methodUnits(source)[0].source)).toBeNull();
@@ -458,7 +458,7 @@ describe('authz coverage — the gate itself', () => {
 			'import {',
 			'\tguardApiUser,',
 			'\tguardApiAdmin,',
-			"} from '$lib/server/http/guards';",
+			"} from '#lib/server/http/guards.ts';",
 			'export const DELETE = async () => dropEverything();',
 		].join('\n');
 		expect(classify(methodUnits(source)[0].source)).toBeNull();

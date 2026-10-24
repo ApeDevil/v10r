@@ -1,14 +1,14 @@
 <script lang="ts">
-import type { ActionResult } from '@sveltejs/kit';
+import { Alert, Card, FormField } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Input, Select, Spinner } from '#lib/components/primitives/index.ts';
+import { createCycleState } from '#lib/components/showcases/cycle/cycle.state.svelte.ts';
+import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '#lib/components/showcases/cycle/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { CycleTrace } from '#lib/showcases/cycle/types.ts';
+import type { ActionResult } from '$app/forms';
 import { enhance } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
-import { Alert, Card, FormField } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Button, Input, Select, Spinner } from '$lib/components/primitives';
-import { CycleDetail, CyclePipeline, CycleVizCard, CycleWaterfall } from '$lib/components/showcases/cycle';
-import { createCycleState } from '$lib/components/showcases/cycle/cycle.state.svelte';
-import * as m from '$lib/paraglide/messages';
-import type { CycleTrace } from '$lib/showcases/cycle/types';
+import { refreshAll } from '$app/navigation';
 
 const cycle = createCycleState('default');
 let submitting = $state(false);
@@ -52,7 +52,7 @@ function handleSubmit() {
 				}
 			}
 		}
-		await invalidateAll();
+		await refreshAll();
 	};
 }
 </script>

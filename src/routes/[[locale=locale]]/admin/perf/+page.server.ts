@@ -1,6 +1,6 @@
-import { parseAnalyticsRange } from '$lib/server/admin';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
+import { parseAnalyticsRange } from '#lib/server/admin/index.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import {
 	checkRatchets,
 	getFieldVitals,
@@ -12,7 +12,7 @@ import {
 	scoreSnapshot,
 	snapshot,
 	snapshotAgeDays,
-} from '$lib/server/perf';
+} from '#lib/server/perf/index.ts';
 import type { PageServerLoad } from './$types';
 
 /**

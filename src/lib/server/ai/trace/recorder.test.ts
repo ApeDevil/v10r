@@ -9,7 +9,7 @@ import type { ModelMessage } from 'ai';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const saveTurnTrace = vi.fn();
-vi.mock('$lib/server/db/ai/mutations', () => ({ saveTurnTrace: (...args: unknown[]) => saveTurnTrace(...args) }));
+vi.mock('#lib/server/db/ai/mutations.ts', () => ({ saveTurnTrace: (...args: unknown[]) => saveTurnTrace(...args) }));
 
 const { createTurnRecorder, outlineHistory, TOOL_RESULT_CAP_CHARS } = await import('./recorder');
 

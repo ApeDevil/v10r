@@ -78,7 +78,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
 <!-- src/lib/components/shell/session/SessionMonitor.svelte -->
 <script lang="ts">
   import { page } from '$app/state';
-  import { invalidateAll } from '$app/navigation';
+  import { refreshAll } from '$app/navigation';
   import SessionExpiryDialog from './SessionExpiryDialog.svelte';
   import SessionWarningBanner from './SessionWarningBanner.svelte';
 
@@ -118,7 +118,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
   async function extendSession() {
     try {
       await fetch('/api/auth/extend-session', { method: 'POST' });
-      await invalidateAll();
+      await refreshAll();
       showWarning = false;
     } catch (error) {
       // If extend fails, session may already be expired
@@ -147,7 +147,7 @@ Managing authentication state within the app shell: session expiry, re-authentic
 
       if (res.ok) {
         showExpiredModal = false;
-        await invalidateAll();
+        await refreshAll();
       } else {
         throw new Error('Invalid or expired code');
       }
@@ -332,20 +332,20 @@ Managing authentication state within the app shell: session expiry, re-authentic
 
 ```typescript
 // src/routes/api/auth/extend-session/+server.ts
-import { json, error } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals, cookies }) => {
   const session = locals.session;
 
   if (!session) {
-    throw error(401, 'No active session');
+    error(401, 'No active session');
   }
 
   // Check if session is still valid (not expired)
   const now = new Date();
   if (new Date(session.expiresAt) < now) {
-    throw error(401, 'Session already expired');
+    error(401, 'Session already expired');
   }
 
   // Extend session by default duration (e.g., 7 days)
@@ -364,7 +364,7 @@ export const POST: RequestHandler = async ({ locals, cookies }) => {
     sameSite: 'lax',
   });
 
-  return json({ success: true, expiresAt: newExpiresAt.toISOString() });
+  return Response.json({ success: true, expiresAt: newExpiresAt.toISOString() });
 };
 ```
 
@@ -378,15 +378,15 @@ export const POST: RequestHandler = async ({ locals, cookies }) => {
 
 ```typescript
 // src/routes/api/auth/send-reauth-code/+server.ts
-import { json, error } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
+import { error } from '@sveltejs/kit';
+import { auth } from '#lib/server/auth/index.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ cookies }) => {
   // Get user email from expired session cookie
   const sessionToken = cookies.get('session_token');
   if (!sessionToken) {
-    throw error(401, 'No session to restore');
+    error(401, 'No session to restore');
   }
 
   const expiredSession = await db.query.session.findFirst({
@@ -395,7 +395,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
   });
 
   if (!expiredSession?.user) {
-    throw error(401, 'Session not found');
+    error(401, 'Session not found');
   }
 
   // Use Better Auth's emailOTP plugin to send verification code
@@ -407,7 +407,7 @@ export const POST: RequestHandler = async ({ cookies }) => {
     },
   });
 
-  return json({ success: true, email: expiredSession.user.email });
+  return Response.json({ success: true, email: expiredSession.user.email });
 };
 ```
 
@@ -415,8 +415,8 @@ export const POST: RequestHandler = async ({ cookies }) => {
 
 ```typescript
 // src/routes/api/auth/reauthenticate/+server.ts
-import { json, error } from '@sveltejs/kit';
-import { auth } from '$lib/server/auth';
+import { error } from '@sveltejs/kit';
+import { auth } from '#lib/server/auth/index.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
@@ -425,7 +425,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   // Get user email from expired session cookie
   const sessionToken = cookies.get('session_token');
   if (!sessionToken) {
-    throw error(401, 'No session to restore');
+    error(401, 'No session to restore');
   }
 
   const expiredSession = await db.query.session.findFirst({
@@ -434,7 +434,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   });
 
   if (!expiredSession?.user) {
-    throw error(401, 'Session not found');
+    error(401, 'Session not found');
   }
 
   // Use Better Auth's emailOTP plugin to verify
@@ -447,14 +447,14 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   });
 
   if (!result?.session) {
-    throw error(401, 'Invalid or expired code');
+    error(401, 'Invalid or expired code');
   }
 
   // Better Auth sets the session cookie automatically
   // Clean up the old expired session
   await db.delete(session).where(eq(session.token, sessionToken));
 
-  return json({ success: true });
+  return Response.json({ success: true });
 };
 ```
 
@@ -493,7 +493,7 @@ The key advantage of the modal approach: unsaved form data is preserved.
 ```svelte
 <script lang="ts">
   import { superForm } from 'sveltekit-superforms';
-  import { getSession } from '$lib/state/session.svelte';
+  import { getSession } from '#lib/state/session.svelte.ts';
 
   const session = getSession();
 
@@ -540,7 +540,7 @@ if (response.status === 401) {
 
 ```typescript
 // Strict limiter on the re-auth endpoint — see ../abuse/rate-limits.md
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 
 const reauthLimiter = createLimiter('rl:auth:reauth', 5, '15 m');
 
@@ -559,10 +559,7 @@ export async function requireRecentAuth(session: Session, maxAge = 15 * 60 * 100
   const sessionAge = Date.now() - new Date(session.createdAt).getTime();
 
   if (sessionAge > maxAge) {
-    throw error(403, {
-      code: 'REAUTH_REQUIRED',
-      message: 'Please verify your identity to continue',
-    });
+    error(403, 'Please verify your identity to continue', { code: 'REAUTH_REQUIRED' });
   }
 }
 ```
@@ -585,7 +582,7 @@ Add SessionMonitor to root app layout:
 ```svelte
 <!-- src/routes/(app)/+layout.svelte -->
 <script lang="ts">
-  import { SessionMonitor } from '$lib/components/shell';
+  import { SessionMonitor } from '#lib/components/shell/index.ts';
 
   let { data, children } = $props();
 </script>

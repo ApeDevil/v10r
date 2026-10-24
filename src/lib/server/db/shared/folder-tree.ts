@@ -14,7 +14,7 @@
  */
 import { type SQL, sql } from 'drizzle-orm';
 import { getTableConfig, type PgTable } from 'drizzle-orm/pg-core';
-import { rowsOf } from '$lib/server/db/rows';
+import { rowsOf } from '#lib/server/db/rows.ts';
 
 export class FolderNotFoundError extends Error {
 	readonly code = 'folder_not_found' as const;

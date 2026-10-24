@@ -11,7 +11,7 @@
  */
 
 import { getContext, setContext } from 'svelte';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
 
 const PANEL_MENUS_CTX = Symbol('panel-menus');
 

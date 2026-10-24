@@ -10,7 +10,7 @@
  * would be the larger outage. The in-process map keeps dev and tests honest about the
  * limit without pretending to be shared.
  */
-import { redis } from '$lib/server/cache';
+import { redis } from '#lib/server/cache/index.ts';
 
 const localCounts = new Map<string, { count: number; day: string }>();
 

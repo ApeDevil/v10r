@@ -29,7 +29,7 @@
  * decides for itself what to return when the budget runs out: a fallback, stale data,
  * or a 504. That decision is domain knowledge and cannot be inherited.
  */
-import { ServerError } from '$lib/server/errors';
+import { ServerError } from '#lib/server/errors/index.ts';
 
 /**
  * Default request budget, in milliseconds.

@@ -50,10 +50,10 @@ any file is which of these it is.
 - `pattern-library/` — the registry that *is* the product: pattern records, their schema,
   and the drift guard. `mcp/` (stdio, bare Bun) and `src/lib/server/mcp/` (hosted HTTP) are
   two transports over it; the generated pages under `docs/pattern-library/` are a third
-  reader. Reachable from the app as `$patterns`.
+  reader. Reachable from the app as `#patterns/*`.
 
 A showcase spans three directories, one per concern, and they are named alike:
-`$lib/showcases/[name]/` (shared vocabulary) · `components/showcases/[name]/` (UI) ·
+`#lib/showcases/[name]/` (shared vocabulary) · `components/showcases/[name]/` (UI) ·
 `server/showcases/[name]/` (server logic).
 
 ---
@@ -66,11 +66,11 @@ another:
 
 | | Owns | Read by |
 |---|---|---|
-| `$lib/3d/` | scene, part, and customization registries | the 3D viewer **and** blog scene embeds |
-| `$lib/desk/` | persisted layout shape, panel catalogue, help copy, the spreadsheet formula evaluator and cell contract | the Desk UI, the app shell's command palette, the `desk` DB schema, **and** the `desk` mutations (every stored sheet is re-derived at the write door) |
-| `$lib/showcases/catalog/` | the showcase card tree and section anchors | the hub, nav, both search lanes, the sitemap, the Neo4j projection |
+| `#lib/3d/` | scene, part, and customization registries | the 3D viewer **and** blog scene embeds |
+| `#lib/desk/` | persisted layout shape, panel catalogue, help copy, the spreadsheet formula evaluator and cell contract | the Desk UI, the app shell's command palette, the `desk` DB schema, **and** the `desk` mutations (every stored sheet is re-derived at the write door) |
+| `#lib/showcases/catalog/` | the showcase card tree and section anchors | the hub, nav, both search lanes, the sitemap, the Neo4j projection |
 
-`$lib/desk/panels.ts` lists the panel types; the directories under
+`#lib/desk/panels.ts` lists the panel types; the directories under
 `components/desk/panels/` are named to match, one per entry. The list and the tree are the
 same fact.
 
@@ -112,7 +112,7 @@ feature directories. Feature directories never import each other; when two need 
 component, it moves *down* a layer rather than sideways (that is how
 `composites/citation/` and `primitives/color-input/` came to exist).
 
-The default `$lib/components` barrel is the **cheap** surface. Anything pulling a heavy or
+The default `#lib/components/index.ts` barrel is the **cheap** surface. Anything pulling a heavy or
 optional dependency — viz engines, Three.js, the markdown sanitiser — or app-specific
 chrome is deep-import-only. Adding a heavy dependency to a barreled component is a
 bundle-size regression, not a style preference.
@@ -135,7 +135,7 @@ of that list drifted to naming two of fourteen.
 un-localized REST/SSE tree. Auth gates live in `+layout.server.ts` files, not route groups.
 
 Route-local private folders use a leading underscore (`_components/`, `_sections/`).
-Promote to `$lib/components/[layer]/` only when a second route needs the same thing.
+Promote to `#lib/components/[layer]/` only when a second route needs the same thing.
 
 **Global CSS belongs to the root layout, not the locale layout.** `uno.css`, `src/app.css`,
 and the fonts are imported once in `src/routes/+layout.svelte`. This is load-bearing: a
@@ -184,7 +184,7 @@ fails if a sweep hard-codes a window or names a job that does not exist.
 8. **Reactive state?** → app-wide `src/lib/state/`, or co-located with its component.
 9. **A policy constant?** → `server/[domain]/config.ts`. A retention window → `server/retention/schedule.ts`.
 10. **A catalogue two features share?** → directly under `src/lib/`, below the component
-   layer (see `$lib/3d`, `$lib/desk`).
+   layer (see `#lib/3d`, `#lib/desk`).
 11. **A separately deployed process?** → `services/<name>/`, with its own lockfile,
    toolchain pin and container definition, built with that directory as the context
    (`services/runtime-lab`). Rust compiled *into* the app → `crates/<name>/`
@@ -199,14 +199,15 @@ These are the reasons behind placements that otherwise look arbitrary.
 
 - **`pattern-library/` sits outside `src/`** because `mcp/server.ts` runs under bare Bun in
   an ephemeral, network-less container with no Vite — it must reach `registry.json` by
-  relative path. The app gets the same file through the `$patterns` alias.
+  relative path. The app gets the same file through the `#patterns/*` subpath import
+  (package.json `imports`), which both runtimes resolve without a Vite alias.
 - **`pattern-library/schema.ts` is split from `load.ts`** so the app can import the pattern
   types without pulling `import.meta.dir`, a Bun API that breaks `svelte-check`. One type
   declaration, two runtimes.
 - **`server/retrieval-shared/embed-config.ts` is dependency-free** so standalone Bun ingest
   scripts can import it by relative path. Never re-declare those constants;
   `retrieval/config.ts` re-exports them so retrieval code has one place to look.
-- **`$lib/showcases/catalog/registry.ts` uses relative imports**, not `$lib`, so it stays
+- **`#lib/showcases/catalog/registry.ts` uses relative imports**, not `#lib`, so it stays
   resolvable from `scripts/db/catalog-sync.ts` under bare Bun.
 - **`ai/connections.ts`, `db/ai/provider-connections.ts` and `security/aes-gcm.ts` are
   alias-free** for the same reason: the ingest and seed scripts read the administrator's saved
@@ -220,9 +221,10 @@ These are the reasons behind placements that otherwise look arbitrary.
 - **`server/mcp/` keeps `http.adapter.ts` DB-free** so the protocol tests need no mocks;
   `telemetry/writer.ts` is the only module there that touches the database.
 - **`scripts/external-service/verify.ts` installs a Bun plugin** mapping
-  `$env/dynamic/private` and `$app/environment` to the process environment — the same
-  shim `server/test/vitest.setup.ts` installs for tests — because it drives the real
-  service client, whose `resilience` import reaches `$env` through the cache client.
+  `$app/env/private` (every variable `src/env.ts` declares) and `$app/env` to the process
+  environment — the counterpart of the mock `server/test/vitest.setup.ts` installs for
+  tests — because it drives the real service client, whose `resilience` import reaches
+  `$app/env/private` through the cache client.
   The alternative, an alias-free copy of the retry, would be a second retry. Not in
   `validate`: a new virtual import in that graph surfaces only when the script runs.
 

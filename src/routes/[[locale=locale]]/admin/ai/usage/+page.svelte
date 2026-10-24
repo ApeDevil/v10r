@@ -1,9 +1,9 @@
 <script lang="ts">
-import { invalidateAll } from '$app/navigation';
-import VolumeBarChart from '$lib/components/admin/ai/VolumeBarChart.svelte';
-import { Card, EmptyState } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button } from '$lib/components/primitives';
+import VolumeBarChart from '#lib/components/admin/ai/VolumeBarChart.svelte';
+import { Card, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button } from '#lib/components/primitives/index.ts';
+import { refreshAll } from '$app/navigation';
 
 let { data } = $props();
 
@@ -67,7 +67,7 @@ function limitBadgeVariant(pct: number): 'success' | 'warning' | 'error' {
 		{#snippet header()}
 			<Cluster justify="between" align="center">
 				<h2 class="text-fluid-lg font-semibold">Top Users</h2>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 					Refresh
 				</Button>

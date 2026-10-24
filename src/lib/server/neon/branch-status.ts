@@ -11,7 +11,7 @@ import {
 	type DependencyResult,
 	FREE_TIER_LIMITS,
 	sanitizeError,
-} from '$lib/server/monitoring';
+} from '#lib/server/monitoring/index.ts';
 import { resolveTargets } from './branches';
 import { listBranches, neonConfigured } from './client';
 import type { NeonBranchStatus } from './types';

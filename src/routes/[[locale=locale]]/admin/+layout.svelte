@@ -1,10 +1,10 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import { AdminSidebar, AppShell } from '#lib/components/shell/index.ts';
+import { deLocalizeHref } from '#lib/i18n/index.ts';
+import { adminNavGroups } from '#lib/nav/admin.ts';
 import { page } from '$app/state';
-import { PageContainer } from '$lib/components/layout';
-import { AdminSidebar, AppShell } from '$lib/components/shell';
-import { deLocalizeHref } from '$lib/i18n';
-import { adminNavGroups } from '$lib/nav/admin';
 import type { LayoutData } from './$types';
 
 let { children, data }: { children: Snippet; data: LayoutData } = $props();

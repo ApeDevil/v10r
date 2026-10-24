@@ -3,8 +3,8 @@
  * Pure types only — no runtime dependencies on framework or DB layers.
  */
 
-import type { Locale } from '$lib/i18n/runtime';
-import type { PostStatus } from '$lib/types/db-enums';
+import type { Locale } from '#lib/i18n/runtime.ts';
+import type { PostStatus } from '#lib/types/db-enums.ts';
 
 /**
  * YAML frontmatter shape for content files (`content/<domain>/<slug>/<locale>.md`).

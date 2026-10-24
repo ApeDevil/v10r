@@ -4,8 +4,8 @@
  * native (no fallback badge). Snippets come from `ts_headline`; we strip its
  * non-printing sentinels into plain text + highlight ranges (HTML-free).
  */
-import type { SearchResult } from '$lib/search/types';
-import { HL_START, HL_STOP, searchPublishedRevisions } from '$lib/server/blog';
+import type { SearchResult } from '#lib/search/types.ts';
+import { HL_START, HL_STOP, searchPublishedRevisions } from '#lib/server/blog/index.ts';
 
 /** Convert a `ts_headline` string (with STX/ETX markers) → plain text + ranges. */
 function parseHeadline(headline: string): { snippet: string; highlight: [number, number][] } {

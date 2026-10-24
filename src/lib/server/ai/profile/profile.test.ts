@@ -5,17 +5,17 @@
  * lanes have their own test (`chatbot.test.ts`).
  */
 import { describe, expect, it, vi } from 'vitest';
-import { TOOL_MANIFEST } from '$lib/types/ai-tools';
-import type { CapabilityId } from '$lib/types/assistant-profile';
+import { TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
+import type { CapabilityId } from '#lib/types/assistant-profile.ts';
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	listFiles: vi.fn(),
 	getFile: vi.fn(),
 	getSpreadsheetByFileId: vi.fn(),
 	getMarkdownByFileId: vi.fn(),
 }));
-vi.mock('$lib/server/db/desk/mutations', () => ({
+vi.mock('#lib/server/db/desk/mutations.ts', () => ({
 	updateSpreadsheetByFileId: vi.fn(),
 	updateMarkdownByFileId: vi.fn(),
 	renameFile: vi.fn(),
@@ -23,20 +23,20 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	createMarkdownFile: vi.fn(),
 	deleteFile: vi.fn(),
 }));
-vi.mock('$lib/server/retrieval', () => ({
+vi.mock('#lib/server/retrieval/index.ts', () => ({
 	generateEmbedding: vi.fn(async () => []),
 	retrieve: vi.fn(async () => ({ chunks: [], totalFound: 0 })),
 	formatContextForPrompt: vi.fn(() => ''),
 	contextChunkCut: (result: { chunks: unknown[] }) => result.chunks.length,
 }));
-vi.mock('$lib/server/search', () => ({
+vi.mock('#lib/server/search/index.ts', () => ({
 	formatCatalogMap: vi.fn(() => '<catalog-map></catalog-map>'),
 	buildSearchIndex: vi.fn(() => []),
 	searchContent: vi.fn(async () => []),
 }));
-vi.mock('$lib/server/db/ai/mutations', () => ({ saveTurnTrace: vi.fn() }));
-vi.mock('$lib/server/db/retrieval/queries', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/db/retrieval/queries')>()),
+vi.mock('#lib/server/db/ai/mutations.ts', () => ({ saveTurnTrace: vi.fn() }));
+vi.mock('#lib/server/db/retrieval/queries.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/db/retrieval/queries.ts')>()),
 	countCorpus: vi.fn(async () => ({ documents: 0, chunks: 0 })),
 	getCorpusMap: vi.fn(async () => null),
 	countCorpusMaps: vi.fn(async () => 0),
@@ -46,7 +46,7 @@ const { composeTurn, identityBlock, PROFILES } = await import('./index');
 const { CHATBOT_PROFILE } = await import('./chatbot');
 const { DESKBOT_PROFILE } = await import('./deskbot');
 const { profileCapabilities, profileManifest } = await import('./manifest');
-const { countCorpusMaps } = await import('$lib/server/db/retrieval/queries');
+const { countCorpusMaps } = await import('#lib/server/db/retrieval/queries.ts');
 const { createTurnRecorder } = await import('../trace/recorder');
 const { SHARED_RULES, DATA_BOUNDARY_RULE } = await import('./shared-rules');
 

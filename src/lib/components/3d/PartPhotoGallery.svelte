@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Dialog as DialogPrimitive } from 'bits-ui';
-import type { PartPhoto } from '$lib/3d/parts';
-import { creditLine } from '$lib/credits/asset-rights';
+import type { PartPhoto } from '#lib/3d/parts.ts';
+import { creditLine } from '#lib/credits/asset-rights.ts';
 
 interface Props {
 	/** Photos of the selected part (thumbnail grid → click opens the lightbox) */

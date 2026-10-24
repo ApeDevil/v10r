@@ -1,5 +1,5 @@
 import { and, count, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm';
-import type { DeskFileType } from '$lib/types/db-enums';
+import type { DeskFileType } from '#lib/types/db-enums.ts';
 import { type DbHandle, db } from '../index';
 import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
 

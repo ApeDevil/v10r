@@ -11,8 +11,8 @@
  * mobile view; the dispatcher stays surface-free.
  */
 
-import type { PanelDefinition } from '$lib/desk/layout.types';
-import type { DeskEffect } from '$lib/types/ai-tools';
+import type { PanelDefinition } from '#lib/desk/layout.types.ts';
+import type { DeskEffect } from '#lib/types/ai-tools.ts';
 import type { DeskEvents } from './desk-bus.svelte';
 import { filePanelId } from './file-panel';
 

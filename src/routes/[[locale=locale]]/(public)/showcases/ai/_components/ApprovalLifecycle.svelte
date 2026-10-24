@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import { PROPOSAL_STATES, PROPOSAL_TRANSITIONS, type ProposalState } from '$lib/showcases/ai/topology';
+import * as m from '#lib/paraglide/messages.js';
+import { PROPOSAL_STATES, PROPOSAL_TRANSITIONS, type ProposalState } from '#lib/showcases/ai/topology.ts';
 
 // A genuine state machine, mirrored from the pg enum + the approve route and pinned
 // by drift tests. Failure paths are the point: TTL in SQL, no rollback, frozen scopes.

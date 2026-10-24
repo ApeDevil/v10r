@@ -1,5 +1,5 @@
 // Viz components — explicit import only, NOT re-exported from components/index.ts
-// Usage: import { BarChart } from '$lib/components/viz';
+// Usage: import { BarChart } from '#lib/components/viz/index.ts';
 
 // Charts
 export { default as AreaChart } from './chart/area/AreaChart.svelte';

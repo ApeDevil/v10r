@@ -1,7 +1,7 @@
 <script lang="ts">
 import { ScrollArea as ScrollAreaPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 import { SCROLL_AREA_CLASS, SCROLL_THUMB_CLASS, type ScrollbarVariants, scrollbarVariants } from './scroll-area';
 
 interface Props {

@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import type { TurnProvenanceKind } from '$lib/showcases/ai/inspector';
+import * as m from '#lib/paraglide/messages.js';
+import type { TurnProvenanceKind } from '#lib/showcases/ai/inspector.ts';
 
 // Provenance is never dismissible: it qualifies THIS turn, not the architecture — one chip,
 // text beside a dot so colour never carries it alone: `authored` says a hand wrote it,

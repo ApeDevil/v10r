@@ -2,7 +2,7 @@
  * Name-check policy: what one anonymous check may cost, and how long an answer is
  * the truth. Every number that bounds spend or freshness lives here, not at a call site.
  */
-import type { LiveNameSourceId } from '$lib/name-check/report';
+import type { LiveNameSourceId } from '#lib/name-check/report.ts';
 
 export const RATE_LIMIT_PREFIX = 'rl:name-check';
 /** Checks per IP per window. One check fans out to every live source, so this is the upstream budget too. */

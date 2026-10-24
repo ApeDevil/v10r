@@ -1,5 +1,5 @@
-import { executeCycle } from '$lib/server/showcases/cycle';
-import type { SimulateError } from '$lib/showcases/cycle/types';
+import { executeCycle } from '#lib/server/showcases/cycle/index.ts';
+import type { SimulateError } from '#lib/showcases/cycle/types.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => ({});

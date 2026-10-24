@@ -3,8 +3,8 @@
  * Runs both searches, then fuses results via reciprocal rank fusion.
  */
 import { sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import type { ChunkLevel } from '$lib/types/turn-trace';
+import { db } from '#lib/server/db/index.ts';
+import type { ChunkLevel } from '#lib/types/turn-trace.ts';
 import { OVERFETCH_MULTIPLIER } from '../config';
 import { reciprocalRankFusion } from '../rank';
 import type { DocumentSource, RankedChunk } from '../types';

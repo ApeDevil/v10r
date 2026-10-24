@@ -1,10 +1,10 @@
 <script lang="ts">
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { BUILD_LABELS, LANE_LABELS, LAYER_NAMES, layerRole, STATUS_LABELS } from '$lib/showcases/ai/labels';
-import type { AiLayerId, TraceStatus } from '$lib/showcases/ai/topology';
-import { AI_LAYERS, type AiLayer, STEP_BUDGETS } from '$lib/showcases/ai/topology';
-import type { AiSurface } from '$lib/types/db-enums';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { BUILD_LABELS, LANE_LABELS, LAYER_NAMES, layerRole, STATUS_LABELS } from '#lib/showcases/ai/labels.ts';
+import type { AiLayerId, TraceStatus } from '#lib/showcases/ai/topology.ts';
+import { AI_LAYERS, type AiLayer, STEP_BUDGETS } from '#lib/showcases/ai/topology.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 
 // `statuses` is the per-band status of ONE turn — derived from its persisted trace
 // (`spineOf`) — or null for the resting diagram. `halted` lights the approval replay stack

@@ -16,8 +16,8 @@
  */
 
 import { SvelteSet } from 'svelte/reactivity';
-import { apiFetch } from '$lib/api';
-import { type TraceMetadata, traceSnapshotOf, turnFinished } from '$lib/components/composites/chatbot/turn-progress';
+import { apiFetch } from '#lib/api.ts';
+import { type TraceMetadata, traceSnapshotOf, turnFinished } from '#lib/components/composites/chatbot/turn-progress.ts';
 import {
 	ancestorIds,
 	expandableIds,
@@ -29,11 +29,11 @@ import {
 	type ThreadMessage,
 	type TurnOption,
 	turnOptions,
-} from '$lib/showcases/ai/inspector';
-import { defaultGraphExpanded, graphAncestorIds, type TurnGraph, turnGraph } from '$lib/showcases/ai/turn-graph';
-import type { AssistantProfileManifest } from '$lib/types/assistant-profile';
-import type { AiSurface } from '$lib/types/db-enums';
-import type { TurnSummary, TurnTrace } from '$lib/types/turn-trace';
+} from '#lib/showcases/ai/inspector.ts';
+import { defaultGraphExpanded, graphAncestorIds, type TurnGraph, turnGraph } from '#lib/showcases/ai/turn-graph.ts';
+import type { AssistantProfileManifest } from '#lib/types/assistant-profile.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
+import type { TurnSummary, TurnTrace } from '#lib/types/turn-trace.ts';
 
 export type InspectorSource = 'recorded' | 'live';
 

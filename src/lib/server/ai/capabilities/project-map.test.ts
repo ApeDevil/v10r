@@ -3,11 +3,11 @@
  * ordering (intro + stack line first) survives that cut on a production-sized map.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { buildOverviewBody, type OverviewDocFile } from '$lib/server/docs/overview-body';
+import { buildOverviewBody, type OverviewDocFile } from '#lib/server/docs/overview-body.ts';
 import { PROJECT_MAP_MAX_CHARS } from '../config';
 
 const getCorpusMap = vi.fn();
-vi.mock('$lib/server/db/retrieval/queries', () => ({
+vi.mock('#lib/server/db/retrieval/queries.ts', () => ({
 	getCorpusMap: (...args: unknown[]) => getCorpusMap(...args),
 }));
 

@@ -3,14 +3,14 @@ import {
 	CONVERSATION_RATE_LIMIT_MAX,
 	CONVERSATION_RATE_LIMIT_PREFIX,
 	CONVERSATION_RATE_LIMIT_WINDOW,
-} from '$lib/server/ai/config';
-import { getConversationQuota } from '$lib/server/ai/conversation-quota';
-import { bulkDeleteConversations } from '$lib/server/db/ai/mutations';
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+} from '#lib/server/ai/config.ts';
+import { getConversationQuota } from '#lib/server/ai/conversation-quota.ts';
+import { bulkDeleteConversations } from '#lib/server/db/ai/mutations.ts';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(

@@ -27,6 +27,7 @@
  *   route loads for a user who scrolled past.
  */
 import { preloadCode, preloadData } from '$app/navigation';
+import { match } from '$app/paths';
 
 /**
  * How much to speculate for a link.
@@ -38,22 +39,22 @@ import { preloadCode, preloadData } from '$app/navigation';
 export type PreloadIntent = 'none' | 'code' | 'data' | 'code-data' | 'idle';
 
 /** SvelteKit's own attribute vocabulary, kept out of call sites. */
-const DATA_TRIGGER: Record<PreloadIntent, 'off' | 'hover' | 'tap' | 'viewport'> = {
-	none: 'off',
-	code: 'off',
+const DATA_TRIGGER: Record<PreloadIntent, 'false' | 'hover' | 'tap' | 'viewport'> = {
+	none: 'false',
+	code: 'false',
 	data: 'hover',
 	// Both halves: `viewport` warms the code as the link scrolls in, `tap` holds the
 	// data fetch back until the pointer actually goes down on it.
 	'code-data': 'tap',
-	idle: 'off',
+	idle: 'false',
 };
 
-const CODE_TRIGGER: Record<PreloadIntent, 'off' | 'hover' | 'tap' | 'viewport' | 'eager'> = {
-	none: 'off',
+const CODE_TRIGGER: Record<PreloadIntent, 'false' | 'hover' | 'tap' | 'viewport' | 'eager'> = {
+	none: 'false',
 	code: 'viewport',
 	data: 'hover',
 	'code-data': 'viewport',
-	idle: 'off',
+	idle: 'false',
 };
 
 /**
@@ -81,10 +82,14 @@ export async function preloadNow(href: string, intent: PreloadIntent = 'code-dat
 	if (intent === 'none') return;
 	try {
 		if (intent === 'code') {
-			await preloadCode(href);
+			// preloadCode takes a route ID (`/blog/[slug]`), not an href; a pathname is a no-op.
+			const route = await match(href);
+			if (route) await preloadCode(route.id);
 			return;
 		}
-		// preloadData loads the code too, so `code-data` and `idle` need no second call.
+		// preloadData loads the code too, so `code-data` and `idle` need no second call. A
+		// failing load resolves to `{ type: 'error' }` rather than throwing; either way the
+		// guess is dropped.
 		await preloadData(href);
 	} catch {
 		// Deliberately silent. A failed guess is not an error the user did anything to

@@ -1,7 +1,11 @@
 import * as v from 'valibot';
-import { DESK_TOOL_SCOPES } from '$lib/types/ai-tools';
-import { AI_PROVIDER_IDS, DESK_FILE_TYPES } from '$lib/types/db-enums';
-import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES, DESK_LAYOUT_MAX_PANELS } from '$lib/types/desk-context-limits';
+import { DESK_TOOL_SCOPES } from '#lib/types/ai-tools.ts';
+import { AI_PROVIDER_IDS, DESK_FILE_TYPES } from '#lib/types/db-enums.ts';
+import {
+	CONTEXT_ENTRY_MAX_CHARS,
+	CONTEXT_MAX_ENTRIES,
+	DESK_LAYOUT_MAX_PANELS,
+} from '#lib/types/desk-context-limits.ts';
 
 const MessageRole = v.picklist(['user', 'assistant']);
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Sparkline } from '$lib/components/viz/chart/sparkline';
-import * as m from '$lib/paraglide/messages';
-import { cn } from '$lib/utils/cn';
+import { Sparkline } from '#lib/components/viz/chart/sparkline/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	title: string;

@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { ToggleablePart } from '$lib/3d/customization';
+import type { ToggleablePart } from '#lib/3d/customization.ts';
 
 interface Props {
 	parts: ToggleablePart[];

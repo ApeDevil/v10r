@@ -1,12 +1,12 @@
 import * as v from 'valibot';
-import { createAsset } from '$lib/server/blog';
-import { ConfirmUploadSchema } from '$lib/server/blog/schemas';
-import { isUniqueViolation } from '$lib/server/db/shared/folder-tree';
-import { guardApiBlogAuthor } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiValidationError } from '$lib/server/http/response';
-import { confirmBlogUpload, deleteBlogObject, verifyUploadTicket } from '$lib/server/store/blog';
-import { classifyS3Error, StoreError } from '$lib/server/store/errors';
+import { createAsset } from '#lib/server/blog/index.ts';
+import { ConfirmUploadSchema } from '#lib/server/blog/schemas.ts';
+import { isUniqueViolation } from '#lib/server/db/shared/folder-tree.ts';
+import { guardApiBlogAuthor } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiValidationError } from '#lib/server/http/response.ts';
+import { confirmBlogUpload, deleteBlogObject, verifyUploadTicket } from '#lib/server/store/blog/index.ts';
+import { classifyS3Error, StoreError } from '#lib/server/store/errors.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:assets:confirm', 10, '1 m');

@@ -24,7 +24,7 @@ The `handle` hook intercepts every request before it reaches routes.
 
 ```typescript
 // src/hooks.server.ts
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 
 export const handle: Handle = async ({ event, resolve }) => {
   // Before route handler
@@ -76,8 +76,7 @@ Use `sequence()` to chain multiple handlers. **Order matters.**
 
 ```typescript
 // src/hooks.server.ts
-import { sequence } from '@sveltejs/kit/hooks';
-import type { Handle } from '@sveltejs/kit';
+import { type Handle, sequence } from '@sveltejs/kit/hooks';
 
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
   // Check rate limit first (before expensive auth checks)
@@ -163,8 +162,8 @@ export const auth = betterAuth({
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { auth } from '$lib/server/auth';
-import type { Handle } from '@sveltejs/kit';
+import { auth } from '#lib/server/auth/index.ts';
+import type { Handle } from '@sveltejs/kit/hooks';
 
 // Rate limiting
 const rateLimitHandle: Handle = async ({ event, resolve }) => {
@@ -203,7 +202,7 @@ The `authHandler` hook rate-limits every `/api/auth/*` request by client IP, the
 
 ```typescript
 // src/hooks.server.ts
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 
 const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 
@@ -289,7 +288,7 @@ const securityHandle: Handle = async ({ event, resolve }) => {
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
-    // CSP - consider using nonce mode in svelte.config.js instead
+    // CSP - consider using nonce mode in the sveltekit() options (vite.config.ts) instead
     // response.headers.set('Content-Security-Policy', "...");
   } catch {
     // Headers immutable, return as-is
@@ -301,7 +300,7 @@ const securityHandle: Handle = async ({ event, resolve }) => {
 
 > **Live header set.** The running `securityHeaders` handler also emits `Cross-Origin-Opener-Policy: same-origin-allow-popups` (OAuth popups still work), `Cross-Origin-Resource-Policy: same-site`, and `X-DNS-Prefetch-Control: off`. It conditionally adds `Cache-Control: no-store, private` on authed-or-`/api/` responses (guarded by `!response.headers.has('Cache-Control')` so an explicit per-route setter wins) and `Clear-Site-Data` on a successful `/api/auth/sign-out`. See [system-abstraction.md](../system-abstraction.md#security-headers-set) for the full table.
 
-> **CSP** is configured in `svelte.config.js`, not in this handler. `img-src` is restricted to explicit origins (`self`, `data:`, `blob:`, R2, `basemaps.cartocdn.com`, `avatars.githubusercontent.com`) rather than a blanket `https:`. `style-src` still requires `'unsafe-inline'` — Svelte transitions inject inline styles, a known constraint. For SSR pages prefer `csp.mode: 'auto'` (nonces) over the `'unsafe-inline'` fallback shown above, which provides no XSS protection.
+> **CSP** is configured in the `sveltekit({ csp })` options in `vite.config.ts`, not in this handler. `img-src` is restricted to explicit origins (`self`, `data:`, `blob:`, R2, `basemaps.cartocdn.com`, `avatars.githubusercontent.com`) rather than a blanket `https:`. `style-src` still requires `'unsafe-inline'` — Svelte transitions inject inline styles, a known constraint. For SSR pages prefer `csp.mode: 'auto'` (nonces) over the `'unsafe-inline'` fallback shown above, which provides no XSS protection.
 
 ---
 
@@ -311,7 +310,7 @@ Intercept server-side `fetch()` calls:
 
 ```typescript
 // src/hooks.server.ts
-import type { HandleFetch } from '@sveltejs/kit';
+import type { HandleFetch } from '@sveltejs/kit/hooks';
 
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
   // Forward cookies to same-origin API calls
@@ -342,31 +341,27 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 
 ## Handle Error
 
-Global error handler for unexpected errors:
+Global error handler. It receives every error except redirects, tagged with `kind` (`app` · `framework` · `validation` · `unknown`); there is no top-level `status`/`message`.
 
 ```typescript
-// src/hooks.server.ts
-import type { HandleServerError } from '@sveltejs/kit';
+// src/hooks.server.ts — the body is reportServerError in src/lib/server/http/error-report.ts
+import type { HandleServerError } from '@sveltejs/kit/hooks';
 
-export const handleError: HandleServerError = async ({ error, event, status, message }) => {
+export const handleError: HandleServerError = async ({ kind, error, event }) => {
+  // app errors are error() on purpose — keep their body, log nothing
+  if (kind !== 'unknown') return;
+
   const errorId = crypto.randomUUID();
 
   // Log to console (or Sentry, etc.)
-  console.error({
-    errorId,
-    status,
-    message,
-    path: event.url.pathname,
-    error
-  });
+  console.error({ errorId, path: event.url.pathname, error });
 
   // Return safe error info to client
-  return {
-    message: status === 500 ? 'Internal Server Error' : message,
-    errorId
-  };
+  return { message: 'Internal Server Error', errorId };
 };
 ```
+
+v10r also logs non-404 `framework` errors; see [error-handling.md](./error-handling.md#handle-error-hook).
 
 See [error-handling.md](./error-handling.md) for comprehensive error handling patterns.
 
@@ -378,7 +373,7 @@ The in-process job scheduler starts via a bare import at the top of `hooks.serve
 
 ```typescript
 // src/hooks.server.ts
-import '$lib/server/jobs/scheduler';
+import '#lib/server/jobs/scheduler.ts';
 ```
 
 The import runs the scheduler module once at startup. The module itself guards against duplicate intervals (HMR) and skips execution during Vite builds. On Vercel (serverless), it detects `platform.persistent = false` and does nothing.
@@ -404,11 +399,11 @@ Complete `hooks.server.ts` with all patterns:
 // src/hooks.server.ts
 import { sequence } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
-import { auth } from '$lib/server/auth';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { ALLOWED_ORIGINS } from '$env/static/private';
-import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit';
-import '$lib/server/jobs/scheduler'; // starts in-process scheduler (container only, no-op on Vercel)
+import { auth } from '#lib/server/auth/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { ALLOWED_ORIGINS } from '$app/env/private'; // declared in src/env.ts
+import type { Handle, HandleFetch, HandleServerError } from '@sveltejs/kit/hooks';
+import '#lib/server/jobs/scheduler.ts'; // starts in-process scheduler (container only, no-op on Vercel)
 
 const allowedOrigins = new Set(ALLOWED_ORIGINS?.split(',') ?? []);
 const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
@@ -459,7 +454,7 @@ const corsHandle: Handle = async ({ event, resolve }) => {
 };
 
 // 3. CSRF protection for JSON APIs (SvelteKit only protects form submissions)
-// Live predicates are extracted to $lib/server/security/csrf.ts
+// Live predicates are extracted to #lib/server/security/csrf.ts
 // (needsCsrf, isSameHost, CSRF_EXEMPT_PREFIXES) and imported by the hook.
 // The live handler checks X-Requested-With AND a same-host Origin/Referer on
 // mutating /api/* requests. Exempt prefixes: /api/auth/, /api/cron/,
@@ -555,14 +550,12 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
   return fetch(request);
 };
 
-// Global error handler
-export const handleError: HandleServerError = async ({ error, event, status, message }) => {
+// Global error handler — live: reportServerError (src/lib/server/http/error-report.ts)
+export const handleError: HandleServerError = async ({ kind, error, event }) => {
+  if (kind !== 'unknown') return; // app errors keep their error() body
   const errorId = crypto.randomUUID();
-  console.error({ errorId, status, path: event.url.pathname, error });
-  return {
-    message: status === 500 ? 'Internal Server Error' : message,
-    errorId
-  };
+  console.error({ errorId, path: event.url.pathname, error });
+  return { message: 'Internal Server Error', errorId };
 };
 ```
 
@@ -573,7 +566,7 @@ export const handleError: HandleServerError = async ({ error, event, status, mes
 ```typescript
 // src/app.d.ts
 import type { User, Session } from 'better-auth';
-import type { GrantKind } from '$lib/server/auth/grants';
+import type { GrantKind } from '#lib/server/auth/grants.ts';
 
 declare global {
   namespace App {

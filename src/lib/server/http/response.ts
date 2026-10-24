@@ -8,15 +8,14 @@
  * RULE: Never use SvelteKit error() in +server.ts files — it produces
  * { message } shape. Always use these helpers for consistent contracts.
  */
-import { json } from '@sveltejs/kit';
 import type { BaseIssue } from 'valibot';
 
 export function apiOk<T>(data: T, status = 200) {
-	return json({ data }, { status });
+	return Response.json({ data }, { status });
 }
 
 export function apiCreated<T>(data: T) {
-	return json({ data }, { status: 201 });
+	return Response.json({ data }, { status: 201 });
 }
 
 export function apiNoContent() {
@@ -24,7 +23,7 @@ export function apiNoContent() {
 }
 
 export function apiError(status: number, code: string, message: string, fields?: Record<string, string>) {
-	return json({ error: { code, message, ...(fields && { fields }) } }, { status });
+	return Response.json({ error: { code, message, ...(fields && { fields }) } }, { status });
 }
 
 export function apiValidationError(issues: BaseIssue<unknown>[]) {

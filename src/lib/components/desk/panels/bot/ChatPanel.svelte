@@ -12,13 +12,16 @@
  * an approval is in flight; Approve/Cancel wait for the same and only exist while the
  * card is pending; New chat waits for an approval in flight.
  */
-import { page } from '$app/state';
-import ChatInput from '$lib/components/composites/chatbot/ChatInput.svelte';
-import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
-import type { HarnessMetadata, ProposalMetadata } from '$lib/components/composites/chatbot/harness-types';
-import PlanCard from '$lib/components/composites/chatbot/PlanCard.svelte';
-import { citedCatalogSources, inspectTurnPath, traceOf } from '$lib/components/composites/chatbot/turn-progress';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+
+import ChatInput from '#lib/components/composites/chatbot/ChatInput.svelte';
+import ChatMessage from '#lib/components/composites/chatbot/ChatMessage.svelte';
+import type { HarnessMetadata, ProposalMetadata } from '#lib/components/composites/chatbot/harness-types.ts';
+import PlanCard from '#lib/components/composites/chatbot/PlanCard.svelte';
+import { citedCatalogSources, inspectTurnPath, traceOf } from '#lib/components/composites/chatbot/turn-progress.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { dispatchDeskEffect as dispatchEffect } from '#lib/components/desk/dispatch-desk-effect.ts';
+import { findLeafWithPanel } from '#lib/components/desk/dock.operations.ts';
+import { fileIdOfPanelDefinition, findFilePanel } from '#lib/components/desk/file-panel.ts';
 import {
 	appendIOLog,
 	focusPanel,
@@ -30,15 +33,13 @@ import {
 	getPanelMenus,
 	getWorkspaceContext,
 	serializeForRequest,
-} from '$lib/components/desk';
-import { dispatchDeskEffect as dispatchEffect } from '$lib/components/desk/dispatch-desk-effect';
-import { findLeafWithPanel } from '$lib/components/desk/dock.operations';
-import { fileIdOfPanelDefinition, findFilePanel } from '$lib/components/desk/file-panel';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import type { TurnError } from '$lib/types/ai-error';
-import type { DeskEffect } from '$lib/types/ai-tools';
-import { CONTEXT_MAX_ENTRIES, DESK_LAYOUT_MAX_PANELS } from '$lib/types/desk-context-limits';
+} from '#lib/components/desk/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { TurnError } from '#lib/types/ai-error.ts';
+import type { DeskEffect } from '#lib/types/ai-tools.ts';
+import { CONTEXT_MAX_ENTRIES, DESK_LAYOUT_MAX_PANELS } from '#lib/types/desk-context-limits.ts';
+import { page } from '$app/state';
 import BotManagerDialog from './BotManagerDialog.svelte';
 import { type DeskBotSession, type DeskBotSink, getDeskBotSession } from './desk-bot-session.svelte';
 

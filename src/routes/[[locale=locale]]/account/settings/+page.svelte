@@ -1,15 +1,24 @@
 <script lang="ts">
-import type { ActionResult } from '@sveltejs/kit';
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
+import { Alert, Card, FormField, StepUpDialog } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import {
+	Avatar,
+	Button,
+	Input,
+	Select,
+	Slider,
+	Spinner,
+	Switch,
+	ToggleGroup,
+} from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { userSettingsSchema } from '#lib/schemas/app/settings.ts';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import type { ActionResult } from '$app/forms';
 import { enhance as formEnhance } from '$app/forms';
-import { Alert, Card, FormField, StepUpDialog } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Avatar, Button, Input, Select, Slider, Spinner, Switch, ToggleGroup } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { userSettingsSchema } from '$lib/schemas/app/settings';
-import { getSidebar } from '$lib/state/sidebar.svelte';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

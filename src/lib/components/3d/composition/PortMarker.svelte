@@ -19,7 +19,7 @@ const SCALE: Record<PortEmphasis, number> = { open: 1, coupled: 0.6, selected: 1
 
 <script lang="ts">
 import { T } from '@threlte/core';
-import type { ResolvedPort } from '$lib/product-composition';
+import type { ResolvedPort } from '#lib/product-composition/index.ts';
 
 interface Props {
 	port: ResolvedPort;

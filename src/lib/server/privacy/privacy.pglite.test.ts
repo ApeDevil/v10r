@@ -9,23 +9,23 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { userEvents } from '$lib/server/db/schema/analytics';
-import { account, session, user } from '$lib/server/db/schema/auth/_better-auth';
+import { userEvents } from '#lib/server/db/schema/analytics/index.ts';
+import { account, session, user } from '#lib/server/db/schema/auth/_better-auth.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { collectUserData, maskIp } = await import('./report');
 const { deleteUserData } = await import('./mutations');
 const { consumeTransparencyMarker, hasSeenTransparency, getOrCreatePreferences } = await import(
-	'$lib/server/db/preferences'
+	'#lib/server/db/preferences/index.ts'
 );
 
 afterAll(async () => {

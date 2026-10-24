@@ -1,14 +1,14 @@
 <script lang="ts">
 import { superForm } from 'sveltekit-superforms';
+import { BackLink, Card } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { buttonVariants } from '#lib/components/primitives/button/index.ts';
+import { Badge, Button, Input, Switch } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getCurrentPushSubscription, pushSupported, subscribeToPush, unsubscribeFromPush } from '#lib/pwa/push.ts';
+import { getToast } from '#lib/state/index.ts';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { BackLink, Card } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Switch } from '$lib/components/primitives';
-import { buttonVariants } from '$lib/components/primitives/button';
-import * as m from '$lib/paraglide/messages';
-import { getCurrentPushSubscription, pushSupported, subscribeToPush, unsubscribeFromPush } from '$lib/pwa/push';
-import { getToast } from '$lib/state';
 
 let { data } = $props();
 
@@ -74,11 +74,11 @@ const { form, enhance, submitting, message } = superForm(data.form, {
 $effect(() => {
 	if (data.successMessage === 'discord_connected') {
 		toast.success(m.account_notifications_discord_connected_toast());
-		goto(page.url.pathname, { replaceState: true });
+		goto(page.url.pathname, { replace: true });
 	}
 	if (data.errorMessage === 'discord_denied') {
 		toast.error(m.account_notifications_discord_denied_toast());
-		goto(page.url.pathname, { replaceState: true });
+		goto(page.url.pathname, { replace: true });
 	}
 });
 

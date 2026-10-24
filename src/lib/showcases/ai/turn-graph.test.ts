@@ -6,7 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { TurnTrace, TurnTraceSnapshot } from '$lib/types/turn-trace';
+import type { TurnTrace, TurnTraceSnapshot } from '#lib/types/turn-trace.ts';
 import { chatbotGrounded } from './fixtures/chatbot-grounded';
 import { deskbotPlan } from './fixtures/deskbot-plan';
 import { deskbotSentinel } from './fixtures/deskbot-sentinel';

@@ -1,12 +1,12 @@
 <script lang="ts">
+import { Card } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Spinner } from '#lib/components/primitives/index.ts';
+import { DataField } from '#lib/components/transparency/index.ts';
+import { formatDate, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { type ConsentTier, getConsent } from '#lib/state/consent.svelte.ts';
 import { page } from '$app/state';
-import { Card } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner } from '$lib/components/primitives';
-import { DataField } from '$lib/components/transparency';
-import { formatDate, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { type ConsentTier, getConsent } from '$lib/state/consent.svelte';
 
 let { data } = $props();
 
@@ -311,7 +311,7 @@ function formatTimestamp(iso: string): string {
 			{/snippet}
 			<p class="text-sm text-muted mb-4">{m.account_data_actions_intro()}</p>
 			<div class="flex flex-wrap gap-3">
-				<Button href="/api/account/data/export" variant="outline" data-sveltekit-preload-data="off">
+				<Button href="/api/account/data/export" variant="outline" data-sveltekit-preload-data="false">
 					<span class="i-lucide-download h-4 w-4 mr-1"></span>
 					{m.account_data_download()}
 				</Button>

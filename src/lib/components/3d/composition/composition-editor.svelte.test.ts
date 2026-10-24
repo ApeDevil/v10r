@@ -5,8 +5,8 @@ import {
 	moveOccurrence,
 	type ProductComposition,
 	stringifyComposition,
-} from '$lib/product-composition';
-import { HEATING_COMPOSITION, HEATING_STANDARDS } from '$lib/showcases/3d/compose/heating';
+} from '#lib/product-composition/index.ts';
+import { HEATING_COMPOSITION, HEATING_STANDARDS } from '#lib/showcases/3d/compose/heating.ts';
 import { CompositionEditor } from './composition-editor.svelte';
 
 const registry = createPortStandardRegistry(HEATING_STANDARDS);

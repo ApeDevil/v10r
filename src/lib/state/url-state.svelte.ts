@@ -3,12 +3,12 @@
  * whole decision (`docs/blueprint/state.md#url-state`):
  *
  * - `navigate` — the param is data a `load` reads (a filter, a page, a range). Values come
- *   from `page.url`; a write is `goto(…, { replaceState, keepFocus, noScroll })`, so the load
- *   re-runs and `page.url` stays the truth.
+ *   from `page.url`; a write is `goto(…, { replace, reset: false })` (scroll and focus stay
+ *   put), so the load re-runs and `page.url` stays the truth.
  * - `shallow` — the param is view state no load reads (a selected part, an open tab). Values
- *   live in local `$state`, seeded from the URL; a write is `replaceState` from
- *   `$app/navigation`: no load, no `beforeNavigate`/`afterNavigate`, and `page.url` keeps the
- *   URL the page loaded with, so read the values here, never from `page.url`.
+ *   live in local `$state`, seeded from the URL; a write is `goto(…, { shallow: true })`: no
+ *   load, navigation hooks see `shallow` and stand aside, and `page.url` keeps the URL the
+ *   page loaded with, so read the values here, never from `page.url`.
  *
  * Never `history.replaceState`/`pushState` directly: the router stores its own entry state in
  * history, and a raw write replaces it with whatever the caller passes.
@@ -18,8 +18,8 @@
  * during initialisation: the router does not take a history write before it has started, and
  * on the server there is no history at all — the URL already holds the initial values.
  */
-import { browser } from '$app/environment';
-import { goto, replaceState } from '$app/navigation';
+import { browser } from '$app/env';
+import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { readUrlState, type UrlStateSpec, type UrlStateValues, urlStateHref, writeUrlState } from './url-state';
 
@@ -66,9 +66,8 @@ export function createUrlState<S extends UrlStateSpec>(spec: S, options: UrlStat
 	function navigate(): void {
 		const written = pending;
 		void goto(writeUrlState(page.url, spec, written), {
-			replaceState: options.history !== 'push',
-			keepFocus: true,
-			noScroll: true,
+			replace: options.history !== 'push',
+			reset: false,
 		}).then(settle, settle);
 		function settle() {
 			// A newer write may have arrived while this one navigated; keep it. A navigation that
@@ -81,7 +80,11 @@ export function createUrlState<S extends UrlStateSpec>(spec: S, options: UrlStat
 		if (!browser) return;
 		// page.url is the URL the page loaded with under shallow routing; the address bar is the
 		// one carrying earlier shallow writes, so build on it.
-		replaceState(writeUrlState(new URL(window.location.href), spec, local), page.state);
+		void goto(writeUrlState(new URL(window.location.href), spec, local), {
+			shallow: true,
+			replace: true,
+			state: page.state,
+		});
 	}
 
 	return {

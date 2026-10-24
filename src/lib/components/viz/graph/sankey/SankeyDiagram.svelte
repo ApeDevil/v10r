@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onDestroy, onMount } from 'svelte';
+import { cn } from '#lib/utils/cn.ts';
 import { beforeNavigate } from '$app/navigation';
-import { cn } from '$lib/utils/cn';
 import type { ChartContainerVariants } from '../../_shared/chart-container';
 import { getVizPalette, vizColor } from '../../_shared/theme-bridge';
 import SvgGraphContainer from '../_shared/SvgGraphContainer.svelte';
@@ -54,7 +54,9 @@ function cleanup() {
 	linkPathGenerator = undefined;
 }
 
-beforeNavigate(cleanup);
+beforeNavigate(({ shallow }) => {
+	if (!shallow) cleanup();
+});
 onDestroy(cleanup);
 
 function handleResize(w: number, h: number) {

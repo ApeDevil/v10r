@@ -12,9 +12,9 @@
  * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
 import { Dialog } from 'bits-ui';
-import { Button } from '$lib/components/primitives';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { Button } from '#lib/components/primitives/index.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface DiffRow {
 	field: string;

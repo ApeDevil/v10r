@@ -9,8 +9,8 @@
  * provenance cue (WCAG 1.4.1). Copy (surface labels, EN tooltip) is provisional —
  * CONY to localize en/de/ru.
  */
-import { localizeHref } from '$lib/i18n';
-import { cn } from '$lib/utils/cn';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 type Surface = 'page' | 'showcase' | 'section' | 'doc' | 'blog';
 

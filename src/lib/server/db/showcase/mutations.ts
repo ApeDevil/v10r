@@ -5,14 +5,14 @@
  */
 
 import { and, desc, eq, gt, isNull, lte, max, or } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import {
 	documentVault,
 	showcaseAuditLog,
 	temporalRecord,
 	typeSpecimen,
 	typeSpecimenHistory,
-} from '$lib/server/db/schema';
+} from '#lib/server/db/schema/index.ts';
 
 export async function createSpecimen(data: {
 	label: string;

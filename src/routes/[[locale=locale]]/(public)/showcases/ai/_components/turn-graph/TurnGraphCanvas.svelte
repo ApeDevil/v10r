@@ -1,12 +1,12 @@
 <script lang="ts">
 import { type Edge, type FitViewOptions, MarkerType, type Node } from '@xyflow/svelte';
 import { untrack } from 'svelte';
-import { Button } from '$lib/components/primitives';
-import FlowDiagram from '$lib/components/viz/diagram/flow/FlowDiagram.svelte';
-import * as m from '$lib/paraglide/messages';
-import { COLUMN_LABELS, KIND_LABELS } from '$lib/showcases/ai/labels';
-import { connectedIds, type TurnGraph, visibleTurnGraph } from '$lib/showcases/ai/turn-graph';
-import { cardVariant, layoutTurnGraph, routeEdges } from '$lib/showcases/ai/turn-graph-layout';
+import { Button } from '#lib/components/primitives/index.ts';
+import FlowDiagram from '#lib/components/viz/diagram/flow/FlowDiagram.svelte';
+import * as m from '#lib/paraglide/messages.js';
+import { COLUMN_LABELS, KIND_LABELS } from '#lib/showcases/ai/labels.ts';
+import { connectedIds, type TurnGraph, visibleTurnGraph } from '#lib/showcases/ai/turn-graph.ts';
+import { cardVariant, layoutTurnGraph, routeEdges } from '#lib/showcases/ai/turn-graph-layout.ts';
 import TurnGraphEdge from './TurnGraphEdge.svelte';
 import TurnGraphFlowNode from './TurnGraphFlowNode.svelte';
 import TurnGraphGroupNode from './TurnGraphGroupNode.svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { CustomizationPreset } from '$lib/3d/customization';
+import type { CustomizationPreset } from '#lib/3d/customization.ts';
 
 interface Props {
 	presets: CustomizationPreset[];

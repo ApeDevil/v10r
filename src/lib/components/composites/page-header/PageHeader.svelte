@@ -1,5 +1,5 @@
 <script lang="ts">
-import { localizeHref } from '$lib/i18n';
+import { localizeHref } from '#lib/i18n/index.ts';
 
 interface Breadcrumb {
 	label: string;

@@ -1,7 +1,7 @@
 import type { InferSelectModel } from 'drizzle-orm';
-import type { TranslationMap } from '$lib/i18n/translate';
-import type { asset, domain, post, revision, tag } from '$lib/server/db/schema/blog';
-import type { PostStatus } from '$lib/types/db-enums';
+import type { TranslationMap } from '#lib/i18n/translate.ts';
+import type { asset, domain, post, revision, tag } from '#lib/server/db/schema/blog/index.ts';
+import type { PostStatus } from '#lib/types/db-enums.ts';
 
 export type BlogPost = InferSelectModel<typeof post>;
 export type BlogRevision = InferSelectModel<typeof revision>;

@@ -1,4 +1,5 @@
 <script lang="ts">
+import { NavSection } from '#lib/components/composites/index.ts';
 import {
 	DotPattern,
 	FadeMask,
@@ -8,8 +9,7 @@ import {
 	NoiseTexture,
 	RadialGlow,
 	RetroGrid,
-} from '$lib/components';
-import { NavSection } from '$lib/components/composites';
+} from '#lib/components/index.ts';
 import { DemoCard } from '../../components/_components';
 
 const sections = [

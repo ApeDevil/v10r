@@ -1,11 +1,11 @@
 <script lang="ts">
+import { Card, ConfirmDialog, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { enhance } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
-import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
+import { refreshAll } from '$app/navigation';
 
 let { data } = $props();
 
@@ -114,7 +114,7 @@ const prefixLabels = $derived<Record<string, string>>({
 			{#snippet header()}
 				<Cluster justify="between">
 					<h2 class="text-fluid-lg font-semibold">{m.admin_cache_section_stats()}</h2>
-					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+					<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 						<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 						{m.admin_action_refresh()}
 					</Button>

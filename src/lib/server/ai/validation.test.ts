@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
-import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '$lib/types/desk-context-limits';
+import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '#lib/types/desk-context-limits.ts';
 import { ChatbotRequestSchema, DeskRequestSchema } from './validation';
 
 const text = (id: string, role: 'user' | 'assistant', text: string) => ({

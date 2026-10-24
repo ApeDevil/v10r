@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Switch as SwitchPrimitive } from 'bits-ui';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 import { type SwitchVariants, switchRootVariants, switchThumbVariants } from './switch';
 
 interface Props extends SwitchVariants {

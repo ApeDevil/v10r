@@ -1,14 +1,14 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { sanitizeFeedbackSource } from '$lib/feedback/source';
-import { feedbackSubmissionSchema } from '$lib/feedback/validation';
-import { localizeHref } from '$lib/i18n';
-import { checkHoneypot, ipLimitKey } from '$lib/server/abuse';
-import { submitFeedback } from '$lib/server/feedback';
-import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '$lib/server/feedback/config';
-import { getClientIp } from '$lib/server/http/client-ip';
-import { createLimiter } from '$lib/server/http/rate-limit';
+import { sanitizeFeedbackSource } from '#lib/feedback/source.ts';
+import { feedbackSubmissionSchema } from '#lib/feedback/validation.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { checkHoneypot, ipLimitKey } from '#lib/server/abuse/index.ts';
+import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '#lib/server/feedback/config.ts';
+import { submitFeedback } from '#lib/server/feedback/index.ts';
+import { getClientIp } from '#lib/server/http/client-ip.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const limiter = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);

@@ -36,14 +36,18 @@
  * barred from it for the same reason — in every locale.
  */
 
-import { type BeforeSendEvent, injectAnalytics } from '@vercel/analytics/sveltekit';
-import { browser, dev } from '$app/environment';
+import { type BeforeSendEvent, inject, pageview } from '@vercel/analytics';
+import { browser, dev } from '$app/env';
+import { page } from '$app/state';
 import { isExcludedPath } from './collect-policy';
 
 /**
- * `injectAnalytics` is NOT idempotent. Its script-tag insertion is guarded, but
- * the `page` subscription it opens is not — calling it twice double-counts
- * every subsequent pageview. The layout effect that drives this can re-run.
+ * Inject once. The script tag is guarded either way, but the layout effect that drives
+ * this can re-run, and a second injection would count the current page again.
+ *
+ * Built on the framework-agnostic entry. `@vercel/analytics/sveltekit` (2.0.x) subscribes to
+ * `$app/stores`, which SvelteKit 3 removed, so pageviews are reported here instead: the page
+ * in view when the script is injected, then each client navigation (`trackVercelPageview`).
  */
 let injected = false;
 let consentGranted = false;
@@ -86,5 +90,27 @@ export function setVercelAnalyticsConsent(granted: boolean): void {
 	if (dev) return;
 
 	injected = true;
-	injectAnalytics({ mode: 'production', beforeSend });
+	// What the SvelteKit entry passed besides our options: the build-seeded script path and
+	// client config Vercel provides at build time, and manual pageviews, which the router owns.
+	inject(
+		{
+			mode: 'production',
+			beforeSend,
+			basePath: import.meta.env.VITE_VERCEL_OBSERVABILITY_BASEPATH,
+			disableAutoTrack: true,
+			framework: 'sveltekit',
+		},
+		import.meta.env.VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG,
+	);
+	trackVercelPageview();
+}
+
+/**
+ * Report the page in view. Call it after each client navigation; before consent, and in
+ * dev, it does nothing. A route-less page (an error for an unmatched URL) is not reported,
+ * as the SvelteKit entry never reported one.
+ */
+export function trackVercelPageview(): void {
+	if (!injected || !page.route.id) return;
+	pageview({ route: page.route.id, path: page.url.pathname });
 }

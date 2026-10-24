@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Command as CommandPrimitive } from 'bits-ui';
-import { goto } from '$app/navigation';
-import { cn } from '$lib/utils/cn';
+import { followHref } from '#lib/nav/follow.ts';
+import { cn } from '#lib/utils/cn.ts';
 import {
 	commandEmptyVariants,
 	commandGroupHeadingVariants,
@@ -28,7 +28,7 @@ function handleSelect(item: CommandItem) {
 	if (item.onSelect) {
 		item.onSelect();
 	} else if (item.href) {
-		goto(item.href);
+		void followHref(item.href);
 	}
 }
 </script>

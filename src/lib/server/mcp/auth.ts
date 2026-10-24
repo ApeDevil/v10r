@@ -11,7 +11,7 @@
  *  - token present but wrong     → 401 (constant-time compare)
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { env } from '$env/dynamic/private';
+import { MCP_ADMIN_TOKEN, MCP_PRIVATE_TOKEN } from '$app/env/private';
 
 export type BearerCheck = { ok: true } | { ok: false; status: 401 | 503; code: string; message: string };
 
@@ -40,7 +40,7 @@ const MIN_TOKEN_LENGTH = 32;
 const warnedWeakTokens = new Set<string>();
 
 interface McpBearerRealm {
-	/** The configured secret — read from `$env/dynamic/private` by the per-realm wrapper. */
+	/** The configured secret — read from `$app/env/private` by the per-realm wrapper. */
 	configured: string | undefined;
 	/** Env var NAME, for the 503 message and the weak-token warning only. Never the value. */
 	envName: string;
@@ -80,7 +80,7 @@ export function verifyMcpBearer(request: Request, realm: McpBearerRealm): Bearer
 
 export function verifyAdminMcpBearer(request: Request): BearerCheck {
 	return verifyMcpBearer(request, {
-		configured: env.MCP_ADMIN_TOKEN,
+		configured: MCP_ADMIN_TOKEN,
 		envName: 'MCP_ADMIN_TOKEN',
 		codePrefix: 'mcp_admin',
 		surfaceLabel: 'Admin MCP',
@@ -89,7 +89,7 @@ export function verifyAdminMcpBearer(request: Request): BearerCheck {
 
 export function verifyPrivateMcpBearer(request: Request): BearerCheck {
 	return verifyMcpBearer(request, {
-		configured: env.MCP_PRIVATE_TOKEN,
+		configured: MCP_PRIVATE_TOKEN,
 		envName: 'MCP_PRIVATE_TOKEN',
 		codePrefix: 'mcp_private',
 		surfaceLabel: 'Private MCP',

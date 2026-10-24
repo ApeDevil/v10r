@@ -7,9 +7,9 @@
  *   - following the thread: a running turn renders from its snapshot, a finished one is read.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { chatbotGrounded } from '$lib/showcases/ai/fixtures/chatbot-grounded';
-import { NODE_IDS } from '$lib/showcases/ai/inspector';
-import type { TurnTrace, TurnTraceSnapshot } from '$lib/types/turn-trace';
+import { chatbotGrounded } from '#lib/showcases/ai/fixtures/chatbot-grounded.ts';
+import { NODE_IDS } from '#lib/showcases/ai/inspector.ts';
+import type { TurnTrace, TurnTraceSnapshot } from '#lib/types/turn-trace.ts';
 import { TURN_READ_RETRY_MS, TurnInspectorState } from './turn-inspector.state.svelte';
 
 const trace = chatbotGrounded.trace;

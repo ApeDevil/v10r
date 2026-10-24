@@ -1,18 +1,23 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
 import { untrack } from 'svelte';
+import {
+	applyPreset,
+	type CustomizationPreset,
+	type CustomizationState,
+	getDefaultState,
+} from '#lib/3d/customization.ts';
+import { MODELS_BY_ID, resolveViewportConfig } from '#lib/3d/models.ts';
+import GltfCustomizer from '#lib/components/3d/customizer/GltfCustomizer.svelte';
+import { CustomizerPanel } from '#lib/components/3d/customizer/index.ts';
+import ViewerOverlay from '#lib/components/3d/ViewerOverlay.svelte';
+import ViewerScene from '#lib/components/3d/ViewerScene.svelte';
+import { BoundaryFallback } from '#lib/components/composites/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { createUrlState } from '#lib/state/url-state.svelte.ts';
+import { urlParam } from '#lib/state/url-state.ts';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { applyPreset, type CustomizationPreset, type CustomizationState, getDefaultState } from '$lib/3d/customization';
-import { MODELS_BY_ID, resolveViewportConfig } from '$lib/3d/models';
-import { CustomizerPanel } from '$lib/components/3d/customizer';
-import GltfCustomizer from '$lib/components/3d/customizer/GltfCustomizer.svelte';
-import ViewerOverlay from '$lib/components/3d/ViewerOverlay.svelte';
-import ViewerScene from '$lib/components/3d/ViewerScene.svelte';
-import { BoundaryFallback } from '$lib/components/composites';
-import { localizeHref } from '$lib/i18n';
-import { urlParam } from '$lib/state/url-state';
-import { createUrlState } from '$lib/state/url-state.svelte';
 
 const model = $derived(MODELS_BY_ID.get(page.params.model ?? ''));
 const customization = $derived(model?.customization);

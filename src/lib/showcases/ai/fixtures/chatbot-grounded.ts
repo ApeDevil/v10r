@@ -25,7 +25,7 @@ export const chatbotGrounded: InspectedTurn = {
 	},
 	question: 'How does v10r keep its AI showcase pages from leaking server internals?',
 	answer:
-		'Two mechanisms, both executable.\n\n1. **The route tree is zero-server by construction.** Both pages under `/showcases/ai` render from client-safe projections — the tool manifest, the topology module and recorded fixtures — and there is no `+page.server.ts` anywhere beneath them (`/docs/blueprint/pages`).\n\n2. **A leak gate scans what ships.** `showcases/ai/leak-gate.test.ts` walks both the library modules and the route tree and fails on a `$lib/server` import, a prompt constant, an abuse threshold, a real id or a real email — and it asserts that each root it scans is non-empty, after a mistyped directory once left the whole tree unscanned (`/docs/blueprint/testing/strategy`). The same family of gates guards the rest of the app: `load-leak-gate` refuses any client-facing file that returns the raw user or a secret field (`/docs/blueprint/security/gate-tests`).',
+		'Two mechanisms, both executable.\n\n1. **The route tree is zero-server by construction.** Both pages under `/showcases/ai` render from client-safe projections — the tool manifest, the topology module and recorded fixtures — and there is no `+page.server.ts` anywhere beneath them (`/docs/blueprint/pages`).\n\n2. **A leak gate scans what ships.** `showcases/ai/leak-gate.test.ts` walks both the library modules and the route tree and fails on a `#lib/server` import, a prompt constant, an abuse threshold, a real id or a real email — and it asserts that each root it scans is non-empty, after a mistyped directory once left the whole tree unscanned (`/docs/blueprint/testing/strategy`). The same family of gates guards the rest of the app: `load-leak-gate` refuses any client-facing file that returns the raw user or a secret field (`/docs/blueprint/security/gate-tests`).',
 	trace: {
 		messageId: 'demo_turn',
 		conversationId: 'demo_conversation',
@@ -288,7 +288,7 @@ export const chatbotGrounded: InspectedTurn = {
 						retriever: 'tier-1',
 						omittedReason: 'below_cutoff',
 						path: '/docs/codebase-organization',
-						body: '$lib/server/ is the server/client boundary: nothing under it may be imported from a .svelte file or a universal +page.ts. Business logic lives in framework-free domains; thin adapters (+page.server.ts, +server.ts, AI tools, jobs) wrap it.',
+						body: '#lib/server/ is the server/client boundary: nothing under it may be imported from a .svelte file or a universal +page.ts. Business logic lives in framework-free domains; thin adapters (+page.server.ts, +server.ts, AI tools, jobs) wrap it.',
 					},
 					{
 						id: 'demo_chunk_6',

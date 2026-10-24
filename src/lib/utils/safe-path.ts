@@ -1,8 +1,8 @@
 /**
  * Same-origin path validation — the single implementation behind every
  * redirect target and stored internal path in the app. Framework-free and
- * universally importable (client code uses it too — see `$lib/feedback/source`),
- * which is why it lives in `$lib/utils`, not `$lib/server`.
+ * universally importable (client code uses it too — see `#lib/feedback/source.ts`),
+ * which is why it lives in `#lib/utils`, not `#lib/server`.
  *
  * Server call sites feed user-influenced strings into a `Location` header or a
  * `redirect()`: the `?returnTo=` param on the login and verify pages, and the

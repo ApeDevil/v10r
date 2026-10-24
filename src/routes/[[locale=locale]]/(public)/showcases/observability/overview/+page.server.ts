@@ -1,4 +1,4 @@
-import { getFieldVitals, getOriginHealth, scoreSnapshot, snapshot } from '$lib/server/perf';
+import { getFieldVitals, getOriginHealth, scoreSnapshot, snapshot } from '#lib/server/perf/index.ts';
 import type { PageServerLoad } from './$types';
 
 /**

@@ -1,15 +1,15 @@
 <script lang="ts">
-import type { ActionResult } from '@sveltejs/kit';
+import { authClient } from '#lib/auth-client.ts';
+import { Card, ConfirmDialog, DiagGrid, StepUpDialog } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Spinner } from '#lib/components/primitives/index.ts';
+import { formatDate } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import type { ActionResult } from '$app/forms';
 import { enhance } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
+import { refreshAll } from '$app/navigation';
 import { page } from '$app/state';
-import { authClient } from '$lib/auth-client';
-import { Card, ConfirmDialog, DiagGrid, StepUpDialog } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
-import { formatDate } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data } = $props();
 
@@ -46,7 +46,7 @@ async function addPasskey() {
 		} else {
 			toast.success(m.account_security_passkey_added());
 			newPasskeyName = '';
-			await invalidateAll();
+			await refreshAll();
 		}
 	} catch (err) {
 		if (!isCeremonyCancel(err instanceof Error ? err.message : undefined)) {
@@ -71,7 +71,7 @@ async function saveRename() {
 		toast.error(result.error.message ?? m.account_security_passkey_rename_failed());
 	} else {
 		renamingId = null;
-		await invalidateAll();
+		await refreshAll();
 	}
 	savingRename = false;
 }
@@ -90,7 +90,7 @@ async function deletePasskey() {
 		toast.error(result.error.message ?? m.account_security_passkey_delete_failed());
 	} else {
 		toast.success(m.account_security_passkey_deleted());
-		await invalidateAll();
+		await refreshAll();
 	}
 	deletingPasskey = false;
 	confirmDeleteOpen = false;
@@ -193,7 +193,7 @@ async function confirmTotpEnrollment() {
 	await authClient.getSession({ query: { disableCookieCache: true } });
 	toast.success(m.account_security_totp_enabled());
 	totpFlow = { step: 'idle' };
-	await invalidateAll();
+	await refreshAll();
 }
 
 function cancelTotpEnrollment() {
@@ -226,7 +226,7 @@ async function onStepUpVerified() {
 		} else {
 			await authClient.getSession({ query: { disableCookieCache: true } });
 			toast.success(m.account_security_totp_disabled());
-			await invalidateAll();
+			await refreshAll();
 		}
 		disabling = false;
 	} else if (action === 'regenerate') {

@@ -20,6 +20,8 @@ const OWN_DIRS = [
 
 /** Files allowed to name the variables: the reader, and the test tripwire that erases them. */
 const ENV_READERS = [
+	// The declaration SvelteKit 3 requires for every variable; it reads none of them.
+	'src/env.ts',
 	'src/lib/server/showcases/external-service/targets.adapter.ts',
 	'src/lib/server/test/vitest.setup.ts',
 ];
@@ -55,7 +57,7 @@ describe('external service isolation', () => {
 		expect(svelte.length).toBeGreaterThan(0);
 		// Value imports only: `import type { ExternalServiceCopy }` is erased and ships nothing.
 		const shipsMessages =
-			/^import (?!type )[^\n]*from ['"]\$lib\/(paraglide\/messages|showcases\/external-service\/labels)['"]/m;
+			/^import (?!type )[^\n]*from ['"]#lib\/(paraglide\/messages\.js|showcases\/external-service\/labels\.ts)['"]/m;
 		expect(svelte.filter((path) => shipsMessages.test(readFileSync(path, 'utf8')))).toEqual([]);
 	});
 

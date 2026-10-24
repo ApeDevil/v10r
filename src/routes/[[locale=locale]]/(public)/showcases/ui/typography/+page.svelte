@@ -1,8 +1,8 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import { urlParam } from '$lib/state/url-state';
-import { createUrlState } from '$lib/state/url-state.svelte';
-import { type FontLoadState, findFont, isFontLoaded, loadFont } from '$lib/utils/fonts';
+import * as m from '#lib/paraglide/messages.js';
+import { createUrlState } from '#lib/state/url-state.svelte.ts';
+import { urlParam } from '#lib/state/url-state.ts';
+import { type FontLoadState, findFont, isFontLoaded, loadFont } from '#lib/utils/fonts/index.ts';
 import FontPicker from './_components/FontPicker.svelte';
 import FontPreview from './_components/FontPreview.svelte';
 import ProsePreview from './_components/ProsePreview.svelte';

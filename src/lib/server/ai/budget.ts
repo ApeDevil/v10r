@@ -1,7 +1,7 @@
-import { dev } from '$app/environment';
-import type { Decision } from '$lib/server/abuse';
-import { allowed, denied } from '$lib/server/abuse';
-import { redis } from '$lib/server/cache';
+import type { Decision } from '#lib/server/abuse/index.ts';
+import { allowed, denied } from '#lib/server/abuse/index.ts';
+import { redis } from '#lib/server/cache/index.ts';
+import { dev } from '$app/env';
 import { DAILY_TOKEN_CAP } from './config';
 
 /**

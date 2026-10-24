@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STYLE_COOKIE_NAME } from '$lib/styles/random';
+import { STYLE_COOKIE_NAME } from '#lib/styles/random/index.ts';
 import { rendersAppShell, scopeStyleCookie } from './cookie-scope';
 
 const STYLE = `${STYLE_COOKIE_NAME}=%7B%22pid%22%3A%22x%22%7D; Path=/; Max-Age=31536000; SameSite=Lax`;

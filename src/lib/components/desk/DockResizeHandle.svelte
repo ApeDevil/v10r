@@ -1,6 +1,6 @@
 <script lang="ts">
-import { createAnimationFrameCoalescer } from '$lib/utils/animation-frame-coalescer';
-import { cn } from '$lib/utils/cn';
+import { createAnimationFrameCoalescer } from '#lib/utils/animation-frame-coalescer.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { getDockContext } from './dock.state.svelte';
 
 interface Props {

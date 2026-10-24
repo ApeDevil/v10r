@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRegistry } from '$patterns/schema';
+import { parseRegistry } from '#patterns/schema.ts';
 import { DEEP_PATTERNS, REGISTRY } from './registry';
 
 /**

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { publicPatternRegistry } from '$lib/server/mcp/patterns/tools';
+import { publicPatternRegistry } from '#lib/server/mcp/patterns/tools.ts';
 
 /**
  * The two bearer-authenticated MCP routes, held to ONE contract.
@@ -16,16 +16,16 @@ import { publicPatternRegistry } from '$lib/server/mcp/patterns/tools';
  */
 
 const limiterState = vi.hoisted(() => ({ success: true }));
-vi.mock('$lib/server/http/rate-limit', () => ({
+vi.mock('#lib/server/http/rate-limit.ts', () => ({
 	createLimiter: () => ({ limit: async () => ({ success: limiterState.success, reset: 0 }) }),
 	rateLimitResponse: () => new Response('{}', { status: 429 }),
 }));
 // tools/list and every auth-failure path dispatch nothing, so the DB is never touched.
-vi.mock('$lib/server/db', () => ({ db: {} }));
-vi.mock('$lib/server/admin/audit', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
+vi.mock('#lib/server/admin/audit.ts', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 // Mock the telemetry seam so assertions are about the wiring, not about a database write.
 const telemetry = vi.hoisted(() => ({ observed: [] as unknown[], gateRejections: [] as string[][] }));
-vi.mock('$lib/server/mcp/telemetry/observer', () => ({
+vi.mock('#lib/server/mcp/telemetry/observer.ts', () => ({
 	createMcpObserver: () => ({ observe: (o: unknown) => telemetry.observed.push(o) }),
 	recordMcpGateRejection: (_ctx: unknown, reason: string) => telemetry.gateRejections.push([reason]),
 }));

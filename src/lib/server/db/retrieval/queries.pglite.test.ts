@@ -6,21 +6,21 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '$lib/server/test/fixtures';
+import { makeUser } from '#lib/server/test/fixtures.ts';
 import { user } from '../schema/auth/_better-auth';
 import { document } from '../schema/retrieval/document';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
 const { deskCorpusState } = await import('./queries');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const OWNER = makeUser({ id: 'user-corpus' });
 const OTHER = makeUser({ id: 'user-elsewhere' });

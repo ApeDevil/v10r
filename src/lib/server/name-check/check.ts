@@ -25,11 +25,11 @@ import type {
 	NameCheckReport,
 	NameCoverageStatus,
 	NameMatch,
-} from '$lib/name-check/report';
-import type { NameCheckQueryOutput } from '$lib/schemas/name-check';
-import { definePolicy, readThrough } from '$lib/server/cache';
-import { type Deadline, DeadlineExceededError } from '$lib/server/http/deadline';
-import { type Bulkhead, defineBreaker, defineBulkhead, ResilienceError } from '$lib/server/resilience';
+} from '#lib/name-check/report.ts';
+import type { NameCheckQueryOutput } from '#lib/schemas/name-check.ts';
+import { definePolicy, readThrough } from '#lib/server/cache/index.ts';
+import { type Deadline, DeadlineExceededError } from '#lib/server/http/deadline.ts';
+import { type Bulkhead, defineBreaker, defineBulkhead, ResilienceError } from '#lib/server/resilience/index.ts';
 import {
 	BREAKER,
 	BULKHEAD,

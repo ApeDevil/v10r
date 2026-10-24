@@ -5,9 +5,9 @@
  * Sessions auto-renew, so this only appears after 7 days of inactivity.
  */
 
-import { Button } from '$lib/components/primitives/button';
-import { Dialog } from '$lib/components/primitives/dialog';
-import { getModals } from '$lib/state';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import { Dialog } from '#lib/components/primitives/dialog/index.ts';
+import { getModals } from '#lib/state/index.ts';
 
 type Props = {
 	email: string;

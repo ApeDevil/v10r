@@ -25,14 +25,14 @@ The `{YYYY-MM-DD}` segment is derived from `new Date().toISOString().slice(0, 10
 
 ---
 
-## API (`$lib/server/ai/budget.ts`)
+## API (`#lib/server/ai/budget.ts`)
 
 ### `checkUserBudget(userId)`
 
 Call at request entry — before any expensive model invocation:
 
 ```typescript
-import { checkUserBudget } from '$lib/server/ai/budget';
+import { checkUserBudget } from '#lib/server/ai/budget.ts';
 
 const budget = await checkUserBudget(userId);
 if (!budget.allowed) return decisionResponse(budget);
@@ -52,7 +52,7 @@ Returns a `Decision`. On denial, `retryAfterMs` is set to milliseconds until UTC
 Call once the model is done, while the response is still open (the chatbot's post-text stage runs it alongside the message backfill, before `finish`):
 
 ```typescript
-import { chargeTokens } from '$lib/server/ai/budget';
+import { chargeTokens } from '#lib/server/ai/budget.ts';
 
 // After the model's total usage is known, before the stream closes:
 await chargeTokens(userId, usage.totalTokens);
@@ -79,7 +79,7 @@ The token budget does not read `BOT_DETECTION_MODE` — it is always enforced wh
 ## Where Enforced
 
 - **Shared AI entry guard** (`src/lib/server/ai/guard.ts`, `guardAiRequest`): `checkUserBudget` runs in the auth → `aiConfigured` → (rate-limit ∥ budget) preamble shared by the AI routes (`/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/images/[id]/analyze`), before the AI work starts. The limiter and the budget are read concurrently; when both deny, the rate-limit response answers. On a budget denial alone, returns `decisionResponse(budget)` (429).
-- **Chat orchestrator** (`$lib/server/ai/chat-orchestrator.ts`): `chargeTokens(userId, inputTokens + outputTokens)` in the chatbot's post-text stage (`afterText`, together with the message backfill and the token-total refresh, all awaited before `finish`) and in the deskbot/fallback `onFinish`.
+- **Chat orchestrator** (`#lib/server/ai/chat-orchestrator.ts`): `chargeTokens(userId, inputTokens + outputTokens)` in the chatbot's post-text stage (`afterText`, together with the message backfill and the token-total refresh, all awaited before `finish`) and in the deskbot/fallback `onFinish`.
 
 The gate sits in the entry guard because the chatbot grounds every turn (forced tool-provider routing + per-turn retrieval), so the cost floor per request is higher — the budget is checked before any model work begins, and the single guard keeps the rejection identical across every AI route.
 

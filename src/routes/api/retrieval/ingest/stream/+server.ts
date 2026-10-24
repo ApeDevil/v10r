@@ -1,14 +1,14 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { checkDocumentLimit } from '$lib/server/db/retrieval/limits';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiValidationError } from '$lib/server/http/response';
-import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '$lib/server/retrieval/config';
-import { RetrievalError } from '$lib/server/retrieval/errors';
-import { ingest } from '$lib/server/retrieval/ingest';
-import type { IngestEvent } from '$lib/types/ingest-pipeline';
+import { checkDocumentLimit } from '#lib/server/db/retrieval/limits.ts';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiValidationError } from '#lib/server/http/response.ts';
+import { INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW } from '#lib/server/retrieval/config.ts';
+import { RetrievalError } from '#lib/server/retrieval/errors.ts';
+import { ingest } from '#lib/server/retrieval/ingest/index.ts';
+import type { IngestEvent } from '#lib/types/ingest-pipeline.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:retrieval:ingest-stream', INGEST_RATE_LIMIT_MAX, INGEST_RATE_LIMIT_WINDOW);

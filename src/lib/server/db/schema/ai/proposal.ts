@@ -36,7 +36,7 @@ export const proposalRiskTierEnum = aiSchema.enum('agent_proposal_risk_tier', ['
 /**
  * The undo of an executed plan. Null until claimed; one revert per proposal, so the
  * claim is a conditional UPDATE from null. Its per-step evidence is
- * `agent_proposal_revert_step`. Mirrored in `$lib/types/db-enums`.
+ * `agent_proposal_revert_step`. Mirrored in `#lib/types/db-enums.ts`.
  */
 export const proposalRevertStatusEnum = aiSchema.enum('agent_proposal_revert_status', [
 	'reverting',

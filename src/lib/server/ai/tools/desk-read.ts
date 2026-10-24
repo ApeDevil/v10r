@@ -10,17 +10,17 @@
  */
 import { tool } from 'ai';
 import * as v from 'valibot';
-import { cellLabel, parseCellRef } from '$lib/desk/formula';
-import { DESK_READ_MAX_CHARS } from '$lib/server/ai/config';
+import { cellLabel, parseCellRef } from '#lib/desk/formula.ts';
+import { DESK_READ_MAX_CHARS } from '#lib/server/ai/config.ts';
 import {
 	getFile,
 	getMarkdownByFileId,
 	getSpreadsheetByFileId,
 	listFiles,
 	searchFiles,
-} from '$lib/server/db/desk/queries';
-import { getFileTree, renderFileTreeWithIndex } from '$lib/server/desk/file-tree';
-import { DESK_FILE_TYPES } from '$lib/types/db-enums';
+} from '#lib/server/db/desk/queries.ts';
+import { getFileTree, renderFileTreeWithIndex } from '#lib/server/desk/file-tree.ts';
+import { DESK_FILE_TYPES } from '#lib/types/db-enums.ts';
 import type { DeskLayoutEntry } from './_types';
 import { cancelledBefore } from './cancelled';
 import { toolInputSchema } from './desk-mutation-inputs';

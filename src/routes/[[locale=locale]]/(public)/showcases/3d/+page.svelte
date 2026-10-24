@@ -1,21 +1,21 @@
 <script lang="ts">
-import { pushState } from '$app/navigation';
+import { MODELS, MODELS_BY_ID } from '#lib/3d/models.ts';
+import { SceneCard, ViewerDialog } from '#lib/components/3d/index.ts';
+import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { MODELS, MODELS_BY_ID } from '$lib/3d/models';
-import { SceneCard, ViewerDialog } from '$lib/components/3d';
-import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import * as m from '$lib/paraglide/messages';
 
 const activeModel = $derived(page.state.modelId ? MODELS_BY_ID.get(page.state.modelId) : undefined);
 
 let viewerOpen = $derived(!!page.state.viewerOpen);
 
 function openViewer(modelId: string) {
-	pushState(`/showcases/3d/${modelId}`, {
-		viewerOpen: true,
-		modelId,
-	});
+	// Shallow: the URL names the model (a shareable link to /showcases/3d/[model]) while the
+	// viewer opens over this page instead of loading that one.
+	void goto(localizeHref(`/showcases/3d/${modelId}`), { shallow: true, state: { viewerOpen: true, modelId } });
 }
 
 function closeViewer() {

@@ -1,10 +1,10 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { Button } from '#lib/components/primitives/index.ts';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { Button } from '$lib/components/primitives';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	status: number;

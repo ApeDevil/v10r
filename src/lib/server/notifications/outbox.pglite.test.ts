@@ -1,16 +1,16 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { makeNotification, makeUser } from '$lib/server/test/fixtures';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { notificationDeliveries } from '#lib/server/db/schema/notifications/deliveries.ts';
+import { notifications } from '#lib/server/db/schema/notifications/notifications.ts';
+import { makeNotification, makeUser } from '#lib/server/test/fixtures.ts';
 import { DELIVERY_CLAIM_LEASE_MS, DELIVERY_MAX_ATTEMPTS } from './config';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -18,7 +18,7 @@ vi.mock('$lib/server/db', async () => {
 
 const { createDeliveries, claimDeliveries, markSent, markFailed, reclaimStaleDeliveries } = await import('./outbox');
 const { backoffMs } = await import('./backoff');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER_A = makeUser({ id: 'user-outbox' });
 

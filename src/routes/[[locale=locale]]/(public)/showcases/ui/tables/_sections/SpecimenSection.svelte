@@ -7,8 +7,8 @@ import {
 	Header as TableHeader,
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
-} from '$lib/components';
-import { Button } from '$lib/components/primitives';
+} from '#lib/components/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
 import { EMPLOYEES, type Status } from '../_data/mock-data';
 
 let selected = $state<Set<string>>(new Set());

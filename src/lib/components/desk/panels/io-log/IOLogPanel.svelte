@@ -1,7 +1,7 @@
 <script lang="ts">
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { getPanelMenus } from '$lib/components/desk';
-import { clearIOLog, getIOLogEntries, type IOLogEntry } from '$lib/components/desk/io-log.state.svelte';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { getPanelMenus } from '#lib/components/desk/index.ts';
+import { clearIOLog, getIOLogEntries, type IOLogEntry } from '#lib/components/desk/io-log.state.svelte.ts';
 
 interface Props {
 	panelId: string;

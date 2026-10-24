@@ -42,7 +42,7 @@ import { analyticsSchema, eventTypeEnum } from './events';
 
 /**
  * Which authenticated area produced the event. Bounded on purpose; mirrored for
- * the client in `$lib/types/db-enums.ts` (`USER_SURFACES`, drift-tested).
+ * the client in `#lib/types/db-enums.ts` (`USER_SURFACES`, drift-tested).
  * `desk` joined on 2026-09-18 so the desk's `command_invoked` events — the
  * evidence a menu review runs on — have a lane that does not need a consent
  * tier (`collect-policy.ts` decides the path, `journey/collect` writes here).

@@ -1,4 +1,4 @@
-import { ORIGIN_MS, STAMPEDE_CALLERS } from '$lib/server/showcases/velocity';
+import { ORIGIN_MS, STAMPEDE_CALLERS } from '#lib/server/showcases/velocity/index.ts';
 import type { PageServerLoad } from './$types';
 
 /**

@@ -12,7 +12,7 @@ import {
 	portNetworks,
 	stringifyComposition,
 	validateComposition,
-} from '$lib/product-composition';
+} from '#lib/product-composition/index.ts';
 import { HEATING_COMPOSITION, HEATING_STANDARDS } from './heating';
 import { SHELVING_COMPOSITION, SHELVING_STANDARDS } from './shelving';
 

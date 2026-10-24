@@ -19,9 +19,7 @@
  * widens the model's tool surface or depends on the scopes the plan was granted.
  */
 
-import type { DbHandle } from '$lib/server/db';
-import { db } from '$lib/server/db';
-import { saveMessages } from '$lib/server/db/ai/mutations';
+import { saveMessages } from '#lib/server/db/ai/mutations.ts';
 import {
 	claimRevert,
 	finishRevert,
@@ -31,7 +29,7 @@ import {
 	lockReverting,
 	recordRevertStep,
 	touchReverting,
-} from '$lib/server/db/ai/proposals';
+} from '#lib/server/db/ai/proposals.ts';
 import {
 	deleteFile,
 	lockFileIfUnchanged,
@@ -39,12 +37,14 @@ import {
 	restoreFile,
 	updateMarkdownByFileId,
 	updateSpreadsheetByFileId,
-} from '$lib/server/db/desk/mutations';
-import { getRevision } from '$lib/server/db/desk/queries';
-import type { agentProposal } from '$lib/server/db/schema/ai/proposal';
-import type { StepRecoveryPoint } from '$lib/server/db/schema/ai/proposal-step';
-import type { ProposalOutcome, ProposalRevertReceipt } from '$lib/types/ai-proposal';
-import type { ProposalStepKind } from '$lib/types/db-enums';
+} from '#lib/server/db/desk/mutations.ts';
+import { getRevision } from '#lib/server/db/desk/queries.ts';
+import type { DbHandle } from '#lib/server/db/index.ts';
+import { db } from '#lib/server/db/index.ts';
+import type { agentProposal } from '#lib/server/db/schema/ai/proposal.ts';
+import type { StepRecoveryPoint } from '#lib/server/db/schema/ai/proposal-step.ts';
+import type { ProposalOutcome, ProposalRevertReceipt } from '#lib/types/ai-proposal.ts';
+import type { ProposalStepKind } from '#lib/types/db-enums.ts';
 import { followAiContextChange } from '../deskbot-retrieval';
 import { proposalOutcome } from './proposal-outcome';
 

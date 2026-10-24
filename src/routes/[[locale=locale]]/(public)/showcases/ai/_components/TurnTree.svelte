@@ -1,9 +1,9 @@
 <script lang="ts">
 import type { SvelteSet } from 'svelte/reactivity';
-import { Badge } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { type InspectorNode, visibleNodes } from '$lib/showcases/ai/inspector';
-import { BLOCK_TAGS, GROUP_LABELS, STATE_LABELS } from '$lib/showcases/ai/labels';
+import { Badge } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { type InspectorNode, visibleNodes } from '#lib/showcases/ai/inspector.ts';
+import { BLOCK_TAGS, GROUP_LABELS, STATE_LABELS } from '#lib/showcases/ai/labels.ts';
 
 // APG treeview over the inspector nodes: one tab stop, roving tabindex, arrows walk the
 // visible rows, Right/Left expand and collapse, Enter opens the row in the detail pane.

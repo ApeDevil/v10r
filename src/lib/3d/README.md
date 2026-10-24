@@ -1,4 +1,4 @@
-# `$lib/3d`
+# `#lib/3d`
 
 The 3D **asset catalog** — which scenes exist, what parts they have, and what may be
 customized. Data, not UI.

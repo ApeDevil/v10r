@@ -1,6 +1,6 @@
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { contactSchema } from '$lib/schemas/showcase/basics';
+import { contactSchema } from '#lib/schemas/showcase/basics.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

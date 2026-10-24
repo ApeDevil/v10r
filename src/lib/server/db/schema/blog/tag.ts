@@ -4,7 +4,7 @@
  */
 import { sql } from 'drizzle-orm';
 import { check, index, integer, jsonb, primaryKey, text, uniqueIndex } from 'drizzle-orm/pg-core';
-import type { TranslationMap } from '$lib/i18n/translate';
+import type { TranslationMap } from '#lib/i18n/translate.ts';
 import { post } from './post';
 import { blogSchema } from './schema';
 

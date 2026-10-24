@@ -9,10 +9,10 @@
  * one proposal, no "awaiting approval" prose behind it, and no hidden pending work.
  */
 import type { StopCondition, ToolSet } from 'ai';
-import type { ProposedTarget, ProposedToolCall } from '$lib/server/db/schema/ai/proposal';
-import { type RetentionRuleId, retentionDays } from '$lib/server/retention';
-import type { ProposalCardStep, ProposalStepRecovery } from '$lib/types/ai-proposal';
-import { TOOL_MANIFEST, type ToolRisk } from '$lib/types/ai-tools';
+import type { ProposedTarget, ProposedToolCall } from '#lib/server/db/schema/ai/proposal.ts';
+import { type RetentionRuleId, retentionDays } from '#lib/server/retention/index.ts';
+import type { ProposalCardStep, ProposalStepRecovery } from '#lib/types/ai-proposal.ts';
+import { TOOL_MANIFEST, type ToolRisk } from '#lib/types/ai-tools.ts';
 import { type DeskExecutableTool, TOOL_RECOVERY } from '../tools/desk-execute';
 
 /** One approval the model asked for — a step of the proposal to be. */

@@ -1,6 +1,6 @@
 import { desc } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { cycleRun } from '$lib/server/db/schema';
+import { db } from '#lib/server/db/index.ts';
+import { cycleRun } from '#lib/server/db/schema/index.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async () => {

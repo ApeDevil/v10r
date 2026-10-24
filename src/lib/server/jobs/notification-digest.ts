@@ -11,7 +11,7 @@
  *
  * Returns the number of digests enqueued, which is the `job_execution` row count.
  */
-import { runDigest } from '$lib/server/notifications/digest';
+import { runDigest } from '#lib/server/notifications/digest.ts';
 
 export async function notificationDigest(): Promise<number> {
 	let total = 0;

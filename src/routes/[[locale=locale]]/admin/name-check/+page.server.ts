@@ -1,15 +1,26 @@
 import { fail } from '@sveltejs/kit';
 import * as v from 'valibot';
-import { nameSourceConnectionLabels } from '$lib/name-check/connection-labels';
-import * as m from '$lib/paraglide/messages';
+import { nameSourceConnectionLabels } from '#lib/name-check/connection-labels.ts';
+import * as m from '#lib/paraglide/messages.js';
 import {
 	nameSourceConnectionSaveSchema,
 	nameSourceConnectionTestSchema,
 	nameSourceSecretRemoveSchema,
-} from '$lib/schemas/admin/name-check-connections';
-import { getAuditContext } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/http/guards';
-import { createLimiter } from '$lib/server/http/rate-limit';
+} from '#lib/schemas/admin/name-check-connections.ts';
+import { getAuditContext } from '#lib/server/admin/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
+import {
+	SOURCE_TEST_RATE_LIMIT_MAX,
+	SOURCE_TEST_RATE_LIMIT_PREFIX,
+	SOURCE_TEST_RATE_LIMIT_WINDOW,
+} from '#lib/server/name-check/config.ts';
+import {
+	type NameSourceConnectionRejection,
+	removeNameSourceConnectionSecret,
+	runNameSourceConnectionTest,
+	saveNameSourceConnectionSettings,
+} from '#lib/server/name-check/connection-settings.ts';
 import {
 	EUIPO_DEFAULT_API_BASE,
 	EUIPO_DEFAULT_TOKEN_URL,
@@ -17,20 +28,9 @@ import {
 	NAME_SOURCE_VENDOR_LABELS,
 	type NameSourceConnections,
 	publicNameSourceConnection,
-} from '$lib/server/name-check';
-import {
-	SOURCE_TEST_RATE_LIMIT_MAX,
-	SOURCE_TEST_RATE_LIMIT_PREFIX,
-	SOURCE_TEST_RATE_LIMIT_WINDOW,
-} from '$lib/server/name-check/config';
-import {
-	type NameSourceConnectionRejection,
-	removeNameSourceConnectionSecret,
-	runNameSourceConnectionTest,
-	saveNameSourceConnectionSettings,
-} from '$lib/server/name-check/connection-settings';
-import { EncryptionError, getEncryptionKeyRing } from '$lib/server/security';
-import type { NameSourceVendor } from '$lib/types/db-enums';
+} from '#lib/server/name-check/index.ts';
+import { EncryptionError, getEncryptionKeyRing } from '#lib/server/security/index.ts';
+import type { NameSourceVendor } from '#lib/types/db-enums.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /**

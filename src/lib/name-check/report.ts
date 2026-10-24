@@ -2,7 +2,7 @@
  * The wire contract of a name check — what the page renders and the JSON route returns.
  *
  * Client-side because the showcase components render these and a `.svelte` file may
- * never reach into `$lib/server/`; the domain imports the shapes from here so there is
+ * never reach into `#lib/server/`; the domain imports the shapes from here so there is
  * one declaration rather than two that drift (the `velocity/measurement.ts` precedent).
  *
  * Vocabulary (see `docs/naming.md`): a *name source* is one upstream; a *name match* is
@@ -11,7 +11,7 @@
  * chosen so that a rendering cannot accidentally read like one — there is no `risk`,
  * `safe`, `available` or `verdict` anywhere in this contract.
  */
-import type { NameCheckCategory, NameCheckTerritory } from '$lib/schemas/name-check';
+import type { NameCheckCategory, NameCheckTerritory } from '#lib/schemas/name-check.ts';
 
 export const NAME_SOURCE_IDS = [
 	'euipo',

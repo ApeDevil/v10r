@@ -18,7 +18,7 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 
 ## Avoid when
 
-- The work fits a $lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak
+- The work fits a #lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak
 - The motive is the speed of a small computation — the boundary costs ~1 ms on loopback and tens of ms across a network, before any cold start
 - The browser must call the service directly — that puts the credential or an open endpoint within every visitor's reach
 

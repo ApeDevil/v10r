@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { getAuditContext, recordAuditEvent } from '$lib/server/admin';
+import { getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
 import {
 	createDomain,
 	createTag,
@@ -9,9 +9,9 @@ import {
 	listTags,
 	updateDomain,
 	updateTag,
-} from '$lib/server/blog';
-import { requireAdmin } from '$lib/server/http/guards';
-import { SLUG_PATTERN } from '$lib/server/schemas';
+} from '#lib/server/blog/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { SLUG_PATTERN } from '#lib/server/schemas/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 // Only the lucide collection is registered in presetIcons (uno.config.ts), so

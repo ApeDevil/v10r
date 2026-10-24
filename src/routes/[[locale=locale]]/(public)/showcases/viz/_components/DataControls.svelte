@@ -1,6 +1,6 @@
 <script lang="ts">
-import Select from '$lib/components/primitives/select/Select.svelte';
-import Switch from '$lib/components/primitives/switch/Switch.svelte';
+import Select from '#lib/components/primitives/select/Select.svelte';
+import Switch from '#lib/components/primitives/switch/Switch.svelte';
 
 interface Props {
 	dataset?: string;

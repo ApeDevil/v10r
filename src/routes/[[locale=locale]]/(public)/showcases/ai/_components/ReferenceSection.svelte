@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { Badge, Typography } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import { Badge, Typography } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
 
 // One implementation-reference section, folded by default. A native <details> keeps every
 // old anchor id resolvable: a `#guard` link from the deskbot page (or from the nav) opens the

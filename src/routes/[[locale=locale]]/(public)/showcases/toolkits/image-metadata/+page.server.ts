@@ -5,7 +5,7 @@
 import { redirect } from '@sveltejs/kit';
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { localizeHref } from '$lib/i18n';
+import { localizeHref } from '#lib/i18n/index.ts';
 import {
 	emptyImageMetadata,
 	type FieldProvenance,
@@ -13,10 +13,10 @@ import {
 	METADATA_FIELD_KEYS,
 	PROVENANCE_STATES,
 	type ProvenanceState,
-} from '$lib/schemas/image-metadata';
-import { getVisionProvider, loadProviderRegistry } from '$lib/server/ai';
-import { ImageMetaError, ingestImage, saveImageMetadata } from '$lib/server/imagemeta';
-import { getImagemetaReadUrl } from '$lib/server/store/image';
+} from '#lib/schemas/image-metadata.ts';
+import { getVisionProvider, loadProviderRegistry } from '#lib/server/ai/index.ts';
+import { ImageMetaError, ingestImage, saveImageMetadata } from '#lib/server/imagemeta/index.ts';
+import { getImagemetaReadUrl } from '#lib/server/store/image.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /**

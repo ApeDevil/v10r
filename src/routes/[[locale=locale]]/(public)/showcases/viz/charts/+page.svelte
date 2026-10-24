@@ -1,7 +1,8 @@
 <script lang="ts">
-import { browser } from '$app/environment';
-import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
+import { BackLink, BoundaryFallback, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/table/index.ts';
+import { getVizPalette, toRgba, vizColor } from '#lib/components/viz/_shared/theme-bridge.ts';
+import type { TreemapNode } from '#lib/components/viz/chart/treemap/types.ts';
 import {
 	AreaChart,
 	BarChart,
@@ -13,10 +14,9 @@ import {
 	SimpleChart,
 	Sparkline,
 	Treemap,
-} from '$lib/components/viz';
-import { getVizPalette, toRgba, vizColor } from '$lib/components/viz/_shared/theme-bridge';
-import type { TreemapNode } from '$lib/components/viz/chart/treemap/types';
-import * as m from '$lib/paraglide/messages';
+} from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { browser } from '$app/env';
 import DataControls from '../_components/DataControls.svelte';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 

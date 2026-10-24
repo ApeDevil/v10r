@@ -1,4 +1,4 @@
-import { HONEYPOT_FIELD_NAME, HONEYPOT_MIN_FILL_MS } from '$lib/server/abuse';
+import { HONEYPOT_FIELD_NAME, HONEYPOT_MIN_FILL_MS } from '#lib/server/abuse/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

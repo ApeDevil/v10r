@@ -13,8 +13,8 @@
  * same way it learns everything else — no acknowledgement model call, nothing to fall
  * through into a mutating turn if the plan failed.
  */
-import { db } from '$lib/server/db';
-import { saveMessages } from '$lib/server/db/ai/mutations';
+
+import { saveMessages } from '#lib/server/db/ai/mutations.ts';
 import {
 	listProposalSteps,
 	lockExecuting,
@@ -22,10 +22,11 @@ import {
 	markFailed,
 	recordProposalStep,
 	touchExecuting,
-} from '$lib/server/db/ai/proposals';
-import type { agentProposal } from '$lib/server/db/schema/ai/proposal';
-import type { ProposalOutcome, ProposalReceiptMessage, ProposalStepReceipt } from '$lib/types/ai-proposal';
-import type { ProposalStatus } from '$lib/types/db-enums';
+} from '#lib/server/db/ai/proposals.ts';
+import { db } from '#lib/server/db/index.ts';
+import type { agentProposal } from '#lib/server/db/schema/ai/proposal.ts';
+import type { ProposalOutcome, ProposalReceiptMessage, ProposalStepReceipt } from '#lib/types/ai-proposal.ts';
+import type { ProposalStatus } from '#lib/types/db-enums.ts';
 import type { DeskToolScope } from '../tools/_types';
 import { executeDeskToolCall } from '../tools/desk-execute';
 import { effectsOfReceipts, toStepReceipt } from './proposal-outcome';

@@ -100,7 +100,7 @@ Theme changes apply **immediately** with localStorage + async DB persist.
 
 ```svelte
 <script lang="ts">
-  import { browser } from '$app/environment';
+  import { browser } from '$app/env';
 
   let { data } = $props();
   let theme = $state<'light' | 'dark' | 'system'>(data.settings.theme);

@@ -1,11 +1,11 @@
 import { parse as parseYaml } from 'yaml';
-import { createPost, createRevision, getPostBySlug } from '$lib/server/blog';
-import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '$lib/server/blog/config';
-import { payloadTooLargeResponse, readTextBounded } from '$lib/server/http/body';
-import { guardApiBlogAuthor, guardPostOwnership } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiOk } from '$lib/server/http/response';
-import { SLUG_PATTERN } from '$lib/server/schemas';
+import { WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_WINDOW } from '#lib/server/blog/config.ts';
+import { createPost, createRevision, getPostBySlug } from '#lib/server/blog/index.ts';
+import { payloadTooLargeResponse, readTextBounded } from '#lib/server/http/body.ts';
+import { guardApiBlogAuthor, guardPostOwnership } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiOk } from '#lib/server/http/response.ts';
+import { SLUG_PATTERN } from '#lib/server/schemas/index.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter(WRITE_RATE_LIMIT_PREFIX, WRITE_RATE_LIMIT_MAX, WRITE_RATE_LIMIT_WINDOW);

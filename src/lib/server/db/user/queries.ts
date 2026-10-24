@@ -1,8 +1,8 @@
 import { getAuthenticatorName } from '@better-auth/passkey';
 import { eq, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { account, session as sessionTable, user } from '$lib/server/db/schema/auth/_better-auth';
-import { passkey } from '$lib/server/db/schema/auth/passkey';
+import { db } from '#lib/server/db/index.ts';
+import { account, session as sessionTable, user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { passkey } from '#lib/server/db/schema/auth/passkey.ts';
 
 /** Fetch all sessions for a user. */
 export async function getUserSessions(userId: string) {

@@ -1,9 +1,9 @@
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { markAsRead } from '$lib/server/db/notifications/mutations';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent } from '$lib/server/http/response';
-import { RATE_LIMIT_MAX, RATE_LIMIT_WINDOW } from '$lib/server/notifications/config';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { markAsRead } from '#lib/server/db/notifications/mutations.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent } from '#lib/server/http/response.ts';
+import { RATE_LIMIT_MAX, RATE_LIMIT_WINDOW } from '#lib/server/notifications/config.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:read', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);

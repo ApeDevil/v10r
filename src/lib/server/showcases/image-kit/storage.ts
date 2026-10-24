@@ -12,8 +12,8 @@
 
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { BUCKET, classifyS3Error, StoreError, s3 } from '$lib/server/store';
-import { PRESIGNED_URL_EXPIRY } from '$lib/server/store/config';
+import { PRESIGNED_URL_EXPIRY } from '#lib/server/store/config.ts';
+import { BUCKET, classifyS3Error, StoreError, s3 } from '#lib/server/store/index.ts';
 
 function requireS3() {
 	if (!s3) throw new StoreError('credentials', 'R2 storage is not configured');

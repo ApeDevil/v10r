@@ -8,7 +8,7 @@
  * does not own it.
  */
 import { getContext, setContext } from 'svelte';
-import type { DockLayoutState, LayoutNode, PanelDefinition } from '$lib/desk/layout.types';
+import type { DockLayoutState, LayoutNode, PanelDefinition } from '#lib/desk/layout.types.ts';
 import { collectLeaves } from './dock.operations';
 import type { DockState } from './dock.state.svelte';
 import type { Workspace } from './workspace.types';

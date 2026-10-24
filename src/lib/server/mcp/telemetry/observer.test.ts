@@ -16,7 +16,7 @@ import type { McpCallObservation } from '../types';
  */
 vi.mock('./writer', () => ({ writeCallLog: vi.fn() }));
 vi.mock('@vercel/functions', () => ({ waitUntil: vi.fn() }));
-vi.mock('$env/dynamic/private', () => ({ env: {} }));
+vi.mock('$app/env/private', async () => (await import('#lib/server/test/env-mock.ts')).envModule(() => undefined));
 
 const { buildCallLogRow } = await import('./observer');
 

@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Handle, type Node, type NodeProps, Position } from '@xyflow/svelte';
-import * as m from '$lib/paraglide/messages';
-import type { TurnGraphNode } from '$lib/showcases/ai/turn-graph';
-import type { TurnGraphCardVariant } from '$lib/showcases/ai/turn-graph-layout';
+import * as m from '#lib/paraglide/messages.js';
+import type { TurnGraphNode } from '#lib/showcases/ai/turn-graph.ts';
+import type { TurnGraphCardVariant } from '#lib/showcases/ai/turn-graph-layout.ts';
 import TurnGraphCard from './TurnGraphCard.svelte';
 
 // The Svelte Flow node type of the turn graph: the card (standalone, or a member row inside a

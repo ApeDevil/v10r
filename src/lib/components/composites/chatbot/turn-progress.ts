@@ -3,9 +3,9 @@
  * so the status row can say "Searching the docs…" instead of bouncing three dots for the
  * whole pre-text gap. Pure over the streamed trace snapshot; no component state.
  */
-import type { CatalogSource } from '$lib/components/composites/citation/citation-types';
-import type { AiSurface } from '$lib/types/db-enums';
-import type { TurnTraceSnapshot } from '$lib/types/turn-trace';
+import type { CatalogSource } from '#lib/components/composites/citation/citation-types.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
+import type { TurnTraceSnapshot } from '#lib/types/turn-trace.ts';
 
 /** The three things a turn can be seen doing before its first word. */
 export type TurnProgress = 'retrieving' | 'catalog' | 'generating';

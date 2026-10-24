@@ -3,10 +3,10 @@
  */
 
 import { and, eq, isNull, type SQL, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { normalizeIpForVerification } from '$lib/server/db/analytics/inet';
-import { events, sessions } from '$lib/server/db/schema/analytics';
-import type { ConsentTier } from '$lib/types/db-enums';
+import { normalizeIpForVerification } from '#lib/server/db/analytics/inet.ts';
+import { db } from '#lib/server/db/index.ts';
+import { events, sessions } from '#lib/server/db/schema/analytics/index.ts';
+import type { ConsentTier } from '#lib/types/db-enums.ts';
 
 /**
  * Longest path we will store. Every real route is far shorter, and the bound is

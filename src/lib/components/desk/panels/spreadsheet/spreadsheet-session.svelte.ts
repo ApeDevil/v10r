@@ -1,4 +1,4 @@
-import { apiFetch } from '$lib/api';
+import { apiFetch } from '#lib/api.ts';
 import { createSpreadsheetState } from './spreadsheet.state.svelte';
 import { createSpreadsheetAutosave } from './spreadsheet-autosave';
 import { createSpreadsheetDrafts } from './spreadsheet-drafts';

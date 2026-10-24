@@ -1,9 +1,9 @@
 import * as v from 'valibot';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent, apiValidationError } from '$lib/server/http/response';
-import { updatePreferences } from '$lib/server/preferences';
-import { UpdatePreferencesSchema } from '$lib/server/preferences/schemas';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent, apiValidationError } from '#lib/server/http/response.ts';
+import { updatePreferences } from '#lib/server/preferences/index.ts';
+import { UpdatePreferencesSchema } from '#lib/server/preferences/schemas.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:preferences', 60, '1 m');

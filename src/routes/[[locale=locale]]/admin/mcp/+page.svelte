@@ -1,9 +1,9 @@
 <script lang="ts">
-import { invalidateAll } from '$app/navigation';
-import { Card, EmptyState } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Card, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { refreshAll } from '$app/navigation';
 import type { PageData } from './$types';
 
 let { data }: { data: PageData } = $props();
@@ -18,7 +18,7 @@ let { data }: { data: PageData } = $props();
 					<h2 class="text-fluid-lg font-semibold">{m.admin_mcp_title()}</h2>
 					<p class="text-fluid-sm text-muted">{m.admin_mcp_description()}</p>
 				</div>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 					{m.admin_action_refresh()}
 				</Button>

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 type FrameVariant = 'bracket' | 'double' | 'inset' | 'cross';

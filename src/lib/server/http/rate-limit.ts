@@ -1,7 +1,6 @@
-import { json } from '@sveltejs/kit';
 import { type Duration, Ratelimit } from '@upstash/ratelimit';
-import { dev } from '$app/environment';
-import { redis } from '$lib/server/cache';
+import { redis } from '#lib/server/cache/index.ts';
+import { dev } from '$app/env';
 
 export interface Limiter {
 	limit(id: string): Promise<{ success: boolean; reset: number }>;
@@ -171,7 +170,7 @@ export function isDocumentRequest(headers: Headers): boolean {
 }
 
 export function rateLimitResponse(reset: number, message = 'Too many requests. Please wait a moment.'): Response {
-	return json(
+	return Response.json(
 		{ error: { code: 'rate_limited', message } },
 		{
 			status: 429,

@@ -26,8 +26,8 @@ const FILES = ['AGENTS.md', 'CLAUDE.md', ...markdownUnder('.claude/agents'), ...
 
 /** Repo paths are backticked and start with a top-level directory or name a root config file. */
 const PATH_PREFIX = /^(src|docs|scripts|pattern-library|mcp|messages|static|crates|bin|\.claude)\//;
-const ROOT_FILES = new Set(['compose.yaml', 'package.json', 'drizzle.config.ts', 'svelte.config.js', 'vercel.json']);
-/** Placeholders and globs name a shape, not a path (`$lib/` is resolved to `src/lib/` first). */
+const ROOT_FILES = new Set(['compose.yaml', 'package.json', 'drizzle.config.ts', 'vite.config.ts', 'vercel.json']);
+/** Placeholders and globs name a shape, not a path (`#lib/` is resolved to `src/lib/` first). */
 const NOT_A_PATH = /[*<>{}…$]|\[(domain|layer)\]|\.\.\./;
 /** A bare `name/` in a routing table is relative to one of these. */
 const DIR_BASES = ['', 'src/lib/server/', 'src/lib/', 'src/routes/', 'docs/'];
@@ -79,7 +79,7 @@ function mentions(): Mention[] {
 		const text = readFileSync(join(ROOT, file), 'utf8');
 		for (const [, token] of text.matchAll(/`([^`\s]+)`/g)) {
 			const path = token
-				.replace(/^\$lib\//, 'src/lib/')
+				.replace(/^#lib\//, 'src/lib/')
 				.replace(/(#.*|:\d+(-\d+)?)$/, '')
 				.replace(/[.,;:]+$/, '')
 				.replace(/\/$/, '');

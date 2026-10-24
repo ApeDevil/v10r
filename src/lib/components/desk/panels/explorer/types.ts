@@ -1,4 +1,4 @@
-import type { DeskFileType, PostStatus } from '$lib/types/db-enums';
+import type { DeskFileType, PostStatus } from '#lib/types/db-enums.ts';
 export interface AssetListItem {
 	id: string;
 	fileName: string;

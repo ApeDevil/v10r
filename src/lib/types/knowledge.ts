@@ -1,4 +1,4 @@
-import type { GraphData, GraphEdge, GraphNode } from '$lib/components/viz/graph/_shared/types';
+import type { GraphData, GraphEdge, GraphNode } from '#lib/components/viz/graph/_shared/types.ts';
 
 export interface KnowledgeNode extends GraphNode {
 	entityType: string;

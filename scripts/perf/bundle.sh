@@ -8,7 +8,8 @@
 # prerendered HTML document weight (catches inline-SVG/{@html} bloat in the doc).
 
 set -uo pipefail
-OUT=".vercel/output/static/_app/immutable"
+# `_app/`, not `_app/immutable/`: SvelteKit 3 also emits `_app/manifest.js`.
+OUT=".vercel/output/static/_app"
 
 if [ ! -d "$OUT" ]; then
 	echo "No build output at $OUT — run: podman compose run --rm --entrypoint bun app run build"

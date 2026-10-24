@@ -13,15 +13,14 @@
  * bearer-guessing path outside the rate-limited POST. CSRF exemption is automatic via the
  * `/api/mcp/` prefix (security/csrf.ts).
  */
-import { json } from '@sveltejs/kit';
-import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { type BearerCheck, verifyPrivateMcpBearer } from '$lib/server/mcp/auth';
-import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http.adapter';
-import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/tools';
-import { buildInfo } from '$lib/server/mcp/server-info';
-import { createMcpObserver, recordMcpGateRejection } from '$lib/server/mcp/telemetry/observer';
-import type { McpServerIdentity } from '$lib/server/mcp/transport';
+import { normalizeIpKey } from '#lib/server/abuse/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { type BearerCheck, verifyPrivateMcpBearer } from '#lib/server/mcp/auth.ts';
+import { mcpMethodNotAllowed, respondToMcpPost } from '#lib/server/mcp/http.adapter.ts';
+import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '#lib/server/mcp/patterns/tools.ts';
+import { buildInfo } from '#lib/server/mcp/server-info.ts';
+import { createMcpObserver, recordMcpGateRejection } from '#lib/server/mcp/telemetry/observer.ts';
+import type { McpServerIdentity } from '#lib/server/mcp/transport.ts';
 import type { RequestHandler } from './$types';
 
 /** See the public endpoint: the shared `waitUntil` budget is stated, not inherited. */
@@ -31,7 +30,7 @@ const limiter = createLimiter('mcp-private', 120, '1 m');
 
 function authFailure(check: Extract<BearerCheck, { ok: false }>): Response {
 	const headers = check.status === 401 ? { 'WWW-Authenticate': 'Bearer realm="v10r-mcp-private"' } : undefined;
-	return json({ error: { code: check.code, message: check.message } }, { status: check.status, headers });
+	return Response.json({ error: { code: check.code, message: check.message } }, { status: check.status, headers });
 }
 
 // Full build info (commit SHA + env): this surface is authenticated, so the exact deployment

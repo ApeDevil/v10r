@@ -6,9 +6,9 @@
  * No SvelteKit imports — pure domain function.
  */
 
-import { listAssets, listPosts } from '$lib/server/blog/queries';
-import { listFiles, listFolders } from '$lib/server/db/desk/queries';
-import type { DeskFileType } from '$lib/types/db-enums';
+import { listAssets, listPosts } from '#lib/server/blog/queries.ts';
+import { listFiles, listFolders } from '#lib/server/db/desk/queries.ts';
+import type { DeskFileType } from '#lib/types/db-enums.ts';
 
 export interface FileTreeNode {
 	name: string;

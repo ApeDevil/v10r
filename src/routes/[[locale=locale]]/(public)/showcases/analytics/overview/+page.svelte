@@ -1,14 +1,14 @@
 <script lang="ts">
 import type { ChartData } from 'chart.js';
+import { Alert, ConfirmDialog } from '#lib/components/composites/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import { AreaChart } from '#lib/components/viz/chart/area/index.ts';
+import { BarChart } from '#lib/components/viz/chart/bar/index.ts';
+import { PieChart } from '#lib/components/viz/chart/pie/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { formatDuration } from '#lib/utils/format-duration.ts';
 import { enhance } from '$app/forms';
-import { Alert, ConfirmDialog } from '$lib/components/composites';
-import { Button } from '$lib/components/primitives';
-import { AreaChart } from '$lib/components/viz/chart/area';
-import { BarChart } from '$lib/components/viz/chart/bar';
-import { PieChart } from '$lib/components/viz/chart/pie';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
-import { formatDuration } from '$lib/utils/format-duration';
 import ChartSection from '../_components/ChartSection.svelte';
 import DateRangePresets from '../_components/DateRangePresets.svelte';
 import MetricCard from '../_components/MetricCard.svelte';

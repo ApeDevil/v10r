@@ -7,7 +7,7 @@
  * Module-level $state, safe for the reason desk-context.svelte.ts documents.
  */
 
-import { apiFetch } from '$lib/api';
+import { apiFetch } from '#lib/api.ts';
 
 export interface ConversationSummary {
 	id: string;

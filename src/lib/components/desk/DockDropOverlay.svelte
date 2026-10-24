@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { DropZone } from '$lib/desk/layout.types';
+import type { DropZone } from '#lib/desk/layout.types.ts';
 import { resolveDropZone } from './dock.operations';
 import { getDockContext } from './dock.state.svelte';
 

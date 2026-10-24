@@ -1,5 +1,5 @@
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import {
 	countSuppressedGaps,
 	GAP_MIN_DISTINCT_CLIENTS,
@@ -18,7 +18,7 @@ import {
 	RESPONSE_PREVIEW_CHARS,
 	telemetryReachable,
 	windowStart,
-} from '$lib/server/mcp/telemetry/queries';
+} from '#lib/server/mcp/telemetry/queries.ts';
 import type { PageServerLoad } from './$types';
 
 const WINDOWS = ['24h', '7d', '30d'] as const;

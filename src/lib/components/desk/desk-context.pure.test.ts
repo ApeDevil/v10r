@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '$lib/types/desk-context-limits';
+import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES } from '#lib/types/desk-context-limits.ts';
 import { makePanelContext, makeRegistry, SAMPLES } from './desk-context.fixtures';
 import {
 	budgetAwareSerialize,

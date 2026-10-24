@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Slider as SliderPrimitive } from 'bits-ui';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	value?: number[];

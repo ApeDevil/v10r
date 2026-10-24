@@ -18,7 +18,7 @@
  * double-counting.
  */
 
-import { browser, dev } from '$app/environment';
+import { browser, dev } from '$app/env';
 import { afterNavigate } from '$app/navigation';
 import { refireConfirm } from './confirm-ping';
 
@@ -77,10 +77,11 @@ export function initJourneyBeacon(): void {
 	if (!browser || dev || initialized) return;
 	initialized = true;
 
-	afterNavigate(({ to, from, type }) => {
+	afterNavigate(({ to, from, type, shallow }) => {
 		// 'enter' is the initial hydration firing — that page load is already the
-		// server hook's row. Only genuine client-side navigations belong here.
-		if (!to || type === 'enter') return;
+		// server hook's row. Only genuine client-side navigations belong here; a
+		// shallow one (URL state on the same page) loads nothing new.
+		if (!to || type === 'enter' || shallow) return;
 		enqueue(to.url.pathname, from?.url?.origin ?? (document.referrer ? new URL(document.referrer).origin : null));
 	});
 

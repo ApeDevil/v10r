@@ -4,11 +4,11 @@
  * provider's own.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { hashSystemPrompt } from '$lib/server/ai/context/history';
+import { hashSystemPrompt } from '#lib/server/ai/context/history.ts';
 import { type ModelCallOptions, outlineCallOptions, toolDefinitionsOf, traceModelCalls } from './model-call-middleware';
 import type { TurnRecorder } from './recorder';
 
-vi.mock('$lib/server/db/ai/mutations', () => ({ saveTurnTrace: vi.fn() }));
+vi.mock('#lib/server/db/ai/mutations.ts', () => ({ saveTurnTrace: vi.fn() }));
 
 const params: ModelCallOptions = {
 	prompt: [

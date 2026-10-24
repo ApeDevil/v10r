@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Card, NavSection } from '$lib/components';
-import type { ActivityBarItem, LayoutNode, PanelDefinition } from '$lib/components/desk';
-import { DockLayout } from '$lib/components/desk';
-import * as m from '$lib/paraglide/messages';
+import type { ActivityBarItem, LayoutNode, PanelDefinition } from '#lib/components/desk/index.ts';
+import { DockLayout } from '#lib/components/desk/index.ts';
+import { Card, NavSection } from '#lib/components/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 const panels: Record<string, PanelDefinition> = {
 	explorer: {

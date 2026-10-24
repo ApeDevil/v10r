@@ -38,11 +38,16 @@ import type { ServiceTargetId } from '../../src/lib/showcases/external-service/t
 // The service client reuses `retryWithin` from the resilience barrel, which reaches SvelteKit's
 // virtual env modules. Outside Vite they do not exist; resolve them to the process
 // environment — the same shim `src/lib/server/test/vitest.setup.ts` installs for tests.
+const { variables } = await import('../../src/env.ts');
+
 plugin({
 	name: 'sveltekit-env-shim',
 	setup(build) {
-		build.module('$env/dynamic/private', () => ({ exports: { env: process.env }, loader: 'object' }));
-		build.module('$app/environment', () => ({
+		build.module('$app/env/private', () => ({
+			exports: Object.fromEntries(Object.keys(variables).map((name) => [name, process.env[name]])),
+			loader: 'object',
+		}));
+		build.module('$app/env', () => ({
 			exports: { dev: false, building: false, browser: false, version: 'verify' },
 			loader: 'object',
 		}));

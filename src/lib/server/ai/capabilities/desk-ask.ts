@@ -6,8 +6,8 @@
  * as the `desk` source's executed items once the answer is in, each naming the tool call
  * that surfaced it.
  */
-import { DESK_SEARCH_MAX_CHUNKS } from '$lib/server/ai/deskbot-retrieval';
-import type { GroundingItem } from '$lib/types/turn-trace';
+import { DESK_SEARCH_MAX_CHUNKS } from '#lib/server/ai/deskbot-retrieval.ts';
+import type { GroundingItem } from '#lib/types/turn-trace.ts';
 import { type AssistantCapability, deskSink } from '../profile/profile';
 import { createAskTools } from '../tools/desk-ask';
 import { chunkPlace } from './chunk-place';

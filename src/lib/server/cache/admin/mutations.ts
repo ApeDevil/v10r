@@ -1,4 +1,4 @@
-import { invalidateAnnouncementCache } from '$lib/server/admin/announcements';
+import { invalidateAnnouncementCache } from '#lib/server/admin/announcements.ts';
 import { redis } from '../client';
 import { CacheError } from '../errors';
 

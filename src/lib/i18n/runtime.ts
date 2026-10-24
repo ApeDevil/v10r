@@ -1,4 +1,4 @@
-export type { Locale } from '$lib/paraglide/runtime';
+export type { Locale } from '#lib/paraglide/runtime.js';
 export {
 	baseLocale,
 	cookieMaxAge,
@@ -9,4 +9,4 @@ export {
 	isLocale,
 	locales,
 	localizeHref,
-} from '$lib/paraglide/runtime';
+} from '#lib/paraglide/runtime.js';

@@ -1,7 +1,7 @@
-import { streamAuditLogCsv } from '$lib/server/admin';
-import { requireAdmin } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError } from '$lib/server/http/response';
+import { streamAuditLogCsv } from '#lib/server/admin/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 // The audit log is an unbounded growth table; stream the export so it bypasses

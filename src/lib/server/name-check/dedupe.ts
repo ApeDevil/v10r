@@ -4,7 +4,7 @@
  * noise, not evidence. The first occurrence wins unless a later one scores higher —
  * sources list their richer records first for exactly this reason.
  */
-import type { NameMatch } from '$lib/name-check/report';
+import type { NameMatch } from '#lib/name-check/report.ts';
 
 function identity(match: NameMatch): string {
 	return `${match.kind}:${match.sourceId}:${match.externalId ?? match.label.toLowerCase()}`;

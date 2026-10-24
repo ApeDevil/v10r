@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Badge } from '$lib/components/primitives';
-import type { ExternalServiceCopy } from '$lib/showcases/external-service/labels';
-import type { ServiceCallOutcome } from '$lib/showcases/external-service/types';
+import { Badge } from '#lib/components/primitives/index.ts';
+import type { ExternalServiceCopy } from '#lib/showcases/external-service/labels.ts';
+import type { ServiceCallOutcome } from '#lib/showcases/external-service/types.ts';
 
 interface Props {
 	outcome: ServiceCallOutcome;

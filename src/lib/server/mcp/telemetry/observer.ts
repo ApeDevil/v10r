@@ -24,9 +24,10 @@
  * own current call — only prior ones. That is correct append-only semantics and it removes the
  * read-your-own-writes loop for free. Do not make this await.
  */
-import { env } from '$env/dynamic/private';
-import type { McpCallLogInsert } from '$lib/server/db/schema/mcp/call-log';
-import { deferAfterResponse } from '$lib/server/platform';
+
+import type { McpCallLogInsert } from '#lib/server/db/schema/mcp/call-log.ts';
+import { deferAfterResponse } from '#lib/server/platform/index.ts';
+import { MCP_SELF_TRAFFIC_TOKEN, MCP_TELEMETRY_SALT, VERCEL_ENV } from '$app/env/private';
 import type { McpCallObservation, McpCallObserver } from '../types';
 import { deriveClientKey } from './client-key';
 import { inferOutcome, type McpGateReason, normalizeMethod } from './outcome';
@@ -94,8 +95,8 @@ export function buildCallLogRow(
 	const traffic = classifyTraffic({
 		headers: context.headers,
 		surface: context.surface,
-		vercelEnv: env.VERCEL_ENV,
-		selfSecret: env.MCP_SELF_TRAFFIC_TOKEN,
+		vercelEnv: VERCEL_ENV,
+		selfSecret: MCP_SELF_TRAFFIC_TOKEN,
 	});
 
 	const isPrivate = context.surface === 'private';
@@ -119,9 +120,7 @@ export function buildCallLogRow(
 	// No caller identifier on rejection rows: a per-reason counter answers everything a rejection
 	// needs, and those rows sit on the path an attacker controls the volume of.
 	const clientKey =
-		stage === 'protocol' || stage === 'tool'
-			? deriveClientKey(context.ip, userAgent, env.MCP_TELEMETRY_SALT, now)
-			: null;
+		stage === 'protocol' || stage === 'tool' ? deriveClientKey(context.ip, userAgent, MCP_TELEMETRY_SALT, now) : null;
 
 	return {
 		surface: context.surface,
@@ -203,8 +202,8 @@ export function recordMcpGateRejection(context: McpObserverContext, reason: McpG
 			traffic: classifyTraffic({
 				headers: context.headers,
 				surface: context.surface,
-				vercelEnv: env.VERCEL_ENV,
-				selfSecret: env.MCP_SELF_TRAFFIC_TOKEN,
+				vercelEnv: VERCEL_ENV,
+				selfSecret: MCP_SELF_TRAFFIC_TOKEN,
 			}),
 			stage: 'gate',
 			outcome: reason,

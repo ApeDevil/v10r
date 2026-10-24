@@ -3,7 +3,7 @@
  * Used by the admin notifications page for real-time health status.
  */
 
-import { env } from '$env/dynamic/private';
+import { DISCORD_BOT_TOKEN, TELEGRAM_BOT_TOKEN } from '$app/env/private';
 
 export interface ProbeResult {
 	status: 'ok' | 'error' | 'unconfigured';
@@ -38,7 +38,7 @@ async function probeWithTimeout(fn: (signal: AbortSignal) => Promise<ProbeResult
 }
 
 async function probeDiscord(signal: AbortSignal): Promise<ProbeResult> {
-	const token = env.DISCORD_BOT_TOKEN;
+	const token = DISCORD_BOT_TOKEN;
 	if (!token) {
 		return { status: 'unconfigured', latencyMs: 0, message: 'DISCORD_BOT_TOKEN not set' };
 	}
@@ -62,7 +62,7 @@ async function probeDiscord(signal: AbortSignal): Promise<ProbeResult> {
 }
 
 async function probeTelegram(signal: AbortSignal): Promise<ProbeResult> {
-	const token = env.TELEGRAM_BOT_TOKEN;
+	const token = TELEGRAM_BOT_TOKEN;
 	if (!token) {
 		return { status: 'unconfigured', latencyMs: 0, message: 'TELEGRAM_BOT_TOKEN not set' };
 	}

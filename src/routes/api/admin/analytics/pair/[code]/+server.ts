@@ -2,9 +2,9 @@
  * Admin revokes one of their own pairing codes / paired sessions.
  */
 
-import { requireAdmin } from '$lib/server/http/guards';
-import { apiError, apiNoContent } from '$lib/server/http/response';
-import { revokePairing } from '$lib/server/pairing';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiNoContent } from '#lib/server/http/response.ts';
+import { revokePairing } from '#lib/server/pairing/index.ts';
 import type { RequestHandler } from './$types';
 
 export const DELETE: RequestHandler = async ({ locals, params, request }) => {

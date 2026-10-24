@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Tag } from '$lib/components/primitives/tag';
-import * as m from '$lib/paraglide/messages';
+import { Tag } from '#lib/components/primitives/tag/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let { data } = $props();
 

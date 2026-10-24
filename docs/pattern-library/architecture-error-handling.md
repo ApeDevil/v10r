@@ -1,6 +1,6 @@
 ---
 title: "Error handling (expected/unexpected/form/API)"
-description: "Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail(), json())."
+description: "Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail()…"
 category: "Architecture & Request Pipeline"
 ---
 
@@ -12,7 +12,7 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 
 **Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
-Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail(), json()).
+Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail(), Response.json()).
 
 **When to use:** Reach for it when deciding how to surface a failure from a load function, form action, or API endpoint.
 

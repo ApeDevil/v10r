@@ -4,18 +4,18 @@ vi.mock('web-push', () => ({
 	default: { sendNotification: vi.fn() },
 }));
 
-vi.mock('$lib/server/db/notifications/queries', () => ({
+vi.mock('#lib/server/db/notifications/queries.ts', () => ({
 	getPushSubscriptions: vi.fn(),
 }));
 
-vi.mock('$lib/server/db/notifications/mutations', () => ({
+vi.mock('#lib/server/db/notifications/mutations.ts', () => ({
 	deletePushSubscriptionByEndpoint: vi.fn().mockResolvedValue(undefined),
 	touchPushSubscription: vi.fn().mockResolvedValue(undefined),
 }));
 
 const webpush = (await import('web-push')).default;
-const { getPushSubscriptions } = await import('$lib/server/db/notifications/queries');
-const { deletePushSubscriptionByEndpoint } = await import('$lib/server/db/notifications/mutations');
+const { getPushSubscriptions } = await import('#lib/server/db/notifications/queries.ts');
+const { deletePushSubscriptionByEndpoint } = await import('#lib/server/db/notifications/mutations.ts');
 const { WebPushChannel } = await import('./web-push');
 
 const mockSend = webpush.sendNotification as ReturnType<typeof vi.fn>;
@@ -44,7 +44,7 @@ describe('WebPushChannel', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		// vitest.setup.ts proxies $env/dynamic/private to process.env
+		// vitest.setup.ts proxies $app/env/private to process.env
 		process.env.VAPID_PUBLIC_KEY = 'test-public';
 		process.env.VAPID_PRIVATE_KEY = 'test-private';
 		process.env.VAPID_SUBJECT = 'mailto:test@example.com';

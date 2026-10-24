@@ -5,11 +5,11 @@
  * Icons stay mounted across expand/collapse to prevent DOM swap jank.
  */
 
-import { Kbd } from '$lib/components/primitives/kbd';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { getModals } from '$lib/state/modals.svelte';
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { cn } from '$lib/utils/cn';
+import { Kbd } from '#lib/components/primitives/kbd/index.ts';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { getModals } from '#lib/state/modals.svelte.ts';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	forceExpanded?: boolean; // Force expanded mode (for drawer)

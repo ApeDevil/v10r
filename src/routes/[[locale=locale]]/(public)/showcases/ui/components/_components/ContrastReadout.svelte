@@ -13,7 +13,7 @@
  * computation runs in an $effect (never on the server). SSR + first hydration paint
  * render a neutral "Measuring…" placeholder — same on both sides, no mismatch.
  */
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	/** Selected upper rung, 1–4. */

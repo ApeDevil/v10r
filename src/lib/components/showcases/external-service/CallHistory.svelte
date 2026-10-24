@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives';
-import type { ExternalServiceCopy } from '$lib/showcases/external-service/labels';
-import type { PublicServiceCall } from '$lib/showcases/external-service/types';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/index.ts';
+import type { ExternalServiceCopy } from '#lib/showcases/external-service/labels.ts';
+import type { PublicServiceCall } from '#lib/showcases/external-service/types.ts';
 import OutcomeBadge from './OutcomeBadge.svelte';
 
 interface Props {

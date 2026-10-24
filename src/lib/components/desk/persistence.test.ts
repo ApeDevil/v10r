@@ -10,12 +10,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * that no longer exist, which is how a renamed panel type would otherwise render an empty
  * tab strip.
  *
- * The global `$app/environment` mock reports `browser: false` (correct for the server
+ * The global `$app/env` mock reports `browser: false` (correct for the server
  * suite), and every function below early-returns on that — so this file overrides it and
  * supplies a localStorage stub. That override is the reason this cannot simply live in
  * one of the other desk test files.
  */
-vi.mock('$app/environment', () => ({ browser: true, building: false, dev: true, version: 'test' }));
+vi.mock('$app/env', () => ({ browser: true, building: false, dev: true, version: 'test' }));
 
 const store = new Map<string, string>();
 vi.stubGlobal('localStorage', {

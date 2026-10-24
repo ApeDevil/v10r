@@ -5,7 +5,7 @@
  * (the source for reset-from-parent) comes from NEON_PARENT_BRANCH_ID, or is
  * derived from the dev branch's own `parent_id` when that env is unset.
  */
-import { env } from '$env/dynamic/private';
+import { NEON_DEV_BRANCH_ID, NEON_PARENT_BRANCH_ID } from '$app/env/private';
 import { getBranch, listBranches } from './client';
 
 /** Thrown when the dev/parent branch targets cannot be resolved from config. */
@@ -22,10 +22,10 @@ export interface ResolvedTargets {
 }
 
 export async function resolveTargets(): Promise<ResolvedTargets> {
-	const devBranchId = env.NEON_DEV_BRANCH_ID;
+	const devBranchId = NEON_DEV_BRANCH_ID;
 	if (!devBranchId) throw new TargetsError('NEON_DEV_BRANCH_ID not configured');
 
-	let parentBranchId = env.NEON_PARENT_BRANCH_ID ?? '';
+	let parentBranchId = NEON_PARENT_BRANCH_ID ?? '';
 	if (!parentBranchId) {
 		const dev = await getBranch(devBranchId);
 		if (!dev.parentId) {

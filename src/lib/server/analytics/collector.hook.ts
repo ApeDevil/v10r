@@ -1,6 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
-import { building, dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
+import type { Handle } from '@sveltejs/kit/hooks';
 import {
 	isAgentSurface,
 	isBot,
@@ -10,12 +8,14 @@ import {
 	isPrefetch,
 	isSamePageDataReload,
 	userLaneSurface,
-} from '$lib/analytics/collect-policy';
-import { normalizeIpKey } from '$lib/server/abuse';
-import { recordEvent, upsertSession } from '$lib/server/db/analytics/mutations';
-import { recordUserEvent } from '$lib/server/db/analytics/user-mutations';
-import { createLimiter } from '$lib/server/http/rate-limit';
-import { deferAfterResponse } from '$lib/server/platform';
+} from '#lib/analytics/collect-policy.ts';
+import { normalizeIpKey } from '#lib/server/abuse/index.ts';
+import { recordEvent, upsertSession } from '#lib/server/db/analytics/mutations.ts';
+import { recordUserEvent } from '#lib/server/db/analytics/user-mutations.ts';
+import { createLimiter } from '#lib/server/http/rate-limit.ts';
+import { deferAfterResponse } from '#lib/server/platform/index.ts';
+import { building, dev } from '$app/env';
+import { ANALYTICS_DEV_TRACKING } from '$app/env/private';
 import { classifyBot } from './bot-classify';
 import { bufferBotHit } from './bot-hit-buffer';
 import { CONSENT_COOKIE, SESSION_COOKIE, SESSION_TIMEOUT_MS } from './config';
@@ -63,7 +63,7 @@ export const analyticsCollector: Handle = async ({ event, resolve }) => {
 	// browsing into production analytics. All three lanes refuse in dev unless
 	// the override is set, which exists solely for working on the analytics
 	// showcase itself. Read per-request, not at module load, so tests can flip it.
-	const devMuted = dev && env.ANALYTICS_DEV_TRACKING !== 'true';
+	const devMuted = dev && ANALYTICS_DEV_TRACKING !== 'true';
 	const shouldTrack =
 		!building &&
 		!devMuted &&

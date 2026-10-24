@@ -1,6 +1,6 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
-import { Button, Drawer } from '$lib/components/primitives';
+import { Button, Drawer } from '#lib/components/primitives/index.ts';
 import type { AssetListItem } from './types';
 
 function formatBytes(bytes: number): string {

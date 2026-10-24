@@ -35,7 +35,7 @@ Rationale: readers decode position and length far more accurately than angle, ar
 
 ## Color = tokens, always
 
-- Series palette: `getVizPalette()` from `$lib/components/viz/_shared/theme-bridge` → `--chart-1..8` (defined for light *and* dark in `src/app.css`). Grid/axis/label/tooltip come from `--chart-grid`, `--chart-axis`, `--chart-label`, `--chart-tooltip-bg`.
+- Series palette: `getVizPalette()` from `#lib/components/viz/_shared/theme-bridge.ts` → `--chart-1..8` (defined for light *and* dark in `src/app.css`). Grid/axis/label/tooltip come from `--chart-grid`, `--chart-axis`, `--chart-label`, `--chart-tooltip-bg`.
 - Hardcoding a color in a visualization violates the project's token rule and breaks dark mode. Check every chart in both themes.
 - Theme changes at runtime: subscribe via `onThemeChange()` — the wrappers already do.
 
@@ -50,7 +50,7 @@ Rationale: readers decode position and length far more accurately than angle, ar
 | Duration cascade | `Waterfall` |
 | No data / failed load | `ChartEmpty` / `ChartError` — never an empty white box |
 
-Deep-import from `$lib/components/viz` — the viz tree is deliberately excluded from the root component barrel (bundle-size boundary).
+Deep-import from `#lib/components/viz` — the viz tree is deliberately excluded from the root component barrel (bundle-size boundary).
 
 ## SSR & lifecycle gotchas
 

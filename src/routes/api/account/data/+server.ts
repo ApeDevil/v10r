@@ -4,10 +4,10 @@
  * one definition of "all my data" across every surface.
  */
 
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiOk } from '$lib/server/http/response';
-import { collectUserData } from '$lib/server/privacy';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiOk } from '#lib/server/http/response.ts';
+import { collectUserData } from '#lib/server/privacy/index.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:me-data', 10, '1m');

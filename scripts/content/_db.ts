@@ -1,7 +1,7 @@
 /**
  * Script-side db + R2 helpers. Mirrors `src/lib/server/db/index.ts` and
  * `src/lib/server/store/index.ts` but reads `process.env` directly so it works
- * outside the SvelteKit runtime (no `$env/dynamic/private` resolution required).
+ * outside the SvelteKit runtime (no `$app/env/private` resolution required).
  */
 
 import { S3Client } from '@aws-sdk/client-s3';

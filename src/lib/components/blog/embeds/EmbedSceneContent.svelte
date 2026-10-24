@@ -2,7 +2,7 @@
 import { T, useTask } from '@threlte/core';
 import { OrbitControls, useGltf } from '@threlte/extras';
 import { AnimationMixer, type PerspectiveCamera, Vector3 } from 'three';
-import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
+import { THRELTE_MAKE_DEFAULT } from '#lib/utils/threlte-workarounds.ts';
 
 interface Props {
 	path: string;

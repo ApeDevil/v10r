@@ -6,9 +6,9 @@ import {
 	getRequestPreview,
 	pinContext,
 	restoreContext,
-} from '$lib/components/desk';
-import Switch from '$lib/components/primitives/switch/Switch.svelte';
-import * as m from '$lib/paraglide/messages';
+} from '#lib/components/desk/index.ts';
+import Switch from '#lib/components/primitives/switch/Switch.svelte';
+import * as m from '#lib/paraglide/messages.js';
 
 const chips = $derived(getContextChips());
 // The meter describes the request, not the registry: what the next turn would send.

@@ -3,11 +3,11 @@
  * both the sub-route form action and the REST endpoint.
  */
 import { and, eq } from 'drizzle-orm';
-import { recordAuditEvent } from '$lib/server/admin/audit';
-import { db } from '$lib/server/db';
-import { createId } from '$lib/server/db/id';
-import { comment } from '$lib/server/db/schema/blog/comment';
-import { publishedRevision } from '$lib/server/db/schema/blog/published-revision';
+import { recordAuditEvent } from '#lib/server/admin/audit.ts';
+import { createId } from '#lib/server/db/id.ts';
+import { db } from '#lib/server/db/index.ts';
+import { comment } from '#lib/server/db/schema/blog/comment.ts';
+import { publishedRevision } from '#lib/server/db/schema/blog/published-revision.ts';
 import type { CreateCommentInput, EditCommentInput } from './schemas';
 
 const EDIT_WINDOW_MS = 5 * 60 * 1000;

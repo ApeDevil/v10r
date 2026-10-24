@@ -1,10 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import { desc, eq } from 'drizzle-orm';
-import { localizeHref } from '$lib/i18n';
-import { db } from '$lib/server/db';
-import { notificationDeliveries } from '$lib/server/db/schema/notifications/deliveries';
-import { notifications } from '$lib/server/db/schema/notifications/notifications';
-import { renderNotification } from '$lib/server/notifications/render-message';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { db } from '#lib/server/db/index.ts';
+import { notificationDeliveries } from '#lib/server/db/schema/notifications/deliveries.ts';
+import { notifications } from '#lib/server/db/schema/notifications/notifications.ts';
+import { renderNotification } from '#lib/server/notifications/render-message.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 interface DeliveryInfo {

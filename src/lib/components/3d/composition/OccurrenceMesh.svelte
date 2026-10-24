@@ -1,7 +1,7 @@
 <script lang="ts">
 import { T } from '@threlte/core';
-import { MODELS_BY_ID } from '$lib/3d/models';
-import type { ResolvedOccurrence } from '$lib/product-composition';
+import { MODELS_BY_ID } from '#lib/3d/models.ts';
+import type { ResolvedOccurrence } from '#lib/product-composition/index.ts';
 import { SELECTION_TOKEN, toneToken } from './composition-palette';
 import ModelBody from './ModelBody.svelte';
 import { primitiveGeometry } from './primitive-geometry';

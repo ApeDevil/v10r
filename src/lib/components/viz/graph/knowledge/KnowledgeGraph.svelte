@@ -1,5 +1,5 @@
 <script lang="ts">
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 import type { ChartContainerVariants } from '../../_shared/chart-container';
 import NetworkGraph from '../network/NetworkGraph.svelte';
 import type { NetworkData, NetworkNode } from '../network/types';

@@ -1,7 +1,7 @@
 <script lang="ts">
-import { DiagGrid, DiagRow } from '$lib/components/composites';
-import type { ExternalServiceCopy } from '$lib/showcases/external-service/labels';
-import type { PublicServiceCall } from '$lib/showcases/external-service/types';
+import { DiagGrid, DiagRow } from '#lib/components/composites/index.ts';
+import type { ExternalServiceCopy } from '#lib/showcases/external-service/labels.ts';
+import type { PublicServiceCall } from '#lib/showcases/external-service/types.ts';
 import OutcomeBadge from './OutcomeBadge.svelte';
 
 interface Props {

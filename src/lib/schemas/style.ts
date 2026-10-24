@@ -3,9 +3,9 @@
  */
 
 import * as v from 'valibot';
-import { PALETTE_IDS } from '$lib/styles/random/palette-registry';
-import { RADIUS_IDS } from '$lib/styles/random/radius-registry';
-import { TYPOGRAPHY_IDS } from '$lib/styles/random/typography-registry';
+import { PALETTE_IDS } from '#lib/styles/random/palette-registry.ts';
+import { RADIUS_IDS } from '#lib/styles/random/radius-registry.ts';
+import { TYPOGRAPHY_IDS } from '#lib/styles/random/typography-registry.ts';
 
 export const PaletteIdSchema = v.picklist(PALETTE_IDS);
 export const TypographyIdSchema = v.picklist(TYPOGRAPHY_IDS);

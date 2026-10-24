@@ -8,9 +8,9 @@
  * Paths in the shard are locale-bare; consumers localize hrefs at render.
  */
 
-import type { Locale } from '$lib/i18n';
-import { match } from '$lib/search/match';
-import type { SearchRecord, SearchResult } from '$lib/search/types';
+import type { Locale } from '#lib/i18n/index.ts';
+import { match } from '#lib/search/match.ts';
+import type { SearchRecord, SearchResult } from '#lib/search/types.ts';
 
 export type SearchStatus = 'idle' | 'loading' | 'done' | 'error';
 

@@ -8,7 +8,7 @@
  * exact phrase; hits are graded by the similarity engine on their host label and title,
  * so "velora.io — Velora" surfaces and a page that merely mentions the word does not.
  */
-import { NAME_CHECK_TERRITORIES, type NameCheckTerritory } from '$lib/schemas/name-check';
+import { NAME_CHECK_TERRITORIES, type NameCheckTerritory } from '#lib/schemas/name-check.ts';
 import { NameSourceError } from '../errors';
 import { fetchJson } from '../fetch-json';
 import type { LiveNameSource, NameSourceContext, NameSourceCredentials, WebDraft } from '../name-source';

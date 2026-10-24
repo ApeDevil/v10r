@@ -2,7 +2,7 @@
 
 ## CommandPalette Component
 
-`$lib/components/composites/command-palette/`
+`#lib/components/composites/command-palette/`
 
 | File | Role |
 |------|------|
@@ -114,7 +114,7 @@ The load function runs both lanes server-side (no client fetch): `match(buildSea
 │  [icon] Svelte 5 Runes             │
 │         Docs / Stack               │
 │         …reactive variables that…  │ ← snippet with bold matches
-│  [icon] SvelteKit 2                │
+│  [icon] SvelteKit 3                │
 │         Docs / Stack               │
 └────────────────────────────────────┘
 ```

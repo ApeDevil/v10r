@@ -1,9 +1,9 @@
 <script lang="ts">
-import { goto, invalidateAll } from '$app/navigation';
-import { authClient } from '$lib/auth-client';
-import { Button, Spinner } from '$lib/components/primitives';
-import { authErrorMessage } from '$lib/errors';
-import * as m from '$lib/paraglide/messages';
+import { authClient } from '#lib/auth-client.ts';
+import { Button, Spinner } from '#lib/components/primitives/index.ts';
+import { authErrorMessage } from '#lib/errors/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { goto, refreshAll } from '$app/navigation';
 
 let { data } = $props();
 
@@ -46,7 +46,7 @@ async function handleVerify() {
 			} catch {}
 			// Refresh the shared root-layout `session` so the shell reflects
 			// the authenticated user without a full reload.
-			await invalidateAll();
+			await refreshAll();
 			goto(data.returnTo);
 		}
 	} catch {

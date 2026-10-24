@@ -1,20 +1,20 @@
 <script lang="ts">
 import { ContextMenu as ContextMenuPrimitive, DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
-import { trackCommand } from '$lib/analytics/telemetry';
+import { trackCommand } from '#lib/analytics/telemetry.ts';
 import {
 	contextMenuContentVariants,
 	contextMenuItemVariants,
 	contextMenuSeparatorVariants,
 	contextMenuShortcutVariants,
-} from '$lib/components/composites/context-menu';
+} from '#lib/components/composites/context-menu/index.ts';
 import {
 	dropdownMenuContentVariants,
 	dropdownMenuItemVariants,
 	dropdownMenuSeparatorVariants,
-} from '$lib/components/composites/dropdown-menu/dropdown-menu';
-import { Badge } from '$lib/components/primitives';
-import { elevationAttr, getParentLevel } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+} from '#lib/components/composites/dropdown-menu/dropdown-menu.ts';
+import { Badge } from '#lib/components/primitives/index.ts';
+import { elevationAttr, getParentLevel } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { buildContextMenuItems, type ContextMenuCallbacks, dispatchMenuAction } from './context-menu-items';
 import type { ExplorerState } from './explorer.state.svelte';
 import { isSameVirtualTree, VIRTUAL_ROOT } from './explorer-actions';

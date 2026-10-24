@@ -26,7 +26,7 @@ The custom service worker precaches only the icons and the offline page's own as
 
 ## Code
 
-- `src/service-worker.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/service-worker.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/service-worker.ts))
+- `src/service-worker/index.ts` — built on $app/manifest, $app/service-worker and $app/env (SvelteKit 3); its own tsconfig carries the WebWorker types ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/service-worker/index.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/service-worker/index.ts))
 - `src/lib/pwa/sw-policy.ts` — offlineShellAssets: what install precaches ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/pwa/sw-policy.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/pwa/sw-policy.ts))
 
 ## Tests

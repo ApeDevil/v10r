@@ -2,15 +2,15 @@
 /**
  * PWA showcase — documentation, test surface, and reusable pattern in one.
  * The live cards read the real install/service-worker state of this very page;
- * the tables document the caching contract implemented in src/service-worker.ts
- * and $lib/pwa/sw-policy.ts.
+ * the tables document the caching contract implemented in src/service-worker/index.ts
+ * and #lib/pwa/sw-policy.ts.
  */
 import { onMount } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
-import { Card, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { PageContainer, Stack } from '$lib/components/layout';
-import { Badge, Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Card, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 const standaloneQuery = new MediaQuery('(display-mode: standalone)', false);
 

@@ -7,8 +7,8 @@
  * from the prompt rather than a tool result. So: counts orient the model; the tool
  * is the only source of links.
  */
-import type { Locale } from '$lib/i18n';
-import type { SearchSurface } from '$lib/search/types';
+import type { Locale } from '#lib/i18n/index.ts';
+import type { SearchSurface } from '#lib/search/types.ts';
 import { buildSearchIndex } from './query';
 
 export function formatCatalogMap(locale: Locale): string {

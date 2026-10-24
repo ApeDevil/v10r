@@ -1,17 +1,17 @@
 <script lang="ts">
-import { BackLink, PageHeader, ShowcaseDocs } from '$lib/components';
-import { CompositionEditor } from '$lib/components/3d/composition';
-import { Alert } from '$lib/components/composites';
-import { ToggleGroup } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { createPortStandardRegistry } from '$lib/product-composition';
+import { CompositionEditor } from '#lib/components/3d/composition/index.ts';
+import { Alert } from '#lib/components/composites/index.ts';
+import { BackLink, PageHeader, ShowcaseDocs } from '#lib/components/index.ts';
+import { ToggleGroup } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { createPortStandardRegistry } from '#lib/product-composition/index.ts';
 import {
 	HEATING_COMPOSITION,
 	HEATING_CONDUIT_SURFACES,
 	HEATING_ROOM,
 	HEATING_STANDARDS,
-} from '$lib/showcases/3d/compose/heating';
-import { SHELVING_COMPOSITION, SHELVING_ROOM, SHELVING_STANDARDS } from '$lib/showcases/3d/compose/shelving';
+} from '#lib/showcases/3d/compose/heating.ts';
+import { SHELVING_COMPOSITION, SHELVING_ROOM, SHELVING_STANDARDS } from '#lib/showcases/3d/compose/shelving.ts';
 import ComposeView from './_components/ComposeView.svelte';
 
 /** One editor per catalogue, kept for the page's life: switching back finds the work and its undo intact. */

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { McpDemoStateRow } from '$lib/server/db/schema/mcp';
+import type { McpDemoStateRow } from '#lib/server/db/schema/mcp/index.ts';
 
 /**
  * In-memory fake of the singleton row that models the service's compare-and-swap exactly: the
@@ -90,8 +90,8 @@ const h = vi.hoisted(() => {
 	};
 });
 
-vi.mock('$lib/server/db', () => ({ db: h.db }));
-vi.mock('$lib/server/admin/audit', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({ db: h.db }));
+vi.mock('#lib/server/admin/audit.ts', () => ({
 	recordAuditEvent: h.recordAuditEvent,
 	queryAuditLog: h.queryAuditLog,
 }));

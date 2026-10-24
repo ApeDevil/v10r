@@ -1,14 +1,14 @@
 <script lang="ts">
 import { untrack } from 'svelte';
-import { NavSection } from '$lib/components/composites';
-import { answerTextOf, traceOf } from '$lib/components/composites/chatbot/turn-progress';
-import { Typography } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { chatbotGrounded } from '$lib/showcases/ai/fixtures/chatbot-grounded';
-import { guardPassed, spineOf } from '$lib/showcases/ai/inspector';
-import { toolCounts } from '$lib/showcases/ai/topology';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
+import { answerTextOf, traceOf } from '#lib/components/composites/chatbot/turn-progress.ts';
+import { NavSection } from '#lib/components/composites/index.ts';
+import { Typography } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { chatbotGrounded } from '#lib/showcases/ai/fixtures/chatbot-grounded.ts';
+import { guardPassed, spineOf } from '#lib/showcases/ai/inspector.ts';
+import { toolCounts } from '#lib/showcases/ai/topology.ts';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
 import AwarenessPair from '../_components/AwarenessPair.svelte';
 import ChatbotExample from '../_components/ChatbotExample.svelte';
 import GuardChain from '../_components/GuardChain.svelte';

@@ -9,8 +9,8 @@
  * early and the rest of that file reads as prompt rather than data — to a model holding
  * desk:write / desk:delete tools.
  */
-import { CONTEXT_ENTRY_MAX_CHARS } from '$lib/types/desk-context-limits';
-import { escapeXmlAttr, escapeXmlText } from '$lib/utils/xml';
+import { CONTEXT_ENTRY_MAX_CHARS } from '#lib/types/desk-context-limits.ts';
+import { escapeXmlAttr, escapeXmlText } from '#lib/utils/xml.ts';
 import type { AssistantCapability, AssistantProfile, BlockDraft, TurnInput } from '../profile/profile';
 import type { DeskToolScope } from '../tools/_types';
 

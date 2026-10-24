@@ -84,8 +84,15 @@ interface IntegerOptions {
 	max?: number;
 }
 
+/**
+ * The part of a URL these functions read. `page.url` is read-only since SvelteKit 3 (its
+ * `searchParams` has no setters), so they accept it as it is and only ever write to a copy.
+ */
+type ReadableUrl = { readonly href: string; readonly searchParams: ReadableSearchParams };
+type ReadableSearchParams = { get(name: string): string | null };
+
 /** Every param of the spec, parsed. Params the spec does not name are ignored. */
-export function readUrlState<S extends UrlStateSpec>(params: URLSearchParams, spec: S): UrlStateValues<S> {
+export function readUrlState<S extends UrlStateSpec>(params: ReadableSearchParams, spec: S): UrlStateValues<S> {
 	const values: Record<string, unknown> = {};
 	for (const [name, param] of Object.entries(spec)) values[name] = param.parse(params.get(name));
 	return values as UrlStateValues<S>;
@@ -95,8 +102,12 @@ export function readUrlState<S extends UrlStateSpec>(params: URLSearchParams, sp
  * A copy of `url` with `patch` applied on top of the state it already carries. Params equal to
  * their fallback are removed; params outside the spec are kept as they are.
  */
-export function writeUrlState<S extends UrlStateSpec>(url: URL, spec: S, patch: Partial<UrlStateValues<S>>): URL {
-	const next = new URL(url);
+export function writeUrlState<S extends UrlStateSpec>(
+	url: ReadableUrl,
+	spec: S,
+	patch: Partial<UrlStateValues<S>>,
+): URL {
+	const next = new URL(url.href);
 	const values = { ...readUrlState(url.searchParams, spec), ...patch };
 	for (const [name, param] of Object.entries(spec)) {
 		const raw = param.serialize(values[name]);
@@ -107,7 +118,11 @@ export function writeUrlState<S extends UrlStateSpec>(url: URL, spec: S, patch: 
 }
 
 /** `writeUrlState` as a same-origin `href` (path + search) for links. */
-export function urlStateHref<S extends UrlStateSpec>(url: URL, spec: S, patch: Partial<UrlStateValues<S>>): string {
+export function urlStateHref<S extends UrlStateSpec>(
+	url: ReadableUrl,
+	spec: S,
+	patch: Partial<UrlStateValues<S>>,
+): string {
 	const next = writeUrlState(url, spec, patch);
 	return next.pathname + next.search;
 }

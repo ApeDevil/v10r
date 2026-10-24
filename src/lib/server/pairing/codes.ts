@@ -4,8 +4,8 @@
  */
 import crypto from 'node:crypto';
 import { and, eq, gt, isNotNull, isNull, sql } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { pairingCodes, sessions } from '$lib/server/db/schema/analytics';
+import { db } from '#lib/server/db/index.ts';
+import { pairingCodes, sessions } from '#lib/server/db/schema/analytics/index.ts';
 
 export const PAIRING_CODE_TTL_MS = 10 * 60 * 1000;
 export const PAIRED_SESSION_TTL_MS = 2 * 60 * 60 * 1000;

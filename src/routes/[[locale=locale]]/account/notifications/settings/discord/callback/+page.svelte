@@ -1,7 +1,7 @@
 <script lang="ts">
 // This page only exists to handle the OAuth callback redirect.
 // The +page.server.ts load function processes the callback and redirects.
-import * as m from '$lib/paraglide/messages';
+import * as m from '#lib/paraglide/messages.js';
 </script>
 
 <p>{m.account_notifications_discord_connecting()}</p>

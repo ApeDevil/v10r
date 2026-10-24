@@ -1,9 +1,9 @@
 <script lang="ts">
-import { Alert, Card, DiagGrid, DiagRow } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Badge, Button } from '$lib/components/primitives';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
+import { Alert, Card, DiagGrid, DiagRow } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button } from '#lib/components/primitives/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let { data } = $props();
 

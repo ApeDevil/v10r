@@ -69,8 +69,8 @@
  * usage is only totalled on a finished step, so a cut-off attempt is charged as unknown usage.
  */
 import type { InferUIMessageChunk, LanguageModelUsage, UIMessage, UIMessageStreamWriter } from 'ai';
-import { AiError, aiErrorFrameText, classifyAiError, safeAiMessage } from '$lib/server/ai/errors';
-import type { TurnError } from '$lib/types/ai-error';
+import { AiError, aiErrorFrameText, classifyAiError, safeAiMessage } from '#lib/server/ai/errors.ts';
+import type { TurnError } from '#lib/types/ai-error.ts';
 
 /**
  * The slice of a `streamText` result this helper needs. Kept structural (rather than

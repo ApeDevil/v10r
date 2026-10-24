@@ -1,7 +1,7 @@
 /**
  * Client-side mirror of the closed value sets the DATABASE owns.
  *
- * `$lib/server/db/schema` is server-only by path, so a component can never import a
+ * `#lib/server/db/schema/index.ts` is server-only by path, so a component can never import a
  * `pgEnum` directly and some mirror is unavoidable. What is avoidable is having ten of
  * them: before this file, `'draft' | 'published' | 'archived'` was retyped inline in ten
  * places and `'light' | 'dark' | 'system'` in seven, each free to drift from the column

@@ -59,7 +59,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The showcase Redis key namespace | `SHOWCASE_CACHE_PREFIX` / `assertShowcaseCacheKey` | cache-local `SHOWCASE_PREFIX` |
 | The design system's icon size scale | `iconSize` (`styles/tokens.ts`) | sidebar-local `iconSize` |
 | The sidebar's computed icon width | `sidebarIconSize` | `iconSize` |
-| Formatting a date for a reader | `formatDate(date, locale)` from `$lib/i18n` | five page-local `formatDate`s |
+| Formatting a date for a reader | `formatDate(date, locale)` from `#lib/i18n` | five page-local `formatDate`s |
 | The Cloudflare account id | env `R2_ACCOUNT_ID` | `CLOUDFLARE_ACCOUNT_ID` |
 | An AI-domain error | `AiError` / `AiErrorKind` / `classifyAiError` / `safeAiMessage` | `AIError`, `classifyAIError`, `safeAIMessage` |
 | Retrieval's admin overview | `RetrievalOverviewStats` / `RETRIEVAL_PAGE_SIZE` | `RAGOverviewStats`, `RAG_PAGE_SIZE` |
@@ -81,7 +81,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Where each system runs | `LocalityRow` (`perf/locality.ts`) | `RegionMap`, `DeploymentMap` |
 | A separately deployed process the app calls over HTTP | `external service` — first-party or a vendor's; the reference is `services/runtime-lab`, shown at `/showcases/external-service`, recorded as `architecture-external-service` | `sidecar` (the JSONB i18n column), `microservice`, `upstream` as a type, `dependency` (infrastructure we run on) |
 | The deployed reference external service | `runtime lab` (`services/runtime-lab`, binary and compose service `runtime-lab`, Render `v10r-runtime-lab`) — named for its role, a second runtime v10r runs and measures; the domain it evaluates is order-lifecycle rules (`order.rs`). The *External Service Lab* is the showcase page that calls it | `order-rules` (that names the domain it evaluates, not the deployable), `sidecar` |
-| One named, server-configured place an external service is reached | `service target` (`ServiceTargetId` = `local` · `remote`; `ResolvedServiceTarget` with `setup` = `configured` · `unconfigured` · `misconfigured`) | `environment` (`$env`, GitHub environments), `endpoint`, `host` |
+| One named, server-configured place an external service is reached | `service target` (`ServiceTargetId` = `local` · `remote`; `ResolvedServiceTarget` with `setup` = `configured` · `unconfigured` · `misconfigured`) | `environment` (`$app/env`, GitHub environments), `endpoint`, `host` |
 | How one external-service call ended | `ServiceCallOutcome` = `ok` · a `ServiceFailureKind` · `unconfigured` · `misconfigured` (nothing sent) | `status` (that is the service's `/v1/status`), `health`, `error` |
 | The correlation value one call carries across processes | `request id` (`x-request-id` header, `requestId` field; the same concept as `ai.turn.request_id`) — not `auth/grant-requests.ts`'s `requestId`, which is a grant-request row id | `correlationId`, `traceId` (OpenTelemetry's word) |
 | The app-side code that calls one external service | `service client` (`callService` in `client.ts`; its overhead is `clientMs`) | `adapter` (that is `*.adapter.ts`, the env reader beside it), `gateway`, `proxy` |
@@ -114,23 +114,23 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Catalog rows put in the prompt before generation for a "where is…" question | `navigation grounding` (`wantsNavigation`, `<catalog-results>`, the `navigation` capability) | `nav search`, `pre-search`, `catalog prefetch` |
 | What the assembly hands the tools so they do not redo its work | `seed` (`docsSeed`, `catalogSeed` on `RetrievalToolOptions`) | `cache`, `prefetch`, `warm` |
 | The rule that a tool-mounted turn's last allowed step answers | `answerOnLastStep` (`ai/policy/step-budget.ts`) | `finalStepNoTools`, `forceAnswer` |
-| A turn's failure as the client receives it | `error frame` before any content (`aiErrorFrameText`, text `[kind] message`); `turnError` metadata after content (`TurnError` in `$lib/types/ai-error.ts`) | `streamError`, `partialError`, an `error` frame after text |
+| A turn's failure as the client receives it | `error frame` before any content (`aiErrorFrameText`, text `[kind] message`); `turnError` metadata after content (`TurnError` in `#lib/types/ai-error.ts`) | `streamError`, `partialError`, an `error` frame after text |
 | What the status row says the live turn is doing | `turn progress` (`turnProgress` → `retrieving` · `catalog` · `generating`, `awaitingAnswer`; `composites/chatbot/turn-progress.ts`) | `typing indicator`, `loading label`, `phase` (taken by the panel's `open`/`minimized`) |
 | One user message and the assistant message it produced | `turn` (`ai.turn`, keyed by the assistant `message_id`) | `exchange`, `round`, `request` (an HTTP request, or a provider request) |
-| The recorded account of a turn — live-partial, persisted, or a recorded demo | `turn trace` (`TurnTrace`, `TurnTraceSnapshot`, `$lib/types/turn-trace.ts`; `createTurnRecorder` in `ai/trace/recorder.ts` is its one author) | `pipeline events`, `telemetry` (the usage columns alone), `probe` (a second run) |
+| The recorded account of a turn — live-partial, persisted, or a recorded demo | `turn trace` (`TurnTrace`, `TurnTraceSnapshot`, `#lib/types/turn-trace.ts`; `createTurnRecorder` in `ai/trace/recorder.ts` is its one author) | `pipeline events`, `telemetry` (the usage columns alone), `probe` (a second run) |
 | One provider request of a turn (attempt × step) | `model call` (`ai.model_call`, `ModelCallRecord`, `callStart`/`callEnd`) | `conversation_step`, `conversationStep`, bare `step` |
 | One tool `execute` of a turn | `tool execution` (`ToolExecutionRecord`; the row stays `ai.tool_call`) | `tool run`, `invocation` |
 | One provider of the turn's rotation, tried in order | `attempt` (`AttemptRecord`, `attemptStart`/`attemptEnd`; `streaming-turn.ts` `TurnAttempt`) | `retry`, `fallback` on its own |
-| What the assistant is told about the user's situation (page, desk panels, layout, workspace, granted scopes, locale, visibility ceiling) | `awareness` (`TurnAwareness`; site-awareness and desk-awareness are its two surface profiles) | `environment` (collides with `$env` and the runtime environment), `context` on its own |
+| What the assistant is told about the user's situation (page, desk panels, layout, workspace, granted scopes, locale, visibility ceiling) | `awareness` (`TurnAwareness`; site-awareness and desk-awareness are its two surface profiles) | `environment` (collides with `$app/env` and the runtime environment), `context` on its own |
 | Retrieved or indexed material a turn draws on | `grounding` (`GroundingSource` per corpus/index, `GroundingItem` per candidate, `GroundingSourceId`) | `knowledge`, `evidence`, `lane` per corpus |
 | Where an item stands relative to the answer | `TurnItemState`: `available` → `considered` → `included` → `executed` → `cited` — inclusion never claims influence | `used`, `relevant`, `chosen` |
-| The showcase section that opens one recorded turn | `turn inspector` (`/showcases/ai/{chatbot,deskbot}#orchestration`, `TurnInspector.svelte`, `TurnTree`/`TurnItemDetail`/`TurnSourcePicker`, the pure projection `$lib/showcases/ai/inspector.ts`) | `probe`, `x-ray`, `galaxy`, `context orchestration` (the old second-run section), `replay`/`TracePlayer` (the retired frame scrubber) |
+| The showcase section that opens one recorded turn | `turn inspector` (`/showcases/ai/{chatbot,deskbot}#orchestration`, `TurnInspector.svelte`, `TurnTree`/`TurnItemDetail`/`TurnSourcePicker`, the pure projection `#lib/showcases/ai/inspector.ts`) | `probe`, `x-ray`, `galaxy`, `context orchestration` (the old second-run section), `replay`/`TracePlayer` (the retired frame scrubber) |
 | The proposal a deskbot turn stopped on, as its owner reads it back | `turn proposal` (`TurnProposal` on the trace's read side, resolved by `proposalId` through `resolveTurnProposal`; the inspector's `proposal` group) | `plan` on its own (the model's `desk_propose_plan` input), `approval` (the door, not the record) |
 | One turn as the inspector reads it — the trace plus the question, the answer and the profile | `InspectedTurn` | `TurnFixture`, `ReplayTurn` |
 | Where a shown turn came from | `provenance` (`TurnProvenance.kind`: `authored` · `recorded` · `live`; rendered by `ProvenanceBadge` — one chip and, where the reader is owed it, one sentence of gloss (`showcase_ai_prov_*`); never inferred) | `source` on its own (the spine's old `recorded`/`live` flag), `demo`, a `mode chip` for a turn |
 | Where any value came from — entity, producing activity, agent | `provenance` (the general concept; `TurnProvenance` and `fieldProvenance` are instances, see `docs/blueprint/integrity/derivation.md#provenance-record`) | `lineage` (spoken for — rejected for chunk ancestry), `origin` as a type name |
 | The freshness key of a derived output | `derivation key` (`derivationKey(transform, inputs)` in `db/content-hash.ts`; column `derivation_key`) | `cache key` (that is `cacheKey` in `server/cache/`), `fingerprint` on its own, a `--force` flag |
-| Renaming every id of a recorded turn to a `demo_` id before it becomes a fixture | `scrubTurn` (`$lib/showcases/ai/inspector.ts`; the recording script and the fixture test share it) | `anonymize`, `sanitize`, `redact` (the retention pass that empties bodies) |
+| Renaming every id of a recorded turn to a `demo_` id before it becomes a fixture | `scrubTurn` (`#lib/showcases/ai/inspector.ts`; the recording script and the fixture test share it) | `anonymize`, `sanitize`, `redact` (the retention pass that empties bodies) |
 | The upper description of one surface's assistant: identity + capabilities | `profile` (`AssistantProfile`, `ai/profile/<surface>.ts`, `PROFILES` by surface); its client-safe projection is the `profile manifest` (`AssistantProfileManifest`, `GET /api/ai/profiles/[surface]`) | `persona`, `agent config`, `system prompt` for the whole |
 | Who an assistant is and the rules it always follows — the `<role>` + `<instructions>` block | `identity` (`AssistantIdentity`, `identityBlock()`; the shared tail is `shared-rules.ts`) | `SYSTEM_PROMPT`, `DESK_SYSTEM_PROMPT`, `persona` |
 | One thing an assistant can do — tools, when-to-use guidance, activation rule, grounding lane, guide, verifier | `capability` (`AssistantCapability`, `ai/capabilities/<id>.ts`, `CapabilityId`; `TOOL_MANIFEST` names each tool's) | `skill`, `plugin`, `feature`, `tool group` |
@@ -139,7 +139,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | A per-turn rule that decided what the turn could do | `activation` (`Activation` with `id: CapabilityId` — a capability's `activates(turn)` verdict; a lane may revise it) | `ActivationId`, `gate` (the approval gate keeps that word), `flag` |
 | One block of the assembled system prompt, with its text | `PromptBlock` (`id` from the one `PromptBlockId` union, `capability` = its owner, `section`: identity · guidance · grounding · awareness · guide, `stable`) | `AssembledBlock`, `SystemPromptBlock`, `PromptOutline` (viewer-only, retiring with the spine viewer) |
 | A deterministic fact tying the answer to a grounding item | `citation` (`CitationRecord`, `match`: path · quote · provider_source · unsurfaced) | `verdict` (kept inside `verifyCatalogCitations`), `reference`, `paraphrase` (the hash-verified match of the retired wiki verifier) |
-| The three-column picture of one turn — sources, context and model calls, tools — drawn from recorded relations only | `turn graph` (`TurnGraph`, `turnGraph()`, `$lib/showcases/ai/turn-graph.ts` — the projection; `turn-graph-layout.ts` — its geometry; `TurnGraphCanvas` / `TurnGraphList` / `TurnGraphCard` / `TurnGraphGroupNode` under the AI showcase's `_components/turn-graph/`) | `map`, `galaxy`, `x-ray`, `flow` on its own |
+| The three-column picture of one turn — sources, context and model calls, tools — drawn from recorded relations only | `turn graph` (`TurnGraph`, `turnGraph()`, `#lib/showcases/ai/turn-graph.ts` — the projection; `turn-graph-layout.ts` — its geometry; `TurnGraphCanvas` / `TurnGraphList` / `TurnGraphCard` / `TurnGraphGroupNode` under the AI showcase's `_components/turn-graph/`) | `map`, `galaxy`, `x-ray`, `flow` on its own |
 | One of the turn graph's three fixed columns | `column` (`TurnGraphColumn`: `sources` · `context` · `tools`) | `layer`, `lane`, `swimlane` |
 | What an edge of the turn graph stands for | `TurnGraphEdgeKind`: `containment` (where a record sits) vs. the data-flow kinds `inclusion` · `request` · `execution` · `result` · `citation` | `link`, `relation` on its own, `invocation` |
 | A turn-graph node drawn with its visible members inside it | `group` (`TurnGraphLayout.groups`, `TurnGraphGroupNode`; a card's `variant`: `card` · `header` · `row`) | `frame` (a stream frame), `container`, `cluster` |
@@ -152,11 +152,11 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | A chunk's place in its document, as a turn records it | `chunkPlace()` (`ai/capabilities/chunk-place.ts`): `parentId` · `level` (`ChunkLevel`) · `position` · `contentHash` · `path`; `retriever` (`RetrieverId`) per item, `retrievers` per source | `ancestry`, `depth` (a number), `tiers` on the source, `lineage` |
 | The deterministic, ingest-built map of one collection's corpus — what it covers, without loading it | `corpus map` (`retrieval.corpus_map`, `getCorpusMap` / `countCorpusMaps` in `db/retrieval/queries.ts`; the chatbot's is the `project-map` capability, injected as `<project-overview>`) | `llmwiki` (the LLM-compiled pointer layer, retired 2026-09-12 — it had no writer and every fresh user's wiki was empty), `llmwiki_page`, `overview page`, `LlmwikiPage`, `loadOverview`, `get_llmwiki_pages`, `get_source_chunks` |
 | Capability nested by meaning and revealed as intent becomes specific — on one page, and across a user's journey — plus the structure it recommends and the method that reviews for it | `Explosive Discovery` (the principle: `docs/foundation/explosive-discovery.md`; the review method: `docs/blueprint/design/explosive-discovery.md`, registry `ui-explosive-discovery`, skill `uxy-explosive-discovery`); `Nested Depth` (the structure: directions that narrow intent, detail on entry) | `Progressive Revelation`, `ProgRev`, `progressive-revelation` (the planned journey-stage feature — absorbed 2026-09-20 as the journey axis of Explosive Discovery; the blueprint with its unbuilt schema was deleted). `progressive disclosure` is not retired: it stays the design *intent*, principle 3 in `design/README.md` |
-| Work kept only on this device that a sign-out would erase (today: undelivered spreadsheet drafts) | `unsaved work` (`UnsavedWork`, `$lib/state/unsaved-work.ts`; drained → confirmed → discarded) | — |
-| Where an agent runs — the Podman container vs Claude Code on the web | `local session` / `cloud session` (Claude Code's own terms; detected by `CLAUDE_CODE_REMOTE`) | `execution profile` (`profile` is spoken for), `environment` (collides with `$env` and GitHub environments) |
+| Work kept only on this device that a sign-out would erase (today: undelivered spreadsheet drafts) | `unsaved work` (`UnsavedWork`, `#lib/state/unsaved-work.ts`; drained → confirmed → discarded) | — |
+| Where an agent runs — the Podman container vs Claude Code on the web | `local session` / `cloud session` (Claude Code's own terms; detected by `CLAUDE_CODE_REMOTE`) | `execution profile` (`profile` is spoken for), `environment` (collides with `$app/env` and GitHub environments) |
 | Moving an approved feature branch into production: squash into GitHub `main`, GitLab sync, Vercel deployment — only on Stas's explicit instruction in the conversation | `ship` / `shipping mode` (`docs/stack/ops/shipping.md`, skill `ship`, step `scripts/ship/squash-into-main.sh`); the default state is `development mode`. GitLab's copy of `main` is kept by the `GitLab sync` (`gitlab-sync.yml`) | `promote` / `promotion` / `candidate` for this flow (the retired Pattern Incubator's two-stage acceptance, never merged); `release`, `deploy` (Vercel's step, not Claude's). `PROMOTION` survives only as the `.vrrc` key that selects how `main` moves |
-| The persisted shape number of a document or file | `format` (`COMPOSITION_FORMAT`, `$lib/schemas/product-composition.ts`) | `version` (the optimistic-concurrency counter), `revision` (a stored snapshot row), `schemaVersion` |
-| The editable document of products and how they connect | `product composition` (`ProductComposition`, `$lib/product-composition/`) | `assembly` (the AI turn's word), `scene` (the renderer's), `layout` |
+| The persisted shape number of a document or file | `format` (`COMPOSITION_FORMAT`, `#lib/schemas/product-composition.ts`) | `version` (the optimistic-concurrency counter), `revision` (a stored snapshot row), `schemaVersion` |
+| The editable document of products and how they connect | `product composition` (`ProductComposition`, `#lib/product-composition/`) | `assembly` (the AI turn's word), `scene` (the renderer's), `layout` |
 | A reusable product a composition places | `ProductDefinition` — its `body` is its own geometry and ports, or an arrangement of other products (a subassembly is a definition, not a second type) | `component` (Svelte's), `part` (the part explorer's mesh group), `template` |
 | One placed use of a definition | `ProductOccurrence` (field `placement`) | `instance`, `node`, `item` |
 | The occurrences, couplings and conduits of one level | `Arrangement` | `scene`, `graph` |
@@ -324,14 +324,14 @@ Two consequences worth stating:
   named for what they are when they are not — `db/analytics/sentinels.ts` holds the
   `UNKNOWN_COUNTRY` / `UNKNOWN_CLIENT` sentinels, which are vocabulary, not policy.
 
-`$lib/utils/` survives as a *directory*: every leaf inside it is sharply named (`cn.ts`,
+`#lib/utils/` survives as a *directory*: every leaf inside it is sharply named (`cn.ts`,
 `safe-path.ts`, `xml.ts`), so the meaning lives where a reader looks for it.
 
 ## Singular and plural
 
 For cookies the repo distinguishes them, and the distinction is worth keeping: a **singular**
 `cookie.ts` owns one named cookie's contract (`pairing/cookie.ts`, `styles/random/cookie.ts`),
-a **plural** `cookies.ts` is a cookie *utility* module (`$lib/utils/cookies.ts`).
+a **plural** `cookies.ts` is a cookie *utility* module (`#lib/utils/cookies.ts`).
 `analytics/cookies.ts` held only the consent cookie and is now `analytics/consent-cookie.ts`.
 
 ## Names that stay overloaded on purpose
@@ -344,10 +344,10 @@ Flagged by audit, examined, kept:
   ones. The first mirrors a URL path segment, the second mirrors the Vercel AI SDK's own
   wire literal `part.type`.
 - `Database` declared in both `db/types.ts` and `db/index.ts` — the re-derivation is
-  commented, and exists so CLI consumers avoid pulling `$env/dynamic/private`.
+  commented, and exists so CLI consumers avoid pulling `$app/env/private`.
 - Per-domain `config.ts` files repeating `RATE_LIMIT_WINDOW`, `MAX_UPLOAD_SIZE` and friends.
   Same name, independent values, by design — policy belongs to its domain.
-- `$lib/actions/` (Svelte `use:` directives) beside SvelteKit's form `actions`. Both are
+- `#lib/actions/` (Svelte `use:` directives) beside SvelteKit's form `actions`. Both are
   established framework terms; neither is ours to rename.
 - The AI tool `search_pattern_library` beside the MCP tool `search_patterns`. Same registry,
   but two tools on two surfaces with separate telemetry — one name would make an admin

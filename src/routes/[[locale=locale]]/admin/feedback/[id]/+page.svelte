@@ -1,12 +1,12 @@
 <script lang="ts">
+import { BackLink, Card, ConfirmDialog } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Tag } from '#lib/components/primitives/index.ts';
+import { formatRelative, localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { enhance } from '$app/forms';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { BackLink, Card, ConfirmDialog } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Button, Tag } from '$lib/components/primitives';
-import { formatRelative, localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

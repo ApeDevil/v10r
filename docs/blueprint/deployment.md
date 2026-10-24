@@ -2,7 +2,7 @@
 
 Tri-target deployment design: Vercel (Node.js), Vercel (Bun experimental), and Koyeb (Bun container).
 
-> **Status: only the Vercel Node.js target is wired.** `svelte.config.js` hardcodes `adapter-vercel`; `DEPLOY_TARGET`, `svelte-adapter-bun`, and the Dockerfile referenced below do not exist yet. The Bun/Koyeb sections are design intent for the planned container target, kept because the job system and env parity were built to support them.
+> **Status: only the Vercel Node.js target is wired.** The `sveltekit()` options in `vite.config.ts` hardcode `adapter-vercel`; `DEPLOY_TARGET`, `svelte-adapter-bun`, and the Dockerfile referenced below do not exist yet. The Bun/Koyeb sections are design intent for the planned container target, kept because the job system and env parity were built to support them.
 
 **Strategy:** Same codebase, different configurations. See [stack/ops/deployment.md](../stack/ops/deployment.md) for decision rationale and current status.
 
@@ -30,31 +30,30 @@ DEPLOY_TARGET=bun bun run build
 
 ### Dynamic Adapter Selection (planned)
 
-Today `svelte.config.js` imports `@sveltejs/adapter-vercel` unconditionally. The switch below is the shape the container target will introduce:
+Today `vite.config.ts` imports `@sveltejs/adapter-vercel` unconditionally and passes it to `sveltekit({ adapter })`. The switch below is the shape the container target will introduce:
 
-```javascript
-// svelte.config.js
+```typescript
+// vite.config.ts
 import adapterVercel from '@sveltejs/adapter-vercel';
+import { sveltekit } from '@sveltejs/kit/vite';
 import adapterBun from 'svelte-adapter-bun';
 
 const target = process.env.DEPLOY_TARGET;
 
 const adapter = target === 'bun'
   ? adapterBun({ precompress: true })
-  : adapterVercel();
+  : adapterVercel({ runtime: 'nodejs22.x', regions: ['fra1'] });
 
-export default {
-  kit: {
-    adapter,
-  },
-};
+export default defineConfig({
+  plugins: [sveltekit({ adapter /* , version, csp, preprocess */ })],
+});
 ```
 
 ### Adapter Dependencies
 
-Dev dependencies (`svelte-adapter-bun` is not installed until the container target lands):
+Dev dependencies (`svelte-adapter-bun` is not installed until the container target lands, and must support SvelteKit 3 first):
 ```json
-"@sveltejs/adapter-vercel": "^6.3.4",
+"@sveltejs/adapter-vercel": "^7.0.1",
 "svelte-adapter-bun": "^0.5.x"
 ```
 
@@ -90,8 +89,8 @@ Dev dependencies (`svelte-adapter-bun` is not installed until the container targ
 
 ### Function region
 
-The functions run in `fra1`, declared as the adapter default in `svelte.config.js`
-(`adapter({ runtime: 'nodejs22.x', regions: ['fra1'] })`) — next to Neon in `eu-central-1`, so
+The functions run in `fra1`, declared as the adapter default in `vite.config.ts`
+(`sveltekit({ adapter: adapter({ runtime: 'nodejs22.x', regions: ['fra1'] }) })`) — next to Neon in `eu-central-1`, so
 the two blocking database hops of a request stay in one region. Route-level `config` exports
 (`maxDuration` on the AI routes) merge over the defaults and keep the region. Before the
 declaration the deployment ran on Vercel's default `iad1` (measured 2026-09-13 from
@@ -128,30 +127,28 @@ Set in Vercel dashboard → Settings → Environment Variables:
 
 ### Adapter Options
 
-```javascript
-// svelte.config.js
+```typescript
+// vite.config.ts — inside sveltekit({ ... })
 import adapter from '@sveltejs/adapter-vercel';
 
-export default {
-  kit: {
-    adapter: adapter({
-      // Deploy to edge (faster, limited Node.js APIs)
-      runtime: 'edge',
+sveltekit({
+  adapter: adapter({
+    // Deploy to edge (faster, limited Node.js APIs)
+    runtime: 'edge',
 
-      // Or use Node.js runtime (full API support)
-      runtime: 'nodejs22.x',
+    // Or use Node.js runtime (full API support)
+    runtime: 'nodejs22.x',
 
-      // Split routes into separate functions
-      split: true,
+    // Split routes into separate functions
+    split: true,
 
-      // Memory limit (MB)
-      memory: 1024,
+    // Memory limit (MB)
+    memory: 1024,
 
-      // Timeout (seconds)
-      maxDuration: 10,
-    }),
-  },
-};
+    // Timeout (seconds)
+    maxDuration: 10,
+  }),
+});
 ```
 
 ### No preview deployments
@@ -363,27 +360,25 @@ Set in Koyeb dashboard → Service → Settings → Environment:
 
 ### Adapter Options
 
-```javascript
-// svelte.config.js
+```typescript
+// vite.config.ts — inside sveltekit({ ... })
 import adapter from 'svelte-adapter-bun';
 
-export default {
-  kit: {
-    adapter: adapter({
-      // Enable gzip/brotli compression
-      precompress: true,
+sveltekit({
+  adapter: adapter({
+    // Enable gzip/brotli compression
+    precompress: true,
 
-      // Development mode logging
-      development: false,
+    // Development mode logging
+    development: false,
 
-      // Dynamic imports for routes
-      dynamic_origin: true,
+    // Dynamic imports for routes
+    dynamic_origin: true,
 
-      // WebSocket support (experimental)
-      websocket: false,
-    }),
-  },
-};
+    // WebSocket support (experimental)
+    websocket: false,
+  }),
+});
 ```
 
 ### Local Testing
@@ -416,7 +411,7 @@ Recurring background work runs differently per platform. The same job registry s
 | Vercel | HTTP cron via `vercel.json` | `GET /api/cron/due` once a day (everything due, in registry order); `GET /api/cron/[job]` for `standalone` jobs |
 | Container | `setInterval` in `hooks.server.ts` | Direct function call |
 
-**Platform detection** — `src/lib/server/platform/index.ts` reads `$env/dynamic/private`. If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` map to persistent platforms (`fly`, `railway`). Otherwise it falls through to the default `{ id: 'container', persistent: true }` and the scheduler starts — persistence is the default, not driven by `CONTAINER`.
+**Platform detection** — `src/lib/server/platform/index.ts` reads `VERCEL`, `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` from `$app/env/private` (declared in `src/env.ts`). If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` map to persistent platforms (`fly`, `railway`). Otherwise it falls through to the default `{ id: 'container', persistent: true }` and the scheduler starts — persistence is the default, not driven by `CONTAINER`.
 
 **Job registry** — `src/lib/server/jobs/index.ts` maps slugs to `execute()` functions plus a `cadence`. Both trigger paths call the same registry; `jobsDueOn(date)` is what the daily sweep runs.
 
@@ -670,8 +665,7 @@ Configure in Koyeb dashboard → Service → Health checks:
 
 ```typescript
 // src/routes/api/health/+server.ts
-import { json } from '@sveltejs/kit';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import { sql } from 'drizzle-orm';
 
 export async function GET() {
@@ -679,12 +673,12 @@ export async function GET() {
     // Check database connection
     await db.execute(sql`SELECT 1`);
 
-    return json({
+    return Response.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return json(
+    return Response.json(
       { status: 'unhealthy', error: 'Database connection failed' },
       { status: 503 }
     );
@@ -771,7 +765,7 @@ koyeb service logs <service-name> --follow
 ├── .dockerignore           # Docker build exclusions
 ├── vercel.json             # Vercel configuration (crons)
 ├── compose.yaml            # Local dev (sets CONTAINER=1)
-├── svelte.config.js        # Adapter selection, function region
+├── vite.config.ts          # sveltekit({...}): adapter selection, function region
 └── src/
     ├── hooks.server.ts     # Imports scheduler (bare import activates it)
     ├── lib/server/

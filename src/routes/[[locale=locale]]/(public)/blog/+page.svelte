@@ -1,8 +1,8 @@
 <script lang="ts">
-import { PostList } from '$lib/components/blog';
-import { EmptyState, LocaleFallbackBanner, PageHeader } from '$lib/components/composites';
-import { PageContainer, Stack } from '$lib/components/layout';
-import * as m from '$lib/paraglide/messages';
+import { PostList } from '#lib/components/blog/index.ts';
+import { EmptyState, LocaleFallbackBanner, PageHeader } from '#lib/components/composites/index.ts';
+import { PageContainer, Stack } from '#lib/components/layout/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let { data } = $props();
 </script>

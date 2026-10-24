@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RetrievalStepEvent } from '$lib/types/retrieval-trace';
+import type { RetrievalStepEvent } from '#lib/types/retrieval-trace.ts';
 import type { RankedChunk } from './types';
 
 const mockGenerateEmbedding = vi.fn();

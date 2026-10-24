@@ -194,7 +194,7 @@ We use a **multi-provider architecture** with Vercel AI SDK — chat routes acro
 | Feature | Details |
 |---------|---------|
 | Edge Network | Global CDN, automatic |
-| Runtime | Node.js 22 (`nodejs22.x` in `svelte.config.js`; Bun runtime doesn't support SvelteKit) |
+| Runtime | Node.js 22 (`nodejs22.x` in the `sveltekit()` options in `vite.config.ts`; Bun runtime doesn't support SvelteKit) |
 | Preview Deploys | Per-branch deployments — **switched off in v10r** (`vercel.json` deploys `main` only) |
 | Analytics | Built-in, cookieless |
 

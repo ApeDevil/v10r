@@ -4,10 +4,10 @@
   owns the absolute %-geometry, a11y, and reduced-motion handling.
 -->
 <script lang="ts">
-import type { WaterfallRow, WaterfallStatus } from '$lib/components/viz';
-import { Waterfall } from '$lib/components/viz';
-import type { CycleStageId, CycleStageState, CycleStageStatus } from '$lib/showcases/cycle/types';
-import { STAGE_COLORS } from '$lib/showcases/cycle/types';
+import type { WaterfallRow, WaterfallStatus } from '#lib/components/viz/index.ts';
+import { Waterfall } from '#lib/components/viz/index.ts';
+import type { CycleStageId, CycleStageState, CycleStageStatus } from '#lib/showcases/cycle/types.ts';
+import { STAGE_COLORS } from '#lib/showcases/cycle/types.ts';
 
 interface Props {
 	stages: CycleStageState[];

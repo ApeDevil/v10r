@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTestDb } from '$lib/server/test/db';
+import { createTestDb } from '#lib/server/test/db.ts';
 
 /**
  * Concurrency regression test against a REAL Postgres (PGlite) with the full schema pushed —
@@ -10,14 +10,14 @@ import { createTestDb } from '$lib/server/test/db';
  *  - a mid-operation compare-and-swap collision is retried and still returns the TRUE immediate
  *    predecessor (the guarded UPDATE misses, the service re-reads and swaps).
  *
- * The service reads `db` from `$lib/server/db`; we proxy that to the live PGlite handle so the
+ * The service reads `db` from `#lib/server/db/index.ts`; we proxy that to the live PGlite handle so the
  * service, and the audit module it calls, both run against the same real database.
  */
 type Db = Awaited<ReturnType<typeof createTestDb>>['db'];
 type Client = Awaited<ReturnType<typeof createTestDb>>['client'];
 
 const holder = vi.hoisted(() => ({ db: null as unknown }));
-vi.mock('$lib/server/db', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({
 	db: new Proxy(
 		{},
 		{

@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
 import { MediaQuery } from 'svelte/reactivity';
-import { BoundaryFallback } from '$lib/components/composites';
-import type { EmbedDescriptor } from '$lib/server/blog/types';
+import { BoundaryFallback } from '#lib/components/composites/index.ts';
+import type { EmbedDescriptor } from '#lib/server/blog/types.ts';
 import EmbedSceneContent from './EmbedSceneContent.svelte';
 import { resolveScene } from './resolve-scene';
 

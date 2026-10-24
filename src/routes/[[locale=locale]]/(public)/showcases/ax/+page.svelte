@@ -9,10 +9,10 @@ import {
 	NavSection,
 	PageHeader,
 	ShowcaseDocs,
-} from '$lib/components/composites';
-import { CodeBlock } from '$lib/components/composites/info-dialog';
-import { Button, Select, Spinner, Textarea } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+} from '#lib/components/composites/index.ts';
+import { CodeBlock } from '#lib/components/composites/info-dialog/index.ts';
+import { Button, Select, Spinner, Textarea } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import {
 	DIRTY_SNIPPET,
 	headExcerpt,
@@ -20,7 +20,7 @@ import {
 	parseToolResult,
 	splitNextActions,
 	toolCallBody,
-} from '$lib/showcases/ax/demo';
+} from '#lib/showcases/ax/demo.ts';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

@@ -5,18 +5,22 @@
  * ordered option lists, and a silent reordering of the pgEnum would reorder the UI.
  */
 import { describe, expect, it } from 'vitest';
-import { aiSurfaceEnum } from '$lib/server/db/schema/ai/conversation';
-import { proposalRevertStatusEnum, proposalStatusEnum } from '$lib/server/db/schema/ai/proposal';
-import { proposalStepKindEnum } from '$lib/server/db/schema/ai/proposal-step';
-import { aiProviderEnum } from '$lib/server/db/schema/ai/provider-connection';
-import { consentTierEnum } from '$lib/server/db/schema/analytics/events';
-import { userSurfaceEnum } from '$lib/server/db/schema/analytics/user-events';
-import { commentStatusEnum } from '$lib/server/db/schema/blog/comment';
-import { postStatusEnum } from '$lib/server/db/schema/blog/post';
-import { fileTypeEnum } from '$lib/server/db/schema/desk/file';
-import { nameSourceVendorEnum } from '$lib/server/db/schema/name-check/source-connection';
-import { notificationTypeEnum } from '$lib/server/db/schema/notifications/notifications';
-import { dateFormatEnum, displayDensityEnum, themeEnum } from '$lib/server/db/schema/personalization/user-preferences';
+import { aiSurfaceEnum } from '#lib/server/db/schema/ai/conversation.ts';
+import { proposalRevertStatusEnum, proposalStatusEnum } from '#lib/server/db/schema/ai/proposal.ts';
+import { proposalStepKindEnum } from '#lib/server/db/schema/ai/proposal-step.ts';
+import { aiProviderEnum } from '#lib/server/db/schema/ai/provider-connection.ts';
+import { consentTierEnum } from '#lib/server/db/schema/analytics/events.ts';
+import { userSurfaceEnum } from '#lib/server/db/schema/analytics/user-events.ts';
+import { commentStatusEnum } from '#lib/server/db/schema/blog/comment.ts';
+import { postStatusEnum } from '#lib/server/db/schema/blog/post.ts';
+import { fileTypeEnum } from '#lib/server/db/schema/desk/file.ts';
+import { nameSourceVendorEnum } from '#lib/server/db/schema/name-check/source-connection.ts';
+import { notificationTypeEnum } from '#lib/server/db/schema/notifications/notifications.ts';
+import {
+	dateFormatEnum,
+	displayDensityEnum,
+	themeEnum,
+} from '#lib/server/db/schema/personalization/user-preferences.ts';
 import {
 	AI_PROVIDER_IDS,
 	AI_SURFACES,

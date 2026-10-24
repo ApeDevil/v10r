@@ -1,7 +1,7 @@
 <script lang="ts">
-import OklchColorInput from '$lib/components/primitives/color-input/OklchColorInput.svelte';
-import ContrastBadge from '$lib/components/primitives/contrast-badge/ContrastBadge.svelte';
-import type { PaletteColors } from '$lib/styles/random/types';
+import OklchColorInput from '#lib/components/primitives/color-input/OklchColorInput.svelte';
+import ContrastBadge from '#lib/components/primitives/contrast-badge/ContrastBadge.svelte';
+import type { PaletteColors } from '#lib/styles/random/types.ts';
 
 interface Props {
 	palette: PaletteColors;

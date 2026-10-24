@@ -1,5 +1,5 @@
-import { getConsentSplit, getDataAgeStats } from '$lib/server/db/analytics/aggregations';
-import { retentionDays } from '$lib/server/retention';
+import { getConsentSplit, getDataAgeStats } from '#lib/server/db/analytics/aggregations.ts';
+import { retentionDays } from '#lib/server/retention/index.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

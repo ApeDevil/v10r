@@ -5,8 +5,8 @@
  * Order = display order.
  */
 
-import type { LabelFn } from '$lib/nav/types';
-import * as m from '$lib/paraglide/messages';
+import type { LabelFn } from '#lib/nav/types.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 export interface DocsSection {
 	href: `/docs/${string}`;

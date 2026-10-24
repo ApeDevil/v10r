@@ -8,12 +8,12 @@
  * Audit detail is deliberately shallow: vendor, version, which fields changed and how the
  * secret changed. Never the secret, never the ciphertext, never a vendor response.
  */
-import { type getAuditContext, recordAuditEvent } from '$lib/server/admin';
-import { db } from '$lib/server/db';
-import { classifyDbError } from '$lib/server/db/errors';
-import { removeNameSourceSecret, saveNameSourceConnection } from '$lib/server/db/name-check/source-connections';
-import { EncryptionError, encryptAesGcm, getEncryptionKeyRing } from '$lib/server/security';
-import type { NameSourceVendor } from '$lib/types/db-enums';
+import { type getAuditContext, recordAuditEvent } from '#lib/server/admin/index.ts';
+import { classifyDbError } from '#lib/server/db/errors.ts';
+import { db } from '#lib/server/db/index.ts';
+import { removeNameSourceSecret, saveNameSourceConnection } from '#lib/server/db/name-check/source-connections.ts';
+import { EncryptionError, encryptAesGcm, getEncryptionKeyRing } from '#lib/server/security/index.ts';
+import type { NameSourceVendor } from '#lib/types/db-enums.ts';
 import { type NameSourceTestResult, testNameSourceConnection } from './connection-test';
 import type { NameSourceConnection } from './connections';
 import { loadNameSourceConnections } from './index';

@@ -1,4 +1,4 @@
-# `$lib/showcases`
+# `#lib/showcases`
 
 Everything the showcase pages need that is not the page itself.
 

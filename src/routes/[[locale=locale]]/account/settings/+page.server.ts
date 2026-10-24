@@ -1,14 +1,14 @@
 import { redirect } from '@sveltejs/kit';
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { localizeHref } from '$lib/i18n';
-import { userSettingsSchema } from '$lib/schemas/app/settings';
-import { requireStepUp } from '$lib/server/auth/step-up';
-import { getOrCreatePreferences, updatePreferences } from '$lib/server/db/preferences/mutations';
-import { updateDisplayName } from '$lib/server/db/user';
-import { deleteUserData, SoleAdminBlockedError } from '$lib/server/privacy';
-import { AVATAR_ERROR_MESSAGES, removeAvatar, uploadAvatar, validateAvatar } from '$lib/server/store/avatar';
-import type { Theme } from '$lib/types/db-enums';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { userSettingsSchema } from '#lib/schemas/app/settings.ts';
+import { requireStepUp } from '#lib/server/auth/step-up.ts';
+import { getOrCreatePreferences, updatePreferences } from '#lib/server/db/preferences/mutations.ts';
+import { updateDisplayName } from '#lib/server/db/user/index.ts';
+import { deleteUserData, SoleAdminBlockedError } from '#lib/server/privacy/index.ts';
+import { AVATAR_ERROR_MESSAGES, removeAvatar, uploadAvatar, validateAvatar } from '#lib/server/store/avatar.ts';
+import type { Theme } from '#lib/types/db-enums.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

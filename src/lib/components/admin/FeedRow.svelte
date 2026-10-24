@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Tag } from '$lib/components/primitives';
-import type { LiveEvent } from '$lib/types/analytics-live';
+import { Tag } from '#lib/components/primitives/index.ts';
+import type { LiveEvent } from '#lib/types/analytics-live.ts';
 
 interface Props {
 	event: LiveEvent;

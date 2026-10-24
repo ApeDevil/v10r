@@ -1,11 +1,14 @@
 <script lang="ts">
-import type { SubmitFunction } from '@sveltejs/kit';
-import { enhance } from '$app/forms';
-import { Alert, Card, DiagGrid, DiagRow, NavSection, ShowcaseLayout } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Select, Spinner } from '$lib/components/primitives';
-import { CallFigures, CallHistory, EvaluationSteps, OutcomeBadge } from '$lib/components/showcases/external-service';
-import { startedDuringCheck } from '$lib/showcases/external-service/cold-start';
+import { Alert, Card, DiagGrid, DiagRow, NavSection, ShowcaseLayout } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Select, Spinner } from '#lib/components/primitives/index.ts';
+import {
+	CallFigures,
+	CallHistory,
+	EvaluationSteps,
+	OutcomeBadge,
+} from '#lib/components/showcases/external-service/index.ts';
+import { startedDuringCheck } from '#lib/showcases/external-service/cold-start.ts';
 import {
 	type CheckPatience,
 	EVALUATION_PRESET_IDS,
@@ -17,7 +20,9 @@ import {
 	SERVICE_DRILL_IDS,
 	type ServiceDrillId,
 	type ServiceTargetId,
-} from '$lib/showcases/external-service/types';
+} from '#lib/showcases/external-service/types.ts';
+import type { SubmitFunction } from '$app/forms';
+import { enhance } from '$app/forms';
 import { getShowcaseCard } from '../showcases';
 
 let { data, form } = $props();
@@ -43,8 +48,8 @@ let rejectionDismissed = $state(false);
 let enhancedSubmitted = $state(false);
 /**
  * An enhanced action that produced no result. `answered`: the platform sent something other
- * than a result — an error page or a redirect (`status` when SvelteKit could read one); or
- * the request never got an answer at all. Earlier results stay on the page — this only says
+ * than a result — an error page or a redirect, with its HTTP status; or the request never got
+ * an answer at all. Earlier results stay on the page — this only says
  * the latest action did not land.
  */
 let unfinished = $state<{ answered: boolean; status: number | null } | null>(null);
@@ -86,6 +91,11 @@ function remember(...calls: Array<PublicServiceCall | null>) {
 	history = [...made.reverse(), ...history].slice(0, 20);
 }
 
+/** What SvelteKit reports when the client hook passes an unexpected error (a rejected fetch) through. */
+function isUnexpectedErrorDefault(error: App.Error): boolean {
+	return error.status === 500 && error.message === 'Internal Error';
+}
+
 function submit(key: string): SubmitFunction {
 	// Every outcome below clears `pending`. The one path that skips this callback is an
 	// aborted submission — `enhance` aborts only through `controller`, which this page never
@@ -108,11 +118,12 @@ function submit(key: string): SubmitFunction {
 				return;
 			}
 			if (result.type === 'error') {
-				// `enhance` sets `status` only on a SvelteKit error result. A platform error page
-				// (Vercel's 504 at the function's time limit is HTML) fails to deserialize — a
-				// SyntaxError — while a fetch that got no answer at all rejects with a TypeError.
-				const answered = result.status !== undefined || result.error instanceof SyntaxError;
-				unfinished = { answered, status: result.status ?? null };
+				// `enhance` sets `status` on a SvelteKit error result. Any other response — a platform
+				// error page, such as Vercel's HTML 504 at the function's time limit — arrives since
+				// SvelteKit 3 as an error carrying that response's status. A fetch that got no answer
+				// at all rejects instead, and reaches us as the unexpected-error default.
+				const answered = result.status !== undefined || !isUnexpectedErrorDefault(result.error);
+				unfinished = { answered, status: answered ? (result.status ?? result.error.status) : null };
 				return;
 			}
 			if (!result.data) return;

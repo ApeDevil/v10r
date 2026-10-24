@@ -15,7 +15,7 @@
  * Module-level $state, safe for the reason desk-context.svelte.ts documents.
  */
 
-import type { DeskToolScope } from '$lib/server/ai/tools/_types';
+import type { DeskToolScope } from '#lib/server/ai/tools/_types.ts';
 
 // Module-level state
 

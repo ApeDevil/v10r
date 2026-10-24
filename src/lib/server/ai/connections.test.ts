@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { ProviderConnectionRow } from '$lib/server/db/schema/ai/provider-connection';
-import { type EncryptionKeyRing, encryptAesGcm, parseKeyRing } from '$lib/server/security/aes-gcm';
+import type { ProviderConnectionRow } from '#lib/server/db/schema/ai/provider-connection.ts';
+import { type EncryptionKeyRing, encryptAesGcm, parseKeyRing } from '#lib/server/security/aes-gcm.ts';
 import {
 	embeddingStatusFrom,
 	publicProviderConnection,
@@ -175,9 +175,9 @@ describe('publicProviderConnection', () => {
 });
 
 /**
- * The bare-Bun ingest scripts import these leaves by relative path and cannot resolve
- * Vite aliases; a `$lib`/`$env`/`$app` import anywhere in their closure breaks
- * `db:ingest-docs` at startup. Type-only imports are erased and do not count.
+ * The bare-Bun ingest scripts import these leaves by relative path. A `$app` import anywhere
+ * in their closure breaks `db:ingest-docs` at startup (it exists only inside Vite), and a
+ * `#lib` import is how one usually arrives, so both count. Type-only imports are erased.
  */
 describe('script reachability', () => {
 	const ROOTS = ['src/lib/server/ai/connections.ts', 'src/lib/server/db/ai/provider-connections.ts'];
@@ -190,7 +190,7 @@ describe('script reachability', () => {
 		for (const match of source.matchAll(IMPORT_RE)) {
 			const [, typeOnly, specifier] = match as unknown as [string, string | undefined, string];
 			if (typeOnly) continue;
-			if (specifier.startsWith('$')) offenders.push(specifier);
+			if (/^[$#]/.test(specifier)) offenders.push(specifier);
 			if (specifier.startsWith('.')) {
 				const target = resolve(dirname(file), specifier);
 				const candidate = existsSync(`${target}.ts`) ? `${target}.ts` : `${target}/index.ts`;

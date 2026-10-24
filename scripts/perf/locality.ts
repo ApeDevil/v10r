@@ -9,12 +9,12 @@
  * is only the renderer.
  *
  * Run it inside a Vercel function and the compute row fills in from `VERCEL_REGION`. Run
- * it locally and that row honestly says it cannot know: `svelte.config.js` declares the
+ * it locally and that row honestly says it cannot know: `vite.config.ts` declares the
  * region (`regions: ['fra1']`, next to Neon's eu-central-1), and only a running function
  * can confirm the deployment honours it — measured 2026-09-13, before the declaration,
  * every function ran in `iad1` (`x-vercel-id: fra1::iad1::…`).
  */
-import { CRITICAL_PATH_HOPS, describeLocality } from '$lib/server/perf/locality';
+import { CRITICAL_PATH_HOPS, describeLocality } from '#lib/server/perf/locality.ts';
 
 const rows = describeLocality(process.env);
 const width = Math.max(...rows.map((r) => r.system.length));
@@ -41,7 +41,7 @@ const compute = rows.find((r) => r.system.startsWith('compute'));
 const data = rows.find((r) => r.provider === 'Neon');
 if (compute?.region === null && data?.region) {
 	console.log(
-		`\nThe database is in ${data.region}; svelte.config.js declares the functions for fra1. Only a\n` +
+		`\nThe database is in ${data.region}; vite.config.ts declares the functions for fra1. Only a\n` +
 			'running function can confirm the deployment honours that — read `x-vercel-id` on a\n' +
 			'response (edge::function::id) or run this probe in situ. An accidental region is the\n' +
 			'failure this map is for.\n',

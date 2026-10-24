@@ -7,10 +7,10 @@
  * the old `searchPages` exposed them to everyone).
  */
 
-import type { Locale } from '$lib/i18n';
-import { navItems } from '$lib/nav';
-import * as m from '$lib/paraglide/messages';
-import type { SearchRecord } from '$lib/search/types';
+import type { Locale } from '#lib/i18n/index.ts';
+import { navItems } from '#lib/nav/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type { SearchRecord } from '#lib/search/types.ts';
 import { REDIRECT_HREFS } from './_redirects';
 
 function isPublic(href: string): boolean {

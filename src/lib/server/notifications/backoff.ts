@@ -3,7 +3,7 @@
  *
  * The impure shell is outbox.ts, which anchors the computed delay to the DATABASE
  * clock rather than this process's, so a skewed app server cannot shift the queue.
- * Same pure-core/impure-shell split as $lib/pwa/sw-policy.ts.
+ * Same pure-core/impure-shell split as #lib/pwa/sw-policy.ts.
  */
 import {
 	DELIVERY_MAX_ATTEMPTS,

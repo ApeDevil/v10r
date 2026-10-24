@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { NavTab } from '$lib/components/composites';
-import * as m from '$lib/paraglide/messages';
+import { NavTab } from '#lib/components/composites/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { getShowcaseSublinkLabel, getShowcaseSubTabs } from '../../showcases';
 
 let { children }: { children: Snippet } = $props();

@@ -5,9 +5,9 @@
  */
 
 import { and, eq, isNull } from 'drizzle-orm';
-import type { Locale } from '$lib/i18n/runtime';
-import { post, publishedRevision, revision } from '$lib/server/db/schema/blog';
-import type { Database } from '$lib/server/db/types';
+import type { Locale } from '#lib/i18n/runtime.ts';
+import { post, publishedRevision, revision } from '#lib/server/db/schema/blog/index.ts';
+import type { Database } from '#lib/server/db/types.ts';
 import type { DriftStatus } from './types';
 
 /**

@@ -3,7 +3,7 @@
  * sizing, shared by BOTH the in-app retrieval pipeline and the standalone Bun ingestion
  * scripts (scripts/db/ingest-docs.ts, scripts/db/catalog-sync.ts).
  *
- * It MUST stay dependency-free — no `$lib`, no `$env`, no `import.meta` — because the
+ * It MUST stay dependency-free — no `#lib`, no `$app/env`, no `import.meta` — because the
  * Bun scripts import it by relative path and cannot resolve Vite aliases. The scripts
  * must never re-declare these constants — copies drift. `retrieval/config.ts` re-exports
  * them so retrieval code has a single place to look.

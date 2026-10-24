@@ -3,7 +3,7 @@
  * The showcase teaches request lifecycle by making data flow visible in code.
  */
 
-import type { CycleSpan, CycleStageId, CycleTrace } from '$lib/showcases/cycle/types';
+import type { CycleSpan, CycleStageId, CycleTrace } from '#lib/showcases/cycle/types.ts';
 
 /** Create a new trace for a cycle execution. */
 export function createTrace(trigger: 'form' | 'api' | 'ai'): {

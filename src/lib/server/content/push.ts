@@ -16,21 +16,21 @@ import { readdir, readFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import type { S3Client } from '@aws-sdk/client-s3';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import type { Locale } from '$lib/i18n/runtime';
-import { isLocale } from '$lib/i18n/runtime';
-import { getSystemAuthorId } from '$lib/server/auth/admin-ids';
-import { renderBlogPost } from '$lib/server/blog/pipeline';
-import { contentHash } from '$lib/server/db/content-hash';
-import { createId } from '$lib/server/db/id';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { domain, post, publishedRevision, revision } from '$lib/server/db/schema/blog';
-import type { Database } from '$lib/server/db/types';
+import type { Locale } from '#lib/i18n/runtime.ts';
+import { isLocale } from '#lib/i18n/runtime.ts';
+import { getSystemAuthorId } from '#lib/server/auth/admin-ids.ts';
+import { renderBlogPost } from '#lib/server/blog/pipeline.ts';
+import { contentHash } from '#lib/server/db/content-hash.ts';
+import { createId } from '#lib/server/db/id.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { domain, post, publishedRevision, revision } from '#lib/server/db/schema/blog/index.ts';
+import type { Database } from '#lib/server/db/types.ts';
 import { hasRelativeAssets, uploadReferencedAssets } from './assets';
 import { localeFromFilename, type ParsedContentFile, parseContentFile } from './frontmatter';
 import type { PushAction, PushReport } from './types';
 
 export interface PushOptions {
-	/** Required: drizzle Database instance (CLI passes its own Pool-backed db; routes pass `$lib/server/db`). */
+	/** Required: drizzle Database instance (CLI passes its own Pool-backed db; routes pass `#lib/server/db/index.ts`). */
 	db: Database;
 	/** Optional: S3Client + bucket for relative-path asset uploads. If omitted and any locale references a relative path, push fails for that locale. */
 	r2?: { s3: S3Client; bucket: string };

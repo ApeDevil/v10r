@@ -1,7 +1,7 @@
 /**
  * The admin page's wire contract for a source-connection test — what `/admin/name-check`
  * renders after the Test button, shared by the domain that produces it and the page that
- * shows it. Client-safe: no `$lib/server/` import, like `report.ts`.
+ * shows it. Client-safe: no `#lib/server/` import, like `report.ts`.
  */
 export const NAME_SOURCE_TEST_OUTCOMES = [
 	'ok',

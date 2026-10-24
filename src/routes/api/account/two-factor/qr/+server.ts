@@ -6,10 +6,10 @@
  * QR-rendering service; a user can only ever render a code for themselves.
  */
 import * as v from 'valibot';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiOk, apiValidationError } from '$lib/server/http/response';
-import { qrSvg } from '$lib/server/pairing/qr';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import { qrSvg } from '#lib/server/pairing/qr.ts';
 import type { RequestHandler } from './$types';
 
 const ratelimit = createLimiter('rl:2fa-qr', 10, '1m');

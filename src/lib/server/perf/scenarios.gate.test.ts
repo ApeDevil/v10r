@@ -2,11 +2,11 @@
  * SCENARIO GATE — and the door the committed results are written through.
  *
  * The harness needs the application's module graph: it drives the real cache and
- * resilience modules, and those reach `$env/dynamic/private`, which only Vite resolves.
+ * resilience modules, and those reach `$app/env/private`, which only Vite resolves.
  * That is why the runner is a test rather than a plain Bun script the way
  * `scripts/perf/snapshot.ts` is — `scripts/perf/scenarios.ts` spawns this file with
  * `PERF_WRITE_SCENARIOS=1`. A harness restricted to the modules that happen to avoid
- * `$env` would measure a convenient subset and call it the system.
+ * `$app/env` would measure a convenient subset and call it the system.
  *
  * What is asserted is the deterministic half only: origin calls and the outcome string.
  * Latency is written to the file and never compared — on a shared CI host it measures
@@ -20,8 +20,8 @@ import { committedScenarios, compareScenarios, runScenarios, SCENARIO_IDS, type 
 // No Redis, always. A lab measurement that depends on whether the developer happens to
 // have Upstash credentials in their environment is two different measurements sharing
 // a name — and every mechanism here has a defined in-process path without it.
-vi.mock('$lib/server/cache/client', () => ({ redis: null }));
-vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
+vi.mock('#lib/server/cache/client.ts', () => ({ redis: null }));
+vi.mock('#lib/server/platform/after-response.ts', () => ({ deferAfterResponse: vi.fn() }));
 
 const OUT = join(process.cwd(), 'src', 'lib', 'server', 'perf', 'scenarios.json');
 const WRITING = process.env.PERF_WRITE_SCENARIOS === '1';

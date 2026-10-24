@@ -5,34 +5,34 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const mockGetMarkdown = vi.fn();
 const mockGetSpreadsheet = vi.fn();
 const mockListFileTimestamps = vi.fn();
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	getMarkdownByFileId: mockGetMarkdown,
 	getSpreadsheetByFileId: mockGetSpreadsheet,
 	listFileTimestamps: mockListFileTimestamps,
 }));
 const mockDeleteDocument = vi.fn();
 const mockMarkCurrent = vi.fn();
-vi.mock('$lib/server/db/retrieval/mutations', () => ({
+vi.mock('#lib/server/db/retrieval/mutations.ts', () => ({
 	deleteDocument: mockDeleteDocument,
 	markDocumentCurrent: mockMarkCurrent,
 }));
 const mockGetBySourcePath = vi.fn();
 const mockListOrigins = vi.fn();
-vi.mock('$lib/server/db/retrieval/queries', () => ({
+vi.mock('#lib/server/db/retrieval/queries.ts', () => ({
 	getDocumentBySourcePath: mockGetBySourcePath,
 	listDocumentOrigins: mockListOrigins,
 }));
 const mockRetrieve = vi.fn();
-vi.mock('$lib/server/retrieval', () => ({ retrieve: mockRetrieve }));
+vi.mock('#lib/server/retrieval/index.ts', () => ({ retrieve: mockRetrieve }));
 const mockIngest = vi.fn();
-vi.mock('$lib/server/retrieval/ingest', () => ({ ingestIfChanged: mockIngest }));
+vi.mock('#lib/server/retrieval/ingest/index.ts', () => ({ ingestIfChanged: mockIngest }));
 const mockDefer = vi.fn((_label: string, work: () => Promise<unknown>) => void work());
-vi.mock('$lib/server/platform', () => ({ deferAfterResponse: mockDefer }));
+vi.mock('#lib/server/platform/index.ts', () => ({ deferAfterResponse: mockDefer }));
 
 const {
 	attributeDeskHits,

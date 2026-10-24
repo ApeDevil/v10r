@@ -12,9 +12,9 @@
  * Must never import the Better Auth instance (cycle: auth/index.ts → here).
  */
 import { and, eq, ne } from 'drizzle-orm';
-import { recordAuditEvent } from '$lib/server/admin/audit';
-import { db } from '$lib/server/db';
-import { session } from '$lib/server/db/schema';
+import { recordAuditEvent } from '#lib/server/admin/audit.ts';
+import { db } from '#lib/server/db/index.ts';
+import { session } from '#lib/server/db/schema/index.ts';
 import { stampRevocation } from './revocation';
 import { factorChangeTemplate, sendAuthEmail } from './send-auth-email';
 

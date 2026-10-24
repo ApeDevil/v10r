@@ -1,6 +1,6 @@
 <script lang="ts">
-import { FeedbackBand } from '$lib/components/composites/feedback-band';
-import AppShell from '$lib/components/shell/AppShell.svelte';
+import { FeedbackBand } from '#lib/components/composites/feedback-band/index.ts';
+import AppShell from '#lib/components/shell/AppShell.svelte';
 
 let { children, data } = $props();
 </script>

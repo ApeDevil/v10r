@@ -1,15 +1,15 @@
 /**
  * Showcase registry — the single source of truth for the showcase card tree.
  *
- * Lives in `$lib` (not the route tree) so non-route consumers — notably the
- * search index adapters in `$lib/server/search/` — can read it without a
- * `$lib → routes` back-edge. The showcase routes re-export this plus their
+ * Lives in `#lib` (not the route tree) so non-route consumers — notably the
+ * search index adapters in `#lib/server/search//index.ts` — can read it without a
+ * `#lib → routes` back-edge. The showcase routes re-export this plus their
  * route-only navigation helpers from their own `showcases.ts`.
  *
  * All human-visible copy (titles, descriptions, sublink labels) is stored as
  * Paraglide message-function references (`LabelFn`, the `nav.ts` convention) —
  * consumers call `card.title()` at render time to pick up the current locale.
- * Imports are RELATIVE (not `$lib`) so the module stays resolvable under bare
+ * Imports are RELATIVE (not `#lib`) so the module stays resolvable under bare
  * Bun scripts (`catalog-projection.ts` → `scripts/db/catalog-sync.ts`), where
  * Paraglide falls back to the base locale (English).
  */

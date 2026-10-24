@@ -29,8 +29,16 @@
  * this file does not pretend the uncovered rows are green.
  */
 
-import { cacheKey, clearLocalCache, coalesce, definePolicy, readTiered, redis, writeTiered } from '$lib/server/cache';
-import { DeadlineExceededError, startDeadline } from '$lib/server/http/deadline';
+import {
+	cacheKey,
+	clearLocalCache,
+	coalesce,
+	definePolicy,
+	readTiered,
+	redis,
+	writeTiered,
+} from '#lib/server/cache/index.ts';
+import { DeadlineExceededError, startDeadline } from '#lib/server/http/deadline.ts';
 import {
 	DEFAULT_NEEDS_MS,
 	DEFAULT_SHED_ABOVE,
@@ -39,7 +47,7 @@ import {
 	defineShedder,
 	ResilienceError,
 	retryWithin,
-} from '$lib/server/resilience';
+} from '#lib/server/resilience/index.ts';
 import raw from './scenarios.json';
 
 export const SCENARIO_IDS = [

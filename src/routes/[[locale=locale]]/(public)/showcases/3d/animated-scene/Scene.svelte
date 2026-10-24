@@ -2,7 +2,7 @@
 import { T, useTask } from '@threlte/core';
 import { OrbitControls, useGltf } from '@threlte/extras';
 import { type AnimationClip, AnimationMixer, type Group } from 'three';
-import { THRELTE_MAKE_DEFAULT } from '$lib/utils/threlte-workarounds';
+import { THRELTE_MAKE_DEFAULT } from '#lib/utils/threlte-workarounds.ts';
 
 let { currentAnimation }: { currentAnimation: string } = $props();
 

@@ -65,7 +65,7 @@ dispatcher. Each panel's *About* dialog shows the same chords, derived from the 
 (rename) and `M` (move to…) — are declared on their context-menu items
 (`context-menu-items.ts`) and shown beside them on the pointer projection; the tree's
 keydown reads the declaration (`treeKeyOf`). The View toggles' chords are declared on the
-activity-bar items (`$lib/desk/panels.ts`) — the bar tooltip and the View row read the same
+activity-bar items (`#lib/desk/panels.ts`) — the bar tooltip and the View row read the same
 field. Desk chords fire from inside the editor's textarea too (the matcher has no
 "not while editing" guard; every chord is a modifier chord and the array is per focused
 panel), which is why no panel may declare a chord the browser owns in a text field. On the
@@ -165,7 +165,7 @@ export function getShortcutsByCategory(): Record<string, Shortcut[]> {
 
 ```typescript
 // src/lib/shortcuts/keyboard.ts
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 let sequenceBuffer: string[] = [];
 let sequenceTimeout: ReturnType<typeof setTimeout>;
@@ -273,9 +273,9 @@ function normalizeKey(event: KeyboardEvent): string {
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { initKeyboardHandler, registerShortcut } from '$lib/shortcuts';
-  import { ShortcutsModal } from '$lib/components/shell';
-  import { getModals } from '$lib/state/modals.svelte';
+  import { initKeyboardHandler, registerShortcut } from '#lib/shortcuts/index.ts';
+  import { ShortcutsModal } from '#lib/components/shell/index.ts';
+  import { getModals } from '#lib/state/modals.svelte.ts';
 
   const modals = getModals();
 
@@ -343,7 +343,7 @@ function normalizeKey(event: KeyboardEvent): string {
 <!-- src/lib/components/shell/ShortcutsDialog.svelte -->
 <script lang="ts">
   import { Dialog } from 'bits-ui';
-  import { getShortcutsByCategory } from '$lib/shortcuts';
+  import { getShortcutsByCategory } from '#lib/shortcuts/index.ts';
 
   let { open = $bindable(false) } = $props();
 
@@ -450,7 +450,7 @@ Display platform-appropriate symbols:
 
 ```typescript
 // src/lib/shortcuts/platform.ts
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 export function isMac(): boolean {
   if (!browser) return false;

@@ -2,8 +2,12 @@ import { error, fail } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
-import { cancelMyPendingRequest, createGrantRequest, GrantRequestPendingError } from '$lib/server/auth/grant-requests';
-import { requireAuth } from '$lib/server/http/guards';
+import {
+	cancelMyPendingRequest,
+	createGrantRequest,
+	GrantRequestPendingError,
+} from '#lib/server/auth/grant-requests.ts';
+import { requireAuth } from '#lib/server/http/guards.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = () => ({ title: 'Desk' });

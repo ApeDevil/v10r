@@ -22,8 +22,8 @@
  * space, which is why the containment CASE checks relay before datacenter.
  */
 
-import { isValidPrefix } from '$lib/server/db/analytics/inet';
-import type { DcRangeSource } from '$lib/server/db/schema/analytics/dc-ranges';
+import { isValidPrefix } from '#lib/server/db/analytics/inet.ts';
+import type { DcRangeSource } from '#lib/server/db/schema/analytics/dc-ranges.ts';
 import { parsePrefixes } from './bot-ranges';
 
 export interface DatacenterRangeFeed {

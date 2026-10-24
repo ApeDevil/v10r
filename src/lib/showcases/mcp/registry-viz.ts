@@ -12,8 +12,8 @@
  * re-validated here.
  */
 
-import type { DagData } from '$lib/components/viz/graph';
-import type { Registry } from '$patterns/schema';
+import type { DagData } from '#lib/components/viz/graph/index.ts';
+import type { Registry } from '#patterns/schema.ts';
 
 export interface RegistryStats {
 	patternCount: number;

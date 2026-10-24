@@ -1,6 +1,6 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
-import * as m from '$lib/paraglide/messages';
+import { NavSection } from '#lib/components/composites/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import CipherSection from './_sections/CipherSection.svelte';
 import GatewaySection from './_sections/GatewaySection.svelte';
 import InsigniaSection from './_sections/InsigniaSection.svelte';

@@ -1,5 +1,5 @@
-import { requireAdmin } from '$lib/server/http/guards';
-import { getDemoState } from '$lib/server/mcp/demo/state';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { getDemoState } from '#lib/server/mcp/demo/state.ts';
 import type { PageServerLoad } from './$types';
 
 /**

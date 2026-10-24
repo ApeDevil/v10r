@@ -7,8 +7,8 @@ import {
 	Header as TableHeader,
 	HeaderCell as TableHeaderCell,
 	Row as TableRow,
-} from '$lib/components';
-import { Input, Select } from '$lib/components/primitives';
+} from '#lib/components/index.ts';
+import { Input, Select } from '#lib/components/primitives/index.ts';
 import { DEPARTMENTS, type Department, EMPLOYEES, type Status } from '../_data/mock-data';
 
 let search = $state('');

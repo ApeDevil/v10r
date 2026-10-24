@@ -1,8 +1,8 @@
 <script lang="ts">
+import { BlogTag } from '#lib/components/blog/index.ts';
+import { formatDate } from '#lib/i18n/index.ts';
+import type { PostListItem } from '#lib/server/blog/types.ts';
 import { page } from '$app/state';
-import { BlogTag } from '$lib/components/blog';
-import { formatDate } from '$lib/i18n';
-import type { PostListItem } from '$lib/server/blog/types';
 
 interface Props {
 	post: PostListItem;

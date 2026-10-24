@@ -43,7 +43,7 @@ Compiler-based internationalization for SvelteKit. Compiles message files into t
 - Output dir is watched by chokidar separately. Without `server.watch.ignored: ['**/src/lib/paraglide/**']` in `vite.config.ts`, paraglide's own re-emits trigger spurious `(ssr) page reload` events ~5 s after ready
 
 **New message key — dev restart ritual:**
-- Adding a NEW key 500s the running dev server (`<key> is not a function`): Vite's SSR module graph misses the `export *` barrel addition in `$lib/paraglide/messages`.
+- Adding a NEW key 500s the running dev server (`<key> is not a function`): Vite's SSR module graph misses the `export *` barrel addition in `#lib/paraglide/messages.js`.
 - Fix: restart `vite dev` (a `podman restart` may need a `podman start` recovery), then warm the route via curl.
 - Editing an existing key's text does not trigger this — only new keys.
 

@@ -9,15 +9,15 @@ import { join } from 'node:path';
 import type { PGlite } from '@electric-sql/pglite';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeConversation, makeUser } from '$lib/server/test/fixtures';
+import { makeConversation, makeUser } from '#lib/server/test/fixtures.ts';
 import { conversation, message } from '../schema/ai/conversation';
 import { agentProposal } from '../schema/ai/proposal';
 import { user } from '../schema/auth/_better-auth';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -37,7 +37,7 @@ const {
 	recordProposalStep,
 	rejectProposal,
 } = await import('./proposals');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 const USER_A = makeUser({ id: 'prop-user-a' });
 let conversationId: string;

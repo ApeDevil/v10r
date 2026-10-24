@@ -19,8 +19,8 @@
  * DELETE on the same URL rejects a still-pending proposal.
  */
 
-import { executeProposal } from '$lib/server/ai/proposals/execute-proposal';
-import { proposalOutcome } from '$lib/server/ai/proposals/proposal-outcome';
+import { executeProposal } from '#lib/server/ai/proposals/execute-proposal.ts';
+import { proposalOutcome } from '#lib/server/ai/proposals/proposal-outcome.ts';
 import {
 	approveProposal,
 	getProposal,
@@ -29,12 +29,12 @@ import {
 	markExpiredIfPending,
 	markInterruptedIfStale,
 	rejectProposal,
-} from '$lib/server/db/ai/proposals';
-import { getConversation } from '$lib/server/db/ai/queries';
-import { classifyDbError, safeDbMessage } from '$lib/server/db/errors';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
+} from '#lib/server/db/ai/proposals.ts';
+import { getConversation } from '#lib/server/db/ai/queries.ts';
+import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 // The run's ceiling, declared here rather than inherited from the project's default: a

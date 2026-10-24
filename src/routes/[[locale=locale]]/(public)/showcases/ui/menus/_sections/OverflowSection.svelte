@@ -1,5 +1,5 @@
 <script lang="ts">
-import { DropdownMenu } from '$lib/components';
+import { DropdownMenu } from '#lib/components/index.ts';
 import { DemoCard } from '../../components/_components';
 
 function noop() {}

@@ -1,9 +1,9 @@
-import { listDocuments } from '$lib/server/db/retrieval/queries';
-import { READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW } from '$lib/server/http/config';
-import { guardApiUser } from '$lib/server/http/guards';
-import { apiPaginated, parsePagination } from '$lib/server/http/pagination';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError } from '$lib/server/http/response';
+import { listDocuments } from '#lib/server/db/retrieval/queries.ts';
+import { READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW } from '#lib/server/http/config.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { apiPaginated, parsePagination } from '#lib/server/http/pagination.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:retrieval:documents', READ_RATE_LIMIT_MAX, READ_RATE_LIMIT_WINDOW);

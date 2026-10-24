@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PATTERNS } from '$lib/server/patterns';
+import { PATTERNS } from '#lib/server/patterns/index.ts';
 import { PATTERN_TOOLS, publicPatternRegistry } from './tools';
 
 function textOf(result: { content: { text: string }[] }): string {

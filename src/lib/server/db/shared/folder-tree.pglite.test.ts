@@ -18,10 +18,10 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { type SQL, sql } from 'drizzle-orm';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { rowsOf } from '$lib/server/db/rows';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { assetFolder } from '$lib/server/db/schema/blog/asset-folder';
-import { postFolder } from '$lib/server/db/schema/blog/post-folder';
+import { rowsOf } from '#lib/server/db/rows.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { assetFolder } from '#lib/server/db/schema/blog/asset-folder.ts';
+import { postFolder } from '#lib/server/db/schema/blog/post-folder.ts';
 import {
 	assertOwnedDestination,
 	collectSubtreeIds,
@@ -32,14 +32,14 @@ import {
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 afterAll(async () => {
 	await testClient?.close();

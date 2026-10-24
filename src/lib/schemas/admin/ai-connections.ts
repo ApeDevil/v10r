@@ -6,7 +6,7 @@
  * action's failure payload.
  */
 import * as v from 'valibot';
-import { AI_PROVIDER_IDS } from '$lib/types/db-enums';
+import { AI_PROVIDER_IDS } from '#lib/types/db-enums.ts';
 
 const MODEL_ID_MAX = 120;
 const API_KEY_MAX = 512;

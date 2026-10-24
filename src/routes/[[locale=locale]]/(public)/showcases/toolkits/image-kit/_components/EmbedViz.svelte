@@ -9,11 +9,12 @@
  * Not localized: every user-facing string below is a literal or a humanized
  * enum key. The whole file still needs an i18n pass — no per-string markers.
  */
-import { browser } from '$app/environment';
-import { Alert } from '$lib/components/composites';
-import { Badge, Button, Spinner, Switch } from '$lib/components/primitives';
-import { colorChannels, type Rgb } from '$lib/components/viz/_shared/theme-bridge';
-import type { EmbedOk } from '$lib/schemas/showcase/image-kit';
+
+import { Alert } from '#lib/components/composites/index.ts';
+import { Badge, Button, Spinner, Switch } from '#lib/components/primitives/index.ts';
+import { colorChannels, type Rgb } from '#lib/components/viz/_shared/theme-bridge.ts';
+import type { EmbedOk } from '#lib/schemas/showcase/image-kit.ts';
+import { browser } from '$app/env';
 
 interface Props {
 	embed: EmbedOk | null;

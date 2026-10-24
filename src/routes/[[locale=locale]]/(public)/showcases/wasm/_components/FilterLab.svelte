@@ -9,11 +9,11 @@
  * did identical work.
  */
 import { onMount } from 'svelte';
-import { Button, Slider, ToggleGroup } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { type BenchStats, formatMs, stageStats } from '$lib/wasm/bench';
-import { makeTestImage } from '$lib/wasm/filters';
-import type { BenchFilter, BenchRequest, BenchResponse } from '$lib/wasm/kernel-bench.worker';
+import { Button, Slider, ToggleGroup } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { type BenchStats, formatMs, stageStats } from '#lib/wasm/bench.ts';
+import { makeTestImage } from '#lib/wasm/filters.ts';
+import type { BenchFilter, BenchRequest, BenchResponse } from '#lib/wasm/kernel-bench.worker.ts';
 
 const WIDTH = 384;
 const HEIGHT = 384;
@@ -96,7 +96,7 @@ async function getWorker(): Promise<Worker> {
 	// never touched during SSR. One worker for the component lifetime — spawning
 	// per run would charge every run the module boot cost.
 	if (!worker) {
-		const { default: BenchWorker } = await import('$lib/wasm/kernel-bench.worker?worker');
+		const { default: BenchWorker } = await import('#lib/wasm/kernel-bench.worker.ts?worker');
 		worker = new BenchWorker();
 	}
 	return worker;

@@ -8,8 +8,8 @@
  * Only the fields the retriever filled are written: a tier the kernel has not taught
  * yet (parent-child, graph) leaves them absent, which the inspector reads as "not recorded".
  */
-import type { RankedChunk } from '$lib/server/retrieval';
-import type { GroundingItem } from '$lib/types/turn-trace';
+import type { RankedChunk } from '#lib/server/retrieval/index.ts';
+import type { GroundingItem } from '#lib/types/turn-trace.ts';
 
 export type ChunkPlace = Pick<GroundingItem, 'parentId' | 'level' | 'position' | 'contentHash' | 'retriever' | 'path'>;
 

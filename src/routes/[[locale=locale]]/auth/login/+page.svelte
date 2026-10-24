@@ -1,15 +1,15 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { MediaQuery } from 'svelte/reactivity';
-import { browser } from '$app/environment';
-import { goto, invalidateAll } from '$app/navigation';
-import { authClient } from '$lib/auth-client';
-import { Altcha } from '$lib/components/composites';
-import { Badge, Button, Input, Spinner } from '$lib/components/primitives';
-import { authErrorMessage, errorMessage } from '$lib/errors';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { clearAuthPendingMarker, setAuthPendingMarker } from '$lib/pwa/session-refresh';
+import { authClient } from '#lib/auth-client.ts';
+import { Altcha } from '#lib/components/composites/index.ts';
+import { Badge, Button, Input, Spinner } from '#lib/components/primitives/index.ts';
+import { authErrorMessage, errorMessage } from '#lib/errors/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { clearAuthPendingMarker, setAuthPendingMarker } from '#lib/pwa/session-refresh.ts';
+import { browser } from '$app/env';
+import { goto, refreshAll } from '$app/navigation';
 
 let { data } = $props();
 
@@ -213,7 +213,7 @@ async function handlePasskey() {
 			rememberMethod('passkey');
 			// Refresh the shared root-layout `session` (it is reused across a
 			// client-side nav, so the shell would otherwise stay logged-out).
-			await invalidateAll();
+			await refreshAll();
 			goto(localizeHref(data.returnTo));
 			return;
 		}
@@ -260,7 +260,7 @@ onMount(() => {
 			.then(async (result) => {
 				if (result && !result.error) {
 					rememberMethod('passkey');
-					await invalidateAll();
+					await refreshAll();
 					goto(localizeHref(data.returnTo));
 				}
 			})

@@ -11,13 +11,13 @@
  *
  * Deliberately absent: the anonymous pre-signup analytics trail. Linking the
  * hashed visitorId to an identified user is re-identification without a
- * documented Art 6(4) basis — see $lib/server/privacy/report.ts.
+ * documented Art 6(4) basis — see #lib/server/privacy/report.ts.
  */
-import { cookieName as PARAGLIDE_LOCALE_COOKIE } from '$lib/i18n';
-import { CONSENT_COOKIE } from '$lib/server/analytics/config';
-import { parseConsentTier } from '$lib/server/analytics/consent';
-import { requireAuth } from '$lib/server/http/guards';
-import { collectUserData } from '$lib/server/privacy';
+import { cookieName as PARAGLIDE_LOCALE_COOKIE } from '#lib/i18n/index.ts';
+import { CONSENT_COOKIE } from '#lib/server/analytics/config.ts';
+import { parseConsentTier } from '#lib/server/analytics/consent.ts';
+import { requireAuth } from '#lib/server/http/guards.ts';
+import { collectUserData } from '#lib/server/privacy/index.ts';
 import type { PageServerLoad } from './$types';
 
 /** Cookie values safe to echo back. Everything else: presence only (session tokens!). */

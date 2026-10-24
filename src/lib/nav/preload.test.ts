@@ -3,6 +3,9 @@ import { preloadCode, preloadData } from '$app/navigation';
 import { type PreloadIntent, preloadAttributes, preloadNow, preloadOnIdle } from './preload';
 
 vi.mock('$app/navigation', () => ({ preloadCode: vi.fn(), preloadData: vi.fn() }));
+vi.mock('$app/paths', () => ({
+	match: vi.fn(async (href: string) => (href === '/nowhere' ? null : { id: `/[[locale=locale]]${href}`, params: {} })),
+}));
 
 const code = vi.mocked(preloadCode);
 const data = vi.mocked(preloadData);
@@ -27,15 +30,15 @@ describe('preloadAttributes', () => {
 
 	it('turns everything off for `none`', () => {
 		expect(preloadAttributes('none')).toEqual({
-			'data-sveltekit-preload-data': 'off',
-			'data-sveltekit-preload-code': 'off',
+			'data-sveltekit-preload-data': 'false',
+			'data-sveltekit-preload-code': 'false',
 		});
 	});
 
 	it('warms code without touching the server for `code`', () => {
 		const attrs = preloadAttributes('code');
 		expect(attrs['data-sveltekit-preload-code']).toBe('viewport');
-		expect(attrs['data-sveltekit-preload-data']).toBe('off');
+		expect(attrs['data-sveltekit-preload-data']).toBe('false');
 	});
 });
 
@@ -53,13 +56,18 @@ describe('preloadNow', () => {
 
 	it('loads only the chunk for `code`', async () => {
 		await preloadNow('/x', 'code');
-		expect(code).toHaveBeenCalledWith('/x');
+		expect(code).toHaveBeenCalledWith('/[[locale=locale]]/x');
 		expect(data).not.toHaveBeenCalled();
 	});
 
 	it('loads data (which brings the code with it) for `code-data`', async () => {
 		await preloadNow('/x', 'code-data');
 		expect(data).toHaveBeenCalledWith('/x');
+		expect(code).not.toHaveBeenCalled();
+	});
+
+	it('preloads no code for an href that names no route', async () => {
+		await preloadNow('/nowhere', 'code');
 		expect(code).not.toHaveBeenCalled();
 	});
 
@@ -111,7 +119,7 @@ describe('preloadOnIdle', () => {
 		expect(code).not.toHaveBeenCalled();
 		await vi.advanceTimersByTimeAsync(1);
 
-		expect(code).toHaveBeenCalledWith('/x');
+		expect(code).toHaveBeenCalledWith('/[[locale=locale]]/x');
 		vi.useRealTimers();
 	});
 
@@ -124,7 +132,7 @@ describe('preloadOnIdle', () => {
 		await vi.advanceTimersByTimeAsync(1500);
 
 		// Late rather than never — the right failure for work nobody waits on.
-		expect(code).toHaveBeenCalledWith('/x');
+		expect(code).toHaveBeenCalledWith('/[[locale=locale]]/x');
 		vi.useRealTimers();
 	});
 

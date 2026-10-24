@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
-import { ScrollArea } from '$lib/components/primitives/scroll-area';
-import * as m from '$lib/paraglide/messages';
-import { cn } from '$lib/utils/cn';
+import { Button } from '#lib/components/primitives/index.ts';
+import { ScrollArea } from '#lib/components/primitives/scroll-area/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	/** Pre-highlighted HTML from Shiki */

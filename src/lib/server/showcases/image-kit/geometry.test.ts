@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { largestRatioRect } from '$lib/schemas/showcase/image-kit';
+import { largestRatioRect } from '#lib/schemas/showcase/image-kit.ts';
 import { snapToAspect } from './geometry';
 
 describe('largestRatioRect', () => {

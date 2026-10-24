@@ -12,7 +12,7 @@
  * Each entry carries `verifiedOn` + `sourceUrl` + confidence, mirroring provider-limits.ts.
  */
 
-import type { CostEstimate } from '$lib/schemas/image-metadata';
+import type { CostEstimate } from '#lib/schemas/image-metadata.ts';
 
 export type PriceConfidence = 'documented' | 'estimated' | 'unknown';
 

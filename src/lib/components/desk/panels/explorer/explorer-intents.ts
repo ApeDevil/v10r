@@ -8,7 +8,7 @@
  * capture-and-restore it replaces ("remember the parent before the move, put it back on
  * failure") discarded a later confirmed move whenever an earlier one failed after it.
  * The pattern and its reasoning: `docs/blueprint/velocity/interaction.md`, "Optimistic
- * mutation"; the generic single-value form is `$lib/state/optimistic.svelte.ts`.
+ * mutation"; the generic single-value form is `#lib/state/optimistic.svelte.ts`.
  *
  * Two rules the generic form does not have, because a tree of independently-moved nodes
  * needs them:

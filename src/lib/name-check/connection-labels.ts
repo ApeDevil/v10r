@@ -5,9 +5,9 @@
  * the client-JS ratchet has no room for a dictionary the page never needs. `load` returns
  * the maps; the actions return their own sentences; the page renders strings.
  */
-import * as m from '$lib/paraglide/messages';
-import type { KeyStatus } from '$lib/server/security';
-import type { NameSourceVendor } from '$lib/types/db-enums';
+import * as m from '#lib/paraglide/messages.js';
+import type { KeyStatus } from '#lib/server/security/index.ts';
+import type { NameSourceVendor } from '#lib/types/db-enums.ts';
 import type { NameSourceTestOutcome } from './connection';
 
 export const NAME_SOURCE_CONNECTION_COPY_KEYS = [

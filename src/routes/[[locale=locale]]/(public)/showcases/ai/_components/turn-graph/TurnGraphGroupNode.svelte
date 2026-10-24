@@ -1,8 +1,8 @@
 <script lang="ts">
 import { Handle, type Node, type NodeProps, Position } from '@xyflow/svelte';
-import * as m from '$lib/paraglide/messages';
-import type { TurnGraphNode } from '$lib/showcases/ai/turn-graph';
-import { GROUP_HEADER } from '$lib/showcases/ai/turn-graph-layout';
+import * as m from '#lib/paraglide/messages.js';
+import type { TurnGraphNode } from '#lib/showcases/ai/turn-graph.ts';
+import { GROUP_HEADER } from '#lib/showcases/ai/turn-graph-layout.ts';
 import TurnGraphCard from './TurnGraphCard.svelte';
 
 // A node with visible members: a bordered box, tinted deeper with each nesting level, whose

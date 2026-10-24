@@ -1,13 +1,13 @@
 <script lang="ts">
 import { Dialog } from 'bits-ui';
 import type { Snippet } from 'svelte';
-import { Button } from '$lib/components/primitives';
-import { ScrollArea } from '$lib/components/primitives/scroll-area';
-import { Tabs } from '$lib/components/primitives/tabs';
-import * as m from '$lib/paraglide/messages';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
-import { renderMarkdown } from '$lib/utils/markdown';
+import { Button } from '#lib/components/primitives/index.ts';
+import { ScrollArea } from '#lib/components/primitives/scroll-area/index.ts';
+import { Tabs } from '#lib/components/primitives/tabs/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
+import { renderMarkdown } from '#lib/utils/markdown.ts';
 import CodeBlock from './CodeBlock.svelte';
 import PropsTable from './PropsTable.svelte';
 import type { ComponentDoc } from './types';

@@ -8,9 +8,9 @@
  * admin/app/auth routes simply aren't in the index. See `docs/blueprint/ai/site-awareness.md`.
  */
 
-import type { Locale } from '$lib/i18n';
-import { normalizeRouteId } from '$lib/search/route-id';
-import type { SearchRecord } from '$lib/search/types';
+import type { Locale } from '#lib/i18n/index.ts';
+import { normalizeRouteId } from '#lib/search/route-id.ts';
+import type { SearchRecord } from '#lib/search/types.ts';
 import { buildSearchIndex } from './query';
 
 export interface PageContext {

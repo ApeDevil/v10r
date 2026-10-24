@@ -221,8 +221,8 @@ Extract:
 ```typescript
 // src/lib/server/graph/ingestion.ts
 import { embed } from 'ai';
-import { providers } from '$lib/server/ai/providers';
-import { extractEntities } from '$lib/server/ai/entity-extraction';
+import { providers } from '#lib/server/ai/providers.ts';
+import { extractEntities } from '#lib/server/ai/entity-extraction.ts';
 import { getSession } from './index';
 import { nanoid } from 'nanoid';
 
@@ -335,9 +335,9 @@ function chunkDocument(content: string, maxChars = 1000): string[] {
 ```typescript
 // src/lib/server/graph/retrieval.ts
 import { embed } from 'ai';
-import { providers } from '$lib/server/ai/providers';
+import { providers } from '#lib/server/ai/providers.ts';
 import { getSession } from './index';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import { sql } from 'drizzle-orm';
 
 interface RetrievalResult {
@@ -490,19 +490,18 @@ async function extractQueryEntities(query: string): Promise<string[]> {
 ### 5. RAG Endpoint with Graph Context
 
 ```typescript
-// Illustrative — the live orchestrator lives in $lib/server/ai/chat-orchestrator.ts,
+// Illustrative — the live orchestrator lives in #lib/server/ai/chat-orchestrator.ts,
 // reached via the per-surface routes (e.g. src/routes/api/ai/chatbot/+server.ts).
-import { json } from '@sveltejs/kit';
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 import { encode } from '@toon-format/toon';
-import { providers } from '$lib/server/ai/providers';
-import { aiConfig } from '$lib/server/ai/config';
-import { hybridRetrieve } from '$lib/server/graph/retrieval';
+import { providers } from '#lib/server/ai/providers.ts';
+import { aiConfig } from '#lib/server/ai/config.ts';
+import { hybridRetrieve } from '#lib/server/graph/retrieval.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
   if (!locals.user) {
-    return json({ error: 'Unauthorized' }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -553,7 +552,7 @@ When answering:
     return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error('Chat API error:', error);
-    return json({ error: 'Failed to process chat request' }, { status: 500 });
+    return Response.json({ error: 'Failed to process chat request' }, { status: 500 });
   }
 };
 ```
@@ -567,7 +566,7 @@ Connect mentions in documents to canonical entities:
 ```typescript
 // src/lib/server/graph/entity-linking.ts
 import { generateObject } from 'ai';
-import { providers } from '$lib/server/ai/providers';
+import { providers } from '#lib/server/ai/providers.ts';
 import { getSession } from './index';
 import * as v from 'valibot';
 
@@ -634,7 +633,7 @@ For global search, build community summaries:
 ```typescript
 // src/lib/server/graph/communities.ts
 import { generateText } from 'ai';
-import { providers } from '$lib/server/ai/providers';
+import { providers } from '#lib/server/ai/providers.ts';
 import { getSession } from './index';
 
 export async function buildCommunitySummaries() {

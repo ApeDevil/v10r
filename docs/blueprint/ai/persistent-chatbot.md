@@ -137,7 +137,7 @@ never writes it and never branches on it**:
 1. Module top-level declares only inert primitives (`phase = 'closed'`, `chat = null`).
    **No `@ai-sdk/svelte` import at top level.**
 2. `@ai-sdk/svelte` + `ai` are pulled **only** via `await import()` inside
-   `ensureChat()`, whose first line is `if (!browser) return` (`$app/environment`) — a
+   `ensureChat()`, whose first line is `if (!browser) return` (`$app/env`) — a
    dynamic import behind a browser gate never enters the SSR module graph.
 3. Every mutator is browser-gated (server no-op). The view that reads `session.chat`
    is client-dynamic-imported. `SidebarTriggers` *does* SSR but reads only the inert
@@ -207,7 +207,7 @@ avoids covering sticky bottom-right CTAs):
 pb-[max(env(safe-area-inset-bottom),12px)]`. (`inset-x-2` fixes a real pre-existing
 −12px horizontal-overflow bug; `svh` replaces a raw `vh` that slid under the iOS URL
 bar.) Dock-as-column does not apply on mobile. The sheet registers as a
-`chatbot-sheet` dismissal layer in `$lib/state/layer-stack.svelte.ts`, so Escape
+`chatbot-sheet` dismissal layer in `#lib/state/layer-stack.svelte.ts`, so Escape
 peels anything stacked above it (e.g. the ⌘K palette) before minimizing; the
 desktop dock never registers.
 

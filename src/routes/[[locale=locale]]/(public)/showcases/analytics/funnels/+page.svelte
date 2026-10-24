@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Alert } from '$lib/components/composites';
-import * as m from '$lib/paraglide/messages';
+import { Alert } from '#lib/components/composites/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import ChartSection from '../_components/ChartSection.svelte';
 import DateRangePresets from '../_components/DateRangePresets.svelte';
 import FunnelChart from '../_components/FunnelChart.svelte';

@@ -11,9 +11,9 @@
  * "Configured" is decided here, once: enabled, the secret opened, and for EUIPO a client
  * id beside it. A source's `configured?` predicate then only asks whether its slot is null.
  */
-import type { NameSourceConnectionRow } from '$lib/server/db/schema/name-check/source-connection';
-import { type EncryptionKeyRing, type KeyStatus, openSecret } from '$lib/server/security';
-import { NAME_SOURCE_VENDORS, type NameSourceVendor } from '$lib/types/db-enums';
+import type { NameSourceConnectionRow } from '#lib/server/db/schema/name-check/source-connection.ts';
+import { type EncryptionKeyRing, type KeyStatus, openSecret } from '#lib/server/security/index.ts';
+import { NAME_SOURCE_VENDORS, type NameSourceVendor } from '#lib/types/db-enums.ts';
 import type { NameSourceCredentials } from './name-source';
 import { EUIPO_DEFAULT_API_BASE, EUIPO_DEFAULT_TOKEN_URL } from './sources/euipo';
 

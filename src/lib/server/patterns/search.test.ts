@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PATTERNS } from '$lib/server/patterns';
-import devQueries from '$patterns/bench/dev-queries.json';
-import holdoutQueries from '$patterns/bench/holdout-queries.json';
-import holdout2Queries from '$patterns/bench/holdout2-queries.json';
-import { scorePatterns, tokenizePatternQuery } from '$patterns/search';
+import { PATTERNS } from '#lib/server/patterns/index.ts';
+import devQueries from '#patterns/bench/dev-queries.json';
+import holdoutQueries from '#patterns/bench/holdout-queries.json';
+import holdout2Queries from '#patterns/bench/holdout2-queries.json';
+import { scorePatterns, tokenizePatternQuery } from '#patterns/search.ts';
 
 /**
  * Scoring is purely lexical — no embeddings, only crude suffix folding, no synonym table — so a
@@ -149,8 +149,8 @@ describe('relevance floors', () => {
  */
 describe('plan precision', () => {
 	it('builds every dev plan from exactly its required patterns', async () => {
-		const { recommendPlan } = await import('$patterns/query');
-		const { REGISTRY } = await import('$lib/server/patterns');
+		const { recommendPlan } = await import('#patterns/query.ts');
+		const { REGISTRY } = await import('#lib/server/patterns/index.ts');
 		for (const plan of devQueries.plans) {
 			const outcome = recommendPlan(REGISTRY, { capabilities: plan.capabilities });
 			const steps = [...outcome.text.matchAll(/^### Step \d+: .*\(`([a-z0-9-]+)`\)/gm)].map((match) => match[1]);

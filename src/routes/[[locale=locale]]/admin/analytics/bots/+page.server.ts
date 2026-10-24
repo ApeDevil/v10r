@@ -1,13 +1,13 @@
-import { parseAnalyticsRange } from '$lib/server/admin';
-import { flushBotHits } from '$lib/server/analytics';
+import { parseAnalyticsRange } from '#lib/server/admin/index.ts';
+import { flushBotHits } from '#lib/server/analytics/index.ts';
 import {
 	getAgentSurfaceHits,
 	getBotFamilies,
 	getBotMisses,
 	getBotRangeStatus,
-} from '$lib/server/db/analytics/bot-queries';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
+} from '#lib/server/db/analytics/bot-queries.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals }) => {

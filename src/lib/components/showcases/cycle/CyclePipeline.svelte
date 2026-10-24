@@ -4,8 +4,8 @@
   stages when an upstream stage errors.
 -->
 <script lang="ts">
-import type { CycleStageId, CycleStageState } from '$lib/showcases/cycle/types';
-import { STAGE_COLORS } from '$lib/showcases/cycle/types';
+import type { CycleStageId, CycleStageState } from '#lib/showcases/cycle/types.ts';
+import { STAGE_COLORS } from '#lib/showcases/cycle/types.ts';
 
 interface Props {
 	stages: CycleStageState[];

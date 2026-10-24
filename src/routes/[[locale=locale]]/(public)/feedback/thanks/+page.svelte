@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Card } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Card } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 </script>
 <div class="thanks-page">
 	<Card>

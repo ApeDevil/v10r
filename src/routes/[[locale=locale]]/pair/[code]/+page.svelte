@@ -1,7 +1,7 @@
 <script lang="ts">
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { enhance } from '$app/forms';
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
 import type { ActionData, PageData } from './$types';
 
 let { data, form }: { data: PageData; form: ActionData } = $props();

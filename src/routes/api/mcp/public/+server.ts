@@ -6,13 +6,13 @@
  * tool name submitted here is rejected by the transport's allowlist. IP-rate-limited.
  * GET → 405 (SSE is not supported); all interaction is POST.
  */
-import { normalizeIpKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { mcpMethodNotAllowed, respondToMcpPost } from '$lib/server/mcp/http.adapter';
-import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '$lib/server/mcp/patterns/tools';
-import { publicBuildInfo } from '$lib/server/mcp/server-info';
-import { createMcpObserver } from '$lib/server/mcp/telemetry/observer';
-import type { McpServerIdentity } from '$lib/server/mcp/transport';
+import { normalizeIpKey } from '#lib/server/abuse/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { mcpMethodNotAllowed, respondToMcpPost } from '#lib/server/mcp/http.adapter.ts';
+import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '#lib/server/mcp/patterns/tools.ts';
+import { publicBuildInfo } from '#lib/server/mcp/server-info.ts';
+import { createMcpObserver } from '#lib/server/mcp/telemetry/observer.ts';
+import type { McpServerIdentity } from '#lib/server/mcp/transport.ts';
 import type { RequestHandler } from './$types';
 
 /**

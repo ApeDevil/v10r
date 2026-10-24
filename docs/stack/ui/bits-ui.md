@@ -1,6 +1,6 @@
 # Bits UI
 
-Headless, unstyled, accessible Svelte primitives. The project wraps these into the layered component system in `$lib/components/` (primitives, composites, etc.) — see CLAUDE.md (*Component-first*) and [components.md](../../blueprint/design/components.md).
+Headless, unstyled, accessible Svelte primitives. The project wraps these into the layered component system in `#lib/components/` (primitives, composites, etc.) — see CLAUDE.md (*Component-first*) and [components.md](../../blueprint/design/components.md).
 
 ## Why was it chosen?
 

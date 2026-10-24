@@ -78,15 +78,15 @@ admin/db routes ──▶ dbops/ (orchestrate) ──▶ neon/ (Neon Management 
                   dbops.run (Postgres ledger)
 ```
 
-### `$lib/server/neon/`
+### `#lib/server/neon/`
 
 The Management-API client. **Sole holder** of `NEON_API_KEY` / `NEON_PROJECT_ID`. Never returns connection strings in any payload.
 
 `listBranches`, `getBranch`, `restoreBranchFromParent`, `getOperation`, `neonConfigured`, `resolveTargets`, `fetchBranchStatus`.
 
-When unconfigured it degrades to `status: 'unavailable'` rather than throwing — the same pattern as `$lib/server/monitoring/upstash.ts`.
+When unconfigured it degrades to `status: 'unavailable'` rather than throwing — the same pattern as `#lib/server/monitoring/upstash.ts`.
 
-### `$lib/server/dbops/`
+### `#lib/server/dbops/`
 
 The operate orchestrator. Depends on the read-only `monitoring/` layer; the reverse import (`monitoring → dbops`) is forbidden.
 
@@ -119,7 +119,7 @@ House `{ data }` / `{ error }` envelope. Admin-guarded, rate-limited, audited.
 
 ### Jobs
 
-Both reuse the existing `CRON_SECRET` bearer auth and are registered in `$lib/server/jobs/index.ts` (see [architecture/jobs.md](../architecture/jobs.md)).
+Both reuse the existing `CRON_SECRET` bearer auth and are registered in `#lib/server/jobs/index.ts` (see [architecture/jobs.md](../architecture/jobs.md)).
 
 | Job | Schedule | Purpose |
 |-----|----------|---------|

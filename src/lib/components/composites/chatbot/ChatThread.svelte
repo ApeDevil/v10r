@@ -1,11 +1,11 @@
 <script lang="ts">
+import { Button } from '#lib/components/primitives/button/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
+import { type AiErrorKind, parseAiErrorKind, type TurnError } from '#lib/types/ai-error.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { page } from '$app/state';
-import { Button } from '$lib/components/primitives/button';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
-import { type AiErrorKind, parseAiErrorKind, type TurnError } from '$lib/types/ai-error';
-import { cn } from '$lib/utils/cn';
 import ChatMessage from './ChatMessage.svelte';
 import { awaitingAnswer, citedCatalogSources, inspectTurnPath, traceOf, turnProgress } from './turn-progress';
 

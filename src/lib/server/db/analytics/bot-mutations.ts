@@ -7,8 +7,8 @@
  * crawler request.
  */
 
-import { db } from '$lib/server/db';
-import { type BotHitInsert, botHits } from '$lib/server/db/schema/analytics/bot-hits';
+import { db } from '#lib/server/db/index.ts';
+import { type BotHitInsert, botHits } from '#lib/server/db/schema/analytics/bot-hits.ts';
 
 /** 8 columns × 500 rows sits well under the 65,535-parameter ceiling. */
 const INSERT_CHUNK = 500;

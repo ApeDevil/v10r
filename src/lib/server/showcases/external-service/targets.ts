@@ -7,7 +7,7 @@
  * Pure, so the rules are testable without an environment; `targets.adapter.ts` is the
  * one place that reads the environment.
  */
-import type { ServiceTargetId, ServiceTargetProblem } from '$lib/showcases/external-service/types';
+import type { ServiceTargetId, ServiceTargetProblem } from '#lib/showcases/external-service/types.ts';
 import { MIN_TOKEN_LENGTH } from './config';
 
 export interface ServiceTarget {

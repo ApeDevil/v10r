@@ -1,4 +1,4 @@
-# `$lib/desk`
+# `#lib/desk`
 
 What the Desk *is*, independent of how it is drawn: the layout tree that gets persisted
 (`layout.types.ts`), the panel catalogue (`panels.ts`), the help text (`help.ts`), and the

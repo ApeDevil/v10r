@@ -1,7 +1,7 @@
-import { PROFILES } from '$lib/server/ai/profile';
-import { profileCapabilities } from '$lib/server/ai/profile/manifest';
-import { chatbotToolMeta, type DeskToolMeta, deskbotToolMeta } from '$lib/server/ai/tools';
-import { requireAdmin } from '$lib/server/http/guards';
+import { PROFILES } from '#lib/server/ai/profile/index.ts';
+import { profileCapabilities } from '#lib/server/ai/profile/manifest.ts';
+import { chatbotToolMeta, type DeskToolMeta, deskbotToolMeta } from '#lib/server/ai/tools/index.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { PageServerLoad } from './$types';
 
 /**

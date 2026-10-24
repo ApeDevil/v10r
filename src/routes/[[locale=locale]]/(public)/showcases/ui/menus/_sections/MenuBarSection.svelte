@@ -1,6 +1,6 @@
 <script lang="ts">
-import { MenuBar } from '$lib/components/composites';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
+import { MenuBar } from '#lib/components/composites/index.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
 import { DemoCard } from '../../components/_components';
 
 let wordWrap = $state(true);

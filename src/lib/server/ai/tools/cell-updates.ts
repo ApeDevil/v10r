@@ -4,8 +4,8 @@
  * `desk_create_spreadsheet` applies to an empty one — in-loop and on approval replay
  * alike, so the three call sites cannot drift.
  */
-import { type CellValue, cellLabel, parseCellRef } from '$lib/desk/formula';
-import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
+import { type CellValue, cellLabel, parseCellRef } from '#lib/desk/formula.ts';
+import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
 
 export interface CellUpdate {
 	/** A cell address such as `A1` or `C10`; case is forgiven. */

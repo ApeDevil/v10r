@@ -1,6 +1,6 @@
 <script lang="ts">
-import * as m from '$lib/paraglide/messages';
-import type { AiSurface } from '$lib/types/db-enums';
+import * as m from '#lib/paraglide/messages.js';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 
 // Physical size IS the encoding: strip the labels and the claim survives. The
 // asymmetry (thin route label vs. rich desk state) is design, not a parity gap.

@@ -4,10 +4,10 @@
  * Supports keyboard navigation and click-outside-to-close.
  */
 
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import type { NavChild } from '#lib/nav/index.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { page } from '$app/state';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
-import type { NavChild } from '$lib/nav';
-import { cn } from '$lib/utils/cn';
 import NavLink from './NavLink.svelte';
 
 interface Props {

@@ -7,7 +7,7 @@
  * dimensions, centred on the hint, clamped into bounds. Garbage or absent hints
  * degrade to a deterministic centre crop — they can never throw or escape the image.
  */
-import { CROP_RATIO_VALUE, type CropRatio, largestRatioRect } from '$lib/schemas/showcase/image-kit';
+import { CROP_RATIO_VALUE, type CropRatio, largestRatioRect } from '#lib/schemas/showcase/image-kit.ts';
 
 export interface PixelRect {
 	left: number;

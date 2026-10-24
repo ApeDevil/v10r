@@ -5,8 +5,8 @@ import {
 	HONEYPOT_MIN_FILL_MS,
 	PER_EMAIL_LIMIT_MAX,
 	PER_EMAIL_LIMIT_WINDOW,
-} from '$lib/server/abuse';
-import { DAILY_TOKEN_CAP } from '$lib/server/ai/config';
+} from '#lib/server/abuse/index.ts';
+import { DAILY_TOKEN_CAP } from '#lib/server/ai/config.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

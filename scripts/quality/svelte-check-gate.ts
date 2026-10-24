@@ -31,13 +31,23 @@
 // when the tree genuinely shrinks.
 const MIN_FILES = 7000;
 
-async function runChecker(): Promise<{ out: string; exitCode: number; signal: string | null }> {
+/**
+ * Two TypeScript projects since SvelteKit 3: the app, and the service worker, which needs
+ * WebWorker types instead of DOM ones and is excluded from the root tsconfig for it. Each is
+ * checked with its own config; the worker's floor is its entry plus the policy it imports.
+ */
+const PROJECTS = [
+	{ label: 'app', tsconfig: './tsconfig.json', floor: MIN_FILES },
+	{ label: 'service worker', tsconfig: './src/service-worker/tsconfig.json', floor: 2 },
+];
+
+async function runChecker(tsconfig: string): Promise<{ out: string; exitCode: number; signal: string | null }> {
 	const proc = Bun.spawn(
 		[
 			'node',
 			'node_modules/svelte-check/bin/svelte-check',
 			'--tsconfig',
-			'./tsconfig.json',
+			tsconfig,
 			'--output',
 			'machine',
 			'--threshold',
@@ -51,44 +61,52 @@ async function runChecker(): Promise<{ out: string; exitCode: number; signal: st
 }
 
 const SUMMARY_LINE = /^\d+\s+COMPLETED\s/m;
-
-let { out, exitCode, signal } = await runChecker();
-if (!SUMMARY_LINE.test(out) && (signal !== null || exitCode > 128)) {
-	console.error(
-		`svelte-check-gate: checker died by signal (${signal ?? `exit ${exitCode}`}) before completing — a runtime/host fault, not a type error; retrying once.`,
-	);
-	({ out, exitCode, signal } = await runChecker());
-}
-
 const DIAGNOSTIC = /^\d+\s+(ERROR|WARNING)\s+"(.+?)"\s+(\d+):(\d+)\s+"(.*)"$/;
 const SUMMARY = /^\d+\s+COMPLETED\s+(\d+)\s+FILES\s+(\d+)\s+ERRORS\s+(\d+)\s+WARNINGS\s+(\d+)\s+FILES_WITH_PROBLEMS$/;
 
-let summary: { files: number; errors: number } | null = null;
-for (const line of out.split('\n')) {
-	const diag = DIAGNOSTIC.exec(line);
-	if (diag) {
-		const [, severity, file, ln, col, message] = diag;
-		console.error(`  ${file}:${ln}:${col}  ${severity}  ${message.replaceAll('\\n', '\n    ').replaceAll('\\"', '"')}`);
-		continue;
+async function gate({ label, tsconfig, floor }: (typeof PROJECTS)[number]): Promise<boolean> {
+	let { out, exitCode, signal } = await runChecker(tsconfig);
+	if (!SUMMARY_LINE.test(out) && (signal !== null || exitCode > 128)) {
+		console.error(
+			`svelte-check-gate (${label}): checker died by signal (${signal ?? `exit ${exitCode}`}) before completing — a runtime/host fault, not a type error; retrying once.`,
+		);
+		({ out, exitCode, signal } = await runChecker(tsconfig));
 	}
-	const done = SUMMARY.exec(line);
-	if (done) summary = { files: Number(done[1]), errors: Number(done[2]) };
+
+	let summary: { files: number; errors: number } | null = null;
+	for (const line of out.split('\n')) {
+		const diag = DIAGNOSTIC.exec(line);
+		if (diag) {
+			const [, severity, file, ln, col, message] = diag;
+			console.error(
+				`  ${file}:${ln}:${col}  ${severity}  ${message.replaceAll('\\n', '\n    ').replaceAll('\\"', '"')}`,
+			);
+			continue;
+		}
+		const done = SUMMARY.exec(line);
+		if (done) summary = { files: Number(done[1]), errors: Number(done[2]) };
+	}
+
+	if (!summary) {
+		console.error(
+			`svelte-check-gate (${label}): no COMPLETED summary in checker output (crashed? ${signal ?? `exit ${exitCode}`}).`,
+		);
+		return false;
+	}
+	if (summary.errors > 0 || exitCode !== 0) {
+		console.error(`svelte-check-gate (${label}): ${summary.errors} error(s) across ${summary.files} scanned files.`);
+		return false;
+	}
+	if (summary.files < floor) {
+		console.error(
+			`svelte-check-gate (${label}): scanned only ${summary.files} files, floor is ${floor} — the checker no longer sees the tree; fix the scan before trusting the gate (scripts/quality/svelte-check-gate.ts).`,
+		);
+		return false;
+	}
+	console.log(`svelte-check-gate (${label}): OK — scanned ${summary.files} files, 0 errors (floor ${floor}).`);
+	return true;
 }
 
-if (!summary) {
-	console.error(
-		`svelte-check-gate: no COMPLETED summary in checker output (crashed? ${signal ?? `exit ${exitCode}`}).`,
-	);
-	process.exit(1);
-}
-if (summary.errors > 0 || exitCode !== 0) {
-	console.error(`svelte-check-gate: ${summary.errors} error(s) across ${summary.files} scanned files.`);
-	process.exit(1);
-}
-if (summary.files < MIN_FILES) {
-	console.error(
-		`svelte-check-gate: scanned only ${summary.files} files, floor is ${MIN_FILES} — the checker no longer sees the tree; fix the scan before trusting the gate (scripts/quality/svelte-check-gate.ts).`,
-	);
-	process.exit(1);
-}
-console.log(`svelte-check-gate: OK — scanned ${summary.files} files, 0 errors (floor ${MIN_FILES}).`);
+let ok = true;
+for (const project of PROJECTS) ok = (await gate(project)) && ok;
+if (!ok) process.exit(1);

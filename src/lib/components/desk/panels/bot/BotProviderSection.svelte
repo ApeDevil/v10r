@@ -1,6 +1,6 @@
 <script lang="ts">
-import { fetchProviders, getEnabledScopes, getProviderState, switchProvider } from '$lib/components/desk';
-import { Spinner } from '$lib/components/primitives';
+import { fetchProviders, getEnabledScopes, getProviderState, switchProvider } from '#lib/components/desk/index.ts';
+import { Spinner } from '#lib/components/primitives/index.ts';
 
 const state = $derived(getProviderState());
 const configuredProviders = $derived(state.providers.filter((p) => p.configured));

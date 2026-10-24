@@ -30,10 +30,10 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { and, eq, isNull } from 'drizzle-orm';
-import { isLocale, type Locale, locales } from '$lib/i18n/runtime';
-import { FrontmatterError, findOrphanedSourcePaths, parseContentFile } from '$lib/server/content';
-import { contentHash } from '$lib/server/db/content-hash';
-import { post, publishedRevision, revision } from '$lib/server/db/schema/blog';
+import { isLocale, type Locale, locales } from '#lib/i18n/runtime.ts';
+import { FrontmatterError, findOrphanedSourcePaths, parseContentFile } from '#lib/server/content/index.ts';
+import { contentHash } from '#lib/server/db/content-hash.ts';
+import { post, publishedRevision, revision } from '#lib/server/db/schema/blog/index.ts';
 
 interface Flags {
 	strict: boolean;

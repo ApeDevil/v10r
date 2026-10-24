@@ -6,7 +6,7 @@ A read-only MCP server that makes v10r's "emulate, don't clone" contract executa
 [`../pattern-library/`](../pattern-library/): `registry.json` (the records), `schema.ts`
 (their shape and validation rules), `load.ts` (disk read), `validate.ts` (the drift guard).
 The hosted HTTP transport is `src/lib/server/mcp/`, and the app reads the same registry
-through the `$patterns` alias — one record set, three readers.
+through the `#patterns/*` subpath import (package.json `imports`) — one record set, three readers.
 
 Interactive showcase: `/showcases/mcp` — registry stats, dependency graph, container architecture, and the protocol handshake, computed live from `registry.json`. Design rationale: [docs/blueprint/architecture/pattern-mcp.md](../docs/blueprint/architecture/pattern-mcp.md).
 

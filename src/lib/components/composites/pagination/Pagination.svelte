@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { cn } from '$lib/utils/cn';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	currentPage: number;

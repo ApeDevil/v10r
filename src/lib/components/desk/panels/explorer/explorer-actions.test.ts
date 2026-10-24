@@ -8,7 +8,7 @@ import { type ActionContext, dispatchMove, dispatchToggleAiContext } from './exp
 import type { ExplorerNode } from './node';
 
 const { apiFetch } = vi.hoisted(() => ({ apiFetch: vi.fn<(url: string, init?: RequestInit) => Promise<Response>>() }));
-vi.mock('$lib/api', () => ({ apiFetch }));
+vi.mock('#lib/api.ts', () => ({ apiFetch }));
 
 function deferred<T>() {
 	let resolve!: (value: T) => void;

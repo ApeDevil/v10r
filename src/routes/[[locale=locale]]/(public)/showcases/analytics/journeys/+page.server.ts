@@ -1,5 +1,5 @@
-import { getEntryPages, getExitPages, getTopTransitions } from '$lib/server/db/analytics/aggregations';
-import { getSessionTimeline } from '$lib/server/db/analytics/queries';
+import { getEntryPages, getExitPages, getTopTransitions } from '#lib/server/db/analytics/aggregations.ts';
+import { getSessionTimeline } from '#lib/server/db/analytics/queries.ts';
 import type { PageServerLoad } from './$types';
 
 const RANGE_DAYS = 90;

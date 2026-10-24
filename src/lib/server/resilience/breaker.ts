@@ -41,7 +41,7 @@
  * This is the same trade `singleflight.ts` makes when it refuses to let a cold caller
  * wait on a lock.
  */
-import { redis } from '$lib/server/cache';
+import { redis } from '#lib/server/cache/index.ts';
 
 export interface BreakerPolicy {
 	/** Key namespace, and the prefix on every log line. One per dependency class. */

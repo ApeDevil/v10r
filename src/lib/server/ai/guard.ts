@@ -7,13 +7,13 @@
  * the whole request resolves against — or an early `Response` (503 / 429 / budget
  * decision) the caller must return as-is.
  */
-import { decisionResponse } from '$lib/server/abuse/decision.adapter';
-import { loadProviderRegistry, type ProviderRegistry } from '$lib/server/ai';
-import { checkUserBudget } from '$lib/server/ai/budget';
-import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '$lib/server/ai/config';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError } from '$lib/server/http/response';
+import { decisionResponse } from '#lib/server/abuse/decision.adapter.ts';
+import { checkUserBudget } from '#lib/server/ai/budget.ts';
+import { RATE_LIMIT_MAX, RATE_LIMIT_PREFIX, RATE_LIMIT_WINDOW } from '#lib/server/ai/config.ts';
+import { loadProviderRegistry, type ProviderRegistry } from '#lib/server/ai/index.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError } from '#lib/server/http/response.ts';
 
 const ratelimit = createLimiter(RATE_LIMIT_PREFIX, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Stack } from '$lib/components/layout';
-import { Button, VirtualList } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, VirtualList } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 const ROW_HEIGHT = 32;
 const SIZES = [200, 2_000, 10_000];

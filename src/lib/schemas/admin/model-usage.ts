@@ -1,14 +1,14 @@
 /**
  * Cross-surface AI usage DTOs for the admin Cost tab — pure types, no runtime, client-safe
  * (the `+page.svelte` imports them). The dollar math lives server-side in
- * `$lib/server/ai/usage-summary.ts`; cost is always a REFERENCE estimate, never a charge.
+ * `#lib/server/ai/usage-summary.ts`; cost is always a REFERENCE estimate, never a charge.
  */
 
-import type { CostEstimate } from '$lib/schemas/image-metadata';
+import type { CostEstimate } from '#lib/schemas/image-metadata.ts';
 
 /**
  * What the model was asked to DO, which is not the same question as which product surface
- * asked it — `AiSurface` in `$lib/types/db-enums` is chatbot-vs-deskbot and this is
+ * asked it — `AiSurface` in `#lib/types/db-enums.ts` is chatbot-vs-deskbot and this is
  * conversation-vs-vision. Load-bearing discriminant: the same model (e.g. gemini-2.5-flash)
  * serves both with very different per-call token profiles, so rows are keyed on
  * (workload, modelId), never modelId alone — otherwise the two collapse into one row.

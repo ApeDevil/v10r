@@ -1,9 +1,9 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
+import { Typography } from '#lib/components/primitives/index.ts';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
 import { afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
-import { Typography } from '$lib/components/primitives';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
 
 let { children }: { children: Snippet } = $props();
 
@@ -29,8 +29,8 @@ const activeTab = $derived(tabs.find((t) => isActive(t.href)));
 
 // Move focus on real tab changes (not initial hydration) for keyboard/SR users.
 let contentEl = $state<HTMLDivElement>();
-afterNavigate(({ type }) => {
-	if (type !== 'enter') contentEl?.focus();
+afterNavigate(({ type, shallow }) => {
+	if (type !== 'enter' && !shallow) contentEl?.focus();
 });
 </script>
 

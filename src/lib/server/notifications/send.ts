@@ -7,13 +7,13 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { BRAND_NAME } from '$lib/branding';
-import { db } from '$lib/server/db';
-import { createNotification, getOrCreateSettings } from '$lib/server/db/notifications/mutations';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import type { NotificationParams } from '$lib/server/db/schema/notifications/notifications';
-import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
-import { deferAfterResponse } from '$lib/server/platform';
+import { BRAND_NAME } from '#lib/branding.ts';
+import { db } from '#lib/server/db/index.ts';
+import { createNotification, getOrCreateSettings } from '#lib/server/db/notifications/mutations.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import type { NotificationParams } from '#lib/server/db/schema/notifications/notifications.ts';
+import { userPreferences } from '#lib/server/db/schema/personalization/user-preferences.ts';
+import { deferAfterResponse } from '#lib/server/platform/index.ts';
 import { getChannel } from './channels';
 import { createDeliveries } from './outbox';
 import { isQuietNow } from './quiet-hours';

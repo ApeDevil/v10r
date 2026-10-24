@@ -5,7 +5,7 @@
 
 import { sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 
 export async function countRows(table: PgTable): Promise<number> {
 	const [result] = await db.select({ count: sql<number>`count(*)::int` }).from(table);

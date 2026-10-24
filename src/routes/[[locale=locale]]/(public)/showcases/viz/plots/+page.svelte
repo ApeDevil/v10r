@@ -1,11 +1,11 @@
 <script lang="ts">
-import { browser } from '$app/environment';
-import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { Body, Cell, Header, HeaderCell, Row, Table } from '$lib/components/primitives/table';
-import { HeatMap, ScatterPlot } from '$lib/components/viz';
-import { getVizPalette, vizColor } from '$lib/components/viz/_shared/theme-bridge';
-import type { HeatMapData } from '$lib/components/viz/plot';
-import * as m from '$lib/paraglide/messages';
+import { BackLink, NavSection, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/table/index.ts';
+import { getVizPalette, vizColor } from '#lib/components/viz/_shared/theme-bridge.ts';
+import { HeatMap, ScatterPlot } from '#lib/components/viz/index.ts';
+import type { HeatMapData } from '#lib/components/viz/plot/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { browser } from '$app/env';
 import VizDemoCard from '../_components/VizDemoCard.svelte';
 
 const sections = [

@@ -21,11 +21,11 @@ import {
 	type VisionFailureReason,
 	type VisionResponse,
 	visionIsEmpty,
-} from '$lib/schemas/showcase/image-kit';
-import { getVisionProvider, loadProviderRegistry, type ProviderRegistry } from '$lib/server/ai';
-import { chargeTokens, checkUserBudget } from '$lib/server/ai/budget';
-import { MAX_TOKENS } from '$lib/server/ai/config';
-import { estimateCost } from '$lib/server/ai/pricing';
+} from '#lib/schemas/showcase/image-kit.ts';
+import { chargeTokens, checkUserBudget } from '#lib/server/ai/budget.ts';
+import { MAX_TOKENS } from '#lib/server/ai/config.ts';
+import { getVisionProvider, loadProviderRegistry, type ProviderRegistry } from '#lib/server/ai/index.ts';
+import { estimateCost } from '#lib/server/ai/pricing.ts';
 import { snapToAspect } from './geometry';
 
 /** Gemini "thinking" tokens, read defensively from provider metadata (null otherwise). */

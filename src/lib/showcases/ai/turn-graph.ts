@@ -16,18 +16,18 @@
  * tree row and the timeline bar of one record share one selection. Where the visible graph's
  * nodes sit and how its edges travel is `turn-graph-layout.ts`.
  *
- * Pure functions only — no `$lib/server/*`, no `$env/*`, no Paraglide, no `@xyflow` — so the
+ * Pure functions only — no `#lib/server/*`, no `$app/env/*`, no Paraglide, no `@xyflow` — so the
  * fixtures, a live turn and the streaming snapshot share one projection.
  */
 
-import type { AssistantProfileManifest, GroundingSourceId } from '$lib/types/assistant-profile';
+import type { AssistantProfileManifest, GroundingSourceId } from '#lib/types/assistant-profile.ts';
 import type {
 	GroundingItem,
 	GroundingSource,
 	ToolExecutionRecord,
 	TurnItemState,
 	TurnTrace,
-} from '$lib/types/turn-trace';
+} from '#lib/types/turn-trace.ts';
 import { type InspectorNode, NODE_IDS, type ToolInventoryEntry } from './inspector';
 
 export type TurnGraphColumn = 'sources' | 'context' | 'tools';

@@ -1,14 +1,9 @@
-/// <reference types="@sveltejs/kit" />
-/// <reference no-default-lib="true"/>
-/// <reference lib="esnext" />
-/// <reference lib="webworker" />
-
 /**
- * v10r service worker — hand-rolled on SvelteKit's built-in `$service-worker`
- * module (no Workbox). This file is a showcase artifact: every decision is
- * commented because the pattern is meant to be copied.
+ * v10r service worker — hand-rolled on SvelteKit's service-worker modules
+ * (`$app/service-worker`, `$app/manifest`, `$app/env`; no Workbox). This file is a
+ * showcase artifact: every decision is commented because the pattern is meant to be copied.
  *
- * Caching contract (see $lib/pwa/sw-policy.ts for the enforced rules):
+ * Caching contract (see #lib/pwa/sw-policy.ts for the enforced rules):
  * - Precache: the offline shell — the prerendered /offline page, the hashed
  *   assets it loads, and the PWA icons. Not the whole build: every other hashed
  *   file enters the cache cache-first on first use (see offlineShellAssets in
@@ -22,10 +17,12 @@
  *   old tabs keep loading old chunks from the old cache.
  */
 
-import { isImmutableAsset, mayCache, offlineShellAssets, shouldHandle } from '$lib/pwa/sw-policy';
-import { build, files, prerendered, version } from '$service-worker';
+import { isImmutableAsset, manifestPathname, mayCache, offlineShellAssets, shouldHandle } from '#lib/pwa/sw-policy.ts';
+import { version } from '$app/env';
+import { assets, immutable, prerendered } from '$app/manifest';
+import { self as sw } from '$app/service-worker';
 
-const sw = self as unknown as ServiceWorkerGlobalScope;
+const pathname = (path: string) => manifestPathname(path, sw.location.href);
 
 /**
  * KILL SWITCH — flip to true and deploy to evacuate every installed client:
@@ -39,7 +36,7 @@ const KILL_SWITCH = false;
 const CACHE = `cache-${version}`;
 
 /** The prerendered offline fallback (built from src/routes/offline). */
-const OFFLINE_URL = prerendered.find((path) => path.endsWith('/offline')) ?? '/offline';
+const OFFLINE_URL = pathname(prerendered.find(({ path }) => path === 'offline')?.path ?? 'offline');
 
 /**
  * Static precache: PWA icons and the offline page. Deliberately EXCLUDES the big
@@ -47,7 +44,13 @@ const OFFLINE_URL = prerendered.find((path) => path.endsWith('/offline')) ?? '/o
  * assets would blow through iOS's cache budget for no offline value. The hashed
  * assets the offline page loads are added at install, read from its own HTML.
  */
-const PRECACHE = [...files.filter((path) => path.startsWith('/icons/')), OFFLINE_URL];
+const PRECACHE = [
+	...assets.filter(({ path }) => path.startsWith('icons/')).map(({ path }) => pathname(path)),
+	OFFLINE_URL,
+];
+
+/** Every hashed build file, as the absolute pathnames `offlineShellAssets` checks against. */
+const IMMUTABLE = immutable.map(({ path }) => pathname(path));
 
 sw.addEventListener('install', (event) => {
 	if (KILL_SWITCH) {
@@ -59,7 +62,7 @@ sw.addEventListener('install', (event) => {
 			const cache = await caches.open(CACHE);
 			await cache.addAll(PRECACHE);
 			const offline = await cache.match(OFFLINE_URL);
-			if (offline) await cache.addAll(offlineShellAssets(await offline.text(), build));
+			if (offline) await cache.addAll(offlineShellAssets(await offline.text(), IMMUTABLE));
 		})(),
 	);
 });

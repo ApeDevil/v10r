@@ -1,6 +1,6 @@
 <script lang="ts">
+import type { ResolvedAnnouncement } from '#lib/server/admin/announcements.ts';
 import { invalidate } from '$app/navigation';
-import type { ResolvedAnnouncement } from '$lib/server/admin/announcements';
 
 interface Props {
 	announcements: ResolvedAnnouncement[];

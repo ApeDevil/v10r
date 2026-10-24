@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Alert, Card } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Typography } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
+import { Alert, Card } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Typography } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import type { PageData } from './$types';
 
 let { data }: { data: PageData } = $props();

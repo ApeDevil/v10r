@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Button } from '$lib/components/primitives/button';
-import * as m from '$lib/paraglide/messages';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let dismissed = $state(false);
 </script>

@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
-import { isAdmin } from '$lib/server/http/guards';
-import { getFullGraph, getLabelsWithCounts, getRelTypesWithCounts } from '$lib/server/showcases/graph/queries';
-import { reseedGraph } from '$lib/server/showcases/graph/seed';
+import { isAdmin } from '#lib/server/http/guards.ts';
+import { getFullGraph, getLabelsWithCounts, getRelTypesWithCounts } from '#lib/server/showcases/graph/queries.ts';
+import { reseedGraph } from '#lib/server/showcases/graph/seed.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {

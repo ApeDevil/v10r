@@ -2,10 +2,10 @@
  * plan — the pure, dependency-free chunk planner shared by the in-app retrieval ingest
  * (`chunk.ts`) and the standalone docs-ingestion Bun script (`scripts/db/ingest-docs.ts`).
  *
- * It MUST stay dependency-free — no `$lib`, no `$env`, no `import.meta` — because the
+ * It MUST stay dependency-free — no `#lib`, no `$app/env`, no `import.meta` — because the
  * Bun script imports it by relative path and cannot resolve Vite aliases. All tuning
  * (section/paragraph targets, overlap) arrives via `PlanOptions`, never from a config
- * import — `./config` pulls the `$lib`-aliased retrieval policy, which is exactly what
+ * import — `./config` pulls the `#lib`-aliased retrieval policy, which is exactly what
  * would re-break the Bun import, so DO NOT add it. Mirrors `markdown-split.ts`;
  * `../db/content-hash` is reached the same way and is dependency-free for the same reason.
  */

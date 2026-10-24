@@ -1,11 +1,11 @@
 <script lang="ts">
 import type { ChartData } from 'chart.js';
+import { Alert } from '#lib/components/composites/index.ts';
+import { PieChart } from '#lib/components/viz/chart/pie/index.ts';
+import { getFormattingLocale } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { baseLocale, extractLocaleFromUrl } from '#lib/paraglide/runtime.js';
 import { page } from '$app/state';
-import { Alert } from '$lib/components/composites';
-import { PieChart } from '$lib/components/viz/chart/pie';
-import { getFormattingLocale } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
 import ChartSection from '../_components/ChartSection.svelte';
 import MetricCard from '../_components/MetricCard.svelte';
 

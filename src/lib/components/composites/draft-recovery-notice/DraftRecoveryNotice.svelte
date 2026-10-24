@@ -3,11 +3,12 @@
  * The offer of a stored form draft (`state/form-draft.svelte.ts`): restore it or discard it.
  * Never shown for a draft that equals the form, and never applied without a click.
  */
+
+import { Alert } from '#lib/components/composites/alert/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import { formatRelative } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
-import { Alert } from '$lib/components/composites/alert';
-import { Button } from '$lib/components/primitives';
-import { formatRelative } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
 
 interface Props {
 	savedAt: number;

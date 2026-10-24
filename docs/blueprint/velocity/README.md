@@ -7,9 +7,9 @@ so an agent can instantiate the smallest set a project actually justifies.
 
 Live showcase: `/showcases/velocity` · measurement surfaces: `/showcases/observability`, `/admin/perf`
 
-Velocity's code lives in the modules that own each responsibility — `$lib/server/cache/`,
-`$lib/server/http/`, `$lib/server/perf/`, `$lib/server/resilience/`, `$lib/state/`, `$lib/nav/`,
-`$lib/components/primitives/virtual-list/`. There is no `velocity/` directory, because a
+Velocity's code lives in the modules that own each responsibility — `#lib/server/cache/`,
+`#lib/server/http/`, `#lib/server/perf/`, `#lib/server/resilience/`, `#lib/state/`, `#lib/nav/`,
+`#lib/components/primitives/virtual-list/`. There is no `velocity/` directory, because a
 domain named after a quality attribute is a bucket, and buckets accumulate.
 
 ## Files

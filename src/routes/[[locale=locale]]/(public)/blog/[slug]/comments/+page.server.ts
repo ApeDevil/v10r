@@ -19,8 +19,8 @@ import {
 	editCommentSchema,
 	editOwnComment,
 	softDeleteOwnComment,
-} from '$lib/server/blog/comments';
-import { requireAuth } from '$lib/server/http/guards';
+} from '#lib/server/blog/comments/index.ts';
+import { requireAuth } from '#lib/server/http/guards.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ params }) => {

@@ -1,6 +1,6 @@
 <script lang="ts">
-import { PageHeader } from '$lib/components';
-import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
+import type { ComponentDoc } from '#lib/components/composites/info-dialog/types.ts';
+import { PageHeader } from '#lib/components/index.ts';
 import { DemoCard } from '../_components';
 
 // NavSection is "meta-chrome" — it builds the showcase itself. The sticky bar at the

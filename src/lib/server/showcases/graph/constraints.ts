@@ -1,4 +1,4 @@
-import { cypher } from '$lib/server/graph/index';
+import { cypher } from '#lib/server/graph/index.ts';
 
 const CONSTRAINTS = [
 	'CREATE CONSTRAINT technology_name_unique IF NOT EXISTS FOR (t:Technology) REQUIRE t.name IS UNIQUE',

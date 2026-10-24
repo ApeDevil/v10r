@@ -1,5 +1,5 @@
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import type { TurnTrace } from '$lib/types/turn-trace';
+import type { TurnTrace } from '#lib/types/turn-trace.ts';
 import { db } from '../index';
 import { conversation, message, type StoredMessagePart } from '../schema/ai/conversation';
 import { modelCall, toolCall, turn } from '../schema/ai/turn';

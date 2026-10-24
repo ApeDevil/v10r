@@ -1,7 +1,7 @@
 import { and, isNotNull, lt } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { file, fileRevision } from '$lib/server/db/schema/desk';
-import { retentionCutoff } from '$lib/server/retention';
+import { db } from '#lib/server/db/index.ts';
+import { file, fileRevision } from '#lib/server/db/schema/desk/index.ts';
+import { retentionCutoff } from '#lib/server/retention/index.ts';
 
 /**
  * Sweep soft-deleted desk content and prune stale revisions — the retention job the

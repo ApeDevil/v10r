@@ -9,8 +9,8 @@
  * self-knowledge. The content is server-resolved (catalog) and XML-escaped; the client
  * string never reaches the prompt. See `docs/blueprint/ai/site-awareness.md`.
  */
-import type { PageContext } from '$lib/server/search';
-import { escapeXmlAttr } from '$lib/utils/xml';
+import type { PageContext } from '#lib/server/search/index.ts';
+import { escapeXmlAttr } from '#lib/utils/xml.ts';
 import type { AssistantCapability } from '../profile/profile';
 
 /**

@@ -1,4 +1,4 @@
-import { ServerError } from '$lib/server/errors';
+import { ServerError } from '#lib/server/errors/index.ts';
 
 /** The two failures the pipeline raises: the embedding provider, and an ingest that cannot proceed. */
 export type RetrievalErrorKind = 'embedding' | 'ingestion';

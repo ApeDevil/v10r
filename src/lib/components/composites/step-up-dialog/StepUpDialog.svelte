@@ -1,10 +1,10 @@
 <script lang="ts">
 import { Dialog } from 'bits-ui';
-import { authClient } from '$lib/auth-client';
-import { Button, Input, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { authClient } from '#lib/auth-client.ts';
+import { Button, Input, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	open: boolean;

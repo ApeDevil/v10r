@@ -1,7 +1,7 @@
 <script lang="ts">
-import { browser } from '$app/environment';
+import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
+import { browser } from '$app/env';
 import { page } from '$app/state';
-import { deLocalizeHref, localizeHref } from '$lib/i18n';
 
 interface Tab {
 	label: string;

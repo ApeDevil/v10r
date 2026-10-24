@@ -1,6 +1,6 @@
-import { listTags } from '$lib/server/blog';
-import { guardApiBlogAuthor } from '$lib/server/http/guards';
-import { apiPaginated, parsePagination } from '$lib/server/http/pagination';
+import { listTags } from '#lib/server/blog/index.ts';
+import { guardApiBlogAuthor } from '#lib/server/http/guards.ts';
+import { apiPaginated, parsePagination } from '#lib/server/http/pagination.ts';
 import type { RequestHandler } from './$types';
 
 /** List all tags (for the metadata drawer tag picker). */

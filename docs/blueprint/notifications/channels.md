@@ -194,7 +194,7 @@ Unlike Telegram/Discord, there's no account-linking flow. The subscription lives
 | **Env** | `VAPID_PUBLIC_KEY` (ships to the client), `VAPID_PRIVATE_KEY` (server secret), `VAPID_SUBJECT` (`mailto:` contact) — generate with `bunx web-push generate-vapid-keys` |
 | **Payload** | Declarative Web Push JSON, no PII in the payload: title = brand name, body = a generic category line |
 | **Pruning** | A 404/410 from the push service on send deletes that endpoint's subscription (`deletePushSubscriptionByEndpoint`) |
-| **Disconnection** | Sign-out unsubscribes the current device (`$lib/pwa/sign-out.ts` `signOutAndFlush()`); other devices keep receiving push |
+| **Disconnection** | Sign-out unsubscribes the current device (`#lib/pwa/sign-out.ts` `signOutAndFlush()`); other devices keep receiving push |
 
 See [../pwa.md](../pwa.md) for the full design record — payload contract, iOS caveats, and the delivery-mode decision.
 

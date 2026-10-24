@@ -28,9 +28,9 @@ export const CONFIRM_TOKEN_TTL_MS = 10 * 60 * 1000;
 
 /**
  * Re-exported, not redeclared: the browser writes this cookie and the hook reads it, so
- * its identity lives in the client-safe `$lib/analytics/consent-cookie` leaf.
+ * its identity lives in the client-safe `#lib/analytics/consent-cookie.ts` leaf.
  */
-export { CONSENT_COOKIE, CONSENT_MAX_AGE } from '$lib/analytics/consent-cookie';
+export { CONSENT_COOKIE, CONSENT_MAX_AGE } from '#lib/analytics/consent-cookie.ts';
 
 /**
  * Bot lane — buffered in Upstash Redis, flushed into `analytics.bot_hits`.

@@ -5,7 +5,7 @@
  * no load functions, and all three locales inline (a prerendered fallback
  * can't resolve the runtime locale of whatever page the user tried to reach).
  */
-import { Button } from '$lib/components/primitives';
+import { Button } from '#lib/components/primitives/index.ts';
 </script>
 
 <svelte:head>

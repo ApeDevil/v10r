@@ -5,9 +5,9 @@
  * Expanded mode: "velociraptor"
  */
 
-import { localizeHref } from '$lib/i18n';
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { cn } from '$lib/utils/cn';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	forceExpanded?: boolean; // Force expanded mode (for drawer)

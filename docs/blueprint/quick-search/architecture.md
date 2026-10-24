@@ -27,7 +27,7 @@ server result wins (richer snippet). Palette renders grouped by surface.
 
 ## Engine State
 
-`createSearchEngine()` in `$lib/state/search.svelte.ts` — a Svelte 5 factory (`.svelte.ts`), not a singleton.
+`createSearchEngine()` in `#lib/state/search.svelte.ts` — a Svelte 5 factory (`.svelte.ts`), not a singleton.
 
 ```
 engine.instant    → SearchResult[]   (derived from in-memory shard match)
@@ -45,7 +45,7 @@ The debounce timer is 300 ms. Stale server requests are aborted via `AbortContro
 
 ## Dedup and Merge
 
-Both lanes use the same `SearchResult` shape (`$lib/search/types.ts`). `AppShell.svelte` merges before passing to `CommandPalette`:
+Both lanes use the same `SearchResult` shape (`#lib/search/types.ts`). `AppShell.svelte` merges before passing to `CommandPalette`:
 
 ```ts
 const key = (r) => `${r.surface}:${r.path}:${r.anchor ?? ''}`;
@@ -57,7 +57,7 @@ The `/search` page server load applies the same logic (static match + `searchCon
 
 ## Result Grouping
 
-Results are grouped by `SearchSurface` in a fixed display order defined in `$lib/search/types.ts`:
+Results are grouped by `SearchSurface` in a fixed display order defined in `#lib/search/types.ts`:
 
 ```ts
 export const SURFACE_ORDER: SearchSurface[] = ['page', 'showcase', 'section', 'doc', 'blog'];
@@ -102,10 +102,10 @@ Lane-A shard. Prerendered at build time. Returns `SearchRecord[]` (titles only, 
 
 ## Shared Types
 
-`$lib/search/types.ts` — client-safe, imported by both the browser engine and all server adapters.
+`#lib/search/types.ts` — client-safe, imported by both the browser engine and all server adapters.
 
 - `SearchRecord` — indexed item (what goes into the shard and the in-memory corpus)
 - `SearchResult` — ranked hit (what the palette, `/search` page, and `/api/search` all return)
 - `SearchSurface`, `Locale`, `SURFACE_ORDER`
 
-`$lib/search/match.ts` — pure lexical matcher used by Lane A (browser) and by the `/search` SSR load. Unicode-aware tokenization, AND semantics, phrase-bonus, locale-fallback rank penalty.
+`#lib/search/match.ts` — pure lexical matcher used by Lane A (browser) and by the `/search` SSR load. Unicode-aware tokenization, AND semantics, phrase-bonus, locale-fallback rank penalty.

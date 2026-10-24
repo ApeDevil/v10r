@@ -5,7 +5,7 @@ import { defineBreaker, resetBreakers } from './breaker';
 // would cool a dependency for the running app and leak across runs. Everything asserted
 // here is therefore the NO-REDIS path — which is also the path a misconfigured
 // deployment runs, so it is the one worth pinning.
-vi.mock('$lib/server/cache', () => ({ redis: null }));
+vi.mock('#lib/server/cache/index.ts', () => ({ redis: null }));
 
 const policy = {
 	name: 'test-dependency',

@@ -1,12 +1,12 @@
 <script lang="ts">
-import { Button, ToggleGroup } from '$lib/components/primitives';
-import OklchColorInput from '$lib/components/primitives/color-input/OklchColorInput.svelte';
-import Dialog from '$lib/components/primitives/dialog/Dialog.svelte';
-import Tabs from '$lib/components/primitives/tabs/Tabs.svelte';
-import type { ActivityBarPosition } from '$lib/desk/layout.types';
-import { DESK_PANEL_TYPES, DESK_PANELS } from '$lib/desk/panels';
-import * as m from '$lib/paraglide/messages';
-import { cn } from '$lib/utils/cn';
+import OklchColorInput from '#lib/components/primitives/color-input/OklchColorInput.svelte';
+import Dialog from '#lib/components/primitives/dialog/Dialog.svelte';
+import { Button, ToggleGroup } from '#lib/components/primitives/index.ts';
+import Tabs from '#lib/components/primitives/tabs/Tabs.svelte';
+import type { ActivityBarPosition } from '#lib/desk/layout.types.ts';
+import { DESK_PANEL_TYPES, DESK_PANELS } from '#lib/desk/panels.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { cn } from '#lib/utils/cn.ts';
 import { getDeskSettings } from './desk-settings.state.svelte';
 import { getDockContext } from './dock.state.svelte';
 

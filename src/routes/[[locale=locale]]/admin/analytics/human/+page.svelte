@@ -1,17 +1,17 @@
 <script lang="ts">
 import type { ChartData } from 'chart.js';
-import { invalidateAll } from '$app/navigation';
+import LiveFeed from '#lib/components/admin/LiveFeed.svelte';
+import { Alert, Card, DiagGrid, DiagRow, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Button, Skeleton, Tag } from '#lib/components/primitives/index.ts';
+import LineChart from '#lib/components/viz/chart/line/LineChart.svelte';
+import { getFormattingLocale } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { baseLocale, extractLocaleFromUrl } from '#lib/paraglide/runtime.js';
+import { COMMAND_VIA } from '#lib/types/journey-events.ts';
+import { formatDuration } from '#lib/utils/format-duration.ts';
+import { refreshAll } from '$app/navigation';
 import { page } from '$app/state';
-import LiveFeed from '$lib/components/admin/LiveFeed.svelte';
-import { Alert, Card, DiagGrid, DiagRow, EmptyState } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Button, Skeleton, Tag } from '$lib/components/primitives';
-import LineChart from '$lib/components/viz/chart/line/LineChart.svelte';
-import { getFormattingLocale } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { baseLocale, extractLocaleFromUrl } from '$lib/paraglide/runtime';
-import { COMMAND_VIA } from '$lib/types/journey-events';
-import { formatDuration } from '$lib/utils/format-duration';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
@@ -164,7 +164,7 @@ const ranges = [
 				title={m.admin_analytics_trend_error_title()}
 				description={m.admin_analytics_trend_error_description()}
 			>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>{m.composites_error_display_try_again()}</Button>
 			</Alert>
 		{/await}
 	</Card>
@@ -285,7 +285,7 @@ const ranges = [
 				title={m.admin_analytics_composition_error_title()}
 				description={m.admin_analytics_composition_error_description()}
 			>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>{m.composites_error_display_try_again()}</Button>
 			</Alert>
 		{/await}
 	</Card>
@@ -366,7 +366,7 @@ const ranges = [
 					title={m.admin_analytics_top_pages_error_title()}
 					description={m.admin_analytics_top_pages_error_description()}
 				>
-					<Button variant="outline" size="sm" onclick={() => invalidateAll()}>{m.composites_error_display_try_again()}</Button>
+					<Button variant="outline" size="sm" onclick={() => refreshAll()}>{m.composites_error_display_try_again()}</Button>
 				</Alert>
 			{/await}
 		</Card>

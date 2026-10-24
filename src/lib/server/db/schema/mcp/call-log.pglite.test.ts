@@ -3,8 +3,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 // The REAL classifier, not a fixture. It imports only `node:crypto`, so pulling it into a DB test
 // costs nothing — and it is the only way to prove the writer and the CHECKs agree. See the
 // "producer satisfies the constraints" test at the bottom of this file.
-import { classifyTraffic } from '$lib/server/mcp/telemetry/self-traffic';
-import { createTestDb } from '$lib/server/test/db';
+import { classifyTraffic } from '#lib/server/mcp/telemetry/self-traffic.ts';
+import { createTestDb } from '#lib/server/test/db.ts';
 import { mcpCallLog } from './call-log';
 
 /**

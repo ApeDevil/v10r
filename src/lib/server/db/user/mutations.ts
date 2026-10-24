@@ -1,6 +1,6 @@
 import { and, eq, ne } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { session as sessionTable, user } from '$lib/server/db/schema/auth/_better-auth';
+import { db } from '#lib/server/db/index.ts';
+import { session as sessionTable, user } from '#lib/server/db/schema/auth/_better-auth.ts';
 
 /** Update user display name. */
 export async function updateDisplayName(userId: string, name: string) {

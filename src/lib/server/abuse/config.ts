@@ -1,5 +1,5 @@
-import { dev } from '$app/environment';
-import { env } from '$env/dynamic/private';
+import { dev } from '$app/env';
+import * as env from '$app/env/private';
 
 export type BotDetectionMode = 'live' | 'dry_run' | 'off';
 

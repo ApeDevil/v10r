@@ -28,8 +28,8 @@ type Presigner = (client: unknown, command: unknown, options: { expiresIn: numbe
 const send = vi.fn<S3Send>(async () => ({ ContentLength: 3, ContentType: 'text/plain' }));
 const getSignedUrl = vi.fn<Presigner>(async () => 'https://signed.example/object');
 
-vi.mock('$lib/server/store', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/store')>()),
+vi.mock('#lib/server/store/index.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/store/index.ts')>()),
 	s3: { send },
 	BUCKET: 'test-bucket',
 }));
@@ -38,7 +38,7 @@ vi.mock('$lib/server/store', async (importOriginal) => ({
 vi.mock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl }));
 
 const { generateDownloadUrl, getObjectDetail, getObjectRange } = await import('./queries');
-const { PRESIGNED_URL_EXPIRY } = await import('$lib/server/store/config');
+const { PRESIGNED_URL_EXPIRY } = await import('#lib/server/store/config.ts');
 
 /** Every namespace an anonymous caller must not be able to reach. */
 const FORBIDDEN_KEYS = [

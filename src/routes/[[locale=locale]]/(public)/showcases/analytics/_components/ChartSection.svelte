@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { Card } from '$lib/components/composites';
-import { cn } from '$lib/utils/cn';
+import { Card } from '#lib/components/composites/index.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	title: string;

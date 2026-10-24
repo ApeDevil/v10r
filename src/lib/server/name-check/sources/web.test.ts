@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { startDeadline } from '$lib/server/http/deadline';
+import { startDeadline } from '#lib/server/http/deadline.ts';
 import { type NameSourceContext, type NameSourceCredentials, NO_CREDENTIALS } from '../name-source';
 import { toNameCheckQuery } from '../query';
 import { toWebDrafts, webSearchVendor, webSource } from './web';

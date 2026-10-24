@@ -1,7 +1,7 @@
 /**
  * Rights metadata for a third-party asset the app ships — a 3D model, a photo.
  *
- * Recorded once, by the module that owns the asset (`$lib/3d/models.ts`, `$lib/3d/parts.ts`),
+ * Recorded once, by the module that owns the asset (`#lib/3d/models.ts`, `#lib/3d/parts.ts`),
  * and read by every surface that has to credit it: `/credits` and the place the asset is shown.
  * There is no second copy beside the files; `registry.gate.test.ts` binds this metadata to what
  * is actually under `static/`.

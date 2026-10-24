@@ -8,7 +8,7 @@
  * AI effects that target a file find its OPEN instance through `findFilePanel` instead of
  * assuming the canonical id, so a file already open never opens a second time.
  */
-import type { LayoutNode, PanelDefinition } from '$lib/desk/layout.types';
+import type { LayoutNode, PanelDefinition } from '#lib/desk/layout.types.ts';
 import { findLeafWithPanel } from './dock.operations';
 
 /** Desk file ids are `fil_…`; blog posts opened in the editor are `pst_…`. */

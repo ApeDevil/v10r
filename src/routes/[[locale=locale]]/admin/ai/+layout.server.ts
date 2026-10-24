@@ -1,6 +1,6 @@
-import { getActiveProviderInfo, loadProviderRegistry, publicProviderConnection } from '$lib/server/ai';
-import { buildProviderQuota } from '$lib/server/ai/quota';
-import { requireAdmin } from '$lib/server/http/guards';
+import { getActiveProviderInfo, loadProviderRegistry, publicProviderConnection } from '#lib/server/ai/index.ts';
+import { buildProviderQuota } from '#lib/server/ai/quota.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
 import type { LayoutServerLoad } from './$types';
 
 /**

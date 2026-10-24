@@ -5,7 +5,7 @@
  * inside its `$effect` blocks so the AI sidebar always sees an up-to-date
  * snapshot of what's in the workspace.
  */
-import { registerPanelContext, updatePanelContext } from '$lib/components/desk';
+import { registerPanelContext, updatePanelContext } from '#lib/components/desk/index.ts';
 import type { ExplorerState } from './explorer.state.svelte';
 
 export function serializeExplorerContext(state: ExplorerState): string {

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ContextMenu } from '$lib/components/composites';
+import { ContextMenu } from '#lib/components/composites/index.ts';
 import { DemoCard } from '../../components/_components';
 </script>
 

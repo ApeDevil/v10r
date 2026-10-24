@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Card } from '$lib/components/composites';
-import { Stack } from '$lib/components/layout';
-import * as m from '$lib/paraglide/messages';
+import { Card } from '#lib/components/composites/index.ts';
+import { Stack } from '#lib/components/layout/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let { data } = $props();
 </script>

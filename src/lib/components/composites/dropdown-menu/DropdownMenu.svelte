@@ -1,9 +1,9 @@
 <script lang="ts">
 import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
-import { goto } from '$app/navigation';
-import { useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { followHref } from '#lib/nav/follow.ts';
+import { useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 import { dropdownMenuContentVariants, dropdownMenuItemVariants, dropdownMenuSeparatorVariants } from './dropdown-menu';
 
 type DropdownItem =
@@ -65,7 +65,7 @@ const s = useSurface();
 						class={dropdownMenuItemVariants()}
 						onclick={() => {
 							if (item.href) {
-								goto(item.href);
+								void followHref(item.href);
 							} else if (item.onclick) {
 								item.onclick();
 							}

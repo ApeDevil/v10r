@@ -16,7 +16,7 @@
  * The rows hold conversation content (prompt bodies, tool I/O), so they follow the
  * `ai-turn-bodies` / `ai-turns` retention windows (redact, then delete) rather than the
  * telemetry-only window the usage columns used to have. The contract these columns serialize
- * is `$lib/types/turn-trace.ts`.
+ * is `#lib/types/turn-trace.ts`.
  */
 import { index, integer, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
 import type {
@@ -33,7 +33,7 @@ import type {
 	TurnHistory,
 	TurnOutcome,
 	TurnTimings,
-} from '$lib/types/turn-trace';
+} from '#lib/types/turn-trace.ts';
 import { user } from '../auth/_better-auth';
 import { aiSchema, aiSurfaceEnum, conversation, message } from './conversation';
 import { agentProposal } from './proposal';

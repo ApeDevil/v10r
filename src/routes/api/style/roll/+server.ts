@@ -3,11 +3,11 @@
  * Sets cookie and fire-and-forget DB persistence for auth users.
  */
 
-import { ipLimitKey } from '$lib/server/abuse';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
-import { ROLL_RATE_LIMIT_MAX, ROLL_RATE_LIMIT_PREFIX, ROLL_RATE_LIMIT_WINDOW } from '$lib/server/style/config';
-import { saveStyleToDb } from '$lib/server/style/persist';
+import { ipLimitKey } from '#lib/server/abuse/index.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
+import { ROLL_RATE_LIMIT_MAX, ROLL_RATE_LIMIT_PREFIX, ROLL_RATE_LIMIT_WINDOW } from '#lib/server/style/config.ts';
+import { saveStyleToDb } from '#lib/server/style/persist.ts';
 import {
 	generateRandomStyle,
 	parseStyleCookie,
@@ -15,8 +15,8 @@ import {
 	STYLE_COOKIE_NAME,
 	STYLE_COOKIE_OPTIONS,
 	serializeStyleCookie,
-} from '$lib/styles/random';
-import type { PaletteId, RadiusId, TypographyId } from '$lib/styles/random/types';
+} from '#lib/styles/random/index.ts';
+import type { PaletteId, RadiusId, TypographyId } from '#lib/styles/random/types.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter(ROLL_RATE_LIMIT_PREFIX, ROLL_RATE_LIMIT_MAX, ROLL_RATE_LIMIT_WINDOW);

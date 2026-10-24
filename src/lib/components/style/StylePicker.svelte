@@ -10,12 +10,12 @@
  * primitive renders a swatch row.
  */
 
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getStyle } from '$lib/state/style.svelte';
-import { getToast } from '$lib/state/toast.svelte';
-import type { Palette } from '$lib/styles/random';
-import { PALETTE_REGISTRY, RADIUS_REGISTRY, TYPOGRAPHY_REGISTRY } from '$lib/styles/random';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getStyle } from '#lib/state/style.svelte.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import type { Palette } from '#lib/styles/random/index.ts';
+import { PALETTE_REGISTRY, RADIUS_REGISTRY, TYPOGRAPHY_REGISTRY } from '#lib/styles/random/index.ts';
 import type { OwnedPalette } from './types';
 
 interface Props {

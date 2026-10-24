@@ -40,7 +40,7 @@ export function isValidPrefix(prefix: string): boolean {
 /**
  * Shape-check a bare IP address before it can reach an `::inet` cast.
  *
- * Deliberately NOT `normalizeIpKey` from `$lib/server/abuse`: that function
+ * Deliberately NOT `normalizeIpKey` from `#lib/server/abuse/index.ts`: that function
  * returns a `/64` CIDR for IPv6 because it exists to build rate-limit buckets.
  * Containment needs the full host address — a `/64` would both fail the `::inet`
  * cast and, if it survived one, silently widen every IPv6 comparison to a whole

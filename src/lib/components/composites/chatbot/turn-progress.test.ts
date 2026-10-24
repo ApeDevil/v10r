@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { GroundingItem } from '$lib/types/turn-trace';
+import type { GroundingItem } from '#lib/types/turn-trace.ts';
 import {
 	awaitingAnswer,
 	citedCatalogSources,

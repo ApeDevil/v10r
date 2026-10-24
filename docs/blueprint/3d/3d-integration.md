@@ -8,8 +8,8 @@ How v10r wires Threlte into SvelteKit. For Three.js / Threlte basics (scene grap
 - [Route Structure](#route-structure) - Where 3D pages live
 - [Rendering Strategy](#rendering-strategy) - SSR off at the layout
 - [Scene Pattern](#scene-pattern) - Canvas + T + useTask in this app
-- [Model Config Registry](#model-config-registry) - `$lib/3d/models.ts`
-- [Components](#components) - `$lib/components/3d/`
+- [Model Config Registry](#model-config-registry) - `#lib/3d/models.ts`
+- [Components](#components) - `#lib/components/3d/`
 - [Part Explorer](#part-explorer) - opt-in click-to-inspect (sofa)
 - [Asset Pipeline](#asset-pipeline) - GLB assets in `static/models/`
 - [WebGL Fallback](#webgl-fallback) - `<svelte:boundary>`, not manual detection
@@ -110,15 +110,15 @@ useTask((delta) => mixer?.update(delta));
 
 ## Model Config Registry
 
-Camera, lights, controls, and render behavior for each model live in **`$lib/3d/models.ts`** as a static registry (`Model3D`, `CameraPreset`, `OrbitControlsConfig`, `RenderMode`). Viewer components (`ViewerScene`, `SceneCard`) consume the resolved config; pages pass it in.
+Camera, lights, controls, and render behavior for each model live in **`#lib/3d/models.ts`** as a static registry (`Model3D`, `CameraPreset`, `OrbitControlsConfig`, `RenderMode`). Viewer components (`ViewerScene`, `SceneCard`) consume the resolved config; pages pass it in.
 
 **Scene snippets are NOT referenced from the config.** Pages map a model ID to its scene component at the route level. This avoids a circular dependency and preserves per-route code-splitting (a model's Three.js scene only loads on its own route).
 
-Customizer config (materials, parts, morph targets, presets) lives alongside in `$lib/3d/customization.ts`. The click-to-inspect part-explorer registry lives in `$lib/3d/parts.ts` — see [Part Explorer](#part-explorer).
+Customizer config (materials, parts, morph targets, presets) lives alongside in `#lib/3d/customization.ts`. The click-to-inspect part-explorer registry lives in `#lib/3d/parts.ts` — see [Part Explorer](#part-explorer).
 
 ## Components
 
-Reusable 3D building blocks live in **`$lib/components/3d/`** (barrel: `$lib/components/3d/index.ts`). Read the source for current props.
+Reusable 3D building blocks live in **`#lib/components/3d/`** (barrel: `#lib/components/3d/index.ts`). Read the source for current props.
 
 | Component | Role |
 |-----------|------|
@@ -130,7 +130,7 @@ Reusable 3D building blocks live in **`$lib/components/3d/`** (barrel: `$lib/com
 | `PartInfoPanel` / `PartPhotoGallery` | Non-modal part info panel (label, description, photo thumbnails) + full-size photo lightbox |
 | `customizer/` | GLTF customizer (`GltfCustomizer`, `CustomizerLayer`, material/part/accessory pickers, morph-target sliders, preset bar) |
 
-`viz/` and `3d/` are intentionally excluded from the default `$lib/components` barrel so Three.js / Chart.js don't get bundled into surfaces that don't use them. Import 3D components from `$lib/components/3d` directly.
+`viz/` and `3d/` are intentionally excluded from the default `#lib/components` barrel so Three.js / Chart.js don't get bundled into surfaces that don't use them. Import 3D components from `#lib/components/3d` directly.
 
 ## Part Explorer
 
@@ -138,7 +138,7 @@ Opt-in click-to-inspect for a model's logical parts (the Glam Velvet Sofa is the
 
 **Opt-in and gated.** Interactivity turns on only when a part registry exists for the model. `ViewerScene` enables `interactivity()` + `CameraControls` (with `fitToBox` fly-to) when `parts?.length`; otherwise it renders the byte-identical `OrbitControls` path with no picking and no parts UI. Every model except the sofa is unchanged. Add a model by adding a `PART_EXPLORERS_BY_MODEL` entry in `parts.ts` — no component edits.
 
-**Registry — `$lib/3d/parts.ts`.** Pure, WebGL-free single source of truth. A `PartDef` maps a stable logical id (used for selection state and the `?part=` link) to one or more GLTF mesh-name patterns, a label, a description, example `photos` (src/alt/caption/`rights` — assets under `static/images/parts/`; the `AssetRights` record is the only attribution, rendered in the lightbox and on `/credits`), and an optional `customizeHint`. Never key logic on raw artist mesh names — they drift across re-exports and split into `_0`/`_1` primitives, so matching is exact-or-`_N`-prefix tolerant. `resolvePartId` (raycast hit → part id) and `collectPartMeshes` are pure and unit-tested in `parts.test.ts`.
+**Registry — `#lib/3d/parts.ts`.** Pure, WebGL-free single source of truth. A `PartDef` maps a stable logical id (used for selection state and the `?part=` link) to one or more GLTF mesh-name patterns, a label, a description, example `photos` (src/alt/caption/`rights` — assets under `static/images/parts/`; the `AssetRights` record is the only attribution, rendered in the lightbox and on `/credits`), and an optional `customizeHint`. Never key logic on raw artist mesh names — they drift across re-exports and split into `_0`/`_1` primitives, so matching is exact-or-`_N`-prefix tolerant. `resolvePartId` (raycast hit → part id) and `collectPartMeshes` are pure and unit-tested in `parts.test.ts`.
 
 **Highlight — `PartHighlightLayer.svelte`.** Visual-only, applied imperatively. Hover = subtle emissive tint. Selection = inverted-hull outline in the theme accent plus every other part ghosted to low opacity (`transparent` toggle needs `needsUpdate` — see the `3d` skill); the selected part itself gets NO emissive, because dark materials wash out under tone mapping. The outline color resolves `--color-primary` via `css-color.ts` (tokens are oklch, which `THREE.Color` can't parse — normalize via 1px canvas `getImageData`) and re-resolves live on `<html>` `class`/`data-palette` mutations, so it tracks light/dark and palette scheme changes. The layer clones each material on first run (so it never mutates the shared cached GLB), captures original state, and restores on destroy. It **never disposes** model materials — `useGltf` caches the GLB and the customizer route shares the same materials. Deliberately not `<Outlines>` (it reparents meshes and drops the GLTF's baked transforms) and not postprocessing (no postprocessing dep is installed). Selection wins over hover; imperative material changes call `invalidate()` for on-demand render mode.
 
@@ -153,7 +153,7 @@ GLB models ship from **`static/models/`** and are served from `/models/*.glb`:
 | `RobotExpressive.glb` | customizer / viewer |
 | `GlamVelvetSofa.glb` | customizer / viewer |
 
-Attribution lives on each model's `rights` (`AssetRights`: author, SPDX license, source) in `$lib/3d/models.ts`; `/credits` renders it and `credits/registry.gate.test.ts` fails if a file under `static/models/` has no entry.
+Attribution lives on each model's `rights` (`AssetRights`: author, SPDX license, source) in `#lib/3d/models.ts`; `/credits` renders it and `credits/registry.gate.test.ts` fails if a file under `static/models/` has no entry.
 
 Use **GLB** (binary glTF), not OBJ/FBX. For compression specifics (Draco, KTX2/Basis textures, decoder paths), see the `3d` skill — no compressed models are wired in yet, so adding one means also serving its decoder.
 
@@ -176,14 +176,14 @@ This project does **not** hand-roll WebGL feature detection. Scenes are wrapped 
 </svelte:boundary>
 ```
 
-`BoundaryFallback` is in `$lib/components/composites`.
+`BoundaryFallback` is in `#lib/components/composites/index.ts`.
 
 ## Gotchas
 
 - **`useTask`, not `useFrame`.** Threlte 8 renamed the per-frame hook. `useFrame` is Threlte 7.
 - **`useGltf` is a store.** Read `$gltf`, and never render scene contents before it resolves — guard with `{#if $gltf}` / `{#await}`.
 - **Morph-target animations fight the customizer.** When a model has morph customization, strip `morphTargetInfluences` tracks from clips before playing, or the mixer overwrites the customizer's values each frame (see `ViewerScene.svelte`).
-- **`makeDefault` type error.** Threlte declares the prop through a conditional type that TypeScript collapses to `undefined`, so the boolean is a type error while the runtime requires it. All scenes pass `makeDefault={THRELTE_MAKE_DEFAULT}` — one owned cast in `$lib/utils/threlte-workarounds.ts` — because markup `@ts-ignore` comments are not honored by svelte-check.
+- **`makeDefault` type error.** Threlte declares the prop through a conditional type that TypeScript collapses to `undefined`, so the boolean is a type error while the runtime requires it. All scenes pass `makeDefault={THRELTE_MAKE_DEFAULT}` — one owned cast in `#lib/utils/threlte-workarounds.ts` — because markup `@ts-ignore` comments are not honored by svelte-check.
 - **`state_referenced_locally` on `useGltf`.** Calling `useGltf(model.path)` at script top reads a prop during init; the codebase silences it with `// svelte-ignore state_referenced_locally`.
 - **Code-split per route.** Keep each scene's Three.js imports inside its own route/scene component. Don't pull 3D libs into a shared parent `+layout.ts` — that defeats the per-route split.
 

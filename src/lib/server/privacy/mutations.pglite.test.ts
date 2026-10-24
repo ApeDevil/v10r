@@ -12,22 +12,22 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { grant } from '$lib/server/db/schema/auth/grant';
-import { comment } from '$lib/server/db/schema/blog/comment';
-import { post } from '$lib/server/db/schema/blog/post';
-import { publishedRevision } from '$lib/server/db/schema/blog/published-revision';
-import { revision } from '$lib/server/db/schema/blog/revision';
-import { chunk } from '$lib/server/db/schema/retrieval/chunk';
-import { collection } from '$lib/server/db/schema/retrieval/collection';
-import { corpusMap } from '$lib/server/db/schema/retrieval/corpus-map';
-import { document } from '$lib/server/db/schema/retrieval/document';
-import { embeddingModel } from '$lib/server/db/schema/retrieval/embedding-model';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { grant } from '#lib/server/db/schema/auth/grant.ts';
+import { comment } from '#lib/server/db/schema/blog/comment.ts';
+import { post } from '#lib/server/db/schema/blog/post.ts';
+import { publishedRevision } from '#lib/server/db/schema/blog/published-revision.ts';
+import { revision } from '#lib/server/db/schema/blog/revision.ts';
+import { chunk } from '#lib/server/db/schema/retrieval/chunk.ts';
+import { collection } from '#lib/server/db/schema/retrieval/collection.ts';
+import { corpusMap } from '#lib/server/db/schema/retrieval/corpus-map.ts';
+import { document } from '#lib/server/db/schema/retrieval/document.ts';
+import { embeddingModel } from '#lib/server/db/schema/retrieval/embedding-model.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -35,11 +35,11 @@ vi.mock('$lib/server/db', async () => {
 
 // The two best-effort sweeps are out of scope here — and left real they attempt a live
 // Neo4j/R2 connection on every case.
-vi.mock('$lib/server/graph/retrieval/mutations', () => ({ deleteUserGraph: async () => {} }));
-vi.mock('$lib/server/store', () => ({ s3: null, BUCKET: '' }));
-vi.mock('$lib/server/store/image', () => ({ deleteImagemetaObject: async () => {} }));
+vi.mock('#lib/server/graph/retrieval/mutations.ts', () => ({ deleteUserGraph: async () => {} }));
+vi.mock('#lib/server/store/index.ts', () => ({ s3: null, BUCKET: '' }));
+vi.mock('#lib/server/store/image.ts', () => ({ deleteImagemetaObject: async () => {} }));
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { deleteUserData, SoleAdminBlockedError } = await import('./mutations');
 
 afterAll(async () => {

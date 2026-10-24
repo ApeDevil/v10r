@@ -93,7 +93,7 @@ compatibility fallback or migration shim is provided.
 
 ### `DELETE /api/desk/files/:id`
 
-Soft-deletes the file: `deleteFile()` sets `deleted_at` on the `desk.file` row and its matching detail row (spreadsheet or markdown) inside a transaction, then returns 204. The row is not hard-deleted, so `ON DELETE CASCADE` never fires. There is no restore endpoint — the row stays soft-deleted until the `deskRetention` job (`$lib/server/jobs/desk-retention.ts`) hard-deletes it after `DESK_SOFT_DELETE_RETENTION_DAYS`. CASCADE on `spreadsheet.file_id` is only a backstop for hard deletion (e.g. user removal), not this endpoint.
+Soft-deletes the file: `deleteFile()` sets `deleted_at` on the `desk.file` row and its matching detail row (spreadsheet or markdown) inside a transaction, then returns 204. The row is not hard-deleted, so `ON DELETE CASCADE` never fires. There is no restore endpoint — the row stays soft-deleted until the `deskRetention` job (`#lib/server/jobs/desk-retention.ts`) hard-deletes it after `DESK_SOFT_DELETE_RETENTION_DAYS`. CASCADE on `spreadsheet.file_id` is only a backstop for hard deletion (e.g. user removal), not this endpoint.
 
 ## SpreadsheetPanel
 
@@ -145,7 +145,7 @@ navigation, retry after a failed save, `online` re-flush).
 
 A cell's stored value is an answer, not a fact: it is only correct while the cells it reads
 are unchanged. The grid therefore never reuses one. `createGridResolver`
-(`$lib/desk/formula.ts`) builds a getter for a single recalculation pass, and every
+(`#lib/desk/formula.ts`) builds a getter for a single recalculation pass, and every
 reference — typed, loaded from storage, or reached through a range — is resolved depth-first
 through it.
 
@@ -184,14 +184,14 @@ reported the stale total as fact. Item 2's fix never reached this path — the b
 in it.
 
 The rule therefore sits where every writer passes: `createSpreadsheetFile` and
-`updateSpreadsheetByFileId` run `recalculateCells` (`$lib/desk/spreadsheet-cells.ts`) before
+`updateSpreadsheetByFileId` run `recalculateCells` (`#lib/desk/spreadsheet-cells.ts`) before
 the row is written. It canonicalises labels (`b2` → `B2`), drops empty cells, marks a `=`
 string as a formula, and re-derives every `v` through the same `createGridResolver` the grid
 uses — so a stored sheet is internally consistent whoever wrote it, and the grid's own save is
 a no-op through it (idempotence is tested). A label the sheet cannot address (`AA1`, `total`)
 is refused rather than dropped, before any lock is taken: the AI tools validate addresses first
 through `applyCellUpdates` and report the offending one; the REST body's `cells` keys are
-validated by valibot. The evaluator lives in `$lib/desk/` for this reason — a value one writer
+validated by valibot. The evaluator lives in `#lib/desk/` for this reason — a value one writer
 stores must be the value the other would compute.
 
 The stored sheet being right is not the same as the open panel showing it. `desk_update_cells`
@@ -226,7 +226,7 @@ The Explorer's `data/` section shows desk folders and spreadsheet files. Folders
 ## File Structure
 
 ```
-$lib/server/db/schema/desk/
+#lib/server/db/schema/desk/
   schema.ts                          # deskSchema = pgSchema('desk')
   file.ts                            # desk.file table + file_type enum ('spreadsheet' | 'markdown')
   folder.ts                          # desk.folder table
@@ -234,7 +234,7 @@ $lib/server/db/schema/desk/
   markdown.ts                        # desk.markdown detail table (file_id FK NOT NULL)
   index.ts                           # Re-exports all desk schema objects
 
-$lib/server/db/desk/
+#lib/server/db/desk/
   queries.ts                         # listFiles, getFile, getSpreadsheetByFileId, getMarkdownByFileId, listFolders, getFolder
   mutations.ts                       # createSpreadsheetFile, createMarkdownFile, renameFile, deleteFile, updateSpreadsheetByFileId, updateMarkdownByFileId, folder mutations, moveFile, duplicateSpreadsheetFile, toggleFileAiContext
 
@@ -246,21 +246,21 @@ src/routes/api/desk/folders/
   +server.ts                         # GET (list) + POST (create)
   [id]/+server.ts                    # GET + PUT + DELETE
 
-$lib/desk/
+#lib/desk/
   formula.ts                         # Expression evaluator + grid resolver (dependency order, cycles)
   spreadsheet-cells.ts               # PersistedCell contract + recalculateCells (the write door's pass)
 
-$lib/components/desk/panels/spreadsheet/
+#lib/components/desk/panels/spreadsheet/
   SpreadsheetPanel.svelte            # Lifecycle, recovery and conflict UI
   spreadsheet-session.svelte.ts      # Per-user/file shared browser document
   spreadsheet-autosave.ts            # Serialized queue and refresh/conflict state machine
   spreadsheet-drafts.ts              # Isolated localStorage draft slots
   spreadsheet.state.svelte.ts        # Sparse SvelteMap of cells, selection, recalculation pass
 
-$lib/server/ai/tools/
+#lib/server/ai/tools/
   cell-updates.ts                    # {cell, value}[] → map; canonical addresses, refused ones named
 
-$lib/components/explorer/
+#lib/components/explorer/
   ExplorerPanel.svelte               # Orchestrator: fetch, adapt, dispatch
   ExplorerTree.svelte                # Thin root iterator + keyboard shortcuts
   TreeNode.svelte                    # Recursive node: context menu, rename, delete, DnD

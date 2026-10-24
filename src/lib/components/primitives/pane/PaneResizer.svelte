@@ -1,6 +1,6 @@
 <script lang="ts">
 import { PaneResizer } from 'paneforge';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	withHandle?: boolean;

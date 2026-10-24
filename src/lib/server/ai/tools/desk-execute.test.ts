@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 /** A transaction handle is the db itself here — the door only needs `transaction(fn)` to call `fn`. */
 const fakeDb: Record<string, unknown> = {};
 fakeDb.transaction = async (fn: (tx: unknown) => Promise<unknown>) => fn(fakeDb);
-vi.mock('$lib/server/db', () => ({ db: fakeDb }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: fakeDb }));
 
 const mockDeleteFile = vi.fn();
 const mockRenameFile = vi.fn();
@@ -23,7 +23,7 @@ const mockCreateSpreadsheet = vi.fn();
 const mockLockFile = vi.fn();
 const mockGetSpreadsheet = vi.fn();
 
-vi.mock('$lib/server/db/desk/mutations', () => ({
+vi.mock('#lib/server/db/desk/mutations.ts', () => ({
 	deleteFile: mockDeleteFile,
 	renameFile: mockRenameFile,
 	updateMarkdownByFileId: mockUpdateMarkdown,
@@ -32,7 +32,7 @@ vi.mock('$lib/server/db/desk/mutations', () => ({
 	createSpreadsheetFile: mockCreateSpreadsheet,
 	lockFileIfUnchanged: mockLockFile,
 }));
-vi.mock('$lib/server/db/desk/queries', () => ({
+vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	getSpreadsheetByFileId: mockGetSpreadsheet,
 }));
 

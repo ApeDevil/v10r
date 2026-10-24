@@ -1,9 +1,9 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
 import { MediaQuery } from 'svelte/reactivity';
-import type { Model3D } from '$lib/3d/models';
-import { resolveCardConfig } from '$lib/3d/models';
-import { BoundaryFallback } from '$lib/components/composites';
+import type { Model3D } from '#lib/3d/models.ts';
+import { resolveCardConfig } from '#lib/3d/models.ts';
+import { BoundaryFallback } from '#lib/components/composites/index.ts';
 import SceneContent from './SceneContent.svelte';
 
 interface Props {

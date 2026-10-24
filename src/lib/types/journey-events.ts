@@ -1,7 +1,7 @@
 /**
  * Client-safe vocabulary shared by the journey lane's collector (server) and
  * its emitters (client): the doors a command can come through. The server's
- * event allow-list (`$lib/server/analytics/event-schema.ts`) reads the enum
+ * event allow-list (`#lib/server/analytics/event-schema.ts`) reads the enum
  * from here so the client cannot send a value the ingest would drop.
  */
 

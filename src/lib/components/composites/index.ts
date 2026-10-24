@@ -5,8 +5,8 @@
 // being pulled into every route's import graph. (The same exclusion also kept
 // jsdom, via isomorphic-dompurify, from breaking Vercel/Node 22 with
 // ERR_REQUIRE_ESM before the swap to sanitize-html.)
-// Callers must import them directly: `$lib/components/composites/chatbot`,
-// `$lib/components/composites/info-dialog`.
+// Callers must import them directly: `#lib/components/composites/chatbot/index.ts`,
+// `#lib/components/composites/info-dialog/index.ts`.
 
 export * from './alert';
 export * from './altcha';

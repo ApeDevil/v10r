@@ -6,10 +6,9 @@
  * userId (never client-supplied), so a caller can only ever address their own object.
  * Nothing is persisted.
  */
-import { json } from '@sveltejs/kit';
-import { isImageId, type VisionFailureReason, type VisionResponse } from '$lib/schemas/showcase/image-kit';
-import { runVision } from '$lib/server/showcases/image-kit';
-import { buildImagekitKey, getImagekitBytes } from '$lib/server/showcases/image-kit/storage';
+import { isImageId, type VisionFailureReason, type VisionResponse } from '#lib/schemas/showcase/image-kit.ts';
+import { runVision } from '#lib/server/showcases/image-kit/index.ts';
+import { buildImagekitKey, getImagekitBytes } from '#lib/server/showcases/image-kit/storage.ts';
 import type { RequestHandler } from './$types';
 
 const REASON_STATUS: Record<VisionFailureReason, number> = {
@@ -25,21 +24,26 @@ export const config = { runtime: 'nodejs22.x', maxDuration: 60 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
-		return json({ ok: false, reason: 'error', message: 'Not signed in.' } satisfies VisionResponse, { status: 401 });
+		return Response.json({ ok: false, reason: 'error', message: 'Not signed in.' } satisfies VisionResponse, {
+			status: 401,
+		});
 	}
 
 	let imageId: unknown;
 	try {
 		({ imageId } = (await request.json()) as { imageId?: unknown });
 	} catch {
-		return json({ ok: false, reason: 'error', message: 'Invalid request body.' } satisfies VisionResponse, {
+		return Response.json({ ok: false, reason: 'error', message: 'Invalid request body.' } satisfies VisionResponse, {
 			status: 400,
 		});
 	}
 	if (!isImageId(imageId)) {
-		return json({ ok: false, reason: 'error', message: 'Missing or invalid imageId.' } satisfies VisionResponse, {
-			status: 400,
-		});
+		return Response.json(
+			{ ok: false, reason: 'error', message: 'Missing or invalid imageId.' } satisfies VisionResponse,
+			{
+				status: 400,
+			},
+		);
 	}
 
 	const key = buildImagekitKey(locals.user.id, imageId, 'webp');
@@ -47,7 +51,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	try {
 		bytes = await getImagekitBytes(key);
 	} catch {
-		return json(
+		return Response.json(
 			{ ok: false, reason: 'error', message: 'Image not found — re-upload and try again.' } satisfies VisionResponse,
 			{
 				status: 404,
@@ -56,5 +60,5 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const result = await runVision(locals.user.id, bytes);
-	return json(result, { status: result.ok ? 200 : REASON_STATUS[result.reason] });
+	return Response.json(result, { status: result.ok ? 200 : REASON_STATUS[result.reason] });
 };

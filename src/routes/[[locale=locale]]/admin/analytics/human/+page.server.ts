@@ -1,6 +1,5 @@
 import { desc, eq } from 'drizzle-orm';
-import { parseAnalyticsRange } from '$lib/server/admin';
-import { db } from '$lib/server/db';
+import { parseAnalyticsRange } from '#lib/server/admin/index.ts';
 import {
 	getAudienceBreakdown,
 	getCommandUsage,
@@ -12,12 +11,13 @@ import {
 	getTrafficComposition,
 	getTrafficTrend,
 	getUserLaneStats,
-} from '$lib/server/db/analytics/aggregations';
-import { getRecentEvents } from '$lib/server/db/analytics/queries';
-import { jobExecution } from '$lib/server/db/schema/jobs';
-import { safeDeferPromise } from '$lib/server/http/defer';
-import { requireAdmin } from '$lib/server/http/guards';
-import { hasActivePairedSession } from '$lib/server/pairing';
+} from '#lib/server/db/analytics/aggregations.ts';
+import { getRecentEvents } from '#lib/server/db/analytics/queries.ts';
+import { db } from '#lib/server/db/index.ts';
+import { jobExecution } from '#lib/server/db/schema/jobs/index.ts';
+import { safeDeferPromise } from '#lib/server/http/defer.ts';
+import { requireAdmin } from '#lib/server/http/guards.ts';
+import { hasActivePairedSession } from '#lib/server/pairing/index.ts';
 import type { PageServerLoad } from './$types';
 
 async function getLastCleanupStatus(): Promise<{

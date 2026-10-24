@@ -19,7 +19,7 @@
  * `getLayerScope`). A layer that watches the stack to yield to whatever covers
  * it (the mobile sidebar drawer) must not yield to its own menus, and the
  * component tree — not the DOM, which portals scatter — is what says whose menu
- * it is. Same context-through-portal fact `$lib/styles/elevation` relies on.
+ * it is. Same context-through-portal fact `#lib/styles/elevation.ts` relies on.
  *
  * The chain is captured at push time rather than walked on demand: an
  * intermediate ancestor can close while its descendant stays open (the user

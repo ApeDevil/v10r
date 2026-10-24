@@ -2,9 +2,9 @@
  * Assistant profile — the client-safe contract of what each AI surface's assistant IS:
  * its identity, the capabilities it is composed from, and the grounding sources it draws on.
  *
- * The server composes a turn from the profile (`$lib/server/ai/profile/`); this module is
- * the vocabulary the trace (`$lib/types/turn-trace.ts`), the tool manifest
- * (`$lib/types/ai-tools.ts`) and the inspector share, and the wire shape of
+ * The server composes a turn from the profile (`#lib/server/ai/profile//index.ts`); this module is
+ * the vocabulary the trace (`#lib/types/turn-trace.ts`), the tool manifest
+ * (`#lib/types/ai-tools.ts`) and the inspector share, and the wire shape of
  * `GET /api/ai/profiles/[surface]`. Framework-free, server-free.
  */
 

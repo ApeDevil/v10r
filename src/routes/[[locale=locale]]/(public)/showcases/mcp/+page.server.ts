@@ -7,9 +7,9 @@
  * browser 500s). The page receives only the projected data it renders.
  */
 
-import { computeStats, toDagData } from '$lib/showcases/mcp/registry-viz';
-import registryJson from '$patterns/registry.json';
-import type { Registry } from '$patterns/schema';
+import { computeStats, toDagData } from '#lib/showcases/mcp/registry-viz.ts';
+import registryJson from '#patterns/registry.json';
+import type { Registry } from '#patterns/schema.ts';
 import type { PageServerLoad } from './$types';
 
 const registry = registryJson as unknown as Registry;

@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/private';
+import { RESEND_API_KEY, RESEND_FROM_EMAIL } from '$app/env/private';
 
 interface AuthEmailParams {
 	to: string;
@@ -7,8 +7,8 @@ interface AuthEmailParams {
 }
 
 export async function sendAuthEmail({ to, subject, html }: AuthEmailParams): Promise<void> {
-	const apiKey = env.RESEND_API_KEY;
-	const from = env.RESEND_FROM_EMAIL ?? 'noreply@example.com';
+	const apiKey = RESEND_API_KEY;
+	const from = RESEND_FROM_EMAIL ?? 'noreply@example.com';
 
 	if (!apiKey) {
 		throw new Error('RESEND_API_KEY not configured — cannot send auth emails');

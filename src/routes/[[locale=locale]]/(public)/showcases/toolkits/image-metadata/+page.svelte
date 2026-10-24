@@ -6,11 +6,10 @@
 import { tick } from 'svelte';
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { enhance } from '$app/forms';
-import { apiFetch } from '$lib/api';
-import { Alert, Card, FormField, TagInput } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Input, Select, Spinner, Switch, Textarea, Tooltip } from '$lib/components/primitives';
+import { apiFetch } from '#lib/api.ts';
+import { Alert, Card, FormField, TagInput } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Input, Select, Spinner, Switch, Textarea, Tooltip } from '#lib/components/primitives/index.ts';
 import {
 	type AnalyzeUsage,
 	type ConfidenceTier,
@@ -21,7 +20,8 @@ import {
 	imageMetadataSaveSchema,
 	type MetadataFieldKey,
 	type ProvenanceState,
-} from '$lib/schemas/image-metadata';
+} from '#lib/schemas/image-metadata.ts';
+import { enhance } from '$app/forms';
 import MetadataApprovalDialog from './_components/MetadataApprovalDialog.svelte';
 import type { PageProps } from './$types';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { BaseEdge, type Edge, type EdgeProps } from '@xyflow/svelte';
-import type { TurnGraphEdgeKind } from '$lib/showcases/ai/turn-graph';
-import { type EdgeRoute, orthogonalPath, routePoints } from '$lib/showcases/ai/turn-graph-layout';
+import type { TurnGraphEdgeKind } from '#lib/showcases/ai/turn-graph.ts';
+import { type EdgeRoute, orthogonalPath, routePoints } from '#lib/showcases/ai/turn-graph-layout.ts';
 
 // One edge of the turn graph, drawn along the route the layout gave it (a gutter track, the
 // column's rail, a detour beneath the columns) so it never crosses a card. Its kind decides

@@ -6,10 +6,10 @@
  */
 
 import { fly } from 'svelte/transition';
-import { Button } from '$lib/components/primitives/button';
-import * as m from '$lib/paraglide/messages';
-import { getToast } from '$lib/state/toast.svelte';
-import { cn } from '$lib/utils/cn';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getToast } from '#lib/state/toast.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	class?: string;

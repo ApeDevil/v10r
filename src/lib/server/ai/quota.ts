@@ -1,4 +1,4 @@
-import { getProviderUsageToday } from '$lib/server/db/ai/admin-queries';
+import { getProviderUsageToday } from '#lib/server/db/ai/admin-queries.ts';
 import type { ProviderRegistry } from './connections';
 import { type LimitConfidence, PROVIDER_LIMITS, type ResetKind } from './provider-limits';
 import { readProviderRedisUsage } from './provider-usage';

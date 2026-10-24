@@ -16,13 +16,13 @@
  * `TurnRecorder`, and `verify()` runs the capabilities' verifiers over the answer.
  */
 import type { ToolSet } from 'ai';
-import type { Locale } from '$lib/i18n';
-import type { SearchResult } from '$lib/search/types';
-import type { DeskCorpusState } from '$lib/server/db/retrieval/queries';
-import { generateEmbedding, type RankedChunk } from '$lib/server/retrieval';
-import type { PageContext } from '$lib/server/search';
-import type { CapabilityId, GroundingSourceId } from '$lib/types/assistant-profile';
-import type { AiSurface } from '$lib/types/db-enums';
+import type { Locale } from '#lib/i18n/index.ts';
+import type { SearchResult } from '#lib/search/types.ts';
+import type { DeskCorpusState } from '#lib/server/db/retrieval/queries.ts';
+import { generateEmbedding, type RankedChunk } from '#lib/server/retrieval/index.ts';
+import type { PageContext } from '#lib/server/search/index.ts';
+import type { CapabilityId, GroundingSourceId } from '#lib/types/assistant-profile.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 import type {
 	Activation,
 	CitationRecord,
@@ -32,7 +32,7 @@ import type {
 	PromptBlockId,
 	PromptBlockSection,
 	TurnAwareness,
-} from '$lib/types/turn-trace';
+} from '#lib/types/turn-trace.ts';
 import { type CompactionListener, wrapToolsWithCompaction } from '../capabilities/compaction';
 import type { EmbeddingConnection } from '../connections';
 import type { DeskLayoutEntry, DeskToolScope } from '../tools/_types';

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { NameMatchKind, NameSourceId } from '$lib/name-check/report';
-import { clearLocalCache } from '$lib/server/cache';
-import { startDeadline } from '$lib/server/http/deadline';
-import { resetBreakers } from '$lib/server/resilience';
+import type { NameMatchKind, NameSourceId } from '#lib/name-check/report.ts';
+import { clearLocalCache } from '#lib/server/cache/index.ts';
+import { startDeadline } from '#lib/server/http/deadline.ts';
+import { resetBreakers } from '#lib/server/resilience/index.ts';
 import { checkName } from './check';
 import { NameSourceError } from './errors';
 import {
@@ -18,8 +18,8 @@ import { EUIPO_DEFAULT_API_BASE, EUIPO_DEFAULT_TOKEN_URL, euipoSource } from './
 import { rdapSource } from './sources/rdap';
 import { webSource } from './sources/web';
 
-vi.mock('$lib/server/cache/client', () => ({ redis: null }));
-vi.mock('$lib/server/platform/after-response', () => ({ deferAfterResponse: vi.fn() }));
+vi.mock('#lib/server/cache/client.ts', () => ({ redis: null }));
+vi.mock('#lib/server/platform/after-response.ts', () => ({ deferAfterResponse: vi.fn() }));
 
 afterEach(() => {
 	clearLocalCache();

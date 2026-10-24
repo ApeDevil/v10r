@@ -24,7 +24,7 @@ agent reads and adapts to a new project. Emulation, not cloning. What it is: `RE
 - **Load context per task, not per session.** Identify the domain from the routing table
   below, read its canonical source, inspect the implementation, then edit. A copy change does
   not need the database docs; a UI change does not need the deployment docs.
-- **Architecture boundaries.** Business logic lives in framework-free `$lib/server/[domain]/`;
+- **Architecture boundaries.** Business logic lives in framework-free `#lib/server/[domain]/`;
   thin adapters (`+page.server.ts`, `+server.ts`, AI tools, jobs) wrap it. Four invariants —
   no framework imports in domains, dates serialized in adapters, `redirect`/`error`/`fail`
   only in adapters, domains call down not across (barrels only) — are executable in
@@ -34,7 +34,7 @@ agent reads and adapts to a new project. Emulation, not cloning. What it is: `RE
   `docs/foundation/self-expressive-project.md`; the credo and the naming rule are in the
   section below. They apply to every name, file, table and comment you write.
 - **Component-first.** Never use a raw `<button>`, `<input>`, `<select>` or `<textarea>` when
-  a `$lib/components/` component exists. Exceptions: `docs/blueprint/design/components.md`.
+  a `#lib/components/` component exists. Exceptions: `docs/blueprint/design/components.md`.
 - **No backward compatibility.** Active development, no production users. No migration shims,
   compat layers or deprecation paths — change the code directly.
 - **Generated surfaces are never hand-edited.** `docs/pattern-library/`, `src/lib/paraglide/`,
@@ -149,7 +149,7 @@ adds the production build and perf ratchet (the ship runs both).
   sub-agent. In this repo `vr ship` gates the feature branch and pushes that branch only
   (`.vrrc` `PROMOTION=conversation`); it never reaches `main`. Otherwise run the container
   commands `vr` wraps directly.
-- **Never import `$lib/server/` from a `.svelte` file or a universal `+page.ts`** — the path
+- **Never import `#lib/server/` from a `.svelte` file or a universal `+page.ts`** — the path
   is the server/client boundary.
 - **A new i18n key needs a dev-server restart**; the running Vite process 500s on the unknown
   key until then (`docs/stack/i18n/paraglide.md`).

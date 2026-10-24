@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Tabs as TabsPrimitive } from 'bits-ui';
 import type { Snippet } from 'svelte';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Tab {
 	value: string;

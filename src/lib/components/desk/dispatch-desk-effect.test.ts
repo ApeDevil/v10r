@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DeskEffect } from '$lib/types/ai-tools';
+import type { DeskEffect } from '#lib/types/ai-tools.ts';
 import { makeMockActions } from './desk-context.fixtures';
 import { dispatchDeskEffect } from './dispatch-desk-effect';
 

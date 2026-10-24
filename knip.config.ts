@@ -22,12 +22,24 @@ const config: KnipConfig = {
 	// console). Scripts wired to a package.json script are already treated as entries, so do
 	// NOT broaden this to scripts/**/* — that would hide genuinely orphaned one-off scripts.
 	entry: [
+		// SvelteKit 3's framework entry points. Knip's SvelteKit plugin (6.3) reads them only from
+		// `svelte.config.js`, which SvelteKit 3 removed; it also predates `src/params.ts` and
+		// `src/env.ts`, and the `$app/*` modules it would mark as resolved (below).
+		'src/routes/**/+{page,server,page.server,error,layout,layout.server}{,@*}.{js,ts,svelte}',
+		'src/hooks.{server,client}.ts',
+		'src/params.ts',
+		'src/env.ts',
+		'src/service-worker/index.ts',
 		'mcp/*.ts',
 		'pattern-library/*.ts',
 		'scripts/db/verify-tx-rollback.ts',
 		'scripts/perf/db-explain.ts',
 		'scripts/perf/vely-turn-tap.js',
 	],
+
+	// SvelteKit's virtual `$app/*` modules exist only inside Vite; `./$types` is generated into
+	// `.svelte-kit/types`, reached through the `rootDirs` of `$app/tsconfig`, which Knip does not follow.
+	ignoreUnresolved: ['\\$app/.+', '\\./\\$types'],
 
 	// SvelteKit virtual modules ($types) produce false "unresolved" reports
 	ignoreIssues: {

@@ -1,8 +1,8 @@
 <script lang="ts">
 import { MediaQuery } from 'svelte/reactivity';
-import { Stack } from '$lib/components/layout';
-import { Badge, Drawer, Input } from '$lib/components/primitives';
-import type { PostStatus } from '$lib/types/db-enums';
+import { Stack } from '#lib/components/layout/index.ts';
+import { Badge, Drawer, Input } from '#lib/components/primitives/index.ts';
+import type { PostStatus } from '#lib/types/db-enums.ts';
 
 interface Props {
 	open: boolean;

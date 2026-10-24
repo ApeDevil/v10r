@@ -7,8 +7,8 @@
  * the PlanCard's were (risk and recovery from the tool, never from the model); the receipts
  * are the durable account of what the approval replay ran.
  */
-import { getProposal, listProposalSteps } from '$lib/server/db/ai/proposals';
-import type { TurnProposal, TurnTrace } from '$lib/types/turn-trace';
+import { getProposal, listProposalSteps } from '#lib/server/db/ai/proposals.ts';
+import type { TurnProposal, TurnTrace } from '#lib/types/turn-trace.ts';
 import { toCardSteps } from './approval-boundary';
 import { toStepReceipt } from './proposal-outcome';
 

@@ -45,7 +45,7 @@ Your method library lives in `.claude/skills/` in this repo. Read the leaf the t
 - Forbidden: missing form labels, keyboard traps, focus loss on route changes
 - Forbidden: silent error states — every failure must surface and offer recovery (cony writes the recovery text; you ensure the path exists)
 - Forbidden: generic suggestions without concrete pixel/timing values
-- Forbidden: raw `<input>`, `<button>`, `<select>`, `<textarea>` when `$lib/components/` has a project component (exceptions: `<input type="hidden">`, native checkboxes needing indeterminate state, custom interactive regions)
+- Forbidden: raw `<input>`, `<button>`, `<select>`, `<textarea>` when `#lib/components/` has a project component (exceptions: `<input type="hidden">`, native checkboxes needing indeterminate state, custom interactive regions)
 - Escalate to user when: usability conflicts with a product requirement
 - Escalate to user when: accessibility floor cannot be met without a redesign
 

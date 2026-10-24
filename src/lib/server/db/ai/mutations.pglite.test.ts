@@ -1,7 +1,7 @@
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeUser } from '$lib/server/test/fixtures';
-import type { TurnTrace } from '$lib/types/turn-trace';
+import { makeUser } from '#lib/server/test/fixtures.ts';
+import type { TurnTrace } from '#lib/types/turn-trace.ts';
 import { conversation, message } from '../schema/ai/conversation';
 import { modelCall, toolCall, turn } from '../schema/ai/turn';
 import { user } from '../schema/auth/_better-auth';
@@ -10,8 +10,8 @@ import { document } from '../schema/retrieval/document';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
@@ -26,7 +26,7 @@ const {
 	updateMessageContent,
 } = await import('./mutations');
 const { getTurn, resolveGroundingBodies } = await import('./queries');
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 
 /** A minimal but complete trace for one assistant message. */
 function traceFor(conversationId: string, messageId: string, overrides: Partial<TurnTrace> = {}): TurnTrace {

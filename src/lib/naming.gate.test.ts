@@ -178,7 +178,7 @@ const RETIRED: RetiredTerm[] = [
  */
 const DUPLICATE_DECLARATIONS_ALLOWED: Record<string, string> = {
 	// `db/index.ts` re-derives it from the live client so CLI consumers can type a handle
-	// without importing `$env/dynamic/private`. Both files say so.
+	// without importing `$app/env/private`. Both files say so.
 	Database: 'deliberate re-derivation, commented in both files',
 	// Per-domain outcome shapes with different fields, following the `<Concept>Result`
 	// convention. Documents vs images ingest nothing alike.
@@ -276,12 +276,12 @@ const I18N_AREAS = [
 /**
  * Files whose export names SvelteKit chooses, not us: routes (`load`, `GET`, `actions`), the
  * hooks (`handle`, `handleError` — the same name on the server and the client by contract) and
- * param matchers (`match`). Plus wasm-bindgen's generated glue, which is nobody's vocabulary.
+ * the param matchers (`params`). Plus wasm-bindgen's generated glue, which is nobody's vocabulary.
  */
 function isFrameworkContract(file: string): boolean {
 	return (
 		file.startsWith('src/routes/') ||
-		file.startsWith('src/params/') ||
+		file === 'src/params.ts' ||
 		file.startsWith('src/hooks.') ||
 		file.startsWith('src/lib/wasm/kernel/') ||
 		file.startsWith('scripts/')
@@ -294,7 +294,7 @@ function isFrameworkContract(file: string): boolean {
  * audit context and an analytics range parser in it, and `notifications/service.ts` was a
  * single-method object around what is now `sendNotification`.
  *
- * The directory `$lib/utils/` is deliberately NOT covered: it is a shelf of small, sharply
+ * The directory `#lib/utils/` is deliberately NOT covered: it is a shelf of small, sharply
  * named leaves (`cn.ts`, `safe-path.ts`, `xml.ts`), and the file names carry the meaning.
  */
 const GENERIC_FILENAMES = [

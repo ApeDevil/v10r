@@ -150,17 +150,24 @@ never came, the first open waits on the network.
 ### Side-effect-free component tree
 
 **A barrel of Svelte components is not tree-shakeable by default.** A compiled component
-runs code at module scope (`$.delegate(...)`, template factories), so Rollup must keep every
-component a barrel re-exports — one `import { Button } from '$lib/components'` shipped the
+runs code at module scope (`$.delegate(...)`, template factories), so the bundler must keep every
+component a barrel re-exports — one `import { Button } from '#lib/components/index.ts'` shipped the
 whole primitives layer, culori and bits-ui's select and menu included, to 197 of 199 routes.
 Rewriting the shell's imports as leaf imports changed nothing (299.4 KB), because pages import
 the barrel too.
 
 `vite.config.ts` therefore declares `src/lib/components/` side-effect free
-(`treeshake.moduleSideEffects`): a component is bundled when an export of it is used and
-dropped when it is not. That one declaration took the median route from 296.7 to 241.9 KB gz.
-Its price is stated in `architecture.gate.test.ts`: nothing may import a component module for
-its side effects alone, because such an import is now silently dropped.
+(`build.rolldownOptions.treeshake.moduleSideEffects`): a component is bundled when an export of
+it is used and dropped when it is not. That one declaration took the median route from 296.7 to
+241.9 KB gz. Its price is stated in `architecture.gate.test.ts`: nothing may import a component
+module for its side effects alone, because such an import is now silently dropped.
+
+Under Rolldown (Vite 8) the declaration is a **rule list**, not a function: a function that
+returns `true` pins a module as side-effectful, skipping both its package.json `sideEffects` and
+Rolldown's own analysis. Paraglide's compiled messages get a rule too. Rollup split them per
+route; Rolldown assigns a module to a chunk by its importers, and every page imports the barrel
+that re-exports all ~3,260 messages, so unclassified they collapse into one 215 KB (gz) chunk
+every route loads (median route 420 KB instead of 235 KB).
 
 **Use when** a component layer is consumed through barrels. **Do not use when** a module in
 the declared tree registers something at module scope that other code relies on — a custom
@@ -483,7 +490,7 @@ claim that was true once, and its failure mode is silent: nothing breaks when a 
 it just gets slower, which is the one class of change no test catches.
 
 ```text
-compute (functions)     —              Vercel          runtime only — declared in svelte.config.js, confirmed in situ
+compute (functions)     —              Vercel          runtime only — declared in vite.config.ts, confirmed in situ
 relational database     eu-central-1   Neon            env:NEON_DATABASE_URL_PROD (host only)
 cache and rate limiter  —              Upstash Redis   env:UPSTASH_REDIS_REST_URL (newer databases omit the prefix)
 graph database          —              Neo4j Aura      configured, region not derivable
@@ -516,7 +523,7 @@ half that decides whether a region is worth moving.
 2026-09-13 the function region was a Vercel project setting that appeared nowhere in this
 repository, and measured (`x-vercel-id: fra1::iad1::…`) it was the default `iad1` — every
 blocking hop above crossed an ocean, twice per page. The region is now declared in
-`svelte.config.js` (adapter `regions: ['fra1']`; route-level `config` exports merge over it), so
+`vite.config.ts` (adapter `regions: ['fra1']` in the `sveltekit()` options; route-level `config` exports merge over it), so
 the repository says where the code runs and only the deployment can contradict it. The probe
 still reads `VERCEL_REGION` in situ rather than asserting the declaration. A deployment's API
 object can still read `regions: ["iad1"]` — that field is the project's default region, while

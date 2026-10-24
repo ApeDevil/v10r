@@ -50,7 +50,7 @@ Contract correctness > Edge coverage > Maintainability > Speed of execution.
 
 | Domain | How |
 |--------|-----|
-| `$lib/server/[domain]/` — highest ROI | Direct import, real types, PGlite for DB |
+| `#lib/server/[domain]/` — highest ROI | Direct import, real types, PGlite for DB |
 | `.svelte.ts` state | `.svelte.test.ts`, factory call, `$effect.root` + `flushSync()` |
 | AI/LLM tools | `MockLanguageModelV3` + `simulateReadableStream`; tool `execute` as pure fn; snapshot system prompts |
 | Drizzle queries | PGlite; test constraints, cascade deletes, error sanitization |
@@ -64,9 +64,12 @@ Contract correctness > Edge coverage > Maintainability > Speed of execution.
 Full mocks only — never `importOriginal` on virtual modules.
 
 ```typescript
-vi.mock('$app/environment', () => ({ building: false, browser: false, dev: true, version: 'test' }));
-vi.mock('$env/dynamic/private', () => ({ env: new Proxy({}, { get: (_, p: string) => process.env[p] }) }));
+vi.mock('$app/env', () => ({ building: false, browser: false, dev: true, version: 'test' }));
+// Every variable declared in src/env.ts, as a getter reading process.env live
+vi.mock('$app/env/private', async () => (await import('#lib/server/test/env-mock.ts')).envModule((name) => process.env[name]));
 ```
+
+`src/lib/server/test/vitest.setup.ts` already applies both globally; a test sets or deletes `process.env.X` per case. A variable missing from `src/env.ts` is not exported, so declare it there first.
 
 Return findings and conclusions, never raw tool output — no pasted grep results, file dumps, or full logs. Lead with what most deserves attention.
 

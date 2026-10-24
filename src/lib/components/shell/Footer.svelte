@@ -1,8 +1,8 @@
 <script lang="ts">
-import { LogoFooter } from '$lib/components/primitives/logo';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
-import { getConsent } from '$lib/state/consent.svelte';
+import { LogoFooter } from '#lib/components/primitives/logo/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getConsent } from '#lib/state/consent.svelte.ts';
 
 const currentYear = new Date().getFullYear();
 const consent = getConsent();

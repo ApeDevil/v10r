@@ -1,10 +1,10 @@
 <script lang="ts">
 import { onDestroy } from 'svelte';
-import { apiFetch } from '$lib/api';
-import { MarkdownProse } from '$lib/components/composites';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { getDeskBus, getPanelMenus } from '$lib/components/desk';
-import { Spinner } from '$lib/components/primitives';
+import { apiFetch } from '#lib/api.ts';
+import { MarkdownProse } from '#lib/components/composites/index.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { getDeskBus, getPanelMenus } from '#lib/components/desk/index.ts';
+import { Spinner } from '#lib/components/primitives/index.ts';
 
 interface Props {
 	/** Panel instance id — menu registrations key on it. */

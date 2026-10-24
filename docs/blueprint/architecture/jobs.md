@@ -22,7 +22,7 @@ A **worker** is the other half of that distinction and is not covered here: a jo
 ```
                          ┌─────────────────────────────┐
                          │       JOB REGISTRY           │
-                         │   $lib/server/jobs/index.ts  │
+                         │   #lib/server/jobs/index.ts  │
                          │                              │
                          │  slug → { execute fn }       │
                          └──────────────┬───────────────┘
@@ -48,7 +48,7 @@ A **worker** is the other half of that distinction and is not covered here: a jo
                                        ▼
     ┌─────────────────────────────────────────────────────────────────────────┐
     │                         DOMAIN MODULES                                  │
-    │                    $lib/server/[domain]/                                │
+    │                    #lib/server/[domain]/                                │
     │              (same functions serve all trigger types)                   │
     └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -371,7 +371,7 @@ export const actions: Actions = {
 For non-critical work that should not block the response (analytics, cache invalidation), use `waitUntil` from `@vercel/functions`. This is NOT a job system — it has no retries, no logging, and silently drops failures.
 
 ```typescript
-import { platform } from '$lib/server/platform';
+import { platform } from '#lib/server/platform/index.ts';
 
 // Only available on Vercel — conditional import
 if (platform.id === 'vercel') {

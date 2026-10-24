@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const guards = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
 const svc = vi.hoisted(() => ({ getDemoState: vi.fn() }));
-vi.mock('$lib/server/http/guards', () => guards);
-vi.mock('$lib/server/mcp/demo/state', () => svc);
+vi.mock('#lib/server/http/guards.ts', () => guards);
+vi.mock('#lib/server/mcp/demo/state.ts', () => svc);
 
 const { load } = await import('./+page.server');
 

@@ -5,9 +5,9 @@
  * Expanded mode: Icons + labels
  */
 
-import { adminNavItem, navItems } from '$lib/nav';
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { cn } from '$lib/utils/cn';
+import { adminNavItem, navItems } from '#lib/nav/index.ts';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 import NavItem from './NavItem.svelte';
 
 interface Props {

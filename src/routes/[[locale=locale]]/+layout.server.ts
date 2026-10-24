@@ -1,10 +1,10 @@
-import { building } from '$app/environment';
-import { tc } from '$lib/i18n/translate';
-import { getActiveAnnouncements } from '$lib/server/admin/announcements';
-import { issueConfirmToken } from '$lib/server/analytics/confirm-token';
-import { deriveVisitorId } from '$lib/server/analytics/visitor';
-import { isAdmin } from '$lib/server/http/guards';
-import type { Theme } from '$lib/types/db-enums';
+import { tc } from '#lib/i18n/translate.ts';
+import { getActiveAnnouncements } from '#lib/server/admin/announcements.ts';
+import { issueConfirmToken } from '#lib/server/analytics/confirm-token.ts';
+import { deriveVisitorId } from '#lib/server/analytics/visitor.ts';
+import { isAdmin } from '#lib/server/http/guards.ts';
+import type { Theme } from '#lib/types/db-enums.ts';
+import { building } from '$app/env';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ cookies, locals, depends, request, getClientAddress }) => {

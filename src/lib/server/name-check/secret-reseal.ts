@@ -2,12 +2,12 @@
  * The name-check half of the `encryption-reseal` job: move every stored vendor secret onto
  * the key ring's current key (`docs/blueprint/security/key-ring.md`).
  */
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import {
 	listNameSourceSecretEnvelopes,
 	replaceNameSourceSecretEnvelope,
-} from '$lib/server/db/name-check/source-connections';
-import { type EncryptionKeyRing, type ResealOutcome, resealEnvelopes } from '$lib/server/security';
+} from '#lib/server/db/name-check/source-connections.ts';
+import { type EncryptionKeyRing, type ResealOutcome, resealEnvelopes } from '#lib/server/security/index.ts';
 
 /** Unaudited for the same reason as the AI half (`ai/provider-key-reseal.ts`). */
 export async function resealNameSourceSecrets(ring: EncryptionKeyRing): Promise<ResealOutcome> {

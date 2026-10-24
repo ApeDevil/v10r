@@ -7,15 +7,15 @@
  * which is what `canSave` gates.
  */
 
-import { apiFetch } from '$lib/api';
-import { Alert } from '$lib/components/composites';
-import { Button, Input, Spinner, ToggleGroup } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { guardUnsavedChanges } from '$lib/state/leave-guard.svelte';
-import { getTheme } from '$lib/state/theme.svelte';
-import { getPalette } from '$lib/styles/random';
-import { applyPalettePreview, clearPalettePreview } from '$lib/styles/random/token-vars';
-import type { PaletteColors, PaletteId } from '$lib/styles/random/types';
+import { apiFetch } from '#lib/api.ts';
+import { Alert } from '#lib/components/composites/index.ts';
+import { Button, Input, Spinner, ToggleGroup } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { guardUnsavedChanges } from '#lib/state/leave-guard.svelte.ts';
+import { getTheme } from '#lib/state/theme.svelte.ts';
+import { getPalette } from '#lib/styles/random/index.ts';
+import { applyPalettePreview, clearPalettePreview } from '#lib/styles/random/token-vars.ts';
+import type { PaletteColors, PaletteId } from '#lib/styles/random/types.ts';
 import CascadePrompt from './CascadePrompt.svelte';
 import CustomPaletteEditor from './CustomPaletteEditor.svelte';
 import type { OwnedPalette } from './types';

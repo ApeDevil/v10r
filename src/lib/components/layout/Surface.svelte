@@ -11,8 +11,8 @@
  */
 import type { Snippet } from 'svelte';
 import type { HTMLAttributes } from 'svelte/elements';
-import { type SurfaceOptions, useSurface } from '$lib/styles/elevation';
-import { cn } from '$lib/utils/cn';
+import { type SurfaceOptions, useSurface } from '#lib/styles/elevation.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props extends HTMLAttributes<HTMLElement>, SurfaceOptions {
 	/** Element tag to render. Defaults to a div. */

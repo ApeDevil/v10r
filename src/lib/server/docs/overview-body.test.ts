@@ -8,7 +8,7 @@
  * grounding bug). These tests pin that invariant.
  */
 import { describe, expect, it } from 'vitest';
-import { PROJECT_MAP_MAX_CHARS } from '$lib/server/ai/config';
+import { PROJECT_MAP_MAX_CHARS } from '#lib/server/ai/config.ts';
 import { buildOverviewBody, type OverviewDocFile } from './overview-body';
 
 const stackDoc = (subsection: string, file: string, title: string): OverviewDocFile => ({

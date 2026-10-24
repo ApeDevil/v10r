@@ -3,10 +3,10 @@
  * and status doors build their answer from, so a live response and a later status read agree
  * by construction. Pure derivations over the stored receipts; no step runs here.
  */
-import { listProposalSteps, listRevertSteps } from '$lib/server/db/ai/proposals';
-import type { agentProposal } from '$lib/server/db/schema/ai/proposal';
-import type { agentProposalStep, StepRecoveryPoint } from '$lib/server/db/schema/ai/proposal-step';
-import type { ProposalOutcome, ProposalRevert, ProposalStepReceipt } from '$lib/types/ai-proposal';
+import { listProposalSteps, listRevertSteps } from '#lib/server/db/ai/proposals.ts';
+import type { agentProposal } from '#lib/server/db/schema/ai/proposal.ts';
+import type { agentProposalStep, StepRecoveryPoint } from '#lib/server/db/schema/ai/proposal-step.ts';
+import type { ProposalOutcome, ProposalRevert, ProposalStepReceipt } from '#lib/types/ai-proposal.ts';
 import type { DeskEffect } from '../tools/_types';
 import { effectsForStep } from '../tools/desk-execute';
 

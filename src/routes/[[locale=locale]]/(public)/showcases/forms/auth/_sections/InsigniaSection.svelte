@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Asterism, Badge, Button, Flourish, Kamon } from '$lib/components';
-import * as m from '$lib/paraglide/messages';
+import { Asterism, Badge, Button, Flourish, Kamon } from '#lib/components/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let isLoggedIn = $state(false);
 

@@ -2,18 +2,18 @@
  * AI-surface topology — the static, client-safe projection the two showcase pages
  * (`/showcases/ai/chatbot`, `/showcases/ai/deskbot`) render from.
  *
- * Conventions (per `$lib/showcases/mcp/registry-viz.ts`):
- * - Pure data + pure functions. No `$lib/server/*`, no `$env/*`, no Paraglide —
+ * Conventions (per `#lib/showcases/mcp/registry-viz.ts`):
+ * - Pure data + pure functions. No `#lib/server/*`, no `$app/env/*`, no Paraglide —
  *   human copy lives in `./labels.ts`; this module ships ids and refs only.
  * - Everything here is either mirrored from a published source (`TOOL_MANIFEST`) or
  *   hand-mirrored and PINNED by `topology.drift.test.ts` (proposal states/transitions,
  *   step budgets, guard stages). Per-turn facts are not mirrored at all: both pages
- *   render a turn's own persisted `TurnTrace` (`$lib/types/turn-trace.ts`) through the
+ *   render a turn's own persisted `TurnTrace` (`#lib/types/turn-trace.ts`) through the
  *   inspector projection (`./inspector.ts`).
  */
 
-import { type DeskToolScope, TOOL_MANIFEST, type ToolRisk } from '$lib/types/ai-tools';
-import type { AiSurface } from '$lib/types/db-enums';
+import { type DeskToolScope, TOOL_MANIFEST, type ToolRisk } from '#lib/types/ai-tools.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 
 /**
  * Per-turn runtime status vocabulary of the spine and the guard stages.

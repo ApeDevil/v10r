@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount, tick } from 'svelte';
-import { browser } from '$app/environment';
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
+import { browser } from '$app/env';
 import type { PaneDefinition } from './reorderable-panes';
 import { gripVariants, tabBarVariants, tabVariants } from './reorderable-panes';
 

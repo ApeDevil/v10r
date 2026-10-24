@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ProviderEntry, ProviderRegistry } from '$lib/server/ai/connections';
+import type { ProviderEntry, ProviderRegistry } from '#lib/server/ai/connections.ts';
 
 const ADMIN = { user: { id: 'admin-1', email: 'admin@example.test' }, session: {} };
 const guards = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
@@ -13,22 +13,22 @@ const settings = vi.hoisted(() => ({
 const limiter = vi.hoisted(() => ({ limit: vi.fn(async () => ({ success: true, reset: 0 })) }));
 const security = vi.hoisted(() => ({ getEncryptionKeyRing: vi.fn(() => ({ current: 'k', previous: [] })) }));
 
-vi.mock('$lib/server/http/guards', () => guards);
-vi.mock('$lib/server/ai', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/ai')>()),
+vi.mock('#lib/server/http/guards.ts', () => guards);
+vi.mock('#lib/server/ai/index.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/ai/index.ts')>()),
 	loadProviderRegistry: ai.loadProviderRegistry,
 }));
-vi.mock('$lib/server/ai/connection-settings', () => settings);
-vi.mock('$lib/server/ai/providers', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/ai/providers')>()),
+vi.mock('#lib/server/ai/connection-settings.ts', () => settings);
+vi.mock('#lib/server/ai/providers.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/ai/providers.ts')>()),
 	getCooldownResumeAt: vi.fn(async () => null),
 }));
-vi.mock('$lib/server/http/rate-limit', () => ({ createLimiter: () => limiter }));
-vi.mock('$lib/server/security', async (importOriginal) => ({
-	...(await importOriginal<typeof import('$lib/server/security')>()),
+vi.mock('#lib/server/http/rate-limit.ts', () => ({ createLimiter: () => limiter }));
+vi.mock('#lib/server/security/index.ts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('#lib/server/security/index.ts')>()),
 	getEncryptionKeyRing: security.getEncryptionKeyRing,
 }));
-vi.mock('$lib/server/db', () => ({ db: {} }));
+vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const { actions, load } = await import('./+page.server');
 

@@ -23,8 +23,8 @@
  * self-heals the badge within one reconnect (≤55s); per-item replay via SSE
  * `id:` + `Last-Event-ID` is not built.
  */
-import { redis } from '$lib/server/cache';
-import { platform } from '$lib/server/platform';
+import { redis } from '#lib/server/cache/index.ts';
+import { platform } from '#lib/server/platform/index.ts';
 import { SSE_MAX_PER_USER } from './config';
 
 type StreamController = ReadableStreamDefaultController<Uint8Array>;

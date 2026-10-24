@@ -27,18 +27,18 @@ No `neo4j-driver` dependency. The graph layer talks to Neo4j over the **HTTP Que
 
 ```typescript
 // src/lib/server/graph/index.ts
-import { env } from '$env/dynamic/private';
-import { TIMEOUT_MS } from '$lib/server/graph/config';
+import { NEO4J_DATABASE, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USERNAME } from '$app/env/private';
+import { TIMEOUT_MS } from './config';
 import { classifyError, Neo4jError } from './errors';
 
 /** Derive HTTPS host from NEO4J_URI (neo4j+s://xxx → https://xxx) */
 function getHttpHost(): string {
-  if (!env.NEO4J_URI) throw new Neo4jError('unavailable', 'NEO4J_URI is not set');
-  return env.NEO4J_URI.replace(/^neo4j(\+s)?:\/\//, 'https://');
+  if (!NEO4J_URI) throw new Neo4jError('unavailable', 'NEO4J_URI is not set');
+  return NEO4J_URI.replace(/^neo4j(\+s)?:\/\//, 'https://');
 }
 
 function getDatabase(): string {
-  return env.NEO4J_DATABASE || 'neo4j';
+  return NEO4J_DATABASE || 'neo4j';
 }
 
 /**
@@ -61,7 +61,7 @@ export async function cypher<T = Record<string, unknown>>(
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      Authorization: `Basic ${btoa(`${env.NEO4J_USERNAME}:${env.NEO4J_PASSWORD}`)}`,
+      Authorization: `Basic ${btoa(`${NEO4J_USERNAME}:${NEO4J_PASSWORD}`)}`,
     },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(timeoutMs),
@@ -258,7 +258,7 @@ export async function getFeatureDependencies(featureName: string): Promise<Featu
 
 ## Write Operations
 
-> **Illustrative.** There is no `graph/mutations.ts`. Writes run through `cypher()` like reads; ID prefixes come from `$lib/server/db/id.ts` (`crypto.randomUUID()`-based, no `nanoid`).
+> **Illustrative.** There is no `graph/mutations.ts`. Writes run through `cypher()` like reads; ID prefixes come from `#lib/server/db/id.ts` (`crypto.randomUUID()`-based, no `nanoid`).
 
 ```typescript
 // Example only — real writes call cypher() over HTTP.
@@ -330,7 +330,7 @@ export async function setNextPage(
 
 ```typescript
 // Example only — call cypher() per statement; there is no getSession/closeDriver.
-import { cypher } from '$lib/server/graph';
+import { cypher } from '#lib/server/graph/index.ts';
 
 async function seedGraph() {
   const session = await getSession();
@@ -403,23 +403,22 @@ seedGraph();
 
 ```typescript
 // src/routes/api/graph/features/+server.ts
-import { json } from '@sveltejs/kit';
-import { getPagesUsingFeature } from '$lib/server/graph/queries';
+import { getPagesUsingFeature } from '#lib/server/graph/queries.ts';
 
 export async function GET({ url }) {
   const name = url.searchParams.get('name');
   if (!name) {
-    return json({ error: 'Feature name required' }, { status: 400 });
+    return Response.json({ error: 'Feature name required' }, { status: 400 });
   }
 
   const pages = await getPagesUsingFeature(name);
-  return json({ pages });
+  return Response.json({ pages });
 }
 ```
 
 ```typescript
 // src/routes/showcases/[slug]/+page.server.ts
-import { getPageFeatures, getRelatedPages } from '$lib/server/graph/queries';
+import { getPageFeatures, getRelatedPages } from '#lib/server/graph/queries.ts';
 
 export async function load({ params }) {
   const path = `/showcases/${params.slug}`;

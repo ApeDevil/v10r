@@ -3,13 +3,13 @@
  * plan-gated; UI-parity tools + desk:ask retrieval grounding). See `docs/blueprint/ai/surfaces.md`.
  */
 import { safeParse } from 'valibot';
-import { orchestrateChat } from '$lib/server/ai/chat-orchestrator';
-import { guardAiRequest } from '$lib/server/ai/guard';
-import { DeskRequestSchema } from '$lib/server/ai/validation';
-import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
-import { startDeadline } from '$lib/server/http/deadline';
-import { isAdmin } from '$lib/server/http/guards';
-import { apiError, apiValidationError } from '$lib/server/http/response';
+import { orchestrateChat } from '#lib/server/ai/chat-orchestrator.ts';
+import { guardAiRequest } from '#lib/server/ai/guard.ts';
+import { DeskRequestSchema } from '#lib/server/ai/validation.ts';
+import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
+import { startDeadline } from '#lib/server/http/deadline.ts';
+import { isAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 // Node runtime + extended duration: an LLM stream routinely outlives the Vercel

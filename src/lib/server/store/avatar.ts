@@ -1,7 +1,7 @@
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { eq } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
+import { db } from '#lib/server/db/index.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
 import { StoreError } from './errors';
 import { BUCKET, s3 } from './index';
 

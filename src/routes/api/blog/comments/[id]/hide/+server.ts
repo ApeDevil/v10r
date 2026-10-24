@@ -1,7 +1,7 @@
 import * as v from 'valibot';
-import { CommentNotFoundError, hideComment, moderateCommentSchema } from '$lib/server/blog/comments';
-import { guardApiAdmin } from '$lib/server/http/guards';
-import { apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+import { CommentNotFoundError, hideComment, moderateCommentSchema } from '#lib/server/blog/comments/index.ts';
+import { guardApiAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {

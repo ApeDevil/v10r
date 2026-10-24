@@ -7,7 +7,7 @@
  * name without putting a domain into the renderer. They are mapped by sorted position onto the
  * chart palette instead — distinct, colour-blind-safe, and stable for a given set of standards.
  */
-import type { PortStandard } from '$lib/product-composition';
+import type { PortStandard } from '#lib/product-composition/index.ts';
 
 /*
  * A lit body needs a mid tone that stands off the stage in light *and* dark mode. The surface

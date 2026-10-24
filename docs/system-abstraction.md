@@ -11,13 +11,13 @@ Two physical spines hold all seven layers together: a **composition root** (`src
 ```
 Layer                    Canonical Home
 ─────────────────────────────────────────────────────────────────────────────
-1  Tech Stack            root config (svelte.config.js, vite.config.ts,
+1  Tech Stack            root config (vite.config.ts incl. sveltekit({...}),
                          uno.config.ts, drizzle.config.ts, package.json)
                          + Containerfile.dev / compose.yaml
 
 2  Architecture          src/hooks.server.ts  (composition root)
                          + multi-client-core pattern
-                         server/client boundary = the $lib/server/ path
+                         server/client boundary = the src/lib/server/ path
 
 3  Services/Applications src/routes/[[locale=locale]]/  (account/, admin/, desk/,
                          auth/, (public)/showcases/)
@@ -55,7 +55,7 @@ The foundation is declared in root config files and `Containerfile.dev`; nothing
 |---------|-----------|
 | Container | Podman (`Containerfile.dev`, `compose.yaml`) |
 | Runtime | Bun |
-| Framework | SvelteKit 2 + Svelte 5 (runes) |
+| Framework | SvelteKit 3 + Svelte 5 (runes), on Vite 8 (Rolldown) |
 | Host | Vercel (`@sveltejs/adapter-vercel`, nodejs22.x) |
 | Code quality | Biome |
 
@@ -85,7 +85,7 @@ The foundation is declared in root config files and `Containerfile.dev`; nothing
 
 **Design principles** (`docs/foundation/principles.md`): libraries-over-services, lightweight, standard protocols, free-tier-friendly, svelte-native-first, no-ungated-codegen, speed-is-a-feature. The codegen constraint is consequential in both directions: generated surfaces (pattern pages, MCP excerpts, Paraglide) are deterministic and staleness-gated in `validate`, while the Better Auth schema stays hand-written Drizzle tables rather than auto-generated.
 
-**Connects down to Layer 2** by providing the runtime these patterns run in. No Layer 2 code imports the vendor names directly; it imports from wrappers in `$lib/server/[domain]/`.
+**Connects down to Layer 2** by providing the runtime these patterns run in. No Layer 2 code imports the vendor names directly; it imports from wrappers in `#lib/server/[domain]/`.
 
 ---
 
@@ -98,9 +98,9 @@ Two architectural spines impose order on every request.
 `src/hooks.server.ts` is the composition root. Three module-load side effects at the top of the file boot background work once at process start:
 
 ```
-import '$lib/server/agents'
-import '$lib/server/jobs/scheduler'
-import '$lib/server/jobs/delivery-scheduler'
+import '#lib/server/agents'
+import '#lib/server/jobs/scheduler.ts'
+import '#lib/server/jobs/delivery-scheduler.ts'
 ```
 
 The main export is a `sequence()` of fourteen `Handle` middlewares that mutate the shared `event.locals` bus in order. Each handler writes named fields and, in some cases, short-circuits the chain with a response before downstream handlers run.
@@ -141,7 +141,7 @@ The terminating error handler `handleError` mints an `errorId` (`crypto.randomUU
 | `Cache-Control` | `no-store, private` | **Conditional** — only on authed responses or any `/api/` path, and only via `!response.headers.has('Cache-Control')` so an explicit per-route setter wins |
 | `Clear-Site-Data` | `"cache","cookies","storage"` | **Conditional** — only on a successful `/api/auth/sign-out` |
 
-CSP itself is configured in `svelte.config.js` (nonce/hash mode), not here.
+CSP itself is configured in the `sveltekit({ csp })` options in `vite.config.ts` (nonce/hash mode), not here.
 
 #### Extracted handler helpers
 
@@ -149,13 +149,13 @@ Several handler predicates were lifted into framework-free modules the hook impo
 
 | Module | Exports | Used by |
 |--------|---------|---------|
-| `$lib/server/security/csrf.ts` | `needsCsrf(method, path)`, `isSameHost()`, `CSRF_EXEMPT_PREFIXES` | `csrfProtection` (handler #9) |
-| `$lib/styles/random/palette-sanitize.ts` | `VALID_TOKEN_KEYS`, `OKLCH_RE`, `safeEntries` | `loadStyle` / i18n palette CSS injection (#3–4) |
-| `$lib/server/auth/step-up.ts` | `twoFactorVerifyLimitKey()` | per-account 2FA verify limiter in `authHandler` (#8) |
+| `#lib/server/security/csrf.ts` | `needsCsrf(method, path)`, `isSameHost()`, `CSRF_EXEMPT_PREFIXES` | `csrfProtection` (handler #9) |
+| `#lib/styles/random/palette-sanitize.ts` | `VALID_TOKEN_KEYS`, `OKLCH_RE`, `safeEntries` | `loadStyle` / i18n palette CSS injection (#3–4) |
+| `#lib/server/auth/step-up.ts` | `twoFactorVerifyLimitKey()` | per-account 2FA verify limiter in `authHandler` (#8) |
 
 ### Spine B — Hexagonal Multi-Client Core
 
-All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it for each client type. The domain modules know nothing about the framework.
+All business logic lives in `#lib/server/[domain]/`. Thin **adapters** wrap it for each client type. The domain modules know nothing about the framework.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -169,7 +169,7 @@ All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it f
        ▼               ▼           ▼              ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                      DOMAIN MODULES                          │
-│                 $lib/server/[domain]/                         │
+│                 #lib/server/[domain]/                         │
 │                                                              │
 │  notifications/    auth/         retrieval/      graph/          │
 │  ├── index.ts      ├── index.ts  ├── index.ts ├── index.ts   │
@@ -190,12 +190,12 @@ All business logic lives in `$lib/server/[domain]/`. Thin **adapters** wrap it f
 
 **The four invariants** — violations break cross-client reuse. They are executable: `src/lib/architecture.gate.test.ts` checks all four and ratchets, so this list cannot drift from the code the way it did before.
 
-1. **No framework imports in domain modules.** No `@sveltejs/kit` or `$app/` imports inside `$lib/server/[domain]/`. These bind logic to the SvelteKit request cycle, preventing reuse by AI tools and jobs. A module that needs the framework is an adapter: it belongs in `server/http/`, or carries a `*.adapter.ts` / `*.hook.ts` suffix.
+1. **No framework imports in domain modules.** No `@sveltejs/kit` or `$app/` imports inside `#lib/server/[domain]/`. These bind logic to the SvelteKit request cycle, preventing reuse by AI tools and jobs. A module that needs the framework is an adapter: it belongs in `server/http/`, or carries a `*.adapter.ts` / `*.hook.ts` suffix.
 2. **Date serialization happens in the adapter layer.** Domain modules return `Date` objects as-is. The route or tool `execute` converts them to ISO strings.
 3. **SvelteKit response helpers (`redirect`, `error`, `fail`, `message`) only in adapters.** Never in domain modules.
 4. **Domains call down, not across.** Cross-domain reads go through the other domain's `index.ts` barrel only — never into its internals.
 
-**Server/client boundary**: the `$lib/server/` path itself. SvelteKit refuses to bundle it client-side. No runtime guard is needed; the path is the boundary.
+**Server/client boundary**: the `#lib/server/` path itself. SvelteKit refuses to bundle it client-side. No runtime guard is needed; the path is the boundary.
 
 **Error spine**: `ServerError` base class (`src/lib/server/errors/index.ts`) with `kind` / `toStatus()` / `toJSON()`. Subclasses: `DbError` (maps PG SQLSTATE → safe message + HTTP status), `AiError`, `Neo4jError`. Each adapter translates: REST endpoints return `apiError(status, kind, safeMessage)`; AI stream tools return structured error objects (never throw); form actions use `fail()`; jobs capture into `JobResult`. Safe messages only — no PG codes, constraint names, or API-key prefixes reach the client.
 
@@ -347,9 +347,9 @@ export * from './composites';
 export * from './layout';
 export * from './primitives';
 
-// viz/ excluded — import from '$lib/components/viz' directly
+// viz/ excluded — import from '#lib/components/viz/index.ts' directly
 //   (avoids bundling Chart.js/Three.js into the default surface)
-// shell/ excluded — app-specific chrome, import from '$lib/components/shell'
+// shell/ excluded — app-specific chrome, import from '#lib/components/shell/index.ts'
 ```
 
 `viz/` and `shell/` are intentionally excluded from the default barrel. This is a bundle-size boundary: Chart.js, Three.js, and app-specific chrome should not load on every page.
@@ -443,7 +443,7 @@ Route adapter  (event.locals fully populated)                          │
   │  +page.server.ts  |  +server.ts  |  ai/tools/  |  jobs/           │
   │                                                                    │
   ▼                                                                    │
-Domain module  $lib/server/[domain]/  (no framework imports)           │
+Domain module  #lib/server/[domain]/  (no framework imports)           │
   │  Pure TypeScript; calls db/, calls infra via injected clients      │
   │                                                                    │
   ▼                                                                    │

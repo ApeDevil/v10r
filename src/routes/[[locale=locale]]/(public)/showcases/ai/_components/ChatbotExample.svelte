@@ -1,14 +1,14 @@
 <script lang="ts">
 import { onMount } from 'svelte';
+import ChatMessage from '#lib/components/composites/chatbot/ChatMessage.svelte';
+import { ChatInput, ChatThread } from '#lib/components/composites/chatbot/index.ts';
+import { citedCatalogSources } from '#lib/components/composites/chatbot/turn-progress.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { isSiteAwareRoute, resolveRouteLabel } from '#lib/search/route-id.ts';
+import type { InspectedTurn } from '#lib/showcases/ai/inspector.ts';
+import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
 import { page } from '$app/state';
-import { ChatInput, ChatThread } from '$lib/components/composites/chatbot';
-import ChatMessage from '$lib/components/composites/chatbot/ChatMessage.svelte';
-import { citedCatalogSources } from '$lib/components/composites/chatbot/turn-progress';
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { isSiteAwareRoute, resolveRouteLabel } from '$lib/search/route-id';
-import type { InspectedTurn } from '$lib/showcases/ai/inspector';
-import { chatbotSession } from '$lib/state/chatbot-session.svelte';
 
 // The working chatbot, first on the page — the SAME Vely thread the dock shows, rendered in
 // place: one session, one transport, one history. While this is mounted the dock stays out

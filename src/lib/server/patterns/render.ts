@@ -5,7 +5,7 @@
  * registry in, deterministic markdown out. The section's index page at
  * /docs/pattern-library is a live route (see catalog.ts), not markdown.
  *
- * Vite-free leaf (no `$lib`, no `$env`, no `import.meta`): the Bun build script
+ * Vite-free leaf (no `#lib`, no `$app/env`, no `import.meta`): the Bun build script
  * (`scripts/patterns/build-derived.ts`) imports this by relative path, the same
  * contract `doc-filter.ts` and `retrieval/plan.ts` follow. All I/O — reading the
  * registry, checking doc publication, writing files — belongs to the script;

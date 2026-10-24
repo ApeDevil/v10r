@@ -5,7 +5,7 @@
 
 // ADMIN_USER_ID gates admin access — a comma-separated list of admin user ids
 // (one per admin; immutable, so admin can't be transferred by re-claiming an
-// email). Read from $env/dynamic/private at usage sites to avoid top-level env
+// email). Read from $app/env/private at usage sites to avoid top-level env
 // access during build. See src/lib/server/http/guards.ts (isAdmin).
 
 /** Session lifetime in seconds (7 days) */

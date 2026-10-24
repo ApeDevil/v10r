@@ -12,7 +12,7 @@
  * generator already excludes binary/oversize files, so only vetted text reaches this reader.
  */
 
-import { type ExcerptRequest, renderExcerpt, splitFragment } from '$patterns/excerpt';
+import { type ExcerptRequest, renderExcerpt, splitFragment } from '#patterns/excerpt.ts';
 import snapshotJson from '../../../../../mcp/public-excerpts.snapshot.json';
 import type { NextAction, ToolDiag } from '../types';
 import { EXCERPT_ALLOWLIST, isAllowlisted } from './allowlist';

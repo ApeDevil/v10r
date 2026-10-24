@@ -105,7 +105,7 @@ export function emptyImageMetadata(imageId: string): ImageMetadataInput {
 // are a REFERENCE estimate at standard pay-as-you-go pricing — our Gemini key runs on
 // the FREE tier, so the real charge is $0. These are pure DTO types (no runtime), shared
 // across the server (analyze RPC, pricing.ts) and the client (cost panel) so the wire
-// shape can't drift. The dollar math lives server-side in $lib/server/ai/pricing.ts.
+// shape can't drift. The dollar math lives server-side in #lib/server/ai/pricing.ts.
 
 /**
  * Per-analysis token usage surfaced to the client. Counts are individually nullable

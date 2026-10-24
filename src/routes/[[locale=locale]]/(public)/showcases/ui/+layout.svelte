@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
-import { NavTab, PageHeader, ShowcaseDocs } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import { getTheme } from '$lib/state/theme.svelte';
+import { NavTab, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import { getTheme } from '#lib/state/theme.svelte.ts';
 import { getShowcaseCard, getShowcaseTabs, showcaseBreadcrumbs } from '../showcases';
 
 let { children }: { children: Snippet } = $props();

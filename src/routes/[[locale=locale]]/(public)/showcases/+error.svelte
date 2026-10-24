@@ -1,6 +1,6 @@
 <script lang="ts">
+import { ErrorDisplay } from '#lib/components/composites/index.ts';
 import { page } from '$app/state';
-import { ErrorDisplay } from '$lib/components/composites';
 
 const HINT_MAP: [string, string][] = [
 	['/showcases/db/relational', 'Check your NEON_DATABASE_URL_PROD in .env — is the connection string valid?'],

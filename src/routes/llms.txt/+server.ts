@@ -1,5 +1,5 @@
-import { buildLlmsTxt } from '$lib/server/docs/llms-txt';
-import { getManifest } from '$lib/server/docs/manifest';
+import { buildLlmsTxt } from '#lib/server/docs/llms-txt.ts';
+import { getManifest } from '#lib/server/docs/manifest.ts';
 import type { RequestHandler } from './$types';
 
 /**

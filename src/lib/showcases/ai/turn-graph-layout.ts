@@ -11,7 +11,7 @@
  * column's RAIL (a shared line just left of it, read as a bus with taps), one two columns
  * apart takes a DETOUR beneath the columns.
  *
- * Pure — no `$lib/server/*`, no `$env/*`, no Paraglide, no `@xyflow`.
+ * Pure — no `#lib/server/*`, no `$app/env/*`, no Paraglide, no `@xyflow`.
  */
 
 import type { TurnGraph, TurnGraphColumn, TurnGraphNode, TurnGraphNodeKind } from './turn-graph';

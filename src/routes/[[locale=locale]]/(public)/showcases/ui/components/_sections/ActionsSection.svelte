@@ -1,6 +1,6 @@
 <script lang="ts">
-import { Button, Spinner } from '$lib/components';
-import type { ComponentDoc } from '$lib/components/composites/info-dialog/types';
+import type { ComponentDoc } from '#lib/components/composites/info-dialog/types.ts';
+import { Button, Spinner } from '#lib/components/index.ts';
 import { DemoCard, VariantGrid } from '../_components';
 
 interface Props {

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Canvas } from '@threlte/core';
 import { NeutralToneMapping, PCFShadowMap } from 'three';
-import { BoundaryFallback } from '$lib/components/composites';
+import { BoundaryFallback } from '#lib/components/composites/index.ts';
 import CompositionScene, { type CompositionSceneProps } from './CompositionScene.svelte';
 
 type Props = CompositionSceneProps & {

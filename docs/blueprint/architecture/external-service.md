@@ -12,7 +12,7 @@ This is a pattern for a *boundary*, not a migration: v10r stays one SvelteKit ap
 
 Reach for a separate service when one responsibility genuinely needs a **different runtime, release cadence or resource profile** from the app: a long-lived worker, a CPU-heavy engine, a component another team or product also calls, a language-specific library.
 
-Do not, when the work fits in a `$lib/server/[domain]/` module. A second deployable doubles the things that can be down, the configuration that can drift, and the places a credential lives. In-process alternatives are cheaper, in order: a domain module (`multi-client-core`), a Web Worker or wasm for client-side compute (`architecture-wasm-kernel`), a queue worker on the same host (`workers.md`). "Rust is faster" is not a reason by itself — see [Measurement](#measurement).
+Do not, when the work fits in a `#lib/server/[domain]/` module. A second deployable doubles the things that can be down, the configuration that can drift, and the places a credential lives. In-process alternatives are cheaper, in order: a domain module (`multi-client-core`), a Web Worker or wasm for client-side compute (`architecture-wasm-kernel`), a queue worker on the same host (`workers.md`). "Rust is faster" is not a reason by itself — see [Measurement](#measurement).
 
 ## Architecture
 
@@ -27,14 +27,14 @@ The browser never talks to the service: no CORS, no public proxy, no credential 
 
 | Where | What | Rule it follows |
 |---|---|---|
-| `services/runtime-lab/src/order.rs` | The domain: a pure order-lifecycle state machine | No HTTP, no serde, no clock — the same domain/adapter split as `$lib/server/[domain]/` |
+| `services/runtime-lab/src/order.rs` | The domain: a pure order-lifecycle state machine | No HTTP, no serde, no clock — the same domain/adapter split as `#lib/server/[domain]/` |
 | `services/runtime-lab/src/contract.rs` | Wire types + the OpenAPI document | The single authority for the API |
 | `services/runtime-lab/src/http.rs` | Routes, bearer auth, body limit, request timeout, request id, `Server-Timing`, one log line | Everything observable at the boundary, nowhere else |
 | `services/runtime-lab/src/main.rs` | The accept loop: header-read timeout, header-size cap, connection cap, graceful drain | Connection-level protection `axum::serve` does not expose |
 | `services/runtime-lab/src/log.rs` | The one log writer: a bounded queue drained by one thread | Logging never blocks or fails a request ([why](#logging-never-stops-the-service)) |
 | `services/runtime-lab/src/config.rs` | `SERVICE_TOKEN`, `SERVICE_TOKEN_PREVIOUS`, `PORT`, `HOST` | Fail closed: no valid credential, no process |
 | `src/lib/server/showcases/external-service/client.ts` | `callService()` — the service client, the only way v10r calls the service | Framework-free; never throws for anything the network can do |
-| `…/targets.ts` + `targets.adapter.ts` | Where the service lives (`local`, `remote`) | The only `$env` read (the adapter); origin-only URLs; TLS off private hosts |
+| `…/targets.ts` + `targets.adapter.ts` | Where the service lives (`local`, `remote`) | The only `$app/env/private` read (the adapter); origin-only URLs; TLS off private hosts |
 | `…/contract.ts` | valibot mirrors of the contract + `contractDrift()` | Pinned to the generated types at compile time and to `openapi.json` at test time |
 | `…/contract-skew.ts` | `contractSkew()` — a running service's `release` against this app's `CONTRACT_RELEASE` | A diagnosis shown in the lab, never a reason to refuse a call ([Evolving the contract](#evolving-the-contract)) |
 | `…/lab.ts`, `…/presets.ts` | The showcase's checks, preset evaluations and drills | Demo code — not part of what you copy |
@@ -175,7 +175,7 @@ Invariants, each with its proof:
 | Functional routes require the credential, checked by the service | `functional_routes_refuse_missing_and_wrong_credentials`; the `credential` drill; `verify.ts` |
 | Every protected path declares the bearer scheme in the contract, and the client agrees | `every_functional_route_requires_the_bearer_scheme_in_the_contract`; `contract.test.ts` operation table |
 | Missing, short or malformed credential fails closed | `config.rs` tests; smoke (exit 2); client: `short_token` / `malformed_token` → `misconfigured`, nothing sent |
-| Credentials never reach a client bundle, a result, a log or an error | env read only in `targets.adapter.ts` (`isolation.gate.test.ts`), `$lib/server` + `$env/dynamic/private`; client/lab tests assert absence on success and failure paths; smoke checks container logs; the built client bundle contains no `EXTERNAL_SERVICE_` name |
+| Credentials never reach a client bundle, a result, a log or an error | env read only in `targets.adapter.ts` (`isolation.gate.test.ts`), `#lib/server` + `$app/env/private`; client/lab tests assert absence on success and failure paths; smoke checks container logs; the built client bundle contains no `EXTERNAL_SERVICE_` name |
 | Input is bounded and validated by the service itself | 8 KiB body, ≤64 events, value ranges, `deny_unknown_fields`; `invalid_input_never_reaches_the_rules`; the `unvalidated` drill |
 | Hostile bytes, slow clients and connection floods do not take the service down | `hostile_utf8_is_clipped_not_panicked_on`; smoke's unfinished-head and 20 KB-head (`431`) checks; the connection cap |
 | A rotation never refuses the caller, and never weakens the credential | `config.rs` `a_previous_credential_is_optional_and_held_to_the_same_rules`; `http.rs` `the_previous_credential_is_accepted_during_a_rotation_and_nothing_else_is`; smoke |
@@ -191,7 +191,7 @@ Only `/showcases/external-service` depends on the service, and `isolation.gate.t
 
 The lab distinguishes four situations a single "error" would blur: **not configured** (this deploy has no such target — muted, not red), **misconfigured** (set but refused, with the rule that refused it), **unavailable** (`unreachable` / `timed_out` after a real attempt), and **ready** (liveness and authenticated status both answered within contract).
 
-**The page says when an action did not land.** An enhanced action can end without a result: Vercel's own error page (a 504 at `maxDuration` is HTML, so SvelteKit hands it back as a status-less error carrying a `SyntaxError`), a SvelteKit error result (with its status), a redirect (no lab action redirects, so one is reported, not followed), or a fetch that got no answer (a `TypeError`). Each shows a dismissible notice — "the server sent no result" or "never got an answer" — the spinner clears and the session history stays (`tests/browser/external-service.spec.ts` drives both by intercepting the action POST). Before 2026-10-23 these results were dropped silently.
+**The page says when an action did not land.** An enhanced action can end without a result: Vercel's own error page (a 504 at `maxDuration` is HTML; since SvelteKit 3 it arrives as an error carrying that response's status), a SvelteKit error result (with its status), a redirect (no lab action redirects, so one is reported, not followed), or a fetch that got no answer (a rejected fetch, which reaches the page as SvelteKit's unexpected-error default). Each shows a dismissible notice — "the server sent no result" or "never got an answer" — the spinner clears and the session history stays (`tests/browser/external-service.spec.ts` drives both by intercepting the action POST). Before 2026-10-23 these results were dropped silently.
 
 **Cold starts.** A free host that idles takes about a minute to start, which no ordinary request budget can hold. The lab's *Check* uses the ordinary 8 s ceiling and reports a timeout honestly; *Wake and check* gives that one action its own 75 s deadline (the route declares `maxDuration: 90`), so the cold start itself is observed — and the service's `uptimeMs`, smaller than the check's own duration, says this check started the process.
 
@@ -243,7 +243,7 @@ Rust checks never run in the app container (the wasm precedent: it stays Rust-fr
 | `bash scripts/external-service/bench.sh` | the free-tier envelope reproduced: the image under `--cpus 0.1 --memory 512m` (override with `BENCH_CPUS`/`BENCH_MEMORY`), start → live, idle and loaded memory, then `verify.ts` — controlled-lab figures, never hosted ones |
 | `bash scripts/external-service/audit.sh [--host]` | cargo-deny against `deny.toml`: RustSec advisories (vulnerable, yanked, unsound, unmaintained), licenses, crates.io-only sources. Outside `validate` like `bun run audit` — it needs the network and its verdict follows the database, not the commit |
 
-`verify.ts` runs real `src/lib/server` modules under bare Bun. They reach SvelteKit's virtual `$env/dynamic/private` through the resilience barrel, so the script installs a two-module Bun plugin mapping `$env/dynamic/private` and `$app/environment` to the process environment — the same shim `src/lib/server/test/vitest.setup.ts` installs for tests (recorded in `docs/codebase-organization.md`).
+`verify.ts` runs real `src/lib/server` modules under bare Bun. They reach SvelteKit's virtual `$app/env/private` through the resilience barrel, so the script installs a two-module Bun plugin mapping `$app/env/private` (every variable `src/env.ts` declares) and `$app/env` to the process environment — the counterpart of the mock `src/lib/server/test/vitest.setup.ts` installs for tests (recorded in `docs/codebase-organization.md`).
 
 ## Hosting on Render
 

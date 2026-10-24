@@ -1,6 +1,6 @@
-import { advanceOperation } from '$lib/server/dbops';
-import { guardApiAdmin } from '$lib/server/http/guards';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { advanceOperation } from '#lib/server/dbops/index.ts';
+import { guardApiAdmin } from '#lib/server/http/guards.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {

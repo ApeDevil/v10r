@@ -1,5 +1,5 @@
-import { DAILY_TOKEN_CAP } from '$lib/server/ai/config';
-import { redis } from '$lib/server/cache';
+import { DAILY_TOKEN_CAP } from '#lib/server/ai/config.ts';
+import { redis } from '#lib/server/cache/index.ts';
 import type { PageServerLoad } from './$types';
 
 function dayKey(userId: string): string {

@@ -15,14 +15,14 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { db } from '$lib/server/db';
+import { db } from '#lib/server/db/index.ts';
 import {
 	claimDigestRecipients,
 	createDigestCarrier,
 	getOrCreateSettings,
-} from '$lib/server/db/notifications/mutations';
-import { getNotificationsSince } from '$lib/server/db/notifications/queries';
-import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
+} from '#lib/server/db/notifications/mutations.ts';
+import { getNotificationsSince } from '#lib/server/db/notifications/queries.ts';
+import { userPreferences } from '#lib/server/db/schema/personalization/user-preferences.ts';
 import { createDigestDelivery } from './outbox';
 import { DIGEST_BODY_LIMITS, renderDigest } from './render-message';
 import { channelsForSettings } from './router';

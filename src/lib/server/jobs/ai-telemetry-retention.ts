@@ -1,7 +1,7 @@
 import { and, isNotNull, isNull, lt } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { modelCall, toolCall, turn } from '$lib/server/db/schema/ai/turn';
-import { retentionCutoff } from '$lib/server/retention';
+import { db } from '#lib/server/db/index.ts';
+import { modelCall, toolCall, turn } from '#lib/server/db/schema/ai/turn.ts';
+import { retentionCutoff } from '#lib/server/retention/index.ts';
 
 /**
  * Two-speed retention for the turn trace, in this order so the windows compose:

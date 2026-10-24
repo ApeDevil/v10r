@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mcpCallLog } from '$lib/server/db/schema/mcp/call-log';
-import { createTestDb } from '$lib/server/test/db';
+import { mcpCallLog } from '#lib/server/db/schema/mcp/call-log.ts';
+import { createTestDb } from '#lib/server/test/db.ts';
 import type { McpCallObservation } from '../types';
 
 /**
@@ -20,7 +20,7 @@ type Db = Awaited<ReturnType<typeof createTestDb>>['db'];
 type Client = Awaited<ReturnType<typeof createTestDb>>['client'];
 
 const holder = vi.hoisted(() => ({ db: null as unknown }));
-vi.mock('$lib/server/db', () => ({
+vi.mock('#lib/server/db/index.ts', () => ({
 	db: new Proxy(
 		{},
 		{
@@ -36,7 +36,7 @@ vi.mock('$lib/server/db', () => ({
 
 // `buildCallLogRow` (folded in at the bottom) reaches the Vercel platform and env.
 vi.mock('@vercel/functions', () => ({ waitUntil: vi.fn() }));
-vi.mock('$env/dynamic/private', () => ({ env: {} }));
+vi.mock('$app/env/private', async () => (await import('#lib/server/test/env-mock.ts')).envModule(() => undefined));
 
 const {
 	getCapabilityGaps,

@@ -1,4 +1,4 @@
-import type { CostEstimate, ImageAnalysis } from '$lib/schemas/image-metadata';
+import type { CostEstimate, ImageAnalysis } from '#lib/schemas/image-metadata.ts';
 
 /** EXIF/technical fields parsed from the ORIGINAL bytes, before stripping. */
 export interface ExtractedExif {

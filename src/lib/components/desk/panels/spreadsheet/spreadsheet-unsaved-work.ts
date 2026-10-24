@@ -1,4 +1,4 @@
-import type { UnsavedWork } from '$lib/state/unsaved-work';
+import type { UnsavedWork } from '#lib/state/unsaved-work.ts';
 import { removeUserSpreadsheetDrafts, userSpreadsheetDraftFiles } from './spreadsheet-drafts';
 
 /**

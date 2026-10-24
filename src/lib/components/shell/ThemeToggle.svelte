@@ -5,9 +5,9 @@
  * Dual-mode: icon-only in rail, labeled when expanded.
  */
 
-import { getSidebar } from '$lib/state/sidebar.svelte';
-import { getTheme } from '$lib/state/theme.svelte';
-import { cn } from '$lib/utils/cn';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
+import { getTheme } from '#lib/state/theme.svelte.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	forceExpanded?: boolean;

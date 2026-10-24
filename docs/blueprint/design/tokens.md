@@ -233,13 +233,13 @@ export const zIndex = {
 Depth cue for stacked surfaces (sidebar → menu → panel → dialog): three independent CSS
 channels layered on `[data-elevation="1..4"]`, decoupled from z-index (stacking order is
 the `zIndex` table above; this section is tone only). Geometry — max-w/max-h/overflow/
-collision — comes from `floatingContentBase` in `$lib/styles/floating.ts`.
+collision — comes from `floatingContentBase` in `#lib/styles/floating.ts`.
 
 ### The model: relative, no floors
 
 The app background is level 0 (`--surface-0`, no attribute). Every surface's level is its
 **parent's level + 1** — resolved once at init via Svelte context, never a hardcoded rung.
-The engine lives in `$lib/styles/elevation.ts` (pure `.ts`, no runes, SSR-safe):
+The engine lives in `#lib/styles/elevation.ts` (pure `.ts`, no runes, SSR-safe):
 
 ```typescript
 export const ELEVATION_CEILING = 4;
@@ -256,7 +256,7 @@ computes an honest `+1` past the ceiling, and returns `attrs = { 'data-elevation
 String(display) }` (`display` clamped to `ELEVATION_CEILING`, omitted at level 0).
 
 Two call sites:
-- **`<Surface>`** (`$lib/components/layout/Surface.svelte`, barrel-exported) — page/layout
+- **`<Surface>`** (`#lib/components/layout/Surface.svelte`, barrel-exported) — page/layout
   code: `<Surface as="section">…</Surface>`.
 - **`useSurface()` directly** — primitives that stamp elevation onto a Bits `.Content`
   they don't otherwise wrap, avoiding an extra DOM node.
@@ -324,7 +324,7 @@ and `vr v` green.
 ### Dismissal order (a separate system)
 
 Rung is tone, not stacking control. Dismissal order is owned by the layer-stack singleton
-(`$lib/state/layer-stack.svelte.ts`): every dismissible layer registers on open;
+(`#lib/state/layer-stack.svelte.ts`): every dismissible layer registers on open;
 hand-rolled Escape/outside-click handlers guard with `wasTop(id)` — the top layer
 snapshotted at window-capture time, because Bits UI dismisses a covering layer
 synchronously before bubble handlers run (`isTop` would lie and double-close) — so one
@@ -548,7 +548,7 @@ Global CSS variables defined in `app.css`. All colors are **OKLCH**, not hex. Va
 
 ```svelte
 <script>
-  import { sidebar, zIndex } from '$lib/styles/tokens';
+  import { sidebar, zIndex } from '#lib/styles/tokens.ts';
 </script>
 
 <aside
@@ -575,7 +575,7 @@ Global CSS variables defined in `app.css`. All colors are **OKLCH**, not hex. Va
 ### In JavaScript
 
 ```typescript
-import { breakpoints } from '$lib/styles/tokens';
+import { breakpoints } from '#lib/styles/tokens.ts';
 
 // Media query matching
 const isMobile = window.matchMedia(`(max-width: ${breakpoints.md})`).matches;

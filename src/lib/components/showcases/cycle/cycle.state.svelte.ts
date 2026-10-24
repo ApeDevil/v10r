@@ -14,7 +14,7 @@ import {
 	type CycleTrace,
 	type CycleViewMode,
 	STAGE_SIDES,
-} from '$lib/showcases/cycle/types';
+} from '#lib/showcases/cycle/types.ts';
 
 export type StageSet = 'default' | 'ai';
 

@@ -1,5 +1,5 @@
 /**
- * CSP SCRIPT-HASH GATE — the inline script in `app.html` must be the one `svelte.config.js`
+ * CSP SCRIPT-HASH GATE — the inline script in `app.html` must be the one `vite.config.ts`
  * allowlists.
  *
  * The theme-flash script is inline (no nonce: `/offline` is prerendered), so `script-src`
@@ -23,9 +23,9 @@ function inlineScriptHash(): string {
 }
 
 function allowlistedHashes(): string[] {
-	const config = readFileSync(join(ROOT, 'svelte.config.js'), 'utf8');
+	const config = readFileSync(join(ROOT, 'vite.config.ts'), 'utf8');
 	const block = config.match(/'script-src':\s*\[([^\]]*)\]/s);
-	if (!block) throw new Error('svelte.config.js has no script-src directive');
+	if (!block) throw new Error('vite.config.ts has no script-src directive');
 	return [...block[1].matchAll(/'(sha256-[A-Za-z0-9+/=]+)'/g)].map((m) => m[1]);
 }
 

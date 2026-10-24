@@ -1,8 +1,8 @@
 <script lang="ts">
+import { Stack } from '#lib/components/layout/index.ts';
+import { Button, Input, Typography } from '#lib/components/primitives/index.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { enhance } from '$app/forms';
-import { Stack } from '$lib/components/layout';
-import { Button, Input, Typography } from '$lib/components/primitives';
-import { getToast } from '$lib/state/toast.svelte';
 
 let { data, form } = $props();
 

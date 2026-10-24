@@ -19,10 +19,15 @@
  * steps changed; each step then shows whether it was undone or left alone because the file
  * moved on since. See `docs/blueprint/ai/harness-lens.md`.
  */
-import { Button } from '$lib/components/primitives/button';
-import * as m from '$lib/paraglide/messages';
-import type { ProposalCardStep, ProposalRun, ProposalStepReceipt, ProposalStepRecovery } from '$lib/types/ai-proposal';
-import { cn } from '$lib/utils/cn';
+import { Button } from '#lib/components/primitives/button/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import type {
+	ProposalCardStep,
+	ProposalRun,
+	ProposalStepReceipt,
+	ProposalStepRecovery,
+} from '#lib/types/ai-proposal.ts';
+import { cn } from '#lib/utils/cn.ts';
 import type { ProposalMetadata } from './harness-types';
 
 interface Props {

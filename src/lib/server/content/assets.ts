@@ -10,9 +10,9 @@
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { PutObjectCommand, type S3Client } from '@aws-sdk/client-s3';
-import { createId } from '$lib/server/db/id';
-import { asset, postAsset } from '$lib/server/db/schema/blog';
-import type { Database } from '$lib/server/db/types';
+import { createId } from '#lib/server/db/id.ts';
+import { asset, postAsset } from '#lib/server/db/schema/blog/index.ts';
+import type { Database } from '#lib/server/db/types.ts';
 
 const BLOG_PREFIX = 'blog/';
 const PROXY_BASE = '/api/blog/media/';

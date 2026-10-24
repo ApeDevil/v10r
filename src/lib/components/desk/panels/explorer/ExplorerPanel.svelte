@@ -1,11 +1,11 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
-import { apiFetch } from '$lib/api';
-import type { MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import type { PanelDefinition } from '$lib/components/desk';
-import { focusPanel, getDeskBus, getDockContext, getPanelMenus } from '$lib/components/desk';
-import { filePanelId } from '$lib/components/desk/file-panel';
-import { Button, Spinner } from '$lib/components/primitives';
+import { apiFetch } from '#lib/api.ts';
+import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { filePanelId } from '#lib/components/desk/file-panel.ts';
+import type { PanelDefinition } from '#lib/components/desk/index.ts';
+import { focusPanel, getDeskBus, getDockContext, getPanelMenus } from '#lib/components/desk/index.ts';
+import { Button, Spinner } from '#lib/components/primitives/index.ts';
 import { dataRootNode } from './adapters';
 import type { ContextMenuCallbacks } from './context-menu-items';
 import ExplorerBreadcrumb from './ExplorerBreadcrumb.svelte';

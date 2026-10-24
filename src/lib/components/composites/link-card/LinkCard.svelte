@@ -1,8 +1,8 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import type { HTMLAttributes } from 'svelte/elements';
-import { localizeHref } from '$lib/i18n';
-import { cn } from '$lib/utils/cn';
+import { localizeHref } from '#lib/i18n/index.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Sublink {
 	label: string;

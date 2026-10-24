@@ -1,4 +1,4 @@
-import type { KnowledgeData, KnowledgeEdge, KnowledgeNode } from '$lib/types/knowledge';
+import type { KnowledgeData, KnowledgeEdge, KnowledgeNode } from '#lib/types/knowledge.ts';
 
 // Neo4j HTTP response shapes
 

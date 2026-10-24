@@ -7,21 +7,21 @@
  */
 
 import { and, eq, inArray } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { userTelegramAccounts } from '$lib/server/db/schema/notifications/telegram';
-import { userPreferences } from '$lib/server/db/schema/personalization/user-preferences';
-import { getChannel } from '$lib/server/notifications/channels';
-import type { DeliveryPayload } from '$lib/server/notifications/channels/types';
-import { DELIVERY_BATCH_SIZE } from '$lib/server/notifications/config';
+import { db } from '#lib/server/db/index.ts';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { userTelegramAccounts } from '#lib/server/db/schema/notifications/telegram.ts';
+import { userPreferences } from '#lib/server/db/schema/personalization/user-preferences.ts';
+import { getChannel } from '#lib/server/notifications/channels/index.ts';
+import type { DeliveryPayload } from '#lib/server/notifications/channels/types.ts';
+import { DELIVERY_BATCH_SIZE } from '#lib/server/notifications/config.ts';
 import {
 	type ClaimedDelivery,
 	claimDeliveries,
 	markFailed,
 	markSent,
 	reclaimStaleDeliveries,
-} from '$lib/server/notifications/outbox';
-import { renderNotification } from '$lib/server/notifications/render-message';
+} from '#lib/server/notifications/outbox.ts';
+import { renderNotification } from '#lib/server/notifications/render-message.ts';
 
 /** Resolve the recipient address for a given channel + user */
 async function resolveRecipient(userId: string, channel: string): Promise<string | null> {
@@ -41,7 +41,7 @@ async function resolveRecipient(userId: string, channel: string): Promise<string
 
 	if (channel === 'discord') {
 		try {
-			const { userDiscordAccounts } = await import('$lib/server/db/schema/notifications/discord');
+			const { userDiscordAccounts } = await import('#lib/server/db/schema/notifications/discord.ts');
 			const [account] = await db
 				.select({ discordUserId: userDiscordAccounts.discordUserId })
 				.from(userDiscordAccounts)
@@ -80,7 +80,7 @@ async function deactivateAccount(channel: string, userId: string): Promise<void>
 
 	if (channel === 'discord') {
 		try {
-			const { userDiscordAccounts } = await import('$lib/server/db/schema/notifications/discord');
+			const { userDiscordAccounts } = await import('#lib/server/db/schema/notifications/discord.ts');
 			await db
 				.update(userDiscordAccounts)
 				.set({ isActive: false })

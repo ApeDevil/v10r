@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Badge } from '$lib/components/primitives';
+import { Badge } from '#lib/components/primitives/index.ts';
 
 export interface ToolRow {
 	name: string;

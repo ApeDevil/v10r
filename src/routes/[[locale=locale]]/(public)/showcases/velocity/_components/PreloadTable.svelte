@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Stack } from '$lib/components/layout';
-import { type PreloadIntent, preloadAttributes } from '$lib/nav';
-import * as m from '$lib/paraglide/messages';
+import { Stack } from '#lib/components/layout/index.ts';
+import { type PreloadIntent, preloadAttributes } from '#lib/nav/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 /** Every level, with the attributes it actually produces — read off the module, not retyped. */
 const INTENTS: Array<{ intent: PreloadIntent; use: string }> = [

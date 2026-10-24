@@ -1,5 +1,5 @@
-import * as m from '$lib/paraglide/messages';
-import { baseLocale, cookieName, isLocale } from '$lib/paraglide/runtime';
+import * as m from '#lib/paraglide/messages.js';
+import { baseLocale, cookieName, isLocale } from '#lib/paraglide/runtime.js';
 import type { RequestHandler } from './$types';
 
 /**

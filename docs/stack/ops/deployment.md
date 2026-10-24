@@ -15,7 +15,7 @@ Multi-target deployment proving runtime portability via SvelteKit's adapter syst
 
 Node 22 is the engine everywhere the code is gated or run: cloud sessions (Node 22 from the
 cloud image), the local container (`Containerfile.dev` copies `node:22`), `package.json`
-`engines` (`>=22`), and the functions (`adapter-vercel` `runtime: 'nodejs22.x'`, also on the
+`engines` (`>=22.17.0`, SvelteKit 3's floor), and the functions (`adapter-vercel` `runtime: 'nodejs22.x'`, also on the
 route-level `config` exports). The Vercel project's **Node.js Version** setting decides the
 engine the production *build* runs on; it must read **22.x**. On 2026-10-22 it read **24.x**,
 so `validate:build` (Node 22) did not test the engine Vercel builds with. Stas changes it in
@@ -23,7 +23,7 @@ the dashboard ([shipping.md](./shipping.md#one-time-configuration)).
 
 ## Adapters
 
-`svelte.config.js` hardcodes `adapter-vercel` (`runtime: 'nodejs22.x'`). The container adapters (`svelte-adapter-bun`, `adapter-node`) are not installed and there is no `Dockerfile` or `DEPLOY_TARGET` switch yet. Swapping adapters needs no application code changes — that portability is the point.
+The `sveltekit()` options in `vite.config.ts` hardcode `adapter-vercel` (`runtime: 'nodejs22.x'`). The container adapters (`svelte-adapter-bun`, `adapter-node`) are not installed and there is no `Dockerfile` or `DEPLOY_TARGET` switch yet. Swapping adapters needs no application code changes — that portability is the point.
 
 ## Known limitations
 

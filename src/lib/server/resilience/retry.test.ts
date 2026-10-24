@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DeadlineExceededError, startDeadline } from '$lib/server/http/deadline';
+import { DeadlineExceededError, startDeadline } from '#lib/server/http/deadline.ts';
 import { ResilienceError } from './errors';
 import { retryWithin } from './retry';
 

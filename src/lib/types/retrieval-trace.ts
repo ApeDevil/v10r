@@ -4,7 +4,7 @@
  *
  * Two ORTHOGONAL axes describe a step/chunk:
  *   - RETRIEVER `RetrieverId`     which retriever produced it
- *   - CORPUS    `RetrievalCorpus` which corpus (in $lib/types/retrieval-corpora.ts)
+ *   - CORPUS    `RetrievalCorpus` which corpus (in #lib/types/retrieval-corpora.ts)
  */
 
 /** Retrieval step identifiers — ordered by execution flow */

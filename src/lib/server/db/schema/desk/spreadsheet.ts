@@ -7,12 +7,12 @@
  * Cell format (sparse, only non-empty cells stored):
  *   { "A1": { v: "Header", t: "text" }, "B2": { v: 42, f: "=SUM(B3:B5)" } }
  *
- * `PersistedCell` in `$lib/desk/spreadsheet-cells.ts` is the shape; the mutations that
+ * `PersistedCell` in `#lib/desk/spreadsheet-cells.ts` is the shape; the mutations that
  * write this column re-derive every `v` from its `f` first, so a stored sheet never
  * disagrees with itself whoever wrote it.
  */
 import { index, integer, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
-import type { SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
+import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
 import { user } from '../auth/_better-auth';
 import { file } from './file';
 import { deskSchema } from './schema';

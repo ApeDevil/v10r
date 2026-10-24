@@ -1,7 +1,7 @@
 /**
  * The daily token budget's Redis shape: the charge is ONE pipelined round trip (INCRBY +
  * EXPIRE) — it runs on the answer path, between the last token and `finish` — and the
- * gate is one GET. Redis and `$app/environment` are mocked; nothing leaves the process.
+ * gate is one GET. Redis and `$app/env` are mocked; nothing leaves the process.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,8 +12,8 @@ const fake = vi.hoisted(() => {
 	return { chain, redis: { get: vi.fn(), pipeline: vi.fn(() => chain) } };
 });
 
-vi.mock('$app/environment', () => ({ dev: false }));
-vi.mock('$lib/server/cache', () => ({ redis: fake.redis }));
+vi.mock('$app/env', () => ({ dev: false }));
+vi.mock('#lib/server/cache/index.ts', () => ({ redis: fake.redis }));
 
 const { chargeTokens, checkUserBudget } = await import('./budget');
 const { DAILY_TOKEN_CAP } = await import('./config');

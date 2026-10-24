@@ -3,8 +3,8 @@
   Shows Code Path (default, always populated), Timing, and Payload tabs.
 -->
 <script lang="ts">
-import { Button } from '$lib/components/primitives';
-import type { CycleStageState } from '$lib/showcases/cycle/types';
+import { Button } from '#lib/components/primitives/index.ts';
+import type { CycleStageState } from '#lib/showcases/cycle/types.ts';
 
 interface Props {
 	stage: CycleStageState;
@@ -20,15 +20,15 @@ let activeTab = $state<'code' | 'timing' | 'payload'>('code');
 const codePaths: Record<string, string> = {
 	browser: 'Client → form.submit() / fetch()',
 	network: 'HTTP POST → SvelteKit adapter → hooks.server.ts',
-	server: '$lib/server/showcases/cycle/handlers.ts → executeCycle() [validation]',
-	domain: '$lib/server/showcases/cycle/handlers.ts → executeCycle() [business logic]',
-	database: '$lib/server/db → db.insert(cycleRun).values(...).returning()',
-	response: '$lib/server/showcases/cycle/handlers.ts → executeCycle() [serialization]',
-	embed: '$lib/server/retrieval/embed.ts → generateEmbedding(query)',
-	retrieve: '$lib/server/retrieval → searchContextual / parentChild / graph',
-	rank: '$lib/server/retrieval/rank.ts → fuseAndRank(chunks) [RRF]',
-	context: '$lib/server/retrieval → formatContextForPrompt(result)',
-	generate: '$lib/server/ai → streamText({ model, prompt, context })',
+	server: '#lib/server/showcases/cycle/handlers.ts → executeCycle() [validation]',
+	domain: '#lib/server/showcases/cycle/handlers.ts → executeCycle() [business logic]',
+	database: '#lib/server/db → db.insert(cycleRun).values(...).returning()',
+	response: '#lib/server/showcases/cycle/handlers.ts → executeCycle() [serialization]',
+	embed: '#lib/server/retrieval/embed.ts → generateEmbedding(query)',
+	retrieve: '#lib/server/retrieval → searchContextual / parentChild / graph',
+	rank: '#lib/server/retrieval/rank.ts → fuseAndRank(chunks) [RRF]',
+	context: '#lib/server/retrieval → formatContextForPrompt(result)',
+	generate: '#lib/server/ai → streamText({ model, prompt, context })',
 };
 
 const pct = $derived(

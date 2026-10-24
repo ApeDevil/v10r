@@ -1,8 +1,8 @@
 <script lang="ts">
-import { Waterfall, type WaterfallRow } from '$lib/components/viz';
-import * as m from '$lib/paraglide/messages';
-import { STEP_BUDGETS } from '$lib/showcases/ai/topology';
-import type { AiSurface } from '$lib/types/db-enums';
+import { Waterfall, type WaterfallRow } from '#lib/components/viz/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { STEP_BUDGETS } from '#lib/showcases/ai/topology.ts';
+import type { AiSurface } from '#lib/types/db-enums.ts';
 
 // A turn is a chain of attempts, not one call. Providers stay abstract
 // (primary/fallback) — live provider status on a public page is a probe signal.

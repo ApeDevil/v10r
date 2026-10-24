@@ -1,12 +1,12 @@
 import * as v from 'valibot';
-import { deleteAsset, getAssetById, updateAssetMetadata } from '$lib/server/blog';
-import { getAssetFolder } from '$lib/server/blog/asset-folders';
-import { PatchAssetSchema } from '$lib/server/blog/schemas';
-import { guardApiBlogAuthor, guardAssetOwnership } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiNoContent, apiOk, apiValidationError } from '$lib/server/http/response';
-import { deleteBlogObject } from '$lib/server/store/blog';
-import { classifyS3Error } from '$lib/server/store/errors';
+import { getAssetFolder } from '#lib/server/blog/asset-folders.ts';
+import { deleteAsset, getAssetById, updateAssetMetadata } from '#lib/server/blog/index.ts';
+import { PatchAssetSchema } from '#lib/server/blog/schemas.ts';
+import { guardApiBlogAuthor, guardAssetOwnership } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiNoContent, apiOk, apiValidationError } from '#lib/server/http/response.ts';
+import { deleteBlogObject } from '#lib/server/store/blog/index.ts';
+import { classifyS3Error } from '#lib/server/store/errors.ts';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:blog:assets:mutate', 30, '1 m');

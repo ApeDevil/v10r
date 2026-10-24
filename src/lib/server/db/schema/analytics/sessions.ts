@@ -4,7 +4,7 @@
  * `device` and `browser` are UA-derived (terminal configuration) and are only
  * populated at the `analytics` tier. `country` is derived from the connection at
  * the edge, never from the device, so it is populated at every tier. See
- * `$lib/server/analytics/enrich.ts` for the legal reasoning behind the split.
+ * `#lib/server/analytics/enrich.ts` for the legal reasoning behind the split.
  */
 import { sql } from 'drizzle-orm';
 import { char, index, integer, text, timestamp } from 'drizzle-orm/pg-core';

@@ -12,7 +12,7 @@
  * `resetSubkeyCache()` between cases, the same convention as `security/ticket.test.ts`.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { resetSubkeyCache } from '$lib/server/security';
+import { resetSubkeyCache } from '#lib/server/security/index.ts';
 import { signOwnerCookie, verifyOwnerCookie } from './cookie';
 
 const ROOT = 'test-root-secret-at-least-32-characters-long';
@@ -79,7 +79,7 @@ describe('verifyOwnerCookie', () => {
 	// A ticket for another purpose derives a different key, so it fails the MAC — this pins
 	// that the pairing cookie cannot be minted by any other ticket-issuing subsystem.
 	it('rejects a ticket issued for a different purpose', async () => {
-		const { signTicket, SUBKEY_PURPOSES } = await import('$lib/server/security');
+		const { signTicket, SUBKEY_PURPOSES } = await import('#lib/server/security/index.ts');
 		const foreign = signTicket(SUBKEY_PURPOSES.blogUploadTicket, { adminUserId: 'usr_admin' }, future());
 		expect(verifyOwnerCookie(foreign)).toBeNull();
 	});

@@ -29,7 +29,7 @@ unattributed              174ms
 to a telemetry vendor:
 
 ```text
-$lib/server/http/request-timing.ts    ← what domain code records into
+#lib/server/http/request-timing.ts    ← what domain code records into
         ↓
 Server-Timing header  (today)   |   an OpenTelemetry exporter  (if ever needed)
 ```
@@ -197,10 +197,10 @@ sharing a name — and the in-process path is worth exercising anyway, since it 
 preview deployment runs.
 
 **Why it runs inside vitest.** The scenarios drive the real cache and resilience modules, and
-those reach `$env/dynamic/private`, a specifier that only exists inside Vite. Bare Bun cannot
+those reach `$app/env/private`, a specifier that only exists inside Vite. Bare Bun cannot
 resolve it, so `scripts/perf/scenarios.ts` spawns the gate in write mode rather than importing
 the harness the way `scripts/perf/snapshot.ts` can. The alternative — a harness restricted to
-the modules that happen to avoid `$env` — would measure a convenient subset of the system and
+the modules that happen to avoid `$app/env` — would measure a convenient subset of the system and
 present it as the system.
 
 ```bash

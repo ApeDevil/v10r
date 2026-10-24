@@ -6,7 +6,7 @@
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { startDeadline } from '$lib/server/http/deadline';
+import { startDeadline } from '#lib/server/http/deadline.ts';
 import { callService, SERVICE_OPERATIONS } from './client';
 import { MAX_RESPONSE_BYTES } from './config';
 import { EVALUATION_PRESETS } from './presets';

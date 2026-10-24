@@ -8,7 +8,7 @@
  * straight and every bend smooth.
  */
 import { CurvePath, LineCurve3, QuadraticBezierCurve3, TubeGeometry, Vector3 } from 'three';
-import type { Vec3 } from '$lib/product-composition';
+import type { Vec3 } from '#lib/product-composition/index.ts';
 
 /** Tube radius and the largest corner radius, in metres. */
 export const CONDUIT_TUBE = { radius: 0.012, bend: 0.05 } as const;

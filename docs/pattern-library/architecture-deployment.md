@@ -23,7 +23,7 @@ Covers the deployment setup — Vercel Node.js serverless is the one wired targe
 
 ## Code
 
-- `svelte.config.js` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/svelte.config.js) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/svelte.config.js))
+- `vite.config.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/vite.config.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/vite.config.ts))
 - `vercel.json` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/vercel.json) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/vercel.json))
 
 ---

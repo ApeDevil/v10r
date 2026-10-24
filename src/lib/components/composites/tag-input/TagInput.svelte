@@ -1,8 +1,8 @@
 <script lang="ts">
 import { tick } from 'svelte';
-import { Tag } from '$lib/components/primitives';
-import type { TagVariants } from '$lib/components/primitives/tag/tag';
-import { cn } from '$lib/utils/cn';
+import { Tag } from '#lib/components/primitives/index.ts';
+import type { TagVariants } from '#lib/components/primitives/tag/tag.ts';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	value?: string[];

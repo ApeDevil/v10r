@@ -1,4 +1,4 @@
-import { cypher } from '$lib/server/graph';
+import { cypher } from '#lib/server/graph/index.ts';
 import {
 	computePercentage,
 	computeThreshold,

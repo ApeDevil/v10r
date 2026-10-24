@@ -3,7 +3,7 @@
  * All mutations produce new trees (immutable replacement).
  */
 
-import type { DropZone, LayoutNode, LeafNode, PanelDefinition, SplitNode } from '$lib/desk/layout.types';
+import type { DropZone, LayoutNode, LeafNode, PanelDefinition, SplitNode } from '#lib/desk/layout.types.ts';
 
 let counter = 0;
 

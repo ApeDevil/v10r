@@ -1,7 +1,7 @@
 /**
  * Editing state for one composition: the document, what is selected, and an undo stack.
  *
- * Every change goes through a pure core operation (`$lib/product-composition`), so the
+ * Every change goes through a pure core operation (`#lib/product-composition/index.ts`), so the
  * editor never mutates a document — undo is a stack of earlier snapshots. A refused
  * operation leaves the document alone and keeps its reasons in `notice` for the UI to say.
  * A drag is one *gesture*: every frame re-applies the operation to the snapshot the drag
@@ -23,7 +23,7 @@ import {
 	resolvePort,
 	stringifyComposition,
 	type Vec3,
-} from '$lib/product-composition';
+} from '#lib/product-composition/index.ts';
 import type { CompositionSelection } from './CompositionScene.svelte';
 
 /** Snapshots kept for undo. */

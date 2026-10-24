@@ -1,7 +1,7 @@
-import ButtonSource from '$lib/components/primitives/button/Button.svelte?raw';
-import ButtonVariants from '$lib/components/primitives/button/button.ts?raw';
-import SpinnerSource from '$lib/components/primitives/spinner/Spinner.svelte?raw';
-import { highlight } from '$lib/server/shiki';
+import ButtonSource from '#lib/components/primitives/button/Button.svelte?raw';
+import ButtonVariants from '#lib/components/primitives/button/button.ts?raw';
+import SpinnerSource from '#lib/components/primitives/spinner/Spinner.svelte?raw';
+import { highlight } from '#lib/server/shiki.ts';
 import type { PageServerLoad } from './$types';
 
 export const prerender = true;

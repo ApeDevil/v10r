@@ -20,19 +20,18 @@
  * decide whether to fall back (see the guard comment below). Note this is a rule, not yet a
  * property of the file: the parse-error path already emits a real JSON-RPC `-32700` at 400.
  */
-import { json } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
-import { MAX_MCP_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '$lib/server/http/body';
+import { MAX_MCP_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
 // Dependency-free by construction (monitoring/index.ts has zero imports), so this does not pull a
 // DB or platform edge into the module graph the zero-mock protocol tests rely on.
-import { sanitizeError } from '$lib/server/monitoring';
+import { sanitizeError } from '#lib/server/monitoring/index.ts';
+import { MCP_ALLOWED_ORIGINS } from '$app/env/private';
 import { isSupportedProtocolVersion, SUPPORTED_PROTOCOL_VERSIONS } from './server-info';
 import { handleMcpMessage, type McpServerIdentity } from './transport';
 import { type JsonRpcResponse, type McpCallObservation, type McpCallObserver, RPC, type ToolRegistry } from './types';
 
 /** 405 for GET (SSE unsupported) — no auth, no tool metadata revealed. */
 export function mcpMethodNotAllowed(): Response {
-	return json(
+	return Response.json(
 		{ error: { code: 'method_not_allowed', message: 'This MCP endpoint accepts POST only (SSE is not supported).' } },
 		{ status: 405, headers: { Allow: 'POST' } },
 	);
@@ -52,7 +51,7 @@ export function mcpMethodNotAllowed(): Response {
  * expressible by writing the scheme out, which is what a local MCP client actually needs.
  */
 function allowedOrigins(): string[] {
-	return (env.MCP_ALLOWED_ORIGINS ?? '')
+	return (MCP_ALLOWED_ORIGINS ?? '')
 		.split(',')
 		.map((entry) => entry.trim())
 		.filter((entry) => entry.length > 0)
@@ -218,7 +217,7 @@ export async function respondToMcpPost(
 
 	if (!isAllowedOrigin(request)) {
 		emit({ stage: 'envelope', status: 403 });
-		return json({ error: { code: 'forbidden_origin', message: 'Origin not allowed.' } }, { status: 403 });
+		return Response.json({ error: { code: 'forbidden_origin', message: 'Origin not allowed.' } }, { status: 403 });
 	}
 	if (!protocolVersionHeaderOk(request)) {
 		/**
@@ -247,7 +246,7 @@ export async function respondToMcpPost(
 		 * https://modelcontextprotocol.io/specification/draft/basic/transports/streamable-http#backward-compatibility
 		 */
 		emit({ stage: 'envelope', status: 400 });
-		return json(
+		return Response.json(
 			{
 				error: {
 					code: 'unsupported_protocol_version',
@@ -279,7 +278,10 @@ export async function respondToMcpPost(
 		// Unchanged from the pre-budget behaviour, byte for byte: -32700 is outside the reserved
 		// -32020..-32099 band, so it is the one JSON-RPC 400 this file is allowed to emit.
 		emit({ stage: 'envelope', status: 400, rpcErrorCode: RPC.PARSE });
-		return json({ jsonrpc: '2.0', id: null, error: { code: RPC.PARSE, message: 'Parse error' } }, { status: 400 });
+		return Response.json(
+			{ jsonrpc: '2.0', id: null, error: { code: RPC.PARSE, message: 'Parse error' } },
+			{ status: 400 },
+		);
 	}
 	const parsed: unknown = body.value;
 
@@ -291,13 +293,13 @@ export async function respondToMcpPost(
 			return new Response(null, { status: 202 });
 		}
 		emit({ ...describeExchange(parsed, response), status: 200 });
-		return json(toWire(response));
+		return Response.json(toWire(response));
 	} catch (cause) {
 		// Defence in depth: tool throws are already caught in the transport, but anything else
 		// stays a clean JSON-RPC internal error — never a raw 500 / exception string on the wire.
 		console.error('[mcp] transport error:', sanitizeError(cause));
 		emit({ stage: 'envelope', status: 500, isError: true, rpcErrorCode: RPC.INTERNAL });
-		return json(
+		return Response.json(
 			{ jsonrpc: '2.0', id: null, error: { code: RPC.INTERNAL, message: 'Internal error' } },
 			{ status: 500 },
 		);

@@ -2,11 +2,11 @@
 import { tick } from 'svelte';
 import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
-import { Alert, Card, FormField } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Checkbox, Input, Progress, Select, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { wizardSchema } from '$lib/schemas/showcase/patterns';
+import { Alert, Card, FormField } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Checkbox, Input, Progress, Select, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { wizardSchema } from '#lib/schemas/showcase/patterns.ts';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();

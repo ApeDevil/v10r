@@ -1,5 +1,5 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
+import { NavSection } from '#lib/components/composites/index.ts';
 import TokensSection from '../components/_sections/TokensSection.svelte';
 
 const sections = [

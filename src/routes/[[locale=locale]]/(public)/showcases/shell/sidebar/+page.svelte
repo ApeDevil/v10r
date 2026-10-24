@@ -1,8 +1,8 @@
 <script lang="ts">
-import { NavSection } from '$lib/components/composites';
-import { Button } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { getSidebar } from '$lib/state/sidebar.svelte';
+import { NavSection } from '#lib/components/composites/index.ts';
+import { Button } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { getSidebar } from '#lib/state/sidebar.svelte.ts';
 
 const sidebar = getSidebar();
 

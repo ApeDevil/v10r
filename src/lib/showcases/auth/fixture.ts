@@ -2,7 +2,7 @@
  * AUTH SHOWCASE FIXTURE — fabricated, schema-faithful data for the
  * Identity & Access showcase.
  *
- * This module has ZERO imports from `$lib/server/*` or `$env/*` and is
+ * This module has ZERO imports from `#lib/server/*` or `$app/env/*` and is
  * therefore safe to import directly into public, client-rendered pages.
  * The auth showcase has no `+page.server.ts` and never touches the real
  * auth subsystem — every row here is invented.
@@ -15,7 +15,7 @@
  *    never a realistic-looking secret
  */
 
-import type { DateFormat, DisplayDensity, Theme } from '$lib/types/db-enums';
+import type { DateFormat, DisplayDensity, Theme } from '#lib/types/db-enums.ts';
 
 export const SECRET_SENTINEL = '«never selected»' as const;
 type Secret = typeof SECRET_SENTINEL;

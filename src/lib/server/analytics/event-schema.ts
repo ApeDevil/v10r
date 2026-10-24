@@ -14,7 +14,7 @@
  * Adding an event is deliberate: add it here, with its allowed keys.
  */
 
-import { COMMAND_VIA } from '$lib/types/journey-events';
+import { COMMAND_VIA } from '#lib/types/journey-events.ts';
 
 /** Bounded value domains. `enum` is the strongest — it also bounds cardinality. */
 type PropertySpec =

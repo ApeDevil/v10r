@@ -13,14 +13,14 @@
  * open (toggles are done in runs); disabled rows are dimmed, never hidden;
  * shortcut hints are keyboard talk and don't render here.
  */
-import { trackCommand } from '$lib/analytics/telemetry';
-import { InfoDialog } from '$lib/components/composites/info-dialog';
-import type { MenuBarItem, MenuBarMenu } from '$lib/components/composites/menu-bar/types';
-import { Drawer } from '$lib/components/primitives';
-import { DESK_PANEL_HELP } from '$lib/desk/help';
-import type { DeskPanelType } from '$lib/desk/panels';
-import * as m from '$lib/paraglide/messages';
-import { cn } from '$lib/utils/cn';
+import { trackCommand } from '#lib/analytics/telemetry.ts';
+import { InfoDialog } from '#lib/components/composites/info-dialog/index.ts';
+import type { MenuBarItem, MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { Drawer } from '#lib/components/primitives/index.ts';
+import { DESK_PANEL_HELP } from '#lib/desk/help.ts';
+import type { DeskPanelType } from '#lib/desk/panels.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { cn } from '#lib/utils/cn.ts';
 import { collectTypeInstances, composePanelMenus, shortcutTableMarkdown } from './compose-menus';
 import { getDockContext } from './dock.state.svelte';
 import { getDockMobile } from './dock-mobile.state.svelte';

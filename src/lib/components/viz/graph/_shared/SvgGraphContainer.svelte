@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onDestroy, onMount, type Snippet } from 'svelte';
+import { cn } from '#lib/utils/cn.ts';
 import { beforeNavigate } from '$app/navigation';
-import { cn } from '$lib/utils/cn';
 import { type ChartContainerVariants, chartContainerVariants } from '../../_shared/chart-container';
 
 interface Props {
@@ -51,7 +51,9 @@ function cleanup() {
 	zoomBehavior = undefined;
 }
 
-beforeNavigate(cleanup);
+beforeNavigate(({ shallow }) => {
+	if (!shallow) cleanup();
+});
 onDestroy(cleanup);
 
 onMount(async () => {

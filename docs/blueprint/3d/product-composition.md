@@ -33,10 +33,10 @@ serialising the scene graph. This pattern keeps seven things apart, so each can 
 | Coupling — *which* two ports are joined, mated or by a conduit | the document | the geometry between them |
 | Conduit — *where* the pipe or cable runs (waypoints) | the document | why the ports are compatible |
 | Rules — which ports may join | a `PortStandardRegistry` the caller supplies | heating, shelving, any domain |
-| Rendering — meshes, markers, tubes, gizmo | `$lib/components/3d/composition/` | the rules |
+| Rendering — meshes, markers, tubes, gizmo | `#lib/components/3d/composition/` | the rules |
 
 Topology is not geometry: IFC 4.3 makes the same split between `IfcRelConnectsPorts` and the
-element that realises it. The core (`$lib/product-composition/`) imports no Svelte, `$app`,
+element that realises it. The core (`#lib/product-composition/`) imports no Svelte, `$app`,
 DOM or WebGL object, so an import, an AI tool or a server write can validate a document
 exactly as the editor does.
 
@@ -126,7 +126,7 @@ code (`diagnostics.ts`):
 
 ## Rendering and editing
 
-`$lib/components/3d/composition/` reads only the core's resolved output:
+`#lib/components/3d/composition/` reads only the core's resolved output:
 
 - `CompositionCanvas` — `<svelte:boundary>` fallback around an on-demand `<Canvas>`, exposed
   as `role="img"` with a label that points to the keyboard way.

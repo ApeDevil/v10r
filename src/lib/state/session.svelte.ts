@@ -4,7 +4,7 @@
  */
 
 import { getContext, setContext } from 'svelte';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 const SESSION_CTX = Symbol('session');
 

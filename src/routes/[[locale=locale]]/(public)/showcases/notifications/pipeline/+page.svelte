@@ -1,9 +1,9 @@
 <script lang="ts">
+import { Card, DiagGrid, DiagRow, EmptyState, NavSection } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Spinner } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 import { enhance } from '$app/forms';
-import { Card, DiagGrid, DiagRow, EmptyState, NavSection } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
 
 let { data } = $props();
 

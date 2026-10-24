@@ -4,11 +4,11 @@ import {
 	createGrantRequest,
 	GrantRequestPendingError,
 	listMyRequests,
-} from '$lib/server/auth/grant-requests';
-import { GRANT_KINDS } from '$lib/server/auth/grants';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiCreated, apiError, apiOk, apiValidationError } from '$lib/server/http/response';
+} from '#lib/server/auth/grant-requests.ts';
+import { GRANT_KINDS } from '#lib/server/auth/grants.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiCreated, apiError, apiOk, apiValidationError } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
 
 const requestLimit = createLimiter('ratelimit:grant-request:user', 1, '24 h');

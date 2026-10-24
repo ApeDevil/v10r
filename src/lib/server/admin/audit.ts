@@ -1,6 +1,6 @@
 import { and, count, desc, eq, gte, ilike, lt, lte, or } from 'drizzle-orm';
-import { db } from '$lib/server/db';
-import { adminAuditLog } from '$lib/server/db/schema/admin';
+import { db } from '#lib/server/db/index.ts';
+import { adminAuditLog } from '#lib/server/db/schema/admin/index.ts';
 import { AUDIT_PAGE_SIZE } from './config';
 
 export interface AuditEventInput {

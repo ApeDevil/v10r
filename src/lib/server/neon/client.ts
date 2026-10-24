@@ -6,24 +6,24 @@
  * `getOperation`. Errors are thrown with status only (never the response body,
  * which can contain ids/tokens); callers run them through `sanitizeError`.
  */
-import { env } from '$env/dynamic/private';
+import { NEON_API_KEY, NEON_PROJECT_ID } from '$app/env/private';
 import type { NeonBranch, NeonOperation, NeonRestoreResult } from './types';
 
 const BASE = 'https://console.neon.tech/api/v2';
 
 /** True when the Management API can be used (key + project id present). */
 export function neonConfigured(): boolean {
-	return !!(env.NEON_API_KEY && env.NEON_PROJECT_ID);
+	return !!(NEON_API_KEY && NEON_PROJECT_ID);
 }
 
 function projectId(): string {
-	const id = env.NEON_PROJECT_ID;
+	const id = NEON_PROJECT_ID;
 	if (!id) throw new Error('NEON_PROJECT_ID not configured');
 	return id;
 }
 
 async function neonFetch<T>(path: string, init?: RequestInit): Promise<T> {
-	const key = env.NEON_API_KEY;
+	const key = NEON_API_KEY;
 	if (!key) throw new Error('NEON_API_KEY not configured');
 
 	const res = await fetch(`${BASE}${path}`, {

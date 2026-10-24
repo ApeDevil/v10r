@@ -1,6 +1,6 @@
 import { fail, message, superValidate } from 'sveltekit-superforms';
 import { valibot } from 'sveltekit-superforms/adapters';
-import { dependentSchema } from '$lib/schemas/showcase/patterns';
+import { dependentSchema } from '#lib/schemas/showcase/patterns.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const locationData = {

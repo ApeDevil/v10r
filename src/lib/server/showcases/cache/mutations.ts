@@ -1,5 +1,4 @@
-import { CacheError } from '$lib/server/cache';
-import { redis } from '$lib/server/cache/index';
+import { CacheError, redis } from '#lib/server/cache/index.ts';
 import { assertShowcaseCacheKey } from './guards';
 
 function requireRedis() {

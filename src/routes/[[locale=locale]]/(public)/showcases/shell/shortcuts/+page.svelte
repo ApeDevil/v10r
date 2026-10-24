@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Kbd } from '$lib/components/primitives';
-import * as m from '$lib/paraglide/messages';
-import { formatShortcut, getShortcutsByCategory } from '$lib/shortcuts';
+import { Kbd } from '#lib/components/primitives/index.ts';
+import * as m from '#lib/paraglide/messages.js';
+import { formatShortcut, getShortcutsByCategory } from '#lib/shortcuts/index.ts';
 
 const shortcuts = $derived(getShortcutsByCategory());
 </script>

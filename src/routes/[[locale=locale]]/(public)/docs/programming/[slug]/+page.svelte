@@ -1,8 +1,8 @@
 <script lang="ts">
-import { MarkdownProse, PageHeader } from '$lib/components/composites';
-import { PageContainer } from '$lib/components/layout';
-import { localizeHref } from '$lib/i18n';
-import * as m from '$lib/paraglide/messages';
+import { MarkdownProse, PageHeader } from '#lib/components/composites/index.ts';
+import { PageContainer } from '#lib/components/layout/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
+import * as m from '#lib/paraglide/messages.js';
 
 let { data } = $props();
 </script>

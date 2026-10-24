@@ -7,19 +7,19 @@
  */
 import type { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { user } from '$lib/server/db/schema/auth/_better-auth';
-import { passkey } from '$lib/server/db/schema/auth/passkey';
+import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { passkey } from '#lib/server/db/schema/auth/passkey.ts';
 
 let testClient: PGlite;
 
-vi.mock('$lib/server/db', async () => {
-	const { createTestDb } = await import('$lib/server/test/db');
+vi.mock('#lib/server/db/index.ts', async () => {
+	const { createTestDb } = await import('#lib/server/test/db.ts');
 	const { db, client } = await createTestDb();
 	testClient = client;
 	return { db };
 });
 
-const { db } = await import('$lib/server/db');
+const { db } = await import('#lib/server/db/index.ts');
 const { listPasskeyDtos, countPasskeys, touchPasskeyLastUsed } = await import('./queries');
 
 afterAll(async () => {

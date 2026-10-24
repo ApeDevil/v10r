@@ -1,5 +1,5 @@
 <script lang="ts">
-import { cn } from '$lib/utils/cn';
+import { cn } from '#lib/utils/cn.ts';
 
 interface Props {
 	rings?: 2 | 3 | 4 | 5 | 6 | 7 | 8;

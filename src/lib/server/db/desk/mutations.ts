@@ -1,5 +1,5 @@
 import { and, eq, isNull, like, sql } from 'drizzle-orm';
-import { recalculateCells, type SpreadsheetCells } from '$lib/desk/spreadsheet-cells';
+import { recalculateCells, type SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
 import { createId } from '../id';
 import { type DbHandle, db } from '../index';
 import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';

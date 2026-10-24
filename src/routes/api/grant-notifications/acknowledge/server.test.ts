@@ -4,12 +4,12 @@ const { acknowledge, guard } = vi.hoisted(() => ({
 	acknowledge: vi.fn(),
 	guard: vi.fn<() => { user: { id: string } } | { error: Response }>(),
 }));
-vi.mock('$lib/server/auth/grants', () => ({
+vi.mock('#lib/server/auth/grants.ts', () => ({
 	GRANT_KINDS: ['blog-author'],
 	acknowledgeGrantNotifications: acknowledge,
 }));
-vi.mock('$lib/server/http/guards', () => ({ guardApiUser: guard }));
-vi.mock('$lib/server/http/rate-limit', () => ({
+vi.mock('#lib/server/http/guards.ts', () => ({ guardApiUser: guard }));
+vi.mock('#lib/server/http/rate-limit.ts', () => ({
 	createLimiter: () => ({ limit: async () => ({ success: true }) }),
 	rateLimitResponse: vi.fn(),
 }));

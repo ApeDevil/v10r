@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { classifyCacheError } from '$lib/server/cache/errors';
+import { classifyCacheError } from '#lib/server/cache/errors.ts';
 import {
 	addToSortedSet,
 	decrementCounter,
@@ -10,8 +10,8 @@ import {
 	removeFromSortedSet,
 	setHashField,
 	setString,
-} from '$lib/server/showcases/cache/mutations';
-import { getEntryDetail, getShowcaseStats, listShowcaseEntries } from '$lib/server/showcases/cache/queries';
+} from '#lib/server/showcases/cache/mutations.ts';
+import { getEntryDetail, getShowcaseStats, listShowcaseEntries } from '#lib/server/showcases/cache/queries.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

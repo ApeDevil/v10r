@@ -1,11 +1,11 @@
 <script lang="ts">
+import RetrievalPipelineDiagram from '#lib/components/admin/ai/RetrievalPipelineDiagram.svelte';
+import { Card, ConfirmDialog, EmptyState } from '#lib/components/composites/index.ts';
+import { Cluster, Stack } from '#lib/components/layout/index.ts';
+import { Badge, Button, Spinner } from '#lib/components/primitives/index.ts';
+import { getToast } from '#lib/state/toast.svelte.ts';
 import { enhance } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
-import RetrievalPipelineDiagram from '$lib/components/admin/ai/RetrievalPipelineDiagram.svelte';
-import { Card, ConfirmDialog, EmptyState } from '$lib/components/composites';
-import { Cluster, Stack } from '$lib/components/layout';
-import { Badge, Button, Spinner } from '$lib/components/primitives';
-import { getToast } from '$lib/state/toast.svelte';
+import { refreshAll } from '$app/navigation';
 
 let { data } = $props();
 const toast = getToast();
@@ -81,7 +81,7 @@ const statusFilters = ['all', 'pending', 'processing', 'ready', 'error'] as cons
 		{#snippet header()}
 			<Cluster justify="between">
 				<h2 class="text-fluid-lg font-semibold">Retrieval Overview</h2>
-				<Button variant="outline" size="sm" onclick={() => invalidateAll()}>
+				<Button variant="outline" size="sm" onclick={() => refreshAll()}>
 					<span class="i-lucide-refresh-cw h-4 w-4 mr-1"></span>
 					Refresh
 				</Button>

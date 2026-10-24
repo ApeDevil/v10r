@@ -1,9 +1,9 @@
-import { env } from '$env/dynamic/private';
-import { db } from '$lib/server/db';
-import { telegramVerificationTokens } from '$lib/server/db/schema/notifications/telegram';
-import { guardApiUser } from '$lib/server/http/guards';
-import { createLimiter, rateLimitResponse } from '$lib/server/http/rate-limit';
-import { apiError, apiOk } from '$lib/server/http/response';
+import { db } from '#lib/server/db/index.ts';
+import { telegramVerificationTokens } from '#lib/server/db/schema/notifications/telegram.ts';
+import { guardApiUser } from '#lib/server/http/guards.ts';
+import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { apiError, apiOk } from '#lib/server/http/response.ts';
+import { TELEGRAM_BOT_USERNAME } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:notifications:telegram', 10, '1 m');
@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ locals }) => {
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const botUsername = env.TELEGRAM_BOT_USERNAME;
+	const botUsername = TELEGRAM_BOT_USERNAME;
 	if (!botUsername) {
 		return apiError(503, 'unavailable', 'Telegram not configured');
 	}
