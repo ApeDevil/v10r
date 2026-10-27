@@ -38,7 +38,9 @@ User clicks "Connect Discord"
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
 2. Create New Application
 3. Go to "Bot" → Create Bot → get `DISCORD_BOT_TOKEN`
-4. Go to "OAuth2" → Add redirect URI
+4. Go to "OAuth2" → Add redirect URI `{site URL}/account/notifications/settings/discord/callback` —
+   `https://www.v10r.dev/account/notifications/settings/discord/callback` in production,
+   `http://localhost:5173/account/notifications/settings/discord/callback` locally
 
 ### 2. Environment Variables
 
@@ -47,7 +49,10 @@ User clicks "Connect Discord"
 | `DISCORD_CLIENT_ID` | OAuth2 client ID |
 | `DISCORD_CLIENT_SECRET` | OAuth2 secret |
 | `DISCORD_BOT_TOKEN` | Bot authentication |
-| `DISCORD_REDIRECT_URI` | OAuth2 callback URL |
+
+The OAuth2 redirect URI is not a variable: it is `DISCORD_OAUTH_CALLBACK_PATH`
+(`notifications/config.ts`) on the site URL (`BETTER_AUTH_URL`, `auth/site-url.ts`), so it can
+never drift from the deployment it belongs to.
 
 ### 3. Required OAuth2 Scopes
 

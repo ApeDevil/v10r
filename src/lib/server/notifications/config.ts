@@ -11,6 +11,13 @@ export const SSE_HEARTBEAT_MS = 25_000;
 /** Max SSE connections per user */
 export const SSE_MAX_PER_USER = 3;
 
+/**
+ * Where Discord returns the user after OAuth consent. The redirect URI is this path on the site
+ * URL (`auth/site-url.ts`), so it is never configured by hand — the Discord developer portal
+ * must list exactly `${BETTER_AUTH_URL}${DISCORD_OAUTH_CALLBACK_PATH}` for each deployment.
+ */
+export const DISCORD_OAUTH_CALLBACK_PATH = '/account/notifications/settings/discord/callback';
+
 /** Delivery worker interval (ms) */
 export const DEFAULT_DELIVERY_INTERVAL_MS = 15_000;
 

@@ -4,6 +4,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
 import { emailOTP, magicLink, twoFactor } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
+import { dev } from '$app/env';
 import {
 	BETTER_AUTH_SECRET,
 	BETTER_AUTH_URL,
@@ -29,6 +30,7 @@ import {
 } from './config';
 import { type FactorChangeAction, onFactorChanged } from './factor-changes';
 import { magicLinkTemplate, otpTemplate, sendAuthEmail } from './send-auth-email';
+import { resolveSiteUrl } from './site-url';
 import { isStepUpFresh, stampStepUp } from './step-up';
 
 function requireEnv(name: string, value: string | undefined): string {
@@ -40,7 +42,9 @@ if (!BETTER_AUTH_SECRET || BETTER_AUTH_SECRET.length < 32) {
 	throw new Error('BETTER_AUTH_SECRET must be at least 32 characters. Generate one with: openssl rand -base64 32');
 }
 
-const baseURL = requireEnv('BETTER_AUTH_URL', BETTER_AUTH_URL);
+/** The canonical site URL (`site-url.ts`): `BETTER_AUTH_URL`, or the Vite dev server in dev. */
+export const siteUrl = resolveSiteUrl(BETTER_AUTH_URL, dev);
+const baseURL = siteUrl.origin;
 const githubClientId = requireEnv('GITHUB_CLIENT_ID', GITHUB_CLIENT_ID);
 const githubClientSecret = requireEnv('GITHUB_CLIENT_SECRET', GITHUB_CLIENT_SECRET);
 const googleClientId = requireEnv('GOOGLE_CLIENT_ID', GOOGLE_CLIENT_ID);
@@ -53,8 +57,6 @@ const googleClientSecret = requireEnv('GOOGLE_CLIENT_SECRET', GOOGLE_CLIENT_SECR
  * half-working ceremony surface would only invite confusion.
  */
 export const passkeysEnabled = VERCEL_ENV !== 'preview';
-
-const baseUrlParsed = new URL(baseURL);
 
 /**
  * Step-up enforcement + factor-change side effects.
@@ -331,9 +333,9 @@ export const auth = betterAuth({
 		...(passkeysEnabled
 			? [
 					passkey({
-						rpID: baseUrlParsed.hostname,
+						rpID: siteUrl.hostname,
 						rpName: 'Velociraptor',
-						origin: baseUrlParsed.origin,
+						origin: siteUrl.origin,
 					}),
 				]
 			: []),

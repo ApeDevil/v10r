@@ -191,7 +191,7 @@ Unlike Telegram/Discord, there's no account-linking flow. The subscription lives
 |--------|--------|
 | **Connection** | Browser permission prompt (must be a user gesture) → `PushManager.subscribe()` → `POST /api/notifications/push` stores the subscription |
 | **Scope** | Per-device, not per-account — one row per browser/device, capped at 10/user (oldest evicted) |
-| **Env** | `VAPID_PUBLIC_KEY` (ships to the client), `VAPID_PRIVATE_KEY` (server secret), `VAPID_SUBJECT` (`mailto:` contact) — generate with `bunx web-push generate-vapid-keys` |
+| **Env** | `VAPID_PUBLIC_KEY` (ships to the client), `VAPID_PRIVATE_KEY` (server secret), optional `VAPID_SUBJECT` (contact URI; defaults to the site URL when it is https, so production sets none) — generate with `bunx web-push generate-vapid-keys` |
 | **Payload** | Declarative Web Push JSON, no PII in the payload: title = brand name, body = a generic category line |
 | **Pruning** | A 404/410 from the push service on send deletes that endpoint's subscription (`deletePushSubscriptionByEndpoint`) |
 | **Disconnection** | Sign-out unsubscribes the current device (`#lib/pwa/sign-out.ts` `signOutAndFlush()`); other devices keep receiving push |

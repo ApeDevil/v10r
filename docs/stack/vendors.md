@@ -436,7 +436,7 @@ There are **no local service containers** — dev runs against the same remote s
 | `UPSTASH_REDIS_REST_URL` | Upstash | Redis REST endpoint |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash | Redis REST auth token |
 | `RESEND_API_KEY` | Resend | Email auth |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` | — (self-generated) | Web Push signing |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (+ optional `VAPID_SUBJECT`, default: the https site URL) | — (self-generated) | Web Push signing |
 | `CRON_SECRET` | — (self-generated) | Vercel cron endpoint auth |
 | `EXTERNAL_SERVICE_LOCAL_URL` / `_TOKEN` | — (self-hosted container) | External Service Lab, `local` target (optional) |
 | `EXTERNAL_SERVICE_REMOTE_URL` / `_TOKEN` | Render | External Service Lab, `remote` target (optional; https only) |

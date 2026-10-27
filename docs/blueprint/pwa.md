@@ -56,7 +56,7 @@ On iOS there is no sound wrapper at all: **the installed PWA is the iOS app.**
 - **Delivery is synchronous** — fanned out beside SSE in `sendNotification`, *bypassing the outbox*: the outbox drain is cron-driven on Vercel (`notification-delivery` cron, daily on the Hobby plan — Vercel rejects sub-daily crons there; the 15s interval scheduler only runs on persistent platforms). A push send is one fast HTTPS POST per device, so push is unaffected by the drain cadence.
 - **Subscription lifecycle:** per user+device rows (`notifications.push_subscriptions`, endpoint unique), created only under a session, capped at 10/user (oldest evicted), pruned on push-service 404/410, removed for the device on sign-out, cascade-deleted with the account.
 - **Types without a push settings column (`success`, `follow`) never route to push** — this mirrors telegram/discord (4-column precedent) and is intentional, not a bug: the router's `key in settings` guard skips absent columns.
-- **Env:** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (sensitive), `VAPID_SUBJECT` — generate with `bunx web-push generate-vapid-keys`; the same trio must exist in Vercel env for prod.
+- **Env:** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (sensitive) — generate with `bunx web-push generate-vapid-keys`; the same pair must exist in Vercel env for prod. `VAPID_SUBJECT` is optional: it defaults to the https site URL (`BETTER_AUTH_URL`).
 
 ## Production-hardening verdicts (research pass, 2026-07-03)
 

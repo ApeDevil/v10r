@@ -4,7 +4,7 @@
 	"inputs": {
 		"services/runtime-lab/Cargo.lock": "5f36dc9cd73c6feed8f4c88f07e24fd3c41f94e5aa9e386ee74440a5552565e6",
 		"services/runtime-lab/Cargo.toml": "1257026dffc12e6e4d7703a993ed721f30f08295dd7982ca17d5ba752a9c662a",
-		"services/runtime-lab/Containerfile": "a33836275083e93eaee0988c12757d3a4eb06c89c7768bfd3a1ddd6c53e154e0",
+		"services/runtime-lab/Containerfile": "87f382dc07672a5b9a7366ff7ce4fb901ec2081474c19c345f8c2a6a8c0117a6",
 		"services/runtime-lab/.dockerignore": "004338ffb4345d29451a2d770467ee03da28e7395d400bc43a0adbc3ade7f4f8",
 		"services/runtime-lab/rust-toolchain.toml": "0e1df4765baf8734ca66b9217c5e3647c37a9fee6461bdc6ce7d4f002ed5f776",
 		"scripts/external-service/check.sh": "b0470e1c409a97a36aae3e6371834a6cde80c111f4d31cb5b9012dd3920a54a6",

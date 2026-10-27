@@ -801,7 +801,7 @@ twoFactor({
   : []),
 ```
 
-`rpID` / `origin` derive from `BETTER_AUTH_URL` (dev → `localhost`).
+`rpID` / `origin` derive from the site URL — `BETTER_AUTH_URL`, or `http://localhost:5173` when it is unset in `dev` (`auth/site-url.ts`).
 
 > **Passkeys are disabled on Vercel previews** at the plugin level — endpoints 404, not just hidden UI. `*.vercel.app` is on the Public Suffix List, so a preview URL can never satisfy the production `rpID`. The exported `passkeysEnabled` flag (`env.VERCEL_ENV !== 'preview'`) also hides the UI in page loads.
 
@@ -1053,13 +1053,20 @@ src/
 
 ```bash
 # .env
-BETTER_AUTH_URL=http://localhost:5173   # drives passkey rpID / origin
 BETTER_AUTH_SECRET=...                   # ≥32 chars (openssl rand -base64 32)
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
+
+`BETTER_AUTH_URL` is the canonical site URL (`src/lib/server/auth/site-url.ts`): Better Auth's
+`baseURL` and trusted origin, the passkey `rpID`/`origin`, the Discord OAuth redirect URI and the
+Web Push contact all derive from it. Unset in `dev` it is `http://localhost:5173`, so a local
+`.env` omits it. Outside `dev` it is required — import throws without it — and is set on Vercel
+to `https://www.v10r.dev`. It is never derived from the request (`Host` is client-chosen) nor
+from `VERCEL_PROJECT_PRODUCTION_URL` (that names the shortest custom domain, the apex
+`v10r.dev`, which only redirects to `www`).
 
 ---
 

@@ -1,11 +1,21 @@
 import webpush from 'web-push';
 import { deletePushSubscriptionByEndpoint, touchPushSubscription } from '#lib/server/db/notifications/mutations.ts';
 import { getPushSubscriptions } from '#lib/server/db/notifications/queries.ts';
-import { VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, VAPID_SUBJECT } from '$app/env/private';
+import { BETTER_AUTH_URL, VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, VAPID_SUBJECT } from '$app/env/private';
 import type { DeliveryChannel, DeliveryPayload, DeliveryResult } from './types';
 
 /** Declarative Web Push format marker (WebKit explainer / W3C Push API draft). */
 const DECLARATIVE_WEB_PUSH_VERSION = 8030;
+
+/**
+ * The contact a push service may use about this deployment: `VAPID_SUBJECT` when set, else the
+ * site URL (`BETTER_AUTH_URL`) when it is https. web-push accepts only an https: or mailto: URI,
+ * so a local http origin leaves the subject — and push — unconfigured.
+ */
+export function resolveVapidSubject(subject: string | undefined, siteUrl: string | undefined): string | undefined {
+	if (subject) return subject;
+	return siteUrl?.startsWith('https://') ? new URL(siteUrl).origin : undefined;
+}
 
 /**
  * Web push channel. Unlike email/telegram/discord (one recipient string), a
@@ -22,11 +32,13 @@ const DECLARATIVE_WEB_PUSH_VERSION = 8030;
  */
 export class WebPushChannel implements DeliveryChannel {
 	async send(payload: DeliveryPayload): Promise<DeliveryResult> {
-		if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !VAPID_SUBJECT) {
+		const subject = resolveVapidSubject(VAPID_SUBJECT, BETTER_AUTH_URL);
+		if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY || !subject) {
 			return {
 				success: false,
 				errorCode: 'NO_VAPID_KEYS',
-				errorMessage: 'VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT not configured',
+				errorMessage:
+					'VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not configured, or no https BETTER_AUTH_URL / VAPID_SUBJECT',
 				retryable: false,
 			};
 		}
@@ -61,7 +73,7 @@ export class WebPushChannel implements DeliveryChannel {
 					{ endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth } },
 					message,
 					{
-						vapidDetails: { subject: VAPID_SUBJECT, publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY },
+						vapidDetails: { subject, publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY },
 						TTL: 24 * 60 * 60,
 						urgency: 'normal',
 					},

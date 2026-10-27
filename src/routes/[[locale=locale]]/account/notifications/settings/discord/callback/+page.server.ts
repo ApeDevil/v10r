@@ -1,8 +1,10 @@
 import { error, redirect } from '@sveltejs/kit';
 import { localizeHref } from '#lib/i18n/index.ts';
+import { siteUrl } from '#lib/server/auth/index.ts';
 import { db } from '#lib/server/db/index.ts';
 import { userDiscordAccounts } from '#lib/server/db/schema/notifications/discord.ts';
-import { DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_REDIRECT_URI } from '$app/env/private';
+import { DISCORD_OAUTH_CALLBACK_PATH } from '#lib/server/notifications/config.ts';
+import { DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET } from '$app/env/private';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ url, locals, cookies }) => {
@@ -29,9 +31,9 @@ export const load: PageServerLoad = async ({ url, locals, cookies }) => {
 
 	const clientId = DISCORD_CLIENT_ID;
 	const clientSecret = DISCORD_CLIENT_SECRET;
-	const redirectUri = DISCORD_REDIRECT_URI;
+	const redirectUri = new URL(DISCORD_OAUTH_CALLBACK_PATH, siteUrl).href;
 
-	if (!clientId || !clientSecret || !redirectUri) {
+	if (!clientId || !clientSecret) {
 		error(503, 'Discord not configured');
 	}
 
