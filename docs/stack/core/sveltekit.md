@@ -2,7 +2,7 @@
 
 The full-stack meta-framework — file-based routing, SSR, deployment adapters. v10r runs SvelteKit 3.1; its config (adapter, `version`, `csp`, `preprocess`) is the `sveltekit({...})` call in `vite.config.ts` — there is no `svelte.config.js`. See the `sveltekit` skill for routing and load-function patterns.
 
-The 2 → 3 move, with every behaviour change it forced: [SVELTEKIT_3_MIGRATION_2026_10.md](../../../SVELTEKIT_3_MIGRATION_2026_10.md).
+The 2 → 3 move, with every behaviour change it forced, is commit `0b080a231` (its message is the record).
 
 ## Why was it chosen?
 

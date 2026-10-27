@@ -128,7 +128,7 @@ export const agentProposal = aiSchema.table(
 		index('agent_proposal_pending_expiry_idx').on(table.expiresAt).where(sql`${table.status} = 'pending'`),
 		// Redundant with the primary key (a unique index on `id` cannot collide with
 		// anything); exactly-once comes from `markExecuting`'s conditional UPDATE. Kept
-		// until a deliberate push drops it — see PATTERN_INITIATIVE_2026_10.md F6.
+		// until a deliberate (non-additive) `db:push` drops it.
 		uniqueIndex('agent_proposal_exec_unique_idx').on(table.id).where(sql`${table.status} IN ('executing', 'executed')`),
 	],
 );
