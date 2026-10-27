@@ -46,6 +46,12 @@ Implementation designs and feature specifications. How to build features using t
 |------|-------------|
 | **[ai/](./ai/)** | • [README.md](./ai/README.md): AI Assistant architecture, multi-provider setup, Vercel AI SDK, chat/embed/image/audio endpoints, sidebar integration<br>• [layered-rag.md](./ai/layered-rag.md): **Primary RAG entry point.** One kernel, two profiles, an ingest-built corpus map; tool contracts, read path, catalog path verification<br>• [graph-rag.md](./ai/graph-rag.md): retrieval internals — hybrid retrieval pipeline, Neo4j knowledge graphs, recursive chunking, entity extraction<br>• [toon.md](./ai/toon.md): TOON format for token-efficient RAG context |
 
+## Product Data (PIM)
+
+| File | Main Topics |
+|------|-------------|
+| **[pim/](./pim/)** | • [sheet-workflow.md](./pim/sheet-workflow.md): Supplier Excel exports to a target schema with an AI agent. The agent reads a bounded profile and proposes a typed transform recipe; code checks the recipe's columns, runs it over every row (unreadable values left unresolved and listed), and checks the output against the target schema. Bounded propose → run → check → revise loop; in-app (`proposeRecipe`) and terminal lanes; the `pim` program works on plain job folders with a dated output folder per run (no git, no repo; `bun run pim:build` compiles a standalone file per OS); text-only `.xlsx`/CSV I/O; GTIN recovery by check digit; review workbook<br>• [tutorial.md](./pim/tutorial.md): Step by step in a plain folder, a German supplier export onto a shop import |
+
 ## Features
 
 | File | Main Topics |

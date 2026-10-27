@@ -170,6 +170,11 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The ports a composed product offers to the outside | `exposedPorts` (each `from` an inner occurrence's port; it speaks that port's standard) | `externalPorts`, `boundary`, `pins` |
 | A connected set of ports, derived from couplings and passages | `PortNetwork` (derived, never stored) | `system`, `circuit` (IFC's explicitly assigned groups — and heating words), `net`, `graph` |
 | One finding of composition validation | `CompositionDiagnostic` (`code` · `severity` · `subject`; plausibility only, never a safety verdict) | `error`, `violation`, `issue` (`CompositionIssue` is a parse failure) |
+| A supplier's or ERP's tabular product export, held as text with source line numbers | `product sheet` (`ProductSheet`, `ProductRow.line`; `#lib/server/pim/`) | `catalog` (the navigation catalog's), `spreadsheet` (the desk file type), `feed` |
+| What the destination accepts: attributes, kinds and rules, plus the key column | `target schema` (`TargetSchema`, `checkSheet` → `SheetCheck` of `SheetIssue`s) | `channel` (a notification transport), `template` (a retired product-composition word), `mapping` |
+| The bounded summary of a product sheet an AI agent reads instead of its rows | `sheet profile` (`SheetProfile`, `profileSheet`) | `sample`, `preview`, `stats` |
+| The reviewable, replayable list of typed ops that turns one product sheet into the target's | `transform recipe` (`TransformRecipe`, one op a `RecipeOp`; run → `RecipeRun`) | `plan` (the deskbot's `desk_propose_plan`), `step` (a persisted plan step), `pipeline`, `script` |
+| A value an op could not read and left unchanged | `unresolved` (`OpReport.unresolved`) | `error`, `skipped`, `invalid` |
 
 Two of these deserve their reasoning spelled out, because the losing name looked fine:
 

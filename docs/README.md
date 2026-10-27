@@ -40,6 +40,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [design/](./blueprint/design/) | Design tokens, tonal elevation, styling techniques, component layer system, Explosive Discovery (nested-depth review heuristic) |
 | [desk/](./blueprint/desk/) | Dock workspace, focus architecture, mobile chrome, Explorer, spreadsheet panel |
 | [notifications/](./blueprint/notifications/) | External channel delivery — routing, Telegram/Discord/email, settings, schema |
+| [pim/](./blueprint/pim/) | Product data office workflows: supplier Excel exports onto a target schema through an AI-proposed, code-run transform recipe, plus a step-by-step tutorial |
 | [quick-search/](./blueprint/quick-search/) | Two-lane search, command palette, blog FTS |
 | [security/](./blueprint/security/) | Control topology, the two admin planes, threat model, static-scan gate tests |
 | [testing/](./blueprint/testing/) | Vitest + Claude Chrome extension testing infrastructure |

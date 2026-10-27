@@ -98,6 +98,11 @@
 			"group": "intelligence"
 		},
 		{
+			"id": "office-workflows",
+			"title": "Office Workflows",
+			"group": "intelligence"
+		},
+		{
 			"id": "analytics",
 			"title": "Analytics",
 			"group": "features"
@@ -10304,6 +10309,156 @@
 			"maturity": "proven",
 			"verifiedAt": "2026-10-23",
 			"verifiedSha": "cf85a2c-dirty"
+		},
+		{
+			"id": "pim-sheet-transform-recipe",
+			"tier": "deep",
+			"title": "PIM Excel workflow with AI agents (profile, proposed recipe, deterministic run, target check)",
+			"category": "office-workflows",
+			"summary": "Supplier Excel/CSV product exports become a target's import sheet without the model touching a row: the agent reads a bounded column profile and proposes a typed transform recipe, a column walk refuses imagined columns, code runs the recipe over every row (unreadable values left unchanged and listed by source line), and a target-schema check over the full output is the definition of done — in a bounded propose → run → check → revise loop, in-app, or from a terminal agent with the `pim` program over plain job folders (no git, no repo; one dated output folder per run).",
+			"when_to_use": "Use when product data (supplier exports, ERP dumps, marketplace templates) arrives as spreadsheets that must be analysed and transformed into a fixed import format, the same kind of file recurs, or the sheet is too large to check by eye.",
+			"avoid_when": [
+				"A one-off cleanup of a few hundred rows nobody will send again — editing it in Excel is faster than writing a target schema",
+				"The transformation needs judgement per row (rewriting marketing copy, translating descriptions) — a recipe of typed ops cannot express it; that is a per-row generation job with its own review",
+				"The data already lives in a PIM with its own import mapping and validation — configure that instead of running a second engine beside it"
+			],
+			"alternatives": [
+				{
+					"approach": "Ask the model to rewrite the sheet (code interpreter, spreadsheet copilots)",
+					"prefer_when": "the sheet is small, the result is looked at once, and nobody needs to reproduce or audit it"
+				},
+				{
+					"approach": "A PIM's or ETL tool's import mapping (Akeneo, Pimcore, Talend, Power Query)",
+					"prefer_when": "the organisation already runs one and the mapping is maintained by people who own it"
+				},
+				{
+					"approach": "Hand-written transformation script per supplier",
+					"prefer_when": "the logic needs real code (lookups against an ERP, conditional derivations) beyond the op vocabulary"
+				}
+			],
+			"requires": ["ai-provider"],
+			"capabilities": [
+				"pim",
+				"product data",
+				"excel transformation",
+				"data cleansing",
+				"agent workflow",
+				"target schema validation"
+			],
+			"keywords": [
+				"pim",
+				"product information management",
+				"excel",
+				"xlsx",
+				"csv",
+				"spreadsheet",
+				"supplier data",
+				"product feed",
+				"gtin",
+				"ean",
+				"data cleansing",
+				"data transformation",
+				"data mapping",
+				"unit conversion",
+				"office workflow",
+				"ai agent",
+				"etl",
+				"job folder",
+				"no git",
+				"standalone executable"
+			],
+			"depends_on": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/pim/sheet-workflow.md#agent-proposed-transform-recipe",
+					"note": "The split, the column walk, why ops never guess, text all the way through, the two lanes"
+				},
+				{
+					"path": "docs/blueprint/pim/tutorial.md",
+					"note": "Step by step: a German supplier export onto a shop import with a terminal agent"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/pim/transform-recipe.ts",
+					"note": "The op vocabulary (valibot), checkRecipe's column walk, applyRecipe with per-op reports and the cell change log"
+				},
+				{
+					"path": "src/lib/server/pim/recipe-proposal.ts",
+					"note": "proposeRecipe: the bounded agent loop, prompt blocks escaped as data, graded by code each round"
+				},
+				{
+					"path": "src/lib/server/pim/sheet-profile.ts",
+					"note": "The profile: bounded by columns, not rows"
+				},
+				{
+					"path": "src/lib/server/pim/target-schema.ts",
+					"note": "TargetSchema and checkSheet: every row, every rule, source line per issue"
+				},
+				{
+					"path": "src/lib/server/pim/sheet-workbook.ts",
+					"note": "Text-only .xlsx read/write: stored digits, never a float"
+				},
+				{
+					"path": "src/lib/server/pim/gtin.ts",
+					"note": "Check digit; lost leading zeros restored only when the check digit confirms them"
+				},
+				{
+					"path": "src/lib/server/pim/run-workbook.ts",
+					"note": "The review workbook: products, issues, changes, recipe"
+				},
+				{
+					"path": "scripts/pim/sheet.ts",
+					"note": "pim example | profile | check | run over a job folder; dated output folders carry the recipe and target they used"
+				},
+				{
+					"path": "scripts/pim/build.ts",
+					"note": "bun run pim:build — one self-contained program per OS for machines with no Bun, git or repo"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/pim/recipe-proposal.test.ts",
+					"note": "Scripted model: imagined column refused and fed back, early stop on a clean check, supplier text escaped"
+				},
+				{
+					"path": "src/lib/server/pim/transform-recipe.test.ts",
+					"note": "Column walk; the worked example: repairs, unresolved values, removed duplicate, change log, determinism"
+				},
+				{
+					"path": "src/lib/server/pim/target-schema.test.ts",
+					"note": "Every rule with its line; after the worked recipe only line 7 remains"
+				},
+				{
+					"path": "src/lib/server/pim/sheet-workbook.test.ts",
+					"note": "xlsx round trip keeps 0012345678905 and 1E5"
+				},
+				{
+					"path": "src/lib/server/pim/sheet-profile.test.ts",
+					"note": "Profile size independent of row count"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"The model never writes a cell; its only output is a recipe, and a recipe only does what its typed ops do.",
+				"A recipe that reads a column which does not exist when its op runs is refused whole, before any row is touched.",
+				"An op never guesses: a value it cannot read is left unchanged and reported with its source line.",
+				"Done means the target-schema check over every row passes, not that the model says so.",
+				"Every value stays text from file to file; nothing becomes a number unless an op says so.",
+				"A run never overwrites an earlier one; each output folder carries the recipe and target that produced it."
+			],
+			"emulation_notes": [
+				"Write the target schema first, from the destination's import documentation — it is the grader, so it must not come from the supplier file or the model.",
+				"Give the agent a profile bounded by columns (counts, top values, shape, a few clipped rows), never the rows; the prompt then costs the same for 40 rows and 40,000.",
+				"Keep the op vocabulary small and typed, and walk the column set through it before running; that one check catches the plan built on an imagined column.",
+				"Read .xlsx numbers as their stored digits and write every cell as text, or GTINs and article numbers are corrupted on the next save.",
+				"Hand over a workbook with the issues and the change log beside the output, and keep the recipe per supplier — next month's export is a re-run, not a new conversation.",
+				"Assume office users have folders and Excel, not git: one job folder per supplier found by file name, a dated output folder per run as the history, and the tool shipped as a single compiled file."
+			],
+			"risk": "low — the engine is pure and every run is reproducible from input + recipe; the residual risk is a recipe that runs cleanly but maps a value wrongly (e.g. a colour), which the change log and a person's review are there to catch",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-27",
+			"verifiedSha": "42c9dfe-dirty"
 		}
 	]
 }
