@@ -1,9 +1,10 @@
 # Environment configuration audit — 2026-10-27
 
-Snapshot of the environment-variable audit on branch `claude/festive-goldberg-bw1mfd`. The live
-model is `src/env.ts` (declaration), `.env.example` (tiers) and
+Record of the environment-variable audit, shipped to `main` as `2f33e377f` (deployment READY
+2026-10-27). The live model is `src/env.ts` (declaration), `.env.example` (tiers) and
 `docs/blueprint/deployment.md#environment-variables`; this file records the evidence and the
-dashboard cleanup that only the owner can do. No secret value appears here. Vercel values were
+dashboard cleanup, which is complete: Vercel went from 48 to 39 variables, each deletion
+confirmed by a fresh listing of the project's variables. No secret value appears here. Vercel values were
 inspected only for three non-secret settings (`BETTER_AUTH_URL`, `DISCORD_REDIRECT_URI`,
 `NEO4J_DATABASE`); everything else was read by name only.
 
@@ -14,7 +15,7 @@ inspected only for three non-secret settings (`BETTER_AUTH_URL`, `DISCORD_REDIRE
   Each reader decides what unset means. `architecture.gate.test.ts` ratchets which modules may read
   env. No `$app/env/public` and no `VITE_*` app config exist, so no variable can reach the browser.
 - **Vercel** builds GitLab `main` only (`vercel.json` guard), so every deployment is production.
-  48 variables were set (production + preview targets).
+  48 variables were set (production + preview targets); 39 after the cleanup.
 - **Render** runs `services/runtime-lab` (Rust). It already reads Render's `PORT` (default 8080),
   binds `0.0.0.0`, health check `/health/live`; one manual variable, `SERVICE_TOKEN`
   (`render.yaml`, `sync: false`). Render's dashboard was not reachable from this session.
@@ -66,7 +67,7 @@ Legend — Sens.: S secret, N non-secret. Scope: all are server-side runtime unl
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | Telegram channel / connect | S/N | Feature | keep |
 | `TELEGRAM_WEBHOOK_SECRET` | Webhook auth — `api/webhooks/telegram` (503 when unset) | S | Feature | keep (**missing on Vercel**) |
 | `DISCORD_BOT_TOKEN`, `DISCORD_CLIENT_ID/SECRET` | Discord channel / OAuth | S | Feature | keep |
-| `DISCORD_REDIRECT_URI` | Discord OAuth redirect | N | Redundant | **remove** (derived) |
+| `DISCORD_REDIRECT_URI` | Discord OAuth redirect | N | Redundant | removed (derived) |
 | `VAPID_PUBLIC_KEY/PRIVATE_KEY` | Web Push keypair | N/S | Feature | keep |
 | `VAPID_SUBJECT` | Web Push contact | N | Redundant in prod | default (https site URL) |
 | `MCP_ADMIN_TOKEN`, `MCP_PRIVATE_TOKEN`, `MCP_SELF_TRAFFIC_TOKEN` | MCP realms, self-traffic tag | S | Feature | keep |
@@ -83,11 +84,13 @@ Legend — Sens.: S secret, N non-secret. Scope: all are server-side runtime unl
 | runtime-lab `PORT`, `HOST` | Bind address (8080 / 0.0.0.0) | N | Platform / default | platform (Render) |
 | `GITLAB_PROMOTION_TOKEN` (GitHub secret) | GitLab sync push | S | Required | keep |
 | Script-only: `PLAYWRIGHT_BASE_URL`, `PERF_WRITE_SCENARIOS`, `V10R_ROOT`, `V10R_COOKIE`, `GIT_SHA`, `UPDATE_OPENAPI` | Developer tooling flags, never deployed | N | Optional | default |
-| Vercel-only, unread by any code: `AURA_INSTANCEID`, `AURA_INSTANCENAME`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `NEON_DATABASE_URL_DEV` | none | S/N | Obsolete | **remove** |
+| Vercel-only, unread by any code: `AURA_INSTANCEID`, `AURA_INSTANCENAME`, `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `NEON_DATABASE_URL_DEV` | none | S/N | Obsolete | removed |
 
 Production finding: Vercel's `DISCORD_REDIRECT_URI` held `http://localhost:5173/app/notifications/settings/discord/callback`
 — a local value on a route that no longer exists — so Discord linking could not work in
-production. The derived value is `https://www.v10r.dev/account/notifications/settings/discord/callback`.
+production. The derived value is `https://www.v10r.dev/account/notifications/settings/discord/callback`;
+it was registered in the Discord developer portal and linking was confirmed working in
+production on 2026-10-27.
 
 ## Count of manually managed variables (Vercel production, no double counting)
 
@@ -100,20 +103,22 @@ production. The derived value is `https://www.v10r.dev/account/notifications/set
 | Cloud `.env.placeholder` | 11 | 8 |
 | `compose.yaml` hard-coded | 4 (`NODE_ENV`, `CONTAINER`, `NODE_OPTIONS`, lab `PORT`) | 2 |
 
-## DELETE
+## DELETE — completed 2026-10-27
+
+Every Vercel and compose row below is done; the local `.env` row is optional housekeeping.
 
 | Name | Location | Env | Reason | Replacement | Evidence | Status |
 |---|---|---|---|---|---|---|
-| `AURA_INSTANCEID` | Vercel | Prod + Preview | No reader in any code, script or config | none | repo-wide grep: 0 hits | Safe now |
-| `AURA_INSTANCENAME` | Vercel | Prod + Preview | same | none | same | Safe now |
-| `MICROSOFT_CLIENT_ID` | Vercel | Prod + Preview | No Microsoft provider in `auth/index.ts` | none | same | Safe now |
-| `MICROSOFT_CLIENT_SECRET` | Vercel | Prod + Preview | same | none | same | Safe now |
-| `NEON_DATABASE_URL_DEV` | Vercel | Prod + Preview | Not declared in `src/env.ts`, not read | none | same; docs said "not read" | Safe now |
-| `DELIVERY_INTERVAL_MS` | Vercel | Prod + Preview | Read only on persistent platforms; `VERCEL` makes `platform.persistent=false` | default 15 s (container) | `platform/index.ts`, `delivery-scheduler.ts` | Safe now |
-| `BOT_DETECTION_MODE` | Vercel | Prod + Preview | Default `live`; any other value fails the build, and the latest production build is READY, so the value is effectively `live` | default `live` | `abuse/config.ts` `assertProductionConfig` | Safe now |
-| `DISCORD_REDIRECT_URI` | Vercel | Prod + Preview | Derived from `BETTER_AUTH_URL` | derived | removed from `src/env.ts`; current value already broken (localhost) | Delete only after successful deployment and verification |
-| `VAPID_SUBJECT` | Vercel | Prod + Preview | Defaults to `https://www.v10r.dev` | derived | `resolveVapidSubject` + tests; the deployed code still requires it | Delete only after successful deployment and verification |
-| `BETTER_AUTH_URL`, `DISCORD_REDIRECT_URI`, `BOT_DETECTION_MODE` | Local `.env` | Dev | Dev default / derived / default | defaults | dev server served `/api/auth/ok` 200 without `BETTER_AUTH_URL` | Safe now (local only) |
+| `AURA_INSTANCEID` | Vercel | Prod + Preview | No reader in any code, script or config | none | repo-wide grep: 0 hits | Deleted (was safe at once) |
+| `AURA_INSTANCENAME` | Vercel | Prod + Preview | same | none | same | Deleted (was safe at once) |
+| `MICROSOFT_CLIENT_ID` | Vercel | Prod + Preview | No Microsoft provider in `auth/index.ts` | none | same | Deleted (was safe at once) |
+| `MICROSOFT_CLIENT_SECRET` | Vercel | Prod + Preview | same | none | same | Deleted (was safe at once) |
+| `NEON_DATABASE_URL_DEV` | Vercel | Prod + Preview | Not declared in `src/env.ts`, not read | none | same; docs said "not read" | Deleted (was safe at once) |
+| `DELIVERY_INTERVAL_MS` | Vercel | Prod + Preview | Read only on persistent platforms; `VERCEL` makes `platform.persistent=false` | default 15 s (container) | `platform/index.ts`, `delivery-scheduler.ts` | Deleted (was safe at once) |
+| `BOT_DETECTION_MODE` | Vercel | Prod + Preview | Default `live`; any other value fails the build, and the latest production build is READY, so the value is effectively `live` | default `live` | `abuse/config.ts` `assertProductionConfig` | Deleted (was safe at once) |
+| `DISCORD_REDIRECT_URI` | Vercel | Prod + Preview | Derived from `BETTER_AUTH_URL` | derived | removed from `src/env.ts`; current value already broken (localhost) | Deleted after deploy and a live Discord link |
+| `VAPID_SUBJECT` | Vercel | Prod + Preview | Defaults to `https://www.v10r.dev` | derived | `resolveVapidSubject` + tests; the deployed code still required it | Deleted after deploy; live push on the default not yet tested |
+| `BETTER_AUTH_URL`, `DISCORD_REDIRECT_URI`, `BOT_DETECTION_MODE` | Local `.env` | Dev | Dev default / derived / default | defaults | dev server served `/api/auth/ok` 200 without `BETTER_AUTH_URL` | Optional — safe to drop from a local `.env` |
 | `CONTAINER`, runtime-lab `PORT` | `compose.yaml` | Local | unread / default | — | done in repo | Done |
 
 ## KEEP (Vercel, manual)
@@ -140,13 +145,14 @@ Render: `SERVICE_TOKEN`. GitHub: `GITLAB_PROMOTION_TOKEN`.
 `platform/index.ts`, `auth/index.ts`, `mcp/server-info.ts`, `mcp/telemetry/*`, `robots.txt`,
 `docs/llms-txt.ts`, `vite.config.ts`). `PORT` (Render; runtime-lab `config.rs`).
 
-## Unverified
+## Still open
 
 - Render dashboard: whether a hand-set `PORT` exists there. Docs say it was never set; the
   dashboard was not reachable. If present, delete it (the service reads Render's injected one).
-- Whether Vercel's `VAPID_SUBJECT` value matters to anyone (type sensitive, unreadable). Push
-  services only use it as a contact; subscriptions are bound to the keypair, not the subject.
-- Discord developer portal: which redirect URIs are registered. The derived one must be listed.
+- Web Push on the derived subject (`https://www.v10r.dev`): it takes effect at the next
+  deployment after `VAPID_SUBJECT` was deleted. Send one test push then; if it fails, re-add
+  `VAPID_SUBJECT`. Push services use the subject only as a contact; subscriptions are bound to
+  the keypair.
 - `TELEGRAM_WEBHOOK_SECRET` and `PRIVACY_CONTACT_EMAIL` are absent on Vercel: Telegram's webhook
   answers 503 and the privacy pages show `privacy@example.com`. Not deletions — gaps to fill or
   accept.
