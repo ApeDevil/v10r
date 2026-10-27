@@ -35,7 +35,7 @@ RUN cargo build --release --locked
 FROM ${RUNTIME_IMAGE}
 COPY --from=build /build/target/release/runtime-lab /usr/local/bin/runtime-lab
 USER nonroot
-# Default for local runs; hosts that assign a port (Render) override PORT.
-ENV PORT=8080
+# No ENV PORT: src/config.rs defaults to 8080 when PORT is unset, and hosts that assign a
+# port (Render) inject PORT themselves. EXPOSE only documents that default.
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/runtime-lab"]

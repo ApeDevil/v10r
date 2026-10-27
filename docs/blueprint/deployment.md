@@ -106,24 +106,45 @@ Vercel cron calls are authenticated with `CRON_SECRET`. See [Scheduled Jobs](#sc
 
 ### Environment Variables
 
-Set in Vercel dashboard → Settings → Environment Variables:
+**The model.** `src/env.ts` declares every variable the app reads, all optional at the schema
+level; each reader decides what unset means (fail at import, degrade a feature, or apply a code
+default). `.env.example` lists them in three tiers — required, feature switches, and commented
+overrides whose defaults are right. A variable is set by hand only when it is a secret, differs
+per deployment, or is an account id no code can know. Everything else is a code default, derived,
+or supplied by the platform. Since every deployment is a production deployment
+([below](#no-preview-deployments)), each value is set for **Production** (Preview may mirror it
+for a manual `vercel deploy`).
 
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `NEON_DATABASE_URL_PROD` | Yes | Neon connection string. Neon's Vercel integration auto-injects `DATABASE_URL` — if you use it, set `NEON_DATABASE_URL_PROD` manually or reconfigure the integration's target var |
-| `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL — enables rate limiting. Without it the limiter passes through in dev and fails closed in prod |
-| `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token (paired with the URL above) |
-| `CRON_SECRET` | Yes | Bearer token for cron endpoints |
-| `ENCRYPTION_KEY` | Yes | 64-char hex (`openssl rand -hex 32`). Seals every stored credential — the AI provider keys (Admin → AI → Models) and name-check vendor secrets (Admin → Name check). Placeholders are rejected at boot; losing it invalidates all of them. Those credentials themselves are **not** environment variables |
-| `ENCRYPTION_KEY_PREVIOUS` | Only while rotating | The old key(s), comma-separated, so secrets sealed under them still open until the `encryption-reseal` job moves them. [Rotation](./security/key-ring.md#rotation) |
-| `NEON_API_KEY` | If using branch refresh | Neon Management API key — see [data/neon-branch-refresh.md](./data/neon-branch-refresh.md) |
-| `NEON_PROJECT_ID` | If using branch refresh | Neon project id |
-| `NEON_DEV_BRANCH_ID` | If using branch refresh | `br-…` of the dev branch |
-| `NEON_PARENT_BRANCH_ID` | No | Defaults to the dev branch's `parent_id` |
-| `DBOPS_AUTO_REFRESH_ENABLED` | No | `"true"` enables the scheduled dev-branch reset. Default off. |
-| `R2_ENDPOINT` | If using R2 | Cloudflare R2 endpoint |
-| `R2_ACCESS_KEY_ID` | If using R2 | R2 credentials |
-| `R2_SECRET_ACCESS_KEY` | If using R2 | R2 credentials |
+Set by hand in Vercel → Settings → Environment Variables:
+
+| Variable | Notes |
+|----------|-------|
+| `NEON_DATABASE_URL_PROD` | Neon connection string (direct, non-pooled). Neon's Vercel integration injects `DATABASE_URL` instead — nothing reads that |
+| `BETTER_AUTH_SECRET` | ≥32 chars. Root of every derived key (`security/subkey.ts`) |
+| `BETTER_AUTH_URL` | The canonical site URL, `https://www.v10r.dev`. Required outside `dev`; auth, passkeys, the Discord redirect URI and the Web Push contact derive from it (`auth/site-url.ts`). Not derivable: `VERCEL_PROJECT_PRODUCTION_URL` is the apex, which redirects |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth apps; required at import |
+| `ENCRYPTION_KEY` | 64-char hex (`openssl rand -hex 32`). Seals every stored credential — the AI provider keys (Admin → AI → Models) and name-check vendor secrets (Admin → Name check). Placeholders are rejected at boot; losing it invalidates all of them. Those credentials themselves are **not** environment variables |
+| `ADMIN_USER_ID` | Comma-separated admin user ids |
+| `ALTCHA_HMAC_KEY` | ≥32 chars; the build fails without it |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Rate limiting and the captcha replay store. Without them the limiter fails closed in production |
+| `CRON_SECRET` | Vercel sends it as the bearer token on every cron call ([Scheduled Jobs](#scheduled-jobs)) |
+| Feature blocks of `.env.example` §2 | Neo4j, R2, Resend, Telegram, Discord (client id/secret, bot token), VAPID keypair, MCP tokens and salt, Neon Management API, DB monitoring, External Service Lab, `PRIVACY_CONTACT_EMAIL`. Each block is all-or-nothing; unset, that feature is off |
+
+Supplied by Vercel, never set by hand: `VERCEL` (disables the in-process scheduler —
+`platform/index.ts`), `VERCEL_ENV` (preview-only passkey switch, robots, MCP telemetry lane),
+`VERCEL_GIT_COMMIT_SHA` (build version, MCP server info), `NODE_ENV=production`. They require
+"Automatically expose System Environment Variables", which is on by default.
+
+Not set on Vercel because the code default is right: `BOT_DETECTION_MODE` (`live`, the only
+mode a build accepts), `VAPID_SUBJECT` (the https site URL), `NEON_PARENT_BRANCH_ID` (the dev branch's parent), `DBOPS_AUTO_REFRESH_ENABLED` (off), the
+subkey overrides. Meaningless on Vercel: `JOB_INTERVAL_MS`, `DELIVERY_INTERVAL_MS`,
+`JOBS_DEV_ENABLED`, `ANALYTICS_DEV_TRACKING` (container or `dev` only). Only while rotating:
+`ENCRYPTION_KEY_PREVIOUS` ([Rotation](./security/key-ring.md#rotation)).
+
+The runtime-lab service on Render needs one variable, `SERVICE_TOKEN`; Render injects `PORT`
+and the service binds `0.0.0.0` with a default of 8080 for local runs
+([external-service.md](./architecture/external-service.md)). The GitLab sync workflow needs one
+GitHub secret, `GITLAB_PROMOTION_TOKEN`, in environment `gitlab-promotion`.
 
 ### Adapter Options
 
@@ -354,7 +375,7 @@ Set in Koyeb dashboard → Service → Settings → Environment:
 | `UPSTASH_REDIS_REST_URL` | Yes | Upstash Redis REST URL — enables rate limiting. Without it the limiter passes through in dev and fails closed in prod |
 | `UPSTASH_REDIS_REST_TOKEN` | Yes | Upstash Redis REST token (paired with the URL above) |
 | `ORIGIN` | Yes | `https://your-app.koyeb.app` |
-| `R2_ENDPOINT` | If using R2 | Cloudflare R2 endpoint |
+| `R2_ACCOUNT_ID` / `R2_BUCKET_NAME` | If using R2 | R2 account and bucket (the endpoint is derived from the account id) |
 | `R2_ACCESS_KEY_ID` | If using R2 | R2 credentials |
 | `R2_SECRET_ACCESS_KEY` | If using R2 | R2 credentials |
 
@@ -411,7 +432,7 @@ Recurring background work runs differently per platform. The same job registry s
 | Vercel | HTTP cron via `vercel.json` | `GET /api/cron/due` once a day (everything due, in registry order); `GET /api/cron/[job]` for `standalone` jobs |
 | Container | `setInterval` in `hooks.server.ts` | Direct function call |
 
-**Platform detection** — `src/lib/server/platform/index.ts` reads `VERCEL`, `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` from `$app/env/private` (declared in `src/env.ts`). If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` map to persistent platforms (`fly`, `railway`). Otherwise it falls through to the default `{ id: 'container', persistent: true }` and the scheduler starts — persistence is the default, not driven by `CONTAINER`.
+**Platform detection** — `src/lib/server/platform/index.ts` reads `VERCEL`, `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` from `$app/env/private` (declared in `src/env.ts`). If `VERCEL` is set, `platform.persistent = false` and the scheduler is a no-op. `FLY_APP_NAME` and `RAILWAY_ENVIRONMENT` map to persistent platforms (`fly`, `railway`). Otherwise it falls through to the default `{ id: 'container', persistent: true }` and the scheduler starts — persistence is the default, not a marker variable.
 
 **Job registry** — `src/lib/server/jobs/index.ts` maps slugs to `execute()` functions plus a `cadence`. Both trigger paths call the same registry; `jobsDueOn(date)` is what the daily sweep runs.
 
@@ -491,7 +512,6 @@ Returns `401` if the token is missing or wrong. Returns `404` if the job slug is
 | Variable | Platform | Notes |
 |----------|----------|-------|
 | `CRON_SECRET` | Both | Bearer token for HTTP cron endpoint. Generate with `openssl rand -base64 32` |
-| `CONTAINER` | Container | Set to `1` in `compose.yaml`. Marker only — platform detection does not read it; persistence comes from the default fall-through when no `VERCEL`/`FLY_APP_NAME`/`RAILWAY_ENVIRONMENT` is set |
 | `JOB_INTERVAL_MS` | Container | Interval in ms. Omit to use the 3-hour default |
 | `VERCEL` | Vercel | Set automatically by Vercel. Disables in-process scheduler |
 
@@ -740,20 +760,16 @@ koyeb service logs <service-name> --follow
 
 ## Environment Variable Checklist
 
-| Variable | Vercel | Koyeb | Required |
-|----------|--------|-------|----------|
-| `NEON_DATABASE_URL_PROD` | Dashboard | Dashboard | Yes |
-| `ORIGIN` | Auto | Manual | Yes (Koyeb) |
-| `UPSTASH_REDIS_REST_URL` | Dashboard | Dashboard | Yes (rate limiting) |
-| `UPSTASH_REDIS_REST_TOKEN` | Dashboard | Dashboard | Yes (rate limiting) |
-| `CRON_SECRET` | Dashboard | Dashboard | If using crons |
-| `CONTAINER` | Not used | `compose.yaml` | Container only |
-| `JOB_INTERVAL_MS` | Not used | Dashboard | Container only, optional |
-| `R2_ENDPOINT` | Dashboard | Dashboard | If using R2 |
-| `R2_ACCESS_KEY_ID` | Dashboard | Dashboard | If using R2 |
-| `R2_SECRET_ACCESS_KEY` | Dashboard | Dashboard | If using R2 |
-| `PROTOCOL_HEADER` | Auto | Dockerfile | Koyeb only |
-| `HOST_HEADER` | Auto | Dockerfile | Koyeb only |
+Vercel's list is [Environment Variables](#environment-variables) above; this table only adds what
+a planned container target (Koyeb) changes.
+
+| Variable | Vercel | Koyeb (planned) |
+|----------|--------|-----------------|
+| Everything in [Environment Variables](#environment-variables) | Dashboard | Dashboard |
+| `ORIGIN` | Not used | Dashboard (`svelte-adapter-bun`) |
+| `PROTOCOL_HEADER` / `HOST_HEADER` | Not used | Dockerfile |
+| `JOB_INTERVAL_MS` | Not used | Optional (3 h default) |
+| `VERCEL`, `VERCEL_ENV`, `VERCEL_GIT_COMMIT_SHA` | Platform | Absent — container scheduler runs |
 
 ---
 
@@ -764,7 +780,7 @@ koyeb service logs <service-name> --follow
 ├── Dockerfile              # Koyeb container build
 ├── .dockerignore           # Docker build exclusions
 ├── vercel.json             # Vercel configuration (crons)
-├── compose.yaml            # Local dev (sets CONTAINER=1)
+├── compose.yaml            # Local dev (loads .env)
 ├── vite.config.ts          # sveltekit({...}): adapter selection, function region
 └── src/
     ├── hooks.server.ts     # Imports scheduler (bare import activates it)

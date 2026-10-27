@@ -19,7 +19,6 @@ services:
       - .env
     environment:
       - NODE_ENV=development
-      - CONTAINER=1
       # The client build's transform phase peaks near 5 GB; V8's default old-space cap (~4 GB)
       # dies there with "Reached heap limit". A cap, not an allocation — idle processes stay small.
       - NODE_OPTIONS=--max-old-space-size=12288
@@ -45,8 +44,8 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
+    # No PORT: the service defaults to 8080 (src/config.rs), the port published above.
     environment:
-      - PORT=8080
       # Same credential the app sends; read from .env by compose interpolation.
       - SERVICE_TOKEN=${EXTERNAL_SERVICE_LOCAL_TOKEN:-}
       # Only during a rotation: the credential being retired, still accepted.

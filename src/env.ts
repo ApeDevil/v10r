@@ -62,7 +62,6 @@ export const variables = defineEnvVars({
 	DISCORD_BOT_TOKEN: { schema: optional },
 	DISCORD_CLIENT_ID: { schema: optional },
 	DISCORD_CLIENT_SECRET: { schema: optional },
-	DISCORD_REDIRECT_URI: { schema: optional },
 	VAPID_PUBLIC_KEY: { schema: optional },
 	VAPID_PRIVATE_KEY: { schema: optional },
 	VAPID_SUBJECT: { schema: optional },

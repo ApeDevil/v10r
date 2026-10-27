@@ -1,7 +1,9 @@
 import { redirect } from '@sveltejs/kit';
+import { siteUrl } from '#lib/server/auth/index.ts';
 import { guardApiUser } from '#lib/server/http/guards.ts';
 import { apiError } from '#lib/server/http/response.ts';
-import { DISCORD_CLIENT_ID, DISCORD_REDIRECT_URI } from '$app/env/private';
+import { DISCORD_OAUTH_CALLBACK_PATH } from '#lib/server/notifications/config.ts';
+import { DISCORD_CLIENT_ID } from '$app/env/private';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals, cookies }) => {
@@ -9,9 +11,9 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
 	if ('error' in guard) return guard.error;
 
 	const clientId = DISCORD_CLIENT_ID;
-	const redirectUri = DISCORD_REDIRECT_URI;
+	const redirectUri = new URL(DISCORD_OAUTH_CALLBACK_PATH, siteUrl).href;
 
-	if (!clientId || !redirectUri) {
+	if (!clientId) {
 		return apiError(503, 'unavailable', 'Discord not configured');
 	}
 

@@ -16,7 +16,7 @@ vi.mock('#lib/server/db/notifications/mutations.ts', () => ({
 const webpush = (await import('web-push')).default;
 const { getPushSubscriptions } = await import('#lib/server/db/notifications/queries.ts');
 const { deletePushSubscriptionByEndpoint } = await import('#lib/server/db/notifications/mutations.ts');
-const { WebPushChannel } = await import('./web-push');
+const { WebPushChannel, resolveVapidSubject } = await import('./web-push');
 
 const mockSend = webpush.sendNotification as ReturnType<typeof vi.fn>;
 const mockSubscriptions = getPushSubscriptions as ReturnType<typeof vi.fn>;
@@ -135,5 +135,35 @@ describe('WebPushChannel', () => {
 		expect(result.success).toBe(false);
 		expect(result.errorCode).toBe('NO_VAPID_KEYS');
 		expect(result.retryable).toBe(false);
+	});
+
+	it('signs with the https site URL when VAPID_SUBJECT is unset', async () => {
+		delete process.env.VAPID_SUBJECT;
+		process.env.BETTER_AUTH_URL = 'https://www.example.com';
+		mockSubscriptions.mockResolvedValue([sub('https://push.example/a')]);
+		mockSend.mockResolvedValue({ statusCode: 201 });
+
+		try {
+			const result = await channel.send({ to: 'user-1', subject: 'v10r', body: 'x' });
+			expect(result.success).toBe(true);
+			expect(mockSend.mock.calls[0][2].vapidDetails.subject).toBe('https://www.example.com');
+		} finally {
+			delete process.env.BETTER_AUTH_URL;
+		}
+	});
+});
+
+describe('resolveVapidSubject', () => {
+	it('prefers the explicit subject', () => {
+		expect(resolveVapidSubject('mailto:ops@example.com', 'https://www.example.com')).toBe('mailto:ops@example.com');
+	});
+
+	it('falls back to the origin of an https site URL', () => {
+		expect(resolveVapidSubject(undefined, 'https://www.example.com/')).toBe('https://www.example.com');
+	});
+
+	it('leaves a local http site URL unconfigured — web-push rejects it', () => {
+		expect(resolveVapidSubject(undefined, 'http://localhost:5173')).toBeUndefined();
+		expect(resolveVapidSubject(undefined, undefined)).toBeUndefined();
 	});
 });

@@ -37,7 +37,7 @@ Pooled (PgBouncer) disables: `SET`, `PREPARE`, `LISTEN`/`NOTIFY`, session adviso
 
 A single direct `NEON_DATABASE_URL_PROD` covers both. drizzle-kit requires direct to run schema operations.
 
-`NEON_DATABASE_URL_PROD` is this project's own variable name (not the ecosystem-standard `DATABASE_URL`) holding the Neon connection string. An optional `NEON_DATABASE_URL_DEV` labels a spare for the dev branch; it is not read by the app.
+`NEON_DATABASE_URL_PROD` is this project's own variable name (not the ecosystem-standard `DATABASE_URL`) holding the Neon connection string. Nothing reads a second connection string: to work against the dev branch, point `NEON_DATABASE_URL_PROD` at it.
 
 ### Transactions under Bun (verified)
 
