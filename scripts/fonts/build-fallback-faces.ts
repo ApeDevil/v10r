@@ -10,7 +10,7 @@
  *
  * Which families get one is measured, not assumed. Lab, 412 px viewport, two long docs
  * pages, mean shift of text blocks between fallback and web-font rendering
- * (recorded in PERFORMANCE_AUDIT_2026_10.md):
+ * (2026-10 performance pass):
  *   - Sans body faces cut the swap shift 37–62% (Nunito 136 → 85 px, Inter 30 → 18 px,
  *     Space Grotesk under Playfair 50 → 19 px) and are neutral in headings.
  *   - The serif display faces made it WORSE (Fraunces headings 19 → 30 px; Playfair
