@@ -13,8 +13,9 @@ sit on your laptop or on a shared drive.
 
 - **The `pim` program.** One file, nothing to install. Ask whoever looks after your
   product-data tools for the copy that matches your computer and put it in a working folder, for
-  example `Product data`. On Windows it is `pim.exe`; on macOS and Linux, rename it to `pim` and
-  type `./pim` wherever this tutorial says `pim`.
+  example `Product data`. On Windows it is `pim.exe`: type `.\pim` wherever this tutorial says
+  `pim`. On macOS and Linux, rename it to `pim` and type `./pim`. The prefix tells the terminal
+  to run the program from the current folder.
 - **The supplier's export.** An `.xlsx` or `.csv` file, exactly as you received it. Save an old
   `.xls` file as `.xlsx` first.
 - **What the shop accepts.** The shop's import documentation, so you can describe the target in
