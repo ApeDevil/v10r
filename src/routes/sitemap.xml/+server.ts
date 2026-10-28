@@ -3,6 +3,7 @@ import { listPublishedPostsForFeed } from '#lib/server/blog/index.ts';
 import { REDIRECT_HREFS } from '#lib/server/search/adapters/_redirects.ts';
 import { showcases } from '#lib/showcases/catalog/registry.ts';
 import { escapeXmlAttr } from '#lib/utils/xml.ts';
+import { workflowHref, workflows } from '#lib/workflows/catalog.ts';
 import type { RequestHandler } from './$types';
 
 const PROD_ORIGIN = 'https://www.v10r.dev';
@@ -40,7 +41,12 @@ function showcasePaths(): string[] {
 	return [...out].sort();
 }
 
-const STATIC_PATHS = [...BASE_PATHS, ...showcasePaths()];
+/** The workflow hub and every tutorial, from the catalog. */
+function workflowPaths(): string[] {
+	return ['/workflows', ...workflows.map(workflowHref)];
+}
+
+const STATIC_PATHS = [...BASE_PATHS, ...showcasePaths(), ...workflowPaths()];
 
 function toDateStr(d: Date): string {
 	return d.toISOString().slice(0, 10);

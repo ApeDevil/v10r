@@ -303,7 +303,7 @@ export const db = drizzle(pool, { schema: { ...schema, ...relations } });
 | `pwa/` | Service-worker policy (pure) + push / session-refresh clients |
 | `workers/` | Web Worker payloads — pure compute, browser-API half, `postMessage` shell |
 | `nav/`, `shortcuts/` | App navigation, keyboard shortcuts |
-| `3d/`, `desk/`, `showcases/catalog/` | Catalogues below the component layer — read by more than one feature dir |
+| `3d/`, `desk/`, `showcases/catalog/`, `workflows/` | Catalogues below the component layer — read by more than one feature dir |
 
 ### Import direction
 
