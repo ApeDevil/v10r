@@ -1,0 +1,22 @@
+{
+	"note": "Supplier export (DE) to the shop import: English attribute names, GTIN-13, colours from the shop's list, weight in kg, dimensions as three numbers.",
+	"ops": [
+		{ "op": "rename", "from": "Artikelnr", "to": "sku" },
+		{ "op": "rename", "from": "EAN", "to": "gtin" },
+		{ "op": "rename", "from": "Bezeichnung", "to": "title" },
+		{ "op": "rename", "from": "Farbe", "to": "color" },
+		{ "op": "rename", "from": "Gewicht", "to": "weight" },
+		{ "op": "rename", "from": "Hersteller", "to": "brand" },
+		{ "op": "trim", "columns": ["title", "color", "brand"] },
+		{ "op": "dedupe", "key": "sku", "keep": "first" },
+		{ "op": "normalize_gtin", "column": "gtin" },
+		{
+			"op": "map_values",
+			"column": "color",
+			"mapping": { "schwarz": "Black", "black": "Black", "rot": "Red", "dunkelblau": "Blue", "weiß": "White" }
+		},
+		{ "op": "convert_unit", "column": "weight", "to": "kg", "assume": "g" },
+		{ "op": "split", "column": "Maße cm (BxHxT)", "separator": "x", "into": ["width_cm", "height_cm", "depth_cm"] },
+		{ "op": "drop", "columns": ["Maße cm (BxHxT)", "Kategorie"] }
+	]
+}

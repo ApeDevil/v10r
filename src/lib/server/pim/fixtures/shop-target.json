@@ -1,0 +1,14 @@
+{
+	"key": "sku",
+	"attributes": [
+		{ "name": "sku", "kind": "text", "required": true },
+		{ "name": "gtin", "kind": "gtin", "required": true },
+		{ "name": "title", "kind": "text", "required": true, "maxLength": 80 },
+		{ "name": "color", "kind": "enum", "values": ["Black", "Red", "Blue", "White"] },
+		{ "name": "weight", "kind": "measure", "unit": "kg", "required": true },
+		{ "name": "width_cm", "kind": "decimal" },
+		{ "name": "height_cm", "kind": "decimal" },
+		{ "name": "depth_cm", "kind": "decimal" },
+		{ "name": "brand", "kind": "text", "required": true }
+	]
+}

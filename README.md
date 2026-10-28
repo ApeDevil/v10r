@@ -94,7 +94,7 @@ The complete map of every pattern in this repo — generated from [`pattern-libr
 - **Foundations:** [Architecture & Request Pipeline](#architecture--request-pipeline) · [App Shell & Navigation](#app-shell--navigation) · [UI Components & Design System](#ui-components--design-system) · [Forms & Validation](#forms--validation) · [Internationalization (i18n)](#internationalization-i18n) · [Docs & Agent Experience](#docs--agent-experience)
 - **Data:** [Databases & Storage](#databases--storage) · [Database Operations](#database-operations)
 - **Identity & Safety:** [Identity & Access](#identity--access) · [Anti-Abuse](#anti-abuse) · [Admin & Privacy](#admin--privacy)
-- **Intelligence:** [AI](#ai) · [Toolkits](#toolkits)
+- **Intelligence:** [AI](#ai) · [Toolkits](#toolkits) · [Office Workflows](#office-workflows)
 - **Features:** [Analytics](#analytics) · [Notifications](#notifications) · [Jobs & Scheduling](#jobs--scheduling) · [PWA](#pwa) · [Data Viz](#data-viz) · [3D](#3d) · [Content & Blog](#content--blog) · [Desk Workspace](#desk-workspace) · [External Integrations](#external-integrations)
 - **Velocity:** [Interaction Velocity](#interaction-velocity) · [Data Velocity](#data-velocity) · [Runtime Velocity](#runtime-velocity) · [Velocity Measurement](#velocity-measurement)
 - **Integrity:** [Truth & Evidence](#truth--evidence) · [Derivation & Provenance](#derivation--provenance) · [Durable Execution](#durable-execution)
@@ -273,6 +273,12 @@ The complete map of every pattern in this repo — generated from [`pattern-libr
 | Pattern | Docs | Code | Showcase |
 |---|---|---|---|
 | [Image Kit (upload → AI pipeline → adjust → approve, persists nothing)](docs/pattern-library/toolkits-image-kit.md) | [blueprint/ai/image-kit.md](docs/blueprint/ai/image-kit.md) | [src/lib/server/showcases/image-kit/](src/lib/server/showcases/image-kit/) | `/showcases/toolkits/image-kit` |
+
+### Office Workflows
+
+| Pattern | Docs | Code | Showcase |
+|---|---|---|---|
+| [**PIM Excel workflow with AI agents (profile, proposed recipe, deterministic run, target check)**](docs/pattern-library/pim-sheet-transform-recipe.md)<br>_Avoid when:_ A one-off cleanup of a few hundred rows nobody will send again — editing it in Excel is faster than writing a target schema | [blueprint/pim/sheet-workflow.md#agent-proposed-transform-recipe](docs/blueprint/pim/sheet-workflow.md#agent-proposed-transform-recipe) (The split, the column walk, why ops never guess, text all the way through, the two lanes) · [blueprint/pim/tutorial.md](docs/blueprint/pim/tutorial.md) (Step by step: a German supplier export onto a shop import with a terminal agent) | [src/lib/server/pim/transform-recipe.ts](src/lib/server/pim/transform-recipe.ts) (The op vocabulary (valibot), checkRecipe's column walk, applyRecipe with per-op reports and the cell change log) · [src/lib/server/pim/recipe-proposal.ts](src/lib/server/pim/recipe-proposal.ts) (proposeRecipe: the bounded agent loop, prompt blocks escaped as data, graded by code each round) · [src/lib/server/pim/sheet-profile.ts](src/lib/server/pim/sheet-profile.ts) (The profile: bounded by columns, not rows) · [src/lib/server/pim/target-schema.ts](src/lib/server/pim/target-schema.ts) (TargetSchema and checkSheet: every row, every rule, source line per issue) · [src/lib/server/pim/sheet-workbook.ts](src/lib/server/pim/sheet-workbook.ts) (Text-only .xlsx read/write: stored digits, never a float) · [src/lib/server/pim/gtin.ts](src/lib/server/pim/gtin.ts) (Check digit; lost leading zeros restored only when the check digit confirms them) · [src/lib/server/pim/run-workbook.ts](src/lib/server/pim/run-workbook.ts) (The review workbook: products, issues, changes, recipe) · [scripts/pim/sheet.ts](scripts/pim/sheet.ts) (pim example | profile | check | run over a job folder; dated output folders carry the recipe and target they used) · [scripts/pim/build.ts](scripts/pim/build.ts) (bun run pim:build — one self-contained program per OS for machines with no Bun, git or repo) | — |
 
 ### Analytics
 

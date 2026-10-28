@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 181 patterns (48 deep cards / 133 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 182 patterns (49 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -154,6 +154,10 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 ### Toolkits
 
 - [Image Kit (upload → AI pipeline → adjust → approve, persists nothing)](./toolkits-image-kit.md)
+
+### Office Workflows
+
+- [**PIM Excel workflow with AI agents (profile, proposed recipe, deterministic run, target check)**](./pim-sheet-transform-recipe.md)
 
 ### Analytics
 
