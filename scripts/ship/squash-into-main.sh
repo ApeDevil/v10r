@@ -12,7 +12,7 @@
 #
 # Exit codes, so the caller can choose a recovery:
 #   0  shipped (or --dry-run complete)    3  main moved — bring it in, re-gate, retry
-#   1  refused or gate failed             4  push denied (permission/proxy) — PR fallback
+#   1  refused or gate failed             4  push denied (permission/proxy) — report it
 #
 set -euo pipefail
 source "$(dirname "$(readlink -f "$0")")/../vr/lib.sh"
