@@ -1,6 +1,7 @@
 import { DOCS_SECTIONS } from '#lib/docs/sections.ts';
 import * as m from '#lib/paraglide/messages.js';
 import { groupByDomain } from '#lib/showcases/catalog/registry.ts';
+import { groupWorkflowsByCategory, workflowHref } from '#lib/workflows/catalog.ts';
 import { adminNavGroups } from './admin';
 import type { LabelFn, NavChild, NavItem } from './types';
 
@@ -68,6 +69,15 @@ export const navItems: NavItem[] = [
 		// dropdown can never drift from the hub — five directions, not 25 rows.
 		children: groupByDomain().flatMap(({ domain, cards }) =>
 			cards.map((card) => ({ href: card.href, label: card.title, group: domain.label })),
+		),
+	},
+	{
+		href: '/workflows',
+		label: m.nav_workflows,
+		icon: 'i-lucide-workflow',
+		// Derived from the workflow catalog, grouped by category like the hub.
+		children: groupWorkflowsByCategory().flatMap(({ category, cards }) =>
+			cards.map((card) => ({ href: workflowHref(card), label: card.title, group: category.label })),
 		),
 	},
 	{

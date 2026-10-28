@@ -67,6 +67,7 @@
 	"account_welcome": "Welcome back, {name}.",
 	"account_sections_aria": "Account sections",
 	"nav_showcases": "Showcases",
+	"nav_workflows": "Workflows",
 	"nav_docs": "Docs",
 	"nav_log_in": "Log in",
 	"nav_admin": "Admin",
@@ -3256,5 +3257,12 @@
 	"showcase_external_service_boundary_targets": "Targets are fixed on the server; this page names them, it cannot point anywhere. There is no proxy and no CORS — the browser never talks to the service.",
 	"showcase_external_service_boundary_failures": "Every call has a deadline and a bounded answer, and ends in exactly one outcome. Only idempotent calls are retried — once, and only when no response arrived.",
 	"showcase_external_service_boundary_optional": "The service is optional: only this page depends on it. Stop it, and this page reports it unreachable while the rest of the site carries on.",
-	"showcase_external_service_boundary_container": "The same container image runs locally under Podman and on a hosted free tier — only the port and the credential change."
+	"showcase_external_service_boundary_container": "The same container image runs locally under Podman and on a hosted free tier — only the port and the credential change.",
+	"workflow_index_title": "Workflows",
+	"workflow_index_description": "Step-by-step patterns for real work, each one a tutorial you can follow on your own files and repeat next time.",
+	"workflow_index_jumpnav_aria": "Workflow categories",
+	"workflow_category_office": "Office",
+	"workflow_category_office_description": "For people who work with folders and Excel files. Nothing to install and no developer tools: a folder per job, the files you already have, and an AI agent to do the tedious part.",
+	"workflow_excel_product_sheet_title": "Clean a supplier's Excel sheet",
+	"workflow_excel_product_sheet_description": "An AI agent writes a short recipe, a small program applies it to every row, and you review the result in Excel."
 }

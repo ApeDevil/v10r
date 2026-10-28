@@ -42,9 +42,11 @@ describe('sanitizeFeedbackSource', () => {
 });
 
 describe('isFeedbackBandPath', () => {
-	it('matches the showcases and docs hubs and their leaves', () => {
+	it('matches the showcases, workflows and docs hubs and their leaves', () => {
 		expect(isFeedbackBandPath('/showcases')).toBe(true);
 		expect(isFeedbackBandPath('/showcases/ui/tokens')).toBe(true);
+		expect(isFeedbackBandPath('/workflows')).toBe(true);
+		expect(isFeedbackBandPath('/workflows/excel-product-sheet')).toBe(true);
 		expect(isFeedbackBandPath('/docs')).toBe(true);
 		expect(isFeedbackBandPath('/docs/stack/viz')).toBe(true);
 	});
@@ -55,6 +57,7 @@ describe('isFeedbackBandPath', () => {
 		expect(isFeedbackBandPath('/blog')).toBe(false);
 		expect(isFeedbackBandPath('/showcasesfoo')).toBe(false);
 		expect(isFeedbackBandPath('/docsish')).toBe(false);
+		expect(isFeedbackBandPath('/workflowsish')).toBe(false);
 	});
 });
 

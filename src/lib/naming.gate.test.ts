@@ -271,6 +271,7 @@ const I18N_AREAS = [
 	'shell',
 	'showcase',
 	'viz',
+	'workflow',
 ];
 
 /**
