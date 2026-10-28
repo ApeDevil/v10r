@@ -17,7 +17,7 @@ This is the right tool when there's no production data to protect.
 
 `drizzle-kit generate` produces versioned SQL files. `migrate()` applies them in order.
 
-- SQL files are version-controlled, reviewable in PRs
+- SQL files are version-controlled, reviewable in the branch diff
 - Ordered history enables reproducing any DB state from scratch
 - Required when real user data exists and schema changes must be non-destructive
 

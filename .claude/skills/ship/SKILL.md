@@ -23,21 +23,18 @@ Constants: repo `ApeDevil/v10r` · Vercel team `team_IVXwC6zuqs8ydqkq9advPv4w`, 
    On success it prints `SHIP_COMMIT=<sha>`. Exit codes:
    - `1` refused or gate failed → report why. Nothing was pushed.
    - `3` `main` moved → `git merge origin/main`, push the branch, run step 2 again.
-   - `4` push denied (permission or proxy) → fallback below.
+   - `4` push denied (permission or proxy) → report it; Stas checks GitHub access.
 3. **Sync.** `gitlab-sync.yml` runs on the push to `main` and copies it to GitLab. Check its
    run (`actions_list` → `list_workflow_runs`, `head_sha` = ship SHA). If it failed, read
    the job log and say why.
 4. **Deploy.** Vercel builds GitLab `main` on its own (~5–8 min). Check
    `list_deployments(projectId, teamId, sha=<ship SHA>)` until READY or ERROR.
-5. **Report** in a few lines: ship SHA, how it landed (script or fallback), sync result,
+5. **Report** in a few lines: ship SHA, sync result,
    deployment state and URL. Then back to development mode. Keep the feature branch. If work
    continues on it, first `git merge origin/main` (clean right after a ship) so the next
    ship contains this one.
 
-**Fallback — only on exit 4.** Open a PR (base `main`, title = the message subject) and
-`merge_pull_request` with `merge_method: "squash"` and `sha` = the gated HEAD. Then confirm
-that the merge commit's tree equals the gated `HEAD^{tree}` and its parent equals the gated
-`main`. If either differs, `main` moved during the merge: say so and re-gate `main`.
-Locally without the MCP: `gh pr merge <n> --squash --match-head-commit <sha>`.
+No pull requests, no GitHub issues. A rollback is a ship too: `docs/stack/ops/shipping.md`
+→ *Rollback*.
 
 Never force-push, never write to GitLab, never skip the gate toward `main`.
