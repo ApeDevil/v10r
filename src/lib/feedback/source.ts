@@ -19,11 +19,13 @@ export function sanitizeFeedbackSource(raw: string | null | undefined): string {
 	return safe ? safe.slice(0, MAX_SOURCE_LENGTH) : '';
 }
 
-/** Route predicate for the pre-footer feedback band: showcases + docs only. */
+/** Route predicate for the pre-footer feedback band: showcases, workflows and docs only. */
 export function isFeedbackBandPath(pathname: string): boolean {
 	return (
 		pathname === '/showcases' ||
 		pathname.startsWith('/showcases/') ||
+		pathname === '/workflows' ||
+		pathname.startsWith('/workflows/') ||
 		pathname === '/docs' ||
 		pathname.startsWith('/docs/')
 	);

@@ -15,6 +15,15 @@ content/
         └── assets/         # local images, uploaded to R2 on push (optional)
 ```
 
+## Workflow tutorials
+
+`content/workflows/<category>/<slug>.md` holds the tutorial behind each `/workflows/<slug>`
+page. Unlike the blog these are **not pushed**: they are bundled at build time
+(`src/lib/server/workflows/`) and English-only, like the docs. A file is served only when
+`src/lib/workflows/catalog.ts` lists its slug, which also owns the page title and description
+in every locale. Office tutorials are written for people with folders and Excel, not
+developers: no git, no package manager, no repository paths (`tutorial.test.ts` enforces it).
+
 ## Daily flow
 
 ```

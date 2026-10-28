@@ -28,6 +28,7 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | Which corpus a chunk came from | `RetrievalCorpus` | `RetrievalLayer` |
 | Which build emitted a telemetry sample | `TelemetryOrigin` | `TelemetryLane` |
 | Anonymous vs authenticated analytics | `lane` | — |
+| A step-by-step pattern for real work, published as a tutorial at `/workflows/<slug>` | `workflow` (`WorkflowCard`, `#lib/workflows/catalog.ts`; tutorial bodies at `content/workflows/<category>/<slug>.md`; i18n prefix `workflow_`) and its hub section `workflow category` (`WorkflowCategoryId`: `office`, …) | a `showcase` (that is a live feature demo), `recipe` (that is the PIM transform recipe a workflow may use) |
 | The brand-name pre-screen | `name check` (`server/name-check/`, `/showcases/name-check`, `/api/name-check`, `showcase_name_check_*`) | `clearance`, `brand search`, `viability` |
 | One upstream the name check asks | `NameSource` (`name-check/sources/*.ts`) | `adapter` (that is `*.adapter.ts`), bare `source` |
 | What a live name source's search reads that can change its answer — the result cache's key | `searchInputs` on `LiveNameSource` | `cacheIdentity` (`identity` is the assistant's), `fingerprint`, `derivation key` (that one is stored beside a derived output) |
