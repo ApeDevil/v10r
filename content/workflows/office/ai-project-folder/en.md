@@ -13,6 +13,10 @@ colleague, or you, next month.
 This tutorial sets up that folder. The two that follow use it for real work:
 [Excel sheets](/workflows/excel-with-ai) and [presentations](/workflows/powerpoint-with-ai).
 
+**[Download the empty job folder](/workflows/ai-project-folder/starter-en.zip)**: the folder
+skeleton, a README template to fill in and a page of prompts for the rounds in step 5. Unpack it
+(right-click, **Extract All**) wherever you keep work files.
+
 ## The three things every AI job needs
 
 | Ingredient | What it is | Where it lives |
@@ -85,7 +89,7 @@ Turn Bergwerk's monthly product export into the sheet our shop imports.
 - Every value in the result matches the target format, or is listed in issues.
 
 ## Decisions
-- 2026-10-29: weights without a unit are grams (all other weights are 0.2 to 2 kg).
+- 2026-10-29: weights without a unit are grams (every weight with a unit is under 2 kg).
 ```
 
 The sections that matter in every job, whatever the file type:

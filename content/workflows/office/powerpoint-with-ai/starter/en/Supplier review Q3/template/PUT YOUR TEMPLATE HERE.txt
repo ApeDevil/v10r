@@ -1,0 +1,2 @@
+Put your company's PowerPoint template (.potx, or a .pptx that uses it) into this folder.
+Ask whoever looks after templates in your company for the current one.

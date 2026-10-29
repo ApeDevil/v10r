@@ -9,6 +9,10 @@ a supplier, Bergwerk, sends a German product export every month, and the shop ne
 import format. Along the way it shows the three things that make any Excel job with AI reliable:
 **describe the sheet**, **let a script touch the rows**, and **check the result by numbers**.
 
+**[Download the example folder](/workflows/excel-with-ai/starter-en.zip)** to follow along: the
+Bergwerk export in `input/`, the README from step 2 ready to use, and the prompts from this page
+in `prompts.md`. Unpack it (right-click, **Extract All**) and point your AI tool at it.
+
 ## What you need
 
 - The folder from [Set up a folder for AI work](/workflows/ai-project-folder), with the
@@ -54,7 +58,9 @@ and anything odd about it.
 | Bezeichnung | Product name, German | Can be longer than 80 characters |
 | Farbe | Colour, German, free text | "schwarz", "Schwarz", "sw" all mean black |
 | Gewicht | Weight | Mixed: "1,2 kg", "850g", "1200" (no unit) |
-| Maße cm (BxHxT) | Width x height x depth in cm | One text value, e.g. "40x30x12" |
+| Maße cm (BxHxT) | Width x height x depth in cm | One text value, e.g. "30 x 45 x 15" |
+| Hersteller | Brand | Sometimes empty |
+| Kategorie | Product category, German | Not imported |
 ```
 
 Then describe the **target** the same way. It is the definition of done, so be exact:
@@ -69,6 +75,7 @@ Then describe the **target** the same way. It is the definition of done, so be e
 | color | One of: Black, Red, Blue, White | no |
 | weight_kg | Number in kg, decimal point | yes |
 | width_cm, height_cm, depth_cm | Numbers | no |
+| brand | Text, from Hersteller | yes |
 ```
 
 You do not have to write this alone. Ask the AI: "Look at input/bergwerk-products.xlsx and draft
@@ -87,20 +94,21 @@ The first real prompt asks the AI to **profile** the sheet, not to change it:
 
 Why a script and not "look at the sheet": the AI can only read so much text at once. On a large
 sheet it silently looks at the first rows and assumes the rest look the same. A profile covers
-every row, whatever the size, and comes back as one short report:
+every row, whatever the size, and comes back as one short report. For the example sheet's weight
+column:
 
 ```text
-Gewicht   filled 4,812 / 4,812   distinct 391
-  top: "1,2 kg" (88)  "0,4 kg" (71)  "850g" (40)  "1200" (12)  "ca. 2kg" (1)
-  note: decimal commas; units with and without a space; 12 values without a unit
+Gewicht   filled 24 / 24   distinct 23
+  top: "1,2 kg" (2)  "850g" (1)  "0.4 kg" (1)  "450" (1)  "ca. 2kg" (1)
+  note: decimal commas and points; units with and without a space; 2 values without a unit
 ```
 
-Read the report against your Columns table. Every surprise is either a mistake in your description
-(fix the README) or a decision to make (write it under Decisions):
+On a sheet with forty thousand rows the report is the same length. Read it against your Columns
+table. Every surprise is either a mistake in your description (fix the README) or a decision to make (write it under Decisions):
 
 ```markdown
 ## Decisions
-- 2026-10-29: weights without a unit are grams; every other weight is between 0.2 and 2 kg.
+- 2026-10-29: weights without a unit are grams; every weight with a unit is under 2 kg.
 - 2026-10-29: "ca." values are estimates; leave them for the supplier, don't convert.
 ```
 

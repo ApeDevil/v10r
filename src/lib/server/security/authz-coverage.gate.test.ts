@@ -135,6 +135,8 @@ const PUBLIC_SURFACES: Record<string, string> = {
 	// ── Non-/api endpoints ────────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/blog/feed.xml/+server.ts':
 		'Public RSS feed. Reads listPublishedPostsForFeed, so drafts are unreachable by construction.',
+	'[[locale=locale]]/(public)/workflows/[slug]/[download]/+server.ts':
+		'Public example-folder zip for a workflow tutorial. Built only from files bundled at build time under content/workflows for catalog slugs; no data access, no user input reaches a path.',
 	'llms.txt/+server.ts':
 		'Agent-facing URL map built from the published docs manifest only — blocked and draft docs are unreachable because it never touches the raw glob. Same published-only resolution as the sitemap.',
 	'manifest.webmanifest/+server.ts': 'Static PWA manifest. No data access; locale read from the request cookie.',

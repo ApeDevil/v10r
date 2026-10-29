@@ -9,13 +9,18 @@ they should take away, the story in a handful of sentences, and where every numb
 This tutorial puts those decisions into the [AI project folder](/workflows/ai-project-folder) and
 lets the AI do the slow part, turning an agreed storyline into slides.
 
-The running example: a quarterly supplier review for the purchasing team, built from a report,
-an Excel sheet of figures and last quarter's deck.
+The running example: a quarterly supplier review for the purchasing team, built from a Word
+report and an Excel sheet of figures.
+
+**[Download the example folder](/workflows/powerpoint-with-ai/starter-en.zip)** to follow along:
+the report and the figures in `input/`, the brief from step 2 as `README.md`, and the prompts from
+this page in `prompts.md`. Unpack it (right-click, **Extract All**) and add your company template
+to `template/`.
 
 ## What you need
 
 - The folder from [Set up a folder for AI work](/workflows/ai-project-folder).
-- The source material: reports, notes, Excel figures, an earlier deck.
+- The source material: reports, notes, Excel figures, and an earlier deck if there is one.
 - The company template (`.potx` or a `.pptx` that uses it). Ask whoever looks after templates for
   the current one; do not copy the look of an old deck by hand.
 - Whatever AI tool your company provides. Copilot in PowerPoint and similar assistants can build
@@ -30,7 +35,6 @@ Supplier review Q3/
   input/
     q3-supplier-report.docx
     q3-figures.xlsx
-    q2-supplier-review.pptx
   template/
     company-template.potx
   output/
@@ -53,21 +57,22 @@ Purchasing team leads, 20 minutes in the monthly meeting. They decide whether to
 Bergwerk on the watch list.
 
 ## Key message (one sentence)
-Bergwerk's on-time delivery fell from 94% to 81% this quarter, and two of our three
+Bergwerk's on-time delivery fell from 94.4% to 80.8% this quarter, and two of our three
 biggest product lines depend on them, so we should start qualifying a second supplier now.
 
 ## Sources (input/)
 - q3-supplier-report.docx: the quarterly report; the only source for text and context.
-- q3-figures.xlsx, sheet `OnTime`: the only source for delivery figures.
-- q2-supplier-review.pptx: last quarter's deck, for continuity. Do not reuse its numbers.
+- q3-figures.xlsx, sheet `OnTime`: orders and on-time deliveries per month; the only
+  source for delivery figures. On-time rate = on time / orders.
+- q3-figures.xlsx, sheet `Lines`: revenue share and main supplier per product line.
 
 ## Rules
 - 8 to 10 slides including title and summary.
-- Every slide title is a full sentence that states the point ("On-time delivery fell 13 points"),
+- Every slide title is a full sentence that states the point ("On-time delivery fell almost 14 points"),
   not a topic ("Delivery").
 - Every number on a slide comes from a named source cell or page. No rounding beyond one decimal.
 - One idea per slide; at most 30 words of body text; details go into the speaker notes.
-- Use template/company-template.potx; no other fonts or colours.
+- Use the company template in template/; no other fonts or colours.
 - Language: English.
 
 ## Done when
@@ -93,10 +98,12 @@ The result is a page of plain text:
 
 ```markdown
 1. Bergwerk is no longer a reliable supplier for our core lines
-2. On-time delivery fell from 94% to 81% in one quarter
-   - Q2 94.2%, Q3 81.0% (q3-figures.xlsx, OnTime!C4:D4)
-   - Worst month September: 74.5% (OnTime!D7)
+2. On-time delivery fell from 94.4% to 80.8% in one quarter
+   - Q2: 355 of 376 orders on time (q3-figures.xlsx, OnTime!B2:C4)
+   - Q3: 316 of 391 orders on time (OnTime!B5:C7)
+   - Worst month September: 95 of 129, 73.6% (OnTime!B7:C7)
 3. Two of our three biggest product lines depend on Bergwerk
+   - Backpacks 34% and sleeping gear 27% of revenue (Lines!B2:B3)
    ...
 ```
 
