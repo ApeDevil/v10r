@@ -1,0 +1,43 @@
+{
+	"sheets": [
+		{
+			"name": "Export",
+			"rows": [
+				["Artikelnr", "EAN", "Bezeichnung", "Farbe", "Gewicht", "Maße cm (BxHxT)", "Hersteller", "Kategorie"],
+				["A-1001", "12345678905", "Rucksack  Urban 20L", "schwarz", "850g", "30 x 45 x 15", "Bergwerk", "Taschen"],
+				["A-1002", "4006381333931", "Rucksack Urban 30L ", "Schwarz ", "1,2 kg", "32 x 50 x 18", "Bergwerk", "Taschen"],
+				["A-1003", "40063813339", "Trinkflasche Alu 0,75L", "rot", "0.4 kg", "8 x 26 x 8", "Alpenglas", "Zubehör"],
+				["A-1004", "5901234123457", "Trinkflasche Alu 1L", "ROT", "450", "9 x 30 x 9", "Alpenglas", "Zubehör"],
+				["A-1005", "76123456789", "Stirnlampe Nightline", "black", "95 g", "6 x 4 x 4", "Lumen&Co", "Licht"],
+				["A-1006", "4.01235E+12", "Zeltleuchte Camp", "dunkelblau", "ca. 2kg", "12 x 12 x 20", "", "Licht"],
+				["A-1007", "8712345678906", "Isomatte Comfort", "Weiß", "1200", "60 x 15 x 15", "Bergwerk", "Schlafen"],
+				["A-1002", "4006381333931", "Rucksack Urban 30L", "schwarz", "1,2 kg", "32 x 50 x 18", "Bergwerk", "Taschen"],
+				["A-1008", "0023456789015", "Schlafsack Polar", "dunkelblau", "1,8 kg", "35 x 35 x 50", "Polarfux", "Schlafen"],
+				["A-1009", "34567890125", "Kocher Mini", "schwarz", "300 g", "10 x 10 x 12", "Alpenglas", "Kochen"],
+				[
+					"A-1010",
+					"4006381333948",
+					"Rucksack Trail 40L mit Regenhülle und Trinksystem-Vorbereitung, extra gepolsterter Hüftgurt",
+					"sw",
+					"1,45 kg",
+					"34 x 62 x 22",
+					"Bergwerk",
+					"Taschen"
+				],
+				["A-1011", "4006381333955", "Daypack Light 15L", "blau", "0,52 kg", "28 x 42 x 12", "Bergwerk", "Taschen"],
+				["A-1012", "4006381333962", "Schlafsack Sommer", "Blau", "1,1 kg", "30 x 30 x 40", "Bergwerk", "Schlafen"],
+				["A-1013", "4006381333979", "Isomatte Ultralight", "weiss", "0,48 kg", "20 x 10 x 10", "Bergwerk", "Schlafen"],
+				["A-1014", "5901234123464", "Besteckset Titan", "silber", "85 g", "20 x 4 x 2", "Alpenglas", "Kochen"],
+				["A-1015", "5901234123471", "Topfset 2-teilig", "schwarz", "620 g", "18 x 18 x 12", "Alpenglas", "Kochen"],
+				["A-1016", "76123456796", "Stirnlampe Nightline Pro", "schwarz", "0,11 kg", "7 x 4 x 4", "Lumen&Co", "Licht"],
+				["A-1017", "4006381333986", "Kopfkissen aufblasbar", "rot", "0,09 kg", "12 x 8 x 8", "Bergwerk", "Schlafen"],
+				["A-1018", "4006381333993", "Rucksack Urban 20L", "Rot", "850 g", "30 x 45 x 15", "Bergwerk", "Taschen"],
+				["A-1019", "8712345678913", "Isomatte Comfort XL", "weiß", "1,6kg", "66 x 15 x 15", "Bergwerk", "Schlafen"],
+				["A-1020", "8712345678920", "Hängematte Travel", "dunkel blau", "0,7 kg", "15 x 15 x 10", "", "Schlafen"],
+				["A-1021", "5901234123488", "Trinkbecher faltbar", "blau", "0,06 kg", "9 x 9 x 3", "Alpenglas", "Zubehör"],
+				["A-1022", "4006381334006", "Packsack 10L", "schwarz", "120 g", "15 x 30 x 15", "Bergwerk", "Zubehör"],
+				["A-1023", "4006381334013", "Regenhülle Rucksack", "rot", "0,1 kg", "", "Bergwerk", "Zubehör"]
+			]
+		}
+	]
+}

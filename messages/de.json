@@ -3262,7 +3262,11 @@
 	"workflow_index_description": "Schritt-für-Schritt-Muster für echte Arbeit – jedes ein Tutorial, das Sie mit Ihren eigenen Dateien durchgehen und beim nächsten Mal wiederholen können.",
 	"workflow_index_jumpnav_aria": "Workflow-Kategorien",
 	"workflow_category_office": "Büro",
-	"workflow_category_office_description": "Für alle, die mit Ordnern und Excel-Dateien arbeiten. Keine Installation, keine Entwicklerwerkzeuge: ein Ordner pro Auftrag, die Dateien, die Sie ohnehin haben, und ein KI-Agent für den mühsamen Teil.",
-	"workflow_excel_product_sheet_title": "Excel-Liste eines Lieferanten bereinigen",
-	"workflow_excel_product_sheet_description": "Ein KI-Agent schreibt ein kurzes Rezept, ein kleines Programm wendet es auf jede Zeile an, und Sie prüfen das Ergebnis in Excel."
+	"workflow_category_office_description": "Für alle mit einem normalen Firmen-Laptop, Office und dem KI-Werkzeug, das die Firma bereitstellt. Nichts zu installieren: ein Ordner pro Aufgabe mit den Quellen, Anweisungen in klaren Worten und den Ergebnissen, damit jedes KI-Werkzeug die mühsame Arbeit übernimmt und Sie sie prüfen können.",
+	"workflow_ai_project_folder_title": "Einen Ordner für die Arbeit mit KI anlegen",
+	"workflow_ai_project_folder_description": "Ein Ordner pro Aufgabe: die Quellen, die Anweisungen in einer README, die Skripte der KI und jedes Ergebnis nach Datum. Funktioniert mit jedem KI-Werkzeug.",
+	"workflow_excel_with_ai_title": "Eine Excel-Tabelle mit KI auswerten und umwandeln",
+	"workflow_excel_with_ai_description": "Die Tabelle beschreiben, ein Python-Skript die Zeilen bearbeiten lassen und das Ergebnis mit Zahlen prüfen, am Beispiel eines echten Lieferanten-Exports.",
+	"workflow_powerpoint_with_ai_title": "Eine stimmige Präsentation mit KI erstellen",
+	"workflow_powerpoint_with_ai_description": "Zuerst Briefing, Kernbotschaft und Storyline, dann Folien aus der Firmenvorlage, jede Zahl bis zu ihrer Quelle nachvollziehbar."
 }

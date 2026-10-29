@@ -17,12 +17,18 @@ content/
 
 ## Workflow tutorials
 
-`content/workflows/<category>/<slug>.md` holds the tutorial behind each `/workflows/<slug>`
-page. Unlike the blog these are **not pushed**: they are bundled at build time
-(`src/lib/server/workflows/`) and English-only, like the docs. A file is served only when
-`src/lib/workflows/catalog.ts` lists its slug, which also owns the page title and description
-in every locale. Office tutorials are written for people with folders and Excel, not
-developers: no git, no package manager, no repository paths (`tutorial.test.ts` enforces it).
+`content/workflows/<category>/<slug>/<locale>.md` holds the tutorial behind each
+`/workflows/<slug>` page, one file per locale (English is the fallback). Unlike the blog these
+are **not pushed**: they are bundled at build time (`src/lib/server/workflows/`). A file is
+served only when `src/lib/workflows/catalog.ts` lists its slug, which also owns the page title
+and description in every locale.
+
+`<slug>/starter/<locale>/<folder name>/` is the tutorial's example folder, downloaded as
+`/workflows/<slug>/starter-<locale>.zip`. Office files are kept as text sources:
+`name.xlsx.json` becomes `name.xlsx` and `name.docx.md` becomes `name.docx` in the zip
+(`starter-folder.ts`). Office tutorials and their starters are written for people with folders
+and Excel, not developers: no git, no package manager, no repository paths
+(`tutorial.test.ts` enforces it).
 
 ## Daily flow
 
