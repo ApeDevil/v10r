@@ -46,7 +46,7 @@ describe('isFeedbackBandPath', () => {
 		expect(isFeedbackBandPath('/showcases')).toBe(true);
 		expect(isFeedbackBandPath('/showcases/ui/tokens')).toBe(true);
 		expect(isFeedbackBandPath('/workflows')).toBe(true);
-		expect(isFeedbackBandPath('/workflows/excel-product-sheet')).toBe(true);
+		expect(isFeedbackBandPath('/workflows/excel-with-ai')).toBe(true);
 		expect(isFeedbackBandPath('/docs')).toBe(true);
 		expect(isFeedbackBandPath('/docs/stack/viz')).toBe(true);
 	});

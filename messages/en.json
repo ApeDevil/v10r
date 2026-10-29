@@ -3262,7 +3262,11 @@
 	"workflow_index_description": "Step-by-step patterns for real work, each one a tutorial you can follow on your own files and repeat next time.",
 	"workflow_index_jumpnav_aria": "Workflow categories",
 	"workflow_category_office": "Office",
-	"workflow_category_office_description": "For people who work with folders and Excel files. Nothing to install and no developer tools: a folder per job, the files you already have, and an AI agent to do the tedious part.",
-	"workflow_excel_product_sheet_title": "Clean a supplier's Excel sheet",
-	"workflow_excel_product_sheet_description": "An AI agent writes a short recipe, a small program applies it to every row, and you review the result in Excel."
+	"workflow_category_office_description": "For people on a standard company laptop with Office and whatever AI tool their company provides. Nothing to install: one folder per job with the sources, plain-language instructions and the results, so any AI tool can do the tedious part and you can check it.",
+	"workflow_ai_project_folder_title": "Set up a folder for AI work",
+	"workflow_ai_project_folder_description": "One folder per job: the sources, the instructions in a README, the scripts the AI writes and every result by date. Works with any AI tool.",
+	"workflow_excel_with_ai_title": "Analyse and transform an Excel sheet with AI",
+	"workflow_excel_with_ai_description": "Describe the sheet, let a Python script touch the rows, and check the result by numbers, using a real supplier export as the example.",
+	"workflow_powerpoint_with_ai_title": "Build a coherent presentation with AI",
+	"workflow_powerpoint_with_ai_description": "Brief, key message and storyline first, then slides from the company template, with every number traced to its source."
 }
