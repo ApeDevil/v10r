@@ -11,6 +11,24 @@
  */
 import { navItems } from '#lib/nav/index.ts';
 import { showcases } from '#lib/showcases/catalog/registry.ts';
+import { findWorkflow } from '#lib/workflows/catalog.ts';
+
+/** The one dynamic public route whose slug may be sent: a workflow tutorial page. */
+const WORKFLOW_ROUTE_ID = '/[[locale=locale]]/(public)/workflows/[slug]';
+
+/**
+ * The route key the chatbot sends for the current page. A workflow tutorial's `[slug]` is
+ * filled in when the slug is a catalogued workflow (a public page name from a fixed list,
+ * never user data), so Vely knows which tutorial the reader is on; every other route id
+ * goes out unchanged, and its dynamic segments keep it unresolvable.
+ */
+export function siteAwareRouteKey(routeId: string | null | undefined, slug: string | undefined): string | null {
+	if (!routeId) return null;
+	if (routeId === WORKFLOW_ROUTE_ID && slug && findWorkflow(slug)) {
+		return routeId.replace('[slug]', slug);
+	}
+	return routeId;
+}
 
 /**
  * `page.route.id` → locale-bare public path (`/showcases/forms`), or `null` when the route has

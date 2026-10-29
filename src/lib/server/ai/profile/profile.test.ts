@@ -94,6 +94,7 @@ describe('the profiles as declarations', () => {
 		const vely = identityBlock(CHATBOT_PROFILE.identity);
 		expect(vely).toContain('You are Vely');
 		expect(vely).toContain('read-only');
+		expect(vely).toContain('/workflows');
 		expect(vely).not.toContain('desk-context');
 		expect(vely).not.toContain('workspace');
 		expect(identityBlock(DESKBOT_PROFILE.identity)).toContain('workspace assistant');

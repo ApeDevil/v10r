@@ -3,7 +3,7 @@ import { MediaQuery } from 'svelte/reactivity';
 import { apiFetch } from '#lib/api.ts';
 import { localizeHref } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
-import { isSiteAwareRoute, resolveRouteLabel } from '#lib/search/route-id.ts';
+import { isSiteAwareRoute, resolveRouteLabel, siteAwareRouteKey } from '#lib/search/route-id.ts';
 import { chatbotSession } from '#lib/state/chatbot-session.svelte.ts';
 import { layerStack } from '#lib/state/layer-stack.svelte.ts';
 import { useSurface } from '#lib/styles/elevation.ts';
@@ -40,7 +40,7 @@ const isLoading = $derived(session.isStreaming);
 // Site-awareness disclosure: the human label of the page Vely is currently aware of.
 // Null on private/unknown routes → the chip hides (the honest "not reading this page" signal).
 // Live present-tense: reflects the CURRENT route, so it reads as the antecedent of "this".
-const pageLabel = $derived(resolveRouteLabel(page.route.id));
+const pageLabel = $derived(resolveRouteLabel(siteAwareRouteKey(page.route.id, page.params.slug)));
 
 // Sign-in gate — sourced from the singleton (set pre-emptively by AppShell's setUser
 // and reactively by the transport on a live 401), NEVER from getSession(): the context
@@ -131,7 +131,7 @@ function submitMessage() {
 	inputValue = '';
 	// Capture the route SYNCHRONOUSLY at click → frozen to the page Send was pressed from.
 	// Private/unknown routes send nothing (server membership check is the authoritative gate).
-	const routeId = page.route.id;
+	const routeId = siteAwareRouteKey(page.route.id, page.params.slug);
 	session.submit(text, isSiteAwareRoute(routeId) ? (routeId ?? undefined) : undefined);
 }
 </script>
