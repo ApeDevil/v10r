@@ -28,7 +28,6 @@ Every artifact derives from an existing single source of truth, because a parall
 | `.md` responses | `getManifest()` / `getRawMarkdown()` (`src/lib/server/docs/manifest.ts`) — the raw glob is consulted only after a manifest hit, so a blocked or draft doc is structurally unreachable (`src/lib/server/docs/markdown-urls.ts`) |
 | `/llms.txt` | `buildLlmsTxt(getManifest())` — it cannot drift from the docs, and its test round-trips every emitted URL through the `.md` resolver |
 | `validate_snippet` rules | `mcp/snippet-rules.json` (shared by both MCP runtimes) + the `--color-*` names extracted from `src/app.css` at load time |
-| Agent pages (`/docs/programming/*.md`) | the agents registry body — never the raw files, whose frontmatter carries tool grants the HTML page has never published |
 | README Pattern Index (the marker-delimited region) | `pattern-library/registry.json` via `scripts/patterns/build-derived.ts` (`patterns:build`; staleness gated by `patterns:check`) |
 | `docs/pattern-library/*.md` (one page per pattern in its own docs section, → `/docs`, RAG, `/llms.txt`) | the same registry + generator — pointer pages only, never copied prose |
 | `/docs/pattern-library` (the section's catalog index: every pattern + purpose) | the same registry, projected live by `#lib/server/patterns/catalog.ts` — no build step |
@@ -84,9 +83,8 @@ A context file is only as good as the paths it routes to, and practitioner surve
 references in roughly a quarter of AI config files. Two gates keep v10r's from rotting:
 
 - **Instruction files route to paths that exist.** `src/lib/agent-instructions.gate.test.ts`
-  reads `AGENTS.md`, `CLAUDE.md`, `.claude/agents/*.md` and `.claude/skills/**`. Every backticked
-  repo path, and every bare `name/` in a routing table, must resolve. A path named on purpose as
-  absent ("there is no `src/lib/server/i18n/` yet") is an allowance with a reason, and the
+  reads `AGENTS.md`, `CLAUDE.md` and `.claude/skills/**`. Every backticked repo path, and
+  every bare `name/` in a routing table, must resolve. A path named on purpose as absent ("there is no `src/lib/server/i18n/` yet") is an allowance with a reason, and the
   allowance fails once the sentence or the absence goes away. The same files must carry no
   hidden bidi or zero-width characters, the rule-file backdoor class: instructions an agent
   obeys that a reviewer never sees in the diff.

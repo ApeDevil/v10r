@@ -23,7 +23,6 @@ An agentic AI surface embedded in the desk workspace calls desk-mutating tools, 
 ## Code
 
 - `src/lib/server/ai/deskbot-retrieval.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/deskbot-retrieval.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/deskbot-retrieval.ts))
-- `src/lib/server/agents/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/agents) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/agents))
 
 ## Proof
 

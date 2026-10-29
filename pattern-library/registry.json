@@ -5266,10 +5266,6 @@
 			"code": [
 				{
 					"path": "src/lib/server/ai/deskbot-retrieval.ts"
-				},
-				{
-					"path": "src/lib/server/agents",
-					"kind": "dir"
 				}
 			],
 			"tests": [],

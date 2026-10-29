@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { getAgentRegistry } from '../agents/registry';
 import { deriveTitle } from './doc-filter';
 import { getManifest, getRawMarkdown } from './manifest';
 import { markdownBodyFor, markdownHrefFor, ROOT_DOCS, resolveMarkdownRequest, toMarkdownPath } from './markdown-urls';
@@ -27,13 +26,6 @@ describe('resolveMarkdownRequest', () => {
 		}
 	});
 
-	it('resolves a published agent page', () => {
-		const record = getAgentRegistry()[0];
-		expect(record).toBeDefined();
-		const target = resolveMarkdownRequest(`/docs/programming/${record.id}.md`);
-		expect(target?.kind).toBe('agent');
-	});
-
 	// The raw glob holds all of docs/; only the manifest is published. Every member of
 	// doc-filter's BLOCKLIST and BLOCKED_PREFIXES (and every README) must be unreachable.
 	it('never resolves blocked or unpublished paths', () => {
@@ -58,8 +50,6 @@ describe('resolveMarkdownRequest', () => {
 			'/docs/stack/bun',
 			'/etc/passwd.md',
 			'/docs/.md',
-			'/docs/programming/../secy.md',
-			'/docs/programming/a/b.md',
 		];
 		for (const path of bad) {
 			expect(resolveMarkdownRequest(path), path).toBeNull();
@@ -83,18 +73,6 @@ describe('markdownBodyFor', () => {
 		const target = resolveMarkdownRequest(markdownHrefFor(entry));
 		const body = markdownBodyFor(target as NonNullable<typeof target>);
 		expect(body).toMatch(/^# /m);
-	});
-
-	// The raw agent files carry tool grants and model config in frontmatter that the
-	// HTML page has never published; the .md variant must not publish them either.
-	it('agent bodies carry a synthesized H1 and no frontmatter', () => {
-		const record = getAgentRegistry()[0];
-		const body = markdownBodyFor({ kind: 'agent', id: record.id });
-		expect(body).not.toBeNull();
-		expect(body).toMatch(new RegExp(`^# ${record.id}\n`));
-		expect(body).not.toMatch(/^tools:/m);
-		expect(body).not.toMatch(/^model:/m);
-		expect(body).not.toMatch(/^---\n/);
 	});
 });
 

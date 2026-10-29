@@ -129,10 +129,6 @@
 			"badge": "🤖"
 		},
 		{
-			"folderPath": "v10r/.claude/agent-memory/",
-			"badge": "🤖🧠"
-		},
-		{
 			"folderPath": "v10r/crates/",
 			"badge": "🦀"
 		}

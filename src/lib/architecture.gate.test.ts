@@ -441,7 +441,6 @@ const KNOWN_ENV_IMPORTS: readonly string[] = [
  * can avoid pulling the Better Auth instance out of `auth/index.ts`.
  */
 const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
-	'src/lib/server/agents/render.ts -> blog/pipeline',
 	// `ai/connections.ts` is reached by the bare-Bun ingest scripts; the security barrel
 	// would drag `subkey.ts`'s `$env` read in behind it, so it takes the caller-keyed
 	// AES-GCM leaf by file — the same reason `auth/admin-ids` is deep-imported.
@@ -462,7 +461,6 @@ const KNOWN_DEEP_CROSS_DOMAIN_IMPORTS: readonly string[] = [
 	'src/lib/server/desk/file-tree.ts -> blog/queries',
 	'src/lib/server/docs/loader.ts -> blog/pipeline',
 	'src/lib/server/docs/loader.ts -> blog/types',
-	'src/lib/server/docs/markdown-urls.ts -> agents/registry',
 	'src/lib/server/graph/catalog.ts -> search/catalog-projection',
 	'src/lib/server/http/guards.ts -> auth/admin-ids',
 	'src/lib/server/imagemeta/extract.ts -> ai/budget',

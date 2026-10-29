@@ -265,7 +265,6 @@ const I18N_AREAS = [
 	'pair',
 	'perf',
 	'primitives',
-	'programming',
 	'pwa',
 	'session',
 	'shell',
