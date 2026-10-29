@@ -1,0 +1,27 @@
+{
+	"sheets": [
+		{
+			"name": "Termintreue",
+			"rows": [
+				["Monat", "Bestellungen", "Pünktlich"],
+				["April", 120, 114],
+				["Mai", 125, 118],
+				["Juni", 131, 123],
+				["Juli", 128, 111],
+				["August", 134, 110],
+				["September", 129, 95]
+			]
+		},
+		{
+			"name": "Sortiment",
+			"rows": [
+				["Sortiment", "Umsatzanteil", "Hauptlieferant"],
+				["Rucksäcke", 0.34, "Bergwerk"],
+				["Schlafausrüstung", 0.27, "Bergwerk"],
+				["Licht", 0.18, "Lumen&Co"],
+				["Kochen", 0.12, "Alpenglas"],
+				["Zubehör", 0.09, "Alpenglas"]
+			]
+		}
+	]
+}

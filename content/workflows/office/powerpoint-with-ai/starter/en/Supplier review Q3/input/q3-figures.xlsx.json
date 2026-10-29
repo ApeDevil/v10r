@@ -1,0 +1,27 @@
+{
+	"sheets": [
+		{
+			"name": "OnTime",
+			"rows": [
+				["Month", "Orders", "On time"],
+				["April", 120, 114],
+				["May", 125, 118],
+				["June", 131, 123],
+				["July", 128, 111],
+				["August", 134, 110],
+				["September", 129, 95]
+			]
+		},
+		{
+			"name": "Lines",
+			"rows": [
+				["Product line", "Revenue share", "Main supplier"],
+				["Backpacks", 0.34, "Bergwerk"],
+				["Sleeping gear", 0.27, "Bergwerk"],
+				["Lighting", 0.18, "Lumen&Co"],
+				["Kitchen", 0.12, "Alpenglas"],
+				["Accessories", 0.09, "Alpenglas"]
+			]
+		}
+	]
+}

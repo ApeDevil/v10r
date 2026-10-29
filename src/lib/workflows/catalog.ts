@@ -39,11 +39,25 @@ export interface WorkflowCard {
 
 export const workflows: WorkflowCard[] = [
 	{
-		slug: 'excel-product-sheet',
+		slug: 'ai-project-folder',
+		category: 'office',
+		icon: 'i-lucide-folder-tree',
+		title: m.workflow_ai_project_folder_title,
+		description: m.workflow_ai_project_folder_description,
+	},
+	{
+		slug: 'excel-with-ai',
 		category: 'office',
 		icon: 'i-lucide-sheet',
-		title: m.workflow_excel_product_sheet_title,
-		description: m.workflow_excel_product_sheet_description,
+		title: m.workflow_excel_with_ai_title,
+		description: m.workflow_excel_with_ai_description,
+	},
+	{
+		slug: 'powerpoint-with-ai',
+		category: 'office',
+		icon: 'i-lucide-presentation',
+		title: m.workflow_powerpoint_with_ai_title,
+		description: m.workflow_powerpoint_with_ai_description,
 	},
 ];
 
