@@ -273,15 +273,15 @@ describe('isExcludedPath', () => {
 		'/admin/analytics',
 		'/account',
 		'/account/data',
-		'/desk',
-		'/desk/workspace',
+		'/showcases/desk',
+		'/showcases/desk/workspace',
 		// Locale-prefixed variants are the SAME surfaces. These were admitted into
 		// the anonymous lane until the prefix strip landed — a German-locale visit
 		// to /account matched neither the exclusion list nor the user-lane list,
 		// so it fell through into the lane it is specifically barred from.
 		'/de/admin',
 		'/de/account/data',
-		'/ru/desk',
+		'/ru/showcases/desk',
 		'/en/account',
 	])('excludes the authenticated surface %s', (path) => {
 		// Authenticated surfaces must never reach the anonymous lane: its legal
@@ -289,7 +289,7 @@ describe('isExcludedPath', () => {
 		expect(isExcludedPath(path)).toBe(true);
 	});
 
-	it.each(['/desktop', '/accounts', '/administer'])('admits %s — a prefix rule is a segment rule', (path) => {
+	it.each(['/showcases/desktop', '/accounts', '/administer'])('admits %s — a prefix rule is a segment rule', (path) => {
 		expect(isExcludedPath(path)).toBe(false);
 	});
 
@@ -306,6 +306,7 @@ describe('isExcludedPath', () => {
 		'/blog',
 		'/blog/some-post',
 		'/showcases/analytics/overview',
+		'/showcases/ui/dock',
 		'/de/blog',
 	])('admits the public page %s', (path) => {
 		expect(isExcludedPath(path)).toBe(false);
@@ -342,15 +343,15 @@ describe('userLaneSurface', () => {
 		['/ru/account/data', 'account'],
 		// The desk joined the identified lane on 2026-09-18 so its command_invoked
 		// events have somewhere to land; the anonymous lane still refuses it above.
-		['/desk', 'desk'],
-		['/de/desk', 'desk'],
+		['/showcases/desk', 'desk'],
+		['/de/showcases/desk', 'desk'],
 	])('claims %s as %s', (path, surface) => {
 		// A path is eligible for exactly one lane: refused by the anonymous lane
 		// above and claimed here, in every locale, under its own surface.
 		expect(userLaneSurface(path)).toBe(surface);
 	});
 
-	it.each(['/admin', '/blog', '/de/blog', '/deskto'])('refuses %s', (path) => {
+	it.each(['/admin', '/blog', '/de/blog', '/showcases/deskto', '/desk'])('refuses %s', (path) => {
 		expect(userLaneSurface(path)).toBeNull();
 	});
 });
@@ -845,8 +846,8 @@ describe('analyticsCollector — page-data requests', () => {
 	it('counts an ssr=false page once: the document, not its hydration fetch', async () => {
 		await collect(
 			makeEvent({
-				path: '/desk',
-				routeId: '/[[locale=locale]]/desk',
+				path: '/showcases/desk',
+				routeId: '/[[locale=locale]]/(public)/showcases/desk',
 				isDataRequest: false,
 				headers: BROWSER_NAV_HEADERS,
 				userId: USER_ID,
@@ -854,11 +855,11 @@ describe('analyticsCollector — page-data requests', () => {
 		);
 		await collect(
 			makeEvent({
-				path: '/desk',
-				routeId: '/[[locale=locale]]/desk',
+				path: '/showcases/desk',
+				routeId: '/[[locale=locale]]/(public)/showcases/desk',
 				isDataRequest: true,
 				headers: DATA_FETCH_HEADERS,
-				referer: 'https://example.com/desk',
+				referer: 'https://example.com/showcases/desk',
 				userId: USER_ID,
 			}),
 		);
@@ -1076,12 +1077,12 @@ describe("collect endpoint — a signed-in user's desk events take the identifie
 		await db.insert(user).values({ id: USER_ID, name: 'Lane Tester', email: 'lane@example.com' });
 	});
 
-	it('routes /desk rows to user_events under the user id and public rows to the anonymous lane', async () => {
+	it('routes /showcases/desk rows to user_events under the user id and public rows to the anonymous lane', async () => {
 		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
 		const batch = {
 			events: [
-				command('/desk', '/desk', 'menu', 'File › Save'),
-				command('/desk', '/desk', 'shortcut', 'File › Save'),
+				command('/showcases/desk', '/showcases/desk', 'menu', 'File › Save'),
+				command('/showcases/desk', '/showcases/desk', 'shortcut', 'File › Save'),
 				command('/docs', '/docs', 'palette', 'panel › Explorer'),
 			],
 		};
@@ -1107,7 +1108,10 @@ describe("collect endpoint — a signed-in user's desk events take the identifie
 	it('needs no consent tier for the identified lane, and still refuses the anonymous one without it', async () => {
 		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
 		const batch = {
-			events: [command('/desk', '/desk', 'bar', 'View › Toggle Explorer'), command('/blog', '/blog', 'palette', 'x')],
+			events: [
+				command('/showcases/desk', '/showcases/desk', 'bar', 'View › Toggle Explorer'),
+				command('/blog', '/blog', 'palette', 'x'),
+			],
 		};
 		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
 		await POST(makeCollectEvent(batch, { signedIn: true, consent: 'necessary' }) as any);
@@ -1115,9 +1119,9 @@ describe("collect endpoint — a signed-in user's desk events take the identifie
 		expect(await db.select().from(events)).toHaveLength(0);
 	});
 
-	it('drops /desk rows from a signed-out client — excluded from the anonymous lane, unclaimed by the identified one', async () => {
+	it('drops /showcases/desk rows from a signed-out client — excluded from the anonymous lane, unclaimed by the identified one', async () => {
 		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
-		const batch = { events: [command('/desk', '/desk', 'menu', 'File › Save')] };
+		const batch = { events: [command('/showcases/desk', '/showcases/desk', 'menu', 'File › Save')] };
 		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub
 		await POST(makeCollectEvent(batch, { signedIn: false, consent: 'analytics' }) as any);
 		expect(await db.select().from(userEvents)).toHaveLength(0);
@@ -1128,10 +1132,10 @@ describe("collect endpoint — a signed-in user's desk events take the identifie
 		const { POST } = await import('../../../routes/api/analytics/journey/collect/+server');
 		const batch = {
 			events: [
-				command('/desk', '/desk', 'menu', 'File › Save'),
-				command('/desk', '/desk', 'shortcut', 'File › Save'),
-				command('/desk', '/desk', 'shortcut', 'File › Save'),
-				command('/desk', '/desk', 'bar', 'View › Toggle Explorer'),
+				command('/showcases/desk', '/showcases/desk', 'menu', 'File › Save'),
+				command('/showcases/desk', '/showcases/desk', 'shortcut', 'File › Save'),
+				command('/showcases/desk', '/showcases/desk', 'shortcut', 'File › Save'),
+				command('/showcases/desk', '/showcases/desk', 'bar', 'View › Toggle Explorer'),
 			],
 		};
 		// biome-ignore lint/suspicious/noExplicitAny: minimal RequestEvent stub

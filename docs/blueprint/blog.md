@@ -142,7 +142,7 @@ The desk already has a **DockLayout** with a binary split tree (resizable, persi
 Benefits:
 - **Side-by-side everything** — edit markdown in one pane, preview in another, chat with AI about the content in a third, browse assets in a fourth
 - **Multipurpose from day one** — the editor panel renders any markdown document. Blog posts first, then notes, docs, announcements
-- **No new route for editing** — the desk is already a full-page immersive route at `[[locale=locale]]/desk/`
+- **No new route for editing** — the desk is already a full-page immersive route at `[[locale=locale]]/(public)/showcases/desk/`
 - **Existing infrastructure** — `notes` panel is already in the registry, just needs real content
 
 ### Default Editor Layout
@@ -213,7 +213,7 @@ No modal for publish — inline confirmation is sufficient for a reversible acti
 ### Desk Workflow
 
 ```
-Author opens /desk
+Author opens /showcases/desk
   -> Documents panel: click "New" button in panel header
   -> Desk auto-arranges writing layout preset: Editor | Preview
   -> Start writing (no DB record yet — IndexedDB autosave protects)
@@ -1067,7 +1067,7 @@ src/routes/api/admin/
 ### Desk (Authoring)
 
 ```
-src/routes/[[locale=locale]]/desk/
+src/routes/[[locale=locale]]/(public)/showcases/desk/
   +layout.server.ts                 # requireAuth; exposes blogAuthor.granted, pendingRequest, justGrantedKinds
   +page.server.ts                   # Form actions: requestBlogAccess, cancelBlogAccessRequest
   +page.svelte                      # Panel registry: editor + preview + documents; AuthorGate wraps editor
@@ -1084,7 +1084,7 @@ src/routes/[[locale=locale]]/desk/
 | `/blog/feed.xml` | ISR (1h) | same as slug | Stable, cacheable; revalidated on publish |
 | `/sitemap.xml` | Dynamic + CDN cache | `Cache-Control: s-maxage=3600` | DB-backed (published posts); cannot prerender — would freeze the post list |
 | `/admin/content`, `/admin/access/*` | SSR | `prerender = false` | Dynamic management UI |
-| `/desk` | SSR then CSR | default | SSR for shell; heavy JS hydration for editor |
+| `/showcases/desk` | SSR then CSR | default | SSR for shell; heavy JS hydration for editor |
 | `api/blog/*` | Dynamic | N/A | Mutations, never cached |
 
 **ISR per-route config** requires `split: true` in Vercel adapter — each route is a separate function. The desk route (long-lived SSR, no ISR) and blog post route (ISR) need different function configs.
@@ -1105,7 +1105,7 @@ src/routes/[[locale=locale]]/desk/
 Public:                /blog/*           anyone (comments hydrated client-side)
 Comment write:         /blog/[slug]/comments/+page.server.ts (form action)
 Comment REST:          /api/blog/posts/[id]/comments (GET public, POST session)
-Desk:                  /desk             signed-in (requireAuth); editor panel
+Desk:                  /showcases/desk  signed-in (requireAuth); editor panel
                                          further gated by blog-author grant
                                          via AuthorGate.svelte
 Blog write APIs:       /api/blog/*       guardApiBlogAuthor (renamed from
@@ -1117,11 +1117,11 @@ Admin moderation:      /admin/content/comments  hide/unhide/remove
 
 **Request-access self-service**
 
-Non-author users on `/desk` see an empty editor state with a "Request access" button (`AuthorGate.svelte`). The button posts to `/desk?/requestBlogAccess` which writes a row to `auth.grant_request` (status `pending`). Admin approves/denies from `/admin/access/requests`. Pending requests auto-expire after 14 days via the `grant-request-expiry` cron job.
+Non-author users on `/showcases/desk` see an empty editor state with a "Request access" button (`AuthorGate.svelte`). The button posts to `/showcases/desk?/requestBlogAccess` which writes a row to `auth.grant_request` (status `pending`). Admin approves/denies from `/admin/access/requests`. Pending requests auto-expire after 14 days via the `grant-request-expiry` cron job.
 
 **Notification**
 
-A first-login Toast fires on the next `/desk` visit after grant. The flag lives on `auth.grant.notifiedAt`. The layout load only reads it (`listPendingGrantNotifications`) — loads also run on link-hover preload, so a load that consumed it would swallow the Toast for a user who never opened the desk. The layout component shows the Toast, then acknowledges it via `POST /api/grant-notifications/acknowledge` (`acknowledgeGrantNotifications`, idempotent). Single-fire per real visit; no email.
+A first-login Toast fires on the next `/showcases/desk` visit after grant. The flag lives on `auth.grant.notifiedAt`. The layout load only reads it (`listPendingGrantNotifications`) — loads also run on link-hover preload, so a load that consumed it would swallow the Toast for a user who never opened the desk. The layout component shows the Toast, then acknowledges it via `POST /api/grant-notifications/acknowledge` (`acknowledgeGrantNotifications`, idempotent). Single-fire per real visit; no email.
 
 **Comments**
 

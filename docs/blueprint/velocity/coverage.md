@@ -25,7 +25,7 @@ being true. Maturity (`proven`/`implemented`) lives in the registry, not here.
 | First viewport visible without JavaScript | Implemented | `critical-rendering-path` | CSS-only hero entrance; `fadeIn` hides only below-the-fold cards |
 | Fonts and text rendering | Implemented | `velocity-asset-delivery` | metric-matched fallbacks for the sans and mono families cut swap shift 34–62%; preloading rejected (FCP +60–120 ms) |
 | Render-blocking CSS | Incomplete | `velocity-asset-delivery` | 255 Lucide icons in the root CSS (~13 KB gz); the theme script waits for every stylesheet |
-| Rendering mode per route | Incomplete | — | SSR everywhere; `ssr = false` justified on `/3d` and `/desk`, unexplained on `/showcases/ui`, whose prerendered primitives page bakes a signed-out shell |
+| Rendering mode per route | Incomplete | — | SSR everywhere; `ssr = false` justified on `/3d` and `/showcases/desk`, unexplained on `/showcases/ui`, whose prerendered primitives page bakes a signed-out shell |
 | Anonymous HTML at the edge | Missing | — | a per-visitor random style and analytics confirm token make every public page unique, so none can be CDN-cached or prerendered; product decision |
 | Redirects and server work before first byte | Implemented | — | no landing redirect; an anonymous request makes no network call before `load` |
 | Streaming non-critical server data | Incomplete | `critical-path-deferred-tail` | the signed-in root layout awaits announcements; a streamed promise would take it off the path |
@@ -63,7 +63,7 @@ being true. Maturity (`proven`/`implemented`) lives in the registry, not here.
 | Round trips per operation | Incomplete | `query-budget` | blog post read registered (budget 2); the session lookup and the desk layout (7 queries + 1 UPDATE) are not |
 | Screen read models | Incomplete | `velocity-screen-read-model` | analytics aggregates use them; the observability showcase scans 30 days of raw events per anonymous view |
 | Compute next to data | Implemented | `velocity-compute-locality` | Vercel `fra1` next to Neon; Upstash region unknown |
-| `ssr = false` routes | Incomplete | — | `/desk` runs the whole hook chain twice (document, then `__data.json`) |
+| `ssr = false` routes | Incomplete | — | `/showcases/desk` runs the whole hook chain twice (document, then `__data.json`) |
 | Neo4j on critical paths, cold start | Not audited | — | the single server function bundles three.js; measure its size before splitting |
 
 ## E. Caching and freshness

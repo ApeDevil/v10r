@@ -1,6 +1,6 @@
 # Desk Workspace
 
-The desk (`/desk`) is a full-page immersive workspace built on DockLayout — a binary split tree with resizable panes, drag-and-drop tabs, and a panel registry. Content types register as panel types; the desk orchestrates them.
+The desk (`/showcases/desk`) is a full-page immersive workspace built on DockLayout — a binary split tree with resizable panes, drag-and-drop tabs, and a panel registry. Content types register as panel types; the desk orchestrates them.
 
 ## Topics
 
@@ -46,7 +46,7 @@ The persisted `DockLayoutState` is always the desktop tree; mobile is a projecti
 
 | `mobileChrome` | Renders | Used by |
 |----------------|---------|---------|
-| `'floating'` (default) | Tab strip + controls pill + drawers | `/desk` |
+| `'floating'` (default) | Tab strip + controls pill + drawers | `/showcases/desk` |
 | `'bar'` | Legacy bottom type-switcher bar | Workbench showcase (dock inside a Card) |
 
 Floating chrome is **viewport chrome**: the controls pill (like the shell FAB and the drawers) is `position: fixed`, so every occupant of the `--fab-*` slot ladder measures from the same origin and stays aligned regardless of mobile browser-chrome state. `'bar'` is the contained variant for docks embedded in a page. One control per surface:

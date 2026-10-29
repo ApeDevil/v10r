@@ -47,7 +47,7 @@ A review heuristic, not a rule: when a menu, toolbar or page offers more than ~5
 
 ## Proof
 
-- [`/desk`](/desk) (app route, no showcase) — Open a panel's kebab on desktop, then the ⋮ commands sheet on a phone: same commands, two projections
+- [`/showcases/desk`](/showcases/desk) — Open a panel's kebab on desktop, then the ⋮ commands sheet on a phone: same commands, two projections
 - [`/showcases/ui/menus`](/showcases/ui/menus) — The forms a direction can take: dropdown, context menu, menu bar, overflow, selection bar, command palette
 
 ## Invariants

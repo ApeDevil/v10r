@@ -26,7 +26,7 @@ A CodeMirror-based source markdown editor with a slash-command palette that auto
 
 ## Proof
 
-- [`desk`](desk) (app route, no showcase) — EditorPanel in the desk workspace
+- [`/showcases/desk`](/showcases/desk) — EditorPanel in the desk workspace
 
 ---
 

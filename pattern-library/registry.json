@@ -1812,8 +1812,8 @@
 			],
 			"showcases": [
 				{
-					"path": "/desk",
-					"kind": "approute",
+					"path": "/showcases/desk",
+					"kind": "route",
 					"note": "Open a panel's kebab on desktop, then the ⋮ commands sheet on a phone: same commands, two projections"
 				},
 				{
@@ -4534,7 +4534,7 @@
 				{
 					"path": "/showcases/ai/deskbot",
 					"kind": "route",
-					"note": "Deskbot architecture page; the live deskbot runs at app route /desk"
+					"note": "Deskbot architecture page; the live deskbot runs at /showcases/desk"
 				}
 			],
 			"invariants": [
@@ -5271,8 +5271,8 @@
 			"tests": [],
 			"showcases": [
 				{
-					"path": "/desk",
-					"kind": "approute"
+					"path": "/showcases/desk",
+					"kind": "route"
 				}
 			],
 			"invariants": [],
@@ -6817,8 +6817,8 @@
 			"tests": [],
 			"showcases": [
 				{
-					"path": "desk",
-					"kind": "approute",
+					"path": "/showcases/desk",
+					"kind": "route",
 					"note": "EditorPanel in the desk workspace"
 				}
 			],
@@ -6950,13 +6950,13 @@
 			],
 			"showcases": [
 				{
-					"path": "/desk",
-					"kind": "approute"
+					"path": "/showcases/desk",
+					"kind": "route"
 				},
 				{
 					"path": "/showcases/ui/dock",
 					"kind": "route",
-					"note": "The same DockLayout embedded in a Card with mobileChrome=\"bar\" — proves the composite is not /desk-specific"
+					"note": "The same DockLayout embedded in a Card with mobileChrome=\"bar\" — proves the composite is not desk-specific"
 				}
 			],
 			"invariants": [
@@ -7023,8 +7023,8 @@
 			],
 			"showcases": [
 				{
-					"path": "desk",
-					"kind": "approute"
+					"path": "/showcases/desk",
+					"kind": "route"
 				}
 			],
 			"invariants": [],
@@ -7074,8 +7074,8 @@
 			],
 			"showcases": [
 				{
-					"path": "/desk",
-					"kind": "approute"
+					"path": "/showcases/desk",
+					"kind": "route"
 				}
 			],
 			"invariants": [],
@@ -7125,8 +7125,8 @@
 			],
 			"showcases": [
 				{
-					"path": "/desk",
-					"kind": "approute"
+					"path": "/showcases/desk",
+					"kind": "route"
 				}
 			],
 			"invariants": [],
@@ -7172,8 +7172,8 @@
 			],
 			"showcases": [
 				{
-					"path": "/desk",
-					"kind": "approute"
+					"path": "/showcases/desk",
+					"kind": "route"
 				}
 			],
 			"invariants": [],
@@ -7219,8 +7219,8 @@
 			"tests": [],
 			"showcases": [
 				{
-					"path": "/desk",
-					"kind": "approute"
+					"path": "/showcases/desk",
+					"kind": "route"
 				}
 			],
 			"invariants": [],

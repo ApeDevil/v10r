@@ -16,7 +16,7 @@
  * bounded no matter what ends up calling this.
  *
  * Two lanes, decided per event by `collect-policy.ts` exactly as the server hook
- * decides page views: an event from a user-lane path (`/account`, `/desk`) of a
+ * decides page views: an event from a user-lane path (`/account`, `/showcases/desk`) of a
  * signed-in user is written to `analytics.user_events` under their id — no
  * consent tier, no visitor hash, no session cookie (`user-events.ts` explains
  * why the ePrivacy gate does not engage there); everything else takes the

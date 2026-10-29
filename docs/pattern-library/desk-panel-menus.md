@@ -32,7 +32,7 @@ A context-scoped registry where each panel instance registers its command menus,
 
 ## Proof
 
-- [`/desk`](/desk) (app route, no showcase)
+- [`/showcases/desk`](/showcases/desk)
 
 ## Depends on
 

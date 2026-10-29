@@ -90,7 +90,7 @@ describe('isBotTrackablePath', () => {
 		expect(isBotTrackablePath(p)).toBe(true);
 	});
 
-	it.each(['/admin', '/account/security', '/desk'])('admits the authenticated surface %s', (p) => {
+	it.each(['/admin', '/account/security', '/showcases/desk'])('admits the authenticated surface %s', (p) => {
 		// Barred from the anonymous human lane to keep identified people out of it.
 		// A crawler is not a person, and a probe of /admin is the row worth having.
 		expect(isBotTrackablePath(p)).toBe(true);

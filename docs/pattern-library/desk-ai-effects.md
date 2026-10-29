@@ -31,7 +31,7 @@ AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify
 
 ## Proof
 
-- [`/desk`](/desk) (app route, no showcase)
+- [`/showcases/desk`](/showcases/desk)
 
 ## Depends on
 

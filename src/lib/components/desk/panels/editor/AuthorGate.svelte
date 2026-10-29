@@ -26,7 +26,7 @@ async function requestAccess(event: SubmitEvent) {
 	try {
 		const fd = new FormData();
 		if (message.trim()) fd.append('message', message.trim());
-		const r = await fetch('/desk?/requestBlogAccess', { method: 'POST', body: fd });
+		const r = await fetch('/showcases/desk?/requestBlogAccess', { method: 'POST', body: fd });
 		if (r.ok) {
 			toast?.success('Request sent. An admin will review it.');
 			// Force layout reload via navigation so page.data.blogAuthor.pendingRequest updates.
@@ -47,7 +47,7 @@ async function requestAccess(event: SubmitEvent) {
 async function cancelRequest() {
 	cancelling = true;
 	try {
-		const r = await fetch('/desk?/cancelBlogAccessRequest', { method: 'POST', body: new FormData() });
+		const r = await fetch('/showcases/desk?/cancelBlogAccessRequest', { method: 'POST', body: new FormData() });
 		if (r.ok) {
 			toast?.success('Request cancelled.');
 			location.reload();

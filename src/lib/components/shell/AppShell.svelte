@@ -165,12 +165,12 @@ const panelSearchItems = $derived(
 		type: 'panel' as const,
 		label: p.label,
 		icon: p.icon ?? 'i-lucide-layout-grid',
-		action: () => goto(`/desk?open=${p.type}`),
-		hint: page.url.pathname !== '/desk' ? m.shell_opens_in_desk() : undefined,
+		action: () => goto(`/showcases/desk?open=${p.type}`),
+		hint: page.url.pathname !== '/showcases/desk' ? m.shell_opens_in_desk() : undefined,
 		secondary: {
 			icon: 'i-lucide-external-link',
 			label: m.shell_open_panel_in_new_tab({ panel: p.label }),
-			action: () => window.open(`/desk?open=${p.type}`, '_blank'),
+			action: () => window.open(`/showcases/desk?open=${p.type}`, '_blank'),
 		},
 	})),
 );

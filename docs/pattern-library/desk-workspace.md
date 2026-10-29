@@ -46,8 +46,8 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 
 ## Proof
 
-- [`/desk`](/desk) (app route, no showcase)
-- [`/showcases/ui/dock`](/showcases/ui/dock) — The same DockLayout embedded in a Card with mobileChrome="bar" — proves the composite is not /desk-specific
+- [`/showcases/desk`](/showcases/desk)
+- [`/showcases/ui/dock`](/showcases/ui/dock) — The same DockLayout embedded in a Card with mobileChrome="bar" — proves the composite is not desk-specific
 
 ## Invariants
 

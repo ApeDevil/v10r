@@ -28,7 +28,7 @@ One recursive tree over heterogeneous content APIs: adapters normalize every sou
 
 ## Proof
 
-- [`/desk`](/desk) (app route, no showcase)
+- [`/showcases/desk`](/showcases/desk)
 
 ## Depends on
 

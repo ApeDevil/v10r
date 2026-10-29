@@ -32,7 +32,7 @@
  * ## Route exclusions
  *
  * `beforeSend` runs the SAME `isExcludedPath` policy as the first-party lanes.
- * Vercel's is an anonymous lane too, so `/admin`, `/account` and `/desk` are
+ * Vercel's is an anonymous lane too, so `/admin`, `/account` and `/showcases/desk` are
  * barred from it for the same reason — in every locale.
  */
 

@@ -196,7 +196,7 @@ function submitHiddenForm(action: string, postId: string) {
 										     the action. A real link, so middle-click opens a second desk. File-managed
 										     posts are edited in their file — their door is the preview badge. -->
 										{#if !p.sourcePath}
-											<Button href="/desk?post={p.id}" variant="outline" size="sm">
+											<Button href="/showcases/desk?post={p.id}" variant="outline" size="sm">
 												<span class="i-lucide-pen-line h-4 w-4 mr-1"></span>
 												{m.admin_action_edit()}
 											</Button>

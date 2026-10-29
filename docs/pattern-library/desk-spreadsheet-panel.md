@@ -33,7 +33,7 @@ A spreadsheet file type managed through the desk's unified file registry, editab
 
 ## Proof
 
-- [`desk`](desk) (app route, no showcase)
+- [`/showcases/desk`](/showcases/desk)
 
 ## Depends on
 

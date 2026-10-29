@@ -310,6 +310,14 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/desk',
+		icon: 'i-lucide-panel-top',
+		title: m.showcase_desk_title,
+		description: m.showcase_desk_description,
+		domain: 'frontend',
+		docs: [{ href: '/docs/blueprint/ai/desk-integration', label: 'Desk Integration' }],
+	},
+	{
 		href: '/showcases/i18n',
 		icon: 'i-lucide-languages',
 		title: m.showcase_i18n_title,

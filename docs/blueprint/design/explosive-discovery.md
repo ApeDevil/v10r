@@ -29,7 +29,7 @@ Action          what do I do to it
 Detail          how exactly
 ```
 
-Live embodiment: the `/desk` panel kebab and the mobile commands sheet render one composed
+Live embodiment: the `/showcases/desk` panel kebab and the mobile commands sheet render one composed
 menu array in two projections · the menu forms a direction can take: `/showcases/ui/menus`.
 
 ## The objective

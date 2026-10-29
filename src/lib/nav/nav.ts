@@ -57,11 +57,6 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-newspaper',
 	},
 	{
-		href: '/desk',
-		label: m.nav_desk,
-		icon: 'i-lucide-panel-top',
-	},
-	{
 		href: '/showcases',
 		label: m.nav_showcases,
 		icon: 'i-lucide-view',

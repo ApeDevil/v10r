@@ -32,7 +32,7 @@ Phone chrome for the dock workspace: a scrollable top tab strip of open panel in
 
 ## Proof
 
-- [`/desk`](/desk) (app route, no showcase)
+- [`/showcases/desk`](/showcases/desk)
 
 ## Depends on
 

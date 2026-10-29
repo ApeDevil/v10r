@@ -23,7 +23,7 @@
  *   at all. The command is a UI label from a closed vocabulary — never content.
  *   Nearly all of these come from the desk, an authenticated area, so they
  *   travel the identified lane (`analytics.user_events`) and are read on
- *   `/admin/analytics/human` — the anonymous lane refuses `/desk` paths.
+ *   `/admin/analytics/human` — the anonymous lane refuses `/showcases/desk` paths.
  *
  * ## What it deliberately does NOT collect
  *
@@ -70,7 +70,7 @@ interface QueuedEvent {
 /**
  * Which lane an event is bound for, decided at push time from the same
  * predicate the server applies (`collect-policy.ts`): a signed-in user on a
- * user-lane path (`/account`, `/desk`) writes to the identified lane, which the
+ * user-lane path (`/account`, `/showcases/desk`) writes to the identified lane, which the
  * consent banner does not govern; everything else is anonymous-lane and waits
  * on consent. Kept beside the event so a withdrawal can drop exactly the rows
  * it covers and nothing else.

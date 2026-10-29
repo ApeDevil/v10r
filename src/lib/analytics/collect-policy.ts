@@ -52,14 +52,14 @@ export function stripLocalePrefix(path: string): string {
 /**
  * Route prefixes never recorded in the anonymous lane.
  *
- * `/admin`, `/account` and `/desk` are authenticated surfaces (all three sit
+ * `/admin`, `/account` and `/showcases/desk` are authenticated surfaces (all three sit
  * behind `requireAdmin`/`requireAuth`). Recording them against a hashed
  * `visitor_id` would place identified users' behaviour into the lane whose
  * legal basis — Art 6(1)(f) legitimate interest — is assessed on the premise
  * that its subjects are anonymous visitors. Authenticated behaviour belongs in
  * `analytics.user_events`, keyed by user id, under a different basis.
  */
-const EXCLUDED_PREFIXES = ['/api/', '/_app/', '/admin', '/account', '/desk'] as const;
+const EXCLUDED_PREFIXES = ['/api/', '/_app/', '/admin', '/account', '/showcases/desk'] as const;
 
 /**
  * User-Agent substrings that mark a non-human caller.
@@ -169,7 +169,7 @@ export function isExcludedPath(path: string): boolean {
 	return unprefixed.includes('.');
 }
 
-/** `/desk` and `/desk/…`, never `/desktop` — a prefix rule is a path-segment rule. */
+/** `/showcases/desk` and `/showcases/desk/…`, never `/showcases/desktop` — a prefix rule is a path-segment rule. */
 function startsWithSegment(path: string, prefix: string): boolean {
 	if (prefix.endsWith('/')) return path.startsWith(prefix);
 	return path === prefix || path.startsWith(`${prefix}/`);
@@ -181,14 +181,14 @@ function startsWithSegment(path: string, prefix: string): boolean {
  * one is stored under.
  *
  * `/admin` is excluded on purpose: it is the operator's own usage, which is high
- * volume and near-zero insight. `/desk` was excluded by decision until
+ * volume and near-zero insight. The desk was excluded by decision until
  * 2026-09-18; it joined so the desk's `command_invoked` events — which menu rows
  * are daily, whether the expert path is used — have a lane that needs no
  * consent tier. Its page views ride along.
  */
 const USER_LANE_SURFACES: readonly (readonly [prefix: string, surface: UserSurface])[] = [
 	['/account', 'account'],
-	['/desk', 'desk'],
+	['/showcases/desk', 'desk'],
 ] as const;
 
 /**

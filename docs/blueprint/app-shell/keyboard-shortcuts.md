@@ -52,7 +52,7 @@ The `×` button is the only gesture that ends a thread. Esc/minimize keep it ali
 | `⌘Enter` / `Ctrl+Enter` | Submit form | When form is focused |
 | `Escape` | Cancel/close form modal | In modal forms |
 
-### Desk Shortcuts (While `/desk` Is Mounted)
+### Desk Shortcuts (While `/showcases/desk` Is Mounted)
 
 The desk dispatches its own chords: `DeskShortcuts` matches keyboard events against the same
 `composePanelMenus()` array the panel kebab renders (`Ctrl+W` on the Panel floor's *Close

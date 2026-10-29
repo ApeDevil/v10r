@@ -321,7 +321,14 @@ describe('readsGrants — the sessionPopulate grant lookup predicate', () => {
 	});
 
 	it('skips pages and every other API', () => {
-		for (const path of ['/blog', '/blog/my-post', '/de/blog', '/desk', '/de/desk/__data.json', '/api/desk/files']) {
+		for (const path of [
+			'/blog',
+			'/blog/my-post',
+			'/de/blog',
+			'/showcases/desk',
+			'/de/showcases/desk/__data.json',
+			'/api/desk/files',
+		]) {
 			expect(guards.readsGrants(path), path).toBe(false);
 		}
 	});

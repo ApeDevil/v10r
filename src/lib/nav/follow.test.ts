@@ -9,7 +9,9 @@ vi.mock('$app/paths', () => ({ match: vi.fn() }));
 const assign = vi.fn();
 
 beforeEach(() => {
-	vi.stubGlobal('window', { location: { href: 'https://v10r.test/desk', origin: 'https://v10r.test', assign } });
+	vi.stubGlobal('window', {
+		location: { href: 'https://v10r.test/showcases/desk', origin: 'https://v10r.test', assign },
+	});
 	vi.mocked(goto).mockClear();
 	assign.mockClear();
 });
