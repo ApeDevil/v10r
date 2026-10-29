@@ -10,6 +10,8 @@ interface Props {
 	disabled?: boolean;
 	orientation?: 'horizontal' | 'vertical';
 	size?: 'sm' | 'md' | 'lg';
+	/** Accessible name of the thumb(s) — a slider has no visible label of its own. */
+	label?: string;
 	class?: string;
 }
 
@@ -21,6 +23,7 @@ let {
 	disabled = false,
 	orientation = 'horizontal',
 	size = 'md',
+	label,
 	class: className,
 }: Props = $props();
 
@@ -41,8 +44,8 @@ const isRange = $derived(value.length === 2);
 		<span class="slider-track">
 			<SliderPrimitive.Range />
 		</span>
-		<SliderPrimitive.Thumb index={0} />
-		<SliderPrimitive.Thumb index={1} />
+		<SliderPrimitive.Thumb index={0} aria-label={label} />
+		<SliderPrimitive.Thumb index={1} aria-label={label} />
 	</SliderPrimitive.Root>
 {:else}
 	<SliderPrimitive.Root
@@ -59,7 +62,7 @@ const isRange = $derived(value.length === 2);
 		<span class="slider-track">
 			<SliderPrimitive.Range />
 		</span>
-		<SliderPrimitive.Thumb index={0} />
+		<SliderPrimitive.Thumb index={0} aria-label={label} />
 	</SliderPrimitive.Root>
 {/if}
 
