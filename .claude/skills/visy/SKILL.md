@@ -63,7 +63,7 @@ If the claim has no shape — no branching, no actors, no topology, no quantity 
 | `.claude/skills/visy-chart/SKILL.md` | The subject is data: charts, plots, dashboards, sparklines |
 | `.claude/skills/visy-story/SKILL.md` | The explanation spans multiple views, levels, or an audience ladder |
 
-For substantial multi-view work, delegate to the `visy` subagent — it uses this skill family as its method library.
+For substantial multi-view work, load the leaf skills above directly and work through them in turn — this skill family is the method library.
 
 ## Quality tests — run before delivering any visual
 

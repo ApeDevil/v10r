@@ -34,10 +34,10 @@ Use real names from the repo: `authCaptchaGate → authHandler`, `POST /api/mcp/
 
 ## Project canon — processes worth depicting correctly
 
-- The composition root: `src/hooks.server.ts` boots three background modules, then runs the 14-middleware `sequence()` — order is load-bearing, so a depiction that reorders it is *wrong*, not simplified.
+- The composition root: `src/hooks.server.ts` boots two background schedulers, then runs the 14-middleware `sequence()` — order is load-bearing, so a depiction that reorders it is *wrong*, not simplified.
 - The multi-client core: one domain function behind four adapters (`+page.server.ts`, `+server.ts`, AI tool, job) — one diagram, four entry edges converging on a single door.
-- Background lifecycles: `agents`, `jobs/scheduler`, `jobs/delivery-scheduler` — setup → run → teardown, not just "runs".
-- The `sys` agent establishes runtime truth (traces, failure modes); visy-process turns that trace into the picture. Depict what is established, not what is assumed.
+- Background lifecycles: `jobs/scheduler`, `jobs/delivery-scheduler` — setup → run → teardown, not just "runs".
+- Establish runtime truth (traces, failure modes) first; visy-process turns that trace into the picture. Depict what is established, not what is assumed.
 
 ## Interactive process diagrams in-app
 

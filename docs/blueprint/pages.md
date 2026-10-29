@@ -158,7 +158,6 @@ No documentation drift. No stale examples. The template validates itself.
 └── /docs                            # Static documentation
     ├── /blueprint                   # System patterns ([...slug])
     ├── /foundation                  # Project goals ([slug])
-    ├── /programming                 # Language/runtime notes ([slug])
     └── /stack                       # Technology decisions ([slug])
 ```
 
@@ -1028,7 +1027,6 @@ src/routes/
 └── docs/
     ├── blueprint/[...slug]/+page.svelte    # Markdown renderer (+page.server.ts)
     ├── foundation/[slug]/+page.svelte
-    ├── programming/[slug]/+page.svelte
     └── stack/[slug]/+page.svelte
 ```
 

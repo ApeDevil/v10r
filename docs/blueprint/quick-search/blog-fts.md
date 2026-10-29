@@ -95,4 +95,3 @@ Headline options: `MaxFragments=1, MinWords=6, MaxWords=26, ShortWord=2`.
 
 - Doc heading-level deep anchors (would need rehype-slug id matching in the markdown pipeline)
 - Recent-searches history (localStorage)
-- `/docs/programming` agents indexing

@@ -108,9 +108,9 @@ where to look after the docs.
 
 ## Agents and sub-agents
 
-- The roster lives in `.claude/agents/*.md`; each file's frontmatter `description` says when
-  to use it (and when not to). Skills live in `.claude/skills/*/SKILL.md`. Route by those
-  descriptions; do not preload them.
+- There are no custom subagents. Use the built-in ones (Explore, general-purpose) only for
+  independent side work. Skills live in `.claude/skills/*/SKILL.md`; route by their
+  descriptions, do not preload them.
 - Launch independent agents in one message so they run concurrently; keep the conclusion, not
   the file dumps.
 - **Every sub-agent prompt that edits files must forbid working-tree-mutating git commands**

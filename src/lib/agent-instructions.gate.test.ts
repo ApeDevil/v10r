@@ -1,6 +1,6 @@
 /**
  * AGENT INSTRUCTIONS GATE — the files every coding agent loads before it reads anything else
- * (`AGENTS.md`, `CLAUDE.md`, `.claude/agents/*.md`, `.claude/skills/**`) must not route it to
+ * (`AGENTS.md`, `CLAUDE.md`, `.claude/skills/**`) must not route it to
  * code that is gone, and must not carry text a human reviewer cannot see.
  *
  * Stale routing is the common failure of context files: a refactor moves a directory, the
@@ -22,7 +22,7 @@ function markdownUnder(dir: string): string[] {
 		.map((name) => join(dir, name));
 }
 
-const FILES = ['AGENTS.md', 'CLAUDE.md', ...markdownUnder('.claude/agents'), ...markdownUnder('.claude/skills')];
+const FILES = ['AGENTS.md', 'CLAUDE.md', ...markdownUnder('.claude/skills')];
 
 /** Repo paths are backticked and start with a top-level directory or name a root config file. */
 const PATH_PREFIX = /^(src|docs|scripts|pattern-library|mcp|messages|static|crates|bin|\.claude)\//;
@@ -32,18 +32,7 @@ const NOT_A_PATH = /[*<>{}…$]|\[(domain|layer)\]|\.\.\./;
 /** A bare `name/` in a routing table is relative to one of these. */
 const DIR_BASES = ['', 'src/lib/server/', 'src/lib/', 'src/routes/', 'docs/'];
 /** Paths named on purpose as absent. Each entry must still be mentioned, or the gate fails. */
-const ABSENT_ON_PURPOSE: ReadonlyArray<{ file: string; path: string; why: string }> = [
-	{
-		file: '.claude/agents/cony.md',
-		path: 'src/lib/server/i18n',
-		why: 'states that the directory deliberately does not exist yet',
-	},
-	...['arty', 'laly', 'visy'].map((agent) => ({
-		file: `.claude/agents/${agent}.md`,
-		path: `.claude/agent-memory/${agent}`,
-		why: 'the agent creates its memory directory on its first save',
-	})),
-];
+const ABSENT_ON_PURPOSE: ReadonlyArray<{ file: string; path: string; why: string }> = [];
 
 /**
  * Zero-width, bidi-override and Unicode tag characters (U+E0000–E007F) — invisible in a diff.

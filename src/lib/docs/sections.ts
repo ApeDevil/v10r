@@ -1,5 +1,5 @@
 /**
- * The docs hub's five sections — ONE list read by the hub page (cards) and the
+ * The docs hub's four sections — ONE list read by the hub page (cards) and the
  * navigation registry (the Docs flyout / drawer children), so the two cannot
  * drift: for two years the flyout listed one section while the hub showed five.
  * Order = display order.
@@ -39,11 +39,5 @@ export const DOCS_SECTIONS: DocsSection[] = [
 		icon: 'i-lucide-map',
 		title: m.docs_section_blueprint_title,
 		description: m.docs_section_blueprint_description,
-	},
-	{
-		href: '/docs/programming',
-		icon: 'i-lucide-users-round',
-		title: m.docs_card_agents_title,
-		description: m.docs_card_agents_description,
 	},
 ];

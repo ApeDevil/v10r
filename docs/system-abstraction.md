@@ -95,12 +95,11 @@ Two architectural spines impose order on every request.
 
 ### Spine A — Composition Root
 
-`src/hooks.server.ts` is the composition root. Three module-load side effects at the top of the file boot background work once at process start:
+`src/hooks.server.ts` is the composition root. On a persistent platform, two gated dynamic imports at the top of the file boot the background schedulers once at process start:
 
 ```
-import '#lib/server/agents'
-import '#lib/server/jobs/scheduler.ts'
-import '#lib/server/jobs/delivery-scheduler.ts'
+await import('#lib/server/jobs/scheduler.ts')
+await import('#lib/server/jobs/delivery-scheduler.ts')
 ```
 
 The main export is a `sequence()` of fourteen `Handle` middlewares that mutate the shared `event.locals` bus in order. Each handler writes named fields and, in some cases, short-circuits the chain with a response before downstream handlers run.

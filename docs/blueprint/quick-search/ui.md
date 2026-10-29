@@ -123,4 +123,3 @@ The load function runs both lanes server-side (no client fetch): `match(buildSea
 
 - Recent searches (localStorage persistence)
 - Doc heading-level deep anchors in results
-- `/docs/programming` agents section indexing
