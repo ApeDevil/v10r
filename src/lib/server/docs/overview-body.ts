@@ -21,9 +21,15 @@
  * carries body/rawHash) structurally satisfies this, so it passes its files straight in.
  */
 export interface OverviewDocFile {
-	/** Canonical /docs path: `/docs/<section>/<slug>` — section is `split('/')[2]`. */
+	/**
+	 * Canonical path: `/docs/<section>/<slug>` (section is `split('/')[2]`), or a workflow
+	 * tutorial's page `/workflows/<slug>` (section `workflows`).
+	 */
 	docsPath: string;
-	/** Repo-relative source: `docs/<section>/<subsection>/<file>.md` — subsection is `split('/')[2]`. */
+	/**
+	 * Repo-relative source: `docs/<section>/<subsection>/<file>.md` (subsection is `split('/')[2]`),
+	 * or `content/workflows/<category>/<slug>/<locale>.md`.
+	 */
 	sourcePath: string;
 	/** Doc title (frontmatter.title or first H1). For a stack doc this IS the technology name. */
 	title: string;
@@ -50,16 +56,38 @@ function buildStackLine(files: OverviewDocFile[]): string {
 	return unique.length ? `\n**Stack:** ${unique.join(' · ')}\n` : '';
 }
 
+const WORKFLOWS_PREFIX = '/workflows/';
+
+/** The map section a doc sits in: the /docs section, or `workflows` for a tutorial. */
+function sectionOf(f: OverviewDocFile): string {
+	return f.docsPath.startsWith(WORKFLOWS_PREFIX) ? 'workflows' : (f.docsPath.split('/')[2] ?? 'other');
+}
+
+/**
+ * One line naming the workflow tutorials, placed in the intro beside the stack line for the
+ * same reason: the `## workflows` TOC sorts last and is lost to the truncation. Without it a
+ * broad question ("can v10r help me with Excel?") never learns the tutorials exist.
+ */
+function buildWorkflowsLine(files: OverviewDocFile[]): string {
+	const tutorials = files
+		.filter((f) => sectionOf(f) === 'workflows')
+		.sort((a, b) => a.docsPath.localeCompare(b.docsPath))
+		.map((f) => `${f.title} (${f.docsPath})`);
+	return tutorials.length
+		? `\n**Workflows:** step-by-step tutorials for office work with any AI tool, for non-developers, in English, German and Russian, each with a downloadable example folder: ${tutorials.join(' · ')}\n`
+		: '';
+}
+
 /** Build the deterministic overview body: intro + one-line stack summary + section-grouped TOC. No LLM. */
 export function buildOverviewBody(files: OverviewDocFile[]): string {
 	const bySection = new Map<string, OverviewDocFile[]>();
 	for (const f of files) {
-		const section = f.docsPath.split('/')[2] ?? 'other';
+		const section = sectionOf(f);
 		const arr = bySection.get(section);
 		if (arr) arr.push(f);
 		else bySection.set(section, [f]);
 	}
-	const order = ['foundation', 'blueprint', 'stack', 'pattern-library'];
+	const order = ['foundation', 'blueprint', 'stack', 'pattern-library', 'workflows'];
 	const sections = [...bySection.keys()].sort(
 		(a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99) || a.localeCompare(b),
 	);
@@ -72,6 +100,7 @@ export function buildOverviewBody(files: OverviewDocFile[]): string {
 	// within the first ~600 chars and survives loadOverview's 2000-char truncation. Without this,
 	// `## stack` sorts last and is cut by the large `blueprint` TOC — the original grounding bug.
 	body += buildStackLine(files);
+	body += buildWorkflowsLine(files);
 	for (const section of sections) {
 		const docs = [...(bySection.get(section) ?? [])].sort((a, b) => a.title.localeCompare(b.title));
 		body += `\n## ${section}\n`;

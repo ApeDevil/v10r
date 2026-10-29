@@ -35,6 +35,35 @@
 			"note": "The pattern registry is reachable and named"
 		},
 		{
+			"id": "where-excel-tutorial",
+			"surface": "chatbot",
+			"question": "Where is the tutorial for working on an Excel sheet with AI?",
+			"expect": [{ "kind": "cites", "path": "/workflows/excel-with-ai" }, { "kind": "cites-only-surfaced" }],
+			"note": "The Office workflow tutorials are pages in the catalog, reached by a where-question"
+		},
+		{
+			"id": "how-ai-project-folder",
+			"surface": "chatbot",
+			"question": "How should I set up a folder before I give an AI an Excel or PowerPoint job?",
+			"expect": [
+				{ "kind": "answer-includes", "phrases": ["input", "output", "README"] },
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "The tutorial text is in the docs corpus: the answer names the folder layout the tutorial teaches"
+		},
+		{
+			"id": "workflow-question-in-german",
+			"surface": "chatbot",
+			"question": "Wie baue ich mit KI eine Präsentation aus einem Bericht und einer Excel-Tabelle?",
+			"expect": [
+				{ "kind": "cites", "path": "/workflows/powerpoint-with-ai" },
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "A German question finds the English PowerPoint tutorial in the corpus and points to its page"
+		},
+		{
 			"id": "uncovered-topic-no-invented-paths",
 			"surface": "chatbot",
 			"question": "Show me v10r's Kubernetes Helm chart and the kubectl commands to deploy it.",

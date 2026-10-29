@@ -1,6 +1,8 @@
 /**
- * ingest-docs — ingest the project documentation (docs/ **\/*.md) into the retrieval.*
- * corpus so the chatbot can ground "how does X work" answers in the real docs.
+ * ingest-docs — ingest the project documentation (docs/ **\/*.md) and the English workflow
+ * tutorials (content/workflows/<category>/<slug>/en.md) into the retrieval.* corpus so the
+ * chatbot can ground "how does X work" answers in the real docs, and "how do I set up the
+ * folder" answers in the tutorials the /workflows pages render.
  *
  * Runs INSIDE the v10r container (host has no node_modules):
  *
@@ -112,6 +114,13 @@ const vecLiteral = (v: number[]) => `[${v.join(',')}]`;
 // Canonical filtering + markdown helpers are shared with the /docs manifest via
 // src/lib/server/docs/doc-filter.ts (single source of truth — no more hand-sync).
 const DOCS_ROOT = fileURLToPath(new URL('../../docs', import.meta.url));
+const WORKFLOWS_ROOT = fileURLToPath(new URL('../../content/workflows', import.meta.url));
+/**
+ * The tutorial locale that enters the corpus. One language keeps the corpus free of three
+ * copies of every passage; the embedding model matches a German or Russian question to it,
+ * and Vely answers in the reader's language anyway.
+ */
+const WORKFLOW_CORPUS_LOCALE = 'en';
 
 // Docs that render for humans at /docs but must NOT enter the chatbot corpus —
 // planned-but-unbuilt designs the assistant would otherwise assert as live code.
@@ -146,7 +155,7 @@ const RETRIEVAL_ONLY_BLOCK = new Set<string>([
 
 interface DocFile {
 	sourcePath: string; // docs/…/x.md
-	docsPath: string; // /docs/section/slug  (== quick-search doc record path)
+	docsPath: string; // /docs/section/slug or /workflows/slug  (== quick-search record path)
 	title: string;
 	body: string;
 	raw: string;
@@ -216,6 +225,43 @@ function buildDocFile(absPath: string): DocFile | null {
 	return { sourcePath, docsPath: `/docs/${section}/${slug}`, title, body, raw };
 }
 
+/**
+ * Every workflow tutorial as a corpus doc, cited at the page that renders it
+ * (`/workflows/<slug>`, a nav page in the quick-search catalog). Only `<slug>/<locale>.md`
+ * files are tutorials; the starter folders beside them are example material, not docs.
+ */
+function listWorkflowTutorials(): DocFile[] {
+	const out: DocFile[] = [];
+	for (const category of readdirSync(WORKFLOWS_ROOT)) {
+		const categoryDir = join(WORKFLOWS_ROOT, category);
+		if (!statSync(categoryDir).isDirectory()) continue;
+		for (const slug of readdirSync(categoryDir)) {
+			if (!statSync(join(categoryDir, slug)).isDirectory()) continue;
+			const absPath = join(categoryDir, slug, `${WORKFLOW_CORPUS_LOCALE}.md`);
+			let raw: string;
+			try {
+				raw = readFileSync(absPath, 'utf8');
+			} catch {
+				continue;
+			}
+			const { body } = parseFrontmatter(raw);
+			const title = deriveTitle(body);
+			if (!title) {
+				console.warn(`[ingest-docs] skip ${absPath}: no # H1`);
+				continue;
+			}
+			out.push({
+				sourcePath: `content/workflows/${category}/${slug}/${WORKFLOW_CORPUS_LOCALE}.md`,
+				docsPath: `/workflows/${slug}`,
+				title,
+				body,
+				raw,
+			});
+		}
+	}
+	return out;
+}
+
 async function ensurePrereqs() {
 	await db.execute(sql`
 		INSERT INTO auth."user" (id, name, email, email_verified)
@@ -225,7 +271,7 @@ async function ensurePrereqs() {
 	await db.execute(sql`
 		INSERT INTO retrieval.collection (id, user_id, name, description)
 		VALUES (${PROJECT_DOCS_COLLECTION_ID}, ${SYSTEM_DOCS_USER_ID}, 'Project Docs',
-			'Project documentation corpus (docs/**/*.md), tier-1 retrieval.')
+			'Project documentation corpus (docs/**/*.md + workflow tutorials), tier-1 retrieval.')
 		ON CONFLICT (id) DO NOTHING
 	`);
 }
@@ -403,8 +449,7 @@ async function main() {
 	await ensurePrereqs();
 
 	const files = await Promise.all(
-		listMarkdown(DOCS_ROOT)
-			.map(buildDocFile)
+		[...listMarkdown(DOCS_ROOT).map(buildDocFile), ...listWorkflowTutorials()]
 			.filter((d): d is DocFile => d !== null)
 			.map(keyDoc),
 	);

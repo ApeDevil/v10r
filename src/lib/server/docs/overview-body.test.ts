@@ -69,4 +69,27 @@ describe('buildOverviewBody', () => {
 		]);
 		expect(body).not.toContain('**Stack:**');
 	});
+
+	it('names the workflow tutorials in the intro, inside the prompt cut, and gives them a section', () => {
+		const tutorial = (slug: string, title: string): OverviewDocFile => ({
+			sourcePath: `content/workflows/office/${slug}/en.md`,
+			docsPath: `/workflows/${slug}`,
+			title,
+		});
+		const body = buildOverviewBody([
+			...files,
+			tutorial('excel-with-ai', 'Analyse and transform an Excel sheet with AI'),
+			tutorial('ai-project-folder', 'Set up a folder for AI work'),
+		]);
+		const line = '**Workflows:**';
+		const excel = 'Analyse and transform an Excel sheet with AI (/workflows/excel-with-ai)';
+		expect(body).toContain(line);
+		expect(body.indexOf(excel) + excel.length).toBeLessThan(PROJECT_MAP_MAX_CHARS);
+		expect(body).toContain('## workflows');
+		expect(body).not.toContain('## excel-with-ai');
+	});
+
+	it('omits the Workflows line when no tutorials are present', () => {
+		expect(buildOverviewBody(files)).not.toContain('**Workflows:**');
+	});
 });

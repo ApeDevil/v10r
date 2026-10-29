@@ -197,6 +197,7 @@ block it, leak); catalog membership **fails safe**.
 |------|--------|----------|
 | **(a) Freely resolvable** | Public catalog: `/showcases/**`, static `/docs/**`, public top-level (`/`, `/blog` index, `/feedback`, `/search`) | Resolve → title/description → `<current-page>` + deixis seed + full chip |
 | **(b) Template-only / coarse** | Public **dynamic**: `/blog/[slug]`, `/docs/.../[slug]`, catch-all docs | Generic label only ("a blog post"); concrete slug never sent. v1: out of scope (decision #3) |
+| **(a′) Allowlisted slug** | `/workflows/[slug]` when the slug is in `#lib/workflows/catalog.ts` | The client fills in the slug (`siteAwareRouteKey` in `#lib/search/route-id.ts`) because it is a public page name from a fixed list, never user data; the route then resolves like tier (a) against the nav page records. Any other slug, and every other dynamic route, stays tier (b) |
 | **(c) Off / not sent / not resolvable** | `/admin/**`, `/app/**` (incl. `/account/**`, `/app/desk/**`), `/auth/**` | Not in catalog → resolves `null` by construction. Nothing injected, seeded, chipped, or stored. **No chip.** |
 
 Tier (c) is enforced in **three layers**: a cheap client gate (don't attach `routeId` on
