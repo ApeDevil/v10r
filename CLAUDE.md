@@ -144,6 +144,7 @@ adds the production build and perf ratchet (the ship runs both).
   and cloud alike); that pushed branch is how Stas reviews. Never commit to or push `main`,
   never push to GitLab, never force-push, rebase a pushed branch, stash or reset — `main`
   moves only in shipping mode, by the ship step. Read-only git is always fine.
+- **Branch names say who and where: `<agent>/<env>/<feature>`.** `<agent>` is `claude` or `codex`; `<env>` is `cloud` in a cloud environment (Claude: `CLAUDE_CODE_REMOTE=true`; Codex: no `~/.codex/` directory), otherwise `local`; `<feature>` is short kebab-case. Example: `claude/local/add-login-page`. Rename an auto-named branch (`claude/brave-bohr-9jw2fq`) to this form before its first push.
 - **Run a `vr` command only when Stas names it in his current message** (`bin/vr`, his
   host-side dispatcher). Naming it is the authorization, including the git work the command
   does itself; it covers that one run as written, never a later one, a variation, or a
