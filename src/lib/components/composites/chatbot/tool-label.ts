@@ -7,7 +7,7 @@
  * The map references each message function by name on purpose: a dynamic
  * `messages[toolLabelKey(name)]` lookup on the Paraglide namespace defeats tree-shaking
  * and ships every message of every locale into each route that renders a tool row
- * (+240 KB gzipped on `/desk` when it was written that way).
+ * (+240 KB gzipped on `/showcases/desk` when it was written that way).
  */
 import * as m from '#lib/paraglide/messages.js';
 

@@ -15,7 +15,7 @@ import { page } from '$app/state';
 
 const toast = getToast();
 
-// Server data from desk/+layout.server.ts
+// Server data from showcases/desk/+layout.server.ts
 const authenticated = $derived(!!page.data.session?.user?.id);
 const serverTheme = $derived(page.data.deskTheme ?? null);
 const serverPresets = $derived(page.data.deskPresets ?? []);

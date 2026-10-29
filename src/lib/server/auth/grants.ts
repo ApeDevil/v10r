@@ -162,7 +162,7 @@ export async function listGrantsForUser(userId: string) {
 /**
  * Grant kinds the user has not been told about yet — the "you now have X access" Toast.
  *
- * Read-only on purpose: the /desk layout load calls it, and loads run speculatively
+ * Read-only on purpose: the desk layout load calls it, and loads run speculatively
  * (`data-sveltekit-preload-data="hover"` fires one on a mere link hover). Marking the
  * notification seen is a separate, client-initiated step — `acknowledgeGrantNotifications`
  * — taken only after the Toast was actually shown.

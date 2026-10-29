@@ -152,7 +152,7 @@ export function renderReadmeIndex(registry: Registry): string {
 		'> **Bold** patterns are deep-tier: their pages carry invariants and emulation notes; the rest are index',
 		'> rows pointing at docs, code, and proof. Showcase routes live on disk under',
 		'> `src/routes/[[locale=locale]]/(public)/showcases/` — append the route path shown. Routes in parentheses,',
-		'> like (`/desk`), mean there is no showcase; the pattern is live at that app route.',
+		'> like (`/admin/db`), mean there is no showcase; the pattern is live at that app route.',
 		'> Unmarked rows are **proven** (a linked test or showcase, verified at a recorded date); _(implemented)_',
 		'> means the code exists but no proof surface is linked yet, _(planned)_ that it is design-only.',
 		'> Each deep row ends with its headline *Avoid when* — the first reason not to adopt it; the page lists the rest.',

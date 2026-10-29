@@ -15,7 +15,7 @@ import raw from './snapshot.json';
 export interface SnapshotMetrics {
 	baseline_js_kb: number;
 	route_js_kb: number;
-	/** Route id of the heaviest route, e.g. `/[[locale=locale]]/desk`. */
+	/** Route id of the heaviest route, e.g. `/[[locale=locale]]/(public)/showcases/desk`. */
 	heaviest_route: string;
 	median_route_js_kb: number;
 	total_client_js_kb: number;

@@ -4,7 +4,7 @@
  * v1 supports kind='blog-author'; add new kinds by extending grantKindEnum.
  *
  * Notification: notifiedAt is NULL until the "you now have X access" Toast has been
- * shown on a real /desk visit; the client then acknowledges it, which stamps the time.
+ * shown on a real desk visit; the client then acknowledges it, which stamps the time.
  */
 import { sql } from 'drizzle-orm';
 import { index, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';

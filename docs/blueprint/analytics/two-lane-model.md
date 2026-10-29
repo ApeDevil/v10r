@@ -69,7 +69,7 @@ Decided in one place, `analytics/collect-policy.ts`, so the two collection paths
 | Bots, prefetch, prerender | neither | Not visitors |
 
 A path is eligible for **exactly one** lane, and a prefix rule is a path-segment rule
-(`/desk` claims `/desk/…`, never `/desktop`). Both the server hook and the two beacon
+(`/showcases/desk` claims `/showcases/desk/…`, never `/showcases/desktop`). Both the server hook and the two beacon
 endpoints import the same predicates — they previously disagreed, and client-side navigations
 into `/admin` and `/account` leaked into the anonymous lane as a result. The telemetry beacon
 (`journey/collect`) splits one batch per event: a signed-in user's rows from a user-lane path

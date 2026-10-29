@@ -1,7 +1,7 @@
 /**
  * AI turn milestones — a paste-into-the-console probe for one chatbot or deskbot conversation.
  *
- * Open `/showcases/ai/chatbot` (or any page with the Vely panel) — or `/desk` with a Bot panel —
+ * Open `/showcases/ai/chatbot` (or any page with the Vely panel) — or `/showcases/desk` with a Bot panel —
  * paste this whole file into the DevTools console, then chat. Every `/api/ai/chatbot` and
  * `/api/ai/deskbot` request is teed and its SSE frames parsed on the way to the app, so the
  * numbers are what the browser actually saw:

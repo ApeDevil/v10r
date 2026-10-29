@@ -391,7 +391,7 @@ Complete `hooks.server.ts` with all patterns:
 > 2. Style + locale populate render context; both skip `/api` and internal subrequests.
 > 3. Rate-limiting lives **inside the auth handler** — `/api/auth/*` rejects before Better Auth runs.
 > 4. CSRF runs **after** auth, on mutating `/api/*` (custom-header + same-host origin/referer check).
-> 5. Session populate reads the session into `locals` and queries `grants` only on `/blog`/`/desk` paths.
+> 5. Session populate reads the session into `locals` and queries `grants` only on `/blog`/`/showcases/desk` paths.
 >
 > **Critical:** Auth routes get stricter rate limits (5/min). The handlers below illustrate individual patterns; the live composition is mirrored at the end of this section.
 

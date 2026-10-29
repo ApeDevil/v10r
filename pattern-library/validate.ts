@@ -14,7 +14,7 @@ import { buildById, type RegRef, topoSort } from './schema.ts';
 const ROOT = process.env.V10R_ROOT ?? resolve(import.meta.dir, '..');
 const SHOWCASE_REGISTRY = 'src/lib/showcases/catalog/registry.ts';
 // Route groups an approute may live under, tried in order. `(public)` covers
-// showcase-adjacent pages, the bare locale dir covers /account, /admin, /desk,
+// showcase-adjacent pages, the bare locale dir covers /account, /admin,
 // /pair, and src/routes covers locale-less endpoints like /api/*.
 const APPROUTE_ROOTS = ['src/routes/[[locale=locale]]/(public)', 'src/routes/[[locale=locale]]', 'src/routes'];
 

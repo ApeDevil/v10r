@@ -51,7 +51,7 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 	<p class="claim">{m.showcase_ai_claim_deskbot()}</p>
 	<dl class="facts">
 		<div><dt>{m.showcase_ai_fact_route()}</dt><dd><code>POST /api/ai/deskbot</code></dd></div>
-		<div><dt>{m.showcase_ai_fact_client()}</dt><dd><code>ChatPanel.svelte</code> · /desk</dd></div>
+		<div><dt>{m.showcase_ai_fact_client()}</dt><dd><code>ChatPanel.svelte</code> · /showcases/desk</dd></div>
 		<div><dt>{m.showcase_ai_fact_mode()}</dt><dd>{m.showcase_ai_fact_mode_deskbot()}</dd></div>
 	</dl>
 
@@ -62,7 +62,7 @@ const sibling = localizeHref('/showcases/ai/chatbot');
 		<div class="viewer">
 			<SurfaceFlow surface="deskbot" statuses={spine} halted={proposal?.status === 'pending'} />
 			<div class="door">
-				<Button variant="primary" href={localizeHref('/desk')}>
+				<Button variant="primary" href={localizeHref('/showcases/desk')}>
 					<span class="i-lucide-panels-top-left h-4 w-4" aria-hidden="true"></span>
 					{m.showcase_ai_door_desk()}
 				</Button>

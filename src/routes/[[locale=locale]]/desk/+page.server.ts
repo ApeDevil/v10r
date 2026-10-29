@@ -1,43 +1,9 @@
-import { error, fail } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
-import { valibot } from 'sveltekit-superforms/adapters';
-import * as v from 'valibot';
-import {
-	cancelMyPendingRequest,
-	createGrantRequest,
-	GrantRequestPendingError,
-} from '#lib/server/auth/grant-requests.ts';
-import { requireAuth } from '#lib/server/http/guards.ts';
-import type { Actions, PageServerLoad } from './$types';
+// The desk moved into the showcases. Old links and bookmarks — including the
+// `?open=` / `?panel=` / `?post=` deep links — keep resolving via this 308.
+import { redirect } from '@sveltejs/kit';
+import { localizeHref } from '#lib/i18n/index.ts';
+import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => ({ title: 'Desk' });
-
-const requestSchema = v.object({
-	message: v.optional(v.pipe(v.string(), v.maxLength(500))),
-});
-
-export const actions: Actions = {
-	requestBlogAccess: async ({ request, locals }) => {
-		const { user } = requireAuth(locals);
-		const form = await superValidate(request, valibot(requestSchema));
-		if (!form.valid) return fail(400, { form });
-
-		try {
-			await createGrantRequest({
-				userId: user.id,
-				kind: 'blog-author',
-				message: form.data.message,
-			});
-			return { form };
-		} catch (err) {
-			if (err instanceof GrantRequestPendingError) return fail(409, { form, code: err.code });
-			throw err;
-		}
-	},
-
-	cancelBlogAccessRequest: async ({ locals }) => {
-		const { user } = requireAuth(locals);
-		const cancelled = await cancelMyPendingRequest(user.id, 'blog-author');
-		if (!cancelled) error(404, 'No pending request');
-	},
+export const load: PageServerLoad = ({ url }) => {
+	redirect(308, localizeHref('/showcases/desk') + url.search);
 };

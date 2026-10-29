@@ -9,7 +9,7 @@ let { children, data }: LayoutProps = $props();
 
 const toast = getToast();
 
-// Single-fire Toast on the first real /desk visit after a grant. The layout load only
+// Single-fire Toast on the first real desk visit after a grant. The layout load only
 // READS pending notifications — it also runs on link-hover preload, so it must not
 // consume them. Acknowledging happens here, after the Toast was shown: only a visit
 // that mounted this layout marks the notification seen. `shown` keeps a load re-run

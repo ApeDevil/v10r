@@ -11,7 +11,7 @@
  * Module-level $state, Map registry, version counter, queueMicrotask. Unlike
  * `panel-menus.svelte.ts`, which is context-scoped precisely so two DockLayouts
  * on one page cannot share a registry, this one is a genuine singleton: the
- * desk route sets `ssr = false` in `src/routes/[[locale=locale]]/desk/+layout.ts`,
+ * desk route sets `ssr = false` in `src/routes/[[locale=locale]]/(public)/showcases/desk/+layout.ts`,
  * so the module only ever runs in the browser and state is per-tab.
  */
 

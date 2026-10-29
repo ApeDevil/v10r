@@ -26,7 +26,7 @@ An agentic AI surface embedded in the desk workspace calls desk-mutating tools, 
 
 ## Proof
 
-- [`/desk`](/desk) (app route, no showcase)
+- [`/showcases/desk`](/showcases/desk)
 
 ---
 

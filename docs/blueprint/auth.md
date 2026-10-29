@@ -602,7 +602,7 @@ Role-based authorization (`user.role === 'author'`) was replaced by a capability
 | `granted_at` | When granted |
 | `revoked_at` | nullable. Partial UNIQUE: `(user_id, kind) WHERE revoked_at IS NULL` enforces at-most-one active grant per kind |
 | `revoked_by` | nullable, admin actor ID |
-| `notified_at` | nullable. NULL until the grant notification Toast was shown on a real `/desk` visit; stamped by the client's acknowledgement (`POST /api/grant-notifications/acknowledge`) |
+| `notified_at` | nullable. NULL until the grant notification Toast was shown on a real `/showcases/desk` visit; stamped by the client's acknowledgement (`POST /api/grant-notifications/acknowledge`) |
 
 **`auth.grant_request`** — user-initiated access requests.
 

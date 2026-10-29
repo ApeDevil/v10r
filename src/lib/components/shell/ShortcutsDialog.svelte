@@ -15,7 +15,7 @@ let { class: className }: Props = $props();
 const modals = getModals();
 
 // The registry is a plain Map; snapshot it each time the dialog opens so
-// shortcuts registered after mount (the desk's, while /desk is up) are listed.
+// shortcuts registered after mount (the desk's, while the desk is up) are listed.
 const shortcutsByCategory = $derived(modals.isOpen('shortcuts') ? getShortcutsByCategory() : null);
 
 let modalRef: HTMLElement | undefined = $state();

@@ -71,7 +71,7 @@ $effect(() => {
 	setVercelAnalyticsConsent(analyticsConsent);
 });
 
-// The identified lane (/account, /desk) is governed by the session, not the
+// The identified lane (/account, /showcases/desk) is governed by the session, not the
 // banner — same predicate as the server's collect-policy.
 $effect(() => {
 	setTelemetrySession(data.session !== null);
