@@ -74,3 +74,5 @@ Stas explicitly says to ship in the conversation — then follow
 [shipping.md](docs/stack/ops/shipping.md) (squash into `main` → GitLab sync → Vercel). Never push
 `main` or GitLab, never force-push, stash, or reset. Run a `vr` command only when
 specifically requested.
+
+Name every branch you create `<agent>/<env>/<feature>`: `<agent>` is `claude` or `codex`; `<env>` is `cloud` in a cloud environment (Claude: `CLAUDE_CODE_REMOTE=true`; Codex: no `~/.codex/` directory), otherwise `local`; `<feature>` is short kebab-case. Example: `claude/local/add-login-page`. Rename an auto-named branch (`claude/brave-bohr-9jw2fq`) to this form before its first push.
