@@ -57,6 +57,7 @@ export function computeStats(reg: Registry): RegistryStats {
 export const DAG_SHORT_LABELS: Record<string, string> = {
 	'multi-client-core': 'Multi-Client',
 	'product-connection-engine': 'Compose 3D',
+	'asset-production-pipeline': 'Produce 3D',
 	'docs-nav-hubs': 'Docs Hubs',
 	'pattern-index': 'Pattern Index',
 	'ui-component-system': 'UI System',

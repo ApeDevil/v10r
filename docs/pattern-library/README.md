@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 182 patterns (49 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 183 patterns (50 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -205,6 +205,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Static & animated scenes](./3d-static-animated-scenes.md)
 - [Full-screen model viewer & customizer (layout reset)](./3d-model-viewer-customizer.md)
 - [**Product composition engine (typed ports, couplings, conduits)**](./product-connection-engine.md)
+- [**Asset production pipeline (typed request → checked GLB)**](./asset-production-pipeline.md)
 
 ### Content & Blog
 

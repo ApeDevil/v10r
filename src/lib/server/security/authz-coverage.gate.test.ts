@@ -94,6 +94,8 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
 	'search/+server.ts': 'Searches published content only. Rate-limited and CDN-cacheable.',
 	'search-index/[locale]/+server.ts': 'Prerendered static index of public titles.',
 	'showcases/check-username/+server.ts': 'Fixed word list, no database access.',
+	'showcases/asset-production/+server.ts':
+		'Anonymous showcase: per-IP rate limit before any work, a 4 KiB body cap, a bounded budget and deadline; reads and writes no stored data.',
 	'showcases/velocity/+server.ts':
 		'Runs one Velocity measurement — in-process arithmetic, setTimeout sleeps and the #lib/server/cache modules. No database, no user data, no caller-supplied key reaches a store: the measurement id is checked against a closed list. IP-rate-limited BEFORE the sleeps so the deliberate latency cannot amplify function-time cost.',
 	'name-check/+server.ts':
