@@ -97,6 +97,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'provenance-record': 'Provenance',
 	'durable-step-execution': 'Durable Steps',
 	'versioned-document-session': 'Doc Session',
+	'dynamic-attributes': 'Dyn. Attributes',
 	'asset-rights-manifest': 'Asset Rights',
 	'encryption-key-ring': 'Key Ring',
 	'url-search-state': 'URL State',

@@ -558,7 +558,7 @@ export const showcases: ShowcaseCard[] = [
 		description: m.showcase_dynamic_attributes_description,
 		ariaLabel: m.showcase_dynamic_attributes_aria,
 		domain: 'frontend',
-		docs: [{ href: '/docs/blueprint/dynamic-attributes', label: 'Dynamic Attributes' }],
+		docs: [{ href: '/docs/blueprint/dynamic-attributes/pattern', label: 'Dynamic Attributes' }],
 	},
 	{
 		href: '/showcases/external-service',

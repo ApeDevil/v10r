@@ -11,18 +11,7 @@ import {
 } from '#lib/asset-production/index.ts';
 import type { AssetRequest } from '#lib/schemas/asset-production.ts';
 import { contentHash, derivationKey } from '#lib/server/db/content-hash.ts';
-
-/** JSON with object keys sorted at every depth: the one text a request digest is taken over. */
-export function canonicalJson(value: unknown): string {
-	if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-	if (value && typeof value === 'object') {
-		const entries = Object.entries(value as Record<string, unknown>)
-			.filter(([, inner]) => inner !== undefined)
-			.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-		return `{${entries.map(([key, inner]) => `${JSON.stringify(key)}:${canonicalJson(inner)}`).join(',')}}`;
-	}
-	return JSON.stringify(value);
-}
+import { canonicalJson } from '#lib/utils/canonical-json.ts';
 
 /** `procedural-ts@1/structural-ring@1` — the transform half of the derivation key. */
 type Versioned = { id: string; version: number };

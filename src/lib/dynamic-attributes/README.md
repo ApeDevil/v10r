@@ -6,4 +6,4 @@ contract. No Svelte, no SvelteKit, no database — the same code runs in the bro
 server (`db/desk/mutations.ts` parses every record with it) and in tests.
 
 The why, the contracts and the security invariants: `docs/blueprint/dynamic-attributes/pattern.md`.
-The editor over it: `#lib/components/attributes/`.
+The editor over it: `#lib/components/composites/attributes/`.

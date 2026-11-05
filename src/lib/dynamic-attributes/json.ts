@@ -7,6 +7,7 @@
  * copy has fresh plain prototypes, refuses the keys a later `obj[key] = …` could turn into
  * prototype pollution, and is bounded in depth, breadth and string length before anything walks it.
  */
+import { canonicalJson } from '#lib/utils/canonical-json.ts';
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -104,20 +105,8 @@ export function utf8Length(text: string): number {
 	return bytes;
 }
 
-/**
- * Canonical JSON text: object keys sorted, no whitespace. Two equal records serialize to the
- * same bytes whichever editor, server or JSONB round trip produced them — `jsonb` itself
- * reorders keys (shorter first), so stored key order can never be the canonical one.
- */
-export function canonicalJson(value: JsonValue): string {
-	if (value === null || typeof value !== 'object') return JSON.stringify(value);
-	if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-	// An `undefined` property is absent in JSON; skipping it keeps `{ a: undefined }` equal to `{}`.
-	const keys = Object.keys(value)
-		.filter((key) => value[key] !== undefined)
-		.sort();
-	return `{${keys.map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`;
-}
+/** Canonical JSON text — the one implementation, re-exported for the record codec. */
+export { canonicalJson };
 
 /** Structural equality over plain JSON. */
 export function jsonEqual(a: JsonValue | undefined, b: JsonValue | undefined): boolean {

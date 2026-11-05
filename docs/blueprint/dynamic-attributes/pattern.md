@@ -7,7 +7,7 @@ keeps the value, changing a type keeps what does not convert, removing is undoab
 writers who change the same record at once get a visible conflict they can merge by attribute.
 
 **Page:** `/showcases/dynamic-attributes` · **Desk:** Explorer → *New Record* ·
-**Core:** `src/lib/dynamic-attributes/` · **Editor:** `src/lib/components/attributes/` ·
+**Core:** `src/lib/dynamic-attributes/` · **Editor:** `src/lib/components/composites/attributes/` ·
 **Persistence:** `desk.record` (`src/lib/server/db/schema/desk/record.ts`),
 `PUT /api/desk/files/[id]` · **Research:** [research.md](./research.md) · **Plan:** [plan.md](./plan.md)
 
@@ -104,7 +104,7 @@ persisted shape number), **version** (the optimistic-concurrency counter of a st
   document-drafts.ts     one device draft slot per writer
   document-sessions.ts   per-tab session registry + unsaved work at sign-out
 
-#lib/components/attributes/         Svelte 5 renderer
+#lib/components/composites/attributes/         Svelte 5 renderer
   attribute-editor.svelte.ts   $state.raw record, undo/redo with coalescing, refusal, diagnostics
   record-session.svelte.ts     editor + document autosave over any AttributeRecordStore + merge
   AttributeEditor.svelte, AttributeRow.svelte, RecordSaveStatus.svelte
@@ -256,7 +256,7 @@ Each one is enforced in code and covered by a test (`codec.test.ts`,
 |---|---|
 | No code in data: no `eval`, `Function`, templates, expressions, user regex or dynamic import named by data. A kind id selects a control from a map the application built; an unknown id selects the read-only fallback. | `kinds.ts`, `controls.ts` |
 | Prototype pollution is impossible: the whole payload is copied into fresh plain objects; `__proto__`, `constructor`, `prototype` are refused as keys at any depth; frames are strict objects; user text never becomes a key. | `json.ts`, `codec.ts` |
-| XSS: labels and values render as text (Svelte escaping); no `{@html}` anywhere in the editor; `multiline` is a `<textarea>`. | `components/attributes/` |
+| XSS: labels and values render as text (Svelte escaping); no `{@html}` anywhere in the editor; `multiline` is a `<textarea>`. | `components/composites/attributes/` |
 | Bounded everything: record bytes (checked before `JSON.parse`), attribute count, label/text/list lengths, options, trash size, opaque depth and entries. The API caps the request body before reading it (413). | `limits.ts`, `codec.ts`, `[id]/+server.ts` |
 | PostgreSQL-safe: no `U+0000`, no non-finite numbers, ids unique before insert (jsonb would silently keep the last duplicate key). | `json.ts`, `codec.ts` |
 | Fail closed: a record the codec refuses is never stored (422), a stored record it cannot parse is never overwritten, a newer format is never downgraded. | `codec.ts`, `stores.ts`, `mutations.ts` |

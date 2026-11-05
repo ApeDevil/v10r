@@ -1,4 +1,4 @@
-import { type AttributeControls, coreAttributeControls } from '#lib/components/attributes/index.ts';
+import { type AttributeControls, coreAttributeControls } from '#lib/components/composites/attributes/index.ts';
 import * as m from '#lib/paraglide/messages.js';
 import RatingControl from './RatingControl.svelte';
 

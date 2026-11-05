@@ -2,7 +2,7 @@ import {
 	acceptsAttributeRecord,
 	createRecordSession,
 	RECORD_DRAFT_NAMESPACE,
-} from '#lib/components/attributes/index.ts';
+} from '#lib/components/composites/attributes/index.ts';
 import { coreAttributeKinds, createAttributeEngine } from '#lib/dynamic-attributes/index.ts';
 import { createDocumentDrafts } from '#lib/state/document-drafts.ts';
 import { createDeskRecordStore } from './record-store';

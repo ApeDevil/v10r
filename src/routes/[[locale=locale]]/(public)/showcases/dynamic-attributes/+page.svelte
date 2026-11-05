@@ -6,7 +6,7 @@ import {
 	createRecordSession,
 	RecordSaveStatus,
 	type RecordSession,
-} from '#lib/components/attributes/index.ts';
+} from '#lib/components/composites/attributes/index.ts';
 import { Card, NavSection, ShowcaseLayout } from '#lib/components/composites/index.ts';
 import { Stack } from '#lib/components/layout/index.ts';
 import { Button, Switch, Textarea, Typography } from '#lib/components/primitives/index.ts';

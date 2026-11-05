@@ -32,14 +32,14 @@ A browser-edited document stays server-authoritative: debounced serialised saves
 
 ## Code
 
-- `src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.ts` — Framework-free save queue owned by the document ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.ts))
-- `src/lib/components/desk/panels/spreadsheet/spreadsheet-drafts.ts` — One localStorage slot per writer; siblings offered, never applied ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-drafts.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-drafts.ts))
+- `src/lib/state/document-autosave.ts` — Framework-free save queue owned by the document, generic over its content ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/document-autosave.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/document-autosave.ts))
+- `src/lib/state/document-drafts.ts` — One localStorage slot per writer; siblings offered, never applied ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/document-drafts.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/document-drafts.ts))
 - `src/lib/components/desk/panels/spreadsheet/spreadsheet-session.svelte.ts` — PUT with expectedVersion ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-session.svelte.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-session.svelte.ts))
 - `src/routes/api/desk/files/[id]/+server.ts` — 409 version_conflict on a stale base ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/desk/files/[id]/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/desk/files/[id]/+server.ts))
 
 ## Tests
 
-- `src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.test.ts))
+- `src/lib/state/document-autosave.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/document-autosave.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/document-autosave.test.ts))
 - `src/routes/api/desk/files/[id]/server.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/desk/files/[id]/server.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/desk/files/[id]/server.test.ts))
 
 ## Invariants

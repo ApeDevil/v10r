@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount, untrack } from 'svelte';
-import { AttributeEditor, RecordSaveStatus, type RecordSession } from '#lib/components/attributes/index.ts';
+import { AttributeEditor, RecordSaveStatus, type RecordSession } from '#lib/components/composites/attributes/index.ts';
 import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
 import { fileIdOfPanel } from '#lib/components/desk/file-panel.ts';
 import {

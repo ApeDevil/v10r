@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { AttributeControlProps } from '#lib/components/attributes/index.ts';
+import type { AttributeControlProps } from '#lib/components/composites/attributes/index.ts';
 import { Button } from '#lib/components/primitives/index.ts';
 import * as m from '#lib/paraglide/messages.js';
 import { RATING_MAX } from '#lib/showcases/dynamic-attributes/rating-kind.ts';

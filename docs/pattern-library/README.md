@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 183 patterns (50 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 184 patterns (51 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -66,6 +66,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Advanced (confirm · reset · edit)](./forms-advanced-patterns.md)
 - [Auth forms (Better Auth client, not Superforms)](./forms-auth-forms.md)
 - [File uploads (withFiles + Sharp + R2)](./forms-file-uploads.md)
+- [**Dynamic attributes (self-describing records the user defines at runtime)**](./dynamic-attributes.md)
 - [**Form draft recovery (kept in the browser, offered back, guarded only when lost)**](./form-draft-recovery.md)
 
 ### Internationalization (i18n)
