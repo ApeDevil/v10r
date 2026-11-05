@@ -30,6 +30,7 @@
 		"check": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && bun run scripts/quality/svelte-check-gate.ts",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error --watch",
 		"db:push": "bunx drizzle-kit push",
+		"db:schema-diff": "bash scripts/db/schema-diff.sh",
 		"db:studio": "bunx drizzle-kit studio",
 		"db:retrieval-pre": "bun run scripts/db/setup-retrieval.ts pre",
 		"db:retrieval-post": "bun run scripts/db/setup-retrieval.ts post",

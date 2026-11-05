@@ -13,6 +13,12 @@ How to manage database schema changes across development and production environm
 
 This is the right tool when there's no production data to protect.
 
+## Schema changes from a cloud session
+
+A cloud session has no `DATABASE_URL`, so `db:push` cannot run there. The production change goes
+through the Neon connector instead: SQL computed offline with `bun run db:schema-diff`, rehearsed
+on a temporary Neon branch, applied on Stas's word — `docs/stack/ops/cloud-database-changes.md`.
+
 ## Production: `generate` + `migrate`
 
 `drizzle-kit generate` produces versioned SQL files. `migrate()` applies them in order.
