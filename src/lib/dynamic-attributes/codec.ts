@@ -154,7 +154,7 @@ export function parseAttributeRecord(input: unknown, options: AttributeCodecOpti
 		return fail('invalid_format', 'format', `An upgrade did not reach format ${current}.`);
 	// A test build may read a later format; what it hands back is always this build's shape.
 	const frame = v.safeParse(recordFrame, { ...document, format: ATTRIBUTE_RECORD_FORMAT });
-	if (!frame.success) return { ok: false, problems: frame.issues.map(issueProblem) };
+	if (!frame.success) return { ok: false, problems: frame.issues.map((issue) => issueProblem(issue)) };
 
 	const problems: AttributeRecordProblem[] = [];
 	const { attributes: rawAttributes, removed: rawRemoved } = frame.output;

@@ -6,7 +6,12 @@
  * One reader for the write tools, the delete tool and `validateProposedPlan`, so a new
  * file type learns its version column in exactly one place.
  */
-import { getFile, getMarkdownByFileId, getSpreadsheetByFileId } from '#lib/server/db/desk/queries.ts';
+import {
+	getFile,
+	getMarkdownByFileId,
+	getRecordByFileId,
+	getSpreadsheetByFileId,
+} from '#lib/server/db/desk/queries.ts';
 import type { ProposedTarget } from '#lib/server/db/schema/ai/proposal.ts';
 
 export async function readProposedTarget(userId: string, fileId: string): Promise<ProposedTarget | null> {
@@ -15,7 +20,9 @@ export async function readProposedTarget(userId: string, fileId: string): Promis
 	const version =
 		fileRow.type === 'spreadsheet'
 			? ((await getSpreadsheetByFileId(fileId, userId))?.spreadsheet.version ?? null)
-			: ((await getMarkdownByFileId(fileId, userId))?.markdown.version ?? null);
+			: fileRow.type === 'record'
+				? ((await getRecordByFileId(fileId, userId))?.record.version ?? null)
+				: ((await getMarkdownByFileId(fileId, userId))?.markdown.version ?? null);
 	return {
 		fileId: fileRow.id,
 		fileType: fileRow.type,

@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 import { safeParse } from 'valibot';
-import { createSpreadsheetFile } from '#lib/server/db/desk/mutations.ts';
+import { createRecordFile, createSpreadsheetFile } from '#lib/server/db/desk/mutations.ts';
 import { listFiles } from '#lib/server/db/desk/queries.ts';
 import { guardApiUser } from '#lib/server/http/guards.ts';
 import { apiPaginated, parsePagination } from '#lib/server/http/pagination.ts';
@@ -10,13 +10,12 @@ import type { RequestHandler } from './$types';
 
 const limiter = createLimiter('rl:desk:files', 10, '1 m');
 
-const CreateFileSchema = v.variant('type', [
-	v.object({
-		type: v.literal('spreadsheet'),
-		name: v.optional(v.pipe(v.string(), v.maxLength(200))),
-		folderId: v.optional(v.nullable(v.string())),
-	}),
-]);
+/** The file types a person creates empty. Markdown is created by import or by the assistant. */
+const CreateFileSchema = v.object({
+	type: v.picklist(['spreadsheet', 'record']),
+	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
+	folderId: v.optional(v.nullable(v.string())),
+});
 
 /** List user's files, optionally filtered by ?type= */
 export const GET: RequestHandler = async ({ url, locals }) => {
@@ -49,6 +48,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	if (type === 'spreadsheet') {
 		const result = await createSpreadsheetFile(user.id, name, {}, folderId ?? null);
 		return apiCreated({ file: result.file, spreadsheet: result.spreadsheet });
+	}
+	if (type === 'record') {
+		const result = await createRecordFile(user.id, name, undefined, folderId ?? null);
+		if (result.status === 'created') return apiCreated({ file: result.file, record: result.record });
 	}
 
 	return apiError(400, 'unsupported_type', 'Unsupported file type.');

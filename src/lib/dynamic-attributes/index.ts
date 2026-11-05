@@ -61,6 +61,7 @@ export {
 	restorePreviousValue,
 	setAttributeValue,
 } from './operations.ts';
+export { attributeRecordToText } from './projection.ts';
 export {
 	ATTRIBUTE_RECORD_FORMAT,
 	type Attribute,

@@ -1,6 +1,7 @@
 export * from './file';
 export * from './folder';
 export * from './markdown';
+export * from './record';
 export * from './revision';
 export * from './schema';
 export * from './spreadsheet';

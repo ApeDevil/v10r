@@ -7,9 +7,16 @@ import {
 	moveFile,
 	renameFile,
 	toggleFileAiContext,
+	updateRecordByFileId,
 	updateSpreadsheetByFileId,
 } from '#lib/server/db/desk/mutations.ts';
-import { getFile, getMarkdownByFileId, getSpreadsheetByFileId } from '#lib/server/db/desk/queries.ts';
+import {
+	getFile,
+	getMarkdownByFileId,
+	getRecordByFileId,
+	getSpreadsheetByFileId,
+} from '#lib/server/db/desk/queries.ts';
+import { payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
 import { guardApiUser } from '#lib/server/http/guards.ts';
 import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 import { apiCreated, apiError, apiNoContent, apiOk, apiValidationError } from '#lib/server/http/response.ts';
@@ -29,6 +36,8 @@ const CellAddress = v.pipe(
 	v.check((label) => parseCellRef(label.toUpperCase()) !== null, 'Not a cell address'),
 );
 const MAX_CELLS_JSON = 500_000; // ~500KB max
+/** Cells plus column meta at their caps, with room for the envelope; a record is far smaller (256 KB). */
+const MAX_BODY_BYTES = 2 * MAX_CELLS_JSON + 64 * 1024;
 
 const limiter = createLimiter('rl:desk:files:mutate', 30, '1 m');
 
@@ -37,6 +46,8 @@ const UpdateFileSchema = v.object({
 	name: v.optional(v.pipe(v.string(), v.maxLength(200))),
 	folderId: v.optional(v.nullable(v.string())),
 	aiContext: v.optional(v.boolean()),
+	/** A record's whole document. Its shape is the record codec's to judge, not this schema's. */
+	document: v.optional(v.unknown()),
 	cells: v.optional(
 		v.pipe(
 			v.record(CellAddress, PersistedCellSchema),
@@ -66,6 +77,11 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		if (!result) return apiError(404, 'not_found', 'Not found.');
 		return apiOk({ file: result.file, spreadsheet: result.spreadsheet });
 	}
+	if (fileRow.type === 'record') {
+		const result = await getRecordByFileId(params.id, user.id);
+		if (!result) return apiError(404, 'not_found', 'Not found.');
+		return apiOk({ file: result.file, record: result.record });
+	}
 	const result = await getMarkdownByFileId(params.id, user.id);
 	if (!result) return apiError(404, 'not_found', 'Not found.');
 	return apiOk({ file: result.file, markdown: result.markdown });
@@ -80,14 +96,31 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 	const { success, reset } = await limiter.limit(user.id);
 	if (!success) return rateLimitResponse(reset);
 
-	const body = await request.json().catch(() => null);
-	if (!body) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
+	const read = await readJsonBounded(request, MAX_BODY_BYTES);
+	if (!read.ok && read.reason === 'too_large') return payloadTooLargeResponse(MAX_BODY_BYTES);
+	if (!read.ok || !read.value) return apiError(400, 'invalid_body', 'Request body must be valid JSON.');
 
-	const parsed = v.safeParse(UpdateFileSchema, body);
+	const parsed = v.safeParse(UpdateFileSchema, read.value);
 	if (!parsed.success) return apiValidationError(parsed.issues);
 
-	const { name, folderId, aiContext, cells, columnMeta, expectedVersion } = parsed.output;
+	const { name, folderId, aiContext, cells, columnMeta, expectedVersion, document } = parsed.output;
 	const hasCellUpdate = cells !== undefined || columnMeta !== undefined;
+	if (document !== undefined) {
+		if (expectedVersion === undefined) return apiError(400, 'version_required', 'expectedVersion is required.');
+		if (hasCellUpdate || folderId !== undefined || aiContext !== undefined) {
+			return apiError(400, 'mixed_update', 'A record document must be sent on its own (with an optional name).');
+		}
+		const result = await updateRecordByFileId(params.id, user.id, { document, expectedVersion, name });
+		if (!result) return apiError(404, 'not_found', 'Not found.');
+		if (result.status === 'invalid') {
+			const fields = Object.fromEntries(result.problems.map((p) => [p.path || 'document', p.message]));
+			return apiError(422, 'invalid_record', 'The record was not saved: it does not pass validation.', fields);
+		}
+		if (result.status === 'conflict') {
+			return apiError(409, 'version_conflict', 'Record changed elsewhere. Your changes were not saved.');
+		}
+		return apiOk({ file: result.file, version: result.version });
+	}
 	// Reject before any metadata mutation: a stale content request has no side effects.
 	if (hasCellUpdate) {
 		if (expectedVersion === undefined) return apiError(400, 'version_required', 'expectedVersion is required.');

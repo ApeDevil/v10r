@@ -79,5 +79,5 @@ export type ConsentTier = (typeof CONSENT_TIERS)[number];
 export const USER_SURFACES = ['account', 'desk'] as const;
 export type UserSurface = (typeof USER_SURFACES)[number];
 
-export const DESK_FILE_TYPES = ['spreadsheet', 'markdown'] as const;
+export const DESK_FILE_TYPES = ['spreadsheet', 'markdown', 'record'] as const;
 export type DeskFileType = (typeof DESK_FILE_TYPES)[number];

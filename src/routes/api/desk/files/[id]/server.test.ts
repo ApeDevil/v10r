@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { update, move, toggle } = vi.hoisted(() => ({ update: vi.fn(), move: vi.fn(), toggle: vi.fn() }));
+const { update, updateRecord, move, toggle } = vi.hoisted(() => ({
+	update: vi.fn(),
+	updateRecord: vi.fn(),
+	move: vi.fn(),
+	toggle: vi.fn(),
+}));
 vi.mock('#lib/server/db/desk/mutations.ts', () => ({
 	updateSpreadsheetByFileId: update,
+	updateRecordByFileId: updateRecord,
 	moveFile: move,
 	toggleFileAiContext: toggle,
 	renameFile: vi.fn(),
@@ -13,6 +19,7 @@ vi.mock('#lib/server/db/desk/queries.ts', () => ({
 	getFile: vi.fn(),
 	getMarkdownByFileId: vi.fn(),
 	getSpreadsheetByFileId: vi.fn(),
+	getRecordByFileId: vi.fn(),
 }));
 vi.mock('#lib/server/http/guards.ts', () => ({ guardApiUser: () => ({ user: { id: 'user' } }) }));
 vi.mock('#lib/server/http/rate-limit.ts', () => ({
@@ -72,5 +79,44 @@ describe('spreadsheet write HTTP contract', () => {
 		const response = await put({ cells: {}, expectedVersion: 2 });
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ data: { file: { id: 'fil_test' }, version: 3 } });
+	});
+});
+
+describe('record write HTTP contract', () => {
+	const document = { format: 1, attributes: [], removed: [] };
+
+	it('requires a version and refuses a record mixed with other changes, before any mutation', async () => {
+		expect((await put({ document })).status).toBe(400);
+		expect((await put({ document, expectedVersion: 0, aiContext: true })).status).toBe(400);
+		expect((await put({ document, expectedVersion: 0, cells: {} })).status).toBe(400);
+		expect(updateRecord).not.toHaveBeenCalled();
+		expect(toggle).not.toHaveBeenCalled();
+	});
+
+	it('maps conflict to 409 and an invalid document to 422 with the problem paths', async () => {
+		updateRecord.mockResolvedValueOnce({ status: 'conflict' });
+		const stale = await put({ document, expectedVersion: 3 });
+		expect(stale.status).toBe(409);
+		expect(updateRecord).toHaveBeenCalledExactlyOnceWith('fil_test', 'user', {
+			document,
+			expectedVersion: 3,
+			name: undefined,
+		});
+
+		updateRecord.mockResolvedValueOnce({
+			status: 'invalid',
+			problems: [{ code: 'invalid_value', path: 'attributes[0].value', message: 'Not a valid number value.' }],
+		});
+		const invalid = await put({ document, expectedVersion: 0 });
+		expect(invalid.status).toBe(422);
+		expect(await invalid.json()).toMatchObject({
+			error: { code: 'invalid_record', fields: { 'attributes[0].value': 'Not a valid number value.' } },
+		});
+	});
+
+	it('refuses an oversized body before parsing it', async () => {
+		const response = await put({ document, expectedVersion: 0, padding: 'x'.repeat(1_200_000) });
+		expect(response.status).toBe(413);
+		expect(updateRecord).not.toHaveBeenCalled();
 	});
 });

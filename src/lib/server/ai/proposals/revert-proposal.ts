@@ -148,9 +148,7 @@ async function revertStep(
 				kind: 'ok',
 				state: { updatedAt: file.updatedAt, version: before.version },
 				// A file that was in AI context goes back into the index — after the commit.
-				afterCommit: file.aiContext
-					? () => followAiContextChange(userId, file.id, file.type as 'markdown' | 'spreadsheet', true)
-					: undefined,
+				afterCommit: file.aiContext ? () => followAiContextChange(userId, file.id, file.type, true) : undefined,
 			};
 		}
 		case 'created': {
@@ -163,7 +161,7 @@ async function revertStep(
 				kind: 'ok',
 				state: { updatedAt: deleted.updatedAt, version: before.version },
 				afterCommit: deleted.aiContext
-					? () => followAiContextChange(userId, deleted.id, deleted.type as 'markdown' | 'spreadsheet', false)
+					? () => followAiContextChange(userId, deleted.id, deleted.type, false)
 					: undefined,
 			};
 		}
