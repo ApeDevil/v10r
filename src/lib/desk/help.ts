@@ -95,7 +95,7 @@ The bot sees the panels you **pin to AI context** (Explorer → *Pin to AI Conte
 		description: 'A record whose attributes you define as you go',
 		icon: 'i-lucide-list-tree',
 		notes: `
-A record describes one thing with **attributes you name yourself** — a label, a type and a value per row. Nothing is predefined: press **Add** for a text attribute, or pick another type first.
+A record describes one thing with **attributes you name yourself** — a label, a type and a value per row. Nothing is predefined: pick a type beside **Add** and press it.
 
 - **Rename freely**: an attribute's identity is never its label, so renaming keeps its value and place.
 - **Change a type safely**: a value that does not convert exactly is kept beside the new one until you restore or discard it.

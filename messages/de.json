@@ -3402,7 +3402,7 @@
 	"showcase_dynamic_attributes_section_conflict": "Ein zweiter Schreiber",
 	"showcase_dynamic_attributes_section_json": "Was gespeichert wird",
 	"showcase_dynamic_attributes_section_import": "Import und Codec",
-	"showcase_dynamic_attributes_try_add": "Gib dem ersten Attribut einen Wert und drücke dann Hinzufügen — wähle vorher einen Typ für Zahl, Datum, Auswahl oder Bewertung.",
+	"showcase_dynamic_attributes_try_add": "Gib dem ersten Attribut einen Wert und füge weitere hinzu: Wähle neben Hinzufügen einen Typ — Text, Zahl, Datum, Auswahl, Liste oder Bewertung — und drücke es.",
 	"showcase_dynamic_attributes_try_types": "Ändere den Typ eines Attributs: Ein Wert, der sich nicht exakt umwandeln lässt, bleibt neben dem neuen erhalten, bis du ihn wiederherstellst oder verwirfst.",
 	"showcase_dynamic_attributes_try_rename": "Benenne ein Label um und beobachte das gespeicherte JSON: Das Attribut behält ID, Wert und Platz.",
 	"showcase_dynamic_attributes_try_reorder": "Sortiere mit den Pfeilen oder Alt+Umschalt+↑/↓, entferne eine Zeile und hole sie aus „Zuletzt entfernt“ zurück, mache rückgängig und wiederhole.",
@@ -3417,7 +3417,7 @@
 	"showcase_dynamic_attributes_loading": "Datensatz wird geöffnet…",
 	"showcase_dynamic_attributes_load_failed": "Der gespeicherte Datensatz konnte nicht geöffnet werden. Er bleibt unverändert; setze die Demo zurück, um neu zu beginnen.",
 	"showcase_dynamic_attributes_storage_unavailable": "Dieser Browser blockiert den lokalen Speicher, daher kann die Demo hier keinen Datensatz ablegen.",
-	"showcase_dynamic_attributes_json_intro": "Der Datensatz von Schreiber A in kanonischer Form: sortierte Schlüssel, Definitionen neben Werten, IDs, die sich nie ändern. Genau das speichern der Browser-Speicher und die Desk-Datenbank.",
+	"showcase_dynamic_attributes_json_intro": "Der Datensatz, wie der Speicher ihn jetzt hält, nach dem letzten angenommenen Speichern eines der Schreiber: kanonisches JSON, sortierte Schlüssel, Definitionen neben Werten, IDs, die sich nie ändern. Die Desk-Datenbank speichert dasselbe Dokument.",
 	"showcase_dynamic_attributes_json_meta": "Version {version} · {count} Attribute · {bytes} Bytes",
 	"showcase_dynamic_attributes_import_intro": "Füge einen Datensatz ein oder wähle ein Beispiel. Der Codec entscheidet, was hinein darf: unbekannte Schlüssel, Prototyp-Schlüssel und falsch typisierte Werte werden mit Begründung abgelehnt; ein Typ, den diese App nicht kennt, bleibt schreibgeschützt erhalten.",
 	"showcase_dynamic_attributes_import_label": "Datensatz-JSON",
@@ -3430,5 +3430,7 @@
 	"showcase_dynamic_attributes_import_valid": "Akzeptiert: {count} Attribute. Öffnen ersetzt den Datensatz von Schreiber A und speichert.",
 	"showcase_dynamic_attributes_import_invalid": "Abgelehnt. Nichts wurde gespeichert:",
 	"showcase_dynamic_attributes_kind_rating": "Bewertung",
-	"showcase_dynamic_attributes_rating_star": "{count} von 5"
+	"showcase_dynamic_attributes_rating_star": "{count} von 5",
+	"attributes_kind_of": "Typ von {label}",
+	"attributes_add_kind": "Typ des neuen Attributs"
 }

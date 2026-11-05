@@ -3402,7 +3402,7 @@
 	"showcase_dynamic_attributes_section_conflict": "A second writer",
 	"showcase_dynamic_attributes_section_json": "What is stored",
 	"showcase_dynamic_attributes_section_import": "Import and the codec",
-	"showcase_dynamic_attributes_try_add": "Give the first attribute a value, then press Add — pick a type first to add a number, date, choice or rating.",
+	"showcase_dynamic_attributes_try_add": "Give the first attribute a value, then add more: pick a type beside Add — text, number, date, choice, list or rating — and press it.",
 	"showcase_dynamic_attributes_try_types": "Change an attribute's type: a value that does not convert exactly is kept beside the new one until you restore or discard it.",
 	"showcase_dynamic_attributes_try_rename": "Rename a label and watch the stored JSON: the attribute keeps its id, value and place.",
 	"showcase_dynamic_attributes_try_reorder": "Reorder with the arrows or Alt+Shift+↑/↓, remove a row and bring it back from Recently removed, undo and redo.",
@@ -3417,7 +3417,7 @@
 	"showcase_dynamic_attributes_loading": "Opening the record…",
 	"showcase_dynamic_attributes_load_failed": "The stored record could not be opened. It was left untouched; reset the demo to start over.",
 	"showcase_dynamic_attributes_storage_unavailable": "This browser blocks local storage, so the demo cannot keep a record here.",
-	"showcase_dynamic_attributes_json_intro": "Writer A's record in canonical form: keys sorted, definitions beside values, ids that never change. This is what the browser store and the desk's database keep.",
+	"showcase_dynamic_attributes_json_intro": "The record as the store holds it now, after the last accepted save of either writer: canonical JSON, keys sorted, definitions beside values, ids that never change. The desk's database keeps the same document.",
 	"showcase_dynamic_attributes_json_meta": "Version {version} · {count} attributes · {bytes} bytes",
 	"showcase_dynamic_attributes_import_intro": "Paste a record or pick a sample. The codec decides what may enter: unknown keys, prototype keys and wrongly typed values are refused with a reason; a type this app does not know is kept, read-only.",
 	"showcase_dynamic_attributes_import_label": "Record JSON",
@@ -3430,5 +3430,7 @@
 	"showcase_dynamic_attributes_import_valid": "Accepted: {count} attributes. Opening it replaces writer A's record and saves.",
 	"showcase_dynamic_attributes_import_invalid": "Refused. Nothing was stored:",
 	"showcase_dynamic_attributes_kind_rating": "Rating",
-	"showcase_dynamic_attributes_rating_star": "{count} of 5"
+	"showcase_dynamic_attributes_rating_star": "{count} of 5",
+	"attributes_kind_of": "Type of {label}",
+	"attributes_add_kind": "Type of the new attribute"
 }

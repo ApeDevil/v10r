@@ -113,6 +113,7 @@ function onkeydown(event: KeyboardEvent) {
 		<div class="row-actions">
 			<Select
 				class="kind-select"
+				aria-label={m.attributes_kind_of({ label: attribute.label || m.attributes_unlabelled() })}
 				options={kindOptions}
 				value={attribute.kind}
 				onchange={(next) => {

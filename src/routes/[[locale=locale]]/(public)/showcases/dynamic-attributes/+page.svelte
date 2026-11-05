@@ -12,6 +12,7 @@ import { Stack } from '#lib/components/layout/index.ts';
 import { Button, Switch, Textarea, Typography } from '#lib/components/primitives/index.ts';
 import { showcaseControls } from '#lib/components/showcases/dynamic-attributes/index.ts';
 import {
+	type AttributeRecord,
 	type AttributeRecordParse,
 	parseAttributeRecordText,
 	serializeAttributeRecord,
@@ -84,6 +85,7 @@ onMount(() => {
 		void session.autosave.refresh();
 		return session.autosave.subscribe(() => {
 			if (writers) writers[key].snapshot = session.autosave.snapshot;
+			readStored();
 		});
 	});
 	return () => {
@@ -101,8 +103,25 @@ function reset() {
 }
 
 const a = $derived(writers?.a);
-const json = $derived(a ? JSON.stringify(JSON.parse(serializeAttributeRecord(a.session.editor.record)), null, 2) : '');
-const bytes = $derived(a ? utf8Length(serializeAttributeRecord(a.session.editor.record)) : 0);
+
+/** What the store holds right now — not either editor's copy, which may be ahead or behind. */
+let stored = $state<{ json: string; bytes: number; version: number; count: number } | null>(null);
+
+function readStored() {
+	try {
+		const text = localStorage.getItem(SHOWCASE_RECORD_KEY);
+		if (text === null) return;
+		const { record, version } = JSON.parse(text) as { record: AttributeRecord; version: number };
+		stored = {
+			json: JSON.stringify(record, null, 2),
+			bytes: utf8Length(serializeAttributeRecord(record)),
+			version,
+			count: record.attributes.length,
+		};
+	} catch {
+		stored = null;
+	}
+}
 
 let payload = $state(SAMPLE_PAYLOADS.valid);
 let checked = $state.raw<AttributeRecordParse | null>(null);
@@ -218,15 +237,11 @@ const sections = $derived([
 				<p class="text-muted text-fluid-sm">{m.showcase_dynamic_attributes_json_intro()}</p>
 			{/snippet}
 			<div class="card-body">
-				{#if a}
+				{#if stored}
 					<p class="text-muted text-fluid-xs">
-						{m.showcase_dynamic_attributes_json_meta({
-							version: a.session.autosave.draft.version,
-							count: a.session.editor.record.attributes.length,
-							bytes,
-						})}
+						{m.showcase_dynamic_attributes_json_meta({ version: stored.version, count: stored.count, bytes: stored.bytes })}
 					</p>
-					<pre class="json" aria-label={m.showcase_dynamic_attributes_section_json()}>{json}</pre>
+					<pre class="json" aria-label={m.showcase_dynamic_attributes_section_json()}>{stored.json}</pre>
 				{/if}
 			</div>
 		</Card>

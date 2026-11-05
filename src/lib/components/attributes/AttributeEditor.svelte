@@ -94,11 +94,11 @@ async function restore(id: string) {
 
 	{#if !readonly}
 		<div class="add-bar">
+			<Select class="add-kind" aria-label={m.attributes_add_kind()} options={addOptions} bind:value={addKind} />
 			<Button variant="outline" onclick={add} disabled={editor.atLimit}>
 				<span class="i-lucide-plus h-4 w-4" aria-hidden="true"></span>
 				{m.attributes_add()}
 			</Button>
-			<Select class="add-kind" options={addOptions} bind:value={addKind} />
 		</div>
 	{/if}
 
@@ -163,7 +163,8 @@ async function restore(id: string) {
 	}
 
 	.add-bar :global(.add-kind) {
-		min-width: 9rem;
+		width: 12rem;
+		max-width: 100%;
 	}
 
 	.refusal {
