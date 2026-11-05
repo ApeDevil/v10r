@@ -7,7 +7,6 @@ import { ExplorerPanel } from '#lib/components/desk/panels/explorer/index.ts';
 import IOLogPanel from '#lib/components/desk/panels/io-log/IOLogPanel.svelte';
 import { MarkdownPanel } from '#lib/components/desk/panels/markdown/index.ts';
 import { PreviewPanel } from '#lib/components/desk/panels/preview/index.ts';
-import { RecordPanel } from '#lib/components/desk/panels/record/index.ts';
 import { SpreadsheetPanel } from '#lib/components/desk/panels/spreadsheet/index.ts';
 import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '#lib/desk/panels.ts';
 import { getToast } from '#lib/state/toast.svelte.ts';
@@ -145,7 +144,11 @@ function getPanelType(panelId: string): string | undefined {
 				{:else if type === 'markdown'}
 					<MarkdownPanel {panelId} />
 				{:else if type === 'record'}
-					<RecordPanel {panelId} />
+					<!-- Loaded on first use: the attribute editor is the desk's least-opened panel, and its
+					     code stays out of the route every desk visit downloads. -->
+					{#await import('#lib/components/desk/panels/record/RecordPanel.svelte') then { default: RecordPanel }}
+						<RecordPanel {panelId} />
+					{/await}
 				{:else if type === 'io-log'}
 					<IOLogPanel {panelId} />
 				{:else}
