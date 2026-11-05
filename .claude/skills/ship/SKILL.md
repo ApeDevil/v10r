@@ -29,7 +29,9 @@ Constants: repo `ApeDevil/v10r` · Vercel team `team_IVXwC6zuqs8ydqkq9advPv4w`, 
    the job log and say why.
 4. **Deploy.** Vercel builds GitLab `main` on its own (~5–8 min). Check
    `list_deployments(projectId, teamId, sha=<ship SHA>)` until READY or ERROR.
-5. **Report** in a few lines: ship SHA, sync result,
+5. **Schema.** If the ship changed `src/lib/server/db/schema/`, say so in the report: production
+   needs the change, applied with the `cloud-db-change` skill once Stas says to.
+6. **Report** in a few lines: ship SHA, sync result,
    deployment state and URL. Then back to development mode. Keep the feature branch. If work
    continues on it, first `git merge origin/main` (clean right after a ship) so the next
    ship contains this one.

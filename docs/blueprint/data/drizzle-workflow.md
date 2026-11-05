@@ -13,6 +13,31 @@ How to manage database schema changes across development and production environm
 
 This is the right tool when there's no production data to protect.
 
+## Schema changes from a cloud session
+
+A cloud session has no `DATABASE_URL`, so `db:push` cannot run there. The production schema
+change goes through the Neon connector instead, after the ship and only on Stas's word.
+
+1. **Compute the SQL offline.** `bun run db:schema-diff <previous-main> <ship-sha>` prints the
+   statements between the two commits' Drizzle schemas (`scripts/db/schema-diff.sh`: a baseline
+   `drizzle-kit generate` at the first ref, a second `generate` at the other; no database).
+   Read it: anything other than additions (a `DROP`, a type change, `NOT NULL` on an existing
+   column) is a data decision for Stas, not a mechanical step.
+2. **Check production's starting point** with `run_sql` (project `broad-night-71900850`,
+   database `neondb`): the objects the diff creates must not exist yet, the ones it alters must.
+   Make the statements idempotent where Postgres allows (`IF NOT EXISTS`).
+3. **Rehearse on a temporary branch.** `prepare_database_migration` copies production into a
+   branch and runs the SQL there. Exercise it with `run_sql` on that branch — insert a row of the
+   new shape, read the constraints and indexes back.
+4. **Apply.** `complete_database_migration` with every value the prepare step returned; it runs
+   the same SQL on the production branch and deletes the temporary one. Verify production with
+   one more `run_sql`. To abandon, call it with `apply_changes: false` so the branch is deleted.
+5. **Report** the statements applied and the verification. The `dev` branch catches up on its
+   next refresh from production (`neon-branch-refresh.md`).
+
+First used 2026-11-05 for the Dynamic Attributes ship (`desk.record`, `file_revision.document`,
+enum value `desk.file_type.record`). Skill: `.claude/skills/cloud-db-change/SKILL.md`.
+
 ## Production: `generate` + `migrate`
 
 `drizzle-kit generate` produces versioned SQL files. `migrate()` applies them in order.
