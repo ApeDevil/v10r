@@ -26,6 +26,7 @@ export * from './error-display';
 export * from './feedback-band';
 export * from './form-field';
 export * from './gallery-card';
+export * from './latent-card';
 export * from './link-card';
 export * from './locale-fallback-banner';
 export * from './markdown';

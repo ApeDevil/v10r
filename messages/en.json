@@ -2316,6 +2316,7 @@
 	"showcase_ui_tab_layouts": "Layouts",
 	"showcase_ui_tab_tables": "Tables",
 	"showcase_ui_tab_menus": "Menus",
+	"showcase_ui_tab_cards": "Cards",
 	"showcase_ui_tab_splits": "Splits",
 	"showcase_ui_tab_splits_resizable": "Resizable",
 	"showcase_ui_tab_splits_reorderable": "Reorderable",
@@ -3432,5 +3433,6 @@
 	"showcase_dynamic_attributes_kind_rating": "Rating",
 	"showcase_dynamic_attributes_rating_star": "{count} of 5",
 	"attributes_kind_of": "Type of {label}",
-	"attributes_add_kind": "Type of the new attribute"
+	"attributes_add_kind": "Type of the new attribute",
+	"composites_latent_card_actions_aria": "Actions for {title}"
 }

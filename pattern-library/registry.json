@@ -1842,6 +1842,98 @@
 			"verifiedSha": "b9287328-dirty"
 		},
 		{
+			"id": "ui-latent-cards",
+			"tier": "deep",
+			"title": "Latent Cards — actions that rest neutral and wake on intent",
+			"category": "ui",
+			"summary": "A card whose actions sit in their final place, neutral but enabled, and take their colour when the user engages the card: hover (only under hover: hover), keyboard focus via :focus-within, or a touch tap on the card's surface that pins it until an outside tap or Escape. Three disclosure levels: the card (always), latent actions (always operable, emphasised on engagement), and depth (a scroll area, accordion or carousel) opened only by a deliberate act. Explosive Discovery at the scale of one card.",
+			"when_to_use": "A grid or list of comparable cards that each offer the same few actions, where showing every card's actions at full strength would turn the content into a wall of buttons.",
+			"avoid_when": [
+				"One or two actions dominate the card — show them at full strength",
+				"Actions users repeat all day (triage queues, expert consoles), where the resting grey costs a beat every time",
+				"A single card that is already the page's focus",
+				"More than about four actions — group them into an overflow menu first; latency is not a substitute for structure"
+			],
+			"alternatives": [
+				{
+					"approach": "A plain Card with full-strength actions",
+					"prefer_when": "the actions are few, repeated constantly, or the card stands alone"
+				},
+				{
+					"approach": "An overflow menu (kebab) per card",
+					"prefer_when": "the actions are many or rarely used and need no visual presence at all"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"neutral-at-rest actions",
+				"hover, focus and touch engagement",
+				"touch pin with outside-tap and Escape release",
+				"level-2 depth: scroll area, accordion, carousel"
+			],
+			"keywords": [
+				"latent cards",
+				"hover reveal",
+				"hover actions",
+				"card actions",
+				"progressive disclosure",
+				"focus-within",
+				"touch",
+				"greyed out",
+				"neutral actions",
+				"accordion card",
+				"carousel card",
+				"scroll area card"
+			],
+			"depends_on": ["ui-explosive-discovery", "ui-primitives"],
+			"docs": [
+				{
+					"path": "docs/blueprint/design/latent-cards.md",
+					"note": "The three levels, the six rules, how the engaged look is built, depth primitives, when not to use it"
+				},
+				{
+					"path": "docs/blueprint/design/explosive-discovery.md",
+					"note": "The review method this applies at card scale"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/components/composites/latent-card/LatentCard.svelte",
+					"note": "The card: CSS engagement (hover under hover: hover, :focus-within), the touch pin as data-pinned, footer or corner actions, the depth slot"
+				},
+				{
+					"path": "src/lib/components/composites/latent-card/latent-card.ts",
+					"note": "Action and tone types; the touch-pin rule (nextPinned, isSurfaceTap)"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/components/composites/latent-card/latent-card.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/ui/cards",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"A resting action is enabled and meets text contrast: muted token, no fill, no accent — never opacity or a disabled look",
+				"Engagement changes emphasis, never capability: no action exists only on hover, none is removed at rest",
+				"Actions hold their place in both looks; engaging a card never reflows the grid",
+				"Hover never opens level-2 depth; only a click, scroll, swipe or key does",
+				"Hover styles live under @media (hover: hover); keyboard engagement is :focus-within and needs no script"
+			],
+			"emulation_notes": [
+				"Keep the engaged look in CSS; the only state is the touch pin, so the card works before hydration",
+				"Give depth a fixed resting footprint (a ScrollArea height, a closed Accordion, a Carousel without autoplay)",
+				"Name the action group from the card title so a screen reader hears which card the actions belong to"
+			],
+			"risk": "low — frontend only",
+			"maturity": "proven",
+			"verifiedAt": "2026-11-05"
+		},
+		{
 			"id": "ui-design-tokens",
 			"tier": "light",
 			"title": "Design tokens (breakpoints, fluid type/space, z-index)",

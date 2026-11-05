@@ -42,6 +42,10 @@ Discovery, on a page and across a journey. When a menu, toolbar or page offers m
 — directions over lists, context promotion, one hierarchy per device projection, an expert
 path beside every discovery path.
 
+At the scale of one card the same intent is [latent-cards.md](./latent-cards.md) — Latent
+Cards: actions rest neutral and take their colour on hover, focus or a touch tap; depth opens
+only on a deliberate act.
+
 ### 4. Responsive by Default
 
 Every component works on every screen. No "desktop-only" features.
@@ -462,6 +466,7 @@ docs/blueprint/
 - [styling.md](./styling.md) - UnoCSS, fluid techniques, container queries
 - [components.md](./components.md) - Component architecture, patterns, and showcase catalog coverage (meta-chrome exception)
 - [explosive-discovery.md](./explosive-discovery.md) - Nested Depth: the review heuristic for dense menus and pages (choice trigger, context promotion, projections, the five-part review output)
+- [latent-cards.md](./latent-cards.md) - Latent Cards: actions that rest neutral and wake on hover, focus or a touch tap; depth opens only on purpose
 - [app-shell/](../app-shell/README.md) - Layout structure and navigation
 
 ---
