@@ -1,12 +1,13 @@
 import { apiFetch } from '#lib/api.ts';
+import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
+import { createDocumentAutosave } from '#lib/state/document-autosave.ts';
 import { createSpreadsheetState } from './spreadsheet.state.svelte';
-import { createSpreadsheetAutosave } from './spreadsheet-autosave';
 import { createSpreadsheetDrafts } from './spreadsheet-drafts';
 import { openSpreadsheetSession } from './spreadsheet-unsaved-work';
 
 function createSession(userId: string, fileId: string) {
 	const sheet = createSpreadsheetState();
-	const autosave = createSpreadsheetAutosave({
+	const autosave = createDocumentAutosave<SpreadsheetCells>({
 		drafts: createSpreadsheetDrafts(() => localStorage, userId, fileId, crypto.randomUUID()),
 		apply: (cells) => sheet.fromJSON(cells),
 		async load() {
@@ -16,9 +17,9 @@ function createSession(userId: string, fileId: string) {
 			if (!Number.isInteger(data?.spreadsheet?.version) || !data.spreadsheet.cells) {
 				throw new Error('Invalid spreadsheet response');
 			}
-			return data.spreadsheet;
+			return { content: data.spreadsheet.cells, version: data.spreadsheet.version };
 		},
-		async save({ cells, version }) {
+		async save({ content: cells, version }) {
 			const res = await apiFetch(`/api/desk/files/${fileId}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
