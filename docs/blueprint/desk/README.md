@@ -40,6 +40,8 @@ The bot panel (`panels/bot/ChatPanel.svelte`) is the view over a `DeskBotSession
 
 `panels/markdown/MarkdownPanel.svelte` is the read-only panel for a desk markdown file: it loads `GET /api/desk/files/[id]` (which answers `{ file, markdown: { content, version } }` for a markdown file), renders with `renderMarkdown`, registers the document as AI context, reloads on `ai:refresh_file` and answers `ai:file_refreshed`. The Explorer opens a desk file in the panel for its TYPE (`openFilePanel`) — before this panel existed every desk file opened as a spreadsheet and a bot-created document had nowhere to be seen. Editing desk markdown stays the bot's job (approved proposals); an editor here is a separate, later decision.
 
+`panels/record/RecordPanel.svelte` is the panel for a record file — a self-describing record whose attributes the user defines (the [Dynamic Attributes](../dynamic-attributes/pattern.md) pattern). It is an adapter: the editor, its operations and its save queue are generic (`#lib/components/composites/attributes/`, `#lib/dynamic-attributes/`); the panel adds the panel-id → file-id mapping, the Record menu, AI context (a `label: value` text projection, read-only for the bot), the bus refresh, and flushing on leave. Records persist in `desk.record` (`document` JSONB + `version`), parsed by the codec before any lock; a stale save is `409`, an invalid one `422 invalid_record`.
+
 ### Mobile Chrome
 
 The persisted `DockLayoutState` is always the desktop tree; mobile is a projection over it — mobile paths only ever `focusPanel` / `ensurePanelType` / `closePanel`, never split or resize. `DockLayout`'s `mobileChrome` prop selects the renderer:
@@ -81,7 +83,7 @@ The Explorer (`ExplorerPanel.svelte`) is the unified file browser for all desk c
 blog/                    # Blog posts (draft/published/archived)
 assets/
   images/                # Uploaded images (R2-backed)
-data/                    # Desk folders + spreadsheet and markdown files
+data/                    # Desk folders + spreadsheet, markdown and record files
   [user folders]/        # Nested desk.folder hierarchy
 ```
 
@@ -107,7 +109,7 @@ Every API item (post, asset, folder, file) is normalized into a unified **Explor
 |---------|-------|--------------|
 | `blog-posts.ts` | `PostListItem[]` | open, open-new-panel, rename, move, ai-context, export-markdown, delete |
 | `blog-assets.ts` | `AssetListItem[]` | open, open-new-panel, rename, insert-into-document, copy-url, delete |
-| `desk-files.ts` | `FileListItem[]` + `FolderListItem[]` | spreadsheet files: open, open-new-panel, rename, duplicate, move, ai-context, delete; markdown files: same minus duplicate; folders: rename, move, delete, new-folder, new-spreadsheet |
+| `desk-files.ts` | `FileListItem[]` + `FolderListItem[]` | spreadsheet files: open, open-new-panel, rename, duplicate, move, ai-context, delete; markdown and record files: same minus duplicate; folders: rename, move, delete, new-folder, new-spreadsheet, new-record |
 
 Virtual root nodes (`blog/`, `assets/`, `images/`, `data/`) are created by the adapters.
 

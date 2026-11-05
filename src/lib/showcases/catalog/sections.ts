@@ -597,6 +597,25 @@ export const showcaseSections: ShowcaseSection[] = [
 		title: 'Search coverage',
 		keywords: ['registries searched', 'euipo', 'gleif', 'rdap', 'manual review'],
 	},
+	// Dynamic attributes
+	{
+		pageHref: '/showcases/dynamic-attributes',
+		anchorId: 'da-record',
+		title: 'Your record',
+		keywords: ['custom fields', 'user-defined attributes', 'label value', 'key value', 'schemaless'],
+	},
+	{
+		pageHref: '/showcases/dynamic-attributes',
+		anchorId: 'da-conflict',
+		title: 'A second writer',
+		keywords: ['conflict', 'merge', 'optimistic concurrency', 'version'],
+	},
+	{
+		pageHref: '/showcases/dynamic-attributes',
+		anchorId: 'da-import',
+		title: 'Import and the codec',
+		keywords: ['validation', 'prototype pollution', 'untrusted json'],
+	},
 	// External service lab
 	{
 		pageHref: '/showcases/external-service',

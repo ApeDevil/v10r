@@ -15,6 +15,7 @@
  * so the module only ever runs in the browser and state is per-tab.
  */
 
+import type { DeskFileType } from '#lib/types/db-enums.ts';
 import {
 	budgetAwareSerialize,
 	CONTEXT_TOKEN_BUDGET,
@@ -45,7 +46,7 @@ export interface PanelContext {
 	contentType?: 'structured' | 'code' | 'plaintext';
 	/** The desk file the panel shows, so a proposed edit can name its target. */
 	fileId?: string;
-	fileType?: 'spreadsheet' | 'markdown';
+	fileType?: DeskFileType;
 	/** The saved version the panel shows, when the file has one. */
 	version?: number;
 	/** The panel holds edits the server has not saved yet. */

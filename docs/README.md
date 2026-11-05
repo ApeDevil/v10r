@@ -38,7 +38,8 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [data/](./blueprint/data/) | Drizzle schema workflow, Neon dev-branch refresh from prod |
 | [db/](./blueprint/db/) | Relational + graph database patterns, polyglot freshness |
 | [design/](./blueprint/design/) | Design tokens, tonal elevation, styling techniques, component layer system, Explosive Discovery (nested-depth review heuristic) |
-| [desk/](./blueprint/desk/) | Dock workspace, focus architecture, mobile chrome, Explorer, spreadsheet panel |
+| [desk/](./blueprint/desk/) | Dock workspace, focus architecture, mobile chrome, Explorer, spreadsheet and record panels |
+| [dynamic-attributes/](./blueprint/dynamic-attributes/) | Self-describing records: user-defined typed attributes, fail-closed codec, merge by attribute id, research report and plan |
 | [notifications/](./blueprint/notifications/) | External channel delivery — routing, Telegram/Discord/email, settings, schema |
 | [pim/](./blueprint/pim/) | Product data office workflows: supplier Excel exports onto a target schema through an AI-proposed, code-run transform recipe, plus a step-by-step tutorial |
 | [quick-search/](./blueprint/quick-search/) | Two-lane search, command palette, blog FTS |

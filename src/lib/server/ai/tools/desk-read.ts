@@ -11,10 +11,12 @@
 import { tool } from 'ai';
 import * as v from 'valibot';
 import { cellLabel, parseCellRef } from '#lib/desk/formula.ts';
+import { attributeRecordToText, coreAttributeKinds } from '#lib/dynamic-attributes/index.ts';
 import { DESK_READ_MAX_CHARS } from '#lib/server/ai/config.ts';
 import {
 	getFile,
 	getMarkdownByFileId,
+	getRecordByFileId,
 	getSpreadsheetByFileId,
 	listFiles,
 	searchFiles,
@@ -178,6 +180,23 @@ export function createReadTools(userId: string, deskLayout?: DeskLayoutEntry[]) 
 								updatedAt: fileRow.updatedAt.toISOString(),
 							},
 							...page,
+						};
+					}
+
+					if (fileRow.type === 'record') {
+						const found = await getRecordByFileId(file_id, userId);
+						if (!found) return { error: 'Record data not found.' };
+						const text = attributeRecordToText(found.record.document, coreAttributeKinds);
+						return {
+							file: {
+								id: fileRow.id,
+								name: fileRow.name,
+								type: fileRow.type,
+								version: found.record.version,
+								updatedAt: fileRow.updatedAt.toISOString(),
+							},
+							content: text.slice(0, MAX_TOOL_OUTPUT_CHARS),
+							attributeCount: found.record.document.attributes.length,
 						};
 					}
 

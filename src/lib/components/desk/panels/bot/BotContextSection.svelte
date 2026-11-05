@@ -35,6 +35,8 @@ function panelIcon(panelType: string): string {
 			return 'i-lucide-folder-tree';
 		case 'preview':
 			return 'i-lucide-eye';
+		case 'record':
+			return 'i-lucide-list-tree';
 		default:
 			return 'i-lucide-layout-grid';
 	}

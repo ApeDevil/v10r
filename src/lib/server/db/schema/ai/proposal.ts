@@ -18,6 +18,7 @@
 
 import { sql } from 'drizzle-orm';
 import { index, jsonb, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import type { DeskFileType } from '#lib/types/db-enums.ts';
 import { user } from '../auth/_better-auth';
 import { aiSchema, conversation, message } from './conversation';
 
@@ -53,9 +54,9 @@ export const proposalRevertStatusEnum = aiSchema.enum('agent_proposal_revert_sta
  */
 export type ProposedTarget = {
 	fileId: string;
-	fileType: 'spreadsheet' | 'markdown';
+	fileType: DeskFileType;
 	name: string;
-	/** `spreadsheet.version` / `markdown.version` at proposal time; null for a rename/delete. */
+	/** `spreadsheet.version` / `markdown.version` / `record.version` at proposal time; null for a rename/delete. */
 	version: number | null;
 	/** `file.updatedAt` at proposal time — the rename/delete baseline. ISO string (jsonb). */
 	updatedAt: string;

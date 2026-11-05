@@ -5,6 +5,7 @@
  * with Vitest. The reactive layer in desk-context.svelte.ts delegates to these.
  */
 
+import type { DeskFileType } from '#lib/types/db-enums.ts';
 import { CONTEXT_ENTRY_MAX_CHARS, CONTEXT_MAX_ENTRIES, CONTEXT_TOKEN_BUDGET } from '#lib/types/desk-context-limits.ts';
 import type { ContextChip, ContextStatus, PanelContext } from './desk-context.state.svelte';
 
@@ -32,7 +33,7 @@ export interface SerializedContext {
 	tokenEstimate: number;
 	truncated: boolean;
 	fileId?: string;
-	fileType?: 'spreadsheet' | 'markdown';
+	fileType?: DeskFileType;
 	/** The saved version the panel shows, when the file has one. */
 	version?: number;
 	/** The panel holds edits the server has not saved yet. */

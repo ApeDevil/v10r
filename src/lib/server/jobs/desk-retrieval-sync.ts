@@ -20,7 +20,7 @@ export async function deskRetrievalSync(): Promise<number> {
 
 	let synced = 0;
 	for (const f of files) {
-		const ingested = await syncDeskFileToRetrieval(f.userId, f.id, f.type as 'markdown' | 'spreadsheet');
+		const ingested = await syncDeskFileToRetrieval(f.userId, f.id, f.type);
 		if (ingested) synced++;
 	}
 

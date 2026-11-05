@@ -18,6 +18,7 @@ export type NodeCapability =
 	| 'copy-url'
 	| 'new-folder'
 	| 'new-spreadsheet'
+	| 'new-record'
 	| 'new-post';
 
 export type NodeSource =

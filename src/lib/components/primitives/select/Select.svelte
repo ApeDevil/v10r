@@ -18,6 +18,10 @@ interface Props {
 	error?: boolean;
 	onchange?: (value: string) => void;
 	class?: string;
+	/** Id of the trigger, for a `<label for>`. */
+	id?: string;
+	/** Accessible name when no visible label names the select. */
+	'aria-label'?: string;
 }
 
 let {
@@ -28,6 +32,8 @@ let {
 	error = false,
 	onchange,
 	class: className,
+	id,
+	'aria-label': ariaLabel,
 }: Props = $props();
 
 let selectedLabel = $derived(options.find((opt) => opt.value === value)?.label ?? '');
@@ -48,6 +54,8 @@ const s = useSurface();
 			className
 		)}
 		aria-invalid={error ? 'true' : undefined}
+		{id}
+		aria-label={ariaLabel}
 	>
 		<span class={cn(!value && 'text-muted')}>
 			{selectedLabel || placeholder}

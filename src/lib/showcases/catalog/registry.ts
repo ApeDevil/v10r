@@ -552,6 +552,15 @@ export const showcases: ShowcaseCard[] = [
 		docs: [{ href: '/docs/blueprint/name-check', label: 'Name Check' }],
 	},
 	{
+		href: '/showcases/dynamic-attributes',
+		icon: 'i-lucide-list-tree',
+		title: m.showcase_dynamic_attributes_title,
+		description: m.showcase_dynamic_attributes_description,
+		ariaLabel: m.showcase_dynamic_attributes_aria,
+		domain: 'frontend',
+		docs: [{ href: '/docs/blueprint/dynamic-attributes/pattern', label: 'Dynamic Attributes' }],
+	},
+	{
 		href: '/showcases/external-service',
 		icon: 'i-lucide-server-cog',
 		title: m.showcase_external_service_title,

@@ -52,6 +52,12 @@ Implementation designs and feature specifications. How to build features using t
 |------|-------------|
 | **[pim/](./pim/)** | • [sheet-workflow.md](./pim/sheet-workflow.md): Supplier Excel exports to a target schema with an AI agent. The agent reads a bounded profile and proposes a typed transform recipe; code checks the recipe's columns, runs it over every row (unreadable values left unresolved and listed), and checks the output against the target schema. Bounded propose → run → check → revise loop; in-app (`proposeRecipe`) and terminal lanes; the `pim` program works on plain job folders with a dated output folder per run (no git, no repo; `bun run pim:build` compiles a standalone file per OS); text-only `.xlsx`/CSV I/O; GTIN recovery by check digit; review workbook<br>• [tutorial.md](./pim/tutorial.md): Step by step in a plain folder, a German supplier export onto a shop import |
 
+## Dynamic Attributes
+
+| File | Main Topics |
+|------|-------------|
+| **[dynamic-attributes/](./dynamic-attributes/)** | • [pattern.md](./dynamic-attributes/pattern.md): Records whose labelled, typed attributes the user defines at runtime, definitions stored beside values — stable ids, safe type changes, restorable removals, opaque unknown kinds; the codec, kind, operation, merge and store contracts; extension interfaces; security invariants; benchmarks; desk integration<br>• [research.md](./dynamic-attributes/research.md): Prior art (Notion, Airtable, Baserow, Directus, Contentful), form generators, JSON Schema vs Valibot, JSONB vs EAV, binary formats, schema evolution, concurrency<br>• [plan.md](./dynamic-attributes/plan.md): Phased plan, progress record, second-pass audit |
+
 ## Features
 
 | File | Main Topics |

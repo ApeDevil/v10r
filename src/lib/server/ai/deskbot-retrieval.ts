@@ -15,13 +15,20 @@
  * See `docs/blueprint/ai/surfaces.md` (retrieval: one kernel, two profiles).
  */
 import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
-import { getMarkdownByFileId, getSpreadsheetByFileId, listFileTimestamps } from '#lib/server/db/desk/queries.ts';
+import { attributeRecordToText, coreAttributeKinds } from '#lib/dynamic-attributes/index.ts';
+import {
+	getMarkdownByFileId,
+	getRecordByFileId,
+	getSpreadsheetByFileId,
+	listFileTimestamps,
+} from '#lib/server/db/desk/queries.ts';
 import { deleteDocument, markDocumentCurrent } from '#lib/server/db/retrieval/mutations.ts';
 import { getDocumentBySourcePath, listDocumentOrigins } from '#lib/server/db/retrieval/queries.ts';
 import { deferAfterResponse } from '#lib/server/platform/index.ts';
 import { retrieve } from '#lib/server/retrieval/index.ts';
 import { ingestIfChanged } from '#lib/server/retrieval/ingest/index.ts';
 import type { RankedChunk, RetrievalResult } from '#lib/server/retrieval/types.ts';
+import type { DeskFileType } from '#lib/types/db-enums.ts';
 
 /** Stable back-pointer from a retrieval document to its originating desk file. */
 export const deskSourcePath = (fileId: string) => `desk_file_${fileId}`;
@@ -44,11 +51,7 @@ function spreadsheetToText(cells: SpreadsheetCells): string {
  * instead of a gap until the next sync. Returns true if it ingested, false when the stored
  * copy's derivation key already matched.
  */
-export async function syncDeskFileToRetrieval(
-	userId: string,
-	fileId: string,
-	type: 'markdown' | 'spreadsheet',
-): Promise<boolean> {
+export async function syncDeskFileToRetrieval(userId: string, fileId: string, type: DeskFileType): Promise<boolean> {
 	let title: string;
 	let content: string;
 	if (type === 'markdown') {
@@ -56,6 +59,11 @@ export async function syncDeskFileToRetrieval(
 		if (!md) return false;
 		title = md.file.name;
 		content = md.markdown.content ?? '';
+	} else if (type === 'record') {
+		const found = await getRecordByFileId(fileId, userId);
+		if (!found) return false;
+		title = found.file.name;
+		content = attributeRecordToText(found.record.document, coreAttributeKinds);
 	} else {
 		const sheet = await getSpreadsheetByFileId(fileId, userId);
 		if (!sheet) return false;
@@ -102,12 +110,7 @@ export async function removeDeskFileFromRetrieval(userId: string, fileId: string
  * pinned file wait for the daily `desk-retrieval-sync` — the one embedding cost that stays off
  * the interactive path by decision.
  */
-export function followAiContextChange(
-	userId: string,
-	fileId: string,
-	type: 'markdown' | 'spreadsheet',
-	pinned: boolean,
-) {
+export function followAiContextChange(userId: string, fileId: string, type: DeskFileType, pinned: boolean) {
 	deferAfterResponse(pinned ? 'desk-retrieval:pin' : 'desk-retrieval:unpin', () =>
 		pinned ? syncDeskFileToRetrieval(userId, fileId, type) : removeDeskFileFromRetrieval(userId, fileId),
 	);

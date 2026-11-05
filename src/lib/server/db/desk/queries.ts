@@ -1,7 +1,7 @@
 import { and, count, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm';
 import type { DeskFileType } from '#lib/types/db-enums.ts';
 import { type DbHandle, db } from '../index';
-import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
+import { deskRecord, file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
 
 // Soft-delete note
 // All queries below filter `file.deleted_at IS NULL` (and the same on
@@ -136,6 +136,32 @@ export async function getMarkdownByFileId(fileId: string, userId: string, handle
 		.from(file)
 		.innerJoin(markdown, eq(markdown.fileId, file.id))
 		.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt), isNull(markdown.deletedAt)))
+		.limit(1);
+	return row ?? null;
+}
+
+/** Get a record by its file ID (joined). Excludes soft-deleted on both sides. Reads on `handle` like `getSpreadsheetByFileId`. */
+export async function getRecordByFileId(fileId: string, userId: string, handle: DbHandle = db) {
+	const [row] = await handle
+		.select({
+			file: {
+				id: file.id,
+				type: file.type,
+				name: file.name,
+				folderId: file.folderId,
+				aiContext: file.aiContext,
+				createdAt: file.createdAt,
+				updatedAt: file.updatedAt,
+			},
+			record: {
+				id: deskRecord.id,
+				document: deskRecord.document,
+				version: deskRecord.version,
+			},
+		})
+		.from(file)
+		.innerJoin(deskRecord, eq(deskRecord.fileId, file.id))
+		.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt), isNull(deskRecord.deletedAt)))
 		.limit(1);
 	return row ?? null;
 }

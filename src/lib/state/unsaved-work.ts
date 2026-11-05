@@ -38,6 +38,10 @@ const SOURCES: readonly UnsavedWorkSource[] = [
 		import('#lib/components/desk/panels/spreadsheet/spreadsheet-unsaved-work.ts').then((source) =>
 			source.spreadsheetUnsavedWork(userId),
 		),
+	(userId) =>
+		import('#lib/components/desk/panels/record/record-unsaved-work.ts').then((source) =>
+			source.recordUnsavedWork(userId),
+		),
 ];
 
 /** Long enough for a normal save round-trip; short enough that the dialog never feels stuck. */

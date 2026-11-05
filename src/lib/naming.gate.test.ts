@@ -250,6 +250,7 @@ const I18N_AREAS = [
 	'account',
 	'admin',
 	'ai',
+	'attributes',
 	'auth',
 	'blog',
 	'composites',

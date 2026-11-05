@@ -1,4 +1,4 @@
-export { assetExtras, canonicalJson, deriveAsset, sha256Hex } from './derivation.ts';
+export { assetExtras, deriveAsset, sha256Hex } from './derivation.ts';
 export {
 	type AssetEnvironmentRun,
 	type AssetExecutionContext,

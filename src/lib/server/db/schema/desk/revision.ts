@@ -45,6 +45,8 @@ export const fileRevision = deskSchema.table(
 		cells: jsonb('cells'),
 		/** Spreadsheet pre-image column metadata. NULL for markdown snapshots. */
 		columnMeta: jsonb('column_meta'),
+		/** Record pre-image document. NULL for spreadsheet and markdown snapshots. */
+		document: jsonb('document'),
 		/** Whether the AI harness or a human triggered the mutation. */
 		source: revisionSourceEnum('source').notNull().default('user'),
 		/** `overwrite` (content replaced) or `delete` (file trashed). */

@@ -143,6 +143,12 @@ function getPanelType(panelId: string): string | undefined {
 					<SpreadsheetPanel {panelId} />
 				{:else if type === 'markdown'}
 					<MarkdownPanel {panelId} />
+				{:else if type === 'record'}
+					<!-- Loaded on first use: the attribute editor is the desk's least-opened panel, and its
+					     code stays out of the route every desk visit downloads. -->
+					{#await import('#lib/components/desk/panels/record/RecordPanel.svelte') then { default: RecordPanel }}
+						<RecordPanel {panelId} />
+					{/await}
 				{:else if type === 'io-log'}
 					<IOLogPanel {panelId} />
 				{:else}

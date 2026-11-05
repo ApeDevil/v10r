@@ -34,6 +34,8 @@ export const createId = {
 	spreadsheet: () => `spr_${shortId()}`,
 	/** Desk theme preset: dtp_a8f3e1b2c4d9 */
 	themePreset: () => `dtp_${shortId()}`,
+	/** Desk record (self-describing attribute record): rcd_a8f3e1b2c4d9 */
+	record: () => `rcd_${shortId()}`,
 	/** Desk markdown: mkd_a8f3e1b2c4d9 */
 	markdown: () => `mkd_${shortId()}`,
 	/** Desk file revision (pre-image snapshot): drv_a8f3e1b2c4d9 */

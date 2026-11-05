@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createSpreadsheetAutosave } from './spreadsheet-autosave';
-import { createSpreadsheetDrafts, removeUserSpreadsheetDrafts, userSpreadsheetDraftFiles } from './spreadsheet-drafts';
+import type { SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
+import { createDocumentAutosave } from '#lib/state/document-autosave.ts';
+import { removeUserDocumentDrafts, userDocumentDraftFiles } from '#lib/state/document-drafts.ts';
+import { createSpreadsheetDrafts, SPREADSHEET_DRAFT_NAMESPACE } from './spreadsheet-drafts';
+
+const userSpreadsheetDraftFiles = (storage: Storage, userId: string) =>
+	userDocumentDraftFiles(storage, SPREADSHEET_DRAFT_NAMESPACE, userId);
+const removeUserSpreadsheetDrafts = (storage: Storage, userId: string) =>
+	removeUserDocumentDrafts(storage, SPREADSHEET_DRAFT_NAMESPACE, userId);
+
 import { openSpreadsheetSession, spreadsheetUnsavedWork } from './spreadsheet-unsaved-work';
 
 function memoryStorage(): Storage {
@@ -22,10 +30,10 @@ function openSheet(storage: Storage, userId: string, fileId: string, save: () =>
 	const commitEdit = vi.fn();
 	const session = openSpreadsheetSession(userId, fileId, () => ({
 		sheet: { commitEdit },
-		autosave: createSpreadsheetAutosave({
+		autosave: createDocumentAutosave<SpreadsheetCells>({
 			drafts: createSpreadsheetDrafts(() => storage, userId, fileId, 'tab'),
 			apply: () => {},
-			load: async () => ({ cells: {}, version: 0 }),
+			load: async () => ({ content: {}, version: 0 }),
 			save: async ({ version }) => {
 				await save();
 				return { status: 'saved', version: version + 1 };

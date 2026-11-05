@@ -68,14 +68,17 @@ The aim is that no edit is ever lost silently and no overwrite is ever silent ei
 
 **Method.** The server stays authoritative and every save carries the version it was based
 on. The client is a small state machine around that, owned by the document rather than by a
-component. In v10r it lives in `spreadsheet-autosave.ts`, `spreadsheet-drafts.ts` and
-`spreadsheet-session.svelte.ts`.
+component. In v10r it is generic over the document's content — `#lib/state/document-autosave.ts`
+and `document-drafts.ts` — and each document kind wires it: `spreadsheet-session.svelte.ts`
+for sheets, `record-session.svelte.ts` for [dynamic-attribute records](../dynamic-attributes/pattern.md).
 
 - **Save queue.** Edits debounce into one latest snapshot, and requests are serialised. An
   edit made while a save is in flight stays pending; a success never clears it.
 - **Compare-and-swap.** `PUT /api/desk/files/[id]` requires `expectedVersion`. A mismatch is
   `409 version_conflict`, and the session enters an explicit `conflict` state. There is no
-  automatic rebase or merge.
+  automatic rebase. A document kind that can merge offers it as a button: `rebase(resolve)`
+  hands the kind's merge the confirmed base, the local copy and the stored one, and saves the
+  result against the stored version (records merge by attribute id; sheets do not merge).
 - **Per-writer drafts.** Every unsaved snapshot is written to its own localStorage slot
   (`v10r:spreadsheet-draft:{user}:{file}:{writerId}`), so one tab never erases another's
   draft. On load, sibling drafts are offered to adopt or discard, never applied silently.

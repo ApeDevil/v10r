@@ -1,8 +1,15 @@
 import { and, eq, isNull, like, sql } from 'drizzle-orm';
 import { recalculateCells, type SpreadsheetCells } from '#lib/desk/spreadsheet-cells.ts';
+import {
+	type AttributeRecord,
+	type AttributeRecordProblem,
+	coreAttributeKinds,
+	emptyAttributeRecord,
+	parseAttributeRecord,
+} from '#lib/dynamic-attributes/index.ts';
 import { createId } from '../id';
 import { type DbHandle, db } from '../index';
-import { file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
+import { deskRecord, file, fileRevision, folder, markdown, spreadsheet } from '../schema/desk';
 
 /** Who triggered a recoverable content mutation. Threaded into the pre-image snapshot. */
 export type RevisionSource = 'ai' | 'user';
@@ -122,6 +129,24 @@ export async function deleteFile(id: string, userId: string, source: RevisionSou
 				});
 			}
 			await tx.update(markdown).set({ deletedAt: now }).where(eq(markdown.fileId, id));
+		} else if (fileRow.type === 'record') {
+			const [current] = await tx
+				.select({ document: deskRecord.document })
+				.from(deskRecord)
+				.where(eq(deskRecord.fileId, id))
+				.limit(1);
+			if (current) {
+				await tx.insert(fileRevision).values({
+					id: createId.deskRevision(),
+					fileId: id,
+					userId,
+					fileType: 'record',
+					document: current.document,
+					source,
+					reason: 'delete',
+				});
+			}
+			await tx.update(deskRecord).set({ deletedAt: now }).where(eq(deskRecord.fileId, id));
 		}
 		return fileRow;
 	});
@@ -584,7 +609,101 @@ export async function restoreFile(id: string, userId: string, sinceUpdatedAt: Da
 			await tx.update(spreadsheet).set({ deletedAt: null }).where(eq(spreadsheet.fileId, id));
 		} else if (row.type === 'markdown') {
 			await tx.update(markdown).set({ deletedAt: null }).where(eq(markdown.fileId, id));
+		} else if (row.type === 'record') {
+			await tx.update(deskRecord).set({ deletedAt: null }).where(eq(deskRecord.fileId, id));
 		}
 		return { status: 'restored' as const, file: restored };
+	});
+}
+
+/**
+ * The one door a record document passes on its way to `desk.record.document`: the editor's own
+ * codec, with the core kinds, server-side and independent of whatever the client checked. An
+ * attribute of a kind the server does not know is kept as bounded opaque JSON, never dropped.
+ */
+export function parseRecordDocument(
+	input: unknown,
+): { ok: true; document: AttributeRecord } | { ok: false; problems: AttributeRecordProblem[] } {
+	const parsed = parseAttributeRecord(input, { kinds: coreAttributeKinds });
+	return parsed.ok ? { ok: true, document: parsed.record } : parsed;
+}
+
+/** Create a record file (file + record detail in a transaction), starting from an empty record unless given one. */
+export async function createRecordFile(
+	userId: string,
+	name = 'Untitled',
+	document: AttributeRecord = emptyAttributeRecord(),
+	folderId: string | null = null,
+	handle: DbHandle = db,
+) {
+	const parsed = parseRecordDocument(document);
+	if (!parsed.ok) return { status: 'invalid' as const, problems: parsed.problems };
+	return handle.transaction(async (tx) => {
+		await assertOwnedDestination(tx, folder, folderId, userId);
+		const fileId = createId.file();
+		const [fileRow] = await tx.insert(file).values({ id: fileId, userId, type: 'record', name, folderId }).returning();
+		const [recordRow] = await tx
+			.insert(deskRecord)
+			.values({ id: createId.record(), fileId, userId, document: parsed.document })
+			.returning();
+		return { status: 'created' as const, file: fileRow, record: recordRow };
+	});
+}
+
+/**
+ * Replace a record's document, by file ID, under the same contract as the spreadsheet and
+ * markdown writers: row locks, the caller's `expectedVersion` checked against the committed
+ * one (`conflict` changes nothing), a pre-image revision, and the file's `updatedAt` touched.
+ * The document is parsed before any lock is taken; an invalid one never reaches the row.
+ */
+export async function updateRecordByFileId(
+	fileId: string,
+	userId: string,
+	data: { document: unknown; expectedVersion: number; name?: string },
+	source: RevisionSource = 'user',
+	handle: DbHandle = db,
+) {
+	const parsed = parseRecordDocument(data.document);
+	if (!parsed.ok) return { status: 'invalid' as const, problems: parsed.problems };
+	return handle.transaction(async (tx) => {
+		const [fileRow] = await tx
+			.select({ id: file.id })
+			.from(file)
+			.where(and(eq(file.id, fileId), eq(file.userId, userId), isNull(file.deletedAt)))
+			.limit(1)
+			.for('update');
+		if (!fileRow) return null;
+
+		const [current] = await tx
+			.select()
+			.from(deskRecord)
+			.where(and(eq(deskRecord.fileId, fileId), isNull(deskRecord.deletedAt)))
+			.limit(1)
+			.for('update');
+		if (!current) return null;
+		if (current.version !== data.expectedVersion) return { status: 'conflict' as const };
+
+		const revisionId = createId.deskRevision();
+		await tx.insert(fileRevision).values({
+			id: revisionId,
+			fileId,
+			userId,
+			fileType: 'record',
+			document: current.document,
+			source,
+			reason: 'overwrite',
+		});
+
+		const now = new Date();
+		const version = current.version + 1;
+		await tx
+			.update(deskRecord)
+			.set({ document: parsed.document, version, updatedAt: now })
+			.where(eq(deskRecord.fileId, fileId));
+		const fileUpdate: { updatedAt: Date; name?: string } = { updatedAt: now };
+		if (data.name !== undefined) fileUpdate.name = data.name;
+		const [updated] = await tx.update(file).set(fileUpdate).where(eq(file.id, fileId)).returning();
+
+		return updated ? { status: 'saved' as const, file: updated, version, revisionId } : null;
 	});
 }

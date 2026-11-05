@@ -9844,11 +9844,11 @@
 			],
 			"code": [
 				{
-					"path": "src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.ts",
-					"note": "Framework-free save queue owned by the document"
+					"path": "src/lib/state/document-autosave.ts",
+					"note": "Framework-free save queue owned by the document, generic over its content"
 				},
 				{
-					"path": "src/lib/components/desk/panels/spreadsheet/spreadsheet-drafts.ts",
+					"path": "src/lib/state/document-drafts.ts",
 					"note": "One localStorage slot per writer; siblings offered, never applied"
 				},
 				{
@@ -9862,7 +9862,7 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.test.ts"
+					"path": "src/lib/state/document-autosave.test.ts"
 				},
 				{
 					"path": "src/routes/api/desk/files/[id]/server.test.ts"
@@ -9884,6 +9884,157 @@
 			"maturity": "proven",
 			"verifiedAt": "2026-10-10",
 			"verifiedSha": "91f61a76-dirty"
+		},
+		{
+			"id": "dynamic-attributes",
+			"tier": "deep",
+			"title": "Dynamic attributes (self-describing records the user defines at runtime)",
+			"category": "forms",
+			"summary": "A record that starts almost empty and grows labelled, typed attributes its user names, with the definitions stored inline beside the values: stable attribute ids make renames free, lossy type changes keep the old value, removals are restorable, unknown kinds survive opaquely, and a fail-closed codec plus a version check guard every save, with conflicts merged by attribute id.",
+			"when_to_use": "Use when the facts on a record differ from one record to the next and belong to the person writing them — an asset panel, a character sheet, a sample log — and the record loads and saves as one unit.",
+			"avoid_when": [
+				"Every record has the same fields — a Valibot schema and a fixed form are simpler and queryable",
+				"An attribute must be a foreign key, unique across records or indexed for search — promote it to a real column",
+				"Two people type into the same value at once — that is the CRDT case",
+				"The attributes carry behaviour (formulas, conditions, validation scripts) — that is a rule engine, and this pattern refuses code as data"
+			],
+			"alternatives": [
+				{
+					"approach": "Real columns via runtime DDL (Baserow, Directus)",
+					"prefer_when": "many records share one user-defined schema and must be filtered and sorted across records"
+				},
+				{
+					"approach": "Entity-attribute-value rows",
+					"prefer_when": "individual attribute values need foreign keys or per-value audit rows"
+				},
+				{
+					"approach": "A JSON Schema form renderer (@sjsf/form)",
+					"prefer_when": "the schema is fixed or comes from outside, and the user fills it in rather than defines it"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"user-defined fields",
+				"typed values",
+				"schema evolution",
+				"safe type conversion",
+				"undo",
+				"autosave",
+				"three-way merge",
+				"conflict detection",
+				"untrusted json parsing"
+			],
+			"keywords": [
+				"custom fields",
+				"dynamic fields",
+				"dynamic attributes",
+				"user-defined attributes",
+				"key value",
+				"label value",
+				"property bag",
+				"schemaless",
+				"self-describing",
+				"jsonb",
+				"eav",
+				"notion properties",
+				"prototype pollution",
+				"merge",
+				"conflict"
+			],
+			"depends_on": ["versioned-document-session"],
+			"docs": [
+				{
+					"path": "docs/blueprint/dynamic-attributes/pattern.md",
+					"note": "Model, contracts, extension interfaces, security invariants, performance, limitations"
+				},
+				{
+					"path": "docs/blueprint/dynamic-attributes/research.md",
+					"note": "Prior art and why no form or schema library is adopted"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/dynamic-attributes",
+					"kind": "dir",
+					"note": "Framework-free core: record, kinds, codec, operations, merge, diagnostics, stores"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/codec.ts",
+					"note": "Fail-closed parse: bounded copy, reserved keys, strict frames, upcasters, size"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/kinds.ts",
+					"note": "The AttributeKind contract and the core kinds; conversion through text"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/merge.ts",
+					"note": "Three-way merge by attribute id; label and value merge separately"
+				},
+				{
+					"path": "src/lib/components/composites/attributes",
+					"kind": "dir",
+					"note": "Svelte 5 editor, per-kind controls, record session, save status"
+				},
+				{
+					"path": "src/lib/state/document-autosave.ts",
+					"note": "Generic save queue with conflict state and rebase"
+				},
+				{
+					"path": "src/lib/server/db/desk/mutations.ts",
+					"note": "updateRecordByFileId: parse before lock, version check, pre-image revision"
+				},
+				{
+					"path": "src/lib/components/desk/panels/record/RecordPanel.svelte",
+					"note": "Desk adapter: menus, AI context, bus refresh, flush on leave"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/dynamic-attributes/codec.test.ts"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/operations.test.ts"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/merge.test.ts"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/stores.test.ts"
+				},
+				{
+					"path": "src/lib/components/composites/attributes/attribute-editor.svelte.test.ts"
+				},
+				{
+					"path": "src/lib/server/db/desk/record-mutations.pglite.test.ts"
+				},
+				{
+					"path": "src/routes/api/desk/files/[id]/server.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/dynamic-attributes",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"An attribute's identity is its id, never its label; a rename never moves or loses a value.",
+				"Nothing is lost silently: a lossy type change keeps the previous value, a removal is restorable, an unknown kind is kept opaque, a newer format is refused.",
+				"No code in data: a kind id selects a control from a map the application built; nothing stored is evaluated, imported or used as a regex.",
+				"The same codec parses on the client and before every server write; a record it refuses is never stored and a stored record it cannot parse is never overwritten.",
+				"Every save names the version it was based on, and a stale save changes nothing."
+			],
+			"emulation_notes": [
+				"Store attributes as an array: jsonb drops object-key order and keeps only the last duplicate key, so neither may carry meaning.",
+				"Copy untrusted JSON into fresh plain objects and refuse __proto__, constructor and prototype as keys before any spread or merge; check the byte length before JSON.parse.",
+				"Convert between kinds through each kind's text form and call a conversion exact only when it reads back as the same text — that one rule decides when to keep the old value.",
+				"Give select options their own ids; the stored value is the id, so renaming an option orphans nothing.",
+				"Keep unchanged attributes' object identity in every operation and hold the record as $state.raw: a keystroke re-renders one row, not two hundred."
+			],
+			"risk": "medium — user-authored data reaches the database; the codec's bounds and refusals are the security boundary and must run on the server",
+			"maturity": "proven",
+			"verifiedAt": "2026-11-05",
+			"verifiedSha": "e3023614"
 		},
 		{
 			"id": "asset-rights-manifest",

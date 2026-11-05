@@ -12,7 +12,7 @@ CREATE TABLE desk.file (
   id                   TEXT PRIMARY KEY,         -- fil_{12 hex}
   user_id              TEXT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
   folder_id            TEXT REFERENCES desk.folder(id) ON DELETE SET NULL,
-  type                 desk.file_type NOT NULL,  -- enum: 'spreadsheet' | 'markdown'
+  type                 desk.file_type NOT NULL,  -- enum: 'spreadsheet' | 'markdown' | 'record'
   name                 TEXT NOT NULL DEFAULT 'Untitled',
   ai_context           BOOLEAN NOT NULL DEFAULT false,
   origin_tool_call_id  TEXT,                     -- set when created by an AI tool call
@@ -133,7 +133,7 @@ remote version pauses saving with an explicit conflict notice. Download the loca
 JSON draft before choosing **Discard local edits and reload** to reconcile manually.
 A failed reload retains local work. There is no automatic merge or force overwrite.
 
-Regression tests: `spreadsheet-autosave.test.ts` covers queue/draft/state failures;
+Regression tests: `#lib/state/document-autosave.test.ts` and `spreadsheet-drafts.test.ts` cover queue/draft/state failures;
 `db/desk/mutations.pglite.test.ts` covers version/revision integrity; the file API and
 AI replay tests cover their conflict contracts. PGlite does not prove concurrent
 multi-connection locking, and vitest never runs the panel's lifecycle wiring; both were
@@ -228,7 +228,7 @@ The Explorer's `data/` section shows desk folders and spreadsheet files. Folders
 ```
 #lib/server/db/schema/desk/
   schema.ts                          # deskSchema = pgSchema('desk')
-  file.ts                            # desk.file table + file_type enum ('spreadsheet' | 'markdown')
+  file.ts                            # desk.file table + file_type enum ('spreadsheet' | 'markdown' | 'record')
   folder.ts                          # desk.folder table
   spreadsheet.ts                     # desk.spreadsheet detail table (file_id FK NOT NULL)
   markdown.ts                        # desk.markdown detail table (file_id FK NOT NULL)
@@ -250,11 +250,15 @@ src/routes/api/desk/folders/
   formula.ts                         # Expression evaluator + grid resolver (dependency order, cycles)
   spreadsheet-cells.ts               # PersistedCell contract + recalculateCells (the write door's pass)
 
+#lib/state/
+  document-autosave.ts               # Serialized queue and refresh/conflict/rebase state machine (any document kind)
+  document-drafts.ts                 # Isolated localStorage draft slots per writer
+
 #lib/components/desk/panels/spreadsheet/
   SpreadsheetPanel.svelte            # Lifecycle, recovery and conflict UI
   spreadsheet-session.svelte.ts      # Per-user/file shared browser document
-  spreadsheet-autosave.ts            # Serialized queue and refresh/conflict state machine
-  spreadsheet-drafts.ts              # Isolated localStorage draft slots
+  spreadsheet-drafts.ts              # Sheet draft slots over #lib/state/document-drafts.ts
+  spreadsheet-unsaved-work.ts        # Sign-out registry over #lib/state/document-sessions.ts
   spreadsheet.state.svelte.ts        # Sparse SvelteMap of cells, selection, recalculation pass
 
 #lib/server/ai/tools/
