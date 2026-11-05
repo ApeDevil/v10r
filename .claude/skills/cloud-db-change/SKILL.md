@@ -6,7 +6,7 @@ description: Apply a shipped Drizzle schema change to the production Neon databa
 # Cloud database change
 
 Stas's word in this conversation is the authorization. The why and the details:
-`docs/blueprint/data/drizzle-workflow.md` → *Schema changes from a cloud session*.
+`docs/stack/ops/cloud-database-changes.md`.
 
 Constants: Neon project `broad-night-71900850` (`v10r`), database `neondb`; the default branch
 is production.

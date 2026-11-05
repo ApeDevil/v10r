@@ -28,7 +28,7 @@ A check that could not run is reported as **not run**, never as passed.
 | `patterns:build`, `mcp:excerpts:build`, `content:check` (offline) | yes | yes |
 | `test:browser` (Playwright; starts `bun run dev`) | unverified — Chromium is preinstalled, but the dev server runs on the fake `.env`, so database-backed routes fail | yes |
 | ship (`scripts/ship/squash-into-main.sh`) — only on Stas's word | yes | yes (gate in the container) |
-| `db:push`, `db:seed`, `db:setup`, `db:*` | no — no database | yes |
+| `db:push`, `db:seed`, `db:setup`, `db:*` | no — no database. A shipped schema change reaches production through the Neon connector instead, on Stas's word (`docs/stack/ops/cloud-database-changes.md`); `db:schema-diff` (offline) works | yes |
 | `refresh` (its last step, `db:ingest-docs`, needs the database and the Gemini key) | build steps only | yes |
 | `content:check:db`, `content:push`, the dev server against Neon, anything with a real credential | no | yes |
 | `vr …` (Stas's host dispatcher) | no | only when Stas names the command |

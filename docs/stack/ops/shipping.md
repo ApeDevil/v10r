@@ -58,6 +58,13 @@ copy, not CI. The SHA stays the same, so Vercel's deployment can be found by the
 Why a GitHub Action and not a mirror setting: GitLab's pull mirror (GitLab fetches from GitHub)
 is Premium-only, and its free push mirror runs the wrong direction.
 
+## The database
+
+A ship moves code, not the database. When the shipped commit changed
+`src/lib/server/db/schema/`, the ship report says production needs the change; it is applied
+separately, on Stas's word — locally with `db:push`, from a cloud session through the Neon
+connector (`cloud-database-changes.md`).
+
 ## One-time configuration
 
 The one credential: Stas's GitLab personal access token `v10r-gh` (scope `write_repository`,
