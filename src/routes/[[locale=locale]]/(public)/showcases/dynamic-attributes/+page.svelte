@@ -45,7 +45,8 @@ interface Writer {
 	snapshot: RecordSession['autosave']['snapshot'];
 }
 
-let writers = $state<{ a: Writer; b: Writer }>();
+/** Raw: a session is an object with its own reactivity, never something to deep-proxy. */
+let writers = $state.raw<{ a: Writer; b: Writer }>();
 let offline = $state(false);
 let failed = $state(false);
 
@@ -84,7 +85,7 @@ onMount(() => {
 		const { session } = opened[key];
 		void session.autosave.refresh();
 		return session.autosave.subscribe(() => {
-			if (writers) writers[key].snapshot = session.autosave.snapshot;
+			if (writers) writers = { ...writers, [key]: { session, snapshot: session.autosave.snapshot } };
 			readStored();
 		});
 	});

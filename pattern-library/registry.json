@@ -9844,11 +9844,11 @@
 			],
 			"code": [
 				{
-					"path": "src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.ts",
-					"note": "Framework-free save queue owned by the document"
+					"path": "src/lib/state/document-autosave.ts",
+					"note": "Framework-free save queue owned by the document, generic over its content"
 				},
 				{
-					"path": "src/lib/components/desk/panels/spreadsheet/spreadsheet-drafts.ts",
+					"path": "src/lib/state/document-drafts.ts",
 					"note": "One localStorage slot per writer; siblings offered, never applied"
 				},
 				{
@@ -9862,7 +9862,7 @@
 			],
 			"tests": [
 				{
-					"path": "src/lib/components/desk/panels/spreadsheet/spreadsheet-autosave.test.ts"
+					"path": "src/lib/state/document-autosave.test.ts"
 				},
 				{
 					"path": "src/routes/api/desk/files/[id]/server.test.ts"

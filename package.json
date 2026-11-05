@@ -64,6 +64,7 @@
 		"pim:build": "bun run scripts/pim/build.ts",
 		"asset:produce": "bun run scripts/asset-production/produce.ts",
 		"asset:bench": "bun run scripts/asset-production/bench.ts",
+		"attributes:bench": "bun run scripts/dynamic-attributes/bench.ts",
 		"pwa:icons": "bun run scripts/pwa/generate-icons.ts",
 		"patterns:validate": "bun run pattern-library/validate.ts",
 		"mcp:excerpts:build": "bun run scripts/mcp/build-public-excerpts.ts",

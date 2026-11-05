@@ -32,8 +32,9 @@ const dock = getDockContext();
 const panelMenus = getPanelMenus();
 const bus = getDeskBus();
 const fileId = $derived(fileIdOfPanel(panelId));
-let session = $state<RecordSession>();
-let save = $state<RecordSession['autosave']['snapshot']>();
+// Raw: the session carries its own reactivity, and its snapshot is replaced, never mutated.
+let session = $state.raw<RecordSession>();
+let save = $state.raw<RecordSession['autosave']['snapshot']>();
 
 function flush() {
 	void session?.autosave.flush();

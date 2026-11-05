@@ -183,7 +183,9 @@ function deskLayout() {
 			panelId: panel.id,
 			label: panel.label,
 			...(fileId ? { fileId } : {}),
-			...(panel.type === 'spreadsheet' || panel.type === 'markdown' ? { fileType: panel.type } : {}),
+			...(panel.type === 'spreadsheet' || panel.type === 'markdown' || panel.type === 'record'
+				? { fileType: panel.type }
+				: {}),
 		});
 	}
 	return layout.slice(0, DESK_LAYOUT_MAX_PANELS);
