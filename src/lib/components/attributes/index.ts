@@ -7,3 +7,11 @@ export {
 	type AttributeControls,
 	coreAttributeControls,
 } from './controls.ts';
+export { default as RecordSaveStatus } from './RecordSaveStatus.svelte';
+export {
+	acceptsAttributeRecord,
+	createRecordSession,
+	RECORD_DRAFT_NAMESPACE,
+	type RecordSession,
+	type RecordSessionOptions,
+} from './record-session.svelte.ts';

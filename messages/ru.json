@@ -3379,5 +3379,19 @@
 	"attributes_select_options": "Варианты",
 	"attributes_select_remove_option": "Удалить вариант «{label}»",
 	"attributes_unknown_kind": "Тип «{kind}» здесь неизвестен. Значение сохранено без изменений.",
-	"attributes_unlabelled": "безымянный атрибут"
+	"attributes_unlabelled": "безымянный атрибут",
+	"attributes_save_conflict": "Изменено в другом месте. Ваши правки сохранены; сохранение приостановлено.",
+	"attributes_save_merge": "Объединить",
+	"attributes_save_download": "Скачать мою копию",
+	"attributes_save_discard_reload": "Отменить мои правки и перезагрузить",
+	"attributes_save_failed": "Не удалось сохранить. Ваши правки ожидают отправки.",
+	"attributes_save_retry": "Повторить сохранение",
+	"attributes_save_saving": "Сохранение…",
+	"attributes_save_unsaved": "Несохранённые изменения",
+	"attributes_save_saved": "Сохранено",
+	"attributes_save_merged_clashes": "Объединено. В конфликтах ({count}) оставлена ваша версия.",
+	"attributes_save_backup_failed": "Локальная копия недоступна. Не закрывайте вкладку до сохранения.",
+	"attributes_save_recoverable": "Черновики для восстановления (возможно, из другой вкладки):",
+	"attributes_save_recover": "Восстановить {time}",
+	"attributes_save_dismiss": "Скрыть"
 }

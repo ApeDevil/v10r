@@ -7,6 +7,7 @@ import { ExplorerPanel } from '#lib/components/desk/panels/explorer/index.ts';
 import IOLogPanel from '#lib/components/desk/panels/io-log/IOLogPanel.svelte';
 import { MarkdownPanel } from '#lib/components/desk/panels/markdown/index.ts';
 import { PreviewPanel } from '#lib/components/desk/panels/preview/index.ts';
+import { RecordPanel } from '#lib/components/desk/panels/record/index.ts';
 import { SpreadsheetPanel } from '#lib/components/desk/panels/spreadsheet/index.ts';
 import { DESK_ACTIVITY_BAR_ITEMS, DESK_PANEL_TYPES, DESK_PANELS } from '#lib/desk/panels.ts';
 import { getToast } from '#lib/state/toast.svelte.ts';
@@ -143,6 +144,8 @@ function getPanelType(panelId: string): string | undefined {
 					<SpreadsheetPanel {panelId} />
 				{:else if type === 'markdown'}
 					<MarkdownPanel {panelId} />
+				{:else if type === 'record'}
+					<RecordPanel {panelId} />
 				{:else if type === 'io-log'}
 					<IOLogPanel {panelId} />
 				{:else}

@@ -13,7 +13,27 @@ const SPREADSHEET_CAPABILITIES: NodeCapability[] = [
 
 const MARKDOWN_CAPABILITIES: NodeCapability[] = ['open', 'open-new-panel', 'rename', 'move', 'ai-context', 'delete'];
 
-const FOLDER_CAPABILITIES: NodeCapability[] = ['rename', 'move', 'delete', 'new-folder', 'new-spreadsheet'];
+/** A record file: no duplicate yet (a copy would need fresh attribute ids to stay distinct records). */
+const RECORD_CAPABILITIES: NodeCapability[] = ['open', 'open-new-panel', 'rename', 'move', 'ai-context', 'delete'];
+
+const FOLDER_CAPABILITIES: NodeCapability[] = [
+	'rename',
+	'move',
+	'delete',
+	'new-folder',
+	'new-spreadsheet',
+	'new-record',
+];
+
+/** How each desk file type looks in the tree and what its context menu offers. */
+const FILE_PRESENTATION: Record<
+	FileListItem['type'],
+	{ icon: string; iconColor: string; capabilities: NodeCapability[] }
+> = {
+	spreadsheet: { icon: 'i-lucide-sheet', iconColor: 'var(--color-success)', capabilities: SPREADSHEET_CAPABILITIES },
+	markdown: { icon: 'i-lucide-file-text', iconColor: 'var(--color-primary)', capabilities: MARKDOWN_CAPABILITIES },
+	record: { icon: 'i-lucide-list-tree', iconColor: 'var(--color-secondary)', capabilities: RECORD_CAPABILITIES },
+};
 
 export function dataRootNode(): ExplorerNode {
 	return {
@@ -25,7 +45,7 @@ export function dataRootNode(): ExplorerNode {
 		icon: 'i-lucide-database',
 		iconColor: 'var(--color-warning)',
 		isFolder: true,
-		capabilities: new Set<NodeCapability>(['new-folder', 'new-spreadsheet']),
+		capabilities: new Set<NodeCapability>(['new-folder', 'new-spreadsheet', 'new-record']),
 		sortKey: '0_2_data',
 	};
 }
@@ -47,17 +67,17 @@ export function adaptDeskFolders(folders: FolderListItem[]): ExplorerNode[] {
 
 export function adaptDeskFiles(files: FileListItem[]): ExplorerNode[] {
 	return files.map((f) => {
-		const isMarkdown = f.type === 'markdown';
+		const look = FILE_PRESENTATION[f.type];
 		return {
 			id: f.id,
 			parentId: f.folderId ?? 'virtual:data',
 			source: 'desk-file' as const,
 			sourceData: f as unknown as Record<string, unknown>,
 			label: f.name,
-			icon: isMarkdown ? 'i-lucide-file-text' : 'i-lucide-sheet',
-			iconColor: isMarkdown ? 'var(--color-primary)' : 'var(--color-success)',
+			icon: look.icon,
+			iconColor: look.iconColor,
 			isFolder: false,
-			capabilities: new Set<NodeCapability>(isMarkdown ? MARKDOWN_CAPABILITIES : SPREADSHEET_CAPABILITIES),
+			capabilities: new Set<NodeCapability>(look.capabilities),
 			aiContext: f.aiContext,
 			sortKey: `1_${f.name.toLowerCase()}`,
 		};

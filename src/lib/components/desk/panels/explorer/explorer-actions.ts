@@ -438,20 +438,22 @@ export async function dispatchNewFolder(state: ExplorerState, node: ExplorerNode
  * The created file is passed back via `onCreated` so the panel can open it in
  * the dock — keeps DOM/dock concerns out of this module.
  */
-export async function dispatchNewSpreadsheet(
+/** Create an empty desk file of `type` in the node's folder, then hand it to `onCreated` to open. */
+export async function dispatchNewDeskFile(
 	_state: ExplorerState,
 	node: ExplorerNode,
 	ctx: ActionContext,
 	onCreated: (file: FileListItem) => void,
+	type: 'spreadsheet' | 'record' = 'spreadsheet',
 ): Promise<void> {
 	const folderId = node.source === 'virtual' ? null : node.id;
 	try {
 		const res = await apiFetch('/api/desk/files', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ type: 'spreadsheet', name: 'Untitled', folderId }),
+			body: JSON.stringify({ type, name: 'Untitled', folderId }),
 		});
-		if (!res.ok) throw new Error('Failed to create spreadsheet');
+		if (!res.ok) throw new Error(`Failed to create ${type}`);
 		const {
 			data: { file },
 		} = (await res.json()) as {
@@ -462,7 +464,7 @@ export async function dispatchNewSpreadsheet(
 		await ctx.refresh();
 		onCreated({
 			id: file.id,
-			type: 'spreadsheet',
+			type,
 			name: file.name,
 			folderId: file.folderId ?? null,
 			aiContext: false,
@@ -470,6 +472,6 @@ export async function dispatchNewSpreadsheet(
 			updatedAt: file.updatedAt,
 		});
 	} catch (e) {
-		ctx.setError(e instanceof Error ? e.message : 'Failed to create spreadsheet');
+		ctx.setError(e instanceof Error ? e.message : `Failed to create ${type}`);
 	}
 }

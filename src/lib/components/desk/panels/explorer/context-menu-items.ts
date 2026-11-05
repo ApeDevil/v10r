@@ -39,6 +39,7 @@ export interface ContextMenuCallbacks {
 	onCopyUrl?: (node: ExplorerNode) => void;
 	onNewFolder?: (node: ExplorerNode) => void;
 	onNewSpreadsheet?: (node: ExplorerNode) => void;
+	onNewRecord?: (node: ExplorerNode) => void;
 	onNewPost?: (node: ExplorerNode) => void;
 	/** Open the "Move to…" dialog for a node. */
 	onMoveRequest?: (node: ExplorerNode) => void;
@@ -97,6 +98,7 @@ const GROUPS: CapabilityItemDef[][] = [
 	[
 		{ capability: 'new-folder', label: 'New Folder', icon: 'i-lucide-folder-plus', action: 'newFolder' },
 		{ capability: 'new-spreadsheet', label: 'New Spreadsheet', icon: 'i-lucide-sheet', action: 'newSpreadsheet' },
+		{ capability: 'new-record', label: 'New Record', icon: 'i-lucide-list-tree', action: 'newRecord' },
 		{ capability: 'new-post', label: 'New Post', icon: 'i-lucide-plus', action: 'newPost' },
 	],
 	// Group 6: Destructive
@@ -154,6 +156,7 @@ export function dispatchMenuAction(action: string, node: ExplorerNode, callbacks
 		copyUrl: 'onCopyUrl',
 		newFolder: 'onNewFolder',
 		newSpreadsheet: 'onNewSpreadsheet',
+		newRecord: 'onNewRecord',
 		newPost: 'onNewPost',
 		moveRequest: 'onMoveRequest',
 	};

@@ -3379,5 +3379,19 @@
 	"attributes_select_options": "Optionen",
 	"attributes_select_remove_option": "Option {label} entfernen",
 	"attributes_unknown_kind": "Der Typ „{kind}“ ist hier unbekannt. Sein Wert bleibt unverändert.",
-	"attributes_unlabelled": "unbenanntes Attribut"
+	"attributes_unlabelled": "unbenanntes Attribut",
+	"attributes_save_conflict": "Woanders geändert. Deine Änderungen bleiben erhalten; das Speichern ist pausiert.",
+	"attributes_save_merge": "Beide zusammenführen",
+	"attributes_save_download": "Meine Kopie herunterladen",
+	"attributes_save_discard_reload": "Meine verwerfen und neu laden",
+	"attributes_save_failed": "Speichern fehlgeschlagen. Deine Änderungen sind noch ausstehend.",
+	"attributes_save_retry": "Erneut speichern",
+	"attributes_save_saving": "Speichert…",
+	"attributes_save_unsaved": "Ungespeicherte Änderungen",
+	"attributes_save_saved": "Gespeichert",
+	"attributes_save_merged_clashes": "Zusammengeführt. Bei {count} Konflikt(en) blieb deine Fassung.",
+	"attributes_save_backup_failed": "Lokale Sicherung nicht verfügbar. Lass diesen Tab bis zum Speichern offen.",
+	"attributes_save_recoverable": "Wiederherstellbare Entwürfe (evtl. aus einem anderen offenen Tab):",
+	"attributes_save_recover": "{time} wiederherstellen",
+	"attributes_save_dismiss": "Verwerfen"
 }

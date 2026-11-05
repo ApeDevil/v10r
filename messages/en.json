@@ -3379,5 +3379,19 @@
 	"attributes_select_options": "Options",
 	"attributes_select_remove_option": "Remove option {label}",
 	"attributes_unknown_kind": "Type “{kind}” is not known here. Its value is kept unchanged.",
-	"attributes_unlabelled": "unnamed attribute"
+	"attributes_unlabelled": "unnamed attribute",
+	"attributes_save_conflict": "Changed elsewhere. Your edits are kept; saving is paused.",
+	"attributes_save_merge": "Merge both",
+	"attributes_save_download": "Download my copy",
+	"attributes_save_discard_reload": "Discard mine and reload",
+	"attributes_save_failed": "Saving failed. Your edits are still pending.",
+	"attributes_save_retry": "Retry save",
+	"attributes_save_saving": "Saving…",
+	"attributes_save_unsaved": "Unsaved changes",
+	"attributes_save_saved": "Saved",
+	"attributes_save_merged_clashes": "Merged. {count} clash(es) kept your version.",
+	"attributes_save_backup_failed": "Local backup unavailable. Keep this tab open until saved.",
+	"attributes_save_recoverable": "Recoverable drafts (may belong to another open tab):",
+	"attributes_save_recover": "Recover {time}",
+	"attributes_save_dismiss": "Dismiss"
 }

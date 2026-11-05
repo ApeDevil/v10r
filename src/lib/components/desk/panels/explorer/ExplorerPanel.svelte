@@ -6,6 +6,7 @@ import { filePanelId } from '#lib/components/desk/file-panel.ts';
 import type { PanelDefinition } from '#lib/components/desk/index.ts';
 import { focusPanel, getDeskBus, getDockContext, getPanelMenus } from '#lib/components/desk/index.ts';
 import { Button, Spinner } from '#lib/components/primitives/index.ts';
+import { DESK_PANELS } from '#lib/desk/panels.ts';
 import { dataRootNode } from './adapters';
 import type { ContextMenuCallbacks } from './context-menu-items';
 import ExplorerBreadcrumb from './ExplorerBreadcrumb.svelte';
@@ -17,8 +18,8 @@ import {
 	dispatchDeleteLeaf,
 	dispatchDuplicate,
 	dispatchMove,
+	dispatchNewDeskFile,
 	dispatchNewFolder,
-	dispatchNewSpreadsheet,
 	dispatchRename,
 	dispatchToggleAiContext,
 } from './explorer-actions';
@@ -165,7 +166,11 @@ async function handleNewFolder(node: ExplorerNode) {
 }
 
 async function handleNewSpreadsheet(node: ExplorerNode) {
-	await dispatchNewSpreadsheet(explorerState, node, actionContext, openFilePanel);
+	await dispatchNewDeskFile(explorerState, node, actionContext, openFilePanel, 'spreadsheet');
+}
+
+async function handleNewRecord(node: ExplorerNode) {
+	await dispatchNewDeskFile(explorerState, node, actionContext, openFilePanel, 'record');
 }
 
 let moveToDialogSource = $state<ExplorerNode | null>(null);
@@ -186,6 +191,7 @@ const menuCallbacks: ContextMenuCallbacks = {
 	onCopyUrl: handleCopyUrl,
 	onNewFolder: handleNewFolder,
 	onNewSpreadsheet: handleNewSpreadsheet,
+	onNewRecord: handleNewRecord,
 	onNewPost: handleNewPost,
 	onMoveRequest(node) {
 		moveToDialogSource = node;
@@ -225,14 +231,14 @@ function selectAsset(a: AssetListItem) {
  * canonical id is reused, so a file already open is focused rather than opened twice.
  */
 function openFilePanel(f: FileListItem, suffix = '') {
-	const panelType = f.type === 'markdown' ? 'markdown' : 'spreadsheet';
+	const panelType = f.type;
 	const panelId = `${filePanelId(panelType, f.id)}${suffix}`;
 	if (!suffix && focusPanel(dock, panelId)) return;
 	const panel: PanelDefinition = {
 		id: panelId,
 		type: panelType,
 		label: f.name,
-		icon: f.type === 'markdown' ? 'i-lucide-file-text' : 'i-lucide-sheet',
+		icon: DESK_PANELS[f.type].icon,
 		closable: true,
 		meta: { fileId: f.id },
 	};
@@ -394,6 +400,7 @@ const explorerMenus = $derived<MenuBarMenu[]>([
 				},
 			},
 			{ label: 'New Spreadsheet', icon: 'i-lucide-sheet', onSelect: () => handleNewSpreadsheet(dataAnchor()) },
+			{ label: 'New Record', icon: 'i-lucide-list-tree', onSelect: () => handleNewRecord(dataAnchor()) },
 			{ label: 'New Folder', icon: 'i-lucide-folder-plus', onSelect: () => handleNewFolder(inferSelectedAnchor()) },
 			{ type: 'separator' },
 			{ label: 'Import Markdown...', icon: 'i-lucide-file-up', onSelect: handleImportClick },

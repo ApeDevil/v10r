@@ -90,6 +90,21 @@ The bot sees the panels you **pin to AI context** (Explorer → *Pin to AI Conte
 **Clear All** from the Sheet menu empties the whole grid and the autosave follows — treat it as destructive.
 `,
 	},
+	record: {
+		title: 'Record',
+		description: 'A record whose attributes you define as you go',
+		icon: 'i-lucide-list-tree',
+		notes: `
+A record describes one thing with **attributes you name yourself** — a label, a type and a value per row. Nothing is predefined: press **Add** for a text attribute, or pick another type first.
+
+- **Rename freely**: an attribute's identity is never its label, so renaming keeps its value and place.
+- **Change a type safely**: a value that does not convert exactly is kept beside the new one until you restore or discard it.
+- **Remove without fear**: removed attributes stay under *Recently removed* and come back in place.
+- **Reorder** with the arrow buttons or **Alt+Shift+↑/↓**.
+
+Edits save automatically. If the record changed in another tab, saving pauses and you choose: merge both, download your copy, or reload.
+`,
+	},
 	markdown: {
 		title: 'Document',
 		description: 'A read-only view of a desk document',
