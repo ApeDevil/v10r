@@ -2316,6 +2316,7 @@
 	"showcase_ui_tab_layouts": "Layouts",
 	"showcase_ui_tab_tables": "Tabellen",
 	"showcase_ui_tab_menus": "Menüs",
+	"showcase_ui_tab_cards": "Karten",
 	"showcase_ui_tab_splits": "Splits",
 	"showcase_ui_tab_splits_resizable": "Größenveränderbar",
 	"showcase_ui_tab_splits_reorderable": "Umsortierbar",
@@ -3432,5 +3433,6 @@
 	"showcase_dynamic_attributes_kind_rating": "Bewertung",
 	"showcase_dynamic_attributes_rating_star": "{count} von 5",
 	"attributes_kind_of": "Typ von {label}",
-	"attributes_add_kind": "Typ des neuen Attributs"
+	"attributes_add_kind": "Typ des neuen Attributs",
+	"composites_latent_card_actions_aria": "Aktionen für {title}"
 }

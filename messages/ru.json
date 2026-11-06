@@ -2316,6 +2316,7 @@
 	"showcase_ui_tab_layouts": "Макеты",
 	"showcase_ui_tab_tables": "Таблицы",
 	"showcase_ui_tab_menus": "Меню",
+	"showcase_ui_tab_cards": "Карточки",
 	"showcase_ui_tab_splits": "Разделители",
 	"showcase_ui_tab_splits_resizable": "Изменяемые",
 	"showcase_ui_tab_splits_reorderable": "Переставляемые",
@@ -3432,5 +3433,6 @@
 	"showcase_dynamic_attributes_kind_rating": "Оценка",
 	"showcase_dynamic_attributes_rating_star": "{count} из 5",
 	"attributes_kind_of": "Тип: {label}",
-	"attributes_add_kind": "Тип нового атрибута"
+	"attributes_add_kind": "Тип нового атрибута",
+	"composites_latent_card_actions_aria": "Действия для «{title}»"
 }

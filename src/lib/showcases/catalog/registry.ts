@@ -156,6 +156,11 @@ export const showcases: ShowcaseCard[] = [
 				docs: [{ href: '/docs/blueprint/design/components', label: 'Components' }],
 			},
 			{
+				label: m.showcase_ui_tab_cards,
+				href: '/showcases/ui/cards',
+				docs: [{ href: '/docs/blueprint/design/latent-cards', label: 'Latent Cards' }],
+			},
+			{
 				label: m.showcase_ui_tab_splits,
 				href: '/showcases/ui/splits',
 				docs: [{ href: '/docs/blueprint/design/components', label: 'Components' }],
