@@ -36,9 +36,15 @@ const latentCardDoc: ComponentDoc = {
 			type: 'Snippet',
 			description: 'Level 2: a ScrollArea, Accordion or Carousel the user opens on purpose.',
 		},
+		{
+			name: 'engageAtCenter',
+			type: 'boolean',
+			default: 'true',
+			description: 'On touch screens, engage while this card is nearest the screen center.',
+		},
 	],
 	notes:
-		'Hover engages only under `(hover: hover)`; `:focus-within` engages for the keyboard without script; a touch tap on the surface pins the card until an outside tap or Escape. Resting actions are never disabled. Pattern: `docs/blueprint/design/latent-cards.md`.',
+		'Hover engages only under `(hover: hover)`; on touch screens the card nearest the screen center engages while scrolling; `:focus-within` engages for the keyboard without script; a touch tap on the surface pins the card until an outside tap or Escape. Resting actions are never disabled. Pattern: `docs/blueprint/design/latent-cards.md`.',
 };
 
 let lastAction = $state('none yet');
@@ -78,8 +84,8 @@ const projects = [
 	<h2 class="section-title">Latent Actions</h2>
 	<p class="section-description">
 		Every card offers the same three actions. At rest they sit neutral, in their final place,
-		readable and enabled. Hover a card, tab into it, or tap its surface on a touch screen and the
-		card engages: the actions take their colour. Nothing moves, nothing appears from nowhere, and
+		readable and enabled. Hover a card or tab into it and the card engages. On a phone, just scroll:
+		the card nearest the middle of the screen engages: the actions take their colour. Nothing moves, nothing appears from nowhere, and
 		a resting action still works on the first click.
 	</p>
 

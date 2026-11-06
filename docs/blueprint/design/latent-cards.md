@@ -37,25 +37,37 @@ one card sees that card's actions light up, and only that card's.
 4. **Hover hints, a deliberate act opens.** Level 2 opens by click, scroll, swipe or keyboard.
    Engagement may tint the depth divider as a hint. Content that opens on hover fires by
    accident when the pointer crosses a grid, and does not exist on touch.
-5. **Hover only where hover exists.** Hover styles sit under `@media (hover: hover)`. On touch,
-   a tap on the card's surface (not on a control) pins it engaged; a tap elsewhere or Escape
-   releases it. A tap on an action simply runs the action, pinned or not.
+5. **Hover only where hover exists; on touch, the center engages.** Hover styles sit under
+   `@media (hover: hover)`. On a touch screen the card nearest the screen's center engages as
+   the user scrolls, and the rest stay latent: one spotlight moving down the list. A tap on a
+   card's surface (not on a control) pins it engaged; a tap elsewhere or Escape releases it. A
+   tap on an action simply runs the action, engaged or not.
 6. **Keyboard is first-class.** `:focus-within` engages the card the moment focus enters it,
    before hydration and with no script.
 
 ## How it is built
 
-The engaged look is pure CSS, so it costs nothing at rest and works before hydration:
+Hover and focus engagement are pure CSS, so they cost nothing at rest and work before
+hydration; touch adds two small pieces of state:
 
 | Signal | Mechanism |
 |---|---|
 | Mouse hover | `.latent-card:hover` inside `@media (hover: hover)` |
 | Keyboard focus | `.latent-card:focus-within` |
-| Touch / pen tap on the surface | `data-pinned`, the component's only state |
+| Touch scroll | `data-centered`, set by the page-wide center tracker under `(hover: none) and (pointer: coarse)` |
+| Touch / pen tap on the surface | `data-pinned` |
 
 The touch pin's rule is a pure function (`nextPinned`, `isSurfaceTap` in `latent-card.ts`): a
 surface tap toggles, an outside tap or Escape releases, a mouse never pins (it already
-hovers), a tap on a control belongs to the control. Unit-tested in `latent-card.test.ts`.
+hovers), a tap on a control belongs to the control.
+
+Center engagement is a pure rule too (`pickCenteredCard`): among the cards whose own center
+is on screen, the one nearest the viewport's center line wins, so a card that only peeks in at
+an edge never takes the spotlight. One tracker (`center-engagement.ts`) serves every card on
+the page — one passive scroll listener, one resize listener, measured at most once per
+animation frame — and runs only while the touch media query matches, so a desktop never pays
+for it. A card that stands alone opts out with `engageAtCenter={false}`. Both rules are
+unit-tested in `latent-card.test.ts`.
 
 Actions are `Button` (ghost) controls with a `tone`: `neutral`, `primary` (the card's main
 way forward) or `danger`. The tone shows only when engaged; at rest every action is the same

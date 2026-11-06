@@ -20,7 +20,7 @@ const rules = [
 	},
 	{
 		rule: 'Hover only where hover exists',
-		why: 'Hover styles sit under (hover: hover). Touch engages by tapping the card surface; a tap elsewhere or Escape releases it.',
+		why: 'Hover styles sit under (hover: hover). On touch, the card nearest the screen center engages as you scroll; tapping a card surface pins it, a tap elsewhere or Escape releases it.',
 	},
 	{
 		rule: 'Keyboard is first-class',
