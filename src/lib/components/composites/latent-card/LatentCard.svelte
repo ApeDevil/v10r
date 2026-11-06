@@ -3,6 +3,9 @@
  * Latent Card — a card whose actions rest neutral and take their colour when the card
  * is engaged (hover, keyboard focus, or a touch tap on its surface).
  *
+ * On touch screens the card nearest the screen's center engages as the user scrolls
+ * (`center-engagement.ts`), so a list reads as one spotlight moving down the page.
+ *
  * Three disclosure levels, one rule each:
  * - Level 0, the card (`media`, title, `children`): always shown.
  * - Level 1, the latent actions: always present and operable, emphasised on engagement.
@@ -15,6 +18,7 @@ import type { Snippet } from 'svelte';
 import { Button } from '#lib/components/primitives/index.ts';
 import * as m from '#lib/paraglide/messages.js';
 import { cn } from '#lib/utils/cn.ts';
+import { trackCenterEngagement } from './center-engagement';
 import {
 	INTERACTIVE_SELECTOR,
 	isSurfaceTap,
@@ -39,6 +43,11 @@ interface Props {
 	children?: Snippet;
 	/** Level 2 depth: content the user opens or scrolls on purpose. */
 	depth?: Snippet;
+	/**
+	 * On touch screens, engage this card while it is the one nearest the screen's center
+	 * as the user scrolls. Turn off for a card that stands alone.
+	 */
+	engageAtCenter?: boolean;
 	class?: string;
 }
 
@@ -52,6 +61,7 @@ let {
 	media,
 	children,
 	depth,
+	engageAtCenter = true,
 	class: className,
 }: Props = $props();
 
@@ -60,6 +70,12 @@ const titleId = `${id}-title`;
 
 let card = $state<HTMLElement | null>(null);
 let pinned = $state(false);
+let centered = $state(false);
+
+$effect(() => {
+	if (!card || !engageAtCenter) return;
+	return trackCenterEngagement(card, (value) => (centered = value));
+});
 
 function onPointerDown(event: PointerEvent) {
 	const target = event.target as Element | null;
@@ -120,6 +136,7 @@ $effect(() => {
 	bind:this={card}
 	class={cn('latent-card', className)}
 	data-pinned={pinned || undefined}
+	data-centered={centered || undefined}
 	aria-labelledby={titleId}
 	onpointerdown={onPointerDown}
 	onkeydown={onKeyDown}
@@ -257,7 +274,8 @@ $effect(() => {
 		height: 1rem;
 	}
 
-	/* ── Engaged: hover (only where hover exists), focus inside, touch pin ── */
+	/* ── Engaged: hover (only where hover exists), focus inside, touch pin,
+	   and on touch screens the card nearest the screen's center ─────────── */
 	@media (hover: hover) {
 		.latent-card:hover {
 			border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
@@ -282,28 +300,33 @@ $effect(() => {
 	}
 
 	.latent-card:focus-within,
-	.latent-card[data-pinned] {
+	.latent-card[data-pinned],
+	.latent-card[data-centered] {
 		border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
 		box-shadow: var(--shadow-md);
 	}
 
 	.latent-card:focus-within :global(.latent-action),
-	.latent-card[data-pinned] :global(.latent-action) {
+	.latent-card[data-pinned] :global(.latent-action),
+	.latent-card[data-centered] :global(.latent-action) {
 		color: var(--color-fg);
 	}
 
 	.latent-card:focus-within :global(.latent-action[data-tone='primary']),
-	.latent-card[data-pinned] :global(.latent-action[data-tone='primary']) {
+	.latent-card[data-pinned] :global(.latent-action[data-tone='primary']),
+	.latent-card[data-centered] :global(.latent-action[data-tone='primary']) {
 		color: var(--color-primary);
 	}
 
 	.latent-card:focus-within :global(.latent-action[data-tone='danger']),
-	.latent-card[data-pinned] :global(.latent-action[data-tone='danger']) {
+	.latent-card[data-pinned] :global(.latent-action[data-tone='danger']),
+	.latent-card[data-centered] :global(.latent-action[data-tone='danger']) {
 		color: var(--color-error);
 	}
 
 	.latent-card:focus-within .latent-depth,
-	.latent-card[data-pinned] .latent-depth {
+	.latent-card[data-pinned] .latent-depth,
+	.latent-card[data-centered] .latent-depth {
 		border-top-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
 	}
 

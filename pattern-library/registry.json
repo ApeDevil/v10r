@@ -1846,7 +1846,7 @@
 			"tier": "deep",
 			"title": "Latent Cards — actions that rest neutral and wake on intent",
 			"category": "ui",
-			"summary": "A card whose actions sit in their final place, neutral but enabled, and take their colour when the user engages the card: hover (only under hover: hover), keyboard focus via :focus-within, or a touch tap on the card's surface that pins it until an outside tap or Escape. Three disclosure levels: the card (always), latent actions (always operable, emphasised on engagement), and depth (a scroll area, accordion or carousel) opened only by a deliberate act. Explosive Discovery at the scale of one card.",
+			"summary": "A card whose actions sit in their final place, neutral but enabled, and take their colour when the user engages the card: hover (only under hover: hover), keyboard focus via :focus-within, on touch screens the card nearest the screen's center as the user scrolls, or a touch tap on the card's surface that pins it until an outside tap or Escape. Three disclosure levels: the card (always), latent actions (always operable, emphasised on engagement), and depth (a scroll area, accordion or carousel) opened only by a deliberate act. Explosive Discovery at the scale of one card.",
 			"when_to_use": "A grid or list of comparable cards that each offer the same few actions, where showing every card's actions at full strength would turn the content into a wall of buttons.",
 			"avoid_when": [
 				"One or two actions dominate the card — show them at full strength",
@@ -1868,6 +1868,7 @@
 			"capabilities": [
 				"neutral-at-rest actions",
 				"hover, focus and touch engagement",
+				"center engagement while scrolling on touch",
 				"touch pin with outside-tap and Escape release",
 				"level-2 depth: scroll area, accordion, carousel"
 			],
@@ -1883,7 +1884,8 @@
 				"neutral actions",
 				"accordion card",
 				"carousel card",
-				"scroll area card"
+				"scroll area card",
+				"scroll spotlight"
 			],
 			"depends_on": ["ui-explosive-discovery", "ui-primitives"],
 			"docs": [
@@ -1903,7 +1905,11 @@
 				},
 				{
 					"path": "src/lib/components/composites/latent-card/latent-card.ts",
-					"note": "Action and tone types; the touch-pin rule (nextPinned, isSurfaceTap)"
+					"note": "Action and tone types; the touch-pin rule (nextPinned, isSurfaceTap) and the center rule (pickCenteredCard)"
+				},
+				{
+					"path": "src/lib/components/composites/latent-card/center-engagement.ts",
+					"note": "One page-wide tracker: passive scroll and resize, one measure per frame, only under (hover: none) and (pointer: coarse)"
 				}
 			],
 			"tests": [
@@ -1922,7 +1928,8 @@
 				"Engagement changes emphasis, never capability: no action exists only on hover, none is removed at rest",
 				"Actions hold their place in both looks; engaging a card never reflows the grid",
 				"Hover never opens level-2 depth; only a click, scroll, swipe or key does",
-				"Hover styles live under @media (hover: hover); keyboard engagement is :focus-within and needs no script"
+				"Hover styles live under @media (hover: hover); keyboard engagement is :focus-within and needs no script",
+				"On touch, at most one card is centered at a time, and only a card whose own center is on screen"
 			],
 			"emulation_notes": [
 				"Keep the engaged look in CSS; the only state is the touch pin, so the card works before hydration",
@@ -1931,7 +1938,7 @@
 			],
 			"risk": "low — frontend only",
 			"maturity": "proven",
-			"verifiedAt": "2026-11-05"
+			"verifiedAt": "2026-11-06"
 		},
 		{
 			"id": "ui-design-tokens",

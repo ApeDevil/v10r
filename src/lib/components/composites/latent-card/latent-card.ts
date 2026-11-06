@@ -62,3 +62,41 @@ export function isSurfaceTap(pointerType: string, onInteractiveControl: boolean)
 /** Elements whose taps belong to themselves, not to the card's surface. */
 export const INTERACTIVE_SELECTOR =
 	'a[href], button, input, select, textarea, summary, [role="button"], [role="tab"], [role="slider"], [contenteditable="true"], [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Center engagement — where hover does not exist, scrolling engages instead.
+ *
+ * On a touch screen there is no hover to say which card the user is reaching for, but
+ * the card they are reading sits near the middle of the screen. Among the cards on
+ * screen, the one whose center is nearest the viewport's center line is engaged; the
+ * rest stay latent. Only one card is centered at a time, so a scrolling list reads as a
+ * single spotlight moving down the page.
+ */
+export interface CardSpan {
+	top: number;
+	bottom: number;
+}
+
+/**
+ * Index of the centered card, or -1 when none qualifies. A card qualifies when its own
+ * center is on screen (between 0 and `viewportHeight`), so a card that only peeks in at
+ * an edge never steals the spotlight.
+ */
+export function pickCenteredCard(spans: readonly CardSpan[], viewportHeight: number): number {
+	const line = viewportHeight / 2;
+	let best = -1;
+	let bestDistance = Number.POSITIVE_INFINITY;
+	spans.forEach((span, i) => {
+		const center = (span.top + span.bottom) / 2;
+		if (center < 0 || center > viewportHeight) return;
+		const distance = Math.abs(center - line);
+		if (distance < bestDistance) {
+			best = i;
+			bestDistance = distance;
+		}
+	});
+	return best;
+}
+
+/** The media query under which center engagement runs: no hover, coarse pointer. */
+export const CENTER_ENGAGEMENT_QUERY = '(hover: none) and (pointer: coarse)';
