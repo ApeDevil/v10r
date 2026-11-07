@@ -15,7 +15,7 @@ export const GET: RequestHandler = async () => {
 			'Disallow: /api/',
 			'Disallow: /account/',
 			'',
-			// The Impressum is deliberately NOT disallowed for general crawlers.
+			// The Impressum and the Datenschutzerklärung are deliberately NOT disallowed for general crawlers.
 			// It serves `X-Robots-Tag: noindex` — and a crawler that is blocked from
 			// fetching never sees the noindex, which is how a bare URL still ends up
 			// in an index via a backlink. Let them read it, then obey the noindex.
@@ -25,7 +25,7 @@ export const GET: RequestHandler = async () => {
 			// v10r is a pattern library that WANTS to be read by agents; the public
 			// MCP endpoint exists for exactly that. So these agents keep full access
 			// to the patterns, docs and showcases. What they do not get is the
-			// Impressum, which carries a private postal address that has no business
+			// Impressum and the Datenschutzerklärung, which carry a private postal address that has no business
 			// in a training corpus or a scraped lead list. `Disallow` (not noindex)
 			// because it stops the fetch itself — the only thing that keeps the
 			// address out of a corpus is never sending it.
@@ -59,6 +59,9 @@ export const GET: RequestHandler = async () => {
 			'Disallow: /impressum',
 			'Disallow: /de/impressum',
 			'Disallow: /ru/impressum',
+			'Disallow: /datenschutz',
+			'Disallow: /de/datenschutz',
+			'Disallow: /ru/datenschutz',
 			'',
 			// A comment, not an invented directive — no `Llms-Txt:` directive is
 			// registered anywhere, and unknown directives are ignored anyway. The

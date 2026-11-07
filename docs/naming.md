@@ -22,6 +22,8 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | An AI model vendor | `provider` | — |
 | An external notification transport | `channel` | `NotificationProvider`, `notifications/providers/` |
 | An infrastructure service we depend on | `dependency` | monitoring `ProviderStatus` / `ProviderResult` |
+| The person who runs a deployment: Impressum provider, GDPR controller, DSA contact point | `siteOperator` (`#lib/server/legal`) | hard-coded identities on each legal page |
+| The placeholder controller the privacy showcase renders instead of a real identity | `templateController` (`#lib/showcases/privacy`) | — |
 | A job execution | `run` (owned by `jobs/`) | — |
 | A Neon branch maintenance action | `branch operation` | `dbops` `Run*` |
 | Which retriever produced a result | `RetrieverId` (field `retriever`) | `RetrieverLane` (field `lane`) |

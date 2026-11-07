@@ -79,7 +79,6 @@ export const variables = defineEnvVars({
 	DBOPS_AUTO_REFRESH_ENABLED: { schema: optional },
 	// Analytics, privacy and showcases
 	ANALYTICS_DEV_TRACKING: { schema: optional },
-	PRIVACY_CONTACT_EMAIL: { schema: optional },
 	EXTERNAL_SERVICE_LOCAL_URL: { schema: optional },
 	EXTERNAL_SERVICE_LOCAL_TOKEN: { schema: optional },
 	EXTERNAL_SERVICE_REMOTE_URL: { schema: optional },

@@ -598,7 +598,11 @@ Operator transparency: what the single admin can see and do, and the code-enforc
 
 ### /showcases/privacy
 
-The data-protection surface: controller, lawful basis, retention, and your rights.
+The data-protection surface as a pattern: controller block, lawful basis, retention, and the visitor's
+rights. The controller renders `templateController` placeholders, never a real identity (enforced by
+`src/lib/showcases/privacy/leak-gate.test.ts`). The binding legal pages of v10r.dev are `/impressum` and
+`/datenschutz`, both linked from the footer and both reading the `siteOperator` record in
+`#lib/server/legal`.
 
 | Tests | Stack |
 |-------|-------|

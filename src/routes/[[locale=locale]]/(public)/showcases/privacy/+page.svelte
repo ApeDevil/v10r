@@ -1,7 +1,9 @@
 <script lang="ts">
 import { NavSection } from '#lib/components/composites/index.ts';
 import { Tag } from '#lib/components/primitives/tag/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
+import { templateController } from '#lib/showcases/privacy/template-controller.ts';
 
 let { data } = $props();
 
@@ -68,7 +70,7 @@ const sections = $derived([
 <svelte:head>
 	<meta
 		name="description"
-		content="How v10r.dev handles your data: controller, lawful basis, retention, your rights."
+		content="A privacy-surface pattern: controller block, lawful basis per data category, live retention windows, data-subject rights."
 	/>
 </svelte:head>
 
@@ -78,10 +80,11 @@ const sections = $derived([
 	<section class="hero">
 		<h2 class="hero-title">A single operator, four principles, one place to verify them.</h2>
 		<p class="hero-body">
-			v10r.dev is a code template hosted by one person. The controller below decides what happens to your data,
-			and bears legal responsibility for it. Everything on the next four pages is derived from the live codebase
-			— if a retention window changes in <code>src/lib/server/retention/schedule.ts</code>, the number on this
-			page changes with it.
+			This is the privacy-surface pattern: the accountability page a deployment publishes for its visitors.
+			The data categories, cookies and rights on the next four pages describe what this codebase really does,
+			and every retention window is read from <code>src/lib/server/retention/schedule.ts</code>, so a changed
+			window changes the number on the page. The controller below is a template value: fill it from your own
+			operator record.
 		</p>
 	</section>
 
@@ -93,23 +96,27 @@ const sections = $derived([
 		<dl class="controller-grid">
 			<div class="controller-row">
 				<dt>Identity</dt>
-				<dd>ApeDevil (sole operator of v10r.dev)</dd>
+				<dd>{templateController.name}</dd>
+			</div>
+			<div class="controller-row">
+				<dt>Address</dt>
+				<dd>{templateController.address}</dd>
 			</div>
 			<div class="controller-row">
 				<dt>Contact</dt>
-				<dd><a href="mailto:{data.controllerEmail}">{data.controllerEmail}</a></dd>
+				<dd><a href="mailto:{templateController.email}">{templateController.email}</a></dd>
 			</div>
 			<div class="controller-row">
 				<dt>Scope</dt>
-				<dd>v10r is a public-facing template / sandbox. There is no commercial processing, no advertising network, and no third-party analytics shipped to the browser.</dd>
+				<dd>v10r is a public-facing template / sandbox. There is no commercial processing, no advertising network, and no third-party analytics in the browser before consent.</dd>
 			</div>
 			<div class="controller-row">
 				<dt>Supervisory authority</dt>
 				<dd>
-					<a href="https://www.bfdi.bund.de" target="_blank" rel="noreferrer noopener">
-						BfDI — Federal Commissioner for Data Protection
+					<a href={templateController.supervisoryAuthority.url} target="_blank" rel="noreferrer noopener">
+						{templateController.supervisoryAuthority.name}
 					</a>
-					<span class="muted">(Germany). You may also file with the authority of your habitual residence.</span>
+					<span class="muted">Visitors may also file with the authority of their habitual residence.</span>
 				</dd>
 			</div>
 		</dl>
@@ -152,9 +159,10 @@ const sections = $derived([
 	<aside class="disclaimer">
 		<span class="i-lucide-info" aria-hidden="true"></span>
 		<p>
-			v10r is a code template; this page describes the data handling of the operator running v10r.dev.
-			It is not legal advice. If you fork v10r and run your own deployment, you become the controller
-			for your visitors and must adapt this page to reflect your jurisdiction and processing.
+			This is a pattern, not legal advice. The binding privacy policy of v10r.dev is the
+			<a href={localizeHref('/datenschutz')}>Datenschutzerklärung</a>. If you fork v10r and run your own
+			deployment, you become the controller for your visitors and must adapt the policy to your jurisdiction
+			and processing.
 		</p>
 	</aside>
 </div>
@@ -405,6 +413,12 @@ const sections = $derived([
 		height: 1.125rem;
 		margin-top: 0.15rem;
 		color: var(--color-muted);
+	}
+
+	.disclaimer a {
+		color: var(--color-primary);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
 	}
 
 	.disclaimer p {

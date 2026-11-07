@@ -1,8 +1,9 @@
 <script lang="ts">
 import { Tag } from '#lib/components/primitives/tag/index.ts';
 import * as m from '#lib/paraglide/messages.js';
+import { templateController } from '#lib/showcases/privacy/template-controller.ts';
 
-let { data } = $props();
+const controllerEmail = templateController.email;
 
 interface Right {
 	article: string;
@@ -19,7 +20,7 @@ const rights: Right[] = [
 		title: 'Right of access',
 		icon: 'i-lucide-file-text',
 		what: 'A copy of the personal data we hold about you, plus the metadata required by Art. 15(1)(a–h): purposes, categories, recipients, retention, sources, and the existence of automated decision-making.',
-		how: `Email ${data.controllerEmail} from the address you used (or include the visitor ID hash you'd like inspected).`,
+		how: `Email ${controllerEmail} from the address you used (or include the visitor ID hash you'd like inspected).`,
 		expect: 'Reply within one month (Art. 12(3)).',
 	},
 	{
@@ -27,7 +28,7 @@ const rights: Right[] = [
 		title: 'Right to rectification',
 		icon: 'i-lucide-pencil',
 		what: 'Correction of inaccurate personal data, or completion of incomplete data.',
-		how: `Email ${data.controllerEmail} with the field and the correct value.`,
+		how: `Email ${controllerEmail} with the field and the correct value.`,
 		expect: 'Correction without undue delay; recipients informed where applicable.',
 	},
 	{
@@ -35,7 +36,7 @@ const rights: Right[] = [
 		title: 'Right to erasure',
 		icon: 'i-lucide-trash-2',
 		what: 'Deletion of personal data — feedback you submitted, an account you created, or telemetry rows still inside the retention window.',
-		how: `Email ${data.controllerEmail} stating what you'd like deleted.`,
+		how: `Email ${controllerEmail} stating what you'd like deleted.`,
 		expect: 'Deletion within one month, except where law requires retention. Confirmation by reply.',
 	},
 	{
@@ -51,7 +52,7 @@ const rights: Right[] = [
 		title: 'Right to portability',
 		icon: 'i-lucide-download',
 		what: 'A machine-readable export of personal data you provided directly (e.g. feedback you wrote, account email).',
-		how: `Email ${data.controllerEmail} requesting an export.`,
+		how: `Email ${controllerEmail} requesting an export.`,
 		expect: 'Reply with a JSON file. Anonymised telemetry is out of scope (no longer "personal data" once hashed).',
 	},
 	{
@@ -86,7 +87,7 @@ const rights: Right[] = [
 		<p>
 			These are not user requests we hope you'll never make — they're features the GDPR builds in for you,
 			and we honour them in plain text. The contact for every right below is
-			<a href="mailto:{data.controllerEmail}"><code>{data.controllerEmail}</code></a>.
+			<a href="mailto:{controllerEmail}"><code>{controllerEmail}</code></a>.
 		</p>
 	</header>
 

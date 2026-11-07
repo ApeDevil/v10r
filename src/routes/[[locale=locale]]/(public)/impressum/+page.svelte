@@ -21,22 +21,18 @@
  * `X-Robots-Tag` in +page.server.ts, the <meta> below, the AI-crawler block in
  * robots.txt, and absence from sitemap.xml.
  *
+ * The identity itself is the site-operator record (`#lib/server/legal`), shared
+ * with /datenschutz so the two legal pages cannot name different people.
+ *
  * NOTE: no schema.org/PostalAddress JSON-LD. Structured data would hand a
  * harvester a typed, parsed record instead of prose. Do not add it.
  */
 import { Card, PageHeader } from '#lib/components/composites/index.ts';
 import { Stack } from '#lib/components/layout/index.ts';
+import { localizeHref } from '#lib/i18n/index.ts';
 
-/**
- * Contact address, used for both the § 5 DDG contact and the DSA Art. 11/12
- * contact point.
- *
- * This is a personal mailbox. It WILL be harvested off this page — that is the
- * unavoidable cost of § 5 DDG requiring a working address in plain text. Moving
- * it to an own-domain alias (e.g. impressum@v10r.dev) later is a one-line change
- * here and makes the inevitable spam disposable instead of permanent.
- */
-const CONTACT_EMAIL = 'stas-k@gmx.de';
+let { data } = $props();
+const operator = $derived(data.operator);
 </script>
 
 <svelte:head>
@@ -53,30 +49,30 @@ const CONTACT_EMAIL = 'stas-k@gmx.de';
 			<section>
 				<h2>Angaben gemäß § 5 DDG</h2>
 				<address>
-					Stanislaw Kirpicnikow<br />
-					Menninghauser Str. 29<br />
-					42859 Remscheid<br />
-					Deutschland
+					{operator.name}<br />
+					{operator.street}<br />
+					{operator.postalCode} {operator.city}<br />
+					{operator.country}
 				</address>
 			</section>
 
 			<section>
 				<h2>Kontakt</h2>
 				<p>
-					E-Mail: <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>
+					E-Mail: <a href="mailto:{operator.email}">{operator.email}</a>
 				</p>
 			</section>
 
 			<section>
 				<h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
-				<p>Stanislaw Kirpicnikow, Anschrift wie oben</p>
+				<p>{operator.name}, Anschrift wie oben</p>
 			</section>
 
 			<section>
 				<h2>Zentrale Kontaktstelle nach Art. 11 und Art. 12 DSA</h2>
 				<p>
-					E-Mail: <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a><br />
-					Sprachen: Deutsch, Englisch
+					E-Mail: <a href="mailto:{operator.email}">{operator.email}</a><br />
+					Sprachen: {operator.contactLanguages}
 				</p>
 				<p class="note">
 					Die Kontaktstelle ist unmittelbar und direkt erreichbar; die Kommunikation erfolgt nicht
@@ -97,7 +93,7 @@ const CONTACT_EMAIL = 'stas-k@gmx.de';
 				<p>
 					This page is the provider identification required of German site operators by § 5 DDG and
 					§ 18 (2) MStV. The German text above is the legally binding version. For data protection
-					information see the privacy policy; to report unlawful content, use the contact address
+					information see the <a href={localizeHref('/datenschutz')}>privacy policy (Datenschutzerklärung)</a>; to report unlawful content, use the contact address
 					above.
 				</p>
 			</section>

@@ -5,7 +5,7 @@ Everything the showcase pages need that is not the page itself.
 - `catalog/` — the index of *all* showcases: the card tree, in-page section anchors, and
   doc-link resolution. Read by the hub, the sidebar nav, both search lanes, the sitemap,
   and the Neo4j catalog projection.
-- `3d/`, `ai/`, `auth/`, `ax/`, `cycle/`, `external-service/`, `mcp/`, `velocity/` — fixtures,
+- `3d/`, `ai/`, `auth/`, `ax/`, `cycle/`, `external-service/`, `mcp/`, `privacy/`, `velocity/` — fixtures,
   vocabulary and helpers belonging to *one* showcase, named for the route under
   `(public)/showcases/` that consumes them.
 
