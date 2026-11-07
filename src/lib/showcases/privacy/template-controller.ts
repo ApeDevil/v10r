@@ -3,7 +3,7 @@
  *
  * `/showcases/privacy` is a pattern, not v10r.dev's privacy policy, so it renders
  * these placeholder values instead of a real identity. The binding policy of this
- * deployment is `/datenschutz`, which reads the site-operator record in
+ * deployment is `/privacy`, which reads the site-operator record in
  * `#lib/server/legal`. Adapting the pattern means pointing the controller block at
  * your own operator record; `leak-gate.test.ts` keeps real identities out of here.
  */

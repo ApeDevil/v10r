@@ -22,7 +22,7 @@
  * robots.txt, and absence from sitemap.xml.
  *
  * The identity itself is the site-operator record (`#lib/server/legal`), shared
- * with /datenschutz so the two legal pages cannot name different people.
+ * with /privacy so the two legal pages cannot name different people.
  *
  * NOTE: no schema.org/PostalAddress JSON-LD. Structured data would hand a
  * harvester a typed, parsed record instead of prose. Do not add it.
@@ -93,7 +93,7 @@ const operator = $derived(data.operator);
 				<p>
 					This page is the provider identification required of German site operators by § 5 DDG and
 					§ 18 (2) MStV. The German text above is the legally binding version. For data protection
-					information see the <a href={localizeHref('/datenschutz')}>privacy policy (Datenschutzerklärung)</a>; to report unlawful content, use the contact address
+					information see the <a href={localizeHref('/privacy')}>privacy policy (Datenschutzerklärung)</a>; to report unlawful content, use the contact address
 					above.
 				</p>
 			</section>

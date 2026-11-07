@@ -61,7 +61,7 @@ const facts = $derived({ operator: data.operator, cookieNames: data.cookies, ret
 			{#if version.binding}
 				<p class="binding">
 					{version.binding.text}
-					<a href={localizeHref('/datenschutz', { locale: 'de' })} hreflang="de">{version.binding.link}</a>{version.binding.rest
+					<a href={localizeHref('/privacy', { locale: 'de' })} hreflang="de">{version.binding.link}</a>{version.binding.rest
 						? ` ${version.binding.rest}`
 						: '.'}
 				</p>

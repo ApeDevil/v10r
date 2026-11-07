@@ -137,6 +137,8 @@ const PUBLIC_SURFACES: Record<string, string> = {
 	// ── Non-/api endpoints ────────────────────────────────────────────────────
 	'[[locale=locale]]/(public)/blog/feed.xml/+server.ts':
 		'Public RSS feed. Reads listPublishedPostsForFeed, so drafts are unreachable by construction.',
+	'[[locale=locale]]/(public)/datenschutz/+server.ts':
+		'Permanent redirect from the old privacy-policy URL to /privacy. No data access; the target is derived from the request path only.',
 	'[[locale=locale]]/(public)/workflows/[slug]/[download]/+server.ts':
 		'Public example-folder zip for a workflow tutorial. Built only from files bundled at build time under content/workflows for catalog slugs; no data access, no user input reaches a path.',
 	'llms.txt/+server.ts':
