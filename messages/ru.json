@@ -2224,6 +2224,7 @@
 	"footer_source_gitlab_aria": "Исходники на GitLab",
 	"footer_copyright": "© {year} Velociraptor.",
 	"footer_credits": "Благодарности",
+	"footer_privacy_policy": "Конфиденциальность",
 	"errors_5xx_feedback_text": "Что-то не так с нашей стороны?",
 	"errors_5xx_feedback_link": "Напишите.",
 	"blog_trailer_feedback": "Что-то не так? Оставьте заметку.",

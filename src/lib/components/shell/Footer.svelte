@@ -18,11 +18,11 @@ const consent = getConsent();
 		</div>
 		<nav class="flex gap-4 flex-wrap items-center justify-center md:justify-end">
 			<a href={localizeHref('/credits')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_credits()}</a>
-			<!-- Labels stay "Impressum" and "Datenschutz" in every locale: § 5 DDG requires
-			     the page be *leicht erkennbar*, and German case law has been unkind to
-			     creative labels. These are the safe ones. -->
+			<!-- The label stays "Impressum" in every locale: § 5 DDG requires the page be
+			     *leicht erkennbar*, and German case law has been unkind to creative labels.
+			     The privacy policy is translated, so its label is too. -->
 			<a href={localizeHref('/impressum')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Impressum</a>
-			<a href={localizeHref('/datenschutz')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Datenschutz</a>
+			<a href={localizeHref('/datenschutz')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_privacy_policy()}</a>
 			<button onclick={() => consent.reopenBanner()} class="text-muted text-sm cursor-pointer bg-transparent border-none p-0 transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Cookie preferences</button>
 			<span class="hidden md:inline-block w-px h-4 bg-border" aria-hidden="true"></span>
 			<a

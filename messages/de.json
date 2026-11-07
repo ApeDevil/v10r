@@ -2224,6 +2224,7 @@
 	"footer_source_gitlab_aria": "Quellcode auf GitLab",
 	"footer_copyright": "© {year} Velociraptor.",
 	"footer_credits": "Credits",
+	"footer_privacy_policy": "Datenschutz",
 	"errors_5xx_feedback_text": "Etwas stimmt auf unserer Seite nicht?",
 	"errors_5xx_feedback_link": "Sag's uns.",
 	"blog_trailer_feedback": "Etwas stimmt nicht? Schreib eine Notiz.",
