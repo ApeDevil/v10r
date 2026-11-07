@@ -22,7 +22,7 @@ const consent = getConsent();
 			     *leicht erkennbar*, and German case law has been unkind to creative labels.
 			     The privacy policy is translated, so its label is too. -->
 			<a href={localizeHref('/impressum')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Impressum</a>
-			<a href={localizeHref('/datenschutz')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_privacy_policy()}</a>
+			<a href={localizeHref('/privacy')} class="text-muted text-sm no-underline transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">{m.footer_privacy_policy()}</a>
 			<button onclick={() => consent.reopenBanner()} class="text-muted text-sm cursor-pointer bg-transparent border-none p-0 transition-colors duration-fast hover:text-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 focus-visible:rounded-sm">Cookie preferences</button>
 			<span class="hidden md:inline-block w-px h-4 bg-border" aria-hidden="true"></span>
 			<a

@@ -160,7 +160,7 @@ const sections = $derived([
 		<span class="i-lucide-info" aria-hidden="true"></span>
 		<p>
 			This is a pattern, not legal advice. The binding privacy policy of v10r.dev is the
-			<a href={localizeHref('/datenschutz')}>Datenschutzerklärung</a>. If you fork v10r and run your own
+			<a href={localizeHref('/privacy')}>privacy policy</a>. If you fork v10r and run your own
 			deployment, you become the controller for your visitors and must adapt the policy to your jurisdiction
 			and processing.
 		</p>

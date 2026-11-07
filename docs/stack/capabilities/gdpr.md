@@ -101,11 +101,11 @@ The **confirmation ping** (`/api/analytics/journey/confirm`) is deliberately out
 ## Pattern vs. this deployment's policy
 
 `/showcases/privacy` is the reusable pattern and shows template values for the controller.
-v10r.dev's own binding texts are `/impressum` (§ 5 DDG, German in every locale) and `/datenschutz`
-(Art. 13/14 GDPR), reached from the footer. `/datenschutz` has one version per locale in `_policy/`;
+v10r.dev's own binding texts are `/impressum` (§ 5 DDG, German in every locale) and `/privacy`
+(Art. 13/14 GDPR), reached from the footer. `/privacy` has one version per locale in `_policy/`;
 German is binding and the English and Russian versions say so and link to it. Both read one record, `siteOperator` in `#lib/server/legal`, so the
-identity cannot drift between them, and `/datenschutz` reads its storage periods from the retention
-schedule. A new vendor, cookie or data category is added to all three `/datenschutz` versions in the same
+identity cannot drift between them, and `/privacy` reads its storage periods from the retention
+schedule. A new vendor, cookie or data category is added to all three `/privacy` versions in the same
 change that adds it to the code. A fork replaces `siteOperator` and adapts the policy text.
 
 ## Stack advantages

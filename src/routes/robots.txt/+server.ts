@@ -59,9 +59,9 @@ export const GET: RequestHandler = async () => {
 			'Disallow: /impressum',
 			'Disallow: /de/impressum',
 			'Disallow: /ru/impressum',
-			'Disallow: /datenschutz',
-			'Disallow: /de/datenschutz',
-			'Disallow: /ru/datenschutz',
+			'Disallow: /privacy',
+			'Disallow: /de/privacy',
+			'Disallow: /ru/privacy',
 			'',
 			// A comment, not an invented directive — no `Llms-Txt:` directive is
 			// registered anywhere, and unknown directives are ignored anyway. The

@@ -1,7 +1,7 @@
 /**
  * LEAK-GATE — the privacy showcase is a pattern and must never carry a real identity.
  *
- * v10r.dev's binding legal pages (`/impressum`, `/datenschutz`) read the site-operator
+ * v10r.dev's binding legal pages (`/impressum`, `/privacy`) read the site-operator
  * record in `#lib/server/legal`. The showcase renders `templateController` instead. This
  * gate keeps the split: no showcase file reads the operator record, and every email it
  * names is an @example.com placeholder.
