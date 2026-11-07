@@ -1,14 +1,14 @@
 # Database changes from a cloud session
 
 How a schema change reaches the production database when the work happens in a Claude Code
-cloud session — where `db:push` cannot run. **Stas says to apply it in the conversation; Claude
+cloud session — where `db:push` cannot run. **ApeDevil says to apply it in the conversation; Claude
 computes the SQL offline, rehearses it on a throwaway Neon branch, then applies it through the
 Neon connector.**
 
 ```
 schema change shipped to main (shipping.md)
         │
-        └─ Stas: "apply the database change"
+        └─ ApeDevil: "apply the database change"
                  ▼
   bun run db:schema-diff <old-main> <new-main>      ← SQL from the two Drizzle schemas, offline
                  ▼
@@ -25,10 +25,10 @@ schema change shipped to main (shipping.md)
 |---|---|---|
 | Database credential | `DATABASE_URL` in `.env` | none — the container has a fake `.env` |
 | How the schema reaches Neon | `bun run db:push` (drizzle-kit diffs the live database) | the **Neon connector** (MCP), authorised in Claude's connector settings, never a credential in the repo |
-| Who confirms | the developer at the terminal | Stas in the conversation; the Neon tools also prompt per call |
+| Who confirms | the developer at the terminal | ApeDevil in the conversation; the Neon tools also prompt per call |
 
 `db:push` needs a live connection to diff against; the cloud has none and must not be given one.
-The connector reaches Neon through Stas's own authorisation, so no secret enters the container,
+The connector reaches Neon through ApeDevil's own authorisation, so no secret enters the container,
 the repo or a commit.
 
 ## Prerequisites
@@ -38,7 +38,7 @@ the repo or a commit.
 - The schema change is **shipped** (on `main`), or at least pushed on the feature branch, so its
   SHA names exactly the schema being applied. Production follows `main`; applying a branch's
   schema before it ships leaves production ahead of the deployed code.
-- Stas has said to apply it, in the current conversation. A finished ship is not that word.
+- ApeDevil has said to apply it, in the current conversation. A finished ship is not that word.
 
 Constants: Neon project `broad-night-71900850` (`v10r`), database `neondb`. The project's
 default branch is production; `dev` is refreshed from it (`docs/blueprint/data/neon-branch-refresh.md`).
@@ -59,7 +59,7 @@ repo is written.
 
 **Read the SQL before going on.** Additions — `CREATE TABLE`, `ADD COLUMN` (nullable or with a
 default), `ADD VALUE` to an enum, `CREATE INDEX` — are mechanical. Anything else is a data
-decision that goes back to Stas: `DROP`, a column type change, `SET NOT NULL` on a column with
+decision that goes back to ApeDevil: `DROP`, a column type change, `SET NOT NULL` on a column with
 rows, a renamed column (drizzle-kit may emit it as drop + add, which loses the data).
 
 ### 2. Check production's starting point
@@ -113,7 +113,7 @@ and the verification query matched. All additions — no existing row was touche
 
 A schema change is rolled back by another change, rehearsed the same way — never by
 restoring the database, which would also discard user data written since. For additions the
-reverse is a `DROP` and therefore Stas's decision. Neon's point-in-time restore
+reverse is a `DROP` and therefore ApeDevil's decision. Neon's point-in-time restore
 (`history_retention_seconds`, 6 h on this project) is the last resort for a destructive mistake,
 not a routine step.
 

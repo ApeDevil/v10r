@@ -12,7 +12,7 @@ Tri-target deployment design: Vercel (Node.js), Vercel (Bun experimental), and K
 
 ```bash
 # Vercel (Node.js) — Stable, the only target wired today. Never deployed by hand:
-# Stas says "ship it" → squash into GitHub main → GitLab sync → Vercel builds GitLab main
+# ApeDevil says "ship it" → squash into GitHub main → GitLab sync → Vercel builds GitLab main
 bun run build   # the same build runs locally/in the cloud as `bun run validate:build`
 
 # Vercel (Bun) — PLANNED, experimental

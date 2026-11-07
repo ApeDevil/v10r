@@ -70,7 +70,7 @@ descriptive subjects that explain behavior.
 
 Work on a feature branch: commit and push it, hand off the branch and its HEAD SHA, and stop.
 No PR is needed; a PR is only the fallback vehicle of a ship. GitHub `main` moves only when
-Stas explicitly says to ship in the conversation — then follow
+ApeDevil explicitly says to ship in the conversation — then follow
 [shipping.md](docs/stack/ops/shipping.md) (squash into `main` → GitLab sync → Vercel). Never push
 `main` or GitLab, never force-push, stash, or reset. Run a `vr` command only when
 specifically requested.

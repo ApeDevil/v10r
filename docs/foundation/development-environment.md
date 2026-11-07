@@ -2,7 +2,7 @@
 
 Two environments share one authority, GitHub `ApeDevil/v10r`: every change is a feature branch
 pushed there, and `main` moves only by a ship ([shipping.md](../stack/ops/shipping.md)).
-Neither environment reaches the other — a cloud session never assumes Stas's machine exists.
+Neither environment reaches the other — a cloud session never assumes ApeDevil's machine exists.
 
 | | Cloud session (Claude Code on the web) — **default** | Local session (Ubuntu workstation) — secondary |
 |---|---|---|
@@ -27,11 +27,11 @@ A check that could not run is reported as **not run**, never as passed.
 | `validate` (the gate), `validate:build`, `test`, `test:mcp`, `check`, `lint`, `knip` | yes | yes |
 | `patterns:build`, `mcp:excerpts:build`, `content:check` (offline) | yes | yes |
 | `test:browser` (Playwright; starts `bun run dev`) | unverified — Chromium is preinstalled, but the dev server runs on the fake `.env`, so database-backed routes fail | yes |
-| ship (`scripts/ship/squash-into-main.sh`) — only on Stas's word | yes | yes (gate in the container) |
-| `db:push`, `db:seed`, `db:setup`, `db:*` | no — no database. A shipped schema change reaches production through the Neon connector instead, on Stas's word (`docs/stack/ops/cloud-database-changes.md`); `db:schema-diff` (offline) works | yes |
+| ship (`scripts/ship/squash-into-main.sh`) — only on ApeDevil's word | yes | yes (gate in the container) |
+| `db:push`, `db:seed`, `db:setup`, `db:*` | no — no database. A shipped schema change reaches production through the Neon connector instead, on ApeDevil's word (`docs/stack/ops/cloud-database-changes.md`); `db:schema-diff` (offline) works | yes |
 | `refresh` (its last step, `db:ingest-docs`, needs the database and the Gemini key) | build steps only | yes |
 | `content:check:db`, `content:push`, the dev server against Neon, anything with a real credential | no | yes |
-| `vr …` (Stas's host dispatcher) | no | only when Stas names the command |
+| `vr …` (ApeDevil's host dispatcher) | no | only when ApeDevil names the command |
 | runtime-lab Rust gate `bash scripts/external-service/check.sh` | `--host` (cargo is installed; the manifest records the host rustc) | yes, in the pinned Rust image |
 | runtime-lab `smoke.sh`, `bench.sh` (containers) | with Docker: start `dockerd` first. The build container cannot reach crates through the session's egress proxy — build from a scratch context with the proxy CA, then `SKIP_BUILD=1` (verified 2026-10-23) | yes (Podman) |
 | `external-service:verify` against a local service; `audit.sh --host` (cargo-deny, needs the network) | yes | yes |

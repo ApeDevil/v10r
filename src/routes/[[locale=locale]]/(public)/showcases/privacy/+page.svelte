@@ -93,7 +93,7 @@ const sections = $derived([
 		<dl class="controller-grid">
 			<div class="controller-row">
 				<dt>Identity</dt>
-				<dd>Stas K. (sole operator of v10r.dev)</dd>
+				<dd>ApeDevil (sole operator of v10r.dev)</dd>
 			</div>
 			<div class="controller-row">
 				<dt>Contact</dt>

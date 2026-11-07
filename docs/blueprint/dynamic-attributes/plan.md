@@ -50,7 +50,7 @@ Done after E, reading the branch as a reviewer would. Findings and outcomes:
 | The proposal undo path has no record branch. | Left as is on purpose: `StepRecoveryPoint` types revision points as spreadsheet or markdown only, because the assistant has no tool that writes a record. Adding a write tool must add the undo branch with it. |
 | Every operation re-serializes the record to check the byte cap (O(n) per keystroke). | Kept: 0.35 ms at the 200-attribute limit. An incremental size count would add state that can drift from the truth. |
 
-## Decisions that need Stas
+## Decisions that need ApeDevil
 
 None block the branch. Two are worth a look when reviewing: whether the assistant should get
 a record write tool (it would need the proposal-undo branch above), and whether `record` is

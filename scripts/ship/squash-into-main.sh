@@ -2,7 +2,7 @@
 #
 # squash-into-main.sh — the ship step without a pull request: put the current feature
 # branch onto GitHub `main` as one squash commit (docs/stack/ops/shipping.md). Claude runs
-# it after Stas says "ship it" (.claude/skills/ship/SKILL.md); nothing else may.
+# it after ApeDevil says "ship it" (.claude/skills/ship/SKILL.md); nothing else may.
 #
 # What lands on `main` is exactly what the gate tested. The commit is built with
 # `git commit-tree` from the feature HEAD's own tree onto the `main` it was gated against,
@@ -69,7 +69,7 @@ branch="$(git symbolic-ref --short HEAD 2>/dev/null)" || die "Detached HEAD — 
 git diff --quiet && git diff --cached --quiet \
 	|| die "Tracked files have uncommitted changes. The ship takes HEAD only — commit and push first."
 
-# ---- 2. the branch is what Stas saw ----
+# ---- 2. the branch is what ApeDevil saw ----
 info "Fetching $REMOTE/$ONTO and $REMOTE/$branch…"
 run git fetch --quiet "$REMOTE" "$ONTO" "$branch" \
 	|| die "Fetch failed. Is '$branch' pushed to $REMOTE?"
