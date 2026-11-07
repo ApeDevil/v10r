@@ -41,7 +41,7 @@ const operator = $derived(data.operator);
 	<meta name="description" content="Anbieterkennzeichnung nach § 5 DDG." />
 </svelte:head>
 
-<PageHeader title="Impressum" description="Angaben gemäß § 5 DDG und § 18 Abs. 2 MStV" />
+<PageHeader title="Impressum" description="Angaben gemäß § 5 DDG und § 18 Abs. 2 MStV" centered />
 
 <div class="impressum">
 	<Card>

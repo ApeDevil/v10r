@@ -12,6 +12,8 @@ interface Props {
 	breadcrumbs?: Breadcrumb[];
 	/** Less padding above and below, and less room beneath — the page below it is the point. */
 	compact?: boolean;
+	/** Center the title and description, for a page whose body is one centered column (legal pages). */
+	centered?: boolean;
 	/** Bindable rendered height (px) — lets sticky consumers set scroll-margin offsets. */
 	headerHeight?: number;
 	class?: string;
@@ -23,6 +25,7 @@ let {
 	description,
 	breadcrumbs = [],
 	compact = false,
+	centered = false,
 	headerHeight = $bindable(0),
 	class: className,
 	children,
@@ -38,7 +41,7 @@ const processedBreadcrumbs = $derived(
 </script>
 
 <header
-	class="page-header {compact ? 'compact' : ''} {className || ''}"
+	class="page-header {compact ? 'compact' : ''} {centered ? 'centered' : ''} {className || ''}"
 	bind:clientHeight={headerHeight}
 >
 	{#if breadcrumbs.length > 0}
@@ -93,6 +96,10 @@ const processedBreadcrumbs = $derived(
 
 	.page-header.compact .breadcrumbs {
 		margin-bottom: var(--spacing-3);
+	}
+
+	.page-header.centered .header-text {
+		text-align: center;
 	}
 
 	.breadcrumbs {

@@ -2,10 +2,11 @@
 /**
  * DATENSCHUTZERKLÄRUNG — the privacy policy of v10r.dev under GDPR Art. 13/14.
  *
- * German in every locale, for the reason the Impressum is: the German text is the
- * operative one, and a translation is a copy that can drift. A short English
- * courtesy note at the end says what the page is. Nothing here goes through
- * Paraglide, deliberately.
+ * One version per locale, so a visitor reads the policy in their own language
+ * (Art. 12(1): "clear and plain language"). The German text is the legally binding
+ * one; the English and Russian versions say so at the top and link to it. Long legal
+ * prose does not go through Paraglide: each version is one component in `_policy/`,
+ * mirroring PolicyDe.svelte section by section. Change all three together.
  *
  * Every section describes processing the code actually does — the categories match
  * the privacy showcase's data inventory, the periods come from the retention
@@ -15,288 +16,57 @@
 import { Card, PageHeader } from '#lib/components/composites/index.ts';
 import { Stack } from '#lib/components/layout/index.ts';
 import { localizeHref } from '#lib/i18n/index.ts';
+import PolicyDe from './_policy/PolicyDe.svelte';
+import PolicyEn from './_policy/PolicyEn.svelte';
+import PolicyRu from './_policy/PolicyRu.svelte';
 
 let { data } = $props();
-const operator = $derived(data.operator);
-const retention = $derived(data.retention);
 
-/** The date this text was last checked against the code. Bump it with every content change. */
-const REVIEWED_ON = '7. November 2026';
+const versions = {
+	de: {
+		Policy: PolicyDe,
+		title: 'Datenschutzerklärung',
+		description: 'Informationen nach Art. 13 und 14 DSGVO',
+		binding: null,
+	},
+	en: {
+		Policy: PolicyEn,
+		title: 'Privacy policy',
+		description: 'Information under Art. 13 and 14 GDPR',
+		binding: { text: 'This is a translation. Only the', link: 'German version', rest: 'is legally binding.' },
+	},
+	ru: {
+		Policy: PolicyRu,
+		title: 'Политика конфиденциальности',
+		description: 'Информация согласно ст. 13 и 14 GDPR',
+		binding: { text: 'Это перевод. Юридически обязательна только', link: 'немецкая версия', rest: '' },
+	},
+} as const;
 
-const cookies = $derived([
-	{
-		name: data.cookies.consent,
-		purpose: 'Speichert Ihre Auswahl im Cookie-Banner.',
-		duration: `${data.cookies.consentDays} Tage`,
-		basis: 'technisch notwendig, § 25 Abs. 2 TDDDG',
-	},
-	{
-		name: data.cookies.session,
-		purpose: 'Ordnet die Seitenaufrufe eines Besuchs einander zu.',
-		duration: '30 Minuten, verlängert bei Aktivität',
-		basis: 'Einwilligung, § 25 Abs. 1 TDDDG',
-	},
-	{
-		name: 'better-auth.session_token',
-		purpose: 'Hält Sie nach der Anmeldung angemeldet.',
-		duration: 'bis Abmeldung oder Ablauf der Sitzung',
-		basis: 'technisch notwendig, § 25 Abs. 2 TDDDG',
-	},
-	{
-		name: 'discord_oauth_state',
-		purpose: 'Schützt die Verknüpfung eines Discord-Kontos für Benachrichtigungen vor Fälschung.',
-		duration: '10 Minuten',
-		basis: 'technisch notwendig, § 25 Abs. 2 TDDDG',
-	},
-	{
-		name: 'theme, PARAGLIDE_LOCALE, v10r_style, sidebar-width',
-		purpose: 'Merken Farbschema, Sprache, Darstellungsstil und Seitenleistenbreite.',
-		duration: 'bis zu 1 Jahr',
-		basis: 'vom Nutzer ausdrücklich gewünscht, § 25 Abs. 2 TDDDG',
-	},
-]);
-
-const recipients = [
-	{ name: 'Vercel Inc., USA', role: 'Hosting der Website, Server-Logs, Web Analytics (nur nach Einwilligung)' },
-	{ name: 'Neon Inc., USA', role: 'Datenbank (Konten, Statistik, Feedback, KI-Verläufe)' },
-	{ name: 'Upstash Inc., USA', role: 'Zwischenspeicher und Missbrauchsschutz (Ratenbegrenzung)' },
-	{ name: 'Cloudflare Inc., USA', role: 'Dateispeicher (R2) für Dateien angemeldeter Nutzer' },
-	{ name: 'Neo4j Inc., USA', role: 'Graphdatenbank (Aura) für Showcase-Daten' },
-	{ name: 'Resend Inc., USA', role: 'Versand von E-Mails (Anmeldelinks, Benachrichtigungen)' },
-	{
-		name: 'Discord Inc., USA; Telegram FZ-LLC, VAE',
-		role: 'Zustellung von Benachrichtigungen, nur wenn Sie das verknüpfen',
-	},
-	{ name: 'Groq Inc., OpenAI LLC, Google LLC (alle USA)', role: 'Verarbeitung von KI-Anfragen' },
-	{
-		name: 'Render Services Inc., USA (Server in Frankfurt)',
-		role: 'Betrieb eines Beispieldienstes; erhält keine Nutzerdaten',
-	},
-];
+const version = $derived(versions[data.locale as keyof typeof versions] ?? versions.en);
+const facts = $derived({ operator: data.operator, cookieNames: data.cookies, retention: data.retention });
 </script>
 
 <svelte:head>
-	<title>Datenschutzerklärung — v10r</title>
+	<title>{version.title} — v10r</title>
 	<meta name="robots" content="noindex, noarchive, nosnippet" />
-	<meta name="description" content="Datenschutzerklärung von v10r.dev nach Art. 13 DSGVO." />
+	<meta name="description" content="{version.title}, v10r.dev — {version.description}." />
 </svelte:head>
 
-<PageHeader title="Datenschutzerklärung" description="Informationen nach Art. 13 und 14 DSGVO" />
+<PageHeader title={version.title} description={version.description} centered />
 
 <div class="policy">
 	<Card>
 		<Stack gap="6">
-			<section>
-				<h2>1. Verantwortlicher</h2>
-				<address>
-					{operator.name}<br />
-					{operator.street}<br />
-					{operator.postalCode} {operator.city}<br />
-					{operator.country}<br />
-					E-Mail: <a href="mailto:{operator.email}">{operator.email}</a>
-				</address>
-				<p>
-					v10r.dev wird von einer Privatperson ohne kommerzielle Absicht betrieben. Ein
-					Datenschutzbeauftragter ist nicht bestellt und gesetzlich nicht vorgeschrieben.
+			{#if version.binding}
+				<p class="binding">
+					{version.binding.text}
+					<a href={localizeHref('/datenschutz', { locale: 'de' })} hreflang="de">{version.binding.link}</a>{version.binding.rest
+						? ` ${version.binding.rest}`
+						: '.'}
 				</p>
-			</section>
-
-			<section>
-				<h2>2. Das Wichtigste vorab</h2>
-				<p>
-					Es gibt keine Werbung, kein Tracking durch Dritte vor Ihrer Einwilligung und kein
-					Fingerprinting. IP-Adressen werden nicht in der Datenbank gespeichert. Ein Konto ist
-					freiwillig; die öffentlichen Seiten funktionieren ohne Anmeldung. Wie die hier beschriebene
-					Verarbeitung technisch umgesetzt ist, zeigt der
-					<a href={localizeHref('/showcases/privacy')}>Privacy-Showcase</a>.
-				</p>
-			</section>
-
-			<section>
-				<h2>3. Hosting und Server-Logs</h2>
-				<p>
-					Die Website wird bei Vercel Inc. gehostet. Bei jedem Aufruf verarbeitet Vercel technisch
-					notwendige Verbindungsdaten (IP-Adresse, Zeitpunkt, aufgerufene Adresse, Browserkennung),
-					um die Seite auszuliefern und den Betrieb abzusichern.
-				</p>
-				<p class="basis">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (sicherer und stabiler Betrieb).</p>
-			</section>
-
-			<section>
-				<h2>4. Besuchsstatistik ohne Einwilligung</h2>
-				<p>
-					Damit Besuche gezählt und Missbrauch erkannt werden kann, wird für jeden Seitenaufruf ein
-					Datensatz gespeichert: eine nicht umkehrbare Kennung (verschlüsselter Hash aus IP-Adresse und
-					Browserkennung; die IP-Adresse selbst wird nicht gespeichert), der aufgerufene Pfad ohne
-					Parameter, der Zeitpunkt, das Land und eine grobe Netzklasse (z. B. Rechenzentrum). Bots
-					werden vor dem Speichern herausgefiltert.
-				</p>
-				<p class="basis">
-					Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Speicherdauer: {retention.events} Tage; danach
-					bleiben nur Tagessummen ohne Personenbezug.
-				</p>
-			</section>
-
-			<section>
-				<h2>5. Analyse mit Einwilligung</h2>
-				<p>
-					Nur wenn Sie im Cookie-Banner der Analyse zustimmen, werden zusätzlich Gerätetyp, Browser,
-					die Herkunftsseite (nur die Domain) und der Weg durch die Website über ein Sitzungs-Cookie
-					erfasst. Außerdem wird dann Vercel Web Analytics geladen, das Seitenadressen und grobe
-					Standortdaten an Vercel übermittelt und keine Cookies setzt.
-				</p>
-				<p>
-					Ihre Entscheidung wird mit Zeitpunkt protokolliert, damit die Einwilligung nachweisbar ist
-					(Art. 7 Abs. 1 DSGVO). Sie können sie jederzeit über „Cookie preferences“ in der Fußzeile
-					widerrufen; die Erfassung endet dann mit der nächsten Anfrage.
-				</p>
-				<p class="basis">
-					Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG. Speicherdauer: Besuchsdaten
-					{retention.events} Tage, Einwilligungsnachweise {retention.consent} Tage.
-				</p>
-			</section>
-
-			<section>
-				<h2>6. Cookies und lokale Speicherung</h2>
-				<div class="table-wrap">
-					<table>
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Zweck</th>
-								<th>Dauer</th>
-								<th>Grundlage</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each cookies as cookie}
-								<tr>
-									<td><code>{cookie.name}</code></td>
-									<td>{cookie.purpose}</td>
-									<td>{cookie.duration}</td>
-									<td>{cookie.basis}</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			</section>
-
-			<section>
-				<h2>7. Benutzerkonto</h2>
-				<p>
-					Wenn Sie ein Konto anlegen, werden Ihre E-Mail-Adresse, ein Passwort-Hash (nie das Passwort
-					selbst), Ihre Sitzungen und ein Protokoll sicherheitsrelevanter Ereignisse (Anmeldung,
-					Abmeldung, Passwortänderung) gespeichert. Bei Anmeldung über GitHub oder Google erhalten wir von
-					dem Anbieter Ihre Kontokennung, Ihren Namen und Ihre E-Mail-Adresse. Verknüpfen Sie für
-					Benachrichtigungen ein Discord- oder Telegram-Konto, speichern wir dessen Kennung. Anmeldelinks und Benachrichtigungen
-					werden über Resend versendet. Inhalte, die Sie im Konto anlegen, bleiben gespeichert, bis Sie
-					sie oder das Konto löschen.
-				</p>
-				<p class="basis">
-					Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Bereitstellung des Kontos), für das
-					Sicherheitsprotokoll Art. 6 Abs. 1 lit. f DSGVO. Nutzungsstatistik im Konto:
-					{retention.userEvents} Tage. Mit der Löschung des Kontos werden die zugehörigen Daten entfernt.
-				</p>
-			</section>
-
-			<section>
-				<h2>8. Feedback-Formular</h2>
-				<p>
-					Wenn Sie das Feedback-Formular absenden, werden Betreff, Nachricht, optional eine Bewertung
-					und eine E-Mail-Adresse für Rückfragen sowie die Seite gespeichert, von der Sie kamen. Die
-					Nachricht bleibt gespeichert, bis Sie ihre Löschung verlangen.
-				</p>
-				<p class="basis">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Beantwortung Ihrer Nachricht).</p>
-			</section>
-
-			<section>
-				<h2>9. KI-Funktionen</h2>
-				<p>
-					Wenn Sie den KI-Chat oder andere KI-Funktionen nutzen, wird Ihre Eingabe zur Beantwortung an
-					einen der KI-Anbieter Groq, OpenAI oder Google übermittelt. Bitte geben Sie dort keine
-					sensiblen personenbezogenen Daten ein. Der Verlauf wird gespeichert, um den Dienst zu
-					betreiben und Fehler zu untersuchen.
-				</p>
-				<p class="basis">
-					Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO, bei angemeldeten Nutzern lit. b. Speicherdauer:
-					die Texte werden nach {retention.aiTurnBodies} Tagen entfernt, die übrigen Metadaten nach
-					{retention.aiTurns} Tagen gelöscht.
-				</p>
-			</section>
-
-			<section>
-				<h2>10. Namensprüfung</h2>
-				<p>
-					Wenn Sie einen Namen prüfen, wird er an das Markenregister der EUIPO, den LEI-Index der
-					GLEIF, die Domain-Registries der geprüften Endungen und einen Websuche-Anbieter (Tavily oder
-					Brave) übermittelt und anschließend verworfen. Der Name wird nicht in einer Datenbank
-					gespeichert; ein Hash des Namens dient bis zu 24 Stunden als Zwischenspeicher-Schlüssel.
-				</p>
-				<p class="basis">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Beantwortung Ihrer Anfrage).</p>
-			</section>
-
-			<section>
-				<h2>11. Missbrauchsschutz</h2>
-				<p>
-					Formulare und Schnittstellen sind durch eine Ratenbegrenzung geschützt, die Ihre IP-Adresse
-					für höchstens 60 Sekunden im Zwischenspeicher (Upstash) hält, und teilweise durch eine
-					Rechenaufgabe (ALTCHA), die ohne Drittanbieter auf diesem Server läuft.
-				</p>
-				<p class="basis">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Schutz vor Missbrauch).</p>
-			</section>
-
-			<section>
-				<h2>12. Empfänger und Übermittlung in Drittländer</h2>
-				<p>Folgende Dienstleister verarbeiten Daten in unserem Auftrag (Art. 28 DSGVO):</p>
-				<ul>
-					{#each recipients as recipient}
-						<li><strong>{recipient.name}</strong>: {recipient.role}</li>
-					{/each}
-				</ul>
-				<p>
-					Bei Anbietern mit Sitz in den USA erfolgt die Übermittlung auf Grundlage des
-					EU-U.S. Data Privacy Framework, soweit der Anbieter zertifiziert ist, im Übrigen auf Grundlage
-					der EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).
-				</p>
-			</section>
-
-			<section>
-				<h2>13. Ihre Rechte</h2>
-				<p>
-					Sie haben das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17),
-					Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch
-					gegen Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21 DSGVO). Eine Einwilligung
-					können Sie jederzeit mit Wirkung für die Zukunft widerrufen. Angemeldete Nutzer können ihre
-					Daten im Konto selbst einsehen, exportieren und löschen; alle anderen Anfragen richten Sie an
-					<a href="mailto:{operator.email}">{operator.email}</a>.
-				</p>
-				<p>
-					Sie können sich bei einer Datenschutz-Aufsichtsbehörde beschweren (Art. 77 DSGVO), etwa bei
-					der für uns zuständigen
-					<a href="https://www.ldi.nrw.de" target="_blank" rel="noreferrer noopener">
-						Landesbeauftragten für Datenschutz und Informationsfreiheit Nordrhein-Westfalen
-					</a>.
-				</p>
-				<p>
-					Eine automatisierte Entscheidungsfindung oder ein Profiling nach Art. 22 DSGVO findet nicht
-					statt. Sie sind nicht verpflichtet, Daten bereitzustellen; ohne Verbindungsdaten kann die
-					Website jedoch nicht ausgeliefert werden.
-				</p>
-			</section>
-
-			<section>
-				<p class="note">Stand: {REVIEWED_ON}</p>
-			</section>
-
-			<section class="courtesy">
-				<h2>Privacy policy</h2>
-				<p>
-					This page is the privacy policy of v10r.dev under Art. 13 and 14 GDPR. The German text above
-					is the legally binding version. For the provider identification see the
-					<a href={localizeHref('/impressum')}>Impressum</a>.
-				</p>
-			</section>
+			{/if}
+			<version.Policy {...facts} />
 		</Stack>
 	</Card>
 </div>
@@ -308,7 +78,9 @@ const recipients = [
 		padding: var(--spacing-6) var(--spacing-4) var(--spacing-8);
 	}
 
-	h2 {
+	/* The policy text lives in the per-locale components in _policy/; it is styled
+	   here once, so every version looks the same. */
+	.policy :global(h2) {
 		margin: 0 0 var(--spacing-2);
 		font-size: var(--text-fluid-sm);
 		font-weight: 600;
@@ -317,9 +89,7 @@ const recipients = [
 		color: var(--color-muted);
 	}
 
-	address,
-	p,
-	li {
+	.policy :global(:is(address, p, li)) {
 		margin: 0;
 		font-size: var(--text-fluid-base);
 		line-height: 1.65;
@@ -327,45 +97,48 @@ const recipients = [
 	}
 
 	/* <address> is the correct element for contact data; undo its italic default. */
-	address {
+	.policy :global(address) {
 		font-style: normal;
 	}
 
-	address + p,
-	p + p,
-	ul + p,
-	p + ul,
-	p + .table-wrap {
+	.policy :global(:is(address, p, ul) + :is(p, ul, .table-wrap)) {
 		margin-top: var(--spacing-3);
 	}
 
-	ul {
-		margin: var(--spacing-2) 0 0;
+	.policy :global(ul) {
+		margin-bottom: 0;
 		padding-left: var(--spacing-5);
 	}
 
-	.basis,
-	.note {
+	.policy :global(:is(.basis, .note)),
+	.binding {
 		font-size: var(--text-fluid-sm);
 		color: var(--color-muted);
 	}
 
+	.binding {
+		margin: 0;
+		padding: var(--spacing-3) var(--spacing-4);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		background: var(--color-subtle);
+	}
+
 	/* width 0 + min-width 100%: the table scrolls inside the card instead of
 	   widening it to its min-content width on a phone. */
-	.table-wrap {
+	.policy :global(.table-wrap) {
 		width: 0;
 		min-width: 100%;
 		overflow-x: auto;
 	}
 
-	table {
+	.policy :global(table) {
 		width: 100%;
 		border-collapse: collapse;
 		font-size: var(--text-fluid-sm);
 	}
 
-	th,
-	td {
+	.policy :global(:is(th, td)) {
 		padding: var(--spacing-2) var(--spacing-3);
 		border-bottom: 1px solid var(--color-border);
 		text-align: left;
@@ -373,33 +146,23 @@ const recipients = [
 		color: var(--color-fg);
 	}
 
-	th {
+	.policy :global(th) {
 		font-weight: 600;
 		color: var(--color-muted);
 	}
 
-	code {
+	.policy :global(code) {
 		font-family: ui-monospace, monospace;
 		font-size: 0.92em;
 	}
 
-	.courtesy {
-		padding-top: var(--spacing-5);
-		border-top: 1px solid var(--color-border);
-	}
-
-	.courtesy p {
-		font-size: var(--text-fluid-sm);
-		color: var(--color-muted);
-	}
-
-	a {
+	.policy :global(a) {
 		color: var(--color-primary);
 		text-decoration: underline;
 		text-underline-offset: 0.2em;
 	}
 
-	a:focus-visible {
+	.policy :global(a:focus-visible) {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
 		border-radius: 2px;
