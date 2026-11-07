@@ -98,6 +98,15 @@ Session counting still works without writing to the device — page views within
 
 The **confirmation ping** (`/api/analytics/journey/confirm`) is deliberately outside this gate: its payload is a constant server-issued token and it reads nothing from terminal equipment (no cookie, no storage, no `navigator` probing), which is the DSK's approved counting-pixel shape (OH Digitale Dienste ¶88). It exists so a consent-declining human can still be told apart from a crawler; it must never grow a payload field.
 
+## Pattern vs. this deployment's policy
+
+`/showcases/privacy` is the reusable pattern and shows template values for the controller.
+v10r.dev's own binding texts are `/impressum` (§ 5 DDG) and `/datenschutz` (Art. 13/14 GDPR), in
+German, reached from the footer. Both read one record, `siteOperator` in `#lib/server/legal`, so the
+identity cannot drift between them, and `/datenschutz` reads its storage periods from the retention
+schedule. A new vendor, cookie or data category is added to `/datenschutz` in the same change that adds
+it to the code. A fork replaces `siteOperator` and adapts the policy text.
+
 ## Stack advantages
 
 | Component | Benefit |

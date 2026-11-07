@@ -17,7 +17,7 @@ This is the right tool when there's no production data to protect.
 
 A cloud session has no `DATABASE_URL`, so `db:push` cannot run there. The production change goes
 through the Neon connector instead: SQL computed offline with `bun run db:schema-diff`, rehearsed
-on a temporary Neon branch, applied on Stas's word — `docs/stack/ops/cloud-database-changes.md`.
+on a temporary Neon branch, applied on ApeDevil's word — `docs/stack/ops/cloud-database-changes.md`.
 
 ## Production: `generate` + `migrate`
 

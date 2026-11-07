@@ -10,7 +10,7 @@
 #   main            →  refused
 #
 # A repo whose .vrrc sets PROMOTION=conversation (v10r) has no train: main moves only when
-# Claude squashes a branch into it after Stas says "ship it" (docs/stack/ops/shipping.md). There `vr ship`
+# Claude squashes a branch into it after ApeDevil says "ship it" (docs/stack/ops/shipping.md). There `vr ship`
 # runs the same gate on the feature branch and pushes that branch alone — never dev, never main.
 #
 # The gate runs inside the repo's container against the *merged* state, so main is
@@ -234,7 +234,7 @@ promote_only() {
 }
 
 # PROMOTION=conversation: the gate on the branch as it is, then the branch goes to the
-# authority (GitHub) for Stas to inspect and for Claude to ship. Nothing here touches main.
+# authority (GitHub) for ApeDevil to inspect and for Claude to ship. Nothing here touches main.
 branch_only() {
 	local feature="$1" url
 	url="$(git remote get-url "$REMOTE")"

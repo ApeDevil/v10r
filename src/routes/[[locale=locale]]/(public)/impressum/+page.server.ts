@@ -1,3 +1,4 @@
+import { siteOperator } from '#lib/server/legal/index.ts';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -35,5 +36,5 @@ export const load: PageServerLoad = async ({ setHeaders }) => {
 		'X-Robots-Tag': 'noindex, noarchive, nosnippet, noai, noimageai',
 	});
 
-	return {};
+	return { operator: siteOperator };
 };

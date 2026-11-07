@@ -12,7 +12,7 @@ Tri-target deployment design: Vercel (Node.js), Vercel (Bun experimental), and K
 
 ```bash
 # Vercel (Node.js) — Stable, the only target wired today. Never deployed by hand:
-# Stas says "ship it" → squash into GitHub main → GitLab sync → Vercel builds GitLab main
+# ApeDevil says "ship it" → squash into GitHub main → GitLab sync → Vercel builds GitLab main
 bun run build   # the same build runs locally/in the cloud as `bun run validate:build`
 
 # Vercel (Bun) — PLANNED, experimental
@@ -128,7 +128,7 @@ Set by hand in Vercel → Settings → Environment Variables:
 | `ALTCHA_HMAC_KEY` | ≥32 chars; the build fails without it |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Rate limiting and the captcha replay store. Without them the limiter fails closed in production |
 | `CRON_SECRET` | Vercel sends it as the bearer token on every cron call ([Scheduled Jobs](#scheduled-jobs)) |
-| Feature blocks of `.env.example` §2 | Neo4j, R2, Resend, Telegram, Discord (client id/secret, bot token), VAPID keypair, MCP tokens and salt, Neon Management API, DB monitoring, External Service Lab, `PRIVACY_CONTACT_EMAIL`. Each block is all-or-nothing; unset, that feature is off |
+| Feature blocks of `.env.example` §2 | Neo4j, R2, Resend, Telegram, Discord (client id/secret, bot token), VAPID keypair, MCP tokens and salt, Neon Management API, DB monitoring, External Service Lab. Each block is all-or-nothing; unset, that feature is off |
 
 Supplied by Vercel, never set by hand: `VERCEL` (disables the in-process scheduler —
 `platform/index.ts`), `VERCEL_ENV` (preview-only passkey switch, robots, MCP telemetry lane),

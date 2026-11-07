@@ -9,7 +9,7 @@ Multi-target deployment proving runtime portability via SvelteKit's adapter syst
 | Serverless | Node.js | Vercel | `adapter-vercel` | Live |
 | Container | Bun | Koyeb | `svelte-adapter-bun` (fallback `adapter-node`) | Planned |
 
-**How a change reaches production:** squash into GitHub `main` (when Stas says "ship it") → `gitlab-sync.yml` copies it to GitLab `main` → Vercel's GitLab integration builds and deploys `main`. Feature branches never deploy (`vercel.json` `git.deploymentEnabled`) — there are no preview deployments. Full flow, setup and recovery: [shipping.md](./shipping.md).
+**How a change reaches production:** squash into GitHub `main` (when ApeDevil says "ship it") → `gitlab-sync.yml` copies it to GitLab `main` → Vercel's GitLab integration builds and deploys `main`. Feature branches never deploy (`vercel.json` `git.deploymentEnabled`) — there are no preview deployments. Full flow, setup and recovery: [shipping.md](./shipping.md).
 
 ## Runtime parity
 
@@ -18,7 +18,7 @@ cloud image), the local container (`Containerfile.dev` copies `node:22`), `packa
 `engines` (`>=22.17.0`, SvelteKit 3's floor), and the functions (`adapter-vercel` `runtime: 'nodejs22.x'`, also on the
 route-level `config` exports). The Vercel project's **Node.js Version** setting decides the
 engine the production *build* runs on; it must read **22.x**. On 2026-10-22 it read **24.x**,
-so `validate:build` (Node 22) did not test the engine Vercel builds with. Stas changes it in
+so `validate:build` (Node 22) did not test the engine Vercel builds with. ApeDevil changes it in
 the dashboard ([shipping.md](./shipping.md#one-time-configuration)).
 
 ## Adapters

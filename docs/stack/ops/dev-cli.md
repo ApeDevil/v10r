@@ -83,7 +83,7 @@ line, `PROMOTION=conversation`.
 | `main` | refused |
 
 **`PROMOTION=conversation` (v10r's committed `.vrrc`): no train.** `main` moves only when
-Claude squashes the branch into it after Stas says "ship it" ([shipping.md](./shipping.md)). On a feature
+Claude squashes the branch into it after ApeDevil says "ship it" ([shipping.md](./shipping.md)). On a feature
 branch `vr ship` requires the branch to contain current `origin/main` (so the gate sees the
 tree the squash will produce), runs the same gate, then pushes **that branch alone**
 to `origin`, which must be GitHub (it refuses a GitLab `origin` and prints the fix). It
