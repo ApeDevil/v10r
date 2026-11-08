@@ -3,8 +3,8 @@
 Choosing where work runs, how parts communicate, where data lives and how a system deploys —
 from requirements and evidence, not technology preference. Architecture Engineering decides
 which approach fits; the [Pattern Library](../../pattern-library/) says how to build it;
-**Architecture Studio** (`/architecture/studio`) lets a developer explore, design, check and
-compare an architecture. Overview page: `/architecture`.
+**Studio**, whose first area this is, lets a developer explore, design, check and
+compare an architecture. Overview page: `/studio/architecture`.
 
 | File | Main Topics |
 |------|-------------|

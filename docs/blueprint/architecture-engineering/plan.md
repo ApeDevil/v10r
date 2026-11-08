@@ -210,17 +210,24 @@ later without touching it.
 
 ## 6. Navigation and UI integration
 
+Decided with ApeDevil on 2026-11-08: the top-level nav entry is **Studio**. Studio is a hub
+that will grow more tools later, and Architecture Engineering is its first area. The hub is
+catalog-driven, like `#lib/workflows/catalog.ts`: `#lib/studio/catalog.ts` lists the Studio
+areas, and the hub, the nav dropdown and the sitemap all read it.
+
 | Conceptual node | Actual home |
 |---|---|
-| Overview, Principles, Decisions, Labs | `/architecture` — one page: principles, the five domains, the decision catalogue (each decision expandable: question, alternatives, rejected reasons, evidence), and the existing labs (`/showcases/wasm`, `/showcases/external-service`) with the app-vs-database gap stated |
-| Patterns | No new page — links into `/docs/pattern-library/<id>` |
-| Architecture Studio | `/architecture/studio`, modes as tabs with `?mode=explore|design|engineer` in the URL |
+| Studio hub | `/studio`, which lists the Studio areas (today only Architecture Engineering) |
+| Architecture Engineering: Overview, Principles, Decisions, Labs | `/studio/architecture`, one page: principles, the five domains, the decision catalogue (each decision expandable: question, alternatives, rule reasons, evidence), and the existing labs (`/showcases/wasm`, `/showcases/external-service`) with the app-vs-database gap stated |
+| Patterns | No new page. Links go to `/docs/pattern-library/<id>` |
+| Explore / Design / Engineer | `/studio/architecture/explore`, `/design` and `/engineer`. These are real routes under one `+layout.svelte` that owns the editor state, so moving between modes keeps the edits |
 
-One top-level nav item (`nav_architecture`), sitemap entries, i18n area `architecture`
-(en/de/ru). Decision catalogue content is English, like the registry. UI chrome is
-localized. Canvas loads only on the Studio route through `FlowDiagram`'s dynamic import.
-Every canvas action has a keyboard path through the inspector forms (add node, connect via
-selects, delete), so the canvas is never the only way to edit.
+One top-level nav item (`nav_studio`) with the Studio areas and modes as its children,
+sitemap entries, and i18n area `studio` (en/de/ru). The decision catalogue content is English,
+like the registry. UI chrome is localized. The canvas loads only on the Design and Engineer
+routes, through `FlowDiagram`'s dynamic import. Every canvas action also has a keyboard path
+through the inspector forms (add node, connect via selects, delete), so the canvas is never
+the only way to edit.
 
 ## 7. Implementation phases
 
@@ -229,7 +236,7 @@ selects, delete), so the canvas is never the only way to edit.
 3. **Explore** — factor form, workload examples, recommendation view, transfer to Design.
 4. **Design** — model + operations + parser, editor state with undo/redo, canvas, inspector, drafts, import/export.
 5. **Engineer** — checks, findings view, variant duplicate + change reason, comparison, evolution example.
-6. **Evidence and integration** — evidence links, `/architecture` overview page, MCP tools, nav/sitemap/i18n polish.
+6. **Evidence and integration** — evidence links, `/studio` hub and `/studio/architecture` overview page, MCP tools, nav/sitemap/i18n polish.
 7. **Final review** — `validate`, `validate:build`, browser check, security/a11y/dead-code review, docs consistency.
 
 ## 8. Risks, dependencies, validation
@@ -255,9 +262,9 @@ a Playwright pass through the Studio flow (cloud quirks: see the team memory).
 | Phase | State | Notes |
 |---|---|---|
 | 1 Audit and design | done | research.md, this plan |
-| 2 Foundation | pending | |
+| 2 Foundation | done | `pattern-library/architecture-engineering/`: vocabulary, `decisions.json` (7 decisions, 5 domains), engine, examples, `patterns:validate` extension |
 | 3 Explore | pending | |
-| 4 Design | pending | |
-| 5 Engineer | pending | |
+| 4 Design | core done | model, parser, operations, transfer from Explore, layout; UI pending |
+| 5 Engineer | core done | 13 checks, comparison, evolution example; UI pending |
 | 6 Evidence and integration | pending | |
 | 7 Final review | pending | |
