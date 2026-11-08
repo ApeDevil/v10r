@@ -2,6 +2,7 @@ import { baseLocale, locales } from '#lib/paraglide/runtime.js';
 import { listPublishedPostsForFeed } from '#lib/server/blog/index.ts';
 import { REDIRECT_HREFS } from '#lib/server/search/adapters/_redirects.ts';
 import { showcases } from '#lib/showcases/catalog/registry.ts';
+import { studioPaths } from '#lib/studio/catalog.ts';
 import { escapeXmlAttr } from '#lib/utils/xml.ts';
 import { workflowHref, workflows } from '#lib/workflows/catalog.ts';
 import type { RequestHandler } from './$types';
@@ -46,7 +47,7 @@ function workflowPaths(): string[] {
 	return ['/workflows', ...workflows.map(workflowHref)];
 }
 
-const STATIC_PATHS = [...BASE_PATHS, ...showcasePaths(), ...workflowPaths()];
+const STATIC_PATHS = [...BASE_PATHS, ...showcasePaths(), ...workflowPaths(), ...studioPaths()];
 
 function toDateStr(d: Date): string {
 	return d.toISOString().slice(0, 10);

@@ -10,6 +10,7 @@ import { join, resolve } from 'node:path';
 import { headingAnchors } from '../src/lib/docs/heading-anchors.server.ts';
 import { checkDecisionReferences, parseDecisionCatalog } from './architecture-engineering/decision-record.ts';
 import decisionCatalogJson from './architecture-engineering/decisions.json';
+import { EVIDENCE_LABS } from './architecture-engineering/evidence-labs.ts';
 import { loadRegistry } from './load.ts';
 import { buildById, type RegRef, topoSort } from './schema.ts';
 
@@ -144,6 +145,17 @@ if (!decisions.catalog) {
 			const kind = entry.ref.startsWith('/showcases') ? 'route' : entry.ref.startsWith('/') ? 'approute' : 'file';
 			checkRef({ path: entry.ref, kind }, `decisions.json ${decision.id}.evidence[${index}]`);
 		});
+	}
+	const decisionIds = new Set(decisions.catalog.decisions.map((decision) => decision.id));
+	for (const lab of EVIDENCE_LABS) {
+		lab.refs.forEach((entry, index) => {
+			const kind = entry.ref.startsWith('/showcases') ? 'route' : entry.ref.startsWith('/') ? 'approute' : 'file';
+			checkRef({ path: entry.ref, kind }, `evidence-labs ${lab.id}.refs[${index}]`);
+		});
+		for (const id of lab.decisions)
+			if (!decisionIds.has(id)) errors.push(`evidence-labs ${lab.id}: decision '${id}' does not exist`);
+		for (const id of lab.patterns)
+			if (!byId.has(id)) errors.push(`evidence-labs ${lab.id}: pattern '${id}' is not in the registry`);
 	}
 }
 

@@ -1,6 +1,7 @@
 import { DOCS_SECTIONS } from '#lib/docs/sections.ts';
 import * as m from '#lib/paraglide/messages.js';
 import { groupByDomain } from '#lib/showcases/catalog/registry.ts';
+import { studioAreaHref, studioAreas, studioModeHref } from '#lib/studio/catalog.ts';
 import { groupWorkflowsByCategory, workflowHref } from '#lib/workflows/catalog.ts';
 import { adminNavGroups } from './admin';
 import type { LabelFn, NavChild, NavItem } from './types';
@@ -74,6 +75,16 @@ export const navItems: NavItem[] = [
 		children: groupWorkflowsByCategory().flatMap(({ category, cards }) =>
 			cards.map((card) => ({ href: workflowHref(card), label: card.title, group: category.label })),
 		),
+	},
+	{
+		href: '/studio',
+		label: m.nav_studio,
+		icon: 'i-lucide-drafting-compass',
+		// Derived from the Studio catalog: each area's overview, then its working modes.
+		children: studioAreas.flatMap((area) => [
+			{ href: studioAreaHref(area), label: m.studio_area_overview, group: area.title },
+			...area.modes.map((mode) => ({ href: studioModeHref(area, mode), label: mode.label, group: area.title })),
+		]),
 	},
 	{
 		href: '/docs',

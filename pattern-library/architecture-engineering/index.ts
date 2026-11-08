@@ -9,6 +9,7 @@ export * from './checks.ts';
 export * from './compare.ts';
 export * from './decision-catalog.ts';
 export * from './decision-record.ts';
+export * from './evidence-labs.ts';
 export * from './evolution-examples.ts';
 export * from './explore.ts';
 export * from './findings.ts';
