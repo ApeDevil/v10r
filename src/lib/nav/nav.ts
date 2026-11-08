@@ -53,11 +53,6 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-home',
 	},
 	{
-		href: '/blog',
-		label: m.nav_blog,
-		icon: 'i-lucide-newspaper',
-	},
-	{
 		href: '/showcases',
 		label: m.nav_showcases,
 		icon: 'i-lucide-view',
@@ -92,5 +87,10 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-book-open',
 		// The hub's four sections, from the list the hub itself renders.
 		children: DOCS_SECTIONS.map((section) => ({ href: section.href, label: section.title })),
+	},
+	{
+		href: '/blog',
+		label: m.nav_blog,
+		icon: 'i-lucide-newspaper',
 	},
 ];
