@@ -79,7 +79,7 @@ export const navItems: NavItem[] = [
 	{
 		href: '/studio',
 		label: m.nav_studio,
-		icon: 'i-lucide-drafting-compass',
+		icon: 'i-lucide-shapes',
 		// Derived from the Studio catalog: each area's overview, then its working modes.
 		children: studioAreas.flatMap((area) => [
 			{ href: studioAreaHref(area), label: m.studio_area_overview, group: area.title },
