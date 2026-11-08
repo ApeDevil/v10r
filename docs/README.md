@@ -34,6 +34,7 @@ Every `blueprint/` subdirectory, one line each. Flat blueprint files (api.md, au
 | [ai/](./blueprint/ai/) | AI assistant, grounded retrieval (kernel + corpus map), provider routing, TOON format |
 | [analytics/](./blueprint/analytics/) | Two-lane model (anonymous vs authenticated), consent gating, LIA + DPIA screening, client telemetry, rollups |
 | [app-shell/](./blueprint/app-shell/) | Layout, sidebar, navigation, toasts, session lifecycle, settings |
+| [architecture-engineering/](./blueprint/architecture-engineering/) | Architecture Engineering + Architecture Studio: decision catalogue, deterministic engine, architecture model, engineering checks, comparison — plan, research, progress |
 | [architecture/](./blueprint/architecture/) | Multi-client core (hexagonal), background jobs, workers (Web Worker + claim-based queue worker), native-client seam |
 | [data/](./blueprint/data/) | Drizzle schema workflow, Neon dev-branch refresh from prod |
 | [db/](./blueprint/db/) | Relational + graph database patterns, polyglot freshness |
