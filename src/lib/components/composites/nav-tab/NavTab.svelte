@@ -7,6 +7,8 @@ interface Tab {
 	label: string;
 	href: string;
 	icon?: string;
+	/** Active only on this exact path, not below it — for an overview tab whose siblings live under its path. */
+	exact?: boolean;
 }
 
 interface Props {
@@ -22,8 +24,10 @@ let chipsEl: HTMLElement | undefined = $state();
 let canScrollRight = $state(false);
 let canScrollLeft = $state(false);
 
-function isActive(href: string): boolean {
-	return page.url.pathname.startsWith(deLocalizeHref(href));
+function isActive(tab: Tab): boolean {
+	const path = deLocalizeHref(page.url.pathname);
+	const href = deLocalizeHref(tab.href);
+	return tab.exact ? path === href || path === `${href}/` : page.url.pathname.startsWith(deLocalizeHref(tab.href));
 }
 
 // Track horizontal scroll overflow for fade indicators
@@ -71,9 +75,9 @@ $effect(() => {
 			<a
 				href={localizeHref(tab.href)}
 				class="tab-item"
-				class:active={isActive(tab.href)}
+				class:active={isActive(tab)}
 				role="tab"
-				aria-selected={isActive(tab.href)}
+				aria-selected={isActive(tab)}
 			>
 				{#if tab.icon}
 					<span class="{tab.icon} tab-icon" aria-hidden="true"></span>

@@ -1,0 +1,1200 @@
+{
+	"format": 1,
+	"note": "The Architecture Engineering decision catalogue. Each decision is evaluated by explore.ts: rules in order, the first rule whose named factors are all known and matching fires; a rule blocked only by an unknown factor is reported as missing information; no rule firing means the fallback, which is always the simplest alternative. Pattern ids must resolve in registry.json (checked by patterns:validate). Content is English, like the registry.",
+	"decisions": [
+		{
+			"id": "compute-placement",
+			"revision": 1,
+			"domain": "execution",
+			"title": "Where the computation runs",
+			"question": "Which placement should execute this unit of work: the browser main thread, a browser worker, a server request, a background job or a separately deployed service?",
+			"description": "Placement is where code executes, separate from the language it is written in and from the unit it is deployed in. The default is the SvelteKit server request: one deployment, one trust zone, the code next to the data. Work moves to the device when the data is already there or must work offline, to a job when it outlives a request, and to a separate service only on an explicit trigger.",
+			"problem": {
+				"workload": "One unit of work a feature needs performed — a transformation, a calculation, a query, a conversion.",
+				"functional": ["Produce the result the feature needs", "Respect who may see the inputs and outputs"],
+				"nonfunctional": [
+					"Latency the user can tolerate",
+					"No blocked main thread",
+					"Cost and operational burden proportional to the need"
+				],
+				"constraints": [
+					"Secrets and authorization never execute on the device",
+					"Serverless request handlers have a hard duration limit"
+				],
+				"assumptions": ["The v10r stack: SvelteKit on a serverless host, Postgres, an optional container host"]
+			},
+			"alternatives": [
+				{
+					"id": "browser-main-thread",
+					"approach": "Run it on the browser main thread",
+					"placement": "browser-main-thread",
+					"technologies": ["TypeScript", "Svelte"],
+					"benefits": ["No network round trip", "Works offline", "No server cost"],
+					"drawbacks": ["Blocks input and rendering while it runs", "Bounded by the slowest supported device"],
+					"prerequisites": ["The data is already on the device"],
+					"contraindications": [
+						"Anything over roughly one frame budget per interaction",
+						"Anything involving secrets or authorization"
+					],
+					"prefer_when": "the data is on the device and the work fits inside an interaction budget (well under 50 ms on a slow phone)",
+					"patterns": ["main-thread-budget", "architecture-state-management"]
+				},
+				{
+					"id": "browser-worker",
+					"approach": "Run it in a browser Web Worker",
+					"placement": "browser-worker",
+					"technologies": ["TypeScript", "Web Worker", "Transferable ArrayBuffer"],
+					"benefits": ["Keeps the main thread responsive", "No network round trip", "Works offline"],
+					"drawbacks": [
+						"postMessage copies data unless it is transferred",
+						"A second module and a message protocol to maintain"
+					],
+					"prerequisites": ["Data on the device", "Vite worker.format 'es' and CSP worker-src (see workers.md)"],
+					"contraindications": ["Work that needs the DOM", "Tiny tasks where messaging costs more than the work"],
+					"prefer_when": "the data is on the device and the work is long enough to block input",
+					"patterns": ["main-thread-budget"]
+				},
+				{
+					"id": "server-request",
+					"approach": "Run it in the SvelteKit server request handler",
+					"placement": "server-request",
+					"technologies": ["TypeScript", "SvelteKit", "Bun / Node"],
+					"benefits": [
+						"One deployment and one trust zone",
+						"Next to the database and the secrets",
+						"Easiest to test and to change"
+					],
+					"drawbacks": [
+						"Every call pays a network round trip",
+						"Bounded by the host's request duration limit",
+						"Cold starts on serverless"
+					],
+					"prerequisites": [],
+					"contraindications": ["Work longer than the host's request limit", "Work that must survive the user leaving"],
+					"prefer_when": "the work needs secrets, authorization or server data, and finishes well inside a request",
+					"patterns": ["multi-client-core", "architecture-runtime-layers"]
+				},
+				{
+					"id": "background-job",
+					"approach": "Run it as a background job or queue worker",
+					"placement": "background-worker",
+					"technologies": [
+						"TypeScript",
+						"Postgres claimed rows (FOR UPDATE SKIP LOCKED)",
+						"Cron / setInterval scheduler"
+					],
+					"benefits": ["Not bounded by a request", "Retries and backoff", "Survives the user leaving"],
+					"drawbacks": [
+						"The result arrives later — needs a status and a way to notify",
+						"Idempotency and retry design",
+						"Scheduling differs per platform"
+					],
+					"prerequisites": ["A scheduler (cron on serverless, a persistent process on a container)"],
+					"contraindications": ["Results the user waits for interactively", "Work small enough for the request"],
+					"prefer_when": "the work runs for minutes, must continue without the user, or must retry on failure",
+					"patterns": [
+						"jobs-scheduler",
+						"jobs-platform-scheduling",
+						"notifications-router-outbox",
+						"durable-step-execution"
+					]
+				},
+				{
+					"id": "separate-service",
+					"approach": "Run it in a separately deployed compute service",
+					"placement": "separate-service",
+					"technologies": ["Rust / Axum", "OCI container", "Typed client with deadlines"],
+					"benefits": [
+						"A different runtime or language where it is genuinely needed",
+						"Isolated failure and resource limits",
+						"Scales independently"
+					],
+					"drawbacks": [
+						"A network hop on every call",
+						"A second deployment, credential and contract to maintain",
+						"Cold starts on free hosts"
+					],
+					"prerequisites": ["A container host", "A typed contract and a failure model"],
+					"contraindications": ["Speed alone — the boundary is not a speed argument", "Low complexity tolerance"],
+					"prefer_when": "the work needs a different runtime, isolation, or independent scaling — and the team accepts a second deployment",
+					"patterns": ["architecture-external-service", "resilience-policy", "deadline-propagation"]
+				}
+			],
+			"rules": [
+				{
+					"id": "secret-stays-on-server",
+					"when": { "sensitivity": ["secret"] },
+					"choose": "server-request",
+					"because": "Secrets and authorization decisions must never ship to the device; the server request is the simplest placement that keeps them there."
+				},
+				{
+					"id": "business-rules-on-server",
+					"when": { "workload": ["business-rules"] },
+					"choose": "server-request",
+					"because": "Business rules and authorization are enforced where the client cannot change them: the server, in a framework-free domain."
+				},
+				{
+					"id": "must-outlive-request",
+					"when": { "background": ["required"] },
+					"choose": "background-job",
+					"because": "The work must continue without the user's request, so it cannot live in a request handler or the browser."
+				},
+				{
+					"id": "longer-than-request",
+					"when": { "duration": ["minutes", "hours"] },
+					"choose": "background-job",
+					"because": "Minutes of work exceed serverless request limits and the user's patience; a job with a status is the honest shape."
+				},
+				{
+					"id": "offline-heavy-on-device",
+					"when": { "offline": ["required"], "compute": ["moderate", "heavy"] },
+					"choose": "browser-worker",
+					"because": "Offline work can only run on the device, and moderate or heavy CPU belongs off the main thread."
+				},
+				{
+					"id": "offline-on-device",
+					"when": { "offline": ["required"] },
+					"choose": "browser-main-thread",
+					"because": "Offline work can only run on the device; light work fits on the main thread."
+				},
+				{
+					"id": "heavy-backend-own-runtime",
+					"when": {
+						"compute": ["heavy"],
+						"dataOrigin": ["server-database", "object-storage", "external-source"],
+						"infrastructure": ["container-available"],
+						"complexityTolerance": ["high"]
+					},
+					"choose": "separate-service",
+					"because": "Heavy server-side compute, a container host and a team that accepts a second deployment are the trigger for a dedicated compute service."
+				},
+				{
+					"id": "heavy-relaxed-to-job",
+					"when": {
+						"compute": ["heavy"],
+						"latency": ["relaxed"],
+						"dataOrigin": ["server-database", "object-storage", "external-source"]
+					},
+					"choose": "background-job",
+					"because": "Heavy server-side work nobody waits for is a job: it leaves the request path and gets retries."
+				},
+				{
+					"id": "device-data-heavy",
+					"when": { "dataOrigin": ["user-device"], "compute": ["moderate", "heavy"] },
+					"choose": "browser-worker",
+					"because": "The data is already on the device; uploading it costs more than computing it there, and the CPU belongs off the main thread."
+				},
+				{
+					"id": "device-data-light",
+					"when": { "dataOrigin": ["user-device"], "compute": ["light"] },
+					"choose": "browser-main-thread",
+					"because": "The data is on the device and the work is light; a worker would cost more in messaging than it saves."
+				}
+			],
+			"fallback": {
+				"choose": "server-request",
+				"because": "Nothing in the workload asks for more: the server request is the simplest placement — one deployment, one trust zone, next to the data."
+			},
+			"changes_when": [
+				"The work grows past the host's request duration limit (→ background job)",
+				"The data must stay on the device, or offline operation becomes required (→ browser)",
+				"A measured hot loop needs a different runtime and the team accepts a second deployment (→ separate service)"
+			],
+			"evidence": [
+				{
+					"kind": "reference-implementation",
+					"ref": "docs/blueprint/architecture/workers.md",
+					"claim": "Web Worker offload and the claim-based queue worker both run in v10r with tests.",
+					"limitations": "Shows the shapes work; does not measure their overhead on your workload."
+				},
+				{
+					"kind": "measured",
+					"ref": "docs/blueprint/architecture/external-service.md#measurement",
+					"claim": "A separate service adds a network hop: about 0.7 ms p50 on loopback, about 67 ms per call hosted (Render Free, Frankfurt), and a cold start that can exceed an 8 s deadline.",
+					"conditions": "Loopback and controlled-lab runs on a development machine; hosted rows on Render Free, Frankfurt, 2026-10-23, called from the developer's network.",
+					"limitations": "One service, one region, a small payload. Your host, region and payload change the numbers."
+				},
+				{
+					"kind": "external-study",
+					"ref": "https://surma.dev/things/is-postmessage-slow",
+					"claim": "postMessage payloads up to roughly 100 KiB fit a 100 ms interaction budget; transferring an ArrayBuffer is near-constant time.",
+					"limitations": "Measured in 2019 browsers; a heuristic, not a constant."
+				}
+			],
+			"evolution": {
+				"revisit_when": [
+					"A request handler starts timing out",
+					"Users report jank during a computation",
+					"A second team or runtime needs to own the work"
+				],
+				"migrations": [
+					{
+						"from": "server-request",
+						"to": "background-job",
+						"path": "Keep the domain function; call it from a registered job instead of the request, and return a job id with a status endpoint or SSE update.",
+						"implications": "Adds a status lifecycle, idempotency and retries; the UI must handle 'pending'."
+					},
+					{
+						"from": "browser-main-thread",
+						"to": "browser-worker",
+						"path": "Move the pure core into #lib/workers/ and keep the impure shell on the main thread; transfer buffers instead of copying.",
+						"implications": "Adds a worker module, CSP worker-src and the Vite worker format setting."
+					},
+					{
+						"from": "server-request",
+						"to": "separate-service",
+						"path": "Extract the hot path behind a typed contract (OpenAPI → generated types), call it through one service client with a deadline and a failure kind per cause.",
+						"implications": "A second deployment, a credential, a contract to version, and every call can now fail on its own."
+					}
+				]
+			},
+			"confirmation": "Architecture Studio's engineering checks flag CPU-intensive work on the main thread, long-running work in request handlers, and secrets on browser nodes."
+		},
+		{
+			"id": "compute-runtime",
+			"revision": 1,
+			"domain": "execution",
+			"title": "Which runtime and language",
+			"question": "Which runtime should execute the hot path — TypeScript, SQL inside the database, Rust compiled to WebAssembly in the browser, or native Rust in a service?",
+			"description": "Language and runtime are a separate dimension from placement. Rust is not automatically faster than JavaScript, and WebAssembly is not automatically faster than optimised JavaScript: Wasm pays off on compute-dense loops over typed data that stays resident in linear memory, and loses when every call copies data across the boundary. Choose it on measurement, not reputation.",
+			"problem": {
+				"workload": "The hot path of a unit of work, once its placement is known.",
+				"functional": ["Produce the same result in whichever runtime is chosen"],
+				"nonfunctional": ["Throughput or latency of the hot loop", "Maintainability of the code"],
+				"constraints": ["The dev container is Rust-free; Wasm is built in an ephemeral container and vendored"],
+				"assumptions": ["A parity test can prove two implementations produce identical output"]
+			},
+			"alternatives": [
+				{
+					"id": "typescript",
+					"approach": "TypeScript in the chosen placement",
+					"technologies": ["TypeScript", "V8 / JavaScriptCore / Bun"],
+					"benefits": [
+						"One language across the stack",
+						"No build toolchain beyond the app's",
+						"Modern JITs are fast for most work"
+					],
+					"drawbacks": ["Less predictable performance for tight numeric loops", "GC pauses on allocation-heavy code"],
+					"prerequisites": [],
+					"contraindications": [],
+					"prefer_when": "almost always — until a measurement shows the hot loop is the bottleneck",
+					"patterns": ["multi-client-core"]
+				},
+				{
+					"id": "sql",
+					"approach": "SQL executed inside the database",
+					"placement": "database",
+					"technologies": ["PostgreSQL", "Drizzle"],
+					"benefits": [
+						"Filters and aggregates next to the data",
+						"Moves only the result over the network",
+						"Transactions and constraints"
+					],
+					"drawbacks": ["Business logic in SQL is harder to test and to read", "Ties the logic to one engine"],
+					"prerequisites": ["The data lives in Postgres"],
+					"contraindications": [
+						"Business rules that need application context",
+						"Logic that is clearer and fast enough in TypeScript"
+					],
+					"prefer_when": "the work is filtering, joining or aggregating data that already lives in the database",
+					"patterns": ["databases-queries-mutations-split", "query-budget"]
+				},
+				{
+					"id": "rust-wasm-browser",
+					"approach": "Rust compiled to WebAssembly, run in a browser worker",
+					"placement": "browser-worker",
+					"technologies": ["Rust", "wasm-bindgen --target web", "Web Worker"],
+					"benefits": ["Predictable throughput on compute-dense loops over typed arrays", "No GC in the hot loop"],
+					"drawbacks": [
+						"Module download and instantiation cost",
+						"Copying across the JS/Wasm boundary can erase the gain",
+						"A Rust toolchain and a vendored artifact to keep fresh"
+					],
+					"prerequisites": [
+						"A measured hot loop",
+						"Typed, resident data (convolution, physics, hashing)",
+						"A JS twin and a byte-parity test"
+					],
+					"contraindications": [
+						"String-heavy or DOM-heavy work",
+						"Per-call copies of large buffers",
+						"Small inputs where init dominates"
+					],
+					"prefer_when": "a measured, compute-dense loop over typed data that can stay resident in Wasm memory",
+					"patterns": ["architecture-wasm-kernel", "main-thread-budget"]
+				},
+				{
+					"id": "rust-native-service",
+					"approach": "Native Rust in a separately deployed service",
+					"placement": "separate-service",
+					"technologies": ["Rust", "Axum", "OCI container"],
+					"benefits": ["Native performance and memory control", "Isolation from the app's runtime"],
+					"drawbacks": ["A network hop per call", "A second deployment and contract"],
+					"prerequisites": [
+						"A container host",
+						"A reason beyond speed: isolation, existing Rust code, independent scaling"
+					],
+					"contraindications": ["Low complexity tolerance", "Latency-critical chatty calls"],
+					"prefer_when": "heavy server-side compute that justifies its own deployment",
+					"patterns": ["architecture-external-service"]
+				}
+			],
+			"rules": [
+				{
+					"id": "query-in-sql",
+					"when": { "workload": ["data-query"], "dataOrigin": ["server-database"] },
+					"choose": "sql",
+					"because": "Filtering and aggregation over database data belong in SQL, next to the data; only the result crosses the network."
+				},
+				{
+					"id": "device-hot-loop-wasm",
+					"when": {
+						"workload": ["numeric-compute", "media-processing", "simulation"],
+						"compute": ["heavy"],
+						"dataOrigin": ["user-device"]
+					},
+					"choose": "rust-wasm-browser",
+					"because": "A heavy, numeric hot loop over device data is the one case where Wasm in a worker can pay off — confirm it with a parity-gated benchmark before committing."
+				},
+				{
+					"id": "backend-hot-loop-native",
+					"when": {
+						"compute": ["heavy"],
+						"dataOrigin": ["server-database", "object-storage", "external-source"],
+						"infrastructure": ["container-available"],
+						"complexityTolerance": ["high"]
+					},
+					"choose": "rust-native-service",
+					"because": "Heavy backend compute with a container host and high complexity tolerance can justify native Rust in its own service."
+				}
+			],
+			"fallback": {
+				"choose": "typescript",
+				"because": "No measured hot loop is stated: TypeScript is the default until a benchmark says otherwise."
+			},
+			"changes_when": [
+				"A profile shows a compute-dense loop dominating (→ consider Wasm or native)",
+				"Boundary copies dominate the Wasm timing (→ back to TypeScript)",
+				"The data moves into the database (→ SQL for filtering and aggregation)"
+			],
+			"evidence": [
+				{
+					"kind": "live-measurement",
+					"ref": "/showcases/wasm",
+					"claim": "A Rust blur kernel against its line-for-line JS twin, with copy-in, compute and copy-out timed separately and a deliberately losing per-call-copy case.",
+					"limitations": "Runs on the reader's device; nothing is recorded. The docs describe blur at about 2–4× in 2026 engines — one kernel, not a general rule."
+				},
+				{
+					"kind": "reference-implementation",
+					"ref": "src/lib/wasm/bench.ts",
+					"claim": "The benchmark protocol: byte-parity-gated identical algorithms, warm-up, counterbalanced rounds, medians, init cost reported.",
+					"limitations": "Protocol, not a result."
+				},
+				{
+					"kind": "external-study",
+					"ref": "https://www.usenix.org/conference/atc19/presentation/jangda",
+					"claim": "WebAssembly ran on average 45–55% slower than native code across SPEC benchmarks in Firefox and Chrome.",
+					"limitations": "2019 browsers, compiled C benchmarks; says nothing about Wasm against optimised JavaScript for your workload."
+				}
+			],
+			"evolution": {
+				"revisit_when": [
+					"A benchmark on representative data contradicts the current choice",
+					"The Wasm artifact's freshness gate starts failing often"
+				],
+				"migrations": [
+					{
+						"from": "typescript",
+						"to": "rust-wasm-browser",
+						"path": "Write the Rust kernel as a line-for-line twin, add the parity test, benchmark both with init and copies counted, and keep the JS path as the fallback.",
+						"implications": "A vendored artifact, a build container, CSP wasm-unsafe-eval, and a Safari feature floor."
+					},
+					{
+						"from": "rust-wasm-browser",
+						"to": "typescript",
+						"path": "Delete the kernel and keep the JS twin, which the parity test already pins.",
+						"implications": "Removes the toolchain; performance returns to the JS baseline you measured."
+					}
+				]
+			},
+			"confirmation": "The wasm pattern's parity test and benchmark protocol; a Studio wasm-module node outside a browser placement is flagged as unsupported."
+		},
+		{
+			"id": "interaction-style",
+			"revision": 1,
+			"domain": "communication",
+			"title": "How the parts communicate",
+			"question": "How should the caller and the work talk: an in-process call, HTTP/REST, typed RPC, Server-Sent Events, WebSockets, or a database-mediated queue?",
+			"description": "Every network boundary adds latency, a failure mode and a contract. Inside the modular monolith a call is a function call. Synchronous request/response fits short work; long work becomes asynchronous with an explicit status; server-to-client push is SSE unless the client must also push at high frequency.",
+			"problem": {
+				"workload": "A caller that needs work done, and possibly a result or a stream of updates.",
+				"functional": ["Deliver the request and the result", "State what happens when either side fails"],
+				"nonfunctional": ["Latency", "Delivery semantics (at-most-once, at-least-once)", "Behaviour under failure"],
+				"constraints": [
+					"Serverless hosts do not keep WebSocket connections",
+					"Every crossing of a trust boundary needs authentication"
+				],
+				"assumptions": []
+			},
+			"alternatives": [
+				{
+					"id": "function-call",
+					"approach": "An in-process function call through a domain barrel",
+					"technologies": ["TypeScript"],
+					"benefits": ["No network, no serialization, no partial failure", "Type-checked end to end"],
+					"drawbacks": ["Only within one deployment unit"],
+					"prerequisites": [],
+					"contraindications": ["Caller and callee in different deployment units"],
+					"prefer_when": "caller and callee are in the same deployment — which in a modular monolith is most of the time",
+					"patterns": ["multi-client-core", "architecture-codebase-map"]
+				},
+				{
+					"id": "http-rest",
+					"approach": "HTTP/REST request and response",
+					"technologies": ["HTTP", "JSON", "SvelteKit +server.ts"],
+					"benefits": ["Universal client support", "HTTP caching semantics", "Easy to inspect"],
+					"drawbacks": ["A contract to version", "Untyped unless a schema is shared"],
+					"prerequisites": ["Authentication on every endpoint that crosses a trust boundary"],
+					"contraindications": ["Work longer than a request", "High-frequency bidirectional messages"],
+					"prefer_when": "an external or browser client calls short, cacheable or resource-shaped operations",
+					"patterns": ["architecture-rest-api", "architecture-error-handling"]
+				},
+				{
+					"id": "typed-rpc",
+					"approach": "Typed RPC over HTTP with a generated contract",
+					"technologies": ["OpenAPI", "Generated TypeScript types", "Valibot mirrors"],
+					"benefits": ["Compile-time agreement between caller and service", "Drift detected by tests"],
+					"drawbacks": ["A contract chain to generate and check"],
+					"prerequisites": ["A contract source of truth"],
+					"contraindications": ["In-process calls"],
+					"prefer_when": "the app calls a separately deployed service it owns",
+					"patterns": ["architecture-external-service", "deadline-propagation"]
+				},
+				{
+					"id": "sse",
+					"approach": "Server-Sent Events for server-to-client updates",
+					"technologies": ["EventSource", "HTTP streaming"],
+					"benefits": ["Plain HTTP, reconnects automatically", "Works through most proxies"],
+					"drawbacks": ["One direction only", "Long-lived connections on serverless are bounded"],
+					"prerequisites": [],
+					"contraindications": ["High-frequency client-to-server messages"],
+					"prefer_when": "the server pushes progress, notifications or collaboration updates and the client's own writes are ordinary requests",
+					"patterns": ["notifications-sse-stream"]
+				},
+				{
+					"id": "websocket",
+					"approach": "WebSockets for bidirectional real-time messages",
+					"technologies": ["WebSocket", "A persistent process"],
+					"benefits": ["Low-latency messages in both directions"],
+					"drawbacks": [
+						"Needs a persistent process (not serverless)",
+						"Reconnection, ordering and backpressure are yours"
+					],
+					"prerequisites": ["A container or a managed real-time service"],
+					"contraindications": ["Serverless-only hosting", "One-way updates"],
+					"prefer_when": "many small messages flow both ways with tight latency, on a host that keeps connections",
+					"patterns": ["notifications-sse-stream"]
+				},
+				{
+					"id": "database-queue",
+					"approach": "Database-mediated queue (outbox rows claimed by a worker)",
+					"technologies": ["Postgres", "FOR UPDATE SKIP LOCKED", "Retry with backoff"],
+					"benefits": [
+						"At-least-once delivery with retries",
+						"Written in the same transaction as the change",
+						"No extra broker"
+					],
+					"drawbacks": ["Polling latency", "Consumers must be idempotent"],
+					"prerequisites": ["Postgres", "A worker or scheduled drain"],
+					"contraindications": ["Interactive request/response"],
+					"prefer_when": "the work is asynchronous, must not be lost, and Postgres is already there",
+					"patterns": ["notifications-router-outbox", "jobs-scheduler", "durable-step-execution"]
+				}
+			],
+			"rules": [
+				{
+					"id": "long-work-async",
+					"when": { "background": ["required"] },
+					"choose": "database-queue",
+					"because": "Work that outlives the request is handed over asynchronously and durably; the outbox delivers at least once without a new broker."
+				},
+				{
+					"id": "long-duration-async",
+					"when": { "duration": ["minutes", "hours"] },
+					"choose": "database-queue",
+					"because": "Minutes of work cannot hold a request open; enqueue it and report status."
+				},
+				{
+					"id": "realtime-persistent",
+					"when": { "workload": ["realtime-collaboration"], "infrastructure": ["container-available"] },
+					"choose": "websocket",
+					"because": "Bidirectional real-time collaboration on a host that keeps connections is what WebSockets are for."
+				},
+				{
+					"id": "realtime-serverless",
+					"when": { "workload": ["realtime-collaboration"], "infrastructure": ["serverless-only"] },
+					"choose": "sse",
+					"because": "Serverless hosts do not keep WebSockets; push updates with SSE and send edits as ordinary requests."
+				},
+				{
+					"id": "own-service-typed",
+					"when": {
+						"compute": ["heavy"],
+						"dataOrigin": ["server-database", "object-storage", "external-source"],
+						"infrastructure": ["container-available"],
+						"complexityTolerance": ["high"]
+					},
+					"choose": "typed-rpc",
+					"because": "A dedicated compute service the app owns is called through a typed, generated contract with deadlines."
+				},
+				{
+					"id": "public-api-rest",
+					"when": { "workload": ["light-api"] },
+					"choose": "http-rest",
+					"because": "A lightweight API for external or browser clients is plain HTTP/REST with standard caching and errors."
+				},
+				{
+					"id": "upload-rest",
+					"when": { "workload": ["file-ingest"] },
+					"choose": "http-rest",
+					"because": "Uploads are HTTP requests — ideally straight to object storage through a signed URL, with the app recording the result."
+				}
+			],
+			"fallback": {
+				"choose": "function-call",
+				"because": "Nothing requires a boundary: inside the modular monolith the simplest communication is a function call."
+			},
+			"changes_when": [
+				"The callee moves to another deployment unit (→ HTTP or typed RPC)",
+				"The work becomes long or must not be lost (→ queue)",
+				"The host starts keeping connections and the client pushes often (→ WebSocket)"
+			],
+			"evidence": [
+				{
+					"kind": "reference-implementation",
+					"ref": "docs/blueprint/architecture/workers.md",
+					"claim": "The outbox queue worker: atomic SKIP LOCKED claim, attempts fence, retry with backoff, stale-claim reaper.",
+					"limitations": "Reference behaviour; polling latency depends on the drain interval you choose."
+				},
+				{
+					"kind": "reference-implementation",
+					"ref": "docs/blueprint/architecture/external-service.md",
+					"claim": "A typed service client with a deadline, bounded body, one failure kind per cause and retry only on idempotent calls.",
+					"limitations": "One service; the contract chain is the reusable part."
+				},
+				{
+					"kind": "documented-reasoning",
+					"ref": "docs/blueprint/architecture/multi-client-core.md",
+					"claim": "One domain serves UI, REST, AI tools and jobs through in-process calls; adapters are thin.",
+					"limitations": "Reasoning and gate tests, not a performance measurement."
+				}
+			],
+			"evolution": {
+				"revisit_when": [
+					"A synchronous call starts timing out",
+					"Messages are lost or duplicated",
+					"The host changes between serverless and container"
+				],
+				"migrations": [
+					{
+						"from": "function-call",
+						"to": "typed-rpc",
+						"path": "Put the callee behind a contract; keep the domain function as the implementation on the other side.",
+						"implications": "Adds latency, partial failure and a version to manage on every call."
+					},
+					{
+						"from": "http-rest",
+						"to": "database-queue",
+						"path": "Enqueue in the same transaction as the change; return an id; deliver status by SSE or polling.",
+						"implications": "At-least-once delivery means idempotent consumers."
+					}
+				]
+			},
+			"confirmation": "Studio checks flag protocols a target cannot accept, WebSockets on request-only placements, and network connections with no stated failure handling."
+		},
+		{
+			"id": "data-store",
+			"revision": 1,
+			"domain": "data",
+			"title": "Where the data lives",
+			"question": "Where should the authoritative copy of this data live: PostgreSQL, browser memory, IndexedDB, a cache, object storage, or a graph database?",
+			"description": "Storage placement is not computation placement. The authoritative copy lives where it can be protected, backed up and queried; caches and device copies are derived from it. Postgres is the default; other stores are added for a reason the default cannot meet.",
+			"problem": {
+				"workload": "Data a feature reads and writes.",
+				"functional": ["Keep the data correct and available", "Let the right parties read it"],
+				"nonfunctional": ["Durability", "Read latency", "Cost per GB"],
+				"constraints": [
+					"Personal data falls under GDPR retention and export",
+					"Large binaries do not belong in table rows"
+				],
+				"assumptions": ["One Postgres per stack (v10r principle 1)"]
+			},
+			"alternatives": [
+				{
+					"id": "postgres",
+					"approach": "PostgreSQL as the authoritative store",
+					"technologies": ["PostgreSQL (Neon)", "Drizzle"],
+					"benefits": ["Transactions and constraints", "One backup and retention story", "SQL close to the data"],
+					"drawbacks": ["A network round trip per query from serverless", "Schema changes to manage"],
+					"prerequisites": ["A Postgres instance"],
+					"contraindications": ["Large binary blobs", "Data that must never leave the device"],
+					"prefer_when": "the data is shared, structured, or must be correct under concurrent writes",
+					"patterns": ["databases-postgres-connection", "databases-schema-type-inference", "temporal-data-modeling"]
+				},
+				{
+					"id": "browser-memory",
+					"approach": "Browser memory only (state that never leaves the device)",
+					"technologies": ["Svelte runes state", "ArrayBuffer"],
+					"benefits": ["No upload, no server cost, private by construction"],
+					"drawbacks": ["Lost on reload unless persisted", "Bounded by device memory"],
+					"prerequisites": [],
+					"contraindications": ["Data others must see", "Data that must survive the session"],
+					"prefer_when": "the data is the user's own working set and does not need to outlive the page",
+					"patterns": ["architecture-state-management"]
+				},
+				{
+					"id": "indexeddb",
+					"approach": "IndexedDB on the device, synchronised with the server",
+					"technologies": ["IndexedDB", "Service worker"],
+					"benefits": ["Works offline", "Survives reloads"],
+					"drawbacks": ["Sync and conflict resolution are yours", "Storage can be evicted"],
+					"prerequisites": ["A sync strategy and a server source of truth"],
+					"contraindications": ["Secrets", "Data that must be authoritative on the device"],
+					"prefer_when": "offline operation is required",
+					"patterns": ["pwa-service-worker", "versioned-document-session"]
+				},
+				{
+					"id": "redis-cache",
+					"approach": "A cache in front of the authoritative store",
+					"technologies": ["Redis (Upstash)", "Stale-while-revalidate"],
+					"benefits": ["Fast repeat reads", "Protects the database from hot keys"],
+					"drawbacks": ["Invalidation", "A second store to reason about"],
+					"prerequisites": ["A measured repeat-read hot spot"],
+					"contraindications": ["As the only copy of anything"],
+					"prefer_when": "measured repeat reads dominate and slightly stale data is acceptable",
+					"patterns": ["databases-cache", "hierarchical-cache", "stale-while-revalidate", "singleflight"]
+				},
+				{
+					"id": "object-storage",
+					"approach": "Object storage for files and large binaries",
+					"technologies": ["S3 API (Cloudflare R2)", "Signed URLs"],
+					"benefits": ["Cheap per GB", "Direct client upload and download"],
+					"drawbacks": ["No queries over content", "Metadata lives elsewhere"],
+					"prerequisites": ["An S3-compatible bucket"],
+					"contraindications": ["Small structured records"],
+					"prefer_when": "the data is files, media or large blobs",
+					"patterns": ["databases-object-storage", "forms-file-uploads"]
+				},
+				{
+					"id": "graph-db",
+					"approach": "A graph database for relationship-first queries",
+					"technologies": ["Neo4j", "Cypher"],
+					"benefits": ["Variable-depth traversals are natural"],
+					"drawbacks": ["A second database to keep fresh", "Polyglot consistency"],
+					"prerequisites": ["A traversal-heavy query that Postgres recursive CTEs serve poorly"],
+					"contraindications": ["Plain relational data"],
+					"prefer_when": "the queries are traversals over many-hop relationships",
+					"patterns": ["databases-neo4j-connection", "databases-graph-traversal", "databases-polyglot-freshness"]
+				}
+			],
+			"rules": [
+				{
+					"id": "offline-device-store",
+					"when": { "offline": ["required"] },
+					"choose": "indexeddb",
+					"because": "Offline operation needs a durable copy on the device, synchronised with a server source of truth."
+				},
+				{
+					"id": "files-to-object-storage",
+					"when": {
+						"workload": ["media-processing", "file-ingest"],
+						"dataOrigin": ["object-storage", "server-database", "external-source"]
+					},
+					"choose": "object-storage",
+					"because": "Files and media belong in object storage; the database keeps their metadata."
+				},
+				{
+					"id": "device-only-working-set",
+					"when": {
+						"dataOrigin": ["user-device"],
+						"background": ["not-required"],
+						"sensitivity": ["public", "personal"]
+					},
+					"choose": "browser-memory",
+					"because": "The data starts on the device and nothing needs it elsewhere; keeping it in memory avoids an upload and a privacy surface."
+				},
+				{
+					"id": "large-uploads-object",
+					"when": { "dataVolume": ["large"], "dataOrigin": ["user-device"], "workload": ["file-ingest"] },
+					"choose": "object-storage",
+					"because": "Large uploads go straight to object storage through a signed URL rather than through the app."
+				}
+			],
+			"fallback": {
+				"choose": "postgres",
+				"because": "Postgres is the default authoritative store: transactions, constraints, one backup and retention story."
+			},
+			"changes_when": [
+				"Offline becomes required (→ IndexedDB plus sync)",
+				"Repeat reads are measured as the bottleneck (→ add a cache)",
+				"Queries become many-hop traversals (→ consider a graph projection)"
+			],
+			"evidence": [
+				{
+					"kind": "reference-implementation",
+					"ref": "docs/blueprint/db/README.md",
+					"claim": "Relational and graph patterns, polyglot freshness between Postgres and Neo4j.",
+					"limitations": "Shows both work in v10r; no comparative benchmark."
+				},
+				{
+					"kind": "documented-reasoning",
+					"ref": "docs/foundation/principles.md",
+					"claim": "One database per stack; managed services hold state, never logic.",
+					"limitations": "A project principle, not a measurement."
+				}
+			],
+			"evolution": {
+				"revisit_when": [
+					"Database read latency dominates a measured trace",
+					"Storage cost of blobs in rows grows",
+					"Users need offline access"
+				],
+				"migrations": [
+					{
+						"from": "postgres",
+						"to": "redis-cache",
+						"path": "Keep Postgres authoritative; add a read-through cache with SWR and singleflight for the measured hot keys only.",
+						"implications": "Staleness windows and invalidation become part of the contract."
+					},
+					{
+						"from": "browser-memory",
+						"to": "indexeddb",
+						"path": "Persist the working set locally and add a sync path to a server store.",
+						"implications": "Conflict resolution and storage eviction handling."
+					}
+				]
+			}
+		},
+		{
+			"id": "processing-locality",
+			"revision": 1,
+			"domain": "data",
+			"title": "Where data is filtered and aggregated",
+			"question": "Should filtering and aggregation run inside the database, in the application server, or in the browser?",
+			"description": "Moving computation to the data beats moving data to the computation when the data is large and the result is small. That argues for SQL-side filtering and aggregation — not for business rules inside the database. Application-side processing stays the default for small sets, where TypeScript is clearer and fast enough.",
+			"problem": {
+				"workload": "Reading many rows to produce fewer — a filter, a group-by, a top-N, a sum.",
+				"functional": ["Return the correct subset or aggregate"],
+				"nonfunctional": ["Bytes transferred", "Query count per request", "Readability of the logic"],
+				"constraints": ["Serverless functions pay a round trip per query"],
+				"assumptions": []
+			},
+			"alternatives": [
+				{
+					"id": "sql-in-database",
+					"approach": "Filter and aggregate in SQL",
+					"placement": "database",
+					"technologies": ["PostgreSQL", "Drizzle query builder", "Indexes"],
+					"benefits": ["Only the result crosses the network", "Indexes do the work", "One round trip"],
+					"drawbacks": ["Complex logic in SQL is harder to test and review"],
+					"prerequisites": ["The data is in Postgres", "An index that supports the query"],
+					"contraindications": [
+						"Business rules that need application context",
+						"Logic that changes often and is clearer in TypeScript"
+					],
+					"prefer_when": "the input is large and the result is small",
+					"patterns": ["databases-queries-mutations-split", "query-budget", "no-waterfall-loading"]
+				},
+				{
+					"id": "application-server",
+					"approach": "Fetch the rows and process them in TypeScript on the server",
+					"placement": "server-request",
+					"technologies": ["TypeScript"],
+					"benefits": ["Readable, testable logic", "Easy to combine with non-database data"],
+					"drawbacks": ["Transfers every row it processes", "Memory grows with the input"],
+					"prerequisites": [],
+					"contraindications": ["Large inputs with small results"],
+					"prefer_when": "the input is small, or the logic needs context the database does not have",
+					"patterns": ["multi-client-core"]
+				},
+				{
+					"id": "browser",
+					"approach": "Process on the device",
+					"placement": "browser-worker",
+					"technologies": ["TypeScript", "Web Worker"],
+					"benefits": ["No server cost", "Interactive re-filtering without round trips"],
+					"drawbacks": ["The data must be on the device first"],
+					"prerequisites": ["The data is already on the device, or small enough to send once"],
+					"contraindications": ["Data the user may not see in full"],
+					"prefer_when": "the data originates on the device or is small, public and re-filtered interactively",
+					"patterns": ["main-thread-budget", "virtualized-rendering"]
+				}
+			],
+			"rules": [
+				{
+					"id": "query-near-data",
+					"when": { "workload": ["data-query"], "dataOrigin": ["server-database"] },
+					"choose": "sql-in-database",
+					"because": "Querying and aggregating database data: let the database filter and aggregate so only the result crosses the network."
+				},
+				{
+					"id": "large-server-data",
+					"when": { "dataOrigin": ["server-database"], "dataVolume": ["medium", "large"] },
+					"choose": "sql-in-database",
+					"because": "Medium or large inputs in the database are reduced there; transferring them to the app to discard most of them wastes bytes and memory."
+				},
+				{
+					"id": "device-data-local",
+					"when": { "dataOrigin": ["user-device"] },
+					"choose": "browser",
+					"because": "The data is already on the device; processing it there avoids an upload."
+				}
+			],
+			"fallback": {
+				"choose": "application-server",
+				"because": "Small inputs: TypeScript on the server is clearer and fast enough, and keeps logic out of the database."
+			},
+			"changes_when": [
+				"Input sizes grow while results stay small (→ SQL)",
+				"The logic gains application context the database lacks (→ application)"
+			],
+			"evidence": [
+				{
+					"kind": "reference-implementation",
+					"ref": "docs/blueprint/velocity/data.md",
+					"claim": "Query budgets pin the number of database round trips per operation and fail the gate when a change adds one.",
+					"limitations": "Counts round trips; does not compare SQL-side and app-side processing time or bytes."
+				},
+				{
+					"kind": "estimate",
+					"ref": "docs/blueprint/architecture-engineering/plan.md",
+					"claim": "SQL-side reduction is preferable when the input is large and the result small.",
+					"limitations": "v10r has no measured app-vs-database comparison yet. This recommendation rests on reasoning, not a recorded measurement."
+				}
+			],
+			"evolution": {
+				"revisit_when": [
+					"A trace shows large result sets transferred and then filtered",
+					"A query becomes too complex to review"
+				],
+				"migrations": [
+					{
+						"from": "application-server",
+						"to": "sql-in-database",
+						"path": "Push the filter or aggregate into the query; add the supporting index; keep a test asserting both give the same result.",
+						"implications": "Logic moves into SQL — keep it to filtering and aggregation, not business rules."
+					}
+				]
+			}
+		},
+		{
+			"id": "deployment-shape",
+			"revision": 1,
+			"domain": "deployment",
+			"title": "What is deployed together",
+			"question": "Should this ship as a modular monolith, a monolith on a persistent host, a monolith plus a worker, a monolith plus a compute service, or a distributed system?",
+			"description": "Start with a modular monolith whose module boundaries are enforced by gates; split a deployment unit off only on an explicit trigger — a different runtime, isolation, a persistent connection, or independent scaling. Every added unit adds deployment, monitoring, credentials and failure modes.",
+			"problem": {
+				"workload": "The system as a whole.",
+				"functional": ["Run every workload somewhere it fits"],
+				"nonfunctional": ["Operational cost", "Reliability", "Scaling boundaries", "Cold starts"],
+				"constraints": ["Free-tier friendly (v10r principle 4)"],
+				"assumptions": ["Vercel for the app; Render or Podman for containers"]
+			},
+			"alternatives": [
+				{
+					"id": "modular-monolith",
+					"approach": "One serverless SvelteKit deployment with enforced module boundaries",
+					"technologies": ["SvelteKit", "Vercel", "Architecture gate tests"],
+					"benefits": [
+						"One deployment, one pipeline, one log",
+						"Scales to zero",
+						"Boundaries enforced by tests, so a later split is cheap"
+					],
+					"drawbacks": ["Request duration limits", "No persistent connections", "Cold starts"],
+					"prerequisites": [],
+					"contraindications": ["Persistent connections", "Work longer than the host's limits without a job runner"],
+					"prefer_when": "nothing in the workloads demands a persistent process or a different runtime",
+					"patterns": ["multi-client-core", "architecture-deployment", "architecture-codebase-map"]
+				},
+				{
+					"id": "persistent-monolith",
+					"approach": "The same monolith on a persistent container host",
+					"technologies": ["SvelteKit adapter-node", "Container"],
+					"benefits": ["Persistent connections and in-process schedulers", "No cold starts"],
+					"drawbacks": ["You run the host", "Scaling is per instance"],
+					"prerequisites": ["A container host"],
+					"contraindications": ["Serverless-only infrastructure"],
+					"prefer_when": "the app needs persistent connections or in-process background loops",
+					"patterns": ["architecture-deployment", "jobs-scheduler"]
+				},
+				{
+					"id": "monolith-plus-worker",
+					"approach": "The monolith plus a background worker process",
+					"technologies": ["Postgres outbox", "A worker on a container, or scheduled drains on serverless"],
+					"benefits": ["Long work leaves the request path", "Retries"],
+					"drawbacks": ["A second process to deploy and watch"],
+					"prerequisites": ["A container host, or cron on the serverless host"],
+					"contraindications": ["No work that outlives a request"],
+					"prefer_when": "work must run in the background continuously",
+					"patterns": ["jobs-scheduler", "jobs-platform-scheduling", "notifications-router-outbox"]
+				},
+				{
+					"id": "monolith-plus-service",
+					"approach": "The monolith plus a separately deployed compute service",
+					"technologies": ["Rust / Axum", "OCI container", "Typed contract"],
+					"benefits": ["A different runtime and isolated resources for the heavy part"],
+					"drawbacks": ["A second deployment, credential and contract", "Network failures between them"],
+					"prerequisites": ["A container host", "A trigger beyond speed"],
+					"contraindications": ["Low complexity tolerance"],
+					"prefer_when": "one workload needs its own runtime or scaling and the team accepts the operational cost",
+					"patterns": ["architecture-external-service"]
+				},
+				{
+					"id": "distributed-services",
+					"approach": "Several independently deployed services",
+					"technologies": ["Service mesh or gateway", "Per-service data"],
+					"benefits": ["Independent deployment and scaling per team"],
+					"drawbacks": ["Distributed failure, consistency and observability", "High operational cost"],
+					"prerequisites": ["Several teams", "Mature operations"],
+					"contraindications": ["A solo developer or a small team", "Boundaries not yet proven in a monolith"],
+					"prefer_when": "several teams need independent release cycles over boundaries already proven in a modular monolith",
+					"patterns": ["architecture-external-service"]
+				}
+			],
+			"rules": [
+				{
+					"id": "heavy-own-service",
+					"when": {
+						"compute": ["heavy"],
+						"dataOrigin": ["server-database", "object-storage", "external-source"],
+						"infrastructure": ["container-available"],
+						"complexityTolerance": ["high"]
+					},
+					"choose": "monolith-plus-service",
+					"because": "Heavy backend compute with a container host and high tolerance is the trigger for one extra unit — not for a distributed system."
+				},
+				{
+					"id": "realtime-persistent-host",
+					"when": { "workload": ["realtime-collaboration"], "infrastructure": ["container-available"] },
+					"choose": "persistent-monolith",
+					"because": "Real-time connections need a process that stays up; run the same monolith on a persistent host."
+				},
+				{
+					"id": "background-worker-container",
+					"when": {
+						"background": ["required"],
+						"infrastructure": ["container-available"],
+						"complexityTolerance": ["medium", "high"]
+					},
+					"choose": "monolith-plus-worker",
+					"because": "Continuous background work on a container host gets its own worker process draining the outbox."
+				}
+			],
+			"fallback": {
+				"choose": "modular-monolith",
+				"because": "No trigger for a second unit: one serverless deployment with enforced module boundaries is the simplest suitable shape. Background work on serverless runs as scheduled jobs inside it."
+			},
+			"changes_when": [
+				"A workload needs a persistent connection (→ persistent host)",
+				"Background work becomes continuous (→ worker)",
+				"One workload needs its own runtime or scaling (→ one service)"
+			],
+			"evidence": [
+				{
+					"kind": "documented-reasoning",
+					"ref": "docs/blueprint/architecture/jobs.md",
+					"claim": "Vendor-agnostic scheduling: the registry owns the job, the platform owns the schedule — cron on Vercel, setInterval on a container.",
+					"limitations": "Reasoning plus a working registry; no cost comparison."
+				},
+				{
+					"kind": "measured",
+					"ref": "docs/blueprint/architecture/external-service.md#measurement",
+					"claim": "A free-tier container service can take longer than an 8 s deadline to wake from cold.",
+					"conditions": "Render Free, Frankfurt, 2026-10-23.",
+					"limitations": "One host and plan; paid plans do not sleep."
+				},
+				{
+					"kind": "external-study",
+					"ref": "https://martinfowler.com/bliki/MonolithFirst.html",
+					"claim": "Successful service architectures usually started as monoliths; early boundaries are hard to get right.",
+					"limitations": "Experience report, not a controlled study."
+				}
+			],
+			"evolution": {
+				"revisit_when": [
+					"A workload hits the host's limits",
+					"A second team needs independent releases",
+					"Operational cost of extra units outweighs their benefit"
+				],
+				"migrations": [
+					{
+						"from": "modular-monolith",
+						"to": "monolith-plus-worker",
+						"path": "Move the job registry's drain into a persistent worker; keep cron as the fallback trigger.",
+						"implications": "A second process; the outbox and job code are unchanged."
+					},
+					{
+						"from": "modular-monolith",
+						"to": "monolith-plus-service",
+						"path": "Extract one domain behind a typed contract; deploy it as a container; call it through a service client.",
+						"implications": "Network failure handling, a credential and a contract version."
+					},
+					{
+						"from": "monolith-plus-service",
+						"to": "modular-monolith",
+						"path": "Fold the service back into a domain when its trigger disappears.",
+						"implications": "Removes a deployment; the contract tests become unit tests."
+					}
+				]
+			},
+			"confirmation": "Studio comparison counts deployment units and operational requirements, so a variant's added units are visible."
+		},
+		{
+			"id": "compute-acceleration",
+			"revision": 1,
+			"domain": "performance",
+			"title": "Making slow work fast",
+			"question": "When a computation is too slow, what should change first: the algorithm, the thread it runs on, the runtime, the machine, or whether it runs at all?",
+			"description": "Most slowness is algorithmic or I/O. Measure first, then change the cheapest thing that the measurement implicates: a better algorithm, moving the work off the main thread, caching a repeated result, and only then a different runtime or machine. Every step adds complexity; none is automatically an improvement.",
+			"problem": {
+				"workload": "A unit of work that is, or is expected to be, too slow.",
+				"functional": ["Same result, sooner — or without blocking"],
+				"nonfunctional": [
+					"Main-thread blocking",
+					"End-to-end latency",
+					"Initial load and runtime initialization",
+					"Memory",
+					"Hosting cost"
+				],
+				"constraints": ["No theoretical score may stand in for a measurement"],
+				"assumptions": ["A profile or benchmark can be taken on representative data"]
+			},
+			"alternatives": [
+				{
+					"id": "optimize-javascript",
+					"approach": "Measure, then fix the algorithm and data structures in place",
+					"technologies": ["Profiler", "TypeScript"],
+					"benefits": ["No new moving parts", "Often the biggest win"],
+					"drawbacks": ["Needs a profile to aim at"],
+					"prerequisites": ["A representative measurement"],
+					"contraindications": [],
+					"prefer_when": "always first",
+					"patterns": ["latency-tracing", "performance-budget-ratchet"]
+				},
+				{
+					"id": "move-off-main-thread",
+					"approach": "Move the work into a Web Worker",
+					"placement": "browser-worker",
+					"technologies": ["Web Worker", "Transferable buffers"],
+					"benefits": ["Input stays responsive even if total time is unchanged"],
+					"drawbacks": ["Messaging overhead", "Does not make the work itself faster"],
+					"prerequisites": ["The work does not need the DOM"],
+					"contraindications": ["Work shorter than the messaging cost"],
+					"prefer_when": "the problem is jank during interaction, not total duration",
+					"patterns": ["main-thread-budget", "velocity-idle-work"]
+				},
+				{
+					"id": "rust-wasm",
+					"approach": "Port the measured hot loop to Rust/Wasm, inside a worker",
+					"placement": "browser-worker",
+					"technologies": ["Rust", "wasm-bindgen"],
+					"benefits": ["Can speed up compute-dense loops over typed data"],
+					"drawbacks": ["Download and instantiation cost", "Boundary copies", "A toolchain to maintain"],
+					"prerequisites": ["A benchmark against an optimised JS twin, with init and copies counted"],
+					"contraindications": ["The loop is not the bottleneck", "Per-call copies of large data"],
+					"prefer_when": "a parity-gated benchmark on representative data shows the gain survives init and copies",
+					"patterns": ["architecture-wasm-kernel"]
+				},
+				{
+					"id": "cache-results",
+					"approach": "Cache the result of repeated work",
+					"technologies": ["HTTP cache", "Redis", "In-memory memo"],
+					"benefits": ["Repeat requests skip the work entirely"],
+					"drawbacks": ["Staleness and invalidation"],
+					"prerequisites": ["The same inputs recur"],
+					"contraindications": ["Every input is unique", "Personal data in a shared cache"],
+					"prefer_when": "measured repeat requests with identical inputs dominate",
+					"patterns": ["hierarchical-cache", "stale-while-revalidate", "singleflight"]
+				},
+				{
+					"id": "offload-to-server",
+					"approach": "Offload the work from the device to the server",
+					"placement": "server-request",
+					"technologies": ["SvelteKit server"],
+					"benefits": ["Predictable hardware", "Shared results"],
+					"drawbacks": ["Upload and download cost", "Server cost", "Data leaves the device"],
+					"prerequisites": ["The data may leave the device"],
+					"contraindications": ["Large device data with a small result computed once", "Offline requirement"],
+					"prefer_when": "the device is too weak and the data is small or already on the server",
+					"patterns": ["multi-client-core", "velocity-asset-delivery"]
+				}
+			],
+			"rules": [
+				{
+					"id": "device-hot-loop",
+					"when": {
+						"workload": ["numeric-compute", "media-processing", "simulation"],
+						"compute": ["heavy"],
+						"dataOrigin": ["user-device"],
+						"dataVolume": ["medium", "large"]
+					},
+					"choose": "rust-wasm",
+					"because": "A heavy numeric loop over a sizeable device-side buffer is the profile where Wasm in a worker can pay off — benchmark it against an optimised JS twin first."
+				},
+				{
+					"id": "interactive-jank",
+					"when": { "latency": ["interactive"], "compute": ["moderate", "heavy"], "dataOrigin": ["user-device"] },
+					"choose": "move-off-main-thread",
+					"because": "Interactive latency with moderate or heavy device-side work: the first fix is not blocking input."
+				},
+				{
+					"id": "repeat-api-reads",
+					"when": { "workload": ["light-api"], "latency": ["interactive"] },
+					"choose": "cache-results",
+					"because": "A lightweight API with interactive latency usually wins most from caching identical repeat requests — after measuring that they repeat."
+				}
+			],
+			"fallback": {
+				"choose": "optimize-javascript",
+				"because": "Measure first: most slowness is algorithmic or I/O, and fixing it in place adds no moving parts."
+			},
+			"changes_when": [
+				"A profile implicates the runtime rather than the algorithm (→ Wasm or native)",
+				"The problem is blocking, not duration (→ worker)",
+				"Inputs repeat (→ cache)"
+			],
+			"evidence": [
+				{
+					"kind": "live-measurement",
+					"ref": "/showcases/wasm",
+					"claim": "Compute, copy-in and copy-out timed separately; the per-call-copy case shows the boundary erasing the gain.",
+					"limitations": "Your device, one kernel; nothing recorded."
+				},
+				{
+					"kind": "reference-implementation",
+					"ref": "src/lib/server/perf/budgets.json",
+					"claim": "Bundle and route weight are ratcheted; initial loading cost of an added runtime is visible in validate:build.",
+					"limitations": "Bundle bytes, not runtime speed."
+				},
+				{
+					"kind": "external-study",
+					"ref": "https://surma.dev/things/is-postmessage-slow",
+					"claim": "Worker messaging cost scales with payload; transfer avoids the copy.",
+					"limitations": "2019 measurements; a heuristic."
+				}
+			],
+			"evolution": {
+				"revisit_when": ["The performance budget or ratchet regresses", "A new profile moves the bottleneck"],
+				"migrations": [
+					{
+						"from": "move-off-main-thread",
+						"to": "rust-wasm",
+						"path": "Inside the existing worker, swap the JS core for a Wasm kernel behind the same message protocol; keep the JS twin and the parity test.",
+						"implications": "Adds the wasm artifact and its init cost to the worker's first run."
+					}
+				]
+			}
+		}
+	]
+}

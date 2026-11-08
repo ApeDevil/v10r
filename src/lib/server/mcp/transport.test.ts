@@ -22,6 +22,8 @@ const PATTERN_TOOL_NAMES = [
 	'get_file_excerpt',
 	'trace_capability',
 	'recommend_emulation_plan',
+	'explore_architecture',
+	'check_architecture',
 	'validate_snippet',
 ];
 const ADMIN_TOOL_NAMES = [
@@ -92,7 +94,7 @@ describe('protocol basics', () => {
 	});
 });
 
-describe('public registry exposes only the six read-only Pattern tools', () => {
+describe('public registry exposes only the eight read-only Pattern tools', () => {
 	it('tools/list returns exactly the pattern tools', async () => {
 		const res = await call('tools/list');
 		const names = (res as { result: { tools: { name: string }[] } }).result.tools.map((t) => t.name);

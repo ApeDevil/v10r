@@ -7,13 +7,15 @@ function textOf(result: { content: { text: string }[] }): string {
 }
 
 describe('PATTERN_TOOLS definitions', () => {
-	it('declares exactly the six read-only tools', () => {
+	it('declares exactly the eight read-only tools', () => {
 		expect(PATTERN_TOOLS.map((t) => t.name)).toEqual([
 			'search_patterns',
 			'get_pattern',
 			'get_file_excerpt',
 			'trace_capability',
 			'recommend_emulation_plan',
+			'explore_architecture',
+			'check_architecture',
 			'validate_snippet',
 		]);
 	});

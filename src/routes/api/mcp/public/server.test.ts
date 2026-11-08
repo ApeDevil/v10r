@@ -55,11 +55,13 @@ describe('POST /api/mcp/public', () => {
 		expect(body.result._meta).not.toHaveProperty('environment');
 	});
 
-	it('tools/list returns exactly the six pattern tools', async () => {
+	it('tools/list returns exactly the eight pattern tools', async () => {
 		const res = await rpc('tools/list');
 		const body = await res.json();
 		expect(body.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(
 			[
+				'check_architecture',
+				'explore_architecture',
 				'get_file_excerpt',
 				'get_pattern',
 				'recommend_emulation_plan',

@@ -8,6 +8,9 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { headingAnchors } from '../src/lib/docs/heading-anchors.server.ts';
+import { checkDecisionReferences, parseDecisionCatalog } from './architecture-engineering/decision-record.ts';
+import decisionCatalogJson from './architecture-engineering/decisions.json';
+import { EVIDENCE_LABS } from './architecture-engineering/evidence-labs.ts';
 import { loadRegistry } from './load.ts';
 import { buildById, type RegRef, topoSort } from './schema.ts';
 
@@ -125,6 +128,34 @@ for (const pattern of registry.patterns) {
 				`${pattern.id}: verifiedAt ${pattern.verifiedAt} is ${Number.isNaN(ageDays) ? 'unparseable' : `${ageDays} days old`} — re-verify the proof surface`,
 			);
 		}
+	}
+}
+
+// The Architecture Engineering decision catalogue references patterns by id and evidence by
+// path or route: every id must resolve (decision invariant 8) and every evidence ref must exist,
+// with the same rules as a pattern's own refs. External `https://` evidence is not fetched.
+const decisions = parseDecisionCatalog(decisionCatalogJson);
+if (!decisions.catalog) {
+	for (const message of decisions.errors) errors.push(`decisions.json: ${message}`);
+} else {
+	for (const message of checkDecisionReferences(decisions.catalog, registry)) errors.push(`decisions.json: ${message}`);
+	for (const decision of decisions.catalog.decisions) {
+		decision.evidence.forEach((entry, index) => {
+			if (entry.ref.startsWith('https://')) return;
+			const kind = entry.ref.startsWith('/showcases') ? 'route' : entry.ref.startsWith('/') ? 'approute' : 'file';
+			checkRef({ path: entry.ref, kind }, `decisions.json ${decision.id}.evidence[${index}]`);
+		});
+	}
+	const decisionIds = new Set(decisions.catalog.decisions.map((decision) => decision.id));
+	for (const lab of EVIDENCE_LABS) {
+		lab.refs.forEach((entry, index) => {
+			const kind = entry.ref.startsWith('/showcases') ? 'route' : entry.ref.startsWith('/') ? 'approute' : 'file';
+			checkRef({ path: entry.ref, kind }, `evidence-labs ${lab.id}.refs[${index}]`);
+		});
+		for (const id of lab.decisions)
+			if (!decisionIds.has(id)) errors.push(`evidence-labs ${lab.id}: decision '${id}' does not exist`);
+		for (const id of lab.patterns)
+			if (!byId.has(id)) errors.push(`evidence-labs ${lab.id}: pattern '${id}' is not in the registry`);
 	}
 }
 

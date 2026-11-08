@@ -28,7 +28,7 @@ export default defineConfig({
 				test: {
 					...shared,
 					name: 'unit',
-					include: ['src/**/*.test.ts'],
+					include: ['src/**/*.test.ts', 'pattern-library/**/*.test.ts'],
 					// `exclude` REPLACES vitest's defaults — spread them back or node_modules is scanned.
 					exclude: [...configDefaults.exclude, PGLITE],
 				},

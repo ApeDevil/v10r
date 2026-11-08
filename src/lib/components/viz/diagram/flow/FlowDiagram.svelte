@@ -32,6 +32,10 @@ interface Props {
 	 */
 	selectedId?: string | null;
 	onselect?: (id: string | null) => void;
+	/** A user drew an edge between two handles (needs `nodesConnectable`). The parent decides whether it exists. */
+	onconnect?: (connection: { source: string; target: string }) => void;
+	/** A drag ended — the parent owns positions, so it receives the node's final one. */
+	onnodedragstop?: (id: string, position: { x: number; y: number }) => void;
 	/** A CSS height (`min(60vh, 640px)`, `32rem`, a number of px); absent keeps the 400px rule. */
 	height?: number | string;
 	/** Refit the viewport whenever this changes (a structural change: nodes added, the canvas resized). */
@@ -64,6 +68,8 @@ let {
 	defaultEdgeOptions,
 	selectedId,
 	onselect,
+	onconnect,
+	onnodedragstop,
 	height,
 	fitKey,
 	controls = true,
@@ -200,6 +206,12 @@ onMount(async () => {
 				onnodeclick={controlled ? onNodeClick : undefined}
 				onpaneclick={controlled ? onPaneClick : undefined}
 				onkeydown={controlled ? onKeyDown : undefined}
+				onconnect={onconnect ? (c: { source: string; target: string }) => onconnect({ source: c.source, target: c.target }) : undefined}
+				onnodedragstop={onnodedragstop
+					? ({ targetNode }: { targetNode: Node | null }) => {
+							if (targetNode) onnodedragstop(targetNode.id, { x: targetNode.position.x, y: targetNode.position.y });
+						}
+					: undefined}
 				proOptions={{ hideAttribution: true }}
 			>
 				{#if background}

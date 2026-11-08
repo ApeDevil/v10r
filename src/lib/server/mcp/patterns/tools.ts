@@ -1,5 +1,5 @@
 /**
- * The PUBLIC read-only tool registry: the six Pattern tools, exposed by `/api/mcp/public` and
+ * The PUBLIC read-only tool registry: the eight Pattern tools, exposed by `/api/mcp/public` and
  * `/api/mcp/private`. Structurally read-only — there is no mutation tool here to dispatch.
  *
  * The tool contract and the four registry tools live once in `pattern-library/query.ts`, shared

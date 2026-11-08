@@ -1044,6 +1044,180 @@
 			"verifiedSha": "aee98e2"
 		},
 		{
+			"id": "architecture-engineering",
+			"tier": "deep",
+			"title": "Architecture Engineering (explained decision records, a typed architecture model and static checks)",
+			"category": "architecture",
+			"summary": "A deterministic decision discipline for where code runs, how parts talk, where data lives and how it ships. Versioned decision records (problem, alternatives, ordered rules, evidence with its kind, migrations) drive an engine that answers a workload profile with the chosen approach, the rule that chose it, why each alternative lost and which unknown factor could change it; no scoring formula and no LLM. A separate architecture model (components, zones, connections; layout stored apart) is parsed fail-closed, edited through pure operations, statically checked (security findings kept apart, fixed severity per code) and compared qualitatively. The Studio at /studio/architecture and the explore_architecture/check_architecture MCP tools run the same engine.",
+			"when_to_use": "Use when architecture choices (browser vs server compute, JS vs Rust/Wasm, monolith vs service, SQL vs application processing) need to be explained, reviewable and reproducible rather than asserted, and when a team or an agent should get the same answer from the same inputs.",
+			"avoid_when": [
+				"The decision has one obvious answer in this codebase — a record and a rule add ceremony without information",
+				"You need performance numbers — the engine and the comparison are qualitative; measure in a lab and cite it as evidence instead",
+				"Decisions must be learned from data or tuned per tenant — this pattern is a fixed, reviewed rule table by design"
+			],
+			"alternatives": [
+				{
+					"approach": "Plain Markdown ADRs (MADR / Nygard) without an engine",
+					"prefer_when": "decisions are few, made once, and nobody needs to re-evaluate them against changing inputs"
+				},
+				{
+					"approach": "A weighted scoring matrix",
+					"prefer_when": "stakeholders explicitly want a ranked trade-off and accept that the weights are opinion, stated as such"
+				},
+				{
+					"approach": "Diagram-only tools (C4 / Structurizr DSL)",
+					"prefer_when": "the need is communicating an architecture, not checking it or deriving it from a workload"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"architecture decision records",
+				"architecture recommendation",
+				"architecture model",
+				"architecture static checks",
+				"architecture comparison",
+				"architecture evolution",
+				"workload profile"
+			],
+			"keywords": [
+				"adr",
+				"decision record",
+				"trade-off",
+				"compute placement",
+				"rust wasm",
+				"modular monolith",
+				"microservice",
+				"c4",
+				"structurizr",
+				"fitness function",
+				"static analysis",
+				"trust boundary",
+				"explainable recommendation",
+				"deterministic rules",
+				"studio"
+			],
+			"depends_on": [
+				"multi-client-core",
+				"architecture-wasm-kernel",
+				"architecture-external-service",
+				"architecture-pattern-mcp"
+			],
+			"docs": [
+				{
+					"path": "docs/blueprint/architecture-engineering/how-it-works.md",
+					"note": "The discipline: domains, decision records and rule evaluation, the architecture model, checks, comparison, evidence"
+				},
+				{
+					"path": "docs/blueprint/architecture-engineering/plan.md",
+					"note": "Contracts, invariants, phases and progress record"
+				},
+				{
+					"path": "docs/blueprint/architecture-engineering/research.md",
+					"note": "Internal inventory, names already spoken for, external research with sources"
+				}
+			],
+			"code": [
+				{
+					"path": "pattern-library/architecture-engineering/decisions.json",
+					"note": "The decision catalogue: seven records across five domains"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/decision-record.ts",
+					"note": "Decision record contract and its fail-closed parser; reference checks against the registry"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/explore.ts",
+					"note": "The engine: ordered rules, unknown-aware matching, contradictions, fallback to the simplest alternative"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/architecture-model.ts",
+					"note": "Architecture model and layout, strict bounded parser, canonical stringify"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/model-operations.ts",
+					"note": "Pure model operations returning a new model or a named refusal"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/checks.ts",
+					"note": "Static checks: security apart from runtime, communication, data and structure"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/compare.ts",
+					"note": "Baseline vs variant: structural diffs and qualitative assessment"
+				},
+				{
+					"path": "pattern-library/architecture-queries.ts",
+					"note": "explore_architecture and check_architecture for both MCP transports"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/(public)/studio/architecture/_state/architecture-studio.svelte.ts",
+					"note": "Studio state: undo/redo with coalescing, working copy, drafts, variants"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/(public)/studio/architecture/_state/architecture-drafts.ts",
+					"note": "Local-first drafts; every read goes through the parser"
+				}
+			],
+			"tests": [
+				{
+					"path": "pattern-library/architecture-engineering/explore.test.ts",
+					"note": "Determinism, unknown handling, every decision reachable, catalogue integrity"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/architecture-model.test.ts",
+					"note": "Parser bounds and integrity, operations, refusals, canonical round trip"
+				},
+				{
+					"path": "pattern-library/architecture-engineering/checks.test.ts",
+					"note": "Every finding code reached; comparison and evolution; no measured claims"
+				},
+				{
+					"path": "pattern-library/architecture-queries.test.ts",
+					"note": "MCP tools: deterministic output, bounded refusals, no caller-text echo"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/(public)/studio/architecture/_state/architecture-studio.svelte.test.ts",
+					"note": "Explore→Design transfer, undo/redo, layout apart from model, variants, import refusal"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/studio/architecture",
+					"kind": "approute"
+				},
+				{
+					"path": "/studio/architecture/explore",
+					"kind": "approute"
+				},
+				{
+					"path": "/studio/architecture/design",
+					"kind": "approute"
+				},
+				{
+					"path": "/studio/architecture/engineer",
+					"kind": "approute"
+				}
+			],
+			"invariants": [
+				"Every recommendation names the rule that chose it and the inputs it used; with no matching rule the simplest alternative is chosen and labelled a default",
+				"An unknown factor is never guessed: a rule blocked only by unknowns is reported as missing information, a rule contradicted by a known value names the contradiction",
+				"Rules are ordered and deterministic — no weights, no scores, no LLM; the same profile and engine revision always give the same result",
+				"Evidence carries its kind (measured, live measurement, reference implementation, documented reasoning, external study, estimate); a measured claim states its conditions, and no comparison reports a number it did not measure",
+				"Every pattern id and evidence reference in a decision resolves — patterns:validate fails otherwise",
+				"The model is independent of its presentation: positions live in a separate layout, and a move never changes the model",
+				"Imported and stored models are untrusted: strict keys, bounded sizes, integrity checks, fail-closed; nothing in a model is executed or rendered as HTML",
+				"Security findings are a separate category with fixed severities, never merged into cosmetic diagram checks"
+			],
+			"emulation_notes": [
+				"Keep the engine and the catalogue framework-free and dependency-free so a CLI, an MCP server and the UI share one implementation",
+				"Start with a handful of decisions that your team actually revisits; add a rule only with the reason it encodes",
+				"Label evidence honestly: link to the lab that measured it, and mark a gap as an estimate until someone measures it",
+				"Persist drafts locally first; the file format is the contract, so a server store can be added later without changing the model"
+			],
+			"risk": "low — read-only reasoning over a reviewed rule table; the main risk is a recommendation read as authoritative, mitigated by showing the rule, the alternatives, the unknowns and the evidence kind on every outcome",
+			"maturity": "implemented"
+		},
+		{
 			"id": "app-shell-layout",
 			"tier": "light",
 			"title": "Shell layout (no global header, sidebar-first)",

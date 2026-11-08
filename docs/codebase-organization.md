@@ -70,6 +70,7 @@ another:
 | `#lib/desk/` | persisted layout shape, panel catalogue, help copy, the spreadsheet formula evaluator and cell contract | the Desk UI, the app shell's command palette, the `desk` DB schema, **and** the `desk` mutations (every stored sheet is re-derived at the write door) |
 | `#lib/showcases/catalog/` | the showcase card tree and section anchors | the hub, nav, both search lanes, the sitemap, the Neo4j projection |
 | `#lib/workflows/` | the workflow catalog: categories and the tutorials in each | the `/workflows` hub, nav, the sitemap, `server/workflows/` (which renders `content/workflows/<category>/<slug>/<locale>.md` and zips its starter folder) |
+| `#lib/studio/` | the Studio catalog: areas and the modes in each | the `/studio` hub, each area's mode tabs, nav, the sitemap |
 
 `#lib/desk/panels.ts` lists the panel types; the directories under
 `components/desk/panels/` are named to match, one per entry. The list and the tree are the

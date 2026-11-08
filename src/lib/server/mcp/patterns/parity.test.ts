@@ -67,6 +67,9 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 			['recommend_emulation_plan', { capabilities: ['background jobs', 'layered RAG'], target_infra: ['postgres'] }],
 			['recommend_emulation_plan', { capabilities: ['approval gate for AI mutations'], detail: 'outline' }],
 			['recommend_emulation_plan', { capabilities: ['jobs'], target_infra: ['mysql'] }],
+			['explore_architecture', { example: 'background-media-conversion', include_model: true }],
+			['explore_architecture', { profile: { workload: 'numeric-compute' } }],
+			['check_architecture', { model: { format: 1 } }],
 		] as const) {
 			const { stdio, hosted } = both(tool, args);
 			expect(stdio, `${tool} ${JSON.stringify(args)}`).toEqual(hosted);
@@ -102,6 +105,9 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 			['trace_capability', { capability: '' }],
 			['recommend_emulation_plan', { capabilities: [] }],
 			['recommend_emulation_plan', { capabilities: Array.from({ length: 25 }, () => 'jobs') }],
+			['explore_architecture', { example: 'nope' }],
+			['explore_architecture', { profile: { workload: 'quantum' } }],
+			['check_architecture', { model: 'not an object' }],
 		] as const) {
 			const { stdio, hosted } = both(tool, args);
 			expect(stdio.isError, `${tool} ${JSON.stringify(args)}`).toBe(true);

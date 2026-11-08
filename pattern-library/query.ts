@@ -1,6 +1,8 @@
 /**
  * The registry query layer: the tool contract and the four registry tools of the Pattern MCP
  * (search_patterns, get_pattern, trace_capability, recommend_emulation_plan), written ONCE.
+ * The two Architecture Engineering tools (explore_architecture, check_architecture) live in
+ * `architecture-queries.ts` under the same contract and are merged in here.
  *
  * Both transports are thin readers over this module — the stdio server (`mcp/tools.ts`, by
  * relative path under bare Bun) and the hosted one (`src/lib/server/mcp/patterns/tools.ts`,
@@ -14,6 +16,7 @@
  * Framework-free and filesystem-free, like `schema.ts`.
  */
 
+import { ARCHITECTURE_QUERIES, ARCHITECTURE_TOOLS } from './architecture-queries.ts';
 import { DEFAULT_LINES, type ExcerptRequest, MAX_LINES } from './excerpt.ts';
 import type { PatternRecord, PatternRequirement, Registry, RegRef } from './schema.ts';
 import { buildById, PATTERN_REQUIREMENTS, topoSort } from './schema.ts';
@@ -281,10 +284,11 @@ export const QUERY_TOOLS: ToolDef[] = [
 			required: ['capabilities'],
 		},
 	},
+	...ARCHITECTURE_TOOLS,
 ];
 
 /**
- * How to use the six tools, for the `initialize` instructions of BOTH transports — each wraps it
+ * How to use the eight tools, for the `initialize` instructions of BOTH transports — each wraps it
  * in its own framing. Claude Code loads server instructions upfront (cut at 4,096 characters),
  * so this is the one place the progressive path is taught before any tool is called.
  */
@@ -294,7 +298,9 @@ export const QUERY_WORKFLOW =
 	'trace_capability; get_pattern for cards (ids for several, sections for part of one — invariants MUST hold when ' +
 	'emulating); get_file_excerpt for exact evidence (section = one heading or declaration; card paths with ' +
 	'#fragments resolve); recommend_emulation_plan for a dependency-ordered plan (target_infra marks steps the ' +
-	'target cannot support); validate_snippet to check code you wrote against v10r conventions (loop until clean).';
+	'target cannot support); validate_snippet to check code you wrote against v10r conventions (loop until clean); ' +
+	'explore_architecture for an explained architecture recommendation for a workload (unknown factors stay unknown; ' +
+	'include_model returns a starting model) and check_architecture to check a model for errors and risks.';
 
 /**
  * `validate_snippet`'s definition. Its ENGINE is per transport (the stdio one adds a Bun syntax
@@ -942,10 +948,12 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 	);
 }
 
-/** The four registry tools by name — each transport's dispatcher looks a call up here first. */
+/** The four registry tools and the two Architecture Engineering tools by name — each
+ *  transport's dispatcher looks a call up here first. */
 export const REGISTRY_QUERIES: Record<string, (registry: Registry, args: Record<string, unknown>) => QueryOutcome> = {
 	search_patterns: searchPatterns,
 	get_pattern: getPattern,
 	trace_capability: traceCapability,
 	recommend_emulation_plan: recommendPlan,
+	...ARCHITECTURE_QUERIES,
 };
