@@ -1,5 +1,5 @@
 /**
- * Hand-curated projections of the MCP server's six tool definitions
+ * Hand-curated projections of the MCP server's eight tool definitions
  * (`pattern-library/query.ts`, served by both transports) and its handshake
  * sequence (mcp/smoke.ts) for the Pattern MCP showcase. Curated literals, not
  * the schemas themselves, because the card wording is written for people;
@@ -70,6 +70,24 @@ export const TOOL_CARDS: ToolCard[] = [
 		],
 	},
 	{
+		name: 'explore_architecture',
+		icon: 'i-lucide-compass',
+		summary:
+			'Recommend an architecture for a workload — deterministic decision records: the rule that chose each approach, the alternatives, missing information and evidence kinds.',
+		params: [
+			{ name: 'profile', detail: 'workload factors; an omitted factor stays unknown and is reported' },
+			{ name: 'example', detail: 'start from one of the ten example workloads' },
+			{ name: 'include_model', detail: 'also return a starting architecture model, default false' },
+		],
+	},
+	{
+		name: 'check_architecture',
+		icon: 'i-lucide-shield-check',
+		summary:
+			'Statically check an architecture model — errors, warnings, unknowns and recommendations, security apart; nothing executed or measured.',
+		params: [{ name: 'model', detail: 'an architecture model or an exported { model, layout } file (required)' }],
+	},
+	{
 		name: 'validate_snippet',
 		icon: 'i-lucide-badge-check',
 		summary:
@@ -102,7 +120,7 @@ export const HANDSHAKE_STEPS: HandshakeStep[] = [
 	{
 		method: 'tools/list',
 		kind: 'request',
-		purpose: 'Returns the six tool definitions — name, description, and inputSchema only.',
+		purpose: 'Returns the eight tool definitions — name, description, and inputSchema only.',
 	},
 	{
 		method: 'tools/call',

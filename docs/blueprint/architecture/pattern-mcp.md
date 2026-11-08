@@ -18,7 +18,7 @@ The Pattern MCP closes that gap. Each entry in [`pattern-library/registry.json`]
 
 ### Registry-as-product
 
-The server is intentionally boring: JSON-RPC plumbing and six tools over two JSON files (the pattern registry and the snippet rules). The tool contract and the four registry tools are written once, in `pattern-library/query.ts` (ranking in `search.ts`, excerpt rendering in `excerpt.ts`), and both transports — stdio `mcp/tools.ts` and hosted `src/lib/server/mcp/patterns/tools.ts` — are thin readers over it that add only what genuinely differs: how a file is read, the snippet engine, and the hosted telemetry `diag`. All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
+The server is intentionally boring: JSON-RPC plumbing and eight tools over three JSON files (the pattern registry, the snippet rules and the architecture decision catalogue). The tool contract and the four registry tools are written once, in `pattern-library/query.ts`; the two Architecture Engineering tools live beside it in `pattern-library/architecture-queries.ts` under the same contract (see below) (ranking in `search.ts`, excerpt rendering in `excerpt.ts`), and both transports — stdio `mcp/tools.ts` and hosted `src/lib/server/mcp/patterns/tools.ts` — are thin readers over it that add only what genuinely differs: how a file is read, the snippet engine, and the hosted telemetry `diag`. All the curation work — deciding what counts as a pattern, which invariants matter, which files are the canonical entry point — lives in the registry data, not in code. Adding a pattern means adding a record, not writing a handler.
 
 A drift guard (`pattern-library/validate.ts`, wired into `bun run validate` as `patterns:validate`) keeps the registry honest: every `docs`/`code`/`tests` path must exist on disk, `showcases` refs of `kind: "route"` must be members of `src/lib/showcases/catalog/registry.ts` (not merely directories on disk), `depends_on` must form a DAG (checked via the same Kahn toposort the server uses at query time), IDs must be unique kebab-case, and each tier's contract holds (deep records must carry invariants/emulation notes; light records must not). A registry that references a moved or deleted file fails the gate — unlike a stale doc, it can't silently rot.
 
@@ -53,6 +53,15 @@ Each query term scores the weight of the **best field** it appears in (title, ke
 An exact id or title is a lookup and ranks first. The id is otherwise not indexed: its `<category>-` prefix is a namespace that let every light `architecture-*` row outrank the deep card for "architecture". Plurals and `-ing`/`-ed` forms are folded crudely on both sides; a query term of four or more letters also matches as a prefix at half weight. Embeddings, BM25F field-weight tuning and rank fusion were considered and rejected for this corpus: a few hundred curated records with authored keywords leave little for them to find, and they would add a model to the stdio container and the Vercel cold start.
 
 Because the match is purely lexical, **a keyword that does not survive tokenization is not weak — it is absent**, and it reads on the card as if the term were covered. The tokenizer lowercases, splits on non-alphanumerics and drops single characters and stopwords; a `+` joining two alphanumerics (`n+1`, `cmd+k`) is kept as part of the term, because splitting it produced two characters that the length filter then discarded. `search.test.ts` asserts no registry keyword tokenizes to nothing. There is one tokenizer, so a fix cannot land in one runtime only; `parity.test.ts` runs every benchmark query, every card, every plan and every allowlisted excerpt through both transports and compares the bytes an agent would see.
+
+### Architecture Engineering tools
+
+`explore_architecture` and `check_architecture` expose the Studio's engine ([architecture-engineering/README.md](../architecture-engineering/README.md)) to agents. They are listed in `QUERY_TOOLS` and `REGISTRY_QUERIES`, so both transports serve them with no per-transport code and `parity.test.ts` compares their bytes like every other tool.
+
+- `explore_architecture` takes a workload profile (closed factor vocabulary; an omitted factor is `unknown`, never guessed) and/or one of the ten example workloads, and returns, per decision record, the chosen approach, the rule that chose it (or that it is the default), why each alternative lost, the missing information that could change it, the evidence kind and the patterns. `include_model` adds a starting architecture model.
+- `check_architecture` takes a model (or an exported `{ model, layout }` file), parses it with the Studio's fail-closed parser and returns the static findings, security apart from design.
+
+Both are deterministic and qualitative: nothing is executed or measured. A refusal names the factor literals it expected, or lists at most ten bounded model issues with an unknown key reported at its parent, so caller text is not reflected back at length.
 
 ### Progressive disclosure: discover broadly, narrow, retrieve minimally
 
@@ -121,7 +130,7 @@ Each was weighed against this workload — a few hundred static records, sub-mil
 | `structuredContent` / `outputSchema` | Not adopted | Claude Code forwards only the structured payload on success when both are present (documented; maintainer-confirmed, 2026), so the markdown body — next actions included — would vanish. |
 | Tool `annotations` (`readOnlyHint`) | Deferred | Recommended by the spec, but this repo recorded a live Claude Code bug that dropped the server's whole tool list over them. Re-adding needs an interop test against a real client, which the automated gate cannot run. |
 | MCP 2026-07-28 (stateless, `server/discover`, `ttlMs`) | Deferred, separate change | Current clients still connect to 2025-11-25 servers. The migration touches framing, headers and errors on both transports and belongs with SDK v2 and its own interoperability tests, not inside a retrieval change. |
-| Resources / prompts | Not adopted | Every retrieval need above is met by parameters on the six existing tools; another surface would add discovery cost without new information. |
+| Resources / prompts | Not adopted | Every retrieval need above is met by parameters on the existing tools; another surface would add discovery cost without new information. |
 | Embeddings, hybrid search, rank fusion | Not adopted | IDF + best-field + coverage took the blind holdout from 52% to 76% Acc@1 with no model; embeddings would add a model to the stdio container and the Vercel cold start for a curated corpus with authored keywords. |
 | Response memoization / HTTP caching | Not adopted | Queries run in well under a millisecond over a cached per-registry index; POST JSON-RPC is not HTTP-cacheable anyway. |
 
@@ -131,7 +140,7 @@ Each record in `registry.json` has `id`, `tier` (`deep | light`), `title`, `cate
 
 ## Hosted trust surfaces
 
-Everything above describes the local stdio server a client spawns as an ephemeral container. The same pattern registry is now *also* served read-only over HTTP, at `POST /api/mcp/public` — no auth, same six tools, no mutation path to dispatch.
+Everything above describes the local stdio server a client spawns as an ephemeral container. The same pattern registry is now *also* served read-only over HTTP, at `POST /api/mcp/public` — no auth, same eight tools, no mutation path to dispatch.
 
 A second, unrelated surface, the private admin MCP at `POST /api/mcp/admin`, lives behind a bearer token and exposes a narrow set of demo-state tools over a small persistent domain — it shares only the transport plumbing with the public endpoint, not the registry or the trust level.
 

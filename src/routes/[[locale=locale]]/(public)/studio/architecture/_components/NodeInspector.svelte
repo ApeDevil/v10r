@@ -4,7 +4,7 @@ import * as m from '#lib/paraglide/messages.js';
 import {
 	type ArchitectureNode,
 	NODE_KINDS,
-	type NODE_TRAIT_IDS,
+	NODE_TRAIT_IDS,
 	PLACEMENT_LABELS,
 	type Placement,
 } from '#patterns/architecture-engineering/index.ts';
@@ -23,7 +23,10 @@ const placements = $derived(
 );
 const zones = $derived(studio.model.zones.map((zone) => ({ value: zone.id, label: `${zone.label} (${zone.kind})` })));
 
-const TRAIT_LABELS: Record<(typeof NODE_TRAIT_IDS)[number], () => string> = {
+type TraitId = (typeof NODE_TRAIT_IDS)[number];
+/** Read in the script so the import stays a value import (biome sees only the script block). */
+const traitIds: readonly TraitId[] = NODE_TRAIT_IDS;
+const TRAIT_LABELS: Record<TraitId, () => string> = {
 	holds_secrets: m.studio_trait_holds_secrets,
 	cpu_intensive: m.studio_trait_cpu_intensive,
 	long_running: m.studio_trait_long_running,
@@ -60,7 +63,7 @@ const TRAIT_LABELS: Record<(typeof NODE_TRAIT_IDS)[number], () => string> = {
 
 	<fieldset class="traits">
 		<legend>{m.studio_design_traits()}</legend>
-		{#each NODE_TRAIT_IDS as trait}
+		{#each traitIds as trait}
 			<Checkbox
 				label={TRAIT_LABELS[trait]()}
 				checked={node.traits[trait]}

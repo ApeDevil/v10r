@@ -106,6 +106,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'ai-untrusted-content-boundary': 'Untrusted',
 	'ai-eval-regression-suite': 'AI Evals',
 	'architecture-external-service': 'Ext Service',
+	'architecture-engineering': 'Arch Eng',
 	'pim-sheet-transform-recipe': 'PIM Recipe',
 };
 

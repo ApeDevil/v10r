@@ -1,5 +1,5 @@
 /**
- * The six read-only tools of the v10r Pattern MCP, stdio side. The tool contract and the four
+ * The eight read-only tools of the v10r Pattern MCP, stdio side. The tool contract and the four
  * registry tools live once in `pattern-library/query.ts` (shared with the hosted transport);
  * this file adds only what is stdio-specific: `get_file_excerpt` over the read-only mount
  * (`security.ts`), the `validate_snippet` engine (`snippet.ts`), and the mapping of an outcome to

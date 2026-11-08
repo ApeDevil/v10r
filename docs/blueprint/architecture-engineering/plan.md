@@ -263,8 +263,8 @@ a Playwright pass through the Studio flow (cloud quirks: see the team memory).
 |---|---|---|
 | 1 Audit and design | done | research.md, this plan |
 | 2 Foundation | done | `pattern-library/architecture-engineering/`: vocabulary, `decisions.json` (7 decisions, 5 domains), engine, examples, `patterns:validate` extension |
-| 3 Explore | pending | |
-| 4 Design | core done | model, parser, operations, transfer from Explore, layout; UI pending |
-| 5 Engineer | core done | 13 checks, comparison, evolution example; UI pending |
-| 6 Evidence and integration | pending | |
-| 7 Final review | pending | |
+| 3 Explore | done | `/studio/architecture/explore`: factor selects, ten examples, explained outcomes, transfer to Design |
+| 4 Design | done | model, parser, operations, layout; `/design`: lazy canvas, lists + inspectors (keyboard path), undo/redo, local drafts, import/export |
+| 5 Engineer | done | 13 checks, comparison, evolution example; `/engineer`: findings, linked decisions, variants with reason, qualitative comparison |
+| 6 Evidence and integration | done | evidence labs, `/studio` hub + nav + sitemap, i18n area `studio` (en/de/ru), registry record `architecture-engineering`, MCP `explore_architecture` + `check_architecture` (both transports, parity-tested), how-it-works.md, naming rows |
+| 7 Final review | in progress | gates, build/perf ratchet, browser pass |

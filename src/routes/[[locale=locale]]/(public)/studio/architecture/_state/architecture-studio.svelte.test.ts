@@ -19,7 +19,10 @@ function memoryStorage(): Storage {
 
 function setup(storage: Storage = memoryStorage()) {
 	let clock = 1_000_000;
-	const store = createArchitectureDraftStore(() => storage, () => new Date(clock));
+	const store = createArchitectureDraftStore(
+		() => storage,
+		() => new Date(clock),
+	);
 	const studio = createArchitectureStudio({ store, now: () => clock });
 	studio.hydrate();
 	return { studio, store, storage, tick: (ms: number) => (clock += ms) };

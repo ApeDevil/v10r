@@ -23,7 +23,10 @@ function memoryStorage(full = false): Storage & { map: Map<string, string> } {
 
 function clock() {
 	let t = Date.UTC(2026, 10, 8);
-	return () => new Date((t += 1000));
+	return () => {
+		t += 1000;
+		return new Date(t);
+	};
 }
 
 describe('architecture drafts', () => {

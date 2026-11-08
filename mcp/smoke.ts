@@ -124,7 +124,7 @@ check('initialize: protocolVersion echoed', init?.protocolVersion === '2025-11-2
 check('initialize: non-empty instructions', (init?.instructions?.length ?? 0) > 100);
 
 const tools = replies.get(2)?.result?.tools ?? [];
-check('tools/list: exactly 6 tools', tools.length === 6, `${tools.length}`);
+check('tools/list: exactly 8 tools', tools.length === 8, `${tools.length}`);
 const FORBIDDEN = ['outputSchema', 'title', 'annotations'];
 for (const tool of tools) {
 	const bad = FORBIDDEN.filter((key) => key in tool);

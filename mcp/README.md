@@ -23,7 +23,7 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 | `server.ts` | Entry: stdio loop, dispatch, lifecycle (exits on stdin EOF / SIGTERM — no orphan containers) |
 | `protocol.ts` | JSON-RPC framing and line buffering |
 | `security.ts` | Path containment (realpath prefix check) + secret denylist + bounded excerpts |
-| `tools.ts` | The six tools — a thin stdio adapter over the shared query layer in `../pattern-library/query.ts` (the hosted transport reads the same module) |
+| `tools.ts` | The eight tools — a thin stdio adapter over the shared query layer in `../pattern-library/query.ts` (the hosted transport reads the same module) |
 | `snippet.ts` + `snippet-rules.json` | `validate_snippet` rule engine |
 | `public-excerpts.snapshot.json` | Generated excerpt snapshot served by the hosted transport |
 | `server.test.ts` / `smoke.ts` | `bun:test` units / spawned-subprocess handshake test |
@@ -50,7 +50,7 @@ claude mcp add --scope user --transport stdio v10r-patterns -- \
   docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
 ```
 
-No clone at all? The same six tools are served over HTTP at `POST https://www.v10r.dev/api/mcp/public` — no podman, no mount, no setup.
+No clone at all? The same eight tools are served over HTTP at `POST https://www.v10r.dev/api/mcp/public` — no podman, no mount, no setup.
 
 Retrieval quality and token cost are measured, not assumed: `bun run mcp:bench` (see
 [`../pattern-library/bench/`](../pattern-library/bench/)) reports relevance on two labelled query
@@ -73,7 +73,7 @@ Pick a tier first. A **light** record is an index row: pointers to docs/code/sho
 
 ## Also served over HTTP (read-only)
 
-This same curated registry is also exposed read-only at `POST /api/mcp/public` — no bearer token, same six tools, no mutation path. It's a separate hosted trust surface built on top of a shared transport, not a change to anything in this directory: the local stdio server described above is unchanged, remains read-only, and keeps running exactly as documented — ephemeral container, network-isolated, repo mounted `:ro`. There is also a separate, unrelated private admin MCP (`/api/mcp/admin`, bearer-gated, demo-state tools only) that has nothing to do with the pattern registry. Full detail: [docs/blueprint/architecture/hosted-mcp.md](../docs/blueprint/architecture/hosted-mcp.md).
+This same curated registry is also exposed read-only at `POST /api/mcp/public` — no bearer token, same eight tools, no mutation path. It's a separate hosted trust surface built on top of a shared transport, not a change to anything in this directory: the local stdio server described above is unchanged, remains read-only, and keeps running exactly as documented — ephemeral container, network-isolated, repo mounted `:ro`. There is also a separate, unrelated private admin MCP (`/api/mcp/admin`, bearer-gated, demo-state tools only) that has nothing to do with the pattern registry. Full detail: [docs/blueprint/architecture/hosted-mcp.md](../docs/blueprint/architecture/hosted-mcp.md).
 
 ## Constraints worth knowing
 
