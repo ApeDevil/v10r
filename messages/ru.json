@@ -3635,5 +3635,6 @@
 	"studio_severity_error": "Ошибка",
 	"studio_severity_warning": "Предупреждение",
 	"studio_severity_unknown": "Неизвестно",
-	"studio_severity_recommendation": "Рекомендация"
+	"studio_severity_recommendation": "Рекомендация",
+	"studio_compare_no_changes": "Структурных изменений пока нет: вариант совпадает с базой."
 }

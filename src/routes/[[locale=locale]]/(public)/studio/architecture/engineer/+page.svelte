@@ -61,11 +61,13 @@ async function showInDesign(entry: ArchitectureFinding) {
 
 // ── Variants and comparison ──
 let variantName = $state('');
+/** The suggested name, without stacking a second "(variant)" onto a variant. */
+const defaultVariantName = $derived(`${studio.model.name.replace(/ \(variant\)$/, '')} (variant)`);
 let variantReason = $state('');
 
 function createVariant() {
 	if (!variantReason.trim()) return;
-	studio.createVariant(variantName.trim() || `${studio.model.name} (variant)`, variantReason.trim());
+	studio.createVariant(variantName.trim() || defaultVariantName, variantReason.trim());
 	variantName = '';
 	variantReason = '';
 }
@@ -89,6 +91,20 @@ const baselineOptions = $derived(
 );
 const baseline = $derived<ArchitectureModel | null>(baselineId ? studio.draftModel(baselineId) : null);
 const comparison = $derived(baseline ? compareArchitectures(baseline, studio.model) : null);
+const hasChanges = $derived(
+	comparison !== null &&
+		[
+			comparison.nodes.added,
+			comparison.nodes.removed,
+			comparison.nodes.changed,
+			comparison.placements,
+			comparison.connections.added,
+			comparison.connections.removed,
+			comparison.connections.changed,
+			comparison.requirements.added,
+			comparison.requirements.removed,
+		].some((list) => list.length > 0),
+);
 </script>
 
 <div class="engineer">
@@ -157,7 +173,7 @@ const comparison = $derived(baseline ? compareArchitectures(baseline, studio.mod
 		<p class="hint">{m.studio_engineer_variant_hint()}</p>
 		<div class="variant-form">
 			<label for="variant-name">{m.studio_engineer_variant_name()}</label>
-			<Input id="variant-name" bind:value={variantName} maxlength={120} placeholder={`${studio.model.name} (variant)`} />
+			<Input id="variant-name" bind:value={variantName} maxlength={120} placeholder={defaultVariantName} />
 			<label for="variant-reason">{m.studio_engineer_variant_reason()}</label>
 			<Textarea id="variant-reason" bind:value={variantReason} rows={3} maxlength={2000} placeholder={m.studio_engineer_variant_reason_placeholder()} />
 			<div>
@@ -166,7 +182,7 @@ const comparison = $derived(baseline ? compareArchitectures(baseline, studio.mod
 				</Button>
 			</div>
 		</div>
-		{#if studio.model.change_reason}
+		{#if studio.model.change_reason && !comparison}
 			<p class="reason"><strong>{m.studio_engineer_change_reason()}</strong> {studio.model.change_reason}</p>
 		{/if}
 	</section>
@@ -250,6 +266,9 @@ const comparison = $derived(baseline ? compareArchitectures(baseline, studio.mod
 				</ul>
 
 				<h3>{m.studio_compare_changes()}</h3>
+				{#if !hasChanges}
+					<p class="hint">{m.studio_compare_no_changes()}</p>
+				{/if}
 				<ul class="changes">
 					{#each comparison.nodes.added as node}<li>+ {node.label} ({node.kind})</li>{/each}
 					{#each comparison.nodes.removed as node}<li>− {node.label} ({node.kind})</li>{/each}

@@ -197,9 +197,14 @@ function onKeydown(event: KeyboardEvent) {
 
 	.add {
 		display: flex;
+		flex-wrap: wrap;
 		gap: var(--spacing-2);
 		align-items: center;
 		min-width: min(100%, 22rem);
+	}
+
+	.toolbar :global(button) {
+		white-space: nowrap;
 	}
 
 	.refusal {

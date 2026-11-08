@@ -3635,5 +3635,6 @@
 	"studio_severity_error": "Fehler",
 	"studio_severity_warning": "Warnung",
 	"studio_severity_unknown": "Unbekannt",
-	"studio_severity_recommendation": "Empfehlung"
+	"studio_severity_recommendation": "Empfehlung",
+	"studio_compare_no_changes": "Noch keine strukturellen Änderungen: Die Variante gleicht ihrer Basis."
 }
