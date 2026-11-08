@@ -53,11 +53,6 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-home',
 	},
 	{
-		href: '/blog',
-		label: m.nav_blog,
-		icon: 'i-lucide-newspaper',
-	},
-	{
 		href: '/showcases',
 		label: m.nav_showcases,
 		icon: 'i-lucide-view',
@@ -79,7 +74,7 @@ export const navItems: NavItem[] = [
 	{
 		href: '/studio',
 		label: m.nav_studio,
-		icon: 'i-lucide-drafting-compass',
+		icon: 'i-lucide-shapes',
 		// Derived from the Studio catalog: each area's overview, then its working modes.
 		children: studioAreas.flatMap((area) => [
 			{ href: studioAreaHref(area), label: m.studio_area_overview, group: area.title },
@@ -92,5 +87,10 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-book-open',
 		// The hub's four sections, from the list the hub itself renders.
 		children: DOCS_SECTIONS.map((section) => ({ href: section.href, label: section.title })),
+	},
+	{
+		href: '/blog',
+		label: m.nav_blog,
+		icon: 'i-lucide-newspaper',
 	},
 ];
