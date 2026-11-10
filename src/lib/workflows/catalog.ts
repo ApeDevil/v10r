@@ -35,6 +35,11 @@ export interface WorkflowCard {
 	icon: string;
 	title: LabelFn;
 	description: LabelFn;
+	/**
+	 * Words a reader searches with that the title does not carry: product names, which stay
+	 * the same in every locale. The tutorials are tool-neutral; these only help find them.
+	 */
+	keywords: readonly string[];
 }
 
 export const workflows: WorkflowCard[] = [
@@ -44,6 +49,7 @@ export const workflows: WorkflowCard[] = [
 		icon: 'i-lucide-folder-tree',
 		title: m.workflow_ai_project_folder_title,
 		description: m.workflow_ai_project_folder_description,
+		keywords: ['Office', 'project', 'Excel', 'PowerPoint', 'Copilot', 'ChatGPT', 'README'],
 	},
 	{
 		slug: 'excel-with-ai',
@@ -51,6 +57,7 @@ export const workflows: WorkflowCard[] = [
 		icon: 'i-lucide-sheet',
 		title: m.workflow_excel_with_ai_title,
 		description: m.workflow_excel_with_ai_description,
+		keywords: ['Office', 'Excel', 'spreadsheet', 'xlsx', 'Python'],
 	},
 	{
 		slug: 'powerpoint-with-ai',
@@ -58,6 +65,7 @@ export const workflows: WorkflowCard[] = [
 		icon: 'i-lucide-presentation',
 		title: m.workflow_powerpoint_with_ai_title,
 		description: m.workflow_powerpoint_with_ai_description,
+		keywords: ['Office', 'PowerPoint', 'slides', 'deck', 'pptx'],
 	},
 ];
 

@@ -44,7 +44,13 @@ export const catalog: AssistantCapability = {
 1. To find WHERE a page, component/showcase, doc, or blog post lives — or to give the user a link — call \`search_catalog\`. It returns exact canonical paths.
 2. Emit a path or link ONLY if it appears verbatim in a catalog, docs or pattern tool result from THIS turn, or in a <catalog-results> block. NEVER invent or guess a path.
 3. If \`search_catalog\` returns nothing for what the user asked, say it isn't in the catalog — do not fabricate a plausible URL.
-4. Use \`search_catalog\` for navigation / "what exists"; use the retrieved documentation for explaining how something works.`,
+4. Use \`search_catalog\` for navigation / "what exists"; use the retrieved documentation for explaining how something works.
+5. Route each question to its section in the <catalog-map> before answering:
+   - What v10r / Velociraptor is, or what the home page shows → Home and the project overview.
+   - A feature demo (a component, Dynamic Attributes, the Desk, 3D, hover cards, …) → its showcase, then the docs behind it.
+   - Office work with AI — Excel, PowerPoint, setting up a folder for an AI job, which AI tool to use → the Workflows tutorials. Answer in plain language for someone who does not code: no git, no repository, no terminal commands. The PIM sheet-transform pattern in the docs is a developer pattern; bring it up only when the user asks about product data (PIM) or about building such a tool.
+   - Engineering a system before building it (where code runs, how parts talk, where data lives) → Studio and its Architecture Engineering area.
+   - How v10r is built, its stack and its patterns → the docs and the pattern registry.`,
 	sources: ['catalog'],
 	activates: () => ({ active: true }),
 	// The map is static per locale — the same for every user, so it sits in the stable prefix.

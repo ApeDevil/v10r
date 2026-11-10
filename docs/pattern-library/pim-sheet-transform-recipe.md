@@ -1,10 +1,10 @@
 ---
-title: "PIM Excel workflow with AI agents (profile, proposed recipe, deterministic run, target check)"
+title: "PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)"
 description: "Supplier Excel/CSV product exports become a target's import sheet without the model touching a row: the agent reads a bounded column profile and proposes a…"
 category: "Office Workflows"
 ---
 
-# PIM Excel workflow with AI agents (profile, proposed recipe, deterministic run, target check)
+# PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

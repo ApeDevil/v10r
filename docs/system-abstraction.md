@@ -392,7 +392,7 @@ Individual files inside a module or component folder. Private by default; public
 
 **Catalog grounding** (`ai/catalog-citations.ts`, `ai/tool-leak-guard.ts`): post-stream surface-citation verifier and Groq/llama textual-tool-call leak guard. See [blueprint/ai/provider-routing.md](./blueprint/ai/provider-routing.md).
 
-**Catalog graph** (`search/catalog-map.ts`, `search/catalog-projection.ts`, `graph/catalog.ts`): `formatCatalogMap` injects a path-free shape hint into the system prompt; `deriveCatalogGraph` projects the showcase registry to typed `:Resource` nodes + `PART_OF` edges; `seedCatalogResources` writes them to Neo4j idempotently (run via `db:catalog-sync`, chained into `db:setup`).
+**Catalog graph** (`search/catalog-map.ts`, `search/catalog-projection.ts`, `graph/catalog.ts`): `formatCatalogMap` injects a path-free site map (top-level sections, their purpose and pages) into the system prompt; `deriveCatalogGraph` projects the showcase registry to typed `:Resource` nodes + `PART_OF` edges; `seedCatalogResources` writes them to Neo4j idempotently (run via `db:catalog-sync`, chained into `db:setup`).
 
 **Docs corpus** (`retrieval/markdown-split.ts`, `ai/tools/search-docs.ts`, `scripts/db/ingest-docs.ts`): the project's own `docs/**/*.md` is ingested into `retrieval.document`/`retrieval.chunk` (owned by `SYSTEM_DOCS_USER_ID`) so the `search_project_docs` tool can ground "how does X work" answers in the real docs. Ingestion is **manual** — `db:ingest-docs` (not chained into `db:setup`). See [blueprint/ai/layered-rag.md](./blueprint/ai/layered-rag.md#docs-corpus-search_project_docs).
 
