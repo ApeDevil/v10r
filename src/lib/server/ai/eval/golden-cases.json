@@ -64,6 +64,51 @@
 			"note": "A German question finds the English PowerPoint tutorial in the corpus and points to its page"
 		},
 		{
+			"id": "office-workflows-not-developer-patterns",
+			"surface": "chatbot",
+			"question": "Tell me about the workflows for Office, for things like AI and Excel.",
+			"expect": [
+				{ "kind": "cites", "path": "/workflows/excel-with-ai" },
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "answer-excludes", "phrases": ["pim:build", "bun run", "git clone"] },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "A broad Office question is routed to the Workflows tutorials in plain language, not to the developer PIM pattern"
+		},
+		{
+			"id": "what-is-velociraptor",
+			"surface": "chatbot",
+			"question": "What is Velociraptor?",
+			"expect": [
+				{ "kind": "answer-includes", "phrases": ["pattern"] },
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "The project itself: a pattern library agents read and adapt"
+		},
+		{
+			"id": "what-is-studio",
+			"surface": "chatbot",
+			"question": "What can I do in the Studio?",
+			"expect": [
+				{ "kind": "answer-includes", "phrases": ["Architecture Engineering"] },
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "The site map names Studio and its first area"
+		},
+		{
+			"id": "which-showcases-exist",
+			"surface": "chatbot",
+			"question": "Which showcases are there?",
+			"expect": [
+				{ "kind": "answer-includes", "phrases": ["Dynamic Attributes", "Desk"] },
+				{ "kind": "cites-only-surfaced" },
+				{ "kind": "outcome", "is": "ok" }
+			],
+			"note": "The site map lists the showcases by domain, so an enumeration is not cut to the first catalog rows"
+		},
+		{
 			"id": "uncovered-topic-no-invented-paths",
 			"surface": "chatbot",
 			"question": "Show me v10r's Kubernetes Helm chart and the kubectl commands to deploy it.",

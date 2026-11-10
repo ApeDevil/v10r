@@ -160,7 +160,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 
 ### Office Workflows
 
-- [**PIM Excel workflow with AI agents (profile, proposed recipe, deterministic run, target check)**](./pim-sheet-transform-recipe.md)
+- [**PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)**](./pim-sheet-transform-recipe.md)
 
 ### Analytics
 

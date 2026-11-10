@@ -10890,7 +10890,7 @@
 		{
 			"id": "pim-sheet-transform-recipe",
 			"tier": "deep",
-			"title": "PIM Excel workflow with AI agents (profile, proposed recipe, deterministic run, target check)",
+			"title": "PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)",
 			"category": "office-workflows",
 			"summary": "Supplier Excel/CSV product exports become a target's import sheet without the model touching a row: the agent reads a bounded column profile and proposes a typed transform recipe, a column walk refuses imagined columns, code runs the recipe over every row (unreadable values left unchanged and listed by source line), and a target-schema check over the full output is the definition of done — in a bounded propose → run → check → revise loop, in-app, or from a terminal agent with the `pim` program over plain job folders (no git, no repo; one dated output folder per run).",
 			"when_to_use": "Use when product data (supplier exports, ERP dumps, marketplace templates) arrives as spreadsheets that must be analysed and transformed into a fixed import format, the same kind of file recurs, or the sheet is too large to check by eye.",

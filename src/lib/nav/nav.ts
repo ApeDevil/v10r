@@ -51,6 +51,7 @@ export const navItems: NavItem[] = [
 		href: '/',
 		label: m.nav_home,
 		icon: 'i-lucide-home',
+		keywords: ['Velociraptor', 'v10r'],
 	},
 	{
 		href: '/showcases',
@@ -68,7 +69,12 @@ export const navItems: NavItem[] = [
 		icon: 'i-lucide-workflow',
 		// Derived from the workflow catalog, grouped by category like the hub.
 		children: groupWorkflowsByCategory().flatMap(({ category, cards }) =>
-			cards.map((card) => ({ href: workflowHref(card), label: card.title, group: category.label })),
+			cards.map((card) => ({
+				href: workflowHref(card),
+				label: card.title,
+				group: category.label,
+				keywords: card.keywords,
+			})),
 		),
 	},
 	{

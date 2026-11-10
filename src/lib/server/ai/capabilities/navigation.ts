@@ -29,6 +29,8 @@ export function wantsNavigation(text: string): boolean {
 export interface CatalogQuery {
 	query: string;
 	surface: SearchSurface | null;
+	/** The subject as written, when a synonym rewrote it: searched when the rewrite finds nothing. */
+	literal?: string;
 }
 
 /** The kind of surface a navigation question names, mapped to the catalog surface it means. */
@@ -62,15 +64,31 @@ const SURFACE_WORDS: Record<string, SearchSurface> = {
 	пост: 'blog',
 };
 
+/**
+ * Words a reader uses for a section the catalog names otherwise: a tutorial is a workflow
+ * page (`docs/naming.md`), so "the Excel tutorial" searches the Workflows section.
+ */
+const SUBJECT_SYNONYMS: Record<string, string> = {
+	tutorial: 'workflows',
+	tutorials: 'workflows',
+	anleitung: 'workflows',
+	anleitungen: 'workflows',
+	tutorien: 'workflows',
+	руководство: 'workflows',
+	инструкция: 'workflows',
+	инструкцию: 'workflows',
+};
+
 /** The asking, not the subject: navigation phrasing and function words the matcher must not see. */
 const NAVIGATION_NOISE: ReadonlySet<string> = new Set(
 	(
 		'where is are was the a an to of for in on at about me my i you it this that and or can could do does find ' +
 		'get give go send show take link links url page pages section please how what which want need looking ' +
+		'with using use work working ' +
 		'wo ist sind der die das den dem des ein eine einen einem einer zu zum zur über mir mich ich du sie es und ' +
-		'oder bitte seite seiten zeig zeige zeigen finde finden gibt kann wie was welche welcher welches ' +
+		'oder bitte seite seiten zeig zeige zeigen finde finden gibt kann wie was welche welcher welches mit für fur ' +
 		'где ссылка ссылку ссылки на мне дай дайте покажи покажите найти найду как и или в к у о об про это эта ' +
-		'этот эту страница страницу страницы пожалуйста есть можно хочу нужна нужен'
+		'этот эту страница страницу страницы пожалуйста есть можно хочу нужна нужен для с со по'
 	).split(' '),
 );
 
@@ -83,15 +101,21 @@ const NAVIGATION_NOISE: ReadonlySet<string> = new Set(
 export function catalogQueryOf(text: string): CatalogQuery | null {
 	let surface: SearchSurface | null = null;
 	const subject: string[] = [];
+	const literal: string[] = [];
 	for (const token of tokenize(text)) {
 		const facet = SURFACE_WORDS[token];
 		if (facet) {
 			surface ??= facet;
 			continue;
 		}
-		if (!NAVIGATION_NOISE.has(token)) subject.push(token);
+		if (NAVIGATION_NOISE.has(token)) continue;
+		subject.push(SUBJECT_SYNONYMS[token] ?? token);
+		literal.push(token);
 	}
-	return subject.length > 0 ? { query: subject.join(' '), surface } : null;
+	if (subject.length === 0) return null;
+	const query = subject.join(' ');
+	const written = literal.join(' ');
+	return query === written ? { query, surface } : { query, surface, literal: written };
 }
 
 export const navigation: AssistantCapability = {
@@ -107,13 +131,16 @@ export const navigation: AssistantCapability = {
 	grounding: async (turn, state) => {
 		const catalogQuery = catalogQueryOf(turn.userMsgText) as CatalogQuery;
 		let rows: SearchResult[];
-		try {
-			rows = await searchCatalogRecords(catalogQuery.query, {
+		const search = (query: string) =>
+			searchCatalogRecords(query, {
 				locale: turn.locale,
 				authCeiling: turn.authCeiling,
 				surface: catalogQuery.surface,
 				limit: CATALOG_RESULTS_LIMIT,
 			});
+		try {
+			rows = await search(catalogQuery.query);
+			if (rows.length === 0 && catalogQuery.literal) rows = await search(catalogQuery.literal);
 		} catch (err) {
 			return { source: { id: 'catalog', ran: false, error: describeError(err), items: [] }, blocks: [] };
 		}

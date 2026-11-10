@@ -255,6 +255,12 @@ describe('navigation grounding', () => {
 		});
 		expect(catalogQueryOf('Где страница чатбота?')).toEqual({ query: 'чатбота', surface: null });
 		expect(catalogQueryOf('Where is the page?')).toBeNull();
+		// A tutorial is a workflow page: the reader's word is rewritten, the written one kept as the fallback.
+		expect(catalogQueryOf('Where is the tutorial for working on an Excel sheet with AI?')).toEqual({
+			query: 'workflows excel sheet ai',
+			surface: null,
+			literal: 'tutorial excel sheet ai',
+		});
 	});
 
 	it('searches the catalog with the distilled query, in the caller’s visibility ceiling, and puts the rows in the prompt', async () => {

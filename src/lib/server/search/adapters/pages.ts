@@ -21,7 +21,7 @@ export function pageRecords(locale: Locale): SearchRecord[] {
 	const out: SearchRecord[] = [];
 	const seen = new Set<string>();
 
-	const push = (href: string, title: string, icon: string, breadcrumb: string[]) => {
+	const push = (href: string, title: string, icon: string, breadcrumb: string[], keywords?: readonly string[]) => {
 		if (REDIRECT_HREFS.has(href) || seen.has(href) || !isPublic(href)) return;
 		seen.add(href);
 		out.push({
@@ -35,13 +35,19 @@ export function pageRecords(locale: Locale): SearchRecord[] {
 			breadcrumb,
 			icon,
 			authScope: 'public',
+			...(keywords?.length ? { keywords: [...keywords] } : {}),
 		});
 	};
 
 	for (const item of navItems) {
-		push(item.href, item.label(), item.icon, []);
+		push(item.href, item.label(), item.icon, [], item.keywords);
 		if (item.children) {
-			for (const child of item.children) push(child.href, child.label(), item.icon, [item.label()]);
+			// The child's group (a showcase domain, a workflow category, a Studio area) joins the
+			// trail, so "office workflows" or "architecture engineering" finds the pages under it.
+			for (const child of item.children) {
+				const trail = child.group ? [item.label(), child.group()] : [item.label()];
+				push(child.href, child.label(), item.icon, trail, child.keywords);
+			}
 		}
 	}
 

@@ -11,6 +11,8 @@ export interface NavChild {
 	 * stay rows, nothing nests, so a long list becomes scannable without a click.
 	 */
 	group?: LabelFn;
+	/** Search terms a reader uses that the label does not carry (product names like "PowerPoint"). */
+	keywords?: readonly string[];
 }
 
 export interface NavItem {
@@ -18,5 +20,7 @@ export interface NavItem {
 	label: LabelFn;
 	/** UnoCSS icon class (e.g., 'i-lucide-home') */
 	icon: string;
+	/** Search terms a reader uses that the label does not carry. */
+	keywords?: readonly string[];
 	children?: NavChild[];
 }
