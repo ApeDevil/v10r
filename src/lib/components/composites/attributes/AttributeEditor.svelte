@@ -7,6 +7,7 @@ import AttributeRow from './AttributeRow.svelte';
 import type { AttributeEditorState } from './attribute-editor.svelte.ts';
 import { type AttributeControls, coreAttributeControls } from './controls.ts';
 import { refusalMessage } from './presentation.ts';
+import { dropGap, gapToIndex } from './row-drop-target.ts';
 
 /**
  * The generic editor of one self-describing record. It knows no domain and no storage: it
@@ -50,6 +51,83 @@ async function add() {
 	document.getElementById(`${idPrefix}-${id}-label`)?.focus();
 }
 
+/** What the live region last said about a move; screen readers hear where the row went. */
+let moveAnnouncement = $state('');
+
+async function reorder(id: string, to: number, focusId: string) {
+	if (editor.move(id, to) === null) return;
+	const moved = editor.record.attributes[to];
+	moveAnnouncement = m.attributes_moved({
+		label: moved?.label || m.attributes_unlabelled(),
+		position: to + 1,
+		count: editor.record.attributes.length,
+	});
+	await tick();
+	document.getElementById(focusId)?.focus();
+}
+
+/**
+ * Pointer drag of a row by its grip. The rows are measured once when the drag starts (in page
+ * coordinates, so scrolling mid-drag stays right); the dragged row only translates, so the list
+ * never reflows until the drop, and the drop is one `move` — one undo step. Escape cancels.
+ */
+let drag = $state<{ id: string; from: number; offset: number; gap: number } | null>(null);
+let listEl = $state<HTMLOListElement>();
+
+function startDrag(event: PointerEvent, id: string) {
+	if (readonly || event.button !== 0 || !listEl) return;
+	const from = editor.record.attributes.findIndex((a) => a.id === id);
+	if (from === -1) return;
+	event.preventDefault();
+	const grip = event.currentTarget as HTMLElement;
+	grip.setPointerCapture(event.pointerId);
+	const rows = [...listEl.querySelectorAll<HTMLElement>(':scope > li')];
+	const midpoints = rows.map((row) => {
+		const box = row.getBoundingClientRect();
+		return box.top + window.scrollY + box.height / 2;
+	});
+	const startY = event.clientY + window.scrollY;
+	drag = { id, from, offset: 0, gap: from };
+
+	const onmove = (e: PointerEvent) => {
+		if (!drag) return;
+		const y = e.clientY + window.scrollY;
+		drag = { ...drag, offset: y - startY, gap: dropGap(midpoints, y) };
+	};
+	const finish = (commit: boolean) => {
+		grip.removeEventListener('pointermove', onmove);
+		grip.removeEventListener('pointerup', onup);
+		grip.removeEventListener('pointercancel', oncancel);
+		grip.removeEventListener('lostpointercapture', oncancel);
+		window.removeEventListener('keydown', onkey, true);
+		const ended = drag;
+		drag = null;
+		if (!commit || !ended) return;
+		const to = gapToIndex(ended.from, ended.gap);
+		if (to !== null) void reorder(ended.id, to, grip.id);
+	};
+	const onup = () => finish(true);
+	const oncancel = () => finish(false);
+	const onkey = (e: KeyboardEvent) => {
+		if (e.key !== 'Escape') return;
+		e.preventDefault();
+		e.stopPropagation();
+		finish(false);
+	};
+	grip.addEventListener('pointermove', onmove);
+	grip.addEventListener('pointerup', onup);
+	grip.addEventListener('pointercancel', oncancel);
+	grip.addEventListener('lostpointercapture', oncancel);
+	window.addEventListener('keydown', onkey, true);
+}
+
+function dropEdge(index: number, count: number): 'before' | 'after' | null {
+	if (!drag || gapToIndex(drag.from, drag.gap) === null) return null;
+	if (drag.gap === index) return 'before';
+	if (drag.gap === count && index === count - 1) return 'after';
+	return null;
+}
+
 async function restore(id: string) {
 	if (editor.restore(id) === null) return;
 	await tick();
@@ -75,7 +153,7 @@ async function restore(id: string) {
 	{#if editor.record.attributes.length === 0}
 		<p class="empty text-fluid-sm text-muted">{m.attributes_empty()}</p>
 	{:else}
-		<ol class="attribute-list">
+		<ol class="attribute-list" class:dragging={drag !== null} bind:this={listEl}>
 			{#each editor.record.attributes as attribute, index (attribute.id)}
 				<AttributeRow
 					{attribute}
@@ -87,6 +165,10 @@ async function restore(id: string) {
 					{idPrefix}
 					{readonly}
 					findings={findingsById.get(attribute.id) ?? NO_FINDINGS}
+					{reorder}
+					ongrip={startDrag}
+					dragOffset={drag?.id === attribute.id ? drag.offset : null}
+					dropEdge={dropEdge(index, editor.record.attributes.length)}
 				/>
 			{/each}
 		</ol>
@@ -103,7 +185,7 @@ async function restore(id: string) {
 	{/if}
 
 	<p class="sr-only" role="status" aria-live="polite">
-		{editor.refusal ? refusalMessage(editor.refusal) : ''}
+		{editor.refusal ? refusalMessage(editor.refusal) : moveAnnouncement}
 	</p>
 	{#if editor.refusal}
 		<p class="refusal text-fluid-sm" aria-hidden="true">{refusalMessage(editor.refusal)}</p>
@@ -153,6 +235,12 @@ async function restore(id: string) {
 		margin: 0;
 		padding: 0;
 		list-style: none;
+	}
+
+	/* While a row is dragged, the page does not select text under the pointer. */
+	.attribute-list.dragging {
+		user-select: none;
+		cursor: grabbing;
 	}
 
 	.add-bar {
