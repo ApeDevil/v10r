@@ -104,6 +104,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'url-search-state': 'URL State',
 	'form-draft-recovery': 'Form Drafts',
 	'ai-untrusted-content-boundary': 'Untrusted',
+	'ai-agent-actions': 'Agent Actions',
 	'ai-eval-regression-suite': 'AI Evals',
 	'architecture-external-service': 'Ext Service',
 	'architecture-engineering': 'Arch Eng',

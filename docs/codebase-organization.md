@@ -67,7 +67,8 @@ another:
 | | Owns | Read by |
 |---|---|---|
 | `#lib/3d/` | scene, part, and customization registries | the 3D viewer **and** blog scene embeds |
-| `#lib/desk/` | persisted layout shape, panel catalogue, help copy, the spreadsheet formula evaluator and cell contract | the Desk UI, the app shell's command palette, the `desk` DB schema, **and** the `desk` mutations (every stored sheet is re-derived at the write door) |
+| `#lib/desk/` | persisted layout shape, panel catalogue, help copy, the spreadsheet formula evaluator and cell contract, the Desk's client actions (`arrange-actions.ts`) | the Desk UI, the app shell's command palette, the `desk` DB schema, **and** the `desk` mutations (every stored sheet is re-derived at the write door) |
+| `#lib/client-actions/` | the client action contract (name, input schema, timeout, bounded result) and the runner that executes one | the server (advertises an action to the model, reads its result back) **and** the client (validates and runs it) — neither side's framework appears in it |
 | `#lib/showcases/catalog/` | the showcase card tree and section anchors | the hub, nav, both search lanes, the sitemap, the Neo4j projection |
 | `#lib/workflows/` | the workflow catalog: categories and the tutorials in each | the `/workflows` hub, nav, the sitemap, `server/workflows/` (which renders `content/workflows/<category>/<slug>/<locale>.md` and zips its starter folder) |
 | `#lib/studio/` | the Studio catalog: areas and the modes in each | the `/studio` hub, each area's mode tabs, nav, the sitemap |

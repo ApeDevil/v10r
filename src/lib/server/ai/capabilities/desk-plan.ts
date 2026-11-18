@@ -15,12 +15,15 @@ import type { AssistantCapability } from '../profile/profile';
 import type { DeskToolScope } from '../tools/_types';
 import { createProposePlanTool } from '../tools/propose-plan';
 
-/** Read-only desk scopes — neither gates the plan loop nor counts toward the mutation step budget. */
-const READONLY_SCOPES: ReadonlySet<DeskToolScope> = new Set(['desk:read', 'desk:ask']);
+/**
+ * Desk scopes that cannot change a file — neither gates the plan loop nor counts toward the
+ * mutation step budget. `desk:arrange` changes the workspace on screen, not stored data.
+ */
+const NON_MUTATING_SCOPES: ReadonlySet<DeskToolScope> = new Set(['desk:read', 'desk:ask', 'desk:arrange']);
 
 /** True when any granted scope can mutate desk state (write/create/delete). */
 export function hasMutatingScope(scopes: readonly DeskToolScope[]): boolean {
-	return scopes.some((s) => !READONLY_SCOPES.has(s));
+	return scopes.some((s) => !NON_MUTATING_SCOPES.has(s));
 }
 
 /** Input for the plan-gating predicate. */

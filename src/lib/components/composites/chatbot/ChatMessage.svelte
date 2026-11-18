@@ -7,7 +7,7 @@ import { cn } from '#lib/utils/cn.ts';
 import StreamedMarkdown from './StreamedMarkdown.svelte';
 import ToolCallStatus from './ToolCallStatus.svelte';
 import { toolLabel } from './tool-label';
-import { isToolPart, TOOL_PHASE, type ToolPart, toolNameOf } from './tool-part';
+import { isToolPart, TOOL_PHASE, type ToolPart, toolNameOf, toolPartFailed } from './tool-part';
 
 interface TextPart {
 	type: 'text';
@@ -122,7 +122,7 @@ function turnErrorCopy(error: TurnError): string {
 				{/if}
 			{:else if isToolPart(part)}
 				{@const toolName = toolNameOf(part)}
-				<ToolCallStatus label={toolLabel(toolName)} phase={TOOL_PHASE[part.state] ?? 'running'} output={part.output} />
+				<ToolCallStatus label={toolLabel(toolName)} phase={toolPartFailed(part) ? 'error' : (TOOL_PHASE[part.state] ?? 'running')} output={part.output} />
 			{/if}
 		{/each}
 

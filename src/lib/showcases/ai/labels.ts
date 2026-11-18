@@ -159,6 +159,7 @@ export const BLOCK_TAGS: Record<PromptBlockId, string> = {
 	'desk-create-guidance': 'desk-create guidance',
 	'desk-ask-guidance': 'desk-ask guidance',
 	'desk-plan-guidance': 'desk-plan guidance',
+	'desk-arrange-guidance': 'desk-arrange guidance',
 	'project-overview': '<project-overview>',
 	'catalog-map': '<catalog-map>',
 	permissions: '<permissions>',

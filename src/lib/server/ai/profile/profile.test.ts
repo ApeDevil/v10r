@@ -5,7 +5,8 @@
  * lanes have their own test (`chatbot.test.ts`).
  */
 import { describe, expect, it, vi } from 'vitest';
-import { TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
+import { DESK_ARRANGE_ACTION_NAMES } from '#lib/desk/arrange-actions.ts';
+import { DESK_TOOL_SCOPES, TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
 import type { CapabilityId } from '#lib/types/assistant-profile.ts';
 
 vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
@@ -120,8 +121,15 @@ describe('the profiles as declarations', () => {
 describe('capabilities ≡ TOOL_MANIFEST', () => {
 	it('each profile, fully granted, mounts exactly the manifest tools of its surface, capability by capability', async () => {
 		for (const profile of Object.values(PROFILES)) {
-			const scopes = ['desk:read', 'desk:write', 'desk:create', 'desk:delete', 'desk:ask'] as const;
-			const composed = await composeTurn(profile, turn({ scopes: [...scopes], userMsgText: 'hello there, docs' }));
+			const composed = await composeTurn(
+				profile,
+				// Fully granted includes a browser that can run every client action.
+				turn({
+					scopes: [...DESK_TOOL_SCOPES],
+					clientActions: DESK_ARRANGE_ACTION_NAMES,
+					userMsgText: 'hello there, docs',
+				}),
+			);
 			const manifest = TOOL_MANIFEST.filter((d) => d.surface === profile.surface);
 			const expected = manifest.map((d) => d.name);
 			expect(withoutInfra(Object.keys(composed.tools))).toEqual(expected.sort());
@@ -277,6 +285,7 @@ describe('every CapabilityId is declared by exactly one profile capability', () 
 			'desk-delete',
 			'desk-ask',
 			'desk-plan',
+			'desk-arrange',
 		];
 		for (const id of ids) expect(declared.has(id), id).toBe(true);
 		expect(declared.size).toBe(ids.length);

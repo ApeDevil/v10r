@@ -132,6 +132,8 @@ export function inspectTurnPath(
 	if (!conversationId || message.role !== 'assistant') return null;
 	const trace = traceOf(message);
 	if (!trace || !turnFinished(trace)) return null;
-	const query = new URLSearchParams({ conversation: conversationId, turn: message.id });
+	// The trace names its own row: a message continued after client actions keeps the id of
+	// its first request while the latest request — the one this trace describes — has its own.
+	const query = new URLSearchParams({ conversation: conversationId, turn: trace.messageId ?? message.id });
 	return `/showcases/ai/${surface}?${query}#orchestration`;
 }

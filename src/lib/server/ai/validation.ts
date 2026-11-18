@@ -1,4 +1,5 @@
 import * as v from 'valibot';
+import { DESK_ARRANGE_ACTION_NAMES } from '#lib/desk/arrange-actions.ts';
 import { DESK_TOOL_SCOPES } from '#lib/types/ai-tools.ts';
 import { AI_PROVIDER_IDS, DESK_FILE_TYPES } from '#lib/types/db-enums.ts';
 import {
@@ -116,9 +117,16 @@ export const DeskRequestSchema = v.object({
 	...baseEntries,
 	panelContext: v.optional(v.pipe(v.array(PanelContextEntry), v.maxLength(CONTEXT_MAX_ENTRIES))),
 	/** Tool permission scopes — empty or omitted means no tools. */
-	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(5))),
+	toolScopes: v.optional(v.pipe(v.array(ToolScope), v.maxLength(DESK_TOOL_SCOPES.length))),
 	/** Current desk layout so AI knows what panels are open. */
 	deskLayout: v.optional(v.pipe(v.array(DeskLayoutEntry), v.maxLength(DESK_LAYOUT_MAX_PANELS))),
+	/**
+	 * The client actions this browser has a handler mounted for right now. Pinned to the
+	 * declared names: an action the Desk does not declare cannot be advertised into a turn.
+	 */
+	clientActions: v.optional(
+		v.pipe(v.array(v.picklist(DESK_ARRANGE_ACTION_NAMES)), v.maxLength(DESK_ARRANGE_ACTION_NAMES.length)),
+	),
 	/** Active workspace name for AI context. */
 	activeWorkspace: v.optional(
 		v.object({

@@ -11,7 +11,7 @@ import type { PageServerLoad } from './$types';
  * manifest, the step budget from the profile. BRANCH is the profile's surface.
  */
 
-const RISK_ORDER: Record<string, number> = { read: 0, create: 1, write: 2, destructive: 3 };
+const RISK_ORDER: Record<string, number> = { read: 0, view: 1, create: 2, write: 3, destructive: 4 };
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);

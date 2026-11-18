@@ -8,6 +8,7 @@
  * the desk inventory is the viewer's own.
  */
 import { asSchema, type Tool } from 'ai';
+import { DESK_ARRANGE_ACTION_NAMES } from '#lib/desk/arrange-actions.ts';
 import type { Locale } from '#lib/i18n/index.ts';
 import { countCorpus, countCorpusMaps } from '#lib/server/db/retrieval/queries.ts';
 import { PATTERNS } from '#lib/server/patterns/index.ts';
@@ -42,6 +43,7 @@ function everythingGranted(viewer: ManifestViewer): TurnInput {
 		pageContext: null,
 		scopes: [...DESK_TOOL_SCOPES],
 		deskCorpus: 'ready',
+		clientActions: DESK_ARRANGE_ACTION_NAMES,
 	};
 }
 

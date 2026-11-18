@@ -3,6 +3,10 @@
  * server reports is the phase the card gets, completed steps' effects reach the desk even
  * when the plan failed, the receipt message joins the thread once, a lost response is
  * `unknown` until the status route answers, and nothing may start while one is in flight.
+ *
+ * And the client actions: a call for a client-executed tool is run once and answered with
+ * what the handler observed, and the thread goes back to the server on its own only for a
+ * result this session just settled — never for a step that ended on a server tool.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ProposalOutcome } from '#lib/types/ai-proposal.ts';
@@ -19,6 +23,16 @@ vi.mock('@ai-sdk/svelte', () => ({
 		error: Error | undefined = undefined;
 		stop = vi.fn(async () => {});
 		sendMessage = vi.fn();
+		/** The SDK's behaviour the session relies on: the output settles the call's part. */
+		addToolOutput = vi.fn(async ({ toolCallId, output }: { toolCallId: string; output: unknown }) => {
+			this.messages = (this.messages as { parts?: { toolCallId?: string }[] }[]).map((message) => ({
+				...message,
+				parts: message.parts?.map((part) =>
+					part.toolCallId === toolCallId ? { ...part, state: 'output-available', output } : part,
+				),
+			}));
+		});
+		constructor(readonly init: Record<string, unknown>) {}
 	},
 }));
 
@@ -57,6 +71,7 @@ function sink(): DeskBotSink & { effects: unknown[] } {
 			effects.push(e);
 		},
 		awaitFileRefreshed: async (fileId) => ({ fileId, version: 3, ok: true }),
+		turnBody: () => ({ deskLayout: [] }),
 	};
 }
 
@@ -247,5 +262,270 @@ describe('DeskBotSession approval run', () => {
 		release(json(outcome()));
 		await first;
 		expect(session.runFor('prp_1').phase).toBe('executed');
+	});
+});
+
+describe('DeskBotSession client actions', () => {
+	type Init = {
+		onToolCall(event: { toolCall: { toolCallId: string; toolName: string; input: unknown } }): void;
+		sendAutomaticallyWhen(options: { messages: unknown[] }): boolean;
+		transport: { prepareSendMessagesRequest(options: Record<string, unknown>): { body: Record<string, unknown> } };
+	};
+	type MockChat = { init: Init; messages: unknown[]; addToolOutput: ReturnType<typeof vi.fn> };
+	const chatOf = (session: InstanceType<typeof DeskBotSession>) => session.chat as unknown as MockChat;
+	const callPart = (toolCallId: string, toolName: string, extra: Record<string, unknown> = {}) => ({
+		type: `tool-${toolName}`,
+		toolCallId,
+		state: 'input-available',
+		...extra,
+	});
+	const thread = (...parts: unknown[]) => [
+		{ id: 'u1', role: 'user', parts: [{ type: 'text', text: 'switch to the budget' }] },
+		{ id: 'a1', role: 'assistant', parts: [{ type: 'step-start' }, ...parts] },
+	];
+	/** Let the session's un-awaited run settle. */
+	const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+	async function mounted() {
+		const { DESK_FOCUS_PANEL } = await import('#lib/desk/arrange-actions.ts');
+		const session = new DeskBotSession();
+		const focus = vi.fn(() => ({ status: 'completed' as const, observed: { panel_id: 'p1', front: true } }));
+		session.actions.register(DESK_FOCUS_PANEL, focus);
+		return { session, chat: chatOf(session), focus };
+	}
+
+	it('runs a client-executed call once and answers it with what the handler observed', async () => {
+		const { session, chat, focus } = await mounted();
+		chat.messages = thread(callPart('call_1', 'desk_focus_panel'));
+		const toolCall = { toolCallId: 'call_1', toolName: 'desk_focus_panel', input: { panel_id: 'p1' } };
+		chat.init.onToolCall({ toolCall });
+		chat.init.onToolCall({ toolCall });
+		expect(session.isBusy).toBe(true);
+		await settled();
+
+		expect(focus).toHaveBeenCalledTimes(1);
+		expect(chat.addToolOutput).toHaveBeenCalledWith({
+			tool: 'desk_focus_panel',
+			toolCallId: 'call_1',
+			output: { status: 'completed', observed: { panel_id: 'p1', front: true } },
+		});
+		expect(session.isBusy).toBe(false);
+		// One continuation for the settled call — asking twice does not send twice.
+		expect(chat.init.sendAutomaticallyWhen({ messages: chat.messages })).toBe(true);
+		expect(chat.init.sendAutomaticallyWhen({ messages: chat.messages })).toBe(false);
+	});
+
+	it('leaves a server tool call alone: it is not this client’s to answer', async () => {
+		const { chat, focus } = await mounted();
+		chat.init.onToolCall({ toolCall: { toolCallId: 'call_s', toolName: 'desk_list_files', input: {} } });
+		await settled();
+		expect(focus).not.toHaveBeenCalled();
+		expect(chat.addToolOutput).not.toHaveBeenCalled();
+	});
+
+	it('does not resend a turn that ended on a server tool — the approval boundary waits for the user', async () => {
+		const { chat } = await mounted();
+		const waiting = thread(
+			callPart('call_r', 'desk_rename_file', { state: 'output-available', output: { requiresApproval: true } }),
+		);
+		expect(chat.init.sendAutomaticallyWhen({ messages: waiting })).toBe(false);
+	});
+
+	it('waits for every call of the step before it continues', async () => {
+		const { chat } = await mounted();
+		chat.messages = thread(callPart('call_1', 'desk_focus_panel'), callPart('call_2', 'desk_close_panel'));
+		chat.init.onToolCall({
+			toolCall: { toolCallId: 'call_1', toolName: 'desk_focus_panel', input: { panel_id: 'p1' } },
+		});
+		await settled();
+		// call_2 has no handler mounted and is still waiting for one: the step is not answered yet.
+		expect(chat.init.sendAutomaticallyWhen({ messages: chat.messages })).toBe(false);
+	});
+
+	it('answers an action nothing is mounted for as unavailable, and still continues so the model can say so', async () => {
+		vi.useFakeTimers();
+		try {
+			const session = new DeskBotSession();
+			const chat = chatOf(session);
+			chat.messages = thread(callPart('call_1', 'desk_open_file'));
+			chat.init.onToolCall({
+				toolCall: { toolCallId: 'call_1', toolName: 'desk_open_file', input: { file_id: 'fil_a' } },
+			});
+			await vi.advanceTimersByTimeAsync(2_000);
+			expect(chat.addToolOutput).toHaveBeenCalledWith(
+				expect.objectContaining({ output: expect.objectContaining({ status: 'unavailable', code: 'no_handler' }) }),
+			);
+			expect(chat.init.sendAutomaticallyWhen({ messages: chat.messages })).toBe(true);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('records a result that settles after Stop, but does not continue the turn', async () => {
+		const { DESK_FOCUS_PANEL } = await import('#lib/desk/arrange-actions.ts');
+		const session = new DeskBotSession();
+		const chat = chatOf(session);
+		let finish: (() => void) | undefined;
+		session.actions.register(
+			DESK_FOCUS_PANEL,
+			() =>
+				new Promise((resolve) => {
+					finish = () => resolve({ status: 'completed' });
+				}),
+		);
+		chat.messages = thread(callPart('call_1', 'desk_focus_panel'));
+		chat.init.onToolCall({
+			toolCall: { toolCallId: 'call_1', toolName: 'desk_focus_panel', input: { panel_id: 'p1' } },
+		});
+		await settled();
+		session.stop();
+		finish?.();
+		await settled();
+		expect(chat.addToolOutput).toHaveBeenCalledTimes(1);
+		expect(chat.init.sendAutomaticallyWhen({ messages: chat.messages })).toBe(false);
+	});
+
+	it('drops a result whose thread was replaced by a new chat', async () => {
+		const { DESK_FOCUS_PANEL } = await import('#lib/desk/arrange-actions.ts');
+		const session = new DeskBotSession();
+		const chat = chatOf(session);
+		let finish: (() => void) | undefined;
+		session.actions.register(
+			DESK_FOCUS_PANEL,
+			() =>
+				new Promise((resolve) => {
+					finish = () => resolve({ status: 'completed' });
+				}),
+		);
+		chat.init.onToolCall({
+			toolCall: { toolCallId: 'call_1', toolName: 'desk_focus_panel', input: { panel_id: 'p1' } },
+		});
+		await settled();
+		session.newChat();
+		finish?.();
+		await settled();
+		expect(chat.addToolOutput).not.toHaveBeenCalled();
+	});
+
+	it('advertises what is mounted at send time, and re-reads the desk for a continuation', async () => {
+		const { session, chat } = await mounted();
+		const desk = sink();
+		desk.turnBody = () => ({ deskLayout: [{ panelId: 'p1', label: 'Budget' }], toolScopes: ['desk:read'] });
+		session.attach(desk);
+		const prepare = (messages: unknown[], body: Record<string, unknown>) =>
+			chat.init.transport.prepareSendMessagesRequest({ body, messages, id: 'c', trigger: 'submit-message' }).body;
+
+		const fresh = prepare([{ id: 'u1', role: 'user', parts: [] }], { deskLayout: [], clientActions: ['forged'] });
+		expect(fresh.clientActions).toEqual(['desk_focus_panel']);
+		expect(fresh.deskLayout).toEqual([]);
+
+		const continued = prepare(thread(), { deskLayout: [] });
+		expect(continued.deskLayout).toEqual([{ panelId: 'p1', label: 'Budget' }]);
+		expect(continued.clientActions).toEqual(['desk_focus_panel']);
+	});
+});
+
+/**
+ * "Find my architecture document and open it in the right Desk panel", end to end below the
+ * model and the stream: the server tool's result and the client action's call are in the
+ * thread as the SDK would leave them, the session runs the call against a REAL dock, and
+ * the server's own reader takes the thread the browser would send next. What the three
+ * sides hold has to agree — the dock, the thread, and the server's reading of it.
+ */
+describe('cross-surface turn: a server search, then a client action on the desk', () => {
+	it('opens the found file in a right-hand pane and continues with what the browser observed', async () => {
+		const { mountArrangeHandlers } = await import('../../arrange-action-handlers');
+		const { createDockState } = await import('../../dock.state.svelte');
+		const { findLeafWithPanel } = await import('../../dock.operations');
+		const { readClientActionResults } = await import('#lib/server/ai/client-action-results.ts');
+
+		const dock = createDockState(
+			{ type: 'leaf', id: 'l-bot', tabs: ['bot'], activeTab: 'bot' },
+			{ bot: { id: 'bot', type: 'bot', label: 'Desk Bot', closable: true } },
+		);
+		const session = new DeskBotSession();
+		const loadFile = vi.fn(async () => ({ id: 'fil_arch', name: 'Architecture', type: 'markdown' }));
+		mountArrangeHandlers(session.actions, { dock, conversationPanelId: 'bot', loadFile });
+		const chat = session.chat as unknown as {
+			init: {
+				onToolCall(event: { toolCall: { toolCallId: string; toolName: string; input: unknown } }): void;
+				sendAutomaticallyWhen(options: { messages: unknown[] }): boolean;
+			};
+			messages: unknown[];
+		};
+
+		// Step 1, as streamed: the server already ran the search; the open is the browser's.
+		chat.messages = [
+			{
+				id: 'u1',
+				role: 'user',
+				parts: [{ type: 'text', text: 'Find my architecture document and open it on the right' }],
+			},
+			{
+				id: 'a1',
+				role: 'assistant',
+				parts: [
+					{ type: 'step-start' },
+					{
+						type: 'tool-desk_search_files',
+						toolCallId: 'call_search',
+						state: 'output-available',
+						input: { query: 'architecture' },
+						output: { files: [{ id: 'fil_arch', name: 'Architecture', type: 'markdown' }] },
+					},
+					{ type: 'step-start' },
+					{
+						type: 'tool-desk_open_file',
+						toolCallId: 'call_open',
+						state: 'input-available',
+						input: { file_id: 'fil_arch', placement: 'right' },
+					},
+				],
+			},
+		];
+		// Dispatched is not done: before the browser acts, nothing is continued or reported.
+		expect(chat.init.sendAutomaticallyWhen({ messages: chat.messages })).toBe(false);
+		expect(readClientActionResults(chat.messages as never).continuation).toBeNull();
+
+		chat.init.onToolCall({
+			toolCall: {
+				toolCallId: 'call_open',
+				toolName: 'desk_open_file',
+				input: { file_id: 'fil_arch', placement: 'right' },
+			},
+		});
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		// The desk: the file has its own pane, in front, and the conversation is still showing.
+		const filePane = findLeafWithPanel(dock.root, 'markdown-fil_arch');
+		expect(filePane?.activeTab).toBe('markdown-fil_arch');
+		expect(filePane?.id).not.toBe(findLeafWithPanel(dock.root, 'bot')?.id);
+		expect(findLeafWithPanel(dock.root, 'bot')?.activeTab).toBe('bot');
+		expect(dock.focusedPanelId).toBe('markdown-fil_arch');
+
+		// The thread goes back once, and the server reads the same thing the desk shows.
+		expect(chat.init.sendAutomaticallyWhen({ messages: chat.messages })).toBe(true);
+		const reading = readClientActionResults(chat.messages as never);
+		expect(reading.continuation).toEqual({
+			messageId: 'a1',
+			reported: [
+				{
+					toolCallId: 'call_open',
+					toolName: 'desk_open_file',
+					input: { file_id: 'fil_arch', placement: 'right' },
+					result: {
+						status: 'completed',
+						observed: {
+							panel_id: 'markdown-fil_arch',
+							file_id: 'fil_arch',
+							panel_type: 'markdown',
+							placed: 'split',
+							front: true,
+						},
+					},
+				},
+			],
+		});
+		expect(reading.spent).toBe(1);
 	});
 });

@@ -72,6 +72,13 @@ export interface TurnInput {
 	panelContext?: PanelContextEntry[];
 	deskLayout?: DeskLayoutEntry[];
 	activeWorkspace?: { id: string; name: string };
+	/**
+	 * Deskbot: the client actions the browser that sent this turn has a handler mounted for
+	 * — known names only, the route's schema drops the rest. Absent on a client that runs none.
+	 */
+	clientActions?: readonly string[];
+	/** Deskbot: client action results already reported since the user's last message. */
+	clientActionsSpent?: number;
 	/** How the turn's tool results reach the recorder when a result is replaced by a ref. */
 	onCompacted?: CompactionListener;
 }

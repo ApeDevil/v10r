@@ -51,6 +51,13 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | The durable per-step outcome of an approved plan | `step receipt` (`agent_proposal_step`, `ProposalStepReceipt`) | `executionResult` jsonb |
 | The client-side lifecycle of one proposal | `proposal run` (`ProposalRun`, `ProposalRunPhase`) | `proposalBusy` |
 | The deterministic assistant message an approval leaves in the thread | `execution receipt message` | the `[resumeFromProposalId:…]` resume turn |
+| Anything the model may ask the application to do | `agent action` — a `TOOL_MANIFEST` entry; in code it stays a `tool` (`ToolDescriptor`) | `command`, `intent`, `operation` as a type name, a second `ActionRegistry` |
+| Where an agent action runs | `executor` (`ToolExecutor`: `server` · `client`) | `surface` (that is which product part a tool belongs to), `side`, `target`, `runtime` |
+| An agent action the user's browser executes and answers for | `client action` (`#lib/client-actions/`: `ClientActionContract`, `ClientActionResult`, `ClientActionRunner`, `ClientActionHandler`; `readClientActionResults` on the server) | `frontend tool`, `UI action`, `browser command`, `desk effect` (that is a server tool's consequence, with no result) |
+| The risk of changing what is shown without changing stored data | `view` (`ToolRisk`) | `ui`, `navigate`, `ephemeral`, `safe` |
+| The Desk's client actions, their scope and their capability | `arrange` (`desk:arrange`, `desk-arrange`, `DESK_ARRANGE_ACTIONS`, `mountArrangeHandlers`) | `layout` (the persisted tree owns it), `navigate`, `control`, `desk:view` |
+| The three facts about a client action that are never merged | `requested` → `executed` → `confirmed`; only the status `completed` means all three | `dispatched`, `sent`, `done`, `success` as a status |
+| The request that carries client action results back into the same turn | `continuation` (`ClientActionReading.continuation`) | `resume` (the retired proposal resume turn), `follow-up`, `round trip` as a name |
 | The step after which a deskbot turn stops for a decision | `approval boundary` (`stoppedAtApproval`) | — |
 | How an approved step is undone | `recovery` (`ProposalStepRecovery`: `revision`/`soft_delete`/`rename_back`/`created`/`none` — the same kinds a `StepRecoveryPoint` carries) | model-authored `rollback` text |
 | What undoing one executed step needs, captured when it ran | `recovery point` (`StepRecoveryPoint`, column `agent_proposal_step.recovery`) | `rollback data`, `snapshot` (that is a `revision`) |

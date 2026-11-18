@@ -29,6 +29,9 @@ const TOOL_LABELS: Record<string, () => string> = {
 	desk_delete_file: m.ai_tool_desk_delete_file,
 	desk_search_knowledge: m.ai_tool_desk_search_knowledge,
 	desk_propose_plan: m.ai_tool_desk_propose_plan,
+	desk_open_file: m.ai_tool_desk_open_file,
+	desk_focus_panel: m.ai_tool_desk_focus_panel,
+	desk_close_panel: m.ai_tool_desk_close_panel,
 };
 
 /** The tool names the map labels — the gate test pins them to the manifest. */
