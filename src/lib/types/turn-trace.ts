@@ -55,6 +55,7 @@ export type PromptBlockId =
 	| 'desk-create-guidance'
 	| 'desk-ask-guidance'
 	| 'desk-plan-guidance'
+	| 'desk-arrange-guidance'
 	| 'project-overview'
 	| 'catalog-map'
 	| 'permissions'
@@ -199,6 +200,8 @@ export interface TurnAwareness {
 	workspace?: { id: string; name: string } | null;
 	layout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
 	panels?: AwarenessPanel[];
+	/** Deskbot: the client actions the browser advertised a mounted handler for. */
+	clientActions?: string[];
 }
 
 /** One part of a history message as sent, sized but never quoted. */

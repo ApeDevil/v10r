@@ -8,7 +8,7 @@
  * carries a `toolName` field. `state` walks
  * input-streaming → input-available → output-available | output-error.
  */
-import type { DeskEffect } from '#lib/types/ai-tools.ts';
+import { type DeskEffect, TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
 
 export type ToolPartState = 'input-streaming' | 'input-available' | 'output-available' | 'output-error';
 
@@ -29,6 +29,28 @@ export function isToolPart(part: { type: string }): part is ToolPart {
 
 export function toolNameOf(part: ToolPart): string {
 	return part.type === 'dynamic-tool' ? (part.toolName ?? 'tool') : part.type.slice('tool-'.length);
+}
+
+const CLIENT_EXECUTED: ReadonlySet<string> = new Set(
+	TOOL_MANIFEST.filter((d) => d.executor === 'client').map((d) => d.name),
+);
+
+/** True for a tool the browser executes — a client action, whose call this client must answer. */
+export function isClientExecutedTool(toolName: string): boolean {
+	return CLIENT_EXECUTED.has(toolName);
+}
+
+/**
+ * Whether a settled tool part failed. The part's `state` only says an output arrived: a
+ * server tool that refused answers with an `error` envelope, and a client action answers
+ * with a result whose `status` is anything but `completed`. Reading `state` alone showed a
+ * check mark beside an action the browser had just reported as not done.
+ */
+export function toolPartFailed(part: ToolPart): boolean {
+	if (part.state === 'output-error') return true;
+	if (part.state !== 'output-available') return false;
+	if (part.output?.error) return true;
+	return isClientExecutedTool(toolNameOf(part)) && part.output?.status !== 'completed';
 }
 
 export const TOOL_PHASE = {

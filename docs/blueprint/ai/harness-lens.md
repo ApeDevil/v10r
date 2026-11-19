@@ -61,6 +61,7 @@ Overwrites and deletes are recoverable: `db/desk` snapshots a pre-image `desk.fi
 | Scope | UI treatment |
 |---|---|
 | `desk:read` | Silent auto; I/O log only |
+| `desk:arrange` | Silent auto, executed in the browser (`view` risk: changes what is shown, never a file); the tool row shows the result the browser observed — see [agent-actions.md](./agent-actions.md) |
 | `desk:create` | Auto with notification; bot-originated writes inherit this tier |
 | `desk:write` on an existing file | Pending proposal → **`PlanCard`**; approve to run (pre-image `desk.file_revision` backs recovery) |
 | `desk:delete` | Pending proposal → **`PlanCard`** with target name; soft delete (trash, `desk-trash` retention window) + `desk.file_revision` pre-image — the card says so, never "permanent" |

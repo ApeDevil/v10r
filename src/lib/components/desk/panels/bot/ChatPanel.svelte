@@ -13,12 +13,14 @@
  * card is pending; New chat waits for an approval in flight.
  */
 
+import { apiFetch } from '#lib/api.ts';
 import ChatInput from '#lib/components/composites/chatbot/ChatInput.svelte';
 import ChatMessage from '#lib/components/composites/chatbot/ChatMessage.svelte';
 import type { HarnessMetadata, ProposalMetadata } from '#lib/components/composites/chatbot/harness-types.ts';
 import PlanCard from '#lib/components/composites/chatbot/PlanCard.svelte';
 import { citedCatalogSources, inspectTurnPath, traceOf } from '#lib/components/composites/chatbot/turn-progress.ts';
 import type { MenuBarMenu } from '#lib/components/composites/menu-bar/types.ts';
+import { type ArrangeFile, mountArrangeHandlers } from '#lib/components/desk/arrange-action-handlers.ts';
 import { dispatchDeskEffect as dispatchEffect } from '#lib/components/desk/dispatch-desk-effect.ts';
 import { findLeafWithPanel } from '#lib/components/desk/dock.operations.ts';
 import { fileIdOfPanelDefinition, findFilePanel } from '#lib/components/desk/file-panel.ts';
@@ -102,15 +104,37 @@ function awaitFileRefreshed(fileId: string) {
 	});
 }
 
+/**
+ * A desk file's name and type, as the server answers for the signed-in user — what
+ * `desk_open_file` opens. A 404 is "this user has no such file", whoever asked for the id.
+ */
+async function loadArrangeFile(fileId: string, signal: AbortSignal): Promise<ArrangeFile | null> {
+	const res = await apiFetch(`/api/desk/files/${encodeURIComponent(fileId)}`, { signal });
+	if (res.status === 404) return null;
+	if (!res.ok) throw new Error(`File lookup failed (${res.status}).`);
+	const { data } = (await res.json()) as { data: { file: ArrangeFile } };
+	return { id: data.file.id, name: data.file.name, type: data.file.type };
+}
+
 // The session is looked up on mount (client only) and lent this panel's dock and bus for
 // as long as the panel is mounted. A move remounts the panel; the session does not notice.
+// The client action handlers are mounted for exactly as long: what the session advertises
+// to the server is what this dock can do while it is on screen.
 $effect(() => {
 	if (!userId) return;
 	const current = getDeskBotSession(userId, workspaceId, panelId);
-	const sink: DeskBotSink = { dispatchEffect: dispatchDeskEffect, awaitFileRefreshed };
+	const sink: DeskBotSink = { dispatchEffect: dispatchDeskEffect, awaitFileRefreshed, turnBody };
 	session = current;
 	current.attach(sink);
-	return () => current.detach(sink);
+	const unmountHandlers = mountArrangeHandlers(current.actions, {
+		dock,
+		conversationPanelId: panelId,
+		loadFile: loadArrangeFile,
+	});
+	return () => {
+		unmountHandlers();
+		current.detach(sink);
+	};
 });
 
 const messages = $derived(session?.chat.messages ?? []);
@@ -191,11 +215,27 @@ function deskLayout() {
 	return layout.slice(0, DESK_LAYOUT_MAX_PANELS);
 }
 
-function submitMessage() {
-	if (!session || !inputValue.trim() || session.isBusy) return;
+/**
+ * What a turn tells the server about the desk as it is now. `logContext` is for the user's
+ * own send; a continuation after a client action re-reads the desk without re-logging it.
+ */
+function turnBody(logContext = false): Record<string, unknown> {
 	// Flushes every panel's pending context first: the turn carries the edit made a moment ago.
 	const { entries, omitted } = serializeForRequest();
+	if (logContext) logTurnContext(entries, omitted);
+	return {
+		...(session?.conversationId ? { conversationId: session.conversationId } : {}),
+		...(entries.length > 0 ? { panelContext: entries } : {}),
+		deskLayout: deskLayout(),
+		toolScopes: getEnabledScopes(),
+		...(getActiveProviderId() ? { providerId: getActiveProviderId() } : {}),
+		...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
+	};
+}
 
+type RequestContext = ReturnType<typeof serializeForRequest>;
+
+function logTurnContext(entries: RequestContext['entries'], omitted: RequestContext['omitted']) {
 	// Log what the model gets — and what it does not. An omission is a fact about this
 	// turn the user must be able to see, never a silent drop.
 	for (const ctx of entries) {
@@ -213,19 +253,17 @@ function submitMessage() {
 			detail: gone.reason === 'entry_cap' ? `more than ${CONTEXT_MAX_ENTRIES} panels` : 'token budget',
 		});
 	}
+}
+
+function submitMessage() {
+	if (!session || !inputValue.trim() || session.isBusy) return;
+	const body = turnBody(true);
 	appendIOLog({ source: 'progress', label: 'Sending message...' });
 
 	const text = inputValue;
 	inputValue = '';
 
-	session.submit(text, {
-		...(session.conversationId ? { conversationId: session.conversationId } : {}),
-		...(entries.length > 0 ? { panelContext: entries } : {}),
-		deskLayout: deskLayout(),
-		toolScopes: getEnabledScopes(),
-		...(getActiveProviderId() ? { providerId: getActiveProviderId() } : {}),
-		...(wsState.active ? { activeWorkspace: { id: wsState.active.id, name: wsState.active.name } } : {}),
-	});
+	session.submit(text, body);
 }
 
 // The Bot Manager rides the menu as well as the input's gear icon: the icon is

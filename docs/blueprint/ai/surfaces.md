@@ -45,6 +45,8 @@ The two tool collections are **physically and semantically disjoint** and grow i
 - `deskbotToolMeta` — desk CRUD/action tools, each carrying its gating `DeskToolScope` (`DeskToolMeta`).
 - `allToolMeta` — the union, for admin/telemetry that needs every tool regardless of surface.
 
+Every tool also declares its `executor`. All chatbot tools and all deskbot data tools are `server`; the deskbot's three workspace tools (`desk:arrange`) are `client` — **client actions**, run by the browser that sent the turn and never able to change stored data ([agent-actions.md](./agent-actions.md)).
+
 A chatbot tool never carries a desk scope; a deskbot tool always does. The `/admin/ai/tools` topology view derives branch from membership (`name in chatbotToolMeta`), not from a scope artifact.
 
 ## One-door rule (deskbot mutations)

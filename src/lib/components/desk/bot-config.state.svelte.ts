@@ -1,8 +1,9 @@
 /**
  * Bot configuration state for the Desk workspace.
  *
- * Exposes two *user-visible* toggles — "Allow editing existing files"
- * (`desk:write`) and "Allow deleting files" (`desk:delete`). Read and
+ * Exposes the *user-visible* toggles — "Allow editing existing files"
+ * (`desk:write`), "Allow deleting files" (`desk:delete`), "Search pinned files"
+ * (`desk:ask`) and "Arrange the workspace" (`desk:arrange`). Read and
  * create scopes are always-on: they're safe because delete is soft and
  * create's undo path is "delete the file you just created."
  *
@@ -24,9 +25,11 @@ import type { DeskToolScope } from '#lib/server/ai/tools/_types.ts';
  *
  * Read and create are ALWAYS granted when any scope is present — they never appear in
  * this set and can't be toggled off. Write, delete and ask (retrieval over the user's
- * pinned files — one query embedding per call, so opt-in) are the user-facing toggles.
+ * pinned files — one query embedding per call, so opt-in) are the user-facing toggles, off
+ * until switched on. Arrange (open, focus and close panels) starts ON: it touches no file and
+ * one gesture undoes it — but it moves the user's screen, so it is theirs to switch off.
  */
-let optInScopes = $state(new Set<Exclude<DeskToolScope, 'desk:read' | 'desk:create'>>());
+let optInScopes = $state(new Set<Exclude<DeskToolScope, 'desk:read' | 'desk:create'>>(['desk:arrange']));
 
 /**
  * The full scope set to send in requests — always includes read+create,

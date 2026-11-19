@@ -30,6 +30,8 @@ Exactly one focused panel per dock instance, on every surface. Menus, Vely's pag
 
 AI-driven effects (`dispatch-desk-effect.ts`) receive an `EffectActions` facade (`focusPanel`, `addPanel`, `updatePanel`, `publish`, `findFilePanel`) and return `boolean` — applied or failed. Failures are surfaced in the I/O Log, never swallowed. A desk effect that surfaces a panel leaves it visible without further interaction: `desk:open_panel` focuses the OPEN instance showing the file (found through `file-panel.ts` — `filePanelId` / `fileIdOfPanel` / `findFilePanel`, the one reader of the `<type>-<fileId>[-<suffix>]` id shape the Explorer mints) or adds one, `desk:scroll_to` pre-focuses before publishing, and overlay auto-close (via `focusSeq`) is part of the effect.
 
+A desk effect is a *consequence* of a server tool: the server decides it, nothing is reported back. When the assistant has to **ask** the workspace for something and learn whether it happened — open a file in a panel, bring a panel forward, close one — that is a **client action** (`arrange-action-handlers.ts` over `#lib/desk/arrange-actions.ts`), which reads the dock back and answers `completed` only for a state it observed. Contract and boundaries: [../ai/agent-actions.md](../ai/agent-actions.md).
+
 A published `ai:refresh_file` is a request, not a result. The panel showing the file reloads and answers `ai:file_refreshed { fileId, version, ok }` (the spreadsheet after `autosave.refresh()`, the markdown viewer after its load); the bot's session waits for that answer and writes what the panel now shows to the I/O Log — or that no panel answered.
 
 ### Desk Bot session

@@ -222,10 +222,12 @@ describe('desk-ask grounding', () => {
 });
 
 describe('one-door: desk-execute drift guard', () => {
-	// Mutating deskbot tools (risk !== 'read'); excludes desk_propose_plan (read) and
-	// resolve_ref (not in the meta registry — compaction infra, never replayed).
+	// Deskbot tools that change stored data (create · write · destructive); excludes
+	// desk_propose_plan (read), the client actions (`view`: they change what is shown and are
+	// never replayed — `client-actions.gate.test.ts` holds that) and resolve_ref (not in the
+	// meta registry — compaction infra, never replayed).
 	const mutatingDeskTools = Object.entries(deskbotToolMeta)
-		.filter(([, meta]) => meta.risk !== 'read')
+		.filter(([, meta]) => meta.risk !== 'read' && meta.risk !== 'view')
 		.map(([name]) => name);
 
 	it('every mutating deskbot tool has a replay executor case', () => {
@@ -265,8 +267,9 @@ describe('the prompt', () => {
 	it('lists every scope in <permissions>, enabled or disabled, in the profile order', async () => {
 		const prompt = await text(['desk:read', 'desk:create']);
 		const block = prompt.slice(prompt.indexOf('<permissions>'), prompt.indexOf('</permissions>'));
-		expect(block.split('\n').filter((l) => l.startsWith('- '))).toHaveLength(5);
+		expect(block.split('\n').filter((l) => l.startsWith('- '))).toHaveLength(6);
 		expect(block).toContain('read: List files, read contents, search workspace [enabled]');
+		expect(block).toContain('arrange: Open files in panels, bring a panel to the front, close a panel [disabled]');
 		expect(block).toContain(
 			'write: Update spreadsheet cells, edit or replace markdown content, rename files (queued for your approval before saving) [disabled]',
 		);

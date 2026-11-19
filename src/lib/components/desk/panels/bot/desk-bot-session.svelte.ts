@@ -19,11 +19,25 @@
  * completed even when the plan failed, and puts the server's receipt message into the
  * thread — which is how the model learns what ran, with no acknowledgement turn.
  * A lost response is `unknown` until `GET /api/ai/proposals/[id]` settles it.
+ *
+ * Client actions run here too (`#lib/client-actions/`). The session owns the runner — its
+ * dedup has to outlive a remount, like the effects' — and the mounted panel lends it the
+ * handlers. A call for a client-executed tool is run once, its result is written into the
+ * thread as that call's output, and only a result settled live in this session sends the
+ * continuation request; nothing is continued for a call the browser did not just run.
  */
 
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { apiFetch, CSRF_HEADER } from '#lib/api.ts';
-import { isToolPart, toolNameOf } from '#lib/components/composites/chatbot/tool-part.ts';
+import type { ClientActionResult } from '#lib/client-actions/contract.ts';
+import { type ClientActionRunner, createClientActionRunner } from '#lib/client-actions/runner.ts';
+import {
+	isClientExecutedTool,
+	isToolPart,
+	toolNameOf,
+	toolPartFailed,
+} from '#lib/components/composites/chatbot/tool-part.ts';
+import { DESK_ARRANGE_ACTIONS } from '#lib/desk/arrange-actions.ts';
 import { Chat, DefaultChatTransport } from '#lib/state/chat-client.ts';
 import { liveDeskBotSession, sessionKey } from '#lib/state/desk-bot-session-registry.ts';
 import { parseAiErrorKind } from '#lib/types/ai-error.ts';
@@ -42,7 +56,19 @@ export interface DeskBotSink {
 	dispatchEffect(effect: DeskEffect): void;
 	/** Resolves when the panel showing `fileId` reports its reload, or null on timeout. */
 	awaitFileRefreshed(fileId: string): Promise<FileRefreshed | null>;
+	/**
+	 * What a turn tells the server about the desk as it is NOW — scopes, open panels, their
+	 * context. A continuation after a client action sends it afresh, so the model reads the
+	 * workspace the action left behind rather than the one the user's message was sent from.
+	 */
+	turnBody(): Record<string, unknown>;
 }
+
+/**
+ * How long a client action waits for its handler when the panel is mid-remount (a layout
+ * move unmounts and remounts it within a frame) before it is reported unavailable.
+ */
+const HANDLER_WAIT_MS = 1_500;
 
 /**
  * Failure kinds beyond the server's classified `AiErrorKind`s: the visitor session is
@@ -67,6 +93,19 @@ export class DeskBotSession {
 	 * route, and must never hold the session busy in the meantime.
 	 */
 	readonly #reverting = new SvelteSet<string>();
+	/**
+	 * The client actions of this conversation. Session-owned so a call is run once whatever
+	 * remounts in between; the mounted panel registers the handlers (`mountArrangeHandlers`).
+	 */
+	readonly actions: ClientActionRunner = createClientActionRunner(DESK_ARRANGE_ACTIONS, {
+		handlerWaitMs: HANDLER_WAIT_MS,
+	});
+	/** Client actions in flight — a turn is not over while the browser is still acting on it. */
+	#acting = $state(0);
+	/** Calls settled live in this session whose continuation request has not been sent yet. */
+	#unsent = new Set<string>();
+	/** Bumped by every submit, Stop and new chat: a result that settles later is not continued. */
+	#turn = 0;
 
 	/** Bumped by `newChat()`: a response header from the previous thread must not name this one. */
 	#epoch = 0;
@@ -85,6 +124,13 @@ export class DeskBotSession {
 				prepareSendMessagesRequest: ({ body, messages, id, trigger, messageId }) => ({
 					body: {
 						...body,
+						// A request whose last message is the assistant's continues it after client
+						// actions: it describes the desk those actions left, not the one the user's
+						// message was sent from.
+						...(messages[messages.length - 1]?.role === 'assistant' ? this.#sink?.turnBody() : {}),
+						// Read at send time, from the runner itself: only what has a handler mounted
+						// right now is advertised, so the server never offers an action nothing can run.
+						clientActions: this.actions.available(),
 						id,
 						trigger,
 						messageId,
@@ -111,6 +157,13 @@ export class DeskBotSession {
 				// Stream errors bypass the response headers: the frame text is `[kind] message`.
 				if (!this.lastErrorKind) this.#fail(parseAiErrorKind(error.message ?? '') ?? 'unknown');
 			},
+			// Fires for every tool call in the stream; only a client-executed tool is this
+			// client's to answer. Not awaited: the SDK processes the stream on the same queue
+			// `addToolOutput` writes through, so awaiting here would wait on itself.
+			onToolCall: ({ toolCall }) => {
+				if (isClientExecutedTool(toolCall.toolName)) void this.#runClientAction(toolCall);
+			},
+			sendAutomaticallyWhen: ({ messages }) => this.#continues(messages),
 		});
 		this.#watchToolParts();
 	}
@@ -128,7 +181,12 @@ export class DeskBotSession {
 
 	/** Typing is always allowed; this is what Send, Approve, Reject and New chat wait for. */
 	get isBusy(): boolean {
-		return this.isStreaming || this.isApproving;
+		return this.isStreaming || this.isApproving || this.isActing;
+	}
+
+	/** A client action is running: the turn it belongs to has not answered yet. */
+	get isActing(): boolean {
+		return this.#acting > 0;
 	}
 
 	runFor(proposalId: string): ProposalRun {
@@ -154,11 +212,15 @@ export class DeskBotSession {
 	submit(text: string, body: Record<string, unknown>): void {
 		if (this.isBusy) return;
 		this.lastErrorKind = null;
+		this.#turn += 1;
 		this.chat.sendMessage({ text }, { body });
 	}
 
 	/** Abort the in-flight response. Whatever a tool already did stays done. */
 	stop(): void {
+		// A client action still running settles into the thread, but starts no new request.
+		this.#turn += 1;
+		this.#unsent.clear();
 		void this.chat.stop();
 		appendIOLog({ source: 'progress', label: 'Stopped — completed actions remain.' });
 	}
@@ -167,6 +229,8 @@ export class DeskBotSession {
 		if (this.isApproving) return;
 		void this.chat.stop();
 		this.#epoch += 1;
+		this.#turn += 1;
+		this.#unsent.clear();
 		this.conversationId = undefined;
 		this.chat.messages = [];
 		this.runs.clear();
@@ -298,6 +362,60 @@ export class DeskBotSession {
 		this.#pendingEffects = [];
 	}
 
+	/**
+	 * Run one client action and write its result into the thread as the call's output. The
+	 * runner answers every way a call can go — unknown, invalid, unavailable, timed out,
+	 * failed — so there is always a result, and it is always the browser's own observation.
+	 */
+	async #runClientAction(call: { toolCallId: string; toolName: string; input: unknown }): Promise<void> {
+		const { toolCallId, toolName } = call;
+		const epoch = this.#epoch;
+		const turn = this.#turn;
+		this.#acting += 1;
+		let result: ClientActionResult;
+		try {
+			result = await this.actions.run({ callId: toolCallId, name: toolName, input: call.input });
+		} finally {
+			this.#acting -= 1;
+		}
+		// A new chat started while the browser was acting: there is no thread to answer in.
+		if (epoch !== this.#epoch) return;
+		appendIOLog({
+			source: 'effect',
+			toolName,
+			level: result.status === 'completed' ? 'success' : 'error',
+			label: `${toolName}: ${result.status}${result.code ? ` (${result.code})` : ''}`,
+			...(result.message ? { detail: result.message } : {}),
+		});
+		// Stopped, or a newer turn began: the result is recorded, the request is not continued.
+		if (turn === this.#turn) this.#unsent.add(toolCallId);
+		const addToolOutput = this.chat.addToolOutput as (output: {
+			tool: string;
+			toolCallId: string;
+			output: unknown;
+		}) => Promise<void>;
+		await addToolOutput({ tool: toolName, toolCallId, output: result });
+	}
+
+	/**
+	 * Whether the thread should go back to the server on its own. Only when the assistant's
+	 * last step holds a client action this session just settled, and nothing in that step is
+	 * still unanswered. The SDK's stock predicate would also fire on a step that ended on a
+	 * SERVER tool — the approval boundary is exactly that — and resend a turn that is waiting
+	 * for the user's decision.
+	 */
+	#continues(messages: readonly { role: string; parts?: readonly { type: string }[] }[]): boolean {
+		const last = messages[messages.length - 1];
+		if (!last || last.role !== 'assistant' || !last.parts) return false;
+		const stepStart = last.parts.map((p) => p.type).lastIndexOf('step-start');
+		const step = last.parts.slice(stepStart + 1).filter(isToolPart);
+		if (step.some((part) => part.state !== 'output-available' && part.state !== 'output-error')) return false;
+		const mine = step.filter((part) => this.#unsent.has(part.toolCallId));
+		if (mine.length === 0) return false;
+		for (const part of mine) this.#unsent.delete(part.toolCallId);
+		return true;
+	}
+
 	#fail(kind: DeskBotErrorKind): void {
 		this.lastErrorKind = kind;
 		appendIOLog({ source: 'effect', level: 'error', label: 'AI error', detail: kind });
@@ -412,7 +530,7 @@ export class DeskBotSession {
 					if (part.state === 'input-available') {
 						appendIOLog({ source: 'tool-call', toolName, label: `Calling ${toolName}...` });
 					} else if (part.state === 'output-available' || part.state === 'output-error') {
-						const failed = part.state === 'output-error' || !!part.output?.error;
+						const failed = toolPartFailed(part);
 						appendIOLog({
 							source: 'tool-result',
 							toolName,

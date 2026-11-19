@@ -33,6 +33,8 @@ missed detection on a turn with all three legs is the whole incident.
 - No tool with `reach: 'external'` runs without a human-approved proposal.
 - Model output renders no image and no link to an unlisted host.
 
+**Client actions.** A tool the browser executes ([agent-actions.md](./agent-actions.md)) is `user` origin by construction: its result arrives in the request body. It is read through `parseClientActionResult` first — a bounded status, code, message and flat facts, anything else replaced by `malformed_result` — and then wrapped like every other replayed `user` result.
+
 **Adding a tool.** Declare `resultOrigin` honestly — anything that echoes user text, even a
 name, is `user`. A tool that sends anything outside the deployment is `external` and must be
 `write` or `destructive` risk, so it goes through the approval gate.

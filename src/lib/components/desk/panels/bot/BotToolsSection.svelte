@@ -5,8 +5,9 @@ import Switch from '#lib/components/primitives/switch/Switch.svelte';
 /**
  * `desk:read` and `desk:create` are always-on — safe because delete is soft and
  * create's undo path is "delete the file you just created." The policy toggles are
- * editing, deleting, and searching the files pinned to AI context (`desk:ask` —
- * off by default: every search spends a query embedding).
+ * editing, deleting, searching the files pinned to AI context (`desk:ask` —
+ * off by default: every search spends a query embedding) and arranging the workspace
+ * (`desk:arrange` — on by default: it changes panels on screen, never a file).
  *
  * Consent for destructive actions lives in the per-action approval flow
  * (proposal → PlanCard → approve endpoint), not in this standing dialog.
@@ -48,6 +49,11 @@ const SCOPE_INFO = [
 				scope: 'desk:ask' as const,
 				label: 'Search pinned files',
 				description: 'Let the bot search the files you pinned to AI context (one embedding per search)',
+			},
+			{
+				scope: 'desk:arrange' as const,
+				label: 'Arrange the workspace',
+				description: 'Open files in panels, switch to a panel, close a panel — never one with unsaved work',
 			},
 		],
 	},

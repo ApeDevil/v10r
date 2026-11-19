@@ -12,7 +12,7 @@
  *   inspector projection (`./inspector.ts`).
  */
 
-import { type DeskToolScope, TOOL_MANIFEST, type ToolRisk } from '#lib/types/ai-tools.ts';
+import { type DeskToolScope, TOOL_MANIFEST, type ToolExecutor, type ToolRisk } from '#lib/types/ai-tools.ts';
 import type { AiSurface } from '#lib/types/db-enums.ts';
 
 /**
@@ -230,6 +230,8 @@ export interface PublicToolCard {
 	name: string;
 	surface: AiSurface;
 	risk: ToolRisk;
+	/** Where it runs: a `client` tool is executed by the user's browser and changes no stored data. */
+	executor: ToolExecutor;
 	/** `null` encodes the invariant "chatbot tools carry no scope". */
 	scope: DeskToolScope | null;
 	mutating: boolean;
@@ -242,12 +244,14 @@ export interface PublicToolCard {
 /** Project the manifest into matrix rows. Derived, never hand-copied. */
 export function buildToolCards(): PublicToolCard[] {
 	return TOOL_MANIFEST.map((d) => {
-		const mutating = d.risk !== 'read';
+		// `view` rearranges the interface; "mutating" is about stored data.
+		const mutating = d.risk !== 'read' && d.risk !== 'view';
 		const requiresApproval = d.risk === 'write' || d.risk === 'destructive';
 		return {
 			name: d.name,
 			surface: d.surface,
 			risk: d.risk,
+			executor: d.executor,
 			scope: d.surface === 'deskbot' ? d.scope : null,
 			mutating,
 			requiresApproval,

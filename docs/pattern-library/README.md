@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 186 patterns (53 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 187 patterns (54 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -152,6 +152,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Deskbot (AI in the desk workspace)](./ai-deskbot.md)
 - [Agent-harness audit lens (loop/context/policy/tools)](./ai-harness-lens.md)
 - [**Untrusted-content boundary (the lethal trifecta, one rule per leg)**](./ai-untrusted-content-boundary.md)
+- [**Agent actions (one tool catalogue, server and client executors)**](./ai-agent-actions.md)
 - [**AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)**](./ai-eval-regression-suite.md)
 
 ### Toolkits

@@ -1,12 +1,13 @@
 <script lang="ts">
 import { Badge } from '#lib/components/primitives/index.ts';
+import type { ToolRisk } from '#lib/types/ai-tools.ts';
 
 export interface ToolRow {
 	name: string;
 	branch: 'retrieval' | 'desk';
 	/** The capability of the profile that mounts it. */
 	capability: string;
-	risk: 'read' | 'create' | 'write' | 'destructive';
+	risk: ToolRisk;
 	/** Desk tools carry their gating scope; chatbot (retrieval) tools are scopeless → null. */
 	scope: string | null;
 	scopeLabel: string;
@@ -23,6 +24,7 @@ const deskTools = $derived(tools.filter((t) => t.branch === 'desk'));
 // Risk = text + icon + shape (never color alone) — WCAG 1.4.1.
 const riskMeta: Record<ToolRow['risk'], { icon: string; variant: 'secondary' | 'success' | 'warning' | 'error' }> = {
 	read: { icon: 'i-lucide-eye', variant: 'secondary' },
+	view: { icon: 'i-lucide-panels-top-left', variant: 'secondary' },
 	create: { icon: 'i-lucide-plus', variant: 'success' },
 	write: { icon: 'i-lucide-pencil', variant: 'warning' },
 	destructive: { icon: 'i-lucide-trash-2', variant: 'error' },

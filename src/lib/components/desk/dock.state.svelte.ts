@@ -27,7 +27,8 @@ import {
 } from './dock.operations';
 
 const DOCK_CTX = Symbol('dock');
-const MAX_DEPTH = 4;
+/** The deepest split tree the dock builds; past it a new panel joins a leaf as a tab. */
+export const MAX_DOCK_DEPTH = 4;
 
 export interface DockStateOptions {
 	/** Fires after a panel leaves the tree (any close path). Host wires undo UX. */
@@ -137,7 +138,7 @@ export function createDockState(
 			if (result) root = result;
 		} else {
 			// Edge drop — create split (unless too deep)
-			if (getDepth(newRoot) >= MAX_DEPTH) {
+			if (getDepth(newRoot) >= MAX_DOCK_DEPTH) {
 				// Fallback: add as tab instead
 				const updated = addPanelToLeaf(targetLeaf, panelId);
 				const result = replaceNode(newRoot, target.leafId, updated);

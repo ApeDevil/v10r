@@ -17,6 +17,7 @@ const otherCount = surface === 'chatbot' ? counts.deskbot : counts.chatbot;
 
 const RISK_META: Record<string, { icon: string; variant: 'secondary' | 'success' | 'warning' | 'error' }> = {
 	read: { icon: 'i-lucide-eye', variant: 'secondary' },
+	view: { icon: 'i-lucide-panels-top-left', variant: 'secondary' },
 	create: { icon: 'i-lucide-plus', variant: 'success' },
 	write: { icon: 'i-lucide-pencil', variant: 'warning' },
 	destructive: { icon: 'i-lucide-trash-2', variant: 'error' },
@@ -66,7 +67,12 @@ const RISK_META: Record<string, { icon: string; variant: 'secondary' | 'success'
 							{/if}
 						</td>
 						<td class="gate-cell">
-							{#if !card.mutating}
+							{#if card.executor === 'client'}
+								<span class="gate-client">
+									<span class="i-lucide-monitor h-3.5 w-3.5" aria-hidden="true"></span>
+									{m.showcase_ai_tools_in_browser()}
+								</span>
+							{:else if !card.mutating}
 								<span class="none" aria-hidden="true">—</span>
 								<span class="visually-hidden">read-only</span>
 							{:else if card.requiresApproval}
@@ -194,6 +200,14 @@ const RISK_META: Record<string, { icon: string; variant: 'secondary' | 'success'
 		font-size: var(--text-fluid-xs);
 		color: var(--color-warning);
 		font-weight: 600;
+	}
+
+	.gate-client {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
 	}
 
 	.gate-inloop {

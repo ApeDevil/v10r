@@ -66,6 +66,8 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		 */
 		toolScopes: parsed.output.toolScopes,
 		deskLayout: parsed.output.deskLayout,
+		// Advertised, like the scopes: which client actions this browser can run right now.
+		clientActions: parsed.output.clientActions,
 		activeWorkspace: parsed.output.activeWorkspace,
 		locale: locals.locale,
 		// Derived from the env admin list, never a DB column — `user.role` used to

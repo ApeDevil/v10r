@@ -5,7 +5,7 @@
  * routes answer with a `ProposalOutcome`; the desk client keeps a `ProposalRun` per card.
  * Zero imports beyond the enum mirror, so the desk bundle can read it.
  */
-import type { DeskEffect } from './ai-tools';
+import type { DeskEffect, ToolRisk } from './ai-tools';
 import type { DeskFileType, ProposalRevertStatus, ProposalStatus, ProposalStepKind } from './db-enums';
 
 /**
@@ -36,7 +36,7 @@ export interface ProposalCardTarget {
 export interface ProposalCardStep {
 	action: string;
 	tool: string;
-	risk: 'read' | 'create' | 'write' | 'destructive';
+	risk: ToolRisk;
 	rationale: string;
 	recovery: ProposalStepRecovery;
 	/**

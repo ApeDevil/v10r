@@ -37,7 +37,8 @@ export type CapabilityId =
 	| 'desk-create'
 	| 'desk-delete'
 	| 'desk-ask'
-	| 'desk-plan';
+	| 'desk-plan'
+	| 'desk-arrange';
 
 /** A tool as the profile manifest projects it: the model-facing definition, verbatim. */
 export interface ToolManifestEntry {

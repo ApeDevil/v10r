@@ -64,6 +64,7 @@ import {
 	streamTextIntoOpenMessage,
 	type TurnAttempt,
 } from './_shared/streaming-turn';
+import { readClientActionResults } from './client-action-results';
 import { checkConversationLimit } from './conversation-quota';
 import { composeTurn, PROFILES, type TurnComposition, type TurnInput } from './profile';
 import {
@@ -124,6 +125,12 @@ export interface ChatInput {
 	toolScopes?: DeskToolScope[];
 	deskLayout?: { panelId: string; fileId?: string; fileType?: string; label: string }[];
 	activeWorkspace?: { id: string; name: string };
+	/**
+	 * The client actions the browser that sent this turn can run right now — the names it
+	 * has a handler mounted for, pinned to the known set by the route schema. Advertised,
+	 * like `toolScopes`: the server offers the model no client action outside this list.
+	 */
+	clientActions?: string[];
 	/**
 	 * The request's remaining budget, when the route minted one for the whole turn. Every model
 	 * call of the turn is bounded by what it has left minus the finalization reserve.
@@ -299,6 +306,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		toolScopes,
 		deskLayout,
 		activeWorkspace,
+		clientActions,
 		locale,
 		authCeiling,
 		pageContext,
@@ -311,7 +319,12 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// Window conversation history to prevent context overflow in multi-turn chats. An approved
 	// plan's outcome reaches the model the same way as everything else: the approve door
 	// persists a deterministic receipt message the client carries in this history.
-	const windowedMessages = windowMessages(rawMessages);
+	const windowed = windowMessages(rawMessages);
+	// Client action results are the one tool result the server did not produce: read them
+	// through the contract before anything else sees the history (`client-action-results.ts`).
+	const clientActionReading = readClientActionResults(windowed);
+	const windowedMessages = clientActionReading.messages;
+	const { continuation } = clientActionReading;
 
 	// Compact loaded history so oversized tool results from resumed conversations
 	// don't blow the context window before the first step even runs, then bound the ones that
@@ -420,6 +433,8 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		panelContext,
 		deskLayout,
 		activeWorkspace,
+		clientActions,
+		clientActionsSpent: clientActionReading.spent,
 		onCompacted: (name, compaction) => recorder.compacted(name, compaction),
 	};
 	const promptHistoryChars = historyChars(recorder.history(messages, rawMessages.length - windowedMessages.length));
@@ -785,8 +800,28 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 				// One assistant message, opened here with the persisted row's id (see the chatbot
 				// branch): the client's message id is the DB's, and the proposal metadata written
 				// from `onStepFinish` lands inside the message the helper keeps open.
-				writer.write({ type: 'start', messageId: assistantMsgId });
+				//
+				// A request that reports client action results CONTINUES the client's assistant
+				// message: the frame carries that message's id, because the SDK client appends a
+				// second message — a copy of the first plus the new parts — when the ids differ.
+				// The row and the trace of this request keep their own id (`assistantMsgId`).
+				writer.write({ type: 'start', messageId: continuation?.messageId ?? assistantMsgId });
 				recorder.timing({ preStreamMs: Math.round(performance.now() - turnStartedAt) });
+
+				// What the browser reported is part of this request's record: the trace shows the
+				// result the model is about to read, and the stored row carries the settled call.
+				for (const action of continuation?.reported ?? []) {
+					recorder.tool({
+						toolCallId: action.toolCallId,
+						toolName: action.toolName,
+						input: action.input,
+						output: action.result,
+						status: action.result.status === 'completed' ? 'success' : 'error',
+						...(action.result.status === 'completed'
+							? {}
+							: { errorMessage: action.result.message ?? action.result.code ?? action.result.status }),
+					});
+				}
 
 				// The desk client reads `harness` only; the trace snapshot rides on the same frames
 				// so a desk turn is inspectable like a chatbot turn. Batched per microtask like

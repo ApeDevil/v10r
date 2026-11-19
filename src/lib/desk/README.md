@@ -12,5 +12,11 @@ shape, and `server/db/desk/mutations.ts` re-derives every spreadsheet value it s
 sheet has two writers, the grid and the AI tools, and a value one stores must be the value
 the other would compute.
 
+`arrange-actions.ts` declares what the deskbot may ask the browser to do to the workspace —
+open a file in a panel, bring a panel forward, close one. The server derives the model-facing
+tools from it and `components/desk/arrange-action-handlers.ts` validates and runs each call;
+the declaration speaks in files, panels and placements so neither side's internals leak into
+it (`docs/blueprint/ai/agent-actions.md`).
+
 `panels.ts` lists the panel types; the directories under `components/desk/panels/` are
 named to match, one per entry.
