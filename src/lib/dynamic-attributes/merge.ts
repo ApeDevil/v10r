@@ -24,13 +24,18 @@ export interface AttributeMerge {
 	conflicts: AttributeMergeConflict[];
 }
 
-/** The parts of an attribute a merge treats separately. Kind, config and value move together. */
+/**
+ * The parts of an attribute a merge treats separately. Kind, config, value and binding move
+ * together: a sync to the dictionary changes them as one, and a value written under one
+ * definition revision must not land under another's kind.
+ */
 function typedPart(attribute: Attribute): JsonValue {
 	return {
 		kind: attribute.kind,
 		value: attribute.value,
 		config: attribute.config,
 		previous: (attribute.previous ?? null) as unknown as JsonValue,
+		binding: (attribute.binding ?? null) as unknown as JsonValue,
 	};
 }
 
@@ -73,6 +78,7 @@ export function mergeAttributeRecords(
 		const source = jsonEqual(typed.value, typedPart(theirs)) ? theirs : mine;
 		const next: Attribute = { id, label: label.value, kind: source.kind, value: source.value, config: source.config };
 		if (source.previous) next.previous = source.previous;
+		if (source.binding) next.binding = source.binding;
 		merged.set(id, attributeEqual(next, mine) ? mine : attributeEqual(next, theirs) ? theirs : next);
 	}
 

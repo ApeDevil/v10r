@@ -30,6 +30,7 @@ import {
 	restoreAttribute,
 	restorePreviousValue,
 	setAttributeValue,
+	unbindAttribute,
 } from '#lib/dynamic-attributes/index.ts';
 
 /** Snapshots kept for undo. Each shares unchanged attributes with its neighbours. */
@@ -114,6 +115,12 @@ export function createAttributeEditor(options: AttributeEditorOptions) {
 		move: (id: string, toIndex: number) => apply(moveAttribute(record, id, toIndex, engine)),
 		remove: (id: string) => apply(removeAttribute(record, id, engine)),
 		restore: (id: string) => apply(restoreAttribute(record, id, engine)),
+		unbind: (id: string) => apply(unbindAttribute(record, id)),
+		/**
+		 * Apply an operation the editor has no method for — binding to a dictionary, syncing to
+		 * it, an application's own. It enters the undo history like any other change.
+		 */
+		run: (operation: (current: AttributeRecord) => AttributeOperation) => apply(operation(record)),
 		undo() {
 			const moved = travel(past, future);
 			if (moved) [past, future] = moved;

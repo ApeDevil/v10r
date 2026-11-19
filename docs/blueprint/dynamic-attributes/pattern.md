@@ -6,6 +6,7 @@ values: no template, no schema table, no migration when a user invents a field. 
 keeps the value, changing a type keeps what does not convert, removing is undoable, and two
 writers who change the same record at once get a visible conflict they can merge by attribute.
 
+**Shared definitions** (dictionary, bindings, projections): [below](#shared-definitions-dictionary-bindings-projections) ·
 **Page:** `/showcases/dynamic-attributes` · **Desk:** Explorer → *New Record* ·
 **Core:** `src/lib/dynamic-attributes/` · **Editor:** `src/lib/components/composites/attributes/` ·
 **Persistence:** `desk.record` (`src/lib/server/db/schema/desk/record.ts`),
@@ -304,11 +305,139 @@ version check.
 the `desk_read` tool's answer, and — for a record pinned to AI context — the text the retrieval
 sync indexes.
 
+## Shared definitions: dictionary, bindings, projections
+
+The record model above keeps every definition inside its record, so two records that both say
+`Width` mean the same thing only by coincidence. When one source must feed many consumers — a
+product studio publishing to a webshop, a marketplace feed and a printed datasheet, each with
+its own names, structure and units — the pattern adds three layers on top. A record without a
+binding behaves exactly as before; nothing below is required.
+
+```
+attribute dictionary     definitions with stable ids, every change a new revision   (what an attribute IS)
+        ▲ binding
+self-describing record   bound attributes carry the definition's snapshot + a value (what this thing HAS)
+        ▼ read by
+attribute projection     one per consumer, pinned to a dictionary revision          (how a consumer SEES it)
+```
+
+**Variants are not versions.** The German and the English label of one definition coexist in
+one revision (`labels: { en, de }`); a consumer's own name lives in its projection (`as`,
+`label`). A *revision* is only change over time. Keeping the two apart is what makes every
+output reproducible from three numbers: the projection's pin, the dictionary revision each
+binding was written at, and the record's version.
+
+### Attribute dictionary — `dictionary.ts`
+
+```jsonc
+{
+  "format": 1,
+  "sourceLocale": "en",                 // every definition has this label; others fall back to it
+  "revisions": [                        // append-only, contiguous from 1, never rewritten
+    { "revision": 5, "note": "Widths are measured in mm from now on", "definitions": [
+      { "id": "def_0000000003",         // minted once, never reused, never deleted
+        "kind": "number", "config": { "min": 0 },
+        "unit": "mm",                   // a measure unit (`#lib/utils/measure.ts`), numbers only
+        "labels": { "en": "Width", "de": "Breite" },
+        "status": "active" }            // active | deprecated | retired
+    ] }
+  ]
+}
+```
+
+- `reviseDictionary(dictionary, change, note, engine)` applies one `DictionaryChange` (`add`,
+  `relabel` per locale, `configure`, `set_unit`, `change_kind`, `set_status`) and writes exactly
+  one new revision, sharing every unchanged definition object with the revision before. A no-op
+  is refused (`unchanged`), a retired definition no longer changes, the source label cannot be
+  cleared, and the revision count is bounded (`DEFAULT_DICTIONARY_LIMITS`).
+- `parseAttributeDictionary` fails closed like the record codec, and adds two rules a record
+  does not need: a definition may not disappear from a later revision (`dropped_definition` —
+  retire it instead), and an unknown kind is refused rather than kept, because the dictionary
+  is the authority records and consumers lean on.
+- `diffDictionaryRevisions(dictionary, from, to)` names what changed per definition.
+
+### Bindings — `Attribute.binding`
+
+A bound attribute is `{ …attribute, binding: { definition: "def_…", revision: 5 } }`. It still
+carries label, kind and config — the definition's snapshot at that revision — so the record
+stays readable on its own (decision 2 holds). The operations refuse to relabel, retype,
+reconfigure or restore a previous value of a bound attribute (`bound_attribute`); its value is
+edited as usual. A record binds one definition at most once (`duplicate_binding` in the codec,
+`already_bound` in the operations).
+
+- `bindAttribute(record, dictionary, definitionId, engine)` adds an attribute from the latest
+  revision; `unbindAttribute` makes it local again, keeping everything it shows.
+- `syncRecordToDictionary(record, dictionary, engine)` moves every binding to the latest
+  revision: a relabel is copied, a **unit change converts the value** (6.5 cm → 65 mm), a kind
+  change converts through text and keeps a lossy value as `previous`, a retired definition is
+  reported and left alone. It is a normal operation: one undo step, one save.
+- `promoteAttribute` turns a local attribute into a new definition and binds it in place.
+- `checkRecordBindings` reports `stale_binding`, `deprecated_definition`, `retired_definition`.
+- The merge treats the binding as part of the typed value, so a value written under one
+  revision never lands under another revision's kind.
+
+### Attribute projection — `projection.ts`
+
+```jsonc
+{
+  "format": 1, "consumer": "marketplace-feed", "name": "Marketplace feed (EN)",
+  "locale": "en", "dictionaryRevision": 1,          // the pin
+  "output": "row",                                   // object (nested JSON) | row (CSV/Excel) | text
+  "fields": [
+    { "from": "def_0000000005", "as": "color_code", "label": "Color code",
+      "steps": [{ "op": "map_options", "map": { "black": "BLK", "olive": "OLV" } }] },
+    { "from": "def_0000000004", "as": "weight_kg",
+      "steps": [{ "op": "convert_unit", "to": "kg" }, { "op": "round", "decimals": 2 }] },
+    { "from": "def_0000000003", "as": "specs.width", "render": { "group": "Specs", "display": "text" } }
+  ]
+}
+```
+
+- `projectRecord(record, dictionary, projection, kinds)` reads labels, kinds and units **as the
+  pinned revision states them**. A value written at another revision is converted to the
+  pinned unit or kind first, so a consumer still pinned to centimetres keeps receiving
+  centimetres after the dictionary moved to millimetres. Local attributes are never projected.
+  It never throws and never refuses: a missing value is `null` with a finding (`no_value`,
+  `not_converted`, `step_skipped`, `unknown_definition`, `retired_definition`).
+- Steps are a closed set — `convert_unit`, `round`, `map_options`, `change_case`, `join`,
+  `with_unit` — the same vocabulary as the PIM transform recipe, keyed by definition id
+  instead of column name, so a rename upstream breaks nothing. A choice leaves the source as its
+  option label; `map_options` keys on the option id.
+- Render hints (`group`, `display: text | heading | badge | list`, `emphasis`) are hints a
+  renderer may ignore. No condition, no expression, no component name.
+- `checkProjectionImpact(dictionary, projection, to?)` says what moving the pin would change:
+  `label_changed` (unless the projection overrides the label), `unit_changed` (a **warning**
+  unless a step converts to a fixed unit or prints the unit — otherwise a `width_cm` column
+  would silently receive millimetres), `kind_changed` and `retired` (breaking),
+  `options_changed` and `unmapped_option`, `deprecated`, `new_definition`.
+- `parseAttributeProjection` refuses unknown steps, unknown hints, colliding paths (`specs` and
+  `specs.width`) and nesting outside `object` output.
+
+### Value history — `value-history.ts`
+
+Values need no versioning machinery of their own: every save is already a stored version (the
+desk's `file_revision`, the showcase's version log). `valueHistory(versions, key, kinds)` reads
+one attribute across them — keyed by definition id for a bound attribute, by attribute id for a
+local one — and lists the versions where its value or presence changed. A relabel or a unit
+change does not break the line.
+
+### Why not …
+
+- **Labels in the projection only** (no locale labels in the dictionary): every consumer would
+  translate on its own, and the editor would have no label to show.
+- **One revision counter per label or per value**: an output could then not be reproduced from
+  a small set of numbers. One counter per document — dictionary, projection, record — is enough.
+- **Mapping by label or column name** (today's PIM recipe): every rename upstream breaks every
+  consumer. Ids are the point.
+
 ## Limitations
 
-- No cross-record schema: two records can call the same idea `Age` and `age`. A future
-  *template* (a record of definitions with empty values) would seed new records without
-  binding them.
+- Without a dictionary there is no cross-record schema: two records can call the same idea
+  `Age` and `age`. Bind them to one definition when it matters.
+- Select option labels are not localized per locale yet; a consumer translates option labels
+  with `map_options`.
+- The dictionary and projections exist in the showcase only (browser storage). No desk file
+  type or database table holds them yet.
 - No referential integrity or cross-record query on attribute values. Promote an attribute
   that needs either to a real column, or mirror it into a side table with real foreign keys.
 - Not real-time co-editing: concurrent writers meet as a conflict and a merge, not as live
@@ -323,7 +452,10 @@ sync indexes.
 
 - A `reference` kind (domain-validated id, dangling-tolerant on read) and `url`/`email` kinds
   with fixed formats — never user regex.
-- Templates and "promote to column" for attributes that turn out to be universal.
+- "Promote to column" for definitions that turn out to be universal and need queries.
+- Rekey the PIM `TargetSchema` and `TransformRecipe` by definition id, so the Office workflow
+  exports one sheet per consumer projection from one source.
+- Persist dictionaries and projections (desk file types, server-side parse before write).
 - JSON Schema export of the record frame with `@valibot/to-json-schema` for external tools (MCP).
 - Drag-and-drop reordering (today: buttons and Alt+Shift+↑/↓).
-- Field-level history from the existing revisions.
+- Field-level history over the desk's `file_revision` (the showcase reads its own version log).

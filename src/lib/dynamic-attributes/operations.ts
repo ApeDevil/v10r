@@ -46,7 +46,10 @@ export type AttributeRefusalCode =
 	| 'invalid_value'
 	| 'invalid_config'
 	| 'invalid_index'
-	| 'no_previous_value';
+	| 'no_previous_value'
+	| 'bound_attribute'
+	| 'already_bound'
+	| 'retired_definition';
 
 export type AttributeOperation =
 	| { ok: true; record: AttributeRecord; attributeId: string }
@@ -104,6 +107,7 @@ export function relabelAttribute(
 ): AttributeOperation {
 	const attribute = find(record, id);
 	if (!attribute) return refuse('unknown_attribute');
+	if (attribute.binding) return refuse('bound_attribute');
 	if (!isLabel(label, engine.limits)) return refuse('invalid_label');
 	if (attribute.label === label) return { ok: true, record, attributeId: id };
 	return done(engine, replace(record, { ...attribute, label }), id);
@@ -134,6 +138,7 @@ export function configureAttribute(
 ): AttributeOperation {
 	const attribute = find(record, id);
 	if (!attribute) return refuse('unknown_attribute');
+	if (attribute.binding) return refuse('bound_attribute');
 	const kind = engine.kinds.get(attribute.kind);
 	if (!kind) return refuse('unknown_kind');
 	const parsed = kind.parseConfig(config, engine.limits);
@@ -183,6 +188,7 @@ export function changeAttributeKind(
 ): AttributeOperation {
 	const attribute = find(record, id);
 	if (!attribute) return refuse('unknown_attribute');
+	if (attribute.binding) return refuse('bound_attribute');
 	const to = engine.kinds.get(kindId);
 	if (!to) return refuse('unknown_kind');
 	if (attribute.kind === kindId) return { ok: true, record, attributeId: id };
@@ -207,6 +213,8 @@ export function restorePreviousValue(record: AttributeRecord, id: string, engine
 	const attribute = find(record, id);
 	if (!attribute) return refuse('unknown_attribute');
 	if (!attribute.previous) return refuse('no_previous_value');
+	// The kept value has another kind than the definition: unbind first, then restore.
+	if (attribute.binding) return refuse('bound_attribute');
 	const { kind, value, config } = attribute.previous;
 	return done(engine, replace(record, { id, label: attribute.label, kind, value, config }), id);
 }
@@ -251,6 +259,8 @@ export function restoreAttribute(record: AttributeRecord, id: string, engine: At
 	const entry = record.removed.find((r) => r.attribute.id === id);
 	if (!entry) return refuse('unknown_attribute');
 	if (record.attributes.length >= engine.limits.attributes) return refuse('too_many_attributes');
+	const definition = entry.attribute.binding?.definition;
+	if (definition && record.attributes.some((a) => a.binding?.definition === definition)) return refuse('already_bound');
 	const attributes = [...record.attributes];
 	attributes.splice(Math.min(entry.index, attributes.length), 0, entry.attribute);
 	return done(engine, { ...record, attributes, removed: record.removed.filter((r) => r.attribute.id !== id) }, id);

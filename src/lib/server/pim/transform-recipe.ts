@@ -17,9 +17,9 @@
  * recipe revision to decide.
  */
 import * as v from 'valibot';
+import { convertMeasure, formatMeasure, MEASURE_UNITS, type MeasureUnit, parseMeasure } from '#lib/utils/measure.ts';
 import { ProductDataError } from './errors';
 import { normalizeGtin } from './gtin';
-import { convertMeasure, formatMeasure, MEASURE_UNITS, type MeasureUnit, parseMeasure } from './measure';
 import type { ProductRow, ProductSheet } from './product-sheet';
 
 const columnName = v.pipe(v.string(), v.trim(), v.minLength(1));

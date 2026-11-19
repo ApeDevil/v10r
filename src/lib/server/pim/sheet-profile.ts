@@ -10,8 +10,9 @@
  * The profile is evidence for a decision, not the decision: the agent proposes a recipe from
  * it, and `checkSheet` over the full output is what says whether the recipe worked.
  */
+
+import { parseMeasure } from '#lib/utils/measure.ts';
 import { normalizeGtin } from './gtin';
-import { parseMeasure } from './measure';
 import type { ProductSheet } from './product-sheet';
 
 /** The form most of a column's values take; `mixed` when no form covers 90% of them. */
