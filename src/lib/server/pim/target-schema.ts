@@ -8,8 +8,8 @@
  * with its source line. Nothing here is sampled; sampling is the profile's job.
  */
 import * as v from 'valibot';
+import { MEASURE_UNITS, parseMeasure } from '#lib/utils/measure.ts';
 import { isValidGtin } from './gtin';
-import { MEASURE_UNITS, parseMeasure } from './measure';
 import type { ProductSheet } from './product-sheet';
 
 export const ATTRIBUTE_KINDS = ['text', 'integer', 'decimal', 'gtin', 'enum', 'measure'] as const;

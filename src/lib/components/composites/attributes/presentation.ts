@@ -40,6 +40,12 @@ export function refusalMessage(code: AttributeRefusalCode): string {
 			return m.attributes_refusal_invalid_value();
 		case 'unknown_kind':
 			return m.attributes_refusal_unknown_kind();
+		case 'bound_attribute':
+			return m.attributes_refusal_bound();
+		case 'already_bound':
+			return m.attributes_refusal_already_bound();
+		case 'retired_definition':
+			return m.attributes_refusal_retired();
 		default:
 			return m.attributes_refusal_generic();
 	}

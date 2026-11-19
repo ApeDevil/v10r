@@ -10,7 +10,7 @@ import {
 import { Card, NavSection, ShowcaseLayout } from '#lib/components/composites/index.ts';
 import { Stack } from '#lib/components/layout/index.ts';
 import { Button, Switch, Textarea, Typography } from '#lib/components/primitives/index.ts';
-import { showcaseControls } from '#lib/components/showcases/dynamic-attributes/index.ts';
+import { ProductCatalog, showcaseControls } from '#lib/components/showcases/dynamic-attributes/index.ts';
 import {
 	type AttributeRecord,
 	type AttributeRecordParse,
@@ -158,6 +158,9 @@ const sections = $derived([
 	{ id: 'da-conflict', label: m.showcase_dynamic_attributes_section_conflict() },
 	{ id: 'da-json', label: m.showcase_dynamic_attributes_section_json() },
 	{ id: 'da-import', label: m.showcase_dynamic_attributes_section_import() },
+	{ id: 'da-dictionary', label: m.showcase_dynamic_attributes_section_dictionary() },
+	{ id: 'da-products', label: m.showcase_dynamic_attributes_section_products() },
+	{ id: 'da-consumers', label: m.showcase_dynamic_attributes_section_consumers() },
 ]);
 </script>
 
@@ -301,12 +304,30 @@ const sections = $derived([
 				</Stack>
 			</div>
 		</Card>
+
+		<div class="part-intro">
+			<Typography variant="h2">{m.showcase_dynamic_attributes_part_shared()}</Typography>
+			<p class="text-muted">{m.showcase_dynamic_attributes_part_shared_intro()}</p>
+		</div>
+
+		<ProductCatalog />
 	</Stack>
 </ShowcaseLayout>
 
 <style>
 	.lede {
 		max-width: 70ch;
+	}
+
+	.part-intro {
+		display: grid;
+		gap: var(--spacing-2);
+		max-width: 70ch;
+		padding-top: var(--spacing-4);
+	}
+
+	.part-intro p {
+		margin: 0;
 	}
 
 	.card-body {

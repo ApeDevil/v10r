@@ -63,6 +63,8 @@ const previousText = $derived.by(() => {
 const messages = $derived(findings.map((f) => findingMessage(f.code)).filter((text): text is string => text !== null));
 
 const name = $derived(attribute.label || m.attributes_unlabelled());
+/** A bound attribute's label, kind and config belong to its dictionary definition; only its value is edited here. */
+const bound = $derived(attribute.binding !== undefined);
 
 /** Arrow keys move the row; `focusId` keeps focus on the control that moved it. */
 function moveByKey(event: KeyboardEvent, focusId: string) {
@@ -125,7 +127,8 @@ function onkeydown(event: KeyboardEvent) {
 			placeholder={m.attributes_label_placeholder()}
 			aria-label={m.attributes_label_aria({ number: index + 1 })}
 			maxlength={engine.limits.labelLength}
-			disabled={readonly}
+			disabled={readonly || bound}
+			title={bound ? m.attributes_bound_label_hint() : undefined}
 			bind:value={() => attribute.label, (next) => editor.relabel(attribute.id, next ?? '')}
 			onkeydown={(event: KeyboardEvent) => {
 				if (event.key === 'Enter') {
@@ -168,10 +171,22 @@ function onkeydown(event: KeyboardEvent) {
 
 	{#if !readonly}
 		<div class="row-actions">
+			{#if bound}
+				<Button
+					variant="ghost"
+					size="icon"
+					aria-label={m.attributes_unbind({ label: name })}
+					title={m.attributes_unbind({ label: name })}
+					onclick={() => editor.unbind(attribute.id)}
+				>
+					<span class="i-lucide-unlink h-4 w-4" aria-hidden="true"></span>
+				</Button>
+			{/if}
 			<Select
 				class="kind-select"
 				aria-label={m.attributes_kind_of({ label: attribute.label || m.attributes_unlabelled() })}
 				options={kindOptions}
+				disabled={bound}
 				value={attribute.kind}
 				onchange={(next) => {
 					if (next !== attribute.kind) editor.changeKind(attribute.id, next);
@@ -210,6 +225,13 @@ function onkeydown(event: KeyboardEvent) {
 		</div>
 	{/if}
 
+	{#if attribute.binding}
+		<p class="binding text-fluid-xs text-muted">
+			<span class="i-lucide-book-marked h-3 w-3" aria-hidden="true"></span>
+			{m.attributes_bound({ revision: attribute.binding.revision })}
+		</p>
+	{/if}
+
 	{#if attribute.previous}
 		<div class="previous-notice" role="note">
 			<p class="text-fluid-sm">
@@ -243,6 +265,7 @@ function onkeydown(event: KeyboardEvent) {
 		grid-template-columns: minmax(8rem, 1fr) minmax(10rem, 2fr) auto;
 		grid-template-areas:
 			'label value actions'
+			'binding binding binding'
 			'notice notice notice'
 			'findings findings findings';
 		align-items: start;
@@ -256,8 +279,17 @@ function onkeydown(event: KeyboardEvent) {
 		grid-template-columns: auto minmax(8rem, 1fr) minmax(10rem, 2fr) auto;
 		grid-template-areas:
 			'grip label value actions'
+			'. binding binding binding'
 			'. notice notice notice'
 			'. findings findings findings';
+	}
+
+	.binding {
+		grid-area: binding;
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-1);
+		margin: 0;
 	}
 
 	.grip-cell {
@@ -345,12 +377,12 @@ function onkeydown(event: KeyboardEvent) {
 	@media (max-width: 640px) {
 		.attribute-row {
 			grid-template-columns: 1fr;
-			grid-template-areas: 'label' 'value' 'actions' 'notice' 'findings';
+			grid-template-areas: 'label' 'value' 'actions' 'binding' 'notice' 'findings';
 		}
 
 		.attribute-row.has-grip {
 			grid-template-columns: auto 1fr;
-			grid-template-areas: 'grip label' '. value' '. actions' 'notice notice' 'findings findings';
+			grid-template-areas: 'grip label' '. value' '. actions' '. binding' 'notice notice' 'findings findings';
 		}
 
 		.row-actions {

@@ -8,4 +8,6 @@ export const showcaseControls: AttributeControls = {
 	'app.rating': { label: m.showcase_dynamic_attributes_kind_rating, icon: 'i-lucide-star', component: RatingControl },
 };
 
+export { default as ConsumerCard } from './ConsumerCard.svelte';
+export { default as ProductCatalog } from './ProductCatalog.svelte';
 export { default as RatingControl } from './RatingControl.svelte';

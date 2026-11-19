@@ -19,6 +19,20 @@ export interface PreviousAttributeValue {
 	config: JsonObject;
 }
 
+/**
+ * Where a bound attribute's definition comes from: an attribute definition in an attribute
+ * dictionary (`dictionary.ts`), as it read at one dictionary revision. The attribute still
+ * carries that definition's label, kind and config, so the record stays readable on its own;
+ * the binding is what lets every record — and every consumer projection — mean the same thing
+ * by it. A bound attribute's label, kind and config change only by syncing to the dictionary.
+ */
+export interface AttributeBinding {
+	/** An attribute definition id: `def_` and 10 lowercase hex. */
+	definition: string;
+	/** The dictionary revision the label, kind and config were taken from. */
+	revision: number;
+}
+
 export interface Attribute {
 	/** Stable identity: `att_` and 10 lowercase hex. Never shown, never reused. */
 	id: string;
@@ -30,6 +44,8 @@ export interface Attribute {
 	/** Kind-specific settings (a number's bounds, a selection's options). `{}` when none. */
 	config: JsonObject;
 	previous?: PreviousAttributeValue;
+	/** Present when the attribute is defined by a shared dictionary; absent for a local attribute. */
+	binding?: AttributeBinding;
 }
 
 /** A removed attribute, kept with the place it held so restoring puts it back there. */
@@ -46,19 +62,33 @@ export interface AttributeRecord {
 }
 
 const ATTRIBUTE_ID = /^att_[0-9a-f]{10}$/;
+const DEFINITION_ID = /^def_[0-9a-f]{10}$/;
 
 export function isAttributeId(id: string): boolean {
 	return ATTRIBUTE_ID.test(id);
 }
 
-/** A fresh attribute id. `random` is injectable so tests and fixtures are deterministic. */
-export function createAttributeId(random: () => number = Math.random): string {
+export function isDefinitionId(id: string): boolean {
+	return DEFINITION_ID.test(id);
+}
+
+function mintId(prefix: 'att' | 'def', random: () => number): string {
 	if (random === Math.random && typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-		return `att_${crypto.randomUUID().replace(/-/g, '').slice(0, 10)}`;
+		return `${prefix}_${crypto.randomUUID().replace(/-/g, '').slice(0, 10)}`;
 	}
 	let hex = '';
 	for (let i = 0; i < 10; i++) hex += Math.floor(random() * 16).toString(16);
-	return `att_${hex}`;
+	return `${prefix}_${hex}`;
+}
+
+/** A fresh attribute id. `random` is injectable so tests and fixtures are deterministic. */
+export function createAttributeId(random: () => number = Math.random): string {
+	return mintId('att', random);
+}
+
+/** A fresh attribute definition id — minted once by the dictionary, never reused. */
+export function createDefinitionId(random: () => number = Math.random): string {
+	return mintId('def', random);
 }
 
 export function emptyAttributeRecord(): AttributeRecord {

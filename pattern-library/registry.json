@@ -10163,7 +10163,7 @@
 			"tier": "deep",
 			"title": "Dynamic attributes (self-describing records the user defines at runtime)",
 			"category": "forms",
-			"summary": "A record that starts almost empty and grows labelled, typed attributes its user names, with the definitions stored inline beside the values: stable attribute ids make renames free, lossy type changes keep the old value, removals are restorable, unknown kinds survive opaquely, and a fail-closed codec plus a version check guard every save, with conflicts merged by attribute id.",
+			"summary": "A record that starts almost empty and grows labelled, typed attributes its user names, with the definitions stored inline beside the values: stable attribute ids make renames free, lossy type changes keep the old value, removals are restorable, unknown kinds survive opaquely, and a fail-closed codec plus a version check guard every save, with conflicts merged by attribute id. Records can bind to a shared attribute dictionary (stable definition ids, labels per locale, append-only revisions) and be projected per consumer — renamed, nested, unit-converted — with each consumer pinned to a revision and an impact check before it moves.",
 			"when_to_use": "Use when the facts on a record differ from one record to the next and belong to the person writing them — an asset panel, a character sheet, a sample log — and the record loads and saves as one unit.",
 			"avoid_when": [
 				"Every record has the same fields — a Valibot schema and a fixed form are simpler and queryable",
@@ -10195,7 +10195,11 @@
 				"autosave",
 				"three-way merge",
 				"conflict detection",
-				"untrusted json parsing"
+				"untrusted json parsing",
+				"shared attribute definitions",
+				"versioned labels",
+				"multi-consumer projection",
+				"value history"
 			],
 			"keywords": [
 				"custom fields",
@@ -10212,7 +10216,12 @@
 				"notion properties",
 				"prototype pollution",
 				"merge",
-				"conflict"
+				"conflict",
+				"pim",
+				"syndication",
+				"channel mapping",
+				"attribute dictionary",
+				"versioned labels"
 			],
 			"depends_on": ["versioned-document-session"],
 			"docs": [
@@ -10244,6 +10253,14 @@
 					"note": "Three-way merge by attribute id; label and value merge separately"
 				},
 				{
+					"path": "src/lib/dynamic-attributes/dictionary.ts",
+					"note": "Attribute dictionary: definitions with stable ids, append-only revisions, bindings and sync"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/projection.ts",
+					"note": "Consumer projections pinned to a dictionary revision; typed steps, render hints, impact check"
+				},
+				{
 					"path": "src/lib/components/composites/attributes",
 					"kind": "dir",
 					"note": "Svelte 5 editor, per-kind controls, record session, save status"
@@ -10270,6 +10287,12 @@
 				},
 				{
 					"path": "src/lib/dynamic-attributes/merge.test.ts"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/dictionary.test.ts"
+				},
+				{
+					"path": "src/lib/dynamic-attributes/projection.test.ts"
 				},
 				{
 					"path": "src/lib/dynamic-attributes/stores.test.ts"

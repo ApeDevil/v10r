@@ -32,6 +32,7 @@ import {
 	type Attribute,
 	type AttributeRecord,
 	isAttributeId,
+	isDefinitionId,
 	type PreviousAttributeValue,
 	type RemovedAttribute,
 } from './record.ts';
@@ -45,6 +46,7 @@ export type AttributeRecordProblemCode =
 	| 'too_many_attributes'
 	| 'too_many_removed'
 	| 'duplicate_id'
+	| 'duplicate_binding'
 	| 'invalid_label'
 	| 'invalid_config'
 	| 'invalid_value'
@@ -83,6 +85,12 @@ const attributeFrame = v.strictObject({
 	value: v.unknown(),
 	config: v.unknown(),
 	previous: v.optional(v.strictObject({ kind: v.string(), value: v.unknown(), config: v.unknown() })),
+	binding: v.optional(
+		v.strictObject({
+			definition: v.string(),
+			revision: v.pipe(v.number(), v.integer(), v.minValue(1)),
+		}),
+	),
 });
 
 const removedFrame = v.strictObject({
@@ -167,12 +175,18 @@ export function parseAttributeRecord(input: unknown, options: AttributeCodecOpti
 	if (problems.length > 0) return { ok: false, problems };
 
 	const seen = new Set<string>();
+	const bound = new Set<string>();
 	const attributes: Attribute[] = [];
 	rawAttributes.forEach((raw, i) => {
 		const attribute = parseAttribute(raw, `attributes[${i}]`, options.kinds, limits, problems);
 		if (!attribute) return;
 		if (seen.has(attribute.id)) problems.push(problem('duplicate_id', `attributes[${i}].id`, 'This id is used twice.'));
 		seen.add(attribute.id);
+		// One definition, one attribute: a projection must know which value it means.
+		const definition = attribute.binding?.definition;
+		if (definition && bound.has(definition))
+			problems.push(problem('duplicate_binding', `attributes[${i}].binding`, 'This definition is bound twice.'));
+		if (definition) bound.add(definition);
 		attributes.push(attribute);
 	});
 	const removed: RemovedAttribute[] = [];
@@ -216,11 +230,13 @@ function parseAttribute(
 		problems.push(...frame.issues.map((issue) => issueProblem(issue, path)));
 		return undefined;
 	}
-	const { id, label, kind, value, config, previous } = frame.output;
+	const { id, label, kind, value, config, previous, binding } = frame.output;
 	const before = problems.length;
 	if (!isAttributeId(id)) problems.push(problem('invalid_shape', `${path}.id`, 'Not an attribute id.'));
 	if (!isLabel(label, limits)) problems.push(problem('invalid_label', `${path}.label`, 'Not a valid label.'));
 	if (!isKindId(kind)) problems.push(problem('invalid_shape', `${path}.kind`, 'Not a kind id.'));
+	if (binding && !isDefinitionId(binding.definition))
+		problems.push(problem('invalid_shape', `${path}.binding.definition`, 'Not an attribute definition id.'));
 	const typed =
 		problems.length === before ? parseTyped(kind, value, config, `${path}`, kinds, limits, problems) : undefined;
 	let kept: PreviousAttributeValue | undefined;
@@ -231,6 +247,7 @@ function parseAttribute(
 	if (!typed || problems.length > before) return undefined;
 	const attribute: Attribute = { id, label, kind, value: typed.value, config: typed.config };
 	if (kept) attribute.previous = kept;
+	if (binding) attribute.binding = { definition: binding.definition, revision: binding.revision };
 	return attribute;
 }
 
