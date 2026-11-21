@@ -21,12 +21,16 @@
  *   from one machine only.
  * - Workflows are scripted agent tasks: an oracle that already knows the right pattern, so they
  *   measure what the INTERFACE costs, never how well a model would choose.
+ * - `strategies` and `catalogueScale` price the same workflows under direct tool calls, Code Mode,
+ *   tool discovery and a hybrid rule, on the real catalogue and on synthetic larger ones
+ *   (`interface-strategies.ts` says what each model includes and leaves out).
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { handleToolCall, TOOLS, type ToolContext } from '../../mcp/tools.ts';
 import { loadRegistry } from '../../pattern-library/load.ts';
 import { scorePatterns } from '../../pattern-library/search.ts';
+import { catalogueScale, compareStrategies, type MeasuredStep, type MeasuredWorkflow } from './interface-strategies.ts';
 
 const ROOT = resolve(import.meta.dir, '../..');
 const BENCH_DIR = resolve(ROOT, 'pattern-library/bench');
@@ -203,6 +207,21 @@ function runWorkflows(workflows: Workflow[], variant: string) {
 		});
 }
 
+/** Each workflow's calls executed once, for the strategy models: pre-progressive and cheapest progressive. */
+function measureWorkflows(workflows: Workflow[]): MeasuredWorkflow[] {
+	const measure = (steps: WorkflowStep[]): MeasuredStep[] =>
+		steps.map((step) => ({ ...step, resultText: call(step.tool, step.args).text }));
+	const total = (steps: MeasuredStep[]) => steps.reduce((sum, step) => sum + step.resultText.length, 0);
+	return workflows.map((workflow) => {
+		const baseline = measure(workflow.variants.baseline ?? []);
+		const progressive = Object.entries(workflow.variants)
+			.filter(([variant]) => variant !== 'baseline')
+			.map(([, steps]) => measure(steps))
+			.sort((a, b) => total(a) - total(b))[0];
+		return { id: workflow.id, baseline, progressive: progressive ?? baseline };
+	});
+}
+
 function readJson<T>(name: string): T {
 	return JSON.parse(readFileSync(resolve(BENCH_DIR, name), 'utf8')) as T;
 }
@@ -221,6 +240,8 @@ const holdout2 = optionalSet('holdout2-queries.json');
 const workflows = readJson<{ workflows: Workflow[] }>('workflows.json').workflows;
 
 const variants = [...new Set(workflows.flatMap((workflow) => Object.keys(workflow.variants)))];
+const measuredWorkflows = measureWorkflows(workflows);
+const strategyModel = { estimateTokens, callOverheadTokens: CALL_OVERHEAD_TOKENS };
 const report = {
 	registryVersion: registry.version,
 	patterns: registry.patterns.length,
@@ -233,6 +254,8 @@ const report = {
 	responseTokens: responseSizes(dev.queries, dev.plans),
 	latency: latency(dev.queries, dev.plans),
 	workflows: Object.fromEntries(variants.map((variant) => [variant, runWorkflows(workflows, variant)])),
+	strategies: compareStrategies(measuredWorkflows, TOOLS, strategyModel),
+	catalogueScale: catalogueScale(measuredWorkflows, TOOLS, strategyModel),
 };
 
 const argv = process.argv.slice(2);

@@ -31,6 +31,11 @@ function check(name: string, condition: boolean, detail = ''): void {
 	}
 }
 
+const MODERN_ENVELOPE = {
+	'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+	'io.modelcontextprotocol/clientCapabilities': {},
+};
+
 const requests: string[] = [
 	JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-11-25' } }),
 	JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }),
@@ -92,6 +97,9 @@ const requests: string[] = [
 			arguments: { language: 'svelte', snippet: '<script>\nexport let value;\n</script>\n<button>go</button>' },
 		},
 	}),
+	// The 2026-07-28 era on the same process: no handshake, the envelope travels in every request.
+	JSON.stringify({ jsonrpc: '2.0', id: 12, method: 'server/discover', params: { _meta: MODERN_ENVELOPE } }),
+	JSON.stringify({ jsonrpc: '2.0', id: 13, method: 'tools/list', params: { _meta: MODERN_ENVELOPE } }),
 ];
 
 const child = Bun.spawn(['bun', join(import.meta.dir, 'server.ts')], {
@@ -116,7 +124,7 @@ for (const line of raw.split('\n').filter((entry) => entry.trim().length > 0)) {
 }
 
 check('child exits 0 on stdin EOF', exitCode === 0, `exit ${exitCode}`);
-check('exactly 11 responses (notification got none)', replies.size === 11, `${replies.size}`);
+check('exactly 13 responses (notification got none)', replies.size === 13, `${replies.size}`);
 
 const init = replies.get(1)?.result;
 check('initialize: serverInfo.name', init?.serverInfo?.name === 'v10r-patterns');
@@ -175,6 +183,21 @@ check(
 	(snippetReport?.content?.[0]?.text.includes('svelte4-export-let') ?? false) &&
 		(snippetReport?.content?.[0]?.text.includes('raw-element') ?? false),
 	snippetReport?.content?.[0]?.text.slice(0, 120),
+);
+
+const discover = replies.get(12)?.result as Record<string, unknown> | undefined;
+check(
+	'server/discover: modern revision advertised',
+	JSON.stringify(discover?.supportedVersions) === '["2026-07-28"]' && discover?.resultType === 'complete',
+);
+const modernList = replies.get(13)?.result as { tools?: unknown[]; resultType?: string; ttlMs?: number } | undefined;
+check(
+	'modern tools/list: same 8 tools, marked complete, with a TTL',
+	modernList?.tools?.length === 8 && modernList.resultType === 'complete' && typeof modernList.ttlMs === 'number',
+);
+check(
+	'modern tools/list: tool definitions byte-identical to the legacy list',
+	JSON.stringify(modernList?.tools) === JSON.stringify(replies.get(2)?.result?.tools),
 );
 
 console.error(failures === 0 ? 'SMOKE OK' : `SMOKE FAILED: ${failures} assertion(s)`);

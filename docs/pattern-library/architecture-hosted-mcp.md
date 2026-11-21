@@ -1,10 +1,10 @@
 ---
-title: "Hosted MCP (two trust surfaces: public read-only · bearer admin)"
-description: "Serves the pattern registry and a separate demo-state service over HTTP through distinct trust boundaries — an unauthenticated public endpoint and…"
+title: "Hosted MCP (four trust surfaces: public · private · admin · admin page)"
+description: "Serves the pattern registry and a separate demo-state service over HTTP through distinct trust boundaries — an unauthenticated public endpoint, a bearer-gated…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Hosted MCP (two trust surfaces: public read-only · bearer admin)
+# Hosted MCP (four trust surfaces: public · private · admin · admin page)
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -12,7 +12,7 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 
 **Category:** Architecture & Request Pipeline · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
-Serves the pattern registry and a separate demo-state service over HTTP through distinct trust boundaries — an unauthenticated public endpoint and bearer-token-protected private/admin endpoints.
+Serves the pattern registry and a separate demo-state service over HTTP through distinct trust boundaries — an unauthenticated public endpoint, a bearer-gated private pattern endpoint and a bearer-gated admin endpoint, plus the protected admin page.
 
 **When to use:** Reach for it when exposing an MCP tool registry over HTTP with differing authentication and telemetry requirements per surface.
 

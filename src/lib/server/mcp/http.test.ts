@@ -6,7 +6,7 @@ const registry: ToolRegistry = {
 	tools: [{ name: 'noop', description: 'noop', inputSchema: { type: 'object' } }],
 	dispatch: () => ({ content: [{ type: 'text', text: 'ok' }] }),
 };
-const identity = { name: 'test', version: '0.0.0', instructions: 'test' };
+const identity = { name: 'test', version: '0.0.0', instructions: 'test', cacheScope: 'public' as const };
 
 function req(headers: Record<string, string>, body?: string): Request {
 	return new Request('http://localhost/api/mcp/public', {
@@ -133,43 +133,34 @@ describe('respondToMcpPost', () => {
 		expect(res.status).toBe(403);
 	});
 
-	it('rejects an unsupported protocol header with 400', async () => {
+	it('rejects an unknown pre-2026 protocol header with the plain legacy 400', async () => {
 		const res = await respondToMcpPost(
-			req({ 'mcp-protocol-version': 'nope' }, ping),
-			registry,
-			identity,
-			noopMcpObserver,
-		);
-		expect(res.status).toBe(400);
-		expect((await res.json()).error.code).toBe('unsupported_protocol_version');
-	});
-
-	it('keeps the unsupported-version 400 OUT of the JSON-RPC error shape', async () => {
-		// Forward-compatibility guard, deliberately asserted on SHAPE rather than on the current
-		// string. Newer-revision clients read a 400 body to decide whether to fall back to
-		// `initialize`: a recognised JSON-RPC error means "don't fall back". This server only speaks
-		// the older handshake, so emitting one here would turn a working connection into a permanent
-		// failure — and would do it invisibly, by flatlining the very metric that would reveal it.
-		//
-		// A test asserting `code === 'unsupported_protocol_version'` would simply be updated
-		// alongside the change it exists to block; asserting the absence of a JSON-RPC envelope
-		// cannot be satisfied by any -3202x refactor.
-		const res = await respondToMcpPost(
-			req({ 'mcp-protocol-version': '2099-01-01' }, ping),
+			req({ 'mcp-protocol-version': '1999-01-01' }, ping),
 			registry,
 			identity,
 			noopMcpObserver,
 		);
 		expect(res.status).toBe(400);
 		const body = await res.json();
+		// A legacy caller: it gets the non-JSON-RPC body it always got, never a modern error code.
 		expect(body).not.toHaveProperty('jsonrpc');
-		expect(typeof body.error.code).not.toBe('number');
-		// Spelled out because -32022 (UnsupportedProtocolVersion) is the specific
-		// value someone "aligning to the spec" would reach for, and the whole
-		// reserved band behaves the same way at a modern client.
-		expect(body.error.code).not.toBe(-32022);
-		if (typeof body.error.code === 'number') {
-			expect(body.error.code).not.toBeGreaterThanOrEqual(-32099);
+		expect(body.error.code).toBe('unsupported_protocol_version');
+	});
+
+	it('answers a modern-era header with no body envelope as a JSON-RPC -32602 400, never as legacy', async () => {
+		// Revision ids compare as strings, like the official SDK: an unknown later revision (and any
+		// non-date token sorting after 2026-07-28) names the modern era, so the caller learns what is
+		// wrong instead of being downgraded silently.
+		for (const header of ['2026-07-28', '2099-01-01', 'nope']) {
+			const res = await respondToMcpPost(
+				req({ 'mcp-protocol-version': header }, ping),
+				registry,
+				identity,
+				noopMcpObserver,
+			);
+			expect(res.status, header).toBe(400);
+			const body = await res.json();
+			expect(body, header).toMatchObject({ jsonrpc: '2.0', id: 1, error: { code: -32602 } });
 		}
 	});
 
@@ -378,5 +369,199 @@ describe('respondToMcpPost', () => {
 		// ...while the caller-visible half of the result is untouched.
 		expect(raw).toMatch(/no match/);
 		expect(JSON.parse(raw).result.isError).toBe(true);
+	});
+});
+
+/** A 2026-07-28 request: the `_meta` envelope in the body and the standard headers that mirror it. */
+function modernReq(
+	method: string,
+	params: Record<string, unknown> = {},
+	headerOverrides: Record<string, string | null> = {},
+	version = '2026-07-28',
+): Request {
+	const body = {
+		jsonrpc: '2.0',
+		id: 7,
+		method,
+		params: {
+			...params,
+			_meta: {
+				'io.modelcontextprotocol/protocolVersion': version,
+				'io.modelcontextprotocol/clientCapabilities': {},
+				'io.modelcontextprotocol/clientInfo': { name: 'modern-client', version: '2.0.0' },
+				...(params._meta as Record<string, unknown> | undefined),
+			},
+		},
+	};
+	const headers: Record<string, string> = { 'mcp-protocol-version': version, 'mcp-method': method };
+	if (typeof params.name === 'string') headers['mcp-name'] = params.name;
+	for (const [key, value] of Object.entries(headerOverrides)) {
+		if (value === null) delete headers[key];
+		else headers[key] = value;
+	}
+	return req(headers, JSON.stringify(body));
+}
+
+async function post(request: Request) {
+	const seen: Parameters<McpCallObserver['observe']>[0][] = [];
+	const res = await respondToMcpPost(request, registry, identity, { observe: (o) => seen.push(o) });
+	return { status: res.status, body: await res.json(), observation: seen[0] };
+}
+
+describe('respondToMcpPost — modern era (2026-07-28)', () => {
+	it('server/discover advertises the modern revision, the same capabilities as initialize, and caching hints', async () => {
+		const { status, body } = await post(modernReq('server/discover'));
+		expect(status).toBe(200);
+		expect(body).toMatchObject({
+			id: 7,
+			result: {
+				resultType: 'complete',
+				supportedVersions: ['2026-07-28'],
+				capabilities: { tools: { listChanged: false } },
+				instructions: 'test',
+				ttlMs: expect.any(Number),
+				cacheScope: 'public',
+				_meta: { 'io.modelcontextprotocol/serverInfo': { name: 'test', version: '0.0.0' } },
+			},
+		});
+		expect(Number.isInteger(body.result.ttlMs) && body.result.ttlMs >= 0).toBe(true);
+	});
+
+	it('tools/list carries resultType and the caching hints; the tools are the registry, unchanged', async () => {
+		const { body } = await post(modernReq('tools/list'));
+		expect(body.result).toMatchObject({ resultType: 'complete', cacheScope: 'public', tools: registry.tools });
+	});
+
+	it('takes the cache scope from the surface identity', async () => {
+		const res = await respondToMcpPost(
+			modernReq('tools/list'),
+			registry,
+			{ ...identity, cacheScope: 'private' },
+			noopMcpObserver,
+		);
+		expect((await res.json()).result.cacheScope).toBe('private');
+	});
+
+	it('tools/call dispatches through the same registry and marks the result complete', async () => {
+		const { status, body, observation } = await post(modernReq('tools/call', { name: 'noop', arguments: {} }));
+		expect(status).toBe(200);
+		expect(body.result).toMatchObject({ resultType: 'complete', content: [{ type: 'text', text: 'ok' }] });
+		expect(observation).toMatchObject({
+			stage: 'tool',
+			toolName: 'noop',
+			clientName: 'modern-client',
+			clientVersion: '2.0.0',
+			servedProtocolVersion: '2026-07-28',
+		});
+	});
+
+	it('answers an unknown tool with the in-band -32602 the spec requires, without dispatching', async () => {
+		let dispatched = 0;
+		const counting: ToolRegistry = {
+			...registry,
+			dispatch: (...args) => {
+				dispatched += 1;
+				return registry.dispatch(...args);
+			},
+		};
+		const seen: Parameters<McpCallObserver['observe']>[0][] = [];
+		const res = await respondToMcpPost(modernReq('tools/call', { name: 'not_here' }), counting, identity, {
+			observe: (o) => seen.push(o),
+		});
+		expect(res.status).toBe(200);
+		expect(await res.json()).toMatchObject({ id: 7, error: { code: -32602, data: { name: 'not_here' } } });
+		expect(dispatched).toBe(0);
+		// Telemetry sees the same unknown-tool event as on the legacy path: tool stage, the name, no diag.
+		expect(seen[0]).toMatchObject({ stage: 'tool', toolName: 'not_here', isError: true, diag: null });
+	});
+
+	it('keeps the legacy unknown-tool answer an isError result with recovery text', async () => {
+		const res = await respondToMcpPost(
+			req({}, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'not_here' } })),
+			registry,
+			identity,
+			noopMcpObserver,
+		);
+		expect(res.status).toBe(200);
+		const body = await res.json();
+		expect(body).not.toHaveProperty('error');
+		expect(body.result).toMatchObject({ isError: true });
+		expect(body.result).not.toHaveProperty('resultType');
+	});
+
+	it('answers removed and unknown methods with 404 / -32601, echoing the id', async () => {
+		for (const method of ['initialize', 'ping', 'logging/setLevel', 'resources/subscribe', 'no/such']) {
+			const { status, body, observation } = await post(modernReq(method));
+			expect(status, method).toBe(404);
+			expect(body, method).toMatchObject({ id: 7, error: { code: -32601 } });
+			expect(observation?.stage, method).toBe('protocol');
+		}
+	});
+
+	it('answers an unsupported modern revision with -32022 listing the modern revisions only', async () => {
+		const { status, body, observation } = await post(modernReq('server/discover', {}, {}, '2099-01-01'));
+		expect(status).toBe(400);
+		expect(body).toMatchObject({
+			id: 7,
+			error: { code: -32022, data: { supported: ['2026-07-28'], requested: '2099-01-01' } },
+		});
+		expect(observation).toMatchObject({ stage: 'envelope', rpcErrorCode: -32022 });
+	});
+
+	it('rejects an invalid envelope with 400 / -32602', async () => {
+		for (const _meta of [
+			{ 'io.modelcontextprotocol/clientCapabilities': undefined },
+			{ 'io.modelcontextprotocol/clientCapabilities': 'all' },
+			{ 'io.modelcontextprotocol/clientInfo': { name: 'x' } },
+			{ 'io.modelcontextprotocol/protocolVersion': 20260728 },
+		]) {
+			// JSON.stringify drops an `undefined` value, so that case sends no clientCapabilities key at all.
+			const request = modernReq('tools/list', { _meta });
+			const { status, body } = await post(request);
+			expect(status, JSON.stringify(_meta)).toBe(400);
+			expect(body.error.code, JSON.stringify(_meta)).toBe(-32602);
+		}
+	});
+
+	it('rejects headers that disagree with the body, or are missing, with 400 / -32020', async () => {
+		const cases: Array<[string, Request]> = [
+			['version mismatch', modernReq('tools/list', {}, { 'mcp-protocol-version': '2025-11-25' })],
+			['method mismatch', modernReq('tools/list', {}, { 'mcp-method': 'tools/call' })],
+			['name mismatch', modernReq('tools/call', { name: 'noop' }, { 'mcp-name': 'other' })],
+			['version missing', modernReq('tools/list', {}, { 'mcp-protocol-version': null })],
+			['method missing', modernReq('tools/list', {}, { 'mcp-method': null })],
+			['name missing', modernReq('tools/call', { name: 'noop' }, { 'mcp-name': null })],
+			['bad base64 sentinel', modernReq('tools/call', { name: 'noop' }, { 'mcp-name': '=?base64?***?=' })],
+			[
+				'initialize under a modern header',
+				req(
+					{ 'mcp-protocol-version': '2026-07-28' },
+					JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'initialize', params: { protocolVersion: '2025-11-25' } }),
+				),
+			],
+		];
+		for (const [label, request] of cases) {
+			const { status, body } = await post(request);
+			expect(status, label).toBe(400);
+			expect(body, label).toMatchObject({ id: 7, error: { code: -32020 } });
+		}
+	});
+
+	it('accepts an Mcp-Name with surrounding whitespace or in the Base64 sentinel', async () => {
+		for (const header of ['  noop\t', `=?base64?${btoa('noop')}?=`]) {
+			const { status, body } = await post(modernReq('tools/call', { name: 'noop' }, { 'mcp-name': header }));
+			expect(status, header).toBe(200);
+			expect(body.result.isError, header).toBeFalsy();
+		}
+	});
+
+	it('leaves the legacy path byte-identical: no resultType, no caching hints, no header rules', async () => {
+		const res = await respondToMcpPost(
+			req({}, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })),
+			registry,
+			identity,
+			noopMcpObserver,
+		);
+		expect(await res.json()).toEqual({ jsonrpc: '2.0', id: 1, result: { tools: registry.tools } });
 	});
 });

@@ -19,11 +19,16 @@ vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 vi.mock('#lib/server/admin/audit.ts', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 
 const { handleMcpMessage } = await import('./transport');
+
+/** The JSON-RPC response alone — these tests are about the body; http.test.ts covers statuses. */
+async function respond(...args: Parameters<typeof handleMcpMessage>) {
+	return (await handleMcpMessage(...args)).response;
+}
 const { publicPatternRegistry } = await import('./patterns/tools');
 const { readAllowlistedExcerpt } = await import('./patterns/excerpts');
 const { MAX_NEXT_ACTIONS, NEXT_ACTIONS_HEADING } = await import('./types');
 
-const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server' };
+const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server', cacheScope: 'public' as const };
 
 /** Dispatch straight through the registry, bypassing the transport's own literals. */
 async function callTool(name: string, args: Record<string, unknown> = {}) {
@@ -153,7 +158,7 @@ describe('every registry error hands the caller a next step', () => {
 
 describe('transport-built errors stay bare — this absence IS the discriminator', () => {
 	it('emits no diag and no next block for an unknown tool name', async () => {
-		const response = await handleMcpMessage(
+		const response = await respond(
 			{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'not_in_this_registry' } },
 			publicPatternRegistry,
 			IDENTITY,
@@ -171,7 +176,7 @@ describe('transport-built errors stay bare — this absence IS the discriminator
 				throw new Error('boom');
 			},
 		};
-		const response = await handleMcpMessage(
+		const response = await respond(
 			{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'boom' } },
 			throwingRegistry,
 			IDENTITY,

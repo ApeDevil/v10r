@@ -77,7 +77,7 @@ Every tool answers at the smallest grain that settles the agent's next decision,
 
 Two rules keep selective disclosure honest. A partial card always keeps its header — tier, maturity, risk, `depends on`, `requires` — and closes with a line naming every withheld section and its size, calling withheld invariants out as MUST-hold; it never reads as "this pattern has no invariants". And a windowed excerpt that stops before EOF ends with the sections below it, so the next call can be targeted. `excerpt.test.ts` checks that every `#fragment` a card cites resolves to a heading.
 
-The trade is measured, not assumed (`bun run mcp:bench`, scripted workflows, ≈tokens including a per-call overhead): checking fit 3 calls ≈2.3k → 2 calls ≈0.65k; reading three patterns' invariants 3 calls ≈2.9k → 1 call ≈0.9k; reading the doc section a card cites 2 calls ≈2.6k → 1 call ≈0.6k. The cost is a longer tool list (≈1.0k → ≈1.4k tokens; Claude Code's tool search loads schemas on demand) and ≈60 more tokens per default search row, which now carries the rule-out facts.
+The trade is measured, not assumed (`bun run mcp:bench`, scripted workflows, ≈tokens including a per-call overhead): checking fit 3 calls ≈2.3k → 2 calls ≈0.65k; reading three patterns' invariants 3 calls ≈2.9k → 1 call ≈0.9k; reading the doc section a card cites 2 calls ≈2.6k → 1 call ≈0.6k. The cost is a longer tool list (≈1.0k → ≈1.4k tokens; Claude Code's tool search loads schemas on demand) and ≈60 more tokens per default search row, which now carries the rule-out facts. (The list is ≈2.4k tokens since the two Architecture Engineering tools joined.) The same harness prices the alternatives — Code Mode, client-side tool discovery and a hybrid rule, on the real catalogue and on synthetic ones up to 512 tools (`scripts/mcp/interface-strategies.ts`, `strategies` and `catalogueScale` in `results.json`); the findings and what they decided are in [mcp-evolution/decision-record.md](./mcp-evolution/decision-record.md) D4–D5.
 
 ### Deterministic plan assembly, not inference
 
@@ -103,9 +103,23 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 
 ### Zero-dependency protocol
 
-`server.ts` and `protocol.ts` hand-roll JSON-RPC 2.0 framing over newline-delimited stdio (MCP spec 2025-11-25) with no SDK and no validation library. This isn't a style preference: the container is a bare `oven/bun` image with no `node_modules`, so any dependency would mean either baking a custom image or an `bun install` step on every spawn. Hand-rolling the ~150 lines of framing and a hand-written structural validator (`registry.ts`) keeps the spawn command a one-liner and the cold-start instant.
+`server.ts` and `protocol.ts` hand-roll JSON-RPC 2.0 framing over newline-delimited stdio (MCP 2025-11-25 and 2026-07-28, see below) with no SDK and no validation library. This isn't a style preference: the container is a bare `oven/bun` image with no `node_modules`, so any dependency would mean either baking a custom image or an `bun install` step on every spawn. Hand-rolling the ~150 lines of framing and a hand-written structural validator (`registry.ts`) keeps the spawn command a one-liner and the cold-start instant.
 
-The `initialize` response also carries a hand-written `instructions` string (in `server.ts`) that tells the calling agent *when* to reach for this server versus plain `Read`/`Grep` — the same "emulate, don't clone" framing this doc opens with, but delivered as part of the protocol handshake instead of a doc the agent might not have read.
+The `initialize` response also carries a hand-written `instructions` string (in `server.ts`) that tells the calling agent *when* to reach for this server versus plain `Read`/`Grep` — the same "emulate, don't clone" framing this doc opens with, but delivered as part of the protocol handshake instead of a doc the agent might not have read. A 2026-07-28 client gets the same string from `server/discover`.
+
+### Protocol eras
+
+Both transports serve two MCP generations on one registration, decided per message by `routeMcpRequest` in `mcp/protocol-era.ts` — a zero-import module the stdio server imports relatively and the hosted transport through `#mcp/*`:
+
+| | Legacy (2025-11-25, -06-18, -03-26) | Modern (2026-07-28) |
+|---|---|---|
+| How the era is chosen | `initialize` without a modern `_meta` claim, or no claim at all | `params._meta["io.modelcontextprotocol/protocolVersion"]` present in the body |
+| Handshake | `initialize` → `protocolVersion` (unknown → latest legacy), then requests | none; `server/discover` describes the server, every request carries its revision and `clientCapabilities` |
+| Methods | `initialize`, `ping`, `tools/list`, `tools/call` | `server/discover`, `tools/list`, `tools/call`; anything else (including `initialize`, `ping`) → -32601 (HTTP 404) |
+| Results | unchanged | `resultType: "complete"`; `_meta["io.modelcontextprotocol/serverInfo"]`; `ttlMs` (1 h) + `cacheScope` on discover and `tools/list` |
+| Errors | as before | -32602 bad envelope · -32022 unsupported revision (`data.supported` = modern revisions only) · -32020 header/body disagreement (HTTP) |
+
+The era is a property of the request's body, as in the official SDK, so a proxy that drops a header cannot change it; over HTTP the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers are then checked against the body. The tools, their order and their bytes are the same in both eras — `mcp/smoke.ts` and the parity test pin it. The one era difference in the answers: an unknown tool is the spec's -32602 (`data: { name }`) in the modern era and an `isError` result with recovery text in the legacy era. Regression authority is the official conformance suite (`bun run mcp:conformance`, both revisions, against a running server) and the SDK v1/v2 clients in `sdk-interop.test.ts`; the why is in [mcp-evolution/decision-record.md](./mcp-evolution/decision-record.md) D1–D2.
 
 ### Client design constraints (the gotchas)
 
@@ -128,8 +142,8 @@ Each was weighed against this workload — a few hundred static records, sub-mil
 | Option | Decision | Why |
 |---|---|---|
 | `structuredContent` / `outputSchema` | Not adopted | Claude Code forwards only the structured payload on success when both are present (documented; maintainer-confirmed, 2026), so the markdown body — next actions included — would vanish. |
-| Tool `annotations` (`readOnlyHint`) | Deferred | Recommended by the spec, but this repo recorded a live Claude Code bug that dropped the server's whole tool list over them. Re-adding needs an interop test against a real client, which the automated gate cannot run. |
-| MCP 2026-07-28 (stateless, `server/discover`, `ttlMs`) | Deferred, separate change | Current clients still connect to 2025-11-25 servers. The migration touches framing, headers and errors on both transports and belongs with SDK v2 and its own interoperability tests, not inside a retrieval change. |
+| Tool `annotations` (`readOnlyHint`) | Deferred | Recommended by the spec, but this repo recorded a live Claude Code bug that dropped the server's whole tool list over them. Re-adding needs an interop test against a real client, which the automated gate cannot run — the isolated kit is [mcp-evolution/claude-code-compat.md](./mcp-evolution/claude-code-compat.md), run locally. |
+| MCP 2026-07-28 (stateless, `server/discover`, `ttlMs`) | **Adopted 2026-11-21**, dual-era | Served beside the 2025-11-25 handshake on both transports, routed per request by `mcp/protocol-era.ts` over the same registries; see §Protocol eras and [mcp-evolution/](./mcp-evolution/README.md). |
 | Resources / prompts | Not adopted | Every retrieval need above is met by parameters on the existing tools; another surface would add discovery cost without new information. |
 | Embeddings, hybrid search, rank fusion | Not adopted | IDF + best-field + coverage took the blind holdout from 52% to 76% Acc@1 with no model; embeddings would add a model to the stdio container and the Vercel cold start for a curated corpus with authored keywords. |
 | Response memoization / HTTP caching | Not adopted | Queries run in well under a millisecond over a cached per-registry index; POST JSON-RPC is not HTTP-cacheable anyway. |

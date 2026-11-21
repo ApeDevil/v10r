@@ -679,9 +679,9 @@
 		{
 			"id": "architecture-hosted-mcp",
 			"tier": "light",
-			"title": "Hosted MCP (two trust surfaces: public read-only · bearer admin)",
+			"title": "Hosted MCP (four trust surfaces: public · private · admin · admin page)",
 			"category": "architecture",
-			"summary": "Serves the pattern registry and a separate demo-state service over HTTP through distinct trust boundaries — an unauthenticated public endpoint and bearer-token-protected private/admin endpoints.",
+			"summary": "Serves the pattern registry and a separate demo-state service over HTTP through distinct trust boundaries — an unauthenticated public endpoint, a bearer-gated private pattern endpoint and a bearer-gated admin endpoint, plus the protected admin page.",
 			"when_to_use": "Reach for it when exposing an MCP tool registry over HTTP with differing authentication and telemetry requirements per surface.",
 			"avoid_when": [],
 			"alternatives": [],
@@ -722,6 +722,125 @@
 			"maturity": "proven",
 			"verifiedAt": "2026-08-20",
 			"verifiedSha": "1a130d67"
+		},
+		{
+			"id": "architecture-mcp-evolution",
+			"tier": "deep",
+			"title": "MCP protocol evolution (dual-era serving, conformance lane, evidence-gated adoption)",
+			"category": "architecture",
+			"summary": "One endpoint serves both MCP generations — the 2025 initialize handshake and the stateless 2026-07-28 per-request _meta protocol — routed per message by one shared module over the existing tool registries, with the official conformance suite and SDK clients as the regression authority and a benchmark that prices alternatives before anything is adopted.",
+			"when_to_use": "Reach for this when an MCP server must move to a new protocol revision without breaking the clients still on the old one, or when deciding whether a new MCP capability (Code Mode, tool discovery, an extension) is worth adopting.",
+			"avoid_when": [
+				"Every caller is pinned to one revision you control — serve that revision alone",
+				"The server is built on the official SDK — its own dual-era entry point does the routing",
+				"Adopting a capability because a vendor ships it — the benchmark and the conformance lane decide"
+			],
+			"alternatives": [
+				{
+					"approach": "Rebuild the server on @modelcontextprotocol/server v2, which ships dual-era routing",
+					"prefer_when": "the server can take a runtime dependency and the hand-written protocol layer has no reason to stay zero-dependency"
+				},
+				{
+					"approach": "Serve only the newest revision behind a separate endpoint",
+					"prefer_when": "the old clients can be pointed at a different URL and the two eras never need one registration"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"mcp protocol versioning",
+				"dual-era mcp",
+				"mcp conformance testing",
+				"protocol migration",
+				"mcp benchmark",
+				"server discover"
+			],
+			"keywords": [
+				"mcp",
+				"2026-07-28",
+				"server/discover",
+				"_meta envelope",
+				"conformance",
+				"code mode",
+				"tool discovery",
+				"backward compatibility"
+			],
+			"depends_on": ["multi-client-core"],
+			"docs": [
+				{
+					"path": "docs/blueprint/architecture/mcp-evolution/README.md",
+					"note": "Hub: the answers, the decisions and where each file fits"
+				},
+				{
+					"path": "docs/blueprint/architecture/mcp-evolution/decision-record.md",
+					"note": "D1–D9: dual-era, hand-written protocol, Code Mode and server-side discovery rejected with revisit triggers"
+				},
+				{
+					"path": "docs/blueprint/architecture/mcp-evolution/matrix.md",
+					"note": "The living compatibility record the monthly review updates"
+				},
+				{
+					"path": "docs/blueprint/architecture/mcp-evolution/process.md",
+					"note": "Sources, monthly and event-driven reviews, the conformance lane, what counts as worth adopting"
+				},
+				{
+					"path": "docs/blueprint/architecture/hosted-mcp.md",
+					"note": "How the hosted transport serves both eras"
+				}
+			],
+			"code": [
+				{
+					"path": "mcp/protocol-era.ts",
+					"note": "routeMcpRequest (body-primary era routing, envelope and header checks), discover and result dressing — shared by both transports"
+				},
+				{
+					"path": "mcp/protocol-version.ts",
+					"note": "The legacy and modern revision lists and the fallback, declared once"
+				},
+				{
+					"path": "src/lib/server/mcp/transport.ts",
+					"note": "Hosted dispatch: answerLegacy and answerModern over the one registry"
+				},
+				{
+					"path": "scripts/mcp/conformance.ts",
+					"note": "The pinned official conformance runner per revision, with per-check baselines"
+				},
+				{
+					"path": "scripts/mcp/interface-strategies.ts",
+					"note": "Offline cost model of direct calls, Code Mode, discovery and a hybrid, with the catalogue-size crossover"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/mcp/sdk-interop.test.ts",
+					"note": "SDK v1 and v2 clients (legacy, auto, pin) against both transports; validate gate"
+				},
+				{
+					"path": "src/lib/server/mcp/http.test.ts",
+					"note": "Modern admission: -32020/-32022/-32602, 404 for removed methods, caching hints, the legacy path byte-identical"
+				},
+				{
+					"path": "mcp/server.test.ts",
+					"note": "The stdio server's modern path"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"The era is decided per request from the body's _meta claim, never from a header alone — headers are checked against the body, so a proxy that drops one cannot change the era.",
+				"Both eras dispatch through the same tool registry and dispatcher; the era changes admission and result dressing only, so a tool cannot exist in one era and not the other.",
+				"The legacy path stays byte-identical: no resultType, no caching hints, no header rules; a header naming an unknown pre-2026 revision keeps its plain non-JSON-RPC 400.",
+				"-32022 lists the modern revisions only, exactly what server/discover advertises — never a legacy revision.",
+				"Conformance baselines list only capabilities the server does not advertise or fixture tools it has no reason to expose, per check; a genuine failure is fixed, never baselined.",
+				"A capability is adopted only on a stable standard the conformance suite checks, a security gap, a measured gain in mcp:bench, or a client that requires it."
+			],
+			"emulation_notes": [
+				"Port mcp/protocol-era.ts as is: it has no imports beyond the version list, so it fits a zero-dependency server and a framework one alike.",
+				"Keep the conformance lane out of the always-on gate (it needs a running server and the network) and keep in-process SDK interop tests in it.",
+				"Before adding Code Mode or tool discovery, extend the benchmark with your own workflows: at v10r's eight tools, discovery only beats direct calls with cached definitions past ~47 tools."
+			],
+			"risk": "low — protocol layer only; both eras pinned by the official SDK clients and conformance suite",
+			"maturity": "proven",
+			"verifiedAt": "2026-11-21",
+			"verifiedSha": "5b825e0"
 		},
 		{
 			"id": "architecture-wasm-kernel",

@@ -9,24 +9,23 @@
  *  - `Origin` is validated to block DNS-rebinding; a request with no Origin (a non-browser MCP
  *    client) is allowed, an exact same-origin browser request (scheme + host + port) is allowed,
  *    anything else is rejected unless explicitly allowlisted via MCP_ALLOWED_ORIGINS.
- *  - `MCP-Protocol-Version`, when present, must be a supported version (else 400). ⚠ The SHAPE of
- *    that 400's body is load-bearing for forward compatibility — see the guard in
- *    `respondToMcpPost` before changing it.
+ *  - Dual-era (legacy `initialize` + 2026-07-28 per-request `_meta`): the transport routes each
+ *    request by its body, then checks `MCP-Protocol-Version` / `Mcp-Method` / `Mcp-Name` against
+ *    it on the modern path. Modern rejections are JSON-RPC errors with the spec's HTTP status
+ *    (400 for -32020/-32022/-32602 admission, 404 for an unknown method).
+ *  - A header naming a PRE-2026 revision this server does not know still gets the plain
+ *    `{ error: { code: 'unsupported_protocol_version' } }` 400 — that caller is a legacy client.
  *  - The JSON body is read under a byte budget, then envelope-validated by the transport before
  *    any dispatch.
- *
- * RULE for any future 400 added to this endpoint: use the plain `{ error: { code: '…' } }` shape,
- * NOT a JSON-RPC error envelope. Newer-protocol clients branch on exactly that distinction to
- * decide whether to fall back (see the guard comment below). Note this is a rule, not yet a
- * property of the file: the parse-error path already emits a real JSON-RPC `-32700` at 400.
  */
 import { MAX_MCP_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
 // Dependency-free by construction (monitoring/index.ts has zero imports), so this does not pull a
 // DB or platform edge into the module graph the zero-mock protocol tests rely on.
 import { sanitizeError } from '#lib/server/monitoring/index.ts';
+import type { McpStandardHeaders } from '#mcp/protocol-era.ts';
+import { isLegacyProtocolVersion, LEGACY_PROTOCOL_VERSIONS, namesModernEra } from '#mcp/protocol-version.ts';
 import { MCP_ALLOWED_ORIGINS } from '$app/env/private';
-import { isSupportedProtocolVersion, SUPPORTED_PROTOCOL_VERSIONS } from './server-info';
-import { handleMcpMessage, type McpServerIdentity } from './transport';
+import { handleMcpMessage, type McpExchange, type McpServerIdentity } from './transport';
 import { type JsonRpcResponse, type McpCallObservation, type McpCallObserver, RPC, type ToolRegistry } from './types';
 
 /** 405 for GET (SSE unsupported) — no auth, no tool metadata revealed. */
@@ -87,11 +86,24 @@ export function isAllowedOrigin(request: Request): boolean {
 	return allowedOrigins().includes(origin.origin);
 }
 
-/** The `MCP-Protocol-Version` header, when present, must be a version we support. */
+/**
+ * The `MCP-Protocol-Version` header, when present, must be a legacy revision we support or name the
+ * modern era. A modern-era value — even one this server does not know — is admitted here and
+ * answered by the transport (-32022 lists what is supported), because only the body decides the era.
+ */
 export function protocolVersionHeaderOk(request: Request): boolean {
 	const header = request.headers.get('mcp-protocol-version');
-	if (header === null) return true; // absent → default negotiated in the initialize body
-	return isSupportedProtocolVersion(header);
+	if (header === null) return true; // absent → legacy `initialize` negotiates, or the modern path rejects
+	return isLegacyProtocolVersion(header) || namesModernEra(header);
+}
+
+/** The standard request headers the modern path validates against the body. */
+function readStandardHeaders(request: Request): McpStandardHeaders {
+	return {
+		protocolVersion: request.headers.get('mcp-protocol-version'),
+		method: request.headers.get('mcp-method'),
+		name: request.headers.get('mcp-name'),
+	};
 }
 
 /** The version the caller ASKED for, readable before any parse (and on a rejected request). */
@@ -124,20 +136,49 @@ const MAX_OBSERVED_RESPONSE_CHARS = 20_000;
  */
 function describeExchange(
 	parsed: unknown,
+	served: McpExchange,
 	response: JsonRpcResponse,
 ): Partial<McpCallObservation> & Pick<McpCallObservation, 'stage'> {
 	const message = asRecord(parsed);
 	const method = asString(message?.method);
 	const params = asRecord(message?.params);
 	const isToolCall = method === 'tools/call';
+	const modern = served.era === 'modern';
+
+	if ('error' in response && isToolCall && served.httpStatus === 200 && typeof params?.name === 'string') {
+		// The 2026-07-28 unknown-tool answer: an in-band -32602 for a tools/call that named a tool. It is
+		// the tool stage's `unknown_tool` (no diag, name not in the registry), exactly like the legacy
+		// path's isError result — so the outcome does not depend on the caller's era.
+		return {
+			stage: 'tool',
+			method,
+			toolName: params.name,
+			args: params.arguments,
+			isError: true,
+			rpcErrorCode: response.error.code,
+			clientName: served.clientInfo?.name ?? null,
+			clientVersion: served.clientInfo?.version ?? null,
+			servedProtocolVersion: served.modernProtocolVersion,
+		};
+	}
 
 	if ('error' in response) {
-		// A malformed envelope: the transport rejected it before any dispatch.
-		return { stage: 'envelope', method, isError: true, rpcErrorCode: response.error.code };
+		// -32601 is a well-formed request for a method this server does not serve (protocol stage);
+		// anything else was refused at admission, before any dispatch (envelope stage).
+		const stage = response.error.code === RPC.NO_METHOD ? 'protocol' : 'envelope';
+		return {
+			stage,
+			method,
+			isError: true,
+			rpcErrorCode: response.error.code,
+			clientName: served.clientInfo?.name ?? null,
+			clientVersion: served.clientInfo?.version ?? null,
+			servedProtocolVersion: served.modernProtocolVersion,
+		};
 	}
 
 	const result = asRecord(response.result);
-	const clientInfo = method === 'initialize' ? asRecord(params?.clientInfo) : null;
+	const clientInfo = modern ? served.clientInfo : method === 'initialize' ? asRecord(params?.clientInfo) : null;
 	const tools = result && Array.isArray(result.tools) ? result.tools : null;
 	// The tool's answer — first text block of a tools/call result. Read here (before `toWire`
 	// runs, though `toWire` is non-mutating so the order could not matter anyway) because this is
@@ -150,14 +191,18 @@ function describeExchange(
 		stage: isToolCall ? 'tool' : 'protocol',
 		method,
 		toolName: isToolCall ? asString(params?.name) : null,
-		// Authoritative source is the body. `Mcp-Name` is untrusted until header/body agreement is
-		// enforced, which this server does not yet do.
+		// Authoritative source is the body. On the modern path `Mcp-Name` is checked against it before
+		// dispatch; on the legacy path the header is not required, so the body stays the one source.
 		args: isToolCall ? params?.arguments : undefined,
 		isError: result?.isError === true,
 		diag: (result?.diag as McpCallObservation['diag']) ?? null,
 		clientName: asString(clientInfo?.name),
 		clientVersion: asString(clientInfo?.version),
-		servedProtocolVersion: method === 'initialize' ? asString(result?.protocolVersion) : null,
+		servedProtocolVersion: modern
+			? served.modernProtocolVersion
+			: method === 'initialize'
+				? asString(result?.protocolVersion)
+				: null,
 		toolCount: tools ? tools.length : null,
 		responseText: answer === null ? null : answer.slice(0, MAX_OBSERVED_RESPONSE_CHARS),
 	};
@@ -221,36 +266,23 @@ export async function respondToMcpPost(
 	}
 	if (!protocolVersionHeaderOk(request)) {
 		/**
-		 * ⚠ DO NOT "align" this body to a JSON-RPC error, and in particular do not emit -32022
-		 * (UnsupportedProtocolVersion) or any code in the -32020..-32099 range.
+		 * A header naming a pre-2026 revision this server does not know: the caller is a legacy
+		 * client, so it gets the plain (non-JSON-RPC) 400 it always got. Modern-era values never
+		 * reach this exit — they are routed by the body and answered with JSON-RPC errors.
 		 *
-		 * Newer-revision clients probe modern-first and, on a 400, inspect the body to decide what to
-		 * do: a recognised modern JSON-RPC error means "this server is modern, retry with one of its
-		 * advertised versions"; anything else means "fall back to `initialize`". This server
-		 * implements `initialize` and does NOT implement the newer revision, so the non-JSON-RPC
-		 * shape below is exactly what keeps those clients working. Emitting -32022 would tell them we
-		 * are modern, they would never fall back, and a working connection would become a permanent
-		 * failure.
-		 *
-		 * It is also self-concealing: that change drives recovery-`initialize` volume to zero while
-		 * the 400 count stays flat, which on the usage dashboard is indistinguishable from "nobody is
-		 * migrating". The landmine disables the one instrument that would catch it.
-		 *
-		 * UNBLOCK CONDITION — change this ONLY together with all of:
-		 *   1. adding the new revision to SUPPORTED_PROTOCOL_VERSIONS (server-info.ts),
-		 *   2. implementing the `server/discover` method,
-		 *   3. validating the per-request `_meta` envelope the new revision requires.
-		 * Partial adoption is worse than none: it trades a spec-defined recovery path for untested
-		 * conformance.
-		 *
-		 * https://modelcontextprotocol.io/specification/draft/basic/transports/streamable-http#backward-compatibility
+		 * History, because the shape was once load-bearing: before this server spoke 2026-07-28, this
+		 * 400 also caught every modern probe, and its non-JSON-RPC body is what told modern-first
+		 * clients to fall back to `initialize`. A -32022 here would have told them the server was
+		 * modern while it was not. That hazard ended when the modern path (server/discover, `_meta`
+		 * validation, header checks) shipped as one change; the SDK v2 interop tests now pin both
+		 * the modern connection and the legacy fallback.
 		 */
 		emit({ stage: 'envelope', status: 400 });
 		return Response.json(
 			{
 				error: {
 					code: 'unsupported_protocol_version',
-					message: `Unsupported MCP-Protocol-Version. Supported: ${SUPPORTED_PROTOCOL_VERSIONS.join(', ')}.`,
+					message: `Unsupported MCP-Protocol-Version. Supported: ${LEGACY_PROTOCOL_VERSIONS.join(', ')}.`,
 				},
 			},
 			{ status: 400 },
@@ -263,11 +295,9 @@ export async function respondToMcpPost(
 	 * measuring the stream consumes it, so a size check followed by `request.json()` would throw
 	 * on the second read.
 	 *
-	 * Oversize is a **413**, deliberately not a 400. The landmine above governs what a *400* body
-	 * looks like, because that is the status modern-first clients inspect to decide whether to
-	 * fall back to `initialize`. A 413 never enters that branch, so the plain
-	 * `{ error: { code, message } }` shape here — the same shape as the 403 two exits up — carries
-	 * no forward-compatibility risk.
+	 * Oversize is a **413** with the plain `{ error: { code, message } }` shape — the same as the
+	 * 403 two exits up: the body never parsed, so there is no request id to echo and no era to
+	 * answer in.
 	 */
 	const body = await readJsonBounded(request, MAX_MCP_BODY_BYTES);
 	if (!body.ok) {
@@ -275,8 +305,7 @@ export async function respondToMcpPost(
 			emit({ stage: 'envelope', status: 413 });
 			return payloadTooLargeResponse(MAX_MCP_BODY_BYTES);
 		}
-		// Unchanged from the pre-budget behaviour, byte for byte: -32700 is outside the reserved
-		// -32020..-32099 band, so it is the one JSON-RPC 400 this file is allowed to emit.
+		// Unparseable JSON has no era: the JSON-RPC -32700 at 400 is right for both.
 		emit({ stage: 'envelope', status: 400, rpcErrorCode: RPC.PARSE });
 		return Response.json(
 			{ jsonrpc: '2.0', id: null, error: { code: RPC.PARSE, message: 'Parse error' } },
@@ -286,14 +315,15 @@ export async function respondToMcpPost(
 	const parsed: unknown = body.value;
 
 	try {
-		const response = await handleMcpMessage(parsed, registry, identity);
+		const served = await handleMcpMessage(parsed, registry, identity, readStandardHeaders(request));
+		const response = served.response;
 		if (response === null) {
 			// A notification is a successful protocol interaction, not an absence of one.
 			emit({ stage: 'protocol', status: 202, method: 'notification' });
 			return new Response(null, { status: 202 });
 		}
-		emit({ ...describeExchange(parsed, response), status: 200 });
-		return Response.json(toWire(response));
+		emit({ ...describeExchange(parsed, served, response), status: served.httpStatus });
+		return Response.json(toWire(response), { status: served.httpStatus });
 	} catch (cause) {
 		// Defence in depth: tool throws are already caught in the transport, but anything else
 		// stays a clean JSON-RPC internal error — never a raw 500 / exception string on the wire.

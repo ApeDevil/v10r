@@ -50,8 +50,8 @@ export function ok(id: Id, result: unknown): string {
 	return `${JSON.stringify({ jsonrpc: '2.0', id, result })}\n`;
 }
 
-export function err(id: Id, code: number, message: string): string {
-	const error = { code, message };
+export function err(id: Id, code: number, message: string, data?: unknown): string {
+	const error = { code, message, ...(data !== undefined && { data }) };
 	return `${JSON.stringify({ jsonrpc: '2.0', id, error })}\n`;
 }
 

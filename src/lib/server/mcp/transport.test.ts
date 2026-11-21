@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { LATEST_LEGACY_PROTOCOL_VERSION } from '#mcp/protocol-version.ts';
 
 // Neither the list nor the cross-registry rejection paths touch the DB; stub it so importing
 // the admin registry never constructs a real Neon pool.
@@ -6,14 +7,19 @@ vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 vi.mock('#lib/server/admin/audit.ts', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 
 const { handleMcpMessage } = await import('./transport');
+
+/** The JSON-RPC response alone — these tests are about the body; http.test.ts covers statuses. */
+async function respond(...args: Parameters<typeof handleMcpMessage>) {
+	return (await handleMcpMessage(...args)).response;
+}
 const { publicPatternRegistry } = await import('./patterns/tools');
 const { createAdminStateRegistry } = await import('./demo/tools');
 const adminStateRegistry = createAdminStateRegistry();
 
-const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server' };
+const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server', cacheScope: 'public' as const };
 
 function call(method: string, params?: unknown, registry = publicPatternRegistry, id: unknown = 1) {
-	return handleMcpMessage({ jsonrpc: '2.0', id, method, params }, registry, IDENTITY);
+	return respond({ jsonrpc: '2.0', id, method, params }, registry, IDENTITY);
 }
 
 const PATTERN_TOOL_NAMES = [
@@ -46,17 +52,21 @@ describe('protocol basics', () => {
 		});
 	});
 
+	it('initialize answers the latest supported revision to an unknown one, like the stdio server', async () => {
+		// The two transports read one constant (mcp/protocol-version.ts); mcp/server.test.ts pins
+		// the stdio side of the same contract.
+		const res = await call('initialize', { protocolVersion: '2099-01-01' });
+		expect(res).toMatchObject({ result: { protocolVersion: LATEST_LEGACY_PROTOCOL_VERSION } });
+		expect(LATEST_LEGACY_PROTOCOL_VERSION).toBe('2025-11-25');
+	});
+
 	it('ping returns an empty result', async () => {
 		const res = await call('ping');
 		expect(res).toMatchObject({ result: {} });
 	});
 
 	it('a notification (no id) is acknowledged with no response body', async () => {
-		const res = await handleMcpMessage(
-			{ jsonrpc: '2.0', method: 'notifications/initialized' },
-			publicPatternRegistry,
-			IDENTITY,
-		);
+		const res = await respond({ jsonrpc: '2.0', method: 'notifications/initialized' }, publicPatternRegistry, IDENTITY);
 		expect(res).toBeNull();
 	});
 
@@ -66,21 +76,17 @@ describe('protocol basics', () => {
 	});
 
 	it('rejects a wrong jsonrpc version (-32600) without dispatching', async () => {
-		const res = await handleMcpMessage(
-			{ jsonrpc: '1.0', id: 1, method: 'tools/list' },
-			publicPatternRegistry,
-			IDENTITY,
-		);
+		const res = await respond({ jsonrpc: '1.0', id: 1, method: 'tools/list' }, publicPatternRegistry, IDENTITY);
 		expect(res && 'error' in res && res.error.code).toBe(-32600);
 	});
 
 	it('rejects a missing jsonrpc field (-32600)', async () => {
-		const res = await handleMcpMessage({ id: 1, method: 'ping' }, publicPatternRegistry, IDENTITY);
+		const res = await respond({ id: 1, method: 'ping' }, publicPatternRegistry, IDENTITY);
 		expect(res && 'error' in res && res.error.code).toBe(-32600);
 	});
 
 	it('rejects a non-scalar id (-32600) without dispatching', async () => {
-		const res = await handleMcpMessage(
+		const res = await respond(
 			{ jsonrpc: '2.0', id: { bad: true }, method: 'tools/list' },
 			publicPatternRegistry,
 			IDENTITY,
@@ -89,7 +95,7 @@ describe('protocol basics', () => {
 	});
 
 	it('rejects a batch (array) request', async () => {
-		const res = await handleMcpMessage([{ jsonrpc: '2.0', id: 1, method: 'ping' }], publicPatternRegistry, IDENTITY);
+		const res = await respond([{ jsonrpc: '2.0', id: 1, method: 'ping' }], publicPatternRegistry, IDENTITY);
 		expect(res && 'error' in res && res.error.code).toBe(-32600);
 	});
 });

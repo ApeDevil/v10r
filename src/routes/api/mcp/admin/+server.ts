@@ -39,6 +39,8 @@ function identity(): McpServerIdentity {
 		version: buildInfo().app,
 		instructions: ADMIN_MCP_INSTRUCTIONS,
 		meta: buildInfo(),
+		// Behind a bearer: a shared cache must not serve these lists across credentials.
+		cacheScope: 'private',
 	};
 }
 

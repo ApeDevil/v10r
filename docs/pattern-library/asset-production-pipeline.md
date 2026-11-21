@@ -80,7 +80,7 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 - [Derivation key (freshness by input fingerprint)](/docs/pattern-library/derivation-key)
 - [Provenance record (entity, activity, agent — PROV-DM core)](/docs/pattern-library/provenance-record)
 - [Rate limiting (sliding window, fail-closed)](/docs/pattern-library/anti-abuse-rate-limiting)
-- [Hosted MCP (two trust surfaces: public read-only · bearer admin)](/docs/pattern-library/architecture-hosted-mcp)
+- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](/docs/pattern-library/architecture-hosted-mcp)
 
 ---
 

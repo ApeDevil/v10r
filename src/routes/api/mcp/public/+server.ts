@@ -33,6 +33,8 @@ function identity(): McpServerIdentity {
 		version: publicBuildInfo().app,
 		instructions: PUBLIC_MCP_INSTRUCTIONS,
 		meta: publicBuildInfo(),
+		// Nothing on this surface depends on who asks, so any cache may share its lists.
+		cacheScope: 'public',
 	};
 }
 

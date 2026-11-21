@@ -10,6 +10,7 @@ import { loadRegistry } from '../pattern-library/load.ts';
 import { buildById, topoSort } from '../pattern-library/schema.ts';
 import { scorePatterns, tokenizePatternQuery } from '../pattern-library/search.ts';
 import { createLineBuffer, err, isNotification, ok, parseLine } from './protocol.ts';
+import { LATEST_LEGACY_PROTOCOL_VERSION } from './protocol-version.ts';
 import { readExcerpt, resolveSafe } from './security.ts';
 import { dispatchLine } from './server.ts';
 import { handleToolCall, TOOLS } from './tools.ts';
@@ -203,7 +204,8 @@ describe('dispatch', () => {
 		const reply = dispatchLine(
 			'{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"1999-01-01"}}',
 		);
-		expect(JSON.parse(reply ?? '{}').result.protocolVersion).toBe('2025-11-25');
+		expect(JSON.parse(reply ?? '{}').result.protocolVersion).toBe(LATEST_LEGACY_PROTOCOL_VERSION);
+		expect(LATEST_LEGACY_PROTOCOL_VERSION).toBe('2025-11-25');
 	});
 
 	test('notifications produce no reply; batch and garbage produce errors', () => {
@@ -217,5 +219,91 @@ describe('dispatch', () => {
 		expect(JSON.parse(dispatchLine('{"jsonrpc":"2.0","id":1,"method":"ping"}') ?? '{}').result).toEqual({});
 		const list = JSON.parse(dispatchLine('{"jsonrpc":"2.0","id":2,"method":"tools/list"}') ?? '{}');
 		expect(list.result.tools.length).toBe(8);
+	});
+});
+
+/** A 2026-07-28 request line: the per-request `_meta` envelope, no handshake. */
+function modernLine(method: string, params: Record<string, unknown> = {}, version = '2026-07-28'): string {
+	return JSON.stringify({
+		jsonrpc: '2.0',
+		id: 5,
+		method,
+		params: {
+			...params,
+			_meta: {
+				'io.modelcontextprotocol/protocolVersion': version,
+				'io.modelcontextprotocol/clientCapabilities': {},
+			},
+		},
+	});
+}
+
+function reply(line: string) {
+	return JSON.parse(dispatchLine(line) ?? '{}');
+}
+
+describe('dispatch — modern era (2026-07-28)', () => {
+	test('server/discover advertises the modern revision, tools only, with caching hints', () => {
+		const { result } = reply(modernLine('server/discover'));
+		expect(result.resultType).toBe('complete');
+		expect(result.supportedVersions).toEqual(['2026-07-28']);
+		expect(result.capabilities).toEqual({ tools: { listChanged: false } });
+		expect(result.instructions.length).toBeGreaterThan(100);
+		expect(result.cacheScope).toBe('public');
+		expect(Number.isInteger(result.ttlMs)).toBe(true);
+		expect(result._meta['io.modelcontextprotocol/serverInfo'].name).toBe('v10r-patterns');
+	});
+
+	test('tools/list and tools/call serve the same tools, marked complete', () => {
+		const list = reply(modernLine('tools/list')).result;
+		expect(list.tools).toEqual(TOOLS);
+		expect(list).toMatchObject({ resultType: 'complete', cacheScope: 'public' });
+		const call = reply(modernLine('tools/call', { name: 'get_pattern', arguments: { id: 'singleflight' } })).result;
+		expect(call.resultType).toBe('complete');
+		expect(call.isError).toBeUndefined();
+		expect(call.content[0].text).toContain('singleflight');
+	});
+
+	test('the legacy path is unchanged by the modern one', () => {
+		const list = reply('{"jsonrpc":"2.0","id":2,"method":"tools/list"}').result;
+		expect(list).toEqual({ tools: TOOLS });
+	});
+
+	test("an unknown tool is the spec's -32602; the legacy era keeps its isError result", () => {
+		expect(reply(modernLine('tools/call', { name: 'set_mcp_page_message' }))).toMatchObject({
+			id: 5,
+			error: { code: -32602, data: { name: 'set_mcp_page_message' } },
+		});
+		const legacy = reply('{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"set_mcp_page_message"}}');
+		expect(legacy.error).toBeUndefined();
+		expect(legacy.result.isError).toBe(true);
+	});
+
+	test('removed and unknown methods answer -32601 with the request id', () => {
+		for (const method of ['initialize', 'ping', 'logging/setLevel', 'no/such']) {
+			expect(reply(modernLine(method)), method).toMatchObject({ id: 5, error: { code: -32601 } });
+		}
+	});
+
+	test('an unsupported modern revision answers -32022 listing the modern revisions only', () => {
+		expect(reply(modernLine('server/discover', {}, '2099-01-01'))).toMatchObject({
+			id: 5,
+			error: { code: -32022, data: { supported: ['2026-07-28'], requested: '2099-01-01' } },
+		});
+	});
+
+	test('an invalid envelope answers -32602', () => {
+		const line = JSON.stringify({
+			jsonrpc: '2.0',
+			id: 5,
+			method: 'tools/list',
+			params: { _meta: { 'io.modelcontextprotocol/protocolVersion': '2026-07-28' } },
+		});
+		expect(reply(line)).toMatchObject({ id: 5, error: { code: -32602 } });
+	});
+
+	test('a method named like an Object.prototype member is not a handler', () => {
+		expect(reply('{"jsonrpc":"2.0","id":3,"method":"constructor"}').error.code).toBe(-32601);
+		expect(reply(modernLine('toString')).error.code).toBe(-32601);
 	});
 });

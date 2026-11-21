@@ -208,9 +208,9 @@ export const mcpCallLog = mcpSchema.table(
 		 * `Mcp-Name` header), so the domain is bounded by construction; unrecognised names become
 		 * '(unknown)'. The length CHECK is a database-side backstop, not the primary control.
 		 *
-		 * Never taken from `Mcp-Name` alone: the RC makes header/body agreement a server MUST, but
-		 * this server does not enforce it, so the header is untrusted input. The body value is
-		 * authoritative and is in scope at the same seam.
+		 * Never taken from `Mcp-Name` alone. The 2026-07-28 path rejects a request whose header and
+		 * body disagree (-32020) before dispatch, but the legacy path does not require the header at
+		 * all, so the body value stays the one authoritative source for both eras.
 		 */
 		toolName: text('tool_name'),
 
@@ -270,9 +270,11 @@ export const mcpCallLog = mcpSchema.table(
 		 * of capture: a client that requests 2026-07-28, gets a 400, falls back, and negotiates
 		 * 2025-11-25 would otherwise be indistinguishable from a plain 2025-11-25 client.
 		 *
-		 * Caller-controlled, so allowlisted to known version strings with '(other)' as the sink.
-		 * ⚠ `servedProtocolVersion` currently over-reports 2025-06-18: `DEFAULT_PROTOCOL_VERSION`
-		 * is `SUPPORTED_PROTOCOL_VERSIONS[1]`, while the spec says the fallback SHOULD be latest.
+		 * Caller-controlled and stored verbatim, capped at 32 characters by the observer (no
+		 * allowlist): an unknown version is itself the signal a migration query looks for.
+		 * Rows written before 2026-11-21 over-report 2025-06-18 as served: the hosted fallback
+		 * answered it for unknown versions until both transports moved to the one
+		 * `LATEST_LEGACY_PROTOCOL_VERSION` (`mcp/protocol-version.ts`).
 		 */
 		requestedProtocolVersion: text('requested_protocol_version'),
 		servedProtocolVersion: text('served_protocol_version'),
@@ -280,7 +282,9 @@ export const mcpCallLog = mcpSchema.table(
 		/**
 		 * The 2026-07-28 revision makes `Mcp-Method` / `Mcp-Name` REQUIRED headers. Their mere
 		 * presence is a free era-detector — what fraction of callers have migrated — and costs
-		 * current-era clients exactly nothing (a `headers.get()` that returns null).
+		 * legacy clients exactly nothing (a `headers.get()` that returns null). Since the server
+		 * speaks 2026-07-28 too, `served_protocol_version = '2026-07-28'` is the exact count;
+		 * this flag still catches modern-shaped requests that were rejected at admission.
 		 */
 		rcHeaders: boolean('rc_headers').notNull().default(false),
 

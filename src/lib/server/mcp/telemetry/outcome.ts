@@ -90,7 +90,9 @@ export function inferOutcome(
 		if (observation.status === 403) return { stage: 'envelope', outcome: 'forbidden_origin' };
 		if (observation.status === 500) return { stage: 'envelope', outcome: 'internal_error' };
 		if (observation.rpcErrorCode === -32700) return { stage: 'envelope', outcome: 'parse_error' };
-		if (observation.status === 400 && observation.rpcErrorCode === null) {
+		// The plain legacy 400 (no JSON-RPC code) and the modern -32022 are the same event: the
+		// caller asked for a revision this server does not speak.
+		if (observation.status === 400 && (observation.rpcErrorCode === null || observation.rpcErrorCode === -32022)) {
 			return { stage: 'envelope', outcome: 'unsupported_version' };
 		}
 		return { stage: 'envelope', outcome: 'bad_envelope' };

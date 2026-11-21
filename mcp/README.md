@@ -12,7 +12,7 @@ Interactive showcase: `/showcases/mcp` — registry stats, dependency graph, con
 
 ## How it works
 
-Zero-dependency Bun TypeScript: hand-rolled JSON-RPC 2.0 over newline-delimited stdio (MCP spec 2025-11-25). No SDK, no node_modules. The client spawns it as an ephemeral container with a read-only repo mount and no network:
+Zero-dependency Bun TypeScript: hand-rolled JSON-RPC 2.0 over newline-delimited stdio, dual-era — the MCP 2025-11-25 `initialize` handshake and stateless 2026-07-28 (`server/discover`, per-request `_meta`), chosen per message. No SDK, no node_modules. The client spawns it as an ephemeral container with a read-only repo mount and no network:
 
 ```bash
 podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
@@ -22,6 +22,8 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 |---|---|
 | `server.ts` | Entry: stdio loop, dispatch, lifecycle (exits on stdin EOF / SIGTERM — no orphan containers) |
 | `protocol.ts` | JSON-RPC framing and line buffering |
+| `protocol-version.ts` | The legacy and modern revision lists and the `initialize` fallback — declared once, also read by the hosted transport (`#mcp/*`) |
+| `protocol-era.ts` | Per-message era routing (`routeMcpRequest`), `_meta` and header checks, `server/discover` and modern result dressing — shared with the hosted transport |
 | `security.ts` | Path containment (realpath prefix check) + secret denylist + bounded excerpts |
 | `tools.ts` | The eight tools — a thin stdio adapter over the shared query layer in `../pattern-library/query.ts` (the hosted transport reads the same module) |
 | `snippet.ts` + `snippet-rules.json` | `validate_snippet` rule engine |
@@ -38,7 +40,9 @@ The records, their schema, and the drift guard (`bun run patterns:validate`) liv
 3. `get_file_excerpt` — bounded line-numbered read of referenced repo files (max 250 lines; secrets denied); `section` (or a `#heading` on the path) reads one heading or declaration
 4. `trace_capability` — concept → docs → code → tests → showcase trail
 5. `recommend_emulation_plan` — deterministic, dependency-ordered plan assembly (no inference); `target_infra` marks steps the target cannot support, `detail: "outline"` drops the per-step depth
-6. `validate_snippet` — checks a Svelte/TS snippet against v10r conventions (runes, component-first, tokens, Valibot); returns line-numbered findings with fixes — call it in a loop until clean
+6. `explore_architecture` — the Studio's Architecture Engineering engine: a workload profile and/or an example workload in, per decision record the chosen approach, the rule that chose it and why each alternative lost
+7. `check_architecture` — a Studio architecture model in, the fail-closed parser's static findings out (security apart from design)
+8. `validate_snippet` — checks a Svelte/TS snippet against v10r conventions (runes, component-first, tokens, Valibot); returns line-numbered findings with fixes — call it in a loop until clean
 
 ## Registration
 
@@ -65,7 +69,7 @@ podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/smoke
 podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/pattern-library/validate.ts
 ```
 
-Vitest/svelte-check don't sweep `mcp/` (tests use `bun:test`); Biome does — keep its style.
+Vitest/svelte-check don't sweep `mcp/` (tests use `bun:test`); Biome does — keep its style. `src/lib/server/mcp/sdk-interop.test.ts` (in `bun run validate`) also drives this server through the official SDK v2 stdio client in `legacy`, `auto` and `pin` mode. Conformance runs against the hosted endpoint (`bun run mcp:conformance`, see `docs/blueprint/architecture/hosted-mcp.md`); both transports share `protocol-era.ts`.
 
 ## Adding a pattern
 
@@ -77,7 +81,8 @@ This same curated registry is also exposed read-only at `POST /api/mcp/public` �
 
 ## Constraints worth knowing
 
-- Tool definitions deliberately omit `outputSchema`/`title`/`annotations` — a live Claude Code bug silently drops a server's entire tool list when any tool carries them. `smoke.ts` guards this.
+- Tool definitions deliberately omit `outputSchema`/`title`/`annotations` — a live Claude Code bug silently drops a server's entire tool list when any tool carries them. `smoke.ts` guards this. Whether the bug is fixed is checked locally with `scripts/mcp/claude-code-compat/check.sh` ([runbook](../docs/blueprint/architecture/mcp-evolution/claude-code-compat.md)) before either field is added.
+- `protocol-version.ts` and `protocol-era.ts` import nothing outside this directory: the hosted transport imports them too, and the container has no `node_modules`.
 - Tool results are text-only markdown, never `structuredContent` — E2E dogfooding found that when both are present, Claude Code shows the model *only* the structured payload and hides the text body (`get_file_excerpt` came through as bare metadata, no code). Don't re-add `structuredContent`.
 - All logging goes to stderr; stdout is protocol-only. The process exits on stdin EOF or SIGTERM/SIGINT — Claude Code has a known issue leaving child processes orphaned otherwise.
 - Every response stays well under Claude Code's 10k-token warning threshold by construction.

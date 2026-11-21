@@ -1,0 +1,43 @@
+# Expected failures for the official MCP conformance suite, revision 2025-11-25
+# (runner @modelcontextprotocol/conformance@0.1.16, pinned in scripts/mcp/conformance.ts).
+#
+# Every entry exercises a capability v10r does not advertise — the server's `initialize` result
+# declares `capabilities: { tools: { listChanged: false } }` and nothing else, so answering these
+# methods with -32601 is the conformant behaviour — or a fixture tool from the conformance
+# reference server (`test_image_content`, `test_tool_with_progress`, …) that a real server has no
+# reason to expose. Nothing here is a protocol bug. A new failure is never added here without a
+# matrix row (docs/blueprint/architecture/mcp-evolution/matrix.md) saying why it is not applicable.
+server:
+  # logging capability not advertised → logging/setLevel is -32601
+  - logging-set-level
+  # completions capability not advertised (no prompts or resource templates to complete)
+  - completion-complete
+  # fixture tools: v10r's tools return text content only, by design (pattern-mcp.md)
+  - tools-call-image
+  - tools-call-audio
+  - tools-call-embedded-resource
+  - tools-call-mixed-content
+  # fixture tools: no tool emits log or progress notifications (non-streaming JSON responses)
+  - tools-call-with-logging
+  - tools-call-with-progress
+  # a WARNING, not a failed check (the runner's baseline mode counts it): no Mcp-Session-Id and no
+  # SSE stream, because v10r is stateless and answers GET with 405 (both optional; hosted-mcp.md §A)
+  - server-sse-multiple-streams
+  # fixture tools: no tool needs sampling or elicitation from the client
+  - tools-call-sampling
+  - tools-call-elicitation
+  - elicitation-sep1034-defaults
+  - elicitation-sep1330-enums
+  # resources capability not advertised
+  - resources-list
+  - resources-read-text
+  - resources-read-binary
+  - resources-templates-read
+  - resources-subscribe
+  - resources-unsubscribe
+  # prompts capability not advertised
+  - prompts-list
+  - prompts-get-simple
+  - prompts-get-with-args
+  - prompts-get-embedded-resource
+  - prompts-get-with-image
