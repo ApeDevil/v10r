@@ -10,8 +10,8 @@
  * Four properties:
  *  1. every `fail(` call in mcp/tools.ts passes an actions array — no error strands the caller;
  *  2. the heading is declared once, in the shared query layer, and stdio renders through it;
- *  3. the transport catch-all in mcp/server.ts stays bare, mirroring the hosted transport
- *     literals whose bareness is the telemetry discriminator;
+ *  3. the thrown-tool literal in mcp/tool-server.ts (both transports) stays bare — its bareness
+ *     is the telemetry discriminator;
  *  4. why-strings stay one short clause wherever they are written.
  */
 import { readFileSync } from 'node:fs';
@@ -21,7 +21,7 @@ import { NEXT_ACTIONS_HEADING } from './types';
 
 const TOOLS_PATH = join(process.cwd(), 'mcp', 'tools.ts');
 const QUERY_PATH = join(process.cwd(), 'pattern-library', 'query.ts');
-const SERVER_PATH = join(process.cwd(), 'mcp', 'server.ts');
+const TOOL_SERVER_PATH = join(process.cwd(), 'mcp', 'tool-server.ts');
 
 /** Balanced-paren argument extraction for every `fail(` CALL (the definition is skipped). */
 function failCallArgs(source: string): string[] {
@@ -45,7 +45,7 @@ function failCallArgs(source: string): string[] {
 
 describe('next-actions gate', () => {
 	const tools = readFileSync(TOOLS_PATH, 'utf8');
-	const server = readFileSync(SERVER_PATH, 'utf8');
+	const toolServer = readFileSync(TOOL_SERVER_PATH, 'utf8');
 
 	it('every fail() call in mcp/tools.ts hands the caller an actions array', () => {
 		const calls = failCallArgs(tools);
@@ -61,9 +61,10 @@ describe('next-actions gate', () => {
 		expect(tools).toMatch(/withNextActions,\n\} from '\.\.\/pattern-library\/query\.ts'/);
 	});
 
-	it('the stdio transport catch-all stays bare, like the hosted transport literals', () => {
-		expect(server).not.toContain(NEXT_ACTIONS_HEADING);
-		expect(server).toContain('failed unexpectedly');
+	it('the shared thrown-tool answer stays bare: no next actions, no diag', () => {
+		expect(toolServer).not.toContain(NEXT_ACTIONS_HEADING);
+		expect(toolServer).not.toContain('withNextActions');
+		expect(toolServer).toContain('tool failed to complete. The error was logged server-side.');
 	});
 
 	it('why-strings stay one short clause on both surfaces', () => {

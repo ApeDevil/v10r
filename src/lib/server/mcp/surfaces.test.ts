@@ -1,25 +1,28 @@
 import { describe, expect, it, vi } from 'vitest';
-import { LATEST_LEGACY_PROTOCOL_VERSION } from '#mcp/protocol-version.ts';
+
+/**
+ * The three hosted surfaces through the production HTTP path (`respondToMcpPost` → the official
+ * SDK): the protocol answers a client relies on, and — the part that is v10r's own — that each
+ * surface serves exactly its registry and nothing else.
+ */
 
 // Neither the list nor the cross-registry rejection paths touch the DB; stub it so importing
 // the admin registry never constructs a real Neon pool.
 vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 vi.mock('#lib/server/admin/audit.ts', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 
-const { handleMcpMessage } = await import('./transport');
+const { mcpPost } = await import('./mcp-post.ts');
 
 /** The JSON-RPC response alone — these tests are about the body; http.test.ts covers statuses. */
-async function respond(...args: Parameters<typeof handleMcpMessage>) {
-	return (await handleMcpMessage(...args)).response;
+async function respond(message: unknown, registry: Parameters<typeof mcpPost>[0]) {
+	return (await mcpPost(registry, message)).body;
 }
 const { publicPatternRegistry } = await import('./patterns/tools');
 const { createAdminStateRegistry } = await import('./demo/tools');
 const adminStateRegistry = createAdminStateRegistry();
 
-const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server', cacheScope: 'public' as const };
-
 function call(method: string, params?: unknown, registry = publicPatternRegistry, id: unknown = 1) {
-	return respond({ jsonrpc: '2.0', id, method, params }, registry, IDENTITY);
+	return respond({ jsonrpc: '2.0', id, method, ...(params !== undefined && { params }) }, registry);
 }
 
 const PATTERN_TOOL_NAMES = [
@@ -42,7 +45,11 @@ const ADMIN_TOOL_NAMES = [
 
 describe('protocol basics', () => {
 	it('initialize returns serverInfo, protocol version, and tools capability', async () => {
-		const res = await call('initialize', { protocolVersion: '2025-06-18' });
+		const res = await call('initialize', {
+			protocolVersion: '2025-06-18',
+			capabilities: {},
+			clientInfo: { name: 't', version: '1' },
+		});
 		expect(res).toMatchObject({
 			result: {
 				protocolVersion: '2025-06-18',
@@ -52,12 +59,13 @@ describe('protocol basics', () => {
 		});
 	});
 
-	it('initialize answers the latest supported revision to an unknown one, like the stdio server', async () => {
-		// The two transports read one constant (mcp/protocol-version.ts); mcp/server.test.ts pins
-		// the stdio side of the same contract.
-		const res = await call('initialize', { protocolVersion: '2099-01-01' });
-		expect(res).toMatchObject({ result: { protocolVersion: LATEST_LEGACY_PROTOCOL_VERSION } });
-		expect(LATEST_LEGACY_PROTOCOL_VERSION).toBe('2025-11-25');
+	it('initialize answers the latest legacy revision to an unknown one (the SDK negotiates, both transports alike)', async () => {
+		const res = await call('initialize', {
+			protocolVersion: '2099-01-01',
+			capabilities: {},
+			clientInfo: { name: 't', version: '1' },
+		});
+		expect(res).toMatchObject({ result: { protocolVersion: '2025-11-25' } });
 	});
 
 	it('ping returns an empty result', async () => {
@@ -66,7 +74,7 @@ describe('protocol basics', () => {
 	});
 
 	it('a notification (no id) is acknowledged with no response body', async () => {
-		const res = await respond({ jsonrpc: '2.0', method: 'notifications/initialized' }, publicPatternRegistry, IDENTITY);
+		const res = await respond({ jsonrpc: '2.0', method: 'notifications/initialized' }, publicPatternRegistry);
 		expect(res).toBeNull();
 	});
 
@@ -76,27 +84,43 @@ describe('protocol basics', () => {
 	});
 
 	it('rejects a wrong jsonrpc version (-32600) without dispatching', async () => {
-		const res = await respond({ jsonrpc: '1.0', id: 1, method: 'tools/list' }, publicPatternRegistry, IDENTITY);
+		const res = await respond({ jsonrpc: '1.0', id: 1, method: 'tools/list' }, publicPatternRegistry);
 		expect(res && 'error' in res && res.error.code).toBe(-32600);
 	});
 
 	it('rejects a missing jsonrpc field (-32600)', async () => {
-		const res = await respond({ id: 1, method: 'ping' }, publicPatternRegistry, IDENTITY);
+		const res = await respond({ id: 1, method: 'ping' }, publicPatternRegistry);
 		expect(res && 'error' in res && res.error.code).toBe(-32600);
 	});
 
 	it('rejects a non-scalar id (-32600) without dispatching', async () => {
-		const res = await respond(
-			{ jsonrpc: '2.0', id: { bad: true }, method: 'tools/list' },
-			publicPatternRegistry,
-			IDENTITY,
-		);
+		const res = await respond({ jsonrpc: '2.0', id: { bad: true }, method: 'tools/list' }, publicPatternRegistry);
 		expect(res && 'error' in res && res.error.code).toBe(-32600);
 	});
 
-	it('rejects a batch (array) request', async () => {
-		const res = await respond([{ jsonrpc: '2.0', id: 1, method: 'ping' }], publicPatternRegistry, IDENTITY);
-		expect(res && 'error' in res && res.error.code).toBe(-32600);
+	it('refuses a batch (-32600) before anything is dispatched', async () => {
+		// One POST is one call: rate limits count POSTs and telemetry records one call per POST, so a
+		// batch would buy N tool calls for one request. The SDK would serve it; the adapter does not.
+		let dispatched = 0;
+		const counting = {
+			tools: publicPatternRegistry.tools,
+			dispatch: (name: string, args: unknown) => {
+				dispatched += 1;
+				return publicPatternRegistry.dispatch(name, args);
+			},
+		};
+		const { status, body } = await mcpPost(counting, [
+			{
+				jsonrpc: '2.0',
+				id: 1,
+				method: 'tools/call',
+				params: { name: 'search_patterns', arguments: { query: 'jobs' } },
+			},
+			{ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'get_pattern', arguments: { id: 'jobs' } } },
+		]);
+		expect(status).toBe(400);
+		expect(body).toMatchObject({ jsonrpc: '2.0', id: null, error: { code: -32600 } });
+		expect(dispatched).toBe(0);
 	});
 });
 
@@ -127,23 +151,24 @@ describe('admin registry exposes only the demo-state tools', () => {
 });
 
 describe('hard dispatch separation', () => {
+	// A name outside the surface's registry is the protocol error -32602 in both eras (the SDK's
+	// answer, and the one the spec gives for an unknown tool). It never reaches a dispatcher.
 	it('rejects an admin mutation submitted to the PUBLIC endpoint', async () => {
 		const res = await call('tools/call', { name: 'set_mcp_page_message', arguments: { message: 'pwned' } });
-		const result = (res as { result: { isError?: boolean; content: { text: string }[] } }).result;
-		expect(result.isError).toBe(true);
-		expect(result.content[0].text).toMatch(/does not expose|Unknown tool/i);
+		expect(res).toMatchObject({ error: { code: -32602, message: expect.stringMatching(/not found/i) } });
+		expect(res).not.toHaveProperty('result');
 	});
 
 	it('rejects every admin tool name on the public endpoint', async () => {
 		for (const name of ADMIN_TOOL_NAMES) {
 			const res = await call('tools/call', { name, arguments: {} });
-			expect((res as { result: { isError?: boolean } }).result.isError).toBe(true);
+			expect(res, name).toMatchObject({ error: { code: -32602 } });
 		}
 	});
 
 	it('rejects a pattern tool submitted to the ADMIN endpoint', async () => {
 		const res = await call('tools/call', { name: 'get_pattern', arguments: { id: 'x' } }, adminStateRegistry);
-		expect((res as { result: { isError?: boolean } }).result.isError).toBe(true);
+		expect(res).toMatchObject({ error: { code: -32602 } });
 	});
 });
 

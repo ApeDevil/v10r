@@ -18,7 +18,7 @@ spend the wrong account. Everything else — the fixture server and the script �
 
 | File | Role |
 |---|---|
-| `scripts/mcp/claude-code-compat/annotated-server.ts` | The real stdio dispatch (`mcp/server.ts`) with one change on the way out: `tools/list` results gain the fields named by `V10R_COMPAT_FIELDS` (`none`, `title`, `readOnlyHint`, `both`). Serves stdio, or HTTP with `--http <port>`. A fixture only — never registered for real use |
+| `scripts/mcp/claude-code-compat/annotated-server.ts` | The real stdio server (the committed bundle `mcp/server.bundle.js`, run as a child) with one change on the way out: `tools/list` results gain the fields named by `V10R_COMPAT_FIELDS` (`none`, `title`, `readOnlyHint`, `both`). Serves stdio, or HTTP with `--http <port>` (a line bridge to the same child). Dependency-free: runs in the bare container like the real server. A fixture only — never registered for real use |
 | `scripts/mcp/claude-code-compat/check.sh` | Runs every case — 2 transports × 4 field sets — as one isolated, headless Claude Code turn and reads the session's `system/init` event: the fixture server's connection status and how many of its eight tools the client kept |
 
 Isolation: `--strict-mcp-config` ignores every MCP server you have configured; each turn runs in a

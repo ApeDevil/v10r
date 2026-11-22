@@ -92,8 +92,9 @@ server:
   - tools-call-image:tools-call-image
   - tools-call-mixed-content:tools-call-mixed-content
   - tools-call-with-progress:tools-call-with-progress
-  # Fixture tools `test_simple_text` and `test_error_handling` — v10r's own text results and isError
-  # results are pinned by http.test.ts, mcp/server.test.ts and sdk-interop.test.ts instead.
+  # Fixture tools `test_simple_text` and `test_error_handling` — the same checks run against v10r's
+  # own tools in sdk-interop.test.ts ("conformance fixture equivalents on real tools"), and the
+  # modern-era text and isError results are pinned by http.test.ts and mcp/server.test.ts.
   - tools-call-error:tools-call-error
   - tools-call-simple-text:tools-call-simple-text
   # Fixture tool `json_schema_2020_12_tool` (pending scenario); v10r's schemas are plain 2020-12-compatible objects

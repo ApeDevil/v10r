@@ -1,18 +1,23 @@
 /**
- * Unit tests for the Pattern MCP (bun:test — runs with zero node_modules).
+ * Unit tests for the Pattern MCP (bun:test).
  * Vitest cannot collide: its include glob is src/** only.
  *
- * Run: podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun test /v10r/mcp/
+ * The protocol itself is the official SDK's and is not re-tested here; what is pinned is v10r's
+ * wiring of it — the tools a connection sees, how a call reaches the registry, which answers the
+ * registry (not the SDK) owns, and the era behaviour a real stdio connection gets from `serveStdio`.
+ *
+ * Run: bun test mcp/
  */
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
+import { InMemoryTransport, type JSONRPCMessage } from '@modelcontextprotocol/server';
+import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { loadRegistry } from '../pattern-library/load.ts';
 import { buildById, topoSort } from '../pattern-library/schema.ts';
 import { scorePatterns, tokenizePatternQuery } from '../pattern-library/search.ts';
-import { createLineBuffer, err, isNotification, ok, parseLine } from './protocol.ts';
-import { LATEST_LEGACY_PROTOCOL_VERSION } from './protocol-version.ts';
 import { readExcerpt, resolveSafe } from './security.ts';
-import { dispatchLine } from './server.ts';
+import { STDIO_IDENTITY, stdioRegistry } from './stdio-server.ts';
+import { createToolServer, type ToolRegistry } from './tool-server.ts';
 import { handleToolCall, TOOLS } from './tools.ts';
 
 const REPO_ROOT = resolve(import.meta.dir, '..');
@@ -21,35 +26,6 @@ if (!registry) {
 	throw new Error('registry must load for tests');
 }
 const ctx = { registry, loadError: null, root: REPO_ROOT };
-
-describe('protocol', () => {
-	test('parseLine classifies messages, batches, garbage', () => {
-		expect(parseLine('{"jsonrpc":"2.0","id":1,"method":"ping"}').kind).toBe('message');
-		expect(parseLine('[1,2]').kind).toBe('batch');
-		expect(parseLine('42').kind).toBe('invalid');
-		expect(parseLine('not json').kind).toBe('parse-error');
-	});
-
-	test('notification = message without id key', () => {
-		expect(isNotification({ method: 'notifications/initialized' })).toBe(true);
-		expect(isNotification({ id: 0, method: 'ping' })).toBe(false);
-		expect(isNotification({ id: null, method: 'ping' })).toBe(false);
-	});
-
-	test('frames are single-line NDJSON', () => {
-		expect(ok(1, { a: 1 })).toBe('{"jsonrpc":"2.0","id":1,"result":{"a":1}}\n');
-		expect(err(null, -32700, 'Parse error')).toContain('"code":-32700');
-		expect(ok(1, { s: 'x' }).slice(0, -1)).not.toContain('\n');
-	});
-
-	test('line buffer survives chunk splits and CRLF', () => {
-		const buffer = createLineBuffer();
-		expect(buffer.push('{"a"')).toEqual([]);
-		expect(buffer.push(':1}\r\n{"b":2}\n{"c"')).toEqual(['{"a":1}', '{"b":2}']);
-		expect(buffer.push(':3}')).toEqual([]);
-		expect(buffer.flush()).toEqual(['{"c":3}']);
-	});
-});
 
 describe('registry', () => {
 	test('loads the full two-tier registry with unique ids and honest tiers', () => {
@@ -189,121 +165,171 @@ describe('tools', () => {
 	});
 });
 
-describe('dispatch', () => {
-	test('initialize negotiates version and ships instructions', () => {
-		const reply = dispatchLine(
-			'{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}',
-		);
-		const parsed = JSON.parse(reply ?? '{}');
-		expect(parsed.result.protocolVersion).toBe('2025-06-18');
-		expect(parsed.result.serverInfo.name).toBe('v10r-patterns');
-		expect(parsed.result.instructions.length).toBeGreaterThan(100);
+// biome-ignore lint/suspicious/noExplicitAny: tests read arbitrary JSON-RPC shapes
+type Reply = Record<string, any>;
+
+/**
+ * One stdio connection, exactly as `mcp/stdio-server.ts` serves it (`serveStdio` + the shared tool
+ * server), over an in-memory pipe instead of process stdio. `send` resolves with the reply to
+ * that id.
+ */
+async function connection(served: ToolRegistry = stdioRegistry(ctx)) {
+	const [client, server] = InMemoryTransport.createLinkedPair();
+	const handle = serveStdio(() => createToolServer(served, STDIO_IDENTITY), { transport: server });
+	const pending = new Map<string | number, (reply: Reply) => void>();
+	client.onmessage = (message: JSONRPCMessage) => {
+		const reply = message as Reply;
+		pending.get(reply.id)?.(reply);
+	};
+	await client.start();
+	let next = 1;
+	return {
+		send(method: string, params?: Record<string, unknown>): Promise<Reply> {
+			const id = next++;
+			const answered = new Promise<Reply>((resolveReply) => pending.set(id, resolveReply));
+			void client.send({ jsonrpc: '2.0', id, method, ...(params && { params }) } as JSONRPCMessage);
+			return answered;
+		},
+		notify(method: string) {
+			return client.send({ jsonrpc: '2.0', method } as JSONRPCMessage);
+		},
+		close: () => handle.close(),
+	};
+}
+
+const INITIALIZE = { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'test', version: '1' } };
+
+/** The 2026-07-28 per-request envelope, no handshake. */
+function modern(params: Record<string, unknown> = {}, version = '2026-07-28') {
+	return {
+		...params,
+		_meta: { 'io.modelcontextprotocol/protocolVersion': version, 'io.modelcontextprotocol/clientCapabilities': {} },
+	};
+}
+
+async function legacyConnection(served?: ToolRegistry) {
+	const conn = await connection(served);
+	const init = await conn.send('initialize', INITIALIZE);
+	await conn.notify('notifications/initialized');
+	return { conn, init };
+}
+
+describe('stdio — legacy era (initialize handshake)', () => {
+	test('initialize negotiates the requested version and ships the instructions', async () => {
+		const { conn, init } = await legacyConnection();
+		expect(init.result.protocolVersion).toBe('2025-11-25');
+		expect(init.result.serverInfo).toEqual({ name: 'v10r-patterns', version: '1.0.0' });
+		expect(init.result.capabilities).toEqual({ tools: { listChanged: false } });
+		expect(init.result.instructions.length).toBeGreaterThan(100);
+		await conn.close();
 	});
 
-	test('unsupported version falls back to newest supported', () => {
-		const reply = dispatchLine(
-			'{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"1999-01-01"}}',
-		);
-		expect(JSON.parse(reply ?? '{}').result.protocolVersion).toBe(LATEST_LEGACY_PROTOCOL_VERSION);
-		expect(LATEST_LEGACY_PROTOCOL_VERSION).toBe('2025-11-25');
+	test('tools/list is the eight tool definitions, byte for byte — no title, annotations or outputSchema', async () => {
+		const { conn } = await legacyConnection();
+		const list = await conn.send('tools/list');
+		expect(list.result.tools).toEqual(TOOLS);
+		expect(JSON.stringify(list.result.tools)).toBe(JSON.stringify(TOOLS));
+		await conn.close();
 	});
 
-	test('notifications produce no reply; batch and garbage produce errors', () => {
-		expect(dispatchLine('{"jsonrpc":"2.0","method":"notifications/initialized"}')).toBeNull();
-		expect(JSON.parse(dispatchLine('[{"jsonrpc":"2.0","id":1,"method":"ping"}]') ?? '{}').error.code).toBe(-32600);
-		expect(JSON.parse(dispatchLine('garbage') ?? '{}').error.code).toBe(-32700);
-		expect(JSON.parse(dispatchLine('{"jsonrpc":"2.0","id":9,"method":"nope"}') ?? '{}').error.code).toBe(-32601);
+	test('a call reaches the registry, and the registry — not the SDK — answers malformed arguments', async () => {
+		const { conn } = await legacyConnection();
+		const good = await conn.send('tools/call', { name: 'get_pattern', arguments: { id: 'singleflight' } });
+		expect(good.result.isError).toBeUndefined();
+		expect(good.result.content[0].text).toContain('singleflight');
+		// A missing required argument is the registry's recoverable error with a next call, not an
+		// SDK "Input validation error": the advertised schema is not enforced in front of the registry.
+		const bad = await conn.send('tools/call', { name: 'search_patterns', arguments: {} });
+		expect(bad.result.isError).toBe(true);
+		expect(bad.result.content[0].text).toContain('## Next actions');
+		expect(bad.result.content[0].text).not.toContain('Input validation error');
+		await conn.close();
 	});
 
-	test('ping and tools/list respond', () => {
-		expect(JSON.parse(dispatchLine('{"jsonrpc":"2.0","id":1,"method":"ping"}') ?? '{}').result).toEqual({});
-		const list = JSON.parse(dispatchLine('{"jsonrpc":"2.0","id":2,"method":"tools/list"}') ?? '{}');
-		expect(list.result.tools.length).toBe(8);
+	test('an unknown tool is the protocol error -32602 and is never dispatched', async () => {
+		let dispatched = 0;
+		const counting: ToolRegistry = {
+			tools: TOOLS,
+			dispatch: (name, args) => {
+				dispatched++;
+				return handleToolCall(name, args, ctx);
+			},
+		};
+		const { conn } = await legacyConnection(counting);
+		const reply = await conn.send('tools/call', { name: 'set_mcp_page_message', arguments: {} });
+		expect(reply.error.code).toBe(-32602);
+		expect(dispatched).toBe(0);
+		await conn.close();
+	});
+
+	test('a throwing tool answers a generic isError — the exception text never reaches the wire', async () => {
+		const throwing: ToolRegistry = {
+			tools: TOOLS,
+			dispatch: () => {
+				throw new Error('SELECT secret FROM internal_table');
+			},
+		};
+		const { conn } = await legacyConnection(throwing);
+		const reply = await conn.send('tools/call', { name: 'get_pattern', arguments: { id: 'x' } });
+		expect(reply.result.isError).toBe(true);
+		expect(JSON.stringify(reply)).not.toContain('secret');
+		await conn.close();
+	});
+
+	test('ping answers and unknown methods are -32601', async () => {
+		const { conn } = await legacyConnection();
+		expect((await conn.send('ping')).result).toEqual({});
+		expect((await conn.send('no/such')).error.code).toBe(-32601);
+		expect((await conn.send('constructor')).error.code).toBe(-32601);
+		await conn.close();
 	});
 });
 
-/** A 2026-07-28 request line: the per-request `_meta` envelope, no handshake. */
-function modernLine(method: string, params: Record<string, unknown> = {}, version = '2026-07-28'): string {
-	return JSON.stringify({
-		jsonrpc: '2.0',
-		id: 5,
-		method,
-		params: {
-			...params,
-			_meta: {
-				'io.modelcontextprotocol/protocolVersion': version,
-				'io.modelcontextprotocol/clientCapabilities': {},
-			},
-		},
-	});
-}
-
-function reply(line: string) {
-	return JSON.parse(dispatchLine(line) ?? '{}');
-}
-
-describe('dispatch — modern era (2026-07-28)', () => {
-	test('server/discover advertises the modern revision, tools only, with caching hints', () => {
-		const { result } = reply(modernLine('server/discover'));
+describe('stdio — modern era (2026-07-28)', () => {
+	test('server/discover advertises the modern revision, tools only, with caching hints', async () => {
+		const conn = await connection();
+		const { result } = await conn.send('server/discover', modern());
 		expect(result.resultType).toBe('complete');
 		expect(result.supportedVersions).toEqual(['2026-07-28']);
 		expect(result.capabilities).toEqual({ tools: { listChanged: false } });
 		expect(result.instructions.length).toBeGreaterThan(100);
 		expect(result.cacheScope).toBe('public');
-		expect(Number.isInteger(result.ttlMs)).toBe(true);
+		expect(result.ttlMs).toBe(3_600_000);
 		expect(result._meta['io.modelcontextprotocol/serverInfo'].name).toBe('v10r-patterns');
+		await conn.close();
 	});
 
-	test('tools/list and tools/call serve the same tools, marked complete', () => {
-		const list = reply(modernLine('tools/list')).result;
+	test('tools/list and tools/call serve the same tools, marked complete', async () => {
+		const conn = await connection();
+		const list = (await conn.send('tools/list', modern())).result;
 		expect(list.tools).toEqual(TOOLS);
 		expect(list).toMatchObject({ resultType: 'complete', cacheScope: 'public' });
-		const call = reply(modernLine('tools/call', { name: 'get_pattern', arguments: { id: 'singleflight' } })).result;
+		const call = (await conn.send('tools/call', modern({ name: 'get_pattern', arguments: { id: 'singleflight' } })))
+			.result;
 		expect(call.resultType).toBe('complete');
 		expect(call.isError).toBeUndefined();
 		expect(call.content[0].text).toContain('singleflight');
+		await conn.close();
 	});
 
-	test('the legacy path is unchanged by the modern one', () => {
-		const list = reply('{"jsonrpc":"2.0","id":2,"method":"tools/list"}').result;
-		expect(list).toEqual({ tools: TOOLS });
+	test('an unknown tool is -32602; removed methods are -32601', async () => {
+		const conn = await connection();
+		expect((await conn.send('tools/call', modern({ name: 'set_mcp_page_message' }))).error.code).toBe(-32602);
+		expect((await conn.send('ping', modern())).error.code).toBe(-32601);
+		await conn.close();
 	});
 
-	test("an unknown tool is the spec's -32602; the legacy era keeps its isError result", () => {
-		expect(reply(modernLine('tools/call', { name: 'set_mcp_page_message' }))).toMatchObject({
-			id: 5,
-			error: { code: -32602, data: { name: 'set_mcp_page_message' } },
-		});
-		const legacy = reply('{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"set_mcp_page_message"}}');
-		expect(legacy.error).toBeUndefined();
-		expect(legacy.result.isError).toBe(true);
+	test('an unsupported modern revision answers -32022 listing the modern revisions only', async () => {
+		const conn = await connection();
+		const reply = await conn.send('server/discover', modern({}, '2099-01-01'));
+		expect(reply.error).toMatchObject({ code: -32022, data: { supported: ['2026-07-28'], requested: '2099-01-01' } });
+		await conn.close();
 	});
 
-	test('removed and unknown methods answer -32601 with the request id', () => {
-		for (const method of ['initialize', 'ping', 'logging/setLevel', 'no/such']) {
-			expect(reply(modernLine(method)), method).toMatchObject({ id: 5, error: { code: -32601 } });
-		}
-	});
-
-	test('an unsupported modern revision answers -32022 listing the modern revisions only', () => {
-		expect(reply(modernLine('server/discover', {}, '2099-01-01'))).toMatchObject({
-			id: 5,
-			error: { code: -32022, data: { supported: ['2026-07-28'], requested: '2099-01-01' } },
-		});
-	});
-
-	test('an invalid envelope answers -32602', () => {
-		const line = JSON.stringify({
-			jsonrpc: '2.0',
-			id: 5,
-			method: 'tools/list',
-			params: { _meta: { 'io.modelcontextprotocol/protocolVersion': '2026-07-28' } },
-		});
-		expect(reply(line)).toMatchObject({ id: 5, error: { code: -32602 } });
-	});
-
-	test('a method named like an Object.prototype member is not a handler', () => {
-		expect(reply('{"jsonrpc":"2.0","id":3,"method":"constructor"}').error.code).toBe(-32601);
-		expect(reply(modernLine('toString')).error.code).toBe(-32601);
+	test('an invalid envelope answers -32602', async () => {
+		const conn = await connection();
+		const reply = await conn.send('tools/list', { _meta: { 'io.modelcontextprotocol/protocolVersion': '2026-07-28' } });
+		expect(reply.error.code).toBe(-32602);
+		await conn.close();
 	});
 });

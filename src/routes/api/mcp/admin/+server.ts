@@ -20,7 +20,7 @@ import {
 import { mcpMethodNotAllowed, respondToMcpPost } from '#lib/server/mcp/http.adapter.ts';
 import { buildInfo } from '#lib/server/mcp/server-info.ts';
 import { createMcpObserver, recordMcpGateRejection } from '#lib/server/mcp/telemetry/observer.ts';
-import type { McpServerIdentity } from '#lib/server/mcp/transport.ts';
+import type { McpServerIdentity } from '#mcp/tool-server.ts';
 import type { RequestHandler } from './$types';
 
 /** See the public endpoint: the shared `waitUntil` budget is stated, not inherited. */

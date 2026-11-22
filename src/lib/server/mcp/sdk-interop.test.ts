@@ -8,10 +8,10 @@ import { StdioClientTransport as StdioClientTransportV2 } from '@modelcontextpro
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { McpServerIdentity } from '#mcp/tool-server.ts';
 import { mcpMethodNotAllowed, respondToMcpPost } from './http.adapter';
 import { publicPatternRegistry } from './patterns/tools';
-import type { McpServerIdentity } from './transport';
-import { noopMcpObserver } from './types';
+import { noopMcpObserver, type ToolRegistry } from './types';
 
 /**
  * Protocol-level interoperability proof using the REAL MCP SDK clients — v1
@@ -40,6 +40,8 @@ const IDENTITY: McpServerIdentity = {
 
 let server: http.Server;
 let baseUrl: URL;
+/** The registry the test server serves; one describe swaps in a throwing wrapper. */
+let served: ToolRegistry = publicPatternRegistry;
 
 beforeAll(async () => {
 	server = http.createServer(async (req, res) => {
@@ -61,7 +63,7 @@ beforeAll(async () => {
 			headers,
 			body: body.length > 0 ? body : undefined,
 		});
-		const response = await respondToMcpPost(request, publicPatternRegistry, IDENTITY, noopMcpObserver);
+		const response = await respondToMcpPost(request, served, IDENTITY, noopMcpObserver);
 		const outHeaders: Record<string, string> = {};
 		response.headers.forEach((val, key) => {
 			outHeaders[key] = val;
@@ -108,11 +110,12 @@ describe('MCP SDK interoperability (real client over HTTP)', () => {
 		}
 	});
 
-	it('rejects an admin mutation tool submitted to the public endpoint', async () => {
+	it('rejects an admin mutation tool submitted to the public endpoint with the protocol error -32602', async () => {
 		const { client, transport } = await connectClient();
 		try {
-			const result = await client.callTool({ name: 'set_mcp_page_message', arguments: { message: 'x' } });
-			expect(result.isError).toBe(true);
+			await expect(
+				client.callTool({ name: 'set_mcp_page_message', arguments: { message: 'x' } }),
+			).rejects.toMatchObject({ code: -32602 });
 		} finally {
 			await transport.close();
 		}
@@ -131,6 +134,99 @@ describe('MCP SDK interoperability (real client over HTTP)', () => {
 			expect(result).not.toHaveProperty('diag');
 			expect(JSON.stringify(result)).not.toMatch(/diag/);
 		} finally {
+			await transport.close();
+		}
+	});
+});
+
+/**
+ * The two 2025-11-25 conformance scenarios v10r baselines — `tools-call-simple-text` and
+ * `tools-call-error` — call fixture tools (`test_simple_text`, `test_error_handling`) no
+ * production server has a reason to expose. These cases run the SAME assertions those scenarios
+ * make, through a real SDK client on the 2025-era handshake, against v10r's own tools — so the
+ * baseline entries exclude only the fixture names, never the behaviour.
+ */
+describe('conformance fixture equivalents on real tools (2025-11-25 era)', () => {
+	/** `tools-call-simple-text`: a content array, non-empty, with a text block carrying text. */
+	function expectSimpleText(result: Awaited<ReturnType<Client['callTool']>>) {
+		const content = result.content as Array<{ type: string; text?: string }>;
+		expect(Array.isArray(content)).toBe(true);
+		expect(content.length).toBeGreaterThan(0);
+		const text = content.find((block) => block.type === 'text');
+		expect(text?.text).toBeTruthy();
+	}
+
+	/** `tools-call-error`: an in-band result (not a JSON-RPC error) with isError and a message. */
+	function expectToolError(result: Awaited<ReturnType<Client['callTool']>>) {
+		expect(result.isError).toBe(true);
+		const content = result.content as Array<{ type: string; text?: string }>;
+		expect(content[0]?.text).toBeTruthy();
+	}
+
+	const SUCCESSFUL_CALLS: Array<[string, Record<string, unknown>]> = [
+		['search_patterns', { query: 'background jobs' }],
+		['get_pattern', { id: 'multi-client-core' }],
+		['trace_capability', { capability: 'rag ingest' }],
+		['recommend_emulation_plan', { capabilities: ['ai chat', 'design system'] }],
+		['validate_snippet', { language: 'svelte', snippet: '<script>\nlet { value } = $props();\n</script>' }],
+	];
+
+	it('negotiates the 2025 era', async () => {
+		const { client, transport } = await connectClient();
+		try {
+			expect(transport.protocolVersion).toMatch(/^2025-/);
+			expect(client.getServerVersion()?.name).toBe(IDENTITY.name);
+		} finally {
+			await transport.close();
+		}
+	});
+
+	for (const [name, args] of SUCCESSFUL_CALLS) {
+		it(`tools-call-simple-text ≡ ${name} answers text content without isError`, async () => {
+			const { client, transport } = await connectClient();
+			try {
+				const result = await client.callTool({ name, arguments: args });
+				expect(result.isError).toBeFalsy();
+				expectSimpleText(result);
+			} finally {
+				await transport.close();
+			}
+		});
+	}
+
+	const DOMAIN_ERRORS: Array<[string, string, Record<string, unknown>]> = [
+		['unknown record', 'get_pattern', { id: 'does-not-exist' }],
+		['missing required argument', 'search_patterns', {}],
+		['wrong argument type', 'search_patterns', { query: 5 }],
+		['file outside the allowlist', 'get_file_excerpt', { path: '../../etc/passwd' }],
+	];
+
+	for (const [label, name, args] of DOMAIN_ERRORS) {
+		it(`tools-call-error ≡ ${name} (${label}) answers isError with a message`, async () => {
+			const { client, transport } = await connectClient();
+			try {
+				expectToolError(await client.callTool({ name, arguments: args }));
+			} finally {
+				await transport.close();
+			}
+		});
+	}
+
+	it('tools-call-error ≡ a real tool that throws answers isError with a generic message, no exception text', async () => {
+		// The scenario's fixture "always throws". Same here: a real tool whose dispatcher throws.
+		served = {
+			tools: publicPatternRegistry.tools,
+			dispatch: () => {
+				throw new Error('SECRET internal detail');
+			},
+		};
+		const { client, transport } = await connectClient();
+		try {
+			const result = await client.callTool({ name: 'search_patterns', arguments: { query: 'jobs' } });
+			expectToolError(result);
+			expect(JSON.stringify(result)).not.toMatch(/SECRET/);
+		} finally {
+			served = publicPatternRegistry;
 			await transport.close();
 		}
 	});
@@ -214,17 +310,18 @@ describe('MCP SDK v2 client interoperability (HTTP)', () => {
 		}
 	});
 
-	it('legacy mode: an admin tool on the public endpoint is an isError result, never dispatched', async () => {
+	it('legacy mode: an admin tool on the public endpoint is the protocol error -32602, never dispatched', async () => {
 		const { client, transport } = await connectV2('legacy');
 		try {
-			const result = await client.callTool({ name: 'set_mcp_page_message', arguments: { message: 'x' } });
-			expect(result.isError).toBe(true);
+			await expect(
+				client.callTool({ name: 'set_mcp_page_message', arguments: { message: 'x' } }),
+			).rejects.toMatchObject({ code: -32602 });
 		} finally {
 			await transport.close();
 		}
 	});
 
-	it('modern mode: the same call is the 2026-07-28 protocol error -32602', async () => {
+	it('modern mode: the same call is the same protocol error -32602', async () => {
 		const { client, transport } = await connectV2({ pin: '2026-07-28' });
 		try {
 			await expect(
@@ -241,35 +338,41 @@ describe('MCP SDK v2 client interoperability (HTTP)', () => {
 });
 
 /**
- * The stdio server through the v2 client's own stdio transport: a spawned `bun mcp/server.ts`, the
- * same process shape an MCP client launches. `bun` is on PATH in both the cloud session and the
- * container; the server itself needs nothing else.
+ * The stdio server through the v2 client's own stdio transport: a spawned process, the same shape
+ * an MCP client launches — the registered entry (`mcp/server.ts`, which starts the bundle), the source
+ * (`mcp/stdio-server.ts`, resolved against node_modules) and the committed self-contained bundle
+ * the container runs (`mcp/server.bundle.js`). `bun` is on
+ * PATH in both the cloud session and the container.
  */
 describe('MCP SDK v2 client interoperability (stdio)', () => {
-	async function connectStdio(mode: 'legacy' | 'auto' | { pin: string }) {
+	async function connectStdio(mode: 'legacy' | 'auto' | { pin: string }, entry: string) {
 		const client = new ClientV2({ name: 'interop-test-v2', version: '1.0.0' }, { versionNegotiation: { mode } });
-		const transport = new StdioClientTransportV2({ command: 'bun', args: ['mcp/server.ts'], stderr: 'ignore' });
+		const transport = new StdioClientTransportV2({ command: 'bun', args: [entry], stderr: 'ignore' });
 		await client.connect(transport);
 		return client;
 	}
 
-	for (const [mode, era] of [
-		['legacy', 'legacy'],
-		['auto', 'modern'],
-		[{ pin: '2026-07-28' }, 'modern'],
+	for (const [mode, era, entry] of [
+		['legacy', 'legacy', 'mcp/server.ts'],
+		['auto', 'modern', 'mcp/server.ts'],
+		[{ pin: '2026-07-28' }, 'modern', 'mcp/server.ts'],
+		['legacy', 'legacy', 'mcp/stdio-server.ts'],
+		['auto', 'modern', 'mcp/stdio-server.ts'],
+		['legacy', 'legacy', 'mcp/server.bundle.js'],
+		['auto', 'modern', 'mcp/server.bundle.js'],
 	] as const) {
-		it(`${JSON.stringify(mode)} mode: connects in the ${era} era, lists eight tools and calls one`, async () => {
-			const client = await connectStdio(mode);
+		it(`${entry}, ${JSON.stringify(mode)} mode: connects in the ${era} era, lists eight tools and calls one`, async () => {
+			const client = await connectStdio(mode, entry);
 			try {
 				expect(client.getProtocolEra()).toBe(era);
 				const { tools } = await client.listTools();
 				expect(tools.map((t) => t.name).sort()).toEqual(PATTERN_TOOL_NAMES);
 				const result = await client.callTool({ name: 'get_pattern', arguments: { id: 'singleflight' } });
 				expect(result.isError).toBeFalsy();
-				// Unknown tool: an isError result on the legacy path, the spec's -32602 on the modern one.
-				const unknown = client.callTool({ name: 'set_mcp_page_message', arguments: { message: 'x' } });
-				if (era === 'legacy') expect((await unknown).isError).toBe(true);
-				else await expect(unknown).rejects.toMatchObject({ code: -32602 });
+				// Unknown tool: the spec's -32602 protocol error, in either era.
+				await expect(
+					client.callTool({ name: 'set_mcp_page_message', arguments: { message: 'x' } }),
+				).rejects.toMatchObject({ code: -32602 });
 			} finally {
 				await client.close();
 			}

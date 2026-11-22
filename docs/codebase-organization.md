@@ -200,7 +200,7 @@ fails if a sweep hard-codes a window or names a job that does not exist.
 
 These are the reasons behind placements that otherwise look arbitrary.
 
-- **`pattern-library/` sits outside `src/`** because `mcp/server.ts` runs under bare Bun in
+- **`pattern-library/` sits outside `src/`** because the stdio server (`mcp/server.ts`, which runs the SDK bundle `mcp/server.bundle.js`) runs under bare Bun in
   an ephemeral, network-less container with no Vite — it must reach `registry.json` by
   relative path. The app gets the same file through the `#patterns/*` subpath import
   (package.json `imports`), which both runtimes resolve without a Vite alias.

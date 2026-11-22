@@ -27,7 +27,7 @@ function post(rawBody: string, headers: Record<string, string> = {}) {
 	const request = new Request('http://localhost/api/mcp/public', {
 		method: 'POST',
 		body: rawBody,
-		headers: { 'content-type': 'application/json', ...headers },
+		headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', ...headers },
 	});
 	return POST({ request, getClientAddress: () => '127.0.0.1' } as unknown as PostEvent);
 }
@@ -45,12 +45,22 @@ describe('GET /api/mcp/public', () => {
 });
 
 describe('POST /api/mcp/public', () => {
-	it('initialize identifies the public server with only coarse version in _meta', async () => {
-		const res = await rpc('initialize', { protocolVersion: '2025-06-18' });
+	it('initialize identifies the public server', async () => {
+		const res = await rpc('initialize', {
+			protocolVersion: '2025-06-18',
+			capabilities: {},
+			clientInfo: { name: 't', version: '1' },
+		});
 		expect(res.status).toBe(200);
 		const body = await res.json();
 		expect(body.result.serverInfo.name).toBe('v10r-mcp-public');
+	});
+
+	it('every tool result carries only the coarse build identity in _meta', async () => {
+		const res = await rpc('tools/call', { name: 'search_patterns', arguments: { query: '*' } });
+		const body = await res.json();
 		expect(body.result._meta).toHaveProperty('app');
+		expect(body.result._meta).toHaveProperty('patternRegistry');
 		expect(body.result._meta).not.toHaveProperty('commit');
 		expect(body.result._meta).not.toHaveProperty('environment');
 	});
@@ -75,7 +85,8 @@ describe('POST /api/mcp/public', () => {
 	it('rejects an admin mutation submitted to the public endpoint', async () => {
 		const res = await rpc('tools/call', { name: 'set_mcp_page_message', arguments: { message: 'x' } });
 		const body = await res.json();
-		expect(body.result.isError).toBe(true);
+		expect(body.error.code).toBe(-32602);
+		expect(body).not.toHaveProperty('result');
 	});
 
 	it('acknowledges a notification with 202 and no body', async () => {
@@ -110,7 +121,7 @@ describe('POST /api/mcp/public', () => {
 		});
 		expect(res.status).toBe(400);
 		const body = await res.json();
-		expect(body.error.code).toBe('unsupported_protocol_version');
+		expect(body.error.message).toMatch(/Unsupported protocol version/);
 	});
 
 	it('accepts a supported MCP-Protocol-Version header', async () => {

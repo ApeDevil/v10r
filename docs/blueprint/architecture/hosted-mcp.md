@@ -15,7 +15,7 @@ admin   endpoint (/api/mcp/admin)   -> bearer auth -> private tool registry -> d
 admin   page     (/admin/mcp)       -> Better Auth requireAdmin             -> demo-state service
 ```
 
-All three endpoints share one transport (`src/lib/server/mcp/transport.ts`) but are handed their tool registries explicitly — public and private the same read-only `publicPatternRegistry`, admin its own demo-state registry. The transport dispatches only tool names present in the registry it's given — a demo-state tool name POSTed to the public or private endpoint is rejected as an `isError` result, never dispatched. Hiding a tool from `tools/list` alone would not be enough; this is a hard dispatch allowlist, enforced in one place for all endpoints.
+All three endpoints share one adapter (`src/lib/server/mcp/http.adapter.ts`) over the official MCP SDK, built per request by `createToolServer` (`mcp/tool-server.ts`, shared with the stdio server), but are handed their tool registries explicitly — public and private the same read-only `publicPatternRegistry`, admin its own demo-state registry. The SDK server registers only the tools of the registry it's given — a demo-state tool name POSTed to the public or private endpoint is answered with JSON-RPC -32602 (`Tool … not found`), never dispatched. Hiding a tool from `tools/list` alone would not be enough; this is a hard dispatch allowlist, enforced in one place for all endpoints.
 
 ## A. Hosted public MCP — `POST /api/mcp/public`
 
@@ -26,17 +26,19 @@ No authentication — this endpoint is read-only by construction, not by convent
 - **Rate limit:** 60 requests/min per IP, via the project's native Upstash limiter (`#lib/server/http/rate-limit.ts`).
 - **`GET /api/mcp/public` → `405 Method Not Allowed`** (`Allow: POST`). Under Streamable HTTP, GET is the optional server→client SSE channel; this server does not implement SSE, so GET is refused. There is no discovery-JSON endpoint (it isn't part of MCP and isn't needed).
 - **Data source:** the same `pattern-library/registry.json`, imported at build time as static JSON — Vercel-safe, no runtime `fs` access. The tool logic is NOT re-implemented here: the tool contract and the four registry tools live once in `pattern-library/query.ts` (framework-free, imported through the `#patterns/*` subpath import), shared with the stdio server; `src/lib/server/mcp/patterns/` adds only the snapshot-backed excerpt reader, the snippet engine and the telemetry `diag`. `src/lib/server/mcp/patterns/parity.test.ts` executes both transports on the same calls and compares their output byte for byte.
-- **Transport:** MCP Streamable HTTP, non-streaming — one JSON-RPC message per POST maps to one JSON-RPC response. The envelope is validated before dispatch (`jsonrpc` must be `"2.0"`; `id` must be a string, number, or null); a notification (no `id`) returns HTTP 202 with no body; malformed JSON returns an HTTP 400 parse error. `Origin` is validated (DNS-rebinding protection, see Security posture). Dual-era: legacy `initialize` clients and stateless 2026-07-28 clients share the endpoint — see §Protocol eras.
+- **Transport:** MCP Streamable HTTP served by `@modelcontextprotocol/server` 2.4.0, non-streaming — one POST, one JSON response. The SDK validates the JSON-RPC envelope; a notification returns HTTP 202 with no body; malformed JSON returns an HTTP 400 parse error (from the bounded body reader, before the SDK). Clients must send `Accept: application/json, text/event-stream`, as the transport spec requires (the SDK answers 406 otherwise). `Origin` is validated (DNS-rebinding protection, see Security posture). Dual-era: legacy `initialize` clients and stateless 2026-07-28 clients share the endpoint — see §Protocol eras.
 
 ### Protocol eras
 
-Every endpoint (public, private, admin) speaks both MCP generations through the one transport. `routeMcpRequest` (`mcp/protocol-era.ts`, shared with the stdio server) decides per POST, from the body:
+Every endpoint (public, private, admin) speaks both MCP generations through the official SDK, composed the way its docs describe for a stateless server: `isLegacyRequest` decides per POST, from the body and headers.
 
-- **Legacy** — `initialize` without a modern `_meta` claim, or a request with no claim and no modern header. Unchanged: `initialize` negotiates (an unknown version gets the latest legacy revision, `2025-11-25`), then `ping` / `tools/list` / `tools/call`. A header naming an unknown *pre-2026* revision gets the plain `{ error: { code: 'unsupported_protocol_version' } }` 400 it always got.
-- **Modern (2026-07-28)** — the body carries `params._meta["io.modelcontextprotocol/protocolVersion"]`. Admission, in order: a valid envelope (`protocolVersion` and `clientCapabilities` required, `clientInfo` optional) else 400 / -32602; header and body agree on version and method else 400 / -32020; a supported revision else 400 / -32022 with `data: { supported: ["2026-07-28"], requested }`; `MCP-Protocol-Version` and `Mcp-Method` present, `Mcp-Name` present and equal to `params.name` on `tools/call` (optional whitespace stripped, `=?base64?…?=` decoded) else 400 / -32020. A modern header with no claim in the body is a 400 / -32602, never a silent downgrade.
-- **Modern methods** — `server/discover` (supported versions, the same capabilities `initialize` declares, the instructions), `tools/list`, `tools/call`. Every result carries `resultType: "complete"` and `_meta["io.modelcontextprotocol/serverInfo"]` (plus the surface's build info); discover and `tools/list` carry `ttlMs: 3600000` and the surface's `cacheScope` — `public` on the public endpoint, `private` behind a bearer. Removed or unknown methods (`initialize`, `ping`, `logging/setLevel`, …) are 404 / -32601; every error echoes the request id. A tool-call error stays an in-band result at 200. An unknown tool is the spec's in-band JSON-RPC error -32602 (`Unknown tool: <name>`, `data: { name }`) at 200, without dispatch; the legacy era keeps its `isError` result with the endpoint's recovery text.
+- **Legacy** — answered by a fresh `McpServer` on a stateless `WebStandardStreamableHTTPServerTransport` (`sessionIdGenerator: undefined`, JSON responses). `initialize` negotiates (an unknown version gets `2025-11-25`), then `ping` / `tools/list` / `tools/call`. An unknown `MCP-Protocol-Version` header is a 400 / -32000 naming the supported revisions.
+- **Modern (2026-07-28)** — answered by `createMcpHandler(factory, { legacy: 'reject', maxSubscriptions: 0 })`. The SDK owns admission: the `_meta` envelope (-32602), header/body agreement for `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` (-32020), supported revision (-32022 with the supported list), and the HTTP statuses that go with them.
+- **Modern methods** — `server/discover`, `tools/list`, `tools/call`. Discover and `tools/list` carry `ttlMs: 3600000` and the surface's `cacheScope` — `public` on the public endpoint, `private` behind a bearer. Unknown methods are 404 / -32601, and so is `subscriptions/listen`: it is optional — its stream carries only list-changed and resource-update notifications, and this server declares neither `listChanged` nor resources — and a Vercel function cannot hold a stream. The adapter answers it before the SDK, which would otherwise open one (the conformance suite reports the listen checks as not applicable).
+- **One message per POST** — a JSON-RPC batch is 400 / -32600 before the SDK, in either era, with nothing dispatched: rate limits count POSTs and telemetry records one call per POST, so a batch would buy N tool calls for one request and hide N-1 of them. (2025-03-26 required servers to accept batches; later revisions removed them. Recorded in the matrix as a deliberate exception.)
+- **Both eras** — an unknown tool is -32602 without dispatch. A tool's own error stays an in-band `isError` result; a tool that throws answers a generic error (never its exception text) and the cause is logged through `sanitizeError`. `tools/call` results carry the surface's build info in `_meta`.
 
-The registry, the dispatch allowlist and the per-surface auth are the same objects in both eras: the era changes admission and result dressing, nothing else. Telemetry records modern rows with the `_meta` clientInfo and the served revision; -32022 counts as `unsupported_version`, -32601 as `unknown_method`. Verified by `http.test.ts` (both eras), `sdk-interop.test.ts` (SDK v2 `legacy`, `auto`, `pin`) and the official conformance suite (`bun run mcp:conformance`).
+The registry, the dispatch allowlist and the per-surface auth are the same objects in both eras: the era changes admission and result dressing, nothing else. Rate limiting, bearer auth, the Origin check and the bounded body read run in the routes and the adapter before the SDK sees a byte. Telemetry records modern rows with the `_meta` clientInfo and the served revision; -32022 counts as `unsupported_version`, -32601 as `unknown_method`. Verified by `http.test.ts` (both eras), `sdk-interop.test.ts` (SDK v2 `legacy`, `auto`, `pin`) and the official conformance suite (`bun run mcp:conformance`).
 
 ## B. Hosted private admin MCP — `POST /api/mcp/admin`
 
@@ -95,11 +97,11 @@ The section now carries two tabs (`Demo` at `/admin/mcp`, `Usage` at `/admin/mcp
 
 Every request reaching an `/api/mcp/*` route produces **exactly one row**, written at a single terminating edge after the outcome is decided. The question it exists to answer is not "how much traffic" but *"in what specific way is this MCP failing its consumers?"* — so the headline output is the set of queries that matched nothing, each naming a capability a consumer wanted and the pattern registry does not have.
 
-**Seam.** `respondToMcpPost` takes a required `McpCallObserver` port (`src/lib/server/mcp/types.ts`). `observe()` returns `void`, so there is nothing to await and telemetry cannot add latency to, or fail, a response. A registry-level decorator was rejected: a seam *below* the method cannot *see* the method, which would lose `initialize`, `tools/list`, unknown-method probes and unknown-tool rejections. `http.ts` is the only frame holding both the request and response envelopes.
+**Seam.** `respondToMcpPost` takes a required `McpCallObserver` port (`src/lib/server/mcp/types.ts`). `observe()` returns `void`, so there is nothing to await and telemetry cannot add latency to, or fail, a response. A registry-level decorator was rejected: a seam *below* the method cannot *see* the method, which would lose `initialize`, `tools/list`, unknown-method probes and unknown-tool rejections. `respondToMcpPost` (`http.adapter.ts`) is the only frame holding both the request and the SDK's answer; it reads the tool record through the `onToolCall` hook of `createToolServer`.
 
-**Import boundary.** `http.ts`, `transport.ts` and `types.ts` must never acquire an edge to `#lib/server/db`, `#lib/server/http/*`, Redis or `@vercel/functions` — `http.test.ts` and `sdk-interop.test.ts` deliberately have zero mocks and drive the real path, and `#lib/server/db` constructs a Neon pool at module load. Enforced by `http.boundary.gate.test.ts`, not by convention. `telemetry/writer.ts` is the only module in the tree that imports the database.
+**Import boundary.** `http.adapter.ts`, `types.ts` and `mcp/tool-server.ts` must never acquire an edge to `#lib/server/db`, `#lib/server/http/*`, Redis or `@vercel/functions` — `http.test.ts` and `sdk-interop.test.ts` deliberately have zero mocks and drive the real path, and `#lib/server/db` constructs a Neon pool at module load. Enforced by `http.boundary.gate.test.ts`, not by convention. `telemetry/writer.ts` is the only module in the tree that imports the database.
 
-**Why tool failures are classifiable.** `errorResult()` takes a **required** `ToolDiag` (a closed union). The transport builds two `isError` results itself — unknown-tool and tool-threw — and those deliberately carry *no* diag. That absence is the discriminator: `isError && diag === undefined` ⟹ the transport produced it. The inference is total *only* because the parameter is required — a handler cannot return `isError` without one. `diag` is stripped by `toWire()` before serialization and is pinned absent from the wire by three tests, the strongest of which runs through the real MCP SDK client.
+**Why tool failures are classifiable.** `errorResult()` takes a **required** `ToolDiag` (a closed union). The SDK bridge builds one `isError` result itself — tool-threw — and it deliberately carries *no* diag (an unknown tool is now a JSON-RPC -32602, classified by its error code). That absence is the discriminator: `isError && diag === undefined` ⟹ the bridge produced it. The inference is total *only* because the parameter is required — a handler cannot return `isError` without one. `diag` is stripped by `toWire()` before serialization and is pinned absent from the wire by three tests, the strongest of which runs through the real MCP SDK client.
 
 **What is deliberately absent.**
 
@@ -178,19 +180,19 @@ Manual curl against a dev server (`bun run dev`, `http://localhost:5173`):
 ```bash
 # public — no auth
 curl -sX POST localhost:5173/api/mcp/public \
-  -H 'content-type: application/json' \
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 
 # public, 2026-07-28 — no handshake; the envelope rides in _meta, the headers mirror the body
 curl -sX POST localhost:5173/api/mcp/public \
-  -H 'content-type: application/json' \
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
   -H 'mcp-protocol-version: 2026-07-28' -H 'mcp-method: server/discover' \
   -d '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
 
 # admin — needs MCP_ADMIN_TOKEN
 curl -sX POST localhost:5173/api/mcp/admin \
   -H "authorization: Bearer $MCP_ADMIN_TOKEN" \
-  -H 'content-type: application/json' \
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"set_mcp_page_color","arguments":{"color":"red"}}}'
 
 # admin without a token returns 401
@@ -199,13 +201,13 @@ curl -sX POST localhost:5173/api/mcp/admin \
 curl -sX POST localhost:5173/api/mcp/private \
   -H "authorization: Bearer $MCP_PRIVATE_TOKEN" \
   -H 'x-v10r-workspace: densho' \
-  -H 'content-type: application/json' \
+  -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_patterns","arguments":{"query":"background jobs"}}}'
 ```
 
 `mcp.demo_state` must exist for live reads/writes: `bun run db:push` provisions the `mcp` schema/table. That command mutates the shared Neon DB and was **not** run as part of this change — running it is an operator step.
 
-The local stdio server serves the same two eras through the same `mcp/protocol-era.ts`; its own tests run via `bun mcp/smoke.ts` and `bun test mcp/server.test.ts`.
+The local stdio server serves the same two eras through the same SDK and `mcp/tool-server.ts`; its own tests run via `bun mcp/smoke.ts` and `bun test mcp/server.test.ts`.
 
 ## Deployment configuration
 

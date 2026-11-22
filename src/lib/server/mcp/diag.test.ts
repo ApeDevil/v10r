@@ -7,28 +7,21 @@ import { describe, expect, it, vi } from 'vitest';
  *  1. **Every registry-produced error carries a diag.** Guaranteed by `errorResult`'s required
  *     second parameter, so this suite proves the shape rather than re-proving the type system.
  *
- *  2. **The two transport-built literals carry NONE.** That absence is not incidental — it is the
- *     discriminator. The recorder infers `isError && diag === undefined ⟹ the transport produced
- *     this`, and that inference is only sound while these two literals stay bare. If someone
- *     "helpfully" adds a diag to them, every unknown-tool and every thrown-tool row would silently
- *     reclassify as a handler error.
+ *  2. **Nothing outside a handler carries one.** An unknown tool is the SDK's -32602 protocol
+ *     error and a thrown tool is the tool server's generic `isError` (`#mcp/tool-server.ts`).
+ *     Neither has a diag, and that absence is the discriminator: the recorder infers
+ *     `diag === undefined ⟹ not a handler's answer`. If someone "helpfully" adds a diag to the
+ *     thrown-tool literal, every thrown-tool row would silently reclassify as a handler error.
  *
  * Mocked because importing the admin registry otherwise constructs a real Neon pool at module load.
  */
 vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 vi.mock('#lib/server/admin/audit.ts', () => ({ recordAuditEvent: vi.fn(), queryAuditLog: vi.fn() }));
 
-const { handleMcpMessage } = await import('./transport');
-
-/** The JSON-RPC response alone — these tests are about the body; http.test.ts covers statuses. */
-async function respond(...args: Parameters<typeof handleMcpMessage>) {
-	return (await handleMcpMessage(...args)).response;
-}
+const { mcpPost } = await import('./mcp-post.ts');
 const { publicPatternRegistry } = await import('./patterns/tools');
 const { readAllowlistedExcerpt } = await import('./patterns/excerpts');
 const { MAX_NEXT_ACTIONS, NEXT_ACTIONS_HEADING } = await import('./types');
-
-const IDENTITY = { name: 'test', version: '0.0.1', instructions: 'test server', cacheScope: 'public' as const };
 
 /** Dispatch straight through the registry, bypassing the transport's own literals. */
 async function callTool(name: string, args: Record<string, unknown> = {}) {
@@ -156,34 +149,36 @@ describe('every registry error hands the caller a next step', () => {
 	});
 });
 
-describe('transport-built errors stay bare — this absence IS the discriminator', () => {
-	it('emits no diag and no next block for an unknown tool name', async () => {
-		const response = await respond(
-			{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'not_in_this_registry' } },
-			publicPatternRegistry,
-			IDENTITY,
-		);
-		const result = (response as { result: { isError?: boolean; diag?: string; content: [{ text: string }] } }).result;
-		expect(result.isError).toBe(true);
-		expect(result.diag).toBeUndefined();
-		expect(result.content[0].text).not.toContain(NEXT_ACTIONS_HEADING);
+describe('errors built outside a handler stay bare — this absence IS the discriminator', () => {
+	it('answers an unknown tool name with the protocol error, never a result', async () => {
+		const { body } = await mcpPost(publicPatternRegistry, {
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'tools/call',
+			params: { name: 'not_in_this_registry' },
+		});
+		expect(body.error.code).toBe(-32602);
+		expect(body).not.toHaveProperty('result');
+		expect(JSON.stringify(body)).not.toContain(NEXT_ACTIONS_HEADING);
 	});
 
 	it('emits no diag and no next block when a tool throws', async () => {
 		const throwingRegistry = {
 			tools: [{ name: 'boom', description: 'boom', inputSchema: { type: 'object' } }],
 			dispatch: () => {
-				throw new Error('boom');
+				throw new Error('relation "secret_table" does not exist');
 			},
 		};
-		const response = await respond(
-			{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'boom' } },
-			throwingRegistry,
-			IDENTITY,
-		);
-		const result = (response as { result: { isError?: boolean; diag?: string; content: [{ text: string }] } }).result;
+		const { body } = await mcpPost(throwingRegistry, {
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'tools/call',
+			params: { name: 'boom' },
+		});
+		const result = body.result as { isError?: boolean; diag?: string; content: [{ text: string }] };
 		expect(result.isError).toBe(true);
 		expect(result.diag).toBeUndefined();
 		expect(result.content[0].text).not.toContain(NEXT_ACTIONS_HEADING);
+		expect(JSON.stringify(body)).not.toContain('secret_table');
 	});
 });

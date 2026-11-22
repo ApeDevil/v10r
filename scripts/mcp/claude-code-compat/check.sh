@@ -13,7 +13,9 @@
 # a throwaway directory (no project .mcp.json or CLAUDE.md), no tool other than the fixture's is
 # allowed, and nothing is written to the user's Claude Code configuration.
 #
-# Server runtime: `bun` when it is on PATH, otherwise the repo's documented podman image.
+# Server runtime: `bun` when it is on PATH, otherwise the repo's documented podman image. The
+# fixture is dependency-free (it runs the committed stdio bundle as a child), so the podman path
+# needs no node_modules — the same read-only, network-less container as the real server.
 # Results: one JSONL transcript per case plus summary.txt under $V10R_COMPAT_OUT (default: a new
 # temp directory, printed at the end). Exit 0 when the control case passes on both transports —
 # the kit itself works — whatever the verdict on the fields; exit 1 when it does not.

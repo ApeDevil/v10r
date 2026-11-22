@@ -12,6 +12,15 @@ server:
   - logging-set-level
   # completions capability not advertised (no prompts or resource templates to complete)
   - completion-complete
+  # fixture tools `test_simple_text` and `test_error_handling` (approved by ApeDevil 2026-11-22).
+  # Until the official SDK took over (2026-11-22) these passed falsely: the hand-written legacy path
+  # answered an unknown tool with an `isError` result, which the runner read as the fixture working.
+  # The SDK now answers -32602 "Tool not found", the spec's answer. The behaviour the scenarios
+  # check — text content from a successful call; `isError` + message from a failing or throwing
+  # tool — runs against v10r's own tools on the 2025 handshake in sdk-interop.test.ts
+  # ("conformance fixture equivalents on real tools").
+  - tools-call-simple-text
+  - tools-call-error
   # fixture tools: v10r's tools return text content only, by design (pattern-mcp.md)
   - tools-call-image
   - tools-call-audio

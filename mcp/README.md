@@ -12,23 +12,25 @@ Interactive showcase: `/showcases/mcp` — registry stats, dependency graph, con
 
 ## How it works
 
-Zero-dependency Bun TypeScript: hand-rolled JSON-RPC 2.0 over newline-delimited stdio, dual-era — the MCP 2025-11-25 `initialize` handshake and stateless 2026-07-28 (`server/discover`, per-request `_meta`), chosen per message. No SDK, no node_modules. The client spawns it as an ephemeral container with a read-only repo mount and no network:
+Bun TypeScript on the official MCP TypeScript SDK v2 (`@modelcontextprotocol/server`): the SDK's `serveStdio` owns JSON-RPC framing, the 2025-11-25 `initialize` handshake and the stateless 2026-07-28 era (`server/discover`, per-request `_meta`), pinning one era per connection from its opening message. v10r owns only the tools and the error hygiene around them (`tool-server.ts`). The client spawns the **bundled** server — `server.bundle.js`, the SDK inlined by `bun run mcp:bundle:build` — as an ephemeral container with a read-only repo mount, no network and no `node_modules`:
 
 ```bash
 podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/server.ts
 ```
 
+`server.ts` is the stable entry: it imports nothing that needs installing and starts the bundle, so registrations made before the SDK migration keep working unchanged. `bun mcp/stdio-server.ts` serves the same thing from source wherever `node_modules` is installed.
+
 | File | Role |
 |---|---|
-| `server.ts` | Entry: stdio loop, dispatch, lifecycle (exits on stdin EOF / SIGTERM — no orphan containers) |
-| `protocol.ts` | JSON-RPC framing and line buffering |
-| `protocol-version.ts` | The legacy and modern revision lists and the `initialize` fallback — declared once, also read by the hosted transport (`#mcp/*`) |
-| `protocol-era.ts` | Per-message era routing (`routeMcpRequest`), `_meta` and header checks, `server/discover` and modern result dressing — shared with the hosted transport |
+| `server.ts` | The registered entry: dependency-free, starts `server.bundle.js` |
+| `stdio-server.ts` | The server source: identity and instructions, `serveStdio` over the stdio registry, lifecycle (exits on stdin EOF / SIGTERM — no orphan containers) |
+| `server.bundle.js` | Generated: `stdio-server.ts` with the SDK inlined, what `server.ts` runs in the container. Its first line records an input digest; `bun run mcp:bundle:check` (in `validate`) fails when it is stale |
+| `tool-server.ts` | The one bridge from a v10r tool registry to the SDK's `McpServer` — shared with the hosted transport (`#mcp/*`): registry-owned argument validation, generic error on a throw, `diag` stripped, build `_meta` |
 | `security.ts` | Path containment (realpath prefix check) + secret denylist + bounded excerpts |
 | `tools.ts` | The eight tools — a thin stdio adapter over the shared query layer in `../pattern-library/query.ts` (the hosted transport reads the same module) |
 | `snippet.ts` + `snippet-rules.json` | `validate_snippet` rule engine |
 | `public-excerpts.snapshot.json` | Generated excerpt snapshot served by the hosted transport |
-| `server.test.ts` / `smoke.ts` | `bun:test` units / spawned-subprocess handshake test |
+| `server.test.ts` / `smoke.ts` | `bun:test` units (SDK in-memory connections, both eras) / spawned-subprocess test of `server.ts`, the bundle and the source |
 
 The records, their schema, and the drift guard (`bun run patterns:validate`) live in
 [`../pattern-library/`](../pattern-library/).
@@ -69,7 +71,9 @@ podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/mcp/smoke
 podman run --rm -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 bun /v10r/pattern-library/validate.ts
 ```
 
-Vitest/svelte-check don't sweep `mcp/` (tests use `bun:test`); Biome does — keep its style. `src/lib/server/mcp/sdk-interop.test.ts` (in `bun run validate`) also drives this server through the official SDK v2 stdio client in `legacy`, `auto` and `pin` mode. Conformance runs against the hosted endpoint (`bun run mcp:conformance`, see `docs/blueprint/architecture/hosted-mcp.md`); both transports share `protocol-era.ts`.
+Vitest/svelte-check don't sweep `mcp/` (tests use `bun:test`); Biome does — keep its style (it skips the generated bundle). `src/lib/server/mcp/sdk-interop.test.ts` (in `bun run validate`) also drives `server.ts`, `stdio-server.ts` and `server.bundle.js` through the official SDK v2 stdio client in `legacy`, `auto` and `pin` mode. Conformance runs against the hosted endpoint (`bun run mcp:conformance`, see `docs/blueprint/architecture/hosted-mcp.md`); both transports build their server with `tool-server.ts`.
+
+After changing anything the stdio server imports, run `bun run mcp:bundle:build` and commit the bundle.
 
 ## Adding a pattern
 
@@ -77,12 +81,13 @@ Pick a tier first. A **light** record is an index row: pointers to docs/code/sho
 
 ## Also served over HTTP (read-only)
 
-This same curated registry is also exposed read-only at `POST /api/mcp/public` — no bearer token, same eight tools, no mutation path. It's a separate hosted trust surface built on top of a shared transport, not a change to anything in this directory: the local stdio server described above is unchanged, remains read-only, and keeps running exactly as documented — ephemeral container, network-isolated, repo mounted `:ro`. There is also a separate, unrelated private admin MCP (`/api/mcp/admin`, bearer-gated, demo-state tools only) that has nothing to do with the pattern registry. Full detail: [docs/blueprint/architecture/hosted-mcp.md](../docs/blueprint/architecture/hosted-mcp.md).
+This same curated registry is also exposed read-only at `POST /api/mcp/public` — no bearer token, same eight tools, no mutation path. It's a separate hosted trust surface built on the same SDK bridge, not a change to anything in this directory: the local stdio server described above is unchanged, remains read-only, and keeps running exactly as documented — ephemeral container, network-isolated, repo mounted `:ro`. There is also a separate, unrelated private admin MCP (`/api/mcp/admin`, bearer-gated, demo-state tools only) that has nothing to do with the pattern registry. Full detail: [docs/blueprint/architecture/hosted-mcp.md](../docs/blueprint/architecture/hosted-mcp.md).
 
 ## Constraints worth knowing
 
 - Tool definitions deliberately omit `outputSchema`/`title`/`annotations` — a live Claude Code bug silently drops a server's entire tool list when any tool carries them. `smoke.ts` guards this. Whether the bug is fixed is checked locally with `scripts/mcp/claude-code-compat/check.sh` ([runbook](../docs/blueprint/architecture/mcp-evolution/claude-code-compat.md)) before either field is added.
-- `protocol-version.ts` and `protocol-era.ts` import nothing outside this directory: the hosted transport imports them too, and the container has no `node_modules`.
+- The container has no `node_modules`, so `server.ts` runs the bundle, never the source. `tool-server.ts` imports only the SDK and `../pattern-library/query.ts` (pinned by `http.boundary.gate.test.ts`): the hosted transport imports it too.
+- The SDK pins one protocol era per stdio connection, decided by the opening message; a client that wants the other era opens a new connection.
 - Tool results are text-only markdown, never `structuredContent` — E2E dogfooding found that when both are present, Claude Code shows the model *only* the structured payload and hides the text body (`get_file_excerpt` came through as bare metadata, no code). Don't re-add `structuredContent`.
 - All logging goes to stderr; stdout is protocol-only. The process exits on stdin EOF or SIGTERM/SIGINT — Claude Code has a known issue leaving child processes orphaned otherwise.
 - Every response stays well under Claude Code's 10k-token warning threshold by construction.

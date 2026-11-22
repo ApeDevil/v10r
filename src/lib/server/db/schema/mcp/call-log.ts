@@ -273,8 +273,8 @@ export const mcpCallLog = mcpSchema.table(
 		 * Caller-controlled and stored verbatim, capped at 32 characters by the observer (no
 		 * allowlist): an unknown version is itself the signal a migration query looks for.
 		 * Rows written before 2026-11-21 over-report 2025-06-18 as served: the hosted fallback
-		 * answered it for unknown versions until both transports moved to the one
-		 * `LATEST_LEGACY_PROTOCOL_VERSION` (`mcp/protocol-version.ts`).
+		 * answered it for unknown versions until both transports moved to one fallback, now the
+		 * official SDK's (`2025-11-25`).
 		 */
 		requestedProtocolVersion: text('requested_protocol_version'),
 		servedProtocolVersion: text('served_protocol_version'),

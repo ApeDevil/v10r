@@ -66,6 +66,8 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | What the daily cron sweep runs | `jobsDueOn` (`/api/cron/due`) | one `vercel.json` entry per job |
 | The MCP demo-state domain module | `src/lib/server/mcp/demo/state.ts` | `mcp/demo/service.ts` |
 | The registry of pattern MCP *tools* | `src/lib/server/mcp/patterns/tools.ts` | `mcp/patterns/registry.ts` |
+| The one bridge from a tool registry to the official MCP SDK server, shared by stdio and HTTP | `tool server` (`mcp/tool-server.ts`, `createToolServer`; a surface's self-description is `McpServerIdentity`) | `transport` (the SDK owns the transports), `protocol layer`, `mcp/protocol*.ts` (the retired hand-written modules) |
+| The stdio server with the SDK inlined, the file the container runs | `stdio bundle` (`mcp/server.bundle.js`, built from `mcp/stdio-server.ts`, started by the registered entry `mcp/server.ts`; `mcp:bundle:build` / `mcp:bundle:check`) | `dist/`, `build` |
 | The showcase Redis key namespace | `SHOWCASE_CACHE_PREFIX` / `assertShowcaseCacheKey` | cache-local `SHOWCASE_PREFIX` |
 | The design system's icon size scale | `iconSize` (`styles/tokens.ts`) | sidebar-local `iconSize` |
 | The sidebar's computed icon width | `sidebarIconSize` | `iconSize` |

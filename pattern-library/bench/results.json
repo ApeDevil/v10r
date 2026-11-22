@@ -36,13 +36,13 @@
 			"answerableGradedWeak": "9/34",
 			"misses": [
 				"g02 \"users lose half-written work because their login silently expired; warn them first and let them sign back in without leaving the page\" → top form-draft-recovery, want app-shell-session-lifecycle",
-				"g08 \"store prices that take effect on a future date and still be able to fix a past mistake while keeping what we believed back then\" → top architecture-mcp-evolution, want temporal-data-modeling",
+				"g08 \"store prices that take effect on a future date and still be able to fix a past mistake while keeping what we believed back then\" → top stale-while-revalidate, want temporal-data-modeling",
 				"g13 \"the support bot can't answer 'what does this button do?' because it doesn't know which page the user is looking at\" → top layered-rag, want ai-site-awareness",
 				"g14 \"where do signups drop off\" → top 3d-threlte-integration, want analytics-funnels",
 				"g17 \"map with countries shaded by value\" → top i18n-db-content, want viz-maps",
 				"g18 \"check if a username is taken while the user types, without hammering the server on every keystroke\" → top dynamic-attributes, want forms-validation-timing",
 				"g33 \"cache a slow third-party API response in memory and Redis, keep serving the old value when the API is down, and let only one request refresh it\" → top latency-tracing, want hierarchical-cache|stale-while-revalidate|singleflight",
-				"g35 \"one-to-one video calls between users in the browser\" (missing) → returned 75, top architecture-external-service",
+				"g35 \"one-to-one video calls between users in the browser\" (missing) → returned 76, top architecture-external-service",
 				"g37 \"bulk import customers from a CSV file with a column-mapping step\" (missing) → returned 47, top pim-sheet-transform-recipe"
 			]
 		}
@@ -99,13 +99,13 @@
 			"max": 3400
 		},
 		"get_pattern_all": {
-			"mean": 432,
+			"mean": 433,
 			"p50": 216,
-			"p95": 1223,
+			"p95": 1253,
 			"max": 3368
 		},
 		"get_pattern_deep": {
-			"mean": 958,
+			"mean": 963,
 			"p50": 832,
 			"p95": 1544,
 			"max": 3368
@@ -119,16 +119,16 @@
 	},
 	"latency": {
 		"search_patterns": {
-			"p50us": 232,
-			"p95us": 577
+			"p50us": 162,
+			"p95us": 342
 		},
 		"get_pattern": {
 			"p50us": 3,
 			"p95us": 12
 		},
 		"recommend_emulation_plan": {
-			"p50us": 288,
-			"p95us": 763
+			"p50us": 319,
+			"p95us": 530
 		}
 	},
 	"workflows": {

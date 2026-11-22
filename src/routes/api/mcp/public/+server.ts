@@ -12,7 +12,7 @@ import { mcpMethodNotAllowed, respondToMcpPost } from '#lib/server/mcp/http.adap
 import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '#lib/server/mcp/patterns/tools.ts';
 import { publicBuildInfo } from '#lib/server/mcp/server-info.ts';
 import { createMcpObserver } from '#lib/server/mcp/telemetry/observer.ts';
-import type { McpServerIdentity } from '#lib/server/mcp/transport.ts';
+import type { McpServerIdentity } from '#mcp/tool-server.ts';
 import type { RequestHandler } from './$types';
 
 /**

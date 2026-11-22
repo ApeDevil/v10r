@@ -54,7 +54,7 @@ const archNodes: Node[] = [
 	},
 	{ id: 'spawn', type: 'flow', position: { x: 250, y: 100 }, data: { label: 'podman run -i --rm' } },
 	{ id: 'container', type: 'flow', position: { x: 250, y: 200 }, data: { label: 'Ephemeral bun container' } },
-	{ id: 'server', type: 'flow', position: { x: 250, y: 300 }, data: { label: 'server.ts stdio JSON-RPC loop' } },
+	{ id: 'server', type: 'flow', position: { x: 250, y: 300 }, data: { label: 'server.ts → official SDK (bundled)' } },
 	{ id: 'tools', type: 'flow', position: { x: 250, y: 400 }, data: { label: '6 read-only tools' } },
 	{ id: 'registry', type: 'flow', position: { x: 80, y: 500 }, data: { label: 'registry.json' } },
 	{ id: 'files', type: 'flow', position: { x: 420, y: 500 }, data: { label: 'Repo file excerpts' } },
@@ -237,7 +237,7 @@ const dagData = toDagData(registry); // deep-tier subgraph only
 							<DiagRow label="Image"><code>docker.io/oven/bun:1.3.12</code></DiagRow>
 							<DiagRow label="Mount"><code>{'-v <repo>:/v10r:ro'}</code></DiagRow>
 							<DiagRow label="Network"><code>--network=none</code></DiagRow>
-							<DiagRow label="Entry"><code>bun /v10r/mcp/server.ts</code></DiagRow>
+							<DiagRow label="Entry"><code>bun /v10r/mcp/server.ts</code> (starts the bundled official SDK)</DiagRow>
 							<DiagRow label="Lifecycle"><code>--rm</code> · exits on stdin EOF / SIGTERM / SIGINT</DiagRow>
 						</DiagGrid>
 					{/snippet}

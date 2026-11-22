@@ -101,25 +101,27 @@ podman run -i --rm --network=none -v <repo>:/v10r:ro docker.io/oven/bun:1.3.12 b
 
 `--rm` means no state survives between sessions, `--network=none` means no exfiltration path exists even if something in the tool chain were compromised, and `:ro` means the mount can't be written to no matter what the server code does. This is kernel-enforced isolation, not a promise the application layer has to keep. `security.ts` adds a second, application-level layer on top — realpath-based path containment (rejects `..` traversal and symlink escapes) and a secret-filename denylist (`.env`, `*.pem`, `*.key`, `.git/`, `node_modules/`, …) for `get_file_excerpt` — because client-supplied paths are advisory in MCP; the server is the trust boundary, not the client.
 
-### Zero-dependency protocol
+### The official SDK, bundled
 
-`server.ts` and `protocol.ts` hand-roll JSON-RPC 2.0 framing over newline-delimited stdio (MCP 2025-11-25 and 2026-07-28, see below) with no SDK and no validation library. This isn't a style preference: the container is a bare `oven/bun` image with no `node_modules`, so any dependency would mean either baking a custom image or an `bun install` step on every spawn. Hand-rolling the ~150 lines of framing and a hand-written structural validator (`registry.ts`) keeps the spawn command a one-liner and the cold-start instant.
+The protocol is the official MCP TypeScript SDK v2's (`@modelcontextprotocol/server`): `serveStdio` owns newline-delimited JSON-RPC framing, the 2025-11-25 handshake and the 2026-07-28 era. v10r follows *official implementations by default* ([decision D10](./mcp-evolution/decision-record.md)) and keeps only what is its own: `mcp/tool-server.ts` turns a tool registry into an SDK `McpServer` — the registry stays the argument validator, a throwing tool answers a generic error instead of its exception text, telemetry `diag` is stripped — and both the stdio and the hosted transport build their servers with it.
 
-The `initialize` response also carries a hand-written `instructions` string (in `server.ts`) that tells the calling agent *when* to reach for this server versus plain `Read`/`Grep` — the same "emulate, don't clone" framing this doc opens with, but delivered as part of the protocol handshake instead of a doc the agent might not have read. A 2026-07-28 client gets the same string from `server/discover`.
+The container is still a bare `oven/bun` image with no `node_modules`, so the registered entry `mcp/server.ts` imports nothing that needs installing and starts `mcp/server.bundle.js`: the server source (`stdio-server.ts`) with the SDK inlined by `bun run mcp:bundle:build` (one minified file, ~0.55 MB). The bundle is committed; its first line records a digest of every input and package version, and `bun run mcp:bundle:check` in `validate` fails when a source or SDK change was not rebuilt. The price is measured: ~80 ms to the `initialize` answer instead of ~30 ms, ~10 MB more RSS — module initialisation, paid once per spawned session (D10).
+
+The `initialize` response also carries a hand-written `instructions` string (in `stdio-server.ts`) that tells the calling agent *when* to reach for this server versus plain `Read`/`Grep` — the same "emulate, don't clone" framing this doc opens with, but delivered as part of the protocol handshake instead of a doc the agent might not have read. A 2026-07-28 client gets the same string from `server/discover`.
 
 ### Protocol eras
 
-Both transports serve two MCP generations on one registration, decided per message by `routeMcpRequest` in `mcp/protocol-era.ts` — a zero-import module the stdio server imports relatively and the hosted transport through `#mcp/*`:
+Both transports serve two MCP generations from one registration; the SDK decides the era:
 
-| | Legacy (2025-11-25, -06-18, -03-26) | Modern (2026-07-28) |
+| | Legacy (2025-11-25, -06-18, -03-26, 2024-11-05, -10-07) | Modern (2026-07-28) |
 |---|---|---|
-| How the era is chosen | `initialize` without a modern `_meta` claim, or no claim at all | `params._meta["io.modelcontextprotocol/protocolVersion"]` present in the body |
-| Handshake | `initialize` → `protocolVersion` (unknown → latest legacy), then requests | none; `server/discover` describes the server, every request carries its revision and `clientCapabilities` |
-| Methods | `initialize`, `ping`, `tools/list`, `tools/call` | `server/discover`, `tools/list`, `tools/call`; anything else (including `initialize`, `ping`) → -32601 (HTTP 404) |
-| Results | unchanged | `resultType: "complete"`; `_meta["io.modelcontextprotocol/serverInfo"]`; `ttlMs` (1 h) + `cacheScope` on discover and `tools/list` |
-| Errors | as before | -32602 bad envelope · -32022 unsupported revision (`data.supported` = modern revisions only) · -32020 header/body disagreement (HTTP) |
+| How the era is chosen | stdio: the connection's opening message (`initialize`, or no modern claim); HTTP: `isLegacyRequest` per POST | stdio: an opening request with the modern `_meta` claim pins the connection; HTTP: the claim in the body plus `MCP-Protocol-Version` |
+| Handshake | `initialize` → `protocolVersion` (unknown → `2025-11-25`), then requests | none; `server/discover` describes the server, every request carries its revision and `clientCapabilities` |
+| Methods | `initialize`, `ping`, `tools/list`, `tools/call` | `server/discover`, `tools/list`, `tools/call`; anything else → -32601 (HTTP 404) |
+| Results | plain | `resultType: "complete"`; `ttlMs` (1 h) + `cacheScope` on discover and `tools/list` |
+| Errors | -32602 for an unknown tool | -32602 bad envelope or unknown tool · -32022 unsupported revision · -32020 header/body disagreement (HTTP) |
 
-The era is a property of the request's body, as in the official SDK, so a proxy that drops a header cannot change it; over HTTP the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers are then checked against the body. The tools, their order and their bytes are the same in both eras — `mcp/smoke.ts` and the parity test pin it. The one era difference in the answers: an unknown tool is the spec's -32602 (`data: { name }`) in the modern era and an `isError` result with recovery text in the legacy era. Regression authority is the official conformance suite (`bun run mcp:conformance`, both revisions, against a running server) and the SDK v1/v2 clients in `sdk-interop.test.ts`; the why is in [mcp-evolution/decision-record.md](./mcp-evolution/decision-record.md) D1–D2.
+Over stdio the era is per connection: a client that wants the other era opens a new one, which is what every SDK client does. The tools, their order and their bytes are the same in both eras — `mcp/server.test.ts`, `mcp/smoke.ts` and the parity test pin it. Regression authority is the official conformance suite (`bun run mcp:conformance`, both revisions, against a running server) and the SDK v1/v2 clients in `sdk-interop.test.ts`; the why is in [mcp-evolution/decision-record.md](./mcp-evolution/decision-record.md) D1 and D10.
 
 ### Client design constraints (the gotchas)
 
@@ -143,7 +145,7 @@ Each was weighed against this workload — a few hundred static records, sub-mil
 |---|---|---|
 | `structuredContent` / `outputSchema` | Not adopted | Claude Code forwards only the structured payload on success when both are present (documented; maintainer-confirmed, 2026), so the markdown body — next actions included — would vanish. |
 | Tool `annotations` (`readOnlyHint`) | Deferred | Recommended by the spec, but this repo recorded a live Claude Code bug that dropped the server's whole tool list over them. Re-adding needs an interop test against a real client, which the automated gate cannot run — the isolated kit is [mcp-evolution/claude-code-compat.md](./mcp-evolution/claude-code-compat.md), run locally. |
-| MCP 2026-07-28 (stateless, `server/discover`, `ttlMs`) | **Adopted 2026-11-21**, dual-era | Served beside the 2025-11-25 handshake on both transports, routed per request by `mcp/protocol-era.ts` over the same registries; see §Protocol eras and [mcp-evolution/](./mcp-evolution/README.md). |
+| MCP 2026-07-28 (stateless, `server/discover`, `ttlMs`) | **Adopted 2026-11-21**, dual-era | Served beside the 2025-11-25 handshake on both transports — by the official SDK since D10 — over the same registries; see §Protocol eras and [mcp-evolution/](./mcp-evolution/README.md). |
 | Resources / prompts | Not adopted | Every retrieval need above is met by parameters on the existing tools; another surface would add discovery cost without new information. |
 | Embeddings, hybrid search, rank fusion | Not adopted | IDF + best-field + coverage took the blind holdout from 52% to 76% Acc@1 with no model; embeddings would add a model to the stdio container and the Vercel cold start for a curated corpus with authored keywords. |
 | Response memoization / HTTP caching | Not adopted | Queries run in well under a millisecond over a cached per-registry index; POST JSON-RPC is not HTTP-cacheable anyway. |
@@ -164,5 +166,5 @@ Full detail — trust-surface boundaries, auth, rate limits, the persistent demo
 
 - **See it live:** [/showcases/mcp](/showcases/mcp) — interactive dependency graph, architecture diagram, and protocol walkthrough
 - **Run it, test it, register it, add a pattern:** [mcp/README.md](../../../mcp/README.md)
-- **Read the code:** [mcp/](../../../mcp/) — `server.ts` (entry/lifecycle), `protocol.ts` (framing), `security.ts` (containment), `tools.ts` (the stdio adapter over the shared query layer), `snippet.ts` (validate_snippet engine); and [pattern-library/](../../../pattern-library/) — `schema.ts` (types/validation/toposort), `search.ts` (ranking), `query.ts` (tool contract + registry tools), `excerpt.ts` (excerpt rendering)
+- **Read the code:** [mcp/](../../../mcp/) — `server.ts` (entry/lifecycle), `tool-server.ts` (the SDK bridge both transports share), `server.bundle.js` (generated container entry), `security.ts` (containment), `tools.ts` (the stdio adapter over the shared query layer), `snippet.ts` (validate_snippet engine); and [pattern-library/](../../../pattern-library/) — `schema.ts` (types/validation/toposort), `search.ts` (ranking), `query.ts` (tool contract + registry tools), `excerpt.ts` (excerpt rendering)
 - **The pattern this MCP itself follows:** [multi-client-core.md](./multi-client-core.md) — the registry's domain-shaped data plus a thin adapter is the same shape as every other pattern in this repo

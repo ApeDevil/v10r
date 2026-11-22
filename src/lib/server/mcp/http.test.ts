@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { isAllowedOrigin, mcpMethodNotAllowed, protocolVersionHeaderOk, respondToMcpPost } from './http.adapter';
+import { isAllowedOrigin, mcpMethodNotAllowed, respondToMcpPost } from './http.adapter';
+import { MCP_CLIENT_HEADERS } from './mcp-post.ts';
 import { type McpCallObserver, noopMcpObserver, type ToolRegistry } from './types';
 
 const registry: ToolRegistry = {
@@ -11,7 +12,7 @@ const identity = { name: 'test', version: '0.0.0', instructions: 'test', cacheSc
 function req(headers: Record<string, string>, body?: string): Request {
 	return new Request('http://localhost/api/mcp/public', {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', ...headers },
+		headers: { ...MCP_CLIENT_HEADERS, ...headers },
 		body,
 	});
 }
@@ -102,18 +103,6 @@ describe('isAllowedOrigin', () => {
 	});
 });
 
-describe('protocolVersionHeaderOk', () => {
-	it('accepts an absent header (default negotiated in body)', () => {
-		expect(protocolVersionHeaderOk(req({}))).toBe(true);
-	});
-	it('accepts a supported version', () => {
-		expect(protocolVersionHeaderOk(req({ 'mcp-protocol-version': '2025-06-18' }))).toBe(true);
-	});
-	it('rejects an unsupported version', () => {
-		expect(protocolVersionHeaderOk(req({ 'mcp-protocol-version': '1999-01-01' }))).toBe(false);
-	});
-});
-
 describe('respondToMcpPost', () => {
 	const ping = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' });
 
@@ -133,7 +122,7 @@ describe('respondToMcpPost', () => {
 		expect(res.status).toBe(403);
 	});
 
-	it('rejects an unknown pre-2026 protocol header with the plain legacy 400', async () => {
+	it('rejects an unknown pre-2026 protocol header with a 400 naming the supported revisions', async () => {
 		const res = await respondToMcpPost(
 			req({ 'mcp-protocol-version': '1999-01-01' }, ping),
 			registry,
@@ -142,9 +131,14 @@ describe('respondToMcpPost', () => {
 		);
 		expect(res.status).toBe(400);
 		const body = await res.json();
-		// A legacy caller: it gets the non-JSON-RPC body it always got, never a modern error code.
-		expect(body).not.toHaveProperty('jsonrpc');
-		expect(body.error.code).toBe('unsupported_protocol_version');
+		// A legacy caller, answered by the SDK's legacy transport — never a modern error code.
+		expect(body.error.code).toBe(-32000);
+		expect(body.error.message).toContain('2025-11-25');
+	});
+
+	it('answers 406 when the client does not accept both JSON and SSE (Streamable HTTP MUST)', async () => {
+		const res = await respondToMcpPost(req({ accept: 'application/json' }, ping), registry, identity, noopMcpObserver);
+		expect(res.status).toBe(406);
 	});
 
 	it('answers a modern-era header with no body envelope as a JSON-RPC -32602 400, never as legacy', async () => {
@@ -243,6 +237,7 @@ describe('respondToMcpPost', () => {
 			['forbidden origin', () => call(req({ origin: 'http://evil.example' }, ping)), 403],
 			['bad protocol version', () => call(req({ 'mcp-protocol-version': 'nope' }, ping)), 400],
 			['parse error', () => call(req({}, 'not json')), 400],
+			['batch', () => call(req({}, JSON.stringify([JSON.parse(ping)]))), 400],
 			['notification', () => call(req({}, JSON.stringify({ jsonrpc: '2.0', method: 'x/notify' }))), 202],
 			['success', () => call(req({}, ping)), 200],
 			[
@@ -323,7 +318,7 @@ describe('respondToMcpPost', () => {
 		expect(seen[0].responseText).toHaveLength(20_000);
 	});
 
-	it('captures clientInfo from initialize, which the transport itself discards', async () => {
+	it('captures clientInfo from initialize, which the SDK keeps to itself', async () => {
 		const seen: Parameters<McpCallObserver['observe']>[0][] = [];
 		const initReq = req(
 			{},
@@ -331,7 +326,11 @@ describe('respondToMcpPost', () => {
 				jsonrpc: '2.0',
 				id: 1,
 				method: 'initialize',
-				params: { protocolVersion: '2025-06-18', clientInfo: { name: 'claude-ai', version: '0.1.0' } },
+				params: {
+					protocolVersion: '2025-06-18',
+					capabilities: {},
+					clientInfo: { name: 'claude-ai', version: '0.1.0' },
+				},
 			}),
 		);
 		await respondToMcpPost(initReq, registry, identity, { observe: (o) => seen.push(o) });
@@ -405,7 +404,7 @@ function modernReq(
 async function post(request: Request) {
 	const seen: Parameters<McpCallObserver['observe']>[0][] = [];
 	const res = await respondToMcpPost(request, registry, identity, { observe: (o) => seen.push(o) });
-	return { status: res.status, body: await res.json(), observation: seen[0] };
+	return { status: res.status, body: await res.clone().json(), response: res, observation: seen[0] };
 }
 
 describe('respondToMcpPost — modern era (2026-07-28)', () => {
@@ -469,24 +468,27 @@ describe('respondToMcpPost — modern era (2026-07-28)', () => {
 			observe: (o) => seen.push(o),
 		});
 		expect(res.status).toBe(200);
-		expect(await res.json()).toMatchObject({ id: 7, error: { code: -32602, data: { name: 'not_here' } } });
+		expect(await res.json()).toMatchObject({ id: 7, error: { code: -32602 } });
 		expect(dispatched).toBe(0);
 		// Telemetry sees the same unknown-tool event as on the legacy path: tool stage, the name, no diag.
 		expect(seen[0]).toMatchObject({ stage: 'tool', toolName: 'not_here', isError: true, diag: null });
 	});
 
-	it('keeps the legacy unknown-tool answer an isError result with recovery text', async () => {
+	it('answers an unknown tool the same way on the legacy path: -32602, never dispatched', async () => {
+		// The hand-written transport answered legacy callers an isError result instead; the SDK gives
+		// both eras the spec's protocol error. Telemetry classifies both identically.
+		const seen: Parameters<McpCallObserver['observe']>[0][] = [];
 		const res = await respondToMcpPost(
 			req({}, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'not_here' } })),
 			registry,
 			identity,
-			noopMcpObserver,
+			{ observe: (o) => seen.push(o) },
 		);
 		expect(res.status).toBe(200);
 		const body = await res.json();
-		expect(body).not.toHaveProperty('error');
-		expect(body.result).toMatchObject({ isError: true });
-		expect(body.result).not.toHaveProperty('resultType');
+		expect(body).toMatchObject({ id: 1, error: { code: -32602 } });
+		expect(body).not.toHaveProperty('result');
+		expect(seen[0]).toMatchObject({ stage: 'tool', toolName: 'not_here', isError: true, diag: null });
 	});
 
 	it('answers removed and unknown methods with 404 / -32601, echoing the id', async () => {
@@ -496,6 +498,18 @@ describe('respondToMcpPost — modern era (2026-07-28)', () => {
 			expect(body, method).toMatchObject({ id: 7, error: { code: -32601 } });
 			expect(observation?.stage, method).toBe('protocol');
 		}
+	});
+
+	it('does not implement subscriptions/listen: 404 / -32601, JSON, no stream opened', async () => {
+		// The server declares nothing a listen stream could deliver (tools.listChanged: false, no
+		// resources), and a serverless function cannot hold one; an unimplemented method is 404.
+		const { status, body, response, observation } = await post(
+			modernReq('subscriptions/listen', { notifications: { toolsListChanged: true } }),
+		);
+		expect(status).toBe(404);
+		expect(response.headers.get('content-type')).toContain('application/json');
+		expect(body).toMatchObject({ jsonrpc: '2.0', id: 7, error: { code: -32601 } });
+		expect(observation?.stage).toBe('protocol');
 	});
 
 	it('answers an unsupported modern revision with -32022 listing the modern revisions only', async () => {

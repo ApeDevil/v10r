@@ -3,6 +3,9 @@
 Prioritised, dependency-ordered changes that follow from the [decision record](./decision-record.md).
 **Status 2026-11-21:** A1, A2, A3 (with B3), B2 and C1 are implemented; B1 waits on a local
 Claude Code run ([claude-code-compat.md](./claude-code-compat.md)); C2–C4 and D are unchanged.
+The protocol modules the A-items name (`mcp/protocol*.ts`, `src/lib/server/mcp/transport.ts`)
+were later replaced by the official SDK (decision D10); the status lines below are kept as
+written.
 Each item lists what changes, why, whether it exists, its standard status, fit, cost,
 compatibility and security, measurable benefit, verification and timing — as proposed; the
 status line under each heading says what happened. Item ids (A1, B2, …) are stable so the [matrix](./matrix.md) can cite them.

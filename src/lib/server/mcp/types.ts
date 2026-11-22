@@ -8,7 +8,14 @@
  * `pattern-library/query.ts` — the stdio server speaks them too — and re-exported here so the
  * admin registry reads them from its own transport contract.
  */
-import { type NextAction, type ToolDef, withNextActions } from '#patterns/query.ts';
+import { type NextAction, withNextActions } from '#patterns/query.ts';
+
+/**
+ * A trust-scoped set of tools plus its dispatcher — declared once beside the SDK bridge, because
+ * the stdio server serves the same shape. The SDK serves only the names in `tools`, so a tool that
+ * is not in a registry cannot be dispatched through it regardless of what a caller submits.
+ */
+export type { ToolRegistry } from '#mcp/tool-server.ts';
 
 export {
 	MAX_NEXT_ACTIONS,
@@ -18,36 +25,14 @@ export {
 	withNextActions,
 } from '#patterns/query.ts';
 
-/** JSON-RPC id: string, number, or null. Absent entirely on notifications. */
-export type JsonRpcId = string | number | null;
-
-export interface JsonRpcRequest {
-	jsonrpc?: string;
-	id?: JsonRpcId;
-	method?: string;
-	params?: unknown;
-}
-
-export interface JsonRpcSuccess {
-	jsonrpc: '2.0';
-	id: JsonRpcId;
-	result: unknown;
-}
-
-export interface JsonRpcError {
-	jsonrpc: '2.0';
-	id: JsonRpcId;
-	error: { code: number; message: string; data?: unknown };
-}
-
-export type JsonRpcResponse = JsonRpcSuccess | JsonRpcError;
-
-/** Standard JSON-RPC error codes used by the transport. */
+/**
+ * The JSON-RPC error codes the HTTP adapter answers or reads itself. Everything else on the wire is
+ * the SDK's to produce.
+ */
 export const RPC = {
 	PARSE: -32700,
-	INVALID_REQ: -32600,
+	INVALID_REQUEST: -32600,
 	NO_METHOD: -32601,
-	BAD_PARAMS: -32602,
 	INTERNAL: -32603,
 } as const;
 
@@ -62,33 +47,35 @@ export const RPC = {
  * `snapshot_miss` is an OPERATOR alarm rather than a caller error: the path is allowlisted but
  * absent from the build-time excerpt snapshot, which means `mcp:excerpts:build` drifted.
  */
-export type ToolDiag =
-	| 'empty' //          well-formed request that matched nothing — the improvement signal
-	| 'invalid_args' //   the caller's arguments were malformed or missing
-	| 'not_found' //      a real-shaped identifier that does not exist — a registry gap
-	| 'snapshot_miss' //  allowlisted but missing from the deployment snapshot — operator alarm
-	| 'conflict' //       optimistic-concurrency loss (admin demo CAS) — not a client bug
-	| 'unknown_tool'; //  registry-level defense-in-depth branch
+export const TOOL_DIAGS = [
+	'empty', //          well-formed request that matched nothing — the improvement signal
+	'invalid_args', //   the caller's arguments were malformed or missing
+	'not_found', //      a real-shaped identifier that does not exist — a registry gap
+	'snapshot_miss', //  allowlisted but missing from the deployment snapshot — operator alarm
+	'conflict', //       optimistic-concurrency loss (admin demo CAS) — not a client bug
+	'unknown_tool', //   registry-level defense-in-depth branch
+] as const;
+
+export type ToolDiag = (typeof TOOL_DIAGS)[number];
+
+/**
+ * The registry contract (`#mcp/tool-server.ts`) types `diag` as a plain string, because the stdio
+ * side has no telemetry vocabulary. This guard is where the hosted side narrows it back: a value
+ * outside the closed union is dropped, never persisted.
+ */
+export function asToolDiag(value: unknown): ToolDiag | null {
+	return (TOOL_DIAGS as readonly unknown[]).includes(value) ? (value as ToolDiag) : null;
+}
 
 /**
  * A tool result — text content blocks, with an optional error flag (never throws to the wire).
  *
- * `diag` is stripped by `toWire()` in http.ts before serialization and MUST NOT reach a caller.
+ * `diag` is removed by the tool server (`#mcp/tool-server.ts`) before the SDK serializes the result, and MUST NOT reach a caller.
  */
 export interface ToolResult {
 	content: Array<{ type: 'text'; text: string }>;
 	isError?: boolean;
 	diag?: ToolDiag;
-}
-
-/**
- * A trust-scoped set of tools plus the dispatcher that runs them. The transport only ever
- * dispatches a name that appears in `tools`; the dispatcher SHOULD also reject unknown names
- * as defense in depth.
- */
-export interface ToolRegistry {
-	readonly tools: readonly ToolDef[];
-	dispatch(name: string, args: unknown): Promise<ToolResult> | ToolResult;
 }
 
 /**

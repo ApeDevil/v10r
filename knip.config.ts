@@ -31,6 +31,8 @@ const config: KnipConfig = {
 		'src/env.ts',
 		'src/service-worker/index.ts',
 		'mcp/*.ts',
+		// The generated stdio bundle the container runs (scripts/mcp/build-stdio-bundle.ts).
+		'mcp/server.bundle.js',
 		'pattern-library/*.ts',
 		'scripts/db/verify-tx-rollback.ts',
 		'scripts/perf/db-explain.ts',

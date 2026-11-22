@@ -17,7 +17,7 @@ substitute.
 | [Deprecated features](https://modelcontextprotocol.io/specification/2026-07-28/deprecated) | Removal dates | The 12-month lifecycle clock |
 | [Roadmap](https://modelcontextprotocol.io/development/roadmap) | "Last updated" date, items moving | Early warning; never adoption |
 | [SEPs](https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/seps) | SEPs reaching *Accepted* / *Final* in areas the matrix tracks | Accepted SEPs become spec text |
-| [TypeScript SDK releases](https://github.com/modelcontextprotocol/typescript-sdk/releases) | v2 minor releases; v1.x security releases | The interop clients and the support window |
+| [TypeScript SDK releases](https://github.com/modelcontextprotocol/typescript-sdk/releases) | Every `@modelcontextprotocol/server` and `/client` v2 release (changelog, breaking notes); v1.x security releases | `@modelcontextprotocol/server` is the runtime protocol layer of every endpoint (decision D10), pinned exactly; the clients are the interop tests |
 | [Conformance releases](https://github.com/modelcontextprotocol/conformance) (npm `@modelcontextprotocol/conformance`) | New scenarios; a stable 0.2.x | The test lane's authority |
 | [Security advisories](https://github.com/modelcontextprotocol/typescript-sdk/security/advisories), [spec security best practices](https://modelcontextprotocol.io/specification/2026-07-28/basic/security_best_practices), [OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-10/) | New advisories; Top 10 revisions | Event-driven reviews |
 | Client changelogs: Claude Code, the Claude MCP connector, Cursor, VS Code | MCP protocol version support; fixes to known bugs (annotations, `structuredContent`) | Decides B1 and C2 in the [roadmap](./roadmap.md) |
@@ -30,15 +30,20 @@ substitute.
 
 A cloud session (or ApeDevil) walks the source list above, then:
 
-1. For each matrix row whose upstream changed, update **Upstream status**, **Evidence**, **Last
+1. **SDK bump check.** If `@modelcontextprotocol/server` has a newer release than the pin in
+   `package.json`: read its changelog and advisories, bump the pin (and `/client` with it),
+   run `bun run mcp:bundle:build`, `bun run validate`, `mcp/smoke.ts` and both conformance
+   lanes. Bump only when all hold against the committed baselines; otherwise record the
+   regression in the matrix row "SDK as runtime dependency" and stay on the pin.
+2. For each matrix row whose upstream changed, update **Upstream status**, **Evidence**, **Last
    reviewed**. Rows with no upstream change get only their date bumped — or are left alone; a
    stale date is a fact, not a failure.
-2. Check telemetry: share of modern-era requests on each surface (`served_protocol_version`
+3. Check telemetry: share of modern-era requests on each surface (`served_protocol_version`
    2026-07-28 rows) and any rise in `unsupported_version` — a client asking for a revision
    v10r does not serve yet is the signal to read the next revision.
-3. Run the conformance lane (§3) once against production (`https://www.v10r.dev/api/mcp/public`)
+4. Run the conformance lane (§3) once against production (`https://www.v10r.dev/api/mcp/public`)
    with the pinned version, and once with the newest runner version to see what is coming.
-4. Write down decisions only where something changed: a new row, a priority move, a revisit
+5. Write down decisions only where something changed: a new row, a priority move, a revisit
    trigger fired. Hand off as a branch, like any other change.
 
 The review is a checklist, not automation (approved 2026-11-21 as an engineering practice): no
@@ -49,7 +54,8 @@ scheduled job, runner, bot or monitoring service.
 Triggers, and only these:
 
 - A new **current** specification revision.
-- A security advisory against `@modelcontextprotocol/*` or a client v10r documents.
+- A security advisory against `@modelcontextprotocol/*` (the runtime SDK above all: patch the
+  pin, rebuild the stdio bundle, ship) or a client v10r documents.
 - A deprecation whose removal date falls within six months.
 - A D4/D5 revisit trigger firing ([decision-record.md](./decision-record.md)).
 - A conformance runner release that changes a scenario v10r passes.
@@ -61,10 +67,11 @@ in the matrix's notes column, and — if code must change — a roadmap item wit
 
 | Layer | What | Runs | Catches |
 |---|---|---|---|
-| Unit + gate tests (existing) | `http.test.ts`, `transport.test.ts`, `auth.test.ts`, `http.boundary.gate.test.ts`, `next-actions.gate.test.ts`, `mcp/server.test.ts` | `bun run validate` | Behavioural regressions in v10r code |
+| Unit + gate tests (existing) | `http.test.ts`, `surfaces.test.ts`, `auth.test.ts`, `http.boundary.gate.test.ts`, `next-actions.gate.test.ts`, `mcp/server.test.ts` | `bun run validate` | Behavioural regressions in v10r code and in how it composes the SDK |
+| Stdio bundle | `bun run mcp:bundle:check` — the committed `mcp/server.bundle.js` matches its inputs (digest) | `bun run validate` | A source or SDK change shipped without rebuilding the container's server |
 | Parity (existing) | `parity.test.ts` — both transports byte-identical | `bun run validate` | One transport drifting |
 | SDK interop | v1 client + v2 client in `legacy`, `auto`, `pin`, over HTTP and stdio | `bun run validate` | A dependency update or a body-shape change breaking a real client |
-| Stdio smoke (existing) | `mcp/smoke.ts` spawned subprocess | `bun run test:mcp` | Tool-list rejection by strict clients |
+| Stdio smoke (existing) | `mcp/smoke.ts` spawns `server.ts`, the bundle and the source, both eras | `V10R_ROOT=$PWD bun mcp/smoke.ts` (or in the container) | Tool-list rejection by strict clients, a broken bundle |
 | Official conformance | `bun run mcp:conformance [--url …] [--revision …]`, one pinned runner and one baseline per revision (`scripts/mcp/conformance/`) | Monthly review, before a ship that touches `src/lib/server/mcp/` or `mcp/` | Spec drift, including scenarios added upstream |
 | Bench (existing) | `bun run mcp:bench --compare` | When tools or results change | Token and relevance regressions |
 
@@ -93,8 +100,8 @@ session store, unless the decision record shows the existing one cannot be exten
 ## 5. Avoiding maintenance noise
 
 - One record (the matrix). The decision record and roadmap change only when a decision changes.
-- No dependency bot: v10r has no CI to attach one to, and the monthly review reads the two SDK
-  release pages that matter.
+- No dependency bot: v10r has no CI to attach one to, and the monthly review's SDK bump check
+  reads the one release page that matters. Advisories trigger an event review.
 - No scheduled conformance job in infrastructure: the monthly review runs it in a session.
 - No notifications and no automated monitoring.
 - Dates in the matrix are per row; nobody rewrites the whole file monthly.

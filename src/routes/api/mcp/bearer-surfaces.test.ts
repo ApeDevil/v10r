@@ -97,7 +97,11 @@ describe.each(SURFACES)('$surface MCP endpoint', ({
 		const request = new Request(`http://localhost/api/mcp/${surface}`, {
 			method: 'POST',
 			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-			headers: { 'content-type': 'application/json', ...(auth ? { authorization: auth } : {}) },
+			headers: {
+				'content-type': 'application/json',
+				accept: 'application/json, text/event-stream',
+				...(auth ? { authorization: auth } : {}),
+			},
 		});
 		return POST({ request, getClientAddress: () => '127.0.0.1' });
 	};
@@ -164,7 +168,8 @@ describe.each(SURFACES)('$surface MCP endpoint', ({
 		it('does not expose the other surface’s tools', async () => {
 			const res = await rpc('tools/call', `Bearer ${token}`, foreignCall);
 			const body = await res.json();
-			expect(body.result.isError).toBe(true);
+			// Not this surface's tool: the protocol error, never a dispatch.
+			expect(body.error.code).toBe(-32602);
 		});
 	});
 

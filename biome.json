@@ -19,7 +19,8 @@
 			"!**/services/runtime-lab/openapi.json",
 			"!**/services/runtime-lab/target",
 			"!**/.claude/settings.local.json",
-			"!**/mcp/public-excerpts.snapshot.json"
+			"!**/mcp/public-excerpts.snapshot.json",
+			"!**/mcp/server.bundle.js"
 		]
 	},
 	"formatter": {

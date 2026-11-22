@@ -16,12 +16,15 @@ import { describe, expect, it } from 'vitest';
  * which was really protecting the import list, not the bytes. Editing the code here is free;
  * acquiring a module edge is not.
  *
- * HONEST LIMIT: this proves the forbidden specifiers are absent from the SOURCE TEXT of these two
+ * The protocol itself is the official SDK's; the files checked are v10r's wiring of it — the HTTP
+ * adapter, the shared types, and the SDK bridge both transports use (`mcp/tool-server.ts`).
+ *
+ * HONEST LIMIT: this proves the forbidden specifiers are absent from the SOURCE TEXT of these
  * files. It does not walk the transitive graph, so a newly-added dependency-free-looking module
  * that itself imports the DB would slip through. If that becomes a real risk, the fix is a real
  * graph walk, not more regexes here.
  */
-const PROTOCOL_FILES = ['http.adapter.ts', 'transport.ts', 'types.ts'];
+const PROTOCOL_FILES = ['http.adapter.ts', 'types.ts', '../../../../mcp/tool-server.ts'];
 
 const FORBIDDEN: Array<{ label: string; re: RegExp }> = [
 	{ label: '#lib/server/db (constructs a Neon pool at module load)', re: /#lib\/server\/db\b/ },
@@ -119,16 +122,18 @@ describe('MCP protocol layer import boundary', () => {
 		expect(/#lib\/server\/cache\b/.test(readFileSync(join(HTTP_KIT_DIR, 'rate-limit.ts'), 'utf8'))).toBe(true);
 	});
 
-	it('keeps types.ts a leaf: it imports only the shared pattern-library contract', () => {
+	it('keeps types.ts a leaf: it imports only the shared pattern-library and tool-server contracts', () => {
 		// Everything else in the MCP tree may import types.ts, so an import here is the one edge that
-		// can reach every other module at once. The single allowed edge is `#patterns/` — the
-		// framework-free, filesystem-free contract the stdio server also runs under bare Bun, which
-		// therefore cannot import anything of the app back.
+		// can reach every other module at once. The allowed edges are `#patterns/` and the SDK bridge
+		// `#mcp/tool-server.ts` — framework-free contracts the stdio server also runs under bare Bun,
+		// which therefore cannot import anything of the app back.
 		const src = readProtocolFile('types.ts');
 		const sources = [...src.matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s+'([^']+)'/gm)].map((match) => match[1]);
 		expect(sources.length, 'types.ts re-uses the shared next-actions contract').toBeGreaterThan(0);
 		for (const source of sources) {
-			expect(source, 'types.ts may import only #patterns/*').toMatch(/^#patterns\/[a-z-]+\.ts$/);
+			expect(source, 'types.ts may import only #patterns/* and #mcp/tool-server.ts').toMatch(
+				/^(#patterns\/[a-z-]+\.ts|#mcp\/tool-server\.ts)$/,
+			);
 		}
 		expect(/\brequire\(/.test(src)).toBe(false);
 	});
@@ -139,6 +144,17 @@ describe('MCP protocol layer import boundary', () => {
 		// Minting one would turn every deploy into a hard break for connected clients.
 		for (const name of PROTOCOL_FILES) {
 			expect(/mcp-session-id/i.test(readProtocolFile(name)), `${name} references a session id`).toBe(false);
+		}
+		// The SDK's legacy transport would mint one if given a generator: it must be built stateless.
+		expect(readProtocolFile('http.adapter.ts')).toMatch(/sessionIdGenerator: undefined/);
+	});
+
+	it('keeps the SDK bridge free of the app: it imports only the SDK and the pattern-library contract', () => {
+		const src = readProtocolFile('../../../../mcp/tool-server.ts');
+		const sources = [...src.matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s+'([^']+)'/gm)].map((match) => match[1]);
+		expect(sources.length).toBeGreaterThan(0);
+		for (const source of sources) {
+			expect(source).toMatch(/^(@modelcontextprotocol\/server|\.\.\/pattern-library\/[a-z-]+\.ts)$/);
 		}
 	});
 });

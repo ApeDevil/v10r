@@ -20,7 +20,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Testing infrastructure (Vitest, PGlite isolation)](./architecture-testing-infra.md)
 - [Pattern MCP (agent-queryable pattern registry, local stdio)](./architecture-pattern-mcp.md)
 - [Hosted MCP (four trust surfaces: public · private · admin · admin page)](./architecture-hosted-mcp.md)
-- [**MCP protocol evolution (dual-era serving, conformance lane, evidence-gated adoption)**](./architecture-mcp-evolution.md)
+- [**MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)**](./architecture-mcp-evolution.md)
 - [Rust→wasm compute kernel (vendored, plugin-free)](./architecture-wasm-kernel.md)
 - [**External service runtime (a separately deployed backend behind a typed client)**](./architecture-external-service.md)
 - [**Architecture Engineering (explained decision records, a typed architecture model and static checks)**](./architecture-engineering.md)

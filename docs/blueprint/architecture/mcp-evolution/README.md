@@ -12,13 +12,14 @@ the state *before* the implementation, and stay as the baseline it was measured 
 
 | Item | State | Evidence |
 |---|---|---|
-| A1 fallback version, doc drift, bench snapshot | Done | both transports answer `2025-11-25` to an unknown version; one list in `mcp/protocol-version.ts` |
+| A1 fallback version, doc drift, bench snapshot | Done | both transports answer `2025-11-25` to an unknown version (the SDK's fallback since D10) |
 | A2 conformance lane, SDK v2 interop | Done | `bun run mcp:conformance`; `sdk-interop.test.ts` (v1; v2 `legacy`/`auto`/`pin`; stdio and HTTP) |
 | A3 dual-era 2026-07-28, both transports (incl. B3 `ttlMs`) | Done | conformance 2026-07-28: every scored scenario v10r can exercise passes; baseline = unadvertised capabilities and fixture tools only |
 | B1 `title` / `readOnlyHint` | Pending ApeDevil's local run; fields stay off | [claude-code-compat.md](./claude-code-compat.md) |
 | B2 strategy benchmark (offline) | Done | `mcp:bench` → `strategies`, `catalogueScale` in `pattern-library/bench/results.json`; findings in the decision record D4–D5 |
 | C1 registry record | Done | `architecture-mcp-evolution` (deep, proven) |
-| Monthly review | Approved practice, no automation | [process.md](./process.md) |
+| Monthly review | Approved practice, no automation | [process.md](./process.md) (now includes the SDK bump check) |
+| D10 official SDK v2 on every endpoint | On branch `claude/cloud/mcp-official-sdk`, awaiting ship | decision record D10; the hand-written protocol modules are removed |
 
 ## Files
 

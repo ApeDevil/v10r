@@ -184,7 +184,7 @@ async function runBadId() {
 	try {
 		const res = await fetch(MCP_ENDPOINT, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
 			body: JSON.stringify(toolCallBody('get_pattern', { id: 'not-a-real-pattern' }, 2)),
 		});
 		const outcome = parseToolResult(await res.json());
@@ -206,7 +206,11 @@ async function runProtocol() {
 	try {
 		const res = await fetch(MCP_ENDPOINT, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', 'mcp-protocol-version': '1999-01-01' },
+			headers: {
+				'content-type': 'application/json',
+				accept: 'application/json, text/event-stream',
+				'mcp-protocol-version': '1999-01-01',
+			},
 			body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'ping' }),
 		});
 		const raw = await res.text();
@@ -249,7 +253,7 @@ async function runValidate() {
 	try {
 		const res = await fetch(MCP_ENDPOINT, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json' },
+			headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
 			body: JSON.stringify(toolCallBody('validate_snippet', { snippet, language }, 1)),
 		});
 		const outcome = parseToolResult(await res.json());
