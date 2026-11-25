@@ -33,7 +33,7 @@ const ctx: Parameters<typeof executeDeskToolCall>[0] = {
 	userId: USER.id,
 	scopes: ['desk:write', 'desk:create'],
 };
-const execCtx = () => ({ toolCallId: 'tc', messages: [], abortSignal: new AbortController().signal });
+const execCtx = () => ({ toolCallId: 'tc', messages: [], abortSignal: new AbortController().signal, context: {} });
 
 /** The baseline a gated tool would have captured when the change was proposed. */
 async function reviewed(fileId: string) {

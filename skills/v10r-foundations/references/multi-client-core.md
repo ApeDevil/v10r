@@ -1,0 +1,51 @@
+# Multi-client core (hexagonal domain modules)
+
+> Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
+
+**Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
+
+One backend operations layer (#lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.
+
+**When to use:** Reach for this whenever a backend capability must be reachable from more than one entry point (page action, API route, AI tool, cron job). It is the foundation nearly every other v10r pattern builds on.
+
+## Avoid when
+
+- An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped
+- Extracting a domain service for a hypothetical second client — extract only when two concrete consumers share a multi-step workflow
+- Reaching for DI containers, command buses or one-implementation interfaces — the pattern is plain module imports, not hexagonal ceremony
+
+## Alternatives
+
+- **Call the data function directly from the +page.server.ts or +server.ts adapter** — prefer when the operation is one query or mutation with a single concrete consumer
+- **Class-based DI containers with formal port interfaces** — prefer when the runtime is a long-lived server with no serverless cold-start cost and a port has more than one real implementation
+
+## Docs
+
+- `docs/blueprint/architecture/multi-client-core.md` — The full pattern: canonical module shape, client wiring, error contract ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/multi-client-core.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/multi-client-core.md))
+- `docs/system-abstraction.md` — Runtime 7-layer view showing where domain modules sit ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/system-abstraction.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/system-abstraction.md))
+- `docs/codebase-organization.md` — Where each piece lives; import direction rules ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/codebase-organization.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/codebase-organization.md))
+
+## Code
+
+- `src/lib/server/` — Per-domain modules; canonical shape is [domain]/queries.ts + mutations.ts (+ service.ts only when orchestration spans multiple infra calls) ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server))
+
+## Tests
+
+- `src/lib/server/security/handle-chain.gate.test.ts` — Middleware-order contract of the multi-client wiring; validate gate — runs on every bun run validate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/security/handle-chain.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/security/handle-chain.gate.test.ts))
+- `src/lib/api.gate.test.ts` — Adapter-boundary gate: client code reaches /api only through apiFetch ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/api.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/api.gate.test.ts))
+
+## Invariants
+
+- Domain functions must not import from @sveltejs/kit or $app/ — binding to the request cycle breaks tool and job reuse.
+- AI tools RETURN structured errors — never throw.
+- The tool manifest is fail-closed: if a tool is not in the manifest, the AI cannot call it; AI tools get a narrower permission set than the human UI.
+- Tools capture userId by closure — a tool never sees an unauthenticated call.
+
+## Emulation notes
+
+- Start every new project with this shape even if only one client exists yet — the second client (AI tool or cron) always arrives.
+- Keep adapters thin: a +page.server.ts action or +server.ts route should validate input, call one domain function, map the result.
+
+---
+
+_Machine-readable record: `multi-client-core` in `pattern-library/registry.json`._

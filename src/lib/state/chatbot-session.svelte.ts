@@ -24,13 +24,22 @@
 import type { Chat } from '@ai-sdk/svelte';
 import { untrack } from 'svelte';
 import { CSRF_HEADER } from '#lib/api.ts';
+import type { GenerativeSurfaceAction } from '#lib/generative-ui/index.ts';
+// By file, not the barrel: this module loads with every page, and the barrel brings the
+// surface policy and valibot with it.
+import {
+	ownSurfaceActionRecordOf,
+	SURFACE_ACTION_PART,
+	type SurfaceActionPart,
+	type SurfaceActionRecord,
+	surfaceActionKey,
+} from '#lib/generative-ui/surface-action-key.ts';
 import type { TurnSummary } from '#lib/types/turn-trace.ts';
 import { browser } from '$app/env';
 
 export type ChatPhase = 'closed' | 'open' | 'minimized';
 
-/** The message array type the live Chat instance owns (the `@ai-sdk/svelte` copy of
- * `ai` — distinct from the top-level `ai` package, so we derive it from Chat). */
+/** The message array type the live Chat instance owns, derived from Chat. */
 type ChatMessages = Chat['messages'];
 
 /** Per-tab resume pointer; userId-stamped to defend a reused tab against a user switch. */
@@ -112,6 +121,8 @@ class ChatbotSession {
 
 	#userId: string | undefined;
 	#loadingChat = false;
+	/** A surface press is between the click and `sendMessage` — the second click of a double click lands here. */
+	#pressInFlight = false;
 	#stopWatcher: (() => void) | undefined;
 
 	/** Reactive: is a response currently being produced? (getter, not `$derived`,
@@ -180,7 +191,7 @@ class ChatbotSession {
 						}
 						return response;
 					},
-				}) as Chat['transport'],
+				}),
 			});
 			this.chat = chat;
 			this.#watchStream();
@@ -261,6 +272,40 @@ class ChatbotSession {
 		// A thread started on an embedding page is alive once the visitor leaves it: parked,
 		// so the sidebar indicator and the bubble offer it back.
 		if (this.embedded && this.phase === 'closed') this.phase = 'minimized';
+	}
+
+	/**
+	 * Send a Button press on a generative surface as the next turn. The press gets its event id
+	 * here (`crypto.randomUUID()`), and travels as one `data-surface-action` part — the bubble
+	 * renders it as a short localized line; the server builds the model's turn from the
+	 * admitted event itself. Dropped, before anything is sent, while an answer streams or a
+	 * press is on its way (a double click), before the thread has a conversation, and when it
+	 * repeats a submission this thread already holds (same render, Button and values — the
+	 * server refuses it as `duplicate_submission` either way).
+	 */
+	async submitSurfaceAction(action: GenerativeSurfaceAction, renderId: string, routeId?: string): Promise<void> {
+		if (!browser || this.#pressInFlight) return;
+		const key = surfaceActionKey(renderId, action);
+		this.#pressInFlight = true;
+		try {
+			const chat = await this.ensureChat();
+			if (!chat || this.isStreaming || !this.conversationId) return;
+			const sent = chat.messages.some((message) =>
+				message.parts.some((part) => {
+					const record = ownSurfaceActionRecordOf(part);
+					return record !== null && surfaceActionKey(record.renderId, record.action) === key;
+				}),
+			);
+			if (sent) return;
+			this.lastError = null;
+			const record: SurfaceActionRecord = { action, renderId, eventId: crypto.randomUUID() };
+			const body: Record<string, unknown> = { conversationId: this.conversationId, surfaceAction: record };
+			if (routeId) body.pageRouteId = routeId;
+			const part: SurfaceActionPart = { type: SURFACE_ACTION_PART, data: record };
+			chat.sendMessage({ parts: [part] } as Parameters<Chat['sendMessage']>[0], { body });
+		} finally {
+			this.#pressInFlight = false;
+		}
 	}
 
 	/** Abort the in-flight response (the composer's Stop). The tokens received so far stay. */

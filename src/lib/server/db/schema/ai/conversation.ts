@@ -19,9 +19,10 @@ export const messageRoleEnum = aiSchema.enum('message_role', ['user', 'assistant
 export const aiSurfaceEnum = aiSchema.enum('ai_surface', ['chatbot', 'deskbot']);
 
 /**
- * An assistant message's parts as the AI SDK client holds them (text, tool and reasoning
- * parts). Stored so a reloaded thread renders the tool calls the answer was built on, not
- * just its text. Shape owned by the SDK (`UIMessagePart`); never read by the server.
+ * A message's parts as the AI SDK client holds them (text, tool, reasoning and data parts).
+ * Stored so a reloaded thread renders the tool calls the answer was built on, not just its
+ * text. Shape owned by the SDK (`UIMessagePart`). The server reads two kinds back: the
+ * `render_surface` tool parts and the `data-surface-action` parts (`ai/generative-ui/`).
  */
 export type StoredMessagePart = { type: string } & Record<string, unknown>;
 
@@ -60,8 +61,11 @@ export const message = aiSchema.table(
 		content: text('content').notNull(),
 		/**
 		 * The assistant message's parts as streamed (text + tool parts), backfilled with
-		 * `content` when the turn finishes. Null on user rows and on assistant rows whose
-		 * turn ended before any part reached the client.
+		 * `content` when the turn finishes. On a user row only when the turn was a Button press
+		 * on a generative surface: its one `data-surface-action` part, the human-facing record
+		 * the bubble renders and the surface action door reads back for duplicates. Null on
+		 * other user rows and on assistant rows whose turn ended before any part reached the
+		 * client.
 		 */
 		parts: jsonb('parts').$type<StoredMessagePart[] | null>(),
 		/**

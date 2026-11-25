@@ -40,6 +40,17 @@ the repo or a commit.
   schema before it ships leaves production ahead of the deployed code.
 - ApeDevil has said to apply it, in the current conversation. A finished ship is not that word.
 
+**Expand before the ship** when the new code reads the new tables on its first request: Vercel
+deploys `main` the moment the squash lands, so applying the schema after the ship leaves a window
+in which the live app expects tables that are missing. Compute the diff from the current `main`
+to the pushed release-candidate commit (`bun run db:schema-diff origin/main <rc-sha>`), and apply
+it on ApeDevil's word **before** the squash. This is safe only for a purely additive change, and
+only once the deployed `main` is shown to work against the expanded schema: run `main`'s database
+test suite in a scratch worktree whose `db/schema` carries the new schema files and nothing else
+(the agentic architecture RC, 2026-11-24, did this: 35 files, 580 tests). Then ship. If the ship
+is abandoned, the additive objects stay, unused; they are removed only by a later change on
+ApeDevil's word.
+
 Constants: Neon project `broad-night-71900850` (`v10r`), database `neondb`. The project's
 default branch is production; `dev` is refreshed from it (`docs/blueprint/data/neon-branch-refresh.md`).
 
@@ -113,7 +124,12 @@ and the verification query matched. All additions — no existing row was touche
 
 A schema change is rolled back by another change, rehearsed the same way — never by
 restoring the database, which would also discard user data written since. For additions the
-reverse is a `DROP` and therefore ApeDevil's decision. Neon's point-in-time restore
+reverse is a `DROP` and therefore ApeDevil's decision.
+
+Roll back the **app**, not the schema: after an additive change, putting `main` back on the
+previous commit leaves the new tables in place, which the previous code ignores. Never run an
+older commit's `db:push` against production afterwards: drizzle-kit would offer to drop the
+tables that commit does not know. Neon's point-in-time restore
 (`history_retention_seconds`, 6 h on this project) is the last resort for a destructive mistake,
 not a routine step.
 

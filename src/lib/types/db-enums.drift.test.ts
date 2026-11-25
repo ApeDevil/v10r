@@ -6,6 +6,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import { aiSurfaceEnum } from '#lib/server/db/schema/ai/conversation.ts';
+import {
+	externalDeliveryEnum,
+	externalOperationStatusEnum,
+	externalProtocolEnum,
+} from '#lib/server/db/schema/ai/external-operation.ts';
+import { externalReversibilityEnum, mcpPeerAudienceEnum } from '#lib/server/db/schema/ai/mcp-peer.ts';
 import { proposalRevertStatusEnum, proposalStatusEnum } from '#lib/server/db/schema/ai/proposal.ts';
 import { proposalStepKindEnum } from '#lib/server/db/schema/ai/proposal-step.ts';
 import { aiProviderEnum } from '#lib/server/db/schema/ai/provider-connection.ts';
@@ -29,6 +35,11 @@ import {
 	DATE_FORMATS,
 	DESK_FILE_TYPES,
 	DISPLAY_DENSITIES,
+	EXTERNAL_DELIVERIES,
+	EXTERNAL_OPERATION_STATUSES,
+	EXTERNAL_PROTOCOLS,
+	EXTERNAL_REVERSIBILITIES,
+	MCP_PEER_AUDIENCES,
 	NAME_SOURCE_VENDORS,
 	NOTIFICATION_TYPES,
 	POST_STATUSES,
@@ -50,6 +61,11 @@ const MIRRORS: ReadonlyArray<[string, readonly string[], readonly string[]]> = [
 	['ai.agent_proposal_status', PROPOSAL_STATUSES, proposalStatusEnum.enumValues],
 	['ai.agent_proposal_step_kind', PROPOSAL_STEP_KINDS, proposalStepKindEnum.enumValues],
 	['ai.agent_proposal_revert_status', PROPOSAL_REVERT_STATUSES, proposalRevertStatusEnum.enumValues],
+	['ai.agent_external_operation_status', EXTERNAL_OPERATION_STATUSES, externalOperationStatusEnum.enumValues],
+	['ai.agent_external_delivery', EXTERNAL_DELIVERIES, externalDeliveryEnum.enumValues],
+	['ai.agent_external_protocol', EXTERNAL_PROTOCOLS, externalProtocolEnum.enumValues],
+	['ai.external_reversibility', EXTERNAL_REVERSIBILITIES, externalReversibilityEnum.enumValues],
+	['ai.mcp_peer_audience', MCP_PEER_AUDIENCES, mcpPeerAudienceEnum.enumValues],
 	['notifications.notification_type', NOTIFICATION_TYPES, notificationTypeEnum.enumValues],
 	['analytics.consent_tier', CONSENT_TIERS, consentTierEnum.enumValues],
 	['analytics.user_surface', USER_SURFACES, userSurfaceEnum.enumValues],

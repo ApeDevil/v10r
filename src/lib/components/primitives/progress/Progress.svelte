@@ -8,6 +8,8 @@ interface Props {
 	variant?: 'default' | 'success' | 'warning' | 'error';
 	size?: 'sm' | 'md' | 'lg';
 	showLabel?: boolean;
+	/** Accessible name of the progress bar, when no visible label names it. */
+	label?: string;
 	class?: string;
 }
 
@@ -17,6 +19,7 @@ let {
 	variant = 'default',
 	size = 'md',
 	showLabel = false,
+	label,
 	class: className,
 }: Props = $props();
 
@@ -39,6 +42,7 @@ const isIndeterminate = $derived(value === undefined);
 	<ProgressPrimitive.Root
 		value={isIndeterminate ? null : value}
 		{max}
+		aria-label={label}
 		class={`progress-${size}`}
 	>
 		<div

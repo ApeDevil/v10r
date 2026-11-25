@@ -123,7 +123,7 @@ export async function proposeRecipe(input: RecipeProposalInput): Promise<RecipeP
 		try {
 			const result = await generateText({
 				model,
-				system: RECIPE_PROPOSAL_SYSTEM,
+				instructions: RECIPE_PROPOSAL_SYSTEM,
 				messages,
 				output: Output.object({ schema: recipeJsonSchema }),
 				maxRetries: 1,

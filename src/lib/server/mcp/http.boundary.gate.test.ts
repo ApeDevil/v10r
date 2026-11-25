@@ -149,12 +149,15 @@ describe('MCP protocol layer import boundary', () => {
 		expect(readProtocolFile('http.adapter.ts')).toMatch(/sessionIdGenerator: undefined/);
 	});
 
-	it('keeps the SDK bridge free of the app: it imports only the SDK and the pattern-library contract', () => {
+	it('keeps the SDK bridge free of the app: it imports only the SDKs and the pattern-library contract', () => {
 		const src = readProtocolFile('../../../../mcp/tool-server.ts');
 		const sources = [...src.matchAll(/^\s*(?:import|export)\b[^;]*?\bfrom\s+'([^']+)'/gm)].map((match) => match[1]);
 		expect(sources.length).toBeGreaterThan(0);
 		for (const source of sources) {
-			expect(source).toMatch(/^(@modelcontextprotocol\/server|\.\.\/pattern-library\/[a-z-]+\.ts)$/);
+			// The official MCP Apps server helpers (ext-apps) register the Views; still no app import.
+			expect(source).toMatch(
+				/^(@modelcontextprotocol\/server|@modelcontextprotocol\/ext-apps\/server|\.\.\/pattern-library\/[a-z-]+\.ts)$/,
+			);
 		}
 	});
 });

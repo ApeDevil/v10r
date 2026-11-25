@@ -850,6 +850,105 @@
 			"verifiedAt": "2026-11-21"
 		},
 		{
+			"id": "architecture-agentic-architecture",
+			"tier": "deep",
+			"category": "architecture",
+			"title": "Agentic architecture (one application architecture, optional interoperability doors)",
+			"summary": "How an application becomes AI-accessible, AI-interactive and AI-adaptive without a second architecture per standard: the tool catalogue, orchestrator, approval gate, untrusted-content boundary and turn trace stay authoritative, and MCP, A2A, AG-UI, A2UI, WebMCP, Agent Skills and OpenTelemetry are adapters that translate into them and never decide. A living matrix grades every technology (upstream, SDK and implementation maturity kept apart) with an adoption decision and a reassessment trigger.",
+			"when_to_use": "Use when deciding which agentic standards an application should speak, and how, without accumulating runtimes: before adopting a protocol, framework or generative-UI format.",
+			"avoid_when": [
+				"The application has no agent and no external agent callers — none of the doors buys anything",
+				"You want one framework to own the agent loop end to end — adopt that framework instead of adapting to it"
+			],
+			"alternatives": [
+				{
+					"approach": "Adopt an agent framework (Mastra, LangGraph, Google ADK) as the runtime because it already speaks the protocols",
+					"prefer_when": "you have no existing tool catalogue, approval model or trace, and accept the framework's"
+				},
+				{
+					"approach": "Integrate each standard on its own terms",
+					"prefer_when": "a one-off prototype that will not grow a second standard"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"agentic architecture",
+				"interoperability adapters",
+				"technology assessment matrix",
+				"risk by effect",
+				"protocol adoption decisions"
+			],
+			"keywords": [
+				"a2a",
+				"ag-ui",
+				"a2ui",
+				"webmcp",
+				"agent skills",
+				"mcp client",
+				"opentelemetry genai",
+				"acp",
+				"mcp apps",
+				"durable execution",
+				"interoperability"
+			],
+			"depends_on": ["ai-agent-actions", "ai-untrusted-content-boundary", "architecture-mcp-evolution"],
+			"docs": [
+				{
+					"path": "docs/blueprint/architecture/agentic-architecture/README.md",
+					"note": "Conceptual model, domains, topology"
+				},
+				{
+					"path": "docs/blueprint/architecture/agentic-architecture/matrix.md",
+					"note": "The technology matrix"
+				},
+				{
+					"path": "docs/blueprint/architecture/agentic-architecture/decision-record.md",
+					"note": "Decisions AA1–AA14"
+				},
+				{
+					"path": "docs/blueprint/architecture/agentic-architecture/security.md",
+					"note": "One trust model across every door"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/http/egress-address.ts",
+					"note": "The one SSRF address policy every outbound peer client shares"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/mcp-client/mcp-client.gate.test.ts"
+				},
+				{
+					"path": "src/lib/generative-ui/generative-ui.gate.test.ts"
+				},
+				{
+					"path": "src/lib/client-actions/webmcp.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [
+				"No standard gets its own tool registry, orchestrator, permission system or trace; every door ends in an existing mechanism.",
+				"Risk is assigned by the application from what an operation does; a protocol hint (annotation, skill tag, button, frontend-tool declaration) may raise a risk, never lower it.",
+				"A remote agent's or external tool's answer is a claim: validated, bounded, wrapped as untrusted content, never an authorization input and never shown as verified.",
+				"Upstream maturity, SDK maturity and implementation maturity are recorded separately; an experiment is never graded proven."
+			],
+			"emulation_notes": [
+				"Start from your catalogue and approval model, not from the protocols: list which existing mechanism each door would end in before installing anything.",
+				"Keep one living matrix with a reassessment trigger per row; review it on a schedule, not by automation.",
+				"Extract a shared module only when two doors have actually implemented the same responsibility (here: the egress address policy)."
+			],
+			"risk": "medium — many young standards; contained because each is an optional adapter with its own gate",
+			"maturity": "implemented"
+		},
+		{
 			"id": "architecture-wasm-kernel",
 			"tier": "light",
 			"title": "Rust→wasm compute kernel (vendored, plugin-free)",
@@ -3456,6 +3555,80 @@
 			"maturity": "proven",
 			"verifiedAt": "2026-10-10",
 			"verifiedSha": "91f61a76-dirty"
+		},
+		{
+			"id": "ai-agent-skills",
+			"tier": "deep",
+			"category": "docs-ax",
+			"title": "Agent Skills generated from the pattern registry",
+			"summary": "The canonical pattern registry is projected into spec-valid Agent Skills (one per registry group plus an architecture-selection skill, per-pattern references disclosed on demand), generated deterministically and checked in the gate — so any skills-compatible agent loads the same knowledge the docs, MCP tools and RAG corpus serve, with no hand-maintained copy.",
+			"when_to_use": "Use when knowledge with a canonical machine-readable source should reach the agent products (editors, CLIs, assistants) that load Agent Skills.",
+			"avoid_when": [
+				"The knowledge has no canonical source yet — write that first",
+				"Every consumer already reaches you over MCP — the pattern tools may be enough"
+			],
+			"alternatives": [
+				{
+					"approach": "MCP skills extension (skills/list, skill:// resources)",
+					"prefer_when": "the official SDK serves it and your consumers prefer protocol over files"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"agent skills",
+				"portable agent knowledge",
+				"generated skill packages",
+				"progressive disclosure"
+			],
+			"keywords": ["SKILL.md", "agentskills.io", "skills-ref", "npx skills add", "references"],
+			"depends_on": ["pattern-index"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/agent-skills.md",
+					"note": "Granularity, generator, validator, sizes"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/patterns/agent-skills.ts",
+					"note": "The renderer"
+				},
+				{
+					"path": "src/lib/server/patterns/agent-skill-spec.ts",
+					"note": "The spec validator"
+				},
+				{
+					"path": "skills/",
+					"kind": "dir",
+					"note": "Generated agent skills"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/patterns/agent-skills.test.ts"
+				},
+				{
+					"path": "src/lib/server/patterns/agent-skill-spec.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [
+				"skills/ is generated from the registry and fails the gate when stale or invalid; it is never edited by hand.",
+				"Every SKILL.md stays within the spec's progressive-disclosure limits (body under 500 lines and 5,000 tokens); detail lives in references/.",
+				"Maturity is stated honestly: implemented is never presented as proven."
+			],
+			"emulation_notes": [
+				"Choose granularity by what sits in the agent's context permanently: every installed skill's description does.",
+				"Reuse the renderer that builds your docs pages so the two projections cannot disagree."
+			],
+			"risk": "low — generated files, gated",
+			"maturity": "implemented"
 		},
 		{
 			"id": "databases-postgres-connection",
@@ -11081,6 +11254,559 @@
 				"WebMCP registerTool or a UI SDK action list can be generated from the same contracts for external agents; treat them as optional adapters, not as the architecture."
 			],
 			"risk": "medium — a browser executes model-chosen operations; held to view-only changes by a gate test",
+			"maturity": "implemented"
+		},
+		{
+			"id": "ai-mcp-client",
+			"tier": "deep",
+			"category": "ai",
+			"title": "MCP client (external tools projected into the one catalogue)",
+			"summary": "Consume external MCP servers with the official TypeScript client: an SSRF-guarded fetch with no token passthrough, bounded listing with fingerprints and drift detection, and a projection into the existing tool catalogue's vocabulary — namespaced names, reach external, user-origin results, and a risk the deployment assigns (write by default; read only for listed, fingerprint-pinned tools). Annotations are recorded as untrusted hints and never lower a risk. Wired to the deskbot through the external-operations domain: an operator-managed peer directory with fingerprint activation, every peer call approval-gated behind a disclosure card, a content screen that refuses secrets and requires a separate authorization for quoted read content, and a persistent execution claim that runs an approval at most once and settles an interrupted call as unknown, never retried.",
+			"when_to_use": "Use when an assistant should call tools another party operates and you can name and review that peer.",
+			"avoid_when": [
+				"The tools are yours — add them to the catalogue instead",
+				"You cannot review and pin the peer's tools — everything stays approval-gated, which may make the peer pointless"
+			],
+			"alternatives": [
+				{
+					"approach": "@ai-sdk/mcp createMCPClient",
+					"prefer_when": "you are on AI SDK v7 and accept the AI SDK's own protocol implementation instead of the official SDK"
+				}
+			],
+			"requires": ["third-party-api"],
+			"capabilities": [
+				"mcp client",
+				"external tool consumption",
+				"tool drift detection",
+				"ssrf guard",
+				"untrusted tool annotations"
+			],
+			"keywords": [
+				"modelcontextprotocol client",
+				"streamable http",
+				"tool poisoning",
+				"fingerprint",
+				"readOnlyHint untrusted",
+				"token passthrough",
+				"dns rebinding",
+				"approval binding",
+				"execution receipt",
+				"external operation",
+				"execution claim",
+				"content screen",
+				"peer directory"
+			],
+			"depends_on": ["ai-tool-harness", "ai-untrusted-content-boundary", "deskbot-approval-gate"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/mcp-client.md",
+					"note": "Decision, risk policy, guard, validation"
+				},
+				{
+					"path": "docs/blueprint/ai/external-operations.md",
+					"note": "Persistent claim, disclosure authorization, deskbot card, peer administration"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/ai/mcp-client/",
+					"kind": "dir",
+					"note": "Peer config, endpoint guard (connect-time pinned), listing, catalogue projection, disclosure, approval binding, approved execution with receipts, AI SDK tool set, peer directory, operation adapter"
+				},
+				{
+					"path": "src/lib/server/external-operations/",
+					"kind": "dir",
+					"note": "Protocol-neutral contract, content screen, persistent executor"
+				},
+				{
+					"path": "src/lib/server/db/ai/external-operations.ts",
+					"note": "Claim, dispatch marker, settlement, lease healing as conditional statements"
+				},
+				{
+					"path": "src/lib/server/ai/capabilities/external-tools.ts",
+					"note": "Deskbot capability mounting activated peer tools as gated tools"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/mcp-client/mcp-client.gate.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/mcp-client/peer-interop.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/mcp-client/endpoint-guard.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/mcp-client/approved-execution.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/mcp-client/projection.test.ts"
+				},
+				{
+					"path": "src/lib/server/external-operations/execution.pglite.test.ts"
+				},
+				{
+					"path": "src/lib/server/external-operations/content-screen.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/mcp-client/python-peer.pglite.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [
+				"Every projected external tool is reach external and resultOrigin user; its risk is write unless an admin listed it read-only and pinned its fingerprint.",
+				"Annotations never lower a risk; destructiveHint raises it.",
+				"A tool whose fingerprint changed, or a new tool, is withheld until an admin reviews it.",
+				"No user session or token is forwarded; the only credential sent is the peer's own, by secret reference.",
+				"Write-risk external tools never contact the peer from the agent loop; they only propose."
+			],
+			"emulation_notes": [
+				"Validate structuredContent yourself with the SDK's validator: the SDK's callTool throws on a mismatch, which would turn a bad peer into a failed turn.",
+				"Give write-risk tools an execute that returns the approval sentinel; a tool with no execute is a client action in the AI SDK."
+			],
+			"risk": "high if wired without review — contained by default-write risk, fingerprint pins and the egress guard",
+			"maturity": "implemented"
+		},
+		{
+			"id": "ai-mcp-app-provider",
+			"tier": "deep",
+			"category": "ai",
+			"title": "MCP App provider (an interactive View beside a text answer)",
+			"summary": "Serve one read-only MCP tool with a ui:// View through the official ext-apps helpers: a self-contained, network-less HTML View built apart from the app, linked by _meta.ui, with a complete text and structuredContent answer for hosts that render no View. The View reuses the tool's own data and the host's theme; it holds no authority of its own.",
+			"when_to_use": "Use when a tool's answer is easier to explore than to read, such as a graph or a filterable list, and the hosts in your audience render MCP Apps.",
+			"avoid_when": [
+				"Your audience is CLI agents only: they get the text, so build the text answer and skip the View",
+				"The View would need network access, credentials or writes: keep those behind your own app's approval flow"
+			],
+			"alternatives": [
+				{
+					"approach": "A generative surface in your own chat",
+					"prefer_when": "the interaction happens inside your app rather than in third-party MCP hosts"
+				}
+			],
+			"requires": [],
+			"capabilities": ["mcp apps", "ui resource", "interactive tool result", "host theming", "text fallback"],
+			"keywords": [
+				"sep-1865",
+				"ui://",
+				"ext-apps",
+				"registerAppTool",
+				"structuredContent",
+				"sandboxed iframe",
+				"mcp inspector"
+			],
+			"depends_on": ["architecture-hosted-mcp"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/mcp-apps.md",
+					"note": "Decision, implementation, security model, host evidence, deferred host requirements"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/mcp/apps/",
+					"kind": "dir",
+					"note": "The explore_patterns tool and its View on the hosted MCP"
+				},
+				{
+					"path": "pattern-library/dependency-explorer.ts",
+					"kind": "file",
+					"note": "The pure graph projection the tool and the View share"
+				},
+				{
+					"path": "scripts/mcp/build-app-views.ts",
+					"kind": "file",
+					"note": "Builds the self-contained View document (mcp:apps:build / mcp:apps:check)"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/mcp/apps/pattern-explorer.test.ts"
+				},
+				{
+					"path": "pattern-library/dependency-explorer.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — the MCP Apps row records the host evidence"
+				}
+			],
+			"invariants": [
+				"The View is read-only and network-less: every CSP list in _meta.ui is empty and it calls only its own tool through the host.",
+				"The text answer and structuredContent are complete on their own; a host that renders no View loses nothing but the interaction.",
+				"The View never ships with the app's client code; it is served only as a ui:// resource.",
+				"A host compatibility claim needs a recorded run in that host."
+			],
+			"emulation_notes": [
+				"Claude Code shows the model only structuredContent when both are present, so make structuredContent the full answer.",
+				"Some hosts prepend their own CSP meta, which pushes the View's own meta outside head; the declared _meta.ui CSP is the control that counts."
+			],
+			"risk": "low — read-only data the public MCP already serves; the host's sandbox is the enforcement point",
+			"maturity": "implemented"
+		},
+		{
+			"id": "ai-agent-to-agent",
+			"tier": "deep",
+			"category": "ai",
+			"title": "Agent to agent (A2A specialist agents, served and delegated)",
+			"summary": "Serve a specialist agent over A2A 1.0 with the official JS SDK behind a SvelteKit route (agent card, JSON-RPC, SSE) and delegate to independently implemented agents through an allowlisted client on the shared pinned peer egress that types every answer as a claim. Assistant-driven delegation is an approval-gated external operation: operator-listed peers, a disclosure of what is sent to whom, a binding over the agent card, budgets and depth one, cancellation of the remote task on timeout or abort. The served skills run deterministic architecture checks, so tasks cost no model quota and complete inside the request.",
+			"when_to_use": "Use when an evaluation belongs to an independently operated agent (another team, language or framework), or when your own specialist should be callable by such agents.",
+			"avoid_when": [
+				"The specialist lives in your own runtime — use a capability or sub-agent",
+				"Both ends are yours with a fixed contract — call a service API"
+			],
+			"alternatives": [
+				{
+					"approach": "Agent exposed as an MCP tool",
+					"prefer_when": "callers are coding agents that already speak MCP and the work is one short call"
+				},
+				{
+					"approach": "Direct service-to-service API",
+					"prefer_when": "you own both sides and the contract is fixed"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"a2a server",
+				"a2a client",
+				"agent card",
+				"remote delegation",
+				"assistant-driven delegation",
+				"cross-language interop"
+			],
+			"keywords": [
+				"agent2agent",
+				"a2a-js",
+				"agent-card.json",
+				"json-rpc",
+				"task lifecycle",
+				"claimed not verified",
+				"external operation",
+				"delegation budget",
+				"pinned egress",
+				"cancel task"
+			],
+			"depends_on": ["architecture-engineering"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/agent-to-agent.md",
+					"note": "When A2A, server and client decisions, interop evidence"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/a2a/",
+					"kind": "dir",
+					"note": "Agent card, executor, HTTP adapter, peer policy, delegation, the external-operations adapter"
+				},
+				{
+					"path": "src/lib/server/http/peer-egress.ts",
+					"note": "The secured outbound fetch shared with the MCP client (pinning, header hygiene, no redirects, byte cap)"
+				},
+				{
+					"path": "src/lib/server/ai/capabilities/agent-delegation.ts",
+					"note": "The deskbot capability that mounts delegate_architecture_review behind the external-operations approval door"
+				},
+				{
+					"path": "scripts/a2a/peer/performance_agent.py",
+					"note": "The independently implemented Python peer"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/a2a/http.adapter.test.ts"
+				},
+				{
+					"path": "src/lib/server/a2a/delegate.test.ts"
+				},
+				{
+					"path": "src/lib/server/a2a/external-adapter.test.ts"
+				},
+				{
+					"path": "src/lib/server/http/peer-egress.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [
+				"A remote answer is a claim: verified is always false, findings are rebuilt from known fields, malformed entries are dropped and counted.",
+				"No task store is shared between requests; every served task completes inside its request.",
+				"Every outbound URL, including the interface a card names, passes the allowlist and is connected to by its pinned, validated address; redirects are refused.",
+				"The assistant delegates only to an operator-listed peer, only after a human approves the disclosed operation, at most once per approval, and never from a delegated turn.",
+				"The served skill never delegates further."
+			],
+			"emulation_notes": [
+				"Do not use the SDK's default client factory if you guard fetch: it adds a REST transport on the global fetch.",
+				"Pull the first stream frame before committing to SSE, as the SDK's own Express handler does, so an immediate error becomes a JSON-RPC error response.",
+				"Stream when the card offers it: the first event names the remote task, which is what makes CancelTask possible after a timeout."
+			],
+			"risk": "medium — public endpoint, deterministic and stateless; delegation approval-gated and not yet wired to a route",
+			"maturity": "implemented"
+		},
+		{
+			"id": "ai-generative-ui",
+			"tier": "deep",
+			"category": "ai",
+			"title": "Generative UI (A2UI surfaces rendered with the app's own components)",
+			"summary": "The model composes interfaces as A2UI v1.0 data from a closed catalog the application defines; a policy and the official validator refuse anything outside it; a lazy Svelte 5 adapter over the lit-free core of @a2ui/web_core renders it with the app's own components and tokens, binds inputs locally and emits bounded view-risk actions. The catalog has a general section (layout, text, notices, disclosure, form fields with bound errors, a data-table bar chart, progress) and a domain section a derived app replaces. Each press carries an event id and a submission key, and is admitted once against the persisted conversation by a claimed row id, so a retry or double click starts no second turn. The human-facing record stays separate from the model prompt. A2UI Express is the model-output language (about 40 % fewer tokens than A2UI JSON, measured).",
+			"when_to_use": "Use when the shape of an answer depends on the question and must be interactive — forms for missing inputs, comparisons, choices, updates to what is on screen.",
+			"avoid_when": [
+				"The shape is known in advance — a fixed card fed structured data is cheaper and needs no catalog prompt",
+				"The interface must persist data on its own — surfaces only emit events"
+			],
+			"alternatives": [
+				{
+					"approach": "json-render with its official Svelte renderer",
+					"prefer_when": "bundle size dominates and no A2UI interop is needed"
+				},
+				{
+					"approach": "MCP Apps (sandboxed HTML)",
+					"prefer_when": "the view is a full application a third party ships"
+				}
+			],
+			"requires": ["ai-provider"],
+			"capabilities": [
+				"generative ui",
+				"a2ui renderer",
+				"component catalog",
+				"declarative ui validation",
+				"surface actions",
+				"idempotent surface actions",
+				"multi-turn surface evaluation"
+			],
+			"keywords": [
+				"a2ui",
+				"web_core",
+				"a2ui express",
+				"json-render",
+				"openui",
+				"catalog",
+				"lazy renderer",
+				"event id",
+				"submission key",
+				"dedup"
+			],
+			"depends_on": ["ui-component-system", "ai-untrusted-content-boundary"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/generative-ui.md",
+					"note": "Roles, catalog sections, measured comparison, security model, dedup rules, evaluation"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/generative-ui/",
+					"kind": "dir",
+					"note": "Catalog (general + domain sections), limits, policy, surface action record and submission key"
+				},
+				{
+					"path": "src/lib/components/composites/generative-surface/",
+					"kind": "dir",
+					"note": "Lazy Svelte renderer"
+				},
+				{
+					"path": "src/lib/server/ai/generative-ui/",
+					"kind": "dir",
+					"note": "Express compiler, prompt, render_surface tool, surface history, surface action door"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/generative-ui/generative-ui.gate.test.ts"
+				},
+				{
+					"path": "src/lib/generative-ui/policy.test.ts"
+				},
+				{
+					"path": "src/lib/components/composites/generative-surface/surface-session.svelte.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/generative-ui/compile-surface.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/generative-ui/surface-action-door.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/generative-ui/surface-conversation.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [
+				"A surface is data rendered by the app's own components: no HTML injection, no script URLs, no catalog functions.",
+				"Every batch passes the policy (size, depth, cycles, bindings, catalog) before the protocol core sees it.",
+				"A surface action is a bounded view-risk event; a button press is never an approval.",
+				"A press is admitted once: the same event id or the same submission key against the persisted conversation is refused, and the admitted row's id is claimed atomically.",
+				"What the user sees for a press and what the model reads are separate: the persisted row keeps the human record, the model gets the event as wrapped untrusted content.",
+				"The renderer never imports Lit or the protocol's own web-component catalog, and loads only when a surface is shown."
+			],
+			"emulation_notes": [
+				"Build your own catalog over your components; the protocol's basic catalog module pulls in a web-component framework at import time.",
+				"Measure the catalog prompt, not only the payload: it is the larger token cost.",
+				"Keep the general section and replace the domain section with your product's own components; give every chart a text alternative by drawing it as data."
+			],
+			"risk": "medium — fresh 0.x core that breaks often; pinned exactly and gated",
+			"maturity": "implemented"
+		},
+		{
+			"id": "ai-webmcp",
+			"tier": "light",
+			"category": "ai",
+			"title": "WebMCP publication of client actions (experiment)",
+			"summary": "Publishes existing client-action contracts to the browser's own agent through document.modelContext when it exists: same schema, runner, timeouts and bounded results; only read and view actions; a per-minute budget; withdrawn on dispose. Progressive enhancement only.",
+			"when_to_use": "Use when bounded client actions exist and external browser agents should operate the view without screen-scraping.",
+			"avoid_when": ["The action changes stored data", "A page would depend on it — the API is in an origin trial"],
+			"alternatives": [],
+			"requires": [],
+			"capabilities": ["webmcp", "browser agent tools"],
+			"keywords": ["document.modelContext", "registerTool", "origin trial"],
+			"depends_on": ["ai-agent-actions"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/webmcp.md",
+					"note": "Decision, rules, upstream status"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/client-actions/webmcp.ts"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/client-actions/webmcp.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — feature-detected, view-risk only",
+			"maturity": "implemented"
+		},
+		{
+			"id": "ai-agent-user-interaction",
+			"tier": "light",
+			"category": "ai",
+			"title": "AG-UI endpoint over the turn stream (experiment)",
+			"summary": "Serves an existing AI SDK agent to AG-UI clients without a second runtime: RunAgentInput is validated by the official schemas and mapped onto the surface's own request, the same orchestrator turn runs, and its stream is projected to AG-UI events under a deny-by-default export policy. Client actions are AG-UI frontend tools; server tool results replay only under a server-issued ticket; state and resume are refused, approvals stay on the approve route.",
+			"when_to_use": "Use when an AG-UI frontend must talk to an existing AI SDK agent.",
+			"avoid_when": ["Your only client is your own — keep the AI SDK stream"],
+			"alternatives": [],
+			"requires": [],
+			"capabilities": ["ag-ui", "agent frontend events"],
+			"keywords": ["ag-ui", "copilotkit", "RUN_STARTED", "RunAgentInput", "HttpAgent", "frontend tools"],
+			"depends_on": ["ai-agent-actions"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/agent-user-interaction.md",
+					"note": "Endpoint contract, run-input refusals, semantics table, export policy, verification"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/ai/ag-ui/ui-stream-to-ag-ui.ts"
+				},
+				{
+					"path": "src/lib/server/ai/ag-ui/run-input.ts"
+				},
+				{
+					"path": "src/lib/server/ai/ag-ui/serve-run.ts"
+				},
+				{
+					"path": "src/lib/server/ai/ag-ui/tool-result-ticket.ts"
+				},
+				{
+					"path": "src/routes/api/ai/ag-ui/deskbot/+server.ts"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/ag-ui/ui-stream-to-ag-ui.test.ts"
+				},
+				{
+					"path": "src/lib/server/ai/ag-ui/serve-run.test.ts"
+				},
+				{
+					"path": "src/routes/api/ai/ag-ui/deskbot/server.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "medium — an authenticated, mutating surface behind the AI guard; deny-by-default export",
+			"maturity": "implemented"
+		},
+		{
+			"id": "ai-agent-observability",
+			"tier": "light",
+			"category": "ai",
+			"title": "Turn trace as OpenTelemetry GenAI spans",
+			"summary": "Projects a recorded turn trace onto invoke_agent, chat and execute_tool spans with GenAI semantic-convention names, v10r facts under v10r.*, and no content by construction — a lossy, exporter-neutral export beside the audit-grade trace.",
+			"when_to_use": "Use when an OpenTelemetry backend should read agent turns without a second tracer.",
+			"avoid_when": ["No telemetry backend exists — the trace and admin pages already answer the questions"],
+			"alternatives": [],
+			"requires": [],
+			"capabilities": ["opentelemetry genai", "agent telemetry"],
+			"keywords": ["gen_ai", "semantic conventions", "invoke_agent", "execute_tool"],
+			"depends_on": ["ai-turn-trace"],
+			"docs": [
+				{
+					"path": "docs/blueprint/ai/agent-observability.md",
+					"note": "Span mapping and the three records"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/ai/trace/gen-ai-spans.ts"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/ai/trace/gen-ai-spans.test.ts"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/interop",
+					"kind": "route",
+					"note": "Agentic Interoperability Lab — each section labels itself live, fixture or recorded"
+				}
+			],
+			"invariants": [],
+			"emulation_notes": [],
+			"risk": "low — pure projection",
 			"maturity": "implemented"
 		},
 		{

@@ -156,12 +156,12 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 	if (model && retrievalOk) {
 		try {
 			const contextBlock = retrievalResult ? formatContextForPrompt(retrievalResult) : '';
-			const system = contextBlock
+			const instructions = contextBlock
 				? `Answer the question using the context below. Be concise (2-3 sentences).\n\n<context>\n${contextBlock}\n</context>`
 				: 'Answer the question concisely in 2-3 sentences.';
 			const result = streamText({
 				model,
-				system,
+				instructions,
 				prompt: query,
 				maxOutputTokens: 180,
 				maxRetries: 0,
@@ -170,11 +170,11 @@ export async function executeAiCycle(input: AiCycleInput, userId: string): Promi
 			// Drain without streaming back — the showcase animates from the final trace.
 			result.consumeStream();
 			answer = await result.text;
-			const totalUsage = await result.totalUsage;
+			const usage = await result.usage;
 			generateDetail = {
 				model: providerInfo?.id,
-				inputTokens: totalUsage?.inputTokens,
-				outputTokens: totalUsage?.outputTokens,
+				inputTokens: usage?.inputTokens,
+				outputTokens: usage?.outputTokens,
 				contextChunks: retrievalResult?.chunks.length ?? 0,
 			};
 		} catch (err) {

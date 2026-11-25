@@ -14,6 +14,8 @@ export interface CaseResult {
 	grades: (Grade & { kind: string })[];
 	/** Set when the turn could not be obtained at all (HTTP error, no trace). */
 	error?: string;
+	/** `provider/model` of every provider call the case's turns made, deduplicated. */
+	models?: string[];
 }
 
 export interface Scorecard {
@@ -29,9 +31,30 @@ export interface EvalBaseline {
 	floor: number;
 }
 
-export function scoreCase(evalCase: EvalCase, turn: GradedTurn): CaseResult {
-	const grades = evalCase.expect.map((e) => ({ kind: e.kind, ...grade(e, turn) }));
-	return { id: evalCase.id, pass: grades.every((g) => g.pass), grades };
+/**
+ * Grade a case over its turns: the question's turn against `expect`, then each scripted
+ * follow-up's turn against its own expectations (their kinds read `turn 2: …`). A follow-up
+ * whose turn is missing fails every one of its expectations.
+ */
+export function scoreCase(evalCase: EvalCase, turns: GradedTurn | readonly GradedTurn[]): CaseResult {
+	const list: readonly GradedTurn[] = Array.isArray(turns) ? turns : [turns as GradedTurn];
+	const [first] = list;
+	const grades: CaseResult['grades'] = evalCase.expect.map((e) => ({ kind: e.kind, ...grade(e, first as GradedTurn) }));
+	(evalCase.followUps ?? []).forEach((followUp, index) => {
+		const turn = list[index + 1];
+		for (const e of followUp.expect) {
+			const kind = `turn ${index + 2}: ${e.kind}`;
+			grades.push(turn ? { kind, ...grade(e, turn) } : { kind, pass: false, detail: 'the turn did not happen' });
+		}
+	});
+	const models = [
+		...new Set(
+			list.flatMap((turn) =>
+				(turn.trace.modelCalls ?? []).map((call) => `${call.providerId ?? 'unknown'}/${call.modelId ?? 'unknown'}`),
+			),
+		),
+	].sort();
+	return { id: evalCase.id, pass: grades.every((g) => g.pass), grades, ...(models.length > 0 ? { models } : {}) };
 }
 
 export function failedCase(evalCase: EvalCase, error: string): CaseResult {

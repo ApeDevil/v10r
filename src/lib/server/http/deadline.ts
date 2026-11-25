@@ -125,10 +125,21 @@ function deadlineFrom(expiresAt: number, budgetMs: number): Deadline {
 						// `remainingMs()` does not, so a budget of 18.7 ms fired at 18 ms rejected
 						// with the deadline still reporting 0.7 ms left — an expired run whose
 						// deadline said it had not expired (flaky `retryWithin` budget test).
-						timer = setTimeout(() => {
+						//
+						// And re-armed while time is left: Node's timers run on libuv's cached loop
+						// clock, which lags `performance.now()` when the loop is busy, so a timer can
+						// fire before the deadline has passed. Rejecting then would report an expired
+						// run under a deadline that has not expired (the same flaky test, under load).
+						const fire = () => {
+							const left = remainingMs();
+							if (left > 0) {
+								timer = setTimeout(fire, Math.ceil(left));
+								return;
+							}
 							controller.abort(expired);
 							reject(expired);
-						}, Math.ceil(budget));
+						};
+						timer = setTimeout(fire, Math.ceil(budget));
 					}),
 				]);
 			} finally {

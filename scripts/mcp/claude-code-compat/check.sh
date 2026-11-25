@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Claude Code compatibility check for tool `title` and `annotations.readOnlyHint` (roadmap B1).
+# Claude Code compatibility check for tool `title` and `annotations.readOnlyHint` (roadmap B1), and
+# for a tool carrying an MCP Apps `_meta.ui` link (field set `metaUi`).
 #
 # Runs on the HOST, where Claude Code is installed and signed in. For each transport (stdio, http)
 # and each field set (none = control, title, readOnlyHint, both) it starts the annotated fixture
@@ -8,6 +9,7 @@
 #
 #   scripts/mcp/claude-code-compat/check.sh            # list check (one tiny turn per case)
 #   scripts/mcp/claude-code-compat/check.sh --call     # also have the model call one tool per case
+#   V10R_COMPAT_MODEL=<model> …                         # pin the model for the headless turns
 #
 # Isolation: --strict-mcp-config ignores every MCP server the user has configured, the turn runs in
 # a throwaway directory (no project .mcp.json or CLAUDE.md), no tool other than the fixture's is
@@ -17,8 +19,12 @@
 # fixture is dependency-free (it runs the committed stdio bundle as a child), so the podman path
 # needs no node_modules — the same read-only, network-less container as the real server.
 # Results: one JSONL transcript per case plus summary.txt under $V10R_COMPAT_OUT (default: a new
-# temp directory, printed at the end). Exit 0 when the control case passes on both transports —
-# the kit itself works — whatever the verdict on the fields; exit 1 when it does not.
+# temp directory, printed at the end). Each line names the model the session ran on (from its
+# `system/init` event) and the protocol era it spoke (`legacy(<version>)` = the 2025-era
+# initialize handshake, `modern(2026-07-28)` = the per-request envelope; bun runtime only). Exit 0 when the control case passes on both transports — the kit itself
+# works — whatever the verdict on the fields; exit 1 when it does not. With --call the control
+# passes only if the tool was actually called: a turn that never ran (a usage limit, a sign-in
+# prompt) is a failed control, not a pass, and its result line is printed.
 #
 # Runbook and how to record the verdict: docs/blueprint/architecture/mcp-evolution/claude-code-compat.md
 set -euo pipefail
@@ -41,7 +47,7 @@ fi
 stdio_command() {
 	local fields="$1"
 	if [[ "$RUNTIME" == bun ]]; then
-		printf '{"command":"bun","args":["%s/scripts/mcp/claude-code-compat/annotated-server.ts"],"env":{"V10R_COMPAT_FIELDS":"%s"}}' "$REPO" "$fields"
+		printf '{"command":"bun","args":["%s/scripts/mcp/claude-code-compat/annotated-server.ts"],"env":{"V10R_COMPAT_FIELDS":"%s","V10R_COMPAT_PROTOCOL_LOG":"%s"}}' "$REPO" "$fields" "$PROTOCOL_LOG"
 	else
 		printf '{"command":"podman","args":["run","-i","--rm","--network=none","-e","V10R_COMPAT_FIELDS=%s","-v","%s:/v10r:ro","%s","bun","/v10r/scripts/mcp/claude-code-compat/annotated-server.ts"]}' "$fields" "$REPO" "$IMAGE"
 	fi
@@ -51,7 +57,7 @@ HTTP_PID=""
 start_http() {
 	local fields="$1"
 	if [[ "$RUNTIME" == bun ]]; then
-		V10R_COMPAT_FIELDS="$fields" bun "$REPO/scripts/mcp/claude-code-compat/annotated-server.ts" --http "$PORT" 2>>"$OUT/http-server.log" &
+		V10R_COMPAT_FIELDS="$fields" V10R_COMPAT_PROTOCOL_LOG="$PROTOCOL_LOG" bun "$REPO/scripts/mcp/claude-code-compat/annotated-server.ts" --http "$PORT" 2>>"$OUT/http-server.log" &
 		HTTP_PID=$!
 	else
 		podman run --rm -d --name v10r-claude-code-compat -p "127.0.0.1:$PORT:$PORT" -e "V10R_COMPAT_FIELDS=$fields" \
@@ -73,6 +79,8 @@ trap stop_http EXIT
 
 run_case() {
 	local transport="$1" fields="$2" config="$WORK/$1-$2.mcp.json" transcript="$OUT/$1-$2.jsonl"
+	# The protocol era the client spoke (bun runtime only; the podman fixture mounts read-only).
+	PROTOCOL_LOG="$OUT/$1-$2.protocol"
 	if [[ "$transport" == stdio ]]; then
 		printf '{"mcpServers":{"v10r-compat":%s}}' "$(stdio_command "$fields")" >"$config"
 	else
@@ -85,20 +93,29 @@ run_case() {
 		allowed="mcp__v10r-compat__search_patterns"
 		turns=3
 	fi
-	(cd "$WORK" && claude -p "$prompt" --output-format stream-json --verbose --strict-mcp-config \
+	local model_args=()
+	[[ -n "${V10R_COMPAT_MODEL:-}" ]] && model_args=(--model "$V10R_COMPAT_MODEL")
+	(cd "$WORK" && claude -p "$prompt" "${model_args[@]}" --output-format stream-json --verbose --strict-mcp-config \
 		--mcp-config "$config" --allowedTools "$allowed" --max-turns "$turns" >"$transcript" 2>"$transcript.stderr") || true
 	[[ "$transport" == http ]] && stop_http
 
-	local init status tools
+	local init status tools model era
 	init="$(grep -m1 '"subtype":"init"' "$transcript" || true)"
 	status="$(grep -o '"name":"v10r-compat","status":"[a-z_-]*"' <<<"$init" | sed 's/.*"status":"//;s/"$//' || true)"
 	tools="$(grep -o 'mcp__v10r-compat__[a-z_]*' <<<"$init" | sort -u | wc -l | tr -d ' ')"
+	model="$(grep -o '"model":"[^"]*"' <<<"$init" | head -1 | sed 's/"model":"//;s/"$//' || true)"
+	era="$(tail -1 "$PROTOCOL_LOG" 2>/dev/null || true)"
 	local called="-"
 	if [[ "$CALL" == 1 ]]; then
 		grep -q '"name":"mcp__v10r-compat__search_patterns"' "$transcript" && called=yes || called=no
 	fi
-	printf '%-6s %-13s status=%-10s tools=%-2s called=%s\n' "$transport" "$fields" "${status:-none}" "$tools" "$called" | tee -a "$OUT/summary.txt"
-	[[ "$fields" != none || ( "$status" == connected && "$tools" == 8 ) ]]
+	printf '%-6s %-13s status=%-10s tools=%-2s called=%-3s era=%-18s model=%s\n' "$transport" "$fields" "${status:-none}" "$tools" "$called" "${era:-unknown}" "${model:-unknown}" | tee -a "$OUT/summary.txt"
+	if [[ "$called" == no ]]; then
+		local result
+		result="$(grep '"type":"result"' "$transcript" | tail -1 | grep -o '"result":"[^"]*"' | head -1 | sed 's/"result":"//;s/"$//' | cut -c1-120 || true)"
+		echo "       no call: ${result:-the turn ended without a result}" | tee -a "$OUT/summary.txt"
+	fi
+	[[ "$fields" != none || ( "$status" == connected && "$tools" == 8 && "$called" != no ) ]]
 }
 
 {
@@ -109,7 +126,7 @@ run_case() {
 
 control_ok=1
 for transport in stdio http; do
-	for fields in none title readOnlyHint both; do
+	for fields in none title readOnlyHint both metaUi; do
 		run_case "$transport" "$fields" || control_ok=0
 	done
 done

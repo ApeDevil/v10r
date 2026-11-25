@@ -1,0 +1,47 @@
+---
+name: v10r-architecture-selection
+description: "Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (Foundations, Data, Identity & Safety, Intelligence, Features, Velocity, Integrity), before reading any single pattern: it maps the 197 registry patterns to the v10r group agent skills, explains requires/depends_on, and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected."
+license: MIT
+metadata:
+  source: "v10r pattern-library registry"
+  registry-version: "2.2.0"
+  generated: "true"
+---
+
+# Choosing v10r patterns
+
+> Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
+
+## When to use
+
+Use this before any v10r group agent skill when the task is "what should this project be built from?" — a new app, a feature that crosses domains, or a review of whether an existing design over-reaches. It is the routing layer; the pattern detail lives in the group agent skills.
+
+## Method
+
+1. **Name the capabilities** the project needs, in plain words ("background jobs", "layered RAG", "rate limiting").
+2. **Name the target infrastructure** using the registry's closed vocabulary: `ai-provider`, `container-host`, `cron`, `pgvector`, `postgres`, `redis`, `third-party-api`, `web-worker`. Unknown is not the same as missing — ask rather than assume.
+3. **With the v10r Pattern MCP connected** (hosted `https://www.v10r.dev/api/mcp/public`, or the local stdio server in `mcp/`):
+   - `recommend_emulation_plan {capabilities, target_infra}` returns a dependency-ordered plan; each step carries its contraindications, required infrastructure (including what its dependencies need) and a fit verdict against `target_infra`. It never drops a step itself — you do, when a step's *Avoid when* describes the target.
+   - `get_pattern {ids, sections: ["fitness", "invariants", "emulation_notes"]}` reads up to five cards at once; `search_patterns {query: "*"}` lists the category map.
+4. **Without the MCP**, do the same by hand:
+   - find candidates in the group agent skills below (each has a full pattern index);
+   - expand every candidate through *depends on* — [references/dependency-graph.md](references/dependency-graph.md) lists every edge and a build order;
+   - union the *requires* of the whole set, including the dependencies', and compare it with the target;
+   - drop any pattern whose *Avoid when* matches, and prefer a listed *Alternative* when its condition holds.
+5. **Build in dependency order**, one pattern at a time, keeping each deep card's invariants.
+
+Fewer patterns is the better plan: catalogs over-recommend, and every adopted pattern is code the project must own.
+
+Maturity is evidence, not opinion: **proven** = a linked test or showcase, verified at a recorded date; **implemented** = the code exists but no proof surface is linked; **planned** = design only. Treat implemented and planned rows as unverified.
+
+## Group agent skills
+
+| Agent skill | Covers | Patterns (deep) |
+|---|---|---|
+| `v10r-foundations` | Architecture & Request Pipeline, App Shell & Navigation, UI Components & Design System, Forms & Validation, Internationalization (i18n), Docs & Agent Experience | 64 (15) |
+| `v10r-data` | Databases & Storage, Database Operations | 13 (0) |
+| `v10r-identity-safety` | Identity & Access, Anti-Abuse, Admin & Privacy | 20 (1) |
+| `v10r-intelligence` | AI, Toolkits, Office Workflows | 28 (13) |
+| `v10r-features` | Analytics, Notifications, Jobs & Scheduling, PWA, Data Viz, 3D, Content & Blog, Desk Workspace, External Integrations | 42 (5) |
+| `v10r-velocity` | Interaction Velocity, Data Velocity, Runtime Velocity, Velocity Measurement | 22 (19) |
+| `v10r-integrity` | Truth & Evidence, Derivation & Provenance, Durable Execution | 8 (8) |

@@ -3,9 +3,11 @@
  * and status doors build their answer from, so a live response and a later status read agree
  * by construction. Pure derivations over the stored receipts; no step runs here.
  */
+import { getExternalOperation } from '#lib/server/db/ai/external-operations.ts';
 import { listProposalSteps, listRevertSteps } from '#lib/server/db/ai/proposals.ts';
 import type { agentProposal } from '#lib/server/db/schema/ai/proposal.ts';
 import type { agentProposalStep, StepRecoveryPoint } from '#lib/server/db/schema/ai/proposal-step.ts';
+import { externalReceiptView } from '#lib/server/external-operations/index.ts';
 import type { ProposalOutcome, ProposalRevert, ProposalStepReceipt } from '#lib/types/ai-proposal.ts';
 import type { DeskEffect } from '../tools/_types';
 import { effectsForStep } from '../tools/desk-execute';
@@ -63,13 +65,16 @@ async function revertOf(proposal: ProposalRow): Promise<ProposalRevert | null> {
 /**
  * The outcome of a proposal that is no longer running, rebuilt from its receipts — what
  * the status route and a repeated approval answer with. The receipt message is not
- * rebuilt: it is a row of the conversation already.
+ * rebuilt here: it is a row of the conversation already (an external operation's is restored
+ * by the executor's `recover` when it was lost).
  */
 export async function proposalOutcome(proposal: ProposalRow): Promise<ProposalOutcome> {
 	const rows = await listProposalSteps(proposal.id);
 	const steps = rows.map(toStepReceipt);
 	const revert = await revertOf(proposal);
+	const external = await getExternalOperation(proposal.id);
 	return {
+		...(external ? { external: externalReceiptView(external) } : {}),
 		id: proposal.id,
 		status: proposal.status,
 		steps,

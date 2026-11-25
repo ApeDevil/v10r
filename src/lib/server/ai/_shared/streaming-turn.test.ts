@@ -1,16 +1,20 @@
 import {
 	APICallError,
 	createUIMessageStream,
+	isStepCount,
+	jsonSchema,
 	type LanguageModelUsage,
 	streamText,
+	tool,
 	type UIMessageStreamWriter,
 } from 'ai';
-import { MockLanguageModelV3, simulateReadableStream } from 'ai/test';
+import { MockLanguageModelV4, simulateReadableStream } from 'ai/test';
 import { describe, expect, it, vi } from 'vitest';
 import { AiError, aiErrorFrameText } from '#lib/server/ai/errors.ts';
 import {
 	type AttemptFailure,
 	type PumpableTextResult,
+	pumpableTextResult,
 	streamTextIntoOpenMessage,
 	type TurnAttempt,
 } from './streaming-turn';
@@ -64,7 +68,7 @@ function makeResult(opts: {
 				? Promise.reject(new Error('No output generated. Check the stream for errors.'))
 				: Promise.resolve(opts.text ?? 'hi');
 		},
-		get totalUsage() {
+		get usage() {
 			return Promise.resolve(opts.usage ?? USAGE);
 		},
 	} as unknown as PumpableTextResult;
@@ -336,7 +340,7 @@ describe('streamTextIntoOpenMessage', () => {
 				})();
 			},
 			text: Promise.resolve('half an answer'),
-			totalUsage: Promise.resolve(USAGE),
+			usage: Promise.resolve(USAGE),
 		};
 		const { hooks, failures } = makeHooks();
 		const seen: string[] = [];
@@ -386,7 +390,7 @@ describe('streamTextIntoOpenMessage', () => {
 
 	// abort: the attempt's abortSignal fired — the turn's cancellation, or its own deadline
 
-	/** The SDK's abort shape: an `abort` part closes the stream; `text`/`totalUsage` reject with the
+	/** The SDK's abort shape: an `abort` part closes the stream; `text`/`usage` reject with the
 	 * reason (pre-caught: the helper must never ask for them after an abort). */
 	function abortedResult(parts: Part[], cancel?: AbortController): PumpableTextResult {
 		const reason = new DOMException('This operation was aborted', 'AbortError');
@@ -402,7 +406,7 @@ describe('streamTextIntoOpenMessage', () => {
 				})();
 			},
 			text: rejected as Promise<string>,
-			totalUsage: rejected as Promise<LanguageModelUsage>,
+			usage: rejected as Promise<LanguageModelUsage>,
 		};
 	}
 
@@ -687,13 +691,13 @@ describe('streamTextIntoOpenMessage', () => {
 });
 
 /**
- * The same contract against the real SDK — `streamText` over `MockLanguageModelV3` inside a real
+ * The same contract against the real SDK — `streamText` over `MockLanguageModelV4` inside a real
  * `createUIMessageStream`, read back as the frames the client would receive. The fakes above
  * model the SDK's failure shape; these prove the shape is what the SDK actually produces.
  */
 describe('streamTextIntoOpenMessage against the real SDK', () => {
 	type StreamPart =
-		Awaited<ReturnType<MockLanguageModelV3['doStream']>>['stream'] extends ReadableStream<infer P> ? P : never;
+		Awaited<ReturnType<MockLanguageModelV4['doStream']>>['stream'] extends ReadableStream<infer P> ? P : never;
 
 	const usage = {
 		inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
@@ -711,11 +715,11 @@ describe('streamTextIntoOpenMessage against the real SDK', () => {
 		});
 
 	/** A provider whose transport fails before any token. */
-	const refusing = () => new MockLanguageModelV3({ doStream: async () => Promise.reject(quota429()) });
+	const refusing = () => new MockLanguageModelV4({ doStream: async () => Promise.reject(quota429()) });
 
 	/** A provider that answers. */
 	const answering = (text: string) =>
-		new MockLanguageModelV3({
+		new MockLanguageModelV4({
 			doStream: async () => ({
 				stream: simulateReadableStream<StreamPart>({
 					chunks: [
@@ -734,7 +738,7 @@ describe('streamTextIntoOpenMessage against the real SDK', () => {
 	 * surfaces this as a rejection of the UI stream — no `error` part — and `result.text` never
 	 * settles, which is why the helper must not await it once the pump has failed. */
 	const cutMidAnswer = () =>
-		new MockLanguageModelV3({
+		new MockLanguageModelV4({
 			doStream: async () => ({
 				stream: new ReadableStream<StreamPart>({
 					start(controller) {
@@ -752,7 +756,7 @@ describe('streamTextIntoOpenMessage against the real SDK', () => {
 	/** A provider that streams one token and then holds the connection open until the call's
 	 * `abortSignal` fires — a real provider fetch fails the same way (AbortError) when aborted. */
 	const holding = (text: string) =>
-		new MockLanguageModelV3({
+		new MockLanguageModelV4({
 			doStream: async ({ abortSignal }) => ({
 				stream: new ReadableStream<StreamPart>({
 					start(controller) {
@@ -765,11 +769,11 @@ describe('streamTextIntoOpenMessage against the real SDK', () => {
 			}),
 		});
 
-	const attempt = (providerId: string, model: MockLanguageModelV3, abortSignal?: AbortSignal): TurnAttempt => ({
+	const attempt = (providerId: string, model: MockLanguageModelV4, abortSignal?: AbortSignal): TurnAttempt => ({
 		providerId,
 		modelId: model.modelId,
 		// `onError` silenced: the SDK's default logs every provider error to the console.
-		run: () => streamText({ model, prompt: 'hi', maxRetries: 0, abortSignal, onError: () => {} }),
+		run: () => pumpableTextResult(streamText({ model, prompt: 'hi', maxRetries: 0, abortSignal, onError: () => {} })),
 	});
 
 	/** Run the helper the way the orchestrator does and collect every frame the client would get. */
@@ -847,7 +851,7 @@ describe('streamTextIntoOpenMessage against the real SDK', () => {
 			{
 				providerId: 'groq',
 				modelId: 'm',
-				run: () => streamText({ model: secondary(), prompt: 'hi', onError: () => {} }),
+				run: () => pumpableTextResult(streamText({ model: secondary(), prompt: 'hi', onError: () => {} })),
 			},
 		]);
 
@@ -881,7 +885,11 @@ describe('streamTextIntoOpenMessage against the real SDK', () => {
 		const { frames: out, failures } = await frames(
 			[
 				attempt('google', holding('Half an answer'), AbortSignal.any([cancel.signal, AbortSignal.timeout(5_000)])),
-				{ providerId: 'groq', modelId: 'm', run: () => streamText({ model: secondary(), prompt: 'hi' }) },
+				{
+					providerId: 'groq',
+					modelId: 'm',
+					run: () => pumpableTextResult(streamText({ model: secondary(), prompt: 'hi' })),
+				},
 			],
 			makeHooks({ signal: cancel.signal, onCancellation }),
 			{
@@ -920,5 +928,105 @@ describe('streamTextIntoOpenMessage against the real SDK', () => {
 		expect(persisted).toEqual(['The catalog has']);
 		expect(failures).toHaveLength(1);
 		expect(failures[0]).toMatchObject({ providerId: 'google', willRetry: false });
+	});
+	/** A provider whose stream ends with neither output nor a `finish` part — a cut transport. */
+	const silent = () =>
+		new MockLanguageModelV4({
+			doStream: async () => ({
+				stream: simulateReadableStream<StreamPart>({ chunks: [{ type: 'stream-start', warnings: [] }] }),
+			}),
+		});
+
+	it('a stream that ends with no output and no finish rotates like an empty answer (AI SDK 7 reports it as an error)', async () => {
+		const { frames: out, failures } = await frames([attempt('google', silent()), attempt('groq', answering('Hi.'))]);
+
+		expect(out.find((f) => f.type === 'text-delta')).toMatchObject({ delta: 'Hi.' });
+		expect(failures).toHaveLength(1);
+		expect(failures[0]).toMatchObject({ providerId: 'google', willRetry: true });
+		expect(failures[0].error).toMatchObject({ kind: 'unavailable', code: 'EMPTY_ANSWER' });
+	});
+
+	/**
+	 * The usage contract the trace and the budget rest on (AI SDK 7 changed the result's `usage`
+	 * to the sum over steps): `onStepEnd` sees each model call's own usage — one trace row per
+	 * call — and the helper hands `afterText` the whole attempt's sum, which is what is charged.
+	 */
+	it('step usage is per model call; the usage afterText charges is the sum of the steps', async () => {
+		const stepUsage = (input: number, output: number) => ({
+			inputTokens: { total: input, noCache: input, cacheRead: undefined, cacheWrite: undefined },
+			outputTokens: { total: output, text: output, reasoning: undefined },
+			raw: undefined,
+		});
+		let call = 0;
+		const model = new MockLanguageModelV4({
+			doStream: async () => {
+				call++;
+				const chunks: StreamPart[] =
+					call === 1
+						? [
+								{ type: 'stream-start', warnings: [] },
+								{ type: 'tool-call', toolCallId: 'c1', toolName: 'lookup', input: '{}' },
+								{
+									type: 'finish',
+									finishReason: { unified: 'tool-calls', raw: 'tool_calls' },
+									usage: stepUsage(100, 7),
+								},
+							]
+						: [
+								{ type: 'stream-start', warnings: [] },
+								{ type: 'text-start', id: 't' },
+								{ type: 'text-delta', id: 't', delta: 'Found it.' },
+								{ type: 'text-end', id: 't' },
+								{ type: 'finish', finishReason: { unified: 'stop', raw: 'stop' }, usage: stepUsage(130, 4) },
+							];
+				return { stream: simulateReadableStream({ chunks }) };
+			},
+		});
+		const tools = {
+			lookup: tool({
+				description: 'look it up',
+				inputSchema: jsonSchema<Record<string, never>>({ type: 'object', properties: {} }),
+				execute: async () => ({ found: true }),
+			}),
+		};
+		const perStep: Array<{ input?: number; output?: number }> = [];
+		const charged: LanguageModelUsage[] = [];
+		const run = () =>
+			pumpableTextResult(
+				streamText({
+					model,
+					prompt: 'find it',
+					tools,
+					stopWhen: isStepCount(2),
+					onStepEnd: (step) => {
+						perStep.push({ input: step.usage.inputTokens, output: step.usage.outputTokens });
+					},
+				}),
+				tools,
+			);
+
+		const stream = createUIMessageStream({
+			execute: async ({ writer }) => {
+				writer.write({ type: 'start', messageId: 'm-1' });
+				await streamTextIntoOpenMessage(
+					writer,
+					[{ providerId: 'google', modelId: 'm', run }],
+					async (text, usage) => {
+						expect(text).toBe('Found it.');
+						charged.push(usage);
+					},
+					makeHooks().hooks,
+				);
+			},
+		});
+		const reader = stream.getReader();
+		while (!(await reader.read()).done) {}
+
+		expect(perStep).toEqual([
+			{ input: 100, output: 7 },
+			{ input: 130, output: 4 },
+		]);
+		expect(charged).toHaveLength(1);
+		expect(charged[0]).toMatchObject({ inputTokens: 230, outputTokens: 11, totalTokens: 241 });
 	});
 });

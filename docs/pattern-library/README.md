@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 188 patterns (55 deep cards / 133 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 197 patterns (61 deep cards / 136 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -21,6 +21,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Pattern MCP (agent-queryable pattern registry, local stdio)](./architecture-pattern-mcp.md)
 - [Hosted MCP (four trust surfaces: public · private · admin · admin page)](./architecture-hosted-mcp.md)
 - [**MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)**](./architecture-mcp-evolution.md)
+- [**Agentic architecture (one application architecture, optional interoperability doors)**](./architecture-agentic-architecture.md)
 - [Rust→wasm compute kernel (vendored, plugin-free)](./architecture-wasm-kernel.md)
 - [**External service runtime (a separately deployed backend behind a typed client)**](./architecture-external-service.md)
 - [**Architecture Engineering (explained decision records, a typed architecture model and static checks)**](./architecture-engineering.md)
@@ -85,6 +86,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Pattern Index (the generated README capability map)**](./pattern-index.md)
 - [**Agent Experience (AX) surfaces**](./agent-experience.md)
 - [Resource anchor integrity (fragments and routing paths resolve)](./resource-anchor-integrity.md)
+- [**Agent Skills generated from the pattern registry**](./ai-agent-skills.md)
 
 ### Databases & Storage
 
@@ -154,6 +156,13 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Agent-harness audit lens (loop/context/policy/tools)](./ai-harness-lens.md)
 - [**Untrusted-content boundary (the lethal trifecta, one rule per leg)**](./ai-untrusted-content-boundary.md)
 - [**Agent actions (one tool catalogue, server and client executors)**](./ai-agent-actions.md)
+- [**MCP client (external tools projected into the one catalogue)**](./ai-mcp-client.md)
+- [**MCP App provider (an interactive View beside a text answer)**](./ai-mcp-app-provider.md)
+- [**Agent to agent (A2A specialist agents, served and delegated)**](./ai-agent-to-agent.md)
+- [**Generative UI (A2UI surfaces rendered with the app's own components)**](./ai-generative-ui.md)
+- [WebMCP publication of client actions (experiment)](./ai-webmcp.md)
+- [AG-UI endpoint over the turn stream (experiment)](./ai-agent-user-interaction.md)
+- [Turn trace as OpenTelemetry GenAI spans](./ai-agent-observability.md)
 - [**AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)**](./ai-eval-regression-suite.md)
 
 ### Toolkits

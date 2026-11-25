@@ -77,7 +77,7 @@ The foundation is declared in root config files and `Containerfile.dev`; nothing
 | Validation | Valibot + Superforms |
 | Styling | UnoCSS + Bits UI |
 | i18n | Paraglide JS (en / de / ru) |
-| AI | Vercel AI SDK v6 (`ai@^6`, `@ai-sdk/{google,groq,openai,svelte}`) |
+| AI | Vercel AI SDK 7 (`ai@7`, `@ai-sdk/{google,groq,openai}@4`, `@ai-sdk/svelte@5`; [blueprint/ai/ai-sdk-v7.md](./blueprint/ai/ai-sdk-v7.md)) |
 | 3D | Three.js + Threlte |
 | Abuse prevention | ALTCHA (`altcha`, `altcha-lib`) |
 | Visualization | d3 (force/dag/hierarchy/sankey/zoom), chart.js, @xyflow/svelte, maplibre-gl |
@@ -506,7 +506,7 @@ These gaps make the blueprint-to-code mapping imperfect. They are recorded here,
 
 4. **Per-surface chat routes, one orchestrator.** Three thin routes — `/api/ai/chatbot`, `/api/ai/deskbot`, `/api/ai/showcase/rag` — set an explicit `surface` and share one entry guard (`guardAiRequest`), then call the single `orchestrateChat` (routing, retrieval, tools, persistence). They replace the former single `/api/ai/chat`; the bare `/api/ai/chat/stream` is also gone. See [blueprint/ai/surfaces.md](./blueprint/ai/surfaces.md).
 
-5. **Blueprint examples lag the SDK.** `multi-client-core.md` shows AI SDK v4/v5 spellings (`parameters`, `maxSteps`, `maxTokens`). The running code is v6 (`inputSchema`, `stopWhen: stepCountIs`, `maxOutputTokens`). The code is correct; the blueprint doc has not been updated.
+5. **Blueprint examples lag the SDK.** `multi-client-core.md` shows AI SDK v4/v5 spellings (`parameters`, `maxSteps`, `maxTokens`). The running code is AI SDK 7 (`inputSchema`, `instructions`, `stopWhen: isStepCount`, `maxOutputTokens`). The code is correct; the blueprint doc has not been updated.
 
 ---
 

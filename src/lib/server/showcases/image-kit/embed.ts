@@ -10,7 +10,7 @@
  * (dimension-incompatible with the 1536-d text index, and the whole page persists
  * nothing). The corpus is re-embedded with the same model so cosine is comparable.
  */
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
 import type { EmbedNeighbor } from '#lib/schemas/showcase/image-kit.ts';
 import { loadEmbeddingConnection } from '#lib/server/ai/index.ts';
@@ -74,7 +74,7 @@ export async function embedImage(bytes: Uint8Array, mimeType: string): Promise<E
 	const connection = await loadEmbeddingConnection();
 	if ('unavailable' in connection) throw new Error('no_provider');
 
-	const model = createGoogleGenerativeAI({ apiKey: connection.apiKey }).embedding(MULTIMODAL_MODEL);
+	const model = createGoogle({ apiKey: connection.apiKey }).embedding(MULTIMODAL_MODEL);
 	const base64 = Buffer.from(bytes).toString('base64');
 	const result = await embed({
 		model,

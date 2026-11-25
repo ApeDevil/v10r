@@ -4,7 +4,7 @@
  * DB modules are mocked — what mounts is tested, never a tool's `execute()`.
  */
 import { describe, expect, it, vi } from 'vitest';
-import type { DeskToolScope } from '#lib/types/ai-tools.ts';
+import { type DeskToolScope, TOOL_MANIFEST } from '#lib/types/ai-tools.ts';
 
 vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 vi.mock('#lib/server/db/desk/queries.ts', () => ({
@@ -224,10 +224,12 @@ describe('desk-ask grounding', () => {
 describe('one-door: desk-execute drift guard', () => {
 	// Deskbot tools that change stored data (create · write · destructive); excludes
 	// desk_propose_plan (read), the client actions (`view`: they change what is shown and are
-	// never replayed — `client-actions.gate.test.ts` holds that) and resolve_ref (not in the
-	// meta registry — compaction infra, never replayed).
+	// never replayed — `client-actions.gate.test.ts` holds that), resolve_ref (not in the
+	// meta registry — compaction infra, never replayed) and the external-reach tools (an
+	// approved external call runs through the external-operations claim, never desk replay).
+	const externalReach = new Set(TOOL_MANIFEST.filter((d) => d.reach === 'external').map((d) => d.name));
 	const mutatingDeskTools = Object.entries(deskbotToolMeta)
-		.filter(([, meta]) => meta.risk !== 'read' && meta.risk !== 'view')
+		.filter(([name, meta]) => meta.risk !== 'read' && meta.risk !== 'view' && !externalReach.has(name))
 		.map(([name]) => name);
 
 	it('every mutating deskbot tool has a replay executor case', () => {

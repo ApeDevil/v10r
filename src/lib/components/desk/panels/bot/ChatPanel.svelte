@@ -321,7 +321,7 @@ $effect(() => {
 								run={session.runFor(proposal.id)}
 								streamReady={!isLoading}
 								{busy}
-								onapprove={() => session?.approve(proposal.id)}
+								onapprove={(decision) => session?.approve(proposal.id, decision)}
 								onreject={() => session?.reject(proposal.id)}
 								onundo={() => session?.revert(proposal.id)}
 							/>

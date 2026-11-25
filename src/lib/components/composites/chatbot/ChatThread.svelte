@@ -7,6 +7,7 @@ import { type AiErrorKind, parseAiErrorKind, type TurnError } from '#lib/types/a
 import { cn } from '#lib/utils/cn.ts';
 import { page } from '$app/state';
 import ChatMessage from './ChatMessage.svelte';
+import { surfaceViewsOf } from './surface-views';
 import { awaitingAnswer, citedCatalogSources, inspectTurnPath, traceOf, turnProgress } from './turn-progress';
 
 // The conversation as the tab's one Vely thread shows it — the messages, the status row
@@ -33,6 +34,8 @@ const isLoading = $derived(session.isStreaming);
 // opens ~0.5 s in; the answer's first token comes seconds later) and names what the turn is
 // doing from the trace the server streams on the message.
 const messages = $derived(session.chat?.messages ?? []);
+// Which render shows which generative surface: only a surface's latest render is live.
+const surfaceViews = $derived(surfaceViewsOf(messages));
 const showStatusRow = $derived(isLoading && awaitingAnswer(messages));
 const statusLabel = $derived.by(() => {
 	const progress = turnProgress(messages[messages.length - 1]);
@@ -59,6 +62,15 @@ function errorKindOf(text: string): AiErrorKind | null {
 // The two rate limits get different words: only one of them is the user's doing.
 function rateLimitCopy(text: string): string {
 	return parseAiErrorKind(text) === 'rate_limit' ? m.ai_chat_error_provider_limited() : m.ai_chat_error_rate_limited();
+}
+
+// A refused surface press (`409 surface_action_rejected`, the door's reason as the message):
+// a repeat and an outdated view get their own words — both mean "nothing was sent again".
+function surfaceRefusalOf(text: string): 'repeated' | 'outdated' | null {
+	if (!text.includes('surface_action_rejected')) return null;
+	if (text.includes('duplicate_event') || text.includes('duplicate_submission')) return 'repeated';
+	if (text.includes('stale_surface') || text.includes('deleted_surface')) return 'outdated';
+	return null;
 }
 
 // Sign-in gate — sourced from the singleton (set pre-emptively by AppShell's setUser
@@ -114,6 +126,8 @@ $effect(() => {
 						catalogSources={citedCatalogSources(traceOf(message))}
 						turnError={(message as { metadata?: { turnError?: TurnError } }).metadata?.turnError}
 						inspectHref={inspectPath && localizeHref(inspectPath)}
+						{surfaceViews}
+						onsurfaceaction={(action, renderId) => void session.submitSurfaceAction(action, renderId, page.route.id ?? undefined)}
 					/>
 				{/each}
 
@@ -191,7 +205,11 @@ $effect(() => {
 		{@const kind = errorKindOf(errorText)}
 		<div class="chatbot-error mx-3 mb-2 rounded-md px-3 py-2 text-fluid-sm" role="alert" aria-live="polite">
 			<span class="font-medium">{m.ai_chat_error_heading()}</span>
-			{#if kind === 'rate_limit'}
+			{#if surfaceRefusalOf(errorText) === 'repeated'}
+				{m.ai_chat_error_surface_action_repeated()}
+			{:else if surfaceRefusalOf(errorText) === 'outdated'}
+				{m.ai_chat_error_surface_action_outdated()}
+			{:else if kind === 'rate_limit'}
 				{rateLimitCopy(errorText)}
 			{:else if kind === 'unavailable' || kind === 'timeout'}
 				{m.ai_chat_error_unavailable()}

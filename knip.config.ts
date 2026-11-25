@@ -33,6 +33,8 @@ const config: KnipConfig = {
 		'mcp/*.ts',
 		// The generated stdio bundle the container runs (scripts/mcp/build-stdio-bundle.ts).
 		'mcp/server.bundle.js',
+		// MCP Apps View entries: compiled by scripts/mcp/build-app-views.ts, never imported.
+		'src/lib/server/mcp/apps/view/*.ts',
 		'pattern-library/*.ts',
 		'scripts/db/verify-tx-rollback.ts',
 		'scripts/perf/db-explain.ts',

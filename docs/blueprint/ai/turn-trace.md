@@ -84,9 +84,9 @@ turn reports what only it sees; the recorder folds it into one trace.
 | Tier 1 (`searchContextual`), through `chunkPlace()` | each candidate's parent, level, position, hash, path and retriever | inside `grounding()` |
 | `composeTurn` (both surfaces, [profiles.md](./profiles.md)) | the awareness, every capability's verdict, every block with its text and its owning capability, every grounding source with its candidates and what the prompt took (per-lane timing), the tools mounted | `awareness()`, `activation()`, `block()`, `grounding()`, `timing()`, `toolsOffered()` |
 | `trace/model-call-middleware.ts` (`wrapLanguageModel`) | each provider request as it leaves: system-prompt hash, history count, the tool results it carries (`toolResultIds`), tools **with schemas**, tool choice, provider options | `callStart()` |
-| `onStepFinish` | usage (incl. cache reads), finish reason, response id/model, text size, tool calls, warnings | `callEnd()` |
+| `onStepEnd` | the step's own usage (one model call — never the multi-step sum the result's `usage` carries since AI SDK 7; incl. cache reads), finish reason, response id/model, text size, tool calls, warnings | `callEnd()` |
 | `onChunk` (first token) | ms to the call's first streamed token | `firstToken()` |
-| `experimental_onToolCallFinish` + the desk step loop | input, model-facing output, status (incl. `requires_approval`), duration | `tool()` |
+| `onToolExecutionEnd` (`toolExecutionMs`, `toolOutput`) + the desk step loop | input, model-facing output, status (incl. `requires_approval`), duration | `tool()` |
 | `wrapToolsWithCompaction` | a result replaced by a ref (`resolve_ref` is the model's route back) | `compacted()` |
 | `streamTextIntoOpenMessage` hooks | attempt start, rotation, final failure, cancellation | `attemptStart()`, `attemptEnd()` |
 | `afterText` → `composition.verify()` (both surfaces) | citations (the catalog's path check, unsurfaced paths included), tool-surfaced grounding — the catalog rows the chatbot's tools returned, the desk chunks `desk_search_knowledge` put in front of the deskbot (`desk` source) — as `executed` items naming their `toolCallId`; finalize timings, outcome | `citations()`, `grounding()`, `timing()`, `outcome()` |

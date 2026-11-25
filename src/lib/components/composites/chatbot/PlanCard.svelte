@@ -18,6 +18,11 @@
  * from model prose. Once a plan ran, Undo (`onundo`) asks the server to put back what the
  * steps changed; each step then shows whether it was undone or left alone because the file
  * moved on since. See `docs/blueprint/ai/harness-lens.md`.
+ *
+ * A proposal that approves an external operation (`proposal.external`) shows its disclosure
+ * and receipt through `ExternalOperationCard` instead of the desk recovery copy, offers no
+ * Undo (v10r cannot take back a peer's effect), and — when the disclosure quotes read content —
+ * keeps Run disabled until that content is separately authorized.
  */
 import { Button } from '#lib/components/primitives/button/index.ts';
 import * as m from '#lib/paraglide/messages.js';
@@ -28,7 +33,8 @@ import type {
 	ProposalStepRecovery,
 } from '#lib/types/ai-proposal.ts';
 import { cn } from '#lib/utils/cn.ts';
-import type { ProposalMetadata } from './harness-types';
+import ExternalOperationCard from './ExternalOperationCard.svelte';
+import type { ProposalDecision, ProposalMetadata } from './harness-types';
 
 interface Props {
 	proposal: ProposalMetadata;
@@ -38,7 +44,7 @@ interface Props {
 	streamReady: boolean;
 	/** True while the turn streams or an approval is in flight — disables both actions. */
 	busy: boolean;
-	onapprove: () => void;
+	onapprove: (decision: ProposalDecision) => void;
 	onreject: () => void;
 	/** Undo a plan that ran; absent where undo is not offered (showcase fixtures). */
 	onundo?: () => void;
@@ -61,6 +67,11 @@ $effect(() => {
 
 const destructiveCount = $derived(proposal.steps.filter((s) => s.risk === 'destructive').length);
 
+let authorizeQuotedContent = $state(false);
+const needsQuotedAuthorization = $derived(
+	proposal.external?.contentClass === 'quotes_read_content' && !authorizeQuotedContent,
+);
+
 // What Undo will do for each step, by the tool's recovery kind. A revision or a soft-deleted
 // row is only restorable while the retention schedule keeps it — the copy carries the window
 // the server read from that schedule.
@@ -79,6 +90,7 @@ function receiptFor(index: number): ProposalStepReceipt | undefined {
 /** Offered once a plan ran and changed something, until an undo was asked for. */
 const canUndo = $derived(
 	onundo !== undefined &&
+		!proposal.external &&
 		run !== undefined &&
 		(run.phase === 'executed' || run.phase === 'failed') &&
 		run.steps.some((s) => s.kind === 'ok') &&
@@ -144,6 +156,8 @@ const statusCopy = $derived.by(() => {
 		case 'executed':
 			return m.ai_plan_status_executed();
 		case 'failed':
+			// An external receipt states its own outcome under the disclosure.
+			if (proposal.external && run?.failureMessage?.startsWith('external_')) return m.ai_external_status_settled();
 			if (run?.failureMessage === 'conflict') return m.ai_plan_status_conflict();
 			if (run?.failureMessage === 'interrupted') return m.ai_plan_status_interrupted();
 			return m.ai_plan_status_failed({ reason: run?.failureMessage ?? '' });
@@ -167,7 +181,7 @@ const statusCopy = $derived.by(() => {
 >
 	<header class="plan-card-header">
 		<span class="i-lucide-list-checks plan-card-icon" aria-hidden="true"></span>
-		<h3 class="plan-card-title">{m.ai_plan_title()}</h3>
+		<h3 class="plan-card-title">{proposal.external ? m.ai_external_title() : m.ai_plan_title()}</h3>
 		{#if destructiveCount > 0}
 			<span class="plan-card-badge">{m.ai_plan_destructive_badge({ count: destructiveCount })}</span>
 		{/if}
@@ -199,8 +213,10 @@ const statusCopy = $derived.by(() => {
 					{#if step.rationale}
 						<span class="plan-card-step-rationale">{step.rationale}</span>
 					{/if}
-					<span class="plan-card-step-recovery">{RECOVERY_COPY[step.recovery ?? 'none'](step)}</span>
-					{#if verdict}
+					{#if !proposal.external}
+						<span class="plan-card-step-recovery">{RECOVERY_COPY[step.recovery ?? 'none'](step)}</span>
+					{/if}
+					{#if verdict && !proposal.external}
 						<span class="plan-card-step-verdict">{verdict.text}</span>
 					{/if}
 					{#if undoVerdict(i)}
@@ -211,6 +227,10 @@ const statusCopy = $derived.by(() => {
 			</li>
 		{/each}
 	</ol>
+
+	{#if proposal.external}
+		<ExternalOperationCard card={proposal.external} receipt={run?.external} bind:authorizeQuotedContent {decided} />
+	{/if}
 
 	{#if decided}
 		<div class="plan-card-status plan-card-status-{phase}" aria-live="polite">
@@ -242,9 +262,9 @@ const statusCopy = $derived.by(() => {
 			<button
 				type="button"
 				class="plan-card-btn plan-card-btn-approve"
-				disabled={busy}
+				disabled={busy || needsQuotedAuthorization}
 				bind:this={runButton}
-				onclick={onapprove}
+				onclick={() => onapprove(proposal.external ? { authorizeQuotedContent } : {})}
 			>
 				{destructiveCount > 0 ? m.ai_plan_run_destructive() : m.ai_plan_run()}
 			</button>

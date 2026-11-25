@@ -32,7 +32,7 @@ interface ModelFamily {
 }
 
 const MODEL_FAMILIES: ModelFamily[] = [
-	// Groq — llama-3.x can drift into textual tool calls; stepCountIs bounds it. Text-only.
+	// Groq — llama-3.x can drift into textual tool calls; isStepCount bounds it. Text-only.
 	{ provider: 'groq', matches: /^llama-3\./, tools: true, vision: false },
 	{ provider: 'groq', matches: /^openai\/gpt-oss-/, tools: true, vision: false },
 	// OpenAI — the gpt-4o / gpt-4.1 / gpt-5 families are multimodal with reliable tool calls.

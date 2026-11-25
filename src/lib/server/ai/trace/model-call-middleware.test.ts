@@ -93,22 +93,28 @@ describe('toolDefinitionsOf', () => {
 
 describe('traceModelCalls', () => {
 	const recorder = { callStart: vi.fn(() => 'mcl_1') } as unknown as TurnRecorder;
+	const providerModel = (specificationVersion: string, doStream: (options: ModelCallOptions) => unknown) => ({
+		specificationVersion,
+		provider: 'google',
+		modelId: 'gemini-2.5-flash',
+		supportedUrls: {},
+		doGenerate: vi.fn(),
+		doStream,
+	});
 
-	it('reports each stream call to the recorder and returns the provider’s stream untouched', async () => {
+	it('reports each stream call of a v4 model and returns the provider’s stream untouched', async () => {
+		recorder.callStart = vi.fn(() => 'mcl_1');
 		const stream = new ReadableStream();
-		const doStream = vi.fn(async (_options: ModelCallOptions) => ({ stream }));
-		const model = {
-			specificationVersion: 'v3',
-			provider: 'google',
-			modelId: 'gemini-2.5-flash',
-			supportedUrls: {},
-			doGenerate: vi.fn(),
-			doStream,
-		};
+		const model = providerModel(
+			'v4',
+			vi.fn(async (_options: ModelCallOptions) => ({ stream })),
+		);
 		const wrapped = traceModelCalls(model as never, recorder, { blockIds: () => ['role'] });
 		expect(wrapped).not.toBe(model);
 
-		const result = await (wrapped as typeof model).doStream(params as never);
+		const result = await (wrapped as unknown as { doStream: (p: unknown) => Promise<{ stream: unknown }> }).doStream(
+			params,
+		);
 		expect(result.stream).toBe(stream);
 		expect(recorder.callStart).toHaveBeenCalledWith({
 			request: expect.objectContaining({ blockIds: ['role'], toolsOffered: ['search_catalog', 'google_search'] }),
@@ -116,9 +122,22 @@ describe('traceModelCalls', () => {
 		});
 	});
 
+	it('records a v3 model too — the SDK adapts it to the v4 spec before the middleware runs', async () => {
+		recorder.callStart = vi.fn(() => 'mcl_1');
+		const model = providerModel(
+			'v3',
+			vi.fn(async () => ({ stream: new ReadableStream({ start: (c) => c.close() }) })),
+		);
+		const wrapped = traceModelCalls(model as never, recorder, { blockIds: () => ['role'] });
+		expect(wrapped).not.toBe(model);
+		expect((wrapped as { specificationVersion: string }).specificationVersion).toBe('v4');
+		await (wrapped as unknown as { doStream: (p: unknown) => Promise<unknown> }).doStream(params);
+		expect(recorder.callStart).toHaveBeenCalledTimes(1);
+	});
+
 	it('leaves a model the SDK cannot wrap alone', () => {
 		expect(traceModelCalls('openai/gpt-4o-mini', recorder, { blockIds: () => [] })).toBe('openai/gpt-4o-mini');
-		const v2 = { specificationVersion: 'v2' };
-		expect(traceModelCalls(v2 as never, recorder, { blockIds: () => [] })).toBe(v2);
+		const unknownSpec = { specificationVersion: 'v1' };
+		expect(traceModelCalls(unknownSpec as never, recorder, { blockIds: () => [] })).toBe(unknownSpec);
 	});
 });

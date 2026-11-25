@@ -1,5 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { configDefaults, defineConfig } from 'vitest/config';
+import { a2uiZodDedupe } from './scripts/build/a2ui-zod-dedupe.ts';
 
 /**
  * Two lanes, because they have nothing in common but the runner.
@@ -24,11 +25,14 @@ export default defineConfig({
 	test: {
 		projects: [
 			{
-				plugins: [sveltekit()],
+				// The zod resolution the app build uses, so web_core is tested as it ships.
+				plugins: [a2uiZodDedupe(), sveltekit()],
 				test: {
 					...shared,
 					name: 'unit',
-					include: ['src/**/*.test.ts', 'pattern-library/**/*.test.ts'],
+					// Inlined so its imports go through the resolver above instead of Node's.
+					server: { deps: { inline: [/\/node_modules\/@a2ui\/web_core\//] } },
+					include: ['src/**/*.test.ts', 'pattern-library/**/*.test.ts', 'scripts/agentic/**/*.test.ts'],
 					// `exclude` REPLACES vitest's defaults — spread them back or node_modules is scanned.
 					exclude: [...configDefaults.exclude, PGLITE],
 				},

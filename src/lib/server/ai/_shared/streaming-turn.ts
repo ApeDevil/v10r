@@ -11,7 +11,7 @@
  *
  *   text/tool parts (sendStart:false, sendFinish:false) → afterText(...) → exactly one `finish`
  *
- * Writing `message-metadata` AFTER the message's `finish` frame makes the AI SDK v6 client
+ * Writing `message-metadata` AFTER the message's `finish` frame makes the AI SDK client
  * materialize a *second, empty* assistant message to hold it (or drops it) — so the answer and its
  * trace/citations land on different messages. This helper keeps the message OPEN: it pumps the text
  * stream itself (suppressing both the stream's own `start` and `finish`), then awaits the post-text
@@ -51,7 +51,10 @@
  * A stream that closes cleanly with ZERO content parts is the third shape: an **empty answer**
  * (`EMPTY_ANSWER`, kind `unavailable`). Left alone it would persist an empty message and show the
  * user nothing; treated as a content-less failure it rotates like one, or ends in the one error
- * frame when no provider is left.
+ * frame when no provider is left. AI SDK 7 reports one variant of it as an error of its own — a
+ * model stream that ended with no output and no `finish` part arrives as an `error` part carrying
+ * `NoOutputGeneratedError` (v6 recorded an empty step) — and the helper reads that as the same
+ * empty answer, so it still rotates instead of landing in the non-retryable `unknown` bucket.
  *
  * ## Abort shapes (the attempt's `abortSignal` fired)
  *
@@ -68,14 +71,23 @@
  * In every case a partial answer is persisted exactly as the client received it — the SDK's
  * usage is only totalled on a finished step, so a cut-off attempt is charged as unknown usage.
  */
-import type { InferUIMessageChunk, LanguageModelUsage, UIMessage, UIMessageStreamWriter } from 'ai';
+import {
+	type InferUIMessageChunk,
+	type LanguageModelUsage,
+	NoOutputGeneratedError,
+	type TextStreamPart,
+	type ToolSet,
+	toUIMessageStream,
+	type UIMessage,
+	type UIMessageStreamWriter,
+} from 'ai';
 import { AiError, aiErrorFrameText, classifyAiError, safeAiMessage } from '#lib/server/ai/errors.ts';
 import type { TurnError } from '#lib/types/ai-error.ts';
 
 /**
  * The slice of a `streamText` result this helper needs. Kept structural (rather than
  * `StreamTextResult<TOOLS, OUTPUT>`) so it doesn't depend on those generics and so tests can pass
- * a tiny fake. A real `streamText(...)` result satisfies it.
+ * a tiny fake. A real `streamText(...)` result is adapted by `pumpableTextResult`.
  */
 export interface PumpableTextResult {
 	toUIMessageStream(options: {
@@ -84,8 +96,45 @@ export interface PumpableTextResult {
 		/** Called with the real error behind an `error` part; returns that part's text. */
 		onError: (error: unknown) => string;
 	}): AsyncIterable<InferUIMessageChunk<UIMessage>>;
+	/** The final step's text — what the client read last (AI SDK 7: `text` stays final-step). */
 	readonly text: PromiseLike<string>;
-	readonly totalUsage: PromiseLike<LanguageModelUsage>;
+	/** The whole attempt's usage, summed over its steps (AI SDK 7 `usage`; v6 `totalUsage`). */
+	readonly usage: PromiseLike<LanguageModelUsage>;
+}
+
+/** What `pumpableTextResult` reads from a `streamText` result. */
+interface StreamedText<TOOLS extends ToolSet> {
+	readonly stream: ReadableStream<TextStreamPart<TOOLS>>;
+	readonly text: PromiseLike<string>;
+	readonly usage: PromiseLike<LanguageModelUsage>;
+}
+
+/**
+ * A `streamText` result as the helper pumps it. AI SDK 7 deprecated the result's own
+ * `toUIMessageStream()`; the stateless helper over `result.stream` is the same conversion. The
+ * attempt's `tools` go along, as the method passed them, so a dynamic tool keeps its part type.
+ *
+ * `redactToolErrors: true` is v6's behaviour, pinned: the `onError` the helper passes handles a
+ * failed tool call too (its text reaches the client as the classified `[kind] message`, never a
+ * raw error). AI SDK 7 defaults it to `true` whenever `onError` is given; pinned so a changed
+ * default cannot start sending raw tool error text to the browser.
+ */
+export function pumpableTextResult<TOOLS extends ToolSet>(
+	result: StreamedText<TOOLS>,
+	tools?: TOOLS,
+): PumpableTextResult {
+	return {
+		toUIMessageStream: (options) =>
+			toUIMessageStream<TOOLS, UIMessage>({ stream: result.stream, tools, redactToolErrors: true, ...options }),
+		// Getters, not copies: the SDK's result promises are created on first read, and an attempt
+		// the helper never asks (an aborted one) must not leave a rejected promise unhandled.
+		get text() {
+			return result.text;
+		},
+		get usage() {
+			return result.usage;
+		},
+	};
 }
 
 /**
@@ -238,14 +287,18 @@ export async function streamTextIntoOpenMessage(
 				if (isContentPart(part.type)) contentParts++;
 				writer.write(part);
 			}
-			// `text`/`totalUsage` reject when generation failed after a clean-looking stream. After an
+			// `text`/`usage` reject when generation failed after a clean-looking stream. After an
 			// abort they are not asked: `text` would be a finished step's, not what just streamed.
-			if (!aborted) outcome = { text: await result.text, usage: await result.totalUsage };
+			if (!aborted) outcome = { text: await result.text, usage: await result.usage };
 		} catch (err) {
 			failure ??= err;
 		}
 
 		const cancelled = hooks.signal?.aborted === true;
+		// AI SDK 7's word for a model stream that ended with no output and no `finish`: the same
+		// empty answer as a clean stop with nothing in it, never the catch-all `unknown`.
+		if (contentParts === 0 && NoOutputGeneratedError.isInstance(failure))
+			failure = new AiError('unavailable', 'The model returned no answer.', 'EMPTY_ANSWER');
 		// An abort the caller did not ask for is the attempt's own deadline.
 		if (aborted && !cancelled) failure ??= new AiError('timeout', 'The model call ran out of time.', 'TIMEOUT');
 		// A clean stop with nothing in it (Gemini 2.5 Flash does this: finishReason `stop`, no text,

@@ -20,7 +20,12 @@
  */
 
 import type { AiErrorKind } from './ai-error';
-import type { ProposalCardStep, ProposalStepReceipt } from './ai-proposal';
+import type {
+	ExternalOperationCard,
+	ExternalOperationReceiptView,
+	ProposalCardStep,
+	ProposalStepReceipt,
+} from './ai-proposal';
 import type { CapabilityId, GroundingSourceId } from './assistant-profile';
 import type { AiSurface, ProposalStatus } from './db-enums';
 import type { RetrieverId } from './retrieval-trace';
@@ -49,6 +54,7 @@ export type PromptBlockId =
 	| 'catalog-guidance'
 	| 'navigation-guidance'
 	| 'pattern-library-guidance'
+	| 'generative-ui-guidance'
 	| 'desk-awareness-guidance'
 	| 'desk-files-guidance'
 	| 'desk-edit-guidance'
@@ -298,6 +304,23 @@ export interface ToolExecutionRecord {
 	startOffsetMs?: number;
 	/** Set when the result was compacted: the ref `resolve_ref` pulls back and its original size. */
 	compaction?: { ref: string; originalBytes: number } | null;
+	/**
+	 * Set when the call proposed or ran an external operation: the external operation's id
+	 * and, once it ran, the ids the peer gave the remote work (an A2A task and context). The
+	 * correlation hook between this turn and the peer's own records — peer-chosen ids, never
+	 * an identity.
+	 */
+	remoteTask?: RemoteTaskRecord;
+}
+
+/** The trace's link from one tool call to the remote work it caused. */
+export interface RemoteTaskRecord {
+	protocol: 'mcp' | 'a2a';
+	peerId: string;
+	/** The external operation (approval) id, when one was proposed. */
+	operationId: string | null;
+	taskId: string | null;
+	contextId: string | null;
 }
 
 export type ToolExecutionOutline = Omit<ToolExecutionRecord, 'input' | 'output'>;
@@ -358,6 +381,8 @@ export interface TurnProposal {
 	expiresAt: string;
 	approvedAt: string | null;
 	executedAt: string | null;
+	/** For a proposal that approves an external operation: what it disclosed, and its receipt. */
+	external?: { card: ExternalOperationCard; receipt: ExternalOperationReceiptView };
 }
 
 export interface TurnTimings {

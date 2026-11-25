@@ -31,6 +31,7 @@ import type {
 	ModelCallRequest,
 	ModelCallResponse,
 	PromptBlock,
+	RemoteTaskRecord,
 	ToolDefinitionRecord,
 	ToolExecutionRecord,
 	ToolExecutionStatus,
@@ -85,6 +86,8 @@ export interface ToolInput {
 	status?: ToolExecutionStatus;
 	errorMessage?: string;
 	durationMs?: number;
+	/** The external operation this call proposed or ran, and the remote ids it learnt. */
+	remoteTask?: RemoteTaskRecord;
 }
 
 export interface TurnRecorder {
@@ -453,6 +456,7 @@ export function createTurnRecorder(init: TurnRecorderInit): TurnRecorder {
 			if (input.status) exec.status = input.status;
 			if (input.errorMessage !== undefined) exec.errorMessage = input.errorMessage;
 			if (input.durationMs !== undefined) exec.durationMs = Math.round(input.durationMs);
+			if (input.remoteTask) exec.remoteTask = { ...input.remoteTask };
 			if (!exec.compaction) {
 				const queue = pendingCompactions.get(input.toolName);
 				const compaction = queue?.shift();

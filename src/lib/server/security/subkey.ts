@@ -25,6 +25,7 @@
  */
 import { createHmac } from 'node:crypto';
 import {
+	AG_UI_RESULT_TICKET_SECRET,
 	ANALYTICS_CONFIRM_SECRET,
 	ANALYTICS_VISITOR_SALT,
 	BETTER_AUTH_SECRET,
@@ -37,6 +38,7 @@ export const SUBKEY_PURPOSES = {
 	analyticsConfirm: 'v10r:analytics-confirm:v1',
 	blogUploadTicket: 'v10r:blog-upload-ticket:v1',
 	pairingOwner: 'v10r:pairing-owner:v1',
+	agUiResultTicket: 'v10r:ag-ui-result-ticket:v1',
 } as const;
 
 export type SubkeyPurpose = (typeof SUBKEY_PURPOSES)[keyof typeof SUBKEY_PURPOSES];
@@ -47,6 +49,7 @@ const OVERRIDE_VAR: Record<SubkeyPurpose, { name: string; read: () => string | u
 	[SUBKEY_PURPOSES.analyticsConfirm]: { name: 'ANALYTICS_CONFIRM_SECRET', read: () => ANALYTICS_CONFIRM_SECRET },
 	[SUBKEY_PURPOSES.blogUploadTicket]: { name: 'BLOG_UPLOAD_TICKET_SECRET', read: () => BLOG_UPLOAD_TICKET_SECRET },
 	[SUBKEY_PURPOSES.pairingOwner]: { name: 'PAIRING_SECRET', read: () => PAIRING_SECRET },
+	[SUBKEY_PURPOSES.agUiResultTicket]: { name: 'AG_UI_RESULT_TICKET_SECRET', read: () => AG_UI_RESULT_TICKET_SECRET },
 };
 
 const cache = new Map<SubkeyPurpose, string>();

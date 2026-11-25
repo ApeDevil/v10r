@@ -57,6 +57,12 @@ export function computeStats(reg: Registry): RegistryStats {
 export const DAG_SHORT_LABELS: Record<string, string> = {
 	'multi-client-core': 'Multi-Client',
 	'architecture-mcp-evolution': 'MCP Eras',
+	'architecture-agentic-architecture': 'Agentic Arch',
+	'ai-mcp-client': 'MCP Client',
+	'ai-mcp-app-provider': 'MCP App',
+	'ai-agent-to-agent': 'A2A',
+	'ai-generative-ui': 'Generative UI',
+	'ai-agent-skills': 'Agent Skills',
 	'product-connection-engine': 'Compose 3D',
 	'asset-production-pipeline': 'Produce 3D',
 	'docs-nav-hubs': 'Docs Hubs',

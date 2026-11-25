@@ -17,8 +17,10 @@ import type { ProposalStepKind } from '#lib/types/db-enums.ts';
 import { createId } from '../id';
 import { type DbHandle, db } from '../index';
 import { conversation } from '../schema/ai/conversation';
+import { agentExternalOperation } from '../schema/ai/external-operation';
 import { agentProposal, type ProposedToolCall } from '../schema/ai/proposal';
 import { agentProposalRevertStep, agentProposalStep, type StepRecoveryPoint } from '../schema/ai/proposal-step';
+import type { ExternalOperationInsert } from './external-operations';
 
 /**
  * The time bound on consent, as a SQL predicate.
@@ -59,26 +61,37 @@ export interface CreateProposalInput {
 	grantedScopes?: string[];
 	/** Override the default 15-minute expiry. */
 	expiresInMs?: number;
+	/**
+	 * The external operation this proposal approves, when it is one (`agent_external_operation`).
+	 * Written in the proposal's transaction with the proposal's expiry: no card without its binding.
+	 */
+	externalOperation?: Omit<ExternalOperationInsert, 'expiresAt'>;
 }
 
-/** Create a new `pending` proposal. */
+/** Create a new `pending` proposal (and its external operation, when it carries one). */
 export async function createProposal(input: CreateProposalInput) {
 	const now = Date.now();
-	const [row] = await db
-		.insert(agentProposal)
-		.values({
-			id: createId.agentProposal(),
-			conversationId: input.conversationId,
-			messageId: input.messageId,
-			status: 'pending',
-			riskTier: input.riskTier ?? 'medium',
-			payload: input.payload,
-			grantedScopes: input.grantedScopes ?? [],
-			rationale: input.rationale ?? '',
-			expiresAt: new Date(now + (input.expiresInMs ?? DEFAULT_EXPIRY_MS)),
-		})
-		.returning();
-	return row;
+	const expiresAt = new Date(now + (input.expiresInMs ?? DEFAULT_EXPIRY_MS));
+	return db.transaction(async (tx) => {
+		const [row] = await tx
+			.insert(agentProposal)
+			.values({
+				id: createId.agentProposal(),
+				conversationId: input.conversationId,
+				messageId: input.messageId,
+				status: 'pending',
+				riskTier: input.riskTier ?? 'medium',
+				payload: input.payload,
+				grantedScopes: input.grantedScopes ?? [],
+				rationale: input.rationale ?? '',
+				expiresAt,
+			})
+			.returning();
+		if (input.externalOperation) {
+			await tx.insert(agentExternalOperation).values({ ...input.externalOperation, proposalId: row.id, expiresAt });
+		}
+		return row;
+	});
 }
 
 /** Fetch a proposal by id. Returns `null` if not found. */

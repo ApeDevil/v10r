@@ -6,9 +6,17 @@
 			"surface": "chatbot",
 			"question": "Where can I see the forms showcases?",
 			"expect": [
-				{ "kind": "calls-tool", "tool": "search_catalog" },
-				{ "kind": "cites", "path": "/showcases/forms" },
-				{ "kind": "cites-only-surfaced" }
+				{
+					"kind": "calls-tool",
+					"tool": "search_catalog"
+				},
+				{
+					"kind": "cites",
+					"path": "/showcases/forms"
+				},
+				{
+					"kind": "cites-only-surfaced"
+				}
 			],
 			"note": "Navigation grounding: a where-question is answered from the catalog, with a citation it surfaced"
 		},
@@ -17,9 +25,17 @@
 			"surface": "chatbot",
 			"question": "How does v10r rate limit requests, and what happens when Redis is down?",
 			"expect": [
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "answer-includes", "phrases": ["rate"] },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "answer-includes",
+					"phrases": ["rate"]
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "A how-question answered from the project docs without citing a path it never retrieved"
 		},
@@ -28,9 +44,17 @@
 			"surface": "chatbot",
 			"question": "Which v10r pattern should I read for optimistic updates with rollback?",
 			"expect": [
-				{ "kind": "calls-any-tool", "tools": ["search_pattern_library", "search_catalog", "search_project_docs"] },
-				{ "kind": "answer-includes", "phrases": ["optimistic"] },
-				{ "kind": "cites-only-surfaced" }
+				{
+					"kind": "calls-any-tool",
+					"tools": ["search_pattern_library", "search_catalog", "search_project_docs"]
+				},
+				{
+					"kind": "answer-includes",
+					"phrases": ["optimistic"]
+				},
+				{
+					"kind": "cites-only-surfaced"
+				}
 			],
 			"note": "The pattern registry is reachable and named"
 		},
@@ -38,7 +62,15 @@
 			"id": "where-excel-tutorial",
 			"surface": "chatbot",
 			"question": "Where is the tutorial for working on an Excel sheet with AI?",
-			"expect": [{ "kind": "cites", "path": "/workflows/excel-with-ai" }, { "kind": "cites-only-surfaced" }],
+			"expect": [
+				{
+					"kind": "cites",
+					"path": "/workflows/excel-with-ai"
+				},
+				{
+					"kind": "cites-only-surfaced"
+				}
+			],
 			"note": "The Office workflow tutorials are pages in the catalog, reached by a where-question"
 		},
 		{
@@ -46,9 +78,17 @@
 			"surface": "chatbot",
 			"question": "How should I set up a folder before I give an AI an Excel or PowerPoint job?",
 			"expect": [
-				{ "kind": "answer-includes", "phrases": ["input", "output", "README"] },
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "answer-includes",
+					"phrases": ["input", "output", "README"]
+				},
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "The tutorial text is in the docs corpus: the answer names the folder layout the tutorial teaches"
 		},
@@ -57,9 +97,17 @@
 			"surface": "chatbot",
 			"question": "Wie baue ich mit KI eine Präsentation aus einem Bericht und einer Excel-Tabelle?",
 			"expect": [
-				{ "kind": "cites", "path": "/workflows/powerpoint-with-ai" },
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "cites",
+					"path": "/workflows/powerpoint-with-ai"
+				},
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "A German question finds the English PowerPoint tutorial in the corpus and points to its page"
 		},
@@ -68,10 +116,21 @@
 			"surface": "chatbot",
 			"question": "Tell me about the workflows for Office, for things like AI and Excel.",
 			"expect": [
-				{ "kind": "cites", "path": "/workflows/excel-with-ai" },
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "answer-excludes", "phrases": ["pim:build", "bun run", "git clone"] },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "cites",
+					"path": "/workflows/excel-with-ai"
+				},
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "answer-excludes",
+					"phrases": ["pim:build", "bun run", "git clone"]
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "A broad Office question is routed to the Workflows tutorials in plain language, not to the developer PIM pattern"
 		},
@@ -80,9 +139,17 @@
 			"surface": "chatbot",
 			"question": "What is Velociraptor?",
 			"expect": [
-				{ "kind": "answer-includes", "phrases": ["pattern"] },
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "answer-includes",
+					"phrases": ["pattern"]
+				},
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "The project itself: a pattern library agents read and adapt"
 		},
@@ -91,9 +158,17 @@
 			"surface": "chatbot",
 			"question": "What can I do in the Studio?",
 			"expect": [
-				{ "kind": "answer-includes", "phrases": ["Architecture Engineering"] },
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "answer-includes",
+					"phrases": ["Architecture Engineering"]
+				},
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "The site map names Studio and its first area"
 		},
@@ -102,9 +177,17 @@
 			"surface": "chatbot",
 			"question": "Which showcases are there?",
 			"expect": [
-				{ "kind": "answer-includes", "phrases": ["Dynamic Attributes", "Desk"] },
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "answer-includes",
+					"phrases": ["Dynamic Attributes", "Desk"]
+				},
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "The site map lists the showcases by domain, so an enumeration is not cut to the first catalog rows"
 		},
@@ -113,8 +196,13 @@
 			"surface": "chatbot",
 			"question": "Show me v10r's Kubernetes Helm chart and the kubectl commands to deploy it.",
 			"expect": [
-				{ "kind": "cites-only-surfaced" },
-				{ "kind": "answer-excludes", "phrases": ["helm install", "kubectl apply"] }
+				{
+					"kind": "cites-only-surfaced"
+				},
+				{
+					"kind": "answer-excludes",
+					"phrases": ["helm install", "kubectl apply"]
+				}
 			],
 			"note": "v10r has no Kubernetes setup: no invented commands and no recalled paths"
 		},
@@ -123,8 +211,14 @@
 			"surface": "chatbot",
 			"question": "Delete all the files on my desk.",
 			"expect": [
-				{ "kind": "never-calls", "tools": ["desk_delete_file", "desk_update_markdown", "desk_rename_file"] },
-				{ "kind": "outcome", "is": "ok" }
+				{
+					"kind": "never-calls",
+					"tools": ["desk_delete_file", "desk_update_markdown", "desk_rename_file"]
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
 			],
 			"note": "The chatbot surface mounts no desk tools, whatever it is asked"
 		},
@@ -132,12 +226,206 @@
 			"id": "deskbot-lists-files",
 			"surface": "deskbot",
 			"question": "What files are on my desk?",
-			"request": { "toolScopes": ["desk:read"] },
+			"request": {
+				"toolScopes": ["desk:read"]
+			},
 			"expect": [
-				{ "kind": "calls-any-tool", "tools": ["desk_list_files", "desk_file_tree", "desk_search_files"] },
-				{ "kind": "never-calls", "tools": ["desk_delete_file"] }
+				{
+					"kind": "calls-any-tool",
+					"tools": ["desk_list_files", "desk_file_tree", "desk_search_files"]
+				},
+				{
+					"kind": "never-calls",
+					"tools": ["desk_delete_file"]
+				}
 			],
 			"note": "A read-scoped deskbot reads; it never reaches for a mutation"
+		},
+		{
+			"id": "genui-text-by-default",
+			"surface": "chatbot",
+			"question": "What is Velociraptor (v10r)?",
+			"expect": [
+				{
+					"kind": "never-calls",
+					"tools": ["render_surface"]
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
+			],
+			"note": "Generative UI: a simple question is answered in text, never with a surface"
+		},
+		{
+			"id": "genui-comparison-surface",
+			"surface": "chatbot",
+			"question": "Compare PostgreSQL, SQLite and Turso side by side for a small SaaS app built on v10r, and let me pick one.",
+			"expect": [
+				{
+					"kind": "renders-valid-surface",
+					"maxAttempts": 2
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
+			],
+			"note": "Generative UI: a side-by-side choice is shown as a valid surface, at most one correction"
+		},
+		{
+			"id": "genui-requirements-form",
+			"surface": "chatbot",
+			"question": "I want to start a new project with v10r patterns. Ask me the details you need in a short form.",
+			"expect": [
+				{
+					"kind": "renders-valid-surface",
+					"maxAttempts": 2
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
+			],
+			"note": "Generative UI: collecting missing details is a form surface, not a wall of questions"
+		},
+		{
+			"id": "genui-form-submit-follow-up",
+			"surface": "chatbot",
+			"question": "I want to start a new project with v10r patterns. Ask me the details you need in a short form.",
+			"expect": [
+				{
+					"kind": "renders-valid-surface",
+					"maxAttempts": 2
+				},
+				{
+					"kind": "outcome",
+					"is": "ok"
+				}
+			],
+			"followUps": [
+				{
+					"press": {
+						"resend": true
+					},
+					"expect": [
+						{
+							"kind": "outcome",
+							"is": "ok"
+						},
+						{
+							"kind": "refuses-repeated-press"
+						},
+						{
+							"kind": "cites-only-surfaced"
+						}
+					]
+				}
+			],
+			"note": "Generative UI, multi-turn: the form's Button press is answered as one turn; the same press resent (a network retry) starts no second turn"
+		},
+		{
+			"id": "genui-chart-recalculate",
+			"surface": "chatbot",
+			"question": "Show me as a chart how the monthly hosting cost of a small v10r app splits between compute, database and storage, with a slider for the number of users and a button to recalculate.",
+			"expect": [
+				{
+					"kind": "renders-valid-surface",
+					"maxAttempts": 2
+				},
+				{
+					"kind": "renders-component",
+					"component": "Chart"
+				}
+			],
+			"followUps": [
+				{
+					"press": {},
+					"expect": [
+						{
+							"kind": "updates-surface"
+						},
+						{
+							"kind": "outcome",
+							"is": "ok"
+						}
+					]
+				}
+			],
+			"note": "Generative UI, parameter exploration: a Chart with a control, and the press answered by updating the same surface rather than drawing a new one"
+		},
+		{
+			"id": "genui-multi-step",
+			"surface": "chatbot",
+			"question": "Walk me through setting up a new v10r project one step at a time, as a short form with a progress indicator.",
+			"expect": [
+				{
+					"kind": "renders-valid-surface",
+					"maxAttempts": 2
+				},
+				{
+					"kind": "renders-component",
+					"component": "Progress"
+				}
+			],
+			"followUps": [
+				{
+					"press": {},
+					"expect": [
+						{
+							"kind": "updates-surface"
+						},
+						{
+							"kind": "outcome",
+							"is": "ok"
+						}
+					]
+				}
+			],
+			"note": "Generative UI, multi-step: the next step replaces the current one on the same surface"
+		},
+		{
+			"id": "genui-architecture-flow",
+			"surface": "chatbot",
+			"question": "Show me visually how a form submission travels through v10r's architecture, from the browser to the database.",
+			"expect": [
+				{
+					"kind": "renders-valid-surface",
+					"maxAttempts": 2
+				},
+				{
+					"kind": "renders-component",
+					"component": "ArchitectureFlow"
+				}
+			],
+			"note": "Generative UI, domain section: a request path is shown with the architecture component, not a table"
+		},
+		{
+			"id": "genui-text-follow-up",
+			"surface": "chatbot",
+			"question": "Compare PostgreSQL, SQLite and Turso side by side for a small SaaS app built on v10r, and let me pick one.",
+			"expect": [
+				{
+					"kind": "renders-valid-surface",
+					"maxAttempts": 2
+				}
+			],
+			"followUps": [
+				{
+					"question": "In one sentence: which of them needs the least operations work?",
+					"expect": [
+						{
+							"kind": "never-calls",
+							"tools": ["render_surface"]
+						},
+						{
+							"kind": "outcome",
+							"is": "ok"
+						}
+					]
+				}
+			],
+			"note": "Generative UI, restraint: after a surface, a short follow-up question is answered in text"
 		}
 	]
 }

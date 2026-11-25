@@ -43,8 +43,8 @@ unless noted. "Conf." = official conformance scenario.
 |---|---|---|---|---|---|---|---|
 | Deterministic `tools/list` order | Stable SHOULD | Supported | Prompt-cache stability in clients | — | static arrays | Adopt (keep) | 2026-11-21 |
 | JSON Schema 2020-12 in `inputSchema` | Stable | Supported (plain schemas) | — | — | — | Adopt (keep) | 2026-11-21 |
-| Tool `title` | Stable | Missing (client bug, 2026-10) | Display names | Later — B1 | Kit: [claude-code-compat.md](./claude-code-compat.md); not yet run | Defer until live check | 2026-11-21 |
-| `annotations.readOnlyHint` | Stable; Proposal to deprecate (SEP-2200) | Missing (client bug) | Client auto-approval | Later — B1 | same kit; not yet run | Defer until live check | 2026-11-21 |
+| Tool `title` | Stable | Missing (client bug, 2026-10) | Display names | Later — B1 | Kit: [claude-code-compat.md](./claude-code-compat.md). Cloud run 2026-11-24, Claude Code 2.1.331 (model pinned to Haiku 5.5): connected, 8/8 tools kept and called on stdio and http | Pass in the cloud run; the local host run is still ApeDevil's call before B1 ships | 2026-11-24 |
+| `annotations.readOnlyHint` | Stable; Proposal to deprecate (SEP-2200) | Missing (client bug) | Client auto-approval | Later — B1 | same kit, same cloud run: pass on both transports | Pass in the cloud run; B1 stays off until accepted | 2026-11-24 |
 | `outputSchema` + `structuredContent` | Stable; result shape on roadmap | Missing (client renders only structured body) | Typed consumption by client code modes | Later — C2 | `pattern-mcp.md` §Considered | Defer | 2026-11-21 |
 | Bounded results, `next actions` recovery | Guidance | Supported | Token efficiency | — | `mcp:bench` | Adopt (keep) | 2026-11-21 |
 | Result-level progressive disclosure | Guidance (spirit) | Supported | Measured −41…−88 % workflow tokens | — | `pattern-mcp.md` §Progressive disclosure | Adopt (keep) | 2026-11-21 |
@@ -66,7 +66,7 @@ unless noted. "Conf." = official conformance scenario.
 |---|---|---|---|---|---|---|---|
 | Extensions negotiation | Stable | Missing | Needed only to offer an extension | Monitor | — | Defer | 2026-11-21 |
 | Tasks `io.modelcontextprotocol/tasks` | Extension | N/A | No long-running tool | Monitor | latency p95 ≤ 1 ms | Defer | 2026-11-21 |
-| MCP Apps `io.modelcontextprotocol/ui` | Extension | N/A | Possible Studio views | Monitor | — | Defer | 2026-11-21 |
+| MCP Apps `io.modelcontextprotocol/ui` | Extension | N/A | Pattern dependency explorer View on the hosted surfaces ([mcp-apps.md](../../ai/mcp-apps.md)); stdio registers none | Experiment | Built on branch `claude/cloud/mcp-app-pattern-explorer`; MCP Inspector 2.16.0 renders it | Experiment — B1 stays off; compat kit needs a `_meta.ui` case | 2026-11-24 |
 | Skills (`ext-skills`) | Extension (experimental attach) | Missing | Pattern cards are skill-shaped | Later — C3 | TS SDK 2.4.0 notes | Defer | 2026-11-21 |
 | ext-auth (client credentials, EMA) | Extension | N/A | Operator surfaces, if multi-holder | Monitor | — | Defer | 2026-11-21 |
 

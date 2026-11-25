@@ -58,6 +58,23 @@ describe('ChatbotRequestSchema (read-only grounded surface)', () => {
 		expect(result.success).toBe(true);
 	});
 
+	it('carries a surface press with its event id, and the press as a data part in the thread', () => {
+		const record = {
+			action: { surfaceId: 'form', name: 'submit', sourceComponentId: 'go', context: { a: 1 } },
+			renderId: 'call_1',
+			eventId: '550e8400-e29b-41d4-a716-446655440000',
+		};
+		const press = { id: 'm2', role: 'user', parts: [{ type: 'data-surface-action', data: record }] };
+		const result = v.safeParse(ChatbotRequestSchema, { messages: [...HELLO, press], surfaceAction: record });
+		expect(result.success).toBe(true);
+		// A press without an event id (or with one that is not a uuid) is not a press.
+		const { eventId: _eventId, ...anonymous } = record;
+		expect(v.safeParse(ChatbotRequestSchema, { messages: HELLO, surfaceAction: anonymous }).success).toBe(false);
+		expect(
+			v.safeParse(ChatbotRequestSchema, { messages: HELLO, surfaceAction: { ...record, eventId: 'retry-1' } }).success,
+		).toBe(false);
+	});
+
 	it('rejects a pageRouteId with breakout chars', () => {
 		const result = v.safeParse(ChatbotRequestSchema, { messages: HELLO, pageRouteId: '/foo?x=<script>' });
 		expect(result.success).toBe(false);

@@ -1,0 +1,19 @@
+# Manual attestations for `scripts/agentic/verify.sh strict`. Copy to test-results/agentic/manual.txt
+# (git-ignored) and run with V10R_MANUAL=test-results/agentic/manual.txt.
+# One line per check: <id> pass|fail <note>. The steps and what you must see:
+# docs/blueprint/architecture/agentic-architecture/verification.md §3.
+# Uncomment a line once you have seen what the step expects. Never put a cookie, key or token in a note.
+#
+# Mandatory for shipping:
+# vely-grounded pass
+# genui-form pass
+# deskbot-approve-revert pass
+# mcp-peer pass
+# a2a-delegation pass
+# ag-ui pass
+# mcp-apps-inspector pass
+#
+# Optional (recorded when attested, never blocking):
+# mcp-apps-hosts pass Claude desktop
+# webmcp pass
+# skills-production pass

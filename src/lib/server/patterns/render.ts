@@ -92,11 +92,19 @@ function collapse(text: string): string {
 
 /** Frontmatter description: one collapsed line, word-truncated to ≤160 chars. */
 export function frontmatterDescription(summary: string): string {
-	const text = collapse(summary);
-	if (text.length <= 160) return text;
-	const slice = text.slice(0, 159);
+	return clipAtWord(summary, 160);
+}
+
+/**
+ * One collapsed line of at most `max` characters, cut at a word boundary (unless that
+ * would drop more than ~40% of the budget) and closed with an ellipsis when cut.
+ */
+export function clipAtWord(input: string, max: number): string {
+	const text = collapse(input);
+	if (text.length <= max) return text;
+	const slice = text.slice(0, max - 1);
 	const lastSpace = slice.lastIndexOf(' ');
-	return `${(lastSpace > 100 ? slice.slice(0, lastSpace) : slice).replace(/[,;:—–-]\s*$/, '')}…`;
+	return `${(lastSpace > Math.round(max * 0.625) ? slice.slice(0, lastSpace) : slice).replace(/[,;:—–-]\s*$/, '')}…`;
 }
 
 // README Pattern Index region
@@ -233,10 +241,45 @@ function bulletLines(items: string[]): string {
 	return items.map((item) => `- ${item}`).join('\n');
 }
 
+/**
+ * How a pattern body links out. The docs site resolves published docs to in-app URLs and
+ * links showcases and dependencies inside the app; a portable copy (an agent skill
+ * reference, read outside this repo and outside the app) can only link the source hosts
+ * and the production site. The sections and their order are the same for both — one body,
+ * two link styles — so an agent skill reference cannot drift from the docs page it mirrors.
+ */
+interface PatternLinkStyle {
+	docsLines(refs: RegRef[]): string;
+	proofLines(refs: RegRef[]): string;
+	dependencyHref(id: string): string;
+}
+
+/** The production site, where showcase routes are live for a reader outside the app. */
+const SITE_ORIGIN = 'https://www.v10r.dev';
+
+function portableProofLines(refs: RegRef[]): string {
+	return refs
+		.map((ref) => {
+			const note = ref.note ? ` — ${ref.note}` : '';
+			if (ref.kind === 'approute') return `- \`${ref.path}\` (app route, no showcase)${note}`;
+			return `- [\`${ref.path}\`](${SITE_ORIGIN}${ref.path})${note}`;
+		})
+		.join('\n');
+}
+
+/** The canonical GitHub view of a pattern's generated docs page — the link a portable copy can follow. */
+export function patternPageSourceUrl(id: string): string {
+	return `${REPO_GITHUB}/blob/main/${PATTERN_PAGES_DIR}/${id}.md`;
+}
+
 /** One generated docs page per pattern record — pointers, never copied prose. */
 export function renderPatternPage(pattern: PatternRecord, registry: Registry, opts: RenderOpts): string {
-	const byId = new Map(registry.patterns.map((entry) => [entry.id, entry]));
-	const sections: string[] = [
+	const links: PatternLinkStyle = {
+		docsLines: (refs) => pageDocsLines(refs, opts),
+		proofLines: pageProofLines,
+		dependencyHref: (id) => `/${PATTERN_PAGES_DIR}/${id}`,
+	};
+	return [
 		'---',
 		`title: ${JSON.stringify(pattern.title)}`,
 		`description: ${JSON.stringify(frontmatterDescription(pattern.summary))}`,
@@ -249,7 +292,30 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 		'',
 		GENERATED_NOTE,
 		'',
-	];
+		...patternBody(pattern, registry, links),
+	].join('\n');
+}
+
+/**
+ * The same record as a portable reference file (an agent skill's `references/<id>.md`):
+ * no docs frontmatter (it is not a docs page), source-host and production-site links only.
+ * `dependencyHref` decides where a `depends_on` link goes — a sibling reference when the
+ * dependency ships in the same agent skill, its GitHub page otherwise.
+ */
+export function renderPatternReference(
+	pattern: PatternRecord,
+	registry: Registry,
+	generatedNote: string,
+	dependencyHref: (id: string) => string,
+): string {
+	const links: PatternLinkStyle = { docsLines: pageRefLines, proofLines: portableProofLines, dependencyHref };
+	return [`# ${pattern.title}`, '', generatedNote, '', ...patternBody(pattern, registry, links)].join('\n');
+}
+
+/** Light-tier notice through the record footer: every field the record carries, in page order. */
+function patternBody(pattern: PatternRecord, registry: Registry, links: PatternLinkStyle): string[] {
+	const byId = new Map(registry.patterns.map((entry) => [entry.id, entry]));
+	const sections: string[] = [];
 	if (pattern.tier === 'light') {
 		sections.push(
 			'_Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._',
@@ -278,7 +344,7 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 			'',
 		);
 	}
-	sections.push(`## Docs`, '', pageDocsLines(pattern.docs, opts));
+	sections.push(`## Docs`, '', links.docsLines(pattern.docs));
 	if (pattern.code.length > 0) {
 		sections.push('', '## Code', '', pageRefLines(pattern.code));
 	}
@@ -286,7 +352,7 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 		sections.push('', '## Tests', '', pageRefLines(pattern.tests));
 	}
 	if (pattern.showcases.length > 0) {
-		sections.push('', '## Proof', '', pageProofLines(pattern.showcases));
+		sections.push('', '## Proof', '', links.proofLines(pattern.showcases));
 	}
 	if (pattern.tier === 'deep') {
 		sections.push('', '## Invariants', '', bulletLines(pattern.invariants));
@@ -295,7 +361,7 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 	if (pattern.depends_on.length > 0) {
 		const deps = pattern.depends_on.map((dep) => {
 			const record = byId.get(dep);
-			return `- [${record?.title ?? dep}](/${PATTERN_PAGES_DIR}/${dep})`;
+			return `- [${record?.title ?? dep}](${links.dependencyHref(dep)})`;
 		});
 		sections.push('', '## Depends on', '', deps.join('\n'));
 	}
@@ -306,7 +372,7 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 		`_Machine-readable record: \`${pattern.id}\` in \`pattern-library/registry.json\`._`,
 		'',
 	);
-	return sections.join('\n');
+	return sections;
 }
 
 /** The docs/pattern-library/README.md navigation hub (README convention; doc-filter keeps any README out of the in-app manifest, so this is a GitHub-only surface). */

@@ -43,7 +43,7 @@ const { createDeleteTools } = await import('./desk-create');
 const { createProposePlanTool } = await import('./propose-plan');
 
 const USER_ID = 'usr_test_gated';
-const ctx = { toolCallId: 'tc1', messages: [] as never[], abortSignal: new AbortController().signal };
+const ctx = { toolCallId: 'tc1', messages: [] as never[], abortSignal: new AbortController().signal, context: {} };
 const UPDATED_AT = new Date('2026-09-12T08:00:00.000Z');
 
 /** A stored file as `getFile` returns it, with the detail row's version behind it. */

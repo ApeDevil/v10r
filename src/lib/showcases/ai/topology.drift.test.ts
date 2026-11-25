@@ -58,10 +58,11 @@ describe('tool cards ≡ TOOL_MANIFEST', () => {
 			.filter((c) => c.requiresApproval)
 			.map((c) => c.name)
 			.sort();
+		// An external tool replays through the external-operations door instead of the desk one.
 		const executableWriteDestructive = TOOL_MANIFEST.filter(
 			(d) =>
 				(d.risk === 'write' || d.risk === 'destructive') &&
-				(DESK_EXECUTABLE_TOOLS as readonly string[]).includes(d.name),
+				((DESK_EXECUTABLE_TOOLS as readonly string[]).includes(d.name) || d.reach === 'external'),
 		)
 			.map((d) => d.name)
 			.sort();

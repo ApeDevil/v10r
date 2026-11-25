@@ -1,0 +1,312 @@
+{
+	"adversarialValidation": {
+		"passed": 20,
+		"results": [
+			{
+				"codes": ["unknown_component"],
+				"expect": "refuse",
+				"id": "unknown-component",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["catalog_violation"],
+				"expect": "refuse",
+				"id": "unknown-property",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": [],
+				"expect": "inert",
+				"id": "script-like-text",
+				"outcome": "accepted",
+				"pass": true
+			},
+			{
+				"codes": ["unsafe_url"],
+				"expect": "refuse",
+				"id": "javascript-url",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["unsafe_url"],
+				"expect": "refuse",
+				"id": "data-url-in-context",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["string_too_long"],
+				"expect": "refuse",
+				"id": "oversized-string",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["too_many_components"],
+				"expect": "refuse",
+				"id": "too-many-components",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["too_deep"],
+				"expect": "refuse",
+				"id": "deep-nesting",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["too_many_rendered_nodes"],
+				"expect": "refuse",
+				"id": "shared-diamond",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["too_many_rendered_nodes"],
+				"expect": "refuse",
+				"id": "repeated-children",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["too_many_rendered_nodes"],
+				"expect": "refuse",
+				"id": "amplifying-rewire",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["cyclic_reference"],
+				"expect": "refuse",
+				"id": "disconnected-cycle",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["cyclic_reference"],
+				"expect": "refuse",
+				"id": "cyclic-children",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["missing_root"],
+				"expect": "refuse",
+				"id": "missing-root",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["bad_binding_path"],
+				"expect": "refuse",
+				"id": "binding-traversal",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["bad_binding_path", "reserved_key"],
+				"expect": "refuse",
+				"id": "prototype-key",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["foreign_surface"],
+				"expect": "refuse",
+				"id": "foreign-surface",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["bad_action", "function_call"],
+				"expect": "refuse",
+				"id": "function-call",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["data_model_too_large"],
+				"expect": "refuse",
+				"id": "oversized-data-model",
+				"outcome": "refused",
+				"pass": true
+			},
+			{
+				"codes": ["unknown_catalog"],
+				"expect": "refuse",
+				"id": "foreign-catalog",
+				"outcome": "refused",
+				"pass": true
+			}
+		],
+		"total": 20
+	},
+	"catalog": "@a2ui/web_core 0.15.0 + @a2ui/agent 0.1.0, v10r catalog v1",
+	"exampleTokens": [
+		{
+			"expressCompiles": true,
+			"followUp": {
+				"a2uiExpress": 41,
+				"a2uiJson": 54
+			},
+			"id": "step-form",
+			"initial": {
+				"a2uiExpress": 151,
+				"a2uiJson": 283
+			}
+		},
+		{
+			"expressCompiles": true,
+			"followUp": {
+				"a2uiExpress": 75,
+				"a2uiJson": 93
+			},
+			"id": "cost-explorer",
+			"initial": {
+				"a2uiExpress": 109,
+				"a2uiJson": 206
+			}
+		},
+		{
+			"expressCompiles": true,
+			"id": "request-flow",
+			"initial": {
+				"a2uiExpress": 129,
+				"a2uiJson": 177
+			}
+		}
+	],
+	"payloadTokens": [
+		{
+			"expressCompiles": true,
+			"id": "requirements-form",
+			"initial": {
+				"a2uiExpress": 224,
+				"a2uiJson": 362,
+				"baseline": 165,
+				"chars": {
+					"a2uiExpress": 897,
+					"a2uiJson": 1496,
+					"baseline": 668,
+					"jsonRender": 1329
+				},
+				"expressVsJson": 0.62,
+				"jsonRender": 321
+			}
+		},
+		{
+			"expressCompiles": true,
+			"id": "technology-comparison",
+			"initial": {
+				"a2uiExpress": 168,
+				"a2uiJson": 264,
+				"baseline": 125,
+				"chars": {
+					"a2uiExpress": 668,
+					"a2uiJson": 1091,
+					"baseline": 551,
+					"jsonRender": 916
+				},
+				"expressVsJson": 0.64,
+				"jsonRender": 221
+			}
+		},
+		{
+			"expressCompiles": true,
+			"id": "architecture-selection",
+			"initial": {
+				"a2uiExpress": 173,
+				"a2uiJson": 294,
+				"baseline": 99,
+				"chars": {
+					"a2uiExpress": 721,
+					"a2uiJson": 1258,
+					"baseline": 453,
+					"jsonRender": 1069
+				},
+				"expressVsJson": 0.59,
+				"jsonRender": 250
+			}
+		},
+		{
+			"expressCompiles": true,
+			"followUp": {
+				"a2uiExpress": 100,
+				"a2uiJson": 173,
+				"baseline": 73,
+				"chars": {
+					"a2uiExpress": 371,
+					"a2uiJson": 674,
+					"baseline": 274,
+					"jsonRender": 683
+				},
+				"expressVsJson": 0.58,
+				"jsonRender": 185
+			},
+			"id": "dynamic-update",
+			"initial": {
+				"a2uiExpress": 43,
+				"a2uiJson": 123,
+				"baseline": 19,
+				"chars": {
+					"a2uiExpress": 177,
+					"a2uiJson": 474,
+					"baseline": 79,
+					"jsonRender": 301
+				},
+				"expressVsJson": 0.35,
+				"jsonRender": 76
+			}
+		}
+	],
+	"promptTokens": {
+		"a2uiExpress": 2435,
+		"a2uiJson": 5941,
+		"components": {
+			"domain": 1,
+			"general": 17
+		},
+		"note": "Catalog prompt for the v10r catalog (general + domain sections), generated by @a2ui/agent. Before the 2026-11-24 extension (13 components) it was 2,026 Express / 5,179 JSON tokens. The baseline needs no catalog prompt (one tool schema per fixed card instead); json-render was measured at 3,730 tokens for a 5-component catalog in the research run (not re-measured here)."
+	},
+	"rendererBundle": {
+		"eagerEntry": {
+			"gzip": 1261,
+			"hasWebCore": false,
+			"litBytes": 0,
+			"packages": {
+				"bundler runtime (preload helper)": 3154,
+				"src/lib/components": 1576
+			},
+			"raw": 2604
+		},
+		"lazyChunks": {
+			"count": 2,
+			"gzip": 100316,
+			"hasWebCore": true,
+			"litBytes": 0,
+			"packages": {
+				"@a2ui/web_core": 368989,
+				"@preact/signals-core": 6861,
+				"src/lib/components": 103398,
+				"src/lib/generative-ui": 31047,
+				"src/lib/paraglide": 7690,
+				"src/lib/styles": 513,
+				"src/lib/utils": 72,
+				"valibot": 10701,
+				"zod": 100329,
+				"zod-to-json-schema": 36507
+			},
+			"raw": 384196
+		},
+		"note": "Vite (rolldown) production build of LazyGenerativeSurface, minified, gzip level 9. svelte, bits-ui, class-variance-authority and clsx are external: every route ships them already. CSS not counted. raw/gzip are the emitted (minified) chunks; per-package figures are rendered lengths before minification.",
+		"reference": {
+			"jsonRenderCore": "@json-render/core tree-shaken (defineCatalog, createSpecStreamCompiler, validateSpec, resolveElementProps): 14 KB min / 4.3 KB gzip with zod external — research run, esbuild, not re-measured here."
+		},
+		"zodV3Copies": 1
+	},
+	"tokenizer": "gpt-tokenizer o200k_base"
+}

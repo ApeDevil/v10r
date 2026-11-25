@@ -42,15 +42,31 @@ scripts/mcp/claude-code-compat/check.sh --call   # also call one tool per case
 Each case prints one line, then the transcripts' directory:
 
 ```
-stdio  none          status=connected  tools=8  called=-
-stdio  title         status=connected  tools=8  called=-
+stdio  none          status=connected  tools=8  called=-   era=modern(2026-07-28) model=<the session's model>
+stdio  title         status=connected  tools=8  called=-   era=modern(2026-07-28) model=…
 …
-http   both          status=connected  tools=8  called=-
+http   metaUi        status=connected  tools=8  called=-   era=modern(2026-07-28) model=…
 ```
+
+`model` is the model the headless session ran on (from its `system/init` event): your Claude Code
+default unless `V10R_COMPAT_MODEL` pins one. `era` is the protocol era Claude Code spoke —
+`legacy(<version>)` for the 2025-era `initialize` handshake, `modern(2026-07-28)` for the
+per-request envelope (bun runtime only; the podman fixture mounts read-only and prints
+`unknown`). The fixture serves both eras; the client picks. The server's legacy era is covered
+independently by `mcp/smoke.ts` and the conformance lane.
 
 - **Pass** for a case: `status=connected` and `tools=8` (and `called=yes` with `--call`).
 - **The control (`none`) must pass on both transports**, or the kit is broken — the script exits 1
-  and the field verdicts mean nothing.
+  and the field verdicts mean nothing. With `--call` the control also needs `called=yes`: a turn
+  that never ran (a usage limit, a sign-in prompt) fails the control and prints the turn's
+  result line, so a run that did not happen is never read as a pass.
+- **The release check uses your ordinary configuration**: run it without `V10R_COMPAT_MODEL`, so
+  the verdict is for the model and settings you actually use, and record that model.
+
+Cloud evidence (2026-11-24, not a verdict): Claude Code 2.1.331 in the cloud container, model
+pinned with `V10R_COMPAT_MODEL`: all ten cases `connected`, `tools=8`, `called=yes`, era
+`modern(2026-07-28)` on both transports. It is not ApeDevil's configuration or default model, so
+B1 stays off until the local run.
 - `tools=0` with `status=connected`, or a failed status, on a field case reproduces the bug.
 
 ## Record the verdict

@@ -89,6 +89,16 @@ describe('scorecard', () => {
 		expect(failed.grades.filter((g) => !g.pass).map((g) => g.kind)).toEqual(['outcome']);
 	});
 
+	it('records which provider and model the turns used, from the trace', () => {
+		const calls = [
+			{ providerId: 'groq', modelId: 'llama-x' },
+			{ providerId: 'groq', modelId: 'llama-x' },
+			{ providerId: null, modelId: null },
+		];
+		expect(scoreCase(evalCase, turn({ modelCalls: calls })).models).toEqual(['groq/llama-x', 'unknown/unknown']);
+		expect(scoreCase(evalCase, turn()).models).toBeUndefined();
+	});
+
 	it('holds or misses the floor', () => {
 		const card = scorecard([scoreCase(evalCase, turn()), scoreCase(evalCase, turn({ outcome: 'error' }))]);
 		expect(card.passRate).toBe(0.5);
@@ -96,6 +106,80 @@ describe('scorecard', () => {
 		expect(checkFloor(card, { floor: 0.75 })).toEqual({
 			ok: false,
 			message: 'pass rate 50.0% is below the floor 75.0%',
+		});
+	});
+
+	it('a valid surface counts the calls it took, refusals included', () => {
+		const refused = { toolName: 'render_surface', status: 'success', output: { ok: false } };
+		const valid = { toolName: 'render_surface', status: 'success', output: { ok: true } };
+		const e = { kind: 'renders-valid-surface', maxAttempts: 1 } as const;
+		expect(pass(e, turn({ toolExecutions: [valid] as never }))).toBe(true);
+		expect(pass(e, turn({ toolExecutions: [refused, valid] as never }))).toBe(false);
+		expect(pass({ kind: 'renders-valid-surface' }, turn({ toolExecutions: [refused, valid] as never }))).toBe(true);
+		expect(pass({ kind: 'renders-valid-surface' }, turn({ toolExecutions: [refused] as never }))).toBe(false);
+	});
+
+	const render = (surfaceId: string, components: { id: string; component: string }[], ok = true) => ({
+		toolName: 'render_surface',
+		status: 'success',
+		output: ok
+			? { ok, surfaceId, messages: [{ version: '1.0', updateComponents: { surfaceId, components } }] }
+			: { ok },
+	});
+
+	it('renders-component looks inside the valid renders only', () => {
+		const chart = render('costs', [{ id: 'root', component: 'Chart' }]);
+		const refusedChart = render('costs', [{ id: 'root', component: 'Chart' }], false);
+		expect(pass({ kind: 'renders-component', component: 'Chart' }, turn({ toolExecutions: [chart] as never }))).toBe(
+			true,
+		);
+		expect(
+			grade({ kind: 'renders-component', component: 'Chart' }, turn({ toolExecutions: [refusedChart] as never })),
+		).toEqual({ pass: false, detail: 'rendered []' });
+	});
+
+	it('updates-surface needs a valid render of a surface an earlier turn showed', () => {
+		const update = render('costs', [{ id: 'chart', component: 'Chart' }]);
+		const earlier = { shownSurfaceIds: ['costs'] };
+		expect(
+			pass({ kind: 'updates-surface' }, { ...turn({ toolExecutions: [update] as never }), conversation: earlier }),
+		).toBe(true);
+		const other = render('fresh', [{ id: 'root', component: 'Text' }]);
+		expect(
+			pass({ kind: 'updates-surface' }, { ...turn({ toolExecutions: [other] as never }), conversation: earlier }),
+		).toBe(false);
+		expect(pass({ kind: 'updates-surface' }, turn({ toolExecutions: [update] as never }))).toBe(false);
+	});
+
+	it('refuses-repeated-press passes only on the 409 duplicate_event answer', () => {
+		const answered = (status: number, body: string) => ({
+			...turn(),
+			conversation: { shownSurfaceIds: [], repeatedPress: { status, body } },
+		});
+		const e = { kind: 'refuses-repeated-press' } as const;
+		expect(pass(e, answered(409, '{"error":{"code":"surface_action_rejected","message":"duplicate_event"}}'))).toBe(
+			true,
+		);
+		expect(pass(e, answered(200, 'data: {}'))).toBe(false);
+		expect(grade(e, turn())).toEqual({ pass: false, detail: 'the press was not resent' });
+	});
+
+	it('scores a follow-up turn against its own expectations, and fails one whose turn is missing', () => {
+		const multi: EvalCase = {
+			id: 'multi',
+			surface: 'chatbot',
+			question: 'q',
+			expect: [{ kind: 'outcome', is: 'ok' }],
+			followUps: [{ question: 'next', expect: [{ kind: 'outcome', is: 'ok' }] }],
+		};
+		expect(scoreCase(multi, [turn(), turn({ outcome: 'error' })]).grades.map((g) => [g.kind, g.pass])).toEqual([
+			['outcome', true],
+			['turn 2: outcome', false],
+		]);
+		expect(scoreCase(multi, [turn()]).grades.at(-1)).toEqual({
+			kind: 'turn 2: outcome',
+			pass: false,
+			detail: 'the turn did not happen',
 		});
 	});
 });

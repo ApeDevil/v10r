@@ -23,7 +23,7 @@ vi.mock('#lib/server/ai/index.ts', () => ({
 	EMBEDDING_UNAVAILABLE_MESSAGES: { no_key: 'no key', disabled: 'disabled', undecryptable: 'undecryptable' },
 }));
 vi.mock('ai', () => ({ embed: embedFn, embedMany: embedManyFn }));
-vi.mock('@ai-sdk/google', () => ({ createGoogleGenerativeAI: () => ({ embedding: () => ({}) }) }));
+vi.mock('@ai-sdk/google', () => ({ createGoogle: () => ({ embedding: () => ({}) }) }));
 vi.mock('#lib/server/ai/provider-usage.ts', () => ({ incrEmbeddingCalls: incrFn }));
 
 const { generateEmbedding, generateEmbeddings } = await import('./embed');

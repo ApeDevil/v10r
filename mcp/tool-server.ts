@@ -21,7 +21,20 @@
  *
  * Tool definitions stay name/description/inputSchema only: the SDK omits `title`, `annotations`
  * and `outputSchema` when they are unset, which keeps the Claude Code tool-list bug out of reach.
+ *
+ * A registry may also carry **MCP Apps Views** (SEP-1865, `io.modelcontextprotocol/ui`): an HTML
+ * resource under `ui://` that a supporting host renders in a sandboxed iframe for one tool's
+ * results. They are registered through the official helpers (`@modelcontextprotocol/ext-apps/server`),
+ * which add the tool's `_meta.ui.resourceUri` link and the `text/html;profile=mcp-app` MIME type.
+ * The tool itself stays an ordinary registry tool — same dispatcher, same error hygiene — so a
+ * host without MCP Apps support gets its text answer. See docs/blueprint/ai/mcp-apps.md.
  */
+import {
+	type McpUiAppResourceConfig,
+	RESOURCE_MIME_TYPE,
+	registerAppResource,
+	registerAppTool,
+} from '@modelcontextprotocol/ext-apps/server';
 import {
 	type CacheScope,
 	type CallToolResult,
@@ -33,20 +46,46 @@ import {
 } from '@modelcontextprotocol/server';
 import type { ToolDef } from '../pattern-library/query.ts';
 
+/** A View resource's `_meta.ui`: CSP domains, permissions, border preference (SEP-1865). */
+type McpUiResourceMeta = NonNullable<NonNullable<McpUiAppResourceConfig['_meta']>['ui']>;
+
 /** How long a client may treat `server/discover` and `tools/list` as fresh: they change only with a deploy. */
 export const LIST_RESULT_TTL_MS = 3_600_000;
 
-/** The wire shape every v10r tool answers — text blocks only, never `structuredContent` (see README). */
+/**
+ * The wire shape every v10r tool answers — text blocks, and `structuredContent` only on a tool a
+ * View renders (see README: Claude Code shows the model only the structured payload when both are
+ * present, so a View tool's JSON must carry the whole answer on its own).
+ */
 export interface ToolCallResult {
 	content: Array<{ type: 'text'; text: string }>;
+	structuredContent?: Record<string, unknown>;
 	isError?: boolean;
 	/** Internal telemetry; removed before the result reaches the SDK. */
 	diag?: string;
 }
 
+/**
+ * An MCP Apps View: one self-contained HTML document a supporting host renders for `tool`'s
+ * results. `ui` is the resource's `_meta.ui` — its CSP, permissions and border preference — and
+ * is declared both on the `resources/list` entry and on the `resources/read` content.
+ */
+export interface AppView {
+	/** `ui://` URI; the tool's `_meta.ui.resourceUri`. */
+	uri: string;
+	name: string;
+	description: string;
+	/** The registry tool whose results this View renders. */
+	tool: string;
+	html: string;
+	ui: McpUiResourceMeta;
+}
+
 /** A trust-scoped set of tools and the dispatcher that runs them. The SDK serves only these names. */
 export interface ToolRegistry<Result extends ToolCallResult = ToolCallResult> {
 	readonly tools: readonly ToolDef[];
+	/** MCP Apps Views over some of `tools`; absent on a surface that ships none. */
+	readonly views?: readonly AppView[];
 	dispatch(name: string, args: unknown): Promise<Result> | Result;
 }
 
@@ -109,31 +148,47 @@ export function createToolServer<Result extends ToolCallResult>(
 		{ name: description.name, version: description.version },
 		{
 			instructions: description.instructions,
-			capabilities: { tools: { listChanged: false } },
+			// Declared up front: the SDK would otherwise advertise `listChanged: true` on the first
+			// registered resource, and this server never changes its lists within a deploy.
+			capabilities: {
+				tools: { listChanged: false },
+				...(registry.views?.length ? { resources: { listChanged: false } } : {}),
+			},
 			cacheHints: { 'tools/list': cacheHint, 'server/discover': cacheHint },
 		},
 	);
 	for (const tool of registry.tools) {
-		server.registerTool(
-			tool.name,
-			{ description: tool.description, inputSchema: advertisedSchema(tool) },
-			async (args: unknown): Promise<CallToolResult> => {
-				let result: Result;
-				try {
-					result = await registry.dispatch(tool.name, args);
-				} catch (cause) {
-					hooks.onToolError?.(tool.name, cause);
-					hooks.onToolCall?.({ name: tool.name, args, result: null });
-					return {
-						content: [
-							{ type: 'text', text: `The "${tool.name}" tool failed to complete. The error was logged server-side.` },
-						],
-						isError: true,
-					};
-				}
-				hooks.onToolCall?.({ name: tool.name, args, result });
-				return toWire(result, description.meta);
-			},
+		const callback = async (args: unknown): Promise<CallToolResult> => {
+			let result: Result;
+			try {
+				result = await registry.dispatch(tool.name, args);
+			} catch (cause) {
+				hooks.onToolError?.(tool.name, cause);
+				hooks.onToolCall?.({ name: tool.name, args, result: null });
+				return {
+					content: [
+						{ type: 'text', text: `The "${tool.name}" tool failed to complete. The error was logged server-side.` },
+					],
+					isError: true,
+				};
+			}
+			hooks.onToolCall?.({ name: tool.name, args, result });
+			return toWire(result, description.meta);
+		};
+		const config = { description: tool.description, inputSchema: advertisedSchema(tool) };
+		const view = registry.views?.find((candidate) => candidate.tool === tool.name);
+		if (view) registerAppTool(server, tool.name, { ...config, _meta: { ui: { resourceUri: view.uri } } }, callback);
+		else server.registerTool(tool.name, config, callback);
+	}
+	for (const view of registry.views ?? []) {
+		registerAppResource(
+			server,
+			view.name,
+			view.uri,
+			{ description: view.description, _meta: { ui: view.ui } },
+			async () => ({
+				contents: [{ uri: view.uri, mimeType: RESOURCE_MIME_TYPE, text: view.html, _meta: { ui: view.ui } }],
+			}),
 		);
 	}
 	return server;

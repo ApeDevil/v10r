@@ -65,13 +65,19 @@ export function withUntrustedBoundary(tools: ToolSet): ToolSet {
  * from the stored raw value, and history compaction may have replaced an oversized one with
  * its `{ ref, summary, … }` projection, so the output's shape is not guaranteed. The rule fails
  * closed: a `user`-origin result of any shape reaches the model wrapped — errors stay errors
- * (their text wrapped), everything else becomes wrapped text.
+ * (their text wrapped), everything else becomes wrapped text. A result whose call id is in
+ * `unrecorded` (the conversation's rows do not hold it, `recorded-tool-results.ts`) is the
+ * client's word, so it is wrapped whatever the tool's declared origin.
  */
-export function boundHistoryToolResults(messages: ModelMessage[]): ModelMessage[] {
+export function boundHistoryToolResults(
+	messages: ModelMessage[],
+	unrecorded: ReadonlySet<string> = new Set(),
+): ModelMessage[] {
 	return messages.map((msg) => {
 		if (msg.role !== 'tool' || !Array.isArray(msg.content)) return msg;
 		const content = msg.content.map((part) => {
-			if (part.type !== 'tool-result' || resultOriginOf(part.toolName) !== 'user') return part;
+			if (part.type !== 'tool-result') return part;
+			if (resultOriginOf(part.toolName) !== 'user' && !unrecorded.has(part.toolCallId)) return part;
 			return { ...part, output: boundOutput(part.toolName, part.output as unknown) };
 		});
 		return { ...msg, content } as ModelMessage;

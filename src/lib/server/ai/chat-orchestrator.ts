@@ -8,9 +8,9 @@ import {
 	convertToModelMessages,
 	createUIMessageStream,
 	createUIMessageStreamResponse,
+	isStepCount,
 	type LanguageModel,
 	type LanguageModelUsage,
-	stepCountIs,
 	streamText,
 	type UIMessage,
 } from 'ai';
@@ -52,6 +52,7 @@ import { DbError, safeDbMessage } from '#lib/server/db/errors.ts';
 import { observedQueryCount } from '#lib/server/db/query-census.ts';
 import { deskCorpusState } from '#lib/server/db/retrieval/queries.ts';
 import type { StoredMessagePart } from '#lib/server/db/schema/ai/conversation.ts';
+import { externalOperationCard, externalOperationRecord } from '#lib/server/external-operations/index.ts';
 import { type Cancellation, startCancellation } from '#lib/server/http/cancellation.ts';
 import type { Deadline } from '#lib/server/http/deadline.ts';
 import { holdOpenUntil } from '#lib/server/platform/index.ts';
@@ -61,11 +62,14 @@ import type { ToolExecutionRecord, TurnAwareness, TurnTimings } from '#lib/types
 import {
 	type AttemptFailure,
 	type PumpableTextResult,
+	pumpableTextResult,
 	streamTextIntoOpenMessage,
 	type TurnAttempt,
 } from './_shared/streaming-turn';
+import { delegationTurnContext } from './capabilities/agent-delegation';
 import { readClientActionResults } from './client-action-results';
 import { checkConversationLimit } from './conversation-quota';
+import { surfaceGraphsFromHistory } from './generative-ui/surface-history.ts';
 import { composeTurn, PROFILES, type TurnComposition, type TurnInput } from './profile';
 import {
 	collectApprovalRequests,
@@ -74,6 +78,8 @@ import {
 	stoppedAtApproval,
 	toCardSteps,
 } from './proposals/approval-boundary';
+import { externalProposalOf } from './proposals/external-proposal';
+import { adoptRecordedToolResults } from './recorded-tool-results';
 import { createToolLeakGuard, stripTextualToolCall } from './tool-leak-guard';
 import { traceModelCalls } from './trace/model-call-middleware';
 import { createTurnRecorder, historyChars } from './trace/recorder';
@@ -120,6 +126,13 @@ export interface ChatInput {
 	registry: ProviderRegistry;
 	providerId?: string;
 	messages: UIMessage[];
+	/**
+	 * The user row this turn persists in place of its text — set by the chatbot route for a
+	 * surface action, whose model-facing text (the untrusted-content prompt) is not what the
+	 * user sees. Claimed by its id: when a row with that id already exists, the same
+	 * submission was already admitted and the turn is refused before anything streams.
+	 */
+	userRow?: { id: string; content: string; parts: StoredMessagePart[] };
 	conversationId?: string;
 	panelContext?: PanelContextEntry[];
 	toolScopes?: DeskToolScope[];
@@ -171,9 +184,10 @@ async function resolveConversation(
 	existingConvId: string | undefined,
 	messages: ChatInput['messages'],
 	surface?: 'chatbot' | 'deskbot',
+	existing?: Awaited<ReturnType<typeof getConversation>>,
 ): Promise<{ conversationId: string } | ChatError> {
 	if (existingConvId) {
-		const conv = await getConversation(existingConvId, userId);
+		const conv = existing === undefined ? await getConversation(existingConvId, userId) : existing;
 		if (!conv) return { type: 'error', status: 404, code: 'not_found', message: 'Conversation not found.' };
 		return { conversationId: existingConvId };
 	}
@@ -280,6 +294,11 @@ function buildTurnAttempts(
 	return attempts;
 }
 
+/** A failed tool execution's message as the trace records it. */
+function toolErrorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
 /**
  * Resolve conversation, optionally retrieve context, stream the response, persist
  * messages. Returns a streaming Response or error JSON.
@@ -323,13 +342,20 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// Client action results are the one tool result the server did not produce: read them
 	// through the contract before anything else sees the history (`client-action-results.ts`).
 	const clientActionReading = readClientActionResults(windowed);
-	const windowedMessages = clientActionReading.messages;
 	const { continuation } = clientActionReading;
+	// Every other tool result is the server's: the conversation's rows hold the copy the model
+	// gets; one the rows do not hold is the client's word (`recorded-tool-results.ts`).
+	const storedConversation = existingConvId ? await getConversation(existingConvId, userId) : null;
+	const recordedResults = adoptRecordedToolResults(clientActionReading.messages, storedConversation?.messages ?? []);
+	const windowedMessages = recordedResults.messages;
 
 	// Compact loaded history so oversized tool results from resumed conversations
 	// don't blow the context window before the first step even runs, then bound the ones that
 	// carry user content — the same <untrusted-content> wrapping as this turn's results.
-	const messages = boundHistoryToolResults(compactToolResults(await convertToModelMessages(windowedMessages)));
+	const messages = boundHistoryToolResults(
+		compactToolResults(await convertToModelMessages(windowedMessages)),
+		recordedResults.unrecorded,
+	);
 
 	// Resolve the provider for this turn against the snapshot the guard loaded
 	// (request override → stored preference → project default → capability order).
@@ -389,7 +415,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 	// any newly-created conversation).
 	let conversationId: string | undefined;
 	{
-		const convResult = await resolveConversation(userId, existingConvId, windowedMessages, surface);
+		const convResult = await resolveConversation(userId, existingConvId, windowedMessages, surface, storedConversation);
 		if ('type' in convResult) {
 			const err = convResult as ChatError;
 			return Response.json(
@@ -435,6 +461,12 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		activeWorkspace,
 		clientActions,
 		clientActionsSpent: clientActionReading.spent,
+		surfaceGraphs: surface === 'chatbot' ? surfaceGraphsFromHistory(windowedMessages) : undefined,
+		// Deskbot, signed in, persisted conversation: the operator's A2A peers, if any.
+		delegation:
+			surface === 'deskbot' && hasTools && awarenessCeiling(authCeiling) && conversationId
+				? await delegationTurnContext(conversationId)
+				: undefined,
 		onCompacted: (name, compaction) => recorder.compacted(name, compaction),
 	};
 	const promptHistoryChars = historyChars(recorder.history(messages, rawMessages.length - windowedMessages.length));
@@ -467,11 +499,22 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 		// An insert failure still answers with the JSON error below, before any stream exists.
 		if (conversationId) {
 			const rows: Parameters<typeof saveMessages>[2] = [];
-			if (lastRawMsg?.role === 'user' && userMsgText) {
+			const { userRow } = input;
+			if (userRow) {
+				rows.push({ ...userRow, role: 'user', route: pageContext?.path ?? null });
+			} else if (lastRawMsg?.role === 'user' && userMsgText) {
 				rows.push({ id: crypto.randomUUID(), role: 'user', content: userMsgText, route: pageContext?.path ?? null });
 			}
 			rows.push({ id: assistantMsgId, role: 'assistant', content: '' });
-			await saveMessages(conversationId, userId, rows);
+			const saved = await saveMessages(conversationId, userId, rows, userRow ? { claim: userRow.id } : undefined);
+			// The same submission won the claim first (two identical presses raced past the door):
+			// no second turn, nothing streamed, nothing else inserted.
+			if (saved === 'claim_taken') {
+				return Response.json(
+					{ error: { code: 'surface_action_rejected', message: 'duplicate_submission' } },
+					{ status: 409 },
+				);
+			}
 		}
 
 		// chatbot path — primary answer surface: Vely, composed from the chatbot profile.
@@ -483,7 +526,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 				execute: async ({ writer }) => {
 					// Open the assistant message frame BEFORE any `message-metadata` write.
 					// This branch emits trace metadata before the merged text stream's own
-					// `start`; without an explicit leading `start` the v6 client materializes a
+					// `start`; without an explicit leading `start` the SDK client materializes a
 					// FIRST (empty) assistant message to hold that early metadata, then the merge's
 					// own `start` (different id) appends a SECOND. One `start` up front → one message.
 					// Reusing this id for the merged stream (via `sendStart: false`) also makes the
@@ -538,7 +581,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 						? {
 								tools,
 								toolChoice: 'auto' as const,
-								stopWhen: stepCountIs(stepBudget),
+								stopWhen: isStepCount(stepBudget),
 								prepareStep: answerOnLastStep(stepBudget),
 							}
 						: {};
@@ -549,11 +592,11 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					const makeStream = (attemptModel: LanguageModel) => {
 						// The assembly's trace precedes the first model frame.
 						flushNow();
-						return streamText({
+						const result = streamText({
 							// The middleware records each provider request as it leaves (prompt hash,
 							// history count, tools with schemas); the hooks below record its answer.
 							model: traceModelCalls(attemptModel, recorder, { blockIds }),
-							system: systemPrompt,
+							instructions: systemPrompt,
 							messages,
 							...toolOpts,
 							providerOptions: CHATBOT_GENERATION_OPTIONS,
@@ -566,7 +609,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 							experimental_transform: createToolLeakGuard((lead) =>
 								console.warn(`[ai:chat:chatbot] suppressed textual tool-call leak: ${lead}…`),
 							),
-							experimental_onStepStart: () => {
+							onStepStart: () => {
 								stepsStarted++;
 								awaitingFirstToken = true;
 							},
@@ -582,22 +625,21 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 									recorder.firstToken();
 								}
 							},
-							experimental_onToolCallFinish: (event) => {
-								const { toolCall, durationMs } = event;
+							onToolExecutionEnd: (event) => {
+								const { toolCall, toolOutput } = event;
 								recorder.tool({
 									toolCallId: toolCall.toolCallId,
 									toolName: toolCall.toolName,
 									input: toolCall.input,
-									durationMs,
-									...(event.success
-										? { output: event.output, status: 'success' as const }
-										: {
-												status: 'error' as const,
-												errorMessage: event.error instanceof Error ? event.error.message : String(event.error),
-											}),
+									durationMs: event.toolExecutionMs,
+									...(toolOutput.type === 'tool-result'
+										? { output: toolOutput.output, status: 'success' as const }
+										: { status: 'error' as const, errorMessage: toolErrorMessage(toolOutput.error) }),
 								});
 							},
-							onStepFinish: (step) => {
+							// `step.usage` is the step's own model call (AI SDK 7 keeps it per step; only the
+							// result's `usage` sums the steps), so each trace row is one call's tokens.
+							onStepEnd: (step) => {
 								recorder.callEnd({
 									stepIndex: step.stepNumber,
 									usage: step.usage,
@@ -616,6 +658,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 								console.error('[ai:chat:chatbot] Stream error:', error);
 							},
 						});
+						return pumpableTextResult(result, toolOpts.tools);
 					};
 
 					// Post-text work runs while the assistant message is still OPEN (the streaming helper
@@ -799,7 +842,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 			execute: async ({ writer }) => {
 				// One assistant message, opened here with the persisted row's id (see the chatbot
 				// branch): the client's message id is the DB's, and the proposal metadata written
-				// from `onStepFinish` lands inside the message the helper keeps open.
+				// from `onStepEnd` lands inside the message the helper keeps open.
 				//
 				// A request that reports client action results CONTINUES the client's assistant
 				// message: the frame carries that message's id, because the SDK client appends a
@@ -848,7 +891,7 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					input?: unknown;
 					output?: unknown;
 				};
-				const onStepFinish = async (step: {
+				const onStepEnd = async (step: {
 					stepNumber?: number;
 					toolCalls?: Array<{ toolCallId: string; toolName: string }>;
 					toolResults?: ToolResultRecord[];
@@ -867,9 +910,17 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 					// at most one proposal; a second request would only ever come from a step the
 					// loop already stopped before.
 					const approval = collectApprovalRequests(results);
+					// An external operation is approved on its own, with its binding written beside
+					// the proposal (`agent_external_operation`) in the same transaction.
+					const external = externalProposalOf(results, deskComposition.state.externalOperations);
 					let proposalPersisted = approval.steps.length === 0;
-					if (conversationId && approval.steps.length > 0 && !harnessMetadata.proposal) {
+					if (external.kind === 'refused' && !harnessMetadata.proposal) {
+						harnessMetadata.proposalError = { message: external.message };
+						flushPending = true;
+						flushNow();
+					} else if (conversationId && approval.steps.length > 0 && !harnessMetadata.proposal) {
 						const goal = approval.goal ?? approval.steps.map((s) => s.action).join('; ');
+						const prepared = external.kind === 'one' ? external.prepared : null;
 						try {
 							const proposal = await createProposal({
 								conversationId,
@@ -877,9 +928,10 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 								// Freeze the grant the plan was proposed under. The approve route
 								// replays these, never scopes sent with the approval request.
 								grantedScopes,
-								riskTier: riskTierOf(approval.steps),
+								riskTier: prepared ? (prepared.disclosure.mutates ? 'high' : 'medium') : riskTierOf(approval.steps),
 								payload: approval.steps,
 								rationale: goal,
+								...(prepared ? { externalOperation: externalOperationRecord(prepared) } : {}),
 							});
 							harnessMetadata.proposal = {
 								id: proposal.id,
@@ -887,9 +939,32 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 								steps: toCardSteps(approval.steps),
 								riskTier: proposal.riskTier,
 								status: 'pending',
+								...(prepared
+									? {
+											external: externalOperationCard(prepared.toolName, prepared.disclosure, {
+												arguments: prepared.request.arguments,
+												argumentsDigest: prepared.binding.argumentsDigest,
+											}),
+										}
+									: {}),
 							};
 							proposalPersisted = true;
 							recorder.proposal(proposal.id);
+							// The correlation key from this turn to the approve request that runs the
+							// call: the operation id; the remote task id joins it on the receipt row.
+							if (external.kind === 'one') {
+								recorder.tool({
+									toolCallId: external.toolCallId,
+									toolName: external.prepared.toolName,
+									remoteTask: {
+										protocol: external.prepared.request.protocol,
+										peerId: external.prepared.request.peerId,
+										operationId: proposal.id,
+										taskId: null,
+										contextId: null,
+									},
+								});
+							}
 							recorder.outcome('awaiting_decision');
 						} catch (err) {
 							console.error('[ai:chat] Failed to persist proposal:', err);
@@ -940,49 +1015,52 @@ async function orchestrateChatInner(input: ChatInput): Promise<Response> {
 
 				const blockIds = () => deskComposition.blocks.map((b) => b.id);
 				const makeStream = (attemptModel: LanguageModel) =>
-					streamText({
-						model: traceModelCalls(attemptModel, recorder, { blockIds }),
-						system: systemPrompt,
-						messages,
-						maxRetries: 0,
-						maxOutputTokens: MAX_TOKENS,
-						abortSignal: modelCallSignal(cancellation, input.deadline),
-						// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
-						// The desk branch routes to the SAME tool-capable provider as the chatbot
-						// branch (which already guards at the chatbot stream), so without this a
-						// Groq-routed desk turn leaks raw tool-call markup into the UI.
-						experimental_transform: createToolLeakGuard((lead) =>
-							console.warn(`[ai:chat:desk] suppressed textual tool-call leak: ${lead}…`),
-						),
-						...(hasDeskTools
-							? {
-									tools: deskTools,
-									toolChoice: 'auto' as const,
-									// Two ways the loop ends: the scope's step budget, or the approval boundary —
-									// the step that asked for approval is the turn's last, so the model never
-									// narrates an "awaiting approval" the card already says and never queues a
-									// second plan. The last budgeted step runs tool-less so it ends on an answer.
-									stopWhen: [stepCountIs(maxSteps), stoppedAtApproval],
-									prepareStep: answerOnLastStep(maxSteps),
-									// Compaction deliberately does NOT hook `prepareStep`: AI SDK #9631 silently
-									// drops message mutations returned from it. It runs at tool-execute time via
-									// `wrapToolsWithCompaction` in the composition, with the whole request inside
-									// a `runWithCompaction` context so refs resolve consistently.
-								}
-							: {}),
-						experimental_onToolCallFinish: (event) => {
-							recorder.tool({
-								toolCallId: event.toolCall.toolCallId,
-								toolName: event.toolCall.toolName,
-								input: event.toolCall.input,
-								durationMs: event.durationMs,
-								...(event.success
-									? {}
-									: { errorMessage: event.error instanceof Error ? event.error.message : String(event.error) }),
-							});
-						},
-						onStepFinish,
-					});
+					pumpableTextResult(
+						streamText({
+							model: traceModelCalls(attemptModel, recorder, { blockIds }),
+							instructions: systemPrompt,
+							messages,
+							maxRetries: 0,
+							maxOutputTokens: MAX_TOKENS,
+							abortSignal: modelCallSignal(cancellation, input.deadline),
+							// Net for Groq/llama emitting a tool call as plain text (`<function=…>`).
+							// The desk branch routes to the SAME tool-capable provider as the chatbot
+							// branch (which already guards at the chatbot stream), so without this a
+							// Groq-routed desk turn leaks raw tool-call markup into the UI.
+							experimental_transform: createToolLeakGuard((lead) =>
+								console.warn(`[ai:chat:desk] suppressed textual tool-call leak: ${lead}…`),
+							),
+							...(hasDeskTools
+								? {
+										tools: deskTools,
+										toolChoice: 'auto' as const,
+										// Two ways the loop ends: the scope's step budget, or the approval boundary —
+										// the step that asked for approval is the turn's last, so the model never
+										// narrates an "awaiting approval" the card already says and never queues a
+										// second plan. The last budgeted step runs tool-less so it ends on an answer.
+										stopWhen: [isStepCount(maxSteps), stoppedAtApproval],
+										prepareStep: answerOnLastStep(maxSteps),
+										// Compaction does NOT hook `prepareStep` (AI SDK 6 dropped its message
+										// edits, #9631; see `loop/compact.ts`). It runs at tool-execute time via
+										// `wrapToolsWithCompaction` in the composition, with the whole request inside
+										// a `runWithCompaction` context so refs resolve consistently.
+									}
+								: {}),
+							onToolExecutionEnd: (event) => {
+								recorder.tool({
+									toolCallId: event.toolCall.toolCallId,
+									toolName: event.toolCall.toolName,
+									input: event.toolCall.input,
+									durationMs: event.toolExecutionMs,
+									...(event.toolOutput.type === 'tool-result'
+										? {}
+										: { errorMessage: toolErrorMessage(event.toolOutput.error) }),
+								});
+							},
+							onStepEnd,
+						}),
+						hasDeskTools ? deskTools : undefined,
+					);
 
 				// The durable tail of a finished (or cut) turn: the answer's row (text + parts), the
 				// trace, then the totals (summed from the trace's model calls) and the budget charge.

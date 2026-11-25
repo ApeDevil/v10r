@@ -4,6 +4,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import UnoCSS from 'unocss/vite';
 import { defineConfig } from 'vite';
+import { a2uiZodDedupe } from './scripts/build/a2ui-zod-dedupe.ts';
 import { thirdPartyLicenses } from './scripts/build/third-party-licenses.ts';
 
 const licenses = thirdPartyLicenses();
@@ -35,6 +36,7 @@ const PARAGLIDE_MESSAGE_MODULE = /\/src\/lib\/paraglide\/messages(\.js$|\/)/;
 
 export default defineConfig({
 	plugins: [
+		a2uiZodDedupe(),
 		UnoCSS(),
 		paraglideVitePlugin({
 			project: './project.inlang',

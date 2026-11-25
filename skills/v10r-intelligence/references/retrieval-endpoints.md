@@ -1,0 +1,58 @@
+# Retrieval ingest/search endpoints (one ingest door, /api/retrieval/*)
+
+> Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
+
+**Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — writes to the corpus store; provider quotas apply
+
+The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a unified ingest door: the app runtime and the Bun docs-ingest script share the same pure planChunks() core.
+
+**When to use:** Use when the corpus must be maintainable from more than one runtime (app UI and scripts) without forking chunking logic.
+
+**Requires:** postgres, pgvector, ai-provider
+
+## Avoid when
+
+- The corpus is fed from one runtime only — a single in-process ingest call needs no HTTP door or shared pure chunker
+- Chunking needs I/O such as per-chunk LLM contextual prep — the door is shareable across runtimes only because planChunks() is pure
+
+## Alternatives
+
+- **Ingest in-process from the app alone, with no script or HTTP door** — prefer when documents arrive only through the app UI and are never bulk-loaded by a script
+
+## Docs
+
+- `docs/blueprint/ai/knowledge-base.md` — The ingest door pattern ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/knowledge-base.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/knowledge-base.md))
+
+## Code
+
+- `src/routes/api/retrieval/ingest/+server.ts` — Ingest endpoint (namespace is /api/retrieval/*, not /api/rag/*) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/retrieval/ingest/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/retrieval/ingest/+server.ts))
+- `src/routes/api/retrieval/search/+server.ts` — Search endpoint ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/retrieval/search/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/retrieval/search/+server.ts))
+- `src/lib/server/retrieval/ingest/index.ts` — Runtime ingest module ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/ingest/index.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/ingest/index.ts))
+- `scripts/db/ingest-docs.ts` — Bun script sharing the same planChunks() door ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/db/ingest-docs.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/db/ingest-docs.ts))
+
+## Tests
+
+- `src/lib/server/retrieval/embed.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/embed.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/embed.test.ts))
+
+## Proof
+
+- [`/showcases/ai/chatbot`](https://www.v10r.dev/showcases/ai/chatbot) — Retrieval now lives as the #retrieval section of the surface pages; the ingest/explorer showcases were retired
+
+## Invariants
+
+- One ingest door: the standalone script reuses the app's pure planChunks() so both runtimes share one chunking implementation.
+- Section-parent chunks are stored with embedding = NULL so tier-1 retrieval never surfaces them.
+- Re-ingest is resume-safe and idempotent.
+
+## Emulation notes
+
+- Keep the chunker pure (no I/O) — that is what makes the door shareable across runtimes.
+- Mind embedding-provider daily quotas when re-ingesting a whole corpus.
+
+## Depends on
+
+- [Grounded retrieval with a corpus map](layered-rag.md)
+
+---
+
+_Machine-readable record: `retrieval-endpoints` in `pattern-library/registry.json`._

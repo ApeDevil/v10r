@@ -37,8 +37,8 @@ server:
   - tools-call-elicitation
   - elicitation-sep1034-defaults
   - elicitation-sep1330-enums
-  # resources capability not advertised
-  - resources-list
+  # resources capability advertised for the MCP App View only (one ui:// resource): resources/list
+  # passes; the fixture resources these scenarios read do not exist on this server
   - resources-read-text
   - resources-read-binary
   - resources-templates-read

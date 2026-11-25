@@ -112,7 +112,7 @@ gemini-2.5-flash runs reasoning ON. `thoughtsTokenCount` is read defensively fro
 
 The wire payload reflects this: the `analyze` RPC success shape gained `usage` (provider/model/token counts + `durationMs`, counts individually nullable) and `cost` (`CostEstimate | null`) beside `fields`/`confidence`.
 
-### AI SDK v6 structured-output reality
+### AI SDK structured-output reality
 
 Use `generateText({ output: Output.object({ schema }) })` with an SDK `jsonSchema()` — not a Valibot schema passed directly, and not the deprecated `generateObject`. Read the result via `result.output`.
 

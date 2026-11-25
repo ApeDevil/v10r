@@ -375,7 +375,7 @@ describe('component layering', () => {
 });
 
 /** Composite directories whose dependency graph is too heavy for the default barrel. */
-const HEAVY_COMPOSITES = ['chatbot', 'info-dialog'] as const;
+const HEAVY_COMPOSITES = ['chatbot', 'generative-surface', 'info-dialog'] as const;
 
 // ─── Recorded allowances (see the RATCHET note at the top of this file) ───
 

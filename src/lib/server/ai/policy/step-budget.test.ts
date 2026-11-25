@@ -3,14 +3,14 @@
  * it: a model that calls a tool whenever it is offered one would otherwise end a 3-step
  * budget on an unanswered tool call (observed live as a dangling third `search_catalog`).
  */
-import { jsonSchema, stepCountIs, streamText, tool } from 'ai';
-import { MockLanguageModelV3, simulateReadableStream } from 'ai/test';
+import { isStepCount, jsonSchema, streamText, tool } from 'ai';
+import { MockLanguageModelV4, simulateReadableStream } from 'ai/test';
 import { describe, expect, it } from 'vitest';
 import { answerOnLastStep } from './step-budget';
 
 /** The provider-level stream part, as the mock model's own `doStream` types it. */
 type StreamPart =
-	Awaited<ReturnType<MockLanguageModelV3['doStream']>>['stream'] extends ReadableStream<infer Part> ? Part : never;
+	Awaited<ReturnType<MockLanguageModelV4['doStream']>>['stream'] extends ReadableStream<infer Part> ? Part : never;
 
 const usage = {
 	inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
@@ -21,7 +21,7 @@ const usage = {
 /** Calls `lookup` whenever the step offers it; answers in text only when no tool is offered. */
 function toolHungryModel() {
 	let call = 0;
-	return new MockLanguageModelV3({
+	return new MockLanguageModelV4({
 		doStream: async ({ tools }) => {
 			const chunks: StreamPart[] = [{ type: 'stream-start', warnings: [] }];
 			if (tools?.length) {
@@ -63,7 +63,7 @@ describe('answerOnLastStep', () => {
 			model: toolHungryModel(),
 			prompt: 'find it',
 			tools,
-			stopWhen: stepCountIs(3),
+			stopWhen: isStepCount(3),
 			prepareStep: answerOnLastStep(3),
 		});
 		await result.consumeStream();
@@ -78,7 +78,7 @@ describe('answerOnLastStep', () => {
 	});
 
 	it('without the policy, the same budget ends on a tool call and no answer (the defect)', async () => {
-		const result = streamText({ model: toolHungryModel(), prompt: 'find it', tools, stopWhen: stepCountIs(3) });
+		const result = streamText({ model: toolHungryModel(), prompt: 'find it', tools, stopWhen: isStepCount(3) });
 		await result.consumeStream();
 		const steps = await result.steps;
 

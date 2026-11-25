@@ -34,10 +34,11 @@ describe('tool diag — every registry error is classified', () => {
 		// that scoring prefix-matches at half weight (search.ts), so a query containing registry
 		// meta-vocabulary — the literal word "capability", say — scores a weak hit and is NOT a
 		// no-match. Fixtures here must be domain terms that appear nowhere in the registry
-		// ("subscription" burned a previous fixture by prefix-matching "subscriptions").
+		// ("subscription" burned a previous fixture by prefix-matching "subscriptions"; "operator"
+		// entered the registry with the operator-managed peers of the external operations).
 		for (const [tool, args] of [
 			['search_patterns', { query: 'stripe billing webhooks' }],
-			['trace_capability', { capability: 'kubernetes operator' }],
+			['trace_capability', { capability: 'kubernetes helm chart' }],
 			['recommend_emulation_plan', { capabilities: ['blockchain wallet'] }],
 		] as const) {
 			const result = await callTool(tool, args);
@@ -114,7 +115,7 @@ describe('every registry error hands the caller a next step', () => {
 		['get_file_excerpt', { path: 'src/lib/server/auth/guards.ts' }],
 		['get_file_excerpt', { path: '/etc/passwd' }],
 		['trace_capability', { capability: '' }],
-		['trace_capability', { capability: 'kubernetes operator' }],
+		['trace_capability', { capability: 'kubernetes helm chart' }],
 		['recommend_emulation_plan', { capabilities: [] }],
 		['recommend_emulation_plan', { capabilities: ['blockchain wallet'] }],
 		['no_such_tool', {}],

@@ -48,12 +48,12 @@ const rows: WaterfallRow[] = [
 	<dl class="stats">
 		<div class="stat">
 			<dt>{m.showcase_ai_stream_budget_read()}</dt>
-			<dd><code>stepCountIs({surface === 'chatbot' ? STEP_BUDGETS.chatbot : STEP_BUDGETS.deskRead})</code></dd>
+			<dd><code>isStepCount({surface === 'chatbot' ? STEP_BUDGETS.chatbot : STEP_BUDGETS.deskRead})</code></dd>
 		</div>
 		{#if surface === 'deskbot'}
 			<div class="stat">
 				<dt>{m.showcase_ai_stream_budget_mutate()}</dt>
-				<dd><code>stepCountIs({STEP_BUDGETS.deskMutate})</code></dd>
+				<dd><code>isStepCount({STEP_BUDGETS.deskMutate})</code></dd>
 			</div>
 		{/if}
 	</dl>

@@ -1,0 +1,61 @@
+# Hierarchical cache (local → shared → origin, with key scope enforced)
+
+> Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
+
+**Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns
+
+A read walks outward from process memory to Redis to the origin. The policy declares namespace, TTL, stale window and scope, and `cacheKey` refuses both scope mistakes — a per-user key with no owner, and a shared key handed one.
+
+**When to use:** Use when reads substantially outnumber writes, the result is expensive and reused, and bounded staleness is acceptable. Not because a cache exists.
+
+**Requires:** redis
+
+## Avoid when
+
+- The data changes constantly or must be strongly current — the cache becomes a second source of truth
+- The computation is already cheap, or invalidation would cost more than the work it saves
+- Reads do not substantially outnumber writes, so entries are invalidated before they are reused
+
+## Alternatives
+
+- **Remove or combine the work (drop the fetch, one cheaper query)** — prefer when the cost is avoidable work rather than a reused expensive answer — the decision hierarchy puts removal ahead of caching
+- **HTTP / CDN cache headers** — prefer when the response is public and identical for every reader, so the edge can hold it without a key scope
+- **A single bounded process-local TTL cache, no shared tier** — prefer when the app runs as one long-lived instance, so there is no second instance for a shared tier to serve
+
+## Docs
+
+- `docs/blueprint/velocity/data.md#hierarchical-cache` — The tiers, and key identity as a security boundary ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))
+
+## Code
+
+- `src/lib/server/cache/tiered.ts` — Policy, key discipline, both tiers, TTL jitter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/tiered.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/tiered.ts))
+- `src/lib/server/cache/client.ts` — The nullable Upstash client every consumer must handle ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/client.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/client.ts))
+- `src/lib/server/style/cookie-scope.ts` — Keeps the style cookie off responses meant for the CDN ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/style/cookie-scope.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/style/cookie-scope.ts))
+
+## Tests
+
+- `src/lib/server/cache/tiered.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/tiered.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/tiered.test.ts))
+- `src/lib/server/style/cookie-scope.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/style/cookie-scope.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/style/cookie-scope.test.ts))
+
+## Proof
+
+- [`/showcases/velocity/data`](https://www.v10r.dev/showcases/velocity/data)
+
+## Invariants
+
+- Every cache entry has a declared owner and scope; `cacheKey` throws on a per-user policy with no owner AND on a shared policy handed one — the second is the more dangerous, because it parks a personal value where everyone reads.
+- A cache key encodes every input that changes the answer. A key that does not is a data leak, not a performance bug.
+- Freshness lives on the policy (`ttl`, `staleFor`), never argued at the call site; `staleFor` defaults to 0 because serving stale is a decision about correctness.
+- The local tier is bounded and evicts oldest-used first.
+- With no Redis configured every shared read is a miss and every write a no-op — a miss is always correct, only slower.
+
+## Emulation notes
+
+- Store the freshness horizon INSIDE the envelope rather than relying on Redis TTL: Redis expiry is a floor that reclaims memory, and the envelope has to survive a read from the local tier where no Redis TTL exists.
+- Jitter the per-key TTL. Keys written together otherwise expire together, and synchronised expiry is how a cache becomes a stampede.
+- Default per-user policies to skipping the local tier: the tier is correct there, but a warm serverless instance accumulates one entry per user it happened to serve.
+- The CDN is a tier with its own admission rules: Vercel caches a function response only with s-maxage (max-age alone is the browser's) and never one that sets a cookie. v10r's crawler endpoints carried s-maxage and were never cached, because every cookieless crawler was handed a style cookie; the cookie is now kept only on app-shell responses.
+
+---
+
+_Machine-readable record: `hierarchical-cache` in `pattern-library/registry.json`._

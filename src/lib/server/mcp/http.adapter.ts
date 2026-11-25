@@ -112,7 +112,8 @@ type ServerFactory = () => ReturnType<typeof createToolServer>;
  *   emitted. (`'json'` would say the same thing and log a warning on every construction.)
  * - `subscriptions/listen` never reaches the entry. The SDK serves it unconditionally, but a listen
  *   stream only ever delivers list-changed and resource-update notifications, and this server
- *   declares `tools.listChanged: false` and no resources — the stream would carry nothing, while on
+ *   declares `tools.listChanged: false`, and `resources.listChanged: false` without `subscribe` where it
+ *   serves MCP Apps Views — the stream would carry nothing, while on
  *   a serverless function it would hold an instance open until `maxDuration` for every anonymous
  *   caller. Not implementing an optional method is answered the way the spec prescribes for any
  *   method a server does not implement: 404 with -32601 (which the official conformance suite

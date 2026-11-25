@@ -4,9 +4,12 @@
  * Agentic, mutating, approval-gated: it works on the user's desk files with the tools the
  * user's consent scopes grant, and every change to an existing file is a proposal the user
  * decides on. Its capabilities, in prompt order: the tool loop's end, the desk awareness,
- * the five scoped capabilities, the client actions that arrange the workspace, the plan/approval rule, the compaction escape hatch.
+ * the five scoped capabilities, the client actions that arrange the workspace, the plan/approval rule,
+ * the operator's external MCP peer tools and A2A delegation (each call approval-gated), the
+ * compaction escape hatch.
  */
 
+import { agentDelegation } from '../capabilities/agent-delegation';
 import { compaction } from '../capabilities/compaction';
 import { completion } from '../capabilities/completion';
 import { deskArrange } from '../capabilities/desk-arrange';
@@ -17,6 +20,7 @@ import { deskDelete } from '../capabilities/desk-delete';
 import { deskEdit } from '../capabilities/desk-edit';
 import { deskFiles } from '../capabilities/desk-files';
 import { deskPlan, hasMutatingScope } from '../capabilities/desk-plan';
+import { externalTools } from '../capabilities/external-tools';
 import { DESK_MUTATE_MAX_STEPS, DESK_READ_MAX_STEPS } from '../config';
 import type { AssistantProfile } from './profile';
 import { SHARED_RULES } from './shared-rules';
@@ -42,6 +46,8 @@ export const DESKBOT_PROFILE: AssistantProfile = {
 		deskAsk,
 		deskArrange,
 		deskPlan,
+		externalTools,
+		agentDelegation,
 		compaction,
 	],
 	wantsTools: (turn) => turn.scopes.length > 0,

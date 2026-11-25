@@ -1,7 +1,7 @@
-import type { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+import type { GoogleLanguageModelOptions } from '@ai-sdk/google';
 
 /**
- * Agent-loop step budgets (AI SDK v6 `stopWhen: stepCountIs(n)`). Externalized here so
+ * Agent-loop step budgets (AI SDK `stopWhen: isStepCount(n)`). Externalized here so
  * the quota-discipline ceilings live in one place instead of as literals scattered across
  * the orchestrator + tool factory. Numbers match the prior inline behavior exactly.
  *
@@ -39,7 +39,7 @@ export const PROJECT_MAP_MAX_CHARS = 2_000;
  * `generate` terminal (0 when the budget is honoured) tells the arms apart in every trace.
  * Empty — today's behavior — until the A/B is accepted.
  */
-export const CHATBOT_GENERATION_OPTIONS = {} satisfies { google?: GoogleGenerativeAIProviderOptions };
+export const CHATBOT_GENERATION_OPTIONS = {} satisfies { google?: GoogleLanguageModelOptions };
 
 /** Chat endpoint rate limit: requests per window */
 export const RATE_LIMIT_MAX = 20;

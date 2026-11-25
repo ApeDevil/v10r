@@ -1,0 +1,44 @@
+# Docs navigation hubs (README-per-directory convention)
+
+> Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
+
+**Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation convention only
+
+An AI-optimized docs tree where every directory's README.md is a navigation hub with topic tables, so agents read index → target file, never everything.
+
+**When to use:** Adopt in any repo meant to be read by AI agents: it turns documentation from a pile of files into an addressable index.
+
+## Avoid when
+
+- A doc set small enough for one README — a hub per directory adds an index with nothing to route
+- Hubs that would restate their files — a hub routes, never summarizes; a summary hub is a second source of truth that drifts
+
+## Alternatives
+
+- **A single README or one flat docs folder** — prefer when the whole doc set is a handful of files an agent can list and pick from directly
+- **An index generated from a docs manifest (as /llms.txt is built from getManifest())** — prefer when doc metadata already lives in a machine-readable manifest, so a hand-written topic table would be a second copy
+
+## Docs
+
+- `docs/README.md` — Root hub — the entry point of the whole convention ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/README.md))
+- `docs/blueprint/README.md` — Example directory hub with topic tables ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/README.md))
+- `docs/blueprint/ai/README.md` — Second example hub (AI subsystem) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/README.md))
+
+## Tests
+
+- `src/lib/server/docs/markdown-urls.test.ts` — Pins every hub URL and H1-title round-trip ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/docs/markdown-urls.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/docs/markdown-urls.test.ts))
+- `src/lib/showcases/catalog/docs-mapping.gate.test.ts` — Every showcase docs button must resolve to a published hub entry ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/showcases/catalog/docs-mapping.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/showcases/catalog/docs-mapping.gate.test.ts))
+
+## Invariants
+
+- Each documentation directory has a README.md acting as a navigation hub: a 2-3 sentence intro plus a topic table showing which file covers what.
+- Navigation rule: start at docs/README.md and drill down through directory READMEs — read index, then target file, never everything.
+
+## Emulation notes
+
+- This is a convention, not code — emulate by writing the hubs, not by copying files.
+- Keep hub intros to 2-3 sentences; the topic table is the payload.
+
+---
+
+_Machine-readable record: `docs-nav-hubs` in `pattern-library/registry.json`._

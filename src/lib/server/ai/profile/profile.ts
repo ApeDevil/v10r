@@ -16,9 +16,11 @@
  * `TurnRecorder`, and `verify()` runs the capabilities' verifiers over the answer.
  */
 import type { ToolSet } from 'ai';
+import type { GenerativeSurfaceGraph } from '#lib/generative-ui/index.ts';
 import type { Locale } from '#lib/i18n/index.ts';
 import type { SearchResult } from '#lib/search/types.ts';
 import type { DeskCorpusState } from '#lib/server/db/retrieval/queries.ts';
+import type { PreparedExternalOperation } from '#lib/server/external-operations/index.ts';
 import { generateEmbedding, type RankedChunk } from '#lib/server/retrieval/index.ts';
 import type { PageContext } from '#lib/server/search/index.ts';
 import type { CapabilityId, GroundingSourceId } from '#lib/types/assistant-profile.ts';
@@ -35,7 +37,9 @@ import type {
 } from '#lib/types/turn-trace.ts';
 import { type CompactionListener, wrapToolsWithCompaction } from '../capabilities/compaction';
 import type { EmbeddingConnection } from '../connections';
+import type { DirectoryPeer, ProjectedPeerTool } from '../mcp-client';
 import type { DeskLayoutEntry, DeskToolScope } from '../tools/_types';
+import type { DelegationTurnContext } from '../tools/delegate-review';
 import type { DocsSeed } from '../tools/search-docs';
 import type { TurnRecorder } from '../trace/recorder';
 import type { PanelContextEntry } from '../types';
@@ -79,8 +83,19 @@ export interface TurnInput {
 	clientActions?: readonly string[];
 	/** Deskbot: client action results already reported since the user's last message. */
 	clientActionsSpent?: number;
+	/**
+	 * Chatbot: the generative surfaces this conversation shows now, by surface id — what a
+	 * `render_surface` update is checked against (`generative-ui/surface-history.ts`).
+	 */
+	surfaceGraphs?: ReadonlyMap<string, GenerativeSurfaceGraph>;
 	/** How the turn's tool results reach the recorder when a result is replaced by a ref. */
 	onCompacted?: CompactionListener;
+	/**
+	 * Deskbot: what a turn that may delegate to an A2A peer carries (operator peers, the
+	 * adapter, the budget). Absent — no peer listed, signed out, or no conversation — keeps the
+	 * `agent-delegation` capability inactive.
+	 */
+	delegation?: DelegationTurnContext;
 }
 
 /** One block a capability contributes; `composeTurn` stamps the owner and sizes it. */
@@ -145,6 +160,13 @@ export interface TurnState {
 	surfacedDesk: Map<string, SurfacedDeskChunk>;
 	/** Tools mounted so far, in profile order. */
 	tools: ToolSet;
+	/** The operator's activated peer tools the external-tools lane mounted for this turn. */
+	externalTools: Array<{ entry: DirectoryPeer; projected: ProjectedPeerTool }>;
+	/**
+	 * External operations this turn's gated peer tools prepared, by tool call id — read by the
+	 * orchestrator when it persists the proposal. Server-side only: the model sees the sentinel.
+	 */
+	externalOperations: Map<string, PreparedExternalOperation>;
 	/** True once a grounding block with this id entered the prompt. */
 	hasBlock(id: PromptBlockId): boolean;
 }
@@ -266,6 +288,8 @@ export function createTurnState(
 		surfacedCatalog: new Map(),
 		surfacedDesk: new Map(),
 		tools: {},
+		externalTools: [],
+		externalOperations: new Map(),
 		hasBlock,
 	};
 }

@@ -25,7 +25,7 @@ const { createReadTools } = await import('./desk-read');
 const { DESK_READ_MAX_CHARS } = await import('../config');
 
 const USER = 'usr_read';
-const ctx = { toolCallId: 'tc', messages: [] as never[], abortSignal: new AbortController().signal };
+const ctx = { toolCallId: 'tc', messages: [] as never[], abortSignal: new AbortController().signal, context: {} };
 const AT = new Date('2026-09-12T08:00:00.000Z');
 const tools = () => createReadTools(USER);
 

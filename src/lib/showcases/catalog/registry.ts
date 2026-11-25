@@ -644,6 +644,18 @@ export const showcases: ShowcaseCard[] = [
 		],
 	},
 	{
+		href: '/showcases/interop',
+		icon: 'i-lucide-plug-zap',
+		title: m.showcase_interop_title,
+		description: m.showcase_interop_description,
+		domain: 'ai',
+		docs: [
+			{ href: '/docs/blueprint/ai/mcp-client', label: 'MCP Client' },
+			{ href: '/docs/blueprint/ai/generative-ui', label: 'Generative UI' },
+			{ href: '/docs/blueprint/ai/agent-to-agent', label: 'Agent to Agent' },
+		],
+	},
+	{
 		href: '/showcases/ax',
 		icon: 'i-lucide-bot',
 		title: m.showcase_ax_title,

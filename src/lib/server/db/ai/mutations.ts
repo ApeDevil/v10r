@@ -46,15 +46,39 @@ const VALID_ROLES = new Set(['user', 'assistant', 'system', 'tool'] as const);
 export async function saveMessages(
 	conversationId: string,
 	userId: string,
-	messages: { id: string; role: string; content: string; route?: string | null }[],
-) {
-	if (messages.length === 0) return;
+	messages: {
+		id: string;
+		role: string;
+		content: string;
+		route?: string | null;
+		/** Stored parts — a user row records a surface action as its data part. */
+		parts?: StoredMessagePart[] | null;
+	}[],
+	options: {
+		/**
+		 * The id of one row that must be NEW: it is inserted first, and when a row with that id
+		 * already exists nothing of this call is written (`'claim_taken'`). A surface action's
+		 * user row is claimed this way — its id is derived from the submission, so the claim is
+		 * what keeps two identical presses from both starting a turn.
+		 */
+		claim?: string;
+	} = {},
+): Promise<'saved' | 'claim_taken' | 'not_saved'> {
+	if (messages.length === 0) return 'not_saved';
 
 	// Filter to valid roles before insert
 	const valid = messages.filter((m) => VALID_ROLES.has(m.role as typeof VALID_ROLES extends Set<infer T> ? T : never));
-	if (valid.length === 0) return;
+	if (valid.length === 0) return 'not_saved';
+	const toRow = (m: (typeof valid)[number]) => ({
+		id: m.id,
+		conversationId,
+		role: m.role as 'user' | 'assistant' | 'system' | 'tool',
+		content: m.content,
+		route: m.route ?? null,
+		...(m.parts !== undefined && { parts: m.parts }),
+	});
 
-	await db.transaction(async (tx) => {
+	return db.transaction(async (tx) => {
 		// Verify conversation ownership before inserting
 		const [conv] = await tx
 			.select({ id: conversation.id })
@@ -62,23 +86,20 @@ export async function saveMessages(
 			.where(and(eq(conversation.id, conversationId), eq(conversation.userId, userId)))
 			.limit(1);
 
-		if (!conv) return;
+		if (!conv) return 'not_saved' as const;
 
-		await tx
-			.insert(message)
-			.values(
-				valid.map((m) => ({
-					id: m.id,
-					conversationId,
-					role: m.role as 'user' | 'assistant' | 'system' | 'tool',
-					content: m.content,
-					route: m.route ?? null,
-				})),
-			)
-			.onConflictDoNothing();
+		let rest = valid;
+		const claimed = options.claim === undefined ? undefined : valid.find((m) => m.id === options.claim);
+		if (claimed) {
+			const won = await tx.insert(message).values(toRow(claimed)).onConflictDoNothing().returning({ id: message.id });
+			if (won.length === 0) return 'claim_taken' as const;
+			rest = valid.filter((m) => m !== claimed);
+		}
+		if (rest.length > 0) await tx.insert(message).values(rest.map(toRow)).onConflictDoNothing();
 
 		// Touch updatedAt so listing reflects recent activity
 		await tx.update(conversation).set({ updatedAt: new Date() }).where(eq(conversation.id, conversationId));
+		return 'saved' as const;
 	});
 }
 

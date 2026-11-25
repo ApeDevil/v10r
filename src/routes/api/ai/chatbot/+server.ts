@@ -5,6 +5,11 @@
 import { safeParse } from 'valibot';
 import type { Locale } from '#lib/i18n/index.ts';
 import { orchestrateChat } from '#lib/server/ai/chat-orchestrator.ts';
+import {
+	admitConversationSurfaceAction,
+	type SurfaceActionTurn,
+	surfaceActionPromptsForModel,
+} from '#lib/server/ai/generative-ui/index.ts';
 import { guardAiRequest } from '#lib/server/ai/guard.ts';
 import { ChatbotRequestSchema } from '#lib/server/ai/validation.ts';
 import { MAX_AI_BODY_BYTES, payloadTooLargeResponse, readJsonBounded } from '#lib/server/http/body.ts';
@@ -44,12 +49,35 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	// trust boundary (the raw id never reaches the orchestrator). Miss/dynamic/private → null.
 	const pageContext = resolvePageContext(parsed.output.pageRouteId, (locals.locale ?? 'en') as Locale);
 
+	// A Button press on a generative surface: admitted against the persisted conversation (the
+	// caller's own, the surface's current version, a Button that declares this event, a press
+	// and a submission not already admitted). The turn's parts become the door's own record —
+	// what the user row stores and the bubble shows — and every recorded press in the thread
+	// reaches the model as the door's untrusted-content prompt. Never an approval of anything.
+	let messages = parsed.output.messages;
+	let surfaceActionTurn: SurfaceActionTurn | undefined;
+	const surfaceAction = parsed.output.surfaceAction;
+	if (surfaceAction) {
+		const last = messages.at(-1);
+		if (!parsed.output.conversationId || last?.role !== 'user')
+			return apiError(409, 'surface_action_rejected', 'A surface action needs its conversation.');
+		const admission = await admitConversationSurfaceAction(parsed.output.conversationId, guard.user.id, surfaceAction);
+		if (!admission.ok) return apiError(409, 'surface_action_rejected', admission.reason);
+		surfaceActionTurn = admission.turn;
+		messages = [...messages.slice(0, -1), { ...last, parts: admission.turn.parts }];
+	}
+
 	return orchestrateChat({
 		userId: guard.user.id,
 		registry: guard.registry,
 		surface: 'chatbot',
 		providerId: parsed.output.providerId,
-		messages: parsed.output.messages as Parameters<typeof orchestrateChat>[0]['messages'],
+		messages: surfaceActionPromptsForModel(messages) as Parameters<typeof orchestrateChat>[0]['messages'],
+		userRow: surfaceActionTurn && {
+			id: surfaceActionTurn.messageId,
+			content: surfaceActionTurn.content,
+			parts: surfaceActionTurn.parts,
+		},
 		conversationId: parsed.output.conversationId,
 		signal: request.signal,
 		deadline: startDeadline(TURN_BUDGET_MS),

@@ -25,6 +25,14 @@ export interface ProposalError {
 	message: string;
 }
 
+/**
+ * What the user decided on the card beyond "approve": for an external operation whose
+ * disclosure quotes read content, the separate authorization to send that content.
+ */
+export interface ProposalDecision {
+	authorizeQuotedContent?: boolean;
+}
+
 /** The full shape of `message.metadata.harness` that the orchestrator emits. */
 export interface HarnessMetadata {
 	proposal?: ProposalMetadata;

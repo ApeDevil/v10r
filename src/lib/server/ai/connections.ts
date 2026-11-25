@@ -12,7 +12,7 @@
  * scripts share one reading of "is Google usable for embeddings" instead of two.
  * `index.ts` is where the app supplies the database and the key.
  */
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
@@ -73,7 +73,7 @@ export function createProviderModel(provider: AiProviderId, modelId: string, api
 		case 'openai':
 			return createOpenAI({ apiKey })(modelId);
 		case 'google':
-			return createGoogleGenerativeAI({ apiKey })(modelId);
+			return createGoogle({ apiKey })(modelId);
 	}
 }
 

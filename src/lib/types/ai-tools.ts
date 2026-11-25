@@ -82,7 +82,8 @@ export type ToolResultOrigin = 'system' | 'user';
 /**
  * Whether a tool can move data out of the deployment — a fetch, an email, a message, a
  * webhook. `external` is the exfiltration leg of the lethal trifecta: such a tool must be
- * approval-gated (`untrusted-content.gate.test.ts`). Every tool today is `internal`.
+ * approval-gated (`untrusted-content.gate.test.ts`). The one `external` tool is
+ * `delegate_architecture_review` (A2A delegation, behind the external-operations approval).
  */
 export type ToolReach = 'internal' | 'external';
 
@@ -182,7 +183,32 @@ export const TOOL_MANIFEST: readonly ToolDescriptor[] = [
 		resultOrigin: 'system',
 		reach: 'internal',
 	},
+	// The one output tool: compiles a generative surface; changes nothing stored.
+	{
+		name: 'render_surface',
+		surface: 'chatbot',
+		risk: 'view',
+		executor: 'server',
+		capability: 'generative-ui',
+		resultOrigin: 'system',
+		reach: 'internal',
+	},
 	// ── deskbot: scope-gated UI-parity tools ──
+	// The one catalogued external tool: delegates a review to an operator-listed A2A peer.
+	// External reach makes it approval-gated (`write` risk: it creates a task on another
+	// organisation's agent and discloses the model); the peer's answer is a claim, so its result
+	// is `user` origin. Deskbot, because the deskbot owns the persisted approval door; mounted
+	// under `desk:read`, the least scope a turn that may read what it sends needs.
+	{
+		name: 'delegate_architecture_review',
+		surface: 'deskbot',
+		risk: 'write',
+		scope: 'desk:read',
+		executor: 'server',
+		capability: 'agent-delegation',
+		resultOrigin: 'user',
+		reach: 'external',
+	},
 	{
 		name: 'desk_list_files',
 		surface: 'deskbot',

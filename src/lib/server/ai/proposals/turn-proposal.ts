@@ -7,7 +7,13 @@
  * the PlanCard's were (risk and recovery from the tool, never from the model); the receipts
  * are the durable account of what the approval replay ran.
  */
+import { getExternalOperation } from '#lib/server/db/ai/external-operations.ts';
 import { getProposal, listProposalSteps } from '#lib/server/db/ai/proposals.ts';
+import {
+	type ExternalDisclosure,
+	externalOperationCard,
+	externalReceiptView,
+} from '#lib/server/external-operations/index.ts';
 import type { TurnProposal, TurnTrace } from '#lib/types/turn-trace.ts';
 import { toCardSteps } from './approval-boundary';
 import { toStepReceipt } from './proposal-outcome';
@@ -21,7 +27,20 @@ export async function resolveTurnProposal(trace: TurnTrace): Promise<TurnTrace> 
 	const row = await getProposal(trace.proposalId);
 	if (!row || row.messageId !== trace.messageId) return trace;
 	const receipts = (await listProposalSteps(row.id)).map(toStepReceipt);
+	const external = await getExternalOperation(row.id);
 	const proposal: TurnProposal = {
+		...(external
+			? {
+					external: {
+						card: externalOperationCard(
+							external.toolName,
+							external.disclosure as unknown as ExternalDisclosure,
+							external,
+						),
+						receipt: externalReceiptView(external),
+					},
+				}
+			: {}),
 		id: row.id,
 		status: row.status,
 		riskTier: row.riskTier,

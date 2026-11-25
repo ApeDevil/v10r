@@ -66,24 +66,20 @@ server:
   # log, so the stream and logLevel requirements have nothing to exercise (runner: "Not testable").
   - server-stateless:sep-2575-http-server-no-independent-requests-on-stream
   - server-stateless:sep-2575-server-no-log-without-loglevel
-  # Caching hints on prompts/resources lists — those capabilities are not advertised (tools/list and
-  # server/discover carry the hints and pass).
+  # Caching hints on the prompts list — that capability is not advertised (tools/list,
+  # server/discover and, since the MCP App View, the resources lists carry the hints and pass).
   - caching:sep-2549-prompts-list-caching-hints
-  - caching:sep-2549-resources-list-caching-hints
-  - caching:sep-2549-resources-templates-list-caching-hints
   # Prompts capability not advertised → prompts/* is -32601
   - prompts-get-embedded-resource:prompts-get-embedded-resource
   - prompts-get-simple:prompts-get-simple
   - prompts-get-with-args:prompts-get-with-args
   - prompts-get-with-image:prompts-get-with-image
   - prompts-list:prompts-list
-  # Resources capability not advertised → resources/* is -32601 (sep-2164 is a WARNING for the same reason)
-  - resources-list:resources-list
+  # Resources capability advertised for the MCP App View only (one ui:// resource): list and
+  # not-found pass; the fixture resources these scenarios read do not exist on this server
   - resources-read-binary:resources-read-binary
   - resources-read-text:resources-read-text
   - resources-templates-read:resources-templates-read
-  - sep-2164-resource-not-found:sep-2164-error-code
-  - sep-2164-resource-not-found:sep-2164-data-uri
   # Completions capability not advertised
   - completion-complete:completion-complete
   # Fixture tools for non-text content and progress — v10r tools return text only, as JSON, by design

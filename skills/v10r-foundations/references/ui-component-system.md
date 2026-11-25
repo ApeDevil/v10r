@@ -1,0 +1,59 @@
+# Component-first UI system (primitives/composites/layout, CVA, tokens)
+
+> Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
+
+**Category:** UI Components & Design System · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — frontend only
+
+A layered component system — Bits UI → primitives (styled atoms) → composites (business logic) → layout (structural wrappers) — styled entirely through CVA → UnoCSS → design-token CSS variables.
+
+**When to use:** Emulate when a project needs consistent UI at any scale: the layer split keeps styling decisions in one place and bans ad-hoc HTML.
+
+## Avoid when
+
+- A non-Svelte frontend — every primitive wraps Bits UI, which is Svelte-native and the layer system depends on it
+- A project committed to a Tailwind theme config or another styled kit — token CSS variables are core to theming and hard to reverse
+
+## Alternatives
+
+- **Radix or Headless UI primitives under the same CVA + token layering** — prefer when the frontend is React or Vue rather than Svelte
+- **Tailwind with its theme config instead of UnoCSS + CSS-variable tokens** — prefer when a larger ecosystem and documentation matter more than build speed and the app needs no runtime theming or rebuild-free dark mode
+
+## Docs
+
+- `docs/blueprint/design/README.md` — Design philosophy hub ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/README.md))
+- `docs/blueprint/design/components.md` — Layer system and CVA variant rules ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/components.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/components.md))
+- `docs/blueprint/design/tokens.md` — Token architecture (breakpoints, fluid type/space, elevation) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/tokens.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/tokens.md))
+- `docs/blueprint/design/styling.md` — Styling flow and layout primitives ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/design/styling.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/design/styling.md))
+
+## Code
+
+- `src/lib/components/primitives/` — ~40 styled atoms wrapping Bits UI ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/primitives) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/primitives))
+- `src/lib/components/composites/` — Components with business logic ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/composites) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/composites))
+- `src/lib/components/layout/` — Structural wrappers (Stack, Cluster, Surface) ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/layout) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/layout))
+- `src/lib/styles/tokens.ts` — Design tokens ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/styles/tokens.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/styles/tokens.ts))
+- `uno.config.ts` — UnoCSS theme wiring ([GitHub](https://github.com/ApeDevil/v10r/blob/main/uno.config.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/uno.config.ts))
+
+## Tests
+
+- `src/lib/components/desk/dock.state.svelte.test.ts` — Example colocated component test ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/desk/dock.state.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/desk/dock.state.svelte.test.ts))
+
+## Proof
+
+- [`/showcases/ui/components`](https://www.v10r.dev/showcases/ui/components)
+- [`/showcases/ui/layouts`](https://www.v10r.dev/showcases/ui/layouts)
+- [`/showcases/ui/tokens`](https://www.v10r.dev/showcases/ui/tokens)
+
+## Invariants
+
+- Never use raw HTML elements when a project component exists — raw <input>/<button>/<select> bypass the design system.
+- Styling flows through CVA → UnoCSS utilities → token-backed CSS variables; components never hardcode colors or spacing.
+- Components are zero-margin; layout is gap-based on the spacing scale.
+
+## Emulation notes
+
+- Adopt the layer vocabulary first (primitive/composite/layout) — it decides where every new component goes.
+- Port the token file before porting any component; components without tokens re-create the ad-hoc styling problem.
+
+---
+
+_Machine-readable record: `ui-component-system` in `pattern-library/registry.json`._

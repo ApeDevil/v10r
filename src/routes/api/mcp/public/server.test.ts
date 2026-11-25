@@ -65,13 +65,14 @@ describe('POST /api/mcp/public', () => {
 		expect(body.result._meta).not.toHaveProperty('environment');
 	});
 
-	it('tools/list returns exactly the eight pattern tools', async () => {
+	it('tools/list returns exactly the eight pattern tools and the explorer App', async () => {
 		const res = await rpc('tools/list');
 		const body = await res.json();
 		expect(body.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(
 			[
 				'check_architecture',
 				'explore_architecture',
+				'explore_patterns',
 				'get_file_excerpt',
 				'get_pattern',
 				'recommend_emulation_plan',
@@ -80,6 +81,82 @@ describe('POST /api/mcp/public', () => {
 				'validate_snippet',
 			].sort(),
 		);
+	});
+
+	describe('the pattern explorer MCP App', () => {
+		const VIEW_URI = 'ui://v10r/pattern-explorer.html';
+
+		it('links explore_patterns to its View and leaves every other tool definition bare (B1)', async () => {
+			const body = await (await rpc('tools/list')).json();
+			const tools = body.result.tools as Array<Record<string, unknown>>;
+			for (const tool of tools) {
+				// B1: no title, annotations or outputSchema on any tool until the compat run says so.
+				expect(tool, String(tool.name)).not.toHaveProperty('title');
+				expect(tool, String(tool.name)).not.toHaveProperty('annotations');
+				expect(tool, String(tool.name)).not.toHaveProperty('outputSchema');
+				if (tool.name !== 'explore_patterns') expect(tool, String(tool.name)).not.toHaveProperty('_meta');
+			}
+			const explorer = tools.find((tool) => tool.name === 'explore_patterns');
+			expect(explorer?._meta).toEqual({ ui: { resourceUri: VIEW_URI }, 'ui/resourceUri': VIEW_URI });
+		});
+
+		it('declares resources without list-change notifications', async () => {
+			const body = await (
+				await rpc('initialize', {
+					protocolVersion: '2025-06-18',
+					capabilities: {},
+					clientInfo: { name: 't', version: '1' },
+				})
+			).json();
+			expect(body.result.capabilities.resources).toEqual({ listChanged: false });
+		});
+
+		it('lists the View as a ui:// resource with the MCP Apps MIME type and its CSP', async () => {
+			const body = await (await rpc('resources/list')).json();
+			expect(body.result.resources).toEqual([
+				expect.objectContaining({
+					uri: VIEW_URI,
+					mimeType: 'text/html;profile=mcp-app',
+					_meta: {
+						ui: {
+							csp: { connectDomains: [], resourceDomains: [], frameDomains: [], baseUriDomains: [] },
+							permissions: {},
+							prefersBorder: true,
+						},
+					},
+				}),
+			]);
+		});
+
+		it('reads the View: one self-contained HTML document, CSP on the content too', async () => {
+			const body = await (await rpc('resources/read', { uri: VIEW_URI })).json();
+			const [content] = body.result.contents;
+			expect(content.uri).toBe(VIEW_URI);
+			expect(content.mimeType).toBe('text/html;profile=mcp-app');
+			expect(content.text).toMatch(/<!doctype html>/);
+			expect(content.text).toContain("connect-src 'none'");
+			expect(content._meta.ui.csp.connectDomains).toEqual([]);
+		});
+
+		it('answers every client: text plus the same projection as structuredContent', async () => {
+			const body = await (
+				await rpc('tools/call', { name: 'explore_patterns', arguments: { id: 'ai-surfaces' } })
+			).json();
+			const { result } = body;
+			expect(result.isError).toBeFalsy();
+			expect(result.content[0].text).toMatch(/^# .+\(`ai-surfaces`\)/);
+			expect(result.content[0].text).toContain('http://localhost/docs/pattern-library/ai-surfaces');
+			expect(result.structuredContent.kind).toBe('focus');
+			expect(result.structuredContent.focus.id).toBe('ai-surfaces');
+			expect(result.structuredContent.focus.docsUrl).toBe('http://localhost/docs/pattern-library/ai-surfaces');
+		});
+
+		it('an unknown id is a tool error with recovery steps and no structured payload', async () => {
+			const body = await (await rpc('tools/call', { name: 'explore_patterns', arguments: { id: 'nope' } })).json();
+			expect(body.result.isError).toBe(true);
+			expect(body.result).not.toHaveProperty('structuredContent');
+			expect(body.result.content[0].text).toContain('## Next actions');
+		});
 	});
 
 	it('rejects an admin mutation submitted to the public endpoint', async () => {

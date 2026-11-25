@@ -1,10 +1,17 @@
 <script lang="ts">
 import CitationChip from '#lib/components/composites/citation/CitationChip.svelte';
 import type { CatalogSource } from '#lib/components/composites/citation/citation-types.ts';
+import {
+	LazyGenerativeSurface,
+	localizedGenerativeSurfaceLabels,
+} from '#lib/components/composites/generative-surface/index.ts';
+import type { GenerativeSurfaceAction } from '#lib/generative-ui/index.ts';
+import { ownSurfaceActionRecordOf } from '#lib/generative-ui/surface-action-key.ts';
 import * as m from '#lib/paraglide/messages.js';
 import type { TurnError } from '#lib/types/ai-error.ts';
 import { cn } from '#lib/utils/cn.ts';
 import StreamedMarkdown from './StreamedMarkdown.svelte';
+import { RENDER_SURFACE_PART, type SurfaceView } from './surface-views';
 import ToolCallStatus from './ToolCallStatus.svelte';
 import { toolLabel } from './tool-label';
 import { isToolPart, TOOL_PHASE, type ToolPart, toolNameOf, toolPartFailed } from './tool-part';
@@ -30,9 +37,24 @@ interface Props {
 	turnError?: TurnError;
 	/** Where the finished turn opens in the turn inspector — set once its trace has persisted. */
 	inspectHref?: string | null;
+	/** The view each `render_surface` part shows (`surfaceViewsOf` over the whole thread). */
+	surfaceViews?: ReadonlyMap<string, SurfaceView | null>;
+	/** A Button was pressed on one of this message's surfaces — an event, never an approval. */
+	onsurfaceaction?: (action: GenerativeSurfaceAction, renderId: string) => void;
 }
 
-let { role, parts, content, catalogSources, turnError, inspectHref = null }: Props = $props();
+let {
+	role,
+	parts,
+	content,
+	catalogSources,
+	turnError,
+	inspectHref = null,
+	surfaceViews,
+	onsurfaceaction,
+}: Props = $props();
+
+const surfaceLabels = $derived(localizedGenerativeSurfaceLabels());
 
 const isUser = $derived(role === 'user');
 
@@ -77,7 +99,9 @@ function isStreaming(part: MessagePart): boolean {
  * speak for those states.
  */
 const hasContent = $derived(
-	displayParts.some((p) => (p.type === 'text' ? !!getTextContent(p) : isToolPart(p))) ||
+	displayParts.some((p) =>
+		p.type === 'text' ? !!getTextContent(p) : isToolPart(p) || ownSurfaceActionRecordOf(p) !== null,
+	) ||
 		uniqueSources.length > 0 ||
 		!!turnError,
 );
@@ -118,6 +142,24 @@ function turnErrorCopy(error: TurnError): string {
 						{:else}
 							<div class="chat-prose"><StreamedMarkdown {text} streaming={isStreaming(part)} /></div>
 						{/if}
+					</div>
+				{/if}
+			{:else if ownSurfaceActionRecordOf(part)}
+				{@const press = ownSurfaceActionRecordOf(part)}
+				<!-- A Button press, recorded as data: the user sees one line, never the
+				     untrusted-content prompt the model reads (rebuilt server-side per turn). -->
+				<div class="chat-bubble chat-bubble-user rounded-lg px-4 py-2 text-fluid-sm text-white" data-surface-action-line>
+					<p class="whitespace-pre-wrap">{m.ai_chat_surface_action_sent({ event: press?.action.name ?? '' })}</p>
+				</div>
+			{:else if part.type === RENDER_SURFACE_PART && isToolPart(part) && surfaceViews?.has(part.toolCallId)}
+				{@const view = surfaceViews.get(part.toolCallId)}
+				{#if view}
+					<div class="chat-surface">
+						<LazyGenerativeSurface
+							messages={view.messages}
+							labels={surfaceLabels}
+							onaction={(action) => onsurfaceaction?.(action, view.renderId)}
+						/>
 					</div>
 				{/if}
 			{:else if isToolPart(part)}
@@ -168,6 +210,12 @@ function turnErrorCopy(error: TurnError): string {
 {/if}
 
 <style>
+	.chat-surface {
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md, 8px);
+		padding: 0.75rem;
+	}
+
 	.chat-avatar-assistant {
 		background-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
 		color: var(--color-fg);

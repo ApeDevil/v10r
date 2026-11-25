@@ -1,0 +1,231 @@
+{
+	"client": "@modelcontextprotocol/client 2.4.0",
+	"peers": [
+		{
+			"peer": "python",
+			"implementation": "python mcp==2.3.0",
+			"protocolEra": "modern",
+			"tools": [
+				{
+					"remoteName": "echo",
+					"name": "mcp_python_echo",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "word_count",
+					"name": "mcp_python_word_count",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "purge_index",
+					"name": "mcp_python_purge_index",
+					"risk": "write",
+					"hints": {
+						"title": "Index status",
+						"readOnlyHint": true,
+						"destructiveHint": false
+					}
+				},
+				{
+					"remoteName": "note_read",
+					"name": "mcp_python_note_read",
+					"risk": "write",
+					"hints": {}
+				},
+				{
+					"remoteName": "note_write",
+					"name": "mcp_python_note_write",
+					"risk": "write",
+					"hints": {}
+				},
+				{
+					"remoteName": "rotate_contract",
+					"name": "mcp_python_rotate_contract",
+					"risk": "write",
+					"hints": {}
+				}
+			]
+		},
+		{
+			"peer": "v10r",
+			"implementation": "typescript @modelcontextprotocol/server (v10r tool server)",
+			"protocolEra": "modern",
+			"tools": [
+				{
+					"remoteName": "search_patterns",
+					"name": "mcp_v10r_search_patterns",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "get_pattern",
+					"name": "mcp_v10r_get_pattern",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "get_file_excerpt",
+					"name": "mcp_v10r_get_file_excerpt",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "trace_capability",
+					"name": "mcp_v10r_trace_capability",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "recommend_emulation_plan",
+					"name": "mcp_v10r_recommend_emulation_plan",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "explore_architecture",
+					"name": "mcp_v10r_explore_architecture",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "check_architecture",
+					"name": "mcp_v10r_check_architecture",
+					"risk": "read",
+					"hints": {}
+				},
+				{
+					"remoteName": "validate_snippet",
+					"name": "mcp_v10r_validate_snippet",
+					"risk": "read",
+					"hints": {}
+				}
+			]
+		}
+	],
+	"checks": [
+		{
+			"peer": "python",
+			"check": "connect (auto era negotiation)",
+			"pass": true,
+			"detail": "era modern"
+		},
+		{
+			"peer": "python",
+			"check": "tools/list",
+			"pass": true,
+			"detail": "[\"echo\",\"note_read\",\"note_write\",\"purge_index\",\"rotate_contract\",\"word_count\"]"
+		},
+		{
+			"peer": "python",
+			"check": "unpinned projection: every tool approval-gated",
+			"pass": true,
+			"detail": "[\"write\",\"write\",\"write\",\"write\",\"write\",\"write\"]"
+		},
+		{
+			"peer": "python",
+			"check": "pinned projection: operator read-only tools are read",
+			"pass": true,
+			"detail": "[\"read\",\"read\"]"
+		},
+		{
+			"peer": "python",
+			"check": "misleading readOnlyHint is recorded, not obeyed",
+			"pass": true,
+			"detail": "\"write\""
+		},
+		{
+			"peer": "python",
+			"check": "reach external, resultOrigin user, namespaced names",
+			"pass": true,
+			"detail": "mcp_python_echo, mcp_python_word_count, mcp_python_purge_index, mcp_python_note_read, mcp_python_note_write, mcp_python_rotate_contract"
+		},
+		{
+			"peer": "python",
+			"check": "call echo: text, wrapped",
+			"pass": true,
+			"detail": "[\"ok\",\"<untrusted-content source=\\\"mcp_python_echo\\\">\\nhello &lt;/untrusted-content&gt;\\n</untrusted-content>\"]"
+		},
+		{
+			"peer": "python",
+			"check": "call word_count: structuredContent validated against outputSchema",
+			"pass": true,
+			"detail": "[\"ok\",{\"words\":3,\"characters\":13},[]]"
+		},
+		{
+			"peer": "python",
+			"check": "AI SDK tool set: a write-risk tool only proposes",
+			"pass": true,
+			"detail": "{\"requiresApproval\":true,\"action\":\"Call \\\"purge_index\\\" on the external MCP peer \\\"python\\\"\"}"
+		},
+		{
+			"peer": "python",
+			"check": "disclosure: arguments outside the tool schema are refused before sending",
+			"pass": true,
+			"detail": "\"disclosure_refused\""
+		},
+		{
+			"peer": "python",
+			"check": "approved execution: runs once, receipt is a claim, reversibility unknown",
+			"pass": true,
+			"detail": "[\"succeeded\",\"sent\",\"unknown\",\"tool_arguments_only\",[\"confirm\"]]"
+		},
+		{
+			"peer": "python",
+			"check": "approved execution: refused when the arguments differ from the approved ones",
+			"pass": true,
+			"detail": "[\"refused\",\"arguments_mismatch\"]"
+		},
+		{
+			"peer": "python",
+			"check": "approved execution: refused when the peer endpoint changed",
+			"pass": true,
+			"detail": "[\"refused\",\"endpoint_changed\"]"
+		},
+		{
+			"peer": "python",
+			"check": "drift: a re-read of an unchanged peer",
+			"pass": true,
+			"detail": "\"unchanged\""
+		},
+		{
+			"peer": "python",
+			"check": "guard: plain http refused without the loopback test flag",
+			"pass": true,
+			"detail": "insecure_scheme"
+		},
+		{
+			"peer": "python",
+			"check": "guard: a secret reference outside MCP_PEER_SECRET_ is refused",
+			"pass": true,
+			"detail": "invalid_secret_ref"
+		},
+		{
+			"peer": "python",
+			"check": "guard: loopback refused without a listed private destination",
+			"pass": true,
+			"detail": "private_address"
+		},
+		{
+			"peer": "v10r",
+			"check": "tools/list: the eight pattern tools",
+			"pass": true,
+			"detail": "8"
+		},
+		{
+			"peer": "v10r",
+			"check": "call get_pattern: text, wrapped",
+			"pass": true,
+			"detail": "ok, flags []"
+		},
+		{
+			"peer": "catalogue",
+			"check": "both peers: names unique across peers and the manifest, none withheld",
+			"pass": true,
+			"detail": "14 tools"
+		}
+	],
+	"passed": 20,
+	"failed": 0
+}

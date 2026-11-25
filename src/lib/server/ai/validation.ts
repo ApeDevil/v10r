@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { DESK_ARRANGE_ACTION_NAMES } from '#lib/desk/arrange-actions.ts';
+import { SURFACE_ACTION_PART, SurfaceActionRecordSchema } from '#lib/generative-ui/index.ts';
 import { DESK_TOOL_SCOPES } from '#lib/types/ai-tools.ts';
 import { AI_PROVIDER_IDS, DESK_FILE_TYPES } from '#lib/types/db-enums.ts';
 import {
@@ -11,7 +12,7 @@ import {
 const MessageRole = v.picklist(['user', 'assistant']);
 
 /**
- * UIMessage part — AI SDK v6 emits dynamic `tool-<toolName>` part types with
+ * UIMessage part — the AI SDK emits dynamic `tool-<toolName>` part types with
  * `state: 'output-available'|'input-available'|...`, so we accept any
  * `type` that starts with `tool-` via a loose object check and validate
  * the fixed parts strictly.
@@ -22,6 +23,8 @@ const FixedUIMessagePart = v.union([
 	v.object({ type: v.literal('source-url'), url: v.string(), title: v.optional(v.string()) }),
 	v.object({ type: v.literal('reasoning'), text: v.string() }),
 	v.object({ type: v.literal('step-start') }),
+	/** A Button press on a generative surface, as the thread records it (`surfaceActionRecordOf`). */
+	v.object({ type: v.literal(SURFACE_ACTION_PART), data: SurfaceActionRecordSchema }),
 ]);
 
 const DynamicToolPart = v.object({
@@ -106,6 +109,14 @@ const PageRouteId = v.optional(v.pipe(v.string(), v.maxLength(120), v.regex(/^\/
 export const ChatbotRequestSchema = v.object({
 	...baseEntries,
 	pageRouteId: PageRouteId,
+	/**
+	 * This turn is a Button press on a generative surface, not typed text: the event and the
+	 * render it was pressed on, and the event id the browser minted for the press. The route
+	 * admits it against the persisted conversation (`generative-ui/surface-action-door.ts`) and
+	 * replaces the turn's parts with the door's own record; the client's parts for the turn are
+	 * never forwarded.
+	 */
+	surfaceAction: v.optional(SurfaceActionRecordSchema),
 });
 
 /**

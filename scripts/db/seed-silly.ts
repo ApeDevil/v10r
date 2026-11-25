@@ -12,7 +12,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle } from '@ai-sdk/google';
 import { neonConfig, Pool } from '@neondatabase/serverless';
 import { embedMany } from 'ai';
 import { sql } from 'drizzle-orm';
@@ -59,7 +59,7 @@ if ('unavailable' in embeddingConnection) {
 	console.error(`[%s] ${EMBEDDING_UNAVAILABLE_MESSAGES[embeddingConnection.unavailable]}`, SCRIPT_NAME);
 	process.exit(1);
 }
-const embedModel = createGoogleGenerativeAI({ apiKey: embeddingConnection.apiKey }).embedding(EMBEDDING_MODEL);
+const embedModel = createGoogle({ apiKey: embeddingConnection.apiKey }).embedding(EMBEDDING_MODEL);
 const EMBEDDING_OPTS = { google: { outputDimensionality: EMBEDDING_DIMENSIONS } };
 
 const hash = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 32);

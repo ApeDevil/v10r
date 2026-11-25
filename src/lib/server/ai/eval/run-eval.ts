@@ -5,16 +5,22 @@
  * trace — so an eval grades exactly what a user's turn would record. Nothing here reaches
  * the database or a provider directly; credentials stay with the running server.
  *
+ * A case may script follow-up turns in the same conversation (`followUps`): typed text, or a
+ * Button press on the surface the thread shows (`surface-press.ts` builds the press the
+ * browser would send, with a fresh event id). Each follow-up sends the persisted thread back
+ * as its history, the way the chat client does, and is graded on its own recorded turn.
+ *
  * Alias-free (`scripts/ai/eval.ts` runs it under bare Bun).
  */
 import type { TurnSummary, TurnTrace } from '../../../types/turn-trace';
-import type { EvalCase } from './eval-case';
-import type { GradedTurn } from './graders';
+import type { EvalCase, FollowUp } from './eval-case';
+import { type GradedTurn, renderedSurfaceIds } from './graders';
 import { type CaseResult, failedCase, type Scorecard, scoreCase, scorecard } from './scorecard';
+import { historyOf, type StoredThreadMessage, scriptedSurfacePress } from './surface-press';
 
-/** Obtains the recorded turn a case's question produces. */
+/** Obtains the recorded turns a case produces: the question's, then one per follow-up. */
 export interface EvalClient {
-	turnFor(evalCase: EvalCase): Promise<GradedTurn>;
+	turnsFor(evalCase: EvalCase): Promise<GradedTurn[]>;
 }
 
 export interface HttpEvalClientOptions {
@@ -45,6 +51,8 @@ export async function fetchEnvelope<T>(
 	return ((await res.json()) as { data: T }).data;
 }
 
+type Thread = { messages: StoredThreadMessage[]; turns: TurnSummary[] };
+
 export function createHttpEvalClient({
 	base,
 	cookie,
@@ -53,21 +61,56 @@ export function createHttpEvalClient({
 	sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 }: HttpEvalClientOptions): EvalClient {
 	const root = base.replace(/\/$/, '');
+	const post = (surface: string, body: unknown) =>
+		fetchImpl(`${root}/api/ai/${surface}`, {
+			method: 'POST',
+			headers: { cookie, origin: root, 'X-Requested-With': 'sveltekit', 'content-type': 'application/json' },
+			body: JSON.stringify(body),
+		});
+
+	/** The thread once a turn after `turnsBefore` has been recorded, and that turn's trace. */
+	async function recordedTurn(conversationId: string, evalCase: EvalCase, turnsBefore: number) {
+		let thread: Thread = { messages: [], turns: [] };
+		let messageId: string | undefined;
+		for (let attempt = 0; attempt < TURN_READ_ATTEMPTS && !messageId; attempt++) {
+			if (attempt > 0) await sleep(TURN_READ_DELAY_MS);
+			thread = await fetchEnvelope<Thread>(root, `/api/ai/conversations/${conversationId}`, cookie, fetchImpl);
+			const turns = thread.turns.filter((t) => t.surface === evalCase.surface);
+			messageId = turns.length > turnsBefore ? turns.at(-1)?.messageId : undefined;
+		}
+		if (!messageId) throw new Error(`Conversation ${conversationId} recorded no new ${evalCase.surface} turn.`);
+		const trace = await fetchEnvelope<TurnTrace>(
+			root,
+			`/api/ai/conversations/${conversationId}/turns/${messageId}`,
+			cookie,
+			fetchImpl,
+		);
+		return { thread, turn: { answer: thread.messages.find((m) => m.id === messageId)?.content ?? '', trace } };
+	}
+
+	/** One scripted follow-up: the request body it sends, and the press it made, if any. */
+	function followUpRequest(followUp: FollowUp, conversationId: string, thread: Thread) {
+		const history = historyOf(thread.messages);
+		if (followUp.question !== undefined) {
+			const message = { id: crypto.randomUUID(), role: 'user', parts: [{ type: 'text', text: followUp.question }] };
+			return { body: { conversationId, messages: [...history, message] }, press: null };
+		}
+		const press = scriptedSurfacePress(thread.messages, followUp.press ?? {});
+		if (!press) throw new Error(`No Button declaring "${followUp.press?.event ?? 'any event'}" is on screen.`);
+		const message = {
+			id: crypto.randomUUID(),
+			role: 'user',
+			parts: [{ type: 'data-surface-action', data: press }],
+		};
+		return { body: { conversationId, messages: [...history, message], surfaceAction: press }, press };
+	}
+
 	return {
-		async turnFor(evalCase) {
+		async turnsFor(evalCase) {
 			// A fresh conversation per case: no case grades another's history.
-			const res = await fetchImpl(`${root}/api/ai/${evalCase.surface}`, {
-				method: 'POST',
-				headers: {
-					cookie,
-					origin: root,
-					'X-Requested-With': 'sveltekit',
-					'content-type': 'application/json',
-				},
-				body: JSON.stringify({
-					messages: [{ id: crypto.randomUUID(), role: 'user', parts: [{ type: 'text', text: evalCase.question }] }],
-					...evalCase.request,
-				}),
+			const res = await post(evalCase.surface, {
+				messages: [{ id: crypto.randomUUID(), role: 'user', parts: [{ type: 'text', text: evalCase.question }] }],
+				...evalCase.request,
 			});
 			if (!res.ok)
 				throw new Error(`POST /api/ai/${evalCase.surface} → ${res.status} ${await res.text().catch(() => '')}`);
@@ -77,22 +120,30 @@ export function createHttpEvalClient({
 			if (!conversationId) throw new Error('The response carried no X-Conversation-Id.');
 
 			try {
-				type Thread = { messages: { id: string; content: string }[]; turns: TurnSummary[] };
-				let thread: Thread = { messages: [], turns: [] };
-				let messageId: string | undefined;
-				for (let attempt = 0; attempt < TURN_READ_ATTEMPTS && !messageId; attempt++) {
-					if (attempt > 0) await sleep(TURN_READ_DELAY_MS);
-					thread = await fetchEnvelope<Thread>(root, `/api/ai/conversations/${conversationId}`, cookie, fetchImpl);
-					messageId = thread.turns.filter((t) => t.surface === evalCase.surface).at(-1)?.messageId;
+				const first = await recordedTurn(conversationId, evalCase, 0);
+				const turns: GradedTurn[] = [first.turn];
+				let thread = first.thread;
+				const shown = new Set(renderedSurfaceIds(first.turn));
+				for (const followUp of evalCase.followUps ?? []) {
+					const { body, press } = followUpRequest(followUp, conversationId, thread);
+					const next = await post(evalCase.surface, body);
+					if (!next.ok)
+						throw new Error(
+							`follow-up ${turns.length + 1}: POST → ${next.status} ${await next.text().catch(() => '')}`,
+						);
+					await next.text();
+					const recorded = await recordedTurn(conversationId, evalCase, turns.length);
+					// A network retry: the same request, same event id. It must start no turn.
+					let repeatedPress: { status: number; body: string } | undefined;
+					if (press && followUp.press?.resend) {
+						const again = await post(evalCase.surface, body);
+						repeatedPress = { status: again.status, body: await again.text().catch(() => '') };
+					}
+					turns.push({ ...recorded.turn, conversation: { shownSurfaceIds: [...shown], repeatedPress } });
+					for (const id of renderedSurfaceIds(recorded.turn)) shown.add(id);
+					thread = recorded.thread;
 				}
-				if (!messageId) throw new Error(`Conversation ${conversationId} recorded no ${evalCase.surface} turn.`);
-				const trace = await fetchEnvelope<TurnTrace>(
-					root,
-					`/api/ai/conversations/${conversationId}/turns/${messageId}`,
-					cookie,
-					fetchImpl,
-				);
-				return { answer: thread.messages.find((m) => m.id === messageId)?.content ?? '', trace };
+				return turns;
 			} finally {
 				// Every case opens a conversation and an account holds a capped number; an eval run
 				// must not use them up. Best effort — a failed delete never fails the case.
@@ -112,7 +163,7 @@ export async function runEval(cases: readonly EvalCase[], client: EvalClient): P
 	const results: CaseResult[] = [];
 	for (const evalCase of cases) {
 		try {
-			results.push(scoreCase(evalCase, await client.turnFor(evalCase)));
+			results.push(scoreCase(evalCase, await client.turnsFor(evalCase)));
 		} catch (err) {
 			results.push(failedCase(evalCase, err instanceof Error ? err.message : String(err)));
 		}

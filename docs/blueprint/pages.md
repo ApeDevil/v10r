@@ -547,7 +547,7 @@ Bundled, multi-step tools: upload once, run an AI pipeline, adjust the results, 
 
 | Tests | Stack |
 |-------|-------|
-| Merged vision call | Vercel AI SDK v6 `generateText` + `Output.object` |
+| Merged vision call | Vercel AI SDK `generateText` + `Output.object` |
 | Server-authoritative geometry | Pure `snapToAspect` (model gives a hint, server derives pixels) |
 | Image processing | sharp (crop derivatives + `attention` saliency baseline) |
 | Embeddings | `gemini-embedding-001` (text) / `gemini-embedding-2-preview` (image) |

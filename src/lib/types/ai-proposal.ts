@@ -6,7 +6,15 @@
  * Zero imports beyond the enum mirror, so the desk bundle can read it.
  */
 import type { DeskEffect, ToolRisk } from './ai-tools';
-import type { DeskFileType, ProposalRevertStatus, ProposalStatus, ProposalStepKind } from './db-enums';
+import type {
+	DeskFileType,
+	ExternalOperationDelivery,
+	ExternalOperationProtocol,
+	ExternalOperationStatus,
+	ProposalRevertStatus,
+	ProposalStatus,
+	ProposalStepKind,
+} from './db-enums';
 
 /**
  * How an approved step is undone — derived from the TOOL, never model prose, and the same word
@@ -59,6 +67,58 @@ export interface ProposalCardData {
 	steps: ProposalCardStep[];
 	riskTier: 'low' | 'medium' | 'high';
 	status: ProposalStatus;
+	/** Present when the proposal approves one external operation instead of a desk plan. */
+	external?: ExternalOperationCard;
+}
+
+/**
+ * What the approval card shows about one external operation — the server's `ExternalDisclosure`
+ * (`#lib/server/external-operations/contract.ts`) as it crosses to the client, plus the tool
+ * name the model called. Everything the user authorizes is here; nothing is left implicit.
+ */
+export interface ExternalOperationCard {
+	toolName: string;
+	protocol: ExternalOperationProtocol;
+	peerId: string;
+	peerLabel: string;
+	/** The origin the request goes to. */
+	destination: string;
+	/** The remote operation (MCP tool name, A2A skill id). */
+	operation: string;
+	/** The exact top-level fields sent, a shortened preview of their values, and the exact size. */
+	fields: string[];
+	preview: string;
+	bytes: number;
+	credential: { kind: 'none' } | { kind: 'operator_secret'; ref: string };
+	mutates: boolean;
+	reversibility: 'reversible' | 'compensatable' | 'irreversible' | 'unknown';
+	grant: 'once';
+	/** `quotes_read_content` needs its own authorization on top of the approval. */
+	contentClass: 'arguments_only' | 'quotes_read_content';
+	quotedFrom: string[];
+	/**
+	 * The complete outgoing arguments (the preview above is the compact form). `digest` is the
+	 * approval binding's `argumentsDigest`: the document parses back to the exact value the
+	 * approval authorizes. `envelope` lists what the protocol adds beside the arguments.
+	 */
+	outgoing: {
+		document: string;
+		digest: string;
+		bytes: number;
+		envelope: { field: string; value: string }[];
+	};
+}
+
+/** One external operation's durable outcome — `ai.agent_external_operation` as the client sees it. */
+export interface ExternalOperationReceiptView {
+	status: ExternalOperationStatus;
+	/** The settled outcome; null while pending or in flight. */
+	outcome: 'succeeded' | 'failed' | 'unknown' | 'refused' | null;
+	delivery: ExternalOperationDelivery | null;
+	reason: string | null;
+	/** The peer's answer as one escaped `<untrusted-content>` element — data, never instructions. */
+	result: string | null;
+	settledAt: string | null;
 }
 
 /** One executed step's durable outcome — `ai.agent_proposal_step` as the client sees it. */
@@ -105,6 +165,8 @@ export interface ProposalOutcome {
 	expiresAt: string;
 	/** Null until an undo was claimed (`POST /api/ai/proposals/[id]/revert`). */
 	revert: ProposalRevert | null;
+	/** The external operation's receipt, for a proposal that approves one. */
+	external?: ExternalOperationReceiptView;
 }
 
 /**
@@ -123,4 +185,6 @@ export interface ProposalRun {
 	 * revert response is reconciled. Null until the user asked for one.
 	 */
 	revert: { phase: ProposalRevertStatus | 'unknown'; steps: ProposalRevertReceipt[] } | null;
+	/** The external operation's receipt once the server answered for it. */
+	external?: ExternalOperationReceiptView;
 }

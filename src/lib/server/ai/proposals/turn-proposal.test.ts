@@ -14,6 +14,7 @@ vi.mock('#lib/server/db/ai/proposals.ts', () => ({
 	getProposal: mocks.getProposal,
 	listProposalSteps: mocks.listProposalSteps,
 }));
+vi.mock('#lib/server/db/ai/external-operations.ts', () => ({ getExternalOperation: async () => null }));
 vi.mock('#lib/server/db/index.ts', () => ({ db: {} }));
 
 const { resolveTurnProposal } = await import('./turn-proposal');

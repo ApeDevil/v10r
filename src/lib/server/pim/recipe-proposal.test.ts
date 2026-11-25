@@ -1,5 +1,5 @@
-import type { LanguageModelV3CallOptions, LanguageModelV3GenerateResult } from '@ai-sdk/provider';
-import { MockLanguageModelV3 } from 'ai/test';
+import type { LanguageModelV4CallOptions, LanguageModelV4GenerateResult } from '@ai-sdk/provider';
+import { MockLanguageModelV4 } from 'ai/test';
 import { describe, expect, it } from 'vitest';
 import { shopTarget, supplierRecipeJson, supplierSheet } from './fixtures/supplier-fixture';
 import { productSheetFromTable } from './product-sheet';
@@ -10,7 +10,7 @@ const usage = {
 	outputTokens: { total: 20, text: 20, reasoning: undefined },
 };
 
-function answer(json: unknown): LanguageModelV3GenerateResult {
+function answer(json: unknown): LanguageModelV4GenerateResult {
 	return {
 		content: [{ type: 'text', text: JSON.stringify(json) }],
 		finishReason: { unified: 'stop', raw: 'stop' },
@@ -22,8 +22,8 @@ function answer(json: unknown): LanguageModelV3GenerateResult {
 /** A model that gives `answers` in order, and the prompts it was given. */
 function scriptedModel(answers: unknown[]) {
 	const prompts: string[] = [];
-	const model = new MockLanguageModelV3({
-		doGenerate: async (options: LanguageModelV3CallOptions) => {
+	const model = new MockLanguageModelV4({
+		doGenerate: async (options: LanguageModelV4CallOptions) => {
 			prompts.push(JSON.stringify(options.prompt));
 			return answer(answers[prompts.length - 1]);
 		},
@@ -85,7 +85,7 @@ describe('proposeRecipe — propose, run, check, revise', () => {
 	});
 
 	it('reports a failed model call as an error, never throws it', async () => {
-		const model = new MockLanguageModelV3({
+		const model = new MockLanguageModelV4({
 			doGenerate: async () => {
 				throw new Error('provider down');
 			},

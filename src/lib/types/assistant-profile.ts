@@ -30,6 +30,8 @@ export type CapabilityId =
 	| 'navigation'
 	| 'pattern-library'
 	| 'site-awareness'
+	| 'generative-ui'
+	| 'agent-delegation'
 	// deskbot
 	| 'desk-awareness'
 	| 'desk-files'
@@ -38,7 +40,8 @@ export type CapabilityId =
 	| 'desk-delete'
 	| 'desk-ask'
 	| 'desk-plan'
-	| 'desk-arrange';
+	| 'desk-arrange'
+	| 'external-tools';
 
 /** A tool as the profile manifest projects it: the model-facing definition, verbatim. */
 export interface ToolManifestEntry {

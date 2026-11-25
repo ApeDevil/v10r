@@ -1,0 +1,167 @@
+{
+	"protocol": "1.0",
+	"versions": {
+		"@a2a-js/sdk": "1.3.0",
+		"a2a-sdk (python)": "1.3.1"
+	},
+	"model": {
+		"id": "a2a-interop-sample",
+		"nodes": 4,
+		"connections": 3
+	},
+	"summary": {
+		"passed": 24,
+		"failed": 0,
+		"total": 24
+	},
+	"checks": [
+		{
+			"leg": "js-client→python-server",
+			"name": "card: resolves, names the performance-review skill at protocol 1.0",
+			"ok": true,
+			"detail": "Independent performance review agent 1.0.0"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "delegate: completed task → claim with validated findings",
+			"ok": true,
+			"detail": "findings=4 dropped=0 codes=availability.single-point,cache.absent,sync.chain-depth"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "adversarial: malformed findings are dropped and counted",
+			"ok": true,
+			"detail": "kept=1 dropped=4"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "delegate: an unknown skill is declined (rejected), not claimed",
+			"ok": true,
+			"detail": "TASK_STATE_REJECTED"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "delegate: an invalid model is declined by the peer",
+			"ok": true,
+			"detail": "TASK_STATE_REJECTED"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "guard: the same loopback peer without a listed private destination is refused",
+			"ok": true,
+			"detail": "private_address"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "getTask: an unknown task is an error",
+			"ok": true,
+			"detail": "TaskNotFoundError"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "cancelTask: an unknown task is an error",
+			"ok": true,
+			"detail": "TaskNotFoundError"
+		},
+		{
+			"leg": "js-client→python-server",
+			"name": "stream: SSE events end in completed with an artifact",
+			"ok": true,
+			"detail": "task -> statusUpdate -> artifactUpdate -> statusUpdate"
+		},
+		{
+			"leg": "js-delegation→python-server",
+			"name": "success: approved delegation → succeeded claim, wrapped, unverified, with the remote task id",
+			"ok": true,
+			"detail": "succeeded/sent task-id=yes"
+		},
+		{
+			"leg": "js-delegation→python-server",
+			"name": "rejection: the peer declines → failed, sent, peer_declined",
+			"ok": true,
+			"detail": "failed/sent reason=peer_declined task-id=yes"
+		},
+		{
+			"leg": "js-delegation→python-server",
+			"name": "invalid result: a wrong report envelope → failed, sent, invalid_answer (no claim)",
+			"ok": true,
+			"detail": "failed/sent reason=invalid_answer task-id=yes"
+		},
+		{
+			"leg": "js-delegation→python-server",
+			"name": "timeout: the deadline passes mid-task → CancelTask confirmed by the peer",
+			"ok": true,
+			"detail": "failed/sent reason=timeout task-id=yes cancellation=confirmed"
+		},
+		{
+			"leg": "js-delegation→python-server",
+			"name": "cancellation: the caller aborts mid-task → CancelTask confirmed by the peer",
+			"ok": true,
+			"detail": "failed/sent reason=aborted task-id=yes cancellation=confirmed"
+		},
+		{
+			"leg": "js-delegation→python-server",
+			"name": "budget/depth: a second delegation in a turn, and any from a delegated turn, is refused before proposing",
+			"ok": true,
+			"detail": "second=turn_budget nested=depth"
+		},
+		{
+			"leg": "js-delegation→python-server",
+			"name": "authorization: a skill the card offers but the operator did not allow is refused before proposing",
+			"ok": true,
+			"detail": "not proposed: skill_not_allowed"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "card: resolves with both review skills",
+			"ok": true,
+			"detail": "v10r architecture review agent 1.0.0; skills=['architecture-review', 'architecture-security-review']"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "card: JSONRPC interface at protocol 1.0",
+			"ok": true,
+			"detail": "JSONRPC@1.0"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "send: security review completes with findings",
+			"ok": true,
+			"detail": "state=TASK_STATE_COMPLETED; findings=1"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "send: every finding is a security finding",
+			"ok": true,
+			"detail": "secret.client-exposed"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "send: an invalid model is rejected",
+			"ok": true,
+			"detail": "state=TASK_STATE_REJECTED"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "get_task: an unknown task is an error",
+			"ok": true,
+			"detail": "TaskNotFoundError"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "cancel_task: an unknown task is an error",
+			"ok": true,
+			"detail": "TaskNotFoundError"
+		},
+		{
+			"leg": "python-client→js-server",
+			"name": "stream: SSE events end in completed with an artifact",
+			"ok": true,
+			"detail": "task -> artifact_update -> status_update"
+		}
+	],
+	"tck": {
+		"run": false,
+		"reason": "a2a-tck (github.com/a2aproject/a2a-tck) has no PyPI package and no tagged release, so it can only run from a checkout. Attempted 2026-11-24 from a cloud session: the checkout was refused (GitHub access limited to the session repository) and `uv run --with a2a-tck` finds no such package. Run it locally with `./run_tck.py --sut-host http://127.0.0.1:<port> --transport jsonrpc` against the Bun.serve SUT this script starts."
+	}
+}

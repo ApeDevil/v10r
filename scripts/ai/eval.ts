@@ -4,15 +4,17 @@
  * (`src/lib/server/ai/eval/`, docs/blueprint/ai/evals.md).
  *
  *   podman exec v10r bun run ai:eval -- --cookie 'better-auth.session_token=…'
- *       [--base http://localhost:5173] [--only <case-id>,…] [--keep] [--check]
+ *       [--base http://localhost:5173] [--only <case-id>,…] [--keep] [--check] [--record <file.json>]
  *
  * Needs what a real turn needs — a dev server with saved provider connections and the
  * database — so it runs locally, never in `validate`. `--check` exits 1 when the pass rate is
  * below `baseline.json`'s floor. Every case opens a new conversation under your account and
  * deletes it once graded (an account holds a capped number); `--keep` leaves them for the
- * turn inspector.
+ * turn inspector. `--record` writes the scorecard with the provider and model each case's turns
+ * used, read from their traces (ids only, never a credential) — the release record of
+ * `scripts/agentic/verify.sh release`.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { safeParse } from 'valibot';
 import { GoldenSetSchema } from '../../src/lib/server/ai/eval/eval-case';
 import { createHttpEvalClient, runEval } from '../../src/lib/server/ai/eval/run-eval';
@@ -55,4 +57,14 @@ for (const result of card.results) {
 }
 const verdict = checkFloor(card, baseline);
 console.log(`[ai:eval] ${card.passed}/${card.total} passed — ${verdict.message}`);
+const models = [...new Set(card.results.flatMap((r) => r.models ?? []))].sort();
+console.log(`[ai:eval] models: ${models.length > 0 ? models.join(', ') : 'none recorded'}`);
+const record = arg('record');
+if (record) {
+	const cases = card.results.map(({ id, pass, models: used }) => ({ id, pass, models: used ?? [] }));
+	writeFileSync(
+		record,
+		`${JSON.stringify({ base, passed: card.passed, total: card.total, floorOk: verdict.ok, models, cases }, null, 2)}\n`,
+	);
+}
 if (process.argv.includes('--check') && !verdict.ok) process.exit(1);

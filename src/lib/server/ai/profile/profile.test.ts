@@ -50,6 +50,7 @@ const { profileCapabilities, profileManifest } = await import('./manifest');
 const { countCorpusMaps } = await import('#lib/server/db/retrieval/queries.ts');
 const { createTurnRecorder } = await import('../trace/recorder');
 const { SHARED_RULES, DATA_BOUNDARY_RULE } = await import('./shared-rules');
+const { unconfiguredDelegation } = await import('../tools/delegate-review');
 
 type Turn = Parameters<typeof composeTurn>[1];
 
@@ -124,10 +125,15 @@ describe('capabilities ≡ TOOL_MANIFEST', () => {
 			const composed = await composeTurn(
 				profile,
 				// Fully granted includes a browser that can run every client action.
+				// …and a route that wired A2A peers behind the approval door.
 				turn({
 					scopes: [...DESK_TOOL_SCOPES],
 					clientActions: DESK_ARRANGE_ACTION_NAMES,
 					userMsgText: 'hello there, docs',
+					delegation: {
+						...unconfiguredDelegation(),
+						peers: [{ id: 'reviewer', label: 'Reviewer', skills: ['architecture-review'] }],
+					},
 				}),
 			);
 			const manifest = TOOL_MANIFEST.filter((d) => d.surface === profile.surface);
@@ -278,6 +284,8 @@ describe('every CapabilityId is declared by exactly one profile capability', () 
 			'navigation',
 			'pattern-library',
 			'site-awareness',
+			'generative-ui',
+			'agent-delegation',
 			'desk-awareness',
 			'desk-files',
 			'desk-edit',
@@ -286,6 +294,7 @@ describe('every CapabilityId is declared by exactly one profile capability', () 
 			'desk-ask',
 			'desk-plan',
 			'desk-arrange',
+			'external-tools',
 		];
 		for (const id of ids) expect(declared.has(id), id).toBe(true);
 		expect(declared.size).toBe(ids.length);

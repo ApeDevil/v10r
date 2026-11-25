@@ -1,0 +1,157 @@
+{
+	"traceId": "lab-scenario-1",
+	"passed": 8,
+	"steps": [
+		{
+			"step": 1,
+			"name": "architecture request",
+			"protocol": "none",
+			"label": "authored",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1",
+				"modelDigest": "55cfcee8f1cb7685"
+			},
+			"facts": {
+				"nodes": 4,
+				"connections": 3
+			}
+		},
+		{
+			"step": 2,
+			"name": "generative requirements",
+			"protocol": "a2ui",
+			"label": "authored",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1",
+				"surfaceId": "setup",
+				"renderId": "lab-scenario-1:render-1"
+			},
+			"facts": {
+				"messages": 1,
+				"components": 8,
+				"compiler": "real"
+			}
+		},
+		{
+			"step": 3,
+			"name": "retrieval",
+			"protocol": "mcp",
+			"label": "real",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1",
+				"mcpTool": "search_patterns"
+			},
+			"facts": {
+				"hits": 5
+			}
+		},
+		{
+			"step": 4,
+			"name": "MCP capability",
+			"protocol": "mcp",
+			"label": "real",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1",
+				"mcpTool": "trace_capability"
+			},
+			"facts": {
+				"answered": true
+			}
+		},
+		{
+			"step": 5,
+			"name": "A2A delegation",
+			"protocol": "external-operations",
+			"label": "real",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1",
+				"externalProtocol": "a2a",
+				"peerId": "reviewer",
+				"contractBound": true,
+				"argumentsDigest": "a7e1af20607badc0",
+				"remoteTaskId": true,
+				"remoteContextId": true
+			},
+			"facts": {
+				"contentClass": "arguments_only",
+				"fields": [
+					"model",
+					"metadata.skill",
+					"metadata.v10r.delegationDepth"
+				],
+				"credential": "none",
+				"mutates": false,
+				"grant": "once",
+				"sentBeforeApproval": 0,
+				"approval": "harness (verify + execute called directly; see a2a-delegation.pglite.test.ts)",
+				"sends": 1
+			}
+		},
+		{
+			"step": 6,
+			"name": "results",
+			"protocol": "a2a",
+			"label": "real",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1",
+				"remoteTaskId": true
+			},
+			"facts": {
+				"outcome": "succeeded",
+				"delivery": "sent",
+				"wrappedUntrusted": true,
+				"verified": false
+			}
+		},
+		{
+			"step": 7,
+			"name": "MCP App visualization",
+			"protocol": "mcp-app",
+			"label": "real",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1",
+				"mcpTool": "explore_patterns",
+				"viewUri": "ui://v10r/pattern-explorer.html"
+			},
+			"facts": {
+				"structured": true,
+				"viewServed": true,
+				"rendered": "not here (mcp:apps:check covers the document)"
+			}
+		},
+		{
+			"step": 8,
+			"name": "correlated evidence",
+			"protocol": "none",
+			"label": "derived",
+			"ok": true,
+			"correlation": {
+				"traceId": "lab-scenario-1"
+			},
+			"facts": {
+				"steps": 7,
+				"keys": [
+					"argumentsDigest",
+					"contractBound",
+					"externalProtocol",
+					"mcpTool",
+					"modelDigest",
+					"peerId",
+					"remoteContextId",
+					"remoteTaskId",
+					"renderId",
+					"surfaceId",
+					"traceId",
+					"viewUri"
+				]
+			}
+		}
+	]
+}

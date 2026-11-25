@@ -11,6 +11,7 @@
 import { catalog } from '../capabilities/catalog';
 import { compaction } from '../capabilities/compaction';
 import { completion } from '../capabilities/completion';
+import { generativeUi } from '../capabilities/generative-ui';
 import { navigation } from '../capabilities/navigation';
 import { patternLibrary } from '../capabilities/pattern-library';
 import { projectDocs } from '../capabilities/project-docs';
@@ -32,7 +33,17 @@ export const CHATBOT_PROFILE: AssistantProfile = {
 			...SHARED_RULES,
 		],
 	},
-	capabilities: [completion, projectMap, projectDocs, catalog, navigation, patternLibrary, siteAwareness, compaction],
+	capabilities: [
+		completion,
+		projectMap,
+		projectDocs,
+		catalog,
+		navigation,
+		patternLibrary,
+		siteAwareness,
+		generativeUi,
+		compaction,
+	],
 	wantsTools: () => true,
 	stepBudget: () => CHATBOT_MAX_STEPS,
 	awareness: (turn) => ({

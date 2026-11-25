@@ -20,7 +20,7 @@ import type { TurnTrace, TurnTraceSnapshot } from '#lib/types/turn-trace.ts';
 const streamRun = vi.hoisted(() => ({
 	writes: [] as Array<Record<string, unknown>>,
 	done: Promise.resolve() as Promise<void>,
-	/** The promise the mocked `streamText` got back from `onStepFinish` (what the SDK would await). */
+	/** The promise the mocked `streamText` got back from `onStepEnd` (what the SDK would await). */
 	stepFinish: undefined as Promise<unknown> | undefined,
 	/** Observes every frame as it is written — for ordering assertions against other side effects. */
 	onWrite: undefined as ((frame: Record<string, unknown>) => void) | undefined,
@@ -38,7 +38,7 @@ const streamRun = vi.hoisted(() => ({
 	held: undefined as (() => void) | undefined,
 	/** The `abortSignal` the last mocked model call was given. */
 	signal: undefined as AbortSignal | undefined,
-	/** The tool results the mocked model's one step reports to `onStepFinish`. */
+	/** The tool results the mocked model's one step reports to `onStepEnd`. */
 	toolResults: [] as Array<{ toolCallId: string; toolName: string; input?: unknown; output?: unknown }>,
 	/** Whether the mocked model's step runs the one `search_catalog` tool (the chatbot's shape). */
 	toolFinish: true,
@@ -152,17 +152,16 @@ vi.mock('ai', async (importOriginal) => ({
 	// branch registers (step start, first chunk, tool finish, step finish) without a provider.
 	streamText: vi.fn((opts: Record<string, (event: unknown) => unknown>) => {
 		streamRun.signal = opts.abortSignal as unknown as AbortSignal | undefined;
-		opts.experimental_onStepStart?.({ stepNumber: 0 });
+		opts.onStepStart?.({ stepNumber: 0 });
 		opts.onChunk?.({ chunk: { type: 'text-delta', id: 't1', text: streamRun.answer } });
 		if (streamRun.toolFinish) {
-			opts.experimental_onToolCallFinish?.({
+			opts.onToolExecutionEnd?.({
 				toolCall: { toolCallId: 'call_1', toolName: 'search_catalog', input: { query: 'auth' } },
-				durationMs: 12.4,
-				success: true,
-				output: { results: [] },
+				toolExecutionMs: 12.4,
+				toolOutput: { type: 'tool-result', output: { results: [] } },
 			});
 		}
-		streamRun.stepFinish = opts.onStepFinish?.({
+		streamRun.stepFinish = opts.onStepEnd?.({
 			toolCalls: [],
 			toolResults: streamRun.toolResults,
 			usage: { inputTokens: 10, outputTokens: 5 },
@@ -178,28 +177,26 @@ vi.mock('ai', async (importOriginal) => ({
 		rejectedText?.catch(() => {});
 		return {
 			consumeStream: vi.fn(),
-			toUIMessageStream: vi.fn(
-				({ onError }: { onError?: (e: unknown) => string } = {}) =>
-					new ReadableStream({
-						start(c) {
-							if (failure) c.enqueue({ type: 'error', errorText: onError?.(failure) });
-							else c.enqueue({ type: 'text-delta', id: 't1', delta: streamRun.answer });
-							if (streamRun.hold) {
-								streamRun.held?.();
-								streamRun.signal?.addEventListener('abort', () => {
-									// The SDK's shape: `onAbort` with the finished steps, never `onFinish`.
-									void opts.onAbort?.({ steps: [] });
-									c.enqueue({ type: 'abort' });
-									c.close();
-								});
-								return;
-							}
+			// The full stream (`TextStreamPart`s); the real `toUIMessageStream` turns it into frames.
+			stream: new ReadableStream({
+				start(c) {
+					if (failure) c.enqueue({ type: 'error', error: failure });
+					else c.enqueue({ type: 'text-delta', id: 't1', text: streamRun.answer });
+					if (streamRun.hold) {
+						streamRun.held?.();
+						streamRun.signal?.addEventListener('abort', () => {
+							// The SDK's shape: `onAbort` with the finished steps, never `onEnd`.
+							void opts.onAbort?.({ steps: [] });
+							c.enqueue({ type: 'abort' });
 							c.close();
-						},
-					}),
-			),
+						});
+						return;
+					}
+					c.close();
+				},
+			}),
 			text: rejectedText ?? Promise.resolve(streamRun.answer),
-			totalUsage: Promise.resolve({
+			usage: Promise.resolve({
 				inputTokens: 10,
 				outputTokens: 5,
 				outputTokenDetails: { textTokens: 2, reasoningTokens: 3 },
@@ -249,7 +246,7 @@ vi.mock('ai', async (importOriginal) => ({
 		({ stream, headers }: { stream?: ReadableStream; headers?: Record<string, string> } = {}) =>
 			new Response(stream ?? null, { status: 200, headers }),
 	),
-	stepCountIs: vi.fn(() => () => false),
+	isStepCount: vi.fn(() => () => false),
 	wrapLanguageModel: vi.fn(({ model }: { model: unknown }) => model),
 }));
 
@@ -507,6 +504,30 @@ describe('chatbot turn persistence and framing', () => {
 		expect(streamRun.writes[0]).toEqual({ type: 'start', messageId: rows[1].id });
 	});
 
+	it('persists a surface action as its human-facing row under a claim; a taken claim refuses the turn before any frame', async () => {
+		const userRow = {
+			id: 'sa_submission',
+			content: 'Sent from the view: submit',
+			parts: [{ type: 'data-surface-action', data: { eventId: 'e-1' } }],
+		};
+		saveMessages.mockResolvedValueOnce('saved' as never);
+		await orchestrateChat({ ...chatbotInput, userRow });
+		await streamRun.done;
+		const [, , rows, options] = saveMessages.mock.calls[0] as [string, string, Array<Record<string, unknown>>, unknown];
+		// The model read the turn's text (the wrapped prompt); the row is what the user sees.
+		expect(rows[0]).toEqual({ ...userRow, role: 'user', route: null });
+		expect(options).toEqual({ claim: 'sa_submission' });
+
+		saveMessages.mockReset().mockResolvedValue('claim_taken' as never);
+		streamRun.writes = [];
+		const refused = await orchestrateChat({ ...chatbotInput, userRow });
+		expect(refused.status).toBe(409);
+		expect(await refused.json()).toEqual({
+			error: { code: 'surface_action_rejected', message: 'duplicate_submission' },
+		});
+		expect(streamRun.writes).toHaveLength(0);
+	});
+
 	it('writes the trace once, after the answer row, with the totals refreshed from it, all before finish', async () => {
 		let traceLanded = false;
 		saveTurnTrace.mockImplementation(
@@ -534,7 +555,7 @@ describe('chatbot turn persistence and framing', () => {
 		};
 
 		await orchestrateChat(chatbotInput);
-		// The step boundary never waits for a write: onStepFinish resolved with nothing in flight.
+		// The step boundary never waits for a write: onStepEnd resolved with nothing in flight.
 		await streamRun.stepFinish;
 		expect(traceLanded).toBe(false);
 		await streamRun.done;
@@ -586,11 +607,11 @@ describe('chatbot turn persistence and framing', () => {
 		await orchestrateChat(chatbotInput);
 		await streamRun.done;
 
-		const opts = streamText.mock.calls[0][0] as { tools: Record<string, unknown>; system: string };
+		const opts = streamText.mock.calls[0][0] as { tools: Record<string, unknown>; instructions: string };
 		expect(Object.keys(opts.tools).sort()).toEqual(
-			['resolve_ref', 'search_catalog', 'search_pattern_library', 'search_project_docs'].sort(),
+			['render_surface', 'resolve_ref', 'search_catalog', 'search_pattern_library', 'search_project_docs'].sort(),
 		);
-		expect(opts.system).toContain('You are Vely');
+		expect(opts.instructions).toContain('You are Vely');
 		expect(
 			persistedTrace()
 				.toolset.map((t) => t.name)
@@ -602,6 +623,7 @@ describe('chatbot turn persistence and framing', () => {
 			'project-docs-guidance',
 			'catalog-guidance',
 			'pattern-library-guidance',
+			'generative-ui-guidance',
 			'catalog-map',
 		]);
 	});

@@ -1,0 +1,69 @@
+# Grounded retrieval with a corpus map
+
+> Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
+
+**Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-09-12 @ 6307c4b6) · **Risk:** medium — external embedding/LLM providers with quota limits
+
+One shared retrieve() kernel (embed → tiers → RRF fusion) under a single user_id tenant filter, composed per turn by the chatbot profile: a deterministic corpus map anchors every turn, a relevance-gated docs lane and the catalog lane ground the prompt, and a post-stream verifier ties each path the answer names to what the turn surfaced.
+
+**When to use:** Use when a project needs grounded answers over a corpus: start with read-only search plus citation/provenance before adding any mutating tools.
+
+**Requires:** postgres, pgvector, ai-provider
+
+## Avoid when
+
+- The corpus fits in the prompt whole — an ingest-built map plus full text needs no embeddings, quota or chunk-level tenant filter
+- Questions are where-is lookups by title or path — the catalog's keyword and Postgres FTS lanes answer them without an embedding
+- Answers must reflect live per-request rows — chunks are ingest-time copies, refreshed off the hot path by a polling job
+
+## Alternatives
+
+- **Keyword search over Postgres FTS (the search_catalog lanes), no vectors** — prefer when queries name titles or paths and no embedding provider or quota is available
+- **A RAG framework (LangChain, LlamaIndex) instead of a hand-rolled kernel** — prefer when the project is Python-first, where the framework ecosystem is mature, and inspectable seams matter less than ready-made loaders
+
+## Docs
+
+- `docs/blueprint/ai/layered-rag.md` — Kernel, profiles, corpus map, catalog grounding, docs corpus ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/layered-rag.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/layered-rag.md))
+- `docs/blueprint/ai/knowledge-base.md` — Corpus and ingest door ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/knowledge-base.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/knowledge-base.md))
+- `docs/blueprint/ai/graph-rag.md` — Graph tier ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/graph-rag.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/graph-rag.md))
+
+## Code
+
+- `src/lib/server/retrieval/index.ts` — retrieve() — the single shared kernel ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/index.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/index.ts))
+- `src/lib/server/retrieval/plan.ts` — Retrieval planning ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/plan.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/plan.ts))
+- `src/lib/server/retrieval/tiers/` — Tier implementations ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/retrieval/tiers) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/retrieval/tiers))
+- `src/lib/server/ai/capabilities/project-map.ts` — The corpus map as the prompt anchor ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/capabilities/project-map.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/capabilities/project-map.ts))
+- `src/lib/server/ai/capabilities/project-docs.ts` — Relevance-gated docs lane + search_project_docs ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/capabilities/project-docs.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/capabilities/project-docs.ts))
+- `src/lib/server/db/schema/retrieval/corpus-map.ts` — retrieval.corpus_map — built at ingest, never by a model ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/db/schema/retrieval/corpus-map.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/db/schema/retrieval/corpus-map.ts))
+
+## Tests
+
+- `src/lib/server/retrieval/index.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/index.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/index.test.ts))
+- `src/lib/server/retrieval/plan.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/plan.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/plan.test.ts))
+- `src/lib/server/retrieval/rank.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/retrieval/rank.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/retrieval/rank.test.ts))
+- `src/lib/server/ai/capabilities/project-map.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/capabilities/project-map.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/capabilities/project-map.test.ts))
+- `src/lib/server/ai/profile/chatbot.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/profile/chatbot.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/profile/chatbot.test.ts))
+
+## Proof
+
+- [`/showcases/ai/chatbot`](https://www.v10r.dev/showcases/ai/chatbot)
+
+## Invariants
+
+- The kernel is never forked — a single user_id tenant filter at the chunk level is the corpus boundary; a duplicated filter would be a cross-tenant leak.
+- Retrieval tools close over the turn's userId when their capability mounts them — the model cannot forge identity.
+- The corpus map is built from the documents at ingest, never compiled by a model: the prompt anchor cannot drift from the corpus it describes.
+- Inclusion never claims influence — a chunk in the prompt is `included`; only a path the answer names against a surfaced row is `cited`.
+
+## Emulation notes
+
+- 'nRAG' in docs is a concept name only — the code identifier is retrieval/retrieve(); do not search for an retrieval module.
+- Build the chunk layer and the ingest-built map first; an LLM-compiled summary layer was tried here and retired — it had no writer and every fresh user started empty.
+
+## Depends on
+
+- [Multi-client core (hexagonal domain modules)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md)
+
+---
+
+_Machine-readable record: `layered-rag` in `pattern-library/registry.json`._

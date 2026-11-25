@@ -68,6 +68,7 @@ export const adminNavGroups: AdminNavGroup[] = [
 			{ label: m.admin_nav_ai_cost, href: '/admin/ai/cost', icon: 'i-lucide-receipt' },
 			{ label: m.admin_nav_ai_retrieval, href: '/admin/ai/retrieval', icon: 'i-lucide-book-marked' },
 			{ label: m.admin_nav_ai_tools, href: '/admin/ai/tools', icon: 'i-lucide-wrench' },
+			{ label: m.admin_nav_ai_peers, href: '/admin/ai/peers', icon: 'i-lucide-plug' },
 		],
 	},
 	{

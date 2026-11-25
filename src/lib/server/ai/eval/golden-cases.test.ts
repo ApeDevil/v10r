@@ -17,11 +17,20 @@ describe('the golden set', () => {
 		const known = new Set(TOOL_MANIFEST.map((d) => d.name));
 		for (const c of set.cases) {
 			const onSurface = new Set(TOOL_MANIFEST.filter((d) => d.surface === c.surface).map((d) => d.name));
-			for (const e of c.expect) {
+			for (const e of [...c.expect, ...(c.followUps ?? []).flatMap((f) => f.expect)]) {
 				if (e.kind === 'calls-tool') expect(onSurface.has(e.tool), `${c.id}: ${e.tool}`).toBe(true);
 				if (e.kind === 'calls-any-tool') for (const t of e.tools) expect(onSurface.has(t), `${c.id}: ${t}`).toBe(true);
 				if (e.kind === 'never-calls') for (const t of e.tools) expect(known.has(t), `${c.id}: ${t}`).toBe(true);
 			}
+		}
+	});
+
+	it('scripts follow-ups only on the chatbot, and only expects updates and repeats where a turn can have them', () => {
+		for (const c of set.cases) {
+			if (c.followUps) expect(c.surface, c.id).toBe('chatbot');
+			for (const e of c.expect) expect(['updates-surface', 'refuses-repeated-press'], c.id).not.toContain(e.kind);
+			for (const f of c.followUps ?? [])
+				if (f.expect.some((e) => e.kind === 'refuses-repeated-press')) expect(f.press?.resend, c.id).toBe(true);
 		}
 	});
 

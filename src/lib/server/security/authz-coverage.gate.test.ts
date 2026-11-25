@@ -89,6 +89,8 @@ const GUARD_PATTERNS: Array<{ scheme: string; re: RegExp }> = [
  * not a reason, and an entry going stale fails the test.
  */
 const PUBLIC_ENDPOINTS: Record<string, string> = {
+	'a2a/+server.ts':
+		'A2A JSON-RPC for the deterministic architecture review agent. IP-rate-limited before parsing, body-capped; runs pure checks over the model in the request, reads and writes no stored data, keeps no task past the response (a fresh task store per request). GET is a bodiless 405.',
 	'mcp/public/+server.ts': 'Read-only pattern registry. Origin-validated and rate-limited; exposes no user data.',
 	'captcha/challenge/+server.ts': 'ALTCHA issuance must precede any session by definition.',
 	'search/+server.ts': 'Searches published content only. Rate-limited and CDN-cacheable.',
@@ -135,6 +137,12 @@ const PUBLIC_SURFACES: Record<string, string> = {
 		'Log sink for the on-device keyboard diagnostics page. `(dev)` routes 404 in production (devRouteGuard), and the handler only echoes the request body to the dev server stdout — nothing is stored, read back, or acted on.',
 
 	// ── Non-/api endpoints ────────────────────────────────────────────────────
+	'.well-known/agent-card.json/+server.ts':
+		'A2A Agent Card: a static description of the public review agent at /api/a2a, built from constants and the request origin. No data access.',
+	'.well-known/agent-skills/index.json/+server.ts':
+		'Agent Skills discovery index: the generated agent skills from the static pattern registry, the same content as the public skills/ tree. No data access.',
+	'.well-known/agent-skills/[archive]/+server.ts':
+		'One agent skill archive listed in the discovery index, built from the static pattern registry; unknown names are 404. No data access.',
 	'[[locale=locale]]/(public)/blog/feed.xml/+server.ts':
 		'Public RSS feed. Reads listPublishedPostsForFeed, so drafts are unreachable by construction.',
 	'[[locale=locale]]/(public)/datenschutz/+server.ts':
@@ -393,6 +401,22 @@ describe('authz coverage — /api endpoints', () => {
 	it('every allowlist entry still exists and is still unguarded', () => {
 		const stale = auditAllowlist(API_DIR, files, PUBLIC_ENDPOINTS);
 		expect(stale, `Stale allowlist entries:\n  ${stale.join('\n  ')}`).toEqual([]);
+	});
+});
+
+describe('authz coverage — agent protocol doors', () => {
+	/**
+	 * An agent protocol endpoint is the easiest surface to ship public by mistake: its peers
+	 * (A2A, the public MCP door) are public on purpose and sit in the allowlist above. The
+	 * AG-UI door runs the deskbot's mutating turn, so it must carry the AI routes' own guard —
+	 * session, rate limit, daily budget — and never an allowlist entry.
+	 */
+	it('the AG-UI endpoint is guarded by the AI routes’ guard, not allowlisted', () => {
+		const relative = 'ai/ag-ui/deskbot/+server.ts';
+		expect(apiEndpoints()).toContain(relative);
+		expect(PUBLIC_ENDPOINTS[relative]).toBeUndefined();
+		const units = methodUnits(readFileSync(join(API_DIR, relative), 'utf8'));
+		expect(units.map((unit) => [unit.method, classify(unit.source)])).toEqual([['POST', 'ai']]);
 	});
 });
 

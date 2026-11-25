@@ -6,6 +6,14 @@
  * generates the committed Markdown pages. The hosted MCP (`server/mcp/patterns/`) and
  * the AI `search_pattern_library` tool read through this barrel.
  */
+export {
+	AGENT_SKILLS_DISCOVERY_PATH,
+	AGENT_SKILLS_DISCOVERY_SCHEMA,
+	type AgentSkillDiscovery,
+	type AgentSkillDiscoveryEntry,
+	buildAgentSkillDiscovery,
+	servedAgentSkillDiscovery,
+} from './agent-skill-discovery';
 export { buildCatalog, type Catalog, type CatalogCategory, type CatalogGroup, type CatalogPattern } from './catalog';
 export {
 	CATEGORIES,

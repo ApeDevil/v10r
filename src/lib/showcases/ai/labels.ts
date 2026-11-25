@@ -153,6 +153,7 @@ export const BLOCK_TAGS: Record<PromptBlockId, string> = {
 	'catalog-guidance': 'catalog guidance',
 	'navigation-guidance': 'navigation guidance',
 	'pattern-library-guidance': 'pattern-library guidance',
+	'generative-ui-guidance': 'generative-ui guidance',
 	'desk-awareness-guidance': 'desk-awareness guidance',
 	'desk-files-guidance': 'desk-files guidance',
 	'desk-edit-guidance': 'desk-edit guidance',

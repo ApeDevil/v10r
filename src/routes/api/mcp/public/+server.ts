@@ -1,15 +1,17 @@
 /**
  * Hosted PUBLIC read-only Pattern MCP — `/api/mcp/public` (MCP Streamable HTTP).
  *
- * No authentication. Structurally read-only: it is handed `publicPatternRegistry`, which
- * contains only the six Pattern tools — there is no mutation tool to dispatch, and a private
+ * No authentication. Structurally read-only: it is handed the eight Pattern tools plus the
+ * read-only `explore_patterns` MCP App (`patternRegistryWithExplorer`, its View a `ui://`
+ * resource) — there is no mutation tool to dispatch, and a private
  * tool name submitted here is rejected by the transport's allowlist. IP-rate-limited.
  * GET → 405 (SSE is not supported); all interaction is POST.
  */
 import { normalizeIpKey } from '#lib/server/abuse/index.ts';
 import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { EXPLORER_SURFACE_TOOL_NAMES, patternRegistryWithExplorer } from '#lib/server/mcp/apps/pattern-explorer.ts';
 import { mcpMethodNotAllowed, respondToMcpPost } from '#lib/server/mcp/http.adapter.ts';
-import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '#lib/server/mcp/patterns/tools.ts';
+import { PUBLIC_MCP_INSTRUCTIONS } from '#lib/server/mcp/patterns/tools.ts';
 import { publicBuildInfo } from '#lib/server/mcp/server-info.ts';
 import { createMcpObserver } from '#lib/server/mcp/telemetry/observer.ts';
 import type { McpServerIdentity } from '#mcp/tool-server.ts';
@@ -69,9 +71,11 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 		headers: request.headers,
 		gateMs,
 		registryVersion: publicBuildInfo().patternRegistry,
-		knownTool: (name) => publicPatternRegistry.tools.some((tool) => tool.name === name),
+		knownTool: (name) => EXPLORER_SURFACE_TOOL_NAMES.includes(name),
 		body: undefined,
 	});
 
-	return respondToMcpPost(request, publicPatternRegistry, identity(), observer);
+	// Per request: the explorer's docs links point at the deployment this request reached.
+	const registry = patternRegistryWithExplorer(new URL(request.url).origin);
+	return respondToMcpPost(request, registry, identity(), observer);
 };

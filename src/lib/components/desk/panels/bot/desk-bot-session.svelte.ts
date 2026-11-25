@@ -31,6 +31,7 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { apiFetch, CSRF_HEADER } from '#lib/api.ts';
 import type { ClientActionResult } from '#lib/client-actions/contract.ts';
 import { type ClientActionRunner, createClientActionRunner } from '#lib/client-actions/runner.ts';
+import type { ProposalDecision } from '#lib/components/composites/chatbot/harness-types.ts';
 import {
 	isClientExecutedTool,
 	isToolPart,
@@ -152,7 +153,7 @@ export class DeskBotSession {
 					if (id && sentIn === this.#epoch) this.conversationId = id;
 					return response;
 				},
-			}) as Chat['transport'],
+			}),
 			onError: (error) => {
 				// Stream errors bypass the response headers: the frame text is `[kind] message`.
 				if (!this.lastErrorKind) this.#fail(parseAiErrorKind(error.message ?? '') ?? 'unknown');
@@ -238,14 +239,14 @@ export class DeskBotSession {
 		this.#pendingEffects = [];
 	}
 
-	async approve(proposalId: string): Promise<void> {
+	async approve(proposalId: string, decision: ProposalDecision = {}): Promise<void> {
 		if (this.isBusy) return;
 		this.runs.set(proposalId, { phase: 'approving', steps: [], failureMessage: null, revert: null });
 		try {
 			const res = await apiFetch(`/api/ai/proposals/${proposalId}/approve`, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: '{}',
+				body: JSON.stringify(decision),
 			});
 			if (res.ok) {
 				const { data } = (await res.json()) as { data: ProposalOutcome };
@@ -389,12 +390,7 @@ export class DeskBotSession {
 		});
 		// Stopped, or a newer turn began: the result is recorded, the request is not continued.
 		if (turn === this.#turn) this.#unsent.add(toolCallId);
-		const addToolOutput = this.chat.addToolOutput as (output: {
-			tool: string;
-			toolCallId: string;
-			output: unknown;
-		}) => Promise<void>;
-		await addToolOutput({ tool: toolName, toolCallId, output: result });
+		await this.chat.addToolOutput({ tool: toolName, toolCallId, output: result });
 	}
 
 	/**
@@ -438,6 +434,7 @@ export class DeskBotSession {
 			steps: outcome.steps,
 			failureMessage: outcome.failureMessage,
 			revert,
+			...(outcome.external ? { external: outcome.external } : {}),
 		});
 		// The undo settles once, like the run: its effects and message on the first terminal answer.
 		if (revert && revert.phase !== 'reverting' && previous?.phase === outcome.status) {

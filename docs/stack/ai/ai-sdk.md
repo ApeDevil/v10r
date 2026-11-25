@@ -11,7 +11,7 @@ Vercel AI SDK — the multi-provider LLM abstraction (streaming, tool calling, s
 
 ## Known limitations
 
-- Pin exact versions — breaking changes land between major versions (the project pins AI SDK v6).
+- Pin exact versions — breaking changes land between major versions (the project pins AI SDK 7: `ai` 7.0.179, providers 4.x, `@ai-sdk/svelte` 5.0.179). The 6 → 7 migration and its behavioural changes: [../../blueprint/ai/ai-sdk-v7.md](../../blueprint/ai/ai-sdk-v7.md).
 - AI SDK RSC is deprecated; use AI SDK UI.
 
 ## Related

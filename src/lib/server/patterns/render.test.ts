@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { PatternRecord, Registry } from './registry';
 import {
 	anchorFor,
+	clipAtWord,
 	docsUrlFor,
 	frontmatterDescription,
+	patternPageSourceUrl,
 	README_MARKER_END,
 	README_MARKER_START,
 	type RenderOpts,
 	renderPatternPage,
+	renderPatternReference,
 	renderPatternsHub,
 	renderReadmeIndex,
 } from './render';
@@ -264,5 +267,47 @@ describe('renderPatternsHub', () => {
 	it('points at the in-app section, not a markdown catalog file', () => {
 		expect(hub).toContain('`/docs/pattern-library`');
 		expect(hub).not.toContain('pattern-library.md');
+	});
+});
+
+describe('clipAtWord', () => {
+	it('keeps short text, collapses whitespace, and cuts long text at a word with an ellipsis', () => {
+		expect(clipAtWord('short  text', 20)).toBe('short text');
+		const clipped = clipAtWord('one two three four five six seven eight nine ten', 20);
+		expect(clipped.length).toBeLessThanOrEqual(20);
+		expect(clipped).toBe('one two three four…');
+	});
+
+	it('is frontmatterDescription at 160', () => {
+		const long = 'word '.repeat(60);
+		expect(frontmatterDescription(long)).toBe(clipAtWord(long, 160));
+	});
+});
+
+describe('renderPatternReference', () => {
+	const reference = renderPatternReference(DEEP, REGISTRY, '> note', (id) => `${id}.md`);
+	const page = renderPatternPage(DEEP, REGISTRY, ALL_PUBLISHED);
+
+	it('carries the same sections as the docs page, without docs frontmatter', () => {
+		expect(reference.startsWith('# Deep pattern\n\n> note\n')).toBe(true);
+		const headings = (text: string) => text.split('\n').filter((line) => line.startsWith('## '));
+		expect(headings(reference)).toEqual(headings(page));
+		expect(reference).not.toContain('title: ');
+	});
+
+	it('links docs and proof portably, and dependencies through the given href', () => {
+		expect(reference).not.toMatch(/\]\(\/docs\//);
+		expect(reference).toContain('[`/showcases/alpha`](https://www.v10r.dev/showcases/alpha)');
+		const light = renderPatternReference(LIGHT, REGISTRY, '> note', (id) => `${id}.md`);
+		expect(light).toContain('- [Deep pattern](alpha-deep.md)');
+		expect(light).toContain('`/admin/alpha` (app route, no showcase) — POST');
+	});
+});
+
+describe('patternPageSourceUrl', () => {
+	it('points at the generated page on GitHub', () => {
+		expect(patternPageSourceUrl('alpha-deep')).toBe(
+			'https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/alpha-deep.md',
+		);
 	});
 });

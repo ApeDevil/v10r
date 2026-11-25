@@ -60,7 +60,7 @@ Rules: describe only what you can actually see. Never invent names, brands, plac
 
 const USER_PROMPT = 'Analyse this image: fill the metadata and suggest the main crop region.';
 
-// AI SDK v6 Output.object wants an SDK Schema (jsonSchema), not a Valibot schema directly.
+// The AI SDK's Output.object wants an SDK Schema (jsonSchema), not a Valibot schema directly.
 // Mirrors imageKitVisionSchema; the model output is re-validated against that canonical
 // Valibot schema below, so any drift between the two surfaces as model_refused.
 const visionJsonSchema = jsonSchema<ImageKitVision>({
@@ -147,7 +147,7 @@ export async function runVision(userId: string, bytes: Uint8Array): Promise<Visi
 	try {
 		const result = await generateText({
 			model,
-			system: SYSTEM,
+			instructions: SYSTEM,
 			maxOutputTokens: MAX_TOKENS,
 			maxRetries: 1,
 			abortSignal: AbortSignal.timeout(30_000),
@@ -171,7 +171,7 @@ export async function runVision(userId: string, bytes: Uint8Array): Promise<Visi
 
 		const inputTokens = result.usage?.inputTokens ?? null;
 		const outputTokens = result.usage?.outputTokens ?? null;
-		const reasoningTokens = readThoughtsTokens(result.providerMetadata);
+		const reasoningTokens = readThoughtsTokens(result.finalStep.providerMetadata);
 		await chargeTokens(userId, (inputTokens ?? 0) + (outputTokens ?? 0));
 
 		if (visionIsEmpty(a)) {

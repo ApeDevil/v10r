@@ -74,6 +74,8 @@ export function asToolDiag(value: unknown): ToolDiag | null {
  */
 export interface ToolResult {
 	content: Array<{ type: 'text'; text: string }>;
+	/** Only on a tool an MCP Apps View renders (`apps/`), and then complete on its own. */
+	structuredContent?: Record<string, unknown>;
 	isError?: boolean;
 	diag?: ToolDiag;
 }

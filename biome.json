@@ -20,7 +20,9 @@
 			"!**/services/runtime-lab/target",
 			"!**/.claude/settings.local.json",
 			"!**/mcp/public-excerpts.snapshot.json",
-			"!**/mcp/server.bundle.js"
+			"!**/src/lib/showcases/interop/scenario-report.json",
+			"!**/mcp/server.bundle.js",
+			"!**/src/lib/server/mcp/apps/*.view.html"
 		]
 	},
 	"formatter": {

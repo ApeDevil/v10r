@@ -218,6 +218,24 @@ describe('AI mutations', () => {
 			const [row] = await db.select().from(conversation);
 			expect(row.updatedAt.getTime()).toBe(conv.updatedAt.getTime());
 		});
+
+		// A surface action's user row is claimed by its submission-derived id: the second of two
+		// identical presses writes nothing — neither its user row nor its assistant row.
+		it('claims a row once: the second claim writes nothing and says so', async () => {
+			const conv = await createConversation(USER_A.id);
+			const part = { type: 'data-surface-action', data: { eventId: 'e-1' } };
+			const turn = (assistantId: string) => [
+				{ id: 'sa_same', role: 'user', content: 'Sent from the view: submit', parts: [part] },
+				{ id: assistantId, role: 'assistant', content: '' },
+			];
+			expect(await saveMessages(conv.id, USER_A.id, turn('a-1'), { claim: 'sa_same' })).toBe('saved');
+			expect(await saveMessages(conv.id, USER_A.id, turn('a-2'), { claim: 'sa_same' })).toBe('claim_taken');
+
+			const rows = await db.select().from(message);
+			expect(rows.map((r) => r.id).sort()).toEqual(['a-1', 'sa_same']);
+			expect(rows.find((r) => r.id === 'sa_same')?.parts).toEqual([part]);
+			expect(await saveMessages(conv.id, USER_B.id, turn('a-3'), { claim: 'sa_other' })).toBe('not_saved');
+		});
 	});
 
 	describe('saveTurnTrace', () => {

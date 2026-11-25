@@ -16,11 +16,38 @@
  *   4. Transition `pending → approved`, then `approved → executing` (may collide).
  *   5. `executeProposal` — receipts in the mutations' transactions, receipt message.
  *
+ * A proposal that approves an EXTERNAL operation (`agent_external_operation`) takes its own
+ * branch right after the ownership check: `approveExternalProposal` approves, claims the
+ * operation atomically, revalidates the actor's current role and the operator's policy,
+ * sends it at most once and records the receipt. Its body may carry
+ * `{ "authorizeQuotedContent": true }` — required when the disclosure quotes content the turn
+ * read, refused (409 `quoted_content_unauthorized`, nothing claimed) without it.
+ *
  * DELETE on the same URL rejects a still-pending proposal.
  */
 
+const EXTERNAL_REFUSALS = {
+	not_found: [404, 'not_found', 'Proposal not found.'],
+	not_owner: [404, 'not_found', 'Proposal not found.'],
+	quoted_content_unauthorized: [
+		409,
+		'quoted_content_unauthorized',
+		'This call would send content the assistant read. Authorize that content explicitly to run it.',
+	],
+	expired: [409, 'proposal_expired', 'This proposal expired before it ran. Ask again to get a fresh one.'],
+	state_changed: [409, 'proposal_state_changed', 'Proposal state changed — reload.'],
+} as const;
+
+/** The approve body: optional, one flag. Anything else in it is ignored. */
+async function authorizeQuotedContentOf(request: Request): Promise<boolean> {
+	const body = await readJsonBounded<{ authorizeQuotedContent?: unknown }>(request, 1024);
+	return body.ok && body.value !== null && typeof body.value === 'object' && body.value.authorizeQuotedContent === true;
+}
+
 import { executeProposal } from '#lib/server/ai/proposals/execute-proposal.ts';
+import { approveExternalProposal } from '#lib/server/ai/proposals/external-approval.ts';
 import { proposalOutcome } from '#lib/server/ai/proposals/proposal-outcome.ts';
+import { getExternalOperation, refusePendingExternalOperation } from '#lib/server/db/ai/external-operations.ts';
 import {
 	approveProposal,
 	getProposal,
@@ -32,7 +59,8 @@ import {
 } from '#lib/server/db/ai/proposals.ts';
 import { getConversation } from '#lib/server/db/ai/queries.ts';
 import { classifyDbError, safeDbMessage } from '#lib/server/db/errors.ts';
-import { guardApiUser } from '#lib/server/http/guards.ts';
+import { readJsonBounded } from '#lib/server/http/body.ts';
+import { guardApiUser, isAdmin } from '#lib/server/http/guards.ts';
 import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
 import { apiError, apiOk } from '#lib/server/http/response.ts';
 import type { RequestHandler } from './$types';
@@ -70,7 +98,7 @@ async function explainRefusedApproval(id: string) {
 	return apiError(409, 'proposal_state_changed', 'Proposal state changed — reload.');
 }
 
-export const POST: RequestHandler = async ({ params, locals }) => {
+export const POST: RequestHandler = async ({ params, locals, request }) => {
 	const guard = guardApiUser(locals);
 	if ('error' in guard) return guard.error;
 	const { user } = guard;
@@ -85,6 +113,27 @@ export const POST: RequestHandler = async ({ params, locals }) => {
 
 		const conv = await getConversation(proposal.conversationId, user.id);
 		if (!conv) return apiError(404, 'not_found', 'Proposal not found.');
+
+		// External operation: its own claim, verification and receipt (see the module doc).
+		if (await getExternalOperation(proposal.id)) {
+			const answer = await approveExternalProposal(
+				proposal.id,
+				{ userId: user.id, role: isAdmin(locals.user) ? 'admin' : 'user' },
+				{ authorizeQuotedContent: await authorizeQuotedContentOf(request), signal: request.signal },
+			);
+			if (answer.kind === 'refused') {
+				const [status, code, message] = EXTERNAL_REFUSALS[answer.reason];
+				return apiError(status, code, message);
+			}
+			if (answer.kind === 'in_flight') {
+				return apiError(
+					409,
+					'proposal_in_flight',
+					'Proposal is already executing. Poll /api/ai/proposals/[id] for status.',
+				);
+			}
+			return apiOk(answer.outcome);
+		}
 
 		// 2. A row still `executing` long after its last heartbeat was interrupted; its
 		//    receipts already say which steps ran.
@@ -156,6 +205,8 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
 
 		const rejected = await rejectProposal(proposal.id, 'user_rejected');
 		if (!rejected) return apiError(409, 'proposal_state_changed', 'Proposal state changed — reload.');
+		// An external operation behind it can never be claimed now; say so on its row too.
+		await refusePendingExternalOperation(proposal.id, 'rejected');
 
 		return apiOk({ id: proposal.id, status: 'rejected' });
 	} catch (err) {

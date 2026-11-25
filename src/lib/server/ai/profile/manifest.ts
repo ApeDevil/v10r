@@ -47,12 +47,17 @@ function everythingGranted(viewer: ManifestViewer): TurnInput {
 	};
 }
 
-/** The tool definitions as sent: the SDK resolves the schema the same way before a provider call. */
+/**
+ * The tool definitions as sent: the SDK resolves the schema the same way before a provider call.
+ * A description may be a function of the tool's `context` (AI SDK 7); no v10r tool declares a
+ * `contextSchema`, so it resolves against an empty context, as `streamText` would.
+ */
 async function toolEntries(tools: Record<string, Tool>): Promise<ToolManifestEntry[]> {
 	return Promise.all(
 		Object.entries(tools).map(async ([name, tool]) => ({
 			name,
-			description: tool.description ?? '',
+			description:
+				typeof tool.description === 'function' ? tool.description({ context: {} }) : (tool.description ?? ''),
 			inputSchema: tool.inputSchema ? await asSchema(tool.inputSchema).jsonSchema : null,
 		})),
 	);

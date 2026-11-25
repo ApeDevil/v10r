@@ -7,6 +7,10 @@
 		<link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
 		<meta name="theme-color" content="#cfd9e1" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#0c1014" media="(prefers-color-scheme: dark)" />
+		<!-- The icon lives here, not in the root layout's <svelte:head>: a route with `ssr = false`
+		     (the 3D showcases) is served as this bare shell, and without a declared icon the browser
+		     falls back to /favicon.ico, which does not exist (a 404 on every direct visit). -->
+		<link rel="icon" href="/favicon.svg" />
 		<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />

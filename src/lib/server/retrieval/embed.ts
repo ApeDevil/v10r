@@ -1,4 +1,4 @@
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogle } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
 import {
 	EMBEDDING_UNAVAILABLE_MESSAGES,
@@ -22,7 +22,7 @@ async function getEmbeddingModel(supplied?: EmbeddingConnection) {
 	if ('unavailable' in connection) {
 		throw new RetrievalError('embedding', EMBEDDING_UNAVAILABLE_MESSAGES[connection.unavailable]);
 	}
-	return createGoogleGenerativeAI({ apiKey: connection.apiKey }).embedding(EMBEDDING_MODEL);
+	return createGoogle({ apiKey: connection.apiKey }).embedding(EMBEDDING_MODEL);
 }
 
 export interface EmbedOptions {

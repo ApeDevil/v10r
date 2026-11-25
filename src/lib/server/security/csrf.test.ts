@@ -54,6 +54,8 @@ describe('needsCsrf', () => {
 		expect(needsCsrf('POST', '/api/mcp/public')).toBe(false);
 		expect(needsCsrf('POST', '/api/mcp')).toBe(false);
 		expect(needsCsrf('POST', '/api/mcpx')).toBe(true);
+		expect(needsCsrf('POST', '/api/a2a')).toBe(false);
+		expect(needsCsrf('POST', '/api/a2ax')).toBe(true);
 		expect(needsCsrf('POST', '/api/authx/steal')).toBe(true);
 	});
 
@@ -63,6 +65,7 @@ describe('needsCsrf', () => {
 			'/api/cron/',
 			'/api/webhooks/',
 			'/api/analytics/journey',
+			'/api/a2a',
 			'/api/mcp/',
 		]);
 	});

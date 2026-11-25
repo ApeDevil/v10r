@@ -15,6 +15,8 @@ const TOOL_LABELS: Record<string, () => string> = {
 	search_catalog: m.ai_tool_search_catalog,
 	search_project_docs: m.ai_tool_search_project_docs,
 	search_pattern_library: m.ai_tool_search_pattern_library,
+	render_surface: m.ai_tool_render_surface,
+	delegate_architecture_review: m.ai_tool_delegate_architecture_review,
 	desk_list_files: m.ai_tool_desk_list_files,
 	desk_read_file: m.ai_tool_desk_read_file,
 	desk_file_tree: m.ai_tool_desk_file_tree,

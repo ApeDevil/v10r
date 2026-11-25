@@ -152,7 +152,7 @@ Assembled by `buildProviderQuota()` in the admin AI layout load (never makes a r
 
 ## UI-message stream frame ordering
 
-A `createUIMessageStream` branch that writes `message-metadata` (live pipeline-viz events) **before** `writer.merge(textResult.toUIMessageStream())` splits one assistant turn into **two** messages on the client: the pre-`start` metadata is attached to a provisional message, then the merged stream's own `start` carries a different `messageId`, so the client appends a second message and orphans the first (empty) one. The symptom is a visible empty duplicate bubble on every answer.
+A `createUIMessageStream` branch that writes `message-metadata` (live pipeline-viz events) **before** the model's UI stream (`toUIMessageStream({ stream: result.stream })`) splits one assistant turn into **two** messages on the client: the pre-`start` metadata is attached to a provisional message, then the merged stream's own `start` carries a different `messageId`, so the client appends a second message and orphans the first (empty) one. The symptom is a visible empty duplicate bubble on every answer.
 
 **The rule:** there must be exactly one `start` per turn, written before any metadata.
 
@@ -163,7 +163,7 @@ execute: async ({ writer }) => {
   const assistantMsgId = crypto.randomUUID();        // hoist to the top
   writer.write({ type: 'start', messageId: assistantMsgId }); // open the frame FIRST
   // ...emit({ type: 'message-metadata', ... }) freely after this...
-  writer.merge(textResult.toUIMessageStream({ sendStart: false })); // suppress the merge's own start
+  writer.merge(toUIMessageStream({ stream: result.stream, sendStart: false })); // suppress its own start
 }
 ```
 
@@ -173,9 +173,9 @@ Bonus: reusing `assistantMsgId` for the merged stream makes the client message i
 |---------------------------|--------|
 | Before the merge, no leading `start` | Split — empty duplicate bubble |
 | After an explicit leading `start` | One message (the chatbot branch) |
-| Inside `onStepFinish` (after the stream's own `start`) | One message (the desk branch — always correct) |
+| Inside `onStepEnd` (after the stream's own `start`) | One message (the desk branch — always correct) |
 
-The rotation in `_shared/streaming-turn.ts` (merge-only, no metadata) and the desk/non-retrieval branches were always correct — they write no metadata before the merge, or write it after `start` via `onStepFinish`.
+The rotation in `_shared/streaming-turn.ts` (merge-only, no metadata) and the desk/non-retrieval branches were always correct — they write no metadata before the merge, or write it after `start` via `onStepEnd`.
 
 ---
 

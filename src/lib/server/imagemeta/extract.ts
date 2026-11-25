@@ -47,7 +47,7 @@ Rules: describe only what you can actually see. Never invent names, brands, plac
 
 const USER_PROMPT = 'Analyse this image and fill out the metadata form.';
 
-// AI SDK v6 Output.object wants an SDK Schema (jsonSchema), not a Valibot schema directly.
+// The AI SDK's Output.object wants an SDK Schema (jsonSchema), not a Valibot schema directly.
 // This mirrors imageAnalysisSchema; the model output is still re-validated against the
 // canonical Valibot schema below, so any drift between the two surfaces as model_refused.
 const analysisJsonSchema = jsonSchema<ImageAnalysis>({
@@ -102,7 +102,7 @@ export async function extractImageMetadata(
 	try {
 		const result = await generateText({
 			model,
-			system: SYSTEM,
+			instructions: SYSTEM,
 			maxOutputTokens: MAX_TOKENS,
 			maxRetries: 1,
 			abortSignal: AbortSignal.timeout(30_000),
@@ -130,7 +130,7 @@ export async function extractImageMetadata(
 		const analysis = parsed.output;
 		const inputTokens = result.usage?.inputTokens ?? null;
 		const outputTokens = result.usage?.outputTokens ?? null;
-		const reasoningTokens = readThoughtsTokens(result.providerMetadata);
+		const reasoningTokens = readThoughtsTokens(result.finalStep.providerMetadata);
 		// Budget charges outputTokens as-is: with thinking ON, @ai-sdk/google reports it as
 		// the billed total (already including thinking), so this reflects true spend.
 		await chargeTokens(userId, (inputTokens ?? 0) + (outputTokens ?? 0));

@@ -9,6 +9,7 @@
  *   V10R_COMPAT_FIELDS=title         `title` on every tool
  *   V10R_COMPAT_FIELDS=readOnlyHint  `annotations: { readOnlyHint: true }` on every tool (true: all eight are read-only)
  *   V10R_COMPAT_FIELDS=both          both
+ *   V10R_COMPAT_FIELDS=metaUi        `_meta.ui.resourceUri` (an MCP Apps View link) on every tool
  *
  *   bun scripts/mcp/claude-code-compat/annotated-server.ts               # stdio
  *   bun scripts/mcp/claude-code-compat/annotated-server.ts --http 8790   # POST http://127.0.0.1:8790/mcp
@@ -23,12 +24,13 @@
  * current Claude Code (pattern-mcp.md §Client design constraints). Runbook:
  * docs/blueprint/architecture/mcp-evolution/claude-code-compat.md.
  */
+import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-type Fields = 'none' | 'title' | 'readOnlyHint' | 'both';
+type Fields = 'none' | 'title' | 'readOnlyHint' | 'both' | 'metaUi';
 
 const FIELDS = (process.env.V10R_COMPAT_FIELDS ?? 'none') as Fields;
-if (!['none', 'title', 'readOnlyHint', 'both'].includes(FIELDS)) {
+if (!['none', 'title', 'readOnlyHint', 'both', 'metaUi'].includes(FIELDS)) {
 	console.error(`[compat] unknown V10R_COMPAT_FIELDS=${FIELDS}`);
 	process.exit(2);
 }
@@ -47,7 +49,39 @@ function annotate(tool: Record<string, unknown>): Record<string, unknown> {
 		...tool,
 		...((FIELDS === 'title' || FIELDS === 'both') && { title: titleOf(name) }),
 		...((FIELDS === 'readOnlyHint' || FIELDS === 'both') && { annotations: { readOnlyHint: true } }),
+		// MCP Apps (SEP-1865): a tool linked to a `ui://` View, as `explore_patterns` is on the hosted server.
+		...(FIELDS === 'metaUi' && {
+			_meta: { ...(tool._meta as object), ui: { resourceUri: 'ui://v10r/pattern-explorer.html' } },
+		}),
 	};
+}
+
+/**
+ * Which protocol era the client spoke, from one inbound frame: the 2025-era `initialize`
+ * handshake (`legacy`, with the version it asked for) or the 2026-07-28 per-request envelope
+ * (`modern`). Recorded once per run to `V10R_COMPAT_PROTOCOL_LOG` for the summary.
+ */
+export function eraOf(line: string): string | null {
+	let message: { method?: string; params?: { protocolVersion?: string; _meta?: Record<string, unknown> } };
+	try {
+		message = JSON.parse(line);
+	} catch {
+		return null;
+	}
+	const envelope = message.params?._meta?.['io.modelcontextprotocol/protocolVersion'];
+	if (typeof envelope === 'string') return `modern(${envelope})`;
+	if (message.method === 'initialize') return `legacy(${message.params?.protocolVersion ?? 'unknown'})`;
+	return null;
+}
+
+let eraRecorded = false;
+function recordEra(line: string): void {
+	const log = process.env.V10R_COMPAT_PROTOCOL_LOG;
+	if (eraRecorded || !log) return;
+	const era = eraOf(line);
+	if (!era) return;
+	eraRecorded = true;
+	appendFileSync(log, `${era}\n`);
 }
 
 /** Pass every frame through; add the fields to a tools/list result. */
@@ -82,7 +116,15 @@ function spawnServer(onLine: (line: string) => void) {
 
 async function serveStdio(): Promise<void> {
 	const { child, drained } = spawnServer((line) => process.stdout.write(`${rewriteFrame(line)}\n`));
+	const decoder = new TextDecoder();
+	let inbound = '';
 	for await (const chunk of Bun.stdin.stream()) {
+		if (!eraRecorded) {
+			inbound += decoder.decode(chunk, { stream: true });
+			const lines = inbound.split('\n');
+			inbound = lines.pop() ?? '';
+			for (const line of lines) recordEra(line);
+		}
 		child.stdin.write(chunk);
 		await child.stdin.flush();
 	}
@@ -124,6 +166,7 @@ function serveHttp(port: number): void {
 					{ status: 400 },
 				);
 			}
+			recordEra(body);
 			const answered =
 				'id' in message ? new Promise<string>((resolve) => pending.set(JSON.stringify(message.id), resolve)) : null;
 			child.stdin.write(`${JSON.stringify(message)}\n`);

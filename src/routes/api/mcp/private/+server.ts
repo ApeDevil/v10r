@@ -1,7 +1,7 @@
 /**
  * Hosted PRIVATE pattern MCP — `/api/mcp/private` (MCP Streamable HTTP).
  *
- * Same six pattern tools, same registry, same instructions as `/api/mcp/public` — the ONLY
+ * Same eight pattern tools and explorer App, same registry, same instructions as `/api/mcp/public` — the ONLY
  * differences are the `MCP_PRIVATE_TOKEN` bearer gate and the telemetry policy it unlocks: on
  * this surface the operator's own calls are recorded in full (question on every outcome, the
  * answer text, a self-declared workspace label) so their private projects' usage of the pattern
@@ -15,9 +15,10 @@
  */
 import { normalizeIpKey } from '#lib/server/abuse/index.ts';
 import { createLimiter, rateLimitResponse } from '#lib/server/http/rate-limit.ts';
+import { EXPLORER_SURFACE_TOOL_NAMES, patternRegistryWithExplorer } from '#lib/server/mcp/apps/pattern-explorer.ts';
 import { type BearerCheck, verifyPrivateMcpBearer } from '#lib/server/mcp/auth.ts';
 import { mcpMethodNotAllowed, respondToMcpPost } from '#lib/server/mcp/http.adapter.ts';
-import { PUBLIC_MCP_INSTRUCTIONS, publicPatternRegistry } from '#lib/server/mcp/patterns/tools.ts';
+import { PUBLIC_MCP_INSTRUCTIONS } from '#lib/server/mcp/patterns/tools.ts';
 import { buildInfo } from '#lib/server/mcp/server-info.ts';
 import { createMcpObserver, recordMcpGateRejection } from '#lib/server/mcp/telemetry/observer.ts';
 import type { McpServerIdentity } from '#mcp/tool-server.ts';
@@ -70,7 +71,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 		headers: request.headers,
 		gateMs,
 		registryVersion: buildInfo().patternRegistry,
-		knownTool: (name: string) => publicPatternRegistry.tools.some((tool) => tool.name === name),
+		knownTool: (name: string) => EXPLORER_SURFACE_TOOL_NAMES.includes(name),
 		body: undefined,
 	};
 
@@ -81,5 +82,6 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 		return authFailure(check);
 	}
 
-	return respondToMcpPost(request, publicPatternRegistry, identity(), createMcpObserver(telemetryContext));
+	const registry = patternRegistryWithExplorer(new URL(request.url).origin);
+	return respondToMcpPost(request, registry, identity(), createMcpObserver(telemetryContext));
 };

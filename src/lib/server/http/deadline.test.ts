@@ -149,6 +149,24 @@ describe('run', () => {
 	});
 });
 
+describe('run under a lagging timer clock', () => {
+	// Node's timers use libuv's cached loop time; on a busy loop a timer fires before
+	// `performance.now()` reaches its due time. Simulated here by a setTimeout that fires 8 ms early.
+	it('never rejects while the deadline still has time left', async () => {
+		const realSetTimeout = globalThis.setTimeout;
+		const early = ((fn: () => void, ms?: number) =>
+			realSetTimeout(fn, Math.max(0, (ms ?? 0) - 8))) as typeof setTimeout;
+		vi.stubGlobal('setTimeout', early);
+		try {
+			const deadline = startDeadline(30);
+			await expect(deadline.run(() => new Promise(() => {}))).rejects.toBeInstanceOf(DeadlineExceededError);
+			expect(deadline.expired()).toBe(true);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+});
+
 describe('DeadlineExceededError', () => {
 	it('maps to 504 — out of time, not broken', () => {
 		expect(new DeadlineExceededError('x').toStatus()).toBe(504);

@@ -4,13 +4,17 @@
  * `wrapLanguageModel` is the one door that sees the request the way the provider does:
  * the prompt after every SDK transformation (`prepareStep`, `activeTools`, the last-step
  * tool withholding) and the tool definitions WITH the JSON schemas the model reads. The
- * step hooks (`onStepFinish`) see usage and the response; this sees the question. Each
+ * step hooks (`onStepEnd`) see usage and the response; this sees the question. Each
  * records what only it sees; the recorder joins them by order (one open call at a time).
  *
  * Nothing here alters the call — `doStream()` runs untouched and the stream is returned
- * as-is. The response side (usage, finish reason, response id, warnings) is `onStepFinish`'s,
+ * as-is. The response side (usage, finish reason, response id, warnings) is `onStepEnd`'s,
  * which sees the SDK-normalized shape; a call that never reaches it (a rotated attempt) is
  * closed by the recorder's `attemptEnd`.
+ *
+ * The middleware speaks the provider spec the SDK runs on — `v4` since AI SDK 7. The SDK's
+ * own providers are v4; a v3 (or v2) model is adapted to v4 by `wrapLanguageModel` itself, so
+ * the request the middleware outlines always has the v4 shape.
  */
 import { type LanguageModel, type LanguageModelMiddleware, wrapLanguageModel } from 'ai';
 import { hashSystemPrompt } from '#lib/server/ai/context/history.ts';
@@ -20,18 +24,22 @@ import type { TurnRecorder } from './recorder';
 /** The provider-level call, as the middleware sees it — derived from the SDK's own middleware type. */
 type WrapStreamOptions = Parameters<NonNullable<LanguageModelMiddleware['wrapStream']>>[0];
 export type ModelCallOptions = WrapStreamOptions['params'];
-type WrappableModel = WrapStreamOptions['model'];
+/** What `wrapLanguageModel` takes: a provider model object of any spec it can adapt. */
+type WrappableModel = Parameters<typeof wrapLanguageModel>[0]['model'];
 
 /** What the middleware needs beside the recorder: the block ids the system prompt was built from. */
 export interface ModelCallTraceOptions {
 	blockIds: () => PromptBlockId[];
 }
 
+/** Provider specs `wrapLanguageModel` accepts; it adapts the older ones to v4. */
+const WRAPPABLE_SPECS = new Set(['v2', 'v3', 'v4']);
+
 function isWrappable(model: LanguageModel): model is WrappableModel {
 	return (
 		typeof model === 'object' &&
 		model !== null &&
-		(model as { specificationVersion?: string }).specificationVersion === 'v3'
+		WRAPPABLE_SPECS.has((model as { specificationVersion?: string }).specificationVersion ?? '')
 	);
 }
 
@@ -73,8 +81,8 @@ export function toolDefinitionsOf(params: ModelCallOptions): ToolDefinitionRecor
 
 /**
  * Wrap a model so every stream call is reported to the recorder. A model the SDK cannot
- * wrap (a gateway id string, a v2 provider) is returned as-is — the step hooks then open
- * the call records themselves, without the request outline.
+ * wrap (a gateway id string) is returned as-is — the step hooks then open the call records
+ * themselves, without the request outline.
  */
 export function traceModelCalls(
 	model: LanguageModel,
@@ -85,7 +93,7 @@ export function traceModelCalls(
 	return wrapLanguageModel({
 		model,
 		middleware: {
-			specificationVersion: 'v3',
+			specificationVersion: 'v4',
 			wrapStream: ({ doStream, params }) => {
 				recorder.callStart({
 					request: outlineCallOptions(params, options.blockIds()),

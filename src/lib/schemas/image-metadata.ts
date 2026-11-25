@@ -29,7 +29,7 @@ export type FieldProvenance = Record<MetadataFieldKey, ProvenanceState>;
 
 // 1) AI-propose contract
 // Every content field is nullable: null = "the AI could not determine this".
-// This is the canonical VALIDATION schema. AI SDK v6 Output.object needs an SDK
+// This is the canonical VALIDATION schema. The AI SDK's Output.object needs an SDK
 // jsonSchema() (not a Valibot schema directly), so extract.ts hand-writes a
 // jsonSchema() mirror for generation and re-validates the model output against
 // THIS schema — drift between the two then surfaces as model_refused.

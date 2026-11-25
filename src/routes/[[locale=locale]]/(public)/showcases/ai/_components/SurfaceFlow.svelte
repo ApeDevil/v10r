@@ -54,8 +54,8 @@ function sourceOf(layer: AiLayer): string {
 
 function loopCap(): string {
 	return surface === 'chatbot'
-		? `stepCountIs(${STEP_BUDGETS.chatbot})`
-		: `stepCountIs(${STEP_BUDGETS.deskRead} · ${STEP_BUDGETS.deskMutate})`;
+		? `isStepCount(${STEP_BUDGETS.chatbot})`
+		: `isStepCount(${STEP_BUDGETS.deskRead} · ${STEP_BUDGETS.deskMutate})`;
 }
 </script>
 

@@ -5,6 +5,9 @@
  * subsequent iterations ("by design" per maintainer). Trying to compact
  * oversized tool results inside `prepareStep` looks like it's working but
  * the SDK re-reads the original `response.messages` accumulator each step.
+ * AI SDK 7 carries a `prepareStep` messages override forward, so that reason
+ * is gone; the execute-time pattern stays because it bounds the result once,
+ * for the model, the stream and the trace alike (`docs/blueprint/ai/ai-sdk-v7.md`).
  *
  * Correct pattern: compact tool results at **execute time** by wrapping
  * each tool's `execute` return value. Oversized results are stored in a
@@ -125,7 +128,7 @@ export function compactToolResult(toolName: string, value: unknown): unknown {
 export function compactToolResults(messages: ModelMessage[]): ModelMessage[] {
 	return messages.map((msg) => {
 		if (msg.role !== 'tool') return msg;
-		// AI SDK v6 tool message content is an array of tool-result parts.
+		// A tool message's content is an array of tool-result parts.
 		const content = (msg as unknown as { content: unknown }).content;
 		if (!Array.isArray(content)) return msg;
 		const nextContent = content.map((part: unknown) => {

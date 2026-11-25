@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { publicPatternRegistry } from '#lib/server/mcp/patterns/tools.ts';
+import { EXPLORER_SURFACE_TOOL_NAMES } from '#lib/server/mcp/apps/pattern-explorer.ts';
 
 /**
  * The two bearer-authenticated MCP routes, held to ONE contract.
@@ -46,9 +46,9 @@ const SURFACES = [
 		otherToken: ADMIN_TOKEN,
 		realm: 'Bearer realm="v10r-mcp-private"',
 		codePrefix: 'mcp_private',
-		// Derived from the registry on purpose: hard-coding the six names here would create
+		// Derived from the registry on purpose: hard-coding the names here would create
 		// another order-pinned site, which the ax sprawl checklist exists to prevent.
-		expectedTools: () => publicPatternRegistry.tools.map((t) => t.name),
+		expectedTools: () => [...EXPLORER_SURFACE_TOOL_NAMES],
 		foreignCall: { name: 'get_mcp_page_state', arguments: {} },
 	},
 	{

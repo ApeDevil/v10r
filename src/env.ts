@@ -28,6 +28,7 @@ export const variables = defineEnvVars({
 	ANALYTICS_CONFIRM_SECRET: { schema: optional },
 	BLOG_UPLOAD_TICKET_SECRET: { schema: optional },
 	PAIRING_SECRET: { schema: optional },
+	AG_UI_RESULT_TICKET_SECRET: { schema: optional },
 	ENCRYPTION_KEY: { schema: optional },
 	ENCRYPTION_KEY_PREVIOUS: { schema: optional },
 	// Abuse controls
@@ -65,6 +66,9 @@ export const variables = defineEnvVars({
 	VAPID_PUBLIC_KEY: { schema: optional },
 	VAPID_PRIVATE_KEY: { schema: optional },
 	VAPID_SUBJECT: { schema: optional },
+	// A2A delegation: the operator's peer list (JSON; a2a/delegation-directory.ts). Peer
+	// credentials are `A2A_PEER_SECRET_*` references, read by name where they are used.
+	A2A_DELEGATION_PEERS: { schema: optional },
 	// MCP server
 	MCP_ADMIN_TOKEN: { schema: optional },
 	MCP_PRIVATE_TOKEN: { schema: optional },

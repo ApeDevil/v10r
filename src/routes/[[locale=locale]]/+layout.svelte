@@ -175,7 +175,6 @@ $effect(() => {
 </script>
 
 <svelte:head>
-	<link rel="icon" href="/favicon.svg" />
 	<title>{page.data.title ? `${page.data.title} - ${BRAND_NAME}` : BRAND_NAME}</title>
 	{#each locales as lang}
 		<link rel="alternate" hreflang={lang} href={localizeHref(page.url.pathname, { locale: lang })} />
