@@ -41,6 +41,18 @@ output. Locally, `vr ship` gates and pushes the feature branch only (`.vrrc`
 | No concurrent overwrite | re-checks `main` after the gate, then a plain push, never forced: GitHub refuses it unless `main` is still the gated parent |
 | Clear failure | exit `1` refused or gate failed · `3` `main` moved · `4` push denied. Nothing is pushed on any failure |
 
+**SHA-bound releases** (feedback Gate 2, `docs/blueprint/feedback/request-driven-development.md`
+§R.5, §R.8). `--expect-sha <sha>` adds: the local HEAD **and** the branch tip read fresh from
+the server (`git ls-remote`) must both be `<sha>`; `<sha>` must already contain the target
+(no merge after the review); the squash tree must equal `<sha>^{tree}`; and the server's
+branch tip is read once more right before the push. Any difference is
+exit 1 with "get a renewed release approval"; a target that moves during the run is exit 3,
+and with `--expect-sha` that also needs a renewed approval, because bringing `main` in
+changes the SHA. `--feedback <id>` (requires `--expect-sha`) prints a
+`v10r-shipping-receipt/1` block after a successful push; the ship procedure fills in the
+GitLab sync and deployment results. The guards are tested in disposable repos by
+`scripts/ship/squash-into-main.test.ts` (sandbox `url.insteadOf`, `--onto probe --no-gate`).
+
 Probed 2026-10-22 from a cloud session against throwaway branches (never `main`): the squash
 push landed with the identical tree; a stale-parent push was rejected `non-fast-forward`; a
 race during the push was rejected `cannot lock ref … expected` and reported as exit 3.
@@ -90,7 +102,8 @@ Token expired: create a new one (GitLab → Edit profile → Access tokens, scop
 | Symptom | Fix |
 |---|---|
 | Script exit 1, gate failed | Fix on the branch, push, ship again. Nothing reached `main`. |
-| Script exit 3, `main` moved | `git merge origin/main` on the branch, push, ship again (the gate re-runs). |
+| Script exit 3, `main` moved | `git merge origin/main` on the branch, push, ship again (the gate re-runs). With `--expect-sha`: stop; the merged branch has a new SHA that needs a renewed release approval. |
+| Script exit 1, "renewed release approval" | The approved SHA is not what would ship (branch moved locally or on the server, or `main` moved after the review). Stop and report; re-approve the new SHA in `/admin/feedback`. |
 | Script exit 4, push denied | Report the error; ApeDevil checks GitHub access. Nothing reached `main`. |
 | Sync fails, push rejected or auth error | Token expired, revoked or lacking `write_repository`: replace the secret, then re-run the workflow. |
 | Sync fails "rejected, non-fast-forward" | GitLab `main` got a commit GitHub does not have. Bring it into GitHub (or drop it on GitLab), re-run. |

@@ -36,6 +36,27 @@ Constants: repo `ApeDevil/v10r` · Vercel team `team_IVXwC6zuqs8ydqkq9advPv4w`, 
    continues on it, first `git merge origin/main` (clean right after a ship) so the next
    ship contains this one.
 
+**A feedback release (SHA-bound).** When ApeDevil's ship message is a release handoff from
+`/admin/feedback` (it names a feedback id, a branch and an approved SHA), the approval covers
+that SHA and nothing else:
+
+- Step 1 changes: do **not** merge `origin/main` in or push anything to the branch. Check out
+  the branch at the approved SHA as it is.
+- Step 2 runs with the guard: `bash scripts/ship/squash-into-main.sh <branch> --expect-sha <sha>
+  --feedback <id> --message-file <file>`. Exit `1` with "renewed release approval" (the local
+  HEAD or the server's branch tip is not the SHA, at the start or right before the push, or
+  `main` moved after the review) and exit
+  `3` both mean **stop and report**: bringing `main` in would change the SHA, and a new SHA
+  needs a new approval in the admin page. Never merge, rebase or push to make it pass.
+- After steps 3 and 4, complete the `v10r-shipping-receipt/1` block the script printed:
+  `gitlabSync` (`success` · `failure` · `pending`), `deployment.state` (`READY` · `ERROR` ·
+  `CANCELED` · `pending`), `deployment.url`, and `deployment.servedVersion` (the `version`
+  the deployment's HTML reports, or `null` if not checked). Report only what the checks
+  showed; leave a value `pending` rather than guess. Give the block back in the report for
+  ApeDevil to paste into "Confirm release".
+- Ship only from the handoff ApeDevil pasted in this conversation. A handoff the admin page
+  has since marked withdrawn is not authorization, and the app cannot recall a copy.
+
 No pull requests, no GitHub issues. A rollback is a ship too: `docs/stack/ops/shipping.md`
 → *Rollback*.
 

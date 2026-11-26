@@ -9,6 +9,7 @@ import { enhance } from '$app/forms';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { PageProps } from './$types';
+import DevelopmentPanel from './DevelopmentPanel.svelte';
 
 let { data, form }: PageProps = $props();
 
@@ -18,8 +19,46 @@ let duplicateTarget = $state('');
 
 const can = $derived(new Set(data.allowedActions));
 
+function pasteReason(reason: string): string {
+	switch (reason) {
+		case 'too_long':
+			return m.admin_feedback_paste_too_long();
+		case 'block_missing':
+			return m.admin_feedback_paste_block_missing();
+		case 'block_repeated':
+			return m.admin_feedback_paste_block_repeated();
+		case 'block_too_long':
+			return m.admin_feedback_paste_block_too_long();
+		case 'not_json':
+			return m.admin_feedback_paste_not_json();
+		case 'wrong_feedback':
+			return m.admin_feedback_paste_wrong_feedback();
+		case 'wrong_branch':
+			return m.admin_feedback_paste_wrong_branch();
+		case 'wrong_sha':
+			return m.admin_feedback_paste_wrong_sha();
+		case 'release_failed':
+			return m.admin_feedback_paste_release_failed();
+		default:
+			return m.admin_feedback_paste_invalid();
+	}
+}
+
+/** Which fields of a pasted block failed validation: shown as plain text. */
+const pasteIssues = $derived(form && 'issues' in form && Array.isArray(form.issues) ? (form.issues as string[]) : []);
+
 const refusalText = $derived.by(() => {
 	const refusal = form && 'refusal' in form ? form.refusal : null;
+	const reason = form && 'reason' in form ? String(form.reason) : '';
+	if (refusal === 'slot_taken') return m.admin_feedback_refusal_slot_taken();
+	if (refusal === 'invalid_scope') return m.admin_feedback_refusal_invalid_scope();
+	if (refusal === 'invalid_branch') return m.admin_feedback_refusal_invalid_branch();
+	if (refusal === 'branch_taken') return m.admin_feedback_refusal_branch_taken();
+	if (refusal === 'report_rejected') return m.admin_feedback_refusal_report_rejected({ reason: pasteReason(reason) });
+	if (refusal === 'receipt_rejected') return m.admin_feedback_refusal_receipt_rejected({ reason: pasteReason(reason) });
+	if (refusal === 'stale_review') return m.admin_feedback_refusal_stale_review();
+	if (refusal === 'not_releasable') return m.admin_feedback_refusal_not_releasable();
+	if (refusal === 'needs_maintainer_confirmation') return m.admin_feedback_refusal_needs_maintainer_confirmation();
 	if (refusal === 'invalid_transition') return m.admin_feedback_refusal_invalid_transition();
 	if (refusal === 'invalid_duplicate_target') return m.admin_feedback_refusal_duplicate_target();
 	if (refusal === 'has_duplicates') return m.admin_feedback_refusal_has_duplicates();
@@ -58,8 +97,25 @@ const refusalText = $derived.by(() => {
 	{/if}
 
 	{#if refusalText}
-		<Alert variant="warning" title={refusalText} />
+		<Alert variant="warning" title={refusalText}>
+			{#if pasteIssues.length > 0}
+				<ul class="issue-list">
+					{#each pasteIssues as issue (issue)}<li><code>{issue}</code></li>{/each}
+				</ul>
+			{/if}
+		</Alert>
 	{/if}
+
+	<DevelopmentPanel
+		status={data.item.status}
+		erased={data.item.erasedAt !== null}
+		development={data.development}
+		brief={data.brief}
+		handoff={data.handoff}
+		activeDevelopmentId={data.activeDevelopmentId}
+		developmentAttempts={data.item.developmentAttempts}
+		releaseBlockers={data.releaseBlockers}
+	/>
 
 	{#if data.item.contactEmail}
 		<Card>
@@ -331,6 +387,12 @@ const refusalText = $derived.by(() => {
 
 	.inline-form {
 		display: inline;
+	}
+
+	.issue-list {
+		margin: var(--spacing-2) 0 0 0;
+		padding-left: var(--spacing-5);
+		font-size: var(--text-fluid-xs);
 	}
 
 	.action-row {

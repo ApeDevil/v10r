@@ -8,7 +8,19 @@
  * demand from the admin inbox (`purgeClosedFeedback`).
  */
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, check, index, pgSchema, smallint, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import {
+	type AnyPgColumn,
+	boolean,
+	check,
+	index,
+	integer,
+	jsonb,
+	pgSchema,
+	smallint,
+	text,
+	timestamp,
+	uniqueIndex,
+} from 'drizzle-orm/pg-core';
 import { FEEDBACK_CATEGORIES } from '../../../../feedback/category';
 import { FEEDBACK_CLOSE_REASONS, FEEDBACK_STATUSES, type FeedbackStatus } from '../../../../feedback/status';
 import { user } from '../auth/_better-auth';
@@ -78,6 +90,9 @@ export const feedback = feedbackSchema.table(
 		statusChangedAt: timestamp('status_changed_at', { withTimezone: true }).notNull().defaultNow(),
 		/** Set when the submitter's account was erased while the row held engineering state. */
 		erasedAt: timestamp('erased_at', { withTimezone: true }),
+		/** How many times Gate 1 approved this item. Each approval is a new development attempt
+		 * with its own branch name, so a returned attempt's branch and report are never reused. */
+		developmentAttempts: integer('development_attempts').notNull().default(0),
 		nonce: text('nonce').notNull(),
 	},
 	(table) => [
@@ -110,5 +125,84 @@ export const feedback = feedbackSchema.table(
 		// erased (SET NULL) stays a valid closed duplicate.
 		check('feedback_duplicate_target_reason', sql`${table.duplicateOf} IS NULL OR ${table.closeReason} = 'duplicate'`),
 		check('feedback_not_own_duplicate', sql`${table.duplicateOf} IS NULL OR ${table.duplicateOf} <> ${table.id}`),
+		check('feedback_development_attempts_range', sql`${table.developmentAttempts} >= 0`),
+	],
+);
+
+/** How a release was confirmed: the live version matched, or the maintainer confirmed it. */
+export const feedbackReleaseVerificationEnum = feedbackSchema.enum('feedback_release_verification', [
+	'live_version',
+	'maintainer',
+]);
+
+/**
+ * DEVELOPMENT — the engineering record of one feedback item from Gate 1 on: the branch, the
+ * admin's scope, the reported implementation, the release approval and the release. One row
+ * per item, created by `approveDevelopment` in the same transaction that takes the
+ * development slot; removed with the item's return to triage. Written by the admin and the
+ * agent, never by the submitter, so it survives the submitter's erasure intact.
+ */
+export const development = feedbackSchema.table(
+	'development',
+	{
+		feedbackId: text('feedback_id')
+			.primaryKey()
+			.references(() => feedback.id, { onDelete: 'cascade' }),
+		branch: text('branch').notNull(),
+		/** Which Gate 1 approval of the item this is (1-based); part of the branch name from 2 on. */
+		attempt: integer('attempt').notNull(),
+		/** The admin's words: the only instruction the brief gives. */
+		scope: text('scope').notNull(),
+		/** Whether the brief quotes the submission (as untrusted data). Off by default; cleared on erasure. */
+		includeSubmitterText: boolean('include_submitter_text').notNull().default(false),
+		approvedBy: text('approved_by').notNull(),
+		approvedAt: timestamp('approved_at', { withTimezone: true }).notNull().defaultNow(),
+		/** The implementation as reported: the agent's claim, validated in shape only. */
+		reportedSha: text('reported_sha'),
+		// Typed by the feedback domain (`ImplementationReport`); the schema stays domain-free.
+		report: jsonb('report').$type<Record<string, unknown>>(),
+		reportedAt: timestamp('reported_at', { withTimezone: true }),
+		/** Bumped by every recorded report: Gate 2 approves this exact revision, not just its SHA. */
+		reportRevision: integer('report_revision').notNull().default(0),
+		/** Gate 2: binds exactly the reviewed commit. */
+		releaseApprovedSha: text('release_approved_sha'),
+		releaseApprovedBy: text('release_approved_by'),
+		releaseApprovedAt: timestamp('release_approved_at', { withTimezone: true }),
+		/** The last release approval a new report or rework withdrew: its handoff is no longer authorized. */
+		withdrawnReleaseSha: text('withdrawn_release_sha'),
+		releasedSha: text('released_sha'),
+		releasedAt: timestamp('released_at', { withTimezone: true }),
+		releaseVerification: feedbackReleaseVerificationEnum('release_verification'),
+		/** The running deployment's commit when the release was confirmed. */
+		runningShaAtRelease: text('running_sha_at_release'),
+		receipt: jsonb('receipt').$type<Record<string, unknown>>(),
+	},
+	(table) => [
+		uniqueIndex('development_branch_idx').on(table.branch),
+		check('development_branch_shape', sql`${table.branch} ~ '^[a-z]+/[a-z]+/[a-z0-9][a-z0-9-]{0,79}$'`),
+		check('development_scope_len', sql`char_length(${table.scope}) BETWEEN 1 AND 8000`),
+		check('development_reported_sha_shape', sql`${table.reportedSha} ~ '^[0-9a-f]{40}$'`),
+		check('development_release_sha_shape', sql`${table.releaseApprovedSha} ~ '^[0-9a-f]{40}$'`),
+		check('development_released_sha_shape', sql`${table.releasedSha} ~ '^[0-9a-f]{40}$'`),
+		check('development_withdrawn_sha_shape', sql`${table.withdrawnReleaseSha} ~ '^[0-9a-f]{40}$'`),
+		check('development_attempt_range', sql`${table.attempt} >= 1`),
+		check('development_report_revision_range', sql`${table.reportRevision} >= 0`),
+		check('development_report_size', sql`octet_length(${table.report}::text) <= 32000`),
+		check('development_receipt_size', sql`octet_length(${table.receipt}::text) <= 4000`),
+		// A report is all three fields or none.
+		check(
+			'development_report_complete',
+			sql`(${table.reportedSha} IS NULL) = (${table.report} IS NULL) AND (${table.report} IS NULL) = (${table.reportedAt} IS NULL)`,
+		),
+		// Gate 2 approves exactly the reported commit; rework clears it with the report.
+		check(
+			'development_release_binds_report',
+			// Spelled out: a bare `=` against a NULL report is NULL, and a NULL CHECK passes.
+			sql`${table.releaseApprovedSha} IS NULL OR (${table.reportedSha} IS NOT NULL AND ${table.releaseApprovedSha} = ${table.reportedSha})`,
+		),
+		check(
+			'development_released_after_approval',
+			sql`${table.releasedSha} IS NULL OR ${table.releaseApprovedSha} IS NOT NULL`,
+		),
 	],
 );

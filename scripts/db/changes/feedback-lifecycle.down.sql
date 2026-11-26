@@ -1,3 +1,9 @@
+-- DESTRUCTIVE. NEVER RUN CASUALLY. It drops every field Slice 1 added (categories, account
+-- links, technical context, duplicate links, notes, close reasons) and collapses the lifecycle
+-- states; there is no way back except a backup. Only on ApeDevil's explicit word, after
+-- feedback-development.sql's objects (feedback.development, its enum, the development_attempts
+-- column) have been dropped first, since they depend on the Slice 1 shape.
+--
 -- Reverses feedback-lifecycle.sql: puts feedback.feedback back in the shape the application
 -- before Slice 1 expects. Only for the case the migration was applied and the new application
 -- cannot be deployed and fixing forward is not an option (§R.4 of

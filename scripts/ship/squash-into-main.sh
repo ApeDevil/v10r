@@ -22,7 +22,7 @@ require_repo
 # so a url.insteadOf rewrite (the sandbox test) cannot change what is being checked.
 AUTHORITY_URL_RE='^(https://github\.com/|git@github\.com:)ApeDevil/v10r(\.git)?$'
 
-DRY_RUN=0; GATE=1; ONTO="$MAIN_BRANCH"; MSG_FILE=""; BRANCH_ARG=""
+DRY_RUN=0; GATE=1; ONTO="$MAIN_BRANCH"; MSG_FILE=""; BRANCH_ARG=""; EXPECT_SHA=""; FEEDBACK_ID=""
 
 usage() {
 	cat <<'EOF'
@@ -34,6 +34,12 @@ squash-into-main.sh — ship the current feature branch onto GitHub main as one 
                     the wrong one)
   --message-file F  commit message (subject, blank line, body); default subject = branch name
   --dry-run         every check and the gate, then print the commit that would land; no push
+  --expect-sha S    ship only the approved commit S (full 40-hex SHA): the local HEAD and the
+                    remote branch tip must both be S, and S must already contain the target.
+                    Any difference means the reviewed implementation is not what would ship;
+                    nothing is merged or pushed to make it pass, a renewed approval is needed.
+  --feedback ID     with --expect-sha: print a v10r-shipping-receipt/1 block for feedback ID
+                    after a successful push, to complete and paste into the admin page
   --onto B --no-gate
                     probe only: target branch B instead of main, without the gate. The gate
                     can never be skipped toward main.
@@ -44,6 +50,8 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 		--message-file) MSG_FILE="${2:?--message-file needs a path}"; shift ;;
 		--dry-run)      DRY_RUN=1 ;;
+		--expect-sha)   EXPECT_SHA="${2:?--expect-sha needs a SHA}"; shift ;;
+		--feedback)     FEEDBACK_ID="${2:?--feedback needs an id}"; shift ;;
 		--onto)         ONTO="${2:?--onto needs a branch}"; shift ;;
 		--no-gate)      GATE=0 ;;
 		-h|--help)      usage; exit 0 ;;
@@ -56,6 +64,13 @@ done
 [ "$GATE" -eq 1 ] || [ "$ONTO" != "$MAIN_BRANCH" ] \
 	|| die "--no-gate is for probes onto another branch; $MAIN_BRANCH only takes a gated tree."
 [ -z "$MSG_FILE" ] || [ -f "$MSG_FILE" ] || die "No message file at $MSG_FILE."
+[ -z "$EXPECT_SHA" ] || [[ "$EXPECT_SHA" =~ ^[0-9a-f]{40}$ ]] \
+	|| die "--expect-sha takes the full 40-character lowercase SHA the release approval names."
+[ -z "$FEEDBACK_ID" ] || [ -n "$EXPECT_SHA" ] \
+	|| die "--feedback needs --expect-sha: a receipt records an approved SHA."
+[ -z "$FEEDBACK_ID" ] || [[ "$FEEDBACK_ID" =~ ^fbk_[A-Za-z0-9]{1,60}$ ]] || die "--feedback takes a feedback id (fbk_…)."
+# A refusal that only a renewed approval can lift (exit 1, like every refusal).
+renew() { die "$* The approved implementation is not what would ship. Nothing shipped — get a renewed release approval for the new SHA."; }
 
 # ---- 1. where we stand ----
 url="$(git config --get "remote.$REMOTE.url" || true)"
@@ -74,13 +89,26 @@ info "Fetching $REMOTE/$ONTO and $REMOTE/$branch…"
 run git fetch --quiet "$REMOTE" "$ONTO" "$branch" \
 	|| die "Fetch failed. Is '$branch' pushed to $REMOTE?"
 head="$(git rev-parse HEAD)"
-[ "$head" = "$(git rev-parse "$REMOTE/$branch")" ] \
+remote_head="$(git rev-parse "$REMOTE/$branch")"
+if [ -n "$EXPECT_SHA" ]; then
+	# Both copies of the branch, against the approval: a stale local checkout and a newer
+	# remote push are both refused. The remote is read fresh from the server, not the
+	# tracking ref, so nothing cached can stand in for it.
+	authoritative="$(git ls-remote "$REMOTE" "refs/heads/$branch" | cut -f1)"
+	[ "$head" = "$EXPECT_SHA" ] || renew "Local HEAD is ${head:0:12}, the approval names ${EXPECT_SHA:0:12}."
+	[ "$authoritative" = "$EXPECT_SHA" ] \
+		|| renew "$REMOTE/$branch is ${authoritative:0:12} on the server, the approval names ${EXPECT_SHA:0:12}."
+fi
+[ "$head" = "$remote_head" ] \
 	|| die "HEAD ${head:0:9} is not $REMOTE/$branch. Push the branch (or pull it) so the shipped state is the reviewed one."
 
 # ---- 3. the branch contains the target, and adds something ----
 base="$(git rev-parse "$REMOTE/$ONTO")"
-git merge-base --is-ancestor "$base" "$head" \
-	|| die "'$branch' does not contain $REMOTE/$ONTO (${base:0:9}). Merge it in (git merge $REMOTE/$ONTO), push, then ship."
+if ! git merge-base --is-ancestor "$base" "$head"; then
+	[ -z "$EXPECT_SHA" ] \
+		|| renew "$REMOTE/$ONTO moved to ${base:0:9} after the review: the approved commit does not contain it, and merging it in would ship a commit nobody reviewed."
+	die "'$branch' does not contain $REMOTE/$ONTO (${base:0:9}). Merge it in (git merge $REMOTE/$ONTO), push, then ship."
+fi
 tree="$(git rev-parse "$head^{tree}")"
 [ "$tree" != "$(git rev-parse "$base^{tree}")" ] \
 	|| die "'$branch' changes nothing against $REMOTE/$ONTO — nothing to ship."
@@ -113,12 +141,30 @@ trap 'rm -f "$msg"' EXIT
 if [ -n "$MSG_FILE" ]; then cat "$MSG_FILE" >"$msg"; else printf '%s\n' "$branch" >"$msg"; fi
 printf '\nSquash of %s (%s..%s).\n' "$branch" "${base:0:9}" "${head:0:9}" >>"$msg"
 commit="$(git commit-tree "$tree" -p "$base" -F "$msg")"
+if [ -n "$EXPECT_SHA" ]; then
+	# The integration tree is the reviewed tree, byte for byte: what lands on $ONTO is the
+	# approved commit's tree, with nothing merged after the review or the gate.
+	[ "$(git rev-parse "$commit^{tree}")" = "$(git rev-parse "$EXPECT_SHA^{tree}")" ] \
+		|| renew "The squash commit's tree differs from the approved commit's tree."
+fi
 info "Squash commit ${commit:0:9}: tree ${tree:0:9} (= ${head:0:9}), parent ${base:0:9}"
 
 # ---- 6. the target did not move while the gate ran ----
 run git fetch --quiet "$REMOTE" "$ONTO"
-[ "$(git rev-parse "$REMOTE/$ONTO")" = "$base" ] \
-	|| { err "$REMOTE/$ONTO moved during the gate (was ${base:0:9}). Nothing shipped."; exit 3; }
+if [ "$(git rev-parse "$REMOTE/$ONTO")" != "$base" ]; then
+	err "$REMOTE/$ONTO moved during the gate (was ${base:0:9}). Nothing shipped."
+	[ -z "$EXPECT_SHA" ] || err "With --expect-sha, bringing $ONTO in changes the SHA: that needs a renewed release approval."
+	exit 3
+fi
+
+# ---- 6b. the approved branch did not move either ----
+# Checked again as close to the push as possible: the gate takes minutes, and a push to the
+# branch meanwhile means the reviewed commit is no longer the branch's state.
+if [ -n "$EXPECT_SHA" ]; then
+	final_tip="$(git ls-remote "$REMOTE" "refs/heads/$branch" | cut -f1)"
+	[ "$final_tip" = "$EXPECT_SHA" ] \
+		|| renew "$REMOTE/$branch moved to ${final_tip:0:12} while the ship ran; the approval names ${EXPECT_SHA:0:12}."
+fi
 
 if [ "$DRY_RUN" -eq 1 ]; then
 	ok "[dry-run] Would push ${commit:0:9} to $REMOTE/$ONTO. Nothing pushed."
@@ -145,3 +191,25 @@ landed="$(git ls-remote "$REMOTE" "refs/heads/$ONTO" | cut -f1)"
 	|| die "Pushed ${commit:0:9}, but $REMOTE/$ONTO reads ${landed:0:9}. Check by hand."
 ok "Shipped '$branch' → $REMOTE/$ONTO as ${commit:0:9}."
 echo "SHIP_COMMIT=$commit"
+
+# ---- 9. the shipping receipt (with --feedback) ----
+# The gate and the push are this script's own facts. The GitLab sync and the deployment are
+# checked afterwards by the ship procedure, which replaces the two "pending" values.
+if [ -n "$FEEDBACK_ID" ]; then
+	gate_result="passed"; [ "$GATE" -eq 1 ] || gate_result="failed"
+	cat <<EOF_RECEIPT
+
+\`\`\`v10r-shipping-receipt/1
+{
+  "format": "v10r-shipping-receipt/1",
+  "feedbackId": "$FEEDBACK_ID",
+  "branch": "$branch",
+  "approvedSha": "$EXPECT_SHA",
+  "shipCommit": "$commit",
+  "gate": { "validate": "$gate_result", "validateBuild": "$gate_result" },
+  "gitlabSync": "pending",
+  "deployment": { "state": "pending", "url": null, "servedVersion": null }
+}
+\`\`\`
+EOF_RECEIPT
+fi

@@ -46,6 +46,15 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | An admin's decision on untriaged feedback | `triage action` (`applyTriageAction`, `TRIAGE_TRANSITIONS`) | `transition` alone as a type name, `workflow` (that is `/workflows`) |
 | The one development state at a time | `development slot` (`ACTIVE_DEVELOPMENT_STATUSES`, index `feedback_one_active_development_idx`) | `lock`, `lease` |
 | What account erasure keeps of feedback that held engineering state | `engineering shell` (`ENGINEERING_STATUSES`, `erased_at`) | `tombstone` (that is retrieval's soft-delete), `anonymized` |
+| An item's engineering record from Gate 1 on (branch, scope, report, release) | `development record` (`feedback.development`, `approveDevelopment`; Gate 1 is `development approval`, Gate 2 is `release approval`) | `ticket`, `job` (that is `#lib/server/jobs/`), `task` |
+| What Gate 1 hands the maintainer to paste into a coding session | `development brief` (`renderDevelopmentBrief`) | `prompt` (that is the AI chat's), `instructions` |
+| The agent's pasted account of its work | `implementation report` (`v10r-implementation-report/1`, `parseImplementationReport`); its claims are reported evidence, not verification | `result`, `attestation` |
+| What Gate 2 hands the maintainer as the ship instruction | `release handoff` (`renderReleaseHandoff`) | `release brief`, `deploy order` |
+| The ship script's pasted record of a ship | `shipping receipt` (`v10r-shipping-receipt/1`, `parseShippingReceipt`); not an authenticated attestation | `ship report` (that is the ship skill's prose), `proof` |
+| How a release was confirmed | `release verification` (`live_version` · `maintainer`) | `verified` alone |
+| One Gate 1 approval of an item, with its own branch | `development attempt` (`attempt`, `development_attempts`; branch suffix `-a<attempt>` from the second) | `run`, `try`, `iteration` |
+| Which recorded report Gate 2 approves | `report revision` (`report_revision`, bumped per report) | `version` (that is the app version) |
+| A report claim that rules a normal release out | `release blocker` (`releaseBlockers`, refusal `not_releasable`) | `gate failure` (the gate is the ship's) |
 | The submitter's opt-in diagnostics | `technical context` (`FeedbackTechnicalContext`, `includeContext`) | `metadata`, `telemetry`, `diagnostics` |
 | Which engine a retrieval step belongs to | `engine` (`RetrievalEngine`) | the step's `path` field |
 | The panel workspace | `desk` → `dock` → `workspace` → `panel` | `workbench` |

@@ -1,9 +1,11 @@
 /**
- * The one-time production change `scripts/db/changes/feedback-lifecycle.sql`, run against
- * the table as it stands on `main` before Slice 1 (the old three-label status enum), with
- * rows in every old state. Two claims: every existing row survives with the mapped status,
- * and the migrated table is structurally the table the Drizzle schema builds — same columns,
- * defaults, constraints, indexes and enum labels — so the next `db:push` finds no drift.
+ * The production change path for the feedback schema, in order: Slice 1's one-time
+ * `feedback-lifecycle.sql` (already applied to production on 2026-11-26), then Slice 2's
+ * additive `feedback-development.sql`, run against the table as it stood on `main` before
+ * Slice 1 (the old three-label status enum), with rows in every old state. Two claims: every
+ * existing row survives with the mapped status, and the result is structurally the feedback
+ * schema the Drizzle schema builds — same columns, defaults, constraints, indexes and enum
+ * labels — so the next `db:push` finds no drift.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -12,6 +14,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestDb } from '#lib/server/test/db.ts';
 
 const MIGRATION = readFileSync(join(process.cwd(), 'scripts/db/changes/feedback-lifecycle.sql'), 'utf8');
+const DEVELOPMENT_CHANGE = readFileSync(join(process.cwd(), 'scripts/db/changes/feedback-development.sql'), 'utf8');
 
 /** `feedback.feedback` exactly as the schema on main (50da2f7) creates it. */
 const MAIN_SHAPE = `
@@ -42,13 +45,13 @@ CREATE INDEX feedback_submitted_idx ON feedback.feedback USING btree (submitted_
 
 const COLUMNS = `
 	SELECT column_name, data_type, udt_name, is_nullable, column_default
-	FROM information_schema.columns WHERE table_schema = 'feedback' AND table_name = 'feedback'
-	ORDER BY column_name`;
+	FROM information_schema.columns WHERE table_schema = 'feedback'
+	ORDER BY table_name, column_name`;
 const CONSTRAINTS = `
 	SELECT conname, pg_get_constraintdef(oid) AS def FROM pg_constraint
-	WHERE conrelid = 'feedback.feedback'::regclass ORDER BY conname`;
+	WHERE connamespace = 'feedback'::regnamespace AND contype <> 'n' ORDER BY conname`;
 const INDEXES = `
-	SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'feedback' AND tablename = 'feedback'
+	SELECT indexname, indexdef FROM pg_indexes WHERE schemaname = 'feedback'
 	ORDER BY indexname`;
 const ENUMS = `
 	SELECT t.typname, string_agg(e.enumlabel, ',' ORDER BY e.enumsortorder) AS labels
@@ -68,6 +71,7 @@ beforeAll(async () => {
 			('fbk_archived', 'Archived one', 'body', NULL, NULL, 'archived', 'n3');
 	`);
 	await migrated.exec(MIGRATION);
+	await migrated.exec(DEVELOPMENT_CHANGE);
 	reference = (await createTestDb()).client;
 	// Catalog functions print type names relative to the search_path; compare like with like.
 	const { rows } = await reference.query<{ search_path: string }>('SHOW search_path');
@@ -79,7 +83,7 @@ afterAll(async () => {
 	await reference?.close();
 });
 
-describe('feedback-lifecycle.sql', () => {
+describe('feedback-lifecycle.sql, then feedback-development.sql', () => {
 	it('preserves every existing row and maps its status', async () => {
 		const { rows } = await migrated.query<{
 			id: string;
@@ -115,6 +119,14 @@ describe('feedback-lifecycle.sql', () => {
 				category: 'general',
 			},
 		]);
+	});
+
+	it('starts every existing row at zero development attempts, with no development record', async () => {
+		const { rows } = await migrated.query<{ n: number }>(
+			'SELECT count(*)::int AS n FROM feedback.feedback WHERE development_attempts <> 0',
+		);
+		expect(rows[0].n).toBe(0);
+		expect((await migrated.query('SELECT 1 FROM feedback.development')).rows).toHaveLength(0);
 	});
 
 	it('leaves no trace of the retired enum', async () => {

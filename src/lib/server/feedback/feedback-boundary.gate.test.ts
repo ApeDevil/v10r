@@ -30,6 +30,8 @@ const FORBIDDEN = [
 	{ pattern: /from '(?:ai|@ai-sdk\/[\w-]+)'/, why: 'model SDK' },
 	{ pattern: /from '#lib\/server\/(?:a2a|external-operations|mcp)\//, why: 'agent interoperability' },
 	{ pattern: /octokit|api\.github\.com|gitlab\.com|api\.anthropic\.com/, why: 'external service' },
+	// Pasted agent reports and shipping receipts are data: nothing on these paths runs code.
+	{ pattern: /child_process|\bBun\.spawn|\bexecSync\(|\beval\(|new Function\(/, why: 'code execution' },
 ];
 
 function files(dir: string): string[] {

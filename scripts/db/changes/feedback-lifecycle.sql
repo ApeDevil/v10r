@@ -5,8 +5,12 @@
 -- exist in it, so the cast fails on any populated table. This file maps the data instead:
 --   new | read → received      archived → closed + close_reason 'archived'
 -- `lifecycle-migration.pglite.test.ts` runs it against old-shape rows and checks the
--- result against the Drizzle schema. Apply with the cloud-db-change skill, on ApeDevil's
--- word only, in one transaction. One-time: delete this file once production carries it.
+-- result against the Drizzle schema.
+--
+-- ALREADY APPLIED TO PRODUCTION (2026-11-26, before the Slice 1 ship bea046c). DO NOT RUN IT
+-- AGAIN: it renames and recreates the status enum and would fail or corrupt the mapping.
+-- Kept, with its down file and regression test, until Slice 2 and the first real
+-- feedback-driven development task are verified; then the temporary artifacts are consolidated.
 
 BEGIN;
 

@@ -1,8 +1,8 @@
 # Request-Driven Development: Slice 0 proposal
 
 **Status:** approved 2026-11-26 with the refinements in §R, which take precedence over the
-sections below where they differ. Slice 1 is built (§R.7 records where it differs from the
-plan); Slices 2–4 are not.
+sections below where they differ. Slice 1 shipped 2026-11-26 (§R.7 records where it differs
+from the plan). Slice 2 is built on its feature branch, not shipped (§R.8). Slices 3–4 are not.
 **Date:** 2026-11-26 · **Base:** `main` at 50da2f7
 **Governing rule:** automate the work, not the authority.
 
@@ -197,15 +197,18 @@ schema is identical to the original (`pg_dump -s`) and every row survives.
 - The script already squashes the branch's own tree (which must contain current `main`), so
   binding the SHA binds the integration tree. If `main` moved, the branch must merge it, the
   SHA changes, and the ship refuses until a renewed approval names the new SHA.
-- **Receipt:** with `--feedback <id>`, the script prints a fixed block at the end
-  (`feedback`, `branch`, `approved_sha`, `ship_commit`, `gate`), and the `ship` skill adds
-  `gitlab_sync` and `deployment` from the checks it already runs. ApeDevil pastes that block
-  into "Confirm release".
-- **Live check, not proof:** at confirmation the server records whether its own
-  `VERCEL_GIT_COMMIT_SHA` equals the ship commit. That shows which deployment answered; it
-  doesn't prove the approved change is inside it. If a later legitimate deployment already
-  replaced the release commit, the confirmation still succeeds on the receipt and records
-  "superseded by <running sha>".
+- **Receipt:** with `--feedback <id>`, the script prints one fenced `v10r-shipping-receipt/1`
+  block after the push (feedback id, branch, approved SHA, ship commit, gate result), with
+  `gitlabSync` and `deployment` left `pending`. The `ship` procedure fills those two in from
+  the checks it already runs, and ApeDevil pastes the block into "Confirm release".
+- **Live check, not proof:** at confirmation the server compares its own
+  `VERCEL_GIT_COMMIT_SHA` with the receipt's ship commit. A match is recorded as
+  `live_version`: it shows which deployment answered, not that the approved change is inside
+  it. A mismatch (not live yet, or a later deployment already superseded it) proves nothing
+  either way, so the confirmation then needs the maintainer's explicit tick and is recorded
+  as `maintainer`, with the running SHA kept beside it. The two are never shown as the same.
+- The receipt is text the maintainer pasted, not an authenticated attestation: the app has no
+  GitHub, GitLab or Vercel credentials to check it against.
 - The app never holds credentials to push `main`, deploy or authorize a release.
 
 ### R.6 Fewer manual steps (Slice 2)
@@ -259,6 +262,101 @@ Where the implementation settled something the plan left open, or differs from i
 - **Form fix found on the way:** `main`'s form failed with a 500 on every submission (its
   union-typed `rating` made superforms refuse the FormData). The rating is now one nullable
   number; a test posts the form's real FormData.
+
+### R.8 Slice 2 as built
+
+- **Development record.** `feedback.development`, one row per item while it is in development or
+  released: branch, attempt, the admin's scope, the submitter-text switch, who approved and
+  when, the reported SHA, report and report revision, the release approval (SHA, who, when),
+  the last withdrawn approval, the release (ship commit, verification, the running SHA at
+  confirmation, the receipt). CHECKs pin SHA shapes, sizes, "report is all or nothing",
+  "Gate 2 approves exactly the reported SHA, and only with a report" and "released only after
+  approval". Plus one column on `feedback.feedback`, `development_attempts` (default 0).
+  Additive: existing rows are untouched (`scripts/db/changes/feedback-development.sql`).
+- **Gate 1** (`approveDevelopment`): `accepted → in_development`, record and audit row in one
+  transaction. The single slot is decided by the partial unique index, so concurrent approvals
+  of different items leave exactly one winner (`slot_taken` names the holder). Each approval is
+  a new **development attempt**: the item's attempt count goes up under the item's row lock,
+  and the branch is `<agent>/cloud/feedback-<last 6 of id>-<slug>`, with `-a<attempt>` from the
+  second attempt on. So a re-approval after "return for analysis" always gets a new branch
+  name, even with the same slug, and old branches are neither deleted nor reused.
+- **Brief** (`renderDevelopmentBrief`): context (id, category, route pattern, app version,
+  error reference), the admin's scope as the only instruction, the submitter's text only when
+  ticked and only as JSON string literals (controls, bidi marks and U+2028/2029 removed), the
+  ten steps, the stop conditions (return an analysis when the work exceeds scope or touches
+  auth, billing, infrastructure, secrets, production data or cost), and the report template.
+  The admin page says plainly that approval starts nothing and that no session is observed.
+- **Report** (`recordImplementationReport`): the paste (≤ 60,000 characters) must hold exactly
+  one fenced `v10r-implementation-report/1` block (≤ 24,000), valid JSON, a strict valibot
+  object, for this item and this attempt's branch: a report from an abandoned attempt names
+  the old branch and is refused. Anything else is refused with up to five issues and no state
+  change. It is stored as data and shown under "Reported by the agent, not verified here".
+  Nothing in it is executed or followed; the boundary gate also forbids process spawning and
+  `eval` on the feedback paths. Every recorded report bumps the **report revision**, replaces
+  the old report and withdraws any release approval.
+- **Gate 2** (`approveRelease`): binds the SHA **and** the report revision the admin's page
+  showed. A report replaced meanwhile, even one with the same SHA, makes it `stale_review`.
+  It also refuses (`not_releasable`) a report whose own claims rule a release out: `validate`
+  or `validate:build` not passed, a browser check neither passed nor marked not applicable,
+  scope exceeded, a request for the maintainer's decision, or a recommendation not to release.
+  The page then shows why and points to rework or return; there is no override. Passing this
+  check only means the report does not argue against release: the ship gate re-runs
+  `validate` and `validate:build` on the exact commit either way. Gate 2 renders the release
+  handoff with the `--expect-sha` command and pushes, merges, deploys and migrates nothing.
+- **Rework** (ordinary rework) returns to `in_development` on the same branch and attempt; it
+  clears report and approval, so a new report and a new Gate 2 are needed. **Return for
+  analysis** goes back to `accepted` from any active state: it withdraws the development
+  authorization and any release approval, drops the record, frees the slot, keeps the audit
+  history and leaves the git branch alone. An item with a record cannot be deleted.
+- **Manual handoffs cannot be recalled.** The app has no connection to a coding session or to
+  the ship script, by design: once a brief or a release handoff is copied, an admin state change
+  cannot reach that copy. So the page marks it instead: after a new report or rework it says
+  "the release approval for <sha> was withdrawn; any copy of its handoff is no longer
+  authorized", and an item returned for analysis says its earlier briefs, reports and handoffs
+  are no longer authorized. The maintainer ships only from the handoff currently shown. The
+  ship script's guards are the backstop: a stale handoff names a SHA that no longer matches
+  the branch, or a branch the next attempt no longer uses.
+- **Confirm release** (`confirmRelease`): the receipt must match item, branch and approved SHA
+  and record a passed gate, a successful GitLab sync and a READY deployment; then §R.5's live
+  or maintainer verification.
+- **Erasure during development** keeps the record and the slot and switches the submitter text
+  off, so a brief rendered afterwards cannot quote the erased words.
+- **Ship guard.** `squash-into-main.sh --expect-sha S [--feedback ID]` refuses (exit 1, "get a
+  renewed release approval") when the local HEAD or the server's branch tip is not S, when S
+  does not contain the current target, when the squash tree differs from S's tree, or when the
+  server's branch tip is no longer S right before the push (re-read after the gate, which
+  takes minutes); exit 3 when the target moves during the run. The push stays plain, never
+  forced. Nothing is merged, rebased or forced to make it pass. Tested in disposable git repos
+  (`scripts/ship/squash-into-main.test.ts`, 9 cases).
+- **Checked on Postgres 16** with the throwaway harness from §R.7, 25 rounds each, all held:
+  five concurrent Gate 1s (one wins), a double Gate 1 on one item (one record, one audit row),
+  Gate 2 racing a new report (the old approval never survives), Gate 2 from a stale page racing
+  a same-SHA report replacement (the new revision is never approved), two concurrent
+  re-approvals after a return (one attempt 2 on an `-a2` branch), return racing release
+  confirmation (exactly one applies), erasure racing Gate 1 (no lost record, switch off). It
+  found one defect first: Bun's SQL driver reports the SQLSTATE as `errno`, not `code`, so on
+  that driver a lost slot race was an error instead of `slot_taken`. Production's Neon driver
+  uses `code` and was not affected; the check now reads both.
+- **Migration rehearsal** (2026-11-26, disposable Neon branches off production, discarded): the
+  additive SQL applied cleanly; both production rows kept their status with
+  `development_attempts = 0`; a development row inserted; the branch index refused a duplicate
+  (23505); deleting an item cascaded its record. The first rehearsal found that the "approval
+  binds report" CHECK passed when the report was NULL (`x = NULL` is NULL, and a NULL CHECK
+  passes); it is now spelled out and the second rehearsal refused that row (23514).
+- **Rollout.** Additive: the old application ignores the new table and column, the new one
+  needs them, so the order is migrate, then ship, as in §R.4. If the deployment fails, leave
+  the schema in place and fix forward; nothing is dropped automatically. A manual rollback
+  (`DROP TABLE feedback.development; DROP TYPE feedback.feedback_release_verification;
+  ALTER TABLE feedback.feedback DROP COLUMN development_attempts;`) is only for abandoning
+  Slice 2, after the application stops using it, on ApeDevil's word.
+- **Slice 1's migration files stay** (`feedback-lifecycle.sql`, its down file and the
+  regression test, which now runs Slice 1 then Slice 2 against the pre-Slice-1 table) until
+  Slice 2 and the first real feedback-driven task are verified. The lifecycle file is already
+  applied to production and must not run again; the down file is destructive.
+- **Bundle.** The development panel and its messages load only on the admin feedback detail
+  route (that node: 6.9 → 18.1 KB gzip, mostly the 86 messages in three languages). Compared
+  file by file with a production build of `main`, no other client chunk changed beyond the
+  router's 31-byte route table.
 
 ## 0. The short answer
 

@@ -32,7 +32,12 @@ export default defineConfig({
 					name: 'unit',
 					// Inlined so its imports go through the resolver above instead of Node's.
 					server: { deps: { inline: [/\/node_modules\/@a2ui\/web_core\//] } },
-					include: ['src/**/*.test.ts', 'pattern-library/**/*.test.ts', 'scripts/agentic/**/*.test.ts'],
+					include: [
+						'src/**/*.test.ts',
+						'pattern-library/**/*.test.ts',
+						'scripts/agentic/**/*.test.ts',
+						'scripts/ship/**/*.test.ts',
+					],
 					// `exclude` REPLACES vitest's defaults — spread them back or node_modules is scanned.
 					exclude: [...configDefaults.exclude, PGLITE],
 				},
