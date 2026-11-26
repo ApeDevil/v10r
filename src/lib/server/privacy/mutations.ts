@@ -18,6 +18,12 @@
  * - `blog.comment.author_id` (RESTRICT — it does NOT cascade) → HARD-DELETED. A
  *   comment is the user's own speech under their own name, so Art 17 takes it.
  *
+ * Feedback splits by status (`eraseSubmitterFeedback`, docs/blueprint/feedback/
+ *   request-driven-development.md §R.1): a row that never held engineering state CASCADES
+ *   with the user; a row in development or released is UNLINKED and cleared to a shell that
+ *   keeps engineering continuity (status, category, route pattern, version) and nothing that
+ *   identifies or correlates with the submitter.
+ *
  * Everything under `retrieval.*` (documents, chunks, collections, corpus maps) cascades
  * from the user row; a RESTRICT junction that once needed a pre-delete here is gone.
  *
@@ -51,6 +57,7 @@ import { grant } from '#lib/server/db/schema/auth/grant.ts';
 import { comment } from '#lib/server/db/schema/blog/comment.ts';
 import { post } from '#lib/server/db/schema/blog/post.ts';
 import { imageAsset } from '#lib/server/db/schema/showcase/image-metadata.ts';
+import { eraseSubmitterFeedback } from '#lib/server/feedback/index.ts';
 import { deleteUserGraph } from '#lib/server/graph/retrieval/mutations.ts';
 import { deleteImagemetaObject } from '#lib/server/store/image.ts';
 import { BUCKET, s3 } from '#lib/server/store/index.ts';
@@ -133,6 +140,9 @@ export async function deleteUserData(userId: string): Promise<void> {
 			const [blockingGrant] = await tx.select({ id: grant.id }).from(grant).where(eq(grant.grantedBy, userId)).limit(1);
 			if (blockingPost || blockingGrant) throw new SoleAdminBlockedError();
 		}
+
+		// Feedback first: in-development rows become shells that survive the cascade below.
+		await eraseSubmitterFeedback(tx, userId);
 
 		// The user's own speech — RESTRICT, so it must go explicitly. GDPR-correct: hard delete.
 		await tx.delete(comment).where(eq(comment.authorId, userId));

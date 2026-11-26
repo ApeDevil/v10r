@@ -3,19 +3,19 @@
  * FeedbackBand — self-gating pre-footer band that prompts for feedback.
  * Mounted once in the (public) layout; renders nothing unless the current
  * route is a showcase or docs page (see `isFeedbackBandPath`). The CTA links
- * to /feedback with the current path pre-filled via `?from=`.
+ * to /feedback with the current path (`?from=`) and route pattern (`?route=`).
  */
 
 import PageContainer from '#lib/components/layout/PageContainer.svelte';
 import { Button } from '#lib/components/primitives/button/index.ts';
-import { isFeedbackBandPath } from '#lib/feedback/source.ts';
+import { feedbackFormHref, isFeedbackBandPath } from '#lib/feedback/source.ts';
 import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
 import { page } from '$app/state';
 
 const pathname = $derived(deLocalizeHref(page.url.pathname));
 const visible = $derived(isFeedbackBandPath(pathname));
-const feedbackHref = $derived(localizeHref(`/feedback?from=${encodeURIComponent(pathname)}`));
+const feedbackHref = $derived(localizeHref(feedbackFormHref(pathname, page.route.id)));
 </script>
 
 {#if visible}

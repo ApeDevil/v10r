@@ -165,9 +165,13 @@ const recipients = [
 <section>
 	<h2>8. Feedback form</h2>
 	<p>
-		If you submit the feedback form, the subject, message, an optional rating, an optional email address for
-		follow-up questions and the page you came from are stored. The message stays stored until you ask for it to
-		be deleted.
+		If you submit the feedback form, the category, subject, message, an optional rating and an optional email
+		address for follow-up questions are stored. Only if you tick "Include technical context" are the page and
+		area you came from, the app version, an error reference and (with analytics consent) your page trail on that
+		visit stored too. Feedback sent while signed in is linked to your account, shown under My feedback, included
+		in your data export and deleted with your account; if work on it has already begun, only your text and contact
+		details are deleted and the non-personal engineering record remains. Otherwise the message stays stored until
+		you ask for it to be deleted, or until we close it and clear old closed feedback.
 	</p>
 	<p class="basis">Legal basis: Art. 6(1)(f) GDPR (answering your message).</p>
 </section>

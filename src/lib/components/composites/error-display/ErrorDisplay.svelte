@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from 'svelte';
 import { Button } from '#lib/components/primitives/index.ts';
+import { feedbackFormHref } from '#lib/feedback/source.ts';
 import { deLocalizeHref, localizeHref } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
 import { goto } from '$app/navigation';
@@ -36,13 +37,9 @@ let copied = $state(false);
 
 // Carry the failing page + errorId into the report: a default-consent visitor
 // has no analytics session, so this query string is the only context /admin
-// gets. `sanitizeFeedbackSource` re-validates `from` server-side.
+// gets. The /feedback load re-validates every parameter server-side.
 const feedbackHref = $derived(
-	localizeHref(
-		`/feedback?from=${encodeURIComponent(deLocalizeHref(page.url.pathname))}${
-			errorId ? `&err=${encodeURIComponent(errorId)}` : ''
-		}`,
-	),
+	localizeHref(feedbackFormHref(deLocalizeHref(page.url.pathname), page.route.id, errorId)),
 );
 
 function copyErrorId() {

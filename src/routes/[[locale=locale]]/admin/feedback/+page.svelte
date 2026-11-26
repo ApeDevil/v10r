@@ -1,39 +1,38 @@
 <script lang="ts">
-import { Card } from '#lib/components/composites/index.ts';
+import { Alert, Card, ConfirmDialog } from '#lib/components/composites/index.ts';
 import { Stack } from '#lib/components/layout/index.ts';
 import { Button, Tag } from '#lib/components/primitives/index.ts';
+import { FEEDBACK_CATEGORIES, type FeedbackCategory } from '#lib/feedback/category.ts';
+import { feedbackCategoryLabel, feedbackCloseReasonLabel, feedbackStatusLabel } from '#lib/feedback/labels.ts';
+import { FEEDBACK_STATUSES, type FeedbackStatus } from '#lib/feedback/status.ts';
 import { formatRelative } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
-import { enhance } from '$app/forms';
+import { invalidateAll } from '$app/navigation';
 import { page } from '$app/state';
 import type { PageProps } from './$types';
 
 let { data }: PageProps = $props();
 
-const statusFilters = $derived<
-	Array<{
-		value: '' | 'new' | 'read' | 'archived';
-		label: string;
-		key: 'new' | 'read' | 'archived' | null;
-	}>
->([
-	{ value: '', label: m.admin_filter_all(), key: null },
-	{ value: 'new', label: m.admin_status_new(), key: 'new' },
-	{ value: 'read', label: m.admin_status_read(), key: 'read' },
-	{ value: 'archived', label: m.admin_status_archived(), key: 'archived' },
-]);
+let confirmPurgeOpen = $state(false);
 
-function statusTagVariant(status: string) {
-	if (status === 'new') return 'default' as const;
-	if (status === 'read') return 'success' as const;
-	return 'secondary' as const;
+const totalCount = $derived(Object.values(data.counts).reduce((sum, n) => sum + n, 0));
+// Either bound reached means the public form is refusing new feedback right now.
+const refusing = $derived(totalCount >= data.storage.ceiling || data.counts.received >= data.storage.inboxCapacity);
+const nearCeiling = $derived(!refusing && totalCount >= data.storage.warnFrom);
+
+function listHref(next: { status?: FeedbackStatus; category?: FeedbackCategory; offset?: number }) {
+	const params = new URLSearchParams();
+	if (next.status) params.set('status', next.status);
+	if (next.category) params.set('category', next.category);
+	if (next.offset) params.set('offset', String(next.offset));
+	const query = params.toString();
+	return query ? `?${query}` : '?';
 }
 
-function statusLabel(status: string): string {
-	if (status === 'new') return m.admin_status_new();
-	if (status === 'read') return m.admin_status_read();
-	if (status === 'archived') return m.admin_status_archived();
-	return status;
+function statusTagVariant(status: FeedbackStatus) {
+	if (status === 'received') return 'default' as const;
+	if (status === 'closed') return 'secondary' as const;
+	return 'success' as const;
 }
 </script>
 <Stack gap="6">
@@ -42,23 +41,52 @@ function statusLabel(status: string): string {
 		<p class="page-lede">{m.admin_feedback_lede()}</p>
 	</header>
 
-	<div class="filter-bar">
-		{#each statusFilters as f (f.value)}
-			{@const count = f.key ? data.counts[f.key] : data.counts.new + data.counts.read + data.counts.archived}
+	{#if refusing}
+		<Alert
+			variant="error"
+			title={m.admin_feedback_storage_full({ stored: totalCount, ceiling: data.storage.ceiling, waiting: data.counts.received, capacity: data.storage.inboxCapacity })}
+		/>
+	{:else if nearCeiling}
+		<Alert variant="warning" title={m.admin_feedback_storage_near({ stored: totalCount, ceiling: data.storage.ceiling })} />
+	{/if}
+
+	<nav class="filter-bar" aria-label={m.admin_feedback_filter_status()}>
+		<a class="filter-link" class:active={!data.status} href={listHref({ category: data.category })}>
+			{m.admin_filter_all()}
+			<span class="filter-count">{totalCount}</span>
+		</a>
+		{#each FEEDBACK_STATUSES as status (status)}
 			<a
 				class="filter-link"
-				class:active={(data.status ?? '') === f.value}
-				href={f.value ? `?status=${f.value}` : '?'}
+				class:active={data.status === status}
+				href={listHref({ status, category: data.category })}
 			>
-				{f.label}
-				<span class="filter-count">{count}</span>
+				{feedbackStatusLabel(status)}
+				<span class="filter-count">{data.counts[status]}</span>
 			</a>
 		{/each}
-	</div>
+	</nav>
+
+	<nav class="filter-bar" aria-label={m.admin_feedback_filter_category()}>
+		<a class="filter-link" class:active={!data.category} href={listHref({ status: data.status })}>
+			{m.admin_filter_all()}
+		</a>
+		{#each FEEDBACK_CATEGORIES as category (category)}
+			<a
+				class="filter-link"
+				class:active={data.category === category}
+				href={listHref({ status: data.status, category })}
+			>
+				{feedbackCategoryLabel(category)}
+			</a>
+		{/each}
+	</nav>
 
 	<Card>
 		{#if data.items.length === 0}
-			<p class="empty">{data.status ? m.admin_feedback_empty_filtered({ status: statusLabel(data.status) }) : m.admin_feedback_empty_none()}</p>
+			<p class="empty">
+				{data.status ? m.admin_feedback_empty_filtered({ status: feedbackStatusLabel(data.status) }) : m.admin_feedback_empty_none()}
+			</p>
 		{:else}
 			<div class="table-wrap" tabindex="0" aria-label={m.admin_feedback_title()}>
 				<table class="feedback-table">
@@ -66,11 +94,9 @@ function statusLabel(status: string): string {
 						<tr>
 							<th>{m.admin_feedback_col_received()}</th>
 							<th>{m.admin_feedback_col_subject()}</th>
-							<th>{m.admin_feedback_col_rating()}</th>
+							<th>{m.admin_feedback_col_category()}</th>
 							<th>{m.admin_feedback_col_page()}</th>
-							<th>{m.admin_feedback_col_journey()}</th>
 							<th>{m.admin_feedback_col_status()}</th>
-							<th aria-label={m.admin_feedback_col_actions()}></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -81,30 +107,18 @@ function statusLabel(status: string): string {
 										{formatRelative(item.submittedAt, page.data.locale)}
 									</a>
 								</td>
-								<td>{item.subject}</td>
-								<td>{item.rating ?? '—'}</td>
-								<td><code class="page-cell">{item.pageOfOrigin || '—'}</code></td>
 								<td>
-									{#if item.sessionId}
-										<span class="i-lucide-link-2" aria-label={m.admin_feedback_journey_linked()}></span>
-									{:else}
-										<span class="muted">—</span>
+									<a href={`/admin/feedback/${item.id}`} class="row-link">{item.subject || m.admin_feedback_erased_subject()}</a>
+									{#if item.signedIn}
+										<span class="i-lucide-user muted" aria-label={m.admin_feedback_signed_in()}></span>
 									{/if}
 								</td>
+								<td>{feedbackCategoryLabel(item.category)}</td>
+								<td><code class="page-cell">{item.routeId || item.pageOfOrigin || '—'}</code></td>
 								<td>
-									<Tag variant={statusTagVariant(item.status)} size="sm">{statusLabel(item.status)}</Tag>
-								</td>
-								<td>
-									<form method="POST" action="?/updateStatus" use:enhance class="inline-form">
-										<input type="hidden" name="id" value={item.id} />
-										{#if item.status === 'new'}
-											<Button type="submit" name="status" value="read" variant="ghost" size="sm">{m.admin_feedback_mark_read()}</Button>
-										{:else if item.status === 'read'}
-											<Button type="submit" name="status" value="archived" variant="ghost" size="sm">{m.admin_action_archive()}</Button>
-										{:else}
-											<Button type="submit" name="status" value="new" variant="ghost" size="sm">{m.admin_action_reopen()}</Button>
-										{/if}
-									</form>
+									<Tag variant={statusTagVariant(item.status)} size="sm">
+										{feedbackStatusLabel(item.status)}{#if item.closeReason}&nbsp;· {feedbackCloseReasonLabel(item.closeReason)}{/if}
+									</Tag>
 								</td>
 							</tr>
 						{/each}
@@ -114,9 +128,47 @@ function statusLabel(status: string): string {
 		{/if}
 	</Card>
 
-	{#if data.total > data.items.length}
-		<p class="muted">{m.admin_feedback_showing_of_total({ shown: data.items.length, total: data.total })}</p>
-	{/if}
+	<div class="list-footer">
+		{#if data.total > data.items.length}
+			<p class="muted">{m.admin_feedback_showing_of_total({ shown: data.items.length, total: data.total })}</p>
+		{/if}
+		<div class="pager">
+			{#if data.offset > 0}
+				<Button variant="ghost" size="sm" href={listHref({ status: data.status, category: data.category, offset: Math.max(data.offset - data.limit, 0) })}>
+					{m.admin_feedback_page_previous()}
+				</Button>
+			{/if}
+			{#if data.offset + data.items.length < data.total}
+				<Button variant="ghost" size="sm" href={listHref({ status: data.status, category: data.category, offset: data.offset + data.limit })}>
+					{m.admin_feedback_page_next()}
+				</Button>
+			{/if}
+		</div>
+	</div>
+
+	<Card>
+		<div class="purge-row">
+			<p class="muted">
+				{m.admin_feedback_purge_description({ days: data.purgeDays })}
+				{m.admin_feedback_storage_usage({ stored: totalCount, ceiling: data.storage.ceiling })}
+			</p>
+			<Button variant="outline" size="sm" onclick={() => (confirmPurgeOpen = true)}>{m.admin_feedback_purge_action()}</Button>
+		</div>
+	</Card>
+
+	<ConfirmDialog
+		bind:open={confirmPurgeOpen}
+		title={m.admin_feedback_purge_dialog_title()}
+		description={m.admin_feedback_purge_description({ days: data.purgeDays })}
+		confirmLabel={m.admin_feedback_purge_action()}
+		destructive
+		onconfirm={async () => {
+			await fetch('?/purge', { method: 'POST', body: new FormData(), headers: { 'x-requested-with': 'fetch' } });
+			confirmPurgeOpen = false;
+			await invalidateAll();
+		}}
+		oncancel={() => (confirmPurgeOpen = false)}
+	/>
 </Stack>
 
 <style>
@@ -214,7 +266,29 @@ function statusLabel(status: string): string {
 		color: var(--color-muted);
 	}
 
-	.inline-form {
-		display: inline;
+	.list-footer {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: var(--spacing-3);
+		flex-wrap: wrap;
+	}
+
+	.pager {
+		display: flex;
+		gap: var(--spacing-2);
+		margin-left: auto;
+	}
+
+	.purge-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: var(--spacing-3);
+		flex-wrap: wrap;
+	}
+
+	.purge-row p {
+		margin: 0;
 	}
 </style>

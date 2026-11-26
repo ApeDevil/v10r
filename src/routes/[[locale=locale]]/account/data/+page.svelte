@@ -103,6 +103,15 @@ function formatTimestamp(iso: string): string {
 						why={m.account_data_field_comments_why()}
 					/>
 					<DataField
+						label={m.account_data_field_feedback()}
+						value={report.feedback.data?.count ?? 0}
+						collected={(report.feedback.data?.count ?? 0) > 0}
+						statusLabel={(report.feedback.data?.count ?? 0) > 0
+							? m.account_data_status_collected()
+							: m.account_data_status_empty()}
+						why={m.account_data_field_feedback_why()}
+					/>
+					<DataField
 						label={m.account_data_field_palettes()}
 						value={report.palettes.data?.count ?? 0}
 						collected={(report.palettes.data?.count ?? 0) > 0}

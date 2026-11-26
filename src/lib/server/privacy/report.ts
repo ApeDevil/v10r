@@ -38,13 +38,14 @@ import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
 import { comment } from '#lib/server/db/schema/blog/comment.ts';
 import { file as deskFile } from '#lib/server/db/schema/desk/file.ts';
 import { deskWorkspace } from '#lib/server/db/schema/desk/workspace.ts';
+import { feedback } from '#lib/server/db/schema/feedback/index.ts';
 import { userDiscordAccounts } from '#lib/server/db/schema/notifications/discord.ts';
 import { userTelegramAccounts } from '#lib/server/db/schema/notifications/telegram.ts';
 import { customPalettes } from '#lib/server/db/schema/personalization/custom-palettes.ts';
 import { imageAsset, imageMetadata } from '#lib/server/db/schema/showcase/image-metadata.ts';
 import { getUserOAuthSummary, getUserProfile, getUserSessions, listPasskeyDtos } from '#lib/server/db/user/index.ts';
 
-export const REPORT_SCHEMA_VERSION = '2026-07-25';
+export const REPORT_SCHEMA_VERSION = '2026-11-26';
 
 /** Legal basis per domain — Art 20 portability applies only to consent/contract data. */
 export type LegalBasis = 'contract' | 'consent' | 'legitimate_interest';
@@ -107,6 +108,34 @@ export interface PersonalDataReport {
 			status: string;
 			createdAt: Date;
 			editedAt: Date | null;
+		}>;
+	}>;
+	/**
+	 * Feedback sent while signed in, in full — the user's own words and the technical context
+	 * they chose to attach. The admin's triage note is an internal working note and is not
+	 * part of this portability export; a formal access request (Art. 15) is answered by hand
+	 * and covers personal data in notes too (docs/blueprint/feedback/request-driven-development.md §R.1).
+	 */
+	feedback: Section<{
+		count: number;
+		items: Array<{
+			id: string;
+			category: string;
+			subject: string;
+			body: string;
+			rating: number | null;
+			contactEmail: string | null;
+			status: string;
+			submittedAt: Date;
+			/** Null when the submitter did not tick "attach technical context". */
+			technicalContext: {
+				page: string;
+				route: string | null;
+				errorId: string | null;
+				appVersion: string | null;
+				/** Whether the analytics journey was linked; the key itself is internal. */
+				journeyLinked: boolean;
+			} | null;
 		}>;
 	}>;
 	/** Full palette definitions — the user's own design work. */
@@ -199,6 +228,7 @@ export async function collectUserData(
 		desk,
 		notifications,
 		blogComments,
+		feedbackItems,
 		palettes,
 		images,
 		behavior,
@@ -304,6 +334,41 @@ export async function collectUserData(
 				.where(eq(comment.authorId, userId))
 				.orderBy(comment.createdAt);
 			return { count: items.length, items };
+		}),
+		settle('consent', true, async () => {
+			const rows = await db
+				.select({
+					id: feedback.id,
+					category: feedback.category,
+					subject: feedback.subject,
+					body: feedback.body,
+					rating: feedback.rating,
+					contactEmail: feedback.contactEmail,
+					status: feedback.status,
+					submittedAt: feedback.submittedAt,
+					pageOfOrigin: feedback.pageOfOrigin,
+					routeId: feedback.routeId,
+					errorId: feedback.errorId,
+					appVersion: feedback.appVersion,
+					sessionId: feedback.sessionId,
+				})
+				.from(feedback)
+				.where(eq(feedback.userId, userId))
+				.orderBy(feedback.submittedAt);
+			return {
+				count: rows.length,
+				items: rows.map(({ pageOfOrigin, routeId, errorId, appVersion, sessionId, ...item }) => {
+					// Context is stored only when ticked, so any of these marks a ticked box.
+					const attached =
+						pageOfOrigin !== '' || routeId !== null || errorId !== null || appVersion !== null || sessionId !== null;
+					return {
+						...item,
+						technicalContext: attached
+							? { page: pageOfOrigin, route: routeId, errorId, appVersion, journeyLinked: sessionId !== null }
+							: null,
+					};
+				}),
+			};
 		}),
 		settle('consent', true, async () => {
 			const items = await db
@@ -417,6 +482,7 @@ export async function collectUserData(
 		desk,
 		notifications,
 		blogComments,
+		feedback: feedbackItems,
 		palettes,
 		images,
 		behavior,

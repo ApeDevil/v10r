@@ -176,9 +176,15 @@ const recipients = [
 <section>
 	<h2>8. Feedback-Formular</h2>
 	<p>
-		Wenn Sie das Feedback-Formular absenden, werden Betreff, Nachricht, optional eine Bewertung
-		und eine E-Mail-Adresse für Rückfragen sowie die Seite gespeichert, von der Sie kamen. Die
-		Nachricht bleibt gespeichert, bis Sie ihre Löschung verlangen.
+		Wenn Sie das Feedback-Formular absenden, werden Kategorie, Betreff, Nachricht, optional eine
+		Bewertung und eine E-Mail-Adresse für Rückfragen gespeichert. Nur wenn Sie „Technischen Kontext
+		mitsenden" anhaken, werden zusätzlich Seite und Bereich, von denen Sie kamen, die App-Version, eine
+		Fehlerreferenz und (mit Analytics-Einwilligung) Ihr Seitenverlauf bei diesem Besuch gespeichert.
+		Angemeldet gesendetes Feedback ist mit Ihrem Konto verknüpft, erscheint unter „Mein Feedback", ist im
+		Datenexport enthalten und wird mit Ihrem Konto gelöscht; hat die Arbeit daran bereits begonnen, werden
+		nur Ihr Text und Ihre Kontaktdaten gelöscht und der nicht personenbezogene Entwicklungsstand bleibt.
+		Ansonsten bleibt die Nachricht gespeichert, bis Sie ihre Löschung verlangen oder bis wir sie schließen
+		und altes geschlossenes Feedback bereinigen.
 	</p>
 	<p class="basis">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Beantwortung Ihrer Nachricht).</p>
 </section>

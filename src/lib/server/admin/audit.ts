@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, ilike, lt, lte, or } from 'drizzle-orm';
-import { db } from '#lib/server/db/index.ts';
+import { type DbHandle, db } from '#lib/server/db/index.ts';
 import { adminAuditLog } from '#lib/server/db/schema/admin/index.ts';
 import { AUDIT_PAGE_SIZE } from './config';
 
@@ -23,8 +23,12 @@ export interface AuditLogFilters {
 	pageSize?: number;
 }
 
-export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
-	await db.insert(adminAuditLog).values({
+/**
+ * `handle` is the transaction the caller already holds when the audit row must commit or
+ * roll back with the change it records (a feedback transition); otherwise the database.
+ */
+export async function recordAuditEvent(input: AuditEventInput, handle: DbHandle = db): Promise<void> {
+	await handle.insert(adminAuditLog).values({
 		action: input.action,
 		actorId: input.actorId,
 		actorEmail: input.actorEmail,

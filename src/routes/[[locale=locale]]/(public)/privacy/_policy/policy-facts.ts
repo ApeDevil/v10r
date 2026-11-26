@@ -14,7 +14,7 @@ export interface PolicyFacts {
  * The day the policy text was last checked against the code — one date for all
  * language versions. Bump it with every content change, in every version.
  */
-export const POLICY_REVIEWED_ON = '2026-11-07';
+export const POLICY_REVIEWED_ON = '2026-11-26';
 
 /** `POLICY_REVIEWED_ON` written out for one locale ("7. November 2026", "November 7, 2026", …). */
 export function reviewedOn(locale: string): string {

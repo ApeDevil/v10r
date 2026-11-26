@@ -38,7 +38,8 @@ The Upstash client is constructed with `timeout: 1000` — a slow Redis cannot s
 |---------|-----------|-------|--------|--------------|----------|
 | Per-email | sha256(normalized email) | 5 | 1 hour | `rl:abuse:email` | `authCaptchaGate` hook |
 | Per-IP challenge | client IP | 30 | 60 s | `rl:captcha:challenge` | `GET /api/captcha/challenge` |
-| Feedback (per-IP) | client IP | 3 | 1 hour | `rl:feedback:submit` | feedback form action |
+| Feedback (per-IP) | client IP (anonymous submitters) | 3 | 1 hour | `rl:feedback:submit` | feedback form action |
+| Feedback (per-user) | user id (signed-in submitters, instead of the IP limit) | 10 | 24 hours | `rl:feedback:submit:user` | feedback form action |
 | Comment write (per-user) | user ID | 5 | 1 min | `ratelimit:comment:user` | `POST /api/blog/posts/[id]/comments` |
 | Comment write (per-user hourly) | user ID | 30 | 1 hour | `ratelimit:comment:user:hour` | same |
 | Comment write (per-IP) | client IP | 20 | 1 hour | `ratelimit:comment:ip` | same |

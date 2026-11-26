@@ -12,6 +12,7 @@ const tabs = [
 	{ label: m.nav_dashboard(), href: '/account/dashboard', icon: 'i-lucide-layout-dashboard' },
 	{ label: m.nav_settings(), href: '/account/settings', icon: 'i-lucide-settings' },
 	{ label: m.nav_notifications(), href: '/account/notifications', icon: 'i-lucide-bell' },
+	{ label: m.nav_my_feedback(), href: '/account/feedback', icon: 'i-lucide-message-square' },
 	{ label: m.nav_security(), href: '/account/security', icon: 'i-lucide-shield-check' },
 ];
 </script>

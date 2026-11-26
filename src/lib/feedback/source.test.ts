@@ -1,6 +1,15 @@
+import { superValidate } from 'sveltekit-superforms';
+import { valibot } from 'sveltekit-superforms/adapters';
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
-import { isFeedbackBandPath, sanitizeFeedbackSource } from './source';
+import {
+	feedbackFormHref,
+	feedbackRouteFromRouteId,
+	isFeedbackBandPath,
+	sanitizeFeedbackErrorId,
+	sanitizeFeedbackRoute,
+	sanitizeFeedbackSource,
+} from './source';
 import { feedbackSubmissionSchema } from './validation';
 
 describe('sanitizeFeedbackSource', () => {
@@ -32,6 +41,11 @@ describe('sanitizeFeedbackSource', () => {
 
 	it('trims surrounding whitespace before checking the shape', () => {
 		expect(sanitizeFeedbackSource('  /docs/stack/viz  ')).toBe('/docs/stack/viz');
+	});
+
+	it('drops a query string and fragment — only the pathname is ever stored', () => {
+		expect(sanitizeFeedbackSource('/account/settings?token=abc#x')).toBe('/account/settings');
+		expect(sanitizeFeedbackSource('/search?q=private')).toBe('/search');
 	});
 
 	it('caps overlong values at 512 characters', () => {
@@ -96,5 +110,82 @@ describe('feedbackSubmissionSchema pageOfOrigin', () => {
 			pageOfOrigin: '//evil.com/phish',
 		});
 		expect(parsed.pageOfOrigin).toBe('');
+	});
+});
+
+describe('feedback route patterns', () => {
+	it('strips the locale segment and layout groups from a route id', () => {
+		expect(feedbackRouteFromRouteId('/[[locale=locale]]/(public)/blog/[slug]')).toBe('/blog/[slug]');
+		expect(feedbackRouteFromRouteId('/[[locale=locale]]/(public)')).toBe('/');
+		expect(feedbackRouteFromRouteId(null)).toBe('');
+	});
+
+	it('accepts a plain pattern and degrades anything else to no-area', () => {
+		expect(sanitizeFeedbackRoute('/blog/[slug]')).toBe('/blog/[slug]');
+		expect(sanitizeFeedbackRoute('/blog/my-post?x=1')).toBe('');
+		expect(sanitizeFeedbackRoute('//evil.com')).toBe('');
+		expect(sanitizeFeedbackRoute('https://evil.com')).toBe('');
+		expect(sanitizeFeedbackRoute(`/${'a'.repeat(250)}`)).toBe('');
+	});
+
+	it('keeps an error id only in its shape', () => {
+		expect(sanitizeFeedbackErrorId('a1b2-c3_d4')).toBe('a1b2-c3_d4');
+		expect(sanitizeFeedbackErrorId('<script>')).toBe('');
+		expect(sanitizeFeedbackErrorId('x'.repeat(65))).toBe('');
+	});
+
+	it('builds the form link with path, area and error id', () => {
+		expect(feedbackFormHref('/blog/x', '/[[locale=locale]]/(public)/blog/[slug]', 'e1')).toBe(
+			'/feedback?from=%2Fblog%2Fx&route=%2Fblog%2F%5Bslug%5D&err=e1',
+		);
+		expect(feedbackFormHref('/docs', null)).toBe('/feedback?from=%2Fdocs');
+	});
+});
+
+describe('feedbackSubmissionSchema technical context', () => {
+	it('defaults to no context and the general category', () => {
+		const parsed = v.parse(feedbackSubmissionSchema, validBase);
+		expect(parsed.includeContext).toBe(false);
+		expect(parsed.category).toBe('general');
+		expect(parsed.routeId).toBe('');
+		expect(parsed.errorId).toBe('');
+	});
+
+	it('degrades crafted hidden fields instead of rejecting the submission', () => {
+		const parsed = v.parse(feedbackSubmissionSchema, {
+			...validBase,
+			includeContext: true,
+			routeId: '/x?token=1',
+			errorId: '"><img>',
+		});
+		expect(parsed).toMatchObject({ includeContext: true, routeId: '', errorId: '' });
+	});
+
+	it('rejects an unknown category', () => {
+		expect(v.safeParse(feedbackSubmissionSchema, { ...validBase, category: 'urgent' }).success).toBe(false);
+	});
+});
+
+describe('feedbackSubmissionSchema as the form posts it', () => {
+	// The form always posts its hidden rating input, '' when unrated. A union-typed rating made
+	// superforms throw on FormData, so every submission ended in a 500.
+	async function post(fields: Record<string, string>) {
+		const data = new FormData();
+		const base = { subject: 'A subject', body: 'A body long enough', nonce: crypto.randomUUID(), renderedAt: '1' };
+		for (const [key, value] of Object.entries({ ...base, ...fields })) data.set(key, value);
+		return superValidate(data, valibot(feedbackSubmissionSchema));
+	}
+
+	it('parses an unrated, a rated and an out-of-range rating without throwing', async () => {
+		expect((await post({ rating: '' })).data.rating).toBeNull();
+		expect((await post({ rating: '4' })).data.rating).toBe(4);
+		expect((await post({ rating: '9' })).valid).toBe(false);
+	});
+
+	it('reads the context checkbox and the category from FormData', async () => {
+		const form = await post({ rating: '', includeContext: 'on', category: 'bug' });
+		expect(form.valid).toBe(true);
+		expect(form.data).toMatchObject({ includeContext: true, category: 'bug' });
+		expect((await post({ rating: '' })).data).toMatchObject({ includeContext: false, category: 'general' });
 	});
 });

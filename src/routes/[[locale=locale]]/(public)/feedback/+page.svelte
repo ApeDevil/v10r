@@ -3,7 +3,9 @@ import { superForm } from 'sveltekit-superforms';
 import { valibotClient } from 'sveltekit-superforms/adapters';
 import { Alert, Card, FormField } from '#lib/components/composites/index.ts';
 import { Stack } from '#lib/components/layout/index.ts';
-import { Accordion, Button, Input, Select, Textarea } from '#lib/components/primitives/index.ts';
+import { Accordion, Button, Checkbox, Input, Select, Textarea } from '#lib/components/primitives/index.ts';
+import { FEEDBACK_CATEGORIES, type FeedbackCategory } from '#lib/feedback/category.ts';
+import { feedbackCategoryLabel } from '#lib/feedback/labels.ts';
 import { feedbackSubmissionSchema } from '#lib/feedback/validation.ts';
 import * as m from '#lib/paraglide/messages.js';
 import type { PageProps } from './$types';
@@ -26,7 +28,22 @@ const formError = $derived(
 		? m.feedback_error_rate_limited()
 		: $formMessage === 'rejected'
 			? m.feedback_error_rejected()
-			: null,
+			: $formMessage === 'inbox_full'
+				? m.feedback_error_inbox_full()
+				: null,
+);
+
+const categoryOptions = $derived(FEEDBACK_CATEGORIES.map((value) => ({ value, label: feedbackCategoryLabel(value) })));
+
+// Exactly what the context checkbox attaches — the list is the consent text.
+const contextItems = $derived(
+	[
+		$form.pageOfOrigin && m.feedback_context_page({ page: $form.pageOfOrigin }),
+		$form.routeId && m.feedback_context_area({ area: $form.routeId }),
+		$form.errorId && m.feedback_context_error({ errorId: $form.errorId }),
+		data.appVersion && m.feedback_context_version({ version: data.appVersion.slice(0, 12) }),
+		m.feedback_context_journey(),
+	].filter(Boolean) as string[],
 );
 
 const ratingOptions = $derived([
@@ -69,6 +86,18 @@ let privacyOpen = $state('');
 		<Card>
 			<form method="POST" use:enhance>
 				<Stack gap="5">
+					<FormField label={m.feedback_field_category_label()} id="feedback-category" required>
+						{#snippet children({ fieldId })}
+							<Select
+								options={categoryOptions}
+								value={$form.category}
+								onchange={(value) => ($form.category = value as FeedbackCategory)}
+							/>
+							<!-- The Select is display-only; this input is what the form actually submits. -->
+							<input type="hidden" id={fieldId} name="category" value={$form.category} />
+						{/snippet}
+					</FormField>
+
 					<FormField label={m.feedback_field_subject_label()} id="feedback-subject" required error={$errors.subject?.[0]}>
 						{#snippet children({ fieldId, describedBy })}
 							<Input
@@ -139,22 +168,22 @@ let privacyOpen = $state('');
 						{/snippet}
 					</FormField>
 
-					{#if $form.pageOfOrigin}
-						<FormField
-							label={m.feedback_field_source_label()}
-							id="feedback-source"
-							description={m.feedback_field_source_description()}
-						>
-							{#snippet children({ fieldId })}
-								<code id={fieldId} class="source-chip">{$form.pageOfOrigin}</code>
-							{/snippet}
-						</FormField>
-					{/if}
+					<div class="context-choice">
+						<Checkbox name="includeContext" bind:checked={$form.includeContext} label={m.feedback_context_label()} />
+						<ul class="context-list" aria-label={m.feedback_context_label()}>
+							{#each contextItems as item (item)}
+								<li><code>{item}</code></li>
+							{/each}
+						</ul>
+						<p class="context-note">{m.feedback_context_note()}</p>
+					</div>
 
 					<!-- Hidden technical fields -->
 					<input type="hidden" name="nonce" value={$form.nonce} />
 					<input type="hidden" name="renderedAt" value={$form.renderedAt} />
 					<input type="hidden" name="pageOfOrigin" value={$form.pageOfOrigin} />
+					<input type="hidden" name="routeId" value={$form.routeId} />
+					<input type="hidden" name="errorId" value={$form.errorId} />
 
 					<!-- Honeypot — visually hidden, must remain empty. -->
 					<div class="honeypot" aria-hidden="true">
@@ -217,16 +246,29 @@ let privacyOpen = $state('');
 		justify-content: flex-end;
 	}
 
-	.source-chip {
-		display: inline-block;
-		padding: var(--spacing-2) var(--spacing-3);
-		border-radius: var(--radius-sm);
-		border: 1px solid var(--color-border);
-		background: var(--color-subtle);
-		font-family: var(--font-mono);
+	.context-choice {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+	}
+
+	.context-list {
+		margin: 0;
+		padding: 0 0 0 var(--spacing-7);
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-1);
 		font-size: var(--text-fluid-xs);
-		color: var(--color-fg);
+		color: var(--color-muted);
 		word-break: break-all;
+	}
+
+	.context-note {
+		margin: 0;
+		padding-left: var(--spacing-7);
+		font-size: var(--text-fluid-xs);
+		color: var(--color-muted);
 	}
 
 	/* Honeypot — keep accessible but invisible to humans + autofill blockers */

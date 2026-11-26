@@ -40,6 +40,13 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | A record's origin vs the user's scope | `jurisdiction` (on `NameMatch`) vs `territory` (on the query) | `region`, `market` |
 | A sanitized client-facing projection | `Public<Concept>` | `<Concept>DTO` |
 | The member area | `account` | `app`, `me` |
+| What a visitor or user sends from `/feedback`, and its lifecycle | `feedback` (`#lib/server/feedback/`, `feedback.feedback`; the brief's "request" is not a code name — it already means an HTTP request, a `request id`, a `grant request`) | `request`, `ticket`, `issue` |
+| What a piece of feedback is about | `category` (`FEEDBACK_CATEGORIES`: `feature` · `bug` · `improvement` · `general`) | `type`, `kind` (the shape is the same) |
+| Where a piece of feedback stands | `status` (`FEEDBACK_STATUSES`, 8 states; `closed` carries a `close reason`: `rejected` · `duplicate` · `archived`); what the submitter sees is the coarse `submitter status` | `state` as a prop, `stage` |
+| An admin's decision on untriaged feedback | `triage action` (`applyTriageAction`, `TRIAGE_TRANSITIONS`) | `transition` alone as a type name, `workflow` (that is `/workflows`) |
+| The one development state at a time | `development slot` (`ACTIVE_DEVELOPMENT_STATUSES`, index `feedback_one_active_development_idx`) | `lock`, `lease` |
+| What account erasure keeps of feedback that held engineering state | `engineering shell` (`ENGINEERING_STATUSES`, `erased_at`) | `tombstone` (that is retrieval's soft-delete), `anonymized` |
+| The submitter's opt-in diagnostics | `technical context` (`FeedbackTechnicalContext`, `includeContext`) | `metadata`, `telemetry`, `diagnostics` |
 | Which engine a retrieval step belongs to | `engine` (`RetrievalEngine`) | the step's `path` field |
 | The panel workspace | `desk` → `dock` → `workspace` → `panel` | `workbench` |
 | Per-user personalization storage | pgSchema `personalization` | pgSchema `app` |

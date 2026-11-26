@@ -1,7 +1,8 @@
 <script lang="ts">
-import { BackLink, Card, ConfirmDialog } from '#lib/components/composites/index.ts';
+import { Alert, BackLink, Card, ConfirmDialog } from '#lib/components/composites/index.ts';
 import { Stack } from '#lib/components/layout/index.ts';
-import { Button, Tag } from '#lib/components/primitives/index.ts';
+import { Button, Input, Tag, Textarea } from '#lib/components/primitives/index.ts';
+import { feedbackCategoryLabel, feedbackCloseReasonLabel, feedbackStatusLabel } from '#lib/feedback/labels.ts';
 import { formatRelative, localizeHref } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
 import { enhance } from '$app/forms';
@@ -9,41 +10,56 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import type { PageProps } from './$types';
 
-let { data }: PageProps = $props();
+let { data, form }: PageProps = $props();
 
 let confirmDeleteOpen = $state(false);
+let note = $state(data.item.triageNote ?? '');
+let duplicateTarget = $state('');
 
-function statusVariant(status: string) {
-	if (status === 'new') return 'default' as const;
-	if (status === 'read') return 'success' as const;
-	return 'secondary' as const;
-}
+const can = $derived(new Set(data.allowedActions));
 
-function statusLabel(status: string): string {
-	if (status === 'new') return m.admin_status_new();
-	if (status === 'read') return m.admin_status_read();
-	if (status === 'archived') return m.admin_status_archived();
-	return status;
-}
+const refusalText = $derived.by(() => {
+	const refusal = form && 'refusal' in form ? form.refusal : null;
+	if (refusal === 'invalid_transition') return m.admin_feedback_refusal_invalid_transition();
+	if (refusal === 'invalid_duplicate_target') return m.admin_feedback_refusal_duplicate_target();
+	if (refusal === 'has_duplicates') return m.admin_feedback_refusal_has_duplicates();
+	if (refusal === 'engineering_state') return m.admin_feedback_refusal_engineering_state();
+	if (refusal) return m.admin_feedback_refusal_generic();
+	return null;
+});
 </script>
 <Stack gap="6">
 	<BackLink href="/admin/feedback" label={m.admin_feedback_back_label()} />
 
 	<header class="detail-header">
 		<div>
-			<h1 class="detail-title">{data.item.subject}</h1>
+			<h1 class="detail-title">{data.item.subject || m.admin_feedback_erased_subject()}</h1>
 			<p class="detail-meta">
 				<span>{formatRelative(data.item.submittedAt, page.data.locale)}</span>
 				<span aria-hidden="true">·</span>
-				<code>{data.item.pageOfOrigin || '—'}</code>
+				<span>{feedbackCategoryLabel(data.item.category)}</span>
+				{#if data.item.userId}
+					<span aria-hidden="true">·</span>
+					<span>{m.admin_feedback_signed_in()}</span>
+				{/if}
 				{#if data.item.rating != null}
 					<span aria-hidden="true">·</span>
 					<span>{m.admin_feedback_rating_label({ rating: data.item.rating })}</span>
 				{/if}
 			</p>
 		</div>
-		<Tag variant={statusVariant(data.item.status)} size="md">{statusLabel(data.item.status)}</Tag>
+		<Tag variant={data.item.status === 'closed' ? 'secondary' : 'default'} size="md">
+			{feedbackStatusLabel(data.item.status)}{#if data.item.closeReason}&nbsp;· {feedbackCloseReasonLabel(data.item.closeReason)}{/if}
+		</Tag>
 	</header>
+
+	{#if data.item.erasedAt}
+		<Alert variant="info" title={m.admin_feedback_erased_title()} description={m.admin_feedback_erased_description()} />
+	{/if}
+
+	{#if refusalText}
+		<Alert variant="warning" title={refusalText} />
+	{/if}
 
 	{#if data.item.contactEmail}
 		<Card>
@@ -59,6 +75,107 @@ function statusLabel(status: string): string {
 	<Card>
 		<h2 class="card-h2">{m.admin_feedback_message_heading()}</h2>
 		<p class="message-body">{data.item.body}</p>
+	</Card>
+
+	<Card>
+		<h2 class="card-h2">{m.admin_feedback_context_heading()}</h2>
+		<dl class="context-grid">
+			<dt>{m.admin_feedback_context_page()}</dt>
+			<dd><code>{data.item.pageOfOrigin || '—'}</code></dd>
+			<dt>{m.admin_feedback_context_area()}</dt>
+			<dd><code>{data.item.routeId ?? '—'}</code></dd>
+			<dt>{m.admin_feedback_context_version()}</dt>
+			<dd><code>{data.item.appVersion ?? '—'}</code></dd>
+			<dt>{m.admin_feedback_context_error()}</dt>
+			<dd><code>{data.item.errorId ?? '—'}</code></dd>
+		</dl>
+	</Card>
+
+	<Card>
+		<h2 class="card-h2">{m.admin_feedback_triage_heading()}</h2>
+		<Stack gap="4">
+			{#if data.item.duplicateOf}
+				<p class="muted">
+					{m.admin_feedback_duplicate_of()}
+					<a href={`/admin/feedback/${data.item.duplicateOf}`}><code>{data.item.duplicateOf}</code></a>
+				</p>
+			{:else if data.item.closeReason === 'duplicate'}
+				<p class="muted">{m.admin_feedback_duplicate_target_gone()}</p>
+			{/if}
+
+			{#if data.allowedActions.length > 0}
+				<form method="POST" action="?/transition" use:enhance class="action-row">
+					{#if can.has('accept')}
+						<Button type="submit" name="kind" value="accept" variant="primary" size="sm">{m.admin_feedback_action_accept()}</Button>
+					{/if}
+					{#if can.has('defer')}
+						<Button type="submit" name="kind" value="defer" variant="outline" size="sm">{m.admin_feedback_action_defer()}</Button>
+					{/if}
+					{#if can.has('reopen')}
+						<Button type="submit" name="kind" value="reopen" variant="outline" size="sm">{m.admin_feedback_action_reopen()}</Button>
+					{/if}
+				</form>
+				{#if can.has('close')}
+					<form method="POST" action="?/transition" use:enhance class="action-row">
+						<input type="hidden" name="kind" value="close" />
+						<Button type="submit" name="reason" value="rejected" variant="outline" size="sm">{m.admin_feedback_action_reject()}</Button>
+						<Button type="submit" name="reason" value="archived" variant="outline" size="sm">{m.admin_feedback_action_archive()}</Button>
+					</form>
+				{/if}
+				{#if can.has('mark_duplicate')}
+					<form method="POST" action="?/transition" use:enhance class="action-row">
+						<input type="hidden" name="kind" value="mark_duplicate" />
+						<Input
+							name="duplicateOf"
+							bind:value={duplicateTarget}
+							placeholder="fbk_…"
+							aria-label={m.admin_feedback_duplicate_input_label()}
+							class="duplicate-input"
+						/>
+						<Button type="submit" variant="outline" size="sm" disabled={!duplicateTarget.trim()}>
+							{m.admin_feedback_action_mark_duplicate()}
+						</Button>
+					</form>
+				{/if}
+			{:else}
+				<p class="muted">{m.admin_feedback_no_triage_actions()}</p>
+			{/if}
+
+			<form method="POST" action="?/note" use:enhance class="note-form">
+				<label class="contact-label" for="triage-note">{m.admin_feedback_note_label()}</label>
+				<Textarea id="triage-note" name="note" bind:value={note} rows={3} maxlength={2000} />
+				<div class="action-row">
+					<Button type="submit" variant="ghost" size="sm">{m.admin_feedback_note_save()}</Button>
+					{#if form && 'noteSaved' in form}<span class="muted">{m.admin_feedback_note_saved()}</span>{/if}
+				</div>
+			</form>
+		</Stack>
+	</Card>
+
+	<Card>
+		<h2 class="card-h2">{m.admin_feedback_related_heading()}</h2>
+		{#if data.related.length === 0}
+			<p class="muted">{m.admin_feedback_related_none()}</p>
+		{:else}
+			<ul class="related-list">
+				{#each data.related as rel (rel.id)}
+					<li>
+						<a href={`/admin/feedback/${rel.id}`} class="related-link">{rel.subject || m.admin_feedback_erased_subject()}</a>
+						<span class="muted">
+							{feedbackCategoryLabel(rel.category)} · {feedbackStatusLabel(rel.status)} · {formatRelative(rel.submittedAt, page.data.locale)}
+							{#if rel.sameError}· {m.admin_feedback_related_same_error()}{/if}
+						</span>
+						{#if can.has('mark_duplicate')}
+							<form method="POST" action="?/transition" use:enhance class="inline-form">
+								<input type="hidden" name="kind" value="mark_duplicate" />
+								<input type="hidden" name="duplicateOf" value={rel.id} />
+								<Button type="submit" variant="ghost" size="sm">{m.admin_feedback_action_duplicate_of_this()}</Button>
+							</form>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
 	</Card>
 
 	<Card>
@@ -87,17 +204,11 @@ function statusLabel(status: string): string {
 		{/if}
 	</Card>
 
-	<div class="actions">
-		<form method="POST" action="?/updateStatus" use:enhance class="inline-form">
-			{#if data.item.status !== 'archived'}
-				<Button type="submit" name="status" value="archived" variant="outline" size="md">{m.admin_action_archive()}</Button>
-			{:else}
-				<Button type="submit" name="status" value="new" variant="outline" size="md">{m.admin_action_reopen()}</Button>
-			{/if}
-		</form>
-
-		<Button variant="ghost" size="md" onclick={() => (confirmDeleteOpen = true)}>{m.admin_action_delete()}</Button>
-	</div>
+	{#if data.canDelete}
+		<div class="actions">
+			<Button variant="ghost" size="md" onclick={() => (confirmDeleteOpen = true)}>{m.admin_action_delete()}</Button>
+		</div>
+	{/if}
 
 	<ConfirmDialog
 		bind:open={confirmDeleteOpen}
@@ -108,9 +219,12 @@ function statusLabel(status: string): string {
 		onconfirm={async () => {
 			const res = await fetch(`/admin/feedback/${data.item.id}?/delete`, {
 				method: 'POST',
+				body: new FormData(),
 				headers: { 'x-requested-with': 'fetch' },
 			});
-			if (res.ok) goto(localizeHref('/admin/feedback'));
+			const outcome = await res.json().catch(() => null);
+			if (res.ok && outcome?.type === 'success') goto(localizeHref('/admin/feedback'));
+			else confirmDeleteOpen = false;
 		}}
 		oncancel={() => (confirmDeleteOpen = false)}
 	/>
@@ -217,5 +331,60 @@ function statusLabel(status: string): string {
 
 	.inline-form {
 		display: inline;
+	}
+
+	.action-row {
+		display: flex;
+		gap: var(--spacing-2);
+		flex-wrap: wrap;
+		align-items: center;
+	}
+
+	.action-row :global(.duplicate-input) {
+		max-width: 16rem;
+	}
+
+	.note-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+	}
+
+	.context-grid {
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		gap: var(--spacing-2) var(--spacing-4);
+		margin: 0;
+		font-size: var(--text-fluid-sm);
+	}
+
+	.context-grid dt {
+		color: var(--color-muted);
+	}
+
+	.context-grid dd {
+		margin: 0;
+		word-break: break-all;
+	}
+
+	.related-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+		font-size: var(--text-fluid-sm);
+	}
+
+	.related-list li {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--spacing-2);
+		align-items: baseline;
+	}
+
+	.related-link {
+		color: var(--color-fg);
 	}
 </style>
