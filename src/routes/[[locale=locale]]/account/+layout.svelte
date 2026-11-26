@@ -14,6 +14,7 @@ const tabs = [
 	{ label: m.nav_notifications(), href: '/account/notifications', icon: 'i-lucide-bell' },
 	{ label: m.nav_my_feedback(), href: '/account/feedback', icon: 'i-lucide-message-square' },
 	{ label: m.nav_security(), href: '/account/security', icon: 'i-lucide-shield-check' },
+	{ label: m.nav_connections(), href: '/account/connections', icon: 'i-lucide-plug' },
 ];
 </script>
 

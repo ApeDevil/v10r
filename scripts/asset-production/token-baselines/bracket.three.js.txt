@@ -1,0 +1,46 @@
+import * as THREE from 'three';
+import { Brush, Evaluator, SUBTRACTION, ADDITION } from 'three-bvh-csg';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+
+const W = 40, L = 60, H = 50, T = 6, HOLE = 6.5;
+const evaluator = new Evaluator();
+
+function box(sx, sy, sz, x = 0, y = 0, z = 0) {
+  const brush = new Brush(new THREE.BoxGeometry(sx, sy, sz));
+  brush.position.set(x + sx / 2, y + sy / 2, z + sz / 2);
+  brush.updateMatrixWorld();
+  return brush;
+}
+
+function cylinder(r, h, x, y, z, rotateY = 0) {
+  const geometry = new THREE.CylinderGeometry(r, r, h, 32);
+  geometry.rotateX(Math.PI / 2);
+  if (rotateY) geometry.rotateY(rotateY);
+  const brush = new Brush(geometry);
+  brush.position.set(x, y, z);
+  brush.updateMatrixWorld();
+  return brush;
+}
+
+const shape = new THREE.Shape();
+shape.moveTo(0, 0);
+shape.lineTo(L * 0.6, 0);
+shape.lineTo(0, H * 0.6);
+shape.closePath();
+const gussetGeometry = new THREE.ExtrudeGeometry(shape, { depth: 4, bevelEnabled: false });
+gussetGeometry.rotateX(Math.PI / 2);
+const gusset = new Brush(gussetGeometry);
+gusset.position.set(T, W / 2 + 2, T);
+gusset.updateMatrixWorld();
+
+let solid = evaluator.evaluate(box(L, W, T), box(T, W, H), ADDITION);
+solid = evaluator.evaluate(solid, gusset, ADDITION);
+for (const y of [W / 4, (3 * W) / 4]) solid = evaluator.evaluate(solid, cylinder(HOLE / 2, T * 3, L * 0.7, y, T / 2), SUBTRACTION);
+solid = evaluator.evaluate(solid, cylinder(HOLE / 2, T * 3, T / 2, W / 2, H * 0.75, Math.PI / 2), SUBTRACTION);
+solid.material = new THREE.MeshStandardMaterial({ color: 0xb3b8bf, metalness: 0.9, roughness: 0.35 });
+
+const root = new THREE.Group();
+root.add(solid);
+root.rotation.x = -Math.PI / 2;
+root.scale.setScalar(0.001);
+export default await new GLTFExporter().parseAsync(root, { binary: true });

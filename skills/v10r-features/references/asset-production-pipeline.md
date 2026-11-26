@@ -12,7 +12,7 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 - The assets are authored by hand in a DCC tool and only need viewing — the model viewer pattern is enough
 - The geometry needs B-rep CAD operations (fillets, STEP exchange, tolerances) — use a CAD kernel (OpenCascade via replicad) behind the same request and report
-- The target needs one booleaned watertight solid (3D printing, volumes) — add a CSG union (manifold-3d) first; this pipeline proves closed shells, not a union
+- The target needs one booleaned watertight solid (3D printing, volumes) — describe it as a parametric model (agentic-parametric-modeling), which runs Manifold behind this same pipeline
 - Imported user files must be converted, decimated, unwrapped or baked — that is Blender's job, in a container worker with typed operations
 
 ## Alternatives

@@ -14,8 +14,16 @@ export interface AssetGenerator<Parameters> {
 	label: string;
 	/** Rules across parameters the schema's per-field bounds cannot express. Findings, never throws. */
 	check(parameters: Parameters): AssetDiagnostic[];
-	/** Exact counts `generate` will emit, computed without building anything: the budget gate's input. */
+	/** Counts `generate` will emit, computed without building anything: the budget gate's input. */
 	estimate(parameters: Parameters): MeshCost;
+	/**
+	 * `exact` (the default): the estimate is what will be built, and a difference is a finding.
+	 * `heuristic`: output size depends on the geometry (Booleans); the engine checks only that
+	 * the built mesh stays inside the budget.
+	 */
+	estimateKind?: 'exact' | 'heuristic';
+	/** Async setup before `generate`, e.g. compiling a WebAssembly kernel. Idempotent. */
+	prepare?(): Promise<void>;
 	/** Calls `checkpoint` between units of work so a run can be cancelled or hit its deadline. */
 	generate(parameters: Parameters, checkpoint: () => void): GeneratedMesh;
 }

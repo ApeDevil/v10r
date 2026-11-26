@@ -6,8 +6,11 @@
  * `secret` and `backupCodes` are encrypted by Better Auth with
  * BETTER_AUTH_SECRET before reaching this table — never plaintext.
  * `backupCodes` is a single encrypted comma-joined string, not an array.
+ *
+ * `failedVerificationCount` / `lockedUntil` arrived with Better Auth 1.7: the plugin's own
+ * brute-force lockout for TOTP and backup-code verification.
  */
-import { boolean, index, text } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, text, timestamp } from 'drizzle-orm/pg-core';
 import { authSchema, user } from './_better-auth';
 
 export const twoFactor = authSchema.table(
@@ -20,6 +23,8 @@ export const twoFactor = authSchema.table(
 		secret: text('secret').notNull(),
 		backupCodes: text('backup_codes').notNull(),
 		verified: boolean('verified').notNull().default(false),
+		failedVerificationCount: integer('failed_verification_count').default(0),
+		lockedUntil: timestamp('locked_until'),
 	},
 	(table) => [index('auth_two_factor_user_idx').on(table.userId)],
 );

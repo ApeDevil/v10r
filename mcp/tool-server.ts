@@ -77,6 +77,14 @@ export interface AppView {
 	description: string;
 	/** The registry tool whose results this View renders. */
 	tool: string;
+	/** Further registry tools whose results this View renders as well (`_meta.ui.resourceUri`). */
+	alsoRenders?: readonly string[];
+	/**
+	 * Registry tools only the View calls (`_meta.ui.visibility: ["app"]`): a supporting host lists
+	 * them to the View and hides them from the model. A client without MCP Apps still sees them in
+	 * `tools/list`, so each must be safe and useful when a model calls it anyway.
+	 */
+	appTools?: readonly string[];
 	html: string;
 	ui: McpUiResourceMeta;
 }
@@ -176,8 +184,18 @@ export function createToolServer<Result extends ToolCallResult>(
 			return toWire(result, description.meta);
 		};
 		const config = { description: tool.description, inputSchema: advertisedSchema(tool) };
-		const view = registry.views?.find((candidate) => candidate.tool === tool.name);
+		const view = registry.views?.find(
+			(candidate) => candidate.tool === tool.name || candidate.alsoRenders?.includes(tool.name),
+		);
+		const appView = registry.views?.find((candidate) => candidate.appTools?.includes(tool.name));
 		if (view) registerAppTool(server, tool.name, { ...config, _meta: { ui: { resourceUri: view.uri } } }, callback);
+		else if (appView)
+			registerAppTool(
+				server,
+				tool.name,
+				{ ...config, _meta: { ui: { resourceUri: appView.uri, visibility: ['app'] } } },
+				callback,
+			);
 		else server.registerTool(tool.name, config, callback);
 	}
 	for (const view of registry.views ?? []) {

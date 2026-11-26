@@ -4,6 +4,7 @@ import { MediaQuery } from 'svelte/reactivity';
 import { authClient } from '#lib/auth-client.ts';
 import { Altcha } from '#lib/components/composites/index.ts';
 import { Badge, Button, Input, Spinner } from '#lib/components/primitives/index.ts';
+import { continueAfterSignIn } from '#lib/continue-after-sign-in.ts';
 import { authErrorMessage, errorMessage } from '#lib/errors/index.ts';
 import { localizeHref } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
@@ -214,7 +215,7 @@ async function handlePasskey() {
 			// Refresh the shared root-layout `session` (it is reused across a
 			// client-side nav, so the shell would otherwise stay logged-out).
 			await refreshAll();
-			goto(localizeHref(data.returnTo));
+			continueAfterSignIn(data.returnTo);
 			return;
 		}
 	} catch (err) {
@@ -261,7 +262,7 @@ onMount(() => {
 				if (result && !result.error) {
 					rememberMethod('passkey');
 					await refreshAll();
-					goto(localizeHref(data.returnTo));
+					continueAfterSignIn(data.returnTo);
 				}
 			})
 			.catch(() => {
@@ -301,6 +302,13 @@ onMount(() => {
 		<div class="login-header">
 			<h1 class="text-2xl font-bold text-fg">{m.auth_login_title()}</h1>
 		</div>
+
+		{#if data.authorizing}
+			<div class="success-alert" role="status">
+				<span class="i-lucide-plug text-lg" aria-hidden="true"></span>
+				<p class="text-sm">{m.auth_login_authorizing_notice()}</p>
+			</div>
+		{/if}
 
 		{#if error}
 			<div class="error-alert" role="alert">

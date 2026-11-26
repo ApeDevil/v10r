@@ -167,12 +167,14 @@ describe('failures keep nothing', () => {
 });
 
 /**
- * The boundary gate: the core imports only itself, its schemas, Valibot and Three.js's
- * `Vector3` — no framework, no DOM, no Node API — so the same engine runs in a server, a
- * worker process or a browser.
+ * The boundary gate: the core imports only itself, its schemas, Valibot, Three.js's
+ * `Vector3`, the Manifold kernel (WebAssembly, loaded the same way everywhere), fflate (pure
+ * JavaScript deflate for model links) and the canonical JSON helper — no framework, no DOM, no
+ * Node API — so the same engine runs in a server, a worker process or a browser.
  */
 test('the core imports no framework, renderer or runtime API', () => {
-	const ALLOWED = /^(\.\.?\/[a-z-/]+\.ts|#lib\/schemas\/(asset-production|product-composition)\.ts|valibot|three)$/;
+	const ALLOWED =
+		/^(\.\.?\/[a-z-/]+\.ts|#lib\/schemas\/(asset-production|product-composition|parametric-model)\.ts|#lib\/utils\/canonical-json\.ts|valibot|three|manifold-3d|fflate)$/;
 	const directory = join(process.cwd(), 'src/lib/asset-production');
 	const files = readdirSync(directory, { recursive: true, encoding: 'utf8' }).filter(
 		(name) => name.endsWith('.ts') && !name.endsWith('.test.ts'),

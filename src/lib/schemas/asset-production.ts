@@ -11,6 +11,7 @@
  * read by the schema, the showcase sliders and the tool description alike.
  */
 import * as v from 'valibot';
+import { parametricModelSchema } from './parametric-model.ts';
 
 /** The request shape number. Bumped when a field changes meaning, not when a generator's code changes. */
 export const ASSET_REQUEST_FORMAT = 1;
@@ -102,6 +103,13 @@ export const assetRequestSchema = v.variant('generator', [
 		generator: v.literal('structural-ring'),
 		label: v.optional(labelSchema),
 		parameters: structuralRingParametersSchema,
+	}),
+	// A whole feature graph as the parameters: see `parametric-model.ts`.
+	v.strictObject({
+		format: v.literal(ASSET_REQUEST_FORMAT),
+		generator: v.literal('parametric-model'),
+		label: v.optional(labelSchema),
+		parameters: parametricModelSchema,
 	}),
 ]);
 export type AssetRequest = v.InferOutput<typeof assetRequestSchema>;

@@ -59,6 +59,8 @@ const GUARD_PATTERNS: Array<{ scheme: string; re: RegExp }> = [
 	{ scheme: 'page-guard', re: /\brequireAdmin\b|\brequireAuth\b/ },
 	{ scheme: 'bearer', re: /\bverify(Admin|Private)McpBearer\b|\bCRON_SECRET\b/ },
 	{ scheme: 'hmac', re: /TELEGRAM_WEBHOOK_SECRET/ },
+	/** An OAuth protected resource: bearer access token, audience, scope and per-request liveness. */
+	{ scheme: 'oauth-resource', re: /\bverifyResourceAccess\b/ },
 	{ scheme: 'cookie-actor', re: /\bverifyOwnerCookie\b|\bclearOwnerCookie\b/ },
 	/**
 	 * An inline session check. Many surfaces are in fact guarded this way and were
@@ -132,6 +134,11 @@ const PUBLIC_ENDPOINTS: Record<string, string> = {
  * surface can actually reach.
  */
 const PUBLIC_SURFACES: Record<string, string> = {
+	// ── OAuth discovery ──────────────────────────────────────────────────────
+	'.well-known/oauth-authorization-server/api/auth/+server.ts':
+		'RFC 8414 authorization server metadata. Public by definition (a client reads it before it has any credential); static JSON derived from configuration — endpoint URLs, scopes, methods — no user data, no database.',
+	'.well-known/oauth-protected-resource/api/mcp/3d/+server.ts':
+		'RFC 9728 protected resource metadata for MCP 3D. Public by definition (the 401 challenge points clients here); static JSON — resource URL, authorization server, scope — no user data, no database.',
 	// ── Dev-only diagnostics ─────────────────────────────────────────────────
 	'(dev)/keyboard-diagnostics/log/+server.ts':
 		'Log sink for the on-device keyboard diagnostics page. `(dev)` routes 404 in production (devRouteGuard), and the handler only echoes the request body to the dev server stdout — nothing is stored, read back, or acted on.',

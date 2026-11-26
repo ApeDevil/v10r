@@ -1,0 +1,40 @@
+import * as THREE from 'three';
+import { Brush, Evaluator, SUBTRACTION, ADDITION } from 'three-bvh-csg';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+
+const D = 60, H = 40, WALL = 3, LID_DEPTH = 5, HOLE = 3.2, CLEAR = 0.2;
+const evaluator = new Evaluator();
+const mm = 0.001;
+
+function cylinder(r, h, z = 0, x = 0, y = 0, segments = 96) {
+  const geometry = new THREE.CylinderGeometry(r, r, h, segments);
+  geometry.rotateX(Math.PI / 2);
+  const brush = new Brush(geometry);
+  brush.position.set(x, y, z + h / 2);
+  brush.updateMatrixWorld();
+  return brush;
+}
+
+let body = evaluator.evaluate(cylinder(D / 2, H), cylinder(D / 2 - WALL, H, WALL), SUBTRACTION);
+for (let i = 0; i < 4; i++) {
+  const a = ((45 + 90 * i) * Math.PI) / 180;
+  const r = D / 2 - WALL - 7;
+  body = evaluator.evaluate(body, cylinder(HOLE / 2, WALL * 3, -WALL, r * Math.cos(a), r * Math.sin(a), 24), SUBTRACTION);
+}
+
+let lid = evaluator.evaluate(cylinder(D / 2, WALL), cylinder(D / 2 - WALL - CLEAR, LID_DEPTH, -LID_DEPTH), ADDITION);
+lid = evaluator.evaluate(lid, cylinder(D / 2 - 2 * WALL - CLEAR, LID_DEPTH, -LID_DEPTH), SUBTRACTION);
+lid.position.z = H + 15;
+
+body.material = new THREE.MeshStandardMaterial({ color: 0xccccc7, roughness: 0.55 });
+lid.material = new THREE.MeshStandardMaterial({ color: 0xd96633, roughness: 0.5 });
+body.name = 'body';
+lid.name = 'lid';
+
+const root = new THREE.Group();
+root.add(body, lid);
+root.rotation.x = -Math.PI / 2;
+root.scale.setScalar(mm);
+
+const glb = await new GLTFExporter().parseAsync(root, { binary: true });
+export default glb;

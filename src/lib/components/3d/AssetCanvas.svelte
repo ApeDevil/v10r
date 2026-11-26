@@ -11,15 +11,27 @@ interface Props {
 	unavailableTitle: string;
 	unavailableDescription: string;
 	onpainted?: () => void;
+	wireframe?: boolean;
+	grid?: boolean;
+	frameKey?: number;
 }
 
-let { asset, label, unavailableTitle, unavailableDescription, onpainted }: Props = $props();
+let {
+	asset,
+	label,
+	unavailableTitle,
+	unavailableDescription,
+	onpainted,
+	wireframe = false,
+	grid = false,
+	frameKey = 0,
+}: Props = $props();
 </script>
 
 <svelte:boundary>
 	<div class="asset-canvas" data-testid="asset-canvas" role="img" aria-label={label}>
 		<Canvas renderMode="on-demand" toneMapping={NeutralToneMapping}>
-			<AssetScene {asset} {onpainted} />
+			<AssetScene {asset} {onpainted} {wireframe} {grid} {frameKey} />
 		</Canvas>
 	</div>
 

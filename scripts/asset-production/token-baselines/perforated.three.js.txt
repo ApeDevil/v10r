@@ -1,0 +1,41 @@
+import * as THREE from 'three';
+import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+
+const COLUMNS = 12, ROWS = 8, PITCH = 10, HOLE = 3.5, T = 3;
+const width = COLUMNS * PITCH + 10, depth = ROWS * PITCH + 10, radius = 4;
+
+const shape = new THREE.Shape();
+shape.moveTo(-width / 2 + radius, -depth / 2);
+shape.lineTo(width / 2 - radius, -depth / 2);
+shape.quadraticCurveTo(width / 2, -depth / 2, width / 2, -depth / 2 + radius);
+shape.lineTo(width / 2, depth / 2 - radius);
+shape.quadraticCurveTo(width / 2, depth / 2, width / 2 - radius, depth / 2);
+shape.lineTo(-width / 2 + radius, depth / 2);
+shape.quadraticCurveTo(-width / 2, depth / 2, -width / 2, depth / 2 - radius);
+shape.lineTo(-width / 2, -depth / 2 + radius);
+shape.quadraticCurveTo(-width / 2, -depth / 2, -width / 2 + radius, -depth / 2);
+
+const panelGeometry = new THREE.ExtrudeGeometry(shape, { depth: T, bevelEnabled: false });
+panelGeometry.translate(0, 0, -T / 2);
+let panel = new Brush(panelGeometry);
+panel.updateMatrixWorld();
+
+const evaluator = new Evaluator();
+const holeGeometry = new THREE.CylinderGeometry(HOLE / 2, HOLE / 2, T * 3, 24);
+holeGeometry.rotateX(Math.PI / 2);
+for (let i = 0; i < COLUMNS; i++) {
+  for (let j = 0; j < ROWS; j++) {
+    const hole = new Brush(holeGeometry);
+    hole.position.set((i - (COLUMNS - 1) / 2) * PITCH, (j - (ROWS - 1) / 2) * PITCH, 0);
+    hole.updateMatrixWorld();
+    panel = evaluator.evaluate(panel, hole, SUBTRACTION);
+  }
+}
+panel.material = new THREE.MeshStandardMaterial({ color: 0xb3b8bf, metalness: 0.9, roughness: 0.35 });
+
+const root = new THREE.Group();
+root.add(panel);
+root.rotation.x = -Math.PI / 2;
+root.scale.setScalar(0.001);
+export default await new GLTFExporter().parseAsync(root, { binary: true });

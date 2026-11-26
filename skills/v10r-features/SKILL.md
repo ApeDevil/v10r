@@ -1,6 +1,6 @@
 ---
 name: v10r-features
-description: "v10r reference patterns for Features in SvelteKit + TypeScript apps (Analytics; Notifications; Jobs & Scheduling; PWA; Data Viz; 3D; Content & Blog; Desk Workspace; External Integrations). Use when designing, building or reviewing: pageview tracking, consent management, user journeys, funnel analysis, sse streaming, scheduled rollup, gdpr transparency, notification routing, channel providers, sse stream, settings matrix, database schema, background jobs, cron scheduling, retention jobs, web manifest, service worker, update prompt, web push — before writing it from scratch, read the matching pattern's contraindications, invariants and emulation notes. 42 patterns, 5 with full emulation cards."
+description: "v10r reference patterns for Features in SvelteKit + TypeScript apps (Analytics; Notifications; Jobs & Scheduling; PWA; Data Viz; 3D; Content & Blog; Desk Workspace; External Integrations). Use when designing, building or reviewing: pageview tracking, consent management, user journeys, funnel analysis, sse streaming, scheduled rollup, gdpr transparency, notification routing, channel providers, sse stream, settings matrix, database schema, background jobs, cron scheduling, retention jobs, web manifest, service worker, update prompt, web push — before writing it from scratch, read the matching pattern's contraindications, invariants and emulation notes. 43 patterns, 6 with full emulation cards."
 license: MIT
 metadata:
   source: "v10r pattern-library registry"
@@ -84,6 +84,9 @@ Maturity is evidence, not opinion: **proven** = a linked test or showcase, verif
 - **[Asset production pipeline (typed request → checked GLB)](references/asset-production-pipeline.md)** (proven) — A structured, validated request becomes a checked 3D asset: a deterministic TypeScript generator builds parametric geometry, an inspector…
   - Use when an app must generate 3D assets from parameters — configurators that export, procedural parts, AI-requested variations — and every…
   - Avoid when: The assets are authored by hand in a DCC tool and only need viewing — the model viewer pattern is enough
+- **[Agentic parametric modeling (MCP 3D)](references/agentic-parametric-modeling.md)** (**implemented** · requires web-worker) — An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold…
+  - Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result…
+  - Avoid when: The geometry needs B-rep CAD (fillets, chamfers, STEP, tolerances) — put a CAD kernel (OpenCascade/replicad) behind the same contract
 
 ### Content & Blog
 

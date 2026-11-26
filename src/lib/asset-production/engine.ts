@@ -21,7 +21,7 @@ import { type AssetDiagnostic, assetDiagnostic, hasAssetErrors } from './diagnos
 import { generatorFor } from './generators/index.ts';
 import { encodeGlb, type GlbSummary, readGlb } from './glb.ts';
 import { inspectMesh, type MeshInspection } from './inspect.ts';
-import type { MeshCost } from './mesh.ts';
+import type { GeneratedMesh, MeshCost, SolidFacts } from './mesh.ts';
 
 /** What one run may spend. Set by the operator of an execution environment, never by the request. */
 export interface AssetBudget {
@@ -62,6 +62,10 @@ export interface EngineRun {
 	inspection?: MeshInspection;
 	glb?: Uint8Array;
 	glbSummary?: Omit<GlbSummary, 'json'>;
+	/** The mesh the GLB was encoded from: other encoders (STL, a preview) read it. */
+	mesh?: GeneratedMesh;
+	/** What a solid kernel reported per primitive, when the generator has one. */
+	solids?: readonly SolidFacts[];
 	diagnostics: AssetDiagnostic[];
 	/** Wall time per stage, milliseconds. A stage that did not run is absent. */
 	stageMs: Partial<Record<AssetStageId, number>>;
@@ -145,7 +149,12 @@ async function produce(input: unknown, context: EngineContext): Promise<EngineRu
 		if (hasAssetErrors(diagnostics)) return run;
 
 		const generator = generatorFor(request);
-		const mesh = await stage('generate', () => generator.generate(request.parameters, checkpoint));
+		const mesh = await stage('generate', async () => {
+			await generator.prepare?.();
+			return generator.generate(request.parameters, checkpoint);
+		});
+		run.solids = mesh.solids;
+		run.mesh = mesh;
 
 		const inspected = await stage('inspect', () => inspectMesh(mesh));
 		run.inspection = inspected.inspection;
@@ -153,6 +162,7 @@ async function produce(input: unknown, context: EngineContext): Promise<EngineRu
 		const estimate = run.estimate;
 		if (
 			estimate &&
+			(generator.estimateKind ?? 'exact') === 'exact' &&
 			(estimate.triangles !== inspected.inspection.triangles || estimate.vertices !== inspected.inspection.vertices)
 		) {
 			diagnostics.push(
@@ -165,6 +175,9 @@ async function produce(input: unknown, context: EngineContext): Promise<EngineRu
 		}
 		if (inspected.inspection.triangles > context.budget.maxTriangles) {
 			diagnostics.push(assetDiagnostic('budget.triangles', 'mesh', 'The built mesh exceeds the triangle budget.'));
+		}
+		if (inspected.inspection.vertices > context.budget.maxVertices) {
+			diagnostics.push(assetDiagnostic('budget.vertices', 'mesh', 'The built mesh exceeds the vertex budget.'));
 		}
 		if (hasAssetErrors(diagnostics)) return { ...run, outcome: 'failed' };
 
@@ -194,8 +207,10 @@ async function produce(input: unknown, context: EngineContext): Promise<EngineRu
 			);
 			return { ...run, outcome: 'cancelled' };
 		}
+		// A generator may throw a finding it could only make while building (an empty Boolean).
+		const finding = (error as { diagnostic?: AssetDiagnostic } | null)?.diagnostic;
 		diagnostics.push(
-			assetDiagnostic('run.failed', 'run', error instanceof Error ? error.message : 'The engine failed.'),
+			finding ?? assetDiagnostic('run.failed', 'run', error instanceof Error ? error.message : 'The engine failed.'),
 		);
 		return { ...run, outcome: 'failed' };
 	}

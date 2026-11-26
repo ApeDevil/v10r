@@ -8,7 +8,8 @@ run — environments, report, store, MCP tools — is `#lib/server/asset-product
 It sits below the server and the component layer because more than one place runs it: the
 server produces assets, and the showcase runs the same generator's `check` and `estimate` in
 the browser before it sends a request. Nothing here imports Svelte, `$app`, the DOM or a Node
-API; Three.js is used for `Vector3` only.
+API; Three.js is used for `Vector3` only, and the modeling kernel (`manifold-3d`, WebAssembly)
+is loaded with a `.wasm` source each environment supplies.
 
 Three boundaries hold the design together:
 
@@ -23,7 +24,9 @@ Three boundaries hold the design together:
 | File | Responsibility |
 |---|---|
 | `engine.ts` | `AssetProductionEngine`: stages, the budget checked twice, cancellation and deadline checkpoints |
-| `generators/` | The generator contract and registry; `structural-ring.ts` is the demonstration object |
+| `generators/` | The generator contract and registry; `structural-ring.ts` is the demonstration object, `parametric-model.ts` runs a parametric model through the modeling kernel |
+| `modeling/` | Parametric models: bounded expressions, resolution and estimate, Manifold evaluation, model links, patches, the preview mesh, `runParametricModel` (docs/blueprint/3d/parametric-modeling.md) |
+| `stl.ts` | Binary STL writer (mm, Z up) |
 | `mesh.ts` | The mesh intermediate and its builder: capped tubes and boxes as closed shells |
 | `inspect.ts` | Counts, bounds, area, volume; closed and outward shells, finite values, the envelope |
 | `glb.ts` | DOM-free, byte-stable GLB writer and the read-back gate |

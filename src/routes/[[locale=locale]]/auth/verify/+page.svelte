@@ -1,9 +1,10 @@
 <script lang="ts">
 import { authClient } from '#lib/auth-client.ts';
 import { Button, Spinner } from '#lib/components/primitives/index.ts';
+import { continueAfterSignIn } from '#lib/continue-after-sign-in.ts';
 import { authErrorMessage } from '#lib/errors/index.ts';
 import * as m from '#lib/paraglide/messages.js';
-import { goto, refreshAll } from '$app/navigation';
+import { refreshAll } from '$app/navigation';
 
 let { data } = $props();
 
@@ -47,7 +48,7 @@ async function handleVerify() {
 			// Refresh the shared root-layout `session` so the shell reflects
 			// the authenticated user without a full reload.
 			await refreshAll();
-			goto(data.returnTo);
+			continueAfterSignIn(data.returnTo);
 		}
 	} catch {
 		error = m.auth_verify_error_failed();

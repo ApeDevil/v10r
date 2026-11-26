@@ -1,0 +1,26 @@
+const { roundedRectangle, cylinder } = require('@jscad/modeling').primitives;
+const { subtract } = require('@jscad/modeling').booleans;
+const { translate } = require('@jscad/modeling').transforms;
+const { extrudeLinear } = require('@jscad/modeling').extrusions;
+
+const getParameterDefinitions = () => [
+  { name: 'columns', type: 'int', initial: 12 },
+  { name: 'rows', type: 'int', initial: 8 },
+  { name: 'pitch', type: 'float', initial: 10 },
+  { name: 'hole', type: 'float', initial: 3.5 },
+  { name: 'thickness', type: 'float', initial: 3 },
+];
+
+const main = ({ columns, rows, pitch, hole, thickness: T }) => {
+  const outline = roundedRectangle({ size: [columns * pitch + 10, rows * pitch + 10], roundRadius: 4 });
+  const panel = translate([0, 0, -T / 2], extrudeLinear({ height: T }, outline));
+  const holes = [];
+  for (let i = 0; i < columns; i++) {
+    for (let j = 0; j < rows; j++) {
+      holes.push(translate([(i - (columns - 1) / 2) * pitch, (j - (rows - 1) / 2) * pitch, 0], cylinder({ radius: hole / 2, height: T * 3, segments: 24 })));
+    }
+  }
+  return subtract(panel, ...holes);
+};
+
+module.exports = { main, getParameterDefinitions };

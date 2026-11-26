@@ -43,6 +43,12 @@ const VIEWS: ViewSource[] = [
 		sheet: 'src/lib/server/mcp/apps/view/pattern-explorer.css',
 		title: 'v10r pattern explorer',
 	},
+	{
+		out: 'src/lib/server/mcp/apps/model-viewer.view.html',
+		entry: 'src/lib/server/mcp/apps/view/model-viewer.ts',
+		sheet: 'src/lib/server/mcp/apps/view/model-viewer.css',
+		title: 'v10r 3D viewer',
+	},
 ];
 
 /**

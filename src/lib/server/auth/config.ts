@@ -54,3 +54,13 @@ export const STEPUP_VERIFY_RATE_LIMIT_MAX = 5;
 
 /** Per-account 2FA verify rate limit: window duration */
 export const STEPUP_VERIFY_RATE_LIMIT_WINDOW = '300 s';
+
+/**
+ * Per-IP limit for the OAuth endpoints MCP hosts call server-to-server (token, register,
+ * revoke, jwks). Hosts share egress across all their users, so this is a host-wide ceiling,
+ * not a per-person one — see hooks.server.ts.
+ */
+export const OAUTH_MACHINE_RATE_LIMIT_MAX = 300;
+
+/** OAuth machine-endpoint rate limit: window duration */
+export const OAUTH_MACHINE_RATE_LIMIT_WINDOW = '60 s';

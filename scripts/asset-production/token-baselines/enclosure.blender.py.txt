@@ -1,0 +1,44 @@
+import bpy, math
+
+D, H, WALL, LID_DEPTH, HOLE, CLEAR = 60, 40, 3, 5, 3.2, 0.2
+
+def cyl(name, r, h, z=0.0, x=0.0, y=0.0, verts=96):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=r, depth=h, location=(x, y, z + h / 2))
+    obj = bpy.context.active_object
+    obj.name = name
+    return obj
+
+def boolean(target, tool, op):
+    mod = target.modifiers.new(name=f"{op}_{tool.name}", type='BOOLEAN')
+    mod.operation = op
+    mod.object = tool
+    mod.solver = 'EXACT'
+    bpy.context.view_layer.objects.active = target
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    bpy.data.objects.remove(tool, do_unlink=True)
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete()
+scene = bpy.context.scene
+scene.unit_settings.system = 'METRIC'
+scene.unit_settings.scale_length = 0.001
+
+body = cyl("body", D / 2, H)
+boolean(body, cyl("cavity", D / 2 - WALL, H, z=WALL), 'DIFFERENCE')
+for i in range(4):
+    a = math.radians(45 + 90 * i)
+    r = D / 2 - WALL - 7
+    boolean(body, cyl(f"hole{i}", HOLE / 2, WALL * 3, z=-WALL, x=r * math.cos(a), y=r * math.sin(a), verts=24), 'DIFFERENCE')
+
+lid = cyl("lid", D / 2, WALL)
+plug = cyl("plug", D / 2 - WALL - CLEAR, LID_DEPTH, z=-LID_DEPTH)
+boolean(lid, plug, 'UNION')
+boolean(lid, cyl("bore", D / 2 - 2 * WALL - CLEAR, LID_DEPTH, z=-LID_DEPTH), 'DIFFERENCE')
+lid.location.z += H + 15
+
+for obj, colour in ((body, (0.8, 0.8, 0.78, 1)), (lid, (0.85, 0.4, 0.2, 1))):
+    mat = bpy.data.materials.new(obj.name)
+    mat.diffuse_color = colour
+    obj.data.materials.append(mat)
+
+bpy.ops.export_scene.gltf(filepath="/tmp/enclosure.glb", export_format='GLB')

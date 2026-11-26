@@ -1,0 +1,26 @@
+const { cuboid, cylinder, polygon } = require('@jscad/modeling').primitives;
+const { subtract, union } = require('@jscad/modeling').booleans;
+const { translate, rotateX, rotateY } = require('@jscad/modeling').transforms;
+const { extrudeLinear } = require('@jscad/modeling').extrusions;
+
+const getParameterDefinitions = () => [
+  { name: 'width', type: 'float', initial: 40 },
+  { name: 'length', type: 'float', initial: 60 },
+  { name: 'height', type: 'float', initial: 50 },
+  { name: 'thickness', type: 'float', initial: 6 },
+  { name: 'hole', type: 'float', initial: 6.5 },
+];
+
+const block = (sx, sy, sz, x = 0, y = 0, z = 0) => cuboid({ size: [sx, sy, sz], center: [x + sx / 2, y + sy / 2, z + sz / 2] });
+
+const main = ({ width: W, length: L, height: H, thickness: T, hole }) => {
+  const gusset = translate(
+    [T, W / 2 + 2, T],
+    rotateX(Math.PI / 2, extrudeLinear({ height: 4 }, polygon({ points: [[0, 0], [L * 0.6, 0], [0, H * 0.6]] }))),
+  );
+  const holes = [W / 4, (3 * W) / 4].map((y) => translate([L * 0.7, y, T / 2], cylinder({ radius: hole / 2, height: T * 3, segments: 32 })));
+  const wallHole = translate([T / 2, W / 2, H * 0.75], rotateY(Math.PI / 2, cylinder({ radius: hole / 2, height: T * 3, segments: 32 })));
+  return subtract(union(block(L, W, T), block(T, W, H), gusset), ...holes, wallHole);
+};
+
+module.exports = { main, getParameterDefinitions };

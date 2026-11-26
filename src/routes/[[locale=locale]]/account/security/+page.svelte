@@ -157,8 +157,9 @@ async function startTotpEnable() {
 	// enable() is NOT idempotent — a second call rotates the secret and breaks
 	// an authenticator that already scanned the first QR. The flow state keeps
 	// the button unreachable while enrollment is in progress.
-	const result = await authClient.twoFactor.enable({});
-	if (result.error || !result.data) {
+	// Better Auth 1.7: `method` defaults to "totp"; only that branch carries the URI and codes.
+	const result = await authClient.twoFactor.enable({ method: 'totp' });
+	if (result.error || !result.data || result.data.method !== 'totp') {
 		toast.error(result.error?.message ?? m.account_security_totp_enable_failed());
 		totpFlow = { step: 'idle' };
 		return;

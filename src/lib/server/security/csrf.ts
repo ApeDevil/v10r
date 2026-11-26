@@ -14,7 +14,12 @@ export const CSRF_EXEMPT_PREFIXES = [
 	'/api/webhooks/', // Third-party webhooks (HMAC signature)
 	'/api/analytics/journey', // navigator.sendBeacon (no custom headers possible)
 	'/api/a2a', // A2A JSON-RPC: public, unauthenticated, read-only (no ambient cookie authority); agent clients can't send X-Requested-With
-	'/api/mcp/', // MCP over HTTP: no ambient cookie auth (admin=Bearer, public=unauth read-only), so CSRF is moot; non-browser clients can't send X-Requested-With
+	// MCP over HTTP. No MCP endpoint reads the session cookie: admin/private take a static
+	// Bearer, 3d takes an OAuth access token in the Authorization header (verifyResourceAccess),
+	// public is unauthenticated read-only. With no ambient cookie authority a cross-site request
+	// carries nothing to abuse, so CSRF is moot — and MCP clients cannot send X-Requested-With.
+	// Keep it that way: never let an /api/mcp/* route fall back to locals.user.
+	'/api/mcp/',
 ] as const;
 
 /**

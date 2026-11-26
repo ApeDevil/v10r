@@ -88,20 +88,22 @@ function inspectPrimitive(primitive: MeshPrimitive, findings: AssetDiagnostic[])
 	const bits = new Uint32Array(positions.buffer, positions.byteOffset, positions.length);
 	const welded = new Uint32Array(vertexCount);
 	const buckets = new Map<number, number[]>();
-	for (let v = 0; v < vertexCount; v++) {
-		const x = bits[3 * v];
-		const y = bits[3 * v + 1];
-		const z = bits[3 * v + 2];
-		const hash = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663) ^ Math.imul(z, 83492791)) >>> 0;
-		const bucket = buckets.get(hash);
-		const same = bucket?.find((u) => bits[3 * u] === x && bits[3 * u + 1] === y && bits[3 * u + 2] === z);
-		if (same !== undefined) welded[v] = same;
-		else {
-			welded[v] = v;
-			if (bucket) bucket.push(v);
-			else buckets.set(hash, [v]);
+	if (primitive.topology && primitive.topology.length === vertexCount) welded.set(primitive.topology);
+	else
+		for (let v = 0; v < vertexCount; v++) {
+			const x = bits[3 * v];
+			const y = bits[3 * v + 1];
+			const z = bits[3 * v + 2];
+			const hash = (Math.imul(x, 73856093) ^ Math.imul(y, 19349663) ^ Math.imul(z, 83492791)) >>> 0;
+			const bucket = buckets.get(hash);
+			const same = bucket?.find((u) => bits[3 * u] === x && bits[3 * u + 1] === y && bits[3 * u + 2] === z);
+			if (same !== undefined) welded[v] = same;
+			else {
+				welded[v] = v;
+				if (bucket) bucket.push(v);
+				else buckets.set(hash, [v]);
+			}
 		}
-	}
 	const countEdge = (edges: Map<number, number>, p: number, q: number) => {
 		const wp = welded[p];
 		const wq = welded[q];
@@ -147,8 +149,15 @@ function inspectPrimitive(primitive: MeshPrimitive, findings: AssetDiagnostic[])
 		volume += shellVolume;
 	}
 
+	// In a kernel-built primitive the shells are welded by the kernel's own topology, so a
+	// zero-area triangle cannot hide an open edge: it is a sliver the kernel's triangulation left
+	// (collinear points), reported but not fatal. Anywhere else it is a generator bug.
 	if (degenerate > 0)
-		findings.push(assetDiagnostic('mesh.degenerate-triangle', name, `${degenerate} triangles have no area.`));
+		findings.push(
+			primitive.topology
+				? assetDiagnostic('mesh.sliver-triangle', name, `${degenerate} zero-area triangles inside a closed solid.`)
+				: assetDiagnostic('mesh.degenerate-triangle', name, `${degenerate} triangles have no area.`),
+		);
 	if (openShells > 0)
 		findings.push(
 			assetDiagnostic(

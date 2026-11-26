@@ -43,3 +43,15 @@ export function sanitizeInternalPath(raw: string | null | undefined): string | n
 		return null;
 	}
 }
+
+/** Where the OAuth authorization endpoint lives — the one internal path that is not a page. */
+export const AUTHORIZATION_ENDPOINT_PATH = '/api/auth/oauth2/authorize';
+
+/**
+ * True when a sanitized `returnTo` resumes an OAuth authorization request (an external
+ * application waiting for this user's sign-in). Such a path is a server endpoint, not a
+ * localized page: it must be reached by a full navigation, never `localizeHref` or `goto`.
+ */
+export function isAuthorizationResumePath(path: string): boolean {
+	return path.startsWith(`${AUTHORIZATION_ENDPOINT_PATH}?`);
+}

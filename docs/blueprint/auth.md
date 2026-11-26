@@ -689,6 +689,18 @@ DELETE /api/admin/users/[id]/grants/[kind]  — revoke capability
 
 ---
 
+## External Applications (OAuth Provider)
+
+Velociraptor is also an OAuth 2.1 **authorization server** for external applications, such
+as MCP hosts, that act on a signed-in user's behalf. It uses `@better-auth/oauth-provider`,
+`@better-auth/cimd` and `jwt()` in the same Better Auth instance. The decision, flow,
+registration policy, revocation window and quotas are in
+[architecture/mcp-authorization.md](./architecture/mcp-authorization.md). A user's
+permission for one application is an **application authorization**, reviewed and revoked at
+`/account/connections`. Sessions, grants and the sign-in flows above are untouched. The one
+addition is that the login page carries an OAuth authorization request across sign-in as
+`returnTo`.
+
 ## Route Protection
 
 ### Server-Side (Recommended)

@@ -1,0 +1,198 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`m1 link compatibility > bracket keeps its geometry 1`] = `
+{
+  "closedManifold": true,
+  "components": [
+    {
+      "genus": 3,
+      "material": "metal",
+      "name": "bracket",
+      "size": [
+        60,
+        40,
+        50,
+      ],
+      "volume": 26644.781,
+    },
+  ],
+  "triangles": 444,
+}
+`;
+
+exports[`m1 link compatibility > enclosure keeps its geometry 1`] = `
+{
+  "closedManifold": true,
+  "components": [
+    {
+      "genus": 4,
+      "material": "plastic",
+      "name": "body",
+      "size": [
+        60,
+        60,
+        40,
+      ],
+      "volume": 28243.503,
+    },
+    {
+      "genus": 0,
+      "material": "accent",
+      "name": "lid",
+      "size": [
+        60,
+        60,
+        8,
+      ],
+      "volume": 10859.012,
+    },
+  ],
+  "triangles": 2312,
+}
+`;
+
+exports[`m1 link compatibility > lamp keeps its geometry 1`] = `
+{
+  "closedManifold": true,
+  "components": [
+    {
+      "genus": 19,
+      "material": "ceramic",
+      "name": "soft",
+      "size": [
+        90,
+        90,
+        90,
+      ],
+      "volume": 52951.673,
+    },
+    {
+      "genus": 0,
+      "material": "metal",
+      "name": "stand",
+      "size": [
+        70,
+        70,
+        60,
+      ],
+      "volume": 30093.833,
+    },
+  ],
+  "triangles": 5660,
+}
+`;
+
+exports[`m1 link compatibility > organic keeps its geometry 1`] = `
+{
+  "closedManifold": true,
+  "components": [
+    {
+      "genus": 0,
+      "material": "wood",
+      "name": "terrain",
+      "size": [
+        80,
+        80,
+        8.996,
+      ],
+      "volume": 38400,
+    },
+    {
+      "genus": 1,
+      "material": "ceramic",
+      "name": "creature",
+      "size": [
+        30.99,
+        23.999,
+        35.994,
+      ],
+      "volume": 7691.329,
+    },
+    {
+      "genus": 0,
+      "material": "accent",
+      "name": "column",
+      "size": [
+        12,
+        12,
+        30,
+      ],
+      "volume": 767.26,
+    },
+  ],
+  "triangles": 24010,
+}
+`;
+
+exports[`m1 link compatibility > perforated keeps its geometry 1`] = `
+{
+  "closedManifold": true,
+  "components": [
+    {
+      "genus": 96,
+      "material": "metal",
+      "name": "perforated",
+      "size": [
+        130,
+        90,
+        3,
+      ],
+      "volume": 32318.489,
+    },
+  ],
+  "triangles": 9740,
+}
+`;
+
+exports[`m1 link compatibility > primitives keeps its geometry 1`] = `
+{
+  "closedManifold": true,
+  "components": [
+    {
+      "genus": 0,
+      "material": "metal",
+      "name": "cube",
+      "size": [
+        25.634,
+        25.634,
+        20,
+      ],
+      "volume": 8000,
+    },
+    {
+      "genus": 0,
+      "material": "ceramic",
+      "name": "ball",
+      "size": [
+        20,
+        20,
+        20,
+      ],
+      "volume": 4146.861,
+    },
+    {
+      "genus": 0,
+      "material": "accent",
+      "name": "cone",
+      "size": [
+        20,
+        20,
+        20,
+      ],
+      "volume": 2088.419,
+    },
+    {
+      "genus": 1,
+      "material": "rubber",
+      "name": "ring",
+      "size": [
+        25,
+        14.957,
+        22.278,
+      ],
+      "volume": 1200.305,
+    },
+  ],
+  "triangles": 3306,
+}
+`;

@@ -1,0 +1,31 @@
+const { cylinder } = require('@jscad/modeling').primitives;
+const { subtract, union } = require('@jscad/modeling').booleans;
+const { translate, rotateZ } = require('@jscad/modeling').transforms;
+const { colorize } = require('@jscad/modeling').colors;
+
+const getParameterDefinitions = () => [
+  { name: 'diameter', type: 'float', initial: 60 },
+  { name: 'height', type: 'float', initial: 40 },
+  { name: 'wall', type: 'float', initial: 3 },
+  { name: 'lidDepth', type: 'float', initial: 5 },
+  { name: 'hole', type: 'float', initial: 3.2 },
+  { name: 'clearance', type: 'float', initial: 0.2 },
+];
+
+const cyl = (radius, height, z = 0, segments = 96) =>
+  translate([0, 0, z + height / 2], cylinder({ radius, height, segments }));
+
+const main = ({ diameter: D, height: H, wall: W, lidDepth: L, hole, clearance: C }) => {
+  const r = D / 2 - W - 7;
+  const holes = [0, 1, 2, 3].map((i) =>
+    rotateZ(((45 + 90 * i) * Math.PI) / 180, translate([r, 0, 0], cyl(hole / 2, W * 3, -W, 24))),
+  );
+  const body = subtract(cyl(D / 2, H), cyl(D / 2 - W, H, W), ...holes);
+  const lid = translate(
+    [0, 0, H + 15],
+    subtract(union(cyl(D / 2, W), cyl(D / 2 - W - C, L, -L)), cyl(D / 2 - 2 * W - C, L, -L)),
+  );
+  return [colorize([0.8, 0.8, 0.78], body), colorize([0.85, 0.4, 0.2], lid)];
+};
+
+module.exports = { main, getParameterDefinitions };

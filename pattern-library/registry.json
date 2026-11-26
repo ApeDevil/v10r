@@ -850,6 +850,133 @@
 			"verifiedAt": "2026-11-21"
 		},
 		{
+			"id": "architecture-mcp-authorization",
+			"tier": "deep",
+			"title": "Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)",
+			"category": "architecture",
+			"summary": "A specialized MCP service that needs a user account becomes an OAuth protected resource with its own audience and scope, and the app becomes its own OAuth 2.1 authorization server on the Better Auth it already runs — PKCE, RFC 9728/8414 discovery, resource-bound JWT access tokens with a per-request liveness check, Client ID Metadata Documents first and bounded Dynamic Client Registration, an authorization page that labels untrusted client metadata, and a connected-applications page whose revoke takes effect on the next request.",
+			"when_to_use": "Use when an MCP host (Claude, ChatGPT, an IDE agent) should call one of your MCP endpoints on behalf of a signed-in user of your app, with per-user quotas, consent the user can review and revoke, and no static shared secret.",
+			"avoid_when": [
+				"The surface is read-only and reveals nothing per user — keep it public and rate-limited",
+				"Only the operator's own tools call it — a static bearer realm (the private Pattern MCP) is simpler",
+				"The app has no user accounts — there is no one for the host to act on behalf of"
+			],
+			"alternatives": [
+				{
+					"approach": "A static bearer token per deployment",
+					"prefer_when": "the only caller is the operator's own projects and per-user identity does not matter"
+				},
+				{
+					"approach": "An external identity provider as the authorization server (Auth0, Keycloak, Clerk)",
+					"prefer_when": "the app's own auth cannot issue OAuth tokens, or enterprise federation is the requirement"
+				},
+				{
+					"approach": "Public endpoint with IP rate limits",
+					"prefer_when": "the service reads and writes nothing per user and abuse is not observed"
+				}
+			],
+			"requires": [],
+			"capabilities": [
+				"mcp authorization",
+				"oauth authorization server",
+				"protected resource",
+				"per-user mcp quota",
+				"client registration",
+				"token revocation",
+				"connected applications"
+			],
+			"keywords": [
+				"oauth 2.1",
+				"pkce",
+				"protected resource metadata",
+				"rfc 9728",
+				"resource indicator",
+				"audience",
+				"cimd",
+				"client id metadata document",
+				"dynamic client registration",
+				"dcr",
+				"better auth",
+				"oauth-provider",
+				"bearer challenge",
+				"www-authenticate",
+				"revocation"
+			],
+			"depends_on": ["architecture-hosted-mcp", "identity-passwordless-auth", "anti-abuse-rate-limiting"],
+			"docs": [
+				{
+					"path": "docs/blueprint/architecture/mcp-authorization.md",
+					"note": "Decision record: shape, adding a service, registration comparison, tokens and revocation window, authorization page, quotas and worst case, refusals, CSRF, privacy, account lifecycle"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/auth/protected-mcp-services.ts",
+					"note": "One entry per protected service: id, path, scope; audience and metadata URL derive from it"
+				},
+				{
+					"path": "src/lib/server/auth/resource-access.ts",
+					"note": "verifyResourceAccess: challenge, upstream JWT verification, liveness; protected resource metadata"
+				},
+				{
+					"path": "src/lib/server/auth/application-authorizations.ts",
+					"note": "Liveness query, one-transaction revocation, the list a user reviews"
+				},
+				{
+					"path": "src/lib/server/auth/application-identity.ts",
+					"note": "Verified domain vs self-declared, recognized by domain never by name"
+				},
+				{
+					"path": "src/lib/server/auth/index.ts",
+					"note": "jwt + oauthProvider + cimd configuration"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/auth/authorize/+page.svelte",
+					"note": "The authorization page"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/account/connections/+page.svelte",
+					"note": "Connected applications with revoke"
+				},
+				{
+					"path": "src/routes/api/mcp/3d/+server.ts",
+					"note": "A protected service: entry limit, resource access, per-account limits, in-flight bound"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/auth/mcp-authorization.pglite.test.ts",
+					"note": "Full flow against the real Better Auth instance and Postgres: discovery, DCR and CIMD, PKCE + resource, audience and scope refusals, refresh rotation, revocation, ban, deletion, every method refused without a token"
+				},
+				{
+					"path": "src/lib/server/auth/application-identity.test.ts",
+					"note": "Identity labelling and name sanitizing"
+				},
+				{
+					"path": "src/lib/server/auth/authorization-request.test.ts",
+					"note": "The authorization request survives sign-in as returnTo"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"Every JSON-RPC request to a protected service, initialize and app-only tools included, is refused with a 401 bearer challenge before any body is parsed unless it carries a token for that service's audience and scope.",
+				"A JSON-RPC client never receives an HTML redirect: refusals are JSON with WWW-Authenticate.",
+				"Revocation and suspension take effect on the next request: the liveness check runs on every call, and revoking deletes the authorization and its tokens in one transaction.",
+				"A client's self-declared name is never presented as verified; recognition keys on the verified metadata-document domain.",
+				"Quotas key on the user, not the IP: all of one user's clients share one allowance.",
+				"No token, code, secret or PKCE verifier is logged, and the MCP endpoint never reads the session cookie."
+			],
+			"emulation_notes": [
+				"Infer native for loopback DCR redirects (clientRegistrationDefaultApplicationType: 'infer'), or MCP Inspector and Claude Code fail with invalid_redirect_uri.",
+				"Include offline_access in each resource's allowedScopes, or the first refresh returns no rotated refresh token.",
+				"Link clients to the resources at registration (clientRegistrationDefaultResources), or authorize fails with invalid_target.",
+				"Upstream delete-consent leaves refresh tokens alive; revoke tokens yourself.",
+				"The PRM resource must equal the URL the user pastes, exactly (Claude compares them)."
+			],
+			"risk": "high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment",
+			"maturity": "implemented"
+		},
+		{
 			"id": "architecture-agentic-architecture",
 			"tier": "deep",
 			"category": "architecture",
@@ -7250,7 +7377,7 @@
 			"avoid_when": [
 				"The assets are authored by hand in a DCC tool and only need viewing — the model viewer pattern is enough",
 				"The geometry needs B-rep CAD operations (fillets, STEP exchange, tolerances) — use a CAD kernel (OpenCascade via replicad) behind the same request and report",
-				"The target needs one booleaned watertight solid (3D printing, volumes) — add a CSG union (manifold-3d) first; this pipeline proves closed shells, not a union",
+				"The target needs one booleaned watertight solid (3D printing, volumes) — describe it as a parametric model (agentic-parametric-modeling), which runs Manifold behind this same pipeline",
 				"Imported user files must be converted, decimated, unwrapped or baked — that is Blender's job, in a container worker with typed operations"
 			],
 			"alternatives": [
@@ -7396,6 +7523,165 @@
 			"maturity": "proven",
 			"verifiedAt": "2026-10-29",
 			"verifiedSha": "6a2cd80-dirty"
+		},
+		{
+			"id": "agentic-parametric-modeling",
+			"tier": "deep",
+			"title": "Agentic parametric modeling (MCP 3D)",
+			"category": "3d",
+			"summary": "An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) engine inside the asset production pipeline validates, builds, inspects and encodes it on a separate stateless MCP service, in the visitor's browser and in tests alike, and a model link in the URL fragment reproduces it anywhere without storage. An MCP App draws a server-side preview mesh; the native viewer runs the kernel in a Web Worker.",
+			"when_to_use": "Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.",
+			"avoid_when": [
+				"The geometry needs B-rep CAD (fillets, chamfers, STEP, tolerances) — put a CAD kernel (OpenCascade/replicad) behind the same contract",
+				"Models must be private, versioned or collaborative — that needs storage and retention, which this pattern deliberately has none of",
+				"The input is existing meshes or scans to repair, convert or bake — that is a Blender or mesh-processing worker, not a feature graph"
+			],
+			"alternatives": [
+				{
+					"approach": "The assistant writes Blender Python or Three.js/JSCAD code and a sandbox runs it",
+					"prefer_when": "the operations cannot be enumerated in advance and a hardened, isolated code sandbox already exists"
+				},
+				{
+					"approach": "A per-user model store with ids and edit history",
+					"prefer_when": "models must outlive the conversation privately or be edited by several people"
+				},
+				{
+					"approach": "Asset production pipeline with fixed generators",
+					"prefer_when": "the object family is fixed (a configurator) and only its parameters change"
+				}
+			],
+			"requires": ["web-worker"],
+			"capabilities": [
+				"parametric 3d modeling",
+				"ai tool for 3d",
+				"mcp server",
+				"mcp app",
+				"csg booleans",
+				"stateless sharing",
+				"glb export",
+				"stl export",
+				"mesh validation",
+				"deterministic build"
+			],
+			"keywords": [
+				"mcp 3d",
+				"parametric",
+				"feature graph",
+				"manifold",
+				"csg",
+				"boolean",
+				"wasm",
+				"model link",
+				"url fragment",
+				"mcp apps",
+				"threlte",
+				"stl",
+				"glb",
+				"agentic",
+				"declarative"
+			],
+			"depends_on": [
+				"asset-production-pipeline",
+				"architecture-mcp-authorization",
+				"architecture-hosted-mcp",
+				"ai-mcp-app-provider",
+				"anti-abuse-rate-limiting",
+				"3d-threlte-integration"
+			],
+			"docs": [
+				{
+					"path": "docs/blueprint/3d/parametric-modeling.md",
+					"note": "The full pattern: responsibilities, model format, engine measurement, evaluation, the MCP 3D service and access (an account, via OAuth), viewing, statelessness, limits, performance, token cost, host compatibility, exports, deployment"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/schemas/parametric-model.ts",
+					"note": "The model contract and every limit"
+				},
+				{
+					"path": "src/lib/asset-production/modeling",
+					"kind": "dir",
+					"note": "Framework-free domain: expressions, resolution and estimate, Manifold evaluation, model links, patches, preview mesh, runParametricModel"
+				},
+				{
+					"path": "src/lib/asset-production/generators/parametric-model.ts",
+					"note": "The model as an asset production generator"
+				},
+				{
+					"path": "src/lib/server/mcp/modeling/tools.ts",
+					"note": "The MCP 3D tool registry"
+				},
+				{
+					"path": "src/routes/api/mcp/3d/+server.ts",
+					"note": "The protected endpoint: entry limit, resource access, per-account limits, in-flight bound, no telemetry"
+				},
+				{
+					"path": "src/lib/server/mcp/apps/model-viewer.ts",
+					"note": "The 3D Viewer MCP App resource"
+				},
+				{
+					"path": "src/lib/server/mcp/apps/view/model-viewer.ts",
+					"note": "The View program (Three.js, ext-apps bridge)"
+				},
+				{
+					"path": "src/lib/workers/model-evaluation.worker.ts",
+					"note": "The browser execution environment"
+				},
+				{
+					"path": "src/lib/components/3d/ModelViewer.svelte",
+					"note": "The native viewer"
+				},
+				{
+					"path": "src/routes/[[locale=locale]]/(public)/3d/view/+page.svelte",
+					"note": "The model-link viewer /3d/view#m1.…"
+				},
+				{
+					"path": "scripts/asset-production/modeling-bench.ts",
+					"note": "Performance measurements"
+				},
+				{
+					"path": "scripts/asset-production/modeling-tokens.ts",
+					"note": "Token-cost measurements against code baselines"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/asset-production/modeling/modeling.test.ts",
+					"note": "Expressions and refusals, analytic volume and genus, all examples closed, determinism, GLB/STL, preview, budget, deadline, patches, links and the compression bomb"
+				},
+				{
+					"path": "src/lib/server/mcp/modeling/tools.test.ts",
+					"note": "Catalogue separation from the Pattern MCP, App wiring and app-only visibility, answers, refusals, patches, exact downloads"
+				},
+				{
+					"path": "src/lib/asset-production/modeling/link-compatibility.test.ts",
+					"note": "The m1 compatibility pin: every example's triangles, manifold status, size, volume and genus"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/3d/mcp",
+					"kind": "route"
+				}
+			],
+			"invariants": [
+				"The assistant sends a definition, never code: no field, operation or expression can name a script, a file, a URL or an engine flag.",
+				"One engine for every surface: MCP tools, the App's geometry, the native viewer, the showcase and the tests all call runParametricModel, and the same model gives the same GLB bytes on Node, Bun and the browser.",
+				"Nothing is stored: every call carries the whole model, modify_model returns the whole new model, and a model link carries it in the URL fragment.",
+				"A model over any limit is refused before the kernel runs, with the path of the field; the real triangle count and a deadline are checked between operations.",
+				"Model definitions are never logged, traced or recorded.",
+				"The MCP 3D service shares protocol infrastructure with the Pattern MCP and nothing else: separate endpoint, identity, registry, App and limits.",
+				"The MCP 3D service requires a Velociraptor account: an OAuth access token for its audience on every request (architecture-mcp-authorization)."
+			],
+			"emulation_notes": [
+				"Advertise the model argument as a plain object and serve the vocabulary from a describe tool: a full JSON Schema in tools/list costs ~9k tokens per connection.",
+				"Do not run WASM inside an MCP App: host CSPs refuse compilation; return a compact preview mesh from an app-only tool.",
+				"Put shared models in the URL fragment, never the query string, and bound the decoder (length, inflate size, ratio).",
+				"Measure token cost and host behaviour before claiming either; the numbers in the doc are dated development measurements."
+			],
+			"risk": "medium — per-account CPU per call (bounded by schema, estimate, budget, deadline, per-account and surface limits); mesh checks prove closed manifolds, never printability or strength; not yet exercised in a real MCP host with authorization",
+			"maturity": "implemented"
 		},
 		{
 			"id": "content-blog-engine",

@@ -9,10 +9,14 @@
  * Three.js is used for its `Vector3` arithmetic only.
  */
 import { Vector3 } from 'three';
+import type { ModelMaterial } from '#lib/schemas/parametric-model.ts';
 import type { Vec3 } from '#lib/schemas/product-composition.ts';
 
-/** What a primitive is drawn as. The encoder maps a role to a glTF material; a viewer may restyle it by name. */
-export type MaterialRole = 'structure' | 'hub' | 'module';
+/**
+ * What a primitive is drawn as. The encoder maps a role to a glTF material; a viewer may restyle
+ * it by name. The structural ring's roles, then the finishes a parametric model can name.
+ */
+export type MaterialRole = 'structure' | 'hub' | 'module' | ModelMaterial;
 
 /** One closed surface inside a primitive: a contiguous run of triangles. */
 export interface MeshShell {
@@ -29,6 +33,13 @@ export interface MeshPrimitive {
 	normals: Float32Array;
 	indices: Uint32Array;
 	shells: readonly MeshShell[];
+	/**
+	 * For a kernel-built primitive: the kernel vertex each vertex was split from (normals split a
+	 * vertex at a crease). When present, inspection welds shells by it — the kernel's own
+	 * topology — instead of by exact position, because a solid may legitimately touch itself at
+	 * a point or an edge, where two distinct vertices share one position.
+	 */
+	topology?: Uint32Array;
 }
 
 /** An axis-aligned box in metres. */
@@ -37,11 +48,28 @@ export interface MeshBounds {
 	max: Vec3;
 }
 
+/**
+ * What a solid-modeling kernel knows about one primitive it built, in the generator's own units
+ * (a parametric model's `units`). Only a kernel that builds solids reports these.
+ */
+export interface SolidFacts {
+	name: string;
+	/** The kernel built a closed, oriented 2-manifold (Manifold's guarantee, re-checked by inspection). */
+	closedManifold: boolean;
+	/** Through-holes of the solid (a plate with four holes has genus 4). */
+	genus: number;
+	volume: number;
+	surfaceArea: number;
+	bounds: MeshBounds;
+}
+
 /** Everything a generator hands on: primitives in a fixed order, and the box the geometry must stay inside. */
 export interface GeneratedMesh {
 	primitives: readonly MeshPrimitive[];
 	/** Declared from the parameters alone; inspection fails geometry that leaves it. */
 	envelope: MeshBounds;
+	/** One entry per primitive, in order, when a solid kernel built them. */
+	solids?: readonly SolidFacts[];
 }
 
 /** Vertex and triangle counts, exact, known before a builder runs — what the budget gate compares. */

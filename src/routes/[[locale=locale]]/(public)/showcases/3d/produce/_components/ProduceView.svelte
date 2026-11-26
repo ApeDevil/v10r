@@ -9,6 +9,7 @@ import {
 	DEFAULT_ASSET_BUDGET,
 	structuralRingGenerator,
 } from '#lib/asset-production/index.ts';
+import { AssetCanvas } from '#lib/components/3d/index.ts';
 import { Alert, Card, DiagGrid, DiagRow } from '#lib/components/composites/index.ts';
 import { Badge, Button, Select, Slider, Spinner, ToggleGroup } from '#lib/components/primitives/index.ts';
 import * as m from '#lib/paraglide/messages.js';
@@ -18,9 +19,7 @@ import {
 	STRUCTURAL_RING_BOUNDS,
 	type StructuralRingParameters,
 } from '#lib/schemas/asset-production.ts';
-
 import { PRODUCE_PRESETS, type ProducePresetId } from '#lib/showcases/3d/produce/presets.ts';
-import AssetCanvas from './AssetCanvas.svelte';
 
 /** Read in the markup too; a script-level value keeps the import a value import. */
 const BOUNDS = STRUCTURAL_RING_BOUNDS;

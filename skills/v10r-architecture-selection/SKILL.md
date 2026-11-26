@@ -1,6 +1,6 @@
 ---
 name: v10r-architecture-selection
-description: "Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (Foundations, Data, Identity & Safety, Intelligence, Features, Velocity, Integrity), before reading any single pattern: it maps the 197 registry patterns to the v10r group agent skills, explains requires/depends_on, and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected."
+description: "Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (Foundations, Data, Identity & Safety, Intelligence, Features, Velocity, Integrity), before reading any single pattern: it maps the 199 registry patterns to the v10r group agent skills, explains requires/depends_on, and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected."
 license: MIT
 metadata:
   source: "v10r pattern-library registry"
@@ -38,10 +38,10 @@ Maturity is evidence, not opinion: **proven** = a linked test or showcase, verif
 
 | Agent skill | Covers | Patterns (deep) |
 |---|---|---|
-| `v10r-foundations` | Architecture & Request Pipeline, App Shell & Navigation, UI Components & Design System, Forms & Validation, Internationalization (i18n), Docs & Agent Experience | 64 (15) |
+| `v10r-foundations` | Architecture & Request Pipeline, App Shell & Navigation, UI Components & Design System, Forms & Validation, Internationalization (i18n), Docs & Agent Experience | 65 (16) |
 | `v10r-data` | Databases & Storage, Database Operations | 13 (0) |
 | `v10r-identity-safety` | Identity & Access, Anti-Abuse, Admin & Privacy | 20 (1) |
 | `v10r-intelligence` | AI, Toolkits, Office Workflows | 28 (13) |
-| `v10r-features` | Analytics, Notifications, Jobs & Scheduling, PWA, Data Viz, 3D, Content & Blog, Desk Workspace, External Integrations | 42 (5) |
+| `v10r-features` | Analytics, Notifications, Jobs & Scheduling, PWA, Data Viz, 3D, Content & Blog, Desk Workspace, External Integrations | 43 (6) |
 | `v10r-velocity` | Interaction Velocity, Data Velocity, Runtime Velocity, Velocity Measurement | 22 (19) |
 | `v10r-integrity` | Truth & Evidence, Derivation & Provenance, Durable Execution | 8 (8) |

@@ -35,6 +35,7 @@ import { conversation } from '#lib/server/db/schema/ai/conversation.ts';
 import { turn } from '#lib/server/db/schema/ai/turn.ts';
 import { userEvents } from '#lib/server/db/schema/analytics/index.ts';
 import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
+import { oauthClient, oauthConsent } from '#lib/server/db/schema/auth/oauth-provider.ts';
 import { comment } from '#lib/server/db/schema/blog/comment.ts';
 import { file as deskFile } from '#lib/server/db/schema/desk/file.ts';
 import { deskWorkspace } from '#lib/server/db/schema/desk/workspace.ts';
@@ -85,6 +86,21 @@ export interface PersonalDataReport {
 			hasAccessToken: boolean;
 			hasRefreshToken: boolean;
 			accessTokenExpiresAt: string | null;
+		}[]
+	>;
+	/**
+	 * External applications (OAuth clients such as MCP hosts) the user authorized to call a
+	 * protected service. The client's name is what it declared about itself; no token, code or
+	 * secret is ever part of this section, and no model the application sent is stored at all.
+	 */
+	applicationAuthorizations: Section<
+		{
+			clientId: string;
+			declaredName: string | null;
+			scopes: string[];
+			resources: string[] | null;
+			authorizedAt: string;
+			updatedAt: string;
 		}[]
 	>;
 	preferences: Section<Record<string, unknown> | null>;
@@ -223,6 +239,7 @@ export async function collectUserData(
 		identity,
 		sessions,
 		oauthAccounts,
+		applicationAuthorizations,
 		preferences,
 		ai,
 		desk,
@@ -270,6 +287,25 @@ export async function collectUserData(
 				hasAccessToken: a.hasAccessToken,
 				hasRefreshToken: a.hasRefreshToken,
 				accessTokenExpiresAt: a.accessTokenExpiresAt?.toISOString() ?? null,
+			}));
+		}),
+		settle('contract', false, async () => {
+			const rows = await db
+				.select({
+					clientId: oauthConsent.clientId,
+					declaredName: oauthClient.name,
+					scopes: oauthConsent.scopes,
+					resources: oauthConsent.resources,
+					authorizedAt: oauthConsent.createdAt,
+					updatedAt: oauthConsent.updatedAt,
+				})
+				.from(oauthConsent)
+				.innerJoin(oauthClient, eq(oauthClient.clientId, oauthConsent.clientId))
+				.where(eq(oauthConsent.userId, userId));
+			return rows.map((r) => ({
+				...r,
+				authorizedAt: r.authorizedAt.toISOString(),
+				updatedAt: r.updatedAt.toISOString(),
 			}));
 		}),
 		settle('consent', true, async () => {
@@ -477,6 +513,7 @@ export async function collectUserData(
 		identity,
 		sessions,
 		oauthAccounts,
+		applicationAuthorizations,
 		preferences,
 		ai,
 		desk,

@@ -11,11 +11,20 @@ export const ASSET_DIAGNOSTIC_SEVERITY = {
 	'parameter.conflict': 'error',
 	'budget.triangles': 'error',
 	'budget.vertices': 'error',
+	// Parametric model (the feature graph): refused before the kernel runs, or by the kernel.
+	'model.invalid-expression': 'error',
+	'model.unknown-reference': 'error',
+	'model.invalid-value': 'error',
+	'model.limit': 'error',
+	'model.empty-result': 'error',
+	'model.kernel-error': 'error',
 	// Mesh inspection.
 	'mesh.empty': 'error',
 	'mesh.non-finite': 'error',
 	'mesh.index-out-of-range': 'error',
 	'mesh.degenerate-triangle': 'error',
+	// A zero-area triangle inside a kernel-built solid whose topology is checked closed.
+	'mesh.sliver-triangle': 'warning',
 	'mesh.open-shell': 'error',
 	'mesh.inverted-shell': 'error',
 	'mesh.outside-envelope': 'error',

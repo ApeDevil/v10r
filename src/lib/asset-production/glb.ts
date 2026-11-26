@@ -26,13 +26,20 @@ const ELEMENT_ARRAY_BUFFER = 34963;
 const TRIANGLES = 4;
 
 /** Physically based defaults per role. Asset data, not UI colour: a viewer restyles by material name. */
-const MATERIAL_PBR: Record<
+export const MATERIAL_PBR: Record<
 	MaterialRole,
 	{ baseColorFactor: number[]; metallicFactor: number; roughnessFactor: number }
 > = {
 	structure: { baseColorFactor: [0.62, 0.64, 0.68, 1], metallicFactor: 0.85, roughnessFactor: 0.4 },
 	hub: { baseColorFactor: [0.45, 0.47, 0.52, 1], metallicFactor: 0.7, roughnessFactor: 0.45 },
 	module: { baseColorFactor: [0.86, 0.85, 0.8, 1], metallicFactor: 0.1, roughnessFactor: 0.65 },
+	metal: { baseColorFactor: [0.7, 0.72, 0.75, 1], metallicFactor: 0.9, roughnessFactor: 0.35 },
+	plastic: { baseColorFactor: [0.8, 0.8, 0.78, 1], metallicFactor: 0, roughnessFactor: 0.55 },
+	wood: { baseColorFactor: [0.62, 0.45, 0.3, 1], metallicFactor: 0, roughnessFactor: 0.8 },
+	rubber: { baseColorFactor: [0.15, 0.15, 0.16, 1], metallicFactor: 0, roughnessFactor: 0.95 },
+	glass: { baseColorFactor: [0.75, 0.85, 0.9, 1], metallicFactor: 0, roughnessFactor: 0.08 },
+	ceramic: { baseColorFactor: [0.93, 0.92, 0.88, 1], metallicFactor: 0, roughnessFactor: 0.3 },
+	accent: { baseColorFactor: [0.85, 0.4, 0.2, 1], metallicFactor: 0.2, roughnessFactor: 0.5 },
 };
 
 const pad4 = (n: number) => (n + 3) & ~3;

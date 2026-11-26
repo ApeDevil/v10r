@@ -317,6 +317,11 @@ export const showcases: ShowcaseCard[] = [
 				href: '/showcases/3d/produce',
 				docs: [{ href: '/docs/blueprint/3d/asset-production', label: 'Asset Production' }],
 			},
+			{
+				label: m.showcase_3d_tab_mcp,
+				href: '/showcases/3d/mcp',
+				docs: [{ href: '/docs/blueprint/3d/parametric-modeling', label: 'Parametric Modeling' }],
+			},
 		],
 	},
 	{

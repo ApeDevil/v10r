@@ -16,7 +16,13 @@ export {
 	type EngineRun,
 	proceduralEngine,
 } from './engine.ts';
-export { ASSET_GENERATORS, type AssetGenerator, generatorFor, structuralRingGenerator } from './generators/index.ts';
+export {
+	ASSET_GENERATORS,
+	type AssetGenerator,
+	generatorFor,
+	parametricModelGenerator,
+	structuralRingGenerator,
+} from './generators/index.ts';
 export { encodeGlb, type GlbOptions, type GlbSummary, readGlb } from './glb.ts';
 export { inspectMesh, type MeshInspection, type PrimitiveInspection } from './inspect.ts';
 export {
@@ -28,6 +34,7 @@ export {
 	type MeshCost,
 	type MeshPrimitive,
 	type MeshShell,
+	type SolidFacts,
 	tubeCost,
 } from './mesh.ts';
 export {

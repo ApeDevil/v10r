@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 197 patterns (61 deep cards / 136 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 199 patterns (63 deep cards / 136 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -21,6 +21,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Pattern MCP (agent-queryable pattern registry, local stdio)](./architecture-pattern-mcp.md)
 - [Hosted MCP (four trust surfaces: public · private · admin · admin page)](./architecture-hosted-mcp.md)
 - [**MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)**](./architecture-mcp-evolution.md)
+- [**Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)**](./architecture-mcp-authorization.md)
 - [**Agentic architecture (one application architecture, optional interoperability doors)**](./architecture-agentic-architecture.md)
 - [Rust→wasm compute kernel (vendored, plugin-free)](./architecture-wasm-kernel.md)
 - [**External service runtime (a separately deployed backend behind a typed client)**](./architecture-external-service.md)
@@ -220,6 +221,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Full-screen model viewer & customizer (layout reset)](./3d-model-viewer-customizer.md)
 - [**Product composition engine (typed ports, couplings, conduits)**](./product-connection-engine.md)
 - [**Asset production pipeline (typed request → checked GLB)**](./asset-production-pipeline.md)
+- [**Agentic parametric modeling (MCP 3D)**](./agentic-parametric-modeling.md)
 
 ### Content & Blog
 

@@ -19,6 +19,8 @@ import { isAdminUserId, logAdminConfig } from '#lib/server/auth/admin-ids.ts';
 import {
 	CALLBACK_RATE_LIMIT_MAX,
 	CALLBACK_RATE_LIMIT_WINDOW,
+	OAUTH_MACHINE_RATE_LIMIT_MAX,
+	OAUTH_MACHINE_RATE_LIMIT_WINDOW,
 	RATE_LIMIT_MAX,
 	RATE_LIMIT_WINDOW,
 	STEPUP_VERIFY_RATE_LIMIT_MAX,
@@ -88,6 +90,25 @@ const authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT
  * Callbacks are protected by Better Auth's one-time state validation.
  */
 const authCallbackRatelimit = createLimiter('ratelimit:auth-cb', CALLBACK_RATE_LIMIT_MAX, CALLBACK_RATE_LIMIT_WINDOW);
+
+/**
+ * OAuth authorization-server endpoints that MCP hosts call server-to-server (token, client
+ * registration, revocation, key set). They arrive from a host's shared egress — every Claude
+ * user's refresh comes from one Anthropic range — so the 5/min sign-in bucket would throttle
+ * all of a host's users together. Abuse bounds still apply: this per-IP bucket, the plugin's
+ * own per-endpoint limits, PKCE and single-use codes.
+ */
+const oauthMachineRatelimit = createLimiter(
+	'ratelimit:auth-oauth',
+	OAUTH_MACHINE_RATE_LIMIT_MAX,
+	OAUTH_MACHINE_RATE_LIMIT_WINDOW,
+);
+const OAUTH_MACHINE_PATHS = new Set([
+	'/api/auth/oauth2/token',
+	'/api/auth/oauth2/register',
+	'/api/auth/oauth2/revoke',
+	'/api/auth/jwks',
+]);
 
 /**
  * Per-ACCOUNT limiter for second-factor verification. The per-IP authRatelimit
@@ -589,7 +610,11 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	// Rate limit all auth endpoints (sign-in, sign-out, get-session); OAuth
 	// callbacks get their own bucket so retried logins can't starve the flow.
 	if (path.startsWith('/api/auth/') && event.locals.clientIp) {
-		const limiter = path.startsWith('/api/auth/callback/') ? authCallbackRatelimit : authRatelimit;
+		const limiter = OAUTH_MACHINE_PATHS.has(path)
+			? oauthMachineRatelimit
+			: path.startsWith('/api/auth/callback/')
+				? authCallbackRatelimit
+				: authRatelimit;
 		// Bucket on the normalized key, never the raw address: an IPv6 client
 		// rotating inside its own /64 would otherwise get 2^64 free buckets.
 		const { success, reset } = await limiter.limit(normalizeIpKey(event.locals.clientIp) ?? event.locals.clientIp);

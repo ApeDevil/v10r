@@ -65,6 +65,8 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
 	'ai-agent-skills': 'Agent Skills',
 	'product-connection-engine': 'Compose 3D',
 	'asset-production-pipeline': 'Produce 3D',
+	'agentic-parametric-modeling': 'MCP 3D',
+	'architecture-mcp-authorization': 'MCP authorization',
 	'docs-nav-hubs': 'Docs Hubs',
 	'pattern-index': 'Pattern Index',
 	'ui-component-system': 'UI System',

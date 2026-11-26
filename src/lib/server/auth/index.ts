@@ -1,8 +1,11 @@
+import { cimd } from '@better-auth/cimd';
+import { fetchClientMetadataResource } from '@better-auth/cimd/node';
+import { oauthProvider } from '@better-auth/oauth-provider';
 import { passkey } from '@better-auth/passkey';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx } from 'better-auth/api';
-import { emailOTP, magicLink, twoFactor } from 'better-auth/plugins';
+import { emailOTP, jwt, magicLink, twoFactor } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
 import { dev } from '$app/env';
 import {
@@ -29,6 +32,14 @@ import {
 	TWO_FACTOR_ISSUER,
 } from './config';
 import { type FactorChangeAction, onFactorChanged } from './factor-changes';
+import {
+	MCP_ACCESS_TOKEN_TTL,
+	MCP_REFRESH_TOKEN_TTL,
+	OAUTH_SCOPES,
+	OFFLINE_ACCESS_SCOPE,
+	PROTECTED_MCP_SERVICES,
+	resourceIdentifier,
+} from './protected-mcp-services';
 import { magicLinkTemplate, otpTemplate, sendAuthEmail } from './send-auth-email';
 import { resolveSiteUrl } from './site-url';
 import { isStepUpFresh, stampStepUp } from './step-up';
@@ -329,6 +340,79 @@ export const auth = betterAuth({
 			issuer: TWO_FACTOR_ISSUER,
 			allowPasswordless: true,
 			skipVerificationOnEnable: false,
+		}),
+		/**
+		 * Velociraptor as an OAuth 2.1 authorization server for external applications (MCP
+		 * hosts) acting on behalf of a signed-in user — docs/blueprint/architecture/mcp-authorization.md.
+		 *
+		 * `jwt()` signs the access tokens: every MCP client sends RFC 8707 `resource`, and a
+		 * token with an audience is a JWT the service verifies in-process against these keys.
+		 * Revocation does not wait for `exp`: the service also checks, per request, that the
+		 * application authorization still exists and the account is not banned
+		 * (`application-authorizations.ts`).
+		 *
+		 * Clients identify themselves by a Client ID Metadata Document (preferred, MCP
+		 * 2025-11-25+) or by Dynamic Client Registration (kept because hosts still use it).
+		 * Registration is unauthenticated by necessity — an MCP host has no account here — so
+		 * it is bounded instead: public clients only in practice (PKCE S256 is required for
+		 * every client), exact redirect-URI matching, only the scopes in `OAUTH_SCOPES`, the
+		 * plugin's per-IP register limit plus the app's machine-endpoint bucket (hooks), and a
+		 * client name that the authorization page labels as self-declared.
+		 */
+		jwt(),
+		oauthProvider({
+			loginPage: '/auth/login',
+			consentPage: '/auth/authorize',
+			scopes: OAUTH_SCOPES,
+			resources: PROTECTED_MCP_SERVICES.map((service) => ({
+				identifier: resourceIdentifier(service, baseURL),
+				name: service.name,
+				// The resource's scope filter applies to every scope of the token, protocol scopes
+				// included: without `offline_access` here the stored refresh token loses it and the
+				// first refresh returns no rotated refresh token.
+				allowedScopes: [service.scope, OFFLINE_ACCESS_SCOPE],
+				accessTokenTtl: MCP_ACCESS_TOKEN_TTL,
+				refreshTokenTtl: MCP_REFRESH_TOKEN_TTL,
+			})),
+			// Boot-time config is the source of truth for the resource policy: a changed TTL or
+			// scope list applies on the next deploy instead of being shadowed by the first seed.
+			resourceSeedMode: 'overwrite',
+			grantTypes: ['authorization_code', 'refresh_token'],
+			accessTokenExpiresIn: MCP_ACCESS_TOKEN_TTL,
+			refreshTokenExpiresIn: MCP_REFRESH_TOKEN_TTL,
+			allowDynamicClientRegistration: true,
+			allowUnauthenticatedClientRegistration: true,
+			// Local MCP clients (MCP Inspector, Claude Code over DCR) register an http loopback
+			// redirect and usually omit `application_type`; the "web" default refuses loopback.
+			// "infer" classifies exactly those as native (RFC 8252) and validates every URI
+			// against the native rules; a sent `application_type` is never overridden.
+			clientRegistrationDefaultApplicationType: 'infer',
+			// Per-client resource linking stays on (RFC 8707 §3, upstream default): every newly
+			// registered client — DCR or metadata document — is linked to the protected MCP
+			// services, so removing a link is a per-client kill switch for one service. The
+			// user's authorization, not the link, is what grants access.
+			clientRegistrationDefaultResources: PROTECTED_MCP_SERVICES.map((service) => resourceIdentifier(service, baseURL)),
+			clientRegistrationDefaultScopes: OAUTH_SCOPES,
+			clientRegistrationAllowedScopes: OAUTH_SCOPES,
+			advertisedMetadata: { scopes_supported: OAUTH_SCOPES },
+			// The RFC 8414 document is served at the origin root by
+			// routes/.well-known/oauth-authorization-server/api/auth (issuer has a path).
+			silenceWarnings: { oauthAuthServerConfig: true, openidConfig: true },
+			// Shared egress: every Claude user's token refresh comes from one Anthropic range,
+			// so the plugin's 20/min token default would throttle all of them together. The
+			// app-level machine bucket in hooks.server.ts is the real per-IP ceiling.
+			rateLimit: {
+				token: { window: 60, max: 600 },
+				register: { window: 60, max: 30 },
+				authorize: { window: 60, max: 60 },
+				revoke: { window: 60, max: 120 },
+				introspect: false,
+				userinfo: false,
+			},
+		}),
+		cimd({
+			fetchClientMetadataResource,
+			metadataProfile: 'mcp-2026-07-28',
 		}),
 		...(passkeysEnabled
 			? [

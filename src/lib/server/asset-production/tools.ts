@@ -49,12 +49,16 @@ const text = (body: string, isError = false): AssetToolAnswer => ({
 function describe(budget: AssetBudget): string {
 	const lines = ['# Asset generators', ''];
 	for (const generator of Object.values(ASSET_GENERATORS)) {
-		lines.push(
-			`## ${generator.id} (v${generator.version}) — ${generator.label}`,
-			'',
-			'| Parameter | Min | Max | Step | Default |',
-			'|---|---|---|---|---|',
-		);
+		lines.push(`## ${generator.id} (v${generator.version}) — ${generator.label}`, '');
+		if (generator.id === 'parametric-model') {
+			// Its parameters are a whole feature graph; the vocabulary is the MCP 3D service's to describe.
+			lines.push(
+				'`parameters` is a parametric model: `{ version: 1, units, parameters?, operations, output }`. The operation vocabulary, limits and an example are served by the MCP 3D endpoint (`/api/mcp/3d`, `describe_modeling`).',
+				'',
+			);
+			continue;
+		}
+		lines.push('| Parameter | Min | Max | Step | Default |', '|---|---|---|---|---|');
 		for (const [name, bound] of Object.entries(STRUCTURAL_RING_BOUNDS)) {
 			lines.push(`| ${name} | ${bound.min} | ${bound.max} | ${bound.step} | ${bound.default} |`);
 		}
@@ -110,8 +114,8 @@ export function createAssetToolRegistry(options: AssetToolOptions): {
 				'Generate one 3D asset (GLB) from a typed request: a generator id and its bounded parameters. Returns the report — counts, size, sha256, derivation key, findings and timings. The asset is kept as a private draft, never published.',
 			inputSchema: toJsonSchema(assetRequestSchema, {
 				errorMode: 'throw',
-				// The label's printable-text regex needs the `u` flag, which JSON Schema cannot carry; the server still enforces it.
-				ignoreActions: ['regex'],
+				// The label's printable-text regex needs the `u` flag, and finiteness and cross-field checks have no JSON Schema form; the server still enforces all three.
+				ignoreActions: ['regex', 'finite', 'check'],
 			}) as Record<string, unknown>,
 		},
 	];

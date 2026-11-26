@@ -1,0 +1,45 @@
+import bpy
+
+COLUMNS, ROWS, PITCH, HOLE, T = 12, 8, 10, 3.5, 3
+
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete()
+
+width, depth = COLUMNS * PITCH + 10, ROWS * PITCH + 10
+bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0))
+panel = bpy.context.active_object
+panel.scale = (width, depth, T)
+bpy.ops.object.transform_apply(scale=True)
+bevel = panel.modifiers.new("round", 'BEVEL')
+bevel.width = 4
+bevel.segments = 6
+bevel.affect = 'EDGES'
+bpy.ops.object.modifier_apply(modifier=bevel.name)
+
+# one cutter object holding every hole, then a single boolean
+bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=HOLE / 2, depth=T * 3)
+cutter = bpy.context.active_object
+array_x = cutter.modifiers.new("columns", 'ARRAY')
+array_x.count = COLUMNS
+array_x.use_relative_offset = False
+array_x.use_constant_offset = True
+array_x.constant_offset_displace = (PITCH, 0, 0)
+array_y = cutter.modifiers.new("rows", 'ARRAY')
+array_y.count = ROWS
+array_y.use_relative_offset = False
+array_y.use_constant_offset = True
+array_y.constant_offset_displace = (0, PITCH, 0)
+cutter.location = (-(COLUMNS - 1) * PITCH / 2, -(ROWS - 1) * PITCH / 2, 0)
+bpy.context.view_layer.objects.active = cutter
+for name in ("columns", "rows"):
+    bpy.ops.object.modifier_apply(modifier=name)
+
+mod = panel.modifiers.new("holes", 'BOOLEAN')
+mod.operation = 'DIFFERENCE'
+mod.object = cutter
+mod.solver = 'EXACT'
+bpy.context.view_layer.objects.active = panel
+bpy.ops.object.modifier_apply(modifier=mod.name)
+bpy.data.objects.remove(cutter, do_unlink=True)
+
+bpy.ops.export_scene.gltf(filepath="/tmp/perforated.glb", export_format='GLB')

@@ -4,15 +4,18 @@
  */
 import type { AssetGeneratorId, AssetRequest } from '#lib/schemas/asset-production.ts';
 import type { AssetGenerator } from './generator.ts';
+import { parametricModelGenerator } from './parametric-model.ts';
 import { structuralRingGenerator } from './structural-ring.ts';
 
 export type { AssetGenerator } from './generator.ts';
+export { parametricModelGenerator } from './parametric-model.ts';
 export { structuralRingGenerator } from './structural-ring.ts';
 
 type ParametersOf<Id extends AssetGeneratorId> = Extract<AssetRequest, { generator: Id }>['parameters'];
 
 export const ASSET_GENERATORS: { [Id in AssetGeneratorId]: AssetGenerator<ParametersOf<Id>> } = {
 	'structural-ring': structuralRingGenerator,
+	'parametric-model': parametricModelGenerator,
 };
 
 /** The generator for a request, typed to its parameters. */
