@@ -32,6 +32,7 @@ import {
 	oauthRefreshToken,
 } from '#lib/server/db/schema/auth/oauth-provider.ts';
 import { type ApplicationIdentity, describeApplicationIdentity } from './application-identity';
+import { matchesRegisteredRedirectUri } from './callback-destination.ts';
 
 export type AuthorizationLiveness = 'live' | 'revoked' | 'account-unavailable';
 
@@ -168,11 +169,22 @@ export async function describeAuthorizationRequest(
 		.limit(1);
 	if (!client || client.disabled) return null;
 	// Shown only when it is one of the client's registered URIs; the endpoint enforces the match.
-	const registered = redirectUri && client.redirectUris.includes(redirectUri) ? new URL(redirectUri) : null;
+	const registered =
+		redirectUri && matchesRegisteredRedirectUri(client.redirectUris, redirectUri) ? new URL(redirectUri) : null;
 	const loopback = registered ? ['localhost', '127.0.0.1', '[::1]'].includes(registered.hostname) : false;
 	return {
 		identity: describeApplicationIdentity(client),
 		redirectHost: registered ? registered.host : null,
 		redirectsToThisDevice: loopback,
 	};
+}
+
+/** The redirect URIs registered for a client; empty when it is unknown or disabled. */
+export async function registeredRedirectUris(clientId: string): Promise<string[]> {
+	const [client] = await db
+		.select({ redirectUris: oauthClient.redirectUris, disabled: oauthClient.disabled })
+		.from(oauthClient)
+		.where(eq(oauthClient.clientId, clientId))
+		.limit(1);
+	return client && !client.disabled ? client.redirectUris : [];
 }

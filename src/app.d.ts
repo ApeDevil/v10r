@@ -36,6 +36,8 @@ declare global {
 			queries: import('#lib/server/db/query-census.ts').QueryCensus;
 			/** Active capability grants for the authenticated user. Empty array when signed out or no active grants. Populated by populateGrants hook. */
 			grants: import('#lib/server/auth/grants.ts').GrantKind[];
+			/** CSP form-action source the authorization page adds for its verified OAuth callback (`callback-destination.ts`). Unset elsewhere. */
+			authorizationFormActionSource?: string | null;
 		}
 		interface PageData {
 			style: import('#lib/styles/random/types.ts').ResolvedStyle;

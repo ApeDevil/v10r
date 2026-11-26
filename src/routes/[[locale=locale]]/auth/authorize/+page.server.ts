@@ -13,6 +13,7 @@ import { isAPIError } from 'better-auth/api';
 import { localizeHref } from '#lib/i18n/index.ts';
 import { describeAuthorizationRequest } from '#lib/server/auth/application-authorizations.ts';
 import { submitAuthorizationDecision } from '#lib/server/auth/authorization-decision.ts';
+import { callbackFormActionSource } from '#lib/server/auth/callback-destination.ts';
 import { siteUrl } from '#lib/server/auth/index.ts';
 import {
 	OFFLINE_ACCESS_SCOPE,
@@ -27,8 +28,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const clientId = url.searchParams.get('client_id');
 	if (!clientId || !url.searchParams.has('sig')) error(400, 'This authorization request is incomplete.');
 
-	const application = await describeAuthorizationRequest(clientId, url.searchParams.get('redirect_uri'));
+	const redirectUri = url.searchParams.get('redirect_uri');
+	const application = await describeAuthorizationRequest(clientId, redirectUri);
 	if (!application) error(400, 'This application is not registered, or it was disabled.');
+	// A native (no-JavaScript) submission is followed by a redirect to the callback, and browsers
+	// hold that redirect to this page's CSP form-action: name the registered callback there.
+	if (application.redirectHost && redirectUri) {
+		locals.authorizationFormActionSource = callbackFormActionSource(redirectUri);
+	}
 
 	const scopes = (url.searchParams.get('scope') ?? '').split(' ').filter(Boolean);
 	const byResource = url.searchParams
@@ -58,15 +65,18 @@ export const actions: Actions = {
 		if (typeof oauthQuery !== 'string' || (decision !== 'allow' && decision !== 'deny')) {
 			return fail(400, { message: 'This authorization request is incomplete.' });
 		}
-		let next: string | null;
+		const expired = { message: 'This authorization request expired. Start again from the application.' };
+		let destination: Awaited<ReturnType<typeof submitAuthorizationDecision>>;
 		try {
-			next = await submitAuthorizationDecision(request.headers, oauthQuery, decision === 'allow');
+			destination = await submitAuthorizationDecision(request.headers, oauthQuery, decision === 'allow');
 		} catch (cause) {
-			if (isAPIError(cause))
-				return fail(400, { message: 'This authorization request expired. Start again from the application.' });
+			if (isAPIError(cause)) return fail(400, expired);
 			throw cause;
 		}
-		if (!next) return fail(400, { message: 'This authorization request expired. Start again from the application.' });
-		redirect(303, next);
+		if (destination.kind === 'refused') return fail(400, expired);
+		if (destination.kind === 'local') redirect(303, destination.location);
+		// SvelteKit 3 permits an external redirect only to origins named here: exactly the
+		// callback the signed request carried and the client registered.
+		redirect(303, destination.location, { external: [destination.callbackUri] });
 	},
 };

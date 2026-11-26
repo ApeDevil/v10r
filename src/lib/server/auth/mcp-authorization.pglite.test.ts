@@ -57,12 +57,34 @@ const { auth } = await import('./index');
 const { db } = await import('#lib/server/db/index.ts');
 const { verifyResourceAccess, protectedResourceMetadata } = await import('./resource-access');
 const { MCP_3D_SERVICE, resourceIdentifier } = await import('./protected-mcp-services');
-const { submitAuthorizationDecision } = await import('./authorization-decision');
 const { listApplicationAuthorizations, revokeApplicationAuthorization, describeAuthorizationRequest } = await import(
 	'./application-authorizations'
 );
 
 const { POST: mcp3dPost } = await import('../../../routes/api/mcp/3d/+server');
+const authorizationPage = await import('../../../routes/[[locale=locale]]/auth/authorize/+page.server');
+const { permitFormActionSource } = await import('./callback-destination');
+
+/**
+ * SvelteKit's own form-action pipeline (the code that runs a POST to a page: native submission
+ * answers with the action result, `use:enhance` with its JSON form). Loaded by path because the
+ * package does not export it; this is what turned the authorization page's redirect into a 500.
+ */
+interface KitActionResult {
+	type: 'success' | 'failure' | 'redirect' | 'error';
+	status?: number;
+	location?: string;
+	data?: unknown;
+	error?: unknown;
+}
+const KIT_ACTIONS = '../../../../node_modules/@sveltejs/kit/src/runtime/server/page/actions.js';
+const kitActions = (await import(/* @vite-ignore */ KIT_ACTIONS)) as {
+	handle_action_request(event: unknown, state: unknown, server: unknown): Promise<KitActionResult>;
+	handle_action_json_request(event: unknown, state: unknown, server: unknown): Promise<Response>;
+};
+// The server initializes its serializer at startup; without it a JSON failure result cannot be written.
+const KIT_TRANSPORT = '../../../../node_modules/@sveltejs/kit/src/runtime/app/internal/transport.js';
+((await import(/* @vite-ignore */ KIT_TRANSPORT)) as { init_transport(transport: object): void }).init_transport({});
 const { MCP_CLIENT_HEADERS } = await import('#lib/server/mcp/mcp-post.ts');
 
 const RESOURCE = resourceIdentifier(MCP_3D_SERVICE, ORIGIN);
@@ -141,13 +163,9 @@ async function authorize(
 	let consentPage: URL | null = null;
 	if (location.pathname === '/auth/authorize') {
 		consentPage = location;
-		const next = await submitAuthorizationDecision(
-			new Headers({ cookie }),
-			consentPage.search.slice(1),
-			options.accept ?? true,
-		);
-		expect(next).toBeTruthy();
-		redirect = new URL(next as string);
+		const answer = await submitConsentPage(cookie, consentPage, options.accept === false ? 'deny' : 'allow');
+		expect(answer.type).toBe('redirect');
+		redirect = new URL(answer.location as string);
 	} else {
 		// This user already authorized this client for these scopes: no second page.
 		redirect = location;
@@ -167,6 +185,78 @@ async function authorize(
 	const token = await authApi('/oauth2/token', form(exchange));
 	expect(token.status).toBe(200);
 	return { tokens: (await token.json()) as Tokens, redirect, consentPage };
+}
+
+/** A request event for the authorization page, as SvelteKit builds it for this signed-in user. */
+async function pageEvent(cookie: string, url: URL, init?: RequestInit) {
+	const session = await auth.api.getSession({ headers: new Headers({ cookie }) });
+	const request = new Request(url, { ...init, headers: { cookie, ...(init?.headers ?? {}) } });
+	return {
+		request,
+		url: new URL(request.url),
+		params: {},
+		route: { id: '/[[locale=locale]]/auth/authorize' },
+		locals: { user: session?.user ?? null } as App.Locals,
+		cookies: { get: () => undefined, getAll: () => [], set() {}, delete() {}, serialize: () => '' },
+		fetch,
+		getClientAddress: () => '127.0.0.1',
+		platform: undefined,
+		setHeaders() {},
+		isDataRequest: false,
+		isSubRequest: false,
+		isRemoteRequest: false,
+		tracing: { enabled: false, root: undefined, current: undefined },
+	};
+}
+
+/**
+ * Answer the authorization page the way a browser does: POST the page's own form (the signed
+ * `oauth_query` it rendered, and the pressed button) to the page URL, through SvelteKit's
+ * action pipeline. `native` is a plain form submission; `enhanced` is `use:enhance`'s fetch,
+ * whose result SvelteKit serializes as JSON.
+ */
+async function submitConsentPage(
+	cookie: string,
+	consentPage: URL,
+	decision: 'allow' | 'deny',
+	mode: 'native' | 'enhanced' = 'native',
+	oauthQuery: string = consentPage.search.slice(1),
+): Promise<KitActionResult> {
+	const pageUrl = new URL(`${consentPage.pathname}${consentPage.search}`, ORIGIN);
+	const event = await pageEvent(cookie, pageUrl, {
+		method: 'POST',
+		headers: {
+			'content-type': 'application/x-www-form-urlencoded',
+			origin: ORIGIN,
+			...(mode === 'enhanced' ? { accept: 'application/json', 'x-sveltekit-action': 'true' } : {}),
+		},
+		body: new URLSearchParams({ oauth_query: oauthQuery, decision }).toString(),
+	});
+	if (mode === 'enhanced') {
+		const response = await kitActions.handle_action_json_request(event, {}, authorizationPage);
+		return (await response.json()) as KitActionResult;
+	}
+	return kitActions.handle_action_request(event, {}, authorizationPage);
+}
+
+/** Start an authorization request and return the consent page it lands on. */
+async function consentPageFor(cookie: string, clientId: string, redirectUri: string, state = 'state-1') {
+	const { challenge } = pkce();
+	const params = new URLSearchParams({
+		response_type: 'code',
+		client_id: clientId,
+		redirect_uri: redirectUri,
+		code_challenge: challenge,
+		code_challenge_method: 'S256',
+		scope: 'mcp:3d:use',
+		state,
+		resource: RESOURCE,
+		prompt: 'consent',
+	});
+	const start = await authApi(`/oauth2/authorize?${params}`, { headers: { cookie } });
+	const location = new URL(start.headers.get('location') as string, ORIGIN);
+	expect(location.pathname).toBe('/auth/authorize');
+	return location;
 }
 
 async function registerDcrClient(): Promise<string> {
@@ -462,5 +552,153 @@ describe('the MCP 3D endpoint', () => {
 		const text = await response.text();
 		expect(text).toContain('generate_model');
 		expect(response.headers.get('cache-control') ?? '').not.toContain('public');
+	});
+});
+
+describe('the authorization page, through SvelteKit (regression: Allow answered 500)', () => {
+	/** Allow/Deny must reach the client's callback with exactly the server's parameters. */
+	function expectCallback(answer: KitActionResult, callback: string, state: string) {
+		expect(answer.type).toBe('redirect');
+		expect(answer.status).toBe(303);
+		const target = new URL(answer.location as string);
+		expect(`${target.origin}${target.pathname}`).toBe(callback);
+		expect(target.searchParams.get('state')).toBe(state);
+		expect(target.searchParams.get('iss')).toBe(`${ORIGIN}/api/auth`);
+		return target;
+	}
+
+	it('Allow (native form) redirects to an external HTTPS callback with code, state and iss', async () => {
+		const page = await consentPageFor(alice.cookie, CIMD_CLIENT_ID, CIMD_REDIRECT, 'native-allow');
+		const target = expectCallback(await submitConsentPage(alice.cookie, page, 'allow'), CIMD_REDIRECT, 'native-allow');
+		expect(target.searchParams.get('code')).toBeTruthy();
+	});
+
+	it('Allow (use:enhance) answers the same callback as a JSON redirect', async () => {
+		const page = await consentPageFor(alice.cookie, CIMD_CLIENT_ID, CIMD_REDIRECT, 'enhanced-allow');
+		const answer = await submitConsentPage(alice.cookie, page, 'allow', 'enhanced');
+		const target = expectCallback(answer, CIMD_REDIRECT, 'enhanced-allow');
+		expect(target.searchParams.get('code')).toBeTruthy();
+	});
+
+	it('Deny returns access_denied to the callback, native and enhanced', async () => {
+		for (const mode of ['native', 'enhanced'] as const) {
+			const page = await consentPageFor(alice.cookie, dcrClient, DCR_REDIRECT, `deny-${mode}`);
+			const target = expectCallback(
+				await submitConsentPage(alice.cookie, page, 'deny', mode),
+				DCR_REDIRECT,
+				`deny-${mode}`,
+			);
+			expect(target.searchParams.get('error')).toBe('access_denied');
+			expect(target.searchParams.get('code')).toBeNull();
+		}
+	});
+
+	it('Allow reaches a loopback callback, including on another ephemeral port', async () => {
+		const page = await consentPageFor(alice.cookie, dcrClient, DCR_REDIRECT, 'loopback');
+		expectCallback(await submitConsentPage(alice.cookie, page, 'allow'), DCR_REDIRECT, 'loopback');
+
+		const otherPort = 'http://127.0.0.1:50123/callback';
+		const portPage = await consentPageFor(alice.cookie, dcrClient, otherPort, 'loopback-port');
+		expectCallback(await submitConsentPage(alice.cookie, portPage, 'allow', 'enhanced'), otherPort, 'loopback-port');
+	});
+
+	it('refuses a manipulated request: a swapped callback, a forged signature, a missing decision', async () => {
+		const page = await consentPageFor(alice.cookie, CIMD_CLIENT_ID, CIMD_REDIRECT, 'tamper');
+		const swapped = new URLSearchParams(page.search);
+		swapped.set('redirect_uri', 'https://evil.example/callback');
+		for (const mode of ['native', 'enhanced'] as const) {
+			const answer = await submitConsentPage(alice.cookie, page, 'allow', mode, swapped.toString());
+			expect(answer.type).toBe('failure');
+			expect(answer.location ?? '').not.toContain('evil.example');
+		}
+
+		const forged = new URLSearchParams(page.search);
+		forged.set('sig', 'AAAA');
+		expect((await submitConsentPage(alice.cookie, page, 'allow', 'native', forged.toString())).type).toBe('failure');
+
+		const event = await pageEvent(alice.cookie, new URL(`${page.pathname}${page.search}`, ORIGIN), {
+			method: 'POST',
+			headers: { 'content-type': 'application/x-www-form-urlencoded', origin: ORIGIN },
+			body: new URLSearchParams({ oauth_query: page.search.slice(1), decision: 'maybe' }).toString(),
+		});
+		expect((await kitActions.handle_action_request(event, {}, authorizationPage)).type).toBe('failure');
+	});
+
+	it('refuses an expired request', async () => {
+		const page = await consentPageFor(alice.cookie, CIMD_CLIENT_ID, CIMD_REDIRECT, 'expired');
+		vi.useFakeTimers({ toFake: ['Date'], now: Date.now() + 60 * 60 * 1000 });
+		try {
+			const answer = await submitConsentPage(alice.cookie, page, 'allow');
+			expect(answer.type).toBe('failure');
+			expect(answer.status).toBe(400);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('a replayed answer only ever reaches the same callback, and its code is single-use', async () => {
+		const { verifier, challenge } = pkce();
+		const params = new URLSearchParams({
+			response_type: 'code',
+			client_id: CIMD_CLIENT_ID,
+			redirect_uri: CIMD_REDIRECT,
+			code_challenge: challenge,
+			code_challenge_method: 'S256',
+			scope: 'mcp:3d:use',
+			state: 'replay',
+			resource: RESOURCE,
+			prompt: 'consent',
+		});
+		const start = await authApi(`/oauth2/authorize?${params}`, { headers: { cookie: alice.cookie } });
+		const page = new URL(start.headers.get('location') as string, ORIGIN);
+		const first = expectCallback(await submitConsentPage(alice.cookie, page, 'allow'), CIMD_REDIRECT, 'replay');
+		const replay = await submitConsentPage(alice.cookie, page, 'allow');
+		if (replay.type === 'redirect') expectCallback(replay, CIMD_REDIRECT, 'replay');
+		else expect(replay.type).toBe('failure');
+
+		const exchange = {
+			grant_type: 'authorization_code',
+			code: first.searchParams.get('code') as string,
+			redirect_uri: CIMD_REDIRECT,
+			client_id: CIMD_CLIENT_ID,
+			code_verifier: verifier,
+			resource: RESOURCE,
+		};
+		expect((await authApi('/oauth2/token', form(exchange))).status).toBe(200);
+		expect((await authApi('/oauth2/token', form(exchange))).status).toBe(400);
+	});
+
+	it('a signed-out answer is refused without redirecting', async () => {
+		const page = await consentPageFor(alice.cookie, CIMD_CLIENT_ID, CIMD_REDIRECT, 'signed-out');
+		const event = await pageEvent('', new URL(`${page.pathname}${page.search}`, ORIGIN), {
+			method: 'POST',
+			headers: { 'content-type': 'application/x-www-form-urlencoded', origin: ORIGIN },
+			body: new URLSearchParams({ oauth_query: page.search.slice(1), decision: 'allow' }).toString(),
+		});
+		const answer = await kitActions.handle_action_request(event, {}, authorizationPage);
+		expect(answer).toMatchObject({ type: 'failure', status: 401 });
+	});
+
+	it('the page names only its registered callback in CSP form-action (native submissions)', async () => {
+		for (const [clientId, callback, source] of [
+			[CIMD_CLIENT_ID, CIMD_REDIRECT, 'https://claude.ai'],
+			[dcrClient, DCR_REDIRECT, 'http://127.0.0.1:33418'],
+		] as const) {
+			const page = await consentPageFor(alice.cookie, clientId, callback);
+			const event = await pageEvent(alice.cookie, new URL(`${page.pathname}${page.search}`, ORIGIN));
+			await authorizationPage.load(event as unknown as Parameters<typeof authorizationPage.load>[0]);
+			expect(event.locals.authorizationFormActionSource).toBe(source);
+		}
+
+		const page = await consentPageFor(alice.cookie, CIMD_CLIENT_ID, CIMD_REDIRECT);
+		const swapped = new URLSearchParams(page.search);
+		swapped.set('redirect_uri', 'https://evil.example/callback');
+		const event = await pageEvent(alice.cookie, new URL(`${page.pathname}?${swapped}`, ORIGIN));
+		await authorizationPage.load(event as unknown as Parameters<typeof authorizationPage.load>[0]);
+		expect(event.locals.authorizationFormActionSource).toBeUndefined();
+
+		expect(
+			permitFormActionSource("default-src 'self'; form-action 'self'; frame-ancestors 'none'", 'https://claude.ai'),
+		).toBe("default-src 'self'; form-action 'self' https://claude.ai; frame-ancestors 'none'");
 	});
 });

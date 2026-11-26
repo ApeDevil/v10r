@@ -16,6 +16,7 @@ import { analyticsCollector } from '#lib/server/analytics/collector.hook.ts';
 import { CONSENT_COOKIE } from '#lib/server/analytics/config.ts';
 import { parseConsentTier } from '#lib/server/analytics/consent.ts';
 import { isAdminUserId, logAdminConfig } from '#lib/server/auth/admin-ids.ts';
+import { permitFormActionSource } from '#lib/server/auth/callback-destination.ts';
 import {
 	CALLBACK_RATE_LIMIT_MAX,
 	CALLBACK_RATE_LIMIT_WINDOW,
@@ -250,6 +251,13 @@ export const securityHeaders: Handle = async ({ event, resolve }) => {
 	// take down the whole chain. (docs/system-abstraction.md documents this.)
 	try {
 		response.headers.set('X-Frame-Options', 'DENY');
+		// The authorization page names its verified OAuth callback in form-action, so a native
+		// (no-JavaScript) Allow/Deny can follow its redirect to the application.
+		const callbackSource = event.locals.authorizationFormActionSource;
+		const policy = callbackSource ? response.headers.get('Content-Security-Policy') : null;
+		if (callbackSource && policy) {
+			response.headers.set('Content-Security-Policy', permitFormActionSource(policy, callbackSource));
+		}
 		response.headers.set('X-Content-Type-Options', 'nosniff');
 		response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 		response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');

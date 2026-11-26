@@ -138,6 +138,18 @@ without introspection. A short-lived cache would reopen the window by its TTL, s
   endpoint revalidates everything once there is a session.
 - A repeat authorization of the same client for the same scopes skips the page, which is
   standard. Revoking makes the page appear again.
+- **The answer leaves the site only for the verified callback.** SvelteKit 3 refuses an
+  external `redirect()` unless it names the origins it permits. The page never permits a
+  global or hardcoded list: `callback-destination.ts` checks the consent endpoint's answer
+  against the `redirect_uri` in the signed request (whose signature the endpoint verified) and
+  the client's registered redirect URIs (loopback may vary its port, RFC 8252), and the
+  redirect permits exactly that callback. Anything else is refused as an expired request.
+  Shipped without this, every Allow answered 500 (`redirect_external_not_allowed`) on
+  2026-11-26; the route-level tests now run the page through SvelteKit's own action pipeline.
+- **No-JavaScript submissions.** Browsers apply CSP `form-action` to the redirect after a
+  native form POST, so the page adds its registered callback's origin (or a native app's
+  scheme) to `form-action` for that response only (`authorizationFormActionSource`, applied
+  in `securityHeaders`). `use:enhance` navigates by script and needs no exception.
 
 ## Connected applications
 
@@ -231,7 +243,8 @@ There is no unauthenticated route into the modeling tools.
 
 | Claim | Evidence |
 |---|---|
-| Full flow (DCR and CIMD), audience, scope, refresh rotation, revocation, ban, deletion, every method refused without a token | `src/lib/server/auth/mcp-authorization.pglite.test.ts`: 20 cases against the real Better Auth instance and Postgres (PGlite) |
+| Full flow (DCR and CIMD), audience, scope, refresh rotation, revocation, ban, deletion, every method refused without a token; the authorization page's Allow/Deny through SvelteKit's action pipeline (native and enhanced, external, loopback, tampered, expired, replayed, signed out) | `src/lib/server/auth/mcp-authorization.pglite.test.ts`: 29 cases against the real Better Auth instance and Postgres (PGlite) |
+| Which callback the page may redirect to | `callback-destination.test.ts` |
 | Identity labelling, the resume path, the in-flight bound | `application-identity.test.ts`, `authorization-request.test.ts`, `in-flight-limit.test.ts` |
 | Every endpoint classified | `authz-coverage.gate.test.ts` (`oauth-resource` scheme, metadata endpoints allowlisted with reasons) |
 | Hosts (Claude, ChatGPT, Claude Code, Inspector) against a deployment | **Not verified.** Needs a reachable deployment with this schema. See the report for the manual steps |
