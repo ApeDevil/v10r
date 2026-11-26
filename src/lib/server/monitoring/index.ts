@@ -60,7 +60,9 @@ export interface R2Metrics {
 }
 
 export const FREE_TIER_LIMITS = {
-	neon: { storageBytes: 512 * 1024 * 1024 },
+	// Neon Free: 1 GB of Postgres storage per project, writes blocked past it. The API
+	// reports it as `branch_logical_size_limit` = 1024 MiB.
+	neon: { storageBytes: 1024 * 1024 * 1024 },
 	neo4j: { nodes: 200_000, relationships: 400_000 },
 	upstash: { storageBytes: 256 * 1024 * 1024, commands: 500_000 },
 	r2: { storageBytes: 10 * 1024 * 1024 * 1024, reads: 10_000_000, writes: 1_000_000 },

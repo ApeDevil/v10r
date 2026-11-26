@@ -85,6 +85,11 @@ const COPY: Record<RetentionRuleId, RetentionCopy> = {
 		rationale:
 			'Files you have already deleted. A live file is never touched by this sweep; only the trash empties, and only after the window.',
 	},
+	'retrieval-trash': {
+		icon: 'i-lucide-file-x',
+		rationale:
+			'Search-index documents that were replaced by a newer version or deleted. A live document is never touched; only these leftovers and their embeddings go.',
+	},
 	'desk-revisions': {
 		icon: 'i-lucide-history',
 		rationale: 'Undo and version history for desk documents, pruned by age independently of the files themselves.',

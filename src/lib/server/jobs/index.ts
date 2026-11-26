@@ -16,6 +16,7 @@ import { mcpTelemetryRetention } from './mcp-telemetry-retention';
 import { notificationCleanup } from './notification-cleanup';
 import { notificationDelivery } from './notification-delivery';
 import { notificationDigest } from './notification-digest';
+import { retrievalRetention } from './retrieval-retention';
 import { sessionCleanup } from './session-cleanup';
 import { telegramTokenCleanup } from './telegram-token-cleanup';
 
@@ -64,6 +65,8 @@ export const jobs: Record<string, Job> = {
 	// it, email/telegram/discord deliveries queue as pending forever.
 	'notification-delivery': { execute: notificationDelivery, cadence: 'daily' },
 	'desk-retrieval-sync': { execute: deskRetrievalSync, cadence: 'daily' },
+	// After the sync, so documents it retires this run start their window today.
+	'retrieval-retention': { execute: retrievalRetention, cadence: 'daily' },
 	'blog-orphan-reaper': { execute: blogOrphanReaper, cadence: 'daily' },
 	'dbops-refresh': { execute: dbopsRefresh, cadence: 'daily' },
 	'dbops-reaper': { execute: dbopsReaper, cadence: 'daily' },

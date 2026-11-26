@@ -21,7 +21,10 @@ export async function fetchNeonMetrics(): Promise<DependencyResult<NeonMetrics>>
 
 	try {
 		const [sizeResult, tableResult] = await Promise.all([
-			db.execute(sql`SELECT pg_database_size(current_database()) AS total_bytes`),
+			// Neon's limit counts the branch's logical size: every database on it, not only ours.
+			db.execute(
+				sql`SELECT COALESCE(SUM(pg_database_size(datname)), 0) AS total_bytes FROM pg_database WHERE NOT datistemplate`,
+			),
 			db.execute(sql`
 				SELECT
 					n.nspname AS schema_name,

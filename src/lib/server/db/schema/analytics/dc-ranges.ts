@@ -42,8 +42,9 @@ export const datacenterIpRanges = analyticsSchema.table(
 		fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(table) => [
+		// Leads with `source`, so it also serves the per-source replace; a separate
+		// `source` index was ~11 MB of pure duplication on ~300k rows.
 		unique('dc_ip_ranges_source_prefix_uniq').on(table.source, table.prefix),
-		index('dc_ip_ranges_source_idx').on(table.source),
 		// Expression index matching the write-time containment test
 		// (`$ip::inet <<= prefix::cidr`). Without it every session upsert seq-scans
 		// tens of thousands of rows; off-TTFB but pure waste.

@@ -19,7 +19,7 @@
  *     re-derived only when `derivationKey(docs-ingest@N, [file hash, chunker@version + sizing,
  *     embedding model])` differs from the stored one, so a chunker, sizing or model change
  *     re-derives the corpus without a flag, and an unchanged corpus costs zero embeds.
- *     Soft-delete + re-insert on change, delete-not-seen reconcile for removed files. A full
+ *     Retire (tombstone + drop chunks) + re-insert on change, delete-not-seen reconcile for removed files. A full
  *     re-derive burns embed quota for the whole corpus (free tier: 1000 embed requests/day);
  *     a run cut short by the quota leaves the rest keyed as stale, so the next run resumes.
  *
@@ -358,6 +358,14 @@ function deepestHeading(text: string): string {
 }
 
 /** Insert one document as hierarchical parent(section)+child(paragraph) chunks. Returns total count. */
+/** Tombstone a docs-corpus document and hard-delete its chunks, in one transaction. */
+async function retireDocument(id: string): Promise<void> {
+	await db.transaction(async (tx) => {
+		await tx.execute(sql`UPDATE retrieval.document SET deleted_at = now(), updated_at = now() WHERE id = ${id}`);
+		await tx.execute(sql`DELETE FROM retrieval.chunk WHERE document_id = ${id}`);
+	});
+}
+
 async function insertDoc(doc: KeyedDoc): Promise<number> {
 	const { parents, children } = await planChunks(doc.body, {
 		sectionTarget: SECTION_CHUNK_TARGET,
@@ -494,8 +502,10 @@ async function main() {
 		}
 		chunks += n;
 		if (prior) {
-			// Soft-delete, not delete: forward-safe vs the page_source restrict.
-			await db.execute(sql`UPDATE retrieval.document SET deleted_at = now() WHERE id = ${prior.id}`);
+			// Retire the prior version the way the app's `deleteDocument` does: tombstone the
+			// document, drop its chunks now (they are the bulk of the bytes and leave the HNSW
+			// index with them). The `retrieval-trash` sweep removes the tombstone later.
+			await retireDocument(prior.id);
 			updated++;
 		} else {
 			inserted++;
@@ -510,7 +520,7 @@ async function main() {
 	const seenSet = new Set(seen);
 	const stale = existing.rows.filter((r) => !seenSet.has(r.sourceUri));
 	for (const r of stale) {
-		await db.execute(sql`UPDATE retrieval.document SET deleted_at = now() WHERE id = ${r.id}`);
+		await retireDocument(r.id);
 	}
 
 	await writeProjectMap(files);

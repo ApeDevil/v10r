@@ -16,6 +16,7 @@ import { modelCall, toolCall, turn } from '#lib/server/db/schema/ai/turn.ts';
 import { user } from '#lib/server/db/schema/auth/_better-auth.ts';
 import { file, fileRevision } from '#lib/server/db/schema/desk/index.ts';
 import { mcpCallLog } from '#lib/server/db/schema/mcp/call-log.ts';
+import { chunk, document } from '#lib/server/db/schema/retrieval/index.ts';
 import { retentionDays } from '#lib/server/retention/index.ts';
 
 let testClient: PGlite;
@@ -32,6 +33,7 @@ const { deskRetention } = await import('./desk-retention');
 const { aiTelemetryRetention } = await import('./ai-telemetry-retention');
 const { auditLogRetention } = await import('./audit-log-retention');
 const { mcpTelemetryRetention } = await import('./mcp-telemetry-retention');
+const { retrievalRetention } = await import('./retrieval-retention');
 
 afterAll(async () => {
 	await testClient?.close();
@@ -50,6 +52,50 @@ beforeEach(async () => {
 	await db.delete(mcpCallLog);
 	await db.delete(user); // cascades desk file + file_revision + conversation → message → step
 	await db.insert(user).values({ id: USER_ID, name: 'Retention Tester', email: 'retention@example.com' });
+});
+
+// retrieval-retention: empties the RAG trash, chunks cascade
+
+describe('retrievalRetention — never touches a live document', () => {
+	it('deletes only the expired tombstone and its chunks; live and recently-retired documents stay', async () => {
+		const doc = (id: string, deletedAt: Date | null) => ({
+			id,
+			userId: USER_ID,
+			title: id,
+			source: 'docs' as const,
+			status: 'ready' as const,
+			contentHash: `hash_${id}`,
+			deletedAt,
+			createdAt: daysAgo(400),
+		});
+		await db
+			.insert(document)
+			.values([
+				doc('d_live', null),
+				doc('d_recent', daysAgo(1)),
+				doc('d_expired', daysAgo(retentionDays('retrieval-trash') + 10)),
+			]);
+		await db.insert(chunk).values(
+			['d_live', 'd_expired'].map((documentId) => ({
+				id: `c_${documentId}`,
+				documentId,
+				userId: USER_ID,
+				level: 'section' as const,
+				position: 0,
+				content: 'text',
+				tokenCount: 1,
+				contentHash: `chunk_${documentId}`,
+			})),
+		);
+
+		const deleted = await retrievalRetention();
+
+		const docs = (await db.select({ id: document.id }).from(document)).map((r) => r.id).sort();
+		const chunks = (await db.select({ id: chunk.id }).from(chunk)).map((r) => r.id);
+		expect(docs).toEqual(['d_live', 'd_recent']);
+		expect(chunks).toEqual(['c_d_live']);
+		expect(deleted).toBe(1);
+	});
 });
 
 // desk-retention: the destructive one

@@ -103,6 +103,11 @@ export const retentionSchedule = [
 	// Undo/version history, pruned purely by age and independently of any file row.
 	{ id: 'desk-revisions', dataset: 'desk.file_revision', days: 90, action: 'delete', job: 'desk-retention' },
 
+	// Retired RAG documents: superseded by a re-ingest or deleted by their owner. Only
+	// tombstones age out; their chunks (the embeddings) cascade with them. Short, because
+	// nothing reads a tombstone and a full docs re-derive leaves thousands of them.
+	{ id: 'retrieval-trash', dataset: 'retrieval.document', days: 7, action: 'delete', job: 'retrieval-retention' },
+
 	// Read notifications leave the active list first, then go entirely.
 	{
 		id: 'notifications-archive',
