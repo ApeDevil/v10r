@@ -208,8 +208,19 @@ endpoint reads the session cookie**:
 
 A cross-site request carries nothing to abuse. The comment on the exemption now says this and
 forbids a `locals.user` fallback on any MCP route. The authorization page itself is a
-SvelteKit form action (origin-checked by SvelteKit), and the consent endpoint is Better Auth's
-(its own CSRF).
+form action, origin-checked like every form, and the consent endpoint is Better Auth's (its
+own CSRF).
+
+**The token endpoint must accept cross-site forms.** A host exchanges its code server-to-server
+as a form POST with no `Origin` (RFC 6749 §4.1.3), like revocation and introspection.
+SvelteKit 3's built-in cross-site form check refuses exactly that, runs before any hook, in
+production only, and has no per-route exception. It answered every token exchange with 403
+(found by the first ChatGPT connection, 2026-11-26). So the app owns the rule:
+`csrf.trustedOrigins: ['*']` turns the framework check off, and `crossSiteFormCheck`, first in
+the hook chain after `securityHeaders`, applies the identical predicate
+(`isCrossSiteFormSubmission`) to every route except `OAUTH_SERVER_TO_SERVER_PATHS`
+(token, revoke, introspect). Those carry no ambient authority: a code is useless without its
+PKCE verifier. `csrf.test.ts` pins the predicate, the exemptions and the hook order.
 
 ## Privacy and logging
 

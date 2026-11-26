@@ -16,6 +16,10 @@
  *    `/api/auth/*` without calling `resolve`, so anything below it never sees
  *    that plane — placing the floor lower would leave sign-up and sign-in bodies
  *    unbounded, which is the one pre-auth surface most worth bounding.
+ *  - `crossSiteFormCheck` sits right below `securityHeaders` and above everything
+ *    that reads a body or a session: it stands in for SvelteKit's own cross-site
+ *    form check (switched off with `csrf.trustedOrigins: ['*']` so OAuth token
+ *    exchanges can pass), which ran before every hook.
  *  - `stripBaseLocalePrefix` runs before any auth, so it is the one handler that
  *    can emit a redirect to an unauthenticated caller — which is precisely how
  *    the `/en//evil.com` open redirect was reachable.
@@ -49,6 +53,7 @@ const EXPECTED = [
 	'requestDeadline',
 	'queryCensus',
 	'securityHeaders',
+	'crossSiteFormCheck',
 	'bodySizeFloor',
 	'stripBaseLocalePrefix',
 	'docsMarkdown',

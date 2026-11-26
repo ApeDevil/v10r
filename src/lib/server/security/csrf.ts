@@ -61,3 +61,56 @@ export function isSameHost(headerValue: string | null, expectedHost: string): bo
 		return false;
 	}
 }
+
+/**
+ * Cross-site form submissions — the check SvelteKit itself makes, owned here instead.
+ *
+ * SvelteKit 3 refuses every mutating request whose body could be a plain HTML form
+ * (`application/x-www-form-urlencoded`, `multipart/form-data`, `text/plain`, its binary form
+ * type, or no content type) unless its `Origin` is this site. It runs before any hook, in
+ * production only, and offers no per-route exception: only `csrf.trustedOrigins`, globally.
+ *
+ * OAuth 2.0 needs one: a client exchanges its code at the token endpoint server-to-server, as a
+ * form POST with no `Origin` (RFC 6749 §4.1.3), and so do revocation (RFC 7009) and
+ * introspection (RFC 7662). SvelteKit answered those with 403, so no MCP host could finish
+ * connecting. So the framework check is switched off (`trustedOrigins: ['*']`, vite.config.ts)
+ * and this predicate, wired first in the hook chain, applies the same rule to every route
+ * except those three endpoints. They carry no ambient authority — a code is useless without its
+ * PKCE verifier, a token without being the token — and Better Auth checks the origin of any
+ * request that does carry its session cookie.
+ */
+export const OAUTH_SERVER_TO_SERVER_PATHS: ReadonlySet<string> = new Set([
+	'/api/auth/oauth2/token',
+	'/api/auth/oauth2/revoke',
+	'/api/auth/oauth2/introspect',
+]);
+
+const FORM_CONTENT_TYPES = new Set([
+	'application/x-www-form-urlencoded',
+	'multipart/form-data',
+	'text/plain',
+	'application/x-sveltekit-formdata',
+]);
+
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+export interface FormSubmission {
+	method: string;
+	path: string;
+	contentType: string | null;
+	origin: string | null;
+	/** This site's origin, as SvelteKit derives it (the request URL's). */
+	selfOrigin: string;
+}
+
+/** True when SvelteKit's own rule would refuse this request, outside the OAuth exceptions. */
+export function isCrossSiteFormSubmission(request: FormSubmission): boolean {
+	const type = request.contentType?.split(';', 1)[0].trim().toLowerCase() ?? '';
+	const formLike = !request.contentType || FORM_CONTENT_TYPES.has(type);
+	return (
+		formLike &&
+		MUTATING_METHODS.has(request.method) &&
+		request.origin !== request.selfOrigin &&
+		!OAUTH_SERVER_TO_SERVER_PATHS.has(request.path)
+	);
+}

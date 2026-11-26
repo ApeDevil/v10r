@@ -51,6 +51,12 @@ export default defineConfig({
 			// merge over these defaults, so the region holds for the AI routes too.
 			adapter: adapter({ runtime: 'nodejs22.x', regions: ['fra1'] }),
 
+			// SvelteKit's cross-site form check is owned by the app (`crossSiteFormCheck` in
+			// hooks.server.ts, rule in #lib/server/security/csrf.ts): the framework's has no
+			// per-route exception and refused OAuth token exchanges, which are server-to-server form
+			// POSTs without an Origin. The hook applies the same rule to every other route.
+			csrf: { trustedOrigins: ['*'] },
+
 			// Deploy-accurate app version: powers `updated` polling (update prompts) and
 			// the service worker's cache names. Vercel injects the commit SHA at build.
 			version: {

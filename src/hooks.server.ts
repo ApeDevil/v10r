@@ -47,7 +47,7 @@ import { apiError } from '#lib/server/http/response.ts';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '#lib/server/pairing/cookie.ts';
 import { platform } from '#lib/server/platform/index.ts';
 import { HSTS_MAX_AGE } from '#lib/server/security/config.ts';
-import { isSameHost, needsCsrf } from '#lib/server/security/csrf.ts';
+import { isCrossSiteFormSubmission, isSameHost, needsCsrf } from '#lib/server/security/csrf.ts';
 import { getCustomPaletteById, scopeStyleCookie } from '#lib/server/style/index.ts';
 import { deriveAccentTokens } from '#lib/styles/random/accent.ts';
 import {
@@ -64,7 +64,7 @@ import { tokenToCssVar } from '#lib/styles/random/token-vars.ts';
 import type { PaletteId, ResolvedStyle } from '#lib/styles/random/types.ts';
 import { getTypography } from '#lib/styles/random/typography-registry.ts';
 import { sanitizeInternalPath } from '#lib/utils/safe-path.ts';
-import { building } from '$app/env';
+import { building, dev } from '$app/env';
 
 // Both schedulers are `setInterval` loops that only ever arm on a persistent
 // platform — on Vercel `platform.persistent` is false and they do nothing. Left
@@ -287,6 +287,35 @@ export const securityHeaders: Handle = async ({ event, resolve }) => {
 	}
 
 	return response;
+};
+
+/**
+ * Cross-site form check — SvelteKit's own CSRF rule, owned by the app so OAuth can be exempt.
+ *
+ * The framework check is off (`csrf.trustedOrigins: ['*']` in vite.config.ts) because it has no
+ * per-route exception and refused OAuth token exchanges (server-to-server form POSTs with no
+ * Origin). This applies the identical rule to everything else, right after `securityHeaders`
+ * so the 403 leaves with them, and before any handler that reads a body or a session — the
+ * position SvelteKit's check had. Like SvelteKit's, it does not run in development.
+ * Predicate and exempt paths: `#lib/server/security/csrf.ts`.
+ */
+const crossSiteFormCheck: Handle = async ({ event, resolve }) => {
+	if (
+		!dev &&
+		isCrossSiteFormSubmission({
+			method: event.request.method,
+			path: event.url.pathname,
+			contentType: event.request.headers.get('content-type'),
+			origin: event.request.headers.get('origin'),
+			selfOrigin: event.url.origin,
+		})
+	) {
+		const message = `Cross-site ${event.request.method} form submissions are forbidden`;
+		return event.request.headers.get('accept') === 'application/json'
+			? Response.json({ message }, { status: 403 })
+			: new Response(message, { status: 403, headers: { 'content-type': 'text/plain' } });
+	}
+	return resolve(event);
 };
 
 /**
@@ -810,6 +839,7 @@ export const handle = sequence(
 	requestDeadline,
 	queryCensus,
 	securityHeaders,
+	crossSiteFormCheck,
 	bodySizeFloor,
 	stripBaseLocalePrefix,
 	docsMarkdown,

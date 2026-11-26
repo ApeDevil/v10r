@@ -1,5 +1,12 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CSRF_EXEMPT_PREFIXES, isSameHost, needsCsrf } from './csrf';
+import {
+	CSRF_EXEMPT_PREFIXES,
+	isCrossSiteFormSubmission,
+	isSameHost,
+	needsCsrf,
+	OAUTH_SERVER_TO_SERVER_PATHS,
+} from './csrf';
 
 describe('needsCsrf', () => {
 	it('requires CSRF on mutating /api/ requests', () => {
@@ -14,7 +21,7 @@ describe('needsCsrf', () => {
 		}
 	});
 
-	it('skips non-/api paths (form actions are covered by SvelteKit checkOrigin)', () => {
+	it('skips non-/api paths (form actions are covered by crossSiteFormCheck)', () => {
 		expect(needsCsrf('POST', '/account/settings')).toBe(false);
 		expect(needsCsrf('POST', '/blog')).toBe(false);
 	});
@@ -95,5 +102,56 @@ describe('isSameHost', () => {
 		expect(isSameHost(null, host)).toBe(false);
 		expect(isSameHost('not-a-url', host)).toBe(false);
 		expect(isSameHost('', host)).toBe(false);
+	});
+});
+
+describe('isCrossSiteFormSubmission (SvelteKit’s rule, owned by the app)', () => {
+	const SELF = 'https://www.v10r.dev';
+	const form = 'application/x-www-form-urlencoded';
+	const request = (over: Partial<Parameters<typeof isCrossSiteFormSubmission>[0]>) => ({
+		method: 'POST',
+		path: '/account/settings',
+		contentType: form,
+		origin: SELF,
+		selfOrigin: SELF,
+		...over,
+	});
+
+	it('refuses a form action posted from another origin, or with no Origin at all', () => {
+		expect(isCrossSiteFormSubmission(request({ origin: 'https://evil.example' }))).toBe(true);
+		expect(isCrossSiteFormSubmission(request({ origin: null }))).toBe(true);
+		for (const contentType of [
+			'multipart/form-data; boundary=x',
+			'text/plain',
+			'application/x-sveltekit-formdata',
+			null,
+		]) {
+			expect(isCrossSiteFormSubmission(request({ origin: 'https://evil.example', contentType }))).toBe(true);
+		}
+		for (const method of ['PUT', 'PATCH', 'DELETE']) {
+			expect(isCrossSiteFormSubmission(request({ method, origin: 'https://evil.example' }))).toBe(true);
+		}
+	});
+
+	it('allows same-origin forms, safe methods and non-form bodies, exactly as SvelteKit did', () => {
+		expect(isCrossSiteFormSubmission(request({}))).toBe(false);
+		expect(isCrossSiteFormSubmission(request({ method: 'GET', origin: null }))).toBe(false);
+		expect(isCrossSiteFormSubmission(request({ contentType: 'application/json', origin: null }))).toBe(false);
+	});
+
+	it('lets an MCP host exchange its code (and revoke or introspect) server-to-server', () => {
+		// The request ChatGPT's server sends: form-encoded, no Origin. SvelteKit answered 403.
+		for (const path of OAUTH_SERVER_TO_SERVER_PATHS) {
+			expect(isCrossSiteFormSubmission(request({ path, origin: null }))).toBe(false);
+		}
+		// Only those: the consent page and the rest of Better Auth keep the rule.
+		expect(isCrossSiteFormSubmission(request({ path: '/auth/authorize', origin: null }))).toBe(true);
+		expect(isCrossSiteFormSubmission(request({ path: '/api/auth/oauth2/consent', origin: null }))).toBe(true);
+		expect(isCrossSiteFormSubmission(request({ path: '/api/auth/oauth2/token/x', origin: null }))).toBe(true);
+	});
+
+	it('replaces the framework check, which is switched off (order: handle-chain.gate.test.ts)', () => {
+		expect(readFileSync('vite.config.ts', 'utf8')).toContain("csrf: { trustedOrigins: ['*'] }");
+		expect(readFileSync('src/hooks.server.ts', 'utf8')).toContain('isCrossSiteFormSubmission({');
 	});
 });
