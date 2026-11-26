@@ -6,10 +6,12 @@ import {
 	Card,
 	DiagGrid,
 	DiagRow,
+	NavGrid,
 	NavSection,
 	PageHeader,
 	ShowcaseDocs,
 } from '#lib/components/composites/index.ts';
+import { LinkCard } from '#lib/components/index.ts';
 import { Body, Cell, Header, HeaderCell, Row, Table } from '#lib/components/primitives/table/index.ts';
 import { DagGraph, FlowDiagram, StateDiagram } from '#lib/components/viz/index.ts';
 import * as m from '#lib/paraglide/messages.js';
@@ -317,6 +319,18 @@ const dagData = toDagData(registry); // deep-tier subgraph only
 		/>
 	{/snippet}
 	</svelte:boundary>
+
+	<section class="section" aria-labelledby="mcp-related">
+		<h2 id="mcp-related" class="section-title">{m.showcase_mcp_related_heading()}</h2>
+		<NavGrid>
+			<LinkCard
+				href="/showcases/3d/mcp"
+				icon="i-lucide-box"
+				title={m.showcase_3d_tab_mcp()}
+				description={m.showcase_3d_card_mcp_desc()}
+			/>
+		</NavGrid>
+	</section>
 
 	<BackLink href="/showcases" label={m.showcase_breadcrumb_showcases()} />
 </div>

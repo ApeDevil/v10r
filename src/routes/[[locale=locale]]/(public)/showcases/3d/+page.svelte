@@ -2,6 +2,7 @@
 import { MODELS, MODELS_BY_ID } from '#lib/3d/models.ts';
 import { SceneCard, ViewerDialog } from '#lib/components/3d/index.ts';
 import { BackLink, NavGrid, PageHeader, ShowcaseDocs } from '#lib/components/composites/index.ts';
+import { LinkCard } from '#lib/components/index.ts';
 import { PageContainer } from '#lib/components/layout/index.ts';
 import { localizeHref } from '#lib/i18n/index.ts';
 import * as m from '#lib/paraglide/messages.js';
@@ -45,6 +46,16 @@ function closeViewer() {
 		{/each}
 	</NavGrid>
 
+	<h2 class="pages-heading">{m.showcase_3d_pages_heading()}</h2>
+	<NavGrid>
+		<LinkCard
+			href="/showcases/3d/mcp"
+			icon="i-lucide-box"
+			title={m.showcase_3d_tab_mcp()}
+			description={m.showcase_3d_card_mcp_desc()}
+		/>
+	</NavGrid>
+
 	<BackLink href="/showcases" label={m.showcase_breadcrumb_showcases()} />
 </PageContainer>
 
@@ -55,3 +66,11 @@ function closeViewer() {
 		onclose={closeViewer}
 	/>
 {/if}
+
+<style>
+	.pages-heading {
+		font-size: var(--text-fluid-lg);
+		font-weight: 600;
+		margin: var(--spacing-7) 0 var(--spacing-4);
+	}
+</style>

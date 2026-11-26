@@ -128,6 +128,45 @@ function applyPatch() {
 		</Card>
 	</div>
 
+	<section class="connect" aria-labelledby="mcp3d-connect">
+		<h2 id="mcp3d-connect" class="heading">{m.showcase_3d_mcp_connect_heading()}</h2>
+		<p>{m.showcase_3d_mcp_connect_intro()}</p>
+		<pre class="code"><code>{endpoint}</code></pre>
+		<div class="panels">
+			<Card>
+				{#snippet header()}
+					<h3 class="heading">ChatGPT</h3>
+				{/snippet}
+				<ol class="steps">
+					<li>{m.showcase_3d_mcp_connect_chatgpt_step1()}</li>
+					<li>{m.showcase_3d_mcp_connect_chatgpt_step2()}</li>
+					<li>{m.showcase_3d_mcp_connect_chatgpt_step3()}</li>
+					<li>{m.showcase_3d_mcp_connect_chatgpt_step4()}</li>
+				</ol>
+				<p class="muted">{m.showcase_3d_mcp_connect_chatgpt_status()}</p>
+			</Card>
+			<Card>
+				{#snippet header()}
+					<h3 class="heading">Claude</h3>
+				{/snippet}
+				<ol class="steps">
+					<li>{m.showcase_3d_mcp_connect_claude_step1()}</li>
+					<li>{m.showcase_3d_mcp_connect_claude_step2()}</li>
+				</ol>
+				<p class="muted">{m.showcase_3d_mcp_connect_claude_status()}</p>
+			</Card>
+			<Card>
+				{#snippet header()}
+					<h3 class="heading">Claude Code</h3>
+				{/snippet}
+				<pre class="code"><code>{`claude mcp add --transport http v10r-3d ${endpoint}`}</code></pre>
+				<p>{m.showcase_3d_mcp_connect_code_step()}</p>
+				<p class="muted">{m.showcase_3d_mcp_connect_claude_status()}</p>
+			</Card>
+		</div>
+		<p><a class="link" href={localizeHref('/account/connections')}>{m.showcase_3d_mcp_connect_revoke()} →</a></p>
+	</section>
+
 	<details class="definition">
 		<summary>{m.showcase_3d_mcp_definition_heading({ bytes: definition.length })}</summary>
 		<pre class="code"><code>{JSON.stringify(model, null, 2)}</code></pre>
@@ -191,6 +230,28 @@ function applyPatch() {
 		overflow-x: auto;
 		white-space: pre;
 		margin: var(--spacing-2) 0 0;
+	}
+
+	.connect {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-3);
+	}
+
+	.connect p {
+		margin: 0;
+	}
+
+	.steps {
+		margin: 0;
+		padding-inline-start: var(--spacing-5);
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+	}
+
+	.link {
+		color: var(--color-primary);
 	}
 
 	.definition summary {
