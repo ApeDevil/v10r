@@ -138,6 +138,5 @@ not a routine step.
 | What | Where |
 |---|---|
 | The SQL diff | `scripts/db/schema-diff.sh` (`bun run db:schema-diff`) |
-| The steps for Claude | `.claude/skills/cloud-db-change/SKILL.md` |
 | The ship's reminder | `.claude/skills/ship/SKILL.md` step 5: a ship that touched `src/lib/server/db/schema/` says production needs the change |
 | Push vs migrations in general | `docs/blueprint/data/drizzle-workflow.md` |

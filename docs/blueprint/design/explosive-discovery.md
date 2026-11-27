@@ -208,8 +208,7 @@ the trade-off either way.
 
 ## Review output and language
 
-Report each finding in five parts. The procedure that produces them lives in the skill
-`.claude/skills/uxy-explosive-discovery/SKILL.md`.
+Report each finding in five parts.
 
 | Part | Carries |
 |---|---|
@@ -285,4 +284,3 @@ The desired result is not minimalism for its own sake.
 - [app-shell/keyboard-shortcuts.md](../app-shell/keyboard-shortcuts.md) — the shell's expert paths
 - [quick-search/architecture.md](../quick-search/architecture.md) — the command palette as a discovery *and* expert path
 - [foundation/explosive-discovery.md](../../foundation/explosive-discovery.md) — the principle this method reviews against: two axes, invariants, accessibility
-- `.claude/skills/uxy-explosive-discovery/SKILL.md` — the review procedure agents follow

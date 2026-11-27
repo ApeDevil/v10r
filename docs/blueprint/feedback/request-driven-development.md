@@ -160,7 +160,7 @@ means none of them is stored, and the analytics-journey link is not stored eithe
   (`scripts/db/changes/feedback-lifecycle.sql`): rename the old type, create the new one,
   convert with `new|read → received` and `archived → closed + close_reason archived`, drop
   the old type. A PGlite test runs it on old-shape rows and compares the result with the
-  Drizzle schema. Applying it to production needs ApeDevil's word (`cloud-db-change`).
+  Drizzle schema. Applying it to production needs ApeDevil's word (`docs/stack/ops/cloud-database-changes.md`).
   The `read` marker is dropped, because opening an item no longer changes its status. No other
   data is lost.
 
@@ -727,8 +727,8 @@ transitions table (the audit log covers it), multi-repository support.
 ## 13. Slices, revised
 
 **Slice 1: Feedback lifecycle** (one branch, M–L)
-- Schema: the columns and status enum above (one Drizzle change; production push through the
-  `cloud-db-change` skill on your word only)
+- Schema: the columns and status enum above (one Drizzle change; production push per
+  `docs/stack/ops/cloud-database-changes.md`, on your word only)
 - Form: category `Select`, a "include technical context" `Checkbox` listing exactly what is
   sent (version, area, error reference), server-filled `app_version`, `route_id` from the band
   and error page

@@ -39,7 +39,7 @@ podman exec v10r bun run db:push         # your LOCAL database only — never pr
 ```
 
 Production is changed only by the explicit, separately authorized step in the RC report
-(`cloud-db-change` skill), never by `db:push`.
+(`docs/stack/ops/cloud-database-changes.md`), never by `db:push`.
 
 **Dev server.** Restart it (new i18n keys 500 on a running Vite process):
 
