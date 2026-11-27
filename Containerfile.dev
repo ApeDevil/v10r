@@ -12,7 +12,9 @@ FROM docker.io/oven/bun:1.3.12
 # build is set in compose.yaml (NODE_OPTIONS).
 COPY --from=docker.io/library/node:22 /usr/local/bin/node /usr/local/bin/node
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+# git: the ship gate runs inside this container, and scripts/ship/squash-into-main.test.ts
+# builds throwaway repositories to prove the ship guard — without git every local ship fails.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
