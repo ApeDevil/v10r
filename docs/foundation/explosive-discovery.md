@@ -11,7 +11,7 @@ An interface shows what the user's current intent needs and keeps the rest one m
 | Name | Job | Where |
 |---|---|---|
 | **Progressive disclosure** | The intent — *show what is needed now, reveal complexity on demand* | Design principle 3 in [blueprint/design/README.md](../blueprint/design/README.md#3-progressive-disclosure) |
-| **Explosive Discovery** | The principle — how a product organizes capability so that disclosure works on a page, in a menu and across a user's journey; what it must never do; what an adopter emulates | This page; its review method is [blueprint/design/explosive-discovery.md](../blueprint/design/explosive-discovery.md), and the procedure agents follow is the skill `uxy-explosive-discovery` |
+| **Explosive Discovery** | The principle — how a product organizes capability so that disclosure works on a page, in a menu and across a user's journey; what it must never do; what an adopter emulates | This page; its review method is [blueprint/design/explosive-discovery.md](../blueprint/design/explosive-discovery.md) |
 | **Nested Depth** | The structure the principle recommends — directions that narrow intent, detail on entry | Defined in the review method |
 
 ## Core philosophy
@@ -134,4 +134,3 @@ adopting it keeps these:
 - [style.md](./style.md) — Style Randomization; its dice roll is the first revelation
 - [user-data.md](./user-data.md) — the data classification a guest-to-account merge would live under
 - [architecture.md](./architecture.md) — state layers and routing patterns
-- `.claude/skills/uxy-explosive-discovery/SKILL.md` — the review procedure agents follow

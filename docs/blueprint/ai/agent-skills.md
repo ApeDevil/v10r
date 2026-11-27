@@ -108,5 +108,3 @@ reported all 8 valid.
 The MCP skills extension (`io.modelcontextprotocol/skills`, SEP-2640: `skills/list`,
 `skills/get`, `skill://` resources) is not served — waiting for SDK support. The generated
 skills are not ingested into the RAG corpus (it reads `docs/` only), so nothing is counted twice.
-Found on the way: `.claude/skills/visy-diagram/SKILL.md` frontmatter is not valid YAML (an
-unquoted `: ` in its description); both validators reject it and the skills CLI skips it.

@@ -88,7 +88,8 @@ describe('agent instruction files', () => {
 	const all = mentions();
 
 	it('scans the files and finds paths (a renamed directory would pass vacuously)', () => {
-		expect(FILES.length).toBeGreaterThan(10);
+		// AGENTS.md, CLAUDE.md and at least the ship skill; a renamed .claude/skills drops below.
+		expect(FILES.length).toBeGreaterThanOrEqual(3);
 		expect(all.length).toBeGreaterThan(50);
 	});
 
