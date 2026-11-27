@@ -43,6 +43,18 @@ export const CALLBACK_RATE_LIMIT_MAX = 10;
 /** OAuth callback rate limit: window duration */
 export const CALLBACK_RATE_LIMIT_WINDOW = '60 s';
 
+/**
+ * Sign-in ceremony rate limit: requests per window (per IP). For the steps that start or
+ * resume a sign-in without checking a secret or sending an email — the OAuth authorization
+ * navigation and the passkey challenge. One MCP connect plus one passkey sign-in already
+ * spends four to six of these (production, 2026-11-27), so sharing RATE_LIMIT_MAX with the
+ * credential checks locked people out of their first attempt.
+ */
+export const SIGN_IN_CEREMONY_RATE_LIMIT_MAX = 30;
+
+/** Sign-in ceremony rate limit: window duration */
+export const SIGN_IN_CEREMONY_RATE_LIMIT_WINDOW = '60 s';
+
 /** Issuer label shown in authenticator apps for TOTP enrollment */
 export const TWO_FACTOR_ISSUER = 'Velociraptor';
 

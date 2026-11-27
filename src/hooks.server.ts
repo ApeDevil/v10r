@@ -16,6 +16,7 @@ import { analyticsCollector } from '#lib/server/analytics/collector.hook.ts';
 import { CONSENT_COOKIE } from '#lib/server/analytics/config.ts';
 import { parseConsentTier } from '#lib/server/analytics/consent.ts';
 import { isAdminUserId, logAdminConfig } from '#lib/server/auth/admin-ids.ts';
+import { type AuthRateLimitBucket, authRateLimitBucket } from '#lib/server/auth/auth-rate-limit.ts';
 import { permitFormActionSource } from '#lib/server/auth/callback-destination.ts';
 import {
 	CALLBACK_RATE_LIMIT_MAX,
@@ -24,6 +25,8 @@ import {
 	OAUTH_MACHINE_RATE_LIMIT_WINDOW,
 	RATE_LIMIT_MAX,
 	RATE_LIMIT_WINDOW,
+	SIGN_IN_CEREMONY_RATE_LIMIT_MAX,
+	SIGN_IN_CEREMONY_RATE_LIMIT_WINDOW,
 	STEPUP_VERIFY_RATE_LIMIT_MAX,
 	STEPUP_VERIFY_RATE_LIMIT_WINDOW,
 } from '#lib/server/auth/config.ts';
@@ -41,7 +44,7 @@ import { MAX_REQUEST_BYTES, payloadTooLargeResponse } from '#lib/server/http/bod
 import { startDeadline } from '#lib/server/http/deadline.ts';
 import { reportServerError } from '#lib/server/http/error-report.ts';
 import { readsGrants } from '#lib/server/http/guards.ts';
-import { createLimiter, isDocumentRequest } from '#lib/server/http/rate-limit.ts';
+import { createLimiter, isDocumentRequest, type Limiter } from '#lib/server/http/rate-limit.ts';
 import { startRequestTiming, toServerTimingHeader } from '#lib/server/http/request-timing.ts';
 import { apiError } from '#lib/server/http/response.ts';
 import { clearOwnerCookie, PAIRING_COOKIE, verifyOwnerCookie } from '#lib/server/pairing/cookie.ts';
@@ -104,12 +107,24 @@ const oauthMachineRatelimit = createLimiter(
 	OAUTH_MACHINE_RATE_LIMIT_MAX,
 	OAUTH_MACHINE_RATE_LIMIT_WINDOW,
 );
-const OAUTH_MACHINE_PATHS = new Set([
-	'/api/auth/oauth2/token',
-	'/api/auth/oauth2/register',
-	'/api/auth/oauth2/revoke',
-	'/api/auth/jwks',
-]);
+
+/**
+ * Steps that start or resume a sign-in (OAuth authorization navigation, passkey challenge).
+ * They check no secret, so they must not spend the strict bucket the sign-in itself needs —
+ * see auth/auth-rate-limit.ts for the production lockout that split them out.
+ */
+const signInCeremonyRatelimit = createLimiter(
+	'ratelimit:auth-ceremony',
+	SIGN_IN_CEREMONY_RATE_LIMIT_MAX,
+	SIGN_IN_CEREMONY_RATE_LIMIT_WINDOW,
+);
+
+const authLimiters: Record<AuthRateLimitBucket, Limiter> = {
+	'oauth-machine': oauthMachineRatelimit,
+	'oauth-callback': authCallbackRatelimit,
+	'sign-in-ceremony': signInCeremonyRatelimit,
+	auth: authRatelimit,
+};
 
 /**
  * Per-ACCOUNT limiter for second-factor verification. The per-IP authRatelimit
@@ -644,14 +659,11 @@ const authHandler: Handle = async ({ event, resolve }) => {
 
 	const path = event.url.pathname;
 
-	// Rate limit all auth endpoints (sign-in, sign-out, get-session); OAuth
-	// callbacks get their own bucket so retried logins can't starve the flow.
+	// Rate limit all auth endpoints. Credential checks and email sends share the
+	// strict bucket; callbacks, machine endpoints and sign-in ceremony steps get
+	// their own so the steps around a sign-in can't starve the sign-in itself.
 	if (path.startsWith('/api/auth/') && event.locals.clientIp) {
-		const limiter = OAUTH_MACHINE_PATHS.has(path)
-			? oauthMachineRatelimit
-			: path.startsWith('/api/auth/callback/')
-				? authCallbackRatelimit
-				: authRatelimit;
+		const limiter = authLimiters[authRateLimitBucket(path)];
 		// Bucket on the normalized key, never the raw address: an IPv6 client
 		// rotating inside its own /64 would otherwise get 2^64 free buckets.
 		const { success, reset } = await limiter.limit(normalizeIpKey(event.locals.clientIp) ?? event.locals.clientIp);

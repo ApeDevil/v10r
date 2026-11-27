@@ -927,8 +927,9 @@ The session is resolved **inline in `authHandler`** because `sessionPopulate` ru
 
 Better Auth's built-in `rateLimit` is **not used**. Auth paths are limited by an Upstash limiter wired in `hooks.server.ts`.
 
-- `authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)` — 5 per 60s (`createLimiter` from `#lib/server/http/rate-limit.ts`).
-- The hook calls `authRatelimit.limit(event.locals.clientIp)` on `/api/auth/*` before Better Auth runs.
+- `authRatelimit = createLimiter('ratelimit:auth', RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)` — 5 per 60s (`createLimiter` from `#lib/server/http/rate-limit.ts`). Credential checks and email sends (passkey verification, codes, links, sign-in) draw from it.
+- `authRateLimitBucket(path)` (`auth/auth-rate-limit.ts`) picks the bucket per path: `oauth-machine` (token, register, revoke, jwks — shared host egress), `oauth-callback`, `sign-in-ceremony` (OAuth authorize navigation and the passkey challenge, 30 per 60s) and the strict `auth` default. The ceremony split exists because one MCP connect plus one passkey sign-in spent the whole strict budget before the verification ran (2026-11-27).
+- The hook calls the chosen limiter with the normalized client IP on `/api/auth/*` before Better Auth runs.
 - `event.locals.clientIp` is stamped once in `securityHeaders` from `event.getClientAddress()` — downstream code reads it, never the attacker-mutable forwarded-for chain.
 - Better Auth's `advanced.ipAddress.ipAddressHeaders` is pinned to `['x-client-ip']`, so any IP Better Auth records comes from that single trusted stamp.
 

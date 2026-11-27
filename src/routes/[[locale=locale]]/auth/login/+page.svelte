@@ -208,7 +208,9 @@ async function handlePasskey() {
 		const result = await authClient.signIn.passkey();
 		if (result?.error) {
 			if (!isCeremonyCancel(result.error.message)) {
-				error = result.error.message ?? m.auth_login_passkey_failed();
+				// authErrorMessage turns a 429 into the sign-in copy instead of the
+				// limiter's raw "Too many requests" text.
+				error = authErrorMessage(result.error, m.auth_login_passkey_failed);
 			}
 		} else {
 			rememberMethod('passkey');
