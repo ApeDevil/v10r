@@ -18,15 +18,16 @@
 
 import { ARCHITECTURE_QUERIES, ARCHITECTURE_TOOLS } from './architecture-queries.ts';
 import { DEFAULT_LINES, type ExcerptRequest, MAX_LINES } from './excerpt.ts';
-import { needLabel, needsSummary, TARGET_INFRA_WORDS, targetProvides } from './infrastructure-needs.ts';
+import { needsSummary, TARGET_INFRA_WORDS } from './infrastructure-needs.ts';
+import { type PatternGraph, patternGraph, type ResolvedNeed } from './pattern-graph.ts';
 import {
-	type Adoption,
-	type PatternGraph,
-	patternGraph,
-	type ResolvedNeed,
-	resolveNeeds,
-	type StepReason,
-} from './pattern-graph.ts';
+	assemble,
+	type NeedStatus,
+	type Plan,
+	type PlanStep,
+	type Selection,
+	select as selectRecord,
+} from './planner.ts';
 import type { PatternRecord, Registry, RegRef } from './schema.ts';
 import { ADOPTION_SEMANTICS, type NEED_LEVELS } from './schema.ts';
 import { type Scored, scorePatterns } from './search.ts';
@@ -92,6 +93,8 @@ export const MAX_CAPABILITIES = 20;
 const MAX_RESULTS = 50;
 /** Cards per get_pattern call: a deep card is ~850 tokens, so five stay under Claude Code's 10k warning. */
 const MAX_CARDS = 5;
+/** Several cards past this are shown header-only from the first that would cross it (≈9k tokens). */
+const CARDS_BUDGET_CHARS = 36_000;
 
 /**
  * What the TARGET project already runs: infrastructure need ids or the technologies that provide
@@ -105,7 +108,7 @@ const TARGET_INFRA_SCHEMA = {
 		'What the target project HAS — capabilities or technologies, e.g. ["relational-db"] or ["postgres", "redis"] ([] = none); each step then says whether it fits.',
 };
 
-const PLAN_DETAILS = ['outline', 'full'] as const;
+const PLAN_DETAILS = ['compact', 'full'] as const;
 /** Above this a full plan is outlined instead (≈8k tokens, under Claude Code's 10k warning). */
 const PLAN_BUDGET_CHARS = 32_000;
 
@@ -266,7 +269,7 @@ export const QUERY_TOOLS: ToolDef[] = [
 	{
 		name: 'recommend_emulation_plan',
 		description:
-			'Assemble a dependency-ordered emulation plan for desired capabilities — deterministic registry assembly, no inference: matching patterns plus prerequisites, topologically ordered, each step with its contraindications, required infrastructure and the invariants to preserve. Drop any step whose "Avoid when" describes the target.',
+			'Plan an emulation in three explained stages: discovery and selection turn each capability into one record (or report it ambiguous, with candidates and a recovery call — nothing is guessed), canonical "ids" skip both, and assembly deterministically adds prerequisites, constituents, specializations, principles, assumptions, infrastructure, pins, order and the reason for every step. Patterns are implemented, workflows performed, principles applied (never steps). Conditional constituents stay open decisions until "conditions" settles them by id; optional ones are adopted only via "select" or an explicit request. Compact by default.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -276,23 +279,69 @@ export const QUERY_TOOLS: ToolDef[] = [
 					items: { type: 'string', maxLength: MAX_ARG_CHARS },
 					minItems: 1,
 					maxItems: MAX_CAPABILITIES,
-					description: `Capabilities the target project needs (1-${MAX_CAPABILITIES}) — e.g. ["layered RAG", "background jobs", "design system"].`,
+					description: `What the target needs, in words (1-${MAX_CAPABILITIES}) — e.g. ["grounded answers", "background jobs"]. Each is selected separately and the selection explained.`,
 				},
-				include_dependencies: {
-					type: 'boolean',
-					default: true,
+				ids: {
+					type: 'array',
+					items: { type: 'string', maxLength: MAX_ARG_CHARS },
+					minItems: 1,
+					maxItems: MAX_CAPABILITIES,
 					description:
-						'Expand the plan with what the matched patterns build on, their required constituents and those of their generalizations; conditional and optional constituents are listed as open decisions, never added silently. Default true.',
+						'Canonical record ids to plan exactly (from search_patterns or get_pattern): validated, never aliased; unknown ids are reported. With capabilities, both sets of roots are planned together and shared parts appear once.',
+				},
+				conditions: {
+					type: 'array',
+					maxItems: MAX_RESULTS,
+					items: {
+						type: 'object',
+						additionalProperties: false,
+						properties: {
+							id: {
+								type: 'string',
+								maxLength: MAX_ARG_CHARS,
+								description: 'A condition id a plan printed, e.g. "layered-rag/composes/graph-rag".',
+							},
+							state: { type: 'string', enum: ['satisfied', 'unsatisfied'] },
+						},
+						required: ['id', 'state'],
+					},
+					description:
+						'Settled conditions, by the id a plan prints; leave unknown ones out. A satisfied condition makes a conditional constituent or need required; it never adopts an optional one.',
+				},
+				select: {
+					type: 'array',
+					items: { type: 'string', maxLength: MAX_ARG_CHARS },
+					maxItems: MAX_CAPABILITIES,
+					description: 'Optional or conditional constituents to adopt, by id.',
+				},
+				exclude: {
+					type: 'array',
+					items: { type: 'string', maxLength: MAX_ARG_CHARS },
+					maxItems: MAX_CAPABILITIES,
+					description:
+						'Record ids the target refuses; a step that requires one is reported as a conflict, never dropped silently.',
 				},
 				target_infra: TARGET_INFRA_SCHEMA,
+				target_lacks: {
+					type: 'array',
+					items: { type: 'string', enum: TARGET_INFRA_WORDS },
+					description:
+						'Infrastructure the target is known NOT to have. Steps that require it are reported blocked, with what stands on them. A need in neither list is unknown, never assumed absent.',
+				},
+				target_has: {
+					type: 'array',
+					items: { type: 'string', maxLength: MAX_ARG_CHARS },
+					maxItems: MAX_RESULTS,
+					description: 'Record ids the target already has an equivalent of: satisfied, never built again.',
+				},
 				detail: {
 					type: 'string',
 					enum: PLAN_DETAILS,
-					default: 'full',
-					description: 'full (default) = docs, code, tests, invariants per step; outline = steps and fitness only.',
+					default: 'compact',
+					description:
+						'compact (default) = steps, reasons, fitness and every decision; full adds docs, code, tests and invariants per step.',
 				},
 			},
-			required: ['capabilities'],
 		},
 	},
 	...ARCHITECTURE_TOOLS,
@@ -749,7 +798,7 @@ export function searchPatterns(registry: Registry, args: Record<string, unknown>
 }
 
 /** The not-found answer: a capped id sample (reflecting all of them would be kilobytes) and search. */
-function unknownIds(registry: Registry, missing: string[]): QueryOutcome {
+function unknownIdsOutcome(registry: Registry, missing: string[]): QueryOutcome {
 	const all = registry.patterns;
 	const more = all.length > 20 ? `, … (${all.length} total — search_patterns finds the rest)` : '';
 	return failure(
@@ -803,13 +852,26 @@ export function getPattern(registry: Registry, args: Record<string, unknown>): Q
 	const patterns = (ids as string[]).map((id) => byId.get(id));
 	const missing = (ids as string[]).filter((_, index) => patterns[index] === undefined);
 	// A real-shaped id we do not have is a REGISTRY GAP, not a malformed request.
-	if (missing.length > 0) return unknownIds(registry, missing);
+	if (missing.length > 0) return unknownIdsOutcome(registry, missing);
 	const shownWithInvariants = new Set(sections.includes('invariants') ? (ids as string[]) : []);
-	return ok(
-		(patterns as PatternRecord[])
-			.map((pattern) => patternCard(pattern, needs.get(pattern.id) ?? [], graph, sections, shownWithInvariants))
-			.join('\n\n---\n\n'),
-	);
+	// Several long cards could pass a client's large-output warning together. A card that would
+	// cross the budget is shown as its header and says what it withholds — never cut mid-card.
+	const cards: string[] = [];
+	let size = 0;
+	for (const pattern of patterns as PatternRecord[]) {
+		const full = patternCard(pattern, needs.get(pattern.id) ?? [], graph, sections, shownWithInvariants);
+		const card =
+			cards.length > 0 && size + full.length > CARDS_BUDGET_CHARS
+				? `${cardHeader(pattern, needs.get(pattern.id) ?? [], graph)}\n\n_Withheld for size (this response is near the ${CARDS_BUDGET_CHARS / 4 / 1000}k-token budget): ${sections
+						.map((section) => ({ section, count: sectionSize(pattern, section) }))
+						.filter(({ count }) => count > 0)
+						.map(({ section, count }) => `${section} (${count})`)
+						.join(', ')} — the invariants MUST hold when emulating. Request this card alone: get_pattern {"id":"${pattern.id}"}._`
+				: full;
+		cards.push(card);
+		size += card.length;
+	}
+	return ok(cards.join('\n\n---\n\n'));
 }
 
 export function traceCapability(registry: Registry, args: Record<string, unknown>): QueryOutcome {
@@ -846,272 +908,380 @@ export function traceCapability(registry: Registry, args: Record<string, unknown
 	);
 }
 
-/**
- * A step's fit against the target. A required need the target lacks (or a pin it does not meet)
- * blocks the step; a conditional one is a question the agent must settle against the target.
- */
-function stepVerdict(stepNeeds: ResolvedNeed[], target: ReadonlySet<string>): string {
-	const blocking = stepNeeds.filter((need) => need.level === 'required' && !targetProvides(target, need).provided);
-	const unsettled = stepNeeds.filter((need) => need.level === 'conditional' && !targetProvides(target, need).provided);
-	const pins = blocking.filter((need) => targetProvides(target, need).pinMismatch);
-	return [
-		blocking.length > 0
-			? `**Target lacks ${blocking.map((need) => needLabel(need)).join(', ')} — drop or replace this step, and the steps that build on it.**`
-			: '',
-		...pins.flatMap((need) =>
-			need.sources
-				.filter((source) => source.pinned && source.level === 'required')
-				.map((source) => `Pinned to ${source.pinned} by ${source.origin}: ${source.why}.`),
-		),
-		unsettled.length > 0
-			? `Check against the target: ${unsettled.map((need) => needLabel(need, { condition: true })).join(', ')}.`
-			: '',
-		blocking.length === 0 && unsettled.length === 0 ? 'Fits the target.' : '',
-	]
-		.filter((line) => line.length > 0)
-		.join('\n');
+/** `"x"` → a selection's line in the Requested section. */
+function selectionLine(selection: Selection): string {
+	if (selection.status === 'selected') {
+		const { chosen } = selection;
+		return `"${selection.request}" → \`${chosen.id}\` (${chosen.kind}, ${chosen.tier}): ${selection.reason}.`;
+	}
+	if (selection.status === 'ambiguous') {
+		return `"${selection.request}" → **ambiguous**, nothing adopted for it: ${selection.reason}. Candidates: ${selection.candidates.map((candidate) => `\`${candidate.id}\` (${candidate.evidence}${candidate.matched.length > 0 ? `: ${candidate.matched.slice(0, 2).join(', ')}` : ''})`).join(', ')}. Recover: call again with "ids" naming the one you mean.`;
+	}
+	return `"${selection.request}" → **unmatched**: ${selection.reason}${selection.closest ? ` (closest weak overlap: \`${selection.closest.id}\`)` : ''}. Cover it manually, or search with other terms.`;
 }
 
-/**
- * The plan's infrastructure, by level, resolved once over every step: a need is listed once at the
- * strictest level any step holds it, with every pin and condition kept; optional and
- * implementation needs never block anything.
- */
-function planInfrastructure(needs: ResolvedNeed[], target: ReadonlySet<string> | null): string[] {
-	const at = (level: (typeof NEED_LEVELS)[number]) => needs.filter((need) => need.level === level);
-	const pinnedLabel = (need: ResolvedNeed) => {
-		const pins = need.pins.filter((pin) => !pin.conditional).map((pin) => pin.technology);
-		if (need.conflict?.certain) return `${need.need} (pins conflict: ${pins.join(', ')})`;
-		return pins.length > 0 ? `${need.need} (pinned: ${pins.join(', ')})` : need.need;
-	};
-	const required = at('required');
-	const missing = target ? required.filter((need) => !targetProvides(target, need).provided) : [];
+/** Why a step is in the plan, every reason kept, the causes first and context after. */
+function reasonText(step: PlanStep): string {
+	const parts = step.reasons.map((reason) => {
+		const via =
+			'inheritedFrom' in reason && reason.inheritedFrom ? ` (inherited from \`${reason.inheritedFrom}\`)` : '';
+		switch (reason.kind) {
+			case 'requested':
+				return step.requestedAs.length > 0
+					? `requested (${step.requestedAs.map((as) => (as === 'id' ? 'by id' : `"${as}"`)).join(', ')})`
+					: 'requested';
+			case 'builds_on':
+				return `\`${reason.from}\` builds on it${via}`;
+			case 'part_of':
+				return reason.binding === 'required'
+					? `required part of \`${reason.from}\`${via}`
+					: reason.binding === 'condition'
+						? `conditional part of \`${reason.from}\`${via}, required because \`${reason.condition?.id}\` is satisfied (${reason.condition?.when})`
+						: `${reason.level} part of \`${reason.from}\`${via}, selected by the caller`;
+			default:
+				return `also a${reason.level === 'optional' ? 'n optional' : ' conditional'} part of \`${reason.from}\` (\`${reason.condition.id}\`, ${reason.state})`;
+		}
+	});
+	return parts.join('; ');
+}
+
+const NEED_STATUS_TEXT: Record<NeedStatus, string> = {
+	provided: 'the target provides it',
+	lacking: 'the target LACKS it',
+	unknown: 'unknown for the target — check',
+	'pin-mismatch': 'the target has the capability but not the pinned technology',
+};
+
+/** A need with its pins, conditional pins under their conditions. */
+function needText(need: ResolvedNeed, status: NeedStatus | null): string {
+	const pins = need.pins.map((pin) =>
+		pin.conditional
+			? `pinned to ${pin.technology} only when ${pin.conditions.join('; or when ')}`
+			: `pinned to ${pin.technology}`,
+	);
+	const details = [
+		need.conflict
+			? `pins ${need.conflict.certain ? 'conflict' : 'may conflict'}: ${need.conflict.technologies.join(', ')}`
+			: '',
+		...(need.conflict ? [] : pins),
+		need.level === 'conditional' ? `when ${need.conditions.join('; or when ')}` : '',
+		need.level === 'optional' || need.level === 'implementation' ? (need.why ?? '') : '',
+		`from ${need.origins.map((origin) => `\`${origin}\``).join(', ')}`,
+		status ? NEED_STATUS_TEXT[status] : '',
+	].filter((part) => part.length > 0);
+	return `${need.need} (${details.join('; ')})`;
+}
+
+function planInfrastructure(plan: Plan): string[] {
+	const at = (level: (typeof NEED_LEVELS)[number]) => plan.needs.filter((entry) => entry.need.level === level);
 	const lines = [
-		required.length === 0
-			? 'Required infrastructure: none beyond the app runtime.'
-			: `Required infrastructure: ${required.map(pinnedLabel).join(', ')}.`,
+		at('required').length === 0
+			? 'Required: none beyond the app runtime.'
+			: `Required: ${at('required')
+					.map((entry) => needText(entry.need, entry.status))
+					.join(', ')}.`,
 		at('conditional').length > 0
-			? `Conditional infrastructure: ${at('conditional')
-					.map((need) => needLabel(need, { condition: true }))
-					.join(', ')}. Settle each condition against the target.`
+			? `Conditional (needed only when its condition holds; settle each): ${at('conditional')
+					.map((entry) => needText(entry.need, entry.status))
+					.join(', ')}.`
 			: '',
 		at('optional').length > 0
-			? `Optional infrastructure: ${at('optional')
-					.map((need) => `${need.need} (${need.why})`)
+			? `Optional (never blocks): ${at('optional')
+					.map((entry) => needText(entry.need, null))
 					.join(', ')}.`
 			: '',
 		at('implementation').length > 0
-			? `v10r's implementation also uses ${at('implementation')
-					.map((need) => need.need)
-					.join(', ')}: not needed to emulate the patterns (each step says why).`
+			? `Implementation-specific (v10r's choice, not needed to emulate): ${at('implementation')
+					.map((entry) => needText(entry.need, null))
+					.join(', ')}.`
 			: '',
-		target === null
-			? required.length > 0
-				? 'If the target lacks a required need, drop or replace the step that needs it.'
-				: ''
-			: missing.length === 0
-				? 'The target has every required need.'
-				: `The target lacks ${missing.map((need) => need.need).join(', ')}: the steps marked above need it.`,
 	];
 	return lines.filter((line) => line.length > 0);
 }
 
-/** One reason chain head per step, e.g. `ai-surfaces builds on it` or `part of agentic-architecture`. */
-function reasonText(reasons: readonly StepReason[]): string {
-	const parts = reasons.map((reason) => {
-		if (reason.kind === 'requested') return 'it was requested';
-		const via = reason.inheritedFrom ? ` (inherited from ${reason.inheritedFrom})` : '';
-		if (reason.kind === 'builds_on') return `${reason.from} builds on it${via}`;
-		return reason.level === 'required'
-			? `it is part of ${reason.from}${via}`
-			: `it is a ${reason.level} part of ${reason.from}${via}, included because its condition is satisfied`;
-	});
-	return parts.length > 0 ? parts.join('; ') : 'it was requested';
-}
-
-/** Open decisions, principles and platform assumptions: what a plan must say without adding a step. */
-function adoptionNotes(adoption: Adoption): string[] {
-	const conditional = adoption.open.filter((entry) => entry.level === 'conditional');
-	const optional = adoption.open.filter((entry) => entry.level === 'optional');
-	const proposals = (entry: Adoption['open'][number]) =>
-		entry.proposedBy.map((proposal) => `part of \`${proposal.from}\` when ${proposal.condition.when}`).join('; ');
-	const principles = adoption.assumptions.filter((entry) => entry.kind === 'principle');
-	const conventions = adoption.assumptions.filter((entry) => entry.kind !== 'principle');
+/** Open constituents: what the plan does not adopt, and the question that would. */
+function openLines(plan: Plan): string[] {
+	const line = (entry: Plan['adoption']['open'][number]) =>
+		`\`${entry.id}\` — ${entry.proposedBy
+			.map(
+				(proposal) =>
+					`${proposal.level} part of \`${proposal.from}\` when ${proposal.condition.when} (\`${proposal.condition.id}\`: ${proposal.state === 'unknown' ? 'unknown' : proposal.state}${proposal.level === 'optional' && proposal.state === 'satisfied' ? ', applies but not selected' : ''})`,
+			)
+			.join('; ')}`;
+	const conditional = plan.adoption.open.filter(
+		(entry) => entry.level === 'conditional' && entry.proposedBy.some((proposal) => proposal.state !== 'unsatisfied'),
+	);
+	const optional = plan.adoption.open.filter(
+		(entry) => entry.level === 'optional' && entry.proposedBy.some((proposal) => proposal.state !== 'unsatisfied'),
+	);
+	const omitted = plan.adoption.open.filter((entry) =>
+		entry.proposedBy.every((proposal) => proposal.state === 'unsatisfied'),
+	);
 	return [
 		conditional.length > 0
-			? `Open decisions (conditional constituents: adopt each when its condition holds for the target; the condition is unknown, so none was added or dropped): ${conditional.map((entry) => `\`${entry.id}\` (${proposals(entry)})`).join(', ')}.`
+			? `**Open decisions** (conditional constituents — required when the condition holds; settle with "conditions", or adopt with "select"):\n${bullets(conditional.map(line))}`
 			: '',
 		optional.length > 0
-			? `Optional constituents (enhancements that may be omitted even when they apply): ${optional.map((entry) => `\`${entry.id}\` (${proposals(entry)})`).join(', ')}.`
+			? `**Optional** (enhancements, adopted only when selected — a satisfied condition alone does not adopt one):\n${bullets(optional.map(line))}`
 			: '',
-		principles.length > 0
-			? `Applies (principles; review the work against them, never a step): ${principles.map((entry) => `\`${entry.id}\` for ${entry.steps.map((id) => `\`${id}\``).join(', ')}`).join('; ')}.`
-			: '',
-		conventions.length > 0
-			? `Assumes (platform conventions the steps rely on; build only if the target lacks them): ${conventions.map((entry) => `\`${entry.id}\` for ${entry.steps.map((id) => `\`${id}\``).join(', ')}`).join('; ')}.`
-			: '',
-	].filter((line) => line.length > 0);
+		omitted.length > 0 ? `**Omitted** (every condition unsatisfied):\n${bullets(omitted.map(line))}` : '',
+	].filter((part) => part.length > 0);
 }
 
-/** Needs of a plan built without expansion: each step's resolved needs, merged without loss. */
-function mergedNeeds(order: readonly string[], graph: PatternGraph): ResolvedNeed[] {
-	return resolveNeeds(
-		order.flatMap((id) => graph.needSources(id)),
-		order,
-	);
-}
-
-export function recommendPlan(registry: Registry, args: Record<string, unknown>): QueryOutcome {
-	// Refuse rather than truncate — a plan silently built from the first 20 of 5000
-	// capabilities looks complete and is not.
-	if (Array.isArray(args.capabilities) && args.capabilities.length > MAX_CAPABILITIES) {
-		return failure(
-			`"capabilities" accepts at most ${MAX_CAPABILITIES} entries; got ${args.capabilities.length}. Split the request.`,
-			'invalid_args',
-			[
-				{
-					tool: 'recommend_emulation_plan',
-					args: { capabilities: ['layered RAG', 'background jobs'] },
-					why: 'retry with the first batch of at most 20 capabilities.',
-				},
-			],
+function renderStep(step: PlanStep, index: number, graph: PatternGraph, full: boolean): string {
+	const pattern = graph.byId.get(step.id) as PatternRecord;
+	const verb = step.action === 'perform' ? 'Perform (a workflow, run against the project)' : 'Implement';
+	const lines = [
+		`### ${index + 1}. ${verb}: ${pattern.title} (\`${step.id}\`)${pattern.tier === 'light' ? ' — light record' : ''}`,
+		`Why: ${reasonText(step)}.`,
+		step.generalizations.length > 0
+			? `Specializes ${step.generalizations.map((id) => `\`${id}\``).join(' → ')}: its invariants hold here; it is not built separately.`
+			: '',
+		step.blockedBy.length > 0
+			? `**Blocked:** needs ${step.blockedBy.map((need) => needText(need, 'lacking')).join(', ')}.${step.affects.length > 0 ? ` Affects what stands on it: ${step.affects.map((id) => `\`${id}\``).join(', ')}.` : ''} Provide the need, replace this step, or drop it with what stands on it.`
+			: '',
+		step.needs.length > 0 ? `Needs: ${needsSummary(step.needs, { condition: true })}` : '',
+	];
+	if (full) {
+		lines.push(
+			`Risk: ${pattern.risk}`,
+			...fitnessLines(pattern),
+			`Read:\n${refLines(pattern.docs)}`,
+			pattern.code.length > 0 ? `Model on:\n${refLines(pattern.code)}` : '',
+			pattern.tests.length > 0 ? `Mirror tests:\n${refLines(pattern.tests)}` : '',
+		);
+		const invariants = [bullets(pattern.invariants), inheritedInvariantLines(pattern, graph)].filter(
+			(part) => part.length > 0,
+		);
+		lines.push(
+			invariants.length > 0
+				? `Invariants (must hold):\n${invariants.join('\n')}`
+				: pattern.tier === 'light'
+					? 'Light record: no curated invariants — its docs are the canonical explanation.'
+					: '',
+		);
+	} else if (pattern.avoid_when.length > 0) {
+		lines.push(
+			`Avoid when: ${pattern.avoid_when[0]}${pattern.avoid_when.length > 1 ? ` (+${pattern.avoid_when.length - 1} more)` : ''}`,
 		);
 	}
-	const capabilities = Array.isArray(args.capabilities)
-		? args.capabilities.filter(
-				(item): item is string => typeof item === 'string' && item.trim().length > 0 && item.length <= MAX_ARG_CHARS,
-			)
-		: [];
-	if (capabilities.length === 0) {
+	return lines.filter((line) => line.length > 0).join('\n');
+}
+
+/** Strings from an array argument, bounded; null when the argument is malformed. */
+function stringList(value: unknown, max: number): string[] | null {
+	if (value === undefined) return [];
+	if (!Array.isArray(value) || value.length > max) return null;
+	const items = value.map((item) => boundedString(item));
+	return items.some((item) => item === null || item.trim().length === 0) ? null : (items as string[]);
+}
+
+const PLAN_EXAMPLE: NextAction = {
+	tool: 'recommend_emulation_plan',
+	args: { capabilities: ['grounded answers'], ids: ['graph-rag'] },
+	why: 'a well-formed example call.',
+};
+
+export function recommendPlan(registry: Registry, args: Record<string, unknown>): QueryOutcome {
+	const capabilities = stringList(args.capabilities, MAX_CAPABILITIES);
+	// Ids are a set: the plan is the same whatever order they are given in.
+	const listed = stringList(args.ids, MAX_CAPABILITIES);
+	const ids = listed === null ? null : [...new Set(listed)].sort();
+	const select = stringList(args.select, MAX_CAPABILITIES);
+	const exclude = stringList(args.exclude, MAX_CAPABILITIES);
+	const existing = stringList(args.target_has, MAX_RESULTS);
+	const lacks = stringList(args.target_lacks, TARGET_INFRA_WORDS.length);
+	if ([capabilities, ids, select, exclude, existing, lacks].some((list) => list === null)) {
 		return failure(
-			`recommend_emulation_plan needs "capabilities": a non-empty array of 1-${MAX_CAPABILITIES} strings, each at most ${MAX_ARG_CHARS} characters, e.g. ["layered RAG", "background jobs"].`,
+			`recommend_emulation_plan takes "capabilities" and/or "ids" (each 1-${MAX_CAPABILITIES} non-empty strings of at most ${MAX_ARG_CHARS} characters); "select", "exclude" and "target_has" are id arrays. Split a larger request; nothing is truncated.`,
 			'invalid_args',
-			[
-				{
-					tool: 'recommend_emulation_plan',
-					args: { capabilities: ['layered RAG', 'background jobs'] },
-					why: 'a well-formed example call.',
-				},
-			],
+			[PLAN_EXAMPLE],
 		);
+	}
+	if ((capabilities as string[]).length + (ids as string[]).length === 0) {
+		return failure(
+			'recommend_emulation_plan needs "capabilities" (what you want) or "ids" (canonical record ids), or both.',
+			'invalid_args',
+			[PLAN_EXAMPLE],
+		);
+	}
+	if ((lacks as string[]).some((word) => !TARGET_INFRA_WORDS.includes(word))) {
+		return failure(`"target_lacks" must be an array of: ${TARGET_INFRA_WORDS.join(', ')}.`, 'invalid_args', [
+			PLAN_EXAMPLE,
+		]);
+	}
+	const conditions = new Map<string, 'satisfied' | 'unsatisfied'>();
+	if (args.conditions !== undefined) {
+		const entries = Array.isArray(args.conditions) ? args.conditions : null;
+		const valid =
+			entries !== null &&
+			entries.length <= MAX_RESULTS &&
+			entries.every(
+				(entry) =>
+					typeof entry === 'object' &&
+					entry !== null &&
+					boundedString((entry as Record<string, unknown>).id) !== null &&
+					['satisfied', 'unsatisfied'].includes((entry as Record<string, unknown>).state as string),
+			);
+		if (!valid) {
+			return failure(
+				'"conditions" must be an array of {"id": "<condition id from a plan>", "state": "satisfied" | "unsatisfied"}; leave a condition out when it is unknown.',
+				'invalid_args',
+				[PLAN_EXAMPLE],
+			);
+		}
+		for (const entry of entries as { id: string; state: 'satisfied' | 'unsatisfied' }[])
+			conditions.set(entry.id, entry.state);
 	}
 	const parsedTarget = targetOf(args);
 	if (!('target' in parsedTarget)) return parsedTarget;
-	const { target } = parsedTarget;
-	const detail = oneOf(args.detail, PLAN_DETAILS) ?? 'full';
-	const includeDeps = args.include_dependencies !== false;
-	const { byId, graph, needs } = viewOf(registry);
-	// Plan steps come from DEEP records only — a step without invariants is noise.
-	// Capabilities that only match light index rows are reported in a trailer so
-	// the gap is visible (and a promotion candidate) instead of silently dropped.
-	const satisfies = new Map<string, string[]>();
-	const lightOnly: string[] = [];
-	const unmatched: string[] = [];
-	for (const capability of capabilities) {
-		// A weak overlap never becomes a plan step: the capability is reported unmatched instead.
-		const all = scorePatterns(capability, registry.patterns);
-		const ranked = all.filter((hit) => hit.strength !== 'weak');
-		const deep = ranked.filter((hit) => hit.pattern.tier === 'deep');
-		// The best deep hit, plus a runner-up only when it is a STRONG match within half the
-		// best score: a partial runner-up is an adjacent pattern, and every step drags its own
-		// dependencies into the plan.
-		const best = deep.filter(
-			(hit, index) => index === 0 || (index === 1 && hit.strength === 'strong' && hit.score >= deep[0].score / 2),
-		);
-		if (best.length === 0) {
-			const lightHits = ranked.filter((hit) => hit.pattern.tier === 'light').slice(0, 2);
-			if (lightHits.length > 0) {
-				lightOnly.push(`"${capability}" → ${lightHits.map((hit) => `\`${hit.pattern.id}\``).join(', ')}`);
-			} else {
-				// Name the closest weak overlap: on a paraphrase it is often the right card.
-				unmatched.push(all[0] ? `${capability} (closest weak overlap: \`${all[0].pattern.id}\`)` : capability);
-			}
-			continue;
-		}
-		for (const hit of best) {
-			satisfies.set(hit.pattern.id, [...(satisfies.get(hit.pattern.id) ?? []), capability]);
+	const detail = oneOf(args.detail, PLAN_DETAILS) ?? 'compact';
+	const { byId, graph } = viewOf(registry);
+
+	// Ids are validated, never resolved: an unknown or retired id is reported, not aliased.
+	const unknownIds = (ids as string[]).filter((id) => !byId.has(id));
+	const selections = (capabilities as string[]).map((capability) => selectRecord(registry, capability));
+	const roots = new Map<string, string[]>();
+	for (const id of ids as string[]) if (byId.has(id)) roots.set(id, [...(roots.get(id) ?? []), 'id']);
+	for (const selection of selections) {
+		if (selection.status !== 'selected') continue;
+		const id = selection.chosen.id;
+		roots.set(id, [...(roots.get(id) ?? []), selection.request]);
+	}
+	if (roots.size === 0) {
+		if (unknownIds.length > 0 && selections.length === 0) return unknownIdsOutcome(registry, unknownIds);
+		const ambiguous = selections.filter((selection) => selection.status === 'ambiguous');
+		if (ambiguous.length === 0) {
+			const closest = selections.flatMap((selection) =>
+				selection.status === 'unmatched' && selection.closest ? [selection.closest.id] : [],
+			);
+			return failure(
+				[
+					`No record matches ${selections.map((selection) => `"${selection.request}"`).join(', ')}.`,
+					...selections.map(selectionLine),
+					...(unknownIds.length > 0 ? [`Unknown ids: ${unknownIds.join(', ')}.`] : []),
+				].join('\n'),
+				'empty',
+				[
+					...(closest[0]
+						? [
+								{
+									tool: 'get_pattern',
+									args: { id: closest[0] },
+									why: 'the closest candidate — confirm it or rule it out.',
+								},
+							]
+						: []),
+					LIST_EVERYTHING,
+				],
+			);
 		}
 	}
-	if (satisfies.size === 0 && lightOnly.length === 0) {
-		return noMatch(registry, `capabilities [${capabilities.join(', ')}]`);
-	}
-	if (satisfies.size === 0) {
-		return ok(
-			`No deep pattern card matches these capabilities yet, but the index knows them.\n\n## Related index entries (no deep card yet)\n${lightOnly.map((line) => `- ${line}`).join('\n')}\n\nCall get_pattern on an id above for its docs/code pointers.`,
-		);
-	}
-	const adoption = includeDeps ? graph.adopt([...satisfies.keys()]) : null;
-	const { order, cyclic } = adoption
-		? { order: adoption.steps, cyclic: adoption.cyclic }
-		: graph.order([...satisfies.keys()]);
-	const stepNeedsOf = (id: string) => needs.get(id) ?? [];
-	const renderStep = (id: string, index: number, outlined: boolean) => {
-		const pattern = byId.get(id);
-		if (!pattern) return `${index + 1}. ${id}`;
-		const covers = satisfies.get(id);
-		const stepNeeds = stepNeedsOf(id);
-		const generalizations = graph.generalizations(id);
-		const requirement = [
-			stepNeeds.length > 0 ? `Needs: ${needsSummary(stepNeeds, { condition: true })}` : '',
-			target === null ? '' : stepVerdict(stepNeeds, target),
-		].filter((line) => line.length > 0);
-		const head = [
-			`### Step ${index + 1}: ${pattern.title} (\`${id}\`)`,
-			covers ? `Satisfies: ${covers.join(', ')}` : `Included because ${reasonText(adoption?.reasons.get(id) ?? [])}.`,
-			generalizations.length > 0
-				? `Specializes ${generalizations.join(' → ')}: its invariants hold here and its foundations and constituents are steps of this plan; it is not built twice.`
-				: '',
-			pattern.kind === 'pattern' ? '' : `Kind: ${pattern.kind} — ${ADOPTION_SEMANTICS[pattern.kind]}`,
-			`Risk: ${pattern.risk}`,
-			...requirement,
-		];
-		if (outlined) {
-			return [
-				...head,
-				pattern.avoid_when.length > 0 ? `Avoid when: ${pattern.avoid_when[0]}` : '',
-				`Not shown: ${pattern.invariants.length} invariant(s) that MUST hold, ${pattern.code.length} code entry point(s), ${pattern.docs.length} doc(s).`,
-			]
-				.filter((line) => line.length > 0)
-				.join('\n');
-		}
-		return [
-			...head,
-			...fitnessLines(pattern),
-			`Read:\n${refLines(pattern.docs)}`,
-			`Model on:\n${refLines(pattern.code)}`,
-			pattern.tests.length > 0 ? `Mirror tests:\n${refLines(pattern.tests)}` : '',
-			`Invariants:\n${[bullets(pattern.invariants), inheritedInvariantLines(pattern, graph)].filter((part) => part.length > 0).join('\n')}`,
-		]
-			.filter((line) => line.length > 0)
-			.join('\n');
-	};
-	let steps = order.map((id, index) => renderStep(id, index, detail === 'outline'));
-	// A full plan past the budget would trip a client's large-output warning (Claude Code: 10k
-	// tokens). It is outlined instead — and says so — never cut off mid-step.
+	const plan = assemble(registry, {
+		roots,
+		conditions,
+		selected: new Set(select as string[]),
+		excluded: new Set(exclude as string[]),
+		target: {
+			provides: parsedTarget.target,
+			lacks: new Set(lacks as string[]),
+			existing: new Set(existing as string[]),
+		},
+	});
+	const requested = [
+		...(ids as string[]).map((id) =>
+			byId.has(id)
+				? `\`${id}\` by id (${byId.get(id)?.kind})${byId.get(id)?.kind === 'principle' ? ' — a principle: it constrains the work below, never a step' : ''}`
+				: `\`${id}\` — **unknown id**: no record has it (retired and renamed ids are not resolved; find the current one with search_patterns).`,
+		),
+		...selections.map(selectionLine),
+	];
+	const satisfied = plan.adoption.satisfied.map((id) => `\`${id}\` (${reasonTextOf(plan, id)})`);
+	const conflicts = [
+		...plan.adoption.excluded
+			.filter((entry) => entry.conflict)
+			.map(
+				(entry) =>
+					`\`${entry.id}\` is excluded but ${reasonTextOf(plan, entry.id)} — the plan cannot hold both; resolve it before building.`,
+			),
+		...plan.needs
+			.filter((entry) => entry.need.conflict)
+			.map(
+				(entry) =>
+					`${entry.need.need}: pins ${entry.need.conflict?.certain ? 'conflict' : 'may conflict'} (${entry.need.conflict?.technologies.join(', ')}) from ${entry.need.origins.join(', ')}.`,
+			),
+	];
+	const declined = plan.adoption.excluded.filter((entry) => !entry.conflict).map((entry) => `\`${entry.id}\``);
+	// A need condition is moot once the need is required anyway; the rest stay visible.
+	const requiredNeeds = new Set(plan.needs.filter((entry) => entry.need.level === 'required').map((entry) => entry.need.need));
+	const unresolved = plan.unresolved.filter(
+		(condition) => condition.origin.kind === 'need' && !requiredNeeds.has(condition.origin.need),
+	);
+	const reported = [
+		...plan.unknownIds.map((id) => `"select"/"exclude"/"target_has" id \`${id}\` is not a record.`),
+		...plan.irrelevantConditions.map((id) => `Condition \`${id}\` is not met by this plan (ignored).`),
+	];
+	const render = (full: boolean) => plan.steps.map((step, index) => renderStep(step, index, graph, full));
+	let steps = render(detail === 'full');
 	const fullSize = steps.join('\n\n').length;
 	const overBudget = detail === 'full' && fullSize > PLAN_BUDGET_CHARS;
-	if (overBudget) steps = order.map((id, index) => renderStep(id, index, true));
-	const outlined = detail === 'outline' || overBudget;
-	const infrastructure = planInfrastructure(adoption ? adoption.needs : mergedNeeds(order, graph), target);
-	const notes = [
-		'Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.',
-		...infrastructure,
-		...(adoption ? adoptionNotes(adoption) : []),
-		lightOnly.length > 0 ? `Related index entries (no deep card yet): ${lightOnly.join('; ')}.` : '',
-		unmatched.length > 0
-			? `Unmatched capabilities (no registry entry yet — cover manually or search with different terms): ${unmatched.join(', ')}.`
+	if (overBudget) steps = render(false);
+	const implement = plan.steps.filter((step) => step.action === 'implement').length;
+	const perform = plan.steps.length - implement;
+	const sections = [
+		`# Emulation plan: ${implement} to implement${perform > 0 ? `, ${perform} to perform` : ''}${plan.adoption.satisfied.length > 0 ? `, ${plan.adoption.satisfied.length} already satisfied` : ''}${plan.blocked.length > 0 ? `, ${plan.blocked.length} blocked` : ''}`,
+		'Assembled deterministically from the registry: selection is explained per request, and assembly never reinterprets it. Adapt each pattern to the target; emulate, do not clone.',
+		`## Requested\n${bullets(requested)}`,
+		plan.steps.length > 0
+			? `## Steps (foundations and constituents first)\n\n${steps.join('\n\n')}`
+			: '## Steps\nNone: nothing selected adopts a buildable record.',
+		satisfied.length > 0 ? `## Already satisfied by the target (not built again)\n${bullets(satisfied)}` : '',
+		conflicts.length > 0 ? `## Conflicts\n${bullets(conflicts)}` : '',
+		plan.blocked.length > 0
+			? `## Blocked\n${bullets(plan.blocked.map((step) => `\`${step.id}\` needs ${step.blockedBy.map((need) => need.need).join(', ')}, which the target lacks${step.affects.length > 0 ? `; affects ${step.affects.map((id) => `\`${id}\``).join(', ')}` : ''}.`))}`
 			: '',
-		cyclic ? 'Warning: adoption cycle detected; order is best-effort.' : '',
-		outlined
-			? `Next: get_pattern with ids (≤ ${MAX_CARDS} per call) and sections ["invariants", "code"] for the steps you keep.`
+		...openLines(plan),
+		declined.length > 0 ? `**Excluded by the caller** (nothing requires them): ${declined.join(', ')}.` : '',
+		plan.requestedPrinciples.length + plan.principles.length > 0
+			? `## Principles (constrain the work; never steps)\n${bullets([
+					...plan.requestedPrinciples.map((id) => `\`${id}\` — requested: review every step against it`),
+					...plan.principles.map(
+						(entry) => `\`${entry.id}\` — applies to ${entry.steps.map((id) => `\`${id}\``).join(', ')}: ${entry.why}`,
+					),
+				])}`
 			: '',
-	].filter((line) => line.length > 0);
-	const budgetNote = overBudget
-		? ` — outlined: full detail would be ≈${Math.round(fullSize / 4 / 1000)}k tokens, past the 10k a client warns at`
-		: '';
-	return ok(
-		`# Emulation plan (${order.length} pattern(s), foundations and constituents first)${budgetNote}\n\n${steps.join('\n\n')}\n\n---\n${notes.map((note) => `- ${note}`).join('\n')}`,
-	);
+		plan.conventions.length > 0
+			? `## Assumes (platform conventions; build one only if the target lacks it)\n${bullets(plan.conventions.map((entry) => `\`${entry.id}\` for ${entry.steps.map((id) => `\`${id}\``).join(', ')}: ${entry.why}`))}`
+			: '',
+		`## Infrastructure${parsedTarget.target === null && (lacks as string[]).length === 0 ? ' (target not described: every need is unknown for it)' : ''}\n${bullets(planInfrastructure(plan))}`,
+		unresolved.length > 0
+			? `## Unresolved conditions on needs\n${bullets(unresolved.map((condition) => `\`${condition.id}\`: ${condition.when}`))}`
+			: '',
+		reported.length > 0 ? `## Reported\n${bullets(reported)}` : '',
+		plan.adoption.cyclic ? 'Warning: adoption cycle detected; order is best-effort.' : '',
+		overBudget
+			? `_Compact: full detail would be ≈${Math.round(fullSize / 4 / 1000)}k tokens, past the 10k a client warns at. Nothing decision-critical is withheld; read each step's invariants and code with get_pattern (ids, ≤ ${MAX_CARDS} per call)._`
+			: detail === 'compact'
+				? `_Compact: per-step invariants, docs, code and tests are withheld — detail "full", or get_pattern with ids (≤ ${MAX_CARDS} per call) and sections ["invariants", "code"]._`
+				: '',
+	];
+	return ok(sections.filter((section) => section.length > 0).join('\n\n'));
+}
+
+/** The reasons of a reached record that is not a step (satisfied or excluded), as text. */
+function reasonTextOf(plan: Plan, id: string): string {
+	return reasonText({
+		id,
+		kind: 'pattern',
+		tier: 'deep',
+		action: 'implement',
+		requestedAs: plan.roots.find((root) => root.id === id)?.requestedAs ?? [],
+		reasons: plan.adoption.reasons.get(id) ?? [],
+		generalizations: [],
+		needs: [],
+		blockedBy: [],
+		affects: [],
+	});
 }
 
 /** The four registry tools and the two Architecture Engineering tools by name — each

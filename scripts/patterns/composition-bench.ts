@@ -61,6 +61,10 @@ interface Scenario extends Expectations {
 	id: string;
 	set: 'design' | 'holdout';
 	capabilities: string[];
+	/** Canonical ids the scenario plans by (exact-id selection), instead of or beside capabilities. */
+	ids?: string[];
+	/** A holdout whose expectations were inspected during implementation: reported apart, never as independent. */
+	exposed?: { since: string; why: string };
 	note?: string;
 }
 
@@ -86,6 +90,8 @@ interface NamedPlan {
 	needs: Record<string, { level: Level; pinned?: string }>;
 	text: string;
 	optionalMentioned: string[];
+	/** Per capability, the record selection chose (null: ambiguous or unmatched). Slice 4 plans only. */
+	selected?: Record<string, string | null>;
 }
 
 /** The reconciliation manifest's id map: old id → current canonical id. */
@@ -140,6 +146,36 @@ function parsePlan(text: string, golden: Scenario): NamedPlan {
 	return { steps, needs, text, optionalMentioned: mentioned(text, golden.optional) };
 }
 
+/** The Slice 4 plan: numbered Implement/Perform steps, a Requested section, an Infrastructure section by level. */
+function parsePlannerPlan(text: string, golden: Scenario): NamedPlan {
+	const steps = [
+		...text.matchAll(/^### \d+\. (?:Implement|Perform)[^:]*: .*\(`([a-z0-9-]+)`\)(?: — light record)?\s*$/gm),
+	].map((match) => match[1]);
+	const needs: NamedPlan['needs'] = {};
+	const lines: [Level, RegExp][] = [
+		['implementation', /^- Implementation-specific \([^)]*\): (.+)\.$/m],
+		['optional', /^- Optional \(never blocks\): (.+)\.$/m],
+		['conditional', /^- Conditional \([^)]*\): (.+)\.$/m],
+		['required', /^- Required: (.+)\.$/m],
+	];
+	for (const [level, label] of lines) {
+		const line = text.match(label)?.[1];
+		if (!line || line.startsWith('none beyond')) continue;
+		for (const item of topLevelItems(line)) {
+			const need = item.match(/^[a-z0-9-]+/)?.[0];
+			if (!need) continue;
+			const pinned = item.match(/pinned to ([a-z0-9-]+)(?![a-z0-9-]| only when)/)?.[1];
+			needs[need] = { level, pinned };
+		}
+	}
+	const selected: Record<string, string | null> = {};
+	for (const capability of golden.capabilities) {
+		const escaped = capability.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		selected[capability] = text.match(new RegExp(`^- "${escaped}" → \`([a-z0-9-]+)\``, 'm'))?.[1] ?? null;
+	}
+	return { steps, needs, text, optionalMentioned: mentioned(text, golden.optional), selected };
+}
+
 /** The pre-Slice-1 plan: one "This plan requires: postgres, redis." line of technologies, no levels. */
 const LEGACY_NEED: Record<string, string> = {
 	postgres: 'relational-db',
@@ -190,6 +226,8 @@ function expectationsFor(fixture: Fixture, which: 'original' | 'revised'): Scena
 			return original as unknown as Scenario;
 		});
 }
+
+type PlanFormat = 'legacy' | 'levels' | 'planner';
 
 const LEVEL_ORDER: Level[] = ['required', 'conditional', 'optional', 'implementation'];
 
@@ -262,6 +300,19 @@ function score(
 		factLevelCorrect: [...goldenLevel].filter(([need, level]) => factNeeds.get(need) === level).length,
 		named: plan.needs,
 		planChars: plan.text.length,
+		capabilities: golden.capabilities.length,
+		/** Capabilities whose selected record is one the golden requires (Slice 4 plans; null before). */
+		selectedCorrectly: plan.selected
+			? golden.capabilities.filter((capability) => {
+					const id = plan.selected?.[capability];
+					return id !== null && id !== undefined && required.has(translate.get(id) ?? id);
+				}).length
+			: null,
+		ambiguousOrUnmatched: plan.selected
+			? golden.capabilities.filter((capability) => plan.selected?.[capability] === null)
+			: [],
+		requiredNeedsGolden: golden.needs.required.length,
+		requiredNeedsFound: golden.needs.required.filter((need) => stated(need)?.level === 'required').length,
 	};
 }
 
@@ -312,7 +363,18 @@ function aggregate(results: ScenarioResult[]) {
 			sum((result) => result.factLevelCorrect),
 			goldenNeeds,
 		),
+		requiredInfrastructureRecall: pct(
+			sum((result) => result.requiredNeedsFound),
+			sum((result) => result.requiredNeedsGolden),
+		),
+		capabilitySelection: results.some((result) => result.selectedCorrectly === null)
+			? 'n/a'
+			: pct(
+					sum((result) => result.selectedCorrectly ?? 0),
+					sum((result) => result.capabilities),
+				),
 		planTokensEstimated: Math.ceil(sum((result) => result.planChars) / 4),
+		planTokensMax: Math.ceil(Math.max(0, ...results.map((result) => result.planChars)) / 4),
 	};
 }
 
@@ -341,30 +403,39 @@ const stored = rescoreFrom
 	? (JSON.parse(readFileSync(resolve(ROOT, rescoreFrom), 'utf8')) as {
 			commit: string;
 			registryDigest: string;
-			plans: Record<string, { text: string; format: 'legacy' | 'levels'; facts?: Record<string, Level> }>;
+			plans: Record<string, { text: string; format: PlanFormat; facts?: Record<string, Level> }>;
 		})
 	: undefined;
 const legacy = args.includes('--legacy-plans');
 
-const plans: Record<string, { text: string; format: 'legacy' | 'levels'; facts?: Record<string, Level> }> = {};
+const plans: Record<string, { text: string; format: PlanFormat; facts?: Record<string, Level> }> = {};
+const timings: number[] = [];
 const results: ScenarioResult[] = goldens.map((golden) => {
 	let text: string;
-	let format: 'legacy' | 'levels';
+	let format: PlanFormat;
 	if (stored) {
 		const plan = stored.plans[golden.id];
 		if (!plan) throw new Error(`stored run has no plan for ${golden.id}: re-measure it at its commit instead`);
 		({ text, format } = plan);
 		plans[golden.id] = plan;
 	} else {
+		const started = performance.now();
 		text = REGISTRY_QUERIES.recommend_emulation_plan(registry, {
-			capabilities: golden.capabilities,
-			detail: 'outline',
+			...(golden.capabilities.length > 0 ? { capabilities: golden.capabilities } : {}),
+			...(golden.ids ? { ids: golden.ids } : {}),
 		}).text;
-		format = legacy ? 'legacy' : 'levels';
+		timings.push(performance.now() - started);
+		format = legacy ? 'legacy' : 'planner';
 	}
 	plans[golden.id] ??= { text, format };
-	const plan = format === 'legacy' ? parseLegacyPlan(text, golden) : parsePlan(text, golden);
-	return { ...score(golden, plan, registry, translate, stored?.plans[golden.id]?.facts), set: golden.set };
+	const plan =
+		format === 'legacy'
+			? parseLegacyPlan(text, golden)
+			: format === 'levels'
+				? parsePlan(text, golden)
+				: parsePlannerPlan(text, golden);
+	const set = golden.set === 'holdout' && golden.exposed ? 'exposed' : golden.set;
+	return { ...score(golden, plan, registry, translate, stored?.plans[golden.id]?.facts), set };
 });
 
 const report = {
@@ -377,9 +448,19 @@ const report = {
 	rescoredFrom: rescoreFrom,
 	totals: {
 		design: aggregate(results.filter((result) => result.set === 'design')),
+		/** Untouched holdouts only; an exposed holdout is reported apart. */
 		holdout: aggregate(results.filter((result) => result.set === 'holdout')),
+		exposed: aggregate(results.filter((result) => result.set === 'exposed')),
 		all: aggregate(results),
 	},
+	/** Wall time of each plan call in this process, ms (cold first call included). */
+	latencyMs:
+		timings.length > 0
+			? {
+					median: Math.round([...timings].sort((a, b) => a - b)[Math.floor(timings.length / 2)] * 10) / 10,
+					max: Math.round(Math.max(...timings) * 10) / 10,
+				}
+			: null,
 	scenarios: results,
 	plans,
 };
@@ -398,9 +479,10 @@ const rows = (label: string, totals: ReturnType<typeof aggregate>, before?: Retu
 console.log(
 	`composition bench — ${which} expectations, commit ${report.commit}, registry ${report.registryDigest}, ${goldens.length} scenarios`,
 );
-for (const set of ['design', 'holdout', 'all'] as const) {
-	console.log(rows(set, report.totals[set], baseline?.totals[set]).join('\n'));
+for (const set of ['design', 'holdout', 'exposed', 'all'] as const) {
+	console.log(rows(set, report.totals[set], baseline?.totals[set as keyof typeof baseline.totals]).join('\n'));
 }
+if (report.latencyMs) console.log(`latency  median ${report.latencyMs.median} ms, max ${report.latencyMs.max} ms`);
 for (const result of results) {
 	const flags = [
 		result.missing.length > 0 ? `missing ${result.missing.join(',')}` : '',

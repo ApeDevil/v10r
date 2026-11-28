@@ -154,10 +154,10 @@ describe('plan precision', () => {
 		const { REGISTRY } = await import('#lib/server/patterns/index.ts');
 		for (const plan of devQueries.plans) {
 			const outcome = recommendPlan(REGISTRY, { capabilities: plan.capabilities });
-			const steps = [...outcome.text.matchAll(/^### Step \d+: .*\(`([a-z0-9-]+)`\)/gm)].map((match) => match[1]);
+			const steps = [...outcome.text.matchAll(/^### \d+\. \w+[^:]*: .*\(`([a-z0-9-]+)`\)/gm)].map((match) => match[1]);
 			expect(new Set(steps), plan.id).toEqual(new Set(plan.required));
 			// A platform assumption is named, never a step (D-05).
-			const assumes = outcome.text.match(/^- Assumes \(platform conventions[^\n]*$/m)?.[0] ?? '';
+			const assumes = outcome.text.split('## Assumes (platform conventions')[1]?.split('\n## ')[0] ?? '';
 			for (const id of plan.assumed) expect(assumes, `${plan.id}: ${id}`).toContain(id);
 		}
 	});

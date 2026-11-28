@@ -64,7 +64,7 @@ describe('publicPatternRegistry.dispatch', () => {
 			capabilities: ['layered rag', 'background jobs'],
 		}) as { content: { text: string }[] };
 		expect(textOf(result)).toMatch(/Emulation plan/);
-		expect(textOf(result)).toMatch(/Step 1/);
+		expect(textOf(result)).toMatch(/^### 1\. Implement: /m);
 	});
 
 	// "Foundations first" is the tool's whole promise, and the title above asserted only
@@ -75,11 +75,11 @@ describe('publicPatternRegistry.dispatch', () => {
 		const result = publicPatternRegistry.dispatch('recommend_emulation_plan', {
 			capabilities: ['caching', 'singleflight', 'stale-while-revalidate', 'query budget', 'scenario testing'],
 		}) as { content: { text: string }[] };
-		const text = textOf(result);
+		const order = [...textOf(result).matchAll(/^### \d+\. \w+: .*\(`([a-z0-9-]+)`\)/gm)].map((match) => match[1]);
 		const precedes = (first: string, second: string) => {
-			expect(text).toContain(first);
-			expect(text).toContain(second);
-			expect(text.indexOf(first)).toBeLessThan(text.indexOf(second));
+			expect(order).toContain(first);
+			expect(order).toContain(second);
+			expect(order.indexOf(first)).toBeLessThan(order.indexOf(second));
 		};
 		precedes('hierarchical-cache', 'singleflight');
 		precedes('hierarchical-cache', 'stale-while-revalidate');
@@ -268,30 +268,34 @@ describe('applicability — what adopting a pattern really takes', () => {
 		expect(card).toContain(
 			"**Needs:** required key-value-store (via rate-limiting) · v10r's implementation uses relational-db",
 		);
-		const plan = textOf(call('recommend_emulation_plan', { capabilities: ['hosted mcp'], detail: 'outline' }));
-		expect(plan).toMatch(/- Required infrastructure: [^\n]*key-value-store/);
+		const plan = textOf(call('recommend_emulation_plan', { capabilities: ['hosted mcp'] }));
+		expect(plan).toMatch(/- Required: [^\n]*key-value-store/);
+		expect(plan).toMatch(/- Implementation-specific \(v10r's choice, not needed to emulate\): relational-db/);
 	});
 
-	it('marks plan steps against a declared target, keeping unknown and missing apart', () => {
+	it('marks plan needs against a declared target, keeping provided, lacking and unknown apart', () => {
 		const capabilities = ['background jobs', 'layered RAG'];
 		const unknown = textOf(call('recommend_emulation_plan', { capabilities }));
-		expect(unknown).not.toContain('Fits the target');
-		expect(unknown).not.toContain('Target lacks');
+		expect(unknown).toContain('target not described: every need is unknown for it');
+		expect(unknown).not.toContain('Blocked');
 		// A technology word implies its capability: postgres satisfies relational-db.
 		const declared = textOf(call('recommend_emulation_plan', { capabilities, target_infra: ['postgres', 'cron'] }));
-		expect(declared).toContain('**Target lacks llm-provider, vector-search — drop or replace this step');
-		expect(declared).toContain('Fits the target.');
-		expect(declared).toMatch(/The target lacks (vector-search, llm-provider|llm-provider, vector-search)/);
+		expect(declared).toMatch(/relational-db \([^)]*the target provides it\)/);
+		// Not listed is unknown, not absent: nothing is blocked on a guess.
+		expect(declared).toMatch(/llm-provider \([^)]*unknown for the target — check\)/);
+		expect(declared).not.toContain('Blocked');
 		// A conditional need is a question to settle, never a silent requirement or a silent pass.
-		expect(declared).toContain('Check against the target: graph-db (when the graph tier answers');
-		const complete = textOf(
+		expect(declared).toMatch(
+			/Conditional \(needed only when its condition holds; settle each\): graph-db \(when the graph tier answers/,
+		);
+		const lacking = textOf(
 			call('recommend_emulation_plan', {
 				capabilities,
-				target_infra: ['relational-db', 'pgvector', 'llm-provider', 'scheduler', 'neo4j'],
+				target_infra: ['postgres', 'cron'],
+				target_lacks: ['llm-provider'],
 			}),
 		);
-		expect(complete).toContain('The target has every required need.');
-		expect(complete).not.toContain('Target lacks');
+		expect(lacking).toMatch(/## Blocked\n- `layered-rag` needs [^\n]*llm-provider/);
 	});
 
 	it('refuses a target_infra word outside the vocabulary', () => {
@@ -300,11 +304,12 @@ describe('applicability — what adopting a pattern really takes', () => {
 		expect(textOf(result)).toContain('relational-db, vector-search');
 	});
 
-	it('outlines a plan without dropping the count of what it withholds', () => {
-		const outline = textOf(call('recommend_emulation_plan', { capabilities: ['background jobs'], detail: 'outline' }));
-		expect(outline).not.toContain('Invariants:\n');
-		expect(outline).toMatch(/Not shown: \d+ invariant\(s\) that MUST hold/);
-		expect(outline).toContain('Next: get_pattern with ids');
+	it('is compact by default and names what it withholds', () => {
+		const compact = textOf(call('recommend_emulation_plan', { capabilities: ['background jobs'] }));
+		expect(compact).not.toContain('Invariants (must hold):');
+		expect(compact).toContain('per-step invariants, docs, code and tests are withheld');
+		const full = textOf(call('recommend_emulation_plan', { capabilities: ['background jobs'], detail: 'full' }));
+		expect(full).toContain('Invariants (must hold):');
 	});
 });
 
@@ -331,6 +336,13 @@ describe('bounded output', () => {
 				capabilities: PATTERNS.filter((pattern) => pattern.tier === 'deep')
 					.slice(0, 20)
 					.map((pattern) => pattern.title),
+				detail: 'full',
+			}),
+			call('recommend_emulation_plan', {
+				ids: PATTERNS.filter((pattern) => pattern.tier === 'deep')
+					.slice(0, 20)
+					.map((pattern) => pattern.id),
+				detail: 'full',
 			}),
 		];
 		for (const result of worst) expect(textOf(result).length).toBeLessThan(WARNING_CHARS);
@@ -342,9 +354,10 @@ describe('bounded output', () => {
 				capabilities: PATTERNS.filter((pattern) => pattern.tier === 'deep')
 					.slice(0, 20)
 					.map((pattern) => pattern.title),
+				detail: 'full',
 			}),
 		);
-		expect(text).toMatch(/— outlined: full detail would be ≈\d+k tokens/);
-		expect(text).toMatch(/Not shown: \d+ invariant\(s\) that MUST hold/);
+		expect(text).toMatch(/Compact: full detail would be ≈\d+k tokens/);
+		expect(text).toContain('Nothing decision-critical is withheld');
 	});
 });

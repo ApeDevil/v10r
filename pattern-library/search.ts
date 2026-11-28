@@ -56,6 +56,11 @@ function stem(token: string): string {
 	return term;
 }
 
+/** A text as the scorer sees it: tokenized and stem-folded — what discovery compares phrases with. */
+export function patternTerms(text: string): string[] {
+	return tokenizePatternQuery(text).map(stem);
+}
+
 /** Below this share of the query matched, a hit is an incidental overlap, not an answer. */
 const STRONG_COVERAGE = 0.6;
 const PARTIAL_COVERAGE = 0.35;
