@@ -1,0 +1,194 @@
+{
+	"note": "Composition benchmark for recommend_emulation_plan (scripts/patterns/composition-bench.ts). Golden sets are reviewer judgement from each pattern's docs and code, ratified by ApeDevil 2026-11-28 (D-01). `design` scenarios were used to find the failures and to design the ontology; `holdout` scenarios were written and fixed on 2026-11-28 BEFORE any Slice 1 change and are never edited to fit a result: a change needs a dated entry in `changes` with its reason (D-16). required = steps a correct plan must contain; optional = constituents a correct plan lists as optional, never as mandatory steps; acceptable = steps that are neither credited nor penalised (platform assumptions, or a modelling question still open, named in `note`). needs.required / needs.conditional = infrastructure a correct plan must name at that level, in the capability vocabulary.",
+	"changes": [],
+	"scenarios": [
+		{
+			"id": "S1",
+			"set": "design",
+			"capabilities": ["mcp authorization"],
+			"required": [
+				"architecture-mcp-authorization",
+				"architecture-hosted-mcp",
+				"identity-passwordless-auth",
+				"anti-abuse-rate-limiting"
+			],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": ["relational-db", "key-value-store", "email-delivery"], "conditional": [] }
+		},
+		{
+			"id": "S2",
+			"set": "design",
+			"capabilities": ["rate limiting"],
+			"required": ["anti-abuse-rate-limiting"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": ["key-value-store"], "conditional": [] }
+		},
+		{
+			"id": "S3",
+			"set": "design",
+			"capabilities": ["hosted mcp"],
+			"required": ["architecture-hosted-mcp", "anti-abuse-rate-limiting"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "architecture-pattern-mcp"],
+			"needs": { "required": ["relational-db", "key-value-store"], "conditional": [] },
+			"note": "architecture-pattern-mcp: whether the hosted surface composes the pattern MCP or only serves it is settled in Slice 3."
+		},
+		{
+			"id": "S4",
+			"set": "design",
+			"capabilities": ["agentic parametric modeling"],
+			"required": [
+				"agentic-parametric-modeling",
+				"derivation-key",
+				"provenance-record",
+				"anti-abuse-rate-limiting",
+				"architecture-mcp-authorization",
+				"identity-passwordless-auth",
+				"architecture-hosted-mcp"
+			],
+			"optional": ["3d-threlte-integration", "ai-mcp-app-provider"],
+			"acceptable": ["multi-client-core", "asset-production-pipeline"],
+			"needs": { "required": ["relational-db", "key-value-store", "email-delivery"], "conditional": ["web-worker"] },
+			"note": "asset-production-pipeline is the generalization MCP 3D specializes; by the approved rule a specialization does not require a second implementation of its parent, so it is neither credited nor penalised until Slice 3 settles how a specialization carries its parent's constituents."
+		},
+		{
+			"id": "S5",
+			"set": "design",
+			"capabilities": ["architecture engineering"],
+			"required": ["architecture-engineering"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": [], "conditional": [] }
+		},
+		{
+			"id": "S6",
+			"set": "design",
+			"capabilities": ["grounded answers", "graph rag"],
+			"required": ["layered-rag", "ai-graph-rag"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "retrieval-endpoints"],
+			"needs": { "required": ["relational-db", "vector-search", "llm-provider", "graph-db"], "conditional": [] },
+			"note": "retrieval-endpoints: the HTTP surface over layered retrieval; a plan for grounded answers may include it."
+		},
+		{
+			"id": "S7",
+			"set": "design",
+			"capabilities": ["encryption key rotation"],
+			"required": ["encryption-key-ring", "jobs-scheduler"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": ["relational-db", "scheduler"], "conditional": [] }
+		},
+		{
+			"id": "S8",
+			"set": "design",
+			"capabilities": ["resilient multi-source lookup"],
+			"required": ["name-check", "resilience-policy", "deadline-propagation", "hierarchical-cache"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": ["relational-db", "key-value-store", "external-api"], "conditional": [] }
+		},
+		{
+			"id": "H1",
+			"set": "holdout",
+			"capabilities": ["background jobs"],
+			"required": ["jobs-scheduler"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "jobs-platform-scheduling", "jobs-registered-catalog"],
+			"needs": { "required": ["relational-db", "scheduler"], "conditional": [] },
+			"note": "The two light jobs records describe the same scheduler (fold candidates in the reconciliation); including them is not wrong."
+		},
+		{
+			"id": "H2",
+			"set": "holdout",
+			"capabilities": ["magic link login"],
+			"required": ["identity-passwordless-auth"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "forms-auth-forms"],
+			"needs": { "required": ["relational-db", "email-delivery"], "conditional": [] }
+		},
+		{
+			"id": "H3",
+			"set": "holdout",
+			"capabilities": ["file uploads to object storage"],
+			"required": ["forms-file-uploads", "databases-object-storage"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": ["object-storage"], "conditional": [] }
+		},
+		{
+			"id": "H4",
+			"set": "holdout",
+			"capabilities": ["notification outbox"],
+			"required": ["notifications-router-outbox"],
+			"optional": [],
+			"acceptable": [
+				"multi-client-core",
+				"durable-step-execution",
+				"notifications-settings-matrix",
+				"notifications-schema-delivery-log",
+				"notifications-channels"
+			],
+			"needs": { "required": ["relational-db"], "conditional": ["scheduler"] },
+			"note": "scheduler is conditional: the outbox is swept by cron on serverless hosts and by an in-process worker on containers."
+		},
+		{
+			"id": "H5",
+			"set": "holdout",
+			"capabilities": ["stale-while-revalidate caching"],
+			"required": ["stale-while-revalidate", "hierarchical-cache", "critical-path-deferred-tail"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "singleflight"],
+			"needs": { "required": [], "conditional": ["key-value-store"] },
+			"note": "key-value-store is conditional: the shared tier matters once more than one instance serves; one process can run on the memory tier."
+		},
+		{
+			"id": "H6",
+			"set": "holdout",
+			"capabilities": ["optimistic updates with rollback"],
+			"required": ["optimistic-mutation"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": [], "conditional": [] }
+		},
+		{
+			"id": "H7",
+			"set": "holdout",
+			"capabilities": ["crash-safe multi-step work"],
+			"required": ["durable-step-execution"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": { "required": ["relational-db"], "conditional": [] }
+		},
+		{
+			"id": "H8",
+			"set": "holdout",
+			"capabilities": ["gdpr data export and erasure"],
+			"required": ["admin-privacy-gdpr"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "admin-privacy-data-retention", "analytics-my-data-transparency"],
+			"needs": { "required": ["relational-db"], "conditional": [] }
+		},
+		{
+			"id": "H9",
+			"set": "holdout",
+			"capabilities": ["web push notifications"],
+			"required": ["pwa-web-push", "pwa-service-worker"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "notifications-channels", "notifications-router-outbox"],
+			"needs": { "required": ["service-worker", "relational-db"], "conditional": [] }
+		},
+		{
+			"id": "H10",
+			"set": "holdout",
+			"capabilities": ["typed url search params"],
+			"required": ["url-search-state"],
+			"optional": [],
+			"acceptable": ["multi-client-core", "architecture-state-management"],
+			"needs": { "required": [], "conditional": [] },
+			"note": "architecture-state-management is the generalization url-search-state specializes: not a second implementation step, not penalised."
+		}
+	]
+}

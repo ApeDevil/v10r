@@ -78,6 +78,7 @@
 		"mcp:apps:build": "bun run scripts/mcp/build-app-views.ts",
 		"mcp:apps:check": "bun run scripts/mcp/build-app-views.ts --check",
 		"mcp:bench": "bun run scripts/mcp/retrieval-bench.ts",
+		"patterns:bench": "bun run scripts/patterns/composition-bench.ts",
 		"mcp:conformance": "bun run scripts/mcp/conformance.ts",
 		"mcp:client:interop": "bun run scripts/mcp-client/interop.ts",
 		"patterns:build": "bun run scripts/patterns/build-derived.ts",

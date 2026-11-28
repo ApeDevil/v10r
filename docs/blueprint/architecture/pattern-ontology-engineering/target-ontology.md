@@ -2,16 +2,18 @@
 
 **Recommendation in one sentence:** keep the version-controlled registry as the only authority and turn it
 into a *typed relationship graph* — three typed pattern relationships, a small closed `kind`, capability-level
-infrastructure needs, evidence-derived maturity and one declared platform baseline — validated by the same
+infrastructure needs, evidence-derived maturity and scoped platform assumptions — validated by the same
 gate and served by the same query layer. No database projection, no graph database, no ontology framework.
 
-Everything below is a proposal for review. Nothing has been applied.
+Status: **accepted with adjustments** (2026-11-28, [decision register](./decision-register.md)). The adjustments
+are folded into the sections below; §C.4 (infrastructure needs) is implemented in Slice 1, see
+[slice-1.md](./slice-1.md). Everything else is the agreed target, applied slice by slice.
 
 ## C.1 Comparison of architectural directions
 
 | Criterion | A. Refine the current model | **B. Typed graph in the registry** (recommended) | C. Extensive ontology + DB projections |
 |---|---|---|---|
-| What changes | fill `requires` on light rows, fix titles, fix plan bugs; keep one `depends_on` | A + typed relationships, `kind`, capability needs with bindings, derived evidence, baseline, one graph module | B + independent Capability, Technology, Evidence, Decision entities as their own files; Postgres tables and a Neo4j projection of the graph |
+| What changes | fill `requires` on light rows, fix titles, fix plan bugs; keep one `depends_on` | A + typed relationships, `kind`, capability needs with bindings, derived evidence, scoped assumptions, one graph module | B + independent Capability, Technology, Evidence, Decision entities as their own files; Postgres tables and a Neo4j projection of the graph |
 | Semantic clarity | low: composition/optional/specialization stay implicit (F01) | high: every edge has one meaning | high, but meaning spread over many entity files |
 | Human understandability | unchanged | composition tree + dependency DAG become visible | richest, most to learn |
 | AI understandability | better needs; plans still over-adopt (F04) | plans can separate required/optional and say why | same as B for the questions agents ask |
@@ -44,7 +46,8 @@ erDiagram
   GROUP ||--o{ CATEGORY : orders
   CATEGORY ||--o{ PATTERN : "is documentation home of"
   REGISTRY ||--o{ INFRASTRUCTURE_NEED : declares
-  REGISTRY }o--o{ PATTERN : "assumes (baseline)"
+  REGISTRY ||--o{ ASSUMPTION : "declares {applies_to}"
+  ASSUMPTION }o--|| PATTERN : "names"
   PATTERN }o--o{ PATTERN : "builds_on"
   PATTERN }o--o{ PATTERN : "composes {optional, when}"
   PATTERN }o--o| PATTERN : "specializes"
@@ -68,8 +71,8 @@ erDiagram
 | **Tier** | Documentation depth only: `deep` = emulation card (invariants, emulation notes), `light` = index record. Never decides selection, needs or relationships. | closed enum | `schema.ts` |
 | **Category / group** | The pattern's single documentation home and navigation section. Not a semantic type. | kebab id | `registry.json` |
 | **Relationship** | A typed, directed, authored edge between two patterns (C.3). Inverses are derived, never authored. | (type, from, to) | `registry.json` |
-| **Platform baseline** | Patterns every record assumes the target already follows (proposed: `multi-client-core`; D-05). Printed once per plan; never an edge. | list of ids | registry root `assumes` |
-| **Infrastructure need** | A capability the target must run (relational database, key-value store, …), with v10r's binding as data. | closed id | `schema.ts` `INFRASTRUCTURE` |
+| **Platform assumption** | A pattern that records in a declared scope assume the target already follows (e.g. `multi-client-core` for server-side records). Printed once per plan only when a selected step is in scope; never an edge, never unconditional (D-05, §C.3.4). | `{id, applies_to}` | registry root `assumptions` |
+| **Infrastructure need** | A capability the target must run (relational database, key-value store, …) at a level (required, conditional, optional, implementation), with v10r's binding as data. | closed id | `schema.ts` `INFRASTRUCTURE_NEEDS` |
 | **Alternative** | A considered different approach and when it wins; optionally a registry pattern id. | position in the record | record |
 | **Evidence** | A typed ref proving the pattern: `unit-test`, `db-test`, `browser-test`, `measurement`, `showcase`, `app-route`, `live-check`. | (kind, path) | record |
 | **Maturity** | **Derived** from evidence (C.5), never hand-set. | closed enum | computed in `schema.ts` |
@@ -77,35 +80,108 @@ erDiagram
 | **Decision** (AE) | A workload-level architectural question with alternatives and rules; references patterns, never copies them. | id + revision | `decisions.json` |
 | **Showcase** | A live demo route; cited as evidence, back-linked from the registry. | href | showcase catalog |
 
+### Entity kinds and their adoption semantics
+
+`kind` answers one question: **what does adopting this record mean?** It is the only classification the planner
+reads; tier, category and group never change what a plan does (D-11). No further kinds without a case where a
+tool would behave differently (D-03).
+
+| Kind | What it is | What adopting it means | In a plan | May be the target of | May have |
+|---|---|---|---|---|---|
+| `pattern` | A reusable solution to build: problem, context, solution, invariants. | Build it (or map it onto something the target already has, for a `builds_on` target). | A step, with a traceable reason. | `builds_on`, `composes`, `specializes` (from a pattern) | every relationship, needs, evidence |
+| `principle` | A rule or review lens applied to other work (e.g. explosive discovery, component-first). Nothing to build by itself. | Conform to it: review the work against its rules. | Never a step. Listed once under "Applies" when a selected step conforms to it, with the reason. | `specializes` (from a principle) only; referenced by patterns, never built on or composed | evidence of conformance checks, no infrastructure needs |
+| `workflow` | A procedure people or agents perform with tools (e.g. a schema push workflow, a sheet transform recipe). | Follow it: the procedure is the deliverable; the patterns it uses are adopted as its constituents. | A step when asked for; its composed patterns are steps in their own right. | `composes` (from a workflow), `specializes` (from a workflow) | `composes` patterns, needs of the tools it runs |
+
+Rules: a pattern never `builds_on` or `composes` a principle or a workflow; a workflow may compose patterns; a
+`specializes` edge stays inside one kind.
+
 ## C.3 Relationships
 
 Three authored pattern-to-pattern relationships replace `depends_on`. Each was tested against all 88 current
-edges ([edge-classification.md](./edge-classification.md)); each changes what a plan does.
+edges ([edge-classification.md](./edge-classification.md)), and each changes what a plan does. The vocabulary
+stays at three until a concrete case needs a fourth (approval §4). One planning-neutral list for
+non-dependency links is proposed separately (§C.3.3, D-15).
 
-| | `builds_on` | `composes` | `specializes` |
+### C.3.1 Semantics of each relationship
+
+| Property | `builds_on` | `composes` | `specializes` |
 |---|---|---|---|
-| Meaning | A cannot work unless B (or the target's equivalent of B) is present. | B is a constituent of A's solution: adopting A means building B as part of it. | A is a narrower realization of B; B's invariants hold in A. |
+| Meaning | A cannot work unless B, or the target's own equivalent of B, is present. | B is a constituent of A's solution: adopting A means building B as part of it. | A is a narrower realization of B: every A is a B, and B's invariants hold in A. |
 | Test question | Could the target satisfy B with something it already has? → yes | Is B described inside A's solution? → yes | Is every A a B? → yes |
-| Direction / inverse | A → B / *built on by* | A → B / *part of* | A → B / *specialized by* |
-| Cardinality | 0..n | 0..n; entry `{id, optional?, when?}` | **0..1** (single parent keeps inheritance unambiguous) |
-| Symmetric / transitive | no / yes (prerequisite closure) | no / yes (nested composition) | no / yes |
-| Cycles | forbidden over the **union** of the three types | | |
-| Conditionality | none (unconditional by definition) | `optional: true` requires a `when` sentence | none |
-| Plan consequence | included, ordered before A, labelled "required by A" | required constituents included; optional ones listed with their `when`, included only on request | B's invariants listed as inherited; B not a separate step unless also required |
-| Needs propagation | B's needs are A's needs | required: yes; optional: reported as conditional | yes |
-| Authored or derived | authored | authored | authored |
-| Current edges (of 88) | 29 | 26 + 8 optional | 4 |
+| Direction | A → B (A is the dependent) | A → B (A is the whole) | A → B (A is the narrower) |
+| Inverse (derived, never authored) | B *is built on by* A | B *is part of* A | B *is specialized by* A |
+| Cardinality | 0..n per A | 0..n per A; entry `{id, optional?, when?}` | 0..1 per A (one parent keeps inheritance unambiguous); 0..n specializations per B |
+| Transitive | yes: the prerequisite closure | yes for required entries; **an optional edge ends the required chain**: everything reached only through an optional edge is optional with the same condition | yes for invariants (A inherits B's and B's parent's) |
+| Symmetric | no | no | no |
+| Conditionality | none: a prerequisite holds unconditionally, or it is not a prerequisite | `optional: true` requires a `when` sentence; required entries carry no condition | none |
+| Cycles | forbidden over the **union** of the three types (one acyclic graph) | | |
+| Same kind? | pattern → pattern | pattern → pattern; workflow → pattern | within one kind |
+| Needs propagation | B's required and conditional needs become A's, labelled "via B" | required entry: as `builds_on`; optional entry: B's needs are reported as conditional on the entry's `when` | B's needs are A's (A is a B) |
+| Plan consequence | B is a step ordered before A, reason "A builds on B"; replaceable by an equivalent the target already has | required B is a step, reason "part of A"; optional B is listed with its `when`, never a step unless the caller includes it | **B is not a second implementation step.** A's step lists B's invariants as inherited; B appears as a step only if something else requires B itself |
 
-**Considered and rejected**
+### C.3.2 Planning rules (deterministic, apply to every consumer)
+
+1. **Traceable reason.** Every step carries one reason chain back to the request: `requested (capability "…")`,
+   `requested (id)`, `A builds on B`, `part of A`, `part of A, included because condition satisfied`. The chain
+   names one path; the step lists the number of other paths.
+2. **Shared constituents are deduplicated.** A constituent reached through several parents is one step, with
+   "also part of …" listing the other parents. Its needs are counted once.
+3. **Optional never turns required by traversal.** Required-ness is computed per path: a node is required only
+   if some path from a requested record to it consists of required edges only.
+4. **Conditions are three-valued.** Each optional entry's condition is *satisfied* (the caller included it),
+   *unsatisfied* (the caller excluded it) or *unknown* (default). Unknown conditions are listed as open
+   decisions with their `when` sentence; they are never adopted silently and never dropped silently.
+   Conditional needs follow the same three values.
+5. **Unavailable and conflicting prerequisites are reported.** When a required step needs infrastructure the
+   target lacks, the step is marked blocked with the need, the record's alternatives and the steps that build
+   on it. When the caller excludes a record that something requested builds on, the plan names the conflict
+   instead of producing a partial plan that looks complete.
+6. **Inherited invariants apply to the selected implementation.** Invariants are inherited only along
+   `specializes` (where the definition guarantees they hold). Invariants of a `builds_on` or `composes` target
+   belong to that target's own step and are never copied onto the dependent. A specialization whose
+   implementation cannot satisfy one of its parent's invariants is not a specialization; review reclassifies it.
+7. **Principles are constraints, not steps.** Selected steps that conform to a principle list it once under
+   "Applies"; a principle never adds a step or a need.
+8. **Platform assumptions never add architecture silently** (§C.3.4).
+
+### C.3.3 What is not a relationship, and where that knowledge goes
+
+Removing a wrong edge must not erase knowledge. Each of today's non-dependency edges keeps its meaning in a
+typed, checked place:
+
+| Knowledge | Home | Checked by |
+|---|---|---|
+| "B is a considered alternative to A" | `alternatives[].pattern` (canonical id) next to `approach` and `prefer_when` | id resolves; not also a `builds_on`/`composes` target of A |
+| "A conforms to principle P" | derived from P's scope or a principle reference, printed under "Applies" | P is `kind: principle` |
+| "A is related to B, but neither needs the other" (12 of today's edges) | proposed `references: [{id, why}]`, never traversed by planning (D-15) | id resolves; `why` non-empty |
+| "A is shown working in showcase S" | evidence (§C.5) | route registered |
+| "decision X offers pattern A" | `decisions.json` (derived inverse on the card) | decision invariant 8 |
+
+### C.3.4 Platform assumptions
+
+The approval (D-05) rejects an unconditional baseline. Four kinds of "everything assumes this" are kept apart:
+
+| Kind | Example | Where it lives | Plan consequence |
+|---|---|---|---|
+| Platform-wide convention | component-first UI, i18n message keys, the hooks pipeline order | `kind: principle` records with an explicit scope (e.g. "applies to records with UI code") | listed under "Applies" only when a selected step is in scope |
+| Domain-specific assumption | server patterns assume a framework-free domain layer behind thin adapters (`multi-client-core`) | an assumption entry `{id, applies_to}` where `applies_to` is a closed selector (records whose code lives under `src/lib/server/`, a category list, or an explicit id list) | printed once per plan, only if a selected step matches the selector; never a step unless requested |
+| Actual prerequisite | MCP authorization builds on hosted MCP | `builds_on` | step |
+| Implementation-specific choice | v10r deploys to Vercel; uses Neon for Postgres | infrastructure binding or `implementation` need level (§C.4), deployment docs | shown as v10r's choice, never a requirement |
+
+Gate: an assumption's selector must match at least one record, and the bench checks that a plan with no
+matching step never mentions the assumption.
+
+### Considered and rejected
 
 | Candidate | Verdict | Reason |
 |---|---|---|
 | `extends` | merged into `builds_on` | An extension needs its host present; the plan consequence is identical (desk panels, `form-draft-recovery`). |
 | `alternative_to` | not an edge; `alternatives[].pattern` optional id | Alternatives are already authored per record with `prefer_when`; an id makes them navigable without a second symmetric relation to keep consistent. The inverse ("considered by") is derived. |
-| `complements` | rejected | Generic and unactionable: 12 current edges of this sort lead to wrong plan steps. When B really belongs with A it is an optional constituent. |
+| `complements` | rejected | Generic and unactionable: 12 current edges of this sort lead to wrong plan steps. Where B really belongs with A it is an optional constituent; otherwise a planning-neutral reference (D-15). |
 | `conflicts_with` | deferred | No genuine incompatibility found in 199 records; target-condition conflicts are already `avoid_when`. Revisit when a real case appears. |
-| `conforms_to` principle | replaced by the baseline + `kind: principle` | 9 edges to `multi-client-core`/`ui-component-system` are assumptions, not steps. |
-| `verifies` / `references` | not relationships | Evidence and rationale are refs (`evidence[]`, AE decisions), not pattern edges. |
+| `conforms_to` principle | replaced by scoped assumptions + `kind: principle` | 9 edges to `multi-client-core`/`ui-component-system` are assumptions, not steps. |
+| `verifies` | not a relationship | Evidence is its own model (§C.5). |
+| unconditional root `assumes` | rejected by D-05 | Would print architecture into plans that do not need it. Replaced by scoped assumptions (§C.3.4). |
 
 ### Constraints and semantic invariants (all deterministic)
 
@@ -115,65 +191,114 @@ edges ([edge-classification.md](./edge-classification.md)); each changes what a 
 4. `principle` records are never `builds_on`/`composes` targets (they are conformance, not steps); `workflow` records may compose patterns.
 5. `composes {optional: true}` carries a non-empty `when`.
 6. `alternatives[].pattern`, when present, resolves and is not also a `builds_on`/`composes` target of the same record (a thing cannot be both the chosen part and the rejected option).
-7. A baseline pattern is never an explicit relationship target.
+7. A platform assumption is never an explicit relationship target, and its `applies_to` selector matches at least one record.
 8. Needs: a record's declared needs ∪ inherited needs must cover the needs the import-scan finds in its code refs (C.4), unless an allow-listed exception gives a reason.
 
 ## C.4 Infrastructure needs
 
-One closed list of **capabilities**, each with v10r's binding as data, replacing the mixed `PATTERN_REQUIREMENTS`:
+*Implemented in Slice 1* ([slice-1.md](./slice-1.md)). One closed list of **infrastructure needs**, named for
+the capability, each with v10r's reference binding and the technologies known to provide it, replaces the
+mixed `PATTERN_REQUIREMENTS`. Authority: `INFRASTRUCTURE_NEEDS` in `pattern-library/schema.ts`.
 
-| Need (proposed id) | Replaces | v10r binding | Evidence the import-scan looks for |
+| Need | Replaces | v10r's reference binding | Technologies `target_infra` also accepts |
 |---|---|---|---|
-| `relational-db` | `postgres` | PostgreSQL (Neon) via Drizzle | `#lib/server/db` |
-| `vector-search` | `pgvector` | pgvector (needs `relational-db`) | `vector(` columns, retrieval tiers |
-| `graph-db` | `neo4j` | Neo4j Aura (HTTP Query API) | `#lib/server/graph` |
-| `key-value-store` | `redis` | Redis (Upstash, REST) | `#lib/server/cache`, `@upstash/*` |
-| `object-storage` | `object-storage` | Cloudflare R2 (S3 API) | `@aws-sdk/client-s3`, `#lib/server/storage` |
-| `scheduler` | `cron` | Vercel cron / container interval | `vercel.json` crons, jobs registry |
-| `llm-provider` | `ai-provider` | AI SDK providers | `#lib/server/ai/providers` |
-| `email-delivery` | part of `third-party-api` | Resend | email sender module |
-| `external-api` | `third-party-api` | per pattern | fetch through `http/peer-egress` |
-| `web-worker`, `service-worker`, `wasm-toolchain`, `container-host` | same | same | worker/`?url` imports, SW file, crate build |
+| `relational-db` | `postgres` | PostgreSQL (Neon) through Drizzle | `postgres`, `mysql`, `sqlite` |
+| `vector-search` | `pgvector` | pgvector inside PostgreSQL | `pgvector` |
+| `graph-db` | `neo4j` | Neo4j Aura over the HTTP Query API | `neo4j` |
+| `key-value-store` | `redis` | Redis (Upstash, REST) | `redis` |
+| `object-storage` | `object-storage` | Cloudflare R2 over the S3 API | `s3` |
+| `scheduler` | `cron` | Vercel cron calling the jobs runner | `cron` |
+| `llm-provider` | `ai-provider` | provider-agnostic AI SDK adapters | — |
+| `email-delivery` | part of `third-party-api` | Resend | `resend` |
+| `external-api` | `third-party-api` | per pattern (named in `why`/`when`) | — |
+| `web-worker`, `service-worker`, `wasm-toolchain`, `container-host` | same | browser workers; Rust → wasm-pack; Podman / a container host | — |
 
-Entry forms in a record: `"relational-db"`, or `{ "need": "relational-db", "pinned": "postgres", "why": "FOR UPDATE SKIP LOCKED claims" }`
-when the technology is not replaceable, or `{ "need": "key-value-store", "when": "serverless (no persistent process)" }`
-for conditional needs. `target_infra` accepts a need id or a binding; a pinned need only fits the pinned technology.
+### Levels: what a declared need means
+
+| Level | Entry | Meaning | Plan consequence |
+|---|---|---|---|
+| **required** | `"relational-db"` or `{need, level: "required"}` | The pattern cannot work without the capability. | Listed under "Required infrastructure"; a target that lacks it blocks the step. Inherited by every record that builds on or (required-)composes this one. |
+| **conditional** | `{need, level: "conditional", when}` | Required only when the `when` sentence holds for the target. | Listed under "Conditional"; the condition is unknown unless the caller settles it; never turned into a requirement silently. Inherited as conditional. |
+| **optional** | `{need, level: "optional", why}` | Improves the pattern (a faster tier, a richer view) but is not needed for it to work. | Listed under "Optional"; never blocks a step. Not inherited. |
+| **implementation** | `{need, level: "implementation", why}` | v10r's reference implementation uses it; the pattern itself does not need it (D-06: a technology never becomes mandatory merely because v10r uses it). | Shown on the card and the step as "v10r's implementation uses"; never in a plan's infrastructure. Not inherited. |
+
+A **pin** (`pinned: "<technology>", why`) on a required or conditional need says the capability is not
+substitutable: `{need: "relational-db", pinned: "postgres", why: "FOR UPDATE SKIP LOCKED claims"}`. A pinned
+need is satisfied only by that technology; a target naming the generic capability or another technology gets
+the pin's reason instead of a "fits".
+
+### `target_infra`
+
+Accepts need ids and technology ids. A technology implies its need (`["postgres"]` satisfies an unpinned
+`relational-db` and a `relational-db` pinned to `postgres`). Absent means unknown: rows state needs without a
+verdict.
+
+### Evidence gate (import scan)
+
+`pattern-library/infrastructure-evidence.ts` reads the files behind each record's `code` refs (tests excluded)
+and maps **direct** imports of infrastructure adapters to needs (`#lib/server/db` and `drizzle-orm` →
+`relational-db`; `#lib/server/graph` → `graph-db`; `#lib/server/cache/client` and `@upstash/*` →
+`key-value-store`; `#lib/server/store` and `@aws-sdk/client-s3` → `object-storage`; `ai`, `@ai-sdk/*` and the
+provider registry → `llm-provider`; the auth and notification email senders → `email-delivery`; `#lib/wasm` →
+`wasm-toolchain`; `new Worker(` → `web-worker`; `navigator.serviceWorker` → `service-worker`). Every need the
+scan finds must be declared on the record at some level. A ref that surveys a whole layer rather than
+implementing the pattern (e.g. `multi-client-core → src/lib/server`) is exempted by an allow-list entry with a
+reason. Direct imports only: transitive closure over barrels attributes every need of a domain to anything that
+imports it, which would force false declarations; inheritance through relationships (Slice 3) carries the rest.
+`scheduler`, `external-api` and `container-host` have no import signal and stay curated.
+
+Consistency gate: Architecture Engineering's `NODE_KINDS[*].requires` uses the same need ids, and each node
+kind's needs must appear among the declared needs of the patterns that implement it.
 
 ## C.5 Evidence and maturity
 
-```text
-evidence: [ { kind: unit-test | db-test | browser-test | measurement | showcase | app-route | live-check,
-              path, claim?, required?: true (live-check), checkedAt?: YYYY-MM-DD (live-check only) } ]
+*Agreed target for Slice 5, adjusted by D-08.* A passing test proves only the behaviour and invariants it
+exercises; a test file's existence proves nothing. The model therefore separates six things that today's
+`tests`/`showcases`/`verifiedAt`/`verifiedSha` fields blur:
 
-maturity (derived):
-  proven        ⇔ ≥1 unit-test/db-test the gate actually runs   ∧ no required live-check pending
-  demonstrated  ⇔ only showcase / app-route / browser-test / measurement evidence
-  implemented   ⇔ code refs, no evidence — or a required live-check pending (e.g. MCP 3D in a real host)
-  planned       ⇔ no code refs
+| Facet | Question it answers | Where it lives |
+|---|---|---|
+| Evidence **reference** | Which artefact could show the pattern works? | `evidence[]` entry: `{kind, path}` (kinds shared with AE `EVIDENCE_KINDS`: `unit-test`, `db-test`, `browser-test`, `measurement`, `showcase`, `app-route`, `live-check`) |
+| **Scope** | What does it exercise? | `covers`: the invariants (by index or stable key) and capabilities the check asserts; a check that covers no invariant cannot raise maturity |
+| **Verification result** | Did it pass, on what? | a generated **verification ledger** (`pattern-library/verification.json`), written by the gate run from vitest's JSON report: per evidence entry, pass/fail and the content identity it ran against. Never hand-edited |
+| **Provenance** | Who or what produced the result? | ledger entry `by`: `gate` (machine run in `validate`), `ci-local` (ApeDevil's container run), or `human` (live check, with name and note) |
+| **Freshness** | Is the result still about this code? | the ledger records the **content identity** of the record's code refs (hash of the referenced files at run time); a changed hash makes the result stale. No commit SHAs: they do not survive history rewrites (20 of 23 do not resolve) |
+| **Applicability** | Does it apply to the current implementation? | fresh ∧ the check's `covers` intersects the record's current invariants; a result against removed invariants or stale code does not count |
+
+Derived maturity (never authored):
+
+```text
+proven        ⇔ every invariant of the record is covered by ≥1 applicable passing machine check (unit-test / db-test / browser-test)
+demonstrated  ⇔ the pattern is shown working (applicable showcase, app-route or measurement, or a human live-check)
+                 but not every invariant is covered by an applicable passing machine check
+implemented   ⇔ code refs exist; no applicable evidence
+planned       ⇔ no code refs
 ```
 
-`verifiedSha` is dropped (20 of 23 values no longer resolve after history rewrites); passing tests on HEAD are
-the freshness. `checkedAt` survives only on `live-check` evidence, which no gate can re-run. The evidence-kind
-words are shared with Architecture Engineering's `EVIDENCE_KINDS` (one vocabulary, D-08). This is the
-`evidence-status-dimensions` pattern applied to the registry itself.
+A light record has no invariants, so it can reach `demonstrated` but never `proven` until it is promoted to
+deep and its invariants are covered: "proven" means the invariants hold, not that a file exists. Historical
+attestations are removed: `verifiedSha` everywhere, and the 2026-08-20 bulk `verifiedAt` stamp (124 records).
+Traceability survives in git history and in the ledger. This is the `evidence-status-dimensions` pattern
+applied to the registry itself.
 
-Measured consequence on today's data (reviewer's mapping, to be confirmed in Slice 4): of 173 `proven`,
-76 have a test ref and would stay proven; ~97 light records proven by a route alone would read `demonstrated`.
+Open for Slice 5 design: the invariant key (index vs. stable slug) and how a vitest test names what it covers
+(test title tag or a `covers` list in the registry). Both are decided at the Slice 5 checkpoint with a
+prototype on three records.
 
 ## C.6 Pattern anatomy
 
 | Field | Mandatory for | Notes |
 |---|---|---|
 | `id`, `kind`, `title`, `category`, `summary`, `when_to_use`, `risk {level, reason}` | all | `title` = canonical name only (no counts, no parenthetical summary) |
-| `requires`, `builds_on`, `composes`, `specializes` | all (may be empty) | **structural facts are never optional by tier** |
+| `needs`, `builds_on`, `composes`, `specializes`, `references` | all (may be empty) | **structural facts are never optional by tier** |
 | `docs` ≥ 1 | all | |
 | `code`, `evidence` | all (may be empty) | maturity derived from them |
 | `capabilities`, `keywords` | all | discovery only |
-| `avoid_when` ≥ 1, `alternatives` ≥ 1 | deep | encouraged on light |
+| `avoid_when` ≥ 1, `alternatives` ≥ 1 | deep | allowed and encouraged on light (open question 4) |
 | `invariants` ≥ 1, `emulation_notes` ≥ 1 | deep | forbidden on light (unchanged) |
 | inverse relations, transitive needs, inherited invariants, maturity | — | **derived**, never authored |
 
-Removed or replaced: `depends_on` (→ typed relationships), `tests`/`showcases` (→ `evidence`), `maturity`,
+Removed or replaced: `requires` (→ `needs` with levels, Slice 1), `depends_on` (→ typed relationships), `tests`/`showcases` (→ `evidence`), `maturity`,
 `verifiedAt`, `verifiedSha` (→ derived), free-text `risk` (→ `{level, reason}`).
 
 ## C.7 Recursive composition — worked examples
@@ -231,8 +356,8 @@ view "referenced by decision X" replaces the four `depends_on` edges that made p
 | **builds on / built on by** | prerequisite relation | `depends_on`, "depended by", "dependency" for pattern edges (naming.md keeps dependency = infrastructure service) |
 | **composes / part of**, **optional constituent** | composition | "nested pattern", "sub-pattern" |
 | **specializes / specialized by** | specialization | "extends", "variant" |
-| **infrastructure need** (`requires`) | what the target must run | "requirement" (retired for workload profiles), "dependency" |
-| **platform baseline** (`assumes`) | what every pattern assumes | — |
+| **infrastructure need** (`needs`), **need level** (required / conditional / optional / implementation) | what the target must run, and how strictly | "requirement" (retired for workload profiles), "dependency" |
+| **platform assumption** (`assumptions`) | what records in a declared scope assume | "baseline" (an unconditional baseline was rejected, D-05) |
 | **evidence**, **maturity** (derived) | proof | `showcases[]` for non-showcase proof |
 | **pattern capability** | what a pattern enables | add as the fourth subject of "capability" in naming.md |
 
@@ -242,7 +367,7 @@ view "referenced by decision X" replaces the four `depends_on` edges that made p
 |---|---|---|
 | Pattern records, relationships, needs, evidence | `pattern-library/registry.json` + `schema.ts` | docs pages, README index, Agent Skills, MCP excerpt snapshot, explorer projection, `/showcases/mcp` graph, retrieval chunks of the pages |
 | Inverses, closures, inherited invariants, maturity | `pattern-library/pattern-graph.ts` (new, framework-free) | every tool, page and view |
-| Infrastructure vocabulary + bindings | `schema.ts` `INFRASTRUCTURE` | `target_infra` enum, AE node-kind needs (checked) |
+| Infrastructure vocabulary + bindings | `schema.ts` `INFRASTRUCTURE_NEEDS` | `target_infra` enum, AE node-kind needs (checked) |
 | Workload decisions | `decisions.json` | Studio, `explore_architecture` |
 | Showcase list | showcase catalog | registry evidence refs (checked), back-links (derived) |
 | Registry content identity | computed digest | tool responses, bench results, ingest derivation key |

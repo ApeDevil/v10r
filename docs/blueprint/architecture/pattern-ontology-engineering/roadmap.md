@@ -1,90 +1,128 @@
 # F. Development roadmap
 
-Eight slices, foundational corrections first. Each slice ends at a review checkpoint where ApeDevil reviews the
-pushed branch before the next one starts. No compatibility layers: fields are renamed and every reader is
-changed in the same slice. Slices 1–5 are the core; 6–8 can be reordered or dropped.
+Reconciled with ApeDevil's rulings of 2026-11-28 ([decision register](./decision-register.md)). Changes from
+the reviewed version: the composition benchmark and its baseline come first (before any planner change); entity
+kinds and record reconciliation move ahead of relationships and planning (D-03: foundations before consumers);
+the identifier review is part of reconciliation (D-10); evidence gets provenance and verification semantics
+(D-08); the platform-wide slice is mandatory (D-13). The structure stays: one slice at a time, each ending at a
+review checkpoint where ApeDevil reviews the pushed branch. Nothing proceeds past a checkpoint automatically.
 
-Common to every slice: development on a feature branch, `bun run validate` green in the cloud (with
-`NODE_OPTIONS` heap cap set by hand), `bun run patterns:build` + `mcp:excerpts:build` + `skills:build`
-regenerated, `db:ingest-docs` reported as **not run** in the cloud, MCP compatibility constraints respected
-(text-only results on shared tools, no `title`/`readOnlyHint`/`outputSchema` while B1 and C2 are open).
+Common to every slice: development on `claude/cloud/pattern-ontology-engineering`; no compatibility layers
+(fields and ids change and every reader changes in the same slice); `bun run validate` in the cloud (heap cap
+set by hand); `patterns:build`, `mcp:excerpts:build`, `skills:build` and the stdio bundle regenerated;
+`db:ingest-docs` reported as **not run** in the cloud; MCP compatibility constraints respected (text-only
+results on shared tools, no `title`/`readOnlyHint`/`outputSchema` while B1 and C2 are open); the **composition
+benchmark is re-run and its results committed at every checkpoint**, compared with the committed baseline.
 
-## Slice 0 — Ratify this review (no code)
-- **Objective:** decisions D-01 … D-14 answered; golden scenarios in [verification.md](./verification.md) accepted or amended.
-- **Deliverable:** updated decision register. **Checkpoint:** ApeDevil's answers.
+## Slice 0 — Ratify the review ✓
+Decisions D-01 … D-14 answered 2026-11-28; golden scenarios accepted; holdout scenarios required.
 
-## Slice 1 — Truthful facts and vocabulary (foundation)
-- **Objective:** every record states its infrastructure needs; no canonical field states a volatile fact; the registry has a content identity.
-- **Scope / changes:**
-  - Replace `PATTERN_REQUIREMENTS` with the capability vocabulary + bindings ([target-ontology.md §C.4](./target-ontology.md#c4-infrastructure-needs)); `target_infra` accepts needs and bindings.
-  - Fill needs on all records (≈54 currently missing, list in [reconciliation.md](./reconciliation.md)); light records may and must carry needs.
-  - New gate: **import-scan needs evidence** — code refs importing infra adapters imply a need; allow-list with reasons.
-  - New gate: AE `NODE_KINDS[*].requires` ⊆ transitive needs of their patterns.
-  - Titles become canonical names; numerals gated (allow-list: OAuth 2.1, A2A, 3D, N+1, …); fix `pattern-index` summary counts.
-  - `version` → `format` integer + computed digest; bench results record the digest.
-  - `docs/naming.md`: pattern vocabulary rows (§C.8); correct the "capability" subjects and the `dependency` inversion.
-- **Affected:** `schema.ts`, `registry.json`, `validate.ts`, `query.ts` (target_infra), `architecture-engineering/vocabulary.ts`, generated docs/skills/excerpts, bench.
-- **Dependencies:** D-06, D-09. **Breaking:** `target_infra` values, `requires` values.
-- **Risks:** curation errors in needs → mitigated by the import-scan gate; over-declaring conditional needs → `when` form.
-- **Acceptance:** 0 records whose code imports an infra adapter without the need; "hosted mcp" plan names `relational-db, key-value-store`; 0 node-kind contradictions; 0 numerals outside the allow-list in titles.
-- **Checkpoint:** diff review of needs per record.
-
-## Slice 2 — Typed relationships and one graph module
-- **Objective:** `depends_on` is replaced by `builds_on`, `composes {optional, when}`, `specializes`; baseline declared once.
-- **Scope / changes:** schema + validation (§C.3 invariants 1–7); migrate all 88 edges per [edge-classification.md](./edge-classification.md) and add the missing edges listed in the reconciliation (e.g. `layered-rag composes? ai-graph-rag`, `hosted-mcp composes rate-limiting`, analytics/retention `builds_on jobs-scheduler`, `admin-privacy-feedback composes honeypot`); root `assumes`; new `pattern-library/pattern-graph.ts` (closure, inverses, inherited invariants, typed needs) replacing the three walkers.
-- **Affected:** `schema.ts`, `registry.json`, `query.ts`, `dependency-explorer.ts`, `render.ts`, `agent-skills.ts`, `registry-viz.ts`, tests.
-- **Dependencies:** Slice 1, D-01, D-05. **Breaking:** `depends_on` removed; generated pages and skills change.
-- **Risks:** edge-type judgement → each non-trivial edge carries a one-line reason in review; cycles via the union → gate.
-- **Acceptance:** 0 untyped edges; union acyclic; every existing reader uses `pattern-graph.ts` (architecture test forbids a second closure); MCP 3D tree as in §C.7.
-- **Checkpoint:** review the composition trees of the six composites (MCP 3D, MCP authorization, agentic architecture, layered retrieval, notifications, app shell).
-
-## Slice 3 — MCP and Vely read the typed graph (extend, don't add tools)
-- **Objective:** agents get relationships, inverses and reasons deterministically.
+## Slice 1 — Benchmark baseline and truthful infrastructure facts
+- **Objective:** a committed composition benchmark measures plans before anything changes; every record states
+  its infrastructure needs at the right level; no title states a volatile fact; the registry has a content identity.
 - **Changes:**
-  - `get_pattern` header: builds on / composed of (optional + when) / specializes, plus derived inverses and inherited-invariant count.
-  - `recommend_emulation_plan`: new `ids` argument (exact selection, no inference); light records eligible (printed "no invariants recorded"); optional constituents listed, `include_optional` to add them; "why included" per step; principles as constraints; steps that build on a lacking step computed; conditional needs.
-  - `explore_patterns` moves into the shared query layer: stdio serves it as text, hosted keeps the View; overview covers every record; `relation` filter; fix the title-as-capability next action and the recovery text.
-  - `trace_capability` renders through the shared card sections (adds fitness and needs).
-  - `QUERY_WORKFLOW` teaches `explore_patterns`; parity test covers 9 tools; compat kit count updated.
-  - Vely `search_pattern_library` renders rows through the query layer (strength, transitive needs, relationships).
-- **Dependencies:** Slice 2. **Breaking:** tool text changes; new optional args only (no schema field removed).
-- **Risks:** Claude Code compatibility → no `title`/annotations/`outputSchema`; run `scripts/mcp/claude-code-compat/check.sh` in the cloud, ApeDevil's local run remains B1.
-- **Acceptance:** golden scenarios in verification.md meet their targets; parity test green on both transports; next-actions gate green.
-- **Checkpoint:** side-by-side plans before/after for the eight scenarios.
+  1. Composition benchmark (`pattern-library/bench/composition-*.json`, `scripts/patterns/composition-bench.ts`):
+     the eight golden scenarios plus independent holdout scenarios, measured through the real
+     `recommend_emulation_plan`. **Baseline committed before any registry or planner change.**
+  2. `PATTERN_REQUIREMENTS` → `INFRASTRUCTURE_NEEDS` with bindings; record field `requires` → `needs` with levels
+     required / conditional / optional / implementation and justified pins (D-06); `target_infra` accepts need and
+     technology ids; plan, card, explorer and skills print needs by level.
+  3. Needs curated on all records; gate: import-scan needs evidence (direct adapter imports must be declared).
+  4. Gate: Architecture Engineering node-kind needs consistent with their patterns.
+  5. Titles become canonical names (D-09); gate on numerals and version references in titles (allow-list).
+  6. `version` → `format` (schema format integer) + computed content digest; bench results carry the digest.
+  7. D-14: drop the Desk-specific edge `ai-agent-actions → desk-workspace` (knowledge kept in its refs).
+  8. `docs/naming.md`: infrastructure-need vocabulary.
+- **Not in this slice:** selection logic (deep-only, runner-up rule) and edge semantics: they change in Slice 4
+  and Slice 3, measured against the Slice 1 baseline.
+- **Acceptance:** 0 records whose code imports an adapter they do not declare; "hosted mcp" plan names
+  `relational-db, key-value-store`; 0 node-kind contradictions; 0 title numerals outside the allow-list;
+  required-need recall on the benchmark improves without a drop in step metrics.
+- **Checkpoint:** review the needs diff per record and the benchmark delta.
 
-## Slice 4 — Evidence-derived maturity
-- **Objective:** maturity means what it says.
-- **Changes:** `evidence[]` with kinds shared with AE `EVIDENCE_KINDS`; maturity derived (proven / demonstrated / implemented / planned); `verifiedSha` removed; `live-check` entries for MCP 3D, MCP authorization, A2A etc.; README/CLAUDE copy stops calling every record "proven"; catalog shows maturity.
-- **Dependencies:** D-08. **Breaking:** `tests`, `showcases`, `maturity`, `verifiedAt`, `verifiedSha` fields; `search_patterns maturity` filter values.
-- **Acceptance:** maturity computed for all records; gate: every `unit-test`/`db-test` path is inside a vitest project include; 0 hand-set maturities.
+## Slice 2 — Entity kinds, record reconciliation and identifiers
+- **Objective:** the registry holds genuine reusable knowledge, each record says what adopting it means, and each
+  id names its concept.
+- **Changes:** `kind: pattern | principle | workflow` with the adoption semantics of
+  [§C.2](./target-ontology.md#entity-kinds-and-their-adoption-semantics) (D-03); retire, fold and merge per
+  [reconciliation.md](./reconciliation.md) (D-04), moving every doc, code, test and showcase ref to its canonical
+  record; comprehensive identifier review (D-10): ids coupled to taxonomy (`databases-`, `architecture-`, …) or
+  misleading are renamed where the rule "an identifier names the concept, not its organizational location"
+  says so, every consumer updated directly (skills, excerpts, bench fixtures, decisions.json, evidence labs,
+  showcase links, persisted pattern references), no aliases; obsolete categories removed (D-11).
+- **Deliverables:** rename and retirement manifest (old id → new id or target, reason, refs moved);
+  knowledge-preservation gate: every ref of a retired record exists on its target.
+- **Dependencies:** Slice 1. **Breaking:** ids, record count, generated pages and skills.
+- **Acceptance:** 0 records without `kind`; manifest complete; preservation gate green; benchmark not worse.
+- **Checkpoint:** manifest review.
 
-## Slice 5 — Measure composition (can start in parallel with Slice 2)
-- **Objective:** prove the changes improve engineering decisions.
-- **Changes:** add golden composition scenarios to `pattern-library/bench/` (step precision/recall, required-need recall, unnecessary steps, optional handling, light reachability, calls/tokens), measured through the real tools; record the baseline on today's registry first.
-- **Acceptance:** baseline committed before Slice 2 lands; targets in verification.md met after Slice 3.
-- **Decision gate:** D-07 (controlled capabilities) is decided on these numbers.
+## Slice 3 — Typed relationships, scoped assumptions, one graph module
+- **Objective:** `depends_on` is replaced by `builds_on`, `composes {optional, when}`, `specializes` with the
+  semantics of [§C.3](./target-ontology.md#c3-relationships); platform assumptions are scoped (D-05).
+- **Changes:** schema + validation (§C.3 invariants); migrate the edges of the reconciled records per
+  [edge-classification.md](./edge-classification.md) plus the missing ones listed in the reconciliation;
+  non-dependency edges to `references` if D-15 is accepted; alternatives linked by canonical id;
+  `assumptions: [{id, applies_to}]`; new `pattern-library/pattern-graph.ts` (closure with per-path required-ness,
+  inverses, inherited invariants via `specializes`, typed needs) replacing the three walkers.
+- **Dependencies:** Slices 1–2. **Breaking:** `depends_on` removed.
+- **Acceptance:** 0 untyped edges; union acyclic; every reader uses `pattern-graph.ts` (architecture test);
+  composition trees of the composites (MCP 3D, MCP authorization, agentic architecture, layered retrieval,
+  notifications, app shell) reviewed.
+- **Checkpoint:** composition trees and the D-15 decision.
 
-## Slice 6 — Reconcile records and human surfaces
-- **Objective:** the registry holds patterns; every human surface shows one model.
-- **Changes:** `kind` field; merges/folds/reclassifications per [reconciliation.md](./reconciliation.md) (≈199 → ≈165 records); refs of retired records move to their target; one Pattern Explorer on `/docs/pattern-library` with perspectives (taxonomy, composition, dependency, evidence) backed by `pattern-graph.ts`; `/showcases/mcp` graph uses the same projection (remove the deep-only DAG and `DAG_SHORT_LABELS`); pattern pages show inverses and capabilities; showcases and workflows link back; Studio `PatternLinks` shows title + maturity; `PatternRef` format for persisted references.
-- **Dependencies:** Slices 2, 4; D-03, D-04. **Breaking:** ids of merged records disappear (no redirects — no users).
-- **Risks:** losing knowledge in merges → gate: every ref of a retired record exists on its target.
-- **Acceptance:** catalog, explorer, `/showcases/mcp` and pages agree on counts (one test); 0 non-pattern records.
+## Slice 4 — Ontology-aware emulation planning (MCP and Vely)
+- **Objective:** plans follow the planning rules of [§C.3.2](./target-ontology.md#c32-planning-rules-deterministic-apply-to-every-consumer).
+- **Changes:** `recommend_emulation_plan`: `ids` (exact selection, D-07), light records eligible, kinds honoured
+  (principles under "Applies", workflows as procedures), optional constituents listed with tri-state conditions
+  (`include_optional` / `exclude`), blocked and conflicting prerequisites reported, a reason chain per step,
+  shared constituents deduplicated; `get_pattern` header shows typed relations and derived inverses;
+  `explore_patterns` moves into the shared query layer (stdio serves it as text); `trace_capability` renders
+  through the shared card; Vely's `search_pattern_library` uses the same query layer.
+- **Dependencies:** Slice 3. **Breaking:** tool text; new optional args only.
+- **Acceptance:** golden and holdout targets in [verification.md](./verification.md) met; parity on both
+  transports; Claude Code compat kit run in the cloud (ApeDevil's local run remains B1).
+- **Decision gate:** D-07 (controlled capability vocabulary) decided on these numbers.
+- **Checkpoint:** side-by-side plans before and after for every benchmark scenario.
+
+## Slice 5 — Evidence model and derived maturity
+- **Objective:** maturity means what it says (D-08 as adjusted).
+- **Changes:** `evidence[]` with scope (`covers`); a generated verification ledger (result, provenance, content
+  identity of the code it ran against); maturity derived per [§C.5](./target-ontology.md#c5-evidence-and-maturity);
+  `verifiedSha` and the bulk `verifiedAt` stamp removed; live checks for MCP 3D, MCP authorization, A2A;
+  README/CLAUDE copy stops calling every record "proven".
+- **Dependencies:** Slice 2 (records), Slice 3 (invariants inherited). **Breaking:** `tests`, `showcases`,
+  `maturity`, `verifiedAt`, `verifiedSha`; `search_patterns` maturity filter values.
+- **Acceptance:** maturity computed for all records; 0 hand-set maturities; every machine check path is inside
+  a vitest project; a stale code hash demotes maturity in a test fixture.
+- **Checkpoint:** prototype on three records first, then the full migration.
+
+## Slice 6 — Human surfaces on one projection
+- **Objective:** every human surface shows the same model agents get (open question 2).
+- **Changes:** one Pattern Explorer on `/docs/pattern-library` (taxonomy, composition, dependency, evidence
+  perspectives) backed by `pattern-graph.ts`; `/showcases/mcp` graph uses the same projection; pattern pages show
+  inverses, needs by level and maturity; showcases, workflows and Studio link back to patterns.
+- **Acceptance:** catalog, explorer, `/showcases/mcp`, pages and tools agree on counts (one test).
 
 ## Slice 7 — Semantic-integrity gates and the authoring path
-- **Objective:** correct future work is the path of least resistance.
-- **Changes:** retired-term list generated from naming.md's Retired column (not a hand list); prose-count binding for the docs that state registry counts (or remove the counts); advisory overlap report (shared code dirs + showcases); correct the four-invariant claim in CLAUDE.md/self-expressive-project.md or gate it; an authoring skill/README section: "add / extend / compose / retire a pattern" with the gate as the checklist.
-- **Acceptance:** each self-expressive facet maps to a gate or is explicitly declared practice.
+- **Objective:** correct future work is the path of least resistance; claims match enforcement (D-12).
+- **Changes:** retired-term list generated from naming.md; prose counts bound or removed; advisory overlap
+  report; each self-expressive facet mapped to a gate or labelled "practice requiring judgement"; authoring
+  procedure (add / extend / compose / retire a pattern) with the gate as the checklist.
 
-## Slice 8 — Platform vocabulary outside the pattern domain (optional, separate scope)
-- Outcome/lifecycle vocabularies, owner columns, corpus vocabularies, Neo4j identities, dead enum values, doc drift in data docs (F28, F29). Only after ApeDevil decides scope (D-13).
+## Slice 8 — Platform-wide semantic integrity (mandatory, D-13)
+- **Objective:** the ontology is coherent beyond the pattern library.
+- **Scope:** persistence vocabularies (outcome, lifecycle, retired/archived), ownership semantics (owner
+  columns), corpus identities, Neo4j identities and relationship types (F29), dead enum values, data-doc drift
+  (F28), server/frontend/MCP/AI terms. An investigation inventory first; genuinely different concepts keep
+  different terms.
+- **Checkpoint:** inventory and proposed changes before any schema change; live database changes only on
+  ApeDevil's word.
 
 ## Order and dependencies
 
 ```text
-S0 ─► S1 ─► S2 ─► S3 ─► S6 ─► S7
-            │      ▲
-            └► S5 ─┘   (baseline before S2 merges; targets checked after S3)
-      S1 ─► S4 ─► S6
-S8 independent, after S7
+S0 ✓ ─► S1 ─► S2 ─► S3 ─► S4 ─► S6 ─► S7 ─► S8
+              │            ▲
+              └──► S5 ─────┘ (S5 after S3; S6 needs S4 and S5)
+benchmark: baseline in S1, re-measured at every checkpoint
 ```
