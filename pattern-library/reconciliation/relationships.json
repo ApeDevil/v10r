@@ -1,5 +1,5 @@
 {
-	"note": "Slice 3 relationship migration (2026-11-28, Pattern Ontology Engineering). One entry per Slice 2 depends_on edge (before: depends_on) and per relationship that did not exist as an edge before (before: none). after.type is builds_on, composes (with level and when), specializes, references, or none with the home the knowledge moved to (assumption, alternative, decision catalogue, inherited). Edges were judged from the reconciled records, not translated mechanically. Ids are the Slice 2 ids (unchanged in Slice 3).",
+	"note": "Slice 3 relationship migration (2026-11-28, Pattern Ontology Engineering). One entry per Slice 2 depends_on edge (before: depends_on) and per relationship that did not exist as an edge before (before: none). after.type is builds_on, composes (with level and when), specializes, references, or none with the home the knowledge moved to (assumption, alternative, decision catalogue, inherited). Edges were judged from the reconciled records, not translated mechanically. Ids are the Slice 2 ids (unchanged in Slice 3). Slice 4 revisions carry \"revised\": {slice, previously} with the evidence in why; \"inherited\" means the target is reached through the record's adoption closure (a foundation's or a generalization's relationship).",
 	"baseCommit": "786b603",
 	"entries": [
 		{
@@ -306,6 +306,20 @@
 		},
 		{
 			"from": "asset-production-pipeline",
+			"to": "asset-production-engine",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "Every job runs one engine request; the engine was extracted from the pipeline in Slice 4. Slice 4 (2026-11-28): the parent required a write-once owner-scoped store, PROV-DM provenance and a derivation key; the child stores nothing and records nothing (src/lib/asset-production/modeling/run.ts calls the engine, never runAssetJob). The genuinely shared mechanism, the engine, became its own record and the child specializes it.",
+			"revised": {
+				"slice": 4,
+				"previously": null
+			}
+		},
+		{
+			"from": "asset-production-pipeline",
 			"to": "threlte-integration",
 			"before": "depends_on",
 			"after": {
@@ -357,12 +371,32 @@
 		},
 		{
 			"from": "agentic-parametric-modeling",
-			"to": "asset-production-pipeline",
-			"before": "depends_on",
+			"to": "asset-production-engine",
+			"before": "none",
 			"after": {
 				"type": "specializes"
 			},
-			"why": "Every parametric model is an asset production request: one strict request schema, same bytes, inspection before encoding."
+			"why": "Every parametric model runs as one engine request (generator parametric-model) and satisfies every engine invariant. Slice 4 (2026-11-28): the parent required a write-once owner-scoped store, PROV-DM provenance and a derivation key; the child stores nothing and records nothing (src/lib/asset-production/modeling/run.ts calls the engine, never runAssetJob). The genuinely shared mechanism, the engine, became its own record and the child specializes it.",
+			"revised": {
+				"slice": 4,
+				"previously": null
+			}
+		},
+		{
+			"from": "agentic-parametric-modeling",
+			"to": "asset-production-pipeline",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "alternative"
+			},
+			"why": "The child does not satisfy the pipeline's job invariants (store, provenance, derivation), so it cannot specialize it; the pipeline stays its alternative for a fixed object family that must be kept. Slice 4 (2026-11-28): the parent required a write-once owner-scoped store, PROV-DM provenance and a derivation key; the child stores nothing and records nothing (src/lib/asset-production/modeling/run.ts calls the engine, never runAssetJob). The genuinely shared mechanism, the engine, became its own record and the child specializes it.",
+			"revised": {
+				"slice": 4,
+				"previously": {
+					"type": "specializes"
+				}
+			}
 		},
 		{
 			"from": "agentic-parametric-modeling",
@@ -402,7 +436,7 @@
 				"type": "none",
 				"home": "inherited"
 			},
-			"why": "Reached through its foundation hosted-mcp and its generalization asset-production-pipeline, both of which build on rate limiting; a second authored edge would say nothing new."
+			"why": "Reached through its foundation hosted-mcp, which builds on rate limiting; a second authored edge would say nothing new."
 		},
 		{
 			"from": "agentic-parametric-modeling",
@@ -515,6 +549,21 @@
 				"type": "builds_on"
 			},
 			"why": "The refresh runs after the response through the deferred tail; any after-response mechanism with the survival rule satisfies it."
+		},
+		{
+			"from": "stale-while-revalidate",
+			"to": "singleflight",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "concurrent readers or several instances can revalidate the same stale key"
+			},
+			"why": "Slice 4 review of this record, independent of the benchmark: the two foundations are confirmed by the code (swr.ts imports deferAfterResponse and readTiered/writeTiered), and the code also runs every refresh and every cold miss through singleflight, an edge Slice 3 missed. Conditional, not required: stampede protection matters when one stale key can be revalidated concurrently; the stale window and refresh behind the response hold without it. Stale reads refresh behind a cross-instance refresh claim and cold misses are coalesced (src/lib/server/cache/swr.ts imports claimRefresh and coalesce); without it N readers of one stale key start N refreshes.",
+			"revised": {
+				"slice": 4,
+				"previously": null
+			}
 		},
 		{
 			"from": "singleflight",

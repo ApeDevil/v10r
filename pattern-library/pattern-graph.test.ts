@@ -5,7 +5,16 @@
  * Validation of malformed graphs (the negative cases) is in `relationships.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
-import { type Adoption, type ConditionDecisions, patternGraph, type ResolvedNeed } from './pattern-graph.ts';
+import {
+	type Adoption,
+	type AdoptionContext,
+	compositionCondition as cond,
+	type ConditionDecisions,
+	needCondition,
+	patternGraph,
+	type Proposal,
+	type ResolvedNeed,
+} from './pattern-graph.ts';
 import type { Assumption, Constituent, NeedEntry, PatternRecord, Registry, RelationshipRef } from './schema.ts';
 
 interface Spec {
@@ -48,8 +57,30 @@ function graphOf(specs: Record<string, Spec>, assumptions: Assumption[] = []) {
 }
 
 const need = (needs: readonly ResolvedNeed[], id: string) => needs.find((entry) => entry.need === id);
-const decide = (entries: Record<string, 'satisfied' | 'unsatisfied'>): ConditionDecisions =>
+const decisions = (entries: Record<string, 'satisfied' | 'unsatisfied'>): ConditionDecisions =>
 	new Map(Object.entries(entries));
+const decide = (entries: Record<string, 'satisfied' | 'unsatisfied'>): AdoptionContext => ({
+	conditions: decisions(entries),
+});
+/** A proposal as the graph reports it: the condition is the proposing relationship's own. */
+const proposal = (
+	from: string,
+	to: string,
+	level: Proposal['level'],
+	when: string,
+	state: Proposal['state'] = 'unknown',
+	inheritedFrom?: string,
+): Proposal => ({
+	from,
+	level,
+	condition: {
+		id: cond(inheritedFrom ?? from, to),
+		when,
+		origin: { kind: 'composes', from: inheritedFrom ?? from, to },
+	},
+	state,
+	...(inheritedFrom ? { inheritedFrom } : {}),
+});
 const openIds = (adoption: Adoption) => adoption.open.map((entry) => entry.id);
 
 /** Every permutation, for order-independence checks. */
@@ -77,7 +108,9 @@ describe('composition: required, conditional and optional constituents', () => {
 	it('a required constituent is a step before its whole', () => {
 		const adoption = g.adopt(['whole']);
 		expect(adoption.steps).toEqual(['part', 'whole']);
-		expect(adoption.reasons.get('part')).toEqual([{ kind: 'part_of', from: 'whole', level: 'required' }]);
+		expect(adoption.reasons.get('part')).toEqual([
+			{ kind: 'part_of', from: 'whole', level: 'required', binding: 'required' },
+		]);
 	});
 
 	it('conditional and optional constituents stay open while unknown — never adopted or dropped silently', () => {
@@ -86,14 +119,12 @@ describe('composition: required, conditional and optional constituents', () => {
 			{
 				id: 'maybe',
 				level: 'conditional',
-				state: 'unknown',
-				proposedBy: [{ from: 'whole', level: 'conditional', when: 'the host is serverless' }],
+				proposedBy: [proposal('whole', 'maybe', 'conditional', 'the host is serverless')],
 			},
 			{
 				id: 'extra',
 				level: 'optional',
-				state: 'unknown',
-				proposedBy: [{ from: 'whole', level: 'optional', when: 'the team wants traces' }],
+				proposedBy: [proposal('whole', 'extra', 'optional', 'the team wants traces')],
 			},
 		]);
 	});
@@ -108,22 +139,73 @@ describe('composition: required, conditional and optional constituents', () => {
 		expect(need(needs, 'object-storage')?.level).toBe('optional');
 	});
 
-	it('a satisfied condition makes the constituent a step; an unsatisfied one removes it and its needs', () => {
-		const satisfied = g.adopt(['whole'], decide({ maybe: 'satisfied', extra: 'satisfied' }));
-		expect(satisfied.steps).toEqual(['part', 'maybe', 'extra', 'whole']);
-		expect(satisfied.open).toEqual([]);
+	it('a satisfied condition makes a conditional constituent required; an unsatisfied one removes it and its needs', () => {
+		const satisfied = g.adopt(['whole'], decide({ [cond('whole', 'maybe')]: 'satisfied' }));
+		expect(satisfied.steps).toEqual(['part', 'maybe', 'whole']);
+		expect(satisfied.reasons.get('maybe')).toEqual([
+			{
+				kind: 'part_of',
+				from: 'whole',
+				level: 'conditional',
+				binding: 'condition',
+				condition: proposal('whole', 'maybe', 'conditional', 'the host is serverless').condition,
+			},
+		]);
 		expect(need(satisfied.needs, 'key-value-store')?.level).toBe('required');
-		const unsatisfied = g.adopt(['whole'], decide({ maybe: 'unsatisfied' }));
+		const unsatisfied = g.adopt(['whole'], decide({ [cond('whole', 'maybe')]: 'unsatisfied' }));
 		expect(unsatisfied.steps).toEqual(['part', 'whole']);
-		expect(unsatisfied.open.find((entry) => entry.id === 'maybe')?.state).toBe('unsatisfied');
+		expect(unsatisfied.open.find((entry) => entry.id === 'maybe')?.proposedBy[0].state).toBe('unsatisfied');
 		expect(need(unsatisfied.needs, 'key-value-store')).toBeUndefined();
 	});
 
-	it('an unknown condition is never settled by the graph', () => {
-		for (const adoption of [g.adopt(['whole']), g.adopt(['whole'], decide({ extra: 'satisfied' }))]) {
+	it('a satisfied condition on an optional constituent does not select it', () => {
+		const adoption = g.adopt(['whole'], decide({ [cond('whole', 'extra')]: 'satisfied' }));
+		expect(adoption.steps).not.toContain('extra');
+		expect(adoption.open.find((entry) => entry.id === 'extra')?.proposedBy).toEqual([
+			proposal('whole', 'extra', 'optional', 'the team wants traces', 'satisfied'),
+		]);
+		// Applicable, not adopted: its needs stay optional, no longer under the settled condition.
+		expect(need(adoption.needs, 'object-storage')).toMatchObject({ level: 'optional', conditions: [] });
+	});
+
+	it('a selected optional constituent is a step, with its needs, and says it was selected', () => {
+		const adoption = g.adopt(['whole'], { selected: new Set(['extra']) });
+		expect(adoption.steps).toEqual(['part', 'extra', 'whole']);
+		expect(adoption.reasons.get('extra')?.[0]).toMatchObject({
+			kind: 'part_of',
+			binding: 'selected',
+			level: 'optional',
+		});
+		expect(need(adoption.needs, 'object-storage')?.level).toBe('required');
+	});
+
+	it('an explicitly requested optional constituent is a step, and its optional relationship stays visible', () => {
+		const adoption = g.adopt(['whole', 'extra']);
+		expect(adoption.steps).toContain('extra');
+		expect(openIds(adoption)).toEqual(['maybe']);
+		expect(adoption.reasons.get('extra')).toEqual([
+			{ kind: 'requested' },
+			{ kind: 'proposed', ...proposal('whole', 'extra', 'optional', 'the team wants traces') },
+		]);
+		expect(need(adoption.needs, 'object-storage')?.level).toBe('required');
+	});
+
+	it('an unknown condition is never settled by the graph, and a decision keyed by the constituent settles nothing', () => {
+		for (const adoption of [
+			g.adopt(['whole']),
+			g.adopt(['whole'], decide({ [cond('whole', 'extra')]: 'satisfied' })),
+			g.adopt(['whole'], decide({ maybe: 'satisfied' })),
+		]) {
 			expect(adoption.steps).not.toContain('maybe');
-			expect(adoption.open.find((entry) => entry.id === 'maybe')?.state).toBe('unknown');
+			expect(adoption.open.find((entry) => entry.id === 'maybe')?.proposedBy[0].state).toBe('unknown');
 		}
+	});
+
+	it('lists every condition an adoption can meet, by its declaration', () => {
+		expect(g.conditionsOf('whole').map((condition) => condition.id)).toEqual([
+			cond('whole', 'extra'),
+			cond('whole', 'maybe'),
+		]);
 	});
 });
 
@@ -139,9 +221,11 @@ describe('recursive composition', () => {
 		expect(kv?.conditions).toEqual(['multi-hop questions matter and several instances serve it']);
 		expect(kv?.sources[0].path).toEqual(['app', 'tier', 'cache']);
 		// Settling the outer condition leaves the inner one open: one answer settles one question.
-		const adoption = g.adopt(['app'], decide({ tier: 'satisfied' }));
+		expect(kv?.conditionIds).toEqual([[cond('app', 'tier'), cond('tier', 'cache')]]);
+		const adoption = g.adopt(['app'], decide({ [cond('app', 'tier')]: 'satisfied' }));
 		expect(adoption.steps).toEqual(['tier', 'app']);
 		expect(openIds(adoption)).toEqual(['cache']);
+		expect(need(adoption.needs, 'key-value-store')?.conditions).toEqual(['several instances serve it']);
 	});
 
 	it('an optional constituent makes everything it carries optional, however strict inside', () => {
@@ -209,13 +293,59 @@ describe('recursive composition', () => {
 			{
 				id: 'x',
 				level: 'conditional',
-				state: 'unknown',
 				proposedBy: [
-					{ from: 'a', level: 'optional', when: 'a wants it' },
-					{ from: 'b', level: 'conditional', when: 'b runs serverless' },
+					proposal('a', 'x', 'optional', 'a wants it'),
+					proposal('b', 'x', 'conditional', 'b runs serverless'),
 				],
 			},
 		]);
+	});
+
+	it('independent conditions on a shared constituent are settled independently', () => {
+		const g = graphOf({
+			a: { composes: [['x', 'conditional', 'a runs serverless']] },
+			b: { composes: [['x', 'conditional', 'b serves several regions']] },
+			x: { needs: ['key-value-store'] },
+		});
+		const none = g.needs('a');
+		expect(need(none, 'key-value-store')?.conditions).toEqual(['a runs serverless']);
+		// b's condition holds; a's is still unknown. x is required by b — and a's question stays visible.
+		const adoption = g.adopt(['a', 'b'], decide({ [cond('b', 'x')]: 'satisfied' }));
+		expect(adoption.steps).toContain('x');
+		expect(adoption.reasons.get('x')).toEqual([
+			{
+				kind: 'part_of',
+				from: 'b',
+				level: 'conditional',
+				binding: 'condition',
+				condition: proposal('b', 'x', 'conditional', 'b serves several regions').condition,
+			},
+			{ kind: 'proposed', ...proposal('a', 'x', 'conditional', 'a runs serverless') },
+		]);
+		// a's condition is unsatisfied, b's unknown: x stays open on b's condition only.
+		const other = g.adopt(['a', 'b'], decide({ [cond('a', 'x')]: 'unsatisfied' }));
+		expect(other.steps).not.toContain('x');
+		expect(other.open[0].proposedBy.map((entry) => [entry.from, entry.state])).toEqual([
+			['a', 'unsatisfied'],
+			['b', 'unknown'],
+		]);
+		expect(need(other.needs, 'key-value-store')?.conditions).toEqual(['b serves several regions']);
+	});
+
+	it('alternatives across paths stay alternatives; conjunctions along a path stay conjunctions', () => {
+		const g = graphOf({
+			app: {
+				composes: [
+					['left', 'conditional', 'L'],
+					['right', 'conditional', 'R'],
+				],
+			},
+			left: { composes: [['cache', 'conditional', 'L2']] },
+			right: { builds_on: ['cache'] },
+			cache: { needs: ['key-value-store'] },
+		});
+		const kv = need(g.needs('app'), 'key-value-store');
+		expect(kv?.conditions).toEqual(['L and L2', 'R']);
 	});
 });
 
@@ -242,7 +372,7 @@ describe('requirement merging across origins', () => {
 			pinned: { needs: [{ need: 'relational-db', level: 'required', pinned: 'postgres', why: 'uses advisory locks' }] },
 		});
 		expect(need(g.needs('root'), 'relational-db')?.pins).toEqual([
-			{ technology: 'postgres', conditional: false, origins: ['pinned'] },
+			{ technology: 'postgres', conditional: false, conditions: [], origins: ['pinned'] },
 		]);
 	});
 
@@ -254,8 +384,28 @@ describe('requirement merging across origins', () => {
 		});
 		const db = need(g.needs('root'), 'relational-db');
 		expect(db?.level).toBe('required');
-		expect(db?.pins).toEqual([{ technology: 'postgres', conditional: true, origins: ['graph'] }]);
+		expect(db?.pins).toEqual([
+			{ technology: 'postgres', conditional: true, conditions: ['relationship questions matter'], origins: ['graph'] },
+		]);
 		expect(db?.conflict).toBeNull();
+	});
+
+	it('a conditional need declaration is a condition of its own, settled by its id', () => {
+		const g = graphOf({
+			root: { builds_on: ['base'] },
+			base: {
+				needs: [{ need: 'key-value-store', level: 'conditional', when: 'several instances serve', pinned: 'redis' }],
+			},
+		});
+		expect(g.conditionsOf('root').map((condition) => condition.id)).toEqual([needCondition('base', 'key-value-store')]);
+		const open = need(g.needs('root'), 'key-value-store');
+		expect(open?.level).toBe('conditional');
+		expect(open?.pins[0]).toMatchObject({ conditional: true, conditions: ['several instances serve'] });
+		const holds = g.adopt(['root'], decide({ [needCondition('base', 'key-value-store')]: 'satisfied' }));
+		expect(need(holds.needs, 'key-value-store')).toMatchObject({ level: 'required', conditions: [] });
+		expect(need(holds.needs, 'key-value-store')?.pins[0]).toMatchObject({ conditional: false });
+		const fails = g.adopt(['root'], decide({ [needCondition('base', 'key-value-store')]: 'unsatisfied' }));
+		expect(need(fails.needs, 'key-value-store')).toBeUndefined();
 	});
 
 	it('incompatible active pins are an explicit conflict; a conditional one only a possible conflict', () => {
@@ -304,14 +454,15 @@ describe('specialization', () => {
 			builds_on: ['foundation'],
 			composes: [
 				['piece', 'required'],
-				['detail', 'required'],
+				['detail', 'conditional', 'the host renders views'],
 			],
 			invariants: ['every result is reproducible'],
 			needs: ['relational-db', { need: 'object-storage', level: 'implementation', why: 'v10r caches renders' }],
 		},
 		child: {
 			specializes: 'parent',
-			composes: [['detail', 'optional', 'the host renders views']],
+			composes: [['detail', 'required']],
+			references: ['piece'],
 			invariants: ['geometry is never executed code'],
 		},
 		foundation: {},
@@ -321,22 +472,30 @@ describe('specialization', () => {
 
 	it('inherits the generalization’s foundations and constituents without making it a step', () => {
 		const adoption = g.adopt(['child']);
-		expect(adoption.steps).toEqual(['foundation', 'piece', 'child']);
+		expect(adoption.steps).toEqual(['foundation', 'piece', 'detail', 'child']);
 		expect(adoption.steps).not.toContain('parent');
 		expect(adoption.generalizations.get('child')).toEqual(['parent']);
 		expect(adoption.reasons.get('foundation')).toEqual([{ kind: 'builds_on', from: 'child', inheritedFrom: 'parent' }]);
 	});
 
-	it('its own relationship to the same record wins over the inherited one', () => {
+	it('its own compatible relationship to the same record wins over the inherited one', () => {
 		const adoption = g.adopt(['child']);
-		expect(adoption.steps).not.toContain('detail');
-		expect(adoption.open).toEqual([
-			{
-				id: 'detail',
-				level: 'optional',
-				state: 'unknown',
-				proposedBy: [{ from: 'child', level: 'optional', when: 'the host renders views' }],
-			},
+		expect(adoption.reasons.get('detail')).toEqual([
+			{ kind: 'part_of', from: 'child', level: 'required', binding: 'required' },
+		]);
+		expect(adoption.open).toEqual([]);
+		expect(g.adopt(['parent']).open.map((entry) => entry.id)).toEqual(['detail']);
+	});
+
+	it('a reference never suppresses an inherited relationship', () => {
+		// child references piece; piece is still its required constituent, inherited from parent.
+		expect(g.effectiveEdges('child').find((edge) => edge.to === 'piece')).toMatchObject({
+			type: 'composes',
+			level: 'required',
+			inheritedFrom: 'parent',
+		});
+		expect(g.adopt(['child']).reasons.get('piece')).toEqual([
+			{ kind: 'part_of', from: 'child', level: 'required', binding: 'required', inheritedFrom: 'parent' },
 		]);
 	});
 
@@ -396,6 +555,44 @@ describe('principles, assumptions and workflows', () => {
 		const adoption = g.adopt(['runbook']);
 		expect(adoption.steps).toEqual(['server', 'runbook']);
 		expect(g.edgesTo('runbook')).toEqual([]);
+	});
+});
+
+describe('references change no planning consequence', () => {
+	const base = {
+		top: { builds_on: ['found'], composes: [['part', 'required'] as [string, 'required']] },
+		found: { needs: ['relational-db' as NeedEntry] },
+		part: { builds_on: ['deep'] },
+		deep: { needs: [{ need: 'key-value-store', level: 'conditional', when: 'several instances' } as NeedEntry] },
+		other: { needs: ['graph-db' as NeedEntry], builds_on: ['found'] },
+	};
+	const withRefs = Object.fromEntries(
+		Object.entries(base).map(([id, spec]) => [
+			id,
+			{ ...spec, references: ['other', 'deep', 'found'].filter((to) => to !== id) },
+		]),
+	) as Record<string, Spec>;
+	const plain = graphOf(base);
+	const referenced = graphOf(withRefs);
+	const shape = (adoption: Adoption) => ({
+		steps: adoption.steps,
+		reasons: [...adoption.reasons],
+		open: adoption.open,
+		needs: adoption.needs.map(({ sources: _sources, ...rest }) => rest),
+	});
+
+	it('the adoption closure, inherited prerequisites and infrastructure needs are identical with references added', () => {
+		expect(shape(referenced.adopt(['top']))).toEqual(shape(plain.adopt(['top'])));
+		expect(referenced.adopt(['top']).steps).not.toContain('other');
+		expect(referenced.needs('top')).toEqual(plain.needs('top'));
+	});
+
+	it('…including through a specialization whose generalization the specialization also references', () => {
+		const specs = { ...base, child: { specializes: 'top', references: ['part', 'found'] } } as Record<string, Spec>;
+		const g = graphOf(specs);
+		expect(g.adopt(['child']).steps).toEqual(['found', 'deep', 'part', 'child']);
+		expect(need(g.needs('child'), 'relational-db')?.level).toBe('required');
+		expect(need(g.needs('child'), 'key-value-store')?.level).toBe('conditional');
 	});
 });
 

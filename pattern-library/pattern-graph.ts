@@ -41,7 +41,7 @@ export const RELATIONSHIP_SEMANTICS: Record<
 			'a constituent of the record’s solution: required (always part of it), conditional (must be adopted when its condition holds) or optional (an enhancement that may be omitted even when its condition holds)',
 		inverse: 'part of',
 		adoption:
-			'a required constituent is a step; a conditional one is a step only when its condition is satisfied, an open decision while unknown, and omitted when unsatisfied; an optional one is a step only when the caller includes it',
+			'a required constituent is a step; a conditional one is a step when its condition is satisfied (it is then required) or the caller selects it, an open decision while unknown, and omitted when unsatisfied; an optional one is a step only when the caller selects or requests it — a satisfied condition alone never adopts it',
 		needs:
 			'a required constituent’s needs propagate like a foundation’s; a conditional constituent’s required needs become conditional on its condition; an optional constituent’s needs are optional',
 		invariants: 'stay the constituent’s own',
@@ -83,22 +83,78 @@ export interface EffectiveEdge extends Edge {
 /** A condition's state: settled by the caller, never guessed. */
 export type ConditionState = 'satisfied' | 'unsatisfied' | 'unknown';
 
-/** The caller's settled conditions, keyed by constituent id. Anything absent is unknown. */
+/**
+ * A condition's identity is the declaration that states it, never its target or its text: a
+ * conditional or optional constituent (`<whole>/composes/<constituent>`) or a conditional need
+ * (`<record>/needs/<need>`). Two wholes that compose the same record under their own conditions
+ * hold two independent conditions; an inherited edge keeps its generalization's condition.
+ */
+export interface Condition {
+	id: string;
+	when: string;
+	origin: { kind: 'composes'; from: string; to: string } | { kind: 'need'; declarer: string; need: InfrastructureNeed };
+}
+
+export const compositionCondition = (from: string, to: string) => `${from}/composes/${to}`;
+export const needCondition = (declarer: string, need: string) => `${declarer}/needs/${need}`;
+
+/** The caller's settled conditions, keyed by condition id. Anything absent is unknown. */
 export type ConditionDecisions = ReadonlyMap<string, Exclude<ConditionState, 'unknown'>>;
 
-/** Why a record is a step of an adoption. */
+/**
+ * What the caller settled for an adoption. A condition's state and a selection are different
+ * facts: a satisfied condition makes a conditional constituent required, but an optional
+ * constituent is adopted only when selected (or requested), whatever its condition says.
+ */
+export interface AdoptionContext {
+	conditions?: ConditionDecisions;
+	/** Optional or conditional constituents the caller chose to adopt. */
+	selected?: ReadonlySet<string>;
+	/**
+	 * Records the target already has (an equivalent existing prerequisite): reached, never built
+	 * again, and not expanded — what they stand on comes with them, needs included.
+	 */
+	existing?: ReadonlySet<string>;
+	/** Records the caller refuses: reached, never adopted, and a conflict when something requires them. */
+	excluded?: ReadonlySet<string>;
+}
+
+/** A conditional or optional relationship of one whole to one constituent, with its condition's state. */
+export interface Proposal {
+	from: string;
+	level: 'conditional' | 'optional';
+	condition: Condition;
+	state: ConditionState;
+	inheritedFrom?: string;
+}
+
+/**
+ * Why a record is a step of an adoption. `part_of` names what made it a step (`binding`):
+ * `required` (a required constituent), `condition` (a conditional constituent whose condition is
+ * satisfied, hence required) or `selected` (the caller selected it). `proposed` is context, not a
+ * cause: the record is a step for another reason and is ALSO a conditional or optional constituent
+ * of `from`.
+ */
 export type StepReason =
 	| { kind: 'requested' }
 	| { kind: 'builds_on'; from: string; inheritedFrom?: string }
-	| { kind: 'part_of'; from: string; level: ConstituentLevel; when?: string; inheritedFrom?: string };
+	| {
+			kind: 'part_of';
+			from: string;
+			level: ConstituentLevel;
+			binding: 'required' | 'condition' | 'selected';
+			condition?: Condition;
+			inheritedFrom?: string;
+	  }
+	| ({ kind: 'proposed' } & Proposal);
 
 /** A conditional or optional constituent that is not a step, with every whole that proposes it. */
 export interface OpenConstituent {
 	id: string;
 	/** `conditional` when any whole needs it under a condition; otherwise `optional`. */
 	level: 'conditional' | 'optional';
-	state: ConditionState;
-	proposedBy: { from: string; level: 'conditional' | 'optional'; when: string; inheritedFrom?: string }[];
+	/** One per proposing relationship, each with its own condition and state. */
+	proposedBy: Proposal[];
 }
 
 /** A platform assumption or principle that applies to some steps of an adoption. */
@@ -111,6 +167,14 @@ export interface AppliedAssumption extends Assumption {
 export interface Adoption {
 	/** Steps in adoption order: foundations and constituents before the records that need them. */
 	steps: string[];
+	/** Reached records the target already has: satisfied, not built (in registry order). */
+	satisfied: string[];
+	/**
+	 * Reached records the caller excluded. `conflict` when a binding reason (a request, a
+	 * foundation, a required or condition-required or selected constituent) needs it: the plan
+	 * cannot hold both, and says so instead of dropping either.
+	 */
+	excluded: { id: string; conflict: boolean }[];
 	cyclic: boolean;
 	/** Every reason each step is in the plan, sorted; the first is its reason chain's head. */
 	reasons: ReadonlyMap<string, StepReason[]>;
@@ -136,6 +200,8 @@ export interface NeedSource {
 	level: NeedLevel;
 	/** Every condition that must hold, along the path and on the declaration (a conjunction). */
 	conditions: string[];
+	/** The ids of those conditions. */
+	conditionIds: string[];
 	pinned?: string;
 	why?: string;
 }
@@ -144,6 +210,8 @@ export interface PinConstraint {
 	technology: string;
 	/** True when every source pinning it holds only under conditions. */
 	conditional: boolean;
+	/** For a conditional pin: each conjunction under which it holds — a conditional pin never prints as unconditional. */
+	conditions: string[];
 	origins: string[];
 }
 
@@ -151,8 +219,10 @@ export interface ResolvedNeed {
 	need: InfrastructureNeed;
 	/** The strictest effective level of any source. */
 	level: NeedLevel;
-	/** For a conditional need: each distinct conjunction of conditions under which it is needed. */
+	/** For a conditional need: each distinct conjunction of conditions under which it is needed (alternatives across paths). */
 	conditions: string[];
+	/** The same alternatives as condition ids, for a caller that settles them. */
+	conditionIds: string[][];
 	pins: PinConstraint[];
 	/** Every record the need comes from, the resolved record included when it declares it. */
 	origins: string[];
@@ -193,11 +263,15 @@ export function resolveNeeds(sources: readonly NeedSource[], roots: readonly str
 				}
 			}
 			const pins = [...pinned.entries()]
-				.map(([technology, pinSources]) => ({
-					technology,
-					conditional: pinSources.every((source) => source.level === 'conditional'),
-					origins: unique(pinSources.map((source) => source.origin)),
-				}))
+				.map(([technology, pinSources]) => {
+					const conditional = pinSources.every((source) => source.level === 'conditional');
+					return {
+						technology,
+						conditional,
+						conditions: conditional ? unique(pinSources.map((source) => conjunction(source.conditions))) : [],
+						origins: unique(pinSources.map((source) => source.origin)),
+					};
+				})
 				.sort((a, b) => byText(a.technology, b.technology));
 			const unconditional = pins.filter((pin) => !pin.conditional).map((pin) => pin.technology);
 			const origins = unique(sorted.map((source) => source.origin));
@@ -205,6 +279,12 @@ export function resolveNeeds(sources: readonly NeedSource[], roots: readonly str
 				need,
 				level,
 				conditions: level === 'conditional' ? unique(atLevel.map((source) => conjunction(source.conditions))) : [],
+				conditionIds:
+					level === 'conditional'
+						? [...new Map(atLevel.map((source) => [source.conditionIds.join(' & '), source.conditionIds])).entries()]
+								.sort(([a], [b]) => byText(a, b))
+								.map(([, ids]) => ids)
+						: [],
 				pins,
 				origins,
 				// What explains the level: the origins that carry it there. A root that declares the
@@ -238,12 +318,14 @@ export interface PatternGraph {
 	effectiveEdges(id: string): EffectiveEdge[];
 	/** A record's adoption needs with every condition unknown. */
 	needs(id: string): ResolvedNeed[];
-	/** The need sources that reach a record, before merging, under the caller's settled conditions. */
-	needSources(id: string, decisions?: ConditionDecisions): NeedSource[];
+	/** The need sources that reach a record, before merging, under the caller's settled conditions and selections. */
+	needSources(id: string, context?: AdoptionContext): NeedSource[];
+	/** Every condition a record's adoption can meet, along its effective edges and need declarations, sorted by id. */
+	conditionsOf(id: string): Condition[];
 	/** Assumptions whose scope contains the record, unless the record adopts the assumed record itself. */
 	assumptionsFor(id: string): Assumption[];
-	/** The adoption closure of the requested records under the caller's settled conditions. */
-	adopt(requested: readonly string[], decisions?: ConditionDecisions): Adoption;
+	/** The adoption closure of the requested records under the caller's settled conditions and selections. */
+	adopt(requested: readonly string[], context?: AdoptionContext): Adoption;
 	/** Kahn order over effective adoption edges inside `ids`; ties by registry order. */
 	order(ids: readonly string[]): { order: string[]; cyclic: boolean };
 }
@@ -305,7 +387,9 @@ export function patternGraph(registry: Registry): PatternGraph {
 		const own = edgesFrom(id).filter(
 			(edge): edge is EffectiveEdge => edge.type === 'builds_on' || edge.type === 'composes',
 		);
-		const covered = new Set([id, ...edgesFrom(id).map((edge) => edge.to)]);
+		// Only an adoption edge replaces an inherited one: a reference is planning-neutral and never
+		// suppresses a foundation or constituent the generalization requires.
+		const covered = new Set([id, ...own.map((edge) => edge.to)]);
 		const inherited: EffectiveEdge[] = [];
 		for (const parent of generalizations(id)) {
 			covered.add(parent);
@@ -318,19 +402,39 @@ export function patternGraph(registry: Registry): PatternGraph {
 		return [...own, ...inherited];
 	};
 
+	/** The condition an effective conditional or optional edge carries: its authoring whole's. */
+	const edgeCondition = (edge: EffectiveEdge): Condition => {
+		const from = edge.inheritedFrom ?? edge.from;
+		return {
+			id: compositionCondition(from, edge.to),
+			when: edge.when ?? '',
+			origin: { kind: 'composes', from, to: edge.to },
+		};
+	};
+	const declarationCondition = (declarer: string, need: InfrastructureNeed, when: string): Condition => ({
+		id: needCondition(declarer, need),
+		when,
+		origin: { kind: 'need', declarer, need },
+	});
+
 	/**
 	 * Every need declaration reaching `root`, by path. A record contributes its own declarations and
 	 * those of its generalizations (all but implementation needs); its effective edges carry the
-	 * walk on. Conditions accumulate along conditional and optional composition, and an optional
-	 * constituent makes everything it carries optional. A settled condition removes the constituent
-	 * (unsatisfied) or makes it required (satisfied).
+	 * walk on. Conditions accumulate along conditional and optional composition (a conjunction per
+	 * path), and an optional constituent makes everything it carries optional. Settled by id:
+	 * an unsatisfied condition removes what it governs; a satisfied one on a conditional
+	 * constituent or a conditional need makes it required; a satisfied one on an optional
+	 * constituent leaves it optional — only a selection adopts it.
 	 */
-	const needSources = (root: string, decisions: ConditionDecisions = new Map()): NeedSource[] => {
+	const needSources = (root: string, context: AdoptionContext = {}): NeedSource[] => {
+		const decisions: ConditionDecisions = context.conditions ?? new Map();
+		const selected = context.selected ?? new Set<string>();
+		const stops = new Set([...(context.existing ?? []), ...(context.excluded ?? [])]);
 		const sources: NeedSource[] = [];
 		const declare = (
 			declarer: string,
 			path: string[],
-			conditions: string[],
+			conditions: Condition[],
 			optional: boolean,
 			via: NeedSource['via'],
 			fromGeneralization: boolean,
@@ -343,13 +447,24 @@ export function patternGraph(registry: Registry): PatternGraph {
 					declaration.level === 'conditional' ||
 					(fromGeneralization && declaration.level === 'optional');
 				if (!carried) continue;
-				let level: NeedLevel = declaration.level;
+				let settled: NeedLevel = declaration.level;
+				const own: Condition[] = [];
+				if (declaration.level === 'conditional' && declaration.when) {
+					const condition = declarationCondition(declarer, declaration.need, declaration.when);
+					const state = decisions.get(condition.id);
+					if (state === 'unsatisfied') continue;
+					if (state === 'satisfied') settled = 'required';
+					else own.push(condition);
+				}
+				const all = [...conditions, ...own];
+				let level: NeedLevel = settled;
 				if (optional && (level === 'required' || level === 'conditional')) level = 'optional';
-				else if (level === 'required' && conditions.length > 0) level = 'conditional';
+				else if (level === 'required' && all.length > 0) level = 'conditional';
+				const whens = unique(all.map((condition) => condition.when));
 				const why =
 					declaration.why ??
 					(optional
-						? `part of an optional constituent (${path.slice(1).join(' → ')}) when ${conjunction(conditions)}`
+						? `part of an optional constituent (${path.slice(1).join(' → ')})${whens.length > 0 ? ` when ${conjunction(whens)}` : ''}`
 						: undefined);
 				sources.push({
 					need: declaration.need,
@@ -358,30 +473,68 @@ export function patternGraph(registry: Registry): PatternGraph {
 					via,
 					declaredLevel: declaration.level,
 					level,
-					conditions: unique([...conditions, ...(declaration.when ? [declaration.when] : [])]),
+					conditions: whens,
+					conditionIds: unique(all.map((condition) => condition.id)),
 					...(declaration.pinned ? { pinned: declaration.pinned } : {}),
 					...(why ? { why } : {}),
 				});
 			}
 		};
-		const walk = (id: string, path: string[], conditions: string[], optional: boolean, via: NeedSource['via']) => {
+		const walk = (id: string, path: string[], conditions: Condition[], optional: boolean, via: NeedSource['via']) => {
 			declare(id, path, conditions, optional, via, false);
 			for (const parent of generalizations(id)) {
 				declare(parent, [...path, parent], conditions, optional, id === root ? 'specializes' : via, true);
 			}
 			for (const edge of effectiveEdges(id)) {
-				if (path.includes(edge.to)) continue;
+				// A record the target has brings its own needs; an excluded one brings none.
+				if (path.includes(edge.to) || stops.has(edge.to)) continue;
 				const nextVia: NeedSource['via'] = id === root ? edge.type : via;
 				const next = [...path, ...(edge.inheritedFrom ? [edge.inheritedFrom] : []), edge.to];
 				const level = edge.type === 'builds_on' ? 'required' : (edge.level ?? 'required');
-				const state = level === 'required' ? 'satisfied' : (decisions.get(edge.to) ?? 'unknown');
+				// A required constituent, and a selected one (adopted by the caller), carry their needs whole.
+				if (level === 'required' || selected.has(edge.to)) {
+					walk(edge.to, next, conditions, optional, nextVia);
+					continue;
+				}
+				const condition = edgeCondition(edge);
+				const state = decisions.get(condition.id) ?? 'unknown';
 				if (state === 'unsatisfied') continue;
-				if (state === 'satisfied') walk(edge.to, next, conditions, optional, nextVia);
-				else walk(edge.to, next, [...conditions, edge.when ?? ''], optional || level === 'optional', nextVia);
+				if (level === 'conditional') {
+					walk(edge.to, next, state === 'satisfied' ? conditions : [...conditions, condition], optional, nextVia);
+				} else {
+					// Optional: a satisfied condition makes it applicable, not adopted — its needs stay optional.
+					walk(edge.to, next, state === 'satisfied' ? conditions : [...conditions, condition], true, nextVia);
+				}
 			}
 		};
 		walk(root, [root], [], false, 'own');
 		return sources;
+	};
+
+	const conditionsOf = (root: string): Condition[] => {
+		const found = new Map<string, Condition>();
+		const seen = new Set<string>();
+		const visit = (id: string) => {
+			if (seen.has(id)) return;
+			seen.add(id);
+			for (const declarer of [id, ...generalizations(id)]) {
+				for (const entry of byId.get(declarer)?.needs ?? []) {
+					const declaration = needDeclaration(entry);
+					if (declaration.level !== 'conditional' || !declaration.when) continue;
+					const condition = declarationCondition(declarer, declaration.need, declaration.when);
+					found.set(condition.id, condition);
+				}
+			}
+			for (const edge of effectiveEdges(id)) {
+				if (edge.type === 'composes' && edge.level !== 'required') {
+					const condition = edgeCondition(edge);
+					found.set(condition.id, condition);
+				}
+				visit(edge.to);
+			}
+		};
+		visit(root);
+		return [...found.values()].sort((a, b) => byText(a.id, b.id));
 	};
 
 	const assumptionsFor = (id: string): Assumption[] => {
@@ -414,9 +567,13 @@ export function patternGraph(registry: Registry): PatternGraph {
 		return { order: done, cyclic };
 	};
 
-	const adopt = (requested: readonly string[], decisions: ConditionDecisions = new Map()): Adoption => {
+	const adopt = (requested: readonly string[], context: AdoptionContext = {}): Adoption => {
+		const decisions: ConditionDecisions = context.conditions ?? new Map();
+		const selected = context.selected ?? new Set<string>();
+		const existing = context.existing ?? new Set<string>();
+		const excluded = context.excluded ?? new Set<string>();
 		const reasons = new Map<string, StepReason[]>();
-		const proposals = new Map<string, OpenConstituent['proposedBy']>();
+		const proposals = new Map<string, Proposal[]>();
 		const queue: { id: string; reason: StepReason }[] = unique(requested)
 			.filter((id) => byId.has(id))
 			.map((id) => ({ id, reason: { kind: 'requested' } }));
@@ -428,6 +585,7 @@ export function patternGraph(registry: Registry): PatternGraph {
 				continue;
 			}
 			reasons.set(id, [reason]);
+			if (existing.has(id) || excluded.has(id)) continue;
 			for (const edge of effectiveEdges(id)) {
 				const inherited = edge.inheritedFrom ? { inheritedFrom: edge.inheritedFrom } : {};
 				if (edge.type === 'builds_on') {
@@ -435,39 +593,54 @@ export function patternGraph(registry: Registry): PatternGraph {
 					continue;
 				}
 				const level = edge.level ?? 'required';
-				const partOf: StepReason = {
-					kind: 'part_of',
-					from: id,
-					level,
-					...(edge.when ? { when: edge.when } : {}),
-					...inherited,
-				};
-				if (level === 'required' || decisions.get(edge.to) === 'satisfied') {
-					queue.push({ id: edge.to, reason: partOf });
+				if (level === 'required') {
+					queue.push({ id: edge.to, reason: { kind: 'part_of', from: id, level, binding: 'required', ...inherited } });
+					continue;
+				}
+				const condition = edgeCondition(edge);
+				const state = decisions.get(condition.id) ?? 'unknown';
+				if (selected.has(edge.to)) {
+					queue.push({
+						id: edge.to,
+						reason: { kind: 'part_of', from: id, level, binding: 'selected', condition, ...inherited },
+					});
+				} else if (level === 'conditional' && state === 'satisfied') {
+					queue.push({
+						id: edge.to,
+						reason: { kind: 'part_of', from: id, level, binding: 'condition', condition, ...inherited },
+					});
 				} else {
 					proposals.set(edge.to, [
 						...(proposals.get(edge.to) ?? []),
-						{ from: id, level, when: edge.when ?? '', ...inherited },
+						{ from: id, level, condition, state, ...inherited },
 					]);
 				}
 			}
 		}
+		// A proposal whose constituent is a step anyway stays visible as context of that step.
+		for (const [id, list] of proposals) {
+			const known = reasons.get(id);
+			if (known) for (const proposal of list) known.push({ kind: 'proposed', ...proposal });
+		}
+		const head = (reason: StepReason) =>
+			reason.kind === 'requested'
+				? '0'
+				: reason.kind === 'proposed'
+					? `2${reason.from}`
+					: `1${reason.kind}:${reason.from}`;
 		const sortReasons = (list: StepReason[]) =>
-			[...list].sort((a, b) => {
-				const head = (reason: StepReason) => (reason.kind === 'requested' ? '' : `${reason.kind}:${reason.from}`);
-				return byText(head(a), head(b)) || byText(JSON.stringify(a), JSON.stringify(b));
-			});
+			[...list].sort((a, b) => byText(head(a), head(b)) || byText(JSON.stringify(a), JSON.stringify(b)));
 		const sortedReasons = new Map([...reasons.entries()].map(([id, list]) => [id, sortReasons(list)]));
-		const { order: steps, cyclic } = order([...reasons.keys()]);
+		const { order: steps, cyclic } = order([...reasons.keys()].filter((id) => !existing.has(id) && !excluded.has(id)));
+		const binds = (reason: StepReason) => reason.kind !== 'proposed';
 		const open: OpenConstituent[] = [...proposals.entries()]
-			.filter(([id]) => !reasons.has(id))
+			.filter(([id]) => !reasons.has(id) && !excluded.has(id))
 			.map(([id, proposedBy]) => ({
 				id,
 				level: proposedBy.some((entry) => entry.level === 'conditional')
 					? ('conditional' as const)
 					: ('optional' as const),
-				state: decisions.get(id) ?? ('unknown' as const),
-				proposedBy: [...proposedBy].sort((a, b) => byRank(a.from, b.from) || byText(a.when, b.when)),
+				proposedBy: [...proposedBy].sort((a, b) => byRank(a.from, b.from) || byText(a.condition.id, b.condition.id)),
 			}))
 			.sort((a, b) => byRank(a.id, b.id));
 		const stepSet = new Set(steps);
@@ -481,13 +654,18 @@ export function patternGraph(registry: Registry): PatternGraph {
 			.filter((assumption) => assumption.steps.length > 0);
 		return {
 			steps,
+			satisfied: [...reasons.keys()].filter((id) => existing.has(id) && !excluded.has(id)).sort(byRank),
+			excluded: [...new Set([...reasons.keys(), ...proposals.keys()])]
+				.filter((id) => excluded.has(id))
+				.sort(byRank)
+				.map((id) => ({ id, conflict: (reasons.get(id) ?? []).some(binds) })),
 			cyclic,
 			reasons: sortedReasons,
 			open,
 			generalizations: new Map(steps.map((id) => [id, generalizations(id)])),
 			assumptions,
 			needs: resolveNeeds(
-				steps.flatMap((id) => needSources(id, decisions)),
+				steps.flatMap((id) => needSources(id, context)),
 				steps,
 			),
 		};
@@ -506,6 +684,7 @@ export function patternGraph(registry: Registry): PatternGraph {
 		effectiveEdges,
 		needs: (id) => resolveNeeds(needSources(id), [id]),
 		needSources,
+		conditionsOf,
 		assumptionsFor,
 		adopt,
 		order,

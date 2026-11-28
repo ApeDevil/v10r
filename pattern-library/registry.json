@@ -7909,17 +7909,117 @@
 			"verifiedSha": "42d5b7c-dirty"
 		},
 		{
+			"id": "asset-production-engine",
+			"kind": "pattern",
+			"tier": "deep",
+			"title": "Asset production engine",
+			"category": "3d",
+			"summary": "One untrusted structured request in, one checked GLB or the reasons there is none out: a generator builds a mesh from bounded parameters, the budget is checked from an exact estimate before building and from the real mesh after, an inspector proves every shell closed and outward, and a DOM-free writer emits byte-stable GLB with its provenance in asset.extras and reads it back — pure computation, so the same engine runs on a server, in a worker and in a browser.",
+			"when_to_use": "Use when 3D geometry is generated from parameters by code you control and every output must be bounded, deterministic and validated before anyone loads it, whether or not the result is kept.",
+			"avoid_when": [
+				"The assets are authored by hand in a DCC tool and only need viewing — a model viewer is enough",
+				"The geometry needs B-rep CAD operations (fillets, STEP exchange, tolerances) — put a CAD kernel behind the same request contract",
+				"The input is existing meshes or scans to convert, decimate or bake — that is a Blender or mesh-processing worker, not a generator"
+			],
+			"alternatives": [
+				{
+					"approach": "Three.js GLTFExporter in the browser",
+					"prefer_when": "the asset never leaves one user's tab and no server-side proof or storage is needed"
+				}
+			],
+			"needs": [],
+			"capabilities": [
+				"procedural 3d generation",
+				"parametric geometry",
+				"glb export",
+				"mesh validation",
+				"deterministic build"
+			],
+			"keywords": [
+				"gltf",
+				"glb",
+				"procedural",
+				"parametric",
+				"mesh",
+				"generator",
+				"khronos validator",
+				"byte-stable",
+				"exact estimate",
+				"read-back gate"
+			],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
+			"docs": [
+				{
+					"path": "docs/blueprint/3d/asset-production.md",
+					"note": "Engine choice, the pipeline stages, invariants 1–7 and the quality gates"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/asset-production",
+					"kind": "dir",
+					"note": "Framework-free core: engine, generators, mesh intermediate, inspection, GLB writer and read-back gate"
+				},
+				{
+					"path": "src/lib/asset-production/README.md",
+					"note": "The core's boundaries and one responsibility per file"
+				},
+				{
+					"path": "src/lib/schemas/asset-production.ts",
+					"note": "The request schema and the one bounds table the UI and tools read"
+				},
+				{
+					"path": "src/lib/asset-production/engine.ts",
+					"note": "AssetProductionEngine: stages, the budget checked twice, cancellation and deadline checkpoints"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/asset-production/engine.test.ts",
+					"note": "Determinism, exact estimates at the bounds, sixteen refusals, cancellation and deadline, the boundary gate"
+				},
+				{
+					"path": "src/lib/asset-production/glb.test.ts",
+					"note": "Khronos validator: no error or warning; GLTFLoader loads it; damaged files refused"
+				},
+				{
+					"path": "src/lib/asset-production/inspect.test.ts"
+				}
+			],
+			"showcases": [],
+			"invariants": [
+				"Callers ask through one strict request schema — a generator id and bounded parameters; no request can name a script, a file or an engine flag.",
+				"The budget is checked from an exact estimate before anything is built and from the real mesh after; an over-budget request costs one arithmetic pass.",
+				"Same request, same bytes — in-process or in a worker, on V8 or JSC; the label is presentation and never enters the derivation key.",
+				"Every exported GLB passes inspection (closed outward shells, finite values, declared envelope) and its own read-back gate; tests hold it to the Khronos validator with zero errors and warnings.",
+				"Findings are data with a fixed severity per code; a refused or failed run returns no bytes, and a cancelled one keeps nothing.",
+				"The core imports no framework, DOM or runtime API, so the same engine runs in a function, a worker process, a terminal and a browser."
+			],
+			"emulation_notes": [
+				"Write the request schema and its single bounds table first; let the UI sliders and the tool description read the same table.",
+				"Give every generator an exact estimate and test estimate = actual at every bound — that is what makes the a-priori budget honest.",
+				"Write your own byte-stable GLB writer for generated meshes rather than exporting a scene graph; run the Khronos validator in tests."
+			],
+			"risk": "medium — real CPU per run, bounded by the budget; checks prove file and surface integrity, never structural strength",
+			"maturity": "proven",
+			"verifiedAt": "2026-10-29",
+			"verifiedSha": "6a2cd80-dirty"
+		},
+		{
 			"id": "asset-production-pipeline",
 			"kind": "pattern",
 			"tier": "deep",
 			"title": "Asset production pipeline",
 			"category": "3d",
-			"summary": "A structured, validated request becomes a checked 3D asset: a deterministic TypeScript generator builds parametric geometry, an inspector proves every shell closed and outward, a DOM-free writer emits byte-stable GLB with its derivation key inside and reads it back, and one job shape — report, PROV-DM provenance, measurements, a write-once owner-scoped store — serves an HTTP route, a CLI and MCP tools, in-process or in a killable worker process.",
+			"summary": "A structured, validated request becomes a checked 3D asset through the asset production engine, and one job shape around it — report, PROV-DM provenance, the derivation key, measurements and a write-once owner-scoped store when the asset is kept — serves an HTTP route, a CLI and MCP tools, in-process or in a killable worker process.",
 			"when_to_use": "Use when an app must generate 3D assets from parameters — configurators that export, procedural parts, AI-requested variations — and every file must be reproducible, validated and attributable before anyone loads it.",
 			"avoid_when": [
 				"The assets are authored by hand in a DCC tool and only need viewing — the model viewer pattern is enough",
 				"The geometry needs B-rep CAD operations (fillets, STEP exchange, tolerances) — use a CAD kernel (OpenCascade via replicad) behind the same request and report",
-				"The target needs one booleaned watertight solid (3D printing, volumes) — describe it as a parametric model (agentic-parametric-modeling), which runs Manifold behind this same pipeline",
+				"The target needs one booleaned watertight solid (3D printing, volumes) — describe it as a parametric model (agentic-parametric-modeling), which runs Manifold through the same engine without keeping anything",
 				"Imported user files must be converted, decimated, unwrapped or baked — that is Blender's job, in a container worker with typed operations"
 			],
 			"alternatives": [
@@ -7937,16 +8037,7 @@
 				}
 			],
 			"needs": [],
-			"capabilities": [
-				"procedural 3d generation",
-				"parametric geometry",
-				"glb export",
-				"mesh validation",
-				"asset provenance",
-				"deterministic build",
-				"ai tool for 3d",
-				"compute job isolation"
-			],
+			"capabilities": ["asset provenance", "ai tool for 3d", "compute job isolation"],
 			"keywords": [
 				"gltf",
 				"glb",
@@ -7969,6 +8060,11 @@
 				}
 			],
 			"composes": [
+				{
+					"id": "asset-production-engine",
+					"level": "required",
+					"why": "Every job runs one engine request: the engine checks, builds, inspects and encodes; the job adds the report, provenance, derivation and store around it."
+				},
 				{
 					"id": "derivation-key",
 					"level": "required",
@@ -8002,19 +8098,6 @@
 			],
 			"code": [
 				{
-					"path": "src/lib/asset-production",
-					"kind": "dir",
-					"note": "Framework-free core: engine, generators, mesh intermediate, inspection, GLB writer and read-back gate"
-				},
-				{
-					"path": "src/lib/asset-production/README.md",
-					"note": "The core's boundaries and one responsibility per file"
-				},
-				{
-					"path": "src/lib/schemas/asset-production.ts",
-					"note": "The request schema and the one bounds table the UI and tools read"
-				},
-				{
 					"path": "src/lib/server/asset-production",
 					"kind": "dir",
 					"note": "Job lifecycle, report and provenance, derivation, write-once stores, in-process and isolated environments, MCP tool registry"
@@ -8037,17 +8120,6 @@
 				}
 			],
 			"tests": [
-				{
-					"path": "src/lib/asset-production/engine.test.ts",
-					"note": "Determinism, exact estimates at the bounds, sixteen refusals, cancellation and deadline, the boundary gate"
-				},
-				{
-					"path": "src/lib/asset-production/glb.test.ts",
-					"note": "Khronos validator: no error or warning; GLTFLoader loads it; damaged files refused"
-				},
-				{
-					"path": "src/lib/asset-production/inspect.test.ts"
-				},
 				{
 					"path": "src/lib/server/asset-production/run-job.test.ts",
 					"note": "Report and provenance, label-independent derivation, write-once stores, lifecycle"
@@ -8072,18 +8144,9 @@
 				}
 			],
 			"invariants": [
-				"Callers ask through one strict request schema — a generator id and bounded parameters; no request can name a script, a file or an engine flag.",
-				"The budget is checked from an exact estimate before anything is built and from the real mesh after; an over-budget request costs one arithmetic pass.",
-				"Same request, same bytes — in-process or in a worker, on V8 or JSC; the label is presentation and never enters the derivation key.",
-				"Every exported GLB passes inspection (closed outward shells, finite values, declared envelope) and its own read-back gate; tests hold it to the Khronos validator with zero errors and warnings.",
-				"Findings are data with a fixed severity per code; a refused or failed run returns no bytes, and a cancelled one keeps nothing.",
-				"Stores are write-once and owner-scoped: a repeat run reuses, different bytes under a kept key are refused, and a job never publishes.",
-				"The core imports no framework, DOM or runtime API, so the same engine runs in a function, a worker process, a terminal and a browser."
+				"Stores are write-once and owner-scoped: a repeat run reuses, different bytes under a kept key are refused, and a job never publishes."
 			],
 			"emulation_notes": [
-				"Write the request schema and its single bounds table first; let the UI sliders and the tool description read the same table.",
-				"Give every generator an exact estimate and test estimate = actual at every bound — that is what makes the a-priori budget honest.",
-				"Write your own byte-stable GLB writer for generated meshes rather than exporting a scene graph; run the Khronos validator in tests.",
 				"Start in-process; add the isolated worker (SIGKILL deadline, stripped env, capped output) before any untrusted or heavy engine, and only then a container.",
 				"Expose AI access as typed operations through the same schema; mount the tool where calls are authenticated and metered, never on an anonymous endpoint."
 			],
@@ -8098,7 +8161,7 @@
 			"tier": "deep",
 			"title": "Agentic parametric modeling",
 			"category": "3d",
-			"summary": "An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) engine inside the asset production pipeline validates, builds, inspects and encodes it on a separate stateless MCP service, in the visitor's browser and in tests alike, and a model link in the URL fragment reproduces it anywhere without storage. An MCP App draws a server-side preview mesh; the native viewer runs the kernel in a Web Worker.",
+			"summary": "An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) kernel, run as a generator of the asset production engine, validates, builds, inspects and encodes it on a separate stateless MCP service, in the visitor's browser and in tests alike, and a model link in the URL fragment reproduces it anywhere without storage. An MCP App draws a server-side preview mesh; the native viewer runs the kernel in a Web Worker.",
 			"when_to_use": "Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.",
 			"avoid_when": [
 				"The geometry needs B-rep CAD (fillets, chamfers, STEP, tolerances) — put a CAD kernel (OpenCascade/replicad) behind the same contract",
@@ -8182,8 +8245,8 @@
 				}
 			],
 			"specializes": {
-				"id": "asset-production-pipeline",
-				"why": "Every parametric model is an asset production request: one strict request schema, same bytes, inspection before encoding."
+				"id": "asset-production-engine",
+				"why": "Every parametric model runs as one engine request (generator parametric-model): one strict request schema, exact budget before building, same bytes everywhere, inspection and read-back before any GLB leaves."
 			},
 			"references": [],
 			"docs": [
@@ -9463,7 +9526,14 @@
 					"why": "The refresh runs after the response through the deferred tail; any after-response mechanism with the survival rule satisfies it."
 				}
 			],
-			"composes": [],
+			"composes": [
+				{
+					"id": "singleflight",
+					"level": "conditional",
+					"when": "concurrent readers or several instances can revalidate the same stale key",
+					"why": "Stale reads refresh behind a cross-instance refresh claim and cold misses are coalesced (src/lib/server/cache/swr.ts imports claimRefresh and coalesce); without it N readers of one stale key start N refreshes."
+				}
+			],
 			"specializes": null,
 			"references": [],
 			"docs": [

@@ -758,6 +758,7 @@ function validateGraph(registry: Registry, categoryIds: ReadonlySet<string>, err
 	}
 	const cycle = adoptionCycle(registry);
 	if (cycle) errors.push(`adoption relationships form a cycle: ${cycle.join(' → ')}`);
+	else errors.push(...overrideConflicts(registry, byId));
 	const assumed = new Set<string>();
 	for (const assumption of registry.assumptions) {
 		const target = byId.get(assumption.id);
@@ -778,6 +779,60 @@ function validateGraph(registry: Registry, categoryIds: ReadonlySet<string>, err
 		const matched = registry.patterns.filter((pattern) => pattern.id !== assumption.id && inScope(pattern, scope));
 		if (matched.length === 0) errors.push(`assumption '${assumption.id}': its scope matches no record`);
 	}
+}
+
+/** How strongly an adoption edge binds: a foundation or required constituent always, a conditional one under its condition, an optional one never. */
+function binding(edge: { type: 'builds_on' } | { type: 'composes'; level: ConstituentLevel }): number {
+	if (edge.type === 'builds_on' || edge.level === 'required') return 3;
+	return edge.level === 'conditional' ? 2 : 1;
+}
+
+/**
+ * "Every specialization must satisfy the invariants of its generalization": a specialization's
+ * own relationship to a record its generalization adopts replaces the inherited one, so it may
+ * only bind as strongly or more — a required constituent stays required, a conditional one stays
+ * conditional under the same condition or becomes required. A weaker override would let the
+ * specialization drop part of what makes it one of its generalization. Runs on an acyclic graph.
+ */
+function overrideConflicts(registry: Registry, byId: ReadonlyMap<string, PatternRecord>): string[] {
+	const errors: string[] = [];
+	const edges = (pattern: PatternRecord) => [
+		...pattern.builds_on.map((entry) => ({ type: 'builds_on' as const, id: entry.id })),
+		...pattern.composes.map((entry) => ({
+			type: 'composes' as const,
+			id: entry.id,
+			level: entry.level,
+			when: entry.when,
+		})),
+	];
+	for (const pattern of registry.patterns) {
+		const own = new Map(edges(pattern).map((edge) => [edge.id, edge]));
+		let parent = pattern.specializes ? byId.get(pattern.specializes.id) : undefined;
+		while (parent) {
+			for (const inherited of edges(parent)) {
+				const override = own.get(inherited.id);
+				if (!override) continue;
+				const weaker = binding(override) < binding(inherited);
+				const otherCondition =
+					binding(override) === 2 &&
+					binding(inherited) === 2 &&
+					override.type === 'composes' &&
+					inherited.type === 'composes' &&
+					override.when !== inherited.when;
+				if (weaker || otherCondition) {
+					const describe = (edge: typeof override) =>
+						edge.type === 'builds_on'
+							? 'builds on it'
+							: `composes it as ${edge.level}${edge.when ? ` when ${edge.when}` : ''}`;
+					errors.push(
+						`${pattern.id}: overrides '${inherited.id}' from its generalization '${parent.id}' incompatibly — the generalization ${describe(inherited)}, the specialization ${describe(override)}; a specialization keeps every obligation of its generalization`,
+					);
+				}
+			}
+			parent = parent.specializes ? byId.get(parent.specializes.id) : undefined;
+		}
+	}
+	return errors;
 }
 
 /** A cycle over builds_on ∪ composes ∪ specializes, as the ids along it, or null. Deterministic. */

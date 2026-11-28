@@ -6,7 +6,7 @@
  * records — is `pattern-graph.ts` (`graph.needs`, `adopt().needs`). This module only prints a
  * resolved need and checks it against a target, so a need reads the same on every surface.
  */
-import type { ResolvedNeed } from './pattern-graph.ts';
+import { needCondition, type ResolvedNeed } from './pattern-graph.ts';
 import {
 	INFRASTRUCTURE_NEED_IDS,
 	NEED_LEVELS,
@@ -27,8 +27,16 @@ export function ownNeeds(pattern: PatternRecord): ResolvedNeed[] {
 		need: declaration.need,
 		level: declaration.level,
 		conditions: declaration.when ? [declaration.when] : [],
+		conditionIds: declaration.when ? [[needCondition(pattern.id, declaration.need)]] : [],
 		pins: declaration.pinned
-			? [{ technology: declaration.pinned, conditional: declaration.level === 'conditional', origins: [pattern.id] }]
+			? [
+					{
+						technology: declaration.pinned,
+						conditional: declaration.level === 'conditional',
+						conditions: declaration.level === 'conditional' && declaration.when ? [declaration.when] : [],
+						origins: [pattern.id],
+					},
+				]
 			: [],
 		origins: [pattern.id],
 		inherited: [],

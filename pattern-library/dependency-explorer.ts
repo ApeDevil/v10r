@@ -257,7 +257,7 @@ function focusText(focus: ExploredFocus, byId: ReadonlyMap<string, PatternRecord
 			? `## Conditional and optional constituents (decide against the target; never added silently)\n${focus.open
 					.map(
 						(entry) =>
-							`- ${label(entry.id, byId)} — ${entry.level}: ${entry.proposedBy.map((proposal) => `part of \`${proposal.from}\` when ${proposal.when}`).join('; ')}`,
+							`- ${label(entry.id, byId)} — ${entry.level}: ${entry.proposedBy.map((proposal) => `part of \`${proposal.from}\` when ${proposal.condition.when}`).join('; ')}`,
 					)
 					.join('\n')}`
 			: '',

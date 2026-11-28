@@ -73,6 +73,8 @@ interface RelationshipEntry {
 	before: 'depends_on' | 'none';
 	after: { type: string; level?: string; when?: string; home?: string };
 	why: string;
+	/** A Slice 4 revision of a Slice 3 fate: what the entry said before, with the evidence in `why`. */
+	revised?: { slice: number; previously: RelationshipEntry['after'] | null };
 }
 
 const readJson = <T>(path: string) => JSON.parse(readFileSync(resolve(ROOT, path), 'utf8')) as T;
@@ -449,10 +451,12 @@ describe('relationship migration manifest', () => {
 					`${entry.from} → ${entry.to}`,
 				).toContain(entry.to);
 			} else if (home === 'inherited') {
-				expect(
-					graph.effectiveEdges(entry.from).map((edge) => edge.to),
-					`${entry.from} → ${entry.to}`,
-				).toContain(entry.to);
+				// Reached through the record's adoption closure: a foundation's or a generalization's edge.
+				const reached = [
+					...graph.adopt([entry.from]).steps,
+					...graph.effectiveEdges(entry.from).map((edge) => edge.to),
+				];
+				expect(reached, `${entry.from} → ${entry.to}`).toContain(entry.to);
 			} else if (home === 'reference') {
 				// The pair is related once; the reference may point either way.
 				const to = byId.get(entry.to) as PatternRecord;

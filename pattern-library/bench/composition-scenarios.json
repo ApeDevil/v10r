@@ -1,5 +1,5 @@
 {
-	"note": "Composition benchmark for recommend_emulation_plan (scripts/patterns/composition-bench.ts). Golden sets are reviewer judgement from each pattern's docs and code, ratified by ApeDevil 2026-11-28 (D-01). `design` scenarios were used to find the failures and to design the ontology; `holdout` scenarios were written and fixed on 2026-11-28 BEFORE any Slice 1 change and are never edited to fit a result: a change needs a dated entry in `changes` with its reason (D-16). Every golden correction records its `before` value, so the original golden answers are reconstructed exactly (`--expectations original`); `added` marks scenarios added after the baseline. Ids follow the current registry: a rename or merge from the reconciliation manifest is applied to ids mechanically and is not a golden change. required = steps a correct plan must contain; optional = constituents a correct plan lists as optional, never as mandatory steps; acceptable = steps that are neither credited nor penalised (platform assumptions, or a modelling question still open, named in `note`). needs.required / needs.conditional = infrastructure a correct plan must name at that level, in the capability vocabulary. needs.pinned = technology pins a correct plan must state ({need: technology}).",
+	"note": "Composition benchmark for recommend_emulation_plan (scripts/patterns/composition-bench.ts). Golden sets are reviewer judgement from each pattern's docs and code, ratified by ApeDevil 2026-11-28 (D-01). `design` scenarios were used to find the failures and to design the ontology; `holdout` scenarios were written and fixed on 2026-11-28 BEFORE any Slice 1 change and are never edited to fit a result: a change needs a dated entry in `changes` with its reason (D-16). Every golden correction records its `before` value, so the original golden answers are reconstructed exactly (`--expectations original`); `added` marks scenarios added after the baseline. Ids follow the current registry: a rename or merge from the reconciliation manifest is applied to ids mechanically and is not a golden change. required = steps a correct plan must contain; optional = constituents a correct plan lists as optional, never as mandatory steps; acceptable = steps that are neither credited nor penalised (platform assumptions, or a modelling question still open, named in `note`). needs.required / needs.conditional = infrastructure a correct plan must name at that level, in the capability vocabulary. needs.pinned = technology pins a correct plan must state ({need: technology}). `exposed` marks a holdout whose expectations were inspected during implementation work: it stays in the set and is reported separately, never as independent evidence.",
 	"changes": [
 		{
 			"date": "2026-11-28",
@@ -44,6 +44,38 @@
 			"scenario": "S10",
 			"kind": "added",
 			"reason": "Slice 1 review asked for technology-pin preservation to be measured; no earlier scenario has a genuine pin. Refreshing a database branch from production copies a Postgres branch through the host's control-plane API, so relational-db is pinned to postgres and the API is required."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S4",
+			"kind": "golden",
+			"field": "required",
+			"before": [
+				"agentic-parametric-modeling",
+				"derivation-key",
+				"provenance-record",
+				"rate-limiting",
+				"mcp-authorization",
+				"passwordless-auth",
+				"hosted-mcp"
+			],
+			"reason": "Slice 4 specialization review (2026-11-28): MCP 3D runs one engine request and returns the GLB to the caller; it never calls the job layer (src/lib/asset-production/modeling/run.ts calls proceduralEngine.produce; deriveAsset and the PROV-DM record live only in src/lib/server/asset-production/run-job.ts), and its own invariants say nothing is stored or recorded. derivation-key and provenance-record are constituents of the pipeline's job, not of the engine MCP 3D specializes, so a plan that requires them is wrong. The specialization was corrected in the registry first (asset-production-engine extracted); this golden follows the corrected, evidence-checked graph, not a benchmark result."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S4",
+			"kind": "golden",
+			"field": "acceptable",
+			"before": ["multi-client-core", "asset-production-pipeline"],
+			"reason": "Same review: the generalization is now asset-production-engine; the pipeline is an alternative of MCP 3D and adopting it would add a store and provenance the pattern refuses."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S4",
+			"kind": "golden",
+			"field": "note",
+			"before": "asset-production-pipeline is the generalization MCP 3D specializes; by the approved rule a specialization does not require a second implementation of its parent, so it is neither credited nor penalised until Slice 3 settles how a specialization carries its parent's constituents.",
+			"reason": "The note's open question (how a specialization carries its parent's constituents) is settled: generalizations are never steps, and the parent must be one whose invariants the child satisfies."
 		}
 	],
 	"scenarios": [
@@ -90,20 +122,18 @@
 			"capabilities": ["agentic parametric modeling"],
 			"required": [
 				"agentic-parametric-modeling",
-				"derivation-key",
-				"provenance-record",
 				"rate-limiting",
 				"mcp-authorization",
 				"passwordless-auth",
 				"hosted-mcp"
 			],
 			"optional": ["threlte-integration", "mcp-app-provider"],
-			"acceptable": ["multi-client-core", "asset-production-pipeline"],
+			"acceptable": ["multi-client-core", "asset-production-engine"],
 			"needs": {
 				"required": ["relational-db", "key-value-store", "email-delivery"],
 				"conditional": ["web-worker"]
 			},
-			"note": "asset-production-pipeline is the generalization MCP 3D specializes; by the approved rule a specialization does not require a second implementation of its parent, so it is neither credited nor penalised until Slice 3 settles how a specialization carries its parent's constituents."
+			"note": "asset-production-engine is the generalization MCP 3D specializes; a specialization does not require a second implementation of its parent, so it is neither credited nor penalised. asset-production-pipeline is an alternative (a fixed object family whose assets are kept), not a constituent."
 		},
 		{
 			"id": "S5",
@@ -255,7 +285,11 @@
 				"required": [],
 				"conditional": ["key-value-store"]
 			},
-			"note": "key-value-store is conditional: the shared tier matters once more than one instance serves; one process can run on the memory tier."
+			"note": "key-value-store is conditional: the shared tier matters once more than one instance serves; one process can run on the memory tier.",
+			"exposed": {
+				"since": "2026-11-28",
+				"why": "Its stale-while-revalidate expectations were inspected while reviewing the relationship in Slice 4, so H5 no longer measures generalization; it is reported as an exposed holdout, apart from the untouched holdouts."
+			}
 		},
 		{
 			"id": "H6",

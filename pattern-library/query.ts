@@ -934,7 +934,7 @@ function adoptionNotes(adoption: Adoption): string[] {
 	const conditional = adoption.open.filter((entry) => entry.level === 'conditional');
 	const optional = adoption.open.filter((entry) => entry.level === 'optional');
 	const proposals = (entry: Adoption['open'][number]) =>
-		entry.proposedBy.map((proposal) => `part of \`${proposal.from}\` when ${proposal.when}`).join('; ');
+		entry.proposedBy.map((proposal) => `part of \`${proposal.from}\` when ${proposal.condition.when}`).join('; ');
 	const principles = adoption.assumptions.filter((entry) => entry.kind === 'principle');
 	const conventions = adoption.assumptions.filter((entry) => entry.kind !== 'principle');
 	return [

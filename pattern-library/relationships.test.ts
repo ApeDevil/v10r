@@ -124,6 +124,45 @@ describe('relationship validation refuses malformed graphs', () => {
 		expect(errors.filter((error) => error.includes('cycle'))).toEqual([]);
 	});
 
+	it('a specialization that weakens an obligation of its generalization', () => {
+		// asset-production-pipeline composes the engine as required; a specialization may not make it optional.
+		const weakened = errorsAfter((_, byId) => {
+			const child = byId('agentic-parametric-modeling');
+			child.specializes = { id: 'asset-production-pipeline', why };
+			const alternatives = child.alternatives as Record<string, unknown>[];
+			child.alternatives = alternatives.filter((alternative) => alternative.pattern !== 'asset-production-pipeline');
+			(child.composes as unknown[]).push({ id: 'asset-production-engine', level: 'optional', when: 'x', why });
+		});
+		expect(weakened).toContain(
+			"agentic-parametric-modeling: overrides 'asset-production-engine' from its generalization 'asset-production-pipeline' incompatibly — the generalization composes it as required, the specialization composes it as optional when x; a specialization keeps every obligation of its generalization",
+		);
+		const otherCondition = errorsAfter((_, byId) => {
+			byId('asset-production-pipeline').specializes = { id: 'agentic-parametric-modeling', why };
+			const alternatives = byId('agentic-parametric-modeling').alternatives as Record<string, unknown>[];
+			byId('agentic-parametric-modeling').alternatives = alternatives.filter(
+				(alternative) => alternative.pattern !== 'asset-production-pipeline',
+			);
+			byId('agentic-parametric-modeling').specializes = null;
+			(byId('asset-production-pipeline').composes as Record<string, unknown>[]).push({
+				id: 'mcp-authorization',
+				level: 'conditional',
+				when: 'a different condition',
+				why,
+			});
+		});
+		expect(otherCondition.some((error) => error.includes("overrides 'mcp-authorization'"))).toBe(true);
+		// A stronger override is compatible.
+		const stronger = errorsAfter((_, byId) => {
+			(byId('agentic-parametric-modeling').composes as Record<string, unknown>[]).push({
+				id: 'asset-production-engine',
+				level: 'required',
+				why,
+			});
+			byId('agentic-parametric-modeling').specializes = null;
+		});
+		expect(stronger.filter((error) => error.includes('overrides'))).toEqual([]);
+	});
+
 	it('building on or composing a principle, and a principle that adopts anything', () => {
 		const adopting = errorsAfter((_, byId) => {
 			(byId('hosted-mcp').builds_on as unknown[]).push({ id: PRINCIPLE, why });
