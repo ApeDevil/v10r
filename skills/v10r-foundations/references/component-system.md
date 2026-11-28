@@ -68,6 +68,17 @@ A layered component system — Bits UI → primitives (styled atoms) → composi
 - Adopt the layer vocabulary first (primitive/composite/layout) — it decides where every new component goes.
 - Port the token file before porting any component; components without tokens re-create the ad-hoc styling problem.
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Built on by**
+
+- [Generative UI](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/generative-ui.md)
+
+
 ---
 
 _Machine-readable record: `component-system` in `pattern-library/registry.json`._

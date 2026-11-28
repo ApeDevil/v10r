@@ -61,10 +61,13 @@ export const TOOL_CARDS: ToolCard[] = [
 		name: 'recommend_emulation_plan',
 		icon: 'i-lucide-list-checks',
 		summary:
-			'Assemble a dependency-ordered emulation plan — deterministic registry assembly with prerequisites, no inference.',
+			'Assemble an emulation plan, foundations and constituents first — deterministic registry assembly, no inference.',
 		params: [
 			{ name: 'capabilities', detail: 'list of desired capabilities (required)' },
-			{ name: 'include_dependencies', detail: 'expand prerequisites via depends_on, default true' },
+			{
+				name: 'include_dependencies',
+				detail: 'expand foundations and constituents (builds on, composes), default true',
+			},
 			{ name: 'target_infra', detail: 'what the target runs — each step says whether it fits' },
 			{ name: 'detail', detail: 'full (default) · outline (steps and fitness only)' },
 		],

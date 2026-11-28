@@ -13,7 +13,7 @@
  */
 
 import type { DagData } from '#lib/components/viz/graph/index.ts';
-import type { Registry } from '#patterns/schema.ts';
+import type { PatternRecord, Registry } from '#patterns/schema.ts';
 
 export interface RegistryStats {
 	patternCount: number;
@@ -24,6 +24,21 @@ export interface RegistryStats {
 	invariantCount: number;
 	/** Category breakdown in first-seen registry order. */
 	categories: Array<{ name: string; count: number }>;
+}
+
+/**
+ * The records adopting `pattern` brings in: its foundations (`builds_on`), its constituents at every
+ * level (`composes`) and its generalization (`specializes`). `references` are navigation, not
+ * adoption, so they are not edges of the build-order graph. Inlined rather than importing
+ * `adoptionTargets` from the schema, because that import would pull validation code into the client
+ * bundle.
+ */
+export function adoptedIds(pattern: PatternRecord): string[] {
+	return [
+		...pattern.builds_on.map((entry) => entry.id),
+		...pattern.composes.map((entry) => entry.id),
+		...(pattern.specializes ? [pattern.specializes.id] : []),
+	];
 }
 
 export function computeStats(reg: Registry): RegistryStats {
@@ -42,7 +57,7 @@ export function computeStats(reg: Registry): RegistryStats {
 		deepCount,
 		lightCount: reg.patterns.length - deepCount,
 		categoryCount: categories.length,
-		edgeCount: reg.patterns.reduce((sum, p) => sum + p.depends_on.length, 0),
+		edgeCount: reg.patterns.reduce((sum, p) => sum + adoptedIds(p).length, 0),
 		invariantCount: reg.patterns.reduce((sum, p) => sum + p.invariants.length, 0),
 		categories,
 	};
@@ -127,7 +142,7 @@ export const DAG_SHORT_LABELS: Record<string, string> = {
  * drown the graph in "not drawn" nodes, so only deep records (and edges whose
  * both endpoints are deep) are projected. A deep node with zero edges still
  * becomes a node (DagGraph won't draw it — the page's data table covers it;
- * don't fabricate edges). Edge direction is dependency → dependent, i.e. the
+ * don't fabricate edges). Edges are adoption relationships (builds on, composes, specializes); direction is adopted → adopter, i.e. the
  * topological build order recommend_emulation_plan uses.
  */
 export function toDagData(reg: Registry, shortLabels: Record<string, string> = DAG_SHORT_LABELS): DagData {
@@ -136,7 +151,9 @@ export function toDagData(reg: Registry, shortLabels: Record<string, string> = D
 	return {
 		nodes: deep.map((p) => ({ id: p.id, label: shortLabels[p.id] ?? p.title, group: p.category })),
 		edges: deep.flatMap((p) =>
-			p.depends_on.filter((dep) => deepIds.has(dep)).map((dep) => ({ source: dep, target: p.id })),
+			adoptedIds(p)
+				.filter((dep) => deepIds.has(dep))
+				.map((dep) => ({ source: dep, target: p.id })),
 		),
 	};
 }

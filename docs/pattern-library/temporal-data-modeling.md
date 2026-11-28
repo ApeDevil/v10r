@@ -38,6 +38,13 @@ A four-rung ladder — last write, transaction time (revision rows), valid time 
 
 - [`/showcases/db/relational/mutability`](/showcases/db/relational/mutability) — #temporal — query what was valid on a date
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `temporal-data-modeling` in `pattern-library/registry.json`._

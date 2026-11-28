@@ -33,6 +33,25 @@ A sliding-window rate limiter factory backed by Upstash Redis that produces per-
 
 - [`/showcases/abuse/rate-limits`](/showcases/abuse/rate-limits)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Hosted MCP](/docs/pattern-library/hosted-mcp)
+- [MCP authorization](/docs/pattern-library/mcp-authorization)
+- [Asset production pipeline](/docs/pattern-library/asset-production-pipeline)
+- [Comments](/docs/pattern-library/comments)
+- [Name check](/docs/pattern-library/name-check)
+
+**Referenced by**
+
+- [Bot decision & abuse audit](/docs/pattern-library/bot-decision-audit)
+
+
 ---
 
 _Machine-readable record: `rate-limiting` in `pattern-library/registry.json`._

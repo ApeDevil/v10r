@@ -2,8 +2,9 @@
 
 Review accepted by ApeDevil on 2026-11-28 (reviewed commit `5720c96`); his rulings are in the
 [decision register](./decision-register.md) and the target ontology and roadmap are reconciled with them.
-**Slice 1 is implemented and accepted** ([slice-1.md](./slice-1.md)); **Slice 2 is implemented**
-([slice-2.md](./slice-2.md)) and stopped at its review checkpoint; nothing proceeds to Slice 3 without ApeDevil's word. The outcome section below is the review's finding, measured before Slice 1.
+**Slices 1 and 2 are implemented and accepted** ([slice-1.md](./slice-1.md), [slice-2.md](./slice-2.md));
+**Slice 3 is implemented** ([slice-3.md](./slice-3.md)) and stopped at its review checkpoint; nothing proceeds to
+Slice 4, a merge or a deploy without ApeDevil's word. The outcome section below is the review's finding, measured before Slice 1.
 
 ## Outcome
 
@@ -30,6 +31,8 @@ a typed relationship graph inside the existing registry (direction B), no databa
 | [enforcement.md](./enforcement.md) | Gates (deterministic vs judgement) and authoring procedures |
 | [slice-1.md](./slice-1.md) | Slice 1: what changed and why, the needs and titles manifests, benchmark, limits |
 | [slice-2.md](./slice-2.md) | Slice 2: Slice 1 review corrections, entity kinds, reconciliation manifest, inventory, benchmark comparison, remaining issues, validation |
+| [slice-3.md](./slice-3.md) | Slice 3: Slice 2 refinements, typed relationships and counts, migration manifest, worked composition examples, requirement resolution, graph module, tests, benchmark comparison, remaining issues |
+| [release-checklist.md](./release-checklist.md) | Release-blocking checklist: persisted pattern ids, RAG documents and chunks, Neo4j, caches, clients; the reconciliation procedure after the ship |
 | [presentation.html](./presentation.html) | H. Interactive review presentation (self-contained) |
 
 ## Verification limits

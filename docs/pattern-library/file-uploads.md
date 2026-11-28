@@ -36,6 +36,17 @@ Server-side file upload handling that processes images with Sharp and persists t
 
 - [`/showcases/db/storage/transfer`](/showcases/db/storage/transfer)
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Object storage adapter](/docs/pattern-library/object-storage-adapter) — Processed files persist through the S3-compatible storage adapter; any object store satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `file-uploads` in `pattern-library/registry.json`._

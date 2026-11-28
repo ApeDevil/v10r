@@ -71,9 +71,20 @@ Reusable 3D products with typed connection ports join into an editable assembly:
 - Route conduits by hand with waypoints; add auto-routing (bend-penalised A* on a voxel grid) only for obstacles, many conduits or fitting catalogues.
 - Give every canvas action a keyboard path (product list, port list, partner picker, nudge buttons) and pause camera controls during gizmo drags yourself if your Threlte version does not.
 
-## Depends on
+## Relationships
 
-- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/threlte-integration.md)
+**Composes (constituents of its solution)**
+
+- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/threlte-integration.md) — optional when assemblies are shown and edited in a native 3D view: A thin Threlte layer renders the framework-free core; the core validates and edits without it.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

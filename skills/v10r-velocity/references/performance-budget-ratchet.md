@@ -56,6 +56,24 @@ Two thresholds with different jobs: targets are where we want to be and never fa
 - Field and lab budgets for the same metric name are different numbers. Scoring a real-user p75 against a warm-preview budget reports a failure on every healthy deployment.
 - Derive the chain from the build, not from file paths: v10r parses the route dictionary in the generated client app.js. Scoring page nodes only had under-reported the median route by 81 KB gz, because the public shell layout alone was ~160 KB.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Query budget and N+1 proof](query-budget.md)
+- [Heavy dependency quarantine](heavy-dependency-quarantine.md)
+- [Side-effect-free component tree](side-effect-free-components.md)
+- [Performance scenario harness](scenario-harness.md)
+
+**Referenced by**
+
+- [AI eval regression suite](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-eval-regression-suite.md)
+
+
 ---
 
 _Machine-readable record: `performance-budget-ratchet` in `pattern-library/registry.json`._

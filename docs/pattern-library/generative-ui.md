@@ -16,7 +16,7 @@ The model composes interfaces as A2UI v1.0 data from a closed catalog the applic
 
 **When to use:** Use when the shape of an answer depends on the question and must be interactive — forms for missing inputs, comparisons, choices, updates to what is on screen.
 
-**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate, durable-step-execution)
 
 ## Avoid when
 
@@ -66,10 +66,25 @@ The model composes interfaces as A2UI v1.0 data from a closed catalog the applic
 - Measure the catalog prompt, not only the payload: it is the larger token cost.
 - Keep the general section and replace the domain section with your product's own components; give every chart a text alternative by drawing it as data.
 
-## Depends on
+## Relationships
 
-- [Component-first UI system](/docs/pattern-library/component-system)
-- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — The closed catalogue renders through the app's own components and tokens; any component library with a closed catalogue satisfies it.
+- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary) — Model-composed surfaces are untrusted data: policy and validator refuse anything outside the catalogue.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (conditional)
+
 
 ---
 

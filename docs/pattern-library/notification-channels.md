@@ -33,6 +33,17 @@ Email (Resend), Telegram (bot API), and Discord (OAuth2) each implement a common
 
 - [`/showcases/notifications/channels`](/showcases/notifications/channels)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Notification router, outbox and delivery worker](/docs/pattern-library/notification-outbox) (required)
+
+
 ---
 
 _Machine-readable record: `notification-channels` in `pattern-library/registry.json`._

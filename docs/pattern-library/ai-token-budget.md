@@ -32,6 +32,13 @@ A per-user daily token cap stored in Redis that prevents a single authenticated 
 
 - [`/showcases/abuse/ai-budget`](/showcases/abuse/ai-budget)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `ai-token-budget` in `pattern-library/registry.json`._

@@ -52,6 +52,13 @@ Keeping images and fonts from dominating page load: metric-matched fallback face
 - The serif display faces (Playfair, Fraunces) got no fallback: as bold headings, and Fraunces at a large optical size, their computed fallbacks made the shift worse. Isolate heading and body slots before shipping a fallback per family.
 - Known gaps in v10r itself: blog body images carry no dimensions or lazy loading, and unhashed static files (/logo, /favicon.svg at 121 KB gz, /models/*.glb) revalidate on every visit.
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+
 ---
 
 _Machine-readable record: `asset-delivery-pipeline` in `pattern-library/registry.json`._

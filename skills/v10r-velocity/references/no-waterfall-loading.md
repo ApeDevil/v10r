@@ -10,7 +10,7 @@ Independent operations execute concurrently; sequential waiting requires a real 
 
 **When to use:** Use whenever one request needs several independent resources. Reach for it fourth, after removing the fetch, combining the query, and batching.
 
-**Needs:** v10r's implementation uses relational-db, key-value-store
+**Needs:** v10r's implementation uses key-value-store, relational-db
 
 ## Avoid when
 
@@ -51,6 +51,13 @@ Independent operations execute concurrently; sequential waiting requires a real 
 
 - Concurrency is the fourth strategy, not the first: eliminate the fetch, combine into one query, batch equivalent operations, and only then parallelise. A round trip removed beats a round trip parallelised.
 - Measure the origin-call count alongside the clock. Parallelising changes the wall time and nothing else; the counts staying equal is the proof that no work was skipped.
+
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

@@ -32,6 +32,17 @@ The settings UI renders a channel-by-notification-type matrix backed by a form s
 
 - [`/account/notifications`](/account/notifications) (app route, no showcase)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Notification router, outbox and delivery worker](/docs/pattern-library/notification-outbox) (required)
+
+
 ---
 
 _Machine-readable record: `notification-settings-matrix` in `pattern-library/registry.json`._

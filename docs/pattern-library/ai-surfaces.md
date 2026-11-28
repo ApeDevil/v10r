@@ -67,9 +67,28 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 - Start with the read-only surface; add the mutating surface only with the approval gate (see deskbot-approval-gate).
 - Route adapters stay thin — both surfaces call the same guard then their orchestrator.
 
-## Depends on
+## Relationships
 
-- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness) — Both surfaces run turns over the one tool registry and harness; the target’s own tool harness satisfies it.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+- [Agent-harness audit lens](/docs/pattern-library/agent-harness-lens) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Built on by**
+
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate)
+- [Turn trace and turn graph](/docs/pattern-library/turn-trace)
+- [Agent actions](/docs/pattern-library/agent-actions)
+
 
 ---
 

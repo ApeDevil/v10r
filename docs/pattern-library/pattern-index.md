@@ -53,9 +53,24 @@ A generated table in README.md mapping every repo pattern to the doc that explai
 - Anchor the human-readable index to a machine-readable registry and GENERATE it — a hand-maintained twin drifts (this one did: its own row-count claim went stale before the generator existed).
 - Showcase-route cells are validated by pattern-library/validate.ts against src/lib/showcases/catalog/registry.ts membership, not mere directory existence.
 
-## Depends on
+## Relationships
 
-- [Docs navigation hubs](/docs/pattern-library/docs-nav-hubs)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Reproducible artifact build](/docs/pattern-library/reproducible-artifact-build) — The README region is a committed generated artifact proven current by regenerate-and-diff; any regenerate-and-check gate satisfies it.
+
+**References (context only, never a step)**
+
+- [Agent Skills generated from the pattern registry](/docs/pattern-library/agent-skills) — Two projections of the same registry, regenerated and checked by the gate; neither is built from the other.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agent experience surfaces](/docs/pattern-library/agent-experience) (required)
+
 
 ---
 

@@ -16,7 +16,7 @@ A value past its TTL but inside its stale window is returned immediately and ref
 
 **When to use:** Use when slightly stale is better than waiting: dashboards, feeds, metadata, public content, aggregate counts. Never for authorization, security state or balances requiring strong consistency.
 
-**Needs:** conditional key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store))
+**Needs:** conditional key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store); or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)
 
 ## Avoid when
 
@@ -56,10 +56,17 @@ A value past its TTL but inside its stale window is returned immediately and ref
 - Send the background refresh through the platform's after-response mechanism, not a dangling promise: on a serverless host the instance can be frozen the moment the response returns, and a refresh killed halfway leaves the value stale forever with clean logs.
 - Only one instance should refresh a shared stale key — combine this with a refresh claim, and note that losing the claim means 'keep serving stale', never 'wait'.
 
-## Depends on
+## Relationships
 
-- [Hierarchical cache](/docs/pattern-library/hierarchical-cache)
-- [Critical path / deferred tail](/docs/pattern-library/critical-path-deferred-tail)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Hierarchical cache](/docs/pattern-library/hierarchical-cache) — Staleness windows are declared by the cache policy; SWR is the read behaviour of a cache layer that already exists.
+- [Critical path / deferred tail](/docs/pattern-library/critical-path-deferred-tail) — The refresh runs after the response through the deferred tail; any after-response mechanism with the survival rule satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

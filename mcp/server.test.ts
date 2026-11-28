@@ -13,7 +13,7 @@ import { resolve } from 'node:path';
 import { InMemoryTransport, type JSONRPCMessage } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { loadRegistry } from '../pattern-library/load.ts';
-import { buildById, topoSort } from '../pattern-library/schema.ts';
+import { patternGraph } from '../pattern-library/pattern-graph.ts';
 import { scorePatterns, tokenizePatternQuery } from '../pattern-library/search.ts';
 import { readExcerpt, resolveSafe } from './security.ts';
 import { STDIO_IDENTITY, stdioRegistry } from './stdio-server.ts';
@@ -45,14 +45,12 @@ describe('registry', () => {
 		}
 	});
 
-	test('topoSort puts dependencies first, deterministically', () => {
-		const byId = buildById(registry);
-		const order = registry.patterns.map((p) => p.id);
-		const { order: sorted, cyclic } = topoSort(
-			['deskbot-approval-gate', 'ai-surfaces', 'ai-tool-harness'],
-			byId,
-			order,
-		);
+	test('the graph orders foundations first, deterministically', () => {
+		const { order: sorted, cyclic } = patternGraph(registry).order([
+			'deskbot-approval-gate',
+			'ai-surfaces',
+			'ai-tool-harness',
+		]);
 		expect(cyclic).toBe(false);
 		expect(sorted).toEqual(['ai-tool-harness', 'ai-surfaces', 'deskbot-approval-gate']);
 	});
@@ -116,7 +114,7 @@ describe('tools', () => {
 		expect(bad.content[0]?.text).toContain('multi-client-core');
 	});
 
-	test('recommend_emulation_plan orders dependencies and reports unmatched', () => {
+	test('recommend_emulation_plan names the platform assumption without a step, and reports unmatched', () => {
 		const result = handleToolCall(
 			'recommend_emulation_plan',
 			{ capabilities: ['grounded answers', 'quantum teleport'] },
@@ -124,7 +122,9 @@ describe('tools', () => {
 		);
 		expect(result.isError).toBeUndefined();
 		const body = result.content[0]?.text ?? '';
-		expect(body.indexOf('multi-client-core')).toBeLessThan(body.indexOf('layered-rag'));
+		expect(body).toContain('### Step 1: Grounded retrieval with a corpus map (`layered-rag`)');
+		expect(body).not.toMatch(/### Step \d+: .*\(`multi-client-core`\)/);
+		expect(body).toMatch(/- Assumes \(platform conventions[^\n]*`multi-client-core` for `layered-rag`/);
 		expect(body).toContain('Unmatched capabilities');
 		expect(body).toContain('quantum teleport');
 	});

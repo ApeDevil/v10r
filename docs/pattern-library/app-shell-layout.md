@@ -30,6 +30,23 @@ Defines the app shell's structural layout — a collapsible sidebar for primary 
 
 - [`/showcases/shell`](/showcases/shell)
 
+## Relationships
+
+**Composes (constituents of its solution)**
+
+- [Responsive sidebar](/docs/pattern-library/responsive-sidebar) — required: The collapsible sidebar is the shell’s primary navigation.
+- [Page header](/docs/pattern-library/page-header) — required: With no global header, page-specific chrome lives in a per-page header inside the main area.
+- [Navigation structure & progressive disclosure](/docs/pattern-library/navigation-structure) — optional when sections have subpages worth revealing progressively: Compound split buttons reveal subpages from the sidebar items; flat items work without them.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+
 ---
 
 _Machine-readable record: `app-shell-layout` in `pattern-library/registry.json`._

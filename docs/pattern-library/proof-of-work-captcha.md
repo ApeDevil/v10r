@@ -33,6 +33,22 @@ A self-hosted proof-of-work captcha where the client solves a CPU-bound puzzle a
 
 - [`/showcases/abuse/captcha`](/showcases/abuse/captcha)
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Referenced by**
+
+- [Bot decision & abuse audit](/docs/pattern-library/bot-decision-audit)
+
+
 ---
 
 _Machine-readable record: `proof-of-work-captcha` in `pattern-library/registry.json`._

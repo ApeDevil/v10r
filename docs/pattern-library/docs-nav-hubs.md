@@ -47,6 +47,13 @@ An AI-optimized docs tree where every directory's README.md is a navigation hub 
 - This is a convention, not code — emulate by writing the hubs, not by copying files.
 - Keep hub intros to 2-3 sentences; the topic table is the payload.
 
+## Relationships
+
+**Referenced by**
+
+- [Agent experience surfaces](/docs/pattern-library/agent-experience)
+
+
 ---
 
 _Machine-readable record: `docs-nav-hubs` in `pattern-library/registry.json`._

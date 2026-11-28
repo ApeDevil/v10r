@@ -175,7 +175,7 @@ function linkList(entries: Array<{ id: string; depth?: number }>, empty: string)
 			el(
 				'li',
 				{},
-				depth === undefined ? null : el('span', { class: 'depth', title: 'depends_on hops' }, `${depth}↑`),
+				depth === undefined ? null : el('span', { class: 'depth', title: 'adoption hops' }, `${depth}↑`),
 				chip(id, false),
 				el('span', { class: 'muted' }, model.known.get(id)?.maturity ?? ''),
 			),
@@ -229,22 +229,22 @@ function focusCard(exploration: Extract<PatternExploration, { kind: 'focus' }>):
 			el(
 				'section',
 				{},
-				el('h3', {}, `Builds on (${focus.prerequisites.length})`),
-				linkList(focus.prerequisites, 'No prerequisites.'),
+				el('h3', {}, `Adopting it builds (${focus.prerequisites.length})`),
+				linkList(focus.prerequisites, 'Nothing beyond itself.'),
+				focus.open.length > 0 ? el('h3', {}, `Conditional or optional (${focus.open.length})`) : null,
+				focus.open.length > 0 ? linkList(focus.open, '') : null,
 			),
 			el(
 				'section',
 				{},
-				el('h3', {}, `Built on by (${focus.allDependents.length})`),
+				el('h3', {}, `Built on or contained by (${focus.allDependents.length})`),
 				linkList(
 					focus.allDependents.map((id) => ({ id })),
 					'Nothing builds on it yet.',
 				),
 			),
 		),
-		focus.cyclic
-			? el('p', { class: 'notice', 'data-tone': 'error' }, 'A dependency cycle touches this pattern.')
-			: null,
+		focus.cyclic ? el('p', { class: 'notice', 'data-tone': 'error' }, 'An adoption cycle touches this pattern.') : null,
 		el('div', { class: 'actions' }, docs, overview),
 	);
 }

@@ -33,6 +33,13 @@ Drizzle table definitions split across pgSchema() namespaces, one per domain, an
 
 - [`/showcases/db/relational/types`](/showcases/db/relational/types)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `schema-type-inference` in `pattern-library/registry.json`._

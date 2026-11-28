@@ -18,16 +18,17 @@
 
 import { ARCHITECTURE_QUERIES, ARCHITECTURE_TOOLS } from './architecture-queries.ts';
 import { DEFAULT_LINES, type ExcerptRequest, MAX_LINES } from './excerpt.ts';
+import { needLabel, needsSummary, TARGET_INFRA_WORDS, targetProvides } from './infrastructure-needs.ts';
 import {
-	type AdoptionNeed,
-	adoptionNeeds,
-	needLabel,
-	needsSummary,
-	TARGET_INFRA_WORDS,
-	targetProvides,
-} from './infrastructure-needs.ts';
+	type Adoption,
+	type PatternGraph,
+	patternGraph,
+	type ResolvedNeed,
+	resolveNeeds,
+	type StepReason,
+} from './pattern-graph.ts';
 import type { PatternRecord, Registry, RegRef } from './schema.ts';
-import { ADOPTION_SEMANTICS, buildById, NEED_LEVELS, topoSort } from './schema.ts';
+import { ADOPTION_SEMANTICS, type NEED_LEVELS } from './schema.ts';
 import { type Scored, scorePatterns } from './search.ts';
 
 /** MCP tools/list shape — name/description/inputSchema ONLY: `outputSchema`, `title` or
@@ -280,7 +281,8 @@ export const QUERY_TOOLS: ToolDef[] = [
 				include_dependencies: {
 					type: 'boolean',
 					default: true,
-					description: 'Expand the plan with prerequisite patterns via depends_on. Default true.',
+					description:
+						'Expand the plan with what the matched patterns build on, their required constituents and those of their generalizations; conditional and optional constituents are listed as open decisions, never added silently. Default true.',
 				},
 				target_infra: TARGET_INFRA_SCHEMA,
 				detail: {
@@ -386,10 +388,10 @@ export const LIST_EVERYTHING: NextAction = {
 
 /** Per-registry derived lookups, computed once per registry object rather than per call. */
 interface RegistryView {
-	byId: Map<string, PatternRecord>;
-	order: string[];
-	/** Own needs plus every dependency's required and conditional ones — what adopting the pattern takes. */
-	needs: Map<string, AdoptionNeed[]>;
+	byId: ReadonlyMap<string, PatternRecord>;
+	graph: PatternGraph;
+	/** What adopting each record takes, resolved through its foundations, constituents and generalizations. */
+	needs: Map<string, ResolvedNeed[]>;
 }
 
 const views = new WeakMap<Registry, RegistryView>();
@@ -397,11 +399,11 @@ const views = new WeakMap<Registry, RegistryView>();
 function viewOf(registry: Registry): RegistryView {
 	let view = views.get(registry);
 	if (!view) {
-		const byId = buildById(registry);
+		const graph = patternGraph(registry);
 		view = {
-			byId,
-			order: registry.patterns.map((pattern) => pattern.id),
-			needs: new Map(registry.patterns.map((pattern) => [pattern.id, adoptionNeeds(pattern, byId)])),
+			byId: graph.byId,
+			graph,
+			needs: new Map(registry.patterns.map((pattern) => [pattern.id, graph.needs(pattern.id)])),
 		};
 		views.set(registry, view);
 	}
@@ -488,15 +490,71 @@ function noMatch(
 	);
 }
 
-/** The always-shown part of a card: identity, evidence grade, risk and what it stands on. */
-function cardHeader(pattern: PatternRecord, needs: AdoptionNeed[]): string {
+/** `a, b (conditional: when …), c (optional: when …)` — constituents with their promise. */
+function constituentList(pattern: PatternRecord): string {
+	return pattern.composes
+		.map((entry) => (entry.level === 'required' ? entry.id : `${entry.id} (${entry.level}: when ${entry.when})`))
+		.join(', ');
+}
+
+/** The record's relationships as card lines: what it stands on, contains, narrows, cites, and the derived inverses. */
+function relationshipLines(pattern: PatternRecord, graph: PatternGraph): string[] {
+	const inverse = (type: 'builds_on' | 'composes' | 'specializes' | 'references') =>
+		graph.edgesTo(pattern.id, type).map((edge) => edge.from);
+	const builtOnBy = inverse('builds_on');
+	const partOf = inverse('composes');
+	const specializedBy = inverse('specializes');
+	const assumptions = graph.assumptionsFor(pattern.id);
+	const principles = assumptions.filter((entry) => graph.byId.get(entry.id)?.kind === 'principle');
+	const conventions = assumptions.filter((entry) => graph.byId.get(entry.id)?.kind !== 'principle');
+	return [
+		pattern.builds_on.length > 0 ? `**Builds on:** ${pattern.builds_on.map((entry) => entry.id).join(', ')}` : '',
+		pattern.composes.length > 0 ? `**Composes:** ${constituentList(pattern)}` : '',
+		pattern.specializes
+			? `**Specializes:** ${pattern.specializes.id} — its invariants hold here and its foundations and constituents apply; it is not a second step`
+			: '',
+		pattern.references.length > 0
+			? `**References:** ${pattern.references.map((entry) => entry.id).join(', ')} (context only, never a step)`
+			: '',
+		principles.length > 0 ? `**Applies:** ${principles.map((entry) => entry.id).join(', ')}` : '',
+		conventions.length > 0
+			? `**Assumes:** ${conventions.map((entry) => entry.id).join(', ')} (platform convention)`
+			: '',
+		partOf.length > 0 ? `**Part of:** ${partOf.join(', ')}` : '',
+		builtOnBy.length > 0 ? `**Built on by:** ${builtOnBy.join(', ')}` : '',
+		specializedBy.length > 0 ? `**Specialized by:** ${specializedBy.join(', ')}` : '',
+	].filter((line) => line.length > 0);
+}
+
+/** The always-shown part of a card: identity, evidence grade, risk and how it relates. */
+function cardHeader(pattern: PatternRecord, needs: ResolvedNeed[], graph: PatternGraph): string {
 	const facts = [
 		`**Kind:** ${pattern.kind} — ${ADOPTION_SEMANTICS[pattern.kind]}`,
 		`**Category:** ${pattern.category} · **Tier:** ${pattern.tier} · **Maturity:** ${pattern.maturity}${pattern.verifiedAt ? ` (verified ${pattern.verifiedAt})` : ''} · **Risk:** ${pattern.risk}`,
-		pattern.depends_on.length > 0 ? `**Depends on:** ${pattern.depends_on.join(', ')}` : '',
+		...relationshipLines(pattern, graph),
 		needs.length > 0 ? `**Needs:** ${needsSummary(needs, { condition: true })}` : '',
 	].filter((line) => line.length > 0);
 	return `# ${pattern.title} (\`${pattern.id}\`)\n\n${facts.join('\n')}`;
+}
+
+/**
+ * Invariants that hold because the record specializes another, per generalization. A
+ * generalization whose own card, invariants included, is in the same response is pointed at
+ * instead of repeated: the invariants are stated once, and still named with their count.
+ */
+function inheritedInvariantLines(
+	pattern: PatternRecord,
+	graph: PatternGraph,
+	shownWithInvariants: ReadonlySet<string> = new Set(),
+): string {
+	return graph
+		.inheritedInvariants(pattern.id)
+		.map((entry) =>
+			shownWithInvariants.has(entry.from)
+				? `Inherited from \`${entry.from}\` (specializes): its ${entry.invariants.length} invariant(s), stated on its card in this response, hold here too.`
+				: `Inherited from \`${entry.from}\` (specializes):\n${bullets(entry.invariants)}`,
+		)
+		.join('\n');
 }
 
 /**
@@ -504,7 +562,12 @@ function cardHeader(pattern: PatternRecord, needs: AdoptionNeed[]): string {
  * rows: they carry no invariants or emulation notes by contract, so those render as nothing
  * rather than as empty headings.
  */
-function cardSection(pattern: PatternRecord, section: CardSection): string {
+function cardSection(
+	pattern: PatternRecord,
+	section: CardSection,
+	graph: PatternGraph,
+	shownWithInvariants?: ReadonlySet<string>,
+): string {
 	const light = pattern.tier === 'light';
 	switch (section) {
 		case 'overview':
@@ -520,10 +583,12 @@ function cardSection(pattern: PatternRecord, section: CardSection): string {
 			return light && pattern.tests.length === 0 ? '' : `## Tests that pin it\n${refLines(pattern.tests)}`;
 		case 'showcases':
 			return light && pattern.showcases.length === 0 ? '' : `## Showcase proof\n${refLines(pattern.showcases)}`;
-		case 'invariants':
-			return pattern.invariants.length > 0
-				? `## Invariants (must hold when emulating)\n${bullets(pattern.invariants)}`
+		case 'invariants': {
+			const inherited = inheritedInvariantLines(pattern, graph, shownWithInvariants);
+			return pattern.invariants.length > 0 || inherited.length > 0
+				? `## Invariants (must hold when emulating)\n${[bullets(pattern.invariants), inherited].filter((part) => part.length > 0).join('\n')}`
 				: '';
+		}
 		case 'emulation_notes':
 			return pattern.emulation_notes.length > 0 ? `## Emulation notes\n${bullets(pattern.emulation_notes)}` : '';
 	}
@@ -535,10 +600,15 @@ function cardSection(pattern: PatternRecord, section: CardSection): string {
  */
 function patternCard(
 	pattern: PatternRecord,
-	needs: AdoptionNeed[],
+	needs: ResolvedNeed[],
+	graph: PatternGraph,
 	sections: readonly CardSection[] = CARD_SECTIONS,
+	/** Other cards in the same response that show their invariants. */
+	shownWithInvariants?: ReadonlySet<string>,
 ): string {
-	const shown = sections.map((section) => cardSection(pattern, section)).filter((text) => text.length > 0);
+	const shown = sections
+		.map((section) => cardSection(pattern, section, graph, shownWithInvariants))
+		.filter((text) => text.length > 0);
 	const withheld = CARD_SECTIONS.filter((section) => !sections.includes(section))
 		.map((section) => ({ section, size: sectionSize(pattern, section) }))
 		.filter(({ size }) => size > 0);
@@ -548,7 +618,7 @@ function patternCard(
 			: pattern.tier === 'light'
 				? '_Index record — the docs above are the canonical explanation; deep-tier cards carry invariants and emulation notes._'
 				: '';
-	return [cardHeader(pattern, needs), ...shown, footer].filter((part) => part.length > 0).join('\n\n');
+	return [cardHeader(pattern, needs, graph), ...shown, footer].filter((part) => part.length > 0).join('\n\n');
 }
 
 /** How many entries a section holds — the count a withheld section is announced with. */
@@ -574,7 +644,7 @@ function searchRow(
 	pattern: PatternRecord,
 	index: number,
 	detail: SearchDetail,
-	needs: AdoptionNeed[],
+	needs: ResolvedNeed[],
 	hit?: Scored,
 ): string {
 	const strength = hit ? ` · ${hit.strength}` : '';
@@ -582,7 +652,9 @@ function searchRow(
 	const fitness = [
 		// Transitive: what adopting it really takes, its dependencies' infrastructure included.
 		needs.length > 0 ? `needs ${needsSummary(needs)}` : '',
-		pattern.depends_on.length > 0 ? `depends on ${pattern.depends_on.join(', ')}` : '',
+		pattern.builds_on.length > 0 ? `builds on ${pattern.builds_on.map((entry) => entry.id).join(', ')}` : '',
+		pattern.composes.length > 0 ? `composes ${constituentList(pattern)}` : '',
+		pattern.specializes ? `specializes ${pattern.specializes.id}` : '',
 		pattern.avoid_when.length > 0 ? `avoid when: ${pattern.avoid_when[0]}` : '',
 	].filter((part) => part.length > 0);
 	const lines = [
@@ -727,14 +799,15 @@ export function getPattern(registry: Registry, args: Record<string, unknown>): Q
 	// Card order, not request order: a reader expects the same card shape whatever order was asked.
 	const picked: unknown[] | null = Array.isArray(args.sections) ? args.sections : null;
 	const sections = picked ? CARD_SECTIONS.filter((section) => picked.includes(section)) : CARD_SECTIONS;
-	const { byId, needs } = viewOf(registry);
+	const { byId, graph, needs } = viewOf(registry);
 	const patterns = (ids as string[]).map((id) => byId.get(id));
 	const missing = (ids as string[]).filter((_, index) => patterns[index] === undefined);
 	// A real-shaped id we do not have is a REGISTRY GAP, not a malformed request.
 	if (missing.length > 0) return unknownIds(registry, missing);
+	const shownWithInvariants = new Set(sections.includes('invariants') ? (ids as string[]) : []);
 	return ok(
 		(patterns as PatternRecord[])
-			.map((pattern) => patternCard(pattern, needs.get(pattern.id) ?? [], sections))
+			.map((pattern) => patternCard(pattern, needs.get(pattern.id) ?? [], graph, sections, shownWithInvariants))
 			.join('\n\n---\n\n'),
 	);
 }
@@ -777,7 +850,7 @@ export function traceCapability(registry: Registry, args: Record<string, unknown
  * A step's fit against the target. A required need the target lacks (or a pin it does not meet)
  * blocks the step; a conditional one is a question the agent must settle against the target.
  */
-function stepVerdict(stepNeeds: AdoptionNeed[], target: ReadonlySet<string>): string {
+function stepVerdict(stepNeeds: ResolvedNeed[], target: ReadonlySet<string>): string {
 	const blocking = stepNeeds.filter((need) => need.level === 'required' && !targetProvides(target, need).provided);
 	const unsettled = stepNeeds.filter((need) => need.level === 'conditional' && !targetProvides(target, need).provided);
 	const pins = blocking.filter((need) => targetProvides(target, need).pinMismatch);
@@ -785,7 +858,11 @@ function stepVerdict(stepNeeds: AdoptionNeed[], target: ReadonlySet<string>): st
 		blocking.length > 0
 			? `**Target lacks ${blocking.map((need) => needLabel(need)).join(', ')} — drop or replace this step, and the steps that build on it.**`
 			: '',
-		...pins.map((need) => `Pinned to ${need.pinned}: ${need.why}.`),
+		...pins.flatMap((need) =>
+			need.sources
+				.filter((source) => source.pinned && source.level === 'required')
+				.map((source) => `Pinned to ${source.pinned} by ${source.origin}: ${source.why}.`),
+		),
 		unsettled.length > 0
 			? `Check against the target: ${unsettled.map((need) => needLabel(need, { condition: true })).join(', ')}.`
 			: '',
@@ -796,22 +873,23 @@ function stepVerdict(stepNeeds: AdoptionNeed[], target: ReadonlySet<string>): st
 }
 
 /**
- * The plan's infrastructure, by level. A need is listed once, at the strictest level any step
- * holds it; optional and implementation needs are each step's own and never block anything.
+ * The plan's infrastructure, by level, resolved once over every step: a need is listed once at the
+ * strictest level any step holds it, with every pin and condition kept; optional and
+ * implementation needs never block anything.
  */
-function planInfrastructure(stepNeeds: AdoptionNeed[][], target: ReadonlySet<string> | null): string[] {
-	const strictest = new Map<string, AdoptionNeed>();
-	for (const need of stepNeeds.flat()) {
-		const known = strictest.get(need.need);
-		if (!known || NEED_LEVELS.indexOf(need.level) < NEED_LEVELS.indexOf(known.level)) strictest.set(need.need, need);
-	}
-	const at = (level: (typeof NEED_LEVELS)[number]) => [...strictest.values()].filter((need) => need.level === level);
+function planInfrastructure(needs: ResolvedNeed[], target: ReadonlySet<string> | null): string[] {
+	const at = (level: (typeof NEED_LEVELS)[number]) => needs.filter((need) => need.level === level);
+	const pinnedLabel = (need: ResolvedNeed) => {
+		const pins = need.pins.filter((pin) => !pin.conditional).map((pin) => pin.technology);
+		if (need.conflict?.certain) return `${need.need} (pins conflict: ${pins.join(', ')})`;
+		return pins.length > 0 ? `${need.need} (pinned: ${pins.join(', ')})` : need.need;
+	};
 	const required = at('required');
 	const missing = target ? required.filter((need) => !targetProvides(target, need).provided) : [];
 	const lines = [
 		required.length === 0
 			? 'Required infrastructure: none beyond the app runtime.'
-			: `Required infrastructure: ${required.map((need) => (need.pinned ? `${need.need} (pinned: ${need.pinned})` : need.need)).join(', ')}.`,
+			: `Required infrastructure: ${required.map(pinnedLabel).join(', ')}.`,
 		at('conditional').length > 0
 			? `Conditional infrastructure: ${at('conditional')
 					.map((need) => needLabel(need, { condition: true }))
@@ -836,6 +914,51 @@ function planInfrastructure(stepNeeds: AdoptionNeed[][], target: ReadonlySet<str
 				: `The target lacks ${missing.map((need) => need.need).join(', ')}: the steps marked above need it.`,
 	];
 	return lines.filter((line) => line.length > 0);
+}
+
+/** One reason chain head per step, e.g. `ai-surfaces builds on it` or `part of agentic-architecture`. */
+function reasonText(reasons: readonly StepReason[]): string {
+	const parts = reasons.map((reason) => {
+		if (reason.kind === 'requested') return 'it was requested';
+		const via = reason.inheritedFrom ? ` (inherited from ${reason.inheritedFrom})` : '';
+		if (reason.kind === 'builds_on') return `${reason.from} builds on it${via}`;
+		return reason.level === 'required'
+			? `it is part of ${reason.from}${via}`
+			: `it is a ${reason.level} part of ${reason.from}${via}, included because its condition is satisfied`;
+	});
+	return parts.length > 0 ? parts.join('; ') : 'it was requested';
+}
+
+/** Open decisions, principles and platform assumptions: what a plan must say without adding a step. */
+function adoptionNotes(adoption: Adoption): string[] {
+	const conditional = adoption.open.filter((entry) => entry.level === 'conditional');
+	const optional = adoption.open.filter((entry) => entry.level === 'optional');
+	const proposals = (entry: Adoption['open'][number]) =>
+		entry.proposedBy.map((proposal) => `part of \`${proposal.from}\` when ${proposal.when}`).join('; ');
+	const principles = adoption.assumptions.filter((entry) => entry.kind === 'principle');
+	const conventions = adoption.assumptions.filter((entry) => entry.kind !== 'principle');
+	return [
+		conditional.length > 0
+			? `Open decisions (conditional constituents: adopt each when its condition holds for the target; the condition is unknown, so none was added or dropped): ${conditional.map((entry) => `\`${entry.id}\` (${proposals(entry)})`).join(', ')}.`
+			: '',
+		optional.length > 0
+			? `Optional constituents (enhancements that may be omitted even when they apply): ${optional.map((entry) => `\`${entry.id}\` (${proposals(entry)})`).join(', ')}.`
+			: '',
+		principles.length > 0
+			? `Applies (principles; review the work against them, never a step): ${principles.map((entry) => `\`${entry.id}\` for ${entry.steps.map((id) => `\`${id}\``).join(', ')}`).join('; ')}.`
+			: '',
+		conventions.length > 0
+			? `Assumes (platform conventions the steps rely on; build only if the target lacks them): ${conventions.map((entry) => `\`${entry.id}\` for ${entry.steps.map((id) => `\`${id}\``).join(', ')}`).join('; ')}.`
+			: '',
+	].filter((line) => line.length > 0);
+}
+
+/** Needs of a plan built without expansion: each step's resolved needs, merged without loss. */
+function mergedNeeds(order: readonly string[], graph: PatternGraph): ResolvedNeed[] {
+	return resolveNeeds(
+		order.flatMap((id) => graph.needSources(id)),
+		order,
+	);
 }
 
 export function recommendPlan(registry: Registry, args: Record<string, unknown>): QueryOutcome {
@@ -877,7 +1000,7 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 	const { target } = parsedTarget;
 	const detail = oneOf(args.detail, PLAN_DETAILS) ?? 'full';
 	const includeDeps = args.include_dependencies !== false;
-	const { byId, order: registryOrder, needs } = viewOf(registry);
+	const { byId, graph, needs } = viewOf(registry);
 	// Plan steps come from DEEP records only — a step without invariants is noise.
 	// Capabilities that only match light index rows are reported in a trailer so
 	// the gap is visible (and a promotion candidate) instead of silently dropped.
@@ -917,33 +1040,27 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 			`No deep pattern card matches these capabilities yet, but the index knows them.\n\n## Related index entries (no deep card yet)\n${lightOnly.map((line) => `- ${line}`).join('\n')}\n\nCall get_pattern on an id above for its docs/code pointers.`,
 		);
 	}
-	const selected = new Set(satisfies.keys());
-	if (includeDeps) {
-		const queue = [...selected];
-		while (queue.length > 0) {
-			const current = queue.pop();
-			if (current === undefined) break;
-			for (const dep of byId.get(current)?.depends_on ?? []) {
-				if (!selected.has(dep)) {
-					selected.add(dep);
-					queue.push(dep);
-				}
-			}
-		}
-	}
-	const { order, cyclic } = topoSort([...selected], byId, registryOrder);
+	const adoption = includeDeps ? graph.adopt([...satisfies.keys()]) : null;
+	const { order, cyclic } = adoption
+		? { order: adoption.steps, cyclic: adoption.cyclic }
+		: graph.order([...satisfies.keys()]);
+	const stepNeedsOf = (id: string) => needs.get(id) ?? [];
 	const renderStep = (id: string, index: number, outlined: boolean) => {
 		const pattern = byId.get(id);
 		if (!pattern) return `${index + 1}. ${id}`;
 		const covers = satisfies.get(id);
-		const stepNeeds = needs.get(id) ?? [];
+		const stepNeeds = stepNeedsOf(id);
+		const generalizations = graph.generalizations(id);
 		const requirement = [
 			stepNeeds.length > 0 ? `Needs: ${needsSummary(stepNeeds, { condition: true })}` : '',
 			target === null ? '' : stepVerdict(stepNeeds, target),
 		].filter((line) => line.length > 0);
 		const head = [
 			`### Step ${index + 1}: ${pattern.title} (\`${id}\`)`,
-			covers ? `Satisfies: ${covers.join(', ')}` : 'Included as prerequisite (depends_on).',
+			covers ? `Satisfies: ${covers.join(', ')}` : `Included because ${reasonText(adoption?.reasons.get(id) ?? [])}.`,
+			generalizations.length > 0
+				? `Specializes ${generalizations.join(' → ')}: its invariants hold here and its foundations and constituents are steps of this plan; it is not built twice.`
+				: '',
 			pattern.kind === 'pattern' ? '' : `Kind: ${pattern.kind} — ${ADOPTION_SEMANTICS[pattern.kind]}`,
 			`Risk: ${pattern.risk}`,
 			...requirement,
@@ -963,7 +1080,7 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 			`Read:\n${refLines(pattern.docs)}`,
 			`Model on:\n${refLines(pattern.code)}`,
 			pattern.tests.length > 0 ? `Mirror tests:\n${refLines(pattern.tests)}` : '',
-			`Invariants:\n${bullets(pattern.invariants)}`,
+			`Invariants:\n${[bullets(pattern.invariants), inheritedInvariantLines(pattern, graph)].filter((part) => part.length > 0).join('\n')}`,
 		]
 			.filter((line) => line.length > 0)
 			.join('\n');
@@ -975,18 +1092,16 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 	const overBudget = detail === 'full' && fullSize > PLAN_BUDGET_CHARS;
 	if (overBudget) steps = order.map((id, index) => renderStep(id, index, true));
 	const outlined = detail === 'outline' || overBudget;
-	const infrastructure = planInfrastructure(
-		order.map((id) => needs.get(id) ?? []),
-		target,
-	);
+	const infrastructure = planInfrastructure(adoption ? adoption.needs : mergedNeeds(order, graph), target);
 	const notes = [
 		'Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.',
 		...infrastructure,
+		...(adoption ? adoptionNotes(adoption) : []),
 		lightOnly.length > 0 ? `Related index entries (no deep card yet): ${lightOnly.join('; ')}.` : '',
 		unmatched.length > 0
 			? `Unmatched capabilities (no registry entry yet — cover manually or search with different terms): ${unmatched.join(', ')}.`
 			: '',
-		cyclic ? 'Warning: dependency cycle detected; order is best-effort.' : '',
+		cyclic ? 'Warning: adoption cycle detected; order is best-effort.' : '',
 		outlined
 			? `Next: get_pattern with ids (≤ ${MAX_CARDS} per call) and sections ["invariants", "code"] for the steps you keep.`
 			: '',
@@ -995,7 +1110,7 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 		? ` — outlined: full detail would be ≈${Math.round(fullSize / 4 / 1000)}k tokens, past the 10k a client warns at`
 		: '';
 	return ok(
-		`# Emulation plan (${order.length} pattern(s), dependency-ordered)${budgetNote}\n\n${steps.join('\n\n')}\n\n---\n${notes.map((note) => `- ${note}`).join('\n')}`,
+		`# Emulation plan (${order.length} pattern(s), foundations and constituents first)${budgetNote}\n\n${steps.join('\n\n')}\n\n---\n${notes.map((note) => `- ${note}`).join('\n')}`,
 	);
 }
 

@@ -18,7 +18,7 @@ WebAuthn passkeys serve as a phishing-resistant first-factor sign-in credential,
 
 **When to use:** Use passkeys to harden sign-in and step-up TOTP to re-verify identity right before a sensitive action like disabling 2FA.
 
-**Needs:** required relational-db · conditional key-value-store (when step-up stamps must hold across instances) · v10r's implementation uses email-delivery
+**Needs:** required email-delivery (via passwordless-auth), relational-db · conditional key-value-store (when step-up stamps must hold across instances)
 
 ## Docs
 
@@ -33,6 +33,22 @@ WebAuthn passkeys serve as a phishing-resistant first-factor sign-in credential,
 ## Proof
 
 - [`/account/security`](/account/security) (app route, no showcase)
+
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Passwordless auth](/docs/pattern-library/passwordless-auth) — Passkeys are another first-factor credential on the same session layer.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

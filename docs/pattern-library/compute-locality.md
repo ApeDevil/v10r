@@ -31,6 +31,13 @@ A locality map derived from the environment rather than typed into a table: whic
 
 - `src/lib/server/perf/locality.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/perf/locality.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/perf/locality.test.ts))
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `compute-locality` in `pattern-library/registry.json`._

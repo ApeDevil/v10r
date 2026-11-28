@@ -61,9 +61,28 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 - Start with the read-only surface; add the mutating surface only with the approval gate (see deskbot-approval-gate).
 - Route adapters stay thin — both surfaces call the same guard then their orchestrator.
 
-## Depends on
+## Relationships
 
-- [AI tool manifest and harness split](ai-tool-harness.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI tool manifest and harness split](ai-tool-harness.md) — Both surfaces run turns over the one tool registry and harness; the target’s own tool harness satisfies it.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+- [Agent-harness audit lens](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agent-harness-lens.md) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Built on by**
+
+- [Deskbot approval gate](deskbot-approval-gate.md)
+- [Turn trace and turn graph](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/turn-trace.md)
+- [Agent actions](agent-actions.md)
+
 
 ---
 

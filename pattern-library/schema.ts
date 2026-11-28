@@ -32,8 +32,8 @@ export type PatternMaturity = 'planned' | 'implemented' | 'proven';
  * - `pattern`: a reusable engineering solution. Adopting it means BUILDING it in the target; it can
  *   be a plan step, declares infrastructure needs, and other patterns can build on it.
  * - `principle`: a rule or review lens. Adopting it means APPLYING it to the work at hand; it builds
- *   nothing, so it declares no infrastructure needs and builds on nothing. It is never a
- *   prerequisite to build first (until typed relationships exist, an incoming edge means "follows").
+ *   nothing, so it declares no infrastructure needs, builds on and composes nothing, and is never an
+ *   adoption target: where it applies is a scoped `assumptions` entry.
  * - `workflow`: an operational procedure. Adopting it means PERFORMING it, repeatedly, against a
  *   project that already exists; it may need infrastructure to run against, and nothing builds on it.
  *
@@ -120,10 +120,95 @@ export function needDeclaration(entry: NeedEntry): NeedDeclaration {
 	return typeof entry === 'string' ? { need: entry, level: 'required' } : entry;
 }
 
-/** A considered alternative and the condition under which it beats this pattern. */
+/**
+ * A considered alternative and the condition under which it beats this pattern. `pattern` links the
+ * alternative to the record that describes it, when there is one (canonical id); the inverse,
+ * "considered as an alternative by", is derived.
+ */
 export interface RegAlternative {
 	approach: string;
 	prefer_when: string;
+	pattern?: string;
+}
+
+/**
+ * Typed relationships between records (Slice 3; meanings, traversal and planning consequences in
+ * `pattern-graph.ts` `RELATIONSHIP_SEMANTICS`). Every relationship carries its rationale (`why`).
+ *
+ * - `builds_on`: a foundation that must be available for this record to operate; the target's own
+ *   equivalent satisfies it.
+ * - `composes`: a constituent of this record's solution, at a level: `required` (always part of it),
+ *   `conditional` (must be adopted when `when` holds) or `optional` (an enhancement that may be
+ *   omitted even when `when` holds).
+ * - `specializes`: this record is a narrower realization of the target: it inherits the target's
+ *   constituents, prerequisites, invariants and non-implementation needs, and the target is never a
+ *   second implementation step.
+ * - `references`: planning-neutral context; never a step, never propagates needs or invariants.
+ *
+ * Principles are never a relationship's adoption target: where they apply is declared once, as a
+ * scoped `assumptions` entry at the registry root.
+ */
+export interface RelationshipRef {
+	id: string;
+	why: string;
+}
+
+/** How strictly a constituent belongs to its whole — the same three promises as a need level. */
+export const CONSTITUENT_LEVELS = ['required', 'conditional', 'optional'] as const;
+export type ConstituentLevel = (typeof CONSTITUENT_LEVELS)[number];
+
+export interface Constituent {
+	id: string;
+	level: ConstituentLevel;
+	/** The governing condition: required for `conditional` and `optional`, absent for `required`. */
+	when?: string;
+	why: string;
+}
+
+/** The relationships that carry adoption consequences — the only ones that must stay acyclic. */
+export const ADOPTION_RELATIONSHIPS = ['builds_on', 'composes', 'specializes'] as const;
+export type AdoptionRelationship = (typeof ADOPTION_RELATIONSHIPS)[number];
+
+/** Every relationship type, adoption ones first. */
+export const RELATIONSHIP_TYPES = [...ADOPTION_RELATIONSHIPS, 'references'] as const;
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
+/** The adoption edges a record authors (not inherited ones), in field order. */
+export function adoptionTargets(pattern: PatternRecord): { type: AdoptionRelationship; id: string }[] {
+	return [
+		...pattern.builds_on.map((entry) => ({ type: 'builds_on' as const, id: entry.id })),
+		...pattern.composes.map((entry) => ({ type: 'composes' as const, id: entry.id })),
+		...(pattern.specializes ? [{ type: 'specializes' as const, id: pattern.specializes.id }] : []),
+	];
+}
+
+/**
+ * Where a platform assumption or a principle applies: a closed selector. A record is in scope when
+ * its id is listed, its category is listed, or one of its code refs lives under a listed prefix.
+ */
+export interface AssumptionScope {
+	ids?: string[];
+	categories?: string[];
+	code_under?: string[];
+}
+
+/**
+ * A scoped platform assumption (D-05): records in scope assume the named record. A `principle`
+ * applies to the work in scope; a `pattern` is a platform convention the scope already follows.
+ * Printed once per plan when a selected step is in scope; never a step, never a need.
+ */
+export interface Assumption {
+	id: string;
+	applies_to: AssumptionScope;
+	why: string;
+}
+
+export function inScope(pattern: PatternRecord, scope: AssumptionScope): boolean {
+	return (
+		(scope.ids ?? []).includes(pattern.id) ||
+		(scope.categories ?? []).includes(pattern.category) ||
+		(scope.code_under ?? []).some((prefix) => pattern.code.some((ref) => ref.path.startsWith(prefix)))
+	);
 }
 
 export interface RegRef {
@@ -185,7 +270,10 @@ export interface PatternRecord {
 	needs: NeedEntry[];
 	capabilities: string[];
 	keywords: string[];
-	depends_on: string[];
+	builds_on: RelationshipRef[];
+	composes: Constituent[];
+	specializes: RelationshipRef | null;
+	references: RelationshipRef[];
 	docs: RegRef[];
 	code: RegRef[];
 	tests: RegRef[];
@@ -205,13 +293,14 @@ export interface PatternRecord {
  * reshapes fields, and every reader changes with it in the same commit (no compatibility layer).
  * Content identity is not a version number — see `registry-digest.ts`.
  */
-export const REGISTRY_FORMAT = 4;
+export const REGISTRY_FORMAT = 5;
 
 export interface Registry {
 	format: typeof REGISTRY_FORMAT;
 	note?: string;
 	groups: RegGroup[];
 	categories: RegCategory[];
+	assumptions: Assumption[];
 	patterns: PatternRecord[];
 }
 
@@ -225,16 +314,10 @@ const NEEDS_BY_ID = new Map<string, (typeof INFRASTRUCTURE_NEEDS)[number]>(
 	INFRASTRUCTURE_NEEDS.map((entry) => [entry.id, entry]),
 );
 const LEVELS: readonly string[] = NEED_LEVELS;
+const CONSTITUENT_LEVEL_NAMES: readonly string[] = CONSTITUENT_LEVELS;
 const VERIFIED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const STRING_LIST_FIELDS = [
-	'avoid_when',
-	'capabilities',
-	'keywords',
-	'depends_on',
-	'invariants',
-	'emulation_notes',
-] as const;
+const STRING_LIST_FIELDS = ['avoid_when', 'capabilities', 'keywords', 'invariants', 'emulation_notes'] as const;
 const REF_LIST_FIELDS = ['docs', 'code', 'tests', 'showcases'] as const;
 const STRING_FIELDS = ['id', 'title', 'category', 'summary', 'when_to_use', 'risk'] as const;
 
@@ -320,6 +403,63 @@ function validateNeeds(value: unknown, where: string, errors: string[]): void {
 	});
 }
 
+/** `{id, why}`: a kebab-case target and a stated rationale, nothing else. */
+function validateRelationshipRef(value: unknown, at: string, errors: string[], extra: readonly string[] = []): void {
+	if (!isRecord(value)) {
+		errors.push(`${at}: must be {id, why}`);
+		return;
+	}
+	if (typeof value.id !== 'string' || !ID_PATTERN.test(value.id))
+		errors.push(`${at}.id: must be a kebab-case record id`);
+	if (!nonEmpty(value.why)) errors.push(`${at}.why: every relationship states its rationale`);
+	for (const key of Object.keys(value)) {
+		if (!['id', 'why', ...extra].includes(key)) errors.push(`${at}: unknown field '${key}'`);
+	}
+}
+
+/**
+ * Relationship contract: `builds_on` and `references` are lists of `{id, why}`; `composes` entries add
+ * a level, and a `conditional` or `optional` constituent states its governing condition (`when`)
+ * while a `required` one carries none; `specializes` is one `{id, why}` or null (one parent keeps
+ * inheritance unambiguous).
+ */
+function validateRelationships(value: Record<string, unknown>, where: string, errors: string[]): void {
+	for (const field of ['builds_on', 'references'] as const) {
+		const list = value[field];
+		if (!Array.isArray(list)) {
+			errors.push(`${where}.${field}: must be an array`);
+			continue;
+		}
+		list.forEach((entry, index) => {
+			validateRelationshipRef(entry, `${where}.${field}[${index}]`, errors);
+		});
+	}
+	if (!Array.isArray(value.composes)) {
+		errors.push(`${where}.composes: must be an array`);
+	} else {
+		value.composes.forEach((entry, index) => {
+			const at = `${where}.composes[${index}]`;
+			validateRelationshipRef(entry, at, errors, ['level', 'when']);
+			if (!isRecord(entry)) return;
+			if (typeof entry.level !== 'string' || !CONSTITUENT_LEVEL_NAMES.includes(entry.level)) {
+				errors.push(`${at}.level: must be one of ${CONSTITUENT_LEVEL_NAMES.join('|')}`);
+			} else if (entry.level === 'required' && entry.when !== undefined) {
+				errors.push(`${at}: a required constituent is unconditional — "when" belongs to conditional and optional ones`);
+			} else if (entry.level !== 'required' && !nonEmpty(entry.when)) {
+				errors.push(
+					`${at}: ${entry.level === 'optional' ? 'an' : 'a'} ${entry.level} constituent states its governing condition in "when"`,
+				);
+			}
+		});
+	}
+	if (value.specializes !== null) {
+		if (value.specializes === undefined) errors.push(`${where}.specializes: must be {id, why} or null`);
+		else validateRelationshipRef(value.specializes, `${where}.specializes`, errors);
+	}
+	if ('depends_on' in value)
+		errors.push(`${where}.depends_on: retired — use builds_on, composes, specializes or references`);
+}
+
 function validatePattern(value: unknown, index: number, errors: string[]): void {
 	const where = `patterns[${index}]`;
 	if (!isRecord(value)) {
@@ -345,10 +485,13 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 		if (Array.isArray(value.needs) && value.needs.length > 0) {
 			errors.push(`${where}.needs: a principle builds nothing, so it declares no infrastructure needs`);
 		}
-		if (Array.isArray(value.depends_on) && value.depends_on.length > 0) {
-			errors.push(`${where}.depends_on: a principle builds on nothing — it is applied to the work`);
+		for (const field of ['builds_on', 'composes'] as const) {
+			if (Array.isArray(value[field]) && value[field].length > 0) {
+				errors.push(`${where}.${field}: a principle is applied to the work — it builds on and composes nothing`);
+			}
 		}
 	}
+	validateRelationships(value, where, errors);
 	for (const field of STRING_LIST_FIELDS) {
 		if (!isStringArray(value[field])) {
 			errors.push(`${where}.${field}: must be an array of strings`);
@@ -363,9 +506,12 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 				typeof alt.approach !== 'string' ||
 				alt.approach.length === 0 ||
 				typeof alt.prefer_when !== 'string' ||
-				alt.prefer_when.length === 0
+				alt.prefer_when.length === 0 ||
+				(alt.pattern !== undefined && (typeof alt.pattern !== 'string' || !ID_PATTERN.test(alt.pattern)))
 			) {
-				errors.push(`${where}.alternatives[${altIndex}]: must be {approach, prefer_when} with non-empty strings`);
+				errors.push(
+					`${where}.alternatives[${altIndex}]: must be {approach, prefer_when, pattern?} with non-empty strings and a kebab-case pattern id`,
+				);
 			}
 		});
 	}
@@ -488,6 +634,7 @@ export function parseRegistry(data: unknown): { registry: Registry | null; error
 		errors.push(`format: this reader understands registry format ${REGISTRY_FORMAT}, got ${String(data.format)}`);
 	}
 	const categoryIds = validateTaxonomy(data, errors);
+	validateAssumptionShapes(data.assumptions, errors);
 	if (!Array.isArray(data.patterns) || data.patterns.length === 0) {
 		errors.push('patterns: must be a non-empty array');
 		return { registry: null, errors };
@@ -509,25 +656,11 @@ export function parseRegistry(data: unknown): { registry: Registry | null; error
 		seen.add(pattern.id);
 	}
 	for (const pattern of registry.patterns) {
-		for (const dep of pattern.depends_on) {
-			if (!seen.has(dep)) {
-				errors.push(`${pattern.id}: depends_on '${dep}' does not exist`);
-			}
-		}
 		if (!categoryIds.has(pattern.category)) {
 			errors.push(`${pattern.id}: category '${pattern.category}' is not a declared category id`);
 		}
 	}
-	const kindOf = new Map(registry.patterns.map((pattern) => [pattern.id, pattern.kind]));
-	for (const pattern of registry.patterns) {
-		for (const dep of pattern.depends_on) {
-			if (kindOf.get(dep) === 'workflow') {
-				errors.push(
-					`${pattern.id}: depends_on '${dep}' is a workflow — a procedure is performed, nothing builds on it`,
-				);
-			}
-		}
-	}
+	if (errors.length === 0) validateGraph(registry, categoryIds, errors);
 	// The taxonomy is navigation only (D-11): a category nothing is filed under is obsolete.
 	const used = new Set(registry.patterns.map((pattern) => pattern.category));
 	for (const id of categoryIds) {
@@ -540,48 +673,135 @@ export function buildById(registry: Registry): Map<string, PatternRecord> {
 	return new Map(registry.patterns.map((pattern) => [pattern.id, pattern]));
 }
 
+function validateAssumptionShapes(value: unknown, errors: string[]): void {
+	if (!Array.isArray(value)) {
+		errors.push('assumptions: must be an array');
+		return;
+	}
+	value.forEach((entry, index) => {
+		const at = `assumptions[${index}]`;
+		validateRelationshipRef(entry, at, errors, ['applies_to']);
+		if (!isRecord(entry)) return;
+		const scope = entry.applies_to;
+		if (!isRecord(scope)) {
+			errors.push(`${at}.applies_to: must be {ids?, categories?, code_under?}`);
+			return;
+		}
+		const keys = Object.keys(scope);
+		if (keys.length === 0)
+			errors.push(`${at}.applies_to: an unconditional assumption is not allowed (D-05) — name a scope`);
+		for (const key of keys) {
+			if (!['ids', 'categories', 'code_under'].includes(key))
+				errors.push(`${at}.applies_to: unknown selector '${key}'`);
+			else if (!isStringArray(scope[key]) || scope[key].length === 0) {
+				errors.push(`${at}.applies_to.${key}: must be a non-empty array of strings`);
+			}
+		}
+	});
+}
+
 /**
- * Kahn topological sort over depends_on edges, restricted to the selected id set.
- * Deterministic: ties break by registry order. On a cycle, remaining nodes are
- * appended in registry order and `cyclic` is flagged.
+ * The semantic graph invariants (target-ontology §C.3): every target exists and is not the source;
+ * a pair is related once across all four types; kinds decide what may be an adoption target;
+ * the adoption relationships form one acyclic graph (references may cycle: they carry no
+ * adoption consequence); an alternative's pattern is not also an adoption target; a platform
+ * assumption names an existing record and matches at least one.
  */
-export function topoSort(
-	selected: string[],
-	byId: Map<string, PatternRecord>,
-	registryOrder: string[],
-): { order: string[]; cyclic: boolean } {
-	const inSet = new Set(selected);
-	const rank = new Map(registryOrder.map((id, index) => [id, index]));
-	const byRank = (a: string, b: string) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0);
-	const indegree = new Map<string, number>();
-	for (const id of inSet) {
-		const deps = byId.get(id)?.depends_on.filter((dep) => inSet.has(dep)) ?? [];
-		indegree.set(id, deps.length);
-	}
-	const order: string[] = [];
-	let ready = [...inSet].filter((id) => indegree.get(id) === 0).sort(byRank);
-	while (ready.length > 0) {
-		const next = ready.shift();
-		if (next === undefined) {
-			break;
-		}
-		order.push(next);
-		const unlocked: string[] = [];
-		for (const id of inSet) {
-			if (order.includes(id) || ready.includes(id)) {
-				continue;
+function validateGraph(registry: Registry, categoryIds: ReadonlySet<string>, errors: string[]): void {
+	const byId = buildById(registry);
+	for (const pattern of registry.patterns) {
+		const related = new Map<string, string>();
+		const relate = (type: string, id: string) => {
+			const target = byId.get(id);
+			if (!target) {
+				errors.push(`${pattern.id}: ${type} '${id}' does not exist`);
+				return;
 			}
-			const deps = byId.get(id)?.depends_on.filter((dep) => inSet.has(dep)) ?? [];
-			if (deps.every((dep) => order.includes(dep))) {
-				unlocked.push(id);
+			if (id === pattern.id) errors.push(`${pattern.id}: ${type} itself`);
+			const earlier = related.get(id);
+			if (earlier)
+				errors.push(`${pattern.id}: '${id}' is related twice (${earlier} and ${type}) — keep the one that is true`);
+			related.set(id, type);
+			if (type === 'references') return;
+			if (type === 'specializes') {
+				if (target.kind !== pattern.kind) {
+					errors.push(`${pattern.id}: specializes '${id}', a ${target.kind} — a specialization stays inside one kind`);
+				}
+				return;
+			}
+			if (target.kind === 'principle') {
+				errors.push(
+					`${pattern.id}: ${type} '${id}', a principle — principles apply through a scoped assumption, never as a step`,
+				);
+			}
+			if (target.kind === 'workflow') {
+				errors.push(
+					`${pattern.id}: ${type} '${id}', a workflow — a procedure is performed, nothing builds on or composes it`,
+				);
+			}
+		};
+		for (const entry of adoptionTargets(pattern)) relate(entry.type, entry.id);
+		for (const entry of pattern.references) relate('references', entry.id);
+		for (const alternative of pattern.alternatives) {
+			if (alternative.pattern === undefined) continue;
+			if (!byId.has(alternative.pattern))
+				errors.push(`${pattern.id}: alternative pattern '${alternative.pattern}' does not exist`);
+			const type = related.get(alternative.pattern);
+			// The generalization may be the alternative ("the general pattern without this
+			// specialization"); a foundation or constituent may not.
+			if (alternative.pattern === pattern.id || type === 'builds_on' || type === 'composes') {
+				errors.push(
+					`${pattern.id}: '${alternative.pattern}' is both an alternative and adopted — a part cannot be the rejected option`,
+				);
 			}
 		}
-		ready = [...ready, ...unlocked.filter((id) => !ready.includes(id))].sort(byRank);
 	}
-	const cyclic = order.length < inSet.size;
-	if (cyclic) {
-		const remaining = [...inSet].filter((id) => !order.includes(id)).sort(byRank);
-		order.push(...remaining);
+	const cycle = adoptionCycle(registry);
+	if (cycle) errors.push(`adoption relationships form a cycle: ${cycle.join(' → ')}`);
+	const assumed = new Set<string>();
+	for (const assumption of registry.assumptions) {
+		const target = byId.get(assumption.id);
+		if (!target) {
+			errors.push(`assumption '${assumption.id}' does not exist`);
+			continue;
+		}
+		if (assumed.has(assumption.id)) errors.push(`assumption '${assumption.id}' is declared twice — merge the scopes`);
+		assumed.add(assumption.id);
+		if (target.kind === 'workflow')
+			errors.push(`assumption '${assumption.id}' is a workflow — a procedure is performed, not assumed`);
+		const scope = assumption.applies_to;
+		for (const id of scope.ids ?? [])
+			if (!byId.has(id)) errors.push(`assumption '${assumption.id}': scope id '${id}' does not exist`);
+		for (const id of scope.categories ?? []) {
+			if (!categoryIds.has(id)) errors.push(`assumption '${assumption.id}': scope category '${id}' does not exist`);
+		}
+		const matched = registry.patterns.filter((pattern) => pattern.id !== assumption.id && inScope(pattern, scope));
+		if (matched.length === 0) errors.push(`assumption '${assumption.id}': its scope matches no record`);
 	}
-	return { order, cyclic };
+}
+
+/** A cycle over builds_on ∪ composes ∪ specializes, as the ids along it, or null. Deterministic. */
+export function adoptionCycle(registry: Registry): string[] | null {
+	const byId = buildById(registry);
+	const state = new Map<string, 'open' | 'done'>();
+	const stack: string[] = [];
+	const visit = (id: string): string[] | null => {
+		if (state.get(id) === 'done') return null;
+		if (state.get(id) === 'open') return [...stack.slice(stack.indexOf(id)), id];
+		state.set(id, 'open');
+		stack.push(id);
+		const pattern = byId.get(id);
+		for (const edge of pattern ? adoptionTargets(pattern) : []) {
+			const found = visit(edge.id);
+			if (found) return found;
+		}
+		stack.pop();
+		state.set(id, 'done');
+		return null;
+	};
+	for (const pattern of registry.patterns) {
+		const found = visit(pattern.id);
+		if (found) return found;
+	}
+	return null;
 }

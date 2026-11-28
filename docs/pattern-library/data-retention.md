@@ -32,6 +32,17 @@ Scheduled jobs that enforce data-retention policy by purging stale records on a 
 
 - [`/showcases/privacy/retention`](/showcases/privacy/retention)
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Jobs and scheduling](/docs/pattern-library/job-scheduling) — Purges run as registered jobs on a fixed cadence.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `data-retention` in `pattern-library/registry.json`._

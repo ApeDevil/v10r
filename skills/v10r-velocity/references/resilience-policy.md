@@ -63,6 +63,27 @@ Four separate decisions about an unhealthy dependency — should we call it, how
 - Shed by priority against pressure that rises BEFORE capacity is reached. Dropping optional work at half load is how the pool avoids being full for the work that is not optional; critical work is never shed for load alone.
 - Fail-open and fail-closed are both wrong somewhere, so make each call site declare which — `http/rate-limit.ts` splits 'slow' from 'down' for exactly this reason.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [External service runtime](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/external-service-runtime.md) (required)
+
+**Built on by**
+
+- [Provider registry & routing](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/provider-routing.md)
+- [Multi-source aggregation](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-source-aggregation.md)
+
+**Referenced by**
+
+- [Deadline propagation](deadline-propagation.md)
+- [Performance scenario harness](scenario-harness.md)
+
+
 ---
 
 _Machine-readable record: `resilience-policy` in `pattern-library/registry.json`._

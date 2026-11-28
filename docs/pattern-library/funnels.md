@@ -32,6 +32,13 @@ Funnel conversion is computed as count(distinct session_id) per step in one grou
 
 - [`/showcases/analytics/funnels`](/showcases/analytics/funnels)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `funnels` in `pattern-library/registry.json`._

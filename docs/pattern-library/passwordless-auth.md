@@ -18,7 +18,7 @@ Session-based authentication through Better Auth using a magic link and OTP code
 
 **When to use:** Use as the primary sign-in method to avoid password-related breach risk and reset friction.
 
-**Needs:** required relational-db, email-delivery
+**Needs:** required email-delivery, relational-db
 
 ## Docs
 
@@ -33,6 +33,24 @@ Session-based authentication through Better Auth using a magic link and OTP code
 ## Proof
 
 - [`/showcases/auth/authn`](/showcases/auth/authn)
+
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [MCP authorization](/docs/pattern-library/mcp-authorization)
+- [Session lifecycle UI](/docs/pattern-library/session-lifecycle-ui)
+- [Auth forms](/docs/pattern-library/auth-forms)
+- [Passkeys & step-up TOTP](/docs/pattern-library/passkeys)
+
+**Referenced by**
+
+- [OAuth sign-in](/docs/pattern-library/oauth-sign-in)
+
 
 ---
 

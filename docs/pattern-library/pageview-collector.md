@@ -32,6 +32,13 @@ A hooks.server.ts middleware stage that runs last in the hook sequence and recor
 
 - [`/showcases/analytics/overview`](/showcases/analytics/overview)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `pageview-collector` in `pattern-library/registry.json`._

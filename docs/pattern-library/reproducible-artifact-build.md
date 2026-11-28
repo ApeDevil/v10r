@@ -57,6 +57,14 @@ Committed generated artifacts are proven current by the gate: regenerate-and-dif
 - Write the manifest last, after every output is in place, so an interrupted build cannot leave a manifest describing outputs that never landed.
 - Say the limits in the check's own header, as kernel-manifest.test.ts does — the next reader will otherwise assume it proves semantics.
 
+## Relationships
+
+**Built on by**
+
+- [Pattern Index](/docs/pattern-library/pattern-index)
+- [Agent Skills generated from the pattern registry](/docs/pattern-library/agent-skills)
+
+
 ---
 
 _Machine-readable record: `reproducible-artifact-build` in `pattern-library/registry.json`._

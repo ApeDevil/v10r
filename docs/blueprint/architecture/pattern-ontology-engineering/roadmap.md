@@ -17,7 +17,7 @@ benchmark is re-run and its results committed at every checkpoint**, compared wi
 ## Slice 0 — Ratify the review ✓
 Decisions D-01 … D-14 answered 2026-11-28; golden scenarios accepted; holdout scenarios required.
 
-## Slice 1 — Benchmark baseline and truthful infrastructure facts ● implemented, at checkpoint ([slice-1.md](./slice-1.md))
+## Slice 1 — Benchmark baseline and truthful infrastructure facts ● implemented, accepted ([slice-1.md](./slice-1.md))
 - **Objective:** a committed composition benchmark measures plans before anything changes; every record states
   its infrastructure needs at the right level; no title states a volatile fact; the registry has a content identity.
 - **Changes:**
@@ -40,7 +40,7 @@ Decisions D-01 … D-14 answered 2026-11-28; golden scenarios accepted; holdout 
   required-need recall on the benchmark improves without a drop in step metrics.
 - **Checkpoint:** review the needs diff per record and the benchmark delta.
 
-## Slice 2 — Entity kinds, record reconciliation and identifiers ● implemented, at checkpoint ([slice-2.md](./slice-2.md))
+## Slice 2 — Entity kinds, record reconciliation and identifiers ● implemented, accepted ([slice-2.md](./slice-2.md))
 - **Objective:** the registry holds genuine reusable knowledge, each record says what adopting it means, and each
   id names its concept.
 - **Changes:** `kind: pattern | principle | workflow` with the adoption semantics of
@@ -56,7 +56,9 @@ Decisions D-01 … D-14 answered 2026-11-28; golden scenarios accepted; holdout 
 - **Acceptance:** 0 records without `kind`; manifest complete; preservation gate green; benchmark not worse.
 - **Checkpoint:** manifest review.
 
-## Slice 3 — Typed relationships, scoped assumptions, one graph module
+## Slice 3 — Typed relationships, scoped assumptions, one graph module ● implemented, at checkpoint ([slice-3.md](./slice-3.md))
+- **As implemented:** four types — `builds_on`, `composes {level: required | conditional | optional, when}`,
+  `specializes`, `references` (D-15) — and five scoped assumptions; see [§C.3.5](./target-ontology.md#c35-as-implemented-slice-3).
 - **Objective:** `depends_on` is replaced by `builds_on`, `composes {optional, when}`, `specializes` with the
   semantics of [§C.3](./target-ontology.md#c3-relationships); platform assumptions are scoped (D-05).
 - **Changes:** schema + validation (§C.3 invariants); migrate the edges of the reconciled records per

@@ -37,6 +37,23 @@ The default form stack: one schema per form (Valibot) validated on the server an
 - [`/showcases/forms/advanced/reset`](/showcases/forms/advanced/reset) — Advanced form tactics
 - [`/showcases/forms/advanced/edit`](/showcases/forms/advanced/edit) — Advanced form tactics
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Built on by**
+
+- [Validation timing](/docs/pattern-library/validation-timing)
+- [Multi-step and dynamic forms](/docs/pattern-library/multi-step-forms)
+- [Form draft recovery](/docs/pattern-library/form-draft-recovery)
+
+
 ---
 
 _Machine-readable record: `schema-validated-forms` in `pattern-library/registry.json`._

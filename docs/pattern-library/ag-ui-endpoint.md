@@ -18,7 +18,7 @@ Serves an existing AI SDK agent to AG-UI clients without a second runtime: RunAg
 
 **When to use:** Use when an AG-UI frontend must talk to an existing AI SDK agent.
 
-**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate, durable-step-execution)
 
 ## Avoid when
 
@@ -46,9 +46,20 @@ Serves an existing AI SDK agent to AG-UI clients without a second runtime: RunAg
 
 - [`/showcases/interop`](/showcases/interop) — Agentic Interoperability Lab — each section labels itself live, fixture or recorded
 
-## Depends on
+## Relationships
 
-- [Agent actions](/docs/pattern-library/agent-actions)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Agent actions](/docs/pattern-library/agent-actions) — AG-UI frontend tools are the existing client actions.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (conditional)
+
 
 ---
 

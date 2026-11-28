@@ -53,9 +53,12 @@ Search params are read and written through one typed spec shared by loads and co
 - Under shallow writes page.url stays at the loaded URL; read the values from the state object.
 - Give the component the same fallback the load parses with, or a param dropped from the URL means two different things.
 
-## Depends on
+## Relationships
 
-- [State management](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/state-management.md)
+**Specializes (its invariants hold here; it is never built twice)**
+
+- [State management](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/state-management.md) — URL search params are shared page state read and written through one typed spec.
+
 
 ---
 

@@ -4,7 +4,7 @@ description: "v10r reference patterns for Features in SvelteKit + TypeScript app
 license: MIT
 metadata:
   source: "v10r pattern-library registry"
-  registry-digest: "59949b2ccad0ca92"
+  registry-digest: "645006606b7c9657"
   generated: "true"
 ---
 
@@ -22,7 +22,7 @@ To choose among patterns across groups, or to order several, use the `v10r-archi
 
 1. Find the candidate in the index below. Bold, linked rows are deep cards; the rest are index rows.
 2. Fitness first: read its *Avoid when* and *Alternatives*. If the target matches a contraindication, or a simpler alternative fits, stop here — the smallest thing that works wins.
-3. Check *Requires* against the target project's infrastructure, and *Depends on* for prerequisites to build first.
+3. Check *Needs* against the target project's infrastructure, and the reference's *Relationships*: what it *builds on* (build or map first), what it *composes* (required, conditional or optional constituents) and what it *specializes* (inherited invariants, never built twice).
 4. Deep card: open `references/<id>.md`. Every *Invariant* MUST still hold after you adapt it; the *Emulation notes* say what to change for a new project. Read the linked docs and code on GitHub when you need the real implementation.
 5. Index row (no reference file): its docs page is `https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/<id>.md` — pointers to docs, code and proof, but no recorded invariants, so treat it as orientation, not a contract.
 6. When the v10r Pattern MCP is connected (`https://www.v10r.dev/api/mcp/public`, or the local stdio server), `get_pattern {ids, sections}` returns the live card and `get_file_excerpt` the cited code; prefer it over these generated copies.

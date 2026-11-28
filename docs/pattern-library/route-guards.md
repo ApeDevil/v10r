@@ -30,6 +30,17 @@ Server-side guard functions that check a user's capability grants or admin statu
 
 - [`/showcases/auth/authz`](/showcases/auth/authz)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Admin area, guards & data-table pattern](/docs/pattern-library/admin-area)
+
+
 ---
 
 _Machine-readable record: `route-guards` in `pattern-library/registry.json`._

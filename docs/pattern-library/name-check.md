@@ -16,7 +16,7 @@ Checks a proposed name against trademark registries, company registers and domai
 
 **When to use:** Use when users check a proposed product or company name against several registries at once and need an honest, partial-coverage answer, served from a public endpoint that must not let one caller spend the deployment's source quotas.
 
-**Needs:** required key-value-store, external-api (via multi-source-aggregation) · conditional relational-db (when paid sources need stored, encrypted API credentials; via multi-source-aggregation)
+**Needs:** required external-api (via multi-source-aggregation), key-value-store · conditional relational-db (when paid sources need stored, encrypted API credentials; via multi-source-aggregation)
 
 ## Avoid when
 
@@ -58,10 +58,17 @@ Checks a proposed name against trademark registries, company registers and domai
 - Keep the similarity engine pure and fixture-tested, thresholds in config.ts; derive the level from predicates over evidence, never from a count.
 - Put the rate limiter in the route before the fan-out, and keep it fail-closed: a check spends every live source's quota, so an unprotected endpoint is a quota-exhaustion lever.
 
-## Depends on
+## Relationships
 
-- [Multi-source aggregation](/docs/pattern-library/multi-source-aggregation)
-- [Rate limiting](/docs/pattern-library/rate-limiting)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Multi-source aggregation](/docs/pattern-library/multi-source-aggregation) — The check is one adoption of the aggregation mechanism over trademark, register and domain sources.
+- [Rate limiting](/docs/pattern-library/rate-limiting) — The public endpoint runs the IP limiter before any upstream call, and the limiter fails closed.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

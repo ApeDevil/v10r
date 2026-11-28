@@ -18,7 +18,7 @@ Resets the dev Neon Postgres branch from its production parent through Neon's co
 
 **When to use:** Use when developers need production-like data in the dev branch on demand or on a schedule, without a manual dump and restore.
 
-**Needs:** required relational-db (pinned: postgres), external-api
+**Needs:** required external-api, relational-db (pinned: postgres)
 
 ## Docs
 
@@ -32,6 +32,13 @@ Resets the dev Neon Postgres branch from its production parent through Neon's co
 ## Proof
 
 - [`/admin/db`](/admin/db) (app route, no showcase)
+
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

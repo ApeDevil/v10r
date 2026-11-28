@@ -37,10 +37,10 @@ const undrawn = $derived.by(() => {
 	return dagData.nodes.filter((n) => !connectedIds.has(n.id));
 });
 
-function dependedBy(id: string): string {
+function adoptedBy(id: string): string {
 	return (
 		data.patterns
-			.filter((p) => p.depends_on.includes(id))
+			.filter((p) => p.adopts.includes(id))
 			.map((p) => p.id)
 			.join(', ') || '—'
 	);
@@ -164,8 +164,8 @@ const handshakeEdges: Edge[] = [
 		<section id="registry-dag" class="section">
 			<h2 class="section-title">{m.showcase_mcp_section_dag()}</h2>
 			<p class="section-description">
-				The registry's <code>depends_on</code> graph — arrows point dependency → dependent; node color marks DAG
-				layer, not category.
+				The registry's adoption graph (builds on, composes, specializes) — arrows point adopted → adopter; node
+				color marks DAG layer, not category.
 			</p>
 
 			<div class="demos">
@@ -183,8 +183,8 @@ const handshakeEdges: Edge[] = [
 									<HeaderCell>Pattern</HeaderCell>
 									<HeaderCell>Tier</HeaderCell>
 									<HeaderCell>Category</HeaderCell>
-									<HeaderCell>Depends On</HeaderCell>
-									<HeaderCell>Depended By</HeaderCell>
+									<HeaderCell>Adopts</HeaderCell>
+									<HeaderCell>Adopted By</HeaderCell>
 								</Row>
 							</Header>
 							<Body>
@@ -193,8 +193,8 @@ const handshakeEdges: Edge[] = [
 										<Cell><code>{pattern.id}</code></Cell>
 										<Cell>{pattern.tier}</Cell>
 										<Cell>{pattern.category}</Cell>
-										<Cell>{pattern.depends_on.join(', ') || '—'}</Cell>
-										<Cell>{dependedBy(pattern.id)}</Cell>
+										<Cell>{pattern.adopts.join(', ') || '—'}</Cell>
+										<Cell>{adoptedBy(pattern.id)}</Cell>
 									</Row>
 								{/each}
 							</Body>
@@ -204,7 +204,7 @@ const handshakeEdges: Edge[] = [
 						<pre><code>{`// #lib/showcases/mcp/registry-viz.ts — fed by a build-time JSON import
 const dagData = toDagData(registry); // deep-tier subgraph only
 // nodes: deep.map((p) => ({ id: p.id, label: SHORT_LABELS[p.id], group: p.category }))
-// edges: deep.flatMap((p) => p.depends_on.map((dep) => ({ source: dep, target: p.id })))
+// edges: deep.flatMap((p) => adoptedIds(p).map((id) => ({ source: id, target: p.id })))
 
 <DagGraph data={dagData} ariaLabel="Pattern dependency graph" />`}</code></pre>
 					{/snippet}

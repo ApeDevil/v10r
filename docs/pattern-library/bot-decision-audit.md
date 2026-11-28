@@ -31,6 +31,19 @@ A shared Decision type and audit trail that lets the anti-abuse layers (captcha,
 
 - [`/showcases/abuse`](/showcases/abuse)
 
+## Relationships
+
+**References (context only, never a step)**
+
+- [ALTCHA proof-of-work captcha](/docs/pattern-library/proof-of-work-captcha) — One of the anti-abuse layers whose decisions it records.
+- [Honeypot](/docs/pattern-library/honeypot) — One of the anti-abuse layers whose decisions it records.
+- [Rate limiting](/docs/pattern-library/rate-limiting) — One of the anti-abuse layers whose decisions it records.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `bot-decision-audit` in `pattern-library/registry.json`._

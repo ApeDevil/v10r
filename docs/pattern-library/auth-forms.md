@@ -18,6 +18,8 @@ Passwordless login (magic link + OTP) and OAuth forms built directly on the Bett
 
 **When to use:** Use for any authentication entry point (email login, OTP verification, OAuth) instead of wiring the flow through Superforms.
 
+**Needs:** required email-delivery (via passwordless-auth), relational-db (via passwordless-auth)
+
 ## Docs
 
 - [docs/blueprint/auth.md](/docs/blueprint/auth) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/auth.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/auth.md))
@@ -29,6 +31,13 @@ Passwordless login (magic link + OTP) and OAuth forms built directly on the Bett
 ## Proof
 
 - [`/showcases/forms/auth`](/showcases/forms/auth)
+
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Passwordless auth](/docs/pattern-library/passwordless-auth) — The forms drive the magic-link, OTP and OAuth flows of the auth layer directly.
+
 
 ---
 

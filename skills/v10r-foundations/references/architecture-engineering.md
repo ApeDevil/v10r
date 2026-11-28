@@ -10,8 +10,6 @@ A deterministic decision discipline for where code runs, how parts talk, where d
 
 **When to use:** Use when architecture choices (browser vs server compute, JS vs Rust/Wasm, monolith vs service, SQL vs application processing) need to be explained, reviewable and reproducible rather than asserted, and when a team or an agent should get the same answer from the same inputs.
 
-**Needs:** required wasm-toolchain (via wasm-compute-kernel), container-host (via external-service-runtime) · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
-
 ## Avoid when
 
 - The decision has one obvious answer in this codebase — a record and a rule add ceremony without information
@@ -76,12 +74,16 @@ A deterministic decision discipline for where code runs, how parts talk, where d
 - Label evidence honestly: link to the lab that measured it, and mark a gap as an estimate until someone measures it
 - Persist drafts locally first; the file format is the contract, so a server store can be added later without changing the model
 
-## Depends on
+## Relationships
 
-- [Multi-client core](multi-client-core.md)
-- [WebAssembly compute kernel](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/wasm-compute-kernel.md)
-- [External service runtime](external-service-runtime.md)
-- [Pattern MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/pattern-mcp.md)
+**References (context only, never a step)**
+
+- [Pattern MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/pattern-mcp.md) — Its engine is served to agents as the explore_architecture and check_architecture tools of the pattern MCP server.
+
+**Referenced by**
+
+- [Agent to agent](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agent-to-agent.md)
+
 
 ---
 

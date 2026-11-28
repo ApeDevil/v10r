@@ -10,7 +10,7 @@ Every AI tool declares where its result comes from and whether it can send data 
 
 **When to use:** Use when an assistant reads content a user or third party wrote — files, retrieved documents, web pages, tool output — and can also act or answer with links.
 
-**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate, durable-step-execution)
 
 ## Avoid when
 
@@ -51,10 +51,32 @@ Every AI tool declares where its result comes from and whether it can send data 
 - Remember replayed history: results rebuilt from stored messages skip toModelOutput and need the same wrapping.
 - Gate the legs you removed, not only the wrapper: a test that fails when an external tool appears ungated is what keeps the trifecta open.
 
-## Depends on
+## Relationships
 
-- [AI tool manifest and harness split](ai-tool-harness.md)
-- [Deskbot approval gate](deskbot-approval-gate.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI tool manifest and harness split](ai-tool-harness.md) — Every tool in the harness registry declares its result origin and reach.
+- [Deskbot approval gate](deskbot-approval-gate.md) — Tools that can send data out run only behind a human-approved proposal; any human approval gate satisfies it.
+
+**Applies (principles to review the work against)**
+
+- [Agent-harness audit lens](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agent-harness-lens.md) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agentic-architecture.md) (required)
+
+**Built on by**
+
+- [Agent actions](agent-actions.md)
+- [MCP client](mcp-client.md)
+- [Agent to agent](agent-to-agent.md)
+- [Generative UI](generative-ui.md)
+
 
 ---
 

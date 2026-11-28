@@ -16,7 +16,7 @@ A specialized MCP service that needs a user account becomes an OAuth protected r
 
 **When to use:** Use when an MCP host (Claude, ChatGPT, an IDE agent) should call one of your MCP endpoints on behalf of a signed-in user of your app, with per-user quotas, consent the user can review and revoke, and no static shared secret.
 
-**Needs:** required relational-db, email-delivery (via passwordless-auth), key-value-store (via rate-limiting)
+**Needs:** required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db
 
 ## Avoid when
 
@@ -68,11 +68,22 @@ A specialized MCP service that needs a user account becomes an OAuth protected r
 - Upstream delete-consent leaves refresh tokens alive; revoke tokens yourself.
 - The PRM resource must equal the URL the user pastes, exactly (Claude compares them).
 
-## Depends on
+## Relationships
 
-- [Hosted MCP](/docs/pattern-library/hosted-mcp)
-- [Passwordless auth](/docs/pattern-library/passwordless-auth)
-- [Rate limiting](/docs/pattern-library/rate-limiting)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Hosted MCP](/docs/pattern-library/hosted-mcp) — Authorization protects an MCP service that is already served over HTTP; any MCP endpoint satisfies it.
+- [Passwordless auth](/docs/pattern-library/passwordless-auth) — The app becomes its own authorization server on the user accounts and sessions it already runs; any session-based sign-in satisfies it.
+- [Rate limiting](/docs/pattern-library/rate-limiting) — Per-user quotas on the protected service and bounded client registration are enforced by a limiter; the target's own limiter satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic parametric modeling](/docs/pattern-library/agentic-parametric-modeling) (required)
+
 
 ---
 

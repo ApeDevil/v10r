@@ -18,7 +18,7 @@ Publishes existing client-action contracts to the browser's own agent through do
 
 **When to use:** Use when bounded client actions exist and external browser agents should operate the view without screen-scraping.
 
-**Needs:** required llm-provider (via agent-actions), relational-db (via deskbot-approval-gate)
+**Needs:** required llm-provider (via agent-actions, ai-surfaces, ai-tool-harness, deskbot-approval-gate, untrusted-content-boundary), relational-db (via deskbot-approval-gate, durable-step-execution)
 
 ## Avoid when
 
@@ -41,9 +41,16 @@ Publishes existing client-action contracts to the browser's own agent through do
 
 - [`/showcases/interop`](/showcases/interop) — Agentic Interoperability Lab — each section labels itself live, fixture or recorded
 
-## Depends on
+## Relationships
 
-- [Agent actions](/docs/pattern-library/agent-actions)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Agent actions](/docs/pattern-library/agent-actions) — It publishes the existing client-action contracts; it has no actions of its own.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (optional)
+
 
 ---
 

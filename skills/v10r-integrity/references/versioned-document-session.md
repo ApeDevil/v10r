@@ -51,6 +51,21 @@ A browser-edited document stays server-authoritative: debounced serialised saves
 - Name draft slots by user, document and writer: one shared slot per document lets tab B silently erase tab A's only copy.
 - Make reload fetch-then-replace: a reload that clears first turns an offline moment into data loss.
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Part of**
+
+- [Dynamic attributes](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/dynamic-attributes.md) (required)
+
+
 ---
 
 _Machine-readable record: `versioned-document-session` in `pattern-library/registry.json`._

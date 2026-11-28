@@ -18,7 +18,7 @@ Every chatbot and deskbot turn records what was available, considered, included 
 
 **When to use:** Use when an AI feature must be explainable after the fact: what the prompt contained block by block, what retrieval considered versus what the prompt took, which tools ran with what result, how provider attempts rotated, and what the answer actually cited.
 
-**Needs:** required relational-db, llm-provider (via ai-surfaces)
+**Needs:** required llm-provider (via ai-surfaces, ai-tool-harness), relational-db
 
 ## Docs
 
@@ -44,9 +44,25 @@ Every chatbot and deskbot turn records what was available, considered, included 
 - [`/showcases/ai/chatbot`](/showcases/ai/chatbot) — #orchestration — the turn graph over the authored turn or the viewer’s own, following the embedded Vely thread above it
 - [`/showcases/ai/deskbot`](/showcases/ai/deskbot) — #orchestration — the same graph and tree with the proposal and its receipts as nodes
 
-## Depends on
+## Relationships
 
-- [AI surfaces](/docs/pattern-library/ai-surfaces)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI surfaces](/docs/pattern-library/ai-surfaces) — It records the turns of the chatbot and deskbot surfaces from their actual execution.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (required)
+
+**Built on by**
+
+- [Turn trace as OpenTelemetry GenAI spans](/docs/pattern-library/agent-observability)
+- [AI eval regression suite](/docs/pattern-library/ai-eval-regression-suite)
+
 
 ---
 

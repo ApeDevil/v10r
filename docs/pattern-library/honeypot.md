@@ -34,6 +34,17 @@ A no-interaction bot check combining a hidden form field bots tend to fill with 
 - [`/showcases/abuse/honeypot`](/showcases/abuse/honeypot)
 - [`/feedback`](/feedback) (app route, no showcase) — Feedback capture
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Referenced by**
+
+- [Bot decision & abuse audit](/docs/pattern-library/bot-decision-audit)
+
+
 ---
 
 _Machine-readable record: `honeypot` in `pattern-library/registry.json`._

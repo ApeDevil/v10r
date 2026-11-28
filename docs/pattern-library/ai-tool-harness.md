@@ -59,9 +59,24 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 - The manifest is not a single file: meta maps in tools/index.ts + risk vocab in tools/_types.ts + the approval rule in policy/governor.ts together form it.
 - Write the drift-guard test early — it is what keeps the manifest honest as tools accumulate.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](/docs/pattern-library/multi-client-core)
+**Applies (principles to review the work against)**
+
+- [Agent-harness audit lens](/docs/pattern-library/agent-harness-lens) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [AI surfaces](/docs/pattern-library/ai-surfaces)
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate)
+- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary)
+- [Agent actions](/docs/pattern-library/agent-actions)
+- [MCP client](/docs/pattern-library/mcp-client)
+
 
 ---
 

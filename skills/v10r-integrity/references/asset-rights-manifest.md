@@ -46,15 +46,26 @@ Every third-party file the app ships carries one AssetRights record (author, SPD
 - A license that requires attribution is rendered wherever the asset is credited.
 - Rights metadata is never presented as a legal conclusion.
 
+Inherited from [Source-of-truth gate](source-of-truth-gate.md) (specializes):
+
+- One fact, one owner. A second writable copy is a defect, not a configuration option.
+- Every non-owner copy is typed, imported, generated with a check, or drift-tested — there is no fifth kind.
+- A drift test asserts its own scan was non-empty; an empty list must not pass vacuously.
+- Exemption lists fail when an entry no longer applies, so allowances only shrink.
+- Reading the owner succeeds or fails loudly; it never silently substitutes another source.
+
 ## Emulation notes
 
 - Gate against the directory, not against the list: listing the files on disk and comparing is what catches the asset added without a record.
 - Keep a LicenseRef- id for public-domain marks and proprietary EULAs rather than inventing a pseudo-SPDX string — the gate can then stay a syntax check.
 - Say what the check does not prove in the doc and the test header; an inventory that looks like legal review is worse than none.
 
-## Depends on
+## Relationships
 
-- [Source-of-truth gate](source-of-truth-gate.md)
+**Specializes (its invariants hold here; it is never built twice)**
+
+- [Source-of-truth gate](source-of-truth-gate.md) — One owned rights record per file, derived into every surface and gated against the files present: a source-of-truth gate for attribution.
+
 
 ---
 

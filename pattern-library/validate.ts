@@ -15,7 +15,7 @@ import { NODE_KINDS } from './architecture-engineering/vocabulary.ts';
 import { scanInfrastructureEvidence } from './infrastructure-evidence.ts';
 import { declaredNeeds } from './infrastructure-needs.ts';
 import { loadRegistry } from './load.ts';
-import { buildById, type RegRef, TITLE_NUMERALS_ALLOWED, topoSort, volatileTitleFacts } from './schema.ts';
+import { buildById, type RegRef, TITLE_NUMERALS_ALLOWED, volatileTitleFacts } from './schema.ts';
 
 const ROOT = process.env.V10R_ROOT ?? resolve(import.meta.dir, '..');
 const SHOWCASE_REGISTRY = 'src/lib/showcases/catalog/registry.ts';
@@ -92,11 +92,9 @@ if (!registry) {
 }
 
 const byId = buildById(registry);
-const allIds = registry.patterns.map((pattern) => pattern.id);
-const { cyclic } = topoSort(allIds, byId, allIds);
-if (cyclic) {
-	errors.push('depends_on graph contains a cycle');
-}
+
+// Relationship integrity — targets, kinds, one relationship per pair, acyclic adoption — is a
+// structural error in schema.ts, so loadRegistry above has already refused a broken graph.
 
 for (const pattern of registry.patterns) {
 	const lists: Array<[string, RegRef[]]> = [

@@ -36,6 +36,13 @@ Defines the file-based +server.ts convention for REST endpoints, covering Valibo
 - `src/lib/server/http/body.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/body.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/body.test.ts))
 - `src/lib/server/http/rate-limit.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/rate-limit.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/rate-limit.test.ts))
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `rest-api-conventions` in `pattern-library/registry.json`._

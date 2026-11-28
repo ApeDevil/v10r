@@ -18,7 +18,7 @@ sendNotification() writes an in-app record, evaluates the settings matrix per ch
 
 **When to use:** Use as the single entry point for sending any multi-channel notification instead of calling a channel provider directly.
 
-**Needs:** required relational-db · conditional scheduler (when the host has no persistent process to run the delivery worker (serverless: a cron sweep drains the outbox))
+**Needs:** required relational-db · conditional email-delivery (when the email channel is enabled; via notification-channels), external-api (when chat channels are enabled (Telegram bot API, Discord); via notification-channels), scheduler (when the host has no persistent process to run the delivery worker (serverless: a cron sweep drains the outbox)) · optional key-value-store (via notification-stream)
 
 ## Docs
 
@@ -39,6 +39,19 @@ sendNotification() writes an in-app record, evaluates the settings matrix per ch
 ## Proof
 
 - [`/showcases/notifications/pipeline`](/showcases/notifications/pipeline)
+
+## Relationships
+
+**Composes (constituents of its solution)**
+
+- [Channel providers](/docs/pattern-library/notification-channels) — required: Queued rows are delivered through the provider interface of each channel.
+- [Settings matrix](/docs/pattern-library/notification-settings-matrix) — required: sendNotification evaluates the user’s channel-by-type matrix before queueing.
+- [In-app SSE stream & notification center](/docs/pattern-library/notification-stream) — optional when in-app notifications should arrive live: The in-app record can be pushed over SSE; without it the notification centre shows it on the next load.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

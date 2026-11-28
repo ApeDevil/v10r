@@ -49,6 +49,13 @@ A policy layer over the app-wide `data-sveltekit-preload-data="hover"` default, 
 - The expensive level is `data` — it runs the route's real `load`. `code` is a CDN chunk and costs the server nothing, which is why an uncertain-but-heavy route gets code only.
 - `requestIdleCallback` is still missing in Safari; the timeout fallback is late rather than never, which is the right failure for work nobody is waiting on.
 
+## Relationships
+
+**Referenced by**
+
+- [Idle and speculative work](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/idle-work.md)
+
+
 ---
 
 _Machine-readable record: `intent-preloading` in `pattern-library/registry.json`._

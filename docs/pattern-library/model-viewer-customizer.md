@@ -31,6 +31,21 @@ A full-screen model viewer and GLTF customizer (materials, parts, morph targets,
 
 - [`/showcases/3d/[model]`](/showcases/3d/[model]) (app route, no showcase)
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Threlte integration](/docs/pattern-library/threlte-integration) — The viewer and customizer render through the Threlte integration with SSR off.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+
 ---
 
 _Machine-readable record: `model-viewer-customizer` in `pattern-library/registry.json`._

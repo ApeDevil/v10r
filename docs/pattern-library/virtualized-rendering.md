@@ -54,9 +54,16 @@ A long list costs the size of the viewport instead of the size of the data; the 
 - Uniform row height only, on purpose. Variable heights need measurement, a resize observer and a running offset table, and every one of those is a source of scroll jump. A list that needs them is a different pattern, not an option on this one.
 - Split the arithmetic from the component: the maths has the edge cases worth pinning and can be tested in a node environment, where the component's effects never run.
 
-## Depends on
+## Relationships
 
-- [Component-first UI system](/docs/pattern-library/component-system)
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

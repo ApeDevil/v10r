@@ -32,6 +32,13 @@ Runs Cypher traversal queries, such as shortest-path and multi-hop lookups, over
 
 - [`/showcases/db/graph/traversal`](/showcases/db/graph/traversal)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `graph-traversal` in `pattern-library/registry.json`._

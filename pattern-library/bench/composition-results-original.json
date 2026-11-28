@@ -2,27 +2,27 @@
 	"expectations": "original",
 	"scenarioChanges": 0,
 	"measuredAt": "2026-11-28",
-	"commit": "742cf8b-dirty",
-	"registryDigest": "59949b2ccad0ca92",
+	"commit": "786b603-dirty",
+	"registryDigest": "645006606b7c9657",
 	"totals": {
 		"design": {
 			"scenarios": 8,
-			"precision": 48.8,
+			"precision": 60.6,
 			"recall": 87,
-			"unnecessarySteps": 19,
+			"unnecessarySteps": 13,
 			"missingSteps": 3,
-			"optionalAsRequired": 2,
-			"optionalCoverage": 0,
+			"optionalAsRequired": 0,
+			"optionalCoverage": 100,
 			"optionalOmitted": 0,
 			"needRecall": 100,
 			"levelAccuracy": 78.9,
 			"conditionalPromoted": 0,
 			"requiredDowngraded": 4,
 			"pinPreservation": "n/a",
-			"spuriousNeeds": 5,
+			"spuriousNeeds": 3,
 			"factNeedRecall": 94.7,
 			"factLevelAccuracy": 89.5,
-			"planTokensEstimated": 6217
+			"planTokensEstimated": 5617
 		},
 		"holdout": {
 			"scenarios": 10,
@@ -41,33 +41,32 @@
 			"spuriousNeeds": 0,
 			"factNeedRecall": 100,
 			"factLevelAccuracy": 100,
-			"planTokensEstimated": 2732
+			"planTokensEstimated": 2816
 		},
 		"all": {
 			"scenarios": 18,
-			"precision": 51.9,
+			"precision": 61.4,
 			"recall": 73,
-			"unnecessarySteps": 23,
+			"unnecessarySteps": 17,
 			"missingSteps": 10,
-			"optionalAsRequired": 2,
-			"optionalCoverage": 0,
+			"optionalAsRequired": 0,
+			"optionalCoverage": 100,
 			"optionalOmitted": 0,
 			"needRecall": 80.6,
 			"levelAccuracy": 67.7,
 			"conditionalPromoted": 0,
 			"requiredDowngraded": 5,
 			"pinPreservation": "n/a",
-			"spuriousNeeds": 5,
+			"spuriousNeeds": 3,
 			"factNeedRecall": 96.8,
 			"factLevelAccuracy": 93.5,
-			"planTokensEstimated": 8949
+			"planTokensEstimated": 8432
 		}
 	},
 	"scenarios": [
 		{
 			"id": "S1",
 			"steps": [
-				"multi-client-core",
 				"passwordless-auth",
 				"rate-limiting",
 				"hosted-mcp",
@@ -103,27 +102,27 @@
 			"requiredDowngraded": [],
 			"pinsGolden": 0,
 			"pinsPreserved": [],
-			"spuriousNeeds": ["llm-provider", "external-api"],
+			"spuriousNeeds": ["external-api", "llm-provider"],
 			"factNeedsMissing": [],
 			"factLevelCorrect": 3,
 			"named": {
-				"llm-provider": {
-					"level": "required"
-				},
-				"relational-db": {
-					"level": "required"
-				},
 				"email-delivery": {
+					"level": "required"
+				},
+				"external-api": {
 					"level": "required"
 				},
 				"key-value-store": {
 					"level": "required"
 				},
-				"external-api": {
+				"llm-provider": {
+					"level": "required"
+				},
+				"relational-db": {
 					"level": "required"
 				}
 			},
-			"planChars": 4836,
+			"planChars": 5293,
 			"set": "design"
 		},
 		{
@@ -154,7 +153,7 @@
 					"level": "conditional"
 				}
 			},
-			"planChars": 1048,
+			"planChars": 1199,
 			"set": "design"
 		},
 		{
@@ -181,17 +180,17 @@
 			"factNeedsMissing": ["relational-db"],
 			"factLevelCorrect": 1,
 			"named": {
-				"relational-db": {
-					"level": "required"
-				},
 				"email-delivery": {
 					"level": "required"
 				},
 				"key-value-store": {
 					"level": "required"
+				},
+				"relational-db": {
+					"level": "required"
 				}
 			},
-			"planChars": 2198,
+			"planChars": 2506,
 			"set": "design"
 		},
 		{
@@ -201,21 +200,18 @@
 				"rate-limiting",
 				"hosted-mcp",
 				"mcp-authorization",
-				"threlte-integration",
 				"derivation-key",
 				"provenance-record",
-				"asset-production-pipeline",
-				"mcp-app-provider",
 				"agentic-parametric-modeling"
 			],
 			"correct": 7,
 			"required": 7,
-			"scored": 9,
+			"scored": 7,
 			"unnecessary": [],
 			"missing": [],
 			"optionalGolden": 2,
-			"optionalAsRequired": ["threlte-integration", "mcp-app-provider"],
-			"optionalListed": [],
+			"optionalAsRequired": [],
+			"optionalListed": ["threlte-integration", "mcp-app-provider"],
 			"optionalOmitted": [],
 			"goldenNeeds": 4,
 			"needsFound": ["relational-db", "key-value-store", "email-delivery", "web-worker"],
@@ -238,42 +234,26 @@
 				"web-worker": {
 					"level": "conditional"
 				},
-				"relational-db": {
-					"level": "required"
-				},
 				"email-delivery": {
 					"level": "required"
 				},
 				"key-value-store": {
 					"level": "required"
+				},
+				"relational-db": {
+					"level": "required"
 				}
 			},
-			"planChars": 5049,
+			"planChars": 5173,
 			"set": "design"
 		},
 		{
 			"id": "S5",
-			"steps": [
-				"multi-client-core",
-				"pattern-mcp",
-				"wasm-compute-kernel",
-				"resilience-policy",
-				"deadline-propagation",
-				"latency-tracing",
-				"external-service-runtime",
-				"architecture-engineering"
-			],
+			"steps": ["architecture-engineering"],
 			"correct": 1,
 			"required": 1,
-			"scored": 7,
-			"unnecessary": [
-				"pattern-mcp",
-				"wasm-compute-kernel",
-				"resilience-policy",
-				"deadline-propagation",
-				"latency-tracing",
-				"external-service-runtime"
-			],
+			"scored": 1,
+			"unnecessary": [],
 			"missing": [],
 			"optionalGolden": 0,
 			"optionalAsRequired": [],
@@ -287,32 +267,16 @@
 			"requiredDowngraded": [],
 			"pinsGolden": 0,
 			"pinsPreserved": [],
-			"spuriousNeeds": ["wasm-toolchain", "container-host"],
+			"spuriousNeeds": [],
 			"factNeedsMissing": [],
 			"factLevelCorrect": 0,
-			"named": {
-				"llm-provider": {
-					"level": "implementation"
-				},
-				"relational-db": {
-					"level": "implementation"
-				},
-				"key-value-store": {
-					"level": "conditional"
-				},
-				"wasm-toolchain": {
-					"level": "required"
-				},
-				"container-host": {
-					"level": "required"
-				}
-			},
-			"planChars": 4687,
+			"named": {},
+			"planChars": 878,
 			"set": "design"
 		},
 		{
 			"id": "S6",
-			"steps": ["multi-client-core", "ai-tool-harness", "ai-surfaces", "layered-rag"],
+			"steps": ["ai-tool-harness", "ai-surfaces", "layered-rag"],
 			"correct": 1,
 			"required": 2,
 			"scored": 3,
@@ -347,12 +311,12 @@
 					"level": "required"
 				}
 			},
-			"planChars": 2341,
+			"planChars": 2483,
 			"set": "design"
 		},
 		{
 			"id": "S7",
-			"steps": ["multi-client-core", "job-scheduling", "encryption-key-ring"],
+			"steps": ["job-scheduling", "encryption-key-ring"],
 			"correct": 2,
 			"required": 2,
 			"scored": 2,
@@ -374,9 +338,6 @@
 			"factNeedsMissing": [],
 			"factLevelCorrect": 2,
 			"named": {
-				"llm-provider": {
-					"level": "implementation"
-				},
 				"object-storage": {
 					"level": "implementation"
 				},
@@ -387,7 +348,7 @@
 					"level": "required"
 				}
 			},
-			"planChars": 1882,
+			"planChars": 1643,
 			"set": "design"
 		},
 		{
@@ -424,12 +385,12 @@
 					"level": "required"
 				}
 			},
-			"planChars": 2825,
+			"planChars": 3290,
 			"set": "design"
 		},
 		{
 			"id": "H1",
-			"steps": ["multi-client-core", "job-scheduling"],
+			"steps": ["job-scheduling"],
 			"correct": 1,
 			"required": 1,
 			"scored": 1,
@@ -451,9 +412,6 @@
 			"factNeedsMissing": [],
 			"factLevelCorrect": 2,
 			"named": {
-				"llm-provider": {
-					"level": "implementation"
-				},
 				"object-storage": {
 					"level": "implementation"
 				},
@@ -464,7 +422,7 @@
 					"level": "required"
 				}
 			},
-			"planChars": 1372,
+			"planChars": 1098,
 			"set": "holdout"
 		},
 		{
@@ -522,7 +480,7 @@
 					"level": "conditional"
 				}
 			},
-			"planChars": 956,
+			"planChars": 1106,
 			"set": "holdout"
 		},
 		{
@@ -553,12 +511,12 @@
 					"level": "required"
 				}
 			},
-			"planChars": 802,
+			"planChars": 957,
 			"set": "holdout"
 		},
 		{
 			"id": "H5",
-			"steps": ["multi-client-core", "hierarchical-cache", "critical-path-deferred-tail", "stale-while-revalidate"],
+			"steps": ["hierarchical-cache", "critical-path-deferred-tail", "stale-while-revalidate"],
 			"correct": 3,
 			"required": 3,
 			"scored": 3,
@@ -580,9 +538,6 @@
 			"factNeedsMissing": [],
 			"factLevelCorrect": 1,
 			"named": {
-				"llm-provider": {
-					"level": "implementation"
-				},
 				"relational-db": {
 					"level": "implementation"
 				},
@@ -590,7 +545,7 @@
 					"level": "conditional"
 				}
 			},
-			"planChars": 2564,
+			"planChars": 2584,
 			"set": "holdout"
 		},
 		{
@@ -617,7 +572,7 @@
 			"factNeedsMissing": [],
 			"factLevelCorrect": 0,
 			"named": {},
-			"planChars": 701,
+			"planChars": 717,
 			"set": "holdout"
 		},
 		{
@@ -648,7 +603,7 @@
 					"level": "required"
 				}
 			},
-			"planChars": 809,
+			"planChars": 964,
 			"set": "holdout"
 		},
 		{
@@ -685,7 +640,7 @@
 					"level": "required"
 				}
 			},
-			"planChars": 1498,
+			"planChars": 1677,
 			"set": "holdout"
 		},
 		{
@@ -716,12 +671,12 @@
 					"level": "implementation"
 				}
 			},
-			"planChars": 843,
+			"planChars": 991,
 			"set": "holdout"
 		},
 		{
 			"id": "H10",
-			"steps": ["state-management", "url-search-state"],
+			"steps": ["url-search-state"],
 			"correct": 1,
 			"required": 1,
 			"scored": 1,
@@ -742,50 +697,46 @@
 			"spuriousNeeds": [],
 			"factNeedsMissing": [],
 			"factLevelCorrect": 0,
-			"named": {
-				"llm-provider": {
-					"level": "implementation"
-				}
-			},
-			"planChars": 1141,
+			"named": {},
+			"planChars": 926,
 			"set": "holdout"
 		}
 	],
 	"plans": {
 		"S1": {
-			"text": "# Emulation plan (11 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: v10r's implementation uses llm-provider, relational-db\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 3 doc(s).\n\n### Step 2: Passwordless auth (`passwordless-auth`)\nIncluded as prerequisite (depends_on).\nRisk: medium — external managed service (email delivery)\nNeeds: required relational-db, email-delivery\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 3: Rate limiting (`rate-limiting`)\nIncluded as prerequisite (depends_on).\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNeeds: required key-value-store\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Hosted MCP (`hosted-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: required key-value-store (via rate-limiting) · v10r's implementation uses relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 5: MCP authorization (`mcp-authorization`)\nSatisfies: mcp authorization\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nNeeds: required relational-db, email-delivery (via passwordless-auth), key-value-store (via rate-limiting)\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 6: AI tool manifest and harness split (`ai-tool-harness`)\nIncluded as prerequisite (depends_on).\nRisk: high — governs what an LLM is allowed to execute\nNeeds: required llm-provider\nAvoid when: The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern\nNot shown: 3 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n### Step 7: AI surfaces (`ai-surfaces`)\nIncluded as prerequisite (depends_on).\nRisk: high — user-facing LLM behavior and permissions\nNeeds: required llm-provider · conditional relational-db (when conversations are kept beyond the page)\nAvoid when: The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate\nNot shown: 3 invariant(s) that MUST hold, 8 code entry point(s), 4 doc(s).\n\n### Step 8: Durable step execution (`durable-step-execution`)\nIncluded as prerequisite (depends_on).\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nNeeds: required relational-db\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 9: Deskbot approval gate (`deskbot-approval-gate`)\nIncluded as prerequisite (depends_on).\nRisk: high — the safety boundary for AI mutation\nNeeds: required relational-db, llm-provider\nAvoid when: Every tool is read-only or a reversible create — requiresApproval gates write and destructive risk only, so nothing would become a proposal\nNot shown: 7 invariant(s) that MUST hold, 7 code entry point(s), 3 doc(s).\n\n### Step 10: Untrusted-content boundary (`untrusted-content-boundary`)\nIncluded as prerequisite (depends_on).\nRisk: medium — the wrapper lowers but cannot remove the chance a model follows embedded text; the guarantee comes from leg 2 and leg 3 staying closed, which the gate holds\nNeeds: required llm-provider, relational-db (via deskbot-approval-gate)\nAvoid when: The assistant only ever reads a corpus you own and has no tools that act or send — there is no untrusted leg to bound\nNot shown: 4 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 11: MCP client (`mcp-client`)\nSatisfies: mcp authorization\nRisk: high if wired without review — contained by default-write risk, fingerprint pins and the egress guard\nNeeds: required llm-provider, external-api, relational-db\nAvoid when: The tools are yours — add them to the catalogue instead\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: llm-provider, relational-db, email-delivery, key-value-store, external-api.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (10 pattern(s), foundations and constituents first)\n\n### Step 1: Passwordless auth (`passwordless-auth`)\nIncluded because mcp-authorization builds on it.\nRisk: medium — external managed service (email delivery)\nNeeds: required email-delivery, relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 2: Rate limiting (`rate-limiting`)\nIncluded because hosted-mcp builds on it; mcp-authorization builds on it.\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNeeds: required key-value-store\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 3: Hosted MCP (`hosted-mcp`)\nIncluded because mcp-authorization builds on it.\nRisk: low — structural pattern, no external services\nNeeds: required key-value-store (via rate-limiting) · v10r's implementation uses relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: MCP authorization (`mcp-authorization`)\nSatisfies: mcp authorization\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nNeeds: required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 5: AI tool manifest and harness split (`ai-tool-harness`)\nIncluded because ai-surfaces builds on it; deskbot-approval-gate builds on it; mcp-client builds on it; untrusted-content-boundary builds on it.\nRisk: high — governs what an LLM is allowed to execute\nNeeds: required llm-provider\nAvoid when: The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern\nNot shown: 3 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n### Step 6: AI surfaces (`ai-surfaces`)\nIncluded because deskbot-approval-gate builds on it.\nRisk: high — user-facing LLM behavior and permissions\nNeeds: required llm-provider · conditional relational-db (when conversations are kept beyond the page)\nAvoid when: The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate\nNot shown: 3 invariant(s) that MUST hold, 8 code entry point(s), 4 doc(s).\n\n### Step 7: Durable step execution (`durable-step-execution`)\nIncluded because it is part of deskbot-approval-gate.\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nNeeds: required relational-db\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 8: Deskbot approval gate (`deskbot-approval-gate`)\nIncluded because mcp-client builds on it; untrusted-content-boundary builds on it.\nRisk: high — the safety boundary for AI mutation\nNeeds: required llm-provider, relational-db\nAvoid when: Every tool is read-only or a reversible create — requiresApproval gates write and destructive risk only, so nothing would become a proposal\nNot shown: 7 invariant(s) that MUST hold, 7 code entry point(s), 3 doc(s).\n\n### Step 9: Untrusted-content boundary (`untrusted-content-boundary`)\nIncluded because mcp-client builds on it.\nRisk: medium — the wrapper lowers but cannot remove the chance a model follows embedded text; the guarantee comes from leg 2 and leg 3 staying closed, which the gate holds\nNeeds: required llm-provider, relational-db (via deskbot-approval-gate, durable-step-execution)\nAvoid when: The assistant only ever reads a corpus you own and has no tools that act or send — there is no untrusted leg to bound\nNot shown: 4 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 10: MCP client (`mcp-client`)\nSatisfies: mcp authorization\nRisk: high if wired without review — contained by default-write risk, fingerprint pins and the egress guard\nNeeds: required external-api, llm-provider, relational-db\nAvoid when: The tools are yours — add them to the catalogue instead\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: email-delivery, external-api, key-value-store, llm-provider, relational-db.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Applies (principles; review the work against them, never a step): `design-philosophy` for `ai-surfaces`; `agent-harness-lens` for `ai-tool-harness`, `ai-surfaces`, `deskbot-approval-gate`, `untrusted-content-boundary`, `mcp-client`.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `passwordless-auth`, `rate-limiting`, `hosted-mcp`, `mcp-authorization`, `ai-tool-harness`, `ai-surfaces`, `durable-step-execution`, `deskbot-approval-gate`, `untrusted-content-boundary`, `mcp-client`; `component-system` for `ai-surfaces`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"S2": {
-			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Hierarchical cache (`hierarchical-cache`)\nSatisfies: rate limiting\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nNeeds: conditional key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Conditional infrastructure: key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier). Settle each condition against the target.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Hierarchical cache (`hierarchical-cache`)\nSatisfies: rate limiting\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nNeeds: conditional key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Conditional infrastructure: key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier). Settle each condition against the target.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `hierarchical-cache`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"S3": {
-			"text": "# Emulation plan (5 pattern(s), dependency-ordered)\n\n### Step 1: Passwordless auth (`passwordless-auth`)\nIncluded as prerequisite (depends_on).\nRisk: medium — external managed service (email delivery)\nNeeds: required relational-db, email-delivery\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 2: Rate limiting (`rate-limiting`)\nIncluded as prerequisite (depends_on).\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNeeds: required key-value-store\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 3: Hosted MCP (`hosted-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: required key-value-store (via rate-limiting) · v10r's implementation uses relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: MCP authorization (`mcp-authorization`)\nSatisfies: hosted mcp\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nNeeds: required relational-db, email-delivery (via passwordless-auth), key-value-store (via rate-limiting)\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 5: MCP App provider (`mcp-app-provider`)\nSatisfies: hosted mcp\nRisk: low — read-only data the public MCP already serves; the host's sandbox is the enforcement point\nNeeds: required key-value-store (via rate-limiting)\nAvoid when: Your audience is CLI agents only: they get the text, so build the text answer and skip the View\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db, email-delivery, key-value-store.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (5 pattern(s), foundations and constituents first)\n\n### Step 1: Passwordless auth (`passwordless-auth`)\nIncluded because mcp-authorization builds on it.\nRisk: medium — external managed service (email delivery)\nNeeds: required email-delivery, relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 2: Rate limiting (`rate-limiting`)\nIncluded because hosted-mcp builds on it; mcp-authorization builds on it.\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNeeds: required key-value-store\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 3: Hosted MCP (`hosted-mcp`)\nIncluded because mcp-app-provider builds on it; mcp-authorization builds on it.\nRisk: low — structural pattern, no external services\nNeeds: required key-value-store (via rate-limiting) · v10r's implementation uses relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: MCP authorization (`mcp-authorization`)\nSatisfies: hosted mcp\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nNeeds: required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 5: MCP App provider (`mcp-app-provider`)\nSatisfies: hosted mcp\nRisk: low — read-only data the public MCP already serves; the host's sandbox is the enforcement point\nNeeds: required key-value-store (via rate-limiting)\nAvoid when: Your audience is CLI agents only: they get the text, so build the text answer and skip the View\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: email-delivery, key-value-store, relational-db.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `passwordless-auth`, `rate-limiting`, `hosted-mcp`, `mcp-authorization`, `mcp-app-provider`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"S4": {
-			"text": "# Emulation plan (10 pattern(s), dependency-ordered)\n\n### Step 1: Passwordless auth (`passwordless-auth`)\nIncluded as prerequisite (depends_on).\nRisk: medium — external managed service (email delivery)\nNeeds: required relational-db, email-delivery\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 2: Rate limiting (`rate-limiting`)\nIncluded as prerequisite (depends_on).\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNeeds: required key-value-store\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 3: Hosted MCP (`hosted-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: required key-value-store (via rate-limiting) · v10r's implementation uses relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: MCP authorization (`mcp-authorization`)\nIncluded as prerequisite (depends_on).\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nNeeds: required relational-db, email-delivery (via passwordless-auth), key-value-store (via rate-limiting)\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 5: Threlte integration (`threlte-integration`)\nIncluded as prerequisite (depends_on).\nRisk: low — frontend only\nNot shown: 0 invariant(s) that MUST hold, 3 code entry point(s), 3 doc(s).\n\n### Step 6: Derivation key (`derivation-key`)\nIncluded as prerequisite (depends_on).\nRisk: medium — an undeclared input silently serves stale output; the fingerprint test is the guard\nNeeds: conditional relational-db (when derived outputs live in a database (the key is stored beside them)) · v10r's implementation uses llm-provider\nAvoid when: A full rebuild is cheap and nothing reads a stale output in between — regenerate from scratch instead\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n### Step 7: Provenance record (`provenance-record`)\nIncluded as prerequisite (depends_on).\nRisk: low — mostly columns you already have; the failure mode is pointing provenance at mutable ids\nNeeds: required relational-db · v10r's implementation uses vector-search\nAvoid when: The data has one author and no derivation — a user's own settings row is its own provenance\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n### Step 8: Asset production pipeline (`asset-production-pipeline`)\nIncluded as prerequisite (depends_on).\nRisk: medium — real CPU per request (bounded by budget and rate limit); checks prove file and surface integrity, never structural strength\nNeeds: required relational-db (via provenance-record), key-value-store (via rate-limiting)\nAvoid when: The assets are authored by hand in a DCC tool and only need viewing — the model viewer pattern is enough\nNot shown: 7 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 9: MCP App provider (`mcp-app-provider`)\nIncluded as prerequisite (depends_on).\nRisk: low — read-only data the public MCP already serves; the host's sandbox is the enforcement point\nNeeds: required key-value-store (via rate-limiting)\nAvoid when: Your audience is CLI agents only: they get the text, so build the text answer and skip the View\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n### Step 10: Agentic parametric modeling (`agentic-parametric-modeling`)\nSatisfies: agentic parametric modeling\nRisk: medium — per-account CPU per call (bounded by schema, estimate, budget, deadline, per-account and surface limits); mesh checks prove closed manifolds, never printability or strength; not yet exercised in a real MCP host with authorization\nNeeds: required relational-db (via mcp-authorization), key-value-store (via rate-limiting), email-delivery (via passwordless-auth) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)\nAvoid when: The geometry needs B-rep CAD (fillets, chamfers, STEP, tolerances) — put a CAD kernel (OpenCascade/replicad) behind the same contract\nNot shown: 7 invariant(s) that MUST hold, 12 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db, email-delivery, key-value-store.\n- Conditional infrastructure: web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker). Settle each condition against the target.\n- v10r's implementation also uses llm-provider, vector-search: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (7 pattern(s), foundations and constituents first)\n\n### Step 1: Passwordless auth (`passwordless-auth`)\nIncluded because mcp-authorization builds on it.\nRisk: medium — external managed service (email delivery)\nNeeds: required email-delivery, relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 2: Rate limiting (`rate-limiting`)\nIncluded because agentic-parametric-modeling builds on it (inherited from asset-production-pipeline); hosted-mcp builds on it; mcp-authorization builds on it.\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNeeds: required key-value-store\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 3: Hosted MCP (`hosted-mcp`)\nIncluded because agentic-parametric-modeling builds on it; mcp-authorization builds on it.\nRisk: low — structural pattern, no external services\nNeeds: required key-value-store (via rate-limiting) · v10r's implementation uses relational-db\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: MCP authorization (`mcp-authorization`)\nIncluded because it is part of agentic-parametric-modeling.\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nNeeds: required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 5: Derivation key (`derivation-key`)\nIncluded because it is part of agentic-parametric-modeling (inherited from asset-production-pipeline); it is part of provenance-record.\nRisk: medium — an undeclared input silently serves stale output; the fingerprint test is the guard\nNeeds: conditional relational-db (when derived outputs live in a database (the key is stored beside them)) · v10r's implementation uses llm-provider\nAvoid when: A full rebuild is cheap and nothing reads a stale output in between — regenerate from scratch instead\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n### Step 6: Provenance record (`provenance-record`)\nIncluded because it is part of agentic-parametric-modeling (inherited from asset-production-pipeline).\nRisk: low — mostly columns you already have; the failure mode is pointing provenance at mutable ids\nNeeds: required relational-db · v10r's implementation uses vector-search\nAvoid when: The data has one author and no derivation — a user's own settings row is its own provenance\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n### Step 7: Agentic parametric modeling (`agentic-parametric-modeling`)\nSatisfies: agentic parametric modeling\nSpecializes asset-production-pipeline: its invariants hold here and its foundations and constituents are steps of this plan; it is not built twice.\nRisk: medium — per-account CPU per call (bounded by schema, estimate, budget, deadline, per-account and surface limits); mesh checks prove closed manifolds, never printability or strength; not yet exercised in a real MCP host with authorization\nNeeds: required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db (via mcp-authorization, passwordless-auth, provenance-record) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)\nAvoid when: The geometry needs B-rep CAD (fillets, chamfers, STEP, tolerances) — put a CAD kernel (OpenCascade/replicad) behind the same contract\nNot shown: 7 invariant(s) that MUST hold, 12 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: email-delivery, key-value-store, relational-db.\n- Conditional infrastructure: web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker). Settle each condition against the target.\n- v10r's implementation also uses llm-provider, vector-search: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Optional constituents (enhancements that may be omitted even when they apply): `threlte-integration` (part of `agentic-parametric-modeling` when the model is shown in the native viewer), `mcp-app-provider` (part of `agentic-parametric-modeling` when the MCP host renders Views).\n- Applies (principles; review the work against them, never a step): `design-philosophy` for `agentic-parametric-modeling`.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `passwordless-auth`, `rate-limiting`, `hosted-mcp`, `mcp-authorization`, `derivation-key`, `provenance-record`, `agentic-parametric-modeling`; `component-system` for `agentic-parametric-modeling`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"S5": {
-			"text": "# Emulation plan (8 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: v10r's implementation uses llm-provider, relational-db\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 3 doc(s).\n\n### Step 2: Pattern MCP (`pattern-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — read-only, network-isolated container\nNot shown: 0 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n### Step 3: WebAssembly compute kernel (`wasm-compute-kernel`)\nIncluded as prerequisite (depends_on).\nRisk: low — browser-only compute, no external services; rebuilds need only podman\nNeeds: required wasm-toolchain · conditional container-host (when the same kernel also runs as a separately deployed evaluation service)\nNot shown: 0 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n### Step 4: Resilience policy (`resilience-policy`)\nIncluded as prerequisite (depends_on).\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nNeeds: conditional key-value-store (when breaker state must be shared across instances)\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 5: Deadline propagation (`deadline-propagation`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a wrong deadline turns a slow success into a failure\nNeeds: conditional key-value-store (when breaker state must be shared across instances; via resilience-policy) · v10r's implementation uses relational-db\nAvoid when: The request makes one flat call with no nesting or retries, so its own timeout already states the bound\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 6: Latency tracing (`latency-tracing`)\nIncluded as prerequisite (depends_on).\nRisk: medium — it sits on every request, and the header is client-readable\nNeeds: v10r's implementation uses relational-db\nAvoid when: The site is mostly prerendered and CDN-served, so few requests ever reach the handler to be traced\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 7: External service runtime (`external-service-runtime`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable (rotation without downtime is supported); running on Render Free (Frankfurt) and verified end to end from production, where a sleeping service misses the normal 8 s budget (the wake check exists for it); cold-start duration, warm hosted percentiles and Render's proxy behaviour at the 5 s idle close are not yet measured\nNeeds: required container-host · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)\nAvoid when: The work fits a #lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak\nNot shown: 11 invariant(s) that MUST hold, 19 code entry point(s), 5 doc(s).\n\n### Step 8: Architecture Engineering (`architecture-engineering`)\nSatisfies: architecture engineering\nRisk: low — read-only reasoning over a reviewed rule table; the main risk is a recommendation read as authoritative, mitigated by showing the rule, the alternatives, the unknowns and the evidence kind on every outcome\nNeeds: required wasm-toolchain (via wasm-compute-kernel), container-host (via external-service-runtime) · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)\nAvoid when: The decision has one obvious answer in this codebase — a record and a rule add ceremony without information\nNot shown: 8 invariant(s) that MUST hold, 10 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: wasm-toolchain, container-host.\n- Conditional infrastructure: key-value-store (when breaker state must be shared across instances). Settle each condition against the target.\n- v10r's implementation also uses llm-provider, relational-db: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Architecture Engineering (`architecture-engineering`)\nSatisfies: architecture engineering\nRisk: low — read-only reasoning over a reviewed rule table; the main risk is a recommendation read as authoritative, mitigated by showing the rule, the alternatives, the unknowns and the evidence kind on every outcome\nAvoid when: The decision has one obvious answer in this codebase — a record and a rule add ceremony without information\nNot shown: 8 invariant(s) that MUST hold, 10 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"S6": {
-			"text": "# Emulation plan (4 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: v10r's implementation uses llm-provider, relational-db\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 3 doc(s).\n\n### Step 2: AI tool manifest and harness split (`ai-tool-harness`)\nIncluded as prerequisite (depends_on).\nRisk: high — governs what an LLM is allowed to execute\nNeeds: required llm-provider\nAvoid when: The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern\nNot shown: 3 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n### Step 3: AI surfaces (`ai-surfaces`)\nSatisfies: graph rag\nRisk: high — user-facing LLM behavior and permissions\nNeeds: required llm-provider · conditional relational-db (when conversations are kept beyond the page)\nAvoid when: The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate\nNot shown: 3 invariant(s) that MUST hold, 8 code entry point(s), 4 doc(s).\n\n### Step 4: Grounded retrieval with a corpus map (`layered-rag`)\nSatisfies: grounded answers\nRisk: medium — external embedding/LLM providers with quota limits\nNeeds: required relational-db, vector-search, llm-provider · conditional graph-db (when the graph tier answers multi-hop relationship questions)\nAvoid when: The corpus fits in the prompt whole — an ingest-built map plus full text needs no embeddings, quota or chunk-level tenant filter\nNot shown: 4 invariant(s) that MUST hold, 6 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: llm-provider, relational-db, vector-search.\n- Conditional infrastructure: graph-db (when the graph tier answers multi-hop relationship questions). Settle each condition against the target.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (3 pattern(s), foundations and constituents first)\n\n### Step 1: AI tool manifest and harness split (`ai-tool-harness`)\nIncluded because ai-surfaces builds on it.\nRisk: high — governs what an LLM is allowed to execute\nNeeds: required llm-provider\nAvoid when: The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern\nNot shown: 3 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n### Step 2: AI surfaces (`ai-surfaces`)\nSatisfies: graph rag\nRisk: high — user-facing LLM behavior and permissions\nNeeds: required llm-provider · conditional relational-db (when conversations are kept beyond the page)\nAvoid when: The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate\nNot shown: 3 invariant(s) that MUST hold, 8 code entry point(s), 4 doc(s).\n\n### Step 3: Grounded retrieval with a corpus map (`layered-rag`)\nSatisfies: grounded answers\nRisk: medium — external embedding/LLM providers with quota limits\nNeeds: required llm-provider, relational-db, vector-search · conditional graph-db (when the graph tier answers multi-hop relationship questions)\nAvoid when: The corpus fits in the prompt whole — an ingest-built map plus full text needs no embeddings, quota or chunk-level tenant filter\nNot shown: 4 invariant(s) that MUST hold, 6 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: llm-provider, relational-db, vector-search.\n- Conditional infrastructure: graph-db (when the graph tier answers multi-hop relationship questions). Settle each condition against the target.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Optional constituents (enhancements that may be omitted even when they apply): `graph-rag` (part of `layered-rag` when multi-hop relationship questions matter).\n- Applies (principles; review the work against them, never a step): `design-philosophy` for `ai-surfaces`; `agent-harness-lens` for `ai-tool-harness`, `ai-surfaces`.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `ai-tool-harness`, `ai-surfaces`, `layered-rag`; `component-system` for `ai-surfaces`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"S7": {
-			"text": "# Emulation plan (3 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: v10r's implementation uses llm-provider, relational-db\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 3 doc(s).\n\n### Step 2: Jobs and scheduling (`job-scheduling`)\nIncluded as prerequisite (depends_on).\nRisk: medium — touches deploy config and background execution\nNeeds: required relational-db, scheduler · v10r's implementation uses object-storage\nAvoid when: The work is a stream of items to claim and retry — that is a queue worker pulling an outbox, not a pushed job\nNot shown: 5 invariant(s) that MUST hold, 8 code entry point(s), 2 doc(s).\n\n### Step 3: Encryption key ring (`encryption-key-ring`)\nSatisfies: encryption key rotation\nRisk: medium — dropping a previous key before the sweep ran makes the secrets it sealed undecryptable; the failed sweep and the admin pages' undecryptable status say so\nNeeds: required relational-db, scheduler\nAvoid when: The secrets can live in a managed KMS or secret store that does the envelope encryption and rotation for you\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db, scheduler.\n- v10r's implementation also uses llm-provider, object-storage: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (2 pattern(s), foundations and constituents first)\n\n### Step 1: Jobs and scheduling (`job-scheduling`)\nIncluded because encryption-key-ring builds on it.\nRisk: medium — touches deploy config and background execution\nNeeds: required relational-db, scheduler · v10r's implementation uses object-storage\nAvoid when: The work is a stream of items to claim and retry — that is a queue worker pulling an outbox, not a pushed job\nNot shown: 5 invariant(s) that MUST hold, 8 code entry point(s), 2 doc(s).\n\n### Step 2: Encryption key ring (`encryption-key-ring`)\nSatisfies: encryption key rotation\nRisk: medium — dropping a previous key before the sweep ran makes the secrets it sealed undecryptable; the failed sweep and the admin pages' undecryptable status say so\nNeeds: required relational-db, scheduler\nAvoid when: The secrets can live in a managed KMS or secret store that does the envelope encryption and rotation for you\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db, scheduler.\n- v10r's implementation also uses object-storage: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `job-scheduling`, `encryption-key-ring`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"S8": {
-			"text": "# Emulation plan (4 pattern(s), dependency-ordered)\n\n### Step 1: Hierarchical cache (`hierarchical-cache`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nNeeds: conditional key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 3 doc(s).\n\n### Step 2: Resilience policy (`resilience-policy`)\nIncluded as prerequisite (depends_on).\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nNeeds: conditional key-value-store (when breaker state must be shared across instances)\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 3: Deadline propagation (`deadline-propagation`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a wrong deadline turns a slow success into a failure\nNeeds: conditional key-value-store (when breaker state must be shared across instances; via resilience-policy) · v10r's implementation uses relational-db\nAvoid when: The request makes one flat call with no nesting or retries, so its own timeout already states the bound\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Multi-source aggregation (`multi-source-aggregation`)\nSatisfies: resilient multi-source lookup\nRisk: medium — upstream contracts change without notice; a source without a usable API still needs its manual row\nNeeds: required external-api · conditional key-value-store (when daily per-source quotas and cached reports are shared across instances), relational-db (when paid sources need stored, encrypted API credentials)\nAvoid when: One reliable upstream answers the question — per-source breakers, quotas, bulkheads and coverage rows have nothing to aggregate\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: external-api.\n- Conditional infrastructure: key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier), relational-db (when paid sources need stored, encrypted API credentials). Settle each condition against the target.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (4 pattern(s), foundations and constituents first)\n\n### Step 1: Hierarchical cache (`hierarchical-cache`)\nIncluded because multi-source-aggregation builds on it.\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nNeeds: conditional key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 3 doc(s).\n\n### Step 2: Resilience policy (`resilience-policy`)\nIncluded because multi-source-aggregation builds on it.\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nNeeds: conditional key-value-store (when breaker state must be shared across instances)\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 3: Deadline propagation (`deadline-propagation`)\nIncluded because multi-source-aggregation builds on it.\nRisk: medium — a wrong deadline turns a slow success into a failure\nNeeds: v10r's implementation uses relational-db\nAvoid when: The request makes one flat call with no nesting or retries, so its own timeout already states the bound\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Multi-source aggregation (`multi-source-aggregation`)\nSatisfies: resilient multi-source lookup\nRisk: medium — upstream contracts change without notice; a source without a usable API still needs its manual row\nNeeds: required external-api · conditional key-value-store (when breaker state must be shared across instances; or when daily per-source quotas and cached reports are shared across instances; or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier), relational-db (when paid sources need stored, encrypted API credentials)\nAvoid when: One reliable upstream answers the question — per-source breakers, quotas, bulkheads and coverage rows have nothing to aggregate\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: external-api.\n- Conditional infrastructure: key-value-store (when breaker state must be shared across instances; or when daily per-source quotas and cached reports are shared across instances; or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier), relational-db (when paid sources need stored, encrypted API credentials). Settle each condition against the target.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `hierarchical-cache`, `resilience-policy`, `deadline-propagation`, `multi-source-aggregation`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H1": {
-			"text": "# Emulation plan (2 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: v10r's implementation uses llm-provider, relational-db\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 3 doc(s).\n\n### Step 2: Jobs and scheduling (`job-scheduling`)\nSatisfies: background jobs\nRisk: medium — touches deploy config and background execution\nNeeds: required relational-db, scheduler · v10r's implementation uses object-storage\nAvoid when: The work is a stream of items to claim and retry — that is a queue worker pulling an outbox, not a pushed job\nNot shown: 5 invariant(s) that MUST hold, 8 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db, scheduler.\n- v10r's implementation also uses llm-provider, object-storage: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Jobs and scheduling (`job-scheduling`)\nSatisfies: background jobs\nRisk: medium — touches deploy config and background execution\nNeeds: required relational-db, scheduler · v10r's implementation uses object-storage\nAvoid when: The work is a stream of items to claim and retry — that is a queue worker pulling an outbox, not a pushed job\nNot shown: 5 invariant(s) that MUST hold, 8 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db, scheduler.\n- v10r's implementation also uses object-storage: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `job-scheduling`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H2": {
@@ -793,35 +744,35 @@
 			"format": "levels"
 		},
 		"H3": {
-			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Resilience policy (`resilience-policy`)\nSatisfies: file uploads to object storage\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nNeeds: conditional key-value-store (when breaker state must be shared across instances)\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Conditional infrastructure: key-value-store (when breaker state must be shared across instances). Settle each condition against the target.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Resilience policy (`resilience-policy`)\nSatisfies: file uploads to object storage\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nNeeds: conditional key-value-store (when breaker state must be shared across instances)\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Conditional infrastructure: key-value-store (when breaker state must be shared across instances). Settle each condition against the target.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `resilience-policy`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H4": {
-			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Durable step execution (`durable-step-execution`)\nSatisfies: notification outbox\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nNeeds: required relational-db\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Durable step execution (`durable-step-execution`)\nSatisfies: notification outbox\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nNeeds: required relational-db\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `durable-step-execution`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H5": {
-			"text": "# Emulation plan (4 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: v10r's implementation uses llm-provider, relational-db\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 3 doc(s).\n\n### Step 2: Hierarchical cache (`hierarchical-cache`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nNeeds: conditional key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 3 doc(s).\n\n### Step 3: Critical path / deferred tail (`critical-path-deferred-tail`)\nIncluded as prerequisite (depends_on).\nRisk: medium — work moved off the response must be genuinely optional to it\nNeeds: v10r's implementation uses relational-db\nAvoid when: The side effect is a durable write the caller must see acknowledged — that is critical work, not a deferred tail\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Stale-while-revalidate (`stale-while-revalidate`)\nSatisfies: stale-while-revalidate caching\nRisk: medium — the staleness window is a correctness decision, not a tuning knob\nNeeds: conditional key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store))\nAvoid when: The value is authorization, account security state or a balance needing strong consistency — a stale permission is a wrong permission\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Conditional infrastructure: key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier). Settle each condition against the target.\n- v10r's implementation also uses llm-provider, relational-db: not needed to emulate the patterns (each step says why).\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (3 pattern(s), foundations and constituents first)\n\n### Step 1: Hierarchical cache (`hierarchical-cache`)\nIncluded because stale-while-revalidate builds on it.\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nNeeds: conditional key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 3 doc(s).\n\n### Step 2: Critical path / deferred tail (`critical-path-deferred-tail`)\nIncluded because stale-while-revalidate builds on it.\nRisk: medium — work moved off the response must be genuinely optional to it\nNeeds: v10r's implementation uses relational-db\nAvoid when: The side effect is a durable write the caller must see acknowledged — that is critical work, not a deferred tail\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 3: Stale-while-revalidate (`stale-while-revalidate`)\nSatisfies: stale-while-revalidate caching\nRisk: medium — the staleness window is a correctness decision, not a tuning knob\nNeeds: conditional key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store); or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)\nAvoid when: The value is authorization, account security state or a balance needing strong consistency — a stale permission is a wrong permission\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Conditional infrastructure: key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store); or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier). Settle each condition against the target.\n- v10r's implementation also uses relational-db: not needed to emulate the patterns (each step says why).\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `hierarchical-cache`, `critical-path-deferred-tail`, `stale-while-revalidate`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H6": {
-			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Optimistic mutation (`optimistic-mutation`)\nSatisfies: optimistic updates with rollback\nRisk: low — client-side state; the server contract is unchanged\nAvoid when: The action is a payment, an irreversible deletion or a permission change — a rollback cannot restore it\nNot shown: 5 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Optimistic mutation (`optimistic-mutation`)\nSatisfies: optimistic updates with rollback\nRisk: low — client-side state; the server contract is unchanged\nAvoid when: The action is a payment, an irreversible deletion or a permission change — a rollback cannot restore it\nNot shown: 5 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H7": {
-			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Durable step execution (`durable-step-execution`)\nSatisfies: crash-safe multi-step work\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nNeeds: required relational-db\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Durable step execution (`durable-step-execution`)\nSatisfies: crash-safe multi-step work\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nNeeds: required relational-db\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db.\n- If the target lacks a required need, drop or replace the step that needs it.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `durable-step-execution`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H8": {
-			"text": "# Emulation plan (2 pattern(s), dependency-ordered)\n\n### Step 1: Derivation key (`derivation-key`)\nIncluded as prerequisite (depends_on).\nRisk: medium — an undeclared input silently serves stale output; the fingerprint test is the guard\nNeeds: conditional relational-db (when derived outputs live in a database (the key is stored beside them)) · v10r's implementation uses llm-provider\nAvoid when: A full rebuild is cheap and nothing reads a stale output in between — regenerate from scratch instead\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n### Step 2: Provenance record (`provenance-record`)\nSatisfies: gdpr data export and erasure\nRisk: low — mostly columns you already have; the failure mode is pointing provenance at mutable ids\nNeeds: required relational-db · v10r's implementation uses vector-search\nAvoid when: The data has one author and no derivation — a user's own settings row is its own provenance\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db.\n- v10r's implementation also uses llm-provider, vector-search: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (2 pattern(s), foundations and constituents first)\n\n### Step 1: Derivation key (`derivation-key`)\nIncluded because it is part of provenance-record.\nRisk: medium — an undeclared input silently serves stale output; the fingerprint test is the guard\nNeeds: conditional relational-db (when derived outputs live in a database (the key is stored beside them)) · v10r's implementation uses llm-provider\nAvoid when: A full rebuild is cheap and nothing reads a stale output in between — regenerate from scratch instead\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n### Step 2: Provenance record (`provenance-record`)\nSatisfies: gdpr data export and erasure\nRisk: low — mostly columns you already have; the failure mode is pointing provenance at mutable ids\nNeeds: required relational-db · v10r's implementation uses vector-search\nAvoid when: The data has one author and no derivation — a user's own settings row is its own provenance\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: relational-db.\n- v10r's implementation also uses llm-provider, vector-search: not needed to emulate the patterns (each step says why).\n- If the target lacks a required need, drop or replace the step that needs it.\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `derivation-key`, `provenance-record`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H9": {
-			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Latency tracing (`latency-tracing`)\nSatisfies: web push notifications\nRisk: medium — it sits on every request, and the header is client-readable\nNeeds: v10r's implementation uses relational-db\nAvoid when: The site is mostly prerendered and CDN-served, so few requests ever reach the handler to be traced\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- v10r's implementation also uses relational-db: not needed to emulate the patterns (each step says why).\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: Latency tracing (`latency-tracing`)\nSatisfies: web push notifications\nRisk: medium — it sits on every request, and the header is client-readable\nNeeds: v10r's implementation uses relational-db\nAvoid when: The site is mostly prerendered and CDN-served, so few requests ever reach the handler to be traced\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- v10r's implementation also uses relational-db: not needed to emulate the patterns (each step says why).\n- Assumes (platform conventions the steps rely on; build only if the target lacks them): `multi-client-core` for `latency-tracing`.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		},
 		"H10": {
-			"text": "# Emulation plan (2 pattern(s), dependency-ordered)\n\n### Step 1: State management (`state-management`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNeeds: v10r's implementation uses llm-provider\nNot shown: 0 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n### Step 2: URL state (`url-search-state`)\nSatisfies: typed url search params\nRisk: low — a wrong mode shows up as a load that never re-runs (shallow for data) or charts that restart on every pick (navigate for view state)\nAvoid when: The state is private or sensitive — tokens, emails, anything that must not land in logs, referrers or shared links\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- v10r's implementation also uses llm-provider: not needed to emulate the patterns (each step says why).\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"text": "# Emulation plan (1 pattern(s), foundations and constituents first)\n\n### Step 1: URL state (`url-search-state`)\nSatisfies: typed url search params\nSpecializes state-management: its invariants hold here and its foundations and constituents are steps of this plan; it is not built twice.\nRisk: low — a wrong mode shows up as a load that never re-runs (shallow for data) or charts that restart on every pick (navigate for view state)\nAvoid when: The state is private or sensitive — tokens, emails, anything that must not land in logs, referrers or shared links\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- Required infrastructure: none beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
 			"format": "levels"
 		}
 	}

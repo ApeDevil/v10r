@@ -145,7 +145,8 @@ describe('relevance floors', () => {
 
 /**
  * Plan precision over the dev plans: every required step present and nothing unrequested — a
- * partial runner-up per capability used to drag its own dependency chain into the plan.
+ * partial runner-up per capability used to drag its own dependency chain into the plan. Platform
+ * assumptions are named on the plan's Assumes line, never as steps.
  */
 describe('plan precision', () => {
 	it('builds every dev plan from exactly its required patterns', async () => {
@@ -155,6 +156,9 @@ describe('plan precision', () => {
 			const outcome = recommendPlan(REGISTRY, { capabilities: plan.capabilities });
 			const steps = [...outcome.text.matchAll(/^### Step \d+: .*\(`([a-z0-9-]+)`\)/gm)].map((match) => match[1]);
 			expect(new Set(steps), plan.id).toEqual(new Set(plan.required));
+			// A platform assumption is named, never a step (D-05).
+			const assumes = outcome.text.match(/^- Assumes \(platform conventions[^\n]*$/m)?.[0] ?? '';
+			for (const id of plan.assumed) expect(assumes, `${plan.id}: ${id}`).toContain(id);
 		}
 	});
 });

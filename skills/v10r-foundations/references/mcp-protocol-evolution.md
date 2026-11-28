@@ -10,6 +10,8 @@ One endpoint serves both MCP generations — the 2025 initialize handshake and t
 
 **When to use:** Reach for this when an MCP server must move to a new protocol revision without breaking the clients still on the old one, or when deciding whether a new MCP capability (Code Mode, tool discovery, an extension) is worth adopting.
 
+**Needs:** required key-value-store (via rate-limiting)
+
 ## Avoid when
 
 - Every caller is pinned to one revision you control — serve that revision alone
@@ -61,9 +63,20 @@ One endpoint serves both MCP generations — the 2025 initialize handshake and t
 - Pin the SDK exactly and bump it only after the conformance lane and the interop tests hold; keep the conformance lane out of the always-on gate (it needs a running server and the network).
 - Before adding Code Mode or tool discovery, extend the benchmark with your own workflows: at v10r's eight tools, discovery only beats direct calls with cached definitions past ~47 tools.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](multi-client-core.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md) — Dual-era serving evolves an MCP endpoint that already exists; any HTTP MCP server the target runs satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](agentic-architecture.md) (conditional)
+
 
 ---
 

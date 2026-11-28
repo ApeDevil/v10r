@@ -35,6 +35,13 @@ Two vitest lanes over one config: a fast `unit` lane and a `db` lane whose files
 - `src/lib/architecture.gate.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/architecture.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/architecture.gate.test.ts))
 - `src/lib/naming.gate.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/naming.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/naming.gate.test.ts))
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `testing-infrastructure` in `pattern-library/registry.json`._

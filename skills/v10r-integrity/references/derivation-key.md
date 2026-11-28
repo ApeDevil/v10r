@@ -56,6 +56,18 @@ A derived output stores derivationKey(transform@version, inputs) beside itself a
 - Make the bulk re-derive resumable by construction: process per item and write each key with its output, so a run cut short leaves the rest keyed stale and the next run continues.
 - When a skip leaves an output untouched, re-stamp its index time if readers compare it with the source's edit time — otherwise the verified-current copy reports itself stale.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Asset production pipeline](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/asset-production-pipeline.md) (required)
+- [Provenance record](provenance-record.md) (required)
+
+
 ---
 
 _Machine-readable record: `derivation-key` in `pattern-library/registry.json`._

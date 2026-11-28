@@ -62,6 +62,17 @@ Multi-step work that can be killed halfway survives without a workflow engine: a
 - Never re-issue an external call you cannot key idempotently; poll the operation you started instead (dbops), or accept duplicates explicitly (notifications).
 - Heal lazily on read where nothing else needs the slot — a dead run discovered on the next status request needs no extra cron.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate) (required)
+
+
 ---
 
 _Machine-readable record: `durable-step-execution` in `pattern-library/registry.json`._

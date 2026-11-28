@@ -32,6 +32,13 @@ An append-only audit trail of privileged admin actions — who did what to which
 
 - [`/admin`](/admin) (app route, no showcase)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `audit-log` in `pattern-library/registry.json`._

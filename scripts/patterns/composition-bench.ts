@@ -38,11 +38,11 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { adoptionNeeds } from '../../pattern-library/infrastructure-needs.ts';
 import { loadRegistry } from '../../pattern-library/load.ts';
+import { patternGraph } from '../../pattern-library/pattern-graph.ts';
 import { REGISTRY_QUERIES } from '../../pattern-library/query.ts';
 import { registryDigest } from '../../pattern-library/registry-digest.ts';
-import { buildById, type Registry } from '../../pattern-library/schema.ts';
+import type { Registry } from '../../pattern-library/schema.ts';
 
 const ROOT = resolve(import.meta.dir, '../..');
 const SCENARIOS = resolve(ROOT, 'pattern-library/bench/composition-scenarios.json');
@@ -222,13 +222,12 @@ function score(
 			[...translate].some(([old, now]) => now === id && plan.text.includes(`\`${old}\``)),
 	);
 	const optionalListed = optionalMentioned.filter((id) => !steps.includes(id));
-	const byId = buildById(registry);
+	const graph = storedFacts ? null : patternGraph(registry);
 	const factNeeds = new Map<string, Level>();
 	for (const [need, level] of Object.entries(storedFacts ?? {})) factNeeds.set(need, level);
 	for (const id of storedFacts ? [] : golden.required) {
-		const pattern = byId.get(id);
-		if (!pattern) continue;
-		for (const need of adoptionNeeds(pattern, byId)) {
+		if (!graph?.byId.has(id)) continue;
+		for (const need of graph.needs(id)) {
 			if (need.level !== 'required' && need.level !== 'conditional') continue;
 			const known = factNeeds.get(need.need);
 			if (!known || LEVEL_ORDER.indexOf(need.level) < LEVEL_ORDER.indexOf(known)) factNeeds.set(need.need, need.level);

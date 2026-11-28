@@ -16,7 +16,7 @@ How an application becomes AI-accessible, AI-interactive and AI-adaptive without
 
 **When to use:** Use when deciding which agentic standards an application should speak, and how, without accumulating runtimes: before adopting a protocol, framework or generative-UI format.
 
-**Needs:** required llm-provider (via agent-actions), relational-db (via deskbot-approval-gate)
+**Needs:** required llm-provider (via agent-actions, ai-surfaces, ai-tool-harness, deskbot-approval-gate, untrusted-content-boundary), relational-db (via deskbot-approval-gate, durable-step-execution, turn-trace) · conditional external-api (when the application serves a specialist agent or delegates to other agents over A2A; or when the assistant consumes tools from external MCP servers; via agent-to-agent, mcp-client), key-value-store (when the application serves its tools to MCP clients; via rate-limiting)
 
 ## Avoid when
 
@@ -62,11 +62,27 @@ How an application becomes AI-accessible, AI-interactive and AI-adaptive without
 - Keep one living matrix with a reassessment trigger per row; review it on a schedule, not by automation.
 - Extract a shared module only when two doors have actually implemented the same responsibility (here: the egress address policy).
 
-## Depends on
+## Relationships
 
-- [Agent actions](/docs/pattern-library/agent-actions)
-- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary)
-- [MCP protocol evolution](/docs/pattern-library/mcp-protocol-evolution)
+**Composes (constituents of its solution)**
+
+- [Agent actions](/docs/pattern-library/agent-actions) — required: The tool catalogue with risk and executor is the authoritative door every standard ends in.
+- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary) — required: A remote agent's or external tool's answer is a claim: it reaches the model only as untrusted content.
+- [Turn trace and turn graph](/docs/pattern-library/turn-trace) — required: The turn trace is the one authoritative record of what a turn did; telemetry exports are projections of it.
+- [MCP protocol evolution](/docs/pattern-library/mcp-protocol-evolution) — conditional when the application serves its tools to MCP clients: MCP is one adapter onto the tool catalogue; when the application speaks it, it must serve both protocol eras from one registry.
+- [MCP client](/docs/pattern-library/mcp-client) — conditional when the assistant consumes tools from external MCP servers: External MCP tools are projected into the existing catalogue with deployment-assigned risk, never a second registry.
+- [Agent to agent](/docs/pattern-library/agent-to-agent) — conditional when the application serves a specialist agent or delegates to other agents over A2A: A2A is an adapter: delegation is an approval-gated external operation and every answer is a claim.
+- [AG-UI endpoint over the turn stream](/docs/pattern-library/ag-ui-endpoint) — conditional when AG-UI clients must drive the agent: AG-UI is served by the same orchestrator turn under a deny-by-default export policy, not a second runtime.
+- [Generative UI](/docs/pattern-library/generative-ui) — conditional when the model composes interface as data: Generated interface is data from a closed catalogue rendered by the app’s own components; a press is never an approval.
+- [Agent Skills generated from the pattern registry](/docs/pattern-library/agent-skills) — conditional when the application's knowledge must reach agent products that load Agent Skills: Agent Skills are a generated projection of the canonical registry, never a hand-maintained copy.
+- [WebMCP publication of client actions](/docs/pattern-library/webmcp) — optional when the visitor's browser offers its own agent: Progressive enhancement: existing client-action contracts are published to the browser agent; nothing depends on it.
+- [Turn trace as OpenTelemetry GenAI spans](/docs/pattern-library/agent-observability) — optional when turns should also appear in an OpenTelemetry backend: A lossy, exporter-neutral projection of the turn trace; the trace stays the audit record.
+- [MCP App provider](/docs/pattern-library/mcp-app-provider) — optional when an MCP host should render an interactive View beside a tool answer: The text answer is complete on its own; the View only adds interaction.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

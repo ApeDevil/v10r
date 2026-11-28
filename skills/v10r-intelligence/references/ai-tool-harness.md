@@ -53,9 +53,24 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 - The manifest is not a single file: meta maps in tools/index.ts + risk vocab in tools/_types.ts + the approval rule in policy/governor.ts together form it.
 - Write the drift-guard test early — it is what keeps the manifest honest as tools accumulate.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md)
+**Applies (principles to review the work against)**
+
+- [Agent-harness audit lens](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agent-harness-lens.md) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [AI surfaces](ai-surfaces.md)
+- [Deskbot approval gate](deskbot-approval-gate.md)
+- [Untrusted-content boundary](untrusted-content-boundary.md)
+- [Agent actions](agent-actions.md)
+- [MCP client](mcp-client.md)
+
 
 ---
 

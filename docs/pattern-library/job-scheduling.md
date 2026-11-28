@@ -71,9 +71,18 @@ A slug → {execute, cadence} job registry with a unified runner. The registry o
 - Vercel Hobby rejects sub-daily cron schedules at deploy time, so the serverless clock is one daily wake that asks the registry what is due — not one cron entry per job.
 - Weekly retention sweeps filter on absolute age, so a skipped Sunday is repaired by the next one instead of leaving a gap.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](/docs/pattern-library/multi-client-core)
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Data retention policy & purge jobs](/docs/pattern-library/data-retention)
+- [Rollup & cleanup jobs](/docs/pattern-library/analytics-rollups)
+- [Encryption key ring](/docs/pattern-library/encryption-key-ring)
+
 
 ---
 

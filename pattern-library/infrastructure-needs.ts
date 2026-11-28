@@ -1,18 +1,14 @@
 /**
- * What adopting a pattern takes in infrastructure, and whether a target project has it.
+ * How infrastructure needs read, and whether a target project has them.
  *
- * One implementation for every reader (MCP tools, the dependency explorer, docs pages, Agent
- * Skills, Vely), so a need reads the same everywhere. Framework-free and filesystem-free.
- *
- * Inheritance: a pattern's adoption needs are its own declarations plus the required and
- * conditional needs of every pattern it depends on, transitively, labelled with the record they
- * come from. Optional and implementation needs are never inherited: they describe that record's
- * own reference implementation, not what building on it takes. When one need arrives at several
- * levels, the strictest wins (required > conditional > optional > implementation).
+ * Resolution — which needs reach a record through its foundations, constituents and
+ * generalizations, at which level, under which conditions, with which pins and from which
+ * records — is `pattern-graph.ts` (`graph.needs`, `adopt().needs`). This module only prints a
+ * resolved need and checks it against a target, so a need reads the same on every surface.
  */
+import type { ResolvedNeed } from './pattern-graph.ts';
 import {
 	INFRASTRUCTURE_NEED_IDS,
-	type InfrastructureNeed,
 	NEED_LEVELS,
 	type NeedDeclaration,
 	type NeedLevel,
@@ -21,50 +17,44 @@ import {
 	TECHNOLOGY_NEED,
 } from './schema.ts';
 
-/** A need as a reader sees it: the declaration, and the record it is inherited from (absent = own). */
-export interface AdoptionNeed extends NeedDeclaration {
-	via?: string;
-}
-
-const INHERITED_LEVELS: ReadonlySet<NeedLevel> = new Set(['required', 'conditional']);
-const strictness = (level: NeedLevel) => NEED_LEVELS.indexOf(level);
-
 export function declaredNeeds(pattern: PatternRecord): NeedDeclaration[] {
 	return pattern.needs.map(needDeclaration);
 }
 
-/** Own declarations plus inherited required/conditional needs, strictest level per need, own first. */
-export function adoptionNeeds(pattern: PatternRecord, byId: ReadonlyMap<string, PatternRecord>): AdoptionNeed[] {
-	const needs = new Map<InfrastructureNeed, AdoptionNeed>();
-	const add = (declaration: NeedDeclaration, via?: string) => {
-		const known = needs.get(declaration.need);
-		if (!known || strictness(declaration.level) < strictness(known.level)) {
-			needs.set(declaration.need, via ? { ...declaration, via } : { ...declaration });
-		}
-	};
-	for (const declaration of declaredNeeds(pattern)) add(declaration);
-	const seen = new Set([pattern.id]);
-	const queue = [...pattern.depends_on];
-	while (queue.length > 0) {
-		const id = queue.shift();
-		if (id === undefined || seen.has(id)) continue;
-		seen.add(id);
-		const dependency = byId.get(id);
-		if (!dependency) continue;
-		for (const declaration of declaredNeeds(dependency)) {
-			if (INHERITED_LEVELS.has(declaration.level)) add(declaration, id);
-		}
-		queue.push(...dependency.depends_on);
-	}
-	return [...needs.values()];
+/** A record's own declarations as resolved needs (no relationships followed). */
+export function ownNeeds(pattern: PatternRecord): ResolvedNeed[] {
+	return declaredNeeds(pattern).map((declaration) => ({
+		need: declaration.need,
+		level: declaration.level,
+		conditions: declaration.when ? [declaration.when] : [],
+		pins: declaration.pinned
+			? [{ technology: declaration.pinned, conditional: declaration.level === 'conditional', origins: [pattern.id] }]
+			: [],
+		origins: [pattern.id],
+		inherited: [],
+		...(declaration.why && (declaration.level === 'optional' || declaration.level === 'implementation')
+			? { why: declaration.why }
+			: {}),
+		conflict: null,
+		sources: [],
+	}));
 }
 
-/** `relational-db`, `relational-db (pinned: postgres)`, `key-value-store (via rate-limiting)`. */
-export function needLabel(need: AdoptionNeed, options: { condition?: boolean } = {}): string {
+/**
+ * `relational-db`, `relational-db (pinned: postgres)`, `key-value-store (via rate-limiting)`,
+ * `relational-db (pins conflict: mysql, postgres)`. A conditional pin says so; with `condition`, a
+ * conditional need lists each condition under which it is needed.
+ */
+export function needLabel(need: ResolvedNeed, options: { condition?: boolean } = {}): string {
+	const pins = need.pins.map((pin) => (pin.conditional ? `${pin.technology} if its condition holds` : pin.technology));
 	const details = [
-		need.pinned ? `pinned: ${need.pinned}` : '',
-		options.condition && need.when ? `when ${need.when}` : '',
-		need.via ? `via ${need.via}` : '',
+		need.conflict
+			? `pins ${need.conflict.certain ? 'conflict' : 'may conflict'}: ${pins.join(', ')}`
+			: pins.length > 0
+				? `pinned: ${pins.join(', ')}`
+				: '',
+		options.condition && need.conditions.length > 0 ? `when ${need.conditions.join('; or when ')}` : '',
+		need.inherited.length > 0 ? `via ${need.inherited.join(', ')}` : '',
 	].filter((part) => part.length > 0);
 	return details.length > 0 ? `${need.need} (${details.join('; ')})` : need.need;
 }
@@ -77,7 +67,7 @@ export const NEED_LEVEL_LABELS: Record<NeedLevel, string> = {
 };
 
 /** One line per level present, e.g. `required relational-db · conditional web-worker (when …)`. */
-export function needsSummary(needs: readonly AdoptionNeed[], options: { condition?: boolean } = {}): string {
+export function needsSummary(needs: readonly ResolvedNeed[], options: { condition?: boolean } = {}): string {
 	return NEED_LEVELS.map((level) => {
 		const atLevel = needs.filter((need) => need.level === level);
 		return atLevel.length > 0
@@ -98,11 +88,12 @@ export const TARGET_INFRA_WORDS: readonly string[] = [...INFRASTRUCTURE_NEED_IDS
  */
 export function targetProvides(
 	target: ReadonlySet<string>,
-	need: NeedDeclaration,
+	need: Pick<ResolvedNeed, 'need' | 'pins'>,
 ): { provided: boolean; pinMismatch: boolean } {
 	const hasCapability = target.has(need.need) || [...target].some((word) => TECHNOLOGY_NEED.get(word) === need.need);
-	if (need.pinned) {
-		const provided = target.has(need.pinned);
+	const pinned = need.pins.filter((pin) => !pin.conditional).map((pin) => pin.technology);
+	if (pinned.length > 0) {
+		const provided = pinned.every((technology) => target.has(technology));
 		return { provided, pinMismatch: !provided && hasCapability };
 	}
 	return { provided: hasCapability, pinMismatch: false };

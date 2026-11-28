@@ -10,7 +10,7 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 **When to use:** Use when an app must generate 3D assets from parameters — configurators that export, procedural parts, AI-requested variations — and every file must be reproducible, validated and attributable before anyone loads it.
 
-**Needs:** required relational-db (via provenance-record), key-value-store (via rate-limiting)
+**Needs:** required key-value-store (via rate-limiting), relational-db (via provenance-record)
 
 ## Avoid when
 
@@ -72,13 +72,27 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 - Start in-process; add the isolated worker (SIGKILL deadline, stripped env, capped output) before any untrusted or heavy engine, and only then a container.
 - Expose AI access as typed operations through the same schema; mount the tool where calls are authenticated and metered, never on an anonymous endpoint.
 
-## Depends on
+## Relationships
 
-- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/threlte-integration.md)
-- [Derivation key](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/derivation-key.md)
-- [Provenance record](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/provenance-record.md)
-- [Rate limiting](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/rate-limiting.md)
-- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Rate limiting](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/rate-limiting.md) — Public generation is rate limited before anything is built; the target's own limiter satisfies it.
+
+**Composes (constituents of its solution)**
+
+- [Derivation key](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/derivation-key.md) — required: The written GLB carries its derivation key and is current exactly while a recomputed key matches.
+- [Provenance record](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/provenance-record.md) — required: Every job records PROV-DM provenance of the asset it produced.
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md) — conditional when agents call the pipeline over MCP: The same job shape serves MCP tools; when agents must reach it, it is served by an MCP endpoint.
+- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/threlte-integration.md) — optional when the app shows the produced asset in a native viewer: A viewer presents the checked asset; production and inspection do not need it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Specialized by**
+
+- [Agentic parametric modeling](agentic-parametric-modeling.md)
+
 
 ---
 

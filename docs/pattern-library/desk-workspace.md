@@ -70,9 +70,25 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 - Bump a monotonic focusSeq on every focus write, repeats included — overlays close by watching it, which makes 'AI focused the already-visible panel' still dismiss the drawer.
 - Keep closed panels in the panels registry (only the tree entry is removed) — that is what makes close-undo a cheap re-attach instead of a state reconstruction.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](/docs/pattern-library/multi-client-core)
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Built on by**
+
+- [Spreadsheet panel](/docs/pattern-library/desk-spreadsheet-panel)
+- [Desk mobile chrome](/docs/pattern-library/desk-mobile-chrome)
+- [Composed panel menus](/docs/pattern-library/desk-panel-menus)
+- [AI desk effects](/docs/pattern-library/desk-ai-effects)
+- [Explorer panel](/docs/pattern-library/desk-explorer)
+
 
 ---
 

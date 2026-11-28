@@ -33,6 +33,13 @@ Sets up the Drizzle client for PostgreSQL using the Neon serverless driver as th
 
 - [`/showcases/db/relational/connection`](/showcases/db/relational/connection)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `postgres-connection` in `pattern-library/registry.json`._

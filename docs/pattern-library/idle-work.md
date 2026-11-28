@@ -28,9 +28,20 @@ Useful non-critical preparation performed after the page is interactive: preload
 - `src/lib/actions/hydrate-embeds.ts` — Hydrates on intersection rather than on load ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/actions/hydrate-embeds.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/actions/hydrate-embeds.ts))
 - `src/lib/components/shell/AppShell.svelte` — Warms the command palette with requestIdleCallback and a timer fallback ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/shell/AppShell.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/shell/AppShell.svelte))
 
-## Depends on
+## Relationships
 
-- [Intent-based preloading](/docs/pattern-library/intent-preloading)
+**References (context only, never a step)**
+
+- [Intent-based preloading](/docs/pattern-library/intent-preloading) — Both prepare probable next work: idle work after interactivity, intent preloading on intent signals; neither needs the other.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

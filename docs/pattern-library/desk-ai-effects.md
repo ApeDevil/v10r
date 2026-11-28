@@ -18,7 +18,7 @@ AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify
 
 **When to use:** Use when an AI assistant should manipulate a live UI workspace: effects go through the same single-writer actions as user input, so AI behavior stays consistent with direct manipulation.
 
-**Needs:** required relational-db (via desk-workspace), llm-provider (via ai-deskbot)
+**Needs:** required llm-provider (via ai-deskbot), relational-db (via ai-deskbot, desk-workspace)
 
 ## Docs
 
@@ -37,10 +37,21 @@ AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify
 
 - [`/showcases/desk`](/showcases/desk)
 
-## Depends on
+## Relationships
 
-- [Desk workspace](/docs/pattern-library/desk-workspace)
-- [Deskbot](/docs/pattern-library/ai-deskbot)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Desk workspace](/docs/pattern-library/desk-workspace) — Effects open, focus and refresh panels of the workspace.
+- [Deskbot](/docs/pattern-library/ai-deskbot) — The effects are dispatched from the deskbot’s tool results.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

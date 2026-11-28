@@ -34,9 +34,20 @@ One recursive tree over heterogeneous content APIs: adapters normalize every sou
 
 - [`/showcases/desk`](/showcases/desk)
 
-## Depends on
+## Relationships
 
-- [Desk workspace](/docs/pattern-library/desk-workspace)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Desk workspace](/docs/pattern-library/desk-workspace) — The explorer is a panel of the workspace.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

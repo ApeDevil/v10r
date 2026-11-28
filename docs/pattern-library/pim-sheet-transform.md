@@ -73,6 +73,13 @@ Supplier Excel/CSV product exports become a target's import sheet without the mo
 - Hand over a workbook with the issues and the change log beside the output, and keep the recipe per supplier — next month's export is a re-run, not a new conversation.
 - Assume office users have folders and Excel, not git: one job folder per supplier found by file name, a dated output folder per run as the history, and the tool shipped as a single compiled file.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `pim-sheet-transform` in `pattern-library/registry.json`._

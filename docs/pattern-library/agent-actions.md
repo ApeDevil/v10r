@@ -16,7 +16,7 @@ Every action the assistant may take is one tool-catalogue entry with a risk (wha
 
 **When to use:** Use when an in-app assistant must operate live interface state (layout, focus, selection, navigation) as part of the same turn that reads or proposes changes to server data, and must report honestly whether the interface change happened.
 
-**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate, durable-step-execution)
 
 ## Avoid when
 
@@ -76,12 +76,34 @@ Every action the assistant may take is one tool-catalogue entry with a risk (wha
 - Bound client actions per user turn — each result starts another model request.
 - WebMCP registerTool or a UI SDK action list can be generated from the same contracts for external agents; treat them as optional adapters, not as the architecture.
 
-## Depends on
+## Relationships
 
-- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
-- [AI surfaces](/docs/pattern-library/ai-surfaces)
-- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate)
-- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness) — Every action is one entry of the tool catalogue the harness owns.
+- [AI surfaces](/docs/pattern-library/ai-surfaces) — Client actions stream to the browser that sent the turn of an agent surface.
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate) — Write actions are proposals approved by a person, never executed in the loop.
+- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary) — A client action’s result is user-origin content and reaches the model only escaped.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+- [Agent-harness audit lens](/docs/pattern-library/agent-harness-lens) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (required)
+
+**Built on by**
+
+- [WebMCP publication of client actions](/docs/pattern-library/webmcp)
+- [AG-UI endpoint over the turn stream](/docs/pattern-library/ag-ui-endpoint)
+
 
 ---
 

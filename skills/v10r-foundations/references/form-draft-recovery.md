@@ -54,9 +54,20 @@ What a person types into a form is kept in localStorage per account and form, st
 - Touch storage only after mount; reading it during initialisation makes the server and client renders disagree.
 - Let the router own the unload prompt (cancel on type 'leave') instead of adding a beforeunload listener per form.
 
-## Depends on
+## Relationships
 
-- [Schema-validated forms](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/schema-validated-forms.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Schema-validated forms](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/schema-validated-forms.md) — Drafts are kept per form and stripped to the form’s schema shape.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

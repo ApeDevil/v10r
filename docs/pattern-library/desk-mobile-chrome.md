@@ -38,9 +38,21 @@ Phone chrome for the dock workspace: a scrollable top tab strip of open panel in
 
 - [`/showcases/desk`](/showcases/desk)
 
-## Depends on
+## Relationships
 
-- [Desk workspace](/docs/pattern-library/desk-workspace)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Desk workspace](/docs/pattern-library/desk-workspace) — Phone chrome for the workspace’s dock and its open panel instances.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+- [Explosive Discovery — nested depth for dense menus and pages](/docs/pattern-library/explosive-discovery) — Menus, toolbars and command surfaces that offer many actions are reviewed against it (directions that narrow intent, an expert path beside every discovery path); latent cards apply it at the scale of one card.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

@@ -33,6 +33,13 @@ A request-approve-expire workflow where users request a named capability, an adm
 
 - `src/lib/server/http/guards.test.ts` — Covers grant-based capability checks ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/http/guards.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/http/guards.test.ts))
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `grant-requests` in `pattern-library/registry.json`._

@@ -33,6 +33,13 @@ Demonstrates the three Superforms validation timing strategies: realtime (oninpu
 - [`/showcases/forms/validation/async`](/showcases/forms/validation/async)
 - [`/showcases/forms/validation/server`](/showcases/forms/validation/server)
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Schema-validated forms](/docs/pattern-library/schema-validated-forms) — The three timing strategies are options of the schema-validated form stack.
+
+
 ---
 
 _Machine-readable record: `validation-timing` in `pattern-library/registry.json`._

@@ -64,9 +64,25 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 - Bump a monotonic focusSeq on every focus write, repeats included — overlays close by watching it, which makes 'AI focused the already-visible panel' still dismiss the drawer.
 - Keep closed panels in the panels registry (only the tree entry is removed) — that is what makes close-undo a cheap re-attach instead of a state reconstruction.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md)
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Built on by**
+
+- [Spreadsheet panel](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/desk-spreadsheet-panel.md)
+- [Desk mobile chrome](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/desk-mobile-chrome.md)
+- [Composed panel menus](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/desk-panel-menus.md)
+- [AI desk effects](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/desk-ai-effects.md)
+- [Explorer panel](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/desk-explorer.md)
+
 
 ---
 

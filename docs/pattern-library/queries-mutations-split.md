@@ -32,6 +32,13 @@ Splits each domain's database access into separate queries.ts (reads) and mutati
 
 - [`/showcases/db/relational/mutability`](/showcases/db/relational/mutability)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `queries-mutations-split` in `pattern-library/registry.json`._

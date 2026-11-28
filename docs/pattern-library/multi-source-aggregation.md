@@ -16,7 +16,7 @@ One honest report from several unreliable upstreams: concurrent per-source deadl
 
 **When to use:** Use when a feature aggregates third-party APIs of uneven reliability and the user needs an honest partial answer — what was found, and where the search could not look — rather than an all-or-nothing one.
 
-**Needs:** required external-api · conditional key-value-store (when daily per-source quotas and cached reports are shared across instances), relational-db (when paid sources need stored, encrypted API credentials)
+**Needs:** required external-api · conditional key-value-store (when breaker state must be shared across instances; or when daily per-source quotas and cached reports are shared across instances; or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier), relational-db (when paid sources need stored, encrypted API credentials)
 
 ## Avoid when
 
@@ -61,11 +61,22 @@ One honest report from several unreliable upstreams: concurrent per-source deadl
 - Keep vendor credentials as administrator-managed source connections sealed under the deployment key, opened once per operation into a closure that hands the sources a credentials object; nothing is read from .env and the public check never fails because its settings table could not be read.
 - Fire an onSourceSettled callback per source so a streaming route can be added without touching the orchestration.
 
-## Depends on
+## Relationships
 
-- [Resilience policy](/docs/pattern-library/resilience-policy)
-- [Deadline propagation](/docs/pattern-library/deadline-propagation)
-- [Hierarchical cache](/docs/pattern-library/hierarchical-cache)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Resilience policy](/docs/pattern-library/resilience-policy) — Each source gets its own breaker, bulkhead and quota; any resilience policy the target runs satisfies it.
+- [Deadline propagation](/docs/pattern-library/deadline-propagation) — Every source call takes the remaining request budget.
+- [Hierarchical cache](/docs/pattern-library/hierarchical-cache) — Successful source results are cached per source.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Name check](/docs/pattern-library/name-check)
+
 
 ---
 

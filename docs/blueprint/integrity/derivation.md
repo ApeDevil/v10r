@@ -45,8 +45,9 @@ re-embed the whole corpus and use up the day's embedding quota.
 **Graphs, briefly.** Selective recomputation across a dependency graph uses the same key
 applied per node: a node is dirty when its key moves, and its dependents re-key on the new
 output. v10r has two small graphs and needs no general engine. The spreadsheet resolver
-(`src/lib/desk/formula.ts`) memoises per pass and reports cycles as `#CIRC!`. `topoSort` in
-`pattern-library/schema.ts` orders the registry's `depends_on` deterministically, and
+(`src/lib/desk/formula.ts`) memoises per pass and reports cycles as `#CIRC!`. `order` in
+`pattern-library/pattern-graph.ts` orders the registry's adoption relationships (builds on, composes,
+specializes) deterministically, and
 `patterns:validate` fails on a cycle.
 
 **Invariants.**

@@ -1,5 +1,5 @@
 {
-	"note": "Slice 2 reconciliation manifest (2026-11-28, Pattern Ontology Engineering). One entry per record whose id, kind or existence changed. action: rename | rename+reclassify | merge (a duplicated concept folded into its canonical record) | retire (an implementation inventory, documentation view or showcase that becomes refs and evidence of the pattern it implements, documents or demonstrates). `record` is the complete record before Slice 2; `transferred` lists what moved onto the target; `dropped` lists every item that did not move verbatim, with the reason. pattern-library/reconciliation/preservation.gate.test.ts checks this file against the registry. No aliases: an old id is not served anywhere.",
+	"note": "Slice 2 reconciliation manifest (2026-11-28, Pattern Ontology Engineering). One entry per record whose id, kind or existence changed. action: rename | rename+reclassify | merge (a duplicated concept folded into its canonical record) | retire (an implementation inventory, documentation view or showcase that becomes refs and evidence of the pattern it implements, documents or demonstrates). `record` is the complete record before Slice 2; `transferred` lists what moved onto the target; `dropped` lists every item that did not move verbatim, with the reason. pattern-library/reconciliation/preservation.gate.test.ts checks this file against the registry. No aliases: an old id is not served anywhere. `record` is each record as it stood immediately before reconciliation. For every entry but two it equals the Slice 1 registry (commit 742cf8b, recordState slice-1); architecture-hosted-mcp and db-ops-branch-refresh were corrected first (recordState corrected-before-reconciliation), and `historical` lists every field that differs from 742cf8b with the reason. `reclassified` (added with the Slice 2 refinements, 2026-11-28) moves an item to another field of the target when the target does not provide it: a capability that is a reference implementation feature, a feature of a composite solution, showcase functionality or a discovery term stays findable as a keyword instead of being asserted as a capability. Preserving knowledge does not require preserving an incorrect assertion.",
 	"baseCommit": "742cf8b",
 	"entries": [
 		{
@@ -186,7 +186,8 @@
 				"maturity": "proven",
 				"verifiedAt": "2026-09-18",
 				"verifiedSha": "dff6f415"
-			}
+			},
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-runtime-layers",
@@ -249,7 +250,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "request lifecycle",
+					"to": "keywords",
+					"class": "search keyword or contextual discovery term",
+					"reason": "the request lifecycle is the hook chain (middleware-hook-chain); the layered backend is where a request lands, not its lifecycle"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-codebase-map",
@@ -311,7 +322,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "file placement lookup",
+					"to": "keywords",
+					"class": "search keyword or contextual discovery term",
+					"reason": "a lookup table of where files live is a documentation view of the layered backend, not something the pattern provides"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-request-cycle-visualizer",
@@ -397,7 +418,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "request visualization",
+					"to": "keywords",
+					"class": "showcase or demonstration functionality",
+					"reason": "the request-cycle visualizer is a showcase that animates the layers; the pattern does not visualize requests"
+				},
+				{
+					"field": "capabilities",
+					"value": "developer education",
+					"to": "keywords",
+					"class": "showcase or demonstration functionality",
+					"reason": "teaching is what the showcase does, not a capability of the layered backend"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-settings",
@@ -459,7 +497,31 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "user preferences",
+					"to": "keywords",
+					"class": "feature of a composite solution that uses the pattern",
+					"reason": "the settings page is a composite that offers many preferences; style resolution resolves only palette, typography and radius"
+				},
+				{
+					"field": "capabilities",
+					"value": "theme cookie",
+					"to": "keywords",
+					"class": "feature of a composite solution that uses the pattern",
+					"reason": "the dark/light theme cookie belongs to the settings page; style resolution is kept orthogonal to the theme"
+				},
+				{
+					"field": "capabilities",
+					"value": "accessibility settings",
+					"to": "keywords",
+					"class": "feature of a composite solution that uses the pattern",
+					"reason": "accessibility settings live on the settings page that uses style resolution; resolution only guarantees its sets are WCAG-compliant"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-style-randomizer",
@@ -530,7 +592,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-decorative",
@@ -597,7 +660,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "decorative elements",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "the ornaments are v10r's reference implementation rendered from the resolved style, not resolution itself"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-primitives",
@@ -661,7 +734,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-composites",
@@ -722,7 +796,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-layout-primitives",
@@ -782,7 +857,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "spacing",
+					"to": "keywords",
+					"class": "search keyword or contextual discovery term",
+					"reason": "spacing is a token concern (design-tokens); here it only helps find the layout layer"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-tables",
@@ -843,7 +928,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "data tables",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a data table is one component family of v10r's component library; the component system is the layering, not each family"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-menus",
@@ -918,7 +1013,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "dropdown menus",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "one component family of v10r's library, not a capability of the layered system"
+				},
+				{
+					"field": "capabilities",
+					"value": "context menus",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "one component family of v10r's library, not a capability of the layered system"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-split-panes",
@@ -984,7 +1096,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "resizable panes",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "one component family of v10r's library, not a capability of the layered system"
+				},
+				{
+					"field": "capabilities",
+					"value": "reorderable panes",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "one component family of v10r's library, not a capability of the layered system"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-typography",
@@ -1045,7 +1174,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "forms-basic-forms",
@@ -1110,7 +1240,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "basic form patterns",
+					"to": "keywords",
+					"class": "search keyword or contextual discovery term",
+					"reason": "a generic phrase for finding the form stack; it names no capability"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "forms-advanced-patterns",
@@ -1190,7 +1330,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "identity-user-management",
@@ -1253,7 +1394,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "user account management",
+					"to": "keywords",
+					"class": "feature of a composite solution that uses the pattern",
+					"reason": "the account pages are a composite that uses the data-rights aggregator; the aggregator does not manage accounts"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-feedback",
@@ -1317,7 +1468,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "feedback form",
+					"to": "keywords",
+					"class": "feature of a composite solution that uses the pattern",
+					"reason": "a feedback form uses the honeypot; the honeypot does not implement feedback"
+				},
+				{
+					"field": "needs",
+					"value": "relational-db",
+					"to": "needs (implementation)",
+					"class": "semantic correction",
+					"reason": "The feedback form stores submissions in Postgres; that is the composite's database, not the honeypot's. On honeypot the need is implementation level with that reason, so it never becomes an adopter's requirement."
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-chat-assistant",
@@ -1393,7 +1561,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "toolkits-image-kit",
@@ -1471,7 +1640,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "ai cropping",
+					"to": "keywords",
+					"class": "feature of a composite solution that uses the pattern",
+					"reason": "cropping was a step of the image kit pipeline that used the metadata reader; the reader proposes metadata only"
+				},
+				{
+					"field": "capabilities",
+					"value": "embedding",
+					"to": "keywords",
+					"class": "feature of a composite solution that uses the pattern",
+					"reason": "embedding was a step of the image kit pipeline; the reader does not embed images"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "analytics-live-feed",
@@ -1545,7 +1731,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "live feed",
+					"to": "keywords",
+					"class": "showcase or demonstration functionality",
+					"reason": "the analytics live feed is a showcase of the stream; the stream delivers events, the feed is one use of it"
+				},
+				{
+					"field": "needs",
+					"value": "key-value-store",
+					"to": "needs (conditional, the stream's own condition)",
+					"class": "semantic correction",
+					"reason": "The live feed buffered hits in the shared store when several instances record them, a showcase concern. The stream needs the key-value store under its own condition (serverless hosts, where pub/sub replaces the in-memory connection map), which is already declared."
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "analytics-my-data-transparency",
@@ -1622,7 +1825,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "notifications-schema-delivery-log",
@@ -1691,7 +1895,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "database schema",
+					"to": "keywords",
+					"class": "search keyword or contextual discovery term",
+					"reason": "every database-backed pattern has a schema; the phrase only helps find the outbox tables"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "jobs-platform-scheduling",
@@ -1766,7 +1980,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "jobs-registered-catalog",
@@ -1844,7 +2059,31 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "retention jobs",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "retention jobs are entries of v10r's job registry (an implementation inventory); the scheduler runs any job"
+				},
+				{
+					"field": "capabilities",
+					"value": "cleanup jobs",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "cleanup jobs are entries of v10r's job registry; the scheduler runs any job"
+				},
+				{
+					"field": "needs",
+					"value": "relational-db",
+					"to": "needs (required)",
+					"class": "semantic correction",
+					"reason": "The catalog's implementation need is subsumed: job scheduling itself requires the relational database (its runs are recorded there), a stricter level for the same capability."
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-cache",
@@ -1932,7 +2171,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "ephemeral state",
+					"to": "keywords",
+					"class": "search keyword or contextual discovery term",
+					"reason": "the old cache record listed ephemeral Redis uses; the tiered cache provides caching, the phrase helps find it"
+				},
+				{
+					"field": "needs",
+					"value": "key-value-store",
+					"to": "needs (conditional, unpinned)",
+					"class": "semantic correction",
+					"reason": "The retired record was v10r's Redis client, so it pinned redis. The tiered cache works with any shared key-value store and needs one only when several instances share the tier; the Redis binding stays recorded as the need's v10r binding (Upstash REST) in INFRASTRUCTURE_NEEDS."
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "viz-plots",
@@ -1994,7 +2250,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "scatter plot",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a renderer family of v10r's chart components; the pattern is browser-only loading of specialised renderers"
+				},
+				{
+					"field": "capabilities",
+					"value": "heatmap",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a renderer family of v10r's chart components"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "viz-diagrams",
@@ -2055,7 +2328,31 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "flow diagrams",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a renderer family of v10r's components"
+				},
+				{
+					"field": "capabilities",
+					"value": "state diagrams",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a renderer family of v10r's components"
+				},
+				{
+					"field": "capabilities",
+					"value": "custom node types",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a feature of v10r's flow-diagram component"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "viz-maps",
@@ -2125,7 +2422,38 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "webgl base map",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a renderer family of v10r's components"
+				},
+				{
+					"field": "capabilities",
+					"value": "markers",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a feature of v10r's map component"
+				},
+				{
+					"field": "capabilities",
+					"value": "geojson choropleth",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a feature of v10r's map component"
+				},
+				{
+					"field": "needs",
+					"value": "external-api",
+					"to": "needs (implementation)",
+					"class": "semantic correction",
+					"reason": "A tile server is a need of the map renderer family, which is a reference implementation feature of data visualization (its capabilities moved to keywords); on the pattern it is implementation level with that reason."
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "viz-timelines",
@@ -2178,7 +2506,17 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "timeline rendering",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "a renderer family of v10r's components"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "3d-static-animated-scenes",
@@ -2245,7 +2583,24 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"reclassified": [
+				{
+					"field": "capabilities",
+					"value": "orbit controls",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "v10r's scenes use orbit controls; wiring Threlte does not provide them"
+				},
+				{
+					"field": "capabilities",
+					"value": "animation playback",
+					"to": "keywords",
+					"class": "reference implementation feature",
+					"reason": "v10r's animated scenes play GLTF animations; wiring Threlte does not provide it"
+				}
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-middleware",
@@ -2305,7 +2660,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-rest-api",
@@ -2384,7 +2740,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-error-handling",
@@ -2445,7 +2802,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-state-management",
@@ -2514,7 +2872,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-deployment",
@@ -2570,7 +2929,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-testing-infra",
@@ -2648,7 +3008,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-pattern-mcp",
@@ -2712,7 +3073,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-hosted-mcp",
@@ -2786,7 +3148,30 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "corrected-before-reconciliation",
+			"historical": {
+				"commit": "742cf8b",
+				"differences": [
+					{
+						"field": "needs",
+						"slice1": [
+							"key-value-store",
+							{
+								"need": "relational-db",
+								"level": "implementation",
+								"why": "v10r keeps its demo-state service and tool-call telemetry in Postgres; the trust surfaces authenticate with environment bearer tokens"
+							}
+						],
+						"reason": "S3 correction (Slice 1 review, 2026-11-28): the key-value store belongs to the rate-limiting contract, so hosted MCP inherits it by building on rate limiting instead of declaring it; the implementation reason was sharpened (registry is static JSON)."
+					},
+					{
+						"field": "depends_on",
+						"slice1": [],
+						"reason": "S3 correction: hosted MCP builds on rate limiting (the public endpoint runs a fail-closed limiter)."
+					}
+				]
+			}
 		},
 		{
 			"previousId": "architecture-mcp-evolution",
@@ -2937,7 +3322,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-mcp-authorization",
@@ -3093,7 +3479,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-agentic-architecture",
@@ -3213,7 +3600,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-wasm-kernel",
@@ -3317,7 +3705,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "architecture-external-service",
@@ -3605,7 +3994,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-sidebar",
@@ -3670,7 +4060,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-navigation",
@@ -3726,7 +4117,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-keyboard-shortcuts",
@@ -3787,7 +4179,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-modals",
@@ -3846,7 +4239,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-toasts",
@@ -3906,7 +4300,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-session-lifecycle",
@@ -3968,7 +4363,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-loading-states",
@@ -4036,7 +4432,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-empty-states",
@@ -4093,7 +4490,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-page-header",
@@ -4150,7 +4548,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "app-shell-quick-search",
@@ -4223,7 +4622,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-component-system",
@@ -4362,7 +4762,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-design-philosophy",
@@ -4425,7 +4826,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-explosive-discovery",
@@ -4573,7 +4975,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-latent-cards",
@@ -4692,7 +5095,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-design-tokens",
@@ -4754,7 +5158,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-tonal-elevation",
@@ -4813,7 +5218,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ui-fluid-styling",
@@ -4873,7 +5279,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "forms-superforms-valibot",
@@ -4949,7 +5356,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "forms-validation-timing",
@@ -5018,7 +5426,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "forms-multi-step-dynamic",
@@ -5085,7 +5494,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "forms-auth-forms",
@@ -5142,7 +5552,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "forms-file-uploads",
@@ -5214,7 +5625,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "i18n-locale-routing",
@@ -5282,7 +5694,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "i18n-messages",
@@ -5343,7 +5756,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "i18n-formatting",
@@ -5405,7 +5819,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "i18n-db-content",
@@ -5456,7 +5871,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-agent-skills",
@@ -5550,7 +5966,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-postgres-connection",
@@ -5617,7 +6034,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-schema-type-inference",
@@ -5684,7 +6102,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-queries-mutations-split",
@@ -5751,7 +6170,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-neo4j-connection",
@@ -5820,7 +6240,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-graph-modeling",
@@ -5878,7 +6299,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-graph-traversal",
@@ -5936,7 +6358,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-polyglot-freshness",
@@ -5986,7 +6409,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "databases-object-storage",
@@ -6063,7 +6487,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "db-ops-dev-prod-schema-workflow",
@@ -6112,7 +6537,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "db-ops-branch-refresh",
@@ -6182,7 +6608,30 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "corrected-before-reconciliation",
+			"historical": {
+				"commit": "742cf8b",
+				"differences": [
+					{
+						"field": "needs",
+						"slice1": [
+							{
+								"need": "relational-db",
+								"level": "required",
+								"pinned": "postgres",
+								"why": "branch refresh copies a Postgres branch"
+							},
+							{
+								"need": "external-api",
+								"level": "conditional",
+								"when": "the database host offers a branching API (v10r: Neon's)"
+							}
+						],
+						"reason": "Correction before reconciliation: the workflow cannot run without the host's branching API, so external-api is required, not conditional."
+					}
+				]
+			}
 		},
 		{
 			"previousId": "db-ops-bootstrap-seed",
@@ -6247,7 +6696,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "identity-passwordless-auth",
@@ -6311,7 +6761,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "identity-oauth",
@@ -6380,7 +6831,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "identity-route-guards",
@@ -6437,7 +6889,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "identity-capability-grants",
@@ -6504,7 +6957,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "identity-passkeys",
@@ -6580,7 +7034,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "anti-abuse-captcha",
@@ -6650,7 +7105,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "anti-abuse-honeypot",
@@ -6709,7 +7165,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "anti-abuse-rate-limiting",
@@ -6774,7 +7231,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "anti-abuse-ai-budget",
@@ -6831,7 +7289,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "anti-abuse-bot-decision-audit",
@@ -6889,7 +7348,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-admin-area",
@@ -6945,7 +7405,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-gdpr",
@@ -7038,7 +7499,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-consent-cookies",
@@ -7098,7 +7560,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-data-retention",
@@ -7165,7 +7628,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-pairing",
@@ -7226,7 +7690,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-style-picking",
@@ -7303,7 +7768,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "admin-privacy-audit-log",
@@ -7371,7 +7837,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-chatbot-session",
@@ -7427,7 +7894,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-provider-routing",
@@ -7482,7 +7950,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-site-awareness",
@@ -7532,7 +8001,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-graph-rag",
@@ -7595,7 +8065,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-turn-trace",
@@ -7697,7 +8168,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-image-metadata",
@@ -7754,7 +8226,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-toon-format",
@@ -7804,7 +8277,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-harness-lens",
@@ -7867,7 +8341,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-untrusted-content-boundary",
@@ -7980,7 +8455,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-agent-actions",
@@ -8144,7 +8620,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-mcp-client",
@@ -8285,7 +8762,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-mcp-app-provider",
@@ -8388,7 +8866,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-agent-to-agent",
@@ -8514,7 +8993,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-generative-ui",
@@ -8652,7 +9132,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-webmcp",
@@ -8712,7 +9193,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-agent-user-interaction",
@@ -8790,7 +9272,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "ai-agent-observability",
@@ -8850,7 +9333,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "analytics-pageview-hook",
@@ -8906,7 +9390,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "analytics-consent-sessions",
@@ -8966,7 +9451,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "analytics-journeys",
@@ -9022,7 +9508,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "analytics-funnels",
@@ -9080,7 +9567,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "analytics-rollup-cleanup",
@@ -9139,7 +9627,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "notifications-router-outbox",
@@ -9211,7 +9700,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "notifications-channels",
@@ -9287,7 +9777,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "notifications-sse-stream",
@@ -9355,7 +9846,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "notifications-settings-matrix",
@@ -9414,7 +9906,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "jobs-scheduler",
@@ -9552,7 +10045,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "pwa-manifest",
@@ -9611,7 +10105,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "pwa-service-worker",
@@ -9690,7 +10185,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "pwa-web-push",
@@ -9749,7 +10245,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "viz-graphs",
@@ -9807,7 +10304,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "viz-charts",
@@ -9876,7 +10374,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "3d-threlte-integration",
@@ -9943,7 +10442,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "3d-model-viewer-customizer",
@@ -10004,7 +10504,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "content-blog-engine",
@@ -10071,7 +10572,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "content-comments",
@@ -10129,7 +10631,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "content-markdown-pipeline",
@@ -10200,7 +10703,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "content-markdown-editor",
@@ -10258,7 +10762,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "content-docs-site",
@@ -10314,7 +10819,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "velocity-idle-work",
@@ -10375,7 +10881,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "velocity-screen-read-model",
@@ -10432,7 +10939,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "velocity-asset-delivery",
@@ -10550,7 +11058,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "velocity-compute-locality",
@@ -10613,7 +11122,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		},
 		{
 			"previousId": "pim-sheet-transform-recipe",
@@ -10787,7 +11297,8 @@
 				"docs/pattern-library/ (generated pages)",
 				"skills/ (generated Agent Skills)",
 				"mcp/server.bundle.js, mcp/public-excerpts.snapshot.json (generated)"
-			]
+			],
+			"recordState": "slice-1"
 		}
 	]
 }

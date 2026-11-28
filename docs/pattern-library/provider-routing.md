@@ -18,7 +18,7 @@ Resolver functions pick an active chat, tool-calling, or vision LLM provider per
 
 **When to use:** Use when an app must route between multiple LLM providers by capability and needs cross-instance cooldown on failures.
 
-**Needs:** required llm-provider
+**Needs:** required llm-provider · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
 
 ## Docs
 
@@ -31,6 +31,17 @@ Resolver functions pick an active chat, tool-calling, or vision LLM provider per
 ## Tests
 
 - `src/lib/server/ai/providers.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/ai/providers.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/ai/providers.test.ts))
+
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Resilience policy](/docs/pattern-library/resilience-policy) — Rate-limited providers trip a circuit breaker so the resolver routes around them; any breaker satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

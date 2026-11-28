@@ -105,12 +105,18 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 - Hash the contract, not the document: drop prose and sort keys before digesting, or every doc-comment edit and generator upgrade reads as a contract change.
 - Give the costliest public action its own, smaller rate-limit buckets: here a wake check holds a function and the free host for up to 75 s.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](multi-client-core.md)
-- [Deadline propagation](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/deadline-propagation.md)
-- [Resilience policy](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/resilience-policy.md)
-- [Latency tracing](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/latency-tracing.md)
+**Composes (constituents of its solution)**
+
+- [Deadline propagation](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/deadline-propagation.md) — required: Every call to the service runs inside the remaining request deadline with a bounded read.
+- [Resilience policy](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/resilience-policy.md) — required: The one seam ends every call in exactly one failure kind and retries only idempotent operations.
+- [Latency tracing](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/latency-tracing.md) — optional when callers should see the service's share of a request in Server-Timing: The Server-Timing split is an enhancement for diagnosing the second hop; the seam works without it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

@@ -18,7 +18,7 @@ Projects a recorded turn trace onto invoke_agent, chat and execute_tool spans wi
 
 **When to use:** Use when an OpenTelemetry backend should read agent turns without a second tracer.
 
-**Needs:** required relational-db (via turn-trace), llm-provider (via ai-surfaces)
+**Needs:** required llm-provider (via ai-surfaces, ai-tool-harness), relational-db (via turn-trace)
 
 ## Avoid when
 
@@ -40,9 +40,20 @@ Projects a recorded turn trace onto invoke_agent, chat and execute_tool spans wi
 
 - [`/showcases/interop`](/showcases/interop) — Agentic Interoperability Lab — each section labels itself live, fixture or recorded
 
-## Depends on
+## Relationships
 
-- [Turn trace and turn graph](/docs/pattern-library/turn-trace)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Turn trace and turn graph](/docs/pattern-library/turn-trace) — It projects a recorded turn trace onto spans; without the trace there is nothing to export.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (optional)
+
 
 ---
 

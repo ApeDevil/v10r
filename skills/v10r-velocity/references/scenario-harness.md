@@ -10,7 +10,7 @@ Representative paths driven under one adverse condition at a time — cold cache
 
 **When to use:** Use once the obvious latency work is done and the remaining risk is behaviour under failure and load rather than in the happy path.
 
-**Needs:** conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
+**Needs:** v10r's implementation uses key-value-store
 
 ## Avoid when
 
@@ -52,10 +52,20 @@ Representative paths driven under one adverse condition at a time — cold cache
 - Give the patterns with no demonstrable UI their only proof here. Load shedding's success looks like nothing happening, so a scenario row is what an honest measurement of it actually is.
 - Drive the REAL mechanisms. A harness that reimplements the pattern proves the harness works; if the runtime cannot load the real modules, fix the runtime rather than the scope.
 
-## Depends on
+## Relationships
 
-- [Performance budget and ratchet](performance-budget-ratchet.md)
-- [Resilience policy](resilience-policy.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Performance budget and ratchet](performance-budget-ratchet.md) — Deterministic columns are gated against committed ceilings.
+
+**References (context only, never a step)**
+
+- [Resilience policy](resilience-policy.md) — Its hanging- and failing-dependency scenarios exercise the resilience policy; that is evidence for the policy, not a prerequisite.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

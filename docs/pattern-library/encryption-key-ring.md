@@ -59,9 +59,16 @@ Stored credentials are AES-256-GCM envelopes that name the key sealing them (a d
 - Keep reading the pre-ring envelope format by trying every key, and count it as stale so the sweep migrates it.
 - Make the sweep fail after re-sealing what it can when some envelope opens under no key: that failed run is the signal not to drop the previous key yet.
 
-## Depends on
+## Relationships
 
-- [Jobs and scheduling](/docs/pattern-library/job-scheduling)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Jobs and scheduling](/docs/pattern-library/job-scheduling) — Rotation is a ring change plus a re-seal sweep that runs as a registered job; any scheduled-job runner satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

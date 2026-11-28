@@ -30,6 +30,14 @@ A read-only local stdio MCP server that exposes v10r's curated pattern registry 
 
 - [`/showcases/mcp`](/showcases/mcp)
 
+## Relationships
+
+**Referenced by**
+
+- [Hosted MCP](/docs/pattern-library/hosted-mcp)
+- [Architecture Engineering](/docs/pattern-library/architecture-engineering)
+
+
 ---
 
 _Machine-readable record: `pattern-mcp` in `pattern-library/registry.json`._

@@ -28,6 +28,13 @@ Server-resolved page context is injected as a passive block into the chatbot's p
 
 - `src/lib/server/search/page-context.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/search/page-context.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/search/page-context.ts))
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `chatbot-site-awareness` in `pattern-library/registry.json`._

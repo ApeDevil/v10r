@@ -36,6 +36,13 @@ A short-lived, single-use pairing code and QR flow that attributes a phone's ano
 
 - [`/pair/[code]`](/pair/[code]) (app route, no showcase)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `debug-pairing` in `pattern-library/registry.json`._

@@ -33,6 +33,13 @@ Connects to a managed Neo4j Aura database over its HTTP Query API via fetch, wit
 
 - [`/showcases/db/graph/connection`](/showcases/db/graph/connection)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `neo4j-connection` in `pattern-library/registry.json`._

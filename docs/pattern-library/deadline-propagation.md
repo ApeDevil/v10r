@@ -16,7 +16,7 @@ A latency budget stamped once at the edge, from which every downstream operation
 
 **When to use:** Use when a request or job calls external APIs, AI providers, distributed services, several databases in sequence, or anything that retries.
 
-**Needs:** conditional key-value-store (when breaker state must be shared across instances; via resilience-policy) · v10r's implementation uses relational-db
+**Needs:** v10r's implementation uses relational-db
 
 ## Avoid when
 
@@ -62,9 +62,24 @@ A latency budget stamped once at the edge, from which every downstream operation
 - Attach the catch to the abandoned work BEFORE racing it. Once the race rejects nothing is listening, and on Vercel an unhandled rejection can take the process down (SvelteKit #9785).
 - Adoption is per leaf and incremental. Stamping the budget is cheap; nothing is actually bounded until a leaf takes a child and honours it, so record which leaves have rather than implying coverage.
 
-## Depends on
+## Relationships
 
-- [Resilience policy](/docs/pattern-library/resilience-policy)
+**References (context only, never a step)**
+
+- [Resilience policy](/docs/pattern-library/resilience-policy) — Retries and timeouts of the resilience policy spend the propagated budget; each works without the other.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [External service runtime](/docs/pattern-library/external-service-runtime) (required)
+
+**Built on by**
+
+- [Multi-source aggregation](/docs/pattern-library/multi-source-aggregation)
+
 
 ---
 

@@ -24,9 +24,10 @@
  * Pure and deterministic (no timestamps, registry order throughout); the script
  * `scripts/agent-skills/build.ts` owns all I/O. Vite-free leaf like `render.ts`.
  */
-import { adoptionNeeds, declaredNeeds, needsSummary } from '#patterns/infrastructure-needs.ts';
+import { needsSummary, ownNeeds } from '#patterns/infrastructure-needs.ts';
+import { graphOf } from '#patterns/pattern-graph.ts';
 import { registryDigest } from '#patterns/registry-digest.ts';
-import { buildById, INFRASTRUCTURE_NEEDS, topoSort } from '#patterns/schema.ts';
+import { INFRASTRUCTURE_NEEDS } from '#patterns/schema.ts';
 import type { PatternRecord, RegGroup, Registry } from './registry';
 import { clipAtWord, patternPageSourceUrl, renderPatternReference } from './render';
 
@@ -114,7 +115,7 @@ function maturityTag(pattern: PatternRecord): string {
 }
 
 function indexRow(pattern: PatternRecord): string[] {
-	const own = needsSummary(declaredNeeds(pattern));
+	const own = needsSummary(ownNeeds(pattern));
 	const needs = own.length > 0 ? ` · needs ${own}` : '';
 	if (pattern.tier === 'light') {
 		return [
@@ -149,7 +150,7 @@ function renderGroupSkill(registry: Registry, group: RegGroup): string {
 		'',
 		'1. Find the candidate in the index below. Bold, linked rows are deep cards; the rest are index rows.',
 		'2. Fitness first: read its *Avoid when* and *Alternatives*. If the target matches a contraindication, or a simpler alternative fits, stop here — the smallest thing that works wins.',
-		"3. Check *Requires* against the target project's infrastructure, and *Depends on* for prerequisites to build first.",
+		"3. Check *Needs* against the target project's infrastructure, and the reference's *Relationships*: what it *builds on* (build or map first), what it *composes* (required, conditional or optional constituents) and what it *specializes* (inherited invariants, never built twice).",
 		'4. Deep card: open `references/<id>.md`. Every *Invariant* MUST still hold after you adapt it; the *Emulation notes* say what to change for a new project. Read the linked docs and code on GitHub when you need the real implementation.',
 		`5. Index row (no reference file): its docs page is \`${patternPageSourceUrl('<id>')}\` — pointers to docs, code and proof, but no recorded invariants, so treat it as orientation, not a contract.`,
 		`6. When the v10r Pattern MCP is connected (\`${PATTERN_MCP_URL}\`, or the local stdio server), \`get_pattern {ids, sections}\` returns the live card and \`get_file_excerpt\` the cited code; prefer it over these generated copies.`,
@@ -172,7 +173,7 @@ function renderSelectionSkill(registry: Registry): string {
 	const description = fitList(
 		'Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (',
 		registry.groups.map((g) => g.title),
-		`), before reading any single pattern: it maps the ${registry.patterns.length} registry patterns to the v10r group agent skills, explains infrastructure needs and depends_on, and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected.`,
+		`), before reading any single pattern: it maps the ${registry.patterns.length} registry patterns to the v10r group agent skills, explains infrastructure needs and typed relationships (builds on, composes, specializes), and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected.`,
 		1024,
 	);
 	const lines: string[] = [
@@ -196,14 +197,15 @@ function renderSelectionSkill(registry: Registry): string {
 		'3. **With the v10r Pattern MCP connected** (hosted `' +
 			PATTERN_MCP_URL +
 			'`, or the local stdio server in `mcp/`):',
-		"   - `recommend_emulation_plan {capabilities, target_infra}` returns a dependency-ordered plan; each step carries its contraindications, its infrastructure needs by level (including what its dependencies require) and a fit verdict against `target_infra`. It never drops a step itself — you do, when a step's *Avoid when* describes the target.",
+		"   - `recommend_emulation_plan {capabilities, target_infra}` returns a plan ordered foundations and constituents first; each step carries why it is included, its contraindications, its infrastructure needs by level (including what its foundations and constituents require) and a fit verdict against `target_infra`. Conditional and optional constituents are listed as open decisions, never added silently. It never drops a step itself — you do, when a step's *Avoid when* describes the target.",
 		'   - `get_pattern {ids, sections: ["fitness", "invariants", "emulation_notes"]}` reads up to five cards at once; `search_patterns {query: "*"}` lists the category map.',
 		'4. **Without the MCP**, do the same by hand:',
 		'   - find candidates in the group agent skills below (each has a full pattern index);',
-		'   - expand every candidate through *depends on* — [references/dependency-graph.md](references/dependency-graph.md) lists every edge and a build order;',
-		"   - union the *required* and *conditional* needs of the whole set, including the dependencies', and compare them with the target (an *optional* or *v10r's implementation uses* need never rules a pattern out);",
+		'   - expand every candidate through what it *builds on* and its *required* constituents, and the foundations and constituents of what it *specializes* (the generalization itself is never a second step) — [references/relationship-graph.md](references/relationship-graph.md) lists every relationship and a build order;',
+		'   - decide each *conditional* constituent against the target (adopt it when its condition holds) and each *optional* one on its merits; never add or drop one silently;',
+		"   - union the *required* and *conditional* needs of the whole set, including those of foundations and constituents, and compare them with the target (an *optional* or *v10r's implementation uses* need never rules a pattern out);",
 		'   - drop any pattern whose *Avoid when* matches, and prefer a listed *Alternative* when its condition holds.',
-		"5. **Build in dependency order**, one pattern at a time, keeping each deep card's invariants.",
+		"5. **Build foundations and constituents first**, one pattern at a time, keeping each deep card's invariants (and those it inherits by specialization).",
 		'',
 		'Fewer patterns is the better plan: catalogs over-recommend, and every adopted pattern is code the project must own.',
 		'',
@@ -224,43 +226,44 @@ function renderSelectionSkill(registry: Registry): string {
 	return lines.join('\n');
 }
 
-function renderDependencyGraph(registry: Registry): string {
-	const byId = buildById(registry);
+function renderRelationshipGraph(registry: Registry): string {
+	const graph = graphOf(registry);
 	const connected = new Set<string>();
 	for (const pattern of registry.patterns) {
-		if (pattern.depends_on.length === 0) continue;
-		connected.add(pattern.id);
-		for (const dep of pattern.depends_on) connected.add(dep);
+		for (const edge of graph.edgesFrom(pattern.id)) {
+			if (edge.type === 'references') continue;
+			connected.add(pattern.id);
+			connected.add(edge.to);
+		}
 	}
-	// The Kahn toposort the MCP plan assembler and patterns:validate use, so a by-hand plan
-	// and a tool plan come out in the same order.
-	const { order } = topoSort(
-		[...connected],
-		byId,
-		registry.patterns.map((p) => p.id),
-	);
+	// The order the MCP plan assembler uses, so a by-hand plan and a tool plan agree.
+	const { order } = graph.order([...connected]);
 	const lines: string[] = [
-		'# v10r pattern dependency graph',
+		'# v10r pattern relationship graph',
 		'',
 		GENERATED_NOTE,
 		'',
-		"Every pattern that depends on another or is depended on, in a valid build order (prerequisites first, ties in registry order). *Needs* are the pattern's own infrastructure needs by level; adopting it also takes the required and conditional needs of everything it depends on.",
+		"Every pattern in an adoption relationship, in a valid build order (foundations and constituents first, ties in registry order). *Builds on*: must be available (the target's own equivalent satisfies it). *Composes*: constituents, each required, conditional (adopt when its condition holds) or optional (an enhancement). *Specializes*: a narrower realization; the generalization's invariants hold and its foundations and constituents apply, but it is never built twice. *Needs* are the pattern's own infrastructure needs by level; adopting it also takes the required and conditional needs of its foundations and required constituents.",
 		'',
-		'| # | Pattern | Agent skill | Depends on | Needs |',
-		'|---|---|---|---|---|',
+		'| # | Pattern | Agent skill | Builds on | Composes | Specializes | Needs |',
+		'|---|---|---|---|---|---|---|',
 	];
+	const ids = (list: string[]) => list.map((id) => `\`${id}\``).join(', ') || '—';
 	order.forEach((id, index) => {
-		const pattern = byId.get(id) as PatternRecord;
-		const deps = pattern.depends_on.map((dep) => `\`${dep}\``).join(', ') || '—';
-		const needs = needsSummary(declaredNeeds(pattern)) || '—';
+		const pattern = graph.byId.get(id) as PatternRecord;
+		const composes =
+			pattern.composes
+				.map((entry) => `\`${entry.id}\`${entry.level === 'required' ? '' : ` (${entry.level})`}`)
+				.join(', ') || '—';
+		const needs = needsSummary(ownNeeds(pattern)) || '—';
 		lines.push(
-			`| ${index + 1} | \`${id}\` (${pattern.tier}) | \`${agentSkillNameFor(groupOf(registry, pattern))}\` | ${deps} | ${needs} |`,
+			`| ${index + 1} | \`${id}\` (${pattern.tier}) | \`${agentSkillNameFor(groupOf(registry, pattern))}\` | ${ids(pattern.builds_on.map((entry) => entry.id))} | ${composes} | ${pattern.specializes ? `\`${pattern.specializes.id}\`` : '—'} | ${needs} |`,
 		);
 	});
 	lines.push('', '## Infrastructure → patterns', '');
 	for (const entry of INFRASTRUCTURE_NEEDS) {
 		const users = registry.patterns
-			.map((p) => ({ id: p.id, need: adoptionNeeds(p, byId).find((need) => need.need === entry.id) }))
+			.map((p) => ({ id: p.id, need: graph.needs(p.id).find((need) => need.need === entry.id) }))
 			.filter(({ need }) => need !== undefined && (need.level === 'required' || need.level === 'conditional'))
 			.map(({ id, need }) => `\`${id}\`${need?.level === 'conditional' ? ' (conditional)' : ''}`);
 		if (users.length > 0) lines.push(`- **${entry.id}** (${entry.title}; v10r: ${entry.binding}): ${users.join(', ')}`);
@@ -309,7 +312,7 @@ export function renderAgentSkills(registry: Registry): Map<string, string> {
 	const files = new Map<string, string>();
 	files.set('README.md', renderHub(registry));
 	files.set(`${SELECTION_AGENT_SKILL}/SKILL.md`, renderSelectionSkill(registry));
-	files.set(`${SELECTION_AGENT_SKILL}/references/dependency-graph.md`, renderDependencyGraph(registry));
+	files.set(`${SELECTION_AGENT_SKILL}/references/relationship-graph.md`, renderRelationshipGraph(registry));
 	for (const group of registry.groups) {
 		const name = agentSkillNameFor(group.id);
 		const patterns = patternsInGroup(registry, group.id);

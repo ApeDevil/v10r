@@ -55,9 +55,24 @@ The canonical pattern registry is projected into spec-valid Agent Skills (one pe
 - Choose granularity by what sits in the agent's context permanently: every installed skill's description does.
 - Reuse the renderer that builds your docs pages so the two projections cannot disagree.
 
-## Depends on
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Reproducible artifact build](/docs/pattern-library/reproducible-artifact-build) — skills/ is a committed generated artifact that fails the gate when stale; any regenerate-and-check gate satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (conditional)
+
+**Referenced by**
 
 - [Pattern Index](/docs/pattern-library/pattern-index)
+
 
 ---
 

@@ -10,7 +10,7 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 
 **When to use:** Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.
 
-**Needs:** required relational-db (via mcp-authorization), key-value-store (via rate-limiting), email-delivery (via passwordless-auth) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
+**Needs:** required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db (via mcp-authorization, passwordless-auth, provenance-record) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
 
 ## Avoid when
 
@@ -63,6 +63,16 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 - The MCP 3D service shares protocol infrastructure with the Pattern MCP and nothing else: separate endpoint, identity, registry, App and limits.
 - The MCP 3D service requires a Velociraptor account: an OAuth access token for its audience on every request (mcp-authorization).
 
+Inherited from [Asset production pipeline](asset-production-pipeline.md) (specializes):
+
+- Callers ask through one strict request schema — a generator id and bounded parameters; no request can name a script, a file or an engine flag.
+- The budget is checked from an exact estimate before anything is built and from the real mesh after; an over-budget request costs one arithmetic pass.
+- Same request, same bytes — in-process or in a worker, on V8 or JSC; the label is presentation and never enters the derivation key.
+- Every exported GLB passes inspection (closed outward shells, finite values, declared envelope) and its own read-back gate; tests hold it to the Khronos validator with zero errors and warnings.
+- Findings are data with a fixed severity per code; a refused or failed run returns no bytes, and a cancelled one keeps nothing.
+- Stores are write-once and owner-scoped: a repeat run reuses, different bytes under a kept key are refused, and a job never publishes.
+- The core imports no framework, DOM or runtime API, so the same engine runs in a function, a worker process, a terminal and a browser.
+
 ## Emulation notes
 
 - Advertise the model argument as a plain object and serve the vocabulary from a describe tool: a full JSON Schema in tools/list costs ~9k tokens per connection.
@@ -70,14 +80,31 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 - Put shared models in the URL fragment, never the query string, and bound the decoder (length, inflate size, ratio).
 - Measure token cost and host behaviour before claiming either; the numbers in the doc are dated development measurements.
 
-## Depends on
+## Relationships
 
-- [Asset production pipeline](asset-production-pipeline.md)
-- [MCP authorization](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/mcp-authorization.md)
-- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md)
-- [MCP App provider](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/mcp-app-provider.md)
-- [Rate limiting](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/rate-limiting.md)
-- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/threlte-integration.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md) — The modeling tools run on a separate stateless MCP service; any MCP server endpoint satisfies it.
+
+**Composes (constituents of its solution)**
+
+- [MCP authorization](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/mcp-authorization.md) — required: The modeling service is an OAuth protected resource: every request carries an access token for its audience.
+- [MCP App provider](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/mcp-app-provider.md) — optional when the MCP host renders Views: An MCP App draws a server-side preview mesh; the text and structured answer are complete without it.
+- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/threlte-integration.md) — optional when the model is shown in the native viewer: The native viewer runs the same kernel in a web worker; the MCP tools work without it.
+
+**Specializes (its invariants hold here; it is never built twice)**
+
+- [Asset production pipeline](asset-production-pipeline.md) — Every parametric model is an asset production request: one strict request schema, same bytes, inspection before encoding.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

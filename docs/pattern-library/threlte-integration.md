@@ -36,6 +36,27 @@ Threlte 8 is wired into SvelteKit with SSR and prerendering disabled for the 3D 
 - [`/showcases/3d/static-scene`](/showcases/3d/static-scene) — Static & animated scenes
 - [`/showcases/3d/animated-scene`](/showcases/3d/animated-scene) — Static & animated scenes
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+**Part of**
+
+- [Product composition engine](/docs/pattern-library/product-connection-engine) (optional)
+- [Asset production pipeline](/docs/pattern-library/asset-production-pipeline) (optional)
+- [Agentic parametric modeling](/docs/pattern-library/agentic-parametric-modeling) (optional)
+
+**Built on by**
+
+- [Full-screen model viewer and customizer](/docs/pattern-library/model-viewer-customizer)
+
+
 ---
 
 _Machine-readable record: `threlte-integration` in `pattern-library/registry.json`._

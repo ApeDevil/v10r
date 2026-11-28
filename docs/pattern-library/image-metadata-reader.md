@@ -35,6 +35,13 @@ A vision-capable LLM proposes title, caption, alt text, keywords, and category f
 - [`/showcases/toolkits/image-metadata`](/showcases/toolkits/image-metadata)
 - [`/showcases/toolkits/image-kit`](/showcases/toolkits/image-kit) — Image Kit
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `image-metadata-reader` in `pattern-library/registry.json`._

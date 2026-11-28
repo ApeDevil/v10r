@@ -29,6 +29,13 @@ Scripts and seed modules that populate a fresh database with baseline and sample
 - `src/lib/server/db/seed/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/db/seed) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/db/seed))
 - `scripts/db/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/scripts/db) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/scripts/db))
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `database-bootstrap-seed` in `pattern-library/registry.json`._

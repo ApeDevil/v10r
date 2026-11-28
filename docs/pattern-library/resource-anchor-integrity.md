@@ -36,6 +36,24 @@ Every #fragment a registry doc ref names must be a heading the page renders, che
 - `src/lib/docs/heading-anchors.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/docs/heading-anchors.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/docs/heading-anchors.test.ts))
 - `src/lib/agent-instructions.gate.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/agent-instructions.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/agent-instructions.gate.test.ts))
 
+## Invariants
+
+
+Inherited from [Source-of-truth gate](/docs/pattern-library/source-of-truth-gate) (specializes):
+
+- One fact, one owner. A second writable copy is a defect, not a configuration option.
+- Every non-owner copy is typed, imported, generated with a check, or drift-tested — there is no fifth kind.
+- A drift test asserts its own scan was non-empty; an empty list must not pass vacuously.
+- Exemption lists fail when an entry no longer applies, so allowances only shrink.
+- Reading the owner succeeds or fails loudly; it never silently substitutes another source.
+
+## Relationships
+
+**Specializes (its invariants hold here; it is never built twice)**
+
+- [Source-of-truth gate](/docs/pattern-library/source-of-truth-gate) — Each fragment and routed path has one owner (the rendered heading, the file) and a gate checks every copy against it.
+
+
 ---
 
 _Machine-readable record: `resource-anchor-integrity` in `pattern-library/registry.json`._

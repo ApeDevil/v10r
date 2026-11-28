@@ -34,9 +34,31 @@ Serves the pattern registry and a separate demo-state service over HTTP through 
 - [`/api/mcp/public`](/api/mcp/public) (app route, no showcase) — POST
 - [`/admin/mcp`](/admin/mcp) (app route, no showcase)
 
-## Depends on
+## Relationships
 
-- [Rate limiting](/docs/pattern-library/rate-limiting)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Rate limiting](/docs/pattern-library/rate-limiting) — The unauthenticated public endpoint runs a fail-closed limiter before any tool; the target's own fail-closed limiter satisfies it.
+
+**References (context only, never a step)**
+
+- [Pattern MCP](/docs/pattern-library/pattern-mcp) — The same registry tools served locally over stdio to a coding agent; neither surface needs the other.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Asset production pipeline](/docs/pattern-library/asset-production-pipeline) (conditional)
+
+**Built on by**
+
+- [MCP protocol evolution](/docs/pattern-library/mcp-protocol-evolution)
+- [MCP authorization](/docs/pattern-library/mcp-authorization)
+- [Agentic parametric modeling](/docs/pattern-library/agentic-parametric-modeling)
+- [MCP App provider](/docs/pattern-library/mcp-app-provider)
+
 
 ---
 

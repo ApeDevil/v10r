@@ -70,6 +70,19 @@ A read walks outward from process memory to Redis to the origin. The policy decl
 - Default per-user policies to skipping the local tier: the tier is correct there, but a warm serverless instance accumulates one entry per user it happened to serve.
 - The CDN is a tier with its own admission rules: Vercel caches a function response only with s-maxage (max-age alone is the browser's) and never one that sets a cookie. v10r's crawler endpoints carried s-maxage and were never cached, because every cookieless crawler was handed a style cookie; the cookie is now kept only on app-shell responses.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Stale-while-revalidate](/docs/pattern-library/stale-while-revalidate)
+- [Singleflight stampede protection](/docs/pattern-library/singleflight)
+- [Multi-source aggregation](/docs/pattern-library/multi-source-aggregation)
+
+
 ---
 
 _Machine-readable record: `hierarchical-cache` in `pattern-library/registry.json`._

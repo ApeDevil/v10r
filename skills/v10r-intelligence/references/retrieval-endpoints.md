@@ -10,7 +10,7 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 
 **When to use:** Use when the corpus must be maintainable from more than one runtime (app UI and scripts) without forking chunking logic.
 
-**Needs:** required relational-db, vector-search, llm-provider · conditional graph-db (when the graph tier answers multi-hop relationship questions; via layered-rag)
+**Needs:** required llm-provider, relational-db, vector-search · conditional graph-db (when the graph tier answers multi-hop relationship questions; via layered-rag)
 
 ## Avoid when
 
@@ -51,9 +51,16 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 - Keep the chunker pure (no I/O) — that is what makes the door shareable across runtimes.
 - Mind embedding-provider daily quotas when re-ingesting a whole corpus.
 
-## Depends on
+## Relationships
 
-- [Grounded retrieval with a corpus map](layered-rag.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Grounded retrieval with a corpus map](layered-rag.md) — The endpoints feed and query the retrieval kernel over HTTP; the kernel is the foundation they expose.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

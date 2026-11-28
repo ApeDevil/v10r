@@ -18,7 +18,7 @@ Documents strategies for keeping references between Postgres and Neo4j valid, si
 
 **When to use:** Apply when a delete or update in one store, such as a Postgres user or item, must propagate to or invalidate related Neo4j nodes.
 
-**Needs:** required relational-db, graph-db
+**Needs:** required graph-db, relational-db
 
 ## Docs
 
@@ -27,6 +27,13 @@ Documents strategies for keeping references between Postgres and Neo4j valid, si
 ## Code
 
 - `src/lib/server/graph/catalog.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/graph/catalog.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/graph/catalog.ts))
+
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

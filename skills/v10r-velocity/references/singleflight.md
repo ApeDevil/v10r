@@ -10,7 +10,7 @@ Concurrent callers for one key share one execution, and across instances a refre
 
 **When to use:** Use for expensive cache rebuilds, external provider calls, AI calls, aggregate queries and read-model refreshes — anything where a synchronised expiry produces simultaneous identical work.
 
-**Needs:** conditional key-value-store (when more than one instance refreshes the same key (the cross-instance refresh claim))
+**Needs:** conditional key-value-store (when more than one instance refreshes the same key (the cross-instance refresh claim); or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)
 
 ## Avoid when
 
@@ -53,9 +53,16 @@ Concurrent callers for one key share one execution, and across instances a refre
 - Reserve the distributed claim for the refresh path. A lock a cold caller waits on turns a slow dependency into a queue.
 - TTL jitter belongs with this pattern even though it lives in the cache module: desynchronising expiry prevents the stampede that coalescing then has to absorb.
 
-## Depends on
+## Relationships
 
-- [Hierarchical cache](hierarchical-cache.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Hierarchical cache](hierarchical-cache.md) — Refresh claims coordinate the refresh of one cache key across instances.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

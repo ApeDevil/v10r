@@ -58,6 +58,13 @@
 - Name the type before the UI: once a field is called `verdict` or `safe`, the interface will present it as a conclusion no matter what the docs say.
 - Keep the grade coarse enough that `validate` can check it. v10r's maturity has three rungs because a fourth ("browser-verified") had no machine-checkable proof.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `evidence-status-dimensions` in `pattern-library/registry.json`._

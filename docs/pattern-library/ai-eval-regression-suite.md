@@ -60,10 +60,20 @@ A committed golden set of questions, each with the facts its recorded turn must 
 - Run evals through the app's real endpoints as a signed-in user, so the graded turn is exactly what a user's turn records.
 - Start the floor at the first honest run and log every raise; a floor set by hope fails the first time and gets ignored.
 
-## Depends on
+## Relationships
 
-- [Turn trace and turn graph](/docs/pattern-library/turn-trace)
-- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Turn trace and turn graph](/docs/pattern-library/turn-trace) — Every expectation is a deterministic check over a recorded turn trace.
+
+**References (context only, never a step)**
+
+- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet) — Its pass-rate floor follows the same only-tighten discipline as a budget ratchet; neither needs the other.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

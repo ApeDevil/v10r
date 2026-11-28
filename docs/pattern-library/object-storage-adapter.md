@@ -34,6 +34,17 @@ S3-compatible object storage on Cloudflare R2, accessed via @aws-sdk/client-s3 w
 - [`/showcases/db/storage/objects`](/showcases/db/storage/objects)
 - [`/showcases/db/storage/transfer`](/showcases/db/storage/transfer)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [File uploads](/docs/pattern-library/file-uploads)
+
+
 ---
 
 _Machine-readable record: `object-storage-adapter` in `pattern-library/registry.json`._

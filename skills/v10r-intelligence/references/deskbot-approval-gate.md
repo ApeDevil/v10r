@@ -10,7 +10,7 @@ Write/destructive desk tools never mutate inside the agent loop; they return a r
 
 **When to use:** Mandatory companion to any mutating AI tool: it converts 'the model wants to write' into an auditable human decision.
 
-**Needs:** required relational-db, llm-provider
+**Needs:** required llm-provider, relational-db
 
 ## Avoid when
 
@@ -63,11 +63,32 @@ Write/destructive desk tools never mutate inside the agent loop; they return a r
 - Capture what an undo needs when the step runs (its recovery point, on the receipt, in the same transaction) — reconstructing it later from the current file is guessing.
 - Key the revert receipt by the forward step it undoes, with a foreign key onto that receipt: a revert of a step that never ran, or a second undo of one step, then cannot be written at all.
 
-## Depends on
+## Relationships
 
-- [AI tool manifest and harness split](ai-tool-harness.md)
-- [AI surfaces](ai-surfaces.md)
-- [Durable step execution](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/durable-step-execution.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI tool manifest and harness split](ai-tool-harness.md) — The gate lives at the tool layer: write tools return a sentinel instead of mutating inside the agent loop.
+- [AI surfaces](ai-surfaces.md) — Proposals belong to the mutating agent surface; the read-only chatbot never creates one.
+
+**Composes (constituents of its solution)**
+
+- [Durable step execution](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/durable-step-execution.md) — required: An approved plan executes step by step with a claim, a lease and a receipt per step, and can be compensated once.
+
+**Applies (principles to review the work against)**
+
+- [Agent-harness audit lens](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agent-harness-lens.md) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Untrusted-content boundary](untrusted-content-boundary.md)
+- [Agent actions](agent-actions.md)
+- [MCP client](mcp-client.md)
+- [Agent to agent](agent-to-agent.md)
+
 
 ---
 

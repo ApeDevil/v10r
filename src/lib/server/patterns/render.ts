@@ -11,7 +11,8 @@
  * registry, checking doc publication, writing files — belongs to the script;
  * `RenderOpts.isPublishedDoc` injects the one predicate the renderers need.
  */
-import { adoptionNeeds, needsSummary } from '#patterns/infrastructure-needs.ts';
+import { needsSummary } from '#patterns/infrastructure-needs.ts';
+import { graphOf } from '#patterns/pattern-graph.ts';
 import { ADOPTION_SEMANTICS } from '#patterns/schema.ts';
 import { headingAnchors } from '../../docs/heading-anchors.server';
 import type { PatternRecord, Registry, RegRef } from './registry';
@@ -305,8 +306,8 @@ export function renderPatternPage(pattern: PatternRecord, registry: Registry, op
 /**
  * The same record as a portable reference file (an agent skill's `references/<id>.md`):
  * no docs frontmatter (it is not a docs page), source-host and production-site links only.
- * `dependencyHref` decides where a `depends_on` link goes — a sibling reference when the
- * dependency ships in the same agent skill, its GitHub page otherwise.
+ * `dependencyHref` decides where a relationship link goes — a sibling reference when the
+ * related record ships in the same agent skill, its GitHub page otherwise.
  */
 export function renderPatternReference(
 	pattern: PatternRecord,
@@ -318,9 +319,63 @@ export function renderPatternReference(
 	return [`# ${pattern.title}`, '', generatedNote, '', ...patternBody(pattern, registry, links)].join('\n');
 }
 
+/**
+ * A record's relationships with their rationale, then the derived inverses. Each label says what
+ * the relationship does to an adopter, so a reader never has to know the field names.
+ */
+function relationshipSections(
+	pattern: PatternRecord,
+	graph: ReturnType<typeof graphOf>,
+	link: (id: string) => string,
+): string[] {
+	const lines: string[] = [];
+	const block = (title: string, items: string[]) => {
+		if (items.length > 0) lines.push(`**${title}**`, '', items.join('\n'), '');
+	};
+	block(
+		'Builds on (must be available; the target’s own equivalent satisfies it)',
+		pattern.builds_on.map((entry) => `- ${link(entry.id)} — ${entry.why}`),
+	);
+	block(
+		'Composes (constituents of its solution)',
+		pattern.composes.map(
+			(entry) => `- ${link(entry.id)} — ${entry.level}${entry.when ? ` when ${entry.when}` : ''}: ${entry.why}`,
+		),
+	);
+	block(
+		'Specializes (its invariants hold here; it is never built twice)',
+		pattern.specializes ? [`- ${link(pattern.specializes.id)} — ${pattern.specializes.why}`] : [],
+	);
+	block(
+		'References (context only, never a step)',
+		pattern.references.map((entry) => `- ${link(entry.id)} — ${entry.why}`),
+	);
+	const assumptions = graph.assumptionsFor(pattern.id);
+	block(
+		'Applies (principles to review the work against)',
+		assumptions
+			.filter((entry) => graph.byId.get(entry.id)?.kind === 'principle')
+			.map((entry) => `- ${link(entry.id)} — ${entry.why}`),
+	);
+	block(
+		'Assumes (platform conventions in scope)',
+		assumptions
+			.filter((entry) => graph.byId.get(entry.id)?.kind !== 'principle')
+			.map((entry) => `- ${link(entry.id)} — ${entry.why}`),
+	);
+	const inverse = (type: 'builds_on' | 'composes' | 'specializes' | 'references') =>
+		graph.edgesTo(pattern.id, type).map((edge) => `- ${link(edge.from)}${edge.level ? ` (${edge.level})` : ''}`);
+	block('Part of', inverse('composes'));
+	block('Built on by', inverse('builds_on'));
+	block('Specialized by', inverse('specializes'));
+	block('Referenced by', inverse('references'));
+	return lines;
+}
+
 /** Light-tier notice through the record footer: every field the record carries, in page order. */
 function patternBody(pattern: PatternRecord, registry: Registry, links: PatternLinkStyle): string[] {
-	const byId = new Map(registry.patterns.map((entry) => [entry.id, entry]));
+	const graph = graphOf(registry);
+	const byId = graph.byId;
 	const sections: string[] = [];
 	if (pattern.tier === 'light') {
 		sections.push(
@@ -338,7 +393,8 @@ function patternBody(pattern: PatternRecord, registry: Registry, links: PatternL
 		`**When to use:** ${pattern.when_to_use}`,
 		'',
 	);
-	const needs = adoptionNeeds(pattern, byId);
+	const link = (id: string) => `[${byId.get(id)?.title ?? id}](${links.dependencyHref(id)})`;
+	const needs = graph.needs(pattern.id);
 	if (needs.length > 0) {
 		sections.push(`**Needs:** ${needsSummary(needs, { condition: true })}`, '');
 	}
@@ -363,17 +419,19 @@ function patternBody(pattern: PatternRecord, registry: Registry, links: PatternL
 	if (pattern.showcases.length > 0) {
 		sections.push('', '## Proof', '', links.proofLines(pattern.showcases));
 	}
+	const inherited = graph.inheritedInvariants(pattern.id);
+	if (pattern.tier === 'deep' || inherited.length > 0) {
+		sections.push('', '## Invariants', '');
+		if (pattern.invariants.length > 0) sections.push(bulletLines(pattern.invariants));
+		for (const entry of inherited) {
+			sections.push('', `Inherited from ${link(entry.from)} (specializes):`, '', bulletLines(entry.invariants));
+		}
+	}
 	if (pattern.tier === 'deep') {
-		sections.push('', '## Invariants', '', bulletLines(pattern.invariants));
 		sections.push('', '## Emulation notes', '', bulletLines(pattern.emulation_notes));
 	}
-	if (pattern.depends_on.length > 0) {
-		const deps = pattern.depends_on.map((dep) => {
-			const record = byId.get(dep);
-			return `- [${record?.title ?? dep}](${links.dependencyHref(dep)})`;
-		});
-		sections.push('', '## Depends on', '', deps.join('\n'));
-	}
+	const relationships = relationshipSections(pattern, graph, link);
+	if (relationships.length > 0) sections.push('', '## Relationships', '', ...relationships);
 	sections.push(
 		'',
 		'---',

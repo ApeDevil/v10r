@@ -12,7 +12,7 @@ const registry = registryJson as unknown as Registry;
 const pattern = (
 	id: string,
 	category: string,
-	depends_on: string[],
+	builds_on: string[],
 	invariants: string[],
 	tier: 'deep' | 'light' = 'deep',
 ) => ({
@@ -28,7 +28,10 @@ const pattern = (
 	needs: [],
 	capabilities: [],
 	keywords: [],
-	depends_on,
+	builds_on: builds_on.map((id) => ({ id, why: 'fixture' })),
+	composes: [],
+	specializes: null,
+	references: [],
 	docs: [],
 	code: [],
 	tests: [],
@@ -40,7 +43,8 @@ const pattern = (
 });
 
 const fixture: Registry = {
-	format: 4,
+	format: 5,
+	assumptions: [],
 	groups: [{ id: 'g', title: 'G' }],
 	categories: [
 		{ id: 'architecture', title: 'Architecture', group: 'g' },

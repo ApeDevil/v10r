@@ -221,7 +221,7 @@ export const showcaseSections: ShowcaseSection[] = [
 		pageHref: '/showcases/mcp',
 		anchorId: 'registry-dag',
 		title: 'Pattern Dependency Graph',
-		keywords: ['dag', 'depends_on', 'registry', 'patterns', 'emulate'],
+		keywords: ['dag', 'builds on', 'composes', 'registry', 'patterns', 'emulate'],
 	},
 	{
 		pageHref: '/showcases/mcp',

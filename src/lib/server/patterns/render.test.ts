@@ -29,7 +29,10 @@ function makePattern(overrides: Partial<PatternRecord>): PatternRecord {
 		needs: [],
 		capabilities: [],
 		keywords: ['test'],
-		depends_on: [],
+		builds_on: [],
+		composes: [],
+		specializes: null,
+		references: [],
 		docs: [{ path: 'docs/blueprint/alpha/thing.md' }],
 		code: [],
 		tests: [],
@@ -63,14 +66,15 @@ const DEEP = makePattern({
 const LIGHT = makePattern({
 	id: 'alpha-light',
 	title: 'Light pattern',
-	depends_on: ['alpha-deep'],
+	builds_on: [{ id: 'alpha-deep', why: 'the light row runs on the deep mechanism' }],
 	showcases: [{ path: '/admin/alpha', kind: 'approute', note: 'POST' }],
 	maturity: 'proven',
 	verifiedAt: '2026-08-20',
 });
 
 const REGISTRY: Registry = {
-	format: 4,
+	format: 5,
+	assumptions: [],
 	groups: [
 		{ id: 'g-one', title: 'Group One' },
 		{ id: 'g-two', title: 'Group Two' },
@@ -244,9 +248,16 @@ describe('renderPatternPage', () => {
 		const page = renderPatternPage(withDirDoc, REGISTRY, throwing);
 		expect(page).toContain('- `docs/stack/notifications/`');
 	});
-	it('links depends_on to sibling pattern pages by title', () => {
+	it('links builds_on to sibling pattern pages by title, with its rationale', () => {
 		const page = renderPatternPage(LIGHT, REGISTRY, ALL_PUBLISHED);
-		expect(page).toContain('[Deep pattern](/docs/pattern-library/alpha-deep)');
+		expect(page).toContain(
+			'[Deep pattern](/docs/pattern-library/alpha-deep) — the light row runs on the deep mechanism',
+		);
+	});
+	it('shows the derived inverse on the foundation’s page', () => {
+		const page = renderPatternPage(DEEP, REGISTRY, ALL_PUBLISHED);
+		expect(page).toContain('**Built on by**');
+		expect(page).toContain('[Light pattern](/docs/pattern-library/alpha-light)');
 	});
 	it('uses the category title, not the id', () => {
 		const page = renderPatternPage(DEEP, REGISTRY, ALL_PUBLISHED);

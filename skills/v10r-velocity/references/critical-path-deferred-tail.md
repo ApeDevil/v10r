@@ -55,9 +55,16 @@ Only work the caller's intent depends on runs before the response; analytics, in
 - Keep this separate from streaming deferral (`safeDeferPromise`), which keeps a promise alive INSIDE a response body. Two lifetimes, two files — one file holding both is how buckets start.
 - Name the deferred work for the effect (`analytics:pageview`), not the mechanism: the label is what someone reads in a failure log at 3am.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md)
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Stale-while-revalidate](stale-while-revalidate.md)
+
 
 ---
 

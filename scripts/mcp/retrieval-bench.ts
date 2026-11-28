@@ -48,6 +48,8 @@ interface BenchPlan {
 	id: string;
 	capabilities: string[];
 	required: string[];
+	/** Platform conventions the plan names under Assumes, never as steps. */
+	assumed: string[];
 }
 
 interface WorkflowStep {

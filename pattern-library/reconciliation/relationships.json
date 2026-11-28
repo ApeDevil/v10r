@@ -1,0 +1,1319 @@
+{
+	"note": "Slice 3 relationship migration (2026-11-28, Pattern Ontology Engineering). One entry per Slice 2 depends_on edge (before: depends_on) and per relationship that did not exist as an edge before (before: none). after.type is builds_on, composes (with level and when), specializes, references, or none with the home the knowledge moved to (assumption, alternative, decision catalogue, inherited). Edges were judged from the reconciled records, not translated mechanically. Ids are the Slice 2 ids (unchanged in Slice 3).",
+	"baseCommit": "786b603",
+	"entries": [
+		{
+			"from": "hosted-mcp",
+			"to": "rate-limiting",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The unauthenticated public endpoint runs a fail-closed limiter before any tool; the target's own fail-closed limiter satisfies it."
+		},
+		{
+			"from": "mcp-protocol-evolution",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Server-side records assume the framework-free domain layer; a platform assumption scoped to code under src/lib/server/, never a step (D-05)."
+		},
+		{
+			"from": "mcp-authorization",
+			"to": "hosted-mcp",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Authorization protects an MCP service that is already served over HTTP; any MCP endpoint satisfies it."
+		},
+		{
+			"from": "mcp-authorization",
+			"to": "passwordless-auth",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The app becomes its own authorization server on the user accounts and sessions it already runs; any session-based sign-in satisfies it."
+		},
+		{
+			"from": "mcp-authorization",
+			"to": "rate-limiting",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Per-user quotas on the protected service and bounded client registration are enforced by a limiter; the target's own limiter satisfies it."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "agent-actions",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The tool catalogue with risk and executor is the authoritative door every standard ends in."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "untrusted-content-boundary",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "A remote agent's or external tool's answer is a claim: it reaches the model only as untrusted content."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "mcp-protocol-evolution",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "the application serves its tools to MCP clients"
+			},
+			"why": "MCP is one adapter onto the tool catalogue; when the application speaks it, it must serve both protocol eras from one registry."
+		},
+		{
+			"from": "external-service-runtime",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "A platform assumption (code under src/lib/server/); the in-app domain module is also linked as an alternative (alternatives[].pattern)."
+		},
+		{
+			"from": "external-service-runtime",
+			"to": "deadline-propagation",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "Every call to the service runs inside the remaining request deadline with a bounded read."
+		},
+		{
+			"from": "external-service-runtime",
+			"to": "resilience-policy",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The one seam ends every call in exactly one failure kind and retries only idempotent operations."
+		},
+		{
+			"from": "external-service-runtime",
+			"to": "latency-tracing",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "callers should see the service's share of a request in Server-Timing"
+			},
+			"why": "The Server-Timing split is an enhancement for diagnosing the second hop; the seam works without it."
+		},
+		{
+			"from": "architecture-engineering",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "decision catalogue"
+			},
+			"why": "A placement alternative its decision records choose between; decisions.json links it, and the inverse \"offered by decision\" is derived there, not authored twice."
+		},
+		{
+			"from": "architecture-engineering",
+			"to": "wasm-compute-kernel",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "decision catalogue"
+			},
+			"why": "A compute-placement alternative of a decision record (decisions.json); adopting the engine never builds a wasm kernel."
+		},
+		{
+			"from": "architecture-engineering",
+			"to": "external-service-runtime",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "decision catalogue"
+			},
+			"why": "A placement alternative of a decision record (decisions.json); adopting the engine never builds a Rust service."
+		},
+		{
+			"from": "architecture-engineering",
+			"to": "pattern-mcp",
+			"before": "depends_on",
+			"after": {
+				"type": "references"
+			},
+			"why": "Its engine is served to agents as the explore_architecture and check_architecture tools of the pattern MCP server."
+		},
+		{
+			"from": "latent-cards",
+			"to": "explosive-discovery",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Principle applicability: explosive discovery applies to command surfaces and cards, declared once as a scoped assumption."
+		},
+		{
+			"from": "latent-cards",
+			"to": "component-system",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "UI records assume the component system (component-first); a platform assumption scoped to code under src/lib/components/."
+		},
+		{
+			"from": "pattern-index",
+			"to": "docs-nav-hubs",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "alternative"
+			},
+			"why": "Docs navigation hubs alone are the alternative the index was chosen over (alternatives[].pattern); the index does not need the hubs."
+		},
+		{
+			"from": "agent-experience",
+			"to": "docs-nav-hubs",
+			"before": "depends_on",
+			"after": {
+				"type": "references"
+			},
+			"why": "AGENTS.md and llms.txt route agents into the docs tree, which hub READMEs make navigable; the surfaces work over any addressable docs tree."
+		},
+		{
+			"from": "agent-skills",
+			"to": "pattern-index",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "reference"
+			},
+			"why": "Kept as pattern-index references agent-skills: sibling projections of one registry; skills are generated from the registry, not from the index."
+		},
+		{
+			"from": "ai-tool-harness",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Platform assumption (code under src/lib/server/)."
+		},
+		{
+			"from": "ai-surfaces",
+			"to": "ai-tool-harness",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Both surfaces run turns over the one tool registry and harness; the target’s own tool harness satisfies it."
+		},
+		{
+			"from": "deskbot-approval-gate",
+			"to": "ai-tool-harness",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The gate lives at the tool layer: write tools return a sentinel instead of mutating inside the agent loop."
+		},
+		{
+			"from": "deskbot-approval-gate",
+			"to": "ai-surfaces",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Proposals belong to the mutating agent surface; the read-only chatbot never creates one."
+		},
+		{
+			"from": "deskbot-approval-gate",
+			"to": "durable-step-execution",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "An approved plan executes step by step with a claim, a lease and a receipt per step, and can be compensated once."
+		},
+		{
+			"from": "layered-rag",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Platform assumption (code under src/lib/server/)."
+		},
+		{
+			"from": "retrieval-endpoints",
+			"to": "layered-rag",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The endpoints feed and query the retrieval kernel over HTTP; the kernel is the foundation they expose."
+		},
+		{
+			"from": "turn-trace",
+			"to": "ai-surfaces",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "It records the turns of the chatbot and deskbot surfaces from their actual execution."
+		},
+		{
+			"from": "job-scheduling",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Platform assumption (code under src/lib/server/)."
+		},
+		{
+			"from": "product-connection-engine",
+			"to": "threlte-integration",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "assemblies are shown and edited in a native 3D view"
+			},
+			"why": "A thin Threlte layer renders the framework-free core; the core validates and edits without it."
+		},
+		{
+			"from": "asset-production-pipeline",
+			"to": "threlte-integration",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "the app shows the produced asset in a native viewer"
+			},
+			"why": "A viewer presents the checked asset; production and inspection do not need it."
+		},
+		{
+			"from": "asset-production-pipeline",
+			"to": "derivation-key",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The written GLB carries its derivation key and is current exactly while a recomputed key matches."
+		},
+		{
+			"from": "asset-production-pipeline",
+			"to": "provenance-record",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "Every job records PROV-DM provenance of the asset it produced."
+		},
+		{
+			"from": "asset-production-pipeline",
+			"to": "rate-limiting",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Public generation is rate limited before anything is built; the target's own limiter satisfies it."
+		},
+		{
+			"from": "asset-production-pipeline",
+			"to": "hosted-mcp",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "agents call the pipeline over MCP"
+			},
+			"why": "The same job shape serves MCP tools; when agents must reach it, it is served by an MCP endpoint."
+		},
+		{
+			"from": "agentic-parametric-modeling",
+			"to": "asset-production-pipeline",
+			"before": "depends_on",
+			"after": {
+				"type": "specializes"
+			},
+			"why": "Every parametric model is an asset production request: one strict request schema, same bytes, inspection before encoding."
+		},
+		{
+			"from": "agentic-parametric-modeling",
+			"to": "mcp-authorization",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The modeling service is an OAuth protected resource: every request carries an access token for its audience."
+		},
+		{
+			"from": "agentic-parametric-modeling",
+			"to": "hosted-mcp",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The modeling tools run on a separate stateless MCP service; any MCP server endpoint satisfies it."
+		},
+		{
+			"from": "agentic-parametric-modeling",
+			"to": "mcp-app-provider",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "the MCP host renders Views"
+			},
+			"why": "An MCP App draws a server-side preview mesh; the text and structured answer are complete without it."
+		},
+		{
+			"from": "agentic-parametric-modeling",
+			"to": "rate-limiting",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "inherited"
+			},
+			"why": "Reached through its foundation hosted-mcp and its generalization asset-production-pipeline, both of which build on rate limiting; a second authored edge would say nothing new."
+		},
+		{
+			"from": "agentic-parametric-modeling",
+			"to": "threlte-integration",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "the model is shown in the native viewer"
+			},
+			"why": "The native viewer runs the same kernel in a web worker; the MCP tools work without it."
+		},
+		{
+			"from": "desk-workspace",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Platform assumption (code under src/lib/server/)."
+		},
+		{
+			"from": "desk-spreadsheet-panel",
+			"to": "desk-workspace",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "A panel type registered in the workspace’s panel-type registry."
+		},
+		{
+			"from": "desk-mobile-chrome",
+			"to": "desk-workspace",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Phone chrome for the workspace’s dock and its open panel instances."
+		},
+		{
+			"from": "desk-panel-menus",
+			"to": "desk-workspace",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Each panel instance registers its menus with the dock that composes them."
+		},
+		{
+			"from": "desk-ai-effects",
+			"to": "desk-workspace",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Effects open, focus and refresh panels of the workspace."
+		},
+		{
+			"from": "desk-ai-effects",
+			"to": "ai-deskbot",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The effects are dispatched from the deskbot’s tool results."
+		},
+		{
+			"from": "desk-explorer",
+			"to": "desk-workspace",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The explorer is a panel of the workspace."
+		},
+		{
+			"from": "virtualized-rendering",
+			"to": "component-system",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Platform assumption (code under src/lib/components/)."
+		},
+		{
+			"from": "idle-work",
+			"to": "intent-preloading",
+			"before": "depends_on",
+			"after": {
+				"type": "references"
+			},
+			"why": "Both prepare probable next work: idle work after interactivity, intent preloading on intent signals; neither needs the other."
+		},
+		{
+			"from": "stale-while-revalidate",
+			"to": "hierarchical-cache",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Staleness windows are declared by the cache policy; SWR is the read behaviour of a cache layer that already exists."
+		},
+		{
+			"from": "stale-while-revalidate",
+			"to": "critical-path-deferred-tail",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The refresh runs after the response through the deferred tail; any after-response mechanism with the survival rule satisfies it."
+		},
+		{
+			"from": "singleflight",
+			"to": "hierarchical-cache",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Refresh claims coordinate the refresh of one cache key across instances."
+		},
+		{
+			"from": "query-budget",
+			"to": "performance-budget-ratchet",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The measured round-trip budgets are ceilings held by a ratchet; any ratchet the target runs satisfies it."
+		},
+		{
+			"from": "critical-path-deferred-tail",
+			"to": "multi-client-core",
+			"before": "depends_on",
+			"after": {
+				"type": "none",
+				"home": "assumption"
+			},
+			"why": "Platform assumption (code under src/lib/server/)."
+		},
+		{
+			"from": "heavy-dependency-quarantine",
+			"to": "performance-budget-ratchet",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The gated metric, the shared baseline, is a ratchet ceiling."
+		},
+		{
+			"from": "side-effect-free-components",
+			"to": "performance-budget-ratchet",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The effect is held by a bundle ratchet, so removing the declaration fails a build."
+		},
+		{
+			"from": "deadline-propagation",
+			"to": "resilience-policy",
+			"before": "depends_on",
+			"after": {
+				"type": "references"
+			},
+			"why": "Retries and timeouts of the resilience policy spend the propagated budget; each works without the other."
+		},
+		{
+			"from": "scenario-harness",
+			"to": "performance-budget-ratchet",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Deterministic columns are gated against committed ceilings."
+		},
+		{
+			"from": "scenario-harness",
+			"to": "resilience-policy",
+			"before": "depends_on",
+			"after": {
+				"type": "references"
+			},
+			"why": "Its hanging- and failing-dependency scenarios exercise the resilience policy; that is evidence for the policy, not a prerequisite."
+		},
+		{
+			"from": "multi-source-aggregation",
+			"to": "resilience-policy",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Each source gets its own breaker, bulkhead and quota; any resilience policy the target runs satisfies it."
+		},
+		{
+			"from": "multi-source-aggregation",
+			"to": "deadline-propagation",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Every source call takes the remaining request budget."
+		},
+		{
+			"from": "multi-source-aggregation",
+			"to": "hierarchical-cache",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Successful source results are cached per source."
+		},
+		{
+			"from": "name-check",
+			"to": "multi-source-aggregation",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The check is one adoption of the aggregation mechanism over trademark, register and domain sources."
+		},
+		{
+			"from": "name-check",
+			"to": "rate-limiting",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The public endpoint runs the IP limiter before any upstream call, and the limiter fails closed."
+		},
+		{
+			"from": "provenance-record",
+			"to": "derivation-key",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The recorded activity names its transform and inputs through the derivation key."
+		},
+		{
+			"from": "dynamic-attributes",
+			"to": "versioned-document-session",
+			"before": "depends_on",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "Every save is guarded by a version check and conflicts merge by attribute id."
+		},
+		{
+			"from": "asset-rights-manifest",
+			"to": "source-of-truth-gate",
+			"before": "depends_on",
+			"after": {
+				"type": "specializes"
+			},
+			"why": "One owned rights record per file, derived into every surface and gated against the files present: a source-of-truth gate for attribution."
+		},
+		{
+			"from": "encryption-key-ring",
+			"to": "job-scheduling",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Rotation is a ring change plus a re-seal sweep that runs as a registered job; any scheduled-job runner satisfies it."
+		},
+		{
+			"from": "url-search-state",
+			"to": "state-management",
+			"before": "depends_on",
+			"after": {
+				"type": "specializes"
+			},
+			"why": "URL search params are shared page state read and written through one typed spec."
+		},
+		{
+			"from": "form-draft-recovery",
+			"to": "schema-validated-forms",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Drafts are kept per form and stripped to the form’s schema shape."
+		},
+		{
+			"from": "untrusted-content-boundary",
+			"to": "ai-tool-harness",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Every tool in the harness registry declares its result origin and reach."
+		},
+		{
+			"from": "untrusted-content-boundary",
+			"to": "deskbot-approval-gate",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Tools that can send data out run only behind a human-approved proposal; any human approval gate satisfies it."
+		},
+		{
+			"from": "agent-actions",
+			"to": "ai-tool-harness",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Every action is one entry of the tool catalogue the harness owns."
+		},
+		{
+			"from": "agent-actions",
+			"to": "ai-surfaces",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Client actions stream to the browser that sent the turn of an agent surface."
+		},
+		{
+			"from": "agent-actions",
+			"to": "deskbot-approval-gate",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Write actions are proposals approved by a person, never executed in the loop."
+		},
+		{
+			"from": "agent-actions",
+			"to": "untrusted-content-boundary",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "A client action’s result is user-origin content and reaches the model only escaped."
+		},
+		{
+			"from": "mcp-client",
+			"to": "ai-tool-harness",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "External tools are projected into the existing tool catalogue, not a second registry."
+		},
+		{
+			"from": "mcp-client",
+			"to": "untrusted-content-boundary",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Every projected external tool is reach external with user-origin results."
+		},
+		{
+			"from": "mcp-client",
+			"to": "deskbot-approval-gate",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "External operations run only behind an approved proposal."
+		},
+		{
+			"from": "mcp-app-provider",
+			"to": "hosted-mcp",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The View is a ui:// resource of an MCP server; any MCP server endpoint satisfies it."
+		},
+		{
+			"from": "agent-to-agent",
+			"to": "architecture-engineering",
+			"before": "depends_on",
+			"after": {
+				"type": "references"
+			},
+			"why": "The served specialist skills run the architecture engine's deterministic checks: v10r's example workload, not a prerequisite."
+		},
+		{
+			"from": "generative-ui",
+			"to": "component-system",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The closed catalogue renders through the app's own components and tokens; any component library with a closed catalogue satisfies it."
+		},
+		{
+			"from": "generative-ui",
+			"to": "untrusted-content-boundary",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Model-composed surfaces are untrusted data: policy and validator refuse anything outside the catalogue."
+		},
+		{
+			"from": "webmcp",
+			"to": "agent-actions",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "It publishes the existing client-action contracts; it has no actions of its own."
+		},
+		{
+			"from": "ag-ui-endpoint",
+			"to": "agent-actions",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "AG-UI frontend tools are the existing client actions."
+		},
+		{
+			"from": "agent-observability",
+			"to": "turn-trace",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "It projects a recorded turn trace onto spans; without the trace there is nothing to export."
+		},
+		{
+			"from": "ai-eval-regression-suite",
+			"to": "turn-trace",
+			"before": "depends_on",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Every expectation is a deterministic check over a recorded turn trace."
+		},
+		{
+			"from": "ai-eval-regression-suite",
+			"to": "performance-budget-ratchet",
+			"before": "depends_on",
+			"after": {
+				"type": "references"
+			},
+			"why": "Its pass-rate floor follows the same only-tighten discipline as a budget ratchet; neither needs the other."
+		},
+		{
+			"from": "hosted-mcp",
+			"to": "pattern-mcp",
+			"before": "none",
+			"after": {
+				"type": "references"
+			},
+			"why": "The same registry tools served locally over stdio to a coding agent; neither surface needs the other."
+		},
+		{
+			"from": "mcp-protocol-evolution",
+			"to": "hosted-mcp",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Dual-era serving evolves an MCP endpoint that already exists; any HTTP MCP server the target runs satisfies it."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "turn-trace",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The turn trace is the one authoritative record of what a turn did; telemetry exports are projections of it."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "mcp-client",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "the assistant consumes tools from external MCP servers"
+			},
+			"why": "External MCP tools are projected into the existing catalogue with deployment-assigned risk, never a second registry."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "agent-to-agent",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "the application serves a specialist agent or delegates to other agents over A2A"
+			},
+			"why": "A2A is an adapter: delegation is an approval-gated external operation and every answer is a claim."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "ag-ui-endpoint",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "AG-UI clients must drive the agent"
+			},
+			"why": "AG-UI is served by the same orchestrator turn under a deny-by-default export policy, not a second runtime."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "generative-ui",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "the model composes interface as data"
+			},
+			"why": "Generated interface is data from a closed catalogue rendered by the app’s own components; a press is never an approval."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "agent-skills",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "conditional",
+				"when": "the application's knowledge must reach agent products that load Agent Skills"
+			},
+			"why": "Agent Skills are a generated projection of the canonical registry, never a hand-maintained copy."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "webmcp",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "the visitor's browser offers its own agent"
+			},
+			"why": "Progressive enhancement: existing client-action contracts are published to the browser agent; nothing depends on it."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "agent-observability",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "turns should also appear in an OpenTelemetry backend"
+			},
+			"why": "A lossy, exporter-neutral projection of the turn trace; the trace stays the audit record."
+		},
+		{
+			"from": "agentic-architecture",
+			"to": "mcp-app-provider",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "an MCP host should render an interactive View beside a tool answer"
+			},
+			"why": "The text answer is complete on its own; the View only adds interaction."
+		},
+		{
+			"from": "pattern-index",
+			"to": "agent-skills",
+			"before": "none",
+			"after": {
+				"type": "references"
+			},
+			"why": "Two projections of the same registry, regenerated and checked by the gate; neither is built from the other."
+		},
+		{
+			"from": "pattern-index",
+			"to": "reproducible-artifact-build",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The README region is a committed generated artifact proven current by regenerate-and-diff; any regenerate-and-check gate satisfies it."
+		},
+		{
+			"from": "agent-skills",
+			"to": "reproducible-artifact-build",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "skills/ is a committed generated artifact that fails the gate when stale; any regenerate-and-check gate satisfies it."
+		},
+		{
+			"from": "agent-experience",
+			"to": "pattern-index",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The generated pattern library (README index and per-pattern pages) is one of its five surfaces."
+		},
+		{
+			"from": "layered-rag",
+			"to": "graph-rag",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "multi-hop relationship questions matter"
+			},
+			"why": "The graph tier adds explainable multi-hop answers beside the vector tiers; the vector tiers answer without it."
+		},
+		{
+			"from": "agent-to-agent",
+			"to": "untrusted-content-boundary",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "A remote agent’s answer is a claim, typed and wrapped as untrusted content."
+		},
+		{
+			"from": "agent-to-agent",
+			"to": "deskbot-approval-gate",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Assistant-driven delegation is an approval-gated external operation."
+		},
+		{
+			"from": "provider-routing",
+			"to": "resilience-policy",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Rate-limited providers trip a circuit breaker so the resolver routes around them; any breaker satisfies it."
+		},
+		{
+			"from": "model-viewer-customizer",
+			"to": "threlte-integration",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The viewer and customizer render through the Threlte integration with SSR off."
+		},
+		{
+			"from": "resource-anchor-integrity",
+			"to": "source-of-truth-gate",
+			"before": "none",
+			"after": {
+				"type": "specializes"
+			},
+			"why": "Each fragment and routed path has one owner (the rendered heading, the file) and a gate checks every copy against it."
+		},
+		{
+			"from": "multi-step-forms",
+			"to": "schema-validated-forms",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Wizard steps, array fields and dependent fields are built on the schema-validated form stack."
+		},
+		{
+			"from": "validation-timing",
+			"to": "schema-validated-forms",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The three timing strategies are options of the schema-validated form stack."
+		},
+		{
+			"from": "auth-forms",
+			"to": "passwordless-auth",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The forms drive the magic-link, OTP and OAuth flows of the auth layer directly."
+		},
+		{
+			"from": "file-uploads",
+			"to": "object-storage-adapter",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Processed files persist through the S3-compatible storage adapter; any object store satisfies it."
+		},
+		{
+			"from": "passkeys",
+			"to": "passwordless-auth",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Passkeys are another first-factor credential on the same session layer."
+		},
+		{
+			"from": "oauth-sign-in",
+			"to": "passwordless-auth",
+			"before": "none",
+			"after": {
+				"type": "references"
+			},
+			"why": "Another sign-in method on the same session layer; either works alone."
+		},
+		{
+			"from": "admin-area",
+			"to": "route-guards",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Every admin page and endpoint is behind a guard."
+		},
+		{
+			"from": "consent-gated-sessions",
+			"to": "consent-cookies",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The session identifier switches on the consent tier the visitor chose."
+		},
+		{
+			"from": "data-retention",
+			"to": "job-scheduling",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Purges run as registered jobs on a fixed cadence."
+		},
+		{
+			"from": "analytics-rollups",
+			"to": "job-scheduling",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Rollups and retention windows run as registered jobs."
+		},
+		{
+			"from": "notification-outbox",
+			"to": "notification-channels",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "Queued rows are delivered through the provider interface of each channel."
+		},
+		{
+			"from": "notification-outbox",
+			"to": "notification-settings-matrix",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "sendNotification evaluates the user’s channel-by-type matrix before queueing."
+		},
+		{
+			"from": "notification-outbox",
+			"to": "notification-stream",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "in-app notifications should arrive live"
+			},
+			"why": "The in-app record can be pushed over SSE; without it the notification centre shows it on the next load."
+		},
+		{
+			"from": "pwa-update-flow",
+			"to": "service-worker-caching",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The update flow governs a service worker that is already installed."
+		},
+		{
+			"from": "web-push",
+			"to": "service-worker-caching",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Push payloads are handled by the installed service worker."
+		},
+		{
+			"from": "blog-engine",
+			"to": "markdown-pipeline",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "Post bodies render through the markdown pipeline."
+		},
+		{
+			"from": "blog-engine",
+			"to": "comments",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "readers should discuss posts"
+			},
+			"why": "Comments are an enhancement of a post page; publishing works without them."
+		},
+		{
+			"from": "comments",
+			"to": "rate-limiting",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "Posting is rate limited; the target's own limiter satisfies it."
+		},
+		{
+			"from": "markdown-editor",
+			"to": "markdown-pipeline",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The slash commands insert the custom syntax the pipeline renders."
+		},
+		{
+			"from": "keyboard-shortcuts",
+			"to": "modal-layer-stack",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "The help modal opens on the shared modal layer stack."
+		},
+		{
+			"from": "session-lifecycle-ui",
+			"to": "passwordless-auth",
+			"before": "none",
+			"after": {
+				"type": "builds_on"
+			},
+			"why": "It reacts to the session state of the auth layer; any session-based auth satisfies it."
+		},
+		{
+			"from": "app-shell-layout",
+			"to": "responsive-sidebar",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "The collapsible sidebar is the shell’s primary navigation."
+		},
+		{
+			"from": "app-shell-layout",
+			"to": "page-header",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "required"
+			},
+			"why": "With no global header, page-specific chrome lives in a per-page header inside the main area."
+		},
+		{
+			"from": "app-shell-layout",
+			"to": "navigation-structure",
+			"before": "none",
+			"after": {
+				"type": "composes",
+				"level": "optional",
+				"when": "sections have subpages worth revealing progressively"
+			},
+			"why": "Compound split buttons reveal subpages from the sidebar items; flat items work without them."
+		},
+		{
+			"from": "bot-decision-audit",
+			"to": "proof-of-work-captcha",
+			"before": "none",
+			"after": {
+				"type": "references"
+			},
+			"why": "One of the anti-abuse layers whose decisions it records."
+		},
+		{
+			"from": "bot-decision-audit",
+			"to": "honeypot",
+			"before": "none",
+			"after": {
+				"type": "references"
+			},
+			"why": "One of the anti-abuse layers whose decisions it records."
+		},
+		{
+			"from": "bot-decision-audit",
+			"to": "rate-limiting",
+			"before": "none",
+			"after": {
+				"type": "references"
+			},
+			"why": "One of the anti-abuse layers whose decisions it records."
+		}
+	]
+}

@@ -33,6 +33,13 @@ Establishes v10r's rune-based state strategy — $state/$derived for component s
 - `src/lib/state/layer-stack.svelte.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/layer-stack.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/layer-stack.svelte.test.ts))
 - `src/lib/state/branch-operation-monitor.svelte.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/state/branch-operation-monitor.svelte.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/state/branch-operation-monitor.svelte.test.ts))
 
+## Relationships
+
+**Specialized by**
+
+- [URL state](/docs/pattern-library/url-search-state)
+
+
 ---
 
 _Machine-readable record: `state-management` in `pattern-library/registry.json`._

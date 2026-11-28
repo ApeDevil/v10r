@@ -16,7 +16,7 @@ Consume external MCP servers with the official TypeScript client: an SSRF-guarde
 
 **When to use:** Use when an assistant should call tools another party operates and you can name and review that peer.
 
-**Needs:** required llm-provider, external-api, relational-db
+**Needs:** required external-api, llm-provider, relational-db
 
 ## Avoid when
 
@@ -67,11 +67,26 @@ Consume external MCP servers with the official TypeScript client: an SSRF-guarde
 - Validate structuredContent yourself with the SDK's validator: the SDK's callTool throws on a mismatch, which would turn a bad peer into a failed turn.
 - Give write-risk tools an execute that returns the approval sentinel; a tool with no execute is a client action in the AI SDK.
 
-## Depends on
+## Relationships
 
-- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
-- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary)
-- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness) — External tools are projected into the existing tool catalogue, not a second registry.
+- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary) — Every projected external tool is reach external with user-origin results.
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate) — External operations run only behind an approved proposal.
+
+**Applies (principles to review the work against)**
+
+- [Agent-harness audit lens](/docs/pattern-library/agent-harness-lens) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (conditional)
+
 
 ---
 

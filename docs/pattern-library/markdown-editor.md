@@ -30,6 +30,21 @@ A CodeMirror-based source markdown editor with a slash-command palette that auto
 
 - [`/showcases/desk`](/showcases/desk) — EditorPanel in the desk workspace
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Markdown pipeline and custom syntax](/docs/pattern-library/markdown-pipeline) — The slash commands insert the custom syntax the pipeline renders.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+
 ---
 
 _Machine-readable record: `markdown-editor` in `pattern-library/registry.json`._

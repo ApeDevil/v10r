@@ -32,6 +32,13 @@ Wizard (per-step schema validation), dynamic array fields, and dependent/cascadi
 - [`/showcases/forms/patterns/dynamic`](/showcases/forms/patterns/dynamic)
 - [`/showcases/forms/patterns/dependent`](/showcases/forms/patterns/dependent)
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Schema-validated forms](/docs/pattern-library/schema-validated-forms) — Wizard steps, array fields and dependent fields are built on the schema-validated form stack.
+
+
 ---
 
 _Machine-readable record: `multi-step-forms` in `pattern-library/registry.json`._

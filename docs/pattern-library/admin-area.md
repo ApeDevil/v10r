@@ -32,6 +32,17 @@ The overall admin area architecture — a vertical sidebar, route guards, and a 
 
 - [`/showcases/admin`](/showcases/admin)
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Route guards & per-route authorization](/docs/pattern-library/route-guards) — Every admin page and endpoint is behind a guard.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `admin-area` in `pattern-library/registry.json`._

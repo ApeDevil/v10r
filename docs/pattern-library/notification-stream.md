@@ -37,6 +37,17 @@ One SSE route serves notifications in real time over two transports: an in-memor
 - [`/showcases/notifications/send`](/showcases/notifications/send)
 - [`/showcases/analytics/live`](/showcases/analytics/live) — Live events feed
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Notification router, outbox and delivery worker](/docs/pattern-library/notification-outbox) (optional)
+
+
 ---
 
 _Machine-readable record: `notification-stream` in `pattern-library/registry.json`._

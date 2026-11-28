@@ -1,5 +1,5 @@
 {
-	"note": "Dev relevance set for pattern search. Labelled from the registry BEFORE any ranking change (2026-10-22); ranking work may be tuned against it, so the blind holdout-queries.json is the honest generalization check. relevant = the answer an expert would pick; acceptable = a reasonable secondary answer. relevant: [] means the registry has no pattern for it.",
+	"note": "Dev relevance set for pattern search. Labelled from the registry BEFORE any ranking change (2026-10-22); ranking work may be tuned against it, so the blind holdout-queries.json is the honest generalization check. relevant = the answer an expert would pick; acceptable = a reasonable secondary answer. relevant: [] means the registry has no pattern for it. Plans: required = the steps; assumed = platform conventions (registry `assumptions`, D-05) the plan must name under \"Assumes\" without making them steps. Slice 3 (2026-11-28) moved multi-client-core (p01, p02) and component-system (p04) from required to assumed: the knowledge is kept, the assertion that they are steps is not.",
 	"queries": [
 		{
 			"id": "d01",
@@ -468,28 +468,26 @@
 		{
 			"id": "p01",
 			"capabilities": ["background jobs", "layered RAG"],
-			"required": ["job-scheduling", "layered-rag", "multi-client-core"]
+			"required": ["job-scheduling", "layered-rag"],
+			"assumed": ["multi-client-core"]
 		},
 		{
 			"id": "p02",
 			"capabilities": ["approval gate for AI mutations"],
-			"required": [
-				"deskbot-approval-gate",
-				"ai-tool-harness",
-				"ai-surfaces",
-				"durable-step-execution",
-				"multi-client-core"
-			]
+			"required": ["deskbot-approval-gate", "ai-tool-harness", "ai-surfaces", "durable-step-execution"],
+			"assumed": ["multi-client-core"]
 		},
 		{
 			"id": "p03",
 			"capabilities": ["cache stampede protection", "circuit breaker"],
-			"required": ["singleflight", "hierarchical-cache", "resilience-policy"]
+			"required": ["singleflight", "hierarchical-cache", "resilience-policy"],
+			"assumed": []
 		},
 		{
 			"id": "p04",
 			"capabilities": ["optimistic updates", "virtual list for long lists"],
-			"required": ["optimistic-mutation", "virtualized-rendering", "component-system"]
+			"required": ["optimistic-mutation", "virtualized-rendering"],
+			"assumed": ["component-system"]
 		},
 		{
 			"id": "p05",
@@ -502,7 +500,8 @@
 				"deadline-propagation",
 				"hierarchical-cache",
 				"no-waterfall-loading"
-			]
+			],
+			"assumed": []
 		}
 	]
 }

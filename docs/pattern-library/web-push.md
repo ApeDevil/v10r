@@ -18,7 +18,7 @@ Web push uses one Declarative Web Push JSON payload carrying no PII (brand title
 
 **When to use:** Use when adding browser push notifications that must render on iOS Safari without SW code while staying privacy-safe on lock screens.
 
-**Needs:** required service-worker, relational-db · v10r's implementation uses email-delivery
+**Needs:** required relational-db, service-worker · v10r's implementation uses email-delivery
 
 ## Docs
 
@@ -27,6 +27,17 @@ Web push uses one Declarative Web Push JSON payload carrying no PII (brand title
 ## Code
 
 - `src/lib/server/notifications/channels/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/notifications/channels) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/notifications/channels))
+
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Service-worker caching contract](/docs/pattern-library/service-worker-caching) — Push payloads are handled by the installed service worker.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

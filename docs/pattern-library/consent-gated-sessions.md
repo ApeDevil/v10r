@@ -31,6 +31,17 @@ Session identification switches between a cookie-based id under the analytics co
 
 - [`/showcases/analytics/privacy`](/showcases/analytics/privacy)
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Consent & cookies](/docs/pattern-library/consent-cookies) — The session identifier switches on the consent tier the visitor chose.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `consent-gated-sessions` in `pattern-library/registry.json`._

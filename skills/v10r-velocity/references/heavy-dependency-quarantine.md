@@ -50,9 +50,21 @@ Optional heavyweight capabilities load behind dynamic-import boundaries, and the
 - The bundle gate must run a PRODUCTION build; a dev-mode build compiles both halves differently and inflates client JS ~9%. Note that v10r's `validate` has no build step — bundle regressions are only caught by `validate:build`.
 - A closed-by-default surface in a layout every route shares (a command palette, a dialog, an auth client used by one button) is a heavy capability too. Import it on first intent and warm it at idle; the cost is a network wait on first open if idle never came. v10r's palette and better-auth client moved the median route 241.9 -> 231.1 KB gz.
 
-## Depends on
+## Relationships
 
-- [Performance budget and ratchet](performance-budget-ratchet.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Performance budget and ratchet](performance-budget-ratchet.md) — The gated metric, the shared baseline, is a ratchet ceiling.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

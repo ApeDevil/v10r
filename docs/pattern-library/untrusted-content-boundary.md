@@ -16,7 +16,7 @@ Every AI tool declares where its result comes from and whether it can send data 
 
 **When to use:** Use when an assistant reads content a user or third party wrote — files, retrieved documents, web pages, tool output — and can also act or answer with links.
 
-**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate, durable-step-execution)
 
 ## Avoid when
 
@@ -57,10 +57,32 @@ Every AI tool declares where its result comes from and whether it can send data 
 - Remember replayed history: results rebuilt from stored messages skip toModelOutput and need the same wrapping.
 - Gate the legs you removed, not only the wrapper: a test that fails when an external tool appears ungated is what keeps the trifecta open.
 
-## Depends on
+## Relationships
 
-- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
-- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness) — Every tool in the harness registry declares its result origin and reach.
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate) — Tools that can send data out run only behind a human-approved proposal; any human approval gate satisfies it.
+
+**Applies (principles to review the work against)**
+
+- [Agent-harness audit lens](/docs/pattern-library/agent-harness-lens) — Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (required)
+
+**Built on by**
+
+- [Agent actions](/docs/pattern-library/agent-actions)
+- [MCP client](/docs/pattern-library/mcp-client)
+- [Agent to agent](/docs/pattern-library/agent-to-agent)
+- [Generative UI](/docs/pattern-library/generative-ui)
+
 
 ---
 

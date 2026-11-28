@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { type ExpectedNeed, type FixtureRecord, NEED_RESOLUTION_CASES } from './infrastructure-needs.fixtures.ts';
-import { type AdoptionNeed, adoptionNeeds } from './infrastructure-needs.ts';
-import type { PatternRecord } from './schema.ts';
+import { patternGraph, type ResolvedNeed } from './pattern-graph.ts';
+import type { PatternRecord, Registry } from './schema.ts';
 
 /** Every order of a record's prerequisites: the resolution must not depend on traversal order. */
 function orders<T>(items: readonly T[]): T[][] {
@@ -11,37 +11,42 @@ function orders<T>(items: readonly T[]): T[][] {
 	);
 }
 
-function resolve(records: readonly FixtureRecord[], rootOrder: string[]): AdoptionNeed[] {
-	const byId = new Map(
-		records.map((record) => [
-			record.id,
-			{ ...record, depends_on: record.id === 'root' ? rootOrder : record.depends_on } as unknown as PatternRecord,
-		]),
+function resolve(records: readonly FixtureRecord[], rootOrder: string[]): ResolvedNeed[] {
+	const patterns = records.map(
+		(record) =>
+			({
+				id: record.id,
+				kind: 'pattern',
+				needs: record.needs,
+				builds_on: (record.id === 'root' ? rootOrder : record.builds_on).map((id) => ({ id, why: 'fixture' })),
+				composes: [],
+				specializes: null,
+				references: [],
+				invariants: [],
+				code: [],
+			}) as unknown as PatternRecord,
 	);
-	const root = byId.get('root');
-	if (!root) throw new Error('fixture has no root');
-	return adoptionNeeds(root, byId);
+	return patternGraph({ assumptions: [], patterns } as unknown as Registry).needs('root');
 }
 
-/** The current resolver's answer in the fixture's terms. Slice 3 replaces this projection. */
-function observe(needs: readonly AdoptionNeed[], need: ExpectedNeed['need']): Required<Omit<ExpectedNeed, 'need'>> {
+/** The resolver's answer in the fixture's terms. */
+function observe(needs: readonly ResolvedNeed[], need: ExpectedNeed['need']): Required<Omit<ExpectedNeed, 'need'>> {
 	const found = needs.find((entry) => entry.need === need);
 	if (!found) return { level: 'absent', conditions: [], pins: [], origins: [], conflict: false };
 	return {
 		level: found.level,
-		conditions: found.level === 'conditional' && found.when ? [found.when] : [],
-		pins: found.pinned ? [found.pinned] : [],
-		origins: [found.via ?? 'root'],
-		conflict: false,
+		conditions: [...found.conditions],
+		pins: found.pins.map((pin) => pin.technology),
+		origins: [...found.origins],
+		conflict: found.conflict?.certain ?? false,
 	};
 }
 
 describe('need resolution preserves constraints and provenance', () => {
 	for (const fixture of NEED_RESOLUTION_CASES) {
 		const root = fixture.records.find((record) => record.id === 'root');
-		for (const order of orders(root?.depends_on ?? [])) {
-			const name = `${fixture.name} (prerequisites ${order.join(', ') || 'none'})`;
-			const check = () => {
+		for (const order of orders(root?.builds_on ?? [])) {
+			it(`${fixture.name} (prerequisites ${order.join(', ') || 'none'})`, () => {
 				const needs = resolve(fixture.records, order);
 				for (const expected of fixture.expected) {
 					const actual = observe(needs, expected.need);
@@ -51,11 +56,7 @@ describe('need resolution preserves constraints and provenance', () => {
 					if (expected.origins) expect(actual.origins.sort()).toEqual(expected.origins);
 					if (expected.conflict !== undefined) expect(actual.conflict).toBe(expected.conflict);
 				}
-			};
-			// A known gap is asserted to still fail: when Slice 3 fixes it, this flips and the
-			// marker must be removed, so the fixture becomes a plain regression test.
-			if (fixture.knownGap) it.fails(`${name} — known gap until Slice 3: ${fixture.knownGap}`, check);
-			else it(name, check);
+			});
 		}
 	}
 });

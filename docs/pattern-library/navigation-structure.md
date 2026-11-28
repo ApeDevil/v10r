@@ -30,6 +30,17 @@ Structures nav items as compound split buttons — a primary click zone that nav
 
 - [`/showcases/shell/sidebar`](/showcases/shell/sidebar)
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Explosive Discovery — nested depth for dense menus and pages](/docs/pattern-library/explosive-discovery) — Menus, toolbars and command surfaces that offer many actions are reviewed against it (directions that narrow intent, an expert path beside every discovery path); latent cards apply it at the scale of one card.
+
+**Part of**
+
+- [Shell layout](/docs/pattern-library/app-shell-layout) (optional)
+
+
 ---
 
 _Machine-readable record: `navigation-structure` in `pattern-library/registry.json`._

@@ -68,6 +68,17 @@ A review heuristic, not a rule: when a menu, toolbar or page offers more than ~5
 - Nest by narrowing intent (Place → When / Where / Map), never because a menu is long; a 'More' bucket of leftovers is the anti-pattern the heuristic exists to catch.
 - Review with the five-part output (Observation / Reasoning / Opportunity / Possible Direction / Trade-off) and its advisory language; a finding is mandatory only when another requirement makes it so.
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+
 ---
 
 _Machine-readable record: `explosive-discovery` in `pattern-library/registry.json`._

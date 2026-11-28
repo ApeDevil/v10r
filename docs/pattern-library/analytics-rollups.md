@@ -33,6 +33,17 @@ Two scheduled jobs aggregate yesterday's events into a daily_page_stats table an
 
 - `src/lib/server/jobs/analytics-rollup.pglite.test.ts` — Pins the rollup half; the cleanup job shares the registry plumbing ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/jobs/analytics-rollup.pglite.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/jobs/analytics-rollup.pglite.test.ts))
 
+## Relationships
+
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Jobs and scheduling](/docs/pattern-library/job-scheduling) — Rollups and retention windows run as registered jobs.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `analytics-rollups` in `pattern-library/registry.json`._

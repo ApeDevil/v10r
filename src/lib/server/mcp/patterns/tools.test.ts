@@ -67,9 +67,9 @@ describe('publicPatternRegistry.dispatch', () => {
 		expect(textOf(result)).toMatch(/Step 1/);
 	});
 
-	// "Dependency-ordered" is the tool's whole promise, and the title above asserted only
+	// "Foundations first" is the tool's whole promise, and the title above asserted only
 	// that a Step 1 exists. The velocity family is the first set of records with real
-	// depends_on chains, so it is the first case where a wrong order is visible: an agent
+	// builds-on chains, so it is the first case where a wrong order is visible: an agent
 	// told to build singleflight before the cache tier it locks against would follow it.
 	it('recommend_emulation_plan puts a dependency before the pattern that needs it', () => {
 		const result = publicPatternRegistry.dispatch('recommend_emulation_plan', {
@@ -130,9 +130,10 @@ describe('progressive disclosure — search_patterns', () => {
 		expect(sizes[1]).toBeLessThan(sizes[2]);
 	});
 
-	it('puts the rule-out facts on the row: dependencies, needs by level, headline contraindication', () => {
+	it('puts the rule-out facts on the row: relationships, needs by level, headline contraindication', () => {
 		const text = textOf(call('search_patterns', { query: 'layered rag', detail: 'compact', limit: 1 }));
-		expect(text).toContain('needs required relational-db, vector-search, llm-provider · conditional graph-db');
+		expect(text).toContain('needs required llm-provider, relational-db, vector-search · conditional graph-db');
+		expect(text).toContain('composes graph-rag (optional: when multi-hop relationship questions matter)');
 		expect(text).toContain('avoid when: ');
 	});
 
@@ -178,11 +179,12 @@ describe('progressive disclosure — get_pattern', () => {
 		expect(text).toContain('MUST hold when emulating');
 	});
 
-	it('always keeps the header: dependencies and infrastructure needs are never filtered away', () => {
+	it('always keeps the header: relationships and infrastructure needs are never filtered away', () => {
 		const text = textOf(call('get_pattern', { id: 'layered-rag', sections: ['invariants'] }));
-		expect(text).toContain('**Depends on:** multi-client-core');
+		expect(text).toContain('**Composes:** graph-rag (optional: when multi-hop relationship questions matter)');
+		expect(text).toContain('**Assumes:** multi-client-core (platform convention)');
 		expect(text).toContain(
-			'**Needs:** required relational-db, vector-search, llm-provider · conditional graph-db (when the graph tier answers multi-hop relationship questions)',
+			'**Needs:** required llm-provider, relational-db, vector-search · conditional graph-db (when the graph tier answers multi-hop relationship questions)',
 		);
 	});
 
@@ -277,7 +279,7 @@ describe('applicability — what adopting a pattern really takes', () => {
 		expect(unknown).not.toContain('Target lacks');
 		// A technology word implies its capability: postgres satisfies relational-db.
 		const declared = textOf(call('recommend_emulation_plan', { capabilities, target_infra: ['postgres', 'cron'] }));
-		expect(declared).toContain('**Target lacks vector-search, llm-provider — drop or replace this step');
+		expect(declared).toContain('**Target lacks llm-provider, vector-search — drop or replace this step');
 		expect(declared).toContain('Fits the target.');
 		expect(declared).toMatch(/The target lacks (vector-search, llm-provider|llm-provider, vector-search)/);
 		// A conditional need is a question to settle, never a silent requirement or a silent pass.

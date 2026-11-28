@@ -61,9 +61,16 @@ Database round trips counted per request by the driver's own logger, and per ope
 - Wrap the counter ABOVE authentication in the middleware chain. Auth is the request's least visible query, and a counter that starts below it reports every request as cheaper than it was.
 - Keep the per-request ceiling generous. It is a tripwire for the request that suddenly makes ninety queries, not a budget anyone is held to — those are per-operation and asserted where they can be proved.
 
-## Depends on
+## Relationships
 
-- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet) — The measured round-trip budgets are ceilings held by a ratchet; any ratchet the target runs satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

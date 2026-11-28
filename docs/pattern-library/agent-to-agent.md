@@ -16,7 +16,7 @@ Serve a specialist agent over A2A 1.0 with the official JS SDK behind a SvelteKi
 
 **When to use:** Use when an evaluation belongs to an independently operated agent (another team, language or framework), or when your own specialist should be callable by such agents.
 
-**Needs:** required relational-db, external-api, wasm-toolchain (via wasm-compute-kernel), container-host (via external-service-runtime) · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
+**Needs:** required external-api, llm-provider (via ai-surfaces, ai-tool-harness, deskbot-approval-gate, untrusted-content-boundary), relational-db
 
 ## Avoid when
 
@@ -64,9 +64,25 @@ Serve a specialist agent over A2A 1.0 with the official JS SDK behind a SvelteKi
 - Pull the first stream frame before committing to SSE, as the SDK's own Express handler does, so an immediate error becomes a JSON-RPC error response.
 - Stream when the card offers it: the first event names the remote task, which is what makes CancelTask possible after a timeout.
 
-## Depends on
+## Relationships
 
-- [Architecture Engineering](/docs/pattern-library/architecture-engineering)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Untrusted-content boundary](/docs/pattern-library/untrusted-content-boundary) — A remote agent’s answer is a claim, typed and wrapped as untrusted content.
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate) — Assistant-driven delegation is an approval-gated external operation.
+
+**References (context only, never a step)**
+
+- [Architecture Engineering](/docs/pattern-library/architecture-engineering) — The served specialist skills run the architecture engine's deterministic checks: v10r's example workload, not a prerequisite.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](/docs/pattern-library/agentic-architecture) (conditional)
+
 
 ---
 

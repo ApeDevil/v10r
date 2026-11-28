@@ -8,7 +8,9 @@ gate and served by the same query layer. No database projection, no graph databa
 Status: **accepted with adjustments** (2026-11-28, [decision register](./decision-register.md)). The adjustments
 are folded into the sections below; §C.4 (infrastructure needs) is implemented in Slice 1, see
 [slice-1.md](./slice-1.md); entity kinds (§C.2) and the record reconciliation in Slice 2, see
-[slice-2.md](./slice-2.md). Everything else is the agreed target, applied slice by slice.
+[slice-2.md](./slice-2.md); the typed relationships (§C.3), scoped assumptions (§C.3.4), recursive composition
+(§C.7) and the one graph module (§C.9) in Slice 3, see [slice-3.md](./slice-3.md) — §C.3.5 lists where the
+implementation refines this text. Everything else is the agreed target, applied slice by slice.
 
 ## C.1 Comparison of architectural directions
 
@@ -98,10 +100,13 @@ Rules: a pattern never `builds_on` or `composes` a principle or a workflow; a wo
 
 ## C.3 Relationships
 
-Three authored pattern-to-pattern relationships replace `depends_on`. Each was tested against all 88 current
-edges ([edge-classification.md](./edge-classification.md)), and each changes what a plan does. The vocabulary
+Three authored adoption relationships replace `depends_on`. Each was tested against all 88 edges of the time
+([edge-classification.md](./edge-classification.md)), and each changes what a plan does. The vocabulary
 stays at three until a concrete case needs a fourth (approval §4). One planning-neutral list for
-non-dependency links is proposed separately (§C.3.3, D-15).
+non-dependency links, `references: [{id, why}]`, was approved with D-15 and is the fourth relationship type —
+navigation only, never an adoption relationship (§C.3.3). *Implemented in Slice 3*: the schema in
+`pattern-library/schema.ts`, the semantics in `RELATIONSHIP_SEMANTICS` and `patternGraph` in
+`pattern-library/pattern-graph.ts`.
 
 ### C.3.1 Semantics of each relationship
 
@@ -111,13 +116,13 @@ non-dependency links is proposed separately (§C.3.3, D-15).
 | Test question | Could the target satisfy B with something it already has? → yes | Is B described inside A's solution? → yes | Is every A a B? → yes |
 | Direction | A → B (A is the dependent) | A → B (A is the whole) | A → B (A is the narrower) |
 | Inverse (derived, never authored) | B *is built on by* A | B *is part of* A | B *is specialized by* A |
-| Cardinality | 0..n per A | 0..n per A; entry `{id, optional?, when?}` | 0..1 per A (one parent keeps inheritance unambiguous); 0..n specializations per B |
-| Transitive | yes: the prerequisite closure | yes for required entries; **an optional edge ends the required chain**: everything reached only through an optional edge is optional with the same condition | yes for invariants (A inherits B's and B's parent's) |
+| Cardinality | 0..n per A | 0..n per A; entry `{id, level, when?, why}`, level `required` \| `conditional` \| `optional` | 0..1 per A (one parent keeps inheritance unambiguous); 0..n specializations per B |
+| Transitive | yes: the prerequisite closure | yes for required entries; **a conditional or optional edge ends the required chain**: what is reached only through a conditional edge is needed only under its condition (conditions along a path form a conjunction), what is reached only through an optional edge is optional | yes for invariants (A inherits B's and B's parent's) |
 | Symmetric | no | no | no |
-| Conditionality | none: a prerequisite holds unconditionally, or it is not a prerequisite | `optional: true` requires a `when` sentence; required entries carry no condition | none |
+| Conditionality | none: a prerequisite holds unconditionally, or it is not a prerequisite | `conditional` (must be adopted when its `when` holds) and `optional` (may be omitted even when its `when` holds) require a `when` sentence; required entries carry none | none |
 | Cycles | forbidden over the **union** of the three types (one acyclic graph) | | |
-| Same kind? | pattern → pattern | pattern → pattern; workflow → pattern | within one kind |
-| Needs propagation | B's required and conditional needs become A's, labelled "via B" | required entry: as `builds_on`; optional entry: B's needs are reported as conditional on the entry's `when` | B's needs are A's (A is a B) |
+| Same kind? | pattern → pattern; workflow → pattern | pattern → pattern; workflow → pattern | within one kind |
+| Needs propagation | B's required and conditional needs become A's, labelled "via B" | required entry: as `builds_on`; conditional entry: B's required needs become conditional on the entry's `when`; optional entry: B's needs are optional | B's required, conditional and optional needs are A's (A is a B); B's implementation needs are not |
 | Plan consequence | B is a step ordered before A, reason "A builds on B"; replaceable by an equivalent the target already has | required B is a step, reason "part of A"; optional B is listed with its `when`, never a step unless the caller includes it | **B is not a second implementation step.** A's step lists B's invariants as inherited; B appears as a step only if something else requires B itself |
 
 ### C.3.2 Planning rules (deterministic, apply to every consumer)
@@ -129,7 +134,7 @@ non-dependency links is proposed separately (§C.3.3, D-15).
    "also part of …" listing the other parents. Its needs are counted once.
 3. **Optional never turns required by traversal.** Required-ness is computed per path: a node is required only
    if some path from a requested record to it consists of required edges only.
-4. **Conditions are three-valued.** Each optional entry's condition is *satisfied* (the caller included it),
+4. **Conditions are three-valued.** Each conditional or optional entry's condition is *satisfied* (the caller included it),
    *unsatisfied* (the caller excluded it) or *unknown* (default). Unknown conditions are listed as open
    decisions with their `when` sentence; they are never adopted silently and never dropped silently.
    Conditional needs follow the same three values.
@@ -172,6 +177,24 @@ The approval (D-05) rejects an unconditional baseline. Four kinds of "everything
 Gate: an assumption's selector must match at least one record, and the bench checks that a plan with no
 matching step never mentions the assumption.
 
+### C.3.5 As implemented (Slice 3)
+
+Where the implementation refines the text above, the implementation is the reference and this list says why:
+
+- **Conditional ≠ optional.** The proposed `{optional?, when?}` entry could not say "must be adopted when its
+  condition holds" apart from "may be added when it helps". Slice 3 authors `level: required | conditional |
+  optional`; a conditional constituent is an open decision while its condition is unknown and a step once the
+  caller settles it satisfied; an optional one is a step only when the caller includes it.
+- **The specialization's own relationship wins.** A specialization inherits its generalization's foundations
+  and constituents at their own levels, except where it relates to the same record itself (agentic parametric
+  modeling makes the 3D viewer optional although its generalization lists it). Implementation needs and
+  implementation details are never inherited; invariants always are.
+- **Explicit adoption wins over an assumption** (invariant 7): an assumption is printed for a record in its scope
+  unless that record builds on, composes or specializes the assumed record.
+- **Workflows may build on patterns** as well as compose them: a procedure that runs on a mechanism needs it.
+- **Deferred to Slice 4** (plan assembly): naming the number of other reason paths on a step (rule 1 lists all
+  reasons, sorted, instead), and reporting a caller-excluded prerequisite as a conflict (rule 5's second half).
+
 ### Considered and rejected
 
 | Candidate | Verdict | Reason |
@@ -186,13 +209,13 @@ matching step never mentions the assumption.
 
 ### Constraints and semantic invariants (all deterministic)
 
-1. Every relationship target exists, is not the source, and appears at most once per source across all three types (no pair is both `builds_on` and `composes`).
-2. The union of `builds_on ∪ composes ∪ specializes` is acyclic.
+1. Every relationship target exists, is not the source, and appears at most once per source across all four types (no pair is both `builds_on` and `composes`, or both adopted and referenced).
+2. The union of `builds_on ∪ composes ∪ specializes` is acyclic; `references` may cycle (they carry no adoption consequence).
 3. `specializes` has at most one target, of the same `kind`.
-4. `principle` records are never `builds_on`/`composes` targets (they are conformance, not steps); `workflow` records may compose patterns.
-5. `composes {optional: true}` carries a non-empty `when`.
+4. `principle` and `workflow` records are never `builds_on`/`composes` targets (a principle is applied, a procedure performed); a principle builds on, composes and needs nothing; `workflow` records may build on and compose patterns.
+5. A `conditional` or `optional` constituent carries a non-empty `when`; a `required` one carries none.
 6. `alternatives[].pattern`, when present, resolves and is not also a `builds_on`/`composes` target of the same record (a thing cannot be both the chosen part and the rejected option).
-7. A platform assumption is never an explicit relationship target, and its `applies_to` selector matches at least one record.
+7. A platform assumption names an existing record that is not a workflow, is declared once, is never unconditional, and its `applies_to` selector matches at least one record. A record that explicitly adopts the assumed record does not also get it as an assumption: the explicit relationship wins.
 8. Needs: a record's declared needs ∪ inherited needs must cover the needs the import-scan finds in its code refs (C.4), unless an allow-listed exception gives a reason.
 
 ## C.4 Infrastructure needs
@@ -367,7 +390,7 @@ view "referenced by decision X" replaces the four `depends_on` edges that made p
 | Knowledge | Authority (one) | Derived representations (generated, gated) |
 |---|---|---|
 | Pattern records, relationships, needs, evidence | `pattern-library/registry.json` + `schema.ts` | docs pages, README index, Agent Skills, MCP excerpt snapshot, explorer projection, `/showcases/mcp` graph, retrieval chunks of the pages |
-| Inverses, closures, inherited invariants, maturity | `pattern-library/pattern-graph.ts` (new, framework-free) | every tool, page and view |
+| Inverses, closures, composition, need resolution, inherited invariants, assumptions | `pattern-library/pattern-graph.ts` (Slice 3, framework-free; `pattern-graph.gate.test.ts` keeps it the only walker) | every tool, page and view |
 | Infrastructure vocabulary + bindings | `schema.ts` `INFRASTRUCTURE_NEEDS` | `target_infra` enum, AE node-kind needs (checked) |
 | Workload decisions | `decisions.json` | Studio, `explore_architecture` |
 | Showcase list | showcase catalog | registry evidence refs (checked), back-links (derived) |

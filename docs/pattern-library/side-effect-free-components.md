@@ -51,9 +51,12 @@ Compiled Svelte components run code at module scope, so the bundler keeps every 
 - Rolldown assigns a module to a chunk by who imports it, not by which exports survive. Generated code reached through one barrel needs the same declaration: Paraglide's ~3,260 compiled message modules, re-exported by `messages.js`, all landed in one 215 KB (gz) chunk every route loaded until they were declared side-effect free (median route 420 -> 226 KB).
 - Measured (production build, gzip, full route chain): median route 296.7 -> 241.9 KB, heaviest 562.8 -> 521.5 KB. The shared baseline grew 3 KB because finer chunks lengthen the per-node preload lists in the generated app.js; that raise was reviewed and recorded, not absorbed.
 
-## Depends on
+## Relationships
 
-- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet) — The effect is held by a bundle ratchet, so removing the declaration fails a build.
+
 
 ---
 

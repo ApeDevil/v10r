@@ -81,9 +81,21 @@ A record that starts almost empty and grows labelled, typed attributes its user 
 - Give select options their own ids; the stored value is the id, so renaming an option orphans nothing.
 - Keep unchanged attributes' object identity in every operation and hold the record as $state.raw: a keystroke re-renders one row, not two hundred.
 
-## Depends on
+## Relationships
 
-- [Versioned document session](/docs/pattern-library/versioned-document-session)
+**Composes (constituents of its solution)**
+
+- [Versioned document session](/docs/pattern-library/versioned-document-session) — required: Every save is guarded by a version check and conflicts merge by attribute id.
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
 
 ---
 

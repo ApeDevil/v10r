@@ -7,7 +7,7 @@
  * browser 500s). The page receives only the projected data it renders.
  */
 
-import { computeStats, toDagData } from '#lib/showcases/mcp/registry-viz.ts';
+import { adoptedIds, computeStats, toDagData } from '#lib/showcases/mcp/registry-viz.ts';
 import registryJson from '#patterns/registry.json';
 import type { Registry } from '#patterns/schema.ts';
 import type { PageServerLoad } from './$types';
@@ -19,7 +19,7 @@ const registry = registryJson as unknown as Registry;
 // table is deterministic without client work.
 const rows = [...registry.patterns]
 	.sort((a, b) => (a.tier === b.tier ? 0 : a.tier === 'deep' ? -1 : 1))
-	.map((p) => ({ id: p.id, tier: p.tier, category: p.category, depends_on: p.depends_on }));
+	.map((p) => ({ id: p.id, tier: p.tier, category: p.category, adopts: adoptedIds(p) }));
 
 export const load: PageServerLoad = () => {
 	return {

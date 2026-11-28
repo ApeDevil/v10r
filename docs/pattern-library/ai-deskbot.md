@@ -32,6 +32,17 @@ An agentic AI surface embedded in the desk workspace calls desk-mutating tools, 
 
 - [`/showcases/desk`](/showcases/desk)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [AI desk effects](/docs/pattern-library/desk-ai-effects)
+
+
 ---
 
 _Machine-readable record: `ai-deskbot` in `pattern-library/registry.json`._

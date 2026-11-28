@@ -1,5 +1,5 @@
 {
-	"format": 4,
+	"format": 5,
 	"note": "Two-tier pattern registry for the v10r pattern library — the single source of truth every derived surface is built from: the README Pattern Index, the /docs/pattern-library section (catalog + one page per record), both MCP runtimes, /showcases/mcp, and Vely's pattern tool. Deep records are full emulation cards (invariants + emulation notes required); light records are index rows (pointers only). Every path is repo-relative and validated by pattern-library/validate.ts. Records point to docs and code — they do not duplicate explanations.",
 	"groups": [
 		{
@@ -178,6 +178,57 @@
 			"group": "integrity"
 		}
 	],
+	"assumptions": [
+		{
+			"id": "multi-client-core",
+			"applies_to": {
+				"code_under": ["src/lib/server/"]
+			},
+			"why": "Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it."
+		},
+		{
+			"id": "component-system",
+			"applies_to": {
+				"code_under": ["src/lib/components/"]
+			},
+			"why": "UI records are built from the layered component system (component-first); they assume it rather than build it."
+		},
+		{
+			"id": "design-philosophy",
+			"applies_to": {
+				"code_under": ["src/lib/components/", "src/lib/styles/", "src/app.css"]
+			},
+			"why": "Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering."
+		},
+		{
+			"id": "explosive-discovery",
+			"applies_to": {
+				"ids": [
+					"latent-cards",
+					"desk-panel-menus",
+					"desk-mobile-chrome",
+					"navigation-structure",
+					"command-palette",
+					"keyboard-shortcuts"
+				]
+			},
+			"why": "Menus, toolbars and command surfaces that offer many actions are reviewed against it (directions that narrow intent, an expert path beside every discovery path); latent cards apply it at the scale of one card."
+		},
+		{
+			"id": "agent-harness-lens",
+			"applies_to": {
+				"ids": [
+					"ai-tool-harness",
+					"ai-surfaces",
+					"deskbot-approval-gate",
+					"agent-actions",
+					"untrusted-content-boundary",
+					"mcp-client"
+				]
+			},
+			"why": "Records that add or move an agent-harness primitive (loop, context, policy, tools) are audited with the lens, so each primitive has exactly one owning slice."
+		}
+	],
 	"patterns": [
 		{
 			"id": "multi-client-core",
@@ -221,11 +272,7 @@
 				"multi-client backend",
 				"service layer",
 				"business logic",
-				"request lifecycle",
-				"layered architecture",
-				"file placement lookup",
-				"request visualization",
-				"developer education"
+				"layered architecture"
 			],
 			"keywords": [
 				"ports and adapters",
@@ -251,9 +298,16 @@
 				"showcase",
 				"form",
 				"api",
-				"request-cycle visualizer"
+				"request-cycle visualizer",
+				"request lifecycle",
+				"file placement lookup",
+				"request visualization",
+				"developer education"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/multi-client-core.md",
@@ -297,7 +351,7 @@
 			"tests": [
 				{
 					"path": "src/lib/server/security/handle-chain.gate.test.ts",
-					"note": "Middleware-order contract of the multi-client wiring; validate gate — runs on every bun run validate"
+					"note": "Middleware-order contract of the multi-client wiring; validate gate — runs on every bun run validate; pins the middleware order the layer model describes"
 				},
 				{
 					"path": "src/lib/api.gate.test.ts",
@@ -349,7 +403,10 @@
 			"needs": [],
 			"capabilities": ["request interception", "cross-cutting concerns"],
 			"keywords": ["hooks", "csrf", "security headers", "handle chain", "headers", "guards"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/middleware.md"
@@ -397,7 +454,10 @@
 			],
 			"capabilities": ["rest endpoints", "pagination", "response envelopes"],
 			"keywords": ["rest api", "server.ts", "pagination", "rate limits", "envelopes"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/api.md"
@@ -449,7 +509,10 @@
 			"needs": [],
 			"capabilities": ["error classification", "error handling"],
 			"keywords": ["error handling", "fail", "handleerror", "status codes", "expected/unexpected/form/api"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/error-handling.md"
@@ -498,7 +561,10 @@
 			],
 			"capabilities": ["reactive state", "ssr-safe sharing"],
 			"keywords": ["svelte 5", "runes", "state management", "context api"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/state.md"
@@ -539,7 +605,10 @@
 			"needs": [],
 			"capabilities": ["deployment configuration", "adapter selection"],
 			"keywords": ["vercel", "koyeb", "deployment", "adapter", "vercel serverless"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/deployment.md"
@@ -590,7 +659,10 @@
 				"test strategy",
 				"pglite isolation"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/testing/strategy.md"
@@ -637,7 +709,10 @@
 			"needs": [],
 			"capabilities": ["pattern registry", "agent tooling", "mcp server"],
 			"keywords": ["mcp", "pattern registry", "stdio", "emulation", "agent-queryable pattern registry", "local stdio"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/pattern-mcp.md"
@@ -682,7 +757,20 @@
 			],
 			"capabilities": ["hosted mcp", "bearer auth", "trust boundaries"],
 			"keywords": ["mcp", "hosted", "bearer token", "trust surface"],
-			"depends_on": ["rate-limiting"],
+			"builds_on": [
+				{
+					"id": "rate-limiting",
+					"why": "The unauthenticated public endpoint runs a fail-closed limiter before any tool; the target's own fail-closed limiter satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "pattern-mcp",
+					"why": "The same registry tools served locally over stdio to a coding agent; neither surface needs the other."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/hosted-mcp.md"
@@ -765,7 +853,15 @@
 				"conformance lane",
 				"evidence-gated adoption"
 			],
-			"depends_on": ["multi-client-core"],
+			"builds_on": [
+				{
+					"id": "hosted-mcp",
+					"why": "Dual-era serving evolves an MCP endpoint that already exists; any HTTP MCP server the target runs satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/mcp-evolution/README.md",
@@ -910,7 +1006,23 @@
 				"revocation",
 				"oauth 2.1 protected resources on better auth"
 			],
-			"depends_on": ["hosted-mcp", "passwordless-auth", "rate-limiting"],
+			"builds_on": [
+				{
+					"id": "hosted-mcp",
+					"why": "Authorization protects an MCP service that is already served over HTTP; any MCP endpoint satisfies it."
+				},
+				{
+					"id": "passwordless-auth",
+					"why": "The app becomes its own authorization server on the user accounts and sessions it already runs; any session-based sign-in satisfies it."
+				},
+				{
+					"id": "rate-limiting",
+					"why": "Per-user quotas on the protected service and bounded client registration are enforced by a limiter; the target's own limiter satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/mcp-authorization.md",
@@ -1029,7 +1141,80 @@
 				"one application architecture",
 				"optional interoperability doors"
 			],
-			"depends_on": ["agent-actions", "untrusted-content-boundary", "mcp-protocol-evolution"],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "agent-actions",
+					"level": "required",
+					"why": "The tool catalogue with risk and executor is the authoritative door every standard ends in."
+				},
+				{
+					"id": "untrusted-content-boundary",
+					"level": "required",
+					"why": "A remote agent's or external tool's answer is a claim: it reaches the model only as untrusted content."
+				},
+				{
+					"id": "turn-trace",
+					"level": "required",
+					"why": "The turn trace is the one authoritative record of what a turn did; telemetry exports are projections of it."
+				},
+				{
+					"id": "mcp-protocol-evolution",
+					"level": "conditional",
+					"when": "the application serves its tools to MCP clients",
+					"why": "MCP is one adapter onto the tool catalogue; when the application speaks it, it must serve both protocol eras from one registry."
+				},
+				{
+					"id": "mcp-client",
+					"level": "conditional",
+					"when": "the assistant consumes tools from external MCP servers",
+					"why": "External MCP tools are projected into the existing catalogue with deployment-assigned risk, never a second registry."
+				},
+				{
+					"id": "agent-to-agent",
+					"level": "conditional",
+					"when": "the application serves a specialist agent or delegates to other agents over A2A",
+					"why": "A2A is an adapter: delegation is an approval-gated external operation and every answer is a claim."
+				},
+				{
+					"id": "ag-ui-endpoint",
+					"level": "conditional",
+					"when": "AG-UI clients must drive the agent",
+					"why": "AG-UI is served by the same orchestrator turn under a deny-by-default export policy, not a second runtime."
+				},
+				{
+					"id": "generative-ui",
+					"level": "conditional",
+					"when": "the model composes interface as data",
+					"why": "Generated interface is data from a closed catalogue rendered by the app’s own components; a press is never an approval."
+				},
+				{
+					"id": "agent-skills",
+					"level": "conditional",
+					"when": "the application's knowledge must reach agent products that load Agent Skills",
+					"why": "Agent Skills are a generated projection of the canonical registry, never a hand-maintained copy."
+				},
+				{
+					"id": "webmcp",
+					"level": "optional",
+					"when": "the visitor's browser offers its own agent",
+					"why": "Progressive enhancement: existing client-action contracts are published to the browser agent; nothing depends on it."
+				},
+				{
+					"id": "agent-observability",
+					"level": "optional",
+					"when": "turns should also appear in an OpenTelemetry backend",
+					"why": "A lossy, exporter-neutral projection of the turn trace; the trace stays the audit record."
+				},
+				{
+					"id": "mcp-app-provider",
+					"level": "optional",
+					"when": "an MCP host should render an interactive View beside a tool answer",
+					"why": "The text answer is complete on its own; the View only adds interaction."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/agentic-architecture/README.md",
@@ -1114,7 +1299,10 @@
 				"vendored",
 				"plugin-free"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/wasm.md"
@@ -1184,11 +1372,13 @@
 			"alternatives": [
 				{
 					"approach": "A framework-free domain module inside the app (multi-client-core)",
-					"prefer_when": "the work runs fine in the app's own runtime and has no separate release, scaling or ownership need"
+					"prefer_when": "the work runs fine in the app's own runtime and has no separate release, scaling or ownership need",
+					"pattern": "multi-client-core"
 				},
 				{
 					"approach": "Rust compiled to wasm and run in the browser (wasm-compute-kernel)",
-					"prefer_when": "the work is compute-dense over the user's own data and needs no secret, server state or second host"
+					"prefer_when": "the work is compute-dense over the user's own data and needs no secret, server state or second host",
+					"pattern": "wasm-compute-kernel"
 				},
 				{
 					"approach": "OIDC workload identity (e.g. Vercel OIDC tokens verified against JWKS) or HMAC request signing instead of a static bearer",
@@ -1228,7 +1418,27 @@
 				"cgroup cpu quota",
 				"separately deployed backend behind a typed client"
 			],
-			"depends_on": ["multi-client-core", "deadline-propagation", "resilience-policy", "latency-tracing"],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "deadline-propagation",
+					"level": "required",
+					"why": "Every call to the service runs inside the remaining request deadline with a bounded read."
+				},
+				{
+					"id": "resilience-policy",
+					"level": "required",
+					"why": "The one seam ends every call in exactly one failure kind and retries only idempotent operations."
+				},
+				{
+					"id": "latency-tracing",
+					"level": "optional",
+					"when": "callers should see the service's share of a request in Server-Timing",
+					"why": "The Server-Timing split is an enhancement for diagnosing the second hop; the seam works without it."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/external-service.md",
@@ -1480,7 +1690,15 @@
 				"explained decision records",
 				"typed architecture model and static checks"
 			],
-			"depends_on": ["multi-client-core", "wasm-compute-kernel", "external-service-runtime", "pattern-mcp"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "pattern-mcp",
+					"why": "Its engine is served to agents as the explore_architecture and check_architecture tools of the pattern MCP server."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture-engineering/how-it-works.md",
@@ -1609,7 +1827,27 @@
 			"needs": [],
 			"capabilities": ["shell layout", "sidebar-first navigation"],
 			"keywords": ["app shell", "layout", "breakpoints", "z-index", "no global header", "sidebar-first"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "responsive-sidebar",
+					"level": "required",
+					"why": "The collapsible sidebar is the shell’s primary navigation."
+				},
+				{
+					"id": "page-header",
+					"level": "required",
+					"why": "With no global header, page-specific chrome lives in a per-page header inside the main area."
+				},
+				{
+					"id": "navigation-structure",
+					"level": "optional",
+					"when": "sections have subpages worth revealing progressively",
+					"why": "Compound split buttons reveal subpages from the sidebar items; flat items work without them."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/layout.md"
@@ -1653,7 +1891,10 @@
 			],
 			"capabilities": ["responsive sidebar", "rail navigation", "mobile drawer"],
 			"keywords": ["sidebar", "rail", "drawer", "fab", "responsive", "rail / drawer / fab"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/sidebar.md"
@@ -1695,7 +1936,10 @@
 			"needs": [],
 			"capabilities": ["progressive disclosure", "nav hierarchy"],
 			"keywords": ["navigation", "progressive disclosure", "dropdown", "nav item"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/navigation.md"
@@ -1734,7 +1978,15 @@
 			"needs": [],
 			"capabilities": ["keyboard shortcuts", "shortcut discoverability"],
 			"keywords": ["keyboard shortcuts", "hotkeys", "command palette", "help modal"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "modal-layer-stack",
+					"why": "The help modal opens on the shared modal layer stack."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/keyboard-shortcuts.md"
@@ -1776,7 +2028,10 @@
 			"needs": [],
 			"capabilities": ["modal stack", "overlay management"],
 			"keywords": ["modals", "dialog", "layer stack", "overlay"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/shell-state.md"
@@ -1818,7 +2073,10 @@
 			"needs": [],
 			"capabilities": ["toast notifications", "stacking feedback"],
 			"keywords": ["toast", "undo", "feedback", "notifications", "stacking"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/toast.md"
@@ -1860,7 +2118,15 @@
 			"needs": [],
 			"capabilities": ["session expiry ui", "re-authentication"],
 			"keywords": ["session", "expiry", "re-auth", "revocation"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "passwordless-auth",
+					"why": "It reacts to the session state of the auth layer; any session-based auth satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/session-lifecycle.md"
@@ -1902,7 +2168,10 @@
 			"needs": [],
 			"capabilities": ["loading skeletons", "navigation progress"],
 			"keywords": ["loading states", "skeleton", "progress bar", "perceived performance", "skeletons", "nav progress"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/loading-states.md"
@@ -1945,7 +2214,10 @@
 			"needs": [],
 			"capabilities": ["empty state ui"],
 			"keywords": ["empty states", "first-run", "zero results", "placeholder"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/empty-states.md"
@@ -1985,7 +2257,10 @@
 			"needs": [],
 			"capabilities": ["page header", "breadcrumbs"],
 			"keywords": ["page header", "breadcrumbs", "xss-safe", "per-page"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/page-header.md"
@@ -2031,7 +2306,10 @@
 			],
 			"capabilities": ["command palette", "full-text search", "two-lane search"],
 			"keywords": ["quick search", "command palette", "fts", "cmd+k", "two-lane fts"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/quick-search/architecture.md"
@@ -2099,13 +2377,7 @@
 				"cva variants",
 				"composite components",
 				"component composition",
-				"layout wrappers",
-				"spacing",
-				"data tables",
-				"dropdown menus",
-				"context menus",
-				"resizable panes",
-				"reorderable panes"
+				"layout wrappers"
 			],
 			"keywords": [
 				"primitives",
@@ -2134,9 +2406,18 @@
 				"context",
 				"split panes",
 				"resizable",
-				"reorderable"
+				"reorderable",
+				"spacing",
+				"data tables",
+				"dropdown menus",
+				"context menus",
+				"resizable panes",
+				"reorderable panes"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/design/README.md",
@@ -2286,7 +2567,10 @@
 			"needs": [],
 			"capabilities": ["design principles", "token layering"],
 			"keywords": ["design system", "philosophy", "theming", "tokens"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/design/README.md"
@@ -2362,7 +2646,10 @@
 				"mobile projection",
 				"ux review"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/foundation/explosive-discovery.md",
@@ -2492,7 +2779,10 @@
 				"scroll area card",
 				"scroll spotlight"
 			],
-			"depends_on": ["explosive-discovery", "component-system"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/design/latent-cards.md",
@@ -2569,7 +2859,10 @@
 				"fonts",
 				"text"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/design/tokens.md"
@@ -2623,7 +2916,10 @@
 			"needs": [],
 			"capabilities": ["surface depth", "elevation context"],
 			"keywords": ["elevation", "surfaces", "portals", "context"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/design/tokens.md"
@@ -2665,7 +2961,10 @@
 			"needs": [],
 			"capabilities": ["fluid typography", "container queries"],
 			"keywords": ["unocss", "responsive", "container queries", "mobile-first"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/design/styling.md"
@@ -2708,7 +3007,6 @@
 			"capabilities": [
 				"form validation",
 				"progressive enhancement",
-				"basic form patterns",
 				"confirm submit",
 				"reset after submit",
 				"edit forms"
@@ -2729,9 +3027,13 @@
 				"confirm",
 				"reset",
 				"edit",
-				"advanced form tactics"
+				"advanced form tactics",
+				"basic form patterns"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/forms.md"
@@ -2802,7 +3104,15 @@
 			"needs": [],
 			"capabilities": ["validation timing", "async validation"],
 			"keywords": ["validation", "realtime", "debounce", "async", "server"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "schema-validated-forms",
+					"why": "The three timing strategies are options of the schema-validated form stack."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/forms.md"
@@ -2852,7 +3162,15 @@
 			"needs": [],
 			"capabilities": ["multi-step wizard", "dependent fields"],
 			"keywords": ["wizard", "dynamic fields", "dependent fields", "cascade", "dynamic", "dependent"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "schema-validated-forms",
+					"why": "Wizard steps, array fields and dependent fields are built on the schema-validated form stack."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/forms.md"
@@ -2899,7 +3217,15 @@
 			"needs": [],
 			"capabilities": ["passwordless login", "oauth forms"],
 			"keywords": ["better auth", "magic link", "otp", "oauth", "better auth client", "not superforms"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "passwordless-auth",
+					"why": "The forms drive the magic-link, OTP and OAuth flows of the auth layer directly."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/auth.md"
@@ -2944,7 +3270,15 @@
 			],
 			"capabilities": ["file uploads", "image processing"],
 			"keywords": ["file upload", "sharp", "r2", "object storage", "withfiles"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "object-storage-adapter",
+					"why": "Processed files persist through the S3-compatible storage adapter; any object store satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/forms.md"
@@ -2987,7 +3321,10 @@
 			"needs": [],
 			"capabilities": ["locale routing", "canonical redirects"],
 			"keywords": ["locale", "routing", "param matcher", "paraglide", "optional catch-all", "matcher", "308 canonical"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/i18n.md"
@@ -3029,7 +3366,10 @@
 			"needs": [],
 			"capabilities": ["compiled messages", "icu messageformat"],
 			"keywords": ["paraglide", "i18n messages", "icu", "translations", "paraglide js", "compile-time"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/i18n.md"
@@ -3072,7 +3412,10 @@
 			"needs": [],
 			"capabilities": ["locale formatting", "cldr plurals"],
 			"keywords": ["intl", "date formatting", "number formatting", "cldr"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/i18n.md"
@@ -3116,7 +3459,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["db content translation", "jsonb sidecar"],
 			"keywords": ["database i18n", "jsonb", "tc()", "translation map"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/i18n.md"
@@ -3167,7 +3513,10 @@
 				"docs convention",
 				"readme-per-directory convention"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/README.md",
@@ -3223,7 +3572,8 @@
 			"alternatives": [
 				{
 					"approach": "Docs navigation hubs alone (docs-nav-hubs)",
-					"prefer_when": "the repo has a few patterns and no code or showcase cross-references to keep in sync"
+					"prefer_when": "the repo has a few patterns and no code or showcase cross-references to keep in sync",
+					"pattern": "docs-nav-hubs"
 				},
 				{
 					"approach": "A live in-app catalog projected from the registry at request time (catalog.ts, no build step)",
@@ -3242,7 +3592,20 @@
 				"generated",
 				"generated readme capability map"
 			],
-			"depends_on": ["docs-nav-hubs"],
+			"builds_on": [
+				{
+					"id": "reproducible-artifact-build",
+					"why": "The README region is a committed generated artifact proven current by regenerate-and-diff; any regenerate-and-check gate satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "agent-skills",
+					"why": "Two projections of the same registry, regenerated and checked by the gate; neither is built from the other."
+				}
+			],
 			"docs": [
 				{
 					"path": "README.md",
@@ -3330,7 +3693,21 @@
 				"machine-readable docs",
 				"ax"
 			],
-			"depends_on": ["docs-nav-hubs"],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "pattern-index",
+					"level": "required",
+					"why": "The generated pattern library (README index and per-pattern pages) is one of its five surfaces."
+				}
+			],
+			"specializes": null,
+			"references": [
+				{
+					"id": "docs-nav-hubs",
+					"why": "AGENTS.md and llms.txt route agents into the docs tree, which hub READMEs make navigable; the surfaces work over any addressable docs tree."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/agent-experience.md",
@@ -3434,7 +3811,13 @@
 				"selector",
 				"fragments and routing paths resolve"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": {
+				"id": "source-of-truth-gate",
+				"why": "Each fragment and routed path has one owner (the rendered heading, the file) and a gate checks every copy against it."
+			},
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/agent-experience.md#links-and-routing-stay-resolvable",
@@ -3492,7 +3875,15 @@
 				"progressive disclosure"
 			],
 			"keywords": ["SKILL.md", "agentskills.io", "skills-ref", "npx skills add", "references"],
-			"depends_on": ["pattern-index"],
+			"builds_on": [
+				{
+					"id": "reproducible-artifact-build",
+					"why": "skills/ is a committed generated artifact that fails the gate when stale; any regenerate-and-check gate satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-skills.md",
@@ -3561,7 +3952,10 @@
 			],
 			"capabilities": ["db connection", "serverless driver"],
 			"keywords": ["postgres", "neon", "drizzle", "serverless", "neon serverless"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/db/relational.md"
@@ -3609,7 +4003,10 @@
 			],
 			"capabilities": ["schema definition", "type inference"],
 			"keywords": ["drizzle", "schema", "namespaces", "postgres"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/db/relational.md"
@@ -3658,7 +4055,10 @@
 			],
 			"capabilities": ["code organization"],
 			"keywords": ["queries", "mutations", "domain module", "reads-writes", "reads-writes duality"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/codebase-organization.md"
@@ -3704,7 +4104,10 @@
 			],
 			"capabilities": ["db connection", "http query api"],
 			"keywords": ["neo4j", "aura", "graph", "cypher"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/db/graph.md"
@@ -3746,7 +4149,10 @@
 			"needs": ["graph-db"],
 			"capabilities": ["graph modeling"],
 			"keywords": ["neo4j", "nodes", "relationships", "graph"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/db/graph.md"
@@ -3785,7 +4191,10 @@
 			"needs": ["graph-db"],
 			"capabilities": ["graph traversal"],
 			"keywords": ["neo4j", "cypher", "shortest path", "traversal"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/db/graph.md"
@@ -3824,7 +4233,10 @@
 			"needs": ["relational-db", "graph-db"],
 			"capabilities": ["cross-store consistency"],
 			"keywords": ["polyglot persistence", "postgres", "neo4j", "reconciliation"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/db/polyglot-freshness.md"
@@ -3862,7 +4274,10 @@
 			],
 			"capabilities": ["object storage", "presigned urls"],
 			"keywords": ["r2", "s3", "cloudflare", "presigned url", "presigned transfer"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/stack/data/r2.md"
@@ -3930,7 +4345,10 @@
 				"effective date",
 				"how much time to store"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/db/relational.md#how-much-time-to-model",
@@ -3979,7 +4397,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["schema migration workflow"],
 			"keywords": ["drizzle-kit", "push", "migrations", "workflow", "push-only", "no migrations dir"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/data/drizzle-workflow.md"
@@ -4018,7 +4439,10 @@
 			],
 			"capabilities": ["branch reset", "control plane api"],
 			"keywords": ["neon", "branch refresh", "control plane", "admin", "run ledger"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/data/neon-branch-refresh.md"
@@ -4073,7 +4497,10 @@
 			],
 			"capabilities": ["seeding", "bootstrap"],
 			"keywords": ["seed", "bootstrap", "scripts", "database setup"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/data/README.md"
@@ -4109,7 +4536,10 @@
 			"needs": ["relational-db", "email-delivery"],
 			"capabilities": ["magic link", "otp"],
 			"keywords": ["better-auth", "passwordless", "sessions", "email"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/auth.md"
@@ -4166,7 +4596,15 @@
 			],
 			"capabilities": ["oauth sign-in"],
 			"keywords": ["github", "google", "oauth", "better-auth"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "passwordless-auth",
+					"why": "Another sign-in method on the same session layer; either works alone."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/auth.md"
@@ -4205,7 +4643,10 @@
 			"needs": [],
 			"capabilities": ["authorization guards"],
 			"keywords": ["route guards", "authorization", "admin gate", "403/404"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/auth.md"
@@ -4250,7 +4691,10 @@
 			],
 			"capabilities": ["capability grants"],
 			"keywords": ["grants", "authorization", "request approval", "expiry", "request → approve → expire"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/auth.md"
@@ -4303,7 +4747,15 @@
 			],
 			"capabilities": ["passkeys", "step-up totp"],
 			"keywords": ["webauthn", "totp", "step-up", "mfa"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "passwordless-auth",
+					"why": "Passkeys are another first-factor credential on the same session layer."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/auth.md"
@@ -4354,7 +4806,10 @@
 			],
 			"capabilities": ["proof-of-work", "hmac verification", "replay protection"],
 			"keywords": ["altcha", "captcha", "bot detection", "proof-of-work", "hmac"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/abuse/captcha.md"
@@ -4400,7 +4855,7 @@
 					"why": "v10r's feedback capture (implementation inventory) uses it"
 				}
 			],
-			"capabilities": ["hidden field trap", "fill-time check", "feedback form", "spam protection"],
+			"capabilities": ["hidden field trap", "fill-time check", "spam protection"],
 			"keywords": [
 				"honeypot",
 				"bot detection",
@@ -4410,9 +4865,13 @@
 				"min fill time",
 				"feedback",
 				"form",
-				"feedback capture"
+				"feedback capture",
+				"feedback form"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/abuse/honeypot.md"
@@ -4460,7 +4919,10 @@
 			"needs": ["key-value-store"],
 			"capabilities": ["sliding window", "fail-closed", "per-key limiter"],
 			"keywords": ["rate limit", "upstash", "redis", "throttling", "abuse"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/abuse/rate-limits.md"
@@ -4502,7 +4964,10 @@
 			"needs": ["key-value-store", "llm-provider"],
 			"capabilities": ["token budget", "cost control"],
 			"keywords": ["ai budget", "token cap", "rate limit", "cost control", "abuse"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/abuse/ai-budget.md"
@@ -4540,7 +5005,23 @@
 			"needs": [],
 			"capabilities": ["decision aggregation", "audit logging"],
 			"keywords": ["bot detection", "audit log", "abuse", "decision"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "proof-of-work-captcha",
+					"why": "One of the anti-abuse layers whose decisions it records."
+				},
+				{
+					"id": "honeypot",
+					"why": "One of the anti-abuse layers whose decisions it records."
+				},
+				{
+					"id": "rate-limiting",
+					"why": "One of the anti-abuse layers whose decisions it records."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/abuse/README.md"
@@ -4581,7 +5062,15 @@
 			"needs": ["relational-db"],
 			"capabilities": ["route guards", "data table"],
 			"keywords": ["admin", "guards", "data table", "sidebar"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "route-guards",
+					"why": "Every admin page and endpoint is behind a guard."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/admin/README.md"
@@ -4635,14 +5124,7 @@
 					"why": "the bot-hit buffer it cites is kept in Redis"
 				}
 			],
-			"capabilities": [
-				"data aggregation",
-				"export",
-				"erasure",
-				"user account management",
-				"gdpr transparency",
-				"data access request"
-			],
+			"capabilities": ["data aggregation", "export", "erasure", "gdpr transparency", "data access request"],
 			"keywords": [
 				"gdpr",
 				"privacy",
@@ -4658,9 +5140,13 @@
 				"art 15",
 				"my data",
 				"transparency page",
-				"visitor \"my data\" transparency"
+				"visitor \"my data\" transparency",
+				"user account management"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/user-account.md"
@@ -4730,7 +5216,10 @@
 			"needs": [],
 			"capabilities": ["consent state", "cookie gating"],
 			"keywords": ["consent", "cookies", "gdpr", "eprivacy", "banner"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/stack/capabilities/gdpr.md"
@@ -4779,7 +5268,15 @@
 			],
 			"capabilities": ["scheduled purge", "retention policy"],
 			"keywords": ["data retention", "purge", "jobs", "privacy", "gdpr"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "job-scheduling",
+					"why": "Purges run as registered jobs on a fixed cadence."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/jobs.md"
@@ -4818,7 +5315,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["pairing code", "hmac cookie", "qr flow"],
 			"keywords": ["pairing", "debug", "admin", "hmac", "qr code"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/admin/pairing.md"
@@ -4865,17 +5365,7 @@
 					"why": "v10r persists the picked style in Postgres; a cookie serves the pattern equally"
 				}
 			],
-			"capabilities": [
-				"style resolution",
-				"custom palettes",
-				"randomizer",
-				"user preferences",
-				"theme cookie",
-				"accessibility settings",
-				"style randomization",
-				"palette selection",
-				"decorative elements"
-			],
+			"capabilities": ["style resolution", "custom palettes", "randomizer", "style randomization", "palette selection"],
 			"keywords": [
 				"theming",
 				"palette",
@@ -4894,9 +5384,16 @@
 				"ornaments",
 				"backgrounds",
 				"style randomization",
-				"decorative ornaments and backgrounds"
+				"decorative ornaments and backgrounds",
+				"user preferences",
+				"theme cookie",
+				"accessibility settings",
+				"decorative elements"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/visual-identity-architecture.md"
@@ -4971,7 +5468,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["audit log"],
 			"keywords": ["audit log", "announcements", "admin", "announcements"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/admin/README.md"
@@ -5040,7 +5540,10 @@
 				"risk metadata",
 				"registry"
 			],
-			"depends_on": ["multi-client-core"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/surfaces.md",
@@ -5150,7 +5653,15 @@
 				"ai sdk",
 				"chat assistant"
 			],
-			"depends_on": ["ai-tool-harness"],
+			"builds_on": [
+				{
+					"id": "ai-tool-harness",
+					"why": "Both surfaces run turns over the one tool registry and harness; the target’s own tool harness satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/surfaces.md",
@@ -5288,7 +5799,25 @@
 				"proposal → approve",
 				"plan-gated mutation"
 			],
-			"depends_on": ["ai-tool-harness", "ai-surfaces", "durable-step-execution"],
+			"builds_on": [
+				{
+					"id": "ai-tool-harness",
+					"why": "The gate lives at the tool layer: write tools return a sentinel instead of mutating inside the agent loop."
+				},
+				{
+					"id": "ai-surfaces",
+					"why": "Proposals belong to the mutating agent surface; the read-only chatbot never creates one."
+				}
+			],
+			"composes": [
+				{
+					"id": "durable-step-execution",
+					"level": "required",
+					"why": "An approved plan executes step by step with a claim, a lease and a receipt per step, and can be compensated once."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/harness-lens.md",
@@ -5417,7 +5946,17 @@
 				"corpus map"
 			],
 			"keywords": ["retrieval", "corpus map", "rrf", "tiers", "chunks", "grounding", "provenance", "kernel"],
-			"depends_on": ["multi-client-core"],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "graph-rag",
+					"level": "optional",
+					"when": "multi-hop relationship questions matter",
+					"why": "The graph tier adds explainable multi-hop answers beside the vector tiers; the vector tiers answer without it."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/layered-rag.md",
@@ -5527,7 +6066,15 @@
 				"one ingest door",
 				"/api/retrieval/*"
 			],
-			"depends_on": ["layered-rag"],
+			"builds_on": [
+				{
+					"id": "layered-rag",
+					"why": "The endpoints feed and query the retrieval kernel over HTTP; the kernel is the foundation they expose."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/knowledge-base.md",
@@ -5591,7 +6138,10 @@
 			"needs": ["llm-provider"],
 			"capabilities": ["persistent session", "minimize state"],
 			"keywords": ["chatbot session", "minimize", "dock", "state machine"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/persistent-chatbot.md"
@@ -5629,7 +6179,15 @@
 			"needs": ["llm-provider"],
 			"capabilities": ["provider routing", "circuit breaker"],
 			"keywords": ["provider registry", "cooldown", "resolver", "fallback", "chat/tools/vision"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "resilience-policy",
+					"why": "Rate-limited providers trip a circuit breaker so the resolver routes around them; any breaker satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/provider-routing.md"
@@ -5666,7 +6224,10 @@
 			"needs": ["llm-provider"],
 			"capabilities": ["page context", "deixis grounding"],
 			"keywords": ["site awareness", "page context", "deixis", "grounding"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/site-awareness.md"
@@ -5697,7 +6258,10 @@
 			"needs": ["graph-db", "vector-search", "relational-db", "llm-provider"],
 			"capabilities": ["graph rag", "tiered retrieval"],
 			"keywords": ["neo4j", "rrf fusion", "tiers", "knowledge graph", "three tiers"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/graph-rag.md"
@@ -5751,7 +6315,15 @@
 				"chunk ancestry",
 				"proposal receipts"
 			],
-			"depends_on": ["ai-surfaces"],
+			"builds_on": [
+				{
+					"id": "ai-surfaces",
+					"why": "It records the turns of the chatbot and deskbot surfaces from their actual execution."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/turn-trace.md"
@@ -5823,7 +6395,7 @@
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": ["llm-provider", "object-storage", "relational-db"],
-			"capabilities": ["vision analysis", "human approval", "ai metadata", "ai cropping", "embedding"],
+			"capabilities": ["vision analysis", "human approval", "ai metadata"],
 			"keywords": [
 				"image metadata",
 				"vision",
@@ -5834,9 +6406,14 @@
 				"toolkit",
 				"ai pipeline",
 				"upload → ai pipeline → adjust → approve",
-				"persists nothing"
+				"persists nothing",
+				"ai cropping",
+				"embedding"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/image-metadata.md"
@@ -5889,7 +6466,10 @@
 			"needs": [],
 			"capabilities": ["cost monitoring", "usage telemetry"],
 			"keywords": ["usage summary", "pricing", "admin", "token cost"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/cost-monitoring.md"
@@ -5930,7 +6510,10 @@
 			"needs": [],
 			"capabilities": ["prompt compaction", "context formatting"],
 			"keywords": ["toon", "token efficiency", "serialization", "prompt context"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/toon.md"
@@ -5962,7 +6545,10 @@
 			"needs": ["llm-provider", "relational-db"],
 			"capabilities": ["agentic ai", "desk tool calling"],
 			"keywords": ["deskbot", "desk integration", "agent", "tool calling", "ai in the desk workspace"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/desk-integration.md"
@@ -6000,7 +6586,10 @@
 			"needs": [],
 			"capabilities": ["harness audit", "agent loop"],
 			"keywords": ["harness lens", "compaction", "policy governor", "step cap", "loop/context/policy/tools"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/harness-lens.md"
@@ -6045,7 +6634,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["pageview tracking", "middleware hook"],
 			"keywords": ["hooks.server.ts", "sequence", "waituntil", "pageview"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/analytics/activation.md"
@@ -6083,7 +6675,15 @@
 			"needs": [],
 			"capabilities": ["consent management", "cookieless sessions"],
 			"keywords": ["consent tier", "eprivacy", "session id", "cookieless", "cookieless day-rotating id"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "consent-cookies",
+					"why": "The session identifier switches on the consent tier the visitor chose."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/analytics/activation.md"
@@ -6124,7 +6724,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["user journeys", "session analysis"],
 			"keywords": ["journey beacon", "window function", "session flow", "client beacon"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/analytics/activation.md"
@@ -6162,7 +6765,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["funnel analysis", "conversion tracking"],
 			"keywords": ["funnel", "session dedup", "conversion"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/analytics/activation.md"
@@ -6201,7 +6807,15 @@
 			"needs": ["relational-db", "scheduler"],
 			"capabilities": ["scheduled rollup", "data retention"],
 			"keywords": ["daily rollup", "retention window", "analytics cleanup"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "job-scheduling",
+					"why": "Rollups and retention windows run as registered jobs."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/jobs.md"
@@ -6247,7 +6861,7 @@
 					"when": "the host has no persistent process to run the delivery worker (serverless: a cron sweep drains the outbox)"
 				}
 			],
-			"capabilities": ["notification routing", "outbox pattern", "database schema", "delivery log"],
+			"capabilities": ["notification routing", "outbox pattern", "delivery log"],
 			"keywords": [
 				"outbox",
 				"notificationservice",
@@ -6255,9 +6869,30 @@
 				"notification_deliveries",
 				"schema",
 				"push_subscriptions",
-				"schema & delivery log"
+				"schema & delivery log",
+				"database schema"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "notification-channels",
+					"level": "required",
+					"why": "Queued rows are delivered through the provider interface of each channel."
+				},
+				{
+					"id": "notification-settings-matrix",
+					"level": "required",
+					"why": "sendNotification evaluates the user’s channel-by-type matrix before queueing."
+				},
+				{
+					"id": "notification-stream",
+					"level": "optional",
+					"when": "in-app notifications should arrive live",
+					"why": "The in-app record can be pushed over SSE; without it the notification centre shows it on the next load."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/notifications/routing.md"
@@ -6328,7 +6963,10 @@
 			],
 			"capabilities": ["channel providers", "oauth2 connection"],
 			"keywords": ["resend", "telegram", "discord", "provider interface", "email"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/notifications/channels.md"
@@ -6376,7 +7014,7 @@
 					"when": "the host is serverless, where pub/sub replaces the in-memory connection map"
 				}
 			],
-			"capabilities": ["sse stream", "notification center", "sse streaming", "live feed"],
+			"capabilities": ["sse stream", "notification center", "sse streaming"],
 			"keywords": [
 				"sse",
 				"connection map",
@@ -6384,9 +7022,13 @@
 				"live events",
 				"synthetic data",
 				"rate limit",
-				"live events feed"
+				"live events feed",
+				"live feed"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/notifications.md"
@@ -6446,7 +7088,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["settings matrix", "channel preferences"],
 			"keywords": ["settings matrix", "preferences", "notification types", "channel × type"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/notifications/settings.md"
@@ -6515,9 +7160,7 @@
 				"job registry",
 				"recurring work",
 				"cron scheduling",
-				"platform-agnostic jobs",
-				"retention jobs",
-				"cleanup jobs"
+				"platform-agnostic jobs"
 			],
 			"keywords": [
 				"scheduler",
@@ -6537,9 +7180,14 @@
 				"cleanup",
 				"sync",
 				"delivery",
-				"registered jobs"
+				"registered jobs",
+				"retention jobs",
+				"cleanup jobs"
 			],
-			"depends_on": ["multi-client-core"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/jobs.md",
@@ -6638,7 +7286,10 @@
 			"needs": [],
 			"capabilities": ["web manifest", "installability"],
 			"keywords": ["manifest.webmanifest", "maskable icons", "paraglide"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/pwa.md"
@@ -6682,7 +7333,10 @@
 			"needs": ["service-worker"],
 			"capabilities": ["service worker", "offline fallback"],
 			"keywords": ["service worker", "cache contract", "kill switch", "precache", "offline shell", "html network-only"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/pwa.md"
@@ -6729,7 +7383,15 @@
 			"needs": ["service-worker"],
 			"capabilities": ["update prompt", "service worker update"],
 			"keywords": ["skipwaiting", "controllerchange", "update toast", "silent", "idle toast", "no auto skipwaiting"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "service-worker-caching",
+					"why": "The update flow governs a service worker that is already installed."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/pwa.md"
@@ -6775,7 +7437,15 @@
 			],
 			"capabilities": ["web push", "declarative push"],
 			"keywords": ["vapid", "declarative web push", "push_subscriptions", "no pii", "declarative json"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "service-worker-caching",
+					"why": "Push payloads are handled by the installed service worker."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/pwa.md"
@@ -6811,20 +7481,7 @@
 					"why": "v10r's maps (implementation inventory) uses it: map tiles come from a tile server"
 				}
 			],
-			"capabilities": [
-				"bar/line/pie charts",
-				"canvas cleanup",
-				"ssr guard",
-				"scatter plot",
-				"heatmap",
-				"flow diagrams",
-				"state diagrams",
-				"custom node types",
-				"webgl base map",
-				"markers",
-				"geojson choropleth",
-				"timeline rendering"
-			],
+			"capabilities": ["bar/line/pie charts", "canvas cleanup", "ssr guard"],
 			"keywords": [
 				"chart.js",
 				"sparkline",
@@ -6847,9 +7504,20 @@
 				"timeline",
 				"chronology",
 				"events",
-				"timelines"
+				"timelines",
+				"scatter plot",
+				"flow diagrams",
+				"state diagrams",
+				"custom node types",
+				"webgl base map",
+				"markers",
+				"geojson choropleth",
+				"timeline rendering"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/stack/capabilities/viz.md"
@@ -6923,7 +7591,10 @@
 			"needs": [],
 			"capabilities": ["force-directed layout", "tree/dag layout", "sankey flow"],
 			"keywords": ["d3", "network graph", "dag", "sankey"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/stack/capabilities/viz.md"
@@ -6960,14 +7631,7 @@
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": [],
-			"capabilities": [
-				"declarative three.js scenes",
-				"ssr-off subtree",
-				"model config registry",
-				"gltf loading",
-				"orbit controls",
-				"animation playback"
-			],
+			"capabilities": ["declarative three.js scenes", "ssr-off subtree", "model config registry", "gltf loading"],
 			"keywords": [
 				"threlte",
 				"three.js",
@@ -6977,9 +7641,13 @@
 				"code-split model registry",
 				"animation mixer",
 				"orbit controls",
-				"static & animated scenes"
+				"static & animated scenes",
+				"animation playback"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/3d/3d-integration.md"
@@ -7042,7 +7710,15 @@
 			"needs": [],
 			"capabilities": ["material customization", "morph-target presets", "layout reset"],
 			"keywords": ["gltf customizer", "viewer scene", "morph targets", "full-screen"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "threlte-integration",
+					"why": "The viewer and customizer render through the Threlte integration with SSR off."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/3d/3d-integration.md"
@@ -7119,7 +7795,17 @@
 				"couplings",
 				"conduits"
 			],
-			"depends_on": ["threlte-integration"],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "threlte-integration",
+					"level": "optional",
+					"when": "assemblies are shown and edited in a native 3D view",
+					"why": "A thin Threlte layer renders the framework-free core; the core validates and edits without it."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/3d/product-composition.md",
@@ -7276,7 +7962,38 @@
 				"openscad",
 				"typed request → checked glb"
 			],
-			"depends_on": ["threlte-integration", "derivation-key", "provenance-record", "rate-limiting", "hosted-mcp"],
+			"builds_on": [
+				{
+					"id": "rate-limiting",
+					"why": "Public generation is rate limited before anything is built; the target's own limiter satisfies it."
+				}
+			],
+			"composes": [
+				{
+					"id": "derivation-key",
+					"level": "required",
+					"why": "The written GLB carries its derivation key and is current exactly while a recomputed key matches."
+				},
+				{
+					"id": "provenance-record",
+					"level": "required",
+					"why": "Every job records PROV-DM provenance of the asset it produced."
+				},
+				{
+					"id": "hosted-mcp",
+					"level": "conditional",
+					"when": "agents call the pipeline over MCP",
+					"why": "The same job shape serves MCP tools; when agents must reach it, it is served by an MCP endpoint."
+				},
+				{
+					"id": "threlte-integration",
+					"level": "optional",
+					"when": "the app shows the produced asset in a native viewer",
+					"why": "A viewer presents the checked asset; production and inspection do not need it."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/3d/asset-production.md",
@@ -7399,7 +8116,8 @@
 				},
 				{
 					"approach": "Asset production pipeline with fixed generators",
-					"prefer_when": "the object family is fixed (a configurator) and only its parameters change"
+					"prefer_when": "the object family is fixed (a configurator) and only its parameters change",
+					"pattern": "asset-production-pipeline"
 				}
 			],
 			"needs": [
@@ -7438,14 +8156,36 @@
 				"agentic",
 				"declarative"
 			],
-			"depends_on": [
-				"asset-production-pipeline",
-				"mcp-authorization",
-				"hosted-mcp",
-				"mcp-app-provider",
-				"rate-limiting",
-				"threlte-integration"
+			"builds_on": [
+				{
+					"id": "hosted-mcp",
+					"why": "The modeling tools run on a separate stateless MCP service; any MCP server endpoint satisfies it."
+				}
 			],
+			"composes": [
+				{
+					"id": "mcp-authorization",
+					"level": "required",
+					"why": "The modeling service is an OAuth protected resource: every request carries an access token for its audience."
+				},
+				{
+					"id": "mcp-app-provider",
+					"level": "optional",
+					"when": "the MCP host renders Views",
+					"why": "An MCP App draws a server-side preview mesh; the text and structured answer are complete without it."
+				},
+				{
+					"id": "threlte-integration",
+					"level": "optional",
+					"when": "the model is shown in the native viewer",
+					"why": "The native viewer runs the same kernel in a web worker; the MCP tools work without it."
+				}
+			],
+			"specializes": {
+				"id": "asset-production-pipeline",
+				"why": "Every parametric model is an asset production request: one strict request schema, same bytes, inspection before encoding."
+			},
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/3d/parametric-modeling.md",
@@ -7561,7 +8301,22 @@
 			],
 			"capabilities": ["post revisions", "locale-aware publishing", "multi-author drafts"],
 			"keywords": ["blog", "revisions", "i18n", "publishing", "posts"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "markdown-pipeline",
+					"level": "required",
+					"why": "Post bodies render through the markdown pipeline."
+				},
+				{
+					"id": "comments",
+					"level": "optional",
+					"when": "readers should discuss posts",
+					"why": "Comments are an enhancement of a post page; publishing works without them."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/blog.md"
@@ -7604,7 +8359,15 @@
 			"needs": ["relational-db"],
 			"capabilities": ["per-locale comments", "moderation", "author edit window"],
 			"keywords": ["comments", "moderation", "blog", "flat threads", "flat", "per-locale", "moderated"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "rate-limiting",
+					"why": "Posting is rate limited; the target's own limiter satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/blog.md"
@@ -7655,7 +8418,10 @@
 			],
 			"capabilities": ["directive syntax", "markdown ast processing"],
 			"keywords": ["remark", "rehype", "directives", "wikilinks"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/blog.md"
@@ -7697,7 +8463,15 @@
 			"needs": [],
 			"capabilities": ["codemirror editing", "slash commands"],
 			"keywords": ["markdown editor", "codemirror", "slash command", "authoring"],
-			"depends_on": [],
+			"builds_on": [
+				{
+					"id": "markdown-pipeline",
+					"why": "The slash commands insert the custom syntax the pipeline renders."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/blog.md"
@@ -7737,7 +8511,10 @@
 			"needs": [],
 			"capabilities": ["prerendered docs", "self-documenting pages"],
 			"keywords": ["docs", "prerender", "static site"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/pages.md"
@@ -7809,7 +8586,10 @@
 				"focus architecture",
 				"mobile projection"
 			],
-			"depends_on": ["multi-client-core"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/desk/README.md",
@@ -7902,7 +8682,15 @@
 			"needs": [],
 			"capabilities": ["spreadsheet grid", "dual-mode panel"],
 			"keywords": ["spreadsheet", "desk", "file registry", "sti", "file type", "dual-mode"],
-			"depends_on": ["desk-workspace"],
+			"builds_on": [
+				{
+					"id": "desk-workspace",
+					"why": "A panel type registered in the workspace’s panel-type registry."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/desk/spreadsheet.md"
@@ -7968,7 +8756,15 @@
 				"pill",
 				"drawers"
 			],
-			"depends_on": ["desk-workspace"],
+			"builds_on": [
+				{
+					"id": "desk-workspace",
+					"why": "Phone chrome for the workspace’s dock and its open panel instances."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/desk/README.md",
@@ -8030,7 +8826,15 @@
 				"desktop kebab",
 				"mobile sheet"
 			],
-			"depends_on": ["desk-workspace"],
+			"builds_on": [
+				{
+					"id": "desk-workspace",
+					"why": "Each panel instance registers its menus with the dock that composes them."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/desk/README.md",
@@ -8090,7 +8894,19 @@
 				"highlight",
 				"tool results drive the workspace"
 			],
-			"depends_on": ["desk-workspace", "ai-deskbot"],
+			"builds_on": [
+				{
+					"id": "desk-workspace",
+					"why": "Effects open, focus and refresh panels of the workspace."
+				},
+				{
+					"id": "ai-deskbot",
+					"why": "The effects are dispatched from the deskbot’s tool results."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/desk/README.md",
@@ -8147,7 +8963,15 @@
 				"kebab",
 				"unified file tree over n sources"
 			],
-			"depends_on": ["desk-workspace"],
+			"builds_on": [
+				{
+					"id": "desk-workspace",
+					"why": "The explorer is a panel of the workspace."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/desk/README.md",
@@ -8215,7 +9039,10 @@
 				"fold-based rollback",
 				"idempotency keys"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/interaction.md#optimistic-mutation",
@@ -8289,7 +9116,10 @@
 				"idle",
 				"six levels over sveltekit triggers"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/interaction.md#intent-based-preloading",
@@ -8366,7 +9196,10 @@
 				"slow scrolling",
 				"windowing maths split from the component"
 			],
-			"depends_on": ["component-system"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/interaction.md#virtualized-rendering",
@@ -8419,7 +9252,15 @@
 			"needs": [],
 			"capabilities": ["idle work", "speculative preparation", "lazy hydration"],
 			"keywords": ["idle", "requestidlecallback", "speculative", "lazy hydration", "intersection observer"],
-			"depends_on": ["intent-preloading"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "intent-preloading",
+					"why": "Both prepare probable next work: idle work after interactivity, intent preloading on intent signals; neither needs the other."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/interaction.md#idle-and-speculative-work"
@@ -8480,7 +9321,7 @@
 					"when": "more than one instance serves and the shared tier is wanted; one process runs on the memory tier"
 				}
 			],
-			"capabilities": ["caching", "cache tiers", "TTL", "cache invalidation", "cache scope", "ephemeral state"],
+			"capabilities": ["caching", "cache tiers", "TTL", "cache invalidation", "cache scope"],
 			"keywords": [
 				"cache",
 				"ttl",
@@ -8497,9 +9338,13 @@
 				"ephemeral",
 				"upstash redis",
 				"ephemeral patterns",
-				"redis cache client"
+				"redis cache client",
+				"ephemeral state"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/data.md#hierarchical-cache",
@@ -8608,7 +9453,19 @@
 			],
 			"capabilities": ["stale-while-revalidate", "stale-if-error", "background refresh", "bounded staleness"],
 			"keywords": ["swr", "stale", "revalidate", "dashboard", "feed", "slow page", "background refresh"],
-			"depends_on": ["hierarchical-cache", "critical-path-deferred-tail"],
+			"builds_on": [
+				{
+					"id": "hierarchical-cache",
+					"why": "Staleness windows are declared by the cache policy; SWR is the read behaviour of a cache layer that already exists."
+				},
+				{
+					"id": "critical-path-deferred-tail",
+					"why": "The refresh runs after the response through the deferred tail; any after-response mechanism with the survival rule satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/data.md#stale-while-revalidate",
@@ -8688,7 +9545,15 @@
 				"duplicate work",
 				"nobody waits on a lock"
 			],
-			"depends_on": ["hierarchical-cache"],
+			"builds_on": [
+				{
+					"id": "hierarchical-cache",
+					"why": "Refresh claims coordinate the refresh of one cache key across instances."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/data.md#singleflight--stampede-protection",
@@ -8770,7 +9635,10 @@
 			],
 			"capabilities": ["concurrency", "parallel loading", "N+1 avoidance", "request fan-out"],
 			"keywords": ["waterfall", "sequential", "parallel", "promise.all", "n+1", "slow page", "concurrent", "await"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/data.md#no-waterfall-data-loading",
@@ -8825,7 +9693,10 @@
 			"needs": ["relational-db"],
 			"capabilities": ["read model", "projection", "denormalization", "dashboard performance"],
 			"keywords": ["read model", "projection", "rollup", "aggregate", "dashboard", "cqrs", "materialized"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/data.md#screen-read-model"
@@ -8886,7 +9757,15 @@
 				"budget",
 				"counting is not proving"
 			],
-			"depends_on": ["performance-budget-ratchet"],
+			"builds_on": [
+				{
+					"id": "performance-budget-ratchet",
+					"why": "The measured round-trip budgets are ceilings held by a ratchet; any ratchet the target runs satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/data.md#query-budget-and-hot-query-proof",
@@ -8983,7 +9862,10 @@
 				"tail",
 				"slow save"
 			],
-			"depends_on": ["multi-client-core"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#critical-path--deferred-tail",
@@ -9070,7 +9952,10 @@
 				"critical rendering path",
 				"lcp element paints from the document"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#critical-rendering-path",
@@ -9138,7 +10023,15 @@
 				"chunk",
 				"baseline is the metric"
 			],
-			"depends_on": ["performance-budget-ratchet"],
+			"builds_on": [
+				{
+					"id": "performance-budget-ratchet",
+					"why": "The gated metric, the shared baseline, is a ratchet ceiling."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#heavy-dependency-quarantine",
@@ -9222,7 +10115,15 @@
 				"index.ts",
 				"barrels that tree-shake"
 			],
-			"depends_on": ["performance-budget-ratchet"],
+			"builds_on": [
+				{
+					"id": "performance-budget-ratchet",
+					"why": "The effect is held by a bundle ratchet, so removing the declaration fails a build."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#side-effect-free-component-tree",
@@ -9307,7 +10208,10 @@
 				"worker → wasm",
 				"each step measured"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#main-thread-budget--compute-isolation",
@@ -9423,7 +10327,10 @@
 				"breaker",
 				"shedding"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#resilience-policy",
@@ -9528,7 +10435,10 @@
 				"presigned url",
 				"assets"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#asset-delivery"
@@ -9593,7 +10503,10 @@
 			"needs": [],
 			"capabilities": ["deployment locality", "region placement", "cross-region latency", "locality probe"],
 			"keywords": ["region", "edge", "locality", "cold start", "cross-region", "latency", "deployment", "round trip"],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#compute-and-data-locality",
@@ -9663,7 +10576,15 @@
 				"one budget",
 				"divided"
 			],
-			"depends_on": ["resilience-policy"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "resilience-policy",
+					"why": "Retries and timeouts of the resilience policy spend the propagated budget; each works without the other."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/runtime.md#deadline-propagation",
@@ -9753,7 +10674,10 @@
 				"profiling",
 				"server-timing as one renderer"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/measurement.md#latency-tracing",
@@ -9834,7 +10758,10 @@
 				"targets aspire",
 				"ceilings hold"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/measurement.md#performance-budget-and-ratchet",
@@ -9941,7 +10868,20 @@
 				"adverse conditions",
 				"committed"
 			],
-			"depends_on": ["performance-budget-ratchet", "resilience-policy"],
+			"builds_on": [
+				{
+					"id": "performance-budget-ratchet",
+					"why": "Deterministic columns are gated against committed ceilings."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "resilience-policy",
+					"why": "Its hanging- and failing-dependency scenarios exercise the resilience policy; that is evidence for the policy, not a prerequisite."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/measurement.md#performance-scenario-harness",
@@ -10035,7 +10975,23 @@
 				"upstream",
 				"bulkhead"
 			],
-			"depends_on": ["resilience-policy", "deadline-propagation", "hierarchical-cache"],
+			"builds_on": [
+				{
+					"id": "resilience-policy",
+					"why": "Each source gets its own breaker, bulkhead and quota; any resilience policy the target runs satisfies it."
+				},
+				{
+					"id": "deadline-propagation",
+					"why": "Every source call takes the remaining request budget."
+				},
+				{
+					"id": "hierarchical-cache",
+					"why": "Successful source results are cached per source."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/name-check.md#pattern-boundaries",
@@ -10124,7 +11080,19 @@
 				"phonetic",
 				"name search"
 			],
-			"depends_on": ["multi-source-aggregation", "rate-limiting"],
+			"builds_on": [
+				{
+					"id": "multi-source-aggregation",
+					"why": "The check is one adoption of the aggregation mechanism over trademark, register and domain sources."
+				},
+				{
+					"id": "rate-limiting",
+					"why": "The public endpoint runs the IP limiter before any upstream call, and the limiter fails closed."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/name-check.md",
@@ -10244,7 +11212,10 @@
 				"one owner",
 				"bound copies"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/truth.md#source-of-truth-gate",
@@ -10361,7 +11332,10 @@
 				"epistemic",
 				"freshness kept apart"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/truth.md#evidence-status-dimensions",
@@ -10494,7 +11468,10 @@
 				"cycle",
 				"freshness by input fingerprint"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/derivation.md#derivation-key",
@@ -10607,7 +11584,10 @@
 				"regenerate-and-diff",
 				"or manifest"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/derivation.md#reproducible-artifact-build",
@@ -10714,7 +11694,16 @@
 				"activity",
 				"agent — prov-dm core"
 			],
-			"depends_on": ["derivation-key"],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "derivation-key",
+					"level": "required",
+					"why": "The recorded activity names its transform and inputs through the derivation key."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/derivation.md#provenance-record",
@@ -10822,7 +11811,10 @@
 				"claim",
 				"receipts"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/execution.md#durable-step-execution",
@@ -10931,7 +11923,10 @@
 				"drafts",
 				"explicit conflict"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/execution.md#versioned-document-session",
@@ -11054,7 +12049,16 @@
 				"versioned labels",
 				"self-describing records the user defines at runtime"
 			],
-			"depends_on": ["versioned-document-session"],
+			"builds_on": [],
+			"composes": [
+				{
+					"id": "versioned-document-session",
+					"level": "required",
+					"why": "Every save is guarded by a version check and conflicts merge by attribute id."
+				}
+			],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/dynamic-attributes/pattern.md",
@@ -11204,7 +12208,13 @@
 				"owned rights record",
 				"gate over shipped files"
 			],
-			"depends_on": ["source-of-truth-gate"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": {
+				"id": "source-of-truth-gate",
+				"why": "One owned rights record per file, derived into every surface and gated against the files present: a source-of-truth gate for attribution."
+			},
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/integrity/truth.md#asset-rights-manifest",
@@ -11298,7 +12308,15 @@
 				"envelopes name their key",
 				"rotation re-seals"
 			],
-			"depends_on": ["job-scheduling"],
+			"builds_on": [
+				{
+					"id": "job-scheduling",
+					"why": "Rotation is a ring change plus a re-seal sweep that runs as a registered job; any scheduled-job runner satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/security/key-ring.md#encryption-key-ring",
@@ -11396,7 +12414,13 @@
 				"navigate",
 				"shallow writes"
 			],
-			"depends_on": ["state-management"],
+			"builds_on": [],
+			"composes": [],
+			"specializes": {
+				"id": "state-management",
+				"why": "URL search params are shared page state read and written through one typed spec."
+			},
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/state.md#url-state",
@@ -11470,7 +12494,8 @@
 			"alternatives": [
 				{
 					"approach": "Server-side drafts with a save queue (versioned-document-session)",
-					"prefer_when": "the draft must survive sign-out, sync across devices or be shared"
+					"prefer_when": "the draft must survive sign-out, sync across devices or be shared",
+					"pattern": "versioned-document-session"
 				},
 				{
 					"approach": "SvelteKit snapshots (export const snapshot)",
@@ -11504,7 +12529,15 @@
 				"offered back",
 				"guarded only when lost"
 			],
-			"depends_on": ["schema-validated-forms"],
+			"builds_on": [
+				{
+					"id": "schema-validated-forms",
+					"why": "Drafts are kept per form and stripped to the form’s schema shape."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/forms.md#draft-recovery",
@@ -11605,7 +12638,19 @@
 				"delimiter",
 				"one rule per leg"
 			],
-			"depends_on": ["ai-tool-harness", "deskbot-approval-gate"],
+			"builds_on": [
+				{
+					"id": "ai-tool-harness",
+					"why": "Every tool in the harness registry declares its result origin and reach."
+				},
+				{
+					"id": "deskbot-approval-gate",
+					"why": "Tools that can send data out run only behind a human-approved proposal; any human approval gate satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/untrusted-content.md#untrusted-content-boundary",
@@ -11673,7 +12718,8 @@
 			"alternatives": [
 				{
 					"approach": "Server-derived UI effects on tool results (desk-ai-effects)",
-					"prefer_when": "the server already knows what the UI should do after its own tool ran, and no result has to reach the model"
+					"prefer_when": "the server already knows what the UI should do after its own tool ran, and no result has to reach the model",
+					"pattern": "desk-ai-effects"
 				},
 				{
 					"approach": "A server-held pending-action queue with a push channel and a result endpoint",
@@ -11709,7 +12755,27 @@
 				"one tool catalogue",
 				"server and client executors"
 			],
-			"depends_on": ["ai-tool-harness", "ai-surfaces", "deskbot-approval-gate", "untrusted-content-boundary"],
+			"builds_on": [
+				{
+					"id": "ai-tool-harness",
+					"why": "Every action is one entry of the tool catalogue the harness owns."
+				},
+				{
+					"id": "ai-surfaces",
+					"why": "Client actions stream to the browser that sent the turn of an agent surface."
+				},
+				{
+					"id": "deskbot-approval-gate",
+					"why": "Write actions are proposals approved by a person, never executed in the loop."
+				},
+				{
+					"id": "untrusted-content-boundary",
+					"why": "A client action’s result is user-origin content and reaches the model only escaped."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-actions.md",
@@ -11843,7 +12909,23 @@
 				"peer directory",
 				"external tools projected into the one catalogue"
 			],
-			"depends_on": ["ai-tool-harness", "untrusted-content-boundary", "deskbot-approval-gate"],
+			"builds_on": [
+				{
+					"id": "ai-tool-harness",
+					"why": "External tools are projected into the existing tool catalogue, not a second registry."
+				},
+				{
+					"id": "untrusted-content-boundary",
+					"why": "Every projected external tool is reach external with user-origin results."
+				},
+				{
+					"id": "deskbot-approval-gate",
+					"why": "External operations run only behind an approved proposal."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/mcp-client.md",
@@ -11951,7 +13033,15 @@
 				"mcp inspector",
 				"interactive view beside a text answer"
 			],
-			"depends_on": ["hosted-mcp"],
+			"builds_on": [
+				{
+					"id": "hosted-mcp",
+					"why": "The View is a ui:// resource of an MCP server; any MCP server endpoint satisfies it."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/mcp-apps.md",
@@ -12048,7 +13138,24 @@
 				"a2a specialist agents",
 				"served and delegated"
 			],
-			"depends_on": ["architecture-engineering"],
+			"builds_on": [
+				{
+					"id": "untrusted-content-boundary",
+					"why": "A remote agent’s answer is a claim, typed and wrapped as untrusted content."
+				},
+				{
+					"id": "deskbot-approval-gate",
+					"why": "Assistant-driven delegation is an approval-gated external operation."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "architecture-engineering",
+					"why": "The served specialist skills run the architecture engine's deterministic checks: v10r's example workload, not a prerequisite."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-to-agent.md",
@@ -12129,7 +13236,8 @@
 				},
 				{
 					"approach": "MCP Apps (sandboxed HTML)",
-					"prefer_when": "the view is a full application a third party ships"
+					"prefer_when": "the view is a full application a third party ships",
+					"pattern": "mcp-app-provider"
 				}
 			],
 			"needs": [
@@ -12162,7 +13270,19 @@
 				"dedup",
 				"a2ui surfaces rendered with the app's own components"
 			],
-			"depends_on": ["component-system", "untrusted-content-boundary"],
+			"builds_on": [
+				{
+					"id": "component-system",
+					"why": "The closed catalogue renders through the app's own components and tokens; any component library with a closed catalogue satisfies it."
+				},
+				{
+					"id": "untrusted-content-boundary",
+					"why": "Model-composed surfaces are untrusted data: policy and validator refuse anything outside the catalogue."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/generative-ui.md",
@@ -12242,7 +13362,15 @@
 			"needs": [],
 			"capabilities": ["webmcp", "browser agent tools"],
 			"keywords": ["document.modelContext", "registerTool", "origin trial"],
-			"depends_on": ["agent-actions"],
+			"builds_on": [
+				{
+					"id": "agent-actions",
+					"why": "It publishes the existing client-action contracts; it has no actions of its own."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/webmcp.md",
@@ -12284,7 +13412,15 @@
 			"needs": ["llm-provider"],
 			"capabilities": ["ag-ui", "agent frontend events"],
 			"keywords": ["ag-ui", "copilotkit", "RUN_STARTED", "RunAgentInput", "HttpAgent", "frontend tools"],
-			"depends_on": ["agent-actions"],
+			"builds_on": [
+				{
+					"id": "agent-actions",
+					"why": "AG-UI frontend tools are the existing client actions."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-user-interaction.md",
@@ -12344,7 +13480,15 @@
 			"needs": [],
 			"capabilities": ["opentelemetry genai", "agent telemetry"],
 			"keywords": ["gen_ai", "semantic conventions", "invoke_agent", "execute_tool"],
-			"depends_on": ["turn-trace"],
+			"builds_on": [
+				{
+					"id": "turn-trace",
+					"why": "It projects a recorded turn trace onto spans; without the trace there is nothing to export."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-observability.md",
@@ -12412,7 +13556,20 @@
 				"deterministic graders over the turn trace",
 				"floor ratchet"
 			],
-			"depends_on": ["turn-trace", "performance-budget-ratchet"],
+			"builds_on": [
+				{
+					"id": "turn-trace",
+					"why": "Every expectation is a deterministic check over a recorded turn trace."
+				}
+			],
+			"composes": [],
+			"specializes": null,
+			"references": [
+				{
+					"id": "performance-budget-ratchet",
+					"why": "Its pass-rate floor follows the same only-tighten discipline as a budget ratchet; neither needs the other."
+				}
+			],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/evals.md#ai-eval-regression-suite",
@@ -12538,7 +13695,10 @@
 				"deterministic run",
 				"target check"
 			],
-			"depends_on": [],
+			"builds_on": [],
+			"composes": [],
+			"specializes": null,
+			"references": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/pim/sheet-workflow.md#agent-proposed-transform-recipe",

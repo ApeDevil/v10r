@@ -61,9 +61,20 @@ Five derived surfaces make the repo consumable by coding agents: a root AGENTS.m
 - Start with AGENTS.md and llms.txt — the standards that won adoption — and advertise them in-page/headers; an unadvertised llms.txt is dead weight.
 - Make recovery hints structural (a required parameter on the error constructor), not a style guideline reviewers must remember.
 
-## Depends on
+## Relationships
 
-- [Docs navigation hubs](docs-nav-hubs.md)
+**Composes (constituents of its solution)**
+
+- [Pattern Index](pattern-index.md) — required: The generated pattern library (README index and per-pattern pages) is one of its five surfaces.
+
+**References (context only, never a step)**
+
+- [Docs navigation hubs](docs-nav-hubs.md) — AGENTS.md and llms.txt route agents into the docs tree, which hub READMEs make navigable; the surfaces work over any addressable docs tree.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

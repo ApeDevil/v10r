@@ -54,10 +54,20 @@ A committed golden set of questions, each with the facts its recorded turn must 
 - Run evals through the app's real endpoints as a signed-in user, so the graded turn is exactly what a user's turn records.
 - Start the floor at the first honest run and log every raise; a floor set by hope fails the first time and gets ignored.
 
-## Depends on
+## Relationships
 
-- [Turn trace and turn graph](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/turn-trace.md)
-- [Performance budget and ratchet](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/performance-budget-ratchet.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Turn trace and turn graph](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/turn-trace.md) — Every expectation is a deterministic check over a recorded turn trace.
+
+**References (context only, never a step)**
+
+- [Performance budget and ratchet](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/performance-budget-ratchet.md) — Its pass-rate floor follows the same only-tighten discipline as a budget ratchet; neither needs the other.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

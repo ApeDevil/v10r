@@ -1,7 +1,9 @@
 /**
- * The pattern dependency explorer: one deterministic projection of the registry's `depends_on`
- * graph, answered for one pattern (its prerequisites, transitively, and what builds on it) or for
- * the graph as a whole (every pattern that sits in it, grouped by category, with the hubs).
+ * The pattern dependency explorer: one deterministic projection of the registry's typed
+ * relationship graph (`pattern-graph.ts`), answered for one pattern (what adopting it builds —
+ * foundations and required constituents, transitively — its open constituents, its
+ * generalization and references, and what builds on or contains it) or for the graph as a whole
+ * (every pattern in an adoption relationship, grouped by category, with the hubs).
  *
  * It backs the `explore_patterns` tool, which the hosted MCP serves with an MCP Apps View
  * (`src/lib/server/mcp/apps/`). The projection is returned twice from one computation: as
@@ -12,11 +14,11 @@
  * next-action convention it reuses.
  */
 
-import { type AdoptionNeed, adoptionNeeds, needsSummary } from './infrastructure-needs.ts';
+import { needsSummary } from './infrastructure-needs.ts';
+import { type OpenConstituent, type PatternGraph, patternGraph, type ResolvedNeed } from './pattern-graph.ts';
 import { MAX_ARG_CHARS, type NextAction, type QueryDiag, type ToolDef, withNextActions } from './query.ts';
 import { registryDigest } from './registry-digest.ts';
 import type { PatternMaturity, PatternRecord, PatternTier, Registry } from './schema.ts';
-import { buildById, topoSort } from './schema.ts';
 
 export const EXPLORE_PATTERNS_TOOL_NAME = 'explore_patterns';
 
@@ -28,7 +30,7 @@ const MAX_HUBS = 5;
 export const EXPLORE_PATTERNS_TOOL: ToolDef = {
 	name: EXPLORE_PATTERNS_TOOL_NAME,
 	description:
-		"Explore the pattern library's dependency graph. With `id`: that pattern's maturity, infrastructure needs by level, an invariants summary, every prerequisite it builds on (depends_on, transitively, in adoption order) and every pattern that builds on it, with a docs link. Without `id`: the patterns that sit in the graph, by category, and its hubs. Read-only. Hosts that support MCP Apps render it as an interactive explorer; every other client gets the same answer as text.",
+		"Explore the pattern library's relationship graph. With `id`: that pattern's maturity, infrastructure needs by level, an invariants summary, everything adopting it builds (foundations and required constituents, transitively, in adoption order), its conditional and optional constituents, its generalization and references, and every pattern that builds on or contains it, with a docs link. Without `id`: the patterns in adoption relationships, by category, and the hubs. Read-only. Hosts that support MCP Apps render it as an interactive explorer; every other client gets the same answer as text.",
 	inputSchema: {
 		type: 'object',
 		properties: {
@@ -51,30 +53,42 @@ export interface ExploredPattern {
 	maturity: PatternMaturity;
 }
 
-/** A prerequisite in adoption order, with how many `depends_on` hops away it is. */
+/** A step adopting the focus builds, in adoption order, with how many adoption hops away it is. */
 export interface ExploredPrerequisite {
 	id: string;
 	depth: number;
+	/** How the nearest path reaches it: a foundation (`builds_on`) or a required constituent (`composes`). */
+	relation: 'builds_on' | 'composes';
 }
+
+/** A resolved need without its per-path sources (those stay in `get_pattern` and the graph). */
+export type ExploredNeed = Omit<ResolvedNeed, 'sources'>;
 
 export interface ExploredFocus extends ExploredPattern {
 	summary: string;
 	risk: string;
-	/** Own needs and the required/conditional ones inherited through a prerequisite (`via`). */
-	needs: AdoptionNeed[];
+	/** Own needs and those reaching it through foundations, constituents and generalizations. */
+	needs: ExploredNeed[];
 	/** The same needs as one line by level, as every surface prints them. */
 	needsSummary: string;
 	invariantCount: number;
 	invariants: string[];
 	/** The first contraindication, when the record names one. */
 	avoidWhen: string | null;
-	dependsOn: string[];
-	/** Every transitive prerequisite, in adoption order (prerequisites first). */
+	buildsOn: string[];
+	composes: Array<{ id: string; level: string; when?: string }>;
+	specializes: string | null;
+	references: string[];
+	/** Every step adopting it builds, transitively, in adoption order (foundations first). */
 	prerequisites: ExploredPrerequisite[];
-	/** Patterns that list this one in their own `depends_on`. */
+	/** Conditional and optional constituents, never adopted silently. */
+	open: OpenConstituent[];
+	/** Patterns that build on it, contain it or specialize it, directly (derived inverses). */
 	dependents: string[];
-	/** Every pattern that builds on this one, directly or through another. */
+	/** Every pattern whose adoption includes this one, directly or through another. */
 	allDependents: string[];
+	/** Patterns that reference it (planning-neutral, derived inverse). */
+	referencedBy: string[];
 	/** Site path of the generated docs page (`/docs/pattern-library/<id>`); absolute when an origin was given. */
 	docsUrl: string;
 	cyclic: boolean;
@@ -101,7 +115,7 @@ export type PatternExploration =
 			registryDigest: string;
 			categories: ExploredCategory[];
 			hubs: Array<{ id: string; dependents: number }>;
-			/** Registry patterns outside the graph — no prerequisite and no dependent. */
+			/** Registry patterns in no adoption relationship. */
 			unconnected: number;
 			patterns: ExploredPattern[];
 	  };
@@ -125,13 +139,16 @@ function node(pattern: PatternRecord): ExploredPattern {
 	};
 }
 
-/** `pattern id → ids that depend on it`, in registry order. */
-function dependentsIndex(registry: Registry): Map<string, string[]> {
-	const index = new Map<string, string[]>();
-	for (const pattern of registry.patterns) {
-		for (const dep of pattern.depends_on) index.set(dep, [...(index.get(dep) ?? []), pattern.id]);
-	}
-	return index;
+/** Records whose adoption directly includes `id`: built on by, part of (any level), specialized by. */
+function adoptersOf(graph: PatternGraph, id: string): string[] {
+	return [
+		...new Set(
+			graph
+				.edgesTo(id)
+				.filter((edge) => edge.type !== 'references')
+				.map((edge) => edge.from),
+		),
+	];
 }
 
 /** Breadth-first walk from `start` (excluded) along `next`, recording the hop count. */
@@ -154,46 +171,73 @@ export function patternDocsUrl(id: string, options: ExploreOptions = {}): string
 }
 
 function focusOn(registry: Registry, pattern: PatternRecord, options: ExploreOptions): ExplorationOutcome {
-	const byId = buildById(registry);
+	const graph = patternGraph(registry);
 	const registryOrder = registry.patterns.map((entry) => entry.id);
-	const dependents = dependentsIndex(registry);
-	const upstream = walk(pattern.id, (id) => byId.get(id)?.depends_on ?? []);
-	const downstream = walk(pattern.id, (id) => dependents.get(id) ?? []);
-	const { order, cyclic } = topoSort([...upstream.keys()], byId, registryOrder);
+	const adoption = graph.adopt([pattern.id]);
+	const required = (id: string) =>
+		graph
+			.effectiveEdges(id)
+			.filter((edge) => edge.type === 'builds_on' || edge.level === 'required')
+			.map((edge) => edge.to);
+	const upstream = walk(pattern.id, required);
+	const relation = new Map<string, 'builds_on' | 'composes'>();
+	for (const [id, reasons] of adoption.reasons) {
+		const nearest = reasons.find((reason) => reason.kind !== 'requested');
+		if (nearest) relation.set(id, nearest.kind === 'builds_on' ? 'builds_on' : 'composes');
+	}
+	const downstream = walk(pattern.id, (id) => adoptersOf(graph, id));
 	const allDependents = registryOrder.filter((id) => downstream.has(id));
-	const needs = adoptionNeeds(pattern, byId);
+	const needs = graph.needs(pattern.id);
+	const steps = adoption.steps.filter((id) => id !== pattern.id);
 	const focus: ExploredFocus = {
 		...node(pattern),
 		summary: pattern.summary,
 		risk: pattern.risk,
-		needs,
+		needs: needs.map(({ sources: _sources, ...need }) => need),
 		needsSummary: needsSummary(needs, { condition: true }),
 		invariantCount: pattern.invariants.length,
 		invariants: pattern.invariants.slice(0, MAX_SUMMARY_INVARIANTS),
 		avoidWhen: pattern.avoid_when[0] ?? null,
-		dependsOn: [...pattern.depends_on],
-		prerequisites: order.map((id) => ({ id, depth: upstream.get(id) ?? 0 })),
-		dependents: [...(dependents.get(pattern.id) ?? [])],
+		buildsOn: pattern.builds_on.map((entry) => entry.id),
+		composes: pattern.composes.map((entry) => ({
+			id: entry.id,
+			level: entry.level,
+			...(entry.when ? { when: entry.when } : {}),
+		})),
+		specializes: pattern.specializes?.id ?? null,
+		references: pattern.references.map((entry) => entry.id),
+		prerequisites: steps.map((id) => ({ id, depth: upstream.get(id) ?? 0, relation: relation.get(id) ?? 'builds_on' })),
+		open: adoption.open,
+		dependents: adoptersOf(graph, pattern.id),
 		allDependents,
+		referencedBy: graph.edgesTo(pattern.id, 'references').map((edge) => edge.from),
 		docsUrl: patternDocsUrl(pattern.id, options),
-		cyclic: cyclic || upstream.has(pattern.id) || downstream.has(pattern.id),
+		cyclic: adoption.cyclic || upstream.has(pattern.id) || downstream.has(pattern.id),
 	};
-	const named = new Set([pattern.id, ...order, ...allDependents]);
+	const named = new Set([
+		pattern.id,
+		...steps,
+		...allDependents,
+		...adoption.open.map((entry) => entry.id),
+		...focus.references,
+		...focus.referencedBy,
+		...(focus.specializes ? [focus.specializes] : []),
+	]);
 	const exploration: PatternExploration = {
 		kind: 'focus',
 		registryDigest: registryDigest(registry),
 		focus,
 		patterns: registry.patterns.filter((entry) => named.has(entry.id)).map(node),
 	};
-	return { ok: true, text: focusText(focus, byId), exploration };
+	return { ok: true, text: focusText(focus, graph.byId), exploration };
 }
 
-function label(id: string, byId: Map<string, PatternRecord>): string {
+function label(id: string, byId: ReadonlyMap<string, PatternRecord>): string {
 	const pattern = byId.get(id);
 	return pattern ? `\`${id}\` — ${pattern.title} (${pattern.maturity})` : `\`${id}\``;
 }
 
-function focusText(focus: ExploredFocus, byId: Map<string, PatternRecord>): string {
+function focusText(focus: ExploredFocus, byId: ReadonlyMap<string, PatternRecord>): string {
 	const list = (ids: string[]) => (ids.length === 0 ? '- (none)' : ids.map((id) => `- ${label(id, byId)}`).join('\n'));
 	const more = focus.invariantCount - focus.invariants.length;
 	const body = [
@@ -205,9 +249,22 @@ function focusText(focus: ExploredFocus, byId: Map<string, PatternRecord>): stri
 		focus.invariantCount > 0
 			? `## Invariants (${focus.invariantCount})\n${focus.invariants.map((line) => `- ${line}`).join('\n')}${more > 0 ? `\n- … ${more} more in get_pattern` : ''}`
 			: '',
-		`## Builds on (${focus.prerequisites.length}, adoption order)\n${list(focus.prerequisites.map((entry) => entry.id))}`,
-		`## Built on by (${focus.dependents.length} direct, ${focus.allDependents.length} in total)\n${list(focus.allDependents)}`,
-		focus.cyclic ? 'Warning: a dependency cycle touches this pattern; the order is best-effort.' : '',
+		focus.specializes
+			? `Specializes \`${focus.specializes}\`: its invariants hold here; its foundations and constituents are adopted with this pattern, and it is not built twice.`
+			: '',
+		`## Adopting it builds (${focus.prerequisites.length}, adoption order)\n${list(focus.prerequisites.map((entry) => entry.id))}`,
+		focus.open.length > 0
+			? `## Conditional and optional constituents (decide against the target; never added silently)\n${focus.open
+					.map(
+						(entry) =>
+							`- ${label(entry.id, byId)} — ${entry.level}: ${entry.proposedBy.map((proposal) => `part of \`${proposal.from}\` when ${proposal.when}`).join('; ')}`,
+					)
+					.join('\n')}`
+			: '',
+		focus.references.length > 0 ? `## References (context, never a step)\n${list(focus.references)}` : '',
+		`## Built on or contained by (${focus.dependents.length} direct, ${focus.allDependents.length} in total)\n${list(focus.allDependents)}`,
+		focus.referencedBy.length > 0 ? `## Referenced by\n${list(focus.referencedBy)}` : '',
+		focus.cyclic ? 'Warning: an adoption cycle touches this pattern; the order is best-effort.' : '',
 		`Docs: ${focus.docsUrl}`,
 	].filter((part) => part.length > 0);
 	const next: NextAction[] = [
@@ -215,16 +272,19 @@ function focusText(focus: ExploredFocus, byId: Map<string, PatternRecord>): stri
 		{
 			tool: 'recommend_emulation_plan',
 			args: { capabilities: [focus.title] },
-			why: 'an ordered plan that includes these prerequisites.',
+			why: 'an ordered plan that includes these foundations and constituents.',
 		},
 	];
 	return withNextActions(body.join('\n\n'), next);
 }
 
 function overview(registry: Registry): ExplorationOutcome {
-	const dependents = dependentsIndex(registry);
+	const graph = patternGraph(registry);
+	const adopters = new Map(registry.patterns.map((pattern) => [pattern.id, adoptersOf(graph, pattern.id)]));
 	const connected = registry.patterns.filter(
-		(pattern) => pattern.depends_on.length > 0 || (dependents.get(pattern.id)?.length ?? 0) > 0,
+		(pattern) =>
+			graph.edgesFrom(pattern.id).some((edge) => edge.type !== 'references') ||
+			(adopters.get(pattern.id)?.length ?? 0) > 0,
 	);
 	const categories: ExploredCategory[] = registry.categories
 		.map((category) => ({
@@ -234,7 +294,8 @@ function overview(registry: Registry): ExplorationOutcome {
 		}))
 		.filter((category) => category.patterns.length > 0);
 	const registryOrder = registry.patterns.map((pattern) => pattern.id);
-	const hubs = [...dependents]
+	const hubs = [...adopters]
+		.filter(([, ids]) => ids.length > 0)
 		.map(([id, ids]) => ({ id, dependents: ids.length }))
 		.sort((a, b) => b.dependents - a.dependents || registryOrder.indexOf(a.id) - registryOrder.indexOf(b.id))
 		.slice(0, MAX_HUBS);
@@ -247,9 +308,9 @@ function overview(registry: Registry): ExplorationOutcome {
 		patterns: connected.map(node),
 	};
 	const body = [
-		`# Pattern dependency graph (registry ${exploration.registryDigest})`,
-		`${connected.length} of ${registry.patterns.length} patterns build on another or are built on; ${exploration.unconnected} stand alone.`,
-		`## Hubs (most built on)\n${hubs.map((hub) => `- \`${hub.id}\` — ${hub.dependents} direct dependent(s)`).join('\n')}`,
+		`# Pattern relationship graph (registry ${exploration.registryDigest})`,
+		`${connected.length} of ${registry.patterns.length} patterns build on, compose or specialize another, or are built on, composed or specialized; ${exploration.unconnected} stand alone.`,
+		`## Hubs (most built on or composed)\n${hubs.map((hub) => `- \`${hub.id}\` — ${hub.dependents} direct adopter(s)`).join('\n')}`,
 		`## By category\n${categories.map((category) => `- ${category.title}: ${category.patterns.map((id) => `\`${id}\``).join(', ')}`).join('\n')}`,
 	];
 	const first = hubs[0]?.id ?? registry.patterns[0]?.id ?? '';
@@ -259,7 +320,7 @@ function overview(registry: Registry): ExplorationOutcome {
 			{
 				tool: EXPLORE_PATTERNS_TOOL_NAME,
 				args: { id: first },
-				why: 'one pattern with its prerequisites and dependents.',
+				why: 'one pattern with what adopting it builds and what builds on it.',
 			},
 		]),
 		exploration,

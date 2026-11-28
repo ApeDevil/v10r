@@ -18,7 +18,7 @@ Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's 
 
 **When to use:** Offer it alongside magic link/OTP as an alternative sign-in path for users who prefer an existing provider account.
 
-**Needs:** required relational-db, external-api · conditional key-value-store (when sessions must be revoked across instances (the revocation list is shared)) · v10r's implementation uses email-delivery
+**Needs:** required external-api, relational-db · conditional key-value-store (when sessions must be revoked across instances (the revocation list is shared)) · v10r's implementation uses email-delivery
 
 ## Docs
 
@@ -31,6 +31,17 @@ Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's 
 ## Proof
 
 - [`/showcases/auth/authn`](/showcases/auth/authn)
+
+## Relationships
+
+**References (context only, never a step)**
+
+- [Passwordless auth](/docs/pattern-library/passwordless-auth) — Another sign-in method on the same session layer; either works alone.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

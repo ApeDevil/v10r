@@ -31,6 +31,13 @@ Classifies errors into expected, unexpected, form, and API categories, each hand
 
 - [`/showcases/shell/errors`](/showcases/shell/errors)
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+
 ---
 
 _Machine-readable record: `error-handling` in `pattern-library/registry.json`._

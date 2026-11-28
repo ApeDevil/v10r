@@ -41,6 +41,14 @@ The custom service worker precaches only the icons and the offline page's own as
 
 - [`/showcases/pwa`](/showcases/pwa)
 
+## Relationships
+
+**Built on by**
+
+- [Update flow](/docs/pattern-library/pwa-update-flow)
+- [Web push channel](/docs/pattern-library/web-push)
+
+
 ---
 
 _Machine-readable record: `service-worker-caching` in `pattern-library/registry.json`._

@@ -52,9 +52,21 @@ Serve one read-only MCP tool with a ui:// View through the official ext-apps hel
 - Claude Code shows the model only structuredContent when both are present, so make structuredContent the full answer.
 - Some hosts prepend their own CSP meta, which pushes the View's own meta outside head; the declared _meta.ui CSP is the control that counts.
 
-## Depends on
+## Relationships
 
-- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md)
+**Builds on (must be available; the target’s own equivalent satisfies it)**
+
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md) — The View is a ui:// resource of an MCP server; any MCP server endpoint satisfies it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Agentic architecture](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agentic-architecture.md) (optional)
+- [Agentic parametric modeling](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/agentic-parametric-modeling.md) (optional)
+
 
 ---
 

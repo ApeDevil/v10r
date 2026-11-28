@@ -18,7 +18,7 @@ A privacy aggregator that collects everything the app knows about a user into on
 
 **When to use:** Use whenever a new domain stores personal data and must be reflected in access, portability or erasure requests, and when visitors should see what analytics has captured about them.
 
-**Needs:** required relational-db · conditional object-storage (when users own stored files (avatars, uploads) that export and erasure must reach), graph-db (when user content is also projected into a graph store that erasure must reach) · v10r's implementation uses key-value-store
+**Needs:** required relational-db · conditional graph-db (when user content is also projected into a graph store that erasure must reach), object-storage (when users own stored files (avatars, uploads) that export and erasure must reach) · v10r's implementation uses key-value-store
 
 ## Docs
 
@@ -38,6 +38,13 @@ A privacy aggregator that collects everything the app knows about a user into on
 - [`/showcases/privacy/rights`](/showcases/privacy/rights)
 - [`/showcases/auth/users`](/showcases/auth/users) — User management
 - [`/showcases/analytics/my-data`](/showcases/analytics/my-data) — Visitor "my data" transparency
+
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
 
 ---
 

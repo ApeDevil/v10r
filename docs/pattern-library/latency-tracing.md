@@ -61,6 +61,17 @@ Every layer records spans into a request-scoped recorder stamped by the outermos
 - The tracer must be the OUTERMOST middleware or `total` measures a subset, and every 'unattributed' figure derived from it is understated. Where a security handler must be first for its own reasons, prove the ordering in a gate rather than arguing it in a comment.
 - Round durations coarsely. Finer resolution is noise at request scale and a sharper clock is a sharper side channel.
 
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [External service runtime](/docs/pattern-library/external-service-runtime) (optional)
+
+
 ---
 
 _Machine-readable record: `latency-tracing` in `pattern-library/registry.json`._

@@ -30,6 +30,17 @@ D3-powered network, tree, DAG, Sankey, and knowledge-graph layout components, re
 
 - [`/showcases/viz/graphs`](/showcases/viz/graphs)
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](/docs/pattern-library/design-philosophy) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](/docs/pattern-library/component-system) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+
 ---
 
 _Machine-readable record: `node-graph-layout` in `pattern-library/registry.json`._

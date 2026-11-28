@@ -16,7 +16,7 @@ One shared retrieve() kernel (embed → tiers → RRF fusion) under a single use
 
 **When to use:** Use when a project needs grounded answers over a corpus: start with read-only search plus citation/provenance before adding any mutating tools.
 
-**Needs:** required relational-db, vector-search, llm-provider · conditional graph-db (when the graph tier answers multi-hop relationship questions)
+**Needs:** required llm-provider, relational-db, vector-search · conditional graph-db (when the graph tier answers multi-hop relationship questions)
 
 ## Avoid when
 
@@ -68,9 +68,20 @@ One shared retrieve() kernel (embed → tiers → RRF fusion) under a single use
 - 'nRAG' in docs is a concept name only — the code identifier is retrieval/retrieve(); do not search for an retrieval module.
 - Build the chunk layer and the ingest-built map first; an LLM-compiled summary layer was tried here and retired — it had no writer and every fresh user started empty.
 
-## Depends on
+## Relationships
 
-- [Multi-client core](/docs/pattern-library/multi-client-core)
+**Composes (constituents of its solution)**
+
+- [Graph RAG pipeline](/docs/pattern-library/graph-rag) — optional when multi-hop relationship questions matter: The graph tier adds explainable multi-hop answers beside the vector tiers; the vector tiers answer without it.
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Built on by**
+
+- [Retrieval ingest/search endpoints](/docs/pattern-library/retrieval-endpoints)
+
 
 ---
 

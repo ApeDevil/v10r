@@ -43,6 +43,17 @@ What the first viewport needs paints from the server HTML and its render-blockin
 - Inlining on both sides ships the string twice (+42 KB gz of JavaScript in v10r's case). Branch on import.meta.env.SSR so the client build tree-shakes the markup out.
 - Measured in the lab only (Slow 4G, 4x CPU, n=5): mobile home LCP 4,276 -> 1,624 ms, reproduced 4,344 -> 1,632; desktop at parity. The document grew 8 -> 50 KB, and doc_html_kb cannot see it because it measures prerendered pages only. Confirm in field data before calling it a win.
 
+## Relationships
+
+**Applies (principles to review the work against)**
+
+- [Design philosophy & three-tier theming](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/design-philosophy.md) — Visual design decisions and new tokens in these records follow its content-first, accessibility-driven principles and the three-tier token layering.
+
+**Assumes (platform conventions in scope)**
+
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md) — UI records are built from the layered component system (component-first); they assume it rather than build it.
+
+
 ---
 
 _Machine-readable record: `critical-rendering-path` in `pattern-library/registry.json`._

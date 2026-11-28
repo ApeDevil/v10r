@@ -18,8 +18,9 @@
 import { jsonSchema, tool } from 'ai';
 import type { Locale } from '#lib/i18n/index.ts';
 import type { SearchResult } from '#lib/search/types.ts';
-import { CATEGORIES, PATTERN_BY_ID, PATTERNS, type PatternRecord } from '#lib/server/patterns/index.ts';
-import { adoptionNeeds, needsSummary } from '#patterns/infrastructure-needs.ts';
+import { CATEGORIES, PATTERNS, type PatternRecord, REGISTRY } from '#lib/server/patterns/index.ts';
+import { needsSummary } from '#patterns/infrastructure-needs.ts';
+import { graphOf } from '#patterns/pattern-graph.ts';
 import { scorePatterns } from '#patterns/search.ts';
 import type { CatalogSink } from './search-catalog';
 
@@ -50,7 +51,10 @@ function toRow(pattern: PatternRecord) {
 		docs: pattern.docs.map((ref) => ref.path),
 		showcases: pattern.showcases.map((ref) => ref.path),
 		// Structural facts are tier-independent: every record states its infrastructure needs.
-		needs: needsSummary(adoptionNeeds(pattern, PATTERN_BY_ID), { condition: true }),
+		needs: needsSummary(graphOf(REGISTRY).needs(pattern.id), { condition: true }),
+		// What adopting it builds on and contains — typed, so a foundation never reads as a part.
+		builds_on: pattern.builds_on.map((entry) => entry.id),
+		composes: pattern.composes.map((entry) => (entry.level === 'required' ? entry.id : `${entry.id} (${entry.level})`)),
 		// Deep-only depth: at most ~11 records carry these, so the context cost is
 		// bounded — and they are this tool's unique value over plain doc search.
 		...(pattern.tier === 'deep'

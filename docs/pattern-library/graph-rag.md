@@ -18,7 +18,7 @@ Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph travers
 
 **When to use:** Use when vector search alone misses multi-hop relationship queries that a knowledge graph can answer.
 
-**Needs:** required graph-db, vector-search, relational-db, llm-provider
+**Needs:** required graph-db, llm-provider, relational-db, vector-search
 
 ## Docs
 
@@ -32,6 +32,17 @@ Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph travers
 ## Proof
 
 - [`/showcases/ai/chatbot`](/showcases/ai/chatbot)
+
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Part of**
+
+- [Grounded retrieval with a corpus map](/docs/pattern-library/layered-rag) (optional)
+
 
 ---
 

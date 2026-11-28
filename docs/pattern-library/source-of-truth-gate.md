@@ -16,7 +16,7 @@ Every fact has exactly one owner; every other copy is typed, imported, generated
 
 **When to use:** Use whenever a fact must exist in more than one place — a client mirror of a server enum, a public page that states what a job enforces, a script that runs outside the bundler, two runtimes serving one registry.
 
-**Needs:** v10r's implementation uses relational-db, llm-provider
+**Needs:** v10r's implementation uses llm-provider, relational-db
 
 ## Avoid when
 
@@ -64,6 +64,18 @@ Every fact has exactly one owner; every other copy is typed, imported, generated
 - Write the non-empty control first. The common failure of a drift test is not a false positive but a refactor that renames the thing it scans, after which it passes forever.
 - Treat a fallback to a second configuration source as a bug report waiting to happen: it turns "the owner is unreadable" into "the system is quietly using last year's key".
 - Generated copies are committed and diffed by the gate (`--check`), so a reviewer sees the derived change in the same diff as the source change.
+
+## Relationships
+
+**Assumes (platform conventions in scope)**
+
+- [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
+
+**Specialized by**
+
+- [Resource anchor integrity](/docs/pattern-library/resource-anchor-integrity)
+- [Asset rights manifest](/docs/pattern-library/asset-rights-manifest)
+
 
 ---
 
