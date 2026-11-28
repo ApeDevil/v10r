@@ -10,6 +10,8 @@ category: "Databases & Storage"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Databases & Storage · **Tier:** light · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — documentation over existing tables
 
 A four-rung ladder — last write, transaction time (revision rows), valid time (periods, non-overlap by exclusion constraint), bitemporal — climbed only as far as a question someone actually asks; bitemporal only for auditable retroactive corrections.

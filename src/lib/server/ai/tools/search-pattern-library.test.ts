@@ -35,8 +35,8 @@ describe('search_pattern_library', () => {
 	it('ranks a matching pattern and returns its citable page path', async () => {
 		const out = await exec(createSearchPatternLibraryTool('en'), { query: 'background jobs cron' });
 		expect(out.results.length).toBeGreaterThan(0);
-		expect(out.results[0].id).toBe('jobs-scheduler');
-		expect(out.results[0].path).toBe('/docs/pattern-library/jobs-scheduler');
+		expect(out.results[0].id).toBe('job-scheduling');
+		expect(out.results[0].path).toBe('/docs/pattern-library/job-scheduling');
 	});
 
 	it('carries contraindications, invariants and emulation notes on deep rows only', async () => {
@@ -47,7 +47,7 @@ describe('search_pattern_library', () => {
 		expect(deep.results[0].avoid_when.length).toBeGreaterThan(0);
 
 		const light = await exec(createSearchPatternLibraryTool('en'), { query: 'proof-of-work captcha altcha' });
-		expect(light.results[0].id).toBe('anti-abuse-captcha');
+		expect(light.results[0].id).toBe('proof-of-work-captcha');
 		expect(light.results[0].tier).toBe('light');
 		expect(light.results[0]).not.toHaveProperty('invariants');
 		expect(light.results[0]).not.toHaveProperty('emulation_notes');
@@ -62,10 +62,10 @@ describe('search_pattern_library', () => {
 	});
 
 	it('browses a category in registry order with a total count', async () => {
-		const out = await exec(createSearchPatternLibraryTool('en'), { query: '*', category: 'viz', limit: 8 });
+		const out = await exec(createSearchPatternLibraryTool('en'), { query: '*', category: 'velocity-data', limit: 8 });
 		expect(out.results.length).toBeGreaterThanOrEqual(6);
 		expect(out.total).toBe(out.results.length);
-		expect(out.results.every((row: { category: string }) => row.category === 'viz')).toBe(true);
+		expect(out.results.every((row: { category: string }) => row.category === 'velocity-data')).toBe(true);
 	});
 
 	it('browse with an empty query starts at the registry head (deep-first)', async () => {

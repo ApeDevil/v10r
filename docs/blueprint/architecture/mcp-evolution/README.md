@@ -17,7 +17,7 @@ the state *before* the implementation, and stay as the baseline it was measured 
 | A3 dual-era 2026-07-28, both transports (incl. B3 `ttlMs`) | Done | conformance 2026-07-28: every scored scenario v10r can exercise passes; baseline = unadvertised capabilities and fixture tools only |
 | B1 `title` / `readOnlyHint` | Pending ApeDevil's local run; fields stay off | [claude-code-compat.md](./claude-code-compat.md) |
 | B2 strategy benchmark (offline) | Done | `mcp:bench` → `strategies`, `catalogueScale` in `pattern-library/bench/results.json`; findings in the decision record D4–D5 |
-| C1 registry record | Done | `architecture-mcp-evolution` (deep, proven) |
+| C1 registry record | Done | `mcp-protocol-evolution` (deep, proven) |
 | Monthly review | Approved practice, no automation | [process.md](./process.md) (now includes the SDK bump check) |
 | D10 official SDK v2 on every endpoint | On branch `claude/cloud/mcp-official-sdk`, awaiting ship | decision record D10; the hand-written protocol modules are removed |
 

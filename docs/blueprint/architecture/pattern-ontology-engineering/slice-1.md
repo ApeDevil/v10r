@@ -346,7 +346,7 @@ nothing a search found before is lost. Allow-listed numerals: `N+1`, `3D`, `OAut
 Reading it:
 
 - **The facts are now complete.** Given the right steps, the registry names every need the golden sets expect,
-  in design and holdout alike (fact need recall 100%). The remaining need-recall gap is entirely step selection:
+  in design and holdout alike (fact need recall 100%: complete capability coverage against the current benchmark, not a claim about scenarios it does not contain). The remaining need-recall gap is entirely step selection:
   every missed need belongs to a step the planner did not pick (S2, H2, H3, H4, H9).
 - **Spurious needs rose from 5 to 8, all from unnecessary steps.** Truthful needs on wrongly chosen steps are now
   visible: S1 `llm-provider`, `external-api`; S2 `llm-provider`, `relational-db`; S3 `relational-db`,

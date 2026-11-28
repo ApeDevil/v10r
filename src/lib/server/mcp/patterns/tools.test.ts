@@ -147,13 +147,13 @@ describe('progressive disclosure — search_patterns', () => {
 			call('search_patterns', { query: '*', category: 'velocity-data', tier: 'deep', detail: 'ids' }),
 		);
 		expect(text).toContain('`singleflight`');
-		expect(text).not.toContain('`velocity-screen-read-model`'); // light
-		expect(text).not.toContain('`jobs-scheduler`'); // other category
+		expect(text).not.toContain('`screen-read-model`'); // light
+		expect(text).not.toContain('`job-scheduling`'); // other category
 	});
 
 	it('filters a ranked search by tier and maturity', () => {
 		const text = textOf(call('search_patterns', { query: 'cache', tier: 'light', detail: 'ids', limit: 20 }));
-		expect(text).toContain('`databases-cache`');
+		expect(text).toContain('`service-worker-caching`');
 		expect(text).not.toContain('`hierarchical-cache`');
 	});
 
@@ -244,25 +244,28 @@ describe('evidence navigation — get_file_excerpt', () => {
 
 describe('applicability — what adopting a pattern really takes', () => {
 	it('carries required needs through dependencies, naming where they come from', () => {
-		// The MCP App provider declares nothing itself; the hosted MCP it builds on needs a shared store.
-		const card = textOf(call('get_pattern', { id: 'ai-mcp-app-provider', sections: ['overview'] }));
-		expect(card).toContain('**Needs:** required key-value-store (via architecture-hosted-mcp)');
+		// The MCP App provider declares nothing itself; the hosted MCP it builds on carries the
+		// production rate-limiting contract, whose limiter needs a shared store.
+		const card = textOf(call('get_pattern', { id: 'mcp-app-provider', sections: ['overview'] }));
+		expect(card).toContain('**Needs:** required key-value-store (via rate-limiting)');
 		// The hosted MCP's Postgres is v10r's implementation choice: never inherited by what builds on it.
 		expect(card).not.toContain('relational-db');
 		const row = textOf(call('search_patterns', { query: 'mcp app provider', detail: 'compact', limit: 1 }));
-		expect(row).toContain('needs required key-value-store (via architecture-hosted-mcp)');
+		expect(row).toContain('needs required key-value-store (via rate-limiting)');
 	});
 
 	it('keeps the strictest level when a need arrives twice', () => {
 		// Its own email need is implementation-level; the passwordless sign-in it builds on requires it.
-		const card = textOf(call('get_pattern', { id: 'architecture-mcp-authorization', sections: ['overview'] }));
-		expect(card).toContain('email-delivery (via identity-passwordless-auth)');
+		const card = textOf(call('get_pattern', { id: 'mcp-authorization', sections: ['overview'] }));
+		expect(card).toContain('email-delivery (via passwordless-auth)');
 		expect(card).not.toContain("v10r's implementation uses email-delivery");
 	});
 
 	it('says what v10r merely happens to use, apart from what a pattern needs', () => {
-		const card = textOf(call('get_pattern', { id: 'architecture-hosted-mcp', sections: ['overview'] }));
-		expect(card).toContain("**Needs:** required key-value-store · v10r's implementation uses relational-db");
+		const card = textOf(call('get_pattern', { id: 'hosted-mcp', sections: ['overview'] }));
+		expect(card).toContain(
+			"**Needs:** required key-value-store (via rate-limiting) · v10r's implementation uses relational-db",
+		);
 		const plan = textOf(call('recommend_emulation_plan', { capabilities: ['hosted mcp'], detail: 'outline' }));
 		expect(plan).toMatch(/- Required infrastructure: [^\n]*key-value-store/);
 	});
@@ -276,7 +279,7 @@ describe('applicability — what adopting a pattern really takes', () => {
 		const declared = textOf(call('recommend_emulation_plan', { capabilities, target_infra: ['postgres', 'cron'] }));
 		expect(declared).toContain('**Target lacks vector-search, llm-provider — drop or replace this step');
 		expect(declared).toContain('Fits the target.');
-		expect(declared).toContain('The target lacks vector-search, llm-provider');
+		expect(declared).toMatch(/The target lacks (vector-search, llm-provider|llm-provider, vector-search)/);
 		// A conditional need is a question to settle, never a silent requirement or a silent pass.
 		expect(declared).toContain('Check against the target: graph-db (when the graph tier answers');
 		const complete = textOf(

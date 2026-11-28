@@ -10,6 +10,8 @@ category: "PWA"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
+**Kind:** pattern — build it in the target project
+
 **Category:** PWA · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — UI prompt only, no forced reload
 
 A pending service-worker update rides the next client-side navigation silently, or for navigation-less sessions surfaces one persistent reload toast after 30 minutes, and never auto-activates with skipWaiting().

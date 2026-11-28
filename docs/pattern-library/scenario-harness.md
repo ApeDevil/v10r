@@ -8,6 +8,8 @@ category: "Velocity Measurement"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Velocity Measurement · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — a measurement harness, not runtime code
 
 Representative paths driven under one adverse condition at a time — cold cache, expiry burst, hanging dependency, failing dependency, concurrency, refusal — with the deterministic columns gated and the timings only reported. A system is not proven fast because localhost is fast.

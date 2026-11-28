@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Derivation & Provenance · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — the check is cheap; the failure mode is a generator added without one
 
 Committed generated artifacts are proven current by the gate: regenerate-and-diff (missing and orphan outputs included) when the generator can run there, an SLSA-shaped manifest of input/output digests plus a pinned toolchain when it cannot — each artifact labelled bit-for-bit or input-addressed.

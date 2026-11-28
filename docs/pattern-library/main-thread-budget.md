@@ -8,6 +8,8 @@ category: "Runtime Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — a worker boundary is a serialization contract
 
 Expensive browser work moves off the main thread only where measurement justifies it: cheap stays inline, noticeable CPU work goes to a Web Worker, and WASM is reached for last — benchmarked against a line-for-line JS implementation including transfer cost.

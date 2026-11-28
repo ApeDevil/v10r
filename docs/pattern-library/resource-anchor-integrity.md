@@ -1,7 +1,7 @@
 ---
 title: "Resource anchor integrity"
 description: "Every #fragment a registry doc ref names must be a heading the page renders, checked through the renderer's own slugger, and every path an agent instruction…"
-category: "Docs & Agent Experience"
+category: "Truth & Evidence"
 ---
 
 # Resource anchor integrity
@@ -10,7 +10,9 @@ category: "Docs & Agent Experience"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
-**Category:** Docs & Agent Experience · **Tier:** light · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — build-time only
+**Kind:** pattern — build it in the target project
+
+**Category:** Truth & Evidence · **Tier:** light · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — build-time only
 
 Every #fragment a registry doc ref names must be a heading the page renders, checked through the renderer's own slugger, and every path an agent instruction file routes to must exist — a narrow, build-time slice of W3C-style resource anchoring.
 

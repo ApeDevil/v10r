@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Durable Execution · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** medium — leases without fences and app-clock leases are the classic failures; both are checked here
 
 Multi-step work that can be killed halfway survives without a workflow engine: a conditional status machine, one claim, a database-clock lease with a reaper, a fence so a stale owner cannot write, and per-step receipts committed with each step's effect.

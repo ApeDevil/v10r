@@ -8,6 +8,8 @@ category: "Interaction Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Interaction Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — speculative only, never on a correctness path
 
 A policy layer over the app-wide `data-sveltekit-preload-data="hover"` default, for the two cases the blanket setting gets wrong: routes too expensive to speculate on, and next screens predictable enough that waiting for a hover wastes the idle time.

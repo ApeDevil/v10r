@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — fail-open and fail-closed are both wrong somewhere
 
 Four separate decisions about an unhealthy dependency — should we call it, how much of the pool may it hold, is this work worth doing under pressure, and is this failure worth repeating — kept apart because none of them substitutes for another.

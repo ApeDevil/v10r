@@ -1,11 +1,49 @@
 {
-	"note": "Composition benchmark for recommend_emulation_plan (scripts/patterns/composition-bench.ts). Golden sets are reviewer judgement from each pattern's docs and code, ratified by ApeDevil 2026-11-28 (D-01). `design` scenarios were used to find the failures and to design the ontology; `holdout` scenarios were written and fixed on 2026-11-28 BEFORE any Slice 1 change and are never edited to fit a result: a change needs a dated entry in `changes` with its reason (D-16). required = steps a correct plan must contain; optional = constituents a correct plan lists as optional, never as mandatory steps; acceptable = steps that are neither credited nor penalised (platform assumptions, or a modelling question still open, named in `note`). needs.required / needs.conditional = infrastructure a correct plan must name at that level, in the capability vocabulary.",
+	"note": "Composition benchmark for recommend_emulation_plan (scripts/patterns/composition-bench.ts). Golden sets are reviewer judgement from each pattern's docs and code, ratified by ApeDevil 2026-11-28 (D-01). `design` scenarios were used to find the failures and to design the ontology; `holdout` scenarios were written and fixed on 2026-11-28 BEFORE any Slice 1 change and are never edited to fit a result: a change needs a dated entry in `changes` with its reason (D-16). Every golden correction records its `before` value, so the original golden answers are reconstructed exactly (`--expectations original`); `added` marks scenarios added after the baseline. Ids follow the current registry: a rename or merge from the reconciliation manifest is applied to ids mechanically and is not a golden change. required = steps a correct plan must contain; optional = constituents a correct plan lists as optional, never as mandatory steps; acceptable = steps that are neither credited nor penalised (platform assumptions, or a modelling question still open, named in `note`). needs.required / needs.conditional = infrastructure a correct plan must name at that level, in the capability vocabulary. needs.pinned = technology pins a correct plan must state ({need: technology}).",
 	"changes": [
 		{
 			"date": "2026-11-28",
 			"scenario": "S3",
-			"change": "needs.required: removed relational-db",
-			"reason": "Curating needs against the code (Slice 1) showed the hosted MCP surfaces authenticate with environment bearer tokens; Postgres holds only v10r's demo-state service and tool telemetry, so relational-db is an implementation-level need of architecture-hosted-mcp, not a requirement of the pattern. Design scenario, not a holdout."
+			"kind": "golden",
+			"field": "needs.required",
+			"before": ["relational-db", "key-value-store"],
+			"reason": "Curating needs against the code (Slice 1) showed the hosted MCP surfaces authenticate with environment bearer tokens; Postgres holds only v10r's demo-state service and tool telemetry, so relational-db is an implementation-level need of hosted-mcp, not a requirement of the pattern. Design scenario, not a holdout. Approved by ApeDevil in the Slice 1 review (2026-11-28): the public registry is static, private authentication uses environment bearer tokens, and the database holds the implementation's telemetry and demo state; the key-value store comes from the production rate-limiting contract (hosted-mcp builds on rate limiting)."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S8",
+			"kind": "golden",
+			"field": "required",
+			"before": ["name-check", "resilience-policy", "deadline-propagation", "hierarchical-cache"],
+			"reason": "Slice 1 review (ApeDevil, 2026-11-28): the reusable multi-source aggregation mechanism and the protected public name-check endpoint are different adoption scenarios. 'Resilient multi-source lookup' asks for the mechanism, now its own record (multi-source-aggregation); the endpoint, with its rate-limiting contract, is scenario S9."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S8",
+			"kind": "golden",
+			"field": "needs.required",
+			"before": ["relational-db", "key-value-store", "external-api"],
+			"reason": "Same ruling: for the generic aggregation the relational database is conditional (stored, encrypted vendor credentials) and the key-value store is conditional (quotas and cached reports shared across instances; the quota counter fails open, the cache misses without Redis)."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S8",
+			"kind": "golden",
+			"field": "needs.conditional",
+			"before": [],
+			"reason": "Same ruling; the two needs move from required to conditional."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S9",
+			"kind": "added",
+			"reason": "Slice 1 review: the protected public name-check endpoint is a separate adoption scenario. Its IP limiter runs before any upstream call and fails closed, so the key-value store is required there; the production security contract is not weakened to make infrastructure look optional."
+		},
+		{
+			"date": "2026-11-28",
+			"scenario": "S10",
+			"kind": "added",
+			"reason": "Slice 1 review asked for technology-pin preservation to be measured; no earlier scenario has a genuine pin. Refreshing a database branch from production copies a Postgres branch through the host's control-plane API, so relational-db is pinned to postgres and the API is required."
 		}
 	],
 	"scenarios": [
@@ -13,12 +51,7 @@
 			"id": "S1",
 			"set": "design",
 			"capabilities": ["mcp authorization"],
-			"required": [
-				"architecture-mcp-authorization",
-				"architecture-hosted-mcp",
-				"identity-passwordless-auth",
-				"anti-abuse-rate-limiting"
-			],
+			"required": ["mcp-authorization", "hosted-mcp", "passwordless-auth", "rate-limiting"],
 			"optional": [],
 			"acceptable": ["multi-client-core"],
 			"needs": {
@@ -30,7 +63,7 @@
 			"id": "S2",
 			"set": "design",
 			"capabilities": ["rate limiting"],
-			"required": ["anti-abuse-rate-limiting"],
+			"required": ["rate-limiting"],
 			"optional": [],
 			"acceptable": ["multi-client-core"],
 			"needs": {
@@ -42,14 +75,14 @@
 			"id": "S3",
 			"set": "design",
 			"capabilities": ["hosted mcp"],
-			"required": ["architecture-hosted-mcp", "anti-abuse-rate-limiting"],
+			"required": ["hosted-mcp", "rate-limiting"],
 			"optional": [],
-			"acceptable": ["multi-client-core", "architecture-pattern-mcp"],
+			"acceptable": ["multi-client-core", "pattern-mcp"],
 			"needs": {
 				"required": ["key-value-store"],
 				"conditional": []
 			},
-			"note": "architecture-pattern-mcp: whether the hosted surface composes the pattern MCP or only serves it is settled in Slice 3."
+			"note": "pattern-mcp: whether the hosted surface composes the pattern MCP or only serves it is settled in Slice 3."
 		},
 		{
 			"id": "S4",
@@ -59,12 +92,12 @@
 				"agentic-parametric-modeling",
 				"derivation-key",
 				"provenance-record",
-				"anti-abuse-rate-limiting",
-				"architecture-mcp-authorization",
-				"identity-passwordless-auth",
-				"architecture-hosted-mcp"
+				"rate-limiting",
+				"mcp-authorization",
+				"passwordless-auth",
+				"hosted-mcp"
 			],
-			"optional": ["3d-threlte-integration", "ai-mcp-app-provider"],
+			"optional": ["threlte-integration", "mcp-app-provider"],
 			"acceptable": ["multi-client-core", "asset-production-pipeline"],
 			"needs": {
 				"required": ["relational-db", "key-value-store", "email-delivery"],
@@ -88,7 +121,7 @@
 			"id": "S6",
 			"set": "design",
 			"capabilities": ["grounded answers", "graph rag"],
-			"required": ["layered-rag", "ai-graph-rag"],
+			"required": ["layered-rag", "graph-rag"],
 			"optional": [],
 			"acceptable": ["multi-client-core", "retrieval-endpoints"],
 			"needs": {
@@ -101,7 +134,7 @@
 			"id": "S7",
 			"set": "design",
 			"capabilities": ["encryption key rotation"],
-			"required": ["encryption-key-ring", "jobs-scheduler"],
+			"required": ["encryption-key-ring", "job-scheduling"],
 			"optional": [],
 			"acceptable": ["multi-client-core"],
 			"needs": {
@@ -113,21 +146,56 @@
 			"id": "S8",
 			"set": "design",
 			"capabilities": ["resilient multi-source lookup"],
-			"required": ["name-check", "resilience-policy", "deadline-propagation", "hierarchical-cache"],
+			"required": ["multi-source-aggregation", "resilience-policy", "deadline-propagation", "hierarchical-cache"],
 			"optional": [],
 			"acceptable": ["multi-client-core"],
 			"needs": {
-				"required": ["relational-db", "key-value-store", "external-api"],
-				"conditional": []
+				"required": ["external-api"],
+				"conditional": ["relational-db", "key-value-store"]
+			},
+			"note": "name-check is the protected public endpoint built on this mechanism (scenario S9); a plan for the generic lookup that adds it over-adopts the endpoint's rate-limiting contract."
+		},
+		{
+			"id": "S9",
+			"set": "design",
+			"capabilities": ["name check"],
+			"required": [
+				"name-check",
+				"multi-source-aggregation",
+				"rate-limiting",
+				"resilience-policy",
+				"deadline-propagation",
+				"hierarchical-cache"
+			],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": {
+				"required": ["external-api", "key-value-store"],
+				"conditional": ["relational-db"]
+			}
+		},
+		{
+			"id": "S10",
+			"set": "design",
+			"capabilities": ["database branch refresh"],
+			"required": ["database-branch-refresh"],
+			"optional": [],
+			"acceptable": ["multi-client-core"],
+			"needs": {
+				"required": ["relational-db", "external-api"],
+				"conditional": [],
+				"pinned": {
+					"relational-db": "postgres"
+				}
 			}
 		},
 		{
 			"id": "H1",
 			"set": "holdout",
 			"capabilities": ["background jobs"],
-			"required": ["jobs-scheduler"],
+			"required": ["job-scheduling"],
 			"optional": [],
-			"acceptable": ["multi-client-core", "jobs-platform-scheduling", "jobs-registered-catalog"],
+			"acceptable": ["multi-client-core"],
 			"needs": {
 				"required": ["relational-db", "scheduler"],
 				"conditional": []
@@ -138,9 +206,9 @@
 			"id": "H2",
 			"set": "holdout",
 			"capabilities": ["magic link login"],
-			"required": ["identity-passwordless-auth"],
+			"required": ["passwordless-auth"],
 			"optional": [],
-			"acceptable": ["multi-client-core", "forms-auth-forms"],
+			"acceptable": ["multi-client-core", "auth-forms"],
 			"needs": {
 				"required": ["relational-db", "email-delivery"],
 				"conditional": []
@@ -150,7 +218,7 @@
 			"id": "H3",
 			"set": "holdout",
 			"capabilities": ["file uploads to object storage"],
-			"required": ["forms-file-uploads", "databases-object-storage"],
+			"required": ["file-uploads", "object-storage-adapter"],
 			"optional": [],
 			"acceptable": ["multi-client-core"],
 			"needs": {
@@ -162,14 +230,13 @@
 			"id": "H4",
 			"set": "holdout",
 			"capabilities": ["notification outbox"],
-			"required": ["notifications-router-outbox"],
+			"required": ["notification-outbox"],
 			"optional": [],
 			"acceptable": [
 				"multi-client-core",
 				"durable-step-execution",
-				"notifications-settings-matrix",
-				"notifications-schema-delivery-log",
-				"notifications-channels"
+				"notification-settings-matrix",
+				"notification-channels"
 			],
 			"needs": {
 				"required": ["relational-db"],
@@ -218,9 +285,9 @@
 			"id": "H8",
 			"set": "holdout",
 			"capabilities": ["gdpr data export and erasure"],
-			"required": ["admin-privacy-gdpr"],
+			"required": ["gdpr-data-rights"],
 			"optional": [],
-			"acceptable": ["multi-client-core", "admin-privacy-data-retention", "analytics-my-data-transparency"],
+			"acceptable": ["multi-client-core", "data-retention"],
 			"needs": {
 				"required": ["relational-db"],
 				"conditional": []
@@ -230,9 +297,9 @@
 			"id": "H9",
 			"set": "holdout",
 			"capabilities": ["web push notifications"],
-			"required": ["pwa-web-push", "pwa-service-worker"],
+			"required": ["web-push", "service-worker-caching"],
 			"optional": [],
-			"acceptable": ["multi-client-core", "notifications-channels", "notifications-router-outbox"],
+			"acceptable": ["multi-client-core", "notification-channels", "notification-outbox"],
 			"needs": {
 				"required": ["service-worker", "relational-db"],
 				"conditional": []
@@ -244,12 +311,12 @@
 			"capabilities": ["typed url search params"],
 			"required": ["url-search-state"],
 			"optional": [],
-			"acceptable": ["multi-client-core", "architecture-state-management"],
+			"acceptable": ["multi-client-core", "state-management"],
 			"needs": {
 				"required": [],
 				"conditional": []
 			},
-			"note": "architecture-state-management is the generalization url-search-state specializes: not a second implementation step, not penalised."
+			"note": "state-management is the generalization url-search-state specializes: not a second implementation step, not penalised."
 		}
 	]
 }

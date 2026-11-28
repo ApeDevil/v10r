@@ -8,6 +8,8 @@ category: "Data Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns
 
 A read walks outward from process memory to Redis to the origin. The policy declares namespace, TTL, stale window and scope, and `cacheKey` refuses both scope mistakes — a per-user key with no owner, and a shared key handed one.
@@ -31,12 +33,15 @@ A read walks outward from process memory to Redis to the origin. The policy decl
 ## Docs
 
 - [docs/blueprint/velocity/data.md#hierarchical-cache](/docs/blueprint/velocity/data) — The tiers, and key identity as a security boundary ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))
+- [docs/stack/data/redis.md](/docs/stack/redis) — Redis cache client — In-memory key-value store on Upstash Redis, reached over HTTP REST, used for rate limiting, the circuit breaker, and other ephemeral counters. Use when a feature needs fast, short-lived state, such as counters or locks, without Postgres's durability guarantees. ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/stack/data/redis.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/stack/data/redis.md))
+- [docs/stack/ops/caching.md](/docs/stack/caching) — Redis cache client ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/stack/ops/caching.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/stack/ops/caching.md))
 
 ## Code
 
 - `src/lib/server/cache/tiered.ts` — Policy, key discipline, both tiers, TTL jitter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/tiered.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/tiered.ts))
 - `src/lib/server/cache/client.ts` — The nullable Upstash client every consumer must handle ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/cache/client.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/cache/client.ts))
 - `src/lib/server/style/cookie-scope.ts` — Keeps the style cookie off responses meant for the CDN ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/style/cookie-scope.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/style/cookie-scope.ts))
+- `src/lib/server/cache/` — Redis cache client ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/cache) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/cache))
 
 ## Tests
 
@@ -46,6 +51,9 @@ A read walks outward from process memory to Redis to the origin. The policy decl
 ## Proof
 
 - [`/showcases/velocity/data`](/showcases/velocity/data)
+- [`/showcases/db/cache/connection`](/showcases/db/cache/connection) — Redis cache client
+- [`/showcases/db/cache/patterns`](/showcases/db/cache/patterns) — Redis cache client
+- [`/showcases/db/cache/ephemeral`](/showcases/db/cache/ephemeral) — Redis cache client
 
 ## Invariants
 

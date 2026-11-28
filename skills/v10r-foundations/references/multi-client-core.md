@@ -2,11 +2,15 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 One backend operations layer (#lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.
 
 **When to use:** Reach for this whenever a backend capability must be reachable from more than one entry point (page action, API route, AI tool, cron job). It is the foundation nearly every other v10r pattern builds on.
+
+**Needs:** v10r's implementation uses llm-provider, relational-db
 
 ## Avoid when
 
@@ -28,11 +32,21 @@ One backend operations layer (#lib/server/[domain]/) serves four clients — hum
 ## Code
 
 - `src/lib/server/` — Per-domain modules; canonical shape is [domain]/queries.ts + mutations.ts (+ service.ts only when orchestration spans multiple infra calls) ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server))
+- `src/hooks.server.ts` — Runtime layers and request flow — Documents v10r's seven-layer abstraction hierarchy, from tech stack down to code, anchored by the hooks.server.ts composition root and the hexagonal domain core. Reach for it when orienting a new contributor or agent to how a request moves through the system and which layer a given file belongs to. ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/hooks.server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/hooks.server.ts))
+- `src/` — Codebase map — Provides a spatial quick-reference table mapping each kind of code (business logic, route adapters, schemas, components, state) to its canonical directory. Reach for it when deciding where a new file should live or trying to locate an existing concern in the repo. ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src))
+- `src/lib/server/showcases/cycle/` — Request-cycle visualizer — An interactive showcase that visualizes the full form, REST API, and AI request cycles as they pass through the hooks chain and domain layers. Reach for it when you need a live, didactic demonstration of how a form submission, API call, or AI request actually traverses the stack. ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/showcases/cycle) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/showcases/cycle))
+- `src/lib/components/showcases/cycle/` — Request-cycle visualizer ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/showcases/cycle) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/showcases/cycle))
 
 ## Tests
 
 - `src/lib/server/security/handle-chain.gate.test.ts` — Middleware-order contract of the multi-client wiring; validate gate — runs on every bun run validate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/security/handle-chain.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/security/handle-chain.gate.test.ts))
 - `src/lib/api.gate.test.ts` — Adapter-boundary gate: client code reaches /api only through apiFetch ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/api.gate.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/api.gate.test.ts))
+
+## Proof
+
+- [`/showcases/cycle/form`](https://www.v10r.dev/showcases/cycle/form) — Request-cycle visualizer
+- [`/showcases/cycle/api`](https://www.v10r.dev/showcases/cycle/api) — Request-cycle visualizer
+- [`/showcases/cycle/ai`](https://www.v10r.dev/showcases/cycle/ai) — Request-cycle visualizer
 
 ## Invariants
 

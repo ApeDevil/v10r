@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Durable Execution · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — the failure mode is a silent overwrite, which the version check turns into a visible conflict
 
 A browser-edited document stays server-authoritative: debounced serialised saves carrying their base version, compare-and-swap rejection as an explicit conflict state, per-writer local drafts no other tab can erase, and reloads that fetch before they replace.

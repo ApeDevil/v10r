@@ -8,13 +8,15 @@ category: "AI"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-10-23 @ cf85a2c-dirty) · **Risk:** low — the suite is advisory until the floor is raised; a flaky phrase check shows as a named failing fact, not a vague score
 
 A committed golden set of questions, each with the facts its recorded turn must show — citations surfaced not recalled, the right tool called, no forbidden tool, an approval stop, no invented command — graded by pure functions over the turn trace, with a pass-rate floor that only rises; live runs go through the app's own routes against a local dev server.
 
 **When to use:** Use when prompts, retrieval, tools or models change often and unit tests mock the model, so quality regressions would ship unnoticed.
 
-**Needs:** required llm-provider, relational-db (via ai-turn-trace)
+**Needs:** required llm-provider, relational-db (via turn-trace)
 
 ## Avoid when
 
@@ -60,7 +62,7 @@ A committed golden set of questions, each with the facts its recorded turn must 
 
 ## Depends on
 
-- [Turn trace and turn graph](/docs/pattern-library/ai-turn-trace)
+- [Turn trace and turn graph](/docs/pattern-library/turn-trace)
 - [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
 
 ---

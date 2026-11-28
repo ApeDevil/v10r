@@ -8,6 +8,8 @@ category: "3D"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** 3D · **Tier:** deep · **Maturity:** proven (verified 2026-10-20 @ 42d5b7c-dirty) · **Risk:** low — frontend only; plausibility checks, not engineering certification
 
 Reusable 3D products with typed connection ports join into an editable assembly: a framework-free core keeps definitions, occurrences, ports, couplings, conduit routes and port rules apart, validates and edits them deterministically, and a thin Threlte layer renders and edits the result.
@@ -77,7 +79,7 @@ Reusable 3D products with typed connection ports join into an editable assembly:
 
 ## Depends on
 
-- [Threlte integration](/docs/pattern-library/3d-threlte-integration)
+- [Threlte integration](/docs/pattern-library/threlte-integration)
 
 ---
 

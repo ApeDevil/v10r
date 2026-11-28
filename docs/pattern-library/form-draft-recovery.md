@@ -8,6 +8,8 @@ category: "Forms & Validation"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Forms & Validation · **Tier:** deep · **Maturity:** proven (verified 2026-10-23 @ a1f1074-dirty) · **Risk:** low — a failed write degrades to the old behaviour (a leave prompt), and a bad draft is discarded by type checks
 
 What a person types into a form is kept in localStorage per account and form, stripped of credential-like fields, offered back after a closed tab or crash (never applied on its own), cleared on a valid submit; the leave prompt fires only when the draft could not be kept.
@@ -60,7 +62,7 @@ What a person types into a form is kept in localStorage per account and form, st
 
 ## Depends on
 
-- [Superforms + Valibot foundation](/docs/pattern-library/forms-superforms-valibot)
+- [Schema-validated forms](/docs/pattern-library/schema-validated-forms)
 
 ---
 

@@ -64,19 +64,19 @@ export const SURVEY_REFS: ReadonlyArray<{ pattern: string; path: string; why: st
 		path: 'src/lib/server',
 		why: 'the whole server layer, cited to show where domains live; the architectural style needs no infrastructure',
 	},
-	{ pattern: 'architecture-codebase-map', path: 'src', why: 'a map of the source tree, not an implementation' },
+	{ pattern: 'multi-client-core', path: 'src', why: 'a map of the source tree, not an implementation' },
 	{
-		pattern: 'architecture-rest-api',
+		pattern: 'rest-api-conventions',
 		path: 'src/routes/api',
 		why: 'every endpoint of the app, cited as examples of the envelope; each endpoint belongs to its own pattern',
 	},
 	{
-		pattern: 'architecture-runtime-layers',
+		pattern: 'multi-client-core',
 		path: 'src/hooks.server.ts',
 		why: 'the request pipeline is cited to show the layers; each layer is its own pattern',
 	},
 	{
-		pattern: 'architecture-middleware',
+		pattern: 'middleware-hook-chain',
 		path: 'src/hooks.server.ts',
 		why: 'the pipeline composes handles from many domains; each handle belongs to its own pattern',
 	},

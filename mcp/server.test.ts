@@ -64,10 +64,8 @@ describe('search', () => {
 	});
 
 	test('ranks the obvious pattern first', () => {
-		expect(scorePatterns('background jobs cron', registry.patterns)[0]?.pattern.id).toBe('jobs-scheduler');
-		expect(scorePatterns('design tokens component library', registry.patterns)[0]?.pattern.id).toBe(
-			'ui-component-system',
-		);
+		expect(scorePatterns('background jobs cron', registry.patterns)[0]?.pattern.id).toBe('job-scheduling');
+		expect(scorePatterns('design tokens component library', registry.patterns)[0]?.pattern.id).toBe('component-system');
 		expect(scorePatterns('grounded answers citations', registry.patterns)[0]?.pattern.id).toBe('layered-rag');
 	});
 

@@ -207,7 +207,7 @@ it('carries one architecture request through every protocol under one trace id',
 	}
 
 	// 7 ── MCP App visualization ──────────────────────────────────────────────────────────────
-	const focus = hitIds[0] ?? 'ai-agent-actions';
+	const focus = hitIds[0] ?? 'agent-actions';
 	const explored = await call('explore_patterns', { id: focus });
 	const view = registry.views?.find((v) => v.tool === 'explore_patterns');
 	steps.push({

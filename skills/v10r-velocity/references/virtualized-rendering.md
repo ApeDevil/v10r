@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Interaction Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — presentational; the data contract is unchanged
 
 A long list costs the size of the viewport instead of the size of the data; the windowing arithmetic lives in a pure module so its edge cases are testable without a browser, while the component owns only the effects.
@@ -48,7 +50,7 @@ A long list costs the size of the viewport instead of the size of the data; the 
 
 ## Depends on
 
-- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ui-component-system.md)
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/component-system.md)
 
 ---
 

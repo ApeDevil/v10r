@@ -139,9 +139,9 @@ effect: a client honouring `ttlMs` skips `tools/list` on reconnect. Measure with
 
 ### C1 — Registry record for the evolution practice · S · with this branch's acceptance
 
-**Done** as a deep record directly, since A2/A3 exist: `architecture-mcp-evolution`.
+**Done** as a deep record directly, since A2/A3 exist: `mcp-protocol-evolution`.
 
-Add a **light** record `architecture-mcp-evolution` to `pattern-library/registry.json`
+Add a **light** record `mcp-protocol-evolution` to `pattern-library/registry.json`
 (category `architecture`, docs → this directory, code → `src/lib/server/mcp`, `mcp`), run
 `bun run patterns:validate` and `bun run patterns:build` to regenerate the README index and
 `docs/pattern-library/` page, then `mcp:excerpts:build`. Promote to deep (invariants: dual-era,

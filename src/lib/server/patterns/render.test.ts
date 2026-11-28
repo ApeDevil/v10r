@@ -18,6 +18,7 @@ import {
 function makePattern(overrides: Partial<PatternRecord>): PatternRecord {
 	return {
 		id: 'test-pattern',
+		kind: 'pattern',
 		tier: 'light',
 		title: 'Test pattern',
 		category: 'alpha',
@@ -69,7 +70,7 @@ const LIGHT = makePattern({
 });
 
 const REGISTRY: Registry = {
-	format: 3,
+	format: 4,
 	groups: [
 		{ id: 'g-one', title: 'Group One' },
 		{ id: 'g-two', title: 'Group Two' },
@@ -103,7 +104,7 @@ describe('docsUrlFor', () => {
 	it('flattens stack, foundation, and pattern-library to slugified basenames', () => {
 		expect(docsUrlFor('docs/stack/data/postgres.md', true)).toBe('/docs/stack/postgres');
 		expect(docsUrlFor('docs/foundation/style.md', true)).toBe('/docs/foundation/style');
-		expect(docsUrlFor('docs/pattern-library/jobs-scheduler.md', true)).toBe('/docs/pattern-library/jobs-scheduler');
+		expect(docsUrlFor('docs/pattern-library/job-scheduling.md', true)).toBe('/docs/pattern-library/job-scheduling');
 	});
 	it('maps repo-root entry points to their rendered ROOT_DOCS page', () => {
 		expect(docsUrlFor('docs/system-abstraction.md', true)).toBe('/docs/system-abstraction');

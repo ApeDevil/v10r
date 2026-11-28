@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Truth & Evidence · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — the failure mode is an un-credited asset, which the directory comparison turns into a red gate
 
 Every third-party file the app ships carries one AssetRights record (author, SPDX license, source) owned by the module that uses it, derived into every surface that credits it, and gated against the files actually present — metadata presence and shape, never a legal conclusion.

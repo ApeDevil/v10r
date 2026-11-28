@@ -8,6 +8,8 @@ category: "Runtime Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — a wrong deadline turns a slow success into a failure
 
 A latency budget stamped once at the edge, from which every downstream operation takes what is LEFT rather than a fresh window of its own — so the request has a stated bound instead of the sum of independently-chosen timeouts.

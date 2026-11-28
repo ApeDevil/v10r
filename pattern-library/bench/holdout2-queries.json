@@ -4,43 +4,43 @@
 		{
 			"id": "g01",
 			"query": "my Svelte store at module level leaks one user's data into another user's server-rendered page",
-			"relevant": ["architecture-state-management"],
+			"relevant": ["state-management"],
 			"acceptable": []
 		},
 		{
 			"id": "g02",
 			"query": "users lose half-written work because their login silently expired; warn them first and let them sign back in without leaving the page",
-			"relevant": ["app-shell-session-lifecycle"],
+			"relevant": ["session-lifecycle-ui"],
 			"acceptable": ["versioned-document-session"]
 		},
 		{
 			"id": "g03",
 			"query": "refresh the staging Postgres with real production data on a schedule instead of running pg_dump by hand",
-			"relevant": ["db-ops-branch-refresh"],
+			"relevant": ["database-branch-refresh"],
 			"acceptable": []
 		},
 		{
 			"id": "g04",
 			"query": "writers have to request permission to publish, an admin approves it, and unanswered requests should lapse after a while",
-			"relevant": ["identity-capability-grants"],
-			"acceptable": ["identity-route-guards"]
+			"relevant": ["grant-requests"],
+			"acceptable": ["route-guards"]
 		},
 		{
 			"id": "g05",
 			"query": "text jumps when the custom web font finishes loading",
-			"relevant": ["velocity-asset-delivery"],
+			"relevant": ["asset-delivery-pipeline"],
 			"acceptable": []
 		},
 		{
 			"id": "g06",
 			"query": "a background task with several steps gets killed halfway and must resume without sending the email twice",
 			"relevant": ["durable-step-execution"],
-			"acceptable": ["notifications-router-outbox"]
+			"acceptable": ["notification-outbox"]
 		},
 		{
 			"id": "g07",
 			"query": "dates render one way on the server and differently in the browser, causing a hydration mismatch",
-			"relevant": ["i18n-formatting"],
+			"relevant": ["locale-formatting"],
 			"acceptable": []
 		},
 		{
@@ -52,61 +52,61 @@
 		{
 			"id": "g09",
 			"query": "test the live site on my phone and see that phone's visits attributed to me on the admin dashboard without logging in on it",
-			"relevant": ["admin-privacy-pairing"],
+			"relevant": ["debug-pairing"],
 			"acceptable": []
 		},
 		{
 			"id": "g10",
 			"query": "let users link their Telegram or Discord account to get messages from our app",
-			"relevant": ["notifications-channels"],
-			"acceptable": ["notifications-settings-matrix", "notifications-schema-delivery-log"]
+			"relevant": ["notification-channels"],
+			"acceptable": ["notification-settings-matrix", "notification-outbox"]
 		},
 		{
 			"id": "g11",
 			"query": "ship a new service worker version without yanking users out of what they're doing",
 			"relevant": ["pwa-update-flow"],
-			"acceptable": ["velocity-idle-work"]
+			"acceptable": ["idle-work"]
 		},
 		{
 			"id": "g12",
 			"query": "have a vision model suggest a caption and alt text for uploaded photos, but a person must confirm before anything is saved",
-			"relevant": ["ai-image-metadata"],
-			"acceptable": ["toolkits-image-kit"]
+			"relevant": ["image-metadata-reader"],
+			"acceptable": ["image-metadata-reader"]
 		},
 		{
 			"id": "g13",
 			"query": "the support bot can't answer 'what does this button do?' because it doesn't know which page the user is looking at",
-			"relevant": ["ai-site-awareness"],
+			"relevant": ["chatbot-site-awareness"],
 			"acceptable": []
 		},
 		{
 			"id": "g14",
 			"query": "where do signups drop off",
-			"relevant": ["analytics-funnels"],
-			"acceptable": ["analytics-journeys"]
+			"relevant": ["funnels"],
+			"acceptable": ["user-journeys"]
 		},
 		{
 			"id": "g15",
 			"query": "moderate reader comments on articles",
-			"relevant": ["content-comments"],
+			"relevant": ["comments"],
 			"acceptable": []
 		},
 		{
 			"id": "g16",
 			"query": "render a GLTF model in a SvelteKit page without the server-side render crashing on window",
-			"relevant": ["3d-threlte-integration"],
-			"acceptable": ["3d-static-animated-scenes"]
+			"relevant": ["threlte-integration"],
+			"acceptable": ["threlte-integration"]
 		},
 		{
 			"id": "g17",
 			"query": "map with countries shaded by value",
-			"relevant": ["viz-maps"],
+			"relevant": ["data-visualization"],
 			"acceptable": []
 		},
 		{
 			"id": "g18",
 			"query": "check if a username is taken while the user types, without hammering the server on every keystroke",
-			"relevant": ["forms-validation-timing"],
+			"relevant": ["validation-timing"],
 			"acceptable": []
 		},
 		{
@@ -148,49 +148,49 @@
 		{
 			"id": "g25",
 			"query": "presigned URL direct upload",
-			"relevant": ["databases-object-storage"],
-			"acceptable": ["forms-file-uploads"]
+			"relevant": ["object-storage-adapter"],
+			"acceptable": ["file-uploads"]
 		},
 		{
 			"id": "g26",
 			"query": "container queries",
-			"relevant": ["ui-fluid-styling"],
+			"relevant": ["fluid-styling"],
 			"acceptable": []
 		},
 		{
 			"id": "g27",
 			"query": "transactional outbox",
-			"relevant": ["notifications-router-outbox"],
+			"relevant": ["notification-outbox"],
 			"acceptable": ["durable-step-execution"]
 		},
 		{
 			"id": "g28",
 			"query": "skeleton loaders",
-			"relevant": ["app-shell-loading-states"],
+			"relevant": ["loading-states"],
 			"acceptable": []
 		},
 		{
 			"id": "g29",
 			"query": "drizzle-kit push vs migrate",
-			"relevant": ["db-ops-dev-prod-schema-workflow"],
+			"relevant": ["dev-to-prod-schema-workflow"],
 			"acceptable": []
 		},
 		{
 			"id": "g30",
 			"query": "ICU plural messages",
-			"relevant": ["i18n-messages"],
-			"acceptable": ["i18n-formatting"]
+			"relevant": ["translated-messages"],
+			"acceptable": ["locale-formatting"]
 		},
 		{
 			"id": "g31",
 			"query": "public contact form that filters out bots invisibly, caps submissions per IP, and validates on the server even without JavaScript",
-			"relevant": ["anti-abuse-honeypot", "anti-abuse-rate-limiting", "forms-superforms-valibot"],
-			"acceptable": ["anti-abuse-captcha", "forms-basic-forms", "admin-privacy-feedback"]
+			"relevant": ["honeypot", "rate-limiting", "schema-validated-forms"],
+			"acceptable": ["proof-of-work-captcha", "schema-validated-forms", "honeypot"]
 		},
 		{
 			"id": "g32",
 			"query": "accept a product photo upload, shrink it on the server, store it in an S3-compatible bucket and serve it through a CDN that actually caches it",
-			"relevant": ["forms-file-uploads", "databases-object-storage", "velocity-asset-delivery"],
+			"relevant": ["file-uploads", "object-storage-adapter", "asset-delivery-pipeline"],
 			"acceptable": []
 		},
 		{
@@ -202,8 +202,8 @@
 		{
 			"id": "g34",
 			"query": "nightly job that deletes raw analytics older than 90 days and purges expired personal data, scheduled by Vercel cron",
-			"relevant": ["admin-privacy-data-retention", "analytics-rollup-cleanup"],
-			"acceptable": ["jobs-registered-catalog", "jobs-scheduler", "jobs-platform-scheduling"]
+			"relevant": ["data-retention", "analytics-rollups"],
+			"acceptable": ["job-scheduling"]
 		},
 		{
 			"id": "g35",

@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** high — governs what an LLM is allowed to execute
 
 Tool definitions are thin wrappers whose risk-tier metadata and per-surface membership live in a registry, with harness concerns (agent loop, compaction, policy) factored out separately.

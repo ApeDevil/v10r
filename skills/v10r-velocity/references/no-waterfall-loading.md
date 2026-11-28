@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — a reordering of awaits, with no contract change
 
 Independent operations execute concurrently; sequential waiting requires a real dependency. The same round trips happen either way — only the waiting is removed, which is why the fix is free.

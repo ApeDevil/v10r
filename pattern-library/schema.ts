@@ -26,6 +26,32 @@ export type PatternTier = 'deep' | 'light';
 export type PatternMaturity = 'planned' | 'implemented' | 'proven';
 
 /**
+ * Entity kinds: what a record IS, and therefore what adopting it means. Every consumer (plan,
+ * card, docs page, skill) reads the same semantics; documentation depth (`tier`) never decides it.
+ *
+ * - `pattern`: a reusable engineering solution. Adopting it means BUILDING it in the target; it can
+ *   be a plan step, declares infrastructure needs, and other patterns can build on it.
+ * - `principle`: a rule or review lens. Adopting it means APPLYING it to the work at hand; it builds
+ *   nothing, so it declares no infrastructure needs and builds on nothing. It is never a
+ *   prerequisite to build first (until typed relationships exist, an incoming edge means "follows").
+ * - `workflow`: an operational procedure. Adopting it means PERFORMING it, repeatedly, against a
+ *   project that already exists; it may need infrastructure to run against, and nothing builds on it.
+ *
+ * Implementation inventories, documentation views and showcases are not kinds: they are evidence
+ * and refs of the pattern they implement, document or demonstrate.
+ */
+export const ENTITY_KINDS = ['pattern', 'principle', 'workflow'] as const;
+
+export type EntityKind = (typeof ENTITY_KINDS)[number];
+
+/** What adopting a record of each kind means — the one sentence every surface prints. */
+export const ADOPTION_SEMANTICS: Record<EntityKind, string> = {
+	pattern: 'build it in the target project',
+	principle: 'apply it to the work; it builds nothing and is never a step to build first',
+	workflow: 'perform it as a procedure against an existing project; nothing builds on it',
+};
+
+/**
  * Infrastructure needs: the capabilities a pattern can need the TARGET project to run, named for
  * the capability (a relational database), never for the product v10r happens to use (Postgres).
  * `binding` is v10r's reference implementation; `technologies` are the words a target may name
@@ -139,6 +165,8 @@ export function volatileTitleFacts(title: string): string[] {
 
 export interface PatternRecord {
 	id: string;
+	/** What the record is and what adopting it means (`ENTITY_KINDS`, `ADOPTION_SEMANTICS`). */
+	kind: EntityKind;
 	tier: PatternTier;
 	title: string;
 	category: string;
@@ -177,7 +205,7 @@ export interface PatternRecord {
  * reshapes fields, and every reader changes with it in the same commit (no compatibility layer).
  * Content identity is not a version number — see `registry-digest.ts`.
  */
-export const REGISTRY_FORMAT = 3;
+export const REGISTRY_FORMAT = 4;
 
 export interface Registry {
 	format: typeof REGISTRY_FORMAT;
@@ -191,6 +219,7 @@ export const REGISTRY_FILENAME = 'registry.json';
 
 const REF_KINDS: readonly string[] = ['file', 'dir', 'route', 'approute', 'anchor'];
 const TIERS: readonly string[] = ['deep', 'light'];
+const KINDS: readonly string[] = ENTITY_KINDS;
 const MATURITIES: readonly string[] = ['planned', 'implemented', 'proven'];
 const NEEDS_BY_ID = new Map<string, (typeof INFRASTRUCTURE_NEEDS)[number]>(
 	INFRASTRUCTURE_NEEDS.map((entry) => [entry.id, entry]),
@@ -307,6 +336,18 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 	}
 	if (typeof value.tier !== 'string' || !TIERS.includes(value.tier)) {
 		errors.push(`${where}.tier: must be one of ${TIERS.join('|')}`);
+	}
+	if (typeof value.kind !== 'string' || !KINDS.includes(value.kind)) {
+		errors.push(`${where}.kind: must be one of ${KINDS.join('|')}`);
+	}
+	// A principle is applied, not built: nothing to run, nothing to build first.
+	if (value.kind === 'principle') {
+		if (Array.isArray(value.needs) && value.needs.length > 0) {
+			errors.push(`${where}.needs: a principle builds nothing, so it declares no infrastructure needs`);
+		}
+		if (Array.isArray(value.depends_on) && value.depends_on.length > 0) {
+			errors.push(`${where}.depends_on: a principle builds on nothing — it is applied to the work`);
+		}
 	}
 	for (const field of STRING_LIST_FIELDS) {
 		if (!isStringArray(value[field])) {
@@ -476,6 +517,21 @@ export function parseRegistry(data: unknown): { registry: Registry | null; error
 		if (!categoryIds.has(pattern.category)) {
 			errors.push(`${pattern.id}: category '${pattern.category}' is not a declared category id`);
 		}
+	}
+	const kindOf = new Map(registry.patterns.map((pattern) => [pattern.id, pattern.kind]));
+	for (const pattern of registry.patterns) {
+		for (const dep of pattern.depends_on) {
+			if (kindOf.get(dep) === 'workflow') {
+				errors.push(
+					`${pattern.id}: depends_on '${dep}' is a workflow — a procedure is performed, nothing builds on it`,
+				);
+			}
+		}
+	}
+	// The taxonomy is navigation only (D-11): a category nothing is filed under is obsolete.
+	const used = new Set(registry.patterns.map((pattern) => pattern.category));
+	for (const id of categoryIds) {
+		if (!used.has(id)) errors.push(`category '${id}' has no records — remove it`);
 	}
 	return errors.length > 0 ? { registry: null, errors } : { registry, errors };
 }

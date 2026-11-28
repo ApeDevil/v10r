@@ -1,0 +1,926 @@
+{
+	"expectations": "revised",
+	"scenarioChanges": 6,
+	"measuredAt": "2026-11-28",
+	"commit": "45d883b",
+	"registryDigest": "946d83d3652c7402",
+	"rescoredFrom": "pattern-library/bench/composition-baseline-plans.json",
+	"totals": {
+		"design": {
+			"scenarios": 10,
+			"precision": 42.1,
+			"recall": 80,
+			"unnecessarySteps": 31,
+			"missingSteps": 6,
+			"optionalAsRequired": 2,
+			"optionalCoverage": 0,
+			"optionalOmitted": 0,
+			"needRecall": 60.9,
+			"levelAccuracy": 43.5,
+			"conditionalPromoted": 4,
+			"requiredDowngraded": 0,
+			"pinPreservation": 0,
+			"spuriousNeeds": 7,
+			"factNeedRecall": 47.8,
+			"factLevelAccuracy": 34.8,
+			"planTokensEstimated": 7788
+		},
+		"holdout": {
+			"scenarios": 10,
+			"precision": 63.6,
+			"recall": 50,
+			"unnecessarySteps": 4,
+			"missingSteps": 7,
+			"optionalAsRequired": 0,
+			"optionalCoverage": "n/a",
+			"optionalOmitted": 0,
+			"needRecall": 41.7,
+			"levelAccuracy": 33.3,
+			"conditionalPromoted": 1,
+			"requiredDowngraded": 0,
+			"pinPreservation": "n/a",
+			"spuriousNeeds": 0,
+			"factNeedRecall": 25,
+			"factLevelAccuracy": 16.7,
+			"planTokensEstimated": 2432
+		},
+		"all": {
+			"scenarios": 20,
+			"precision": 45.6,
+			"recall": 70.5,
+			"unnecessarySteps": 35,
+			"missingSteps": 13,
+			"optionalAsRequired": 2,
+			"optionalCoverage": 0,
+			"optionalOmitted": 0,
+			"needRecall": 54.3,
+			"levelAccuracy": 40,
+			"conditionalPromoted": 5,
+			"requiredDowngraded": 0,
+			"pinPreservation": 0,
+			"spuriousNeeds": 7,
+			"factNeedRecall": 40,
+			"factLevelAccuracy": 28.6,
+			"planTokensEstimated": 10219
+		}
+	},
+	"scenarios": [
+		{
+			"id": "S1",
+			"steps": [
+				"multi-client-core",
+				"hosted-mcp",
+				"passwordless-auth",
+				"rate-limiting",
+				"mcp-authorization",
+				"ai-tool-harness",
+				"ai-surfaces",
+				"durable-step-execution",
+				"deskbot-approval-gate",
+				"untrusted-content-boundary",
+				"mcp-client"
+			],
+			"correct": 4,
+			"required": 4,
+			"scored": 10,
+			"unnecessary": [
+				"ai-tool-harness",
+				"ai-surfaces",
+				"durable-step-execution",
+				"deskbot-approval-gate",
+				"untrusted-content-boundary",
+				"mcp-client"
+			],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 3,
+			"needsFound": ["relational-db"],
+			"needsMissing": ["key-value-store", "email-delivery"],
+			"levelCorrect": ["relational-db"],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": ["llm-provider", "external-api"],
+			"factNeedsMissing": ["relational-db", "key-value-store", "email-delivery"],
+			"factLevelCorrect": 0,
+			"named": {
+				"llm-provider": {
+					"level": "required",
+					"pinned": "ai-provider"
+				},
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				},
+				"external-api": {
+					"level": "required",
+					"pinned": "third-party-api"
+				}
+			},
+			"planChars": 4851,
+			"set": "design"
+		},
+		{
+			"id": "S2",
+			"steps": [
+				"multi-client-core",
+				"ai-tool-harness",
+				"ai-surfaces",
+				"turn-trace",
+				"performance-budget-ratchet",
+				"ai-eval-regression-suite"
+			],
+			"correct": 0,
+			"required": 1,
+			"scored": 5,
+			"unnecessary": [
+				"ai-tool-harness",
+				"ai-surfaces",
+				"turn-trace",
+				"performance-budget-ratchet",
+				"ai-eval-regression-suite"
+			],
+			"missing": ["rate-limiting"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 1,
+			"needsFound": [],
+			"needsMissing": ["key-value-store"],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": ["llm-provider", "relational-db"],
+			"factNeedsMissing": ["key-value-store"],
+			"factLevelCorrect": 0,
+			"named": {
+				"llm-provider": {
+					"level": "required",
+					"pinned": "ai-provider"
+				},
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				}
+			},
+			"planChars": 2882,
+			"set": "design"
+		},
+		{
+			"id": "S3",
+			"steps": ["hosted-mcp", "passwordless-auth", "rate-limiting", "mcp-authorization", "mcp-app-provider"],
+			"correct": 2,
+			"required": 2,
+			"scored": 5,
+			"unnecessary": ["passwordless-auth", "mcp-authorization", "mcp-app-provider"],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 1,
+			"needsFound": [],
+			"needsMissing": ["key-value-store"],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["key-value-store"],
+			"factLevelCorrect": 0,
+			"named": {},
+			"planChars": 2033,
+			"set": "design"
+		},
+		{
+			"id": "S4",
+			"steps": [
+				"hosted-mcp",
+				"passwordless-auth",
+				"rate-limiting",
+				"mcp-authorization",
+				"threlte-integration",
+				"derivation-key",
+				"provenance-record",
+				"asset-production-pipeline",
+				"mcp-app-provider",
+				"agentic-parametric-modeling"
+			],
+			"correct": 7,
+			"required": 7,
+			"scored": 9,
+			"unnecessary": [],
+			"missing": [],
+			"optionalGolden": 2,
+			"optionalAsRequired": ["threlte-integration", "mcp-app-provider"],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 4,
+			"needsFound": ["relational-db", "web-worker"],
+			"needsMissing": ["key-value-store", "email-delivery"],
+			"levelCorrect": ["relational-db"],
+			"conditionalPromoted": ["web-worker"],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["key-value-store", "email-delivery"],
+			"factLevelCorrect": 1,
+			"named": {
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				},
+				"web-worker": {
+					"level": "required"
+				}
+			},
+			"planChars": 4366,
+			"set": "design"
+		},
+		{
+			"id": "S5",
+			"steps": [
+				"multi-client-core",
+				"pattern-mcp",
+				"wasm-compute-kernel",
+				"resilience-policy",
+				"deadline-propagation",
+				"latency-tracing",
+				"external-service-runtime",
+				"architecture-engineering"
+			],
+			"correct": 1,
+			"required": 1,
+			"scored": 7,
+			"unnecessary": [
+				"pattern-mcp",
+				"wasm-compute-kernel",
+				"resilience-policy",
+				"deadline-propagation",
+				"latency-tracing",
+				"external-service-runtime"
+			],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 0,
+			"needsFound": [],
+			"needsMissing": [],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": ["container-host"],
+			"factNeedsMissing": [],
+			"factLevelCorrect": 0,
+			"named": {
+				"container-host": {
+					"level": "required"
+				}
+			},
+			"planChars": 4013,
+			"set": "design"
+		},
+		{
+			"id": "S6",
+			"steps": ["multi-client-core", "ai-tool-harness", "ai-surfaces", "layered-rag"],
+			"correct": 1,
+			"required": 2,
+			"scored": 3,
+			"unnecessary": ["ai-tool-harness", "ai-surfaces"],
+			"missing": ["graph-rag"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 4,
+			"needsFound": ["relational-db", "vector-search", "llm-provider"],
+			"needsMissing": ["graph-db"],
+			"levelCorrect": ["relational-db", "vector-search", "llm-provider"],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["graph-db"],
+			"factLevelCorrect": 3,
+			"named": {
+				"llm-provider": {
+					"level": "required",
+					"pinned": "ai-provider"
+				},
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				},
+				"vector-search": {
+					"level": "required",
+					"pinned": "pgvector"
+				}
+			},
+			"planChars": 2025,
+			"set": "design"
+		},
+		{
+			"id": "S7",
+			"steps": ["multi-client-core", "job-scheduling", "encryption-key-ring"],
+			"correct": 2,
+			"required": 2,
+			"scored": 2,
+			"unnecessary": [],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 2,
+			"needsFound": ["relational-db", "scheduler"],
+			"needsMissing": [],
+			"levelCorrect": ["relational-db", "scheduler"],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": [],
+			"factLevelCorrect": 2,
+			"named": {
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				},
+				"scheduler": {
+					"level": "required",
+					"pinned": "cron"
+				}
+			},
+			"planChars": 1710,
+			"set": "design"
+		},
+		{
+			"id": "S8",
+			"steps": ["hierarchical-cache", "resilience-policy", "deadline-propagation", "name-check"],
+			"correct": 3,
+			"required": 4,
+			"scored": 4,
+			"unnecessary": ["name-check"],
+			"missing": ["multi-source-aggregation"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 3,
+			"needsFound": ["external-api", "relational-db", "key-value-store"],
+			"needsMissing": [],
+			"levelCorrect": ["external-api"],
+			"conditionalPromoted": ["relational-db", "key-value-store"],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["external-api", "relational-db"],
+			"factLevelCorrect": 0,
+			"named": {
+				"key-value-store": {
+					"level": "required",
+					"pinned": "redis"
+				},
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				},
+				"external-api": {
+					"level": "required",
+					"pinned": "third-party-api"
+				}
+			},
+			"planChars": 2203,
+			"set": "design"
+		},
+		{
+			"id": "S9",
+			"steps": [
+				"multi-client-core",
+				"pattern-mcp",
+				"wasm-compute-kernel",
+				"hierarchical-cache",
+				"resilience-policy",
+				"deadline-propagation",
+				"latency-tracing",
+				"external-service-runtime",
+				"architecture-engineering",
+				"name-check"
+			],
+			"correct": 4,
+			"required": 6,
+			"scored": 9,
+			"unnecessary": [
+				"pattern-mcp",
+				"wasm-compute-kernel",
+				"latency-tracing",
+				"external-service-runtime",
+				"architecture-engineering"
+			],
+			"missing": ["multi-source-aggregation", "rate-limiting"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 3,
+			"needsFound": ["external-api", "key-value-store", "relational-db"],
+			"needsMissing": [],
+			"levelCorrect": ["external-api", "key-value-store"],
+			"conditionalPromoted": ["relational-db"],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": ["container-host"],
+			"factNeedsMissing": [],
+			"factLevelCorrect": 2,
+			"named": {
+				"key-value-store": {
+					"level": "required",
+					"pinned": "redis"
+				},
+				"container-host": {
+					"level": "required"
+				},
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				},
+				"external-api": {
+					"level": "required",
+					"pinned": "third-party-api"
+				}
+			},
+			"planChars": 4999,
+			"set": "design"
+		},
+		{
+			"id": "S10",
+			"steps": ["multi-client-core", "hierarchical-cache", "critical-path-deferred-tail", "stale-while-revalidate"],
+			"correct": 0,
+			"required": 1,
+			"scored": 3,
+			"unnecessary": ["hierarchical-cache", "critical-path-deferred-tail", "stale-while-revalidate"],
+			"missing": ["database-branch-refresh"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 2,
+			"needsFound": [],
+			"needsMissing": ["relational-db", "external-api"],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 1,
+			"pinsPreserved": [],
+			"spuriousNeeds": ["key-value-store"],
+			"factNeedsMissing": ["relational-db", "external-api"],
+			"factLevelCorrect": 0,
+			"named": {
+				"key-value-store": {
+					"level": "required",
+					"pinned": "redis"
+				}
+			},
+			"planChars": 2067,
+			"set": "design"
+		},
+		{
+			"id": "H1",
+			"steps": ["multi-client-core", "job-scheduling"],
+			"correct": 1,
+			"required": 1,
+			"scored": 1,
+			"unnecessary": [],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 2,
+			"needsFound": ["relational-db"],
+			"needsMissing": ["scheduler"],
+			"levelCorrect": ["relational-db"],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["scheduler"],
+			"factLevelCorrect": 1,
+			"named": {
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				}
+			},
+			"planChars": 1164,
+			"set": "holdout"
+		},
+		{
+			"id": "H2",
+			"steps": [],
+			"correct": 0,
+			"required": 1,
+			"scored": 0,
+			"unnecessary": [],
+			"missing": ["passwordless-auth"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 2,
+			"needsFound": [],
+			"needsMissing": ["relational-db", "email-delivery"],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["relational-db", "email-delivery"],
+			"factLevelCorrect": 0,
+			"named": {},
+			"planChars": 256,
+			"set": "holdout"
+		},
+		{
+			"id": "H3",
+			"steps": ["resilience-policy"],
+			"correct": 0,
+			"required": 2,
+			"scored": 1,
+			"unnecessary": ["resilience-policy"],
+			"missing": ["file-uploads", "object-storage-adapter"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 1,
+			"needsFound": [],
+			"needsMissing": ["object-storage"],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["object-storage"],
+			"factLevelCorrect": 0,
+			"named": {},
+			"planChars": 778,
+			"set": "holdout"
+		},
+		{
+			"id": "H4",
+			"steps": ["durable-step-execution"],
+			"correct": 0,
+			"required": 1,
+			"scored": 0,
+			"unnecessary": [],
+			"missing": ["notification-outbox"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 2,
+			"needsFound": ["relational-db"],
+			"needsMissing": ["scheduler"],
+			"levelCorrect": ["relational-db"],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["relational-db", "scheduler"],
+			"factLevelCorrect": 0,
+			"named": {
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				}
+			},
+			"planChars": 807,
+			"set": "holdout"
+		},
+		{
+			"id": "H5",
+			"steps": ["multi-client-core", "hierarchical-cache", "critical-path-deferred-tail", "stale-while-revalidate"],
+			"correct": 3,
+			"required": 3,
+			"scored": 3,
+			"unnecessary": [],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 1,
+			"needsFound": ["key-value-store"],
+			"needsMissing": [],
+			"levelCorrect": [],
+			"conditionalPromoted": ["key-value-store"],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": [],
+			"factLevelCorrect": 0,
+			"named": {
+				"key-value-store": {
+					"level": "required",
+					"pinned": "redis"
+				}
+			},
+			"planChars": 2074,
+			"set": "holdout"
+		},
+		{
+			"id": "H6",
+			"steps": ["optimistic-mutation"],
+			"correct": 1,
+			"required": 1,
+			"scored": 1,
+			"unnecessary": [],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 0,
+			"needsFound": [],
+			"needsMissing": [],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": [],
+			"factLevelCorrect": 0,
+			"named": {},
+			"planChars": 748,
+			"set": "holdout"
+		},
+		{
+			"id": "H7",
+			"steps": ["durable-step-execution"],
+			"correct": 1,
+			"required": 1,
+			"scored": 1,
+			"unnecessary": [],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 1,
+			"needsFound": ["relational-db"],
+			"needsMissing": [],
+			"levelCorrect": ["relational-db"],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": [],
+			"factLevelCorrect": 1,
+			"named": {
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				}
+			},
+			"planChars": 814,
+			"set": "holdout"
+		},
+		{
+			"id": "H8",
+			"steps": ["derivation-key", "provenance-record"],
+			"correct": 0,
+			"required": 1,
+			"scored": 2,
+			"unnecessary": ["derivation-key", "provenance-record"],
+			"missing": ["gdpr-data-rights"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 1,
+			"needsFound": ["relational-db"],
+			"needsMissing": [],
+			"levelCorrect": ["relational-db"],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["relational-db"],
+			"factLevelCorrect": 0,
+			"named": {
+				"relational-db": {
+					"level": "required",
+					"pinned": "postgres"
+				}
+			},
+			"planChars": 1252,
+			"set": "holdout"
+		},
+		{
+			"id": "H9",
+			"steps": ["latency-tracing"],
+			"correct": 0,
+			"required": 2,
+			"scored": 1,
+			"unnecessary": ["latency-tracing"],
+			"missing": ["web-push", "service-worker-caching"],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 2,
+			"needsFound": [],
+			"needsMissing": ["service-worker", "relational-db"],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": ["service-worker", "relational-db"],
+			"factLevelCorrect": 0,
+			"named": {},
+			"planChars": 745,
+			"set": "holdout"
+		},
+		{
+			"id": "H10",
+			"steps": ["state-management", "url-search-state"],
+			"correct": 1,
+			"required": 1,
+			"scored": 1,
+			"unnecessary": [],
+			"missing": [],
+			"optionalGolden": 0,
+			"optionalAsRequired": [],
+			"optionalListed": [],
+			"optionalOmitted": [],
+			"goldenNeeds": 0,
+			"needsFound": [],
+			"needsMissing": [],
+			"levelCorrect": [],
+			"conditionalPromoted": [],
+			"requiredDowngraded": [],
+			"pinsGolden": 0,
+			"pinsPreserved": [],
+			"spuriousNeeds": [],
+			"factNeedsMissing": [],
+			"factLevelCorrect": 0,
+			"named": {},
+			"planChars": 1089,
+			"set": "holdout"
+		}
+	],
+	"plans": {
+		"S1": {
+			"text": "# Emulation plan (11 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: Hosted MCP (four trust surfaces: public · private · admin · admin page) (`architecture-hosted-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 3: Passwordless auth (magic link + OTP) (`identity-passwordless-auth`)\nIncluded as prerequisite (depends_on).\nRisk: medium — external managed service (email delivery)\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 4: Rate limiting (sliding window, fail-closed) (`anti-abuse-rate-limiting`)\nIncluded as prerequisite (depends_on).\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 5: Authenticated MCP services (OAuth 2.1 protected resources on Better Auth) (`architecture-mcp-authorization`)\nSatisfies: mcp authorization\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 6: AI tool manifest & harness split (tool defs, risk metadata, registry) (`ai-tool-harness`)\nIncluded as prerequisite (depends_on).\nRisk: high — governs what an LLM is allowed to execute\nRequires: ai-provider\nAvoid when: The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern\nNot shown: 3 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n### Step 7: AI surfaces (chatbot vs deskbot split over one guard) (`ai-surfaces`)\nIncluded as prerequisite (depends_on).\nRisk: high — user-facing LLM behavior and permissions\nRequires: ai-provider\nAvoid when: The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate\nNot shown: 3 invariant(s) that MUST hold, 8 code entry point(s), 3 doc(s).\n\n### Step 8: Durable step execution (claim, lease, fence, receipts) (`durable-step-execution`)\nIncluded as prerequisite (depends_on).\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nRequires: postgres\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 9: Deskbot approval gate (proposal → approve, plan-gated mutation) (`deskbot-approval-gate`)\nIncluded as prerequisite (depends_on).\nRisk: high — the safety boundary for AI mutation\nRequires: postgres, ai-provider\nAvoid when: Every tool is read-only or a reversible create — requiresApproval gates write and destructive risk only, so nothing would become a proposal\nNot shown: 7 invariant(s) that MUST hold, 7 code entry point(s), 3 doc(s).\n\n### Step 10: Untrusted-content boundary (the lethal trifecta, one rule per leg) (`ai-untrusted-content-boundary`)\nIncluded as prerequisite (depends_on).\nRisk: medium — the wrapper lowers but cannot remove the chance a model follows embedded text; the guarantee comes from leg 2 and leg 3 staying closed, which the gate holds\nRequires: ai-provider, postgres (via deskbot-approval-gate)\nAvoid when: The assistant only ever reads a corpus you own and has no tools that act or send — there is no untrusted leg to bound\nNot shown: 4 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 11: MCP client (external tools projected into the one catalogue) (`ai-mcp-client`)\nSatisfies: mcp authorization\nRisk: high if wired without review — contained by default-write risk, fingerprint pins and the egress guard\nRequires: third-party-api, ai-provider (via ai-tool-harness), postgres (via deskbot-approval-gate)\nAvoid when: The tools are yours — add them to the catalogue instead\nNot shown: 5 invariant(s) that MUST hold, 4 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: ai-provider, postgres, third-party-api. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"S2": {
+			"text": "# Emulation plan (6 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: AI tool manifest & harness split (tool defs, risk metadata, registry) (`ai-tool-harness`)\nIncluded as prerequisite (depends_on).\nRisk: high — governs what an LLM is allowed to execute\nRequires: ai-provider\nAvoid when: The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern\nNot shown: 3 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n### Step 3: AI surfaces (chatbot vs deskbot split over one guard) (`ai-surfaces`)\nIncluded as prerequisite (depends_on).\nRisk: high — user-facing LLM behavior and permissions\nRequires: ai-provider\nAvoid when: The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate\nNot shown: 3 invariant(s) that MUST hold, 8 code entry point(s), 3 doc(s).\n\n### Step 4: Turn trace (recorded account of every AI turn) + turn graph (`ai-turn-trace`)\nIncluded as prerequisite (depends_on).\nRisk: medium — stores prompt bodies and tool I/O per turn; retention and ownership guard them\nRequires: ai-provider (via ai-surfaces)\nNot shown: 0 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n### Step 5: Performance budget and ratchet (targets aspire, ceilings hold) (`performance-budget-ratchet`)\nIncluded as prerequisite (depends_on).\nRisk: low — measurement and gating only; no runtime behaviour\nAvoid when: The metric is not deterministic run to run, like cold-start time or field latency — report it, don't gate it\nNot shown: 6 invariant(s) that MUST hold, 3 code entry point(s), 2 doc(s).\n\n### Step 6: AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet) (`ai-eval-regression-suite`)\nSatisfies: rate limiting\nRisk: low — the suite is advisory until the floor is raised; a flaky phrase check shows as a named failing fact, not a vague score\nRequires: ai-provider, postgres\nAvoid when: Turns are not recorded — without a trace of tools and citations the graders have nothing deterministic to read\nNot shown: 4 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: ai-provider, postgres. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"S3": {
+			"text": "# Emulation plan (5 pattern(s), dependency-ordered)\n\n### Step 1: Hosted MCP (four trust surfaces: public · private · admin · admin page) (`architecture-hosted-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 2: Passwordless auth (magic link + OTP) (`identity-passwordless-auth`)\nIncluded as prerequisite (depends_on).\nRisk: medium — external managed service (email delivery)\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 3: Rate limiting (sliding window, fail-closed) (`anti-abuse-rate-limiting`)\nIncluded as prerequisite (depends_on).\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Authenticated MCP services (OAuth 2.1 protected resources on Better Auth) (`architecture-mcp-authorization`)\nSatisfies: hosted mcp\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 5: MCP App provider (an interactive View beside a text answer) (`ai-mcp-app-provider`)\nSatisfies: hosted mcp\nRisk: low — read-only data the public MCP already serves; the host's sandbox is the enforcement point\nAvoid when: Your audience is CLI agents only: they get the text, so build the text answer and skip the View\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires no infrastructure beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"S4": {
+			"text": "# Emulation plan (10 pattern(s), dependency-ordered)\n\n### Step 1: Hosted MCP (four trust surfaces: public · private · admin · admin page) (`architecture-hosted-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 2: Passwordless auth (magic link + OTP) (`identity-passwordless-auth`)\nIncluded as prerequisite (depends_on).\nRisk: medium — external managed service (email delivery)\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 3: Rate limiting (sliding window, fail-closed) (`anti-abuse-rate-limiting`)\nIncluded as prerequisite (depends_on).\nRisk: medium — throttling correctness affects both abuse defense and legitimate-user access\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Authenticated MCP services (OAuth 2.1 protected resources on Better Auth) (`architecture-mcp-authorization`)\nIncluded as prerequisite (depends_on).\nRisk: high — an authorization server; verified in-process against the real library, not yet against any real MCP host or a deployment\nAvoid when: The surface is read-only and reveals nothing per user — keep it public and rate-limited\nNot shown: 6 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 5: Threlte integration (SSR-off, code-split model registry) (`3d-threlte-integration`)\nIncluded as prerequisite (depends_on).\nRisk: low — frontend only\nNot shown: 0 invariant(s) that MUST hold, 2 code entry point(s), 2 doc(s).\n\n### Step 6: Derivation key (freshness by input fingerprint) (`derivation-key`)\nIncluded as prerequisite (depends_on).\nRisk: medium — an undeclared input silently serves stale output; the fingerprint test is the guard\nRequires: postgres\nAvoid when: A full rebuild is cheap and nothing reads a stale output in between — regenerate from scratch instead\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n### Step 7: Provenance record (entity, activity, agent — PROV-DM core) (`provenance-record`)\nIncluded as prerequisite (depends_on).\nRisk: low — mostly columns you already have; the failure mode is pointing provenance at mutable ids\nRequires: postgres\nAvoid when: The data has one author and no derivation — a user's own settings row is its own provenance\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n### Step 8: Asset production pipeline (typed request → checked GLB) (`asset-production-pipeline`)\nIncluded as prerequisite (depends_on).\nRisk: medium — real CPU per request (bounded by budget and rate limit); checks prove file and surface integrity, never structural strength\nRequires: postgres (via derivation-key)\nAvoid when: The assets are authored by hand in a DCC tool and only need viewing — the model viewer pattern is enough\nNot shown: 7 invariant(s) that MUST hold, 8 code entry point(s), 1 doc(s).\n\n### Step 9: MCP App provider (an interactive View beside a text answer) (`ai-mcp-app-provider`)\nIncluded as prerequisite (depends_on).\nRisk: low — read-only data the public MCP already serves; the host's sandbox is the enforcement point\nAvoid when: Your audience is CLI agents only: they get the text, so build the text answer and skip the View\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n### Step 10: Agentic parametric modeling (MCP 3D) (`agentic-parametric-modeling`)\nSatisfies: agentic parametric modeling\nRisk: medium — per-account CPU per call (bounded by schema, estimate, budget, deadline, per-account and surface limits); mesh checks prove closed manifolds, never printability or strength; not yet exercised in a real MCP host with authorization\nRequires: web-worker, postgres (via derivation-key)\nAvoid when: The geometry needs B-rep CAD (fillets, chamfers, STEP, tolerances) — put a CAD kernel (OpenCascade/replicad) behind the same contract\nNot shown: 7 invariant(s) that MUST hold, 12 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: postgres, web-worker. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"web-worker": "required",
+				"relational-db": "required"
+			}
+		},
+		"S5": {
+			"text": "# Emulation plan (8 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: Pattern MCP (agent-queryable pattern registry, local stdio) (`architecture-pattern-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — read-only, network-isolated container\nNot shown: 0 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n### Step 3: Rust→wasm compute kernel (vendored, plugin-free) (`architecture-wasm-kernel`)\nIncluded as prerequisite (depends_on).\nRisk: low — browser-only compute, no external services; rebuilds need only podman\nNot shown: 0 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n### Step 4: Resilience policy (breaker, bulkhead, shedding, bounded retry) (`resilience-policy`)\nIncluded as prerequisite (depends_on).\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 5: Deadline propagation (one budget, divided) (`deadline-propagation`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a wrong deadline turns a slow success into a failure\nAvoid when: The request makes one flat call with no nesting or retries, so its own timeout already states the bound\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 6: Latency tracing (a v10r span API, Server-Timing as one renderer) (`latency-tracing`)\nIncluded as prerequisite (depends_on).\nRisk: medium — it sits on every request, and the header is client-readable\nAvoid when: The site is mostly prerendered and CDN-served, so few requests ever reach the handler to be traced\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 7: External service runtime (a separately deployed backend behind a typed client) (`architecture-external-service`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable (rotation without downtime is supported); running on Render Free (Frankfurt) and verified end to end from production, where a sleeping service misses the normal 8 s budget (the wake check exists for it); cold-start duration, warm hosted percentiles and Render's proxy behaviour at the 5 s idle close are not yet measured\nRequires: container-host\nAvoid when: The work fits a #lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak\nNot shown: 11 invariant(s) that MUST hold, 19 code entry point(s), 5 doc(s).\n\n### Step 8: Architecture Engineering (explained decision records, a typed architecture model and static checks) (`architecture-engineering`)\nSatisfies: architecture engineering\nRisk: low — read-only reasoning over a reviewed rule table; the main risk is a recommendation read as authoritative, mitigated by showing the rule, the alternatives, the unknowns and the evidence kind on every outcome\nRequires: container-host (via architecture-external-service)\nAvoid when: The decision has one obvious answer in this codebase — a record and a rule add ceremony without information\nNot shown: 8 invariant(s) that MUST hold, 10 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: container-host. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"container-host": "required"
+			}
+		},
+		"S6": {
+			"text": "# Emulation plan (4 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: AI tool manifest & harness split (tool defs, risk metadata, registry) (`ai-tool-harness`)\nIncluded as prerequisite (depends_on).\nRisk: high — governs what an LLM is allowed to execute\nRequires: ai-provider\nAvoid when: The model gets no tools — a plain completion has no execution, risk tier or compaction for a harness to govern\nNot shown: 3 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n### Step 3: AI surfaces (chatbot vs deskbot split over one guard) (`ai-surfaces`)\nSatisfies: graph rag\nRisk: high — user-facing LLM behavior and permissions\nRequires: ai-provider\nAvoid when: The product needs only a read-only answer-bot — ship that one surface and add the acting agent later, together with its approval gate\nNot shown: 3 invariant(s) that MUST hold, 8 code entry point(s), 3 doc(s).\n\n### Step 4: Grounded retrieval with a corpus map (`layered-rag`)\nSatisfies: grounded answers\nRisk: medium — external embedding/LLM providers with quota limits\nRequires: postgres, pgvector, ai-provider\nAvoid when: The corpus fits in the prompt whole — an ingest-built map plus full text needs no embeddings, quota or chunk-level tenant filter\nNot shown: 4 invariant(s) that MUST hold, 6 code entry point(s), 3 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: ai-provider, postgres, pgvector. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"relational-db": "required",
+				"vector-search": "required",
+				"llm-provider": "required"
+			}
+		},
+		"S7": {
+			"text": "# Emulation plan (3 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: Jobs & scheduling (registry, runner, platform-owned cadence) (`jobs-scheduler`)\nIncluded as prerequisite (depends_on).\nRisk: medium — touches deploy config and background execution\nRequires: postgres\nAvoid when: The work is a stream of items to claim and retry — that is a queue worker pulling an outbox, not a pushed job\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n### Step 3: Encryption key ring (envelopes name their key, rotation re-seals) (`encryption-key-ring`)\nSatisfies: encryption key rotation\nRisk: medium — dropping a previous key before the sweep ran makes the secrets it sealed undecryptable; the failed sweep and the admin pages' undecryptable status say so\nRequires: postgres, cron\nAvoid when: The secrets can live in a managed KMS or secret store that does the envelope encryption and rotation for you\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 2 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: postgres, cron. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"relational-db": "required",
+				"scheduler": "required"
+			}
+		},
+		"S8": {
+			"text": "# Emulation plan (4 pattern(s), dependency-ordered)\n\n### Step 1: Hierarchical cache (local → shared → origin, with key scope enforced) (`hierarchical-cache`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nRequires: redis\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n### Step 2: Resilience policy (breaker, bulkhead, shedding, bounded retry) (`resilience-policy`)\nIncluded as prerequisite (depends_on).\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 3: Deadline propagation (one budget, divided) (`deadline-propagation`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a wrong deadline turns a slow success into a failure\nAvoid when: The request makes one flat call with no nesting or retries, so its own timeout already states the bound\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Name check (resilient multi-source fan-out) (`name-check`)\nSatisfies: resilient multi-source lookup\nRisk: medium — upstream contracts change without notice; EUIPO subscription approval takes days and its Sandbox runs on separate hosts\nRequires: postgres, third-party-api, redis (via hierarchical-cache)\nAvoid when: One reliable upstream answers the question — per-source breakers, quotas, bulkheads and coverage rows have nothing to aggregate\nNot shown: 6 invariant(s) that MUST hold, 7 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: redis, postgres, third-party-api. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"key-value-store": "required"
+			}
+		},
+		"S9": {
+			"text": "# Emulation plan (10 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: Pattern MCP (agent-queryable pattern registry, local stdio) (`architecture-pattern-mcp`)\nIncluded as prerequisite (depends_on).\nRisk: low — read-only, network-isolated container\nNot shown: 0 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n### Step 3: Rust→wasm compute kernel (vendored, plugin-free) (`architecture-wasm-kernel`)\nIncluded as prerequisite (depends_on).\nRisk: low — browser-only compute, no external services; rebuilds need only podman\nNot shown: 0 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n### Step 4: Hierarchical cache (local → shared → origin, with key scope enforced) (`hierarchical-cache`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nRequires: redis\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n### Step 5: Resilience policy (breaker, bulkhead, shedding, bounded retry) (`resilience-policy`)\nIncluded as prerequisite (depends_on).\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n### Step 6: Deadline propagation (one budget, divided) (`deadline-propagation`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a wrong deadline turns a slow success into a failure\nAvoid when: The request makes one flat call with no nesting or retries, so its own timeout already states the bound\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 7: Latency tracing (a v10r span API, Server-Timing as one renderer) (`latency-tracing`)\nIncluded as prerequisite (depends_on).\nRisk: medium — it sits on every request, and the header is client-readable\nAvoid when: The site is mostly prerendered and CDN-served, so few requests ever reach the handler to be traced\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 8: External service runtime (a separately deployed backend behind a typed client) (`architecture-external-service`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a second deployable with its own credential, uptime and cost surface; the static bearer is shared and replayable (rotation without downtime is supported); running on Render Free (Frankfurt) and verified end to end from production, where a sleeping service misses the normal 8 s budget (the wake check exists for it); cold-start duration, warm hosted percentiles and Render's proxy behaviour at the 5 s idle close are not yet measured\nRequires: container-host\nAvoid when: The work fits a #lib/server/[domain]/ module — a second deployable doubles what can be down, drift or leak\nNot shown: 11 invariant(s) that MUST hold, 19 code entry point(s), 5 doc(s).\n\n### Step 9: Architecture Engineering (explained decision records, a typed architecture model and static checks) (`architecture-engineering`)\nSatisfies: name check\nRisk: low — read-only reasoning over a reviewed rule table; the main risk is a recommendation read as authoritative, mitigated by showing the rule, the alternatives, the unknowns and the evidence kind on every outcome\nRequires: container-host (via architecture-external-service)\nAvoid when: The decision has one obvious answer in this codebase — a record and a rule add ceremony without information\nNot shown: 8 invariant(s) that MUST hold, 10 code entry point(s), 3 doc(s).\n\n### Step 10: Name check (resilient multi-source fan-out) (`name-check`)\nSatisfies: name check\nRisk: medium — upstream contracts change without notice; EUIPO subscription approval takes days and its Sandbox runs on separate hosts\nRequires: postgres, third-party-api, redis (via hierarchical-cache)\nAvoid when: One reliable upstream answers the question — per-source breakers, quotas, bulkheads and coverage rows have nothing to aggregate\nNot shown: 6 invariant(s) that MUST hold, 7 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: redis, container-host, postgres, third-party-api. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"relational-db": "required",
+				"external-api": "required",
+				"key-value-store": "required"
+			}
+		},
+		"S10": {
+			"text": "# Emulation plan (4 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: Hierarchical cache (local → shared → origin, with key scope enforced) (`hierarchical-cache`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nRequires: redis\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n### Step 3: Critical path / deferred tail (`critical-path-deferred-tail`)\nIncluded as prerequisite (depends_on).\nRisk: medium — work moved off the response must be genuinely optional to it\nAvoid when: The side effect is a durable write the caller must see acknowledged — that is critical work, not a deferred tail\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Stale-while-revalidate (and stale-if-error) (`stale-while-revalidate`)\nSatisfies: database branch refresh\nRisk: medium — the staleness window is a correctness decision, not a tuning knob\nRequires: redis (via hierarchical-cache)\nAvoid when: The value is authorization, account security state or a balance needing strong consistency — a stale permission is a wrong permission\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: redis. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"H1": {
+			"text": "# Emulation plan (2 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: Jobs & scheduling (registry, runner, platform-owned cadence) (`jobs-scheduler`)\nSatisfies: background jobs\nRisk: medium — touches deploy config and background execution\nRequires: postgres\nAvoid when: The work is a stream of items to claim and retry — that is a queue worker pulling an outbox, not a pushed job\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: postgres. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"relational-db": "required"
+			}
+		},
+		"H2": {
+			"text": "No deep pattern card matches these capabilities yet, but the index knows them.\n\n## Related index entries (no deep card yet)\n- \"magic link login\" → `forms-auth-forms`, `identity-passwordless-auth`\n\nCall get_pattern on an id above for its docs/code pointers.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"H3": {
+			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Resilience policy (breaker, bulkhead, shedding, bounded retry) (`resilience-policy`)\nSatisfies: file uploads to object storage\nRisk: medium — fail-open and fail-closed are both wrong somewhere\nAvoid when: No dependency actually throttles or stalls — breakers, bulkheads and shedding are listed for AI-heavy apps, not CRUD or static sites\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires no infrastructure beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"H4": {
+			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Durable step execution (claim, lease, fence, receipts) (`durable-step-execution`)\nSatisfies: notification outbox\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nRequires: postgres\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: postgres. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"H5": {
+			"text": "# Emulation plan (4 pattern(s), dependency-ordered)\n\n### Step 1: Multi-client core (hexagonal domain modules) (`multi-client-core`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nAvoid when: An operation with one consumer that is a single data call — the extraction rules keep it in the route, unwrapped\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 3 doc(s).\n\n### Step 2: Hierarchical cache (local → shared → origin, with key scope enforced) (`hierarchical-cache`)\nIncluded as prerequisite (depends_on).\nRisk: medium — a mis-scoped key is a data leak, which is why the key builder refuses rather than warns\nRequires: redis\nAvoid when: The data changes constantly or must be strongly current — the cache becomes a second source of truth\nNot shown: 5 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n### Step 3: Critical path / deferred tail (`critical-path-deferred-tail`)\nIncluded as prerequisite (depends_on).\nRisk: medium — work moved off the response must be genuinely optional to it\nAvoid when: The side effect is a durable write the caller must see acknowledged — that is critical work, not a deferred tail\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n### Step 4: Stale-while-revalidate (and stale-if-error) (`stale-while-revalidate`)\nSatisfies: stale-while-revalidate caching\nRisk: medium — the staleness window is a correctness decision, not a tuning knob\nRequires: redis (via hierarchical-cache)\nAvoid when: The value is authorization, account security state or a balance needing strong consistency — a stale permission is a wrong permission\nNot shown: 4 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: redis. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"key-value-store": "required"
+			}
+		},
+		"H6": {
+			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Optimistic mutation (fold-based rollback, idempotency keys) (`optimistic-mutation`)\nSatisfies: optimistic updates with rollback\nRisk: low — client-side state; the server contract is unchanged\nAvoid when: The action is a payment, an irreversible deletion or a permission change — a rollback cannot restore it\nNot shown: 5 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires no infrastructure beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"H7": {
+			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Durable step execution (claim, lease, fence, receipts) (`durable-step-execution`)\nSatisfies: crash-safe multi-step work\nRisk: medium — leases without fences and app-clock leases are the classic failures; both are checked here\nRequires: postgres\nAvoid when: The work is one statement — a single transaction is already all-or-nothing\nNot shown: 6 invariant(s) that MUST hold, 4 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: postgres. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {
+				"relational-db": "required"
+			}
+		},
+		"H8": {
+			"text": "# Emulation plan (2 pattern(s), dependency-ordered)\n\n### Step 1: Derivation key (freshness by input fingerprint) (`derivation-key`)\nIncluded as prerequisite (depends_on).\nRisk: medium — an undeclared input silently serves stale output; the fingerprint test is the guard\nRequires: postgres\nAvoid when: A full rebuild is cheap and nothing reads a stale output in between — regenerate from scratch instead\nNot shown: 5 invariant(s) that MUST hold, 6 code entry point(s), 1 doc(s).\n\n### Step 2: Provenance record (entity, activity, agent — PROV-DM core) (`provenance-record`)\nSatisfies: gdpr data export and erasure\nRisk: low — mostly columns you already have; the failure mode is pointing provenance at mutable ids\nRequires: postgres\nAvoid when: The data has one author and no derivation — a user's own settings row is its own provenance\nNot shown: 4 invariant(s) that MUST hold, 5 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires: postgres. If the target project lacks one, drop or replace the step that needs it.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"H9": {
+			"text": "# Emulation plan (1 pattern(s), dependency-ordered)\n\n### Step 1: Latency tracing (a v10r span API, Server-Timing as one renderer) (`latency-tracing`)\nSatisfies: web push notifications\nRisk: medium — it sits on every request, and the header is client-readable\nAvoid when: The site is mostly prerendered and CDN-served, so few requests ever reach the handler to be traced\nNot shown: 5 invariant(s) that MUST hold, 2 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires no infrastructure beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		},
+		"H10": {
+			"text": "# Emulation plan (2 pattern(s), dependency-ordered)\n\n### Step 1: State management (Svelte 5 runes) (`architecture-state-management`)\nIncluded as prerequisite (depends_on).\nRisk: low — structural pattern, no external services\nNot shown: 0 invariant(s) that MUST hold, 1 code entry point(s), 1 doc(s).\n\n### Step 2: URL state (one typed spec for search params, navigate vs shallow writes) (`url-search-state`)\nSatisfies: typed url search params\nRisk: low — a wrong mode shows up as a load that never re-runs (shallow for data) or charts that restart on every pick (navigate for view state)\nAvoid when: The state is private or sensitive — tokens, emails, anything that must not land in logs, referrers or shared links\nNot shown: 4 invariant(s) that MUST hold, 3 code entry point(s), 1 doc(s).\n\n---\n- Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.\n- This plan requires no infrastructure beyond the app runtime.\n- Next: get_pattern with ids (≤ 5 per call) and sections [\"invariants\", \"code\"] for the steps you keep.",
+			"format": "legacy",
+			"facts": {}
+		}
+	}
+}

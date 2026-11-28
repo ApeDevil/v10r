@@ -8,6 +8,8 @@ category: "Data Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — degrades to duplicate work, never to a stall
 
 Concurrent callers for one key share one execution, and across instances a refresh claim stops N instances refreshing the same stale key N times — but a cold caller never blocks on a lock, so a failed leader can never become an outage.

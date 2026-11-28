@@ -10,6 +10,8 @@ category: "Desk Workspace"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Desk Workspace · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — persists spreadsheet data via desk file registry
 
 A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI, with one formula evaluator shared by the grid and the AI write path so a stored sheet never disagrees with itself.

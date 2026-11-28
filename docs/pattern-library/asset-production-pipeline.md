@@ -8,13 +8,15 @@ category: "3D"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** 3D · **Tier:** deep · **Maturity:** proven (verified 2026-10-29 @ 6a2cd80-dirty) · **Risk:** medium — real CPU per request (bounded by budget and rate limit); checks prove file and surface integrity, never structural strength
 
 A structured, validated request becomes a checked 3D asset: a deterministic TypeScript generator builds parametric geometry, an inspector proves every shell closed and outward, a DOM-free writer emits byte-stable GLB with its derivation key inside and reads it back, and one job shape — report, PROV-DM provenance, measurements, a write-once owner-scoped store — serves an HTTP route, a CLI and MCP tools, in-process or in a killable worker process.
 
 **When to use:** Use when an app must generate 3D assets from parameters — configurators that export, procedural parts, AI-requested variations — and every file must be reproducible, validated and attributable before anyone loads it.
 
-**Needs:** required relational-db (via provenance-record), key-value-store (via anti-abuse-rate-limiting)
+**Needs:** required relational-db (via provenance-record), key-value-store (via rate-limiting)
 
 ## Avoid when
 
@@ -78,11 +80,11 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 ## Depends on
 
-- [Threlte integration](/docs/pattern-library/3d-threlte-integration)
+- [Threlte integration](/docs/pattern-library/threlte-integration)
 - [Derivation key](/docs/pattern-library/derivation-key)
 - [Provenance record](/docs/pattern-library/provenance-record)
-- [Rate limiting](/docs/pattern-library/anti-abuse-rate-limiting)
-- [Hosted MCP](/docs/pattern-library/architecture-hosted-mcp)
+- [Rate limiting](/docs/pattern-library/rate-limiting)
+- [Hosted MCP](/docs/pattern-library/hosted-mcp)
 
 ---
 

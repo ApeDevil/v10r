@@ -8,6 +8,8 @@ category: "Interaction Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Interaction Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — client-side state; the server contract is unchanged
 
 The confirmed value and the pending intents are stored separately and the UI reads the fold of one over the other, so a failed mutation rolls back exactly — even with later mutations applied on top — and a repeated intent executes once.

@@ -2,139 +2,120 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 199 patterns (63 deep cards / 136 index rows) across 30 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 170 patterns (64 deep cards / 106 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
 ### Architecture & Request Pipeline
 
 - [**Multi-client core**](./multi-client-core.md)
-- [Runtime layers and request flow](./architecture-runtime-layers.md)
-- [Codebase map](./architecture-codebase-map.md)
-- [Middleware hook chain](./architecture-middleware.md)
-- [REST API patterns](./architecture-rest-api.md)
-- [Error handling](./architecture-error-handling.md)
-- [State management](./architecture-state-management.md)
-- [Request-cycle visualizer](./architecture-request-cycle-visualizer.md)
-- [Deployment](./architecture-deployment.md)
-- [Testing infrastructure](./architecture-testing-infra.md)
-- [Pattern MCP](./architecture-pattern-mcp.md)
-- [Hosted MCP](./architecture-hosted-mcp.md)
-- [**MCP protocol evolution**](./architecture-mcp-evolution.md)
-- [**Authenticated MCP services**](./architecture-mcp-authorization.md)
-- [**Agentic architecture**](./architecture-agentic-architecture.md)
-- [WebAssembly compute kernel](./architecture-wasm-kernel.md)
-- [**External service runtime**](./architecture-external-service.md)
+- [Middleware hook chain](./middleware-hook-chain.md)
+- [REST API conventions](./rest-api-conventions.md)
+- [Error handling](./error-handling.md)
+- [State management](./state-management.md)
+- [Deployment target](./deployment-target.md)
+- [Testing infrastructure](./testing-infrastructure.md)
+- [Pattern MCP](./pattern-mcp.md)
+- [Hosted MCP](./hosted-mcp.md)
+- [**MCP protocol evolution**](./mcp-protocol-evolution.md)
+- [**MCP authorization**](./mcp-authorization.md)
+- [**Agentic architecture**](./agentic-architecture.md)
+- [WebAssembly compute kernel](./wasm-compute-kernel.md)
+- [**External service runtime**](./external-service-runtime.md)
 - [**Architecture Engineering**](./architecture-engineering.md)
 - [**URL state**](./url-search-state.md)
 
 ### App Shell & Navigation
 
 - [Shell layout](./app-shell-layout.md)
-- [Responsive sidebar](./app-shell-sidebar.md)
-- [Navigation structure & progressive disclosure](./app-shell-navigation.md)
-- [Keyboard shortcuts registry + help modal](./app-shell-keyboard-shortcuts.md)
-- [Modals & layer stack](./app-shell-modals.md)
-- [Toasts](./app-shell-toasts.md)
-- [Session lifecycle UI](./app-shell-session-lifecycle.md)
-- [Settings page](./app-shell-settings.md)
-- [Style randomizer](./app-shell-style-randomizer.md)
-- [Loading states](./app-shell-loading-states.md)
-- [Empty states](./app-shell-empty-states.md)
-- [Page header](./app-shell-page-header.md)
-- [Quick search command palette](./app-shell-quick-search.md)
+- [Responsive sidebar](./responsive-sidebar.md)
+- [Navigation structure & progressive disclosure](./navigation-structure.md)
+- [Keyboard shortcuts registry + help modal](./keyboard-shortcuts.md)
+- [Modals & layer stack](./modal-layer-stack.md)
+- [Toasts](./toasts.md)
+- [Session lifecycle UI](./session-lifecycle-ui.md)
+- [Loading states](./loading-states.md)
+- [Empty states](./empty-states.md)
+- [Page header](./page-header.md)
+- [Quick search command palette](./command-palette.md)
+- [Visitor style resolution](./visitor-style-resolution.md)
 
 ### UI Components & Design System
 
-- [**Component-first UI system**](./ui-component-system.md)
-- [Design philosophy & three-tier theming](./ui-design-philosophy.md)
-- [**Explosive Discovery — nested depth for dense menus and pages**](./ui-explosive-discovery.md)
-- [**Latent Cards — actions that rest neutral and wake on intent**](./ui-latent-cards.md)
-- [Design tokens](./ui-design-tokens.md)
-- [Tonal elevation engine](./ui-tonal-elevation.md)
-- [UI primitives](./ui-primitives.md)
-- [Composites](./ui-composites.md)
-- [Layout primitives](./ui-layout-primitives.md)
-- [Fluid responsive styling](./ui-fluid-styling.md)
-- [Tables](./ui-tables.md)
-- [Menus](./ui-menus.md)
-- [Split panes](./ui-split-panes.md)
-- [Typography](./ui-typography.md)
-- [Decorative ornaments and backgrounds](./ui-decorative.md)
+- [**Component-first UI system**](./component-system.md)
+- [Design philosophy & three-tier theming](./design-philosophy.md)
+- [**Explosive Discovery — nested depth for dense menus and pages**](./explosive-discovery.md)
+- [**Latent Cards — actions that rest neutral and wake on intent**](./latent-cards.md)
+- [Design tokens](./design-tokens.md)
+- [Tonal elevation engine](./tonal-elevation.md)
+- [Fluid responsive styling](./fluid-styling.md)
 
 ### Forms & Validation
 
-- [Superforms + Valibot foundation](./forms-superforms-valibot.md)
-- [Basic forms](./forms-basic-forms.md)
-- [Validation timing](./forms-validation-timing.md)
-- [Multi-step and dynamic forms](./forms-multi-step-dynamic.md)
-- [Advanced form tactics](./forms-advanced-patterns.md)
-- [Auth forms](./forms-auth-forms.md)
-- [File uploads](./forms-file-uploads.md)
+- [Schema-validated forms](./schema-validated-forms.md)
+- [Validation timing](./validation-timing.md)
+- [Multi-step and dynamic forms](./multi-step-forms.md)
+- [Auth forms](./auth-forms.md)
+- [File uploads](./file-uploads.md)
 - [**Dynamic attributes**](./dynamic-attributes.md)
 - [**Form draft recovery**](./form-draft-recovery.md)
 
 ### Internationalization (i18n)
 
-- [Locale routing](./i18n-locale-routing.md)
-- [Translated messages](./i18n-messages.md)
-- [Formatting & CLDR plural correctness](./i18n-formatting.md)
-- [Translated database content](./i18n-db-content.md)
+- [Locale routing](./locale-routing.md)
+- [Translated messages](./translated-messages.md)
+- [Formatting & CLDR plural correctness](./locale-formatting.md)
+- [Translated database content](./translated-database-content.md)
 
 ### Docs & Agent Experience
 
 - [**Docs navigation hubs**](./docs-nav-hubs.md)
 - [**Pattern Index**](./pattern-index.md)
 - [**Agent experience surfaces**](./agent-experience.md)
-- [Resource anchor integrity](./resource-anchor-integrity.md)
-- [**Agent Skills generated from the pattern registry**](./ai-agent-skills.md)
+- [**Agent Skills generated from the pattern registry**](./agent-skills.md)
 
 ### Databases & Storage
 
-- [Postgres client and connection](./databases-postgres-connection.md)
-- [Schema and type inference](./databases-schema-type-inference.md)
-- [Queries/mutations split](./databases-queries-mutations-split.md)
-- [Neo4j connection](./databases-neo4j-connection.md)
-- [Graph modeling](./databases-graph-modeling.md)
-- [Graph traversal](./databases-graph-traversal.md)
-- [Polyglot freshness](./databases-polyglot-freshness.md)
-- [Object storage](./databases-object-storage.md)
-- [Redis cache client](./databases-cache.md)
+- [Postgres client and connection](./postgres-connection.md)
+- [Schema and type inference](./schema-type-inference.md)
+- [Queries/mutations split](./queries-mutations-split.md)
+- [Neo4j connection](./neo4j-connection.md)
+- [Graph modeling](./graph-modeling.md)
+- [Graph traversal](./graph-traversal.md)
+- [Polyglot freshness](./polyglot-freshness.md)
+- [Object storage adapter](./object-storage-adapter.md)
 - [Temporal data modeling](./temporal-data-modeling.md)
 
 ### Database Operations
 
-- [Dev-to-prod schema workflow](./db-ops-dev-prod-schema-workflow.md)
-- [Neon branch refresh from prod](./db-ops-branch-refresh.md)
-- [DB bootstrap & seed](./db-ops-bootstrap-seed.md)
+- [Dev-to-prod schema workflow](./dev-to-prod-schema-workflow.md)
+- [Database branch refresh from production](./database-branch-refresh.md)
+- [Database bootstrap and seed](./database-bootstrap-seed.md)
 
 ### Identity & Access
 
-- [Passwordless auth](./identity-passwordless-auth.md)
-- [OAuth](./identity-oauth.md)
-- [Route guards & per-route authorization](./identity-route-guards.md)
-- [Capability grants](./identity-capability-grants.md)
-- [Passkeys & step-up TOTP](./identity-passkeys.md)
-- [User management](./identity-user-management.md)
+- [Passwordless auth](./passwordless-auth.md)
+- [OAuth sign-in](./oauth-sign-in.md)
+- [Route guards & per-route authorization](./route-guards.md)
+- [Grant requests](./grant-requests.md)
+- [Passkeys & step-up TOTP](./passkeys.md)
 
 ### Anti-Abuse
 
-- [ALTCHA proof-of-work captcha](./anti-abuse-captcha.md)
-- [Honeypot](./anti-abuse-honeypot.md)
-- [Rate limiting](./anti-abuse-rate-limiting.md)
-- [AI daily token budget](./anti-abuse-ai-budget.md)
-- [Bot decision & abuse audit](./anti-abuse-bot-decision-audit.md)
+- [ALTCHA proof-of-work captcha](./proof-of-work-captcha.md)
+- [Honeypot](./honeypot.md)
+- [Rate limiting](./rate-limiting.md)
+- [AI daily token budget](./ai-token-budget.md)
+- [Bot decision & abuse audit](./bot-decision-audit.md)
 
 ### Admin & Privacy
 
-- [Admin area, guards & data-table pattern](./admin-privacy-admin-area.md)
-- [GDPR data transparency](./admin-privacy-gdpr.md)
-- [Consent & cookies](./admin-privacy-consent-cookies.md)
-- [Data retention policy & purge jobs](./admin-privacy-data-retention.md)
-- [Cross-device debug pairing](./admin-privacy-pairing.md)
-- [Style picking + custom palettes](./admin-privacy-style-picking.md)
-- [Audit log and announcements](./admin-privacy-audit-log.md)
-- [Feedback capture](./admin-privacy-feedback.md)
+- [Admin area, guards & data-table pattern](./admin-area.md)
+- [GDPR data rights](./gdpr-data-rights.md)
+- [Consent & cookies](./consent-cookies.md)
+- [Data retention policy & purge jobs](./data-retention.md)
+- [Cross-device debug pairing](./debug-pairing.md)
+- [Audit log](./audit-log.md)
 - [**Encryption key ring**](./encryption-key-ring.md)
 
 ### AI
@@ -144,92 +125,77 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Deskbot approval gate**](./deskbot-approval-gate.md)
 - [**Grounded retrieval with a corpus map**](./layered-rag.md)
 - [**Retrieval ingest/search endpoints**](./retrieval-endpoints.md)
-- [Chat assistant](./ai-chat-assistant.md)
-- [Persistent minimizable chatbot session](./ai-chatbot-session.md)
-- [Provider registry & routing](./ai-provider-routing.md)
-- [Chatbot site awareness](./ai-site-awareness.md)
-- [Graph RAG pipeline](./ai-graph-rag.md)
-- [Turn trace and turn graph](./ai-turn-trace.md)
-- [Image metadata reader](./ai-image-metadata.md)
+- [Persistent minimizable chatbot session](./chatbot-session.md)
+- [Provider registry & routing](./provider-routing.md)
+- [Chatbot site awareness](./chatbot-site-awareness.md)
+- [Graph RAG pipeline](./graph-rag.md)
+- [Turn trace and turn graph](./turn-trace.md)
+- [Image metadata reader](./image-metadata-reader.md)
 - [Cost & usage monitoring](./ai-cost-monitoring.md)
-- [TOON token-efficient context format](./ai-toon-format.md)
+- [TOON token-efficient context format](./toon-context-format.md)
 - [Deskbot](./ai-deskbot.md)
-- [Agent-harness audit lens](./ai-harness-lens.md)
-- [**Untrusted-content boundary**](./ai-untrusted-content-boundary.md)
-- [**Agent actions**](./ai-agent-actions.md)
-- [**MCP client**](./ai-mcp-client.md)
-- [**MCP App provider**](./ai-mcp-app-provider.md)
-- [**Agent to agent**](./ai-agent-to-agent.md)
-- [**Generative UI**](./ai-generative-ui.md)
-- [WebMCP publication of client actions](./ai-webmcp.md)
-- [AG-UI endpoint over the turn stream](./ai-agent-user-interaction.md)
-- [Turn trace as OpenTelemetry GenAI spans](./ai-agent-observability.md)
+- [Agent-harness audit lens](./agent-harness-lens.md)
+- [**Untrusted-content boundary**](./untrusted-content-boundary.md)
+- [**Agent actions**](./agent-actions.md)
+- [**MCP client**](./mcp-client.md)
+- [**MCP App provider**](./mcp-app-provider.md)
+- [**Agent to agent**](./agent-to-agent.md)
+- [**Generative UI**](./generative-ui.md)
+- [WebMCP publication of client actions](./webmcp.md)
+- [AG-UI endpoint over the turn stream](./ag-ui-endpoint.md)
+- [Turn trace as OpenTelemetry GenAI spans](./agent-observability.md)
 - [**AI eval regression suite**](./ai-eval-regression-suite.md)
-
-### Toolkits
-
-- [Image Kit](./toolkits-image-kit.md)
 
 ### Office Workflows
 
-- [**PIM sheet transform with AI agents**](./pim-sheet-transform-recipe.md)
+- [**PIM sheet transform with AI agents**](./pim-sheet-transform.md)
 
 ### Analytics
 
-- [Pageview collector hook](./analytics-pageview-hook.md)
-- [Consent-gated sessions](./analytics-consent-sessions.md)
-- [User journeys](./analytics-journeys.md)
-- [Funnels](./analytics-funnels.md)
-- [Live events feed](./analytics-live-feed.md)
-- [Rollup & cleanup jobs](./analytics-rollup-cleanup.md)
-- [Visitor "my data" transparency](./analytics-my-data-transparency.md)
+- [Pageview collector hook](./pageview-collector.md)
+- [Consent-gated sessions](./consent-gated-sessions.md)
+- [User journeys](./user-journeys.md)
+- [Funnels](./funnels.md)
+- [Rollup & cleanup jobs](./analytics-rollups.md)
 
 ### Notifications
 
-- [Notification router, outbox and delivery worker](./notifications-router-outbox.md)
-- [Channel providers](./notifications-channels.md)
-- [In-app SSE stream & notification center](./notifications-sse-stream.md)
-- [Settings matrix](./notifications-settings-matrix.md)
-- [Schema & delivery log](./notifications-schema-delivery-log.md)
+- [Notification router, outbox and delivery worker](./notification-outbox.md)
+- [Channel providers](./notification-channels.md)
+- [In-app SSE stream & notification center](./notification-stream.md)
+- [Settings matrix](./notification-settings-matrix.md)
 
 ### Jobs & Scheduling
 
-- [**Jobs and scheduling**](./jobs-scheduler.md)
-- [Platform scheduling](./jobs-platform-scheduling.md)
-- [Registered jobs](./jobs-registered-catalog.md)
+- [**Jobs and scheduling**](./job-scheduling.md)
 
 ### PWA
 
-- [Localized manifest & installability](./pwa-manifest.md)
-- [Service-worker caching contract](./pwa-service-worker.md)
+- [Localized manifest & installability](./web-app-manifest.md)
+- [Service-worker caching contract](./service-worker-caching.md)
 - [Update flow](./pwa-update-flow.md)
-- [Web push channel](./pwa-web-push.md)
+- [Web push channel](./web-push.md)
 
 ### Data Viz
 
-- [Charts](./viz-charts.md)
-- [Plots](./viz-plots.md)
-- [Diagrams](./viz-diagrams.md)
-- [Node graphs](./viz-graphs.md)
-- [Maps](./viz-maps.md)
-- [Timelines](./viz-timelines.md)
+- [Data visualization](./data-visualization.md)
+- [Node graphs](./node-graph-layout.md)
 
 ### 3D
 
-- [Threlte integration](./3d-threlte-integration.md)
-- [Static & animated scenes](./3d-static-animated-scenes.md)
-- [Full-screen model viewer and customizer](./3d-model-viewer-customizer.md)
+- [Threlte integration](./threlte-integration.md)
+- [Full-screen model viewer and customizer](./model-viewer-customizer.md)
 - [**Product composition engine**](./product-connection-engine.md)
 - [**Asset production pipeline**](./asset-production-pipeline.md)
 - [**Agentic parametric modeling**](./agentic-parametric-modeling.md)
 
 ### Content & Blog
 
-- [Blog engine](./content-blog-engine.md)
-- [Comments](./content-comments.md)
-- [Markdown pipeline and custom syntax](./content-markdown-pipeline.md)
-- [Markdown editor](./content-markdown-editor.md)
-- [Prerendered docs site](./content-docs-site.md)
+- [Blog engine](./blog-engine.md)
+- [Comments](./comments.md)
+- [Markdown pipeline and custom syntax](./markdown-pipeline.md)
+- [Markdown editor](./markdown-editor.md)
+- [Prerendered docs site](./prerendered-docs-site.md)
 
 ### Desk Workspace
 
@@ -242,6 +208,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 
 ### External Integrations
 
+- [**Multi-source aggregation**](./multi-source-aggregation.md)
 - [**Name check**](./name-check.md)
 
 ### Interaction Velocity
@@ -249,7 +216,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Optimistic mutation**](./optimistic-mutation.md)
 - [**Intent-based preloading**](./intent-preloading.md)
 - [**Virtualized rendering**](./virtualized-rendering.md)
-- [Idle and speculative work](./velocity-idle-work.md)
+- [Idle and speculative work](./idle-work.md)
 
 ### Data Velocity
 
@@ -257,7 +224,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Stale-while-revalidate**](./stale-while-revalidate.md)
 - [**Singleflight stampede protection**](./singleflight.md)
 - [**No-waterfall data loading**](./no-waterfall-loading.md)
-- [Screen read model](./velocity-screen-read-model.md)
+- [Screen read model](./screen-read-model.md)
 - [**Query budget and N+1 proof**](./query-budget.md)
 
 ### Runtime Velocity
@@ -268,8 +235,8 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [**Side-effect-free component tree**](./side-effect-free-components.md)
 - [**Main-thread budget**](./main-thread-budget.md)
 - [**Resilience policy**](./resilience-policy.md)
-- [**Asset delivery pipeline**](./velocity-asset-delivery.md)
-- [Compute and data locality](./velocity-compute-locality.md)
+- [**Asset delivery pipeline**](./asset-delivery-pipeline.md)
+- [Compute and data locality](./compute-locality.md)
 - [**Deadline propagation**](./deadline-propagation.md)
 
 ### Velocity Measurement
@@ -280,6 +247,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 
 ### Truth & Evidence
 
+- [Resource anchor integrity](./resource-anchor-integrity.md)
 - [**Source-of-truth gate**](./source-of-truth-gate.md)
 - [**Evidence status dimensions**](./evidence-status-dimensions.md)
 - [**Asset rights manifest**](./asset-rights-manifest.md)

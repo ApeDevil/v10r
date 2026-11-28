@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — work moved off the response must be genuinely optional to it
 
 Only work the caller's intent depends on runs before the response; analytics, indexing, outbox routing and telemetry run after it through one wrapper that owns the platform's survival rule and the catch-before-handoff rule.

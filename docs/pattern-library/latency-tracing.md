@@ -8,6 +8,8 @@ category: "Velocity Measurement"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Velocity Measurement · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — it sits on every request, and the header is client-readable
 
 Every layer records spans into a request-scoped recorder stamped by the outermost handler; `Server-Timing` renders them for callers who already see internals, and `unattributed` reports the wall-clock time no span claimed.

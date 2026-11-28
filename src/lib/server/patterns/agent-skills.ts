@@ -109,7 +109,8 @@ function groupDescription(registry: Registry, group: RegGroup): string {
 }
 
 function maturityTag(pattern: PatternRecord): string {
-	return pattern.maturity === 'proven' ? 'proven' : `**${pattern.maturity}**`;
+	const maturity = pattern.maturity === 'proven' ? 'proven' : `**${pattern.maturity}**`;
+	return pattern.kind === 'pattern' ? maturity : `${pattern.kind}, ${maturity}`;
 }
 
 function indexRow(pattern: PatternRecord): string[] {

@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** proven (verified 2026-10-23 @ 1a5496b-dirty) · **Risk:** low — a wrong mode shows up as a load that never re-runs (shallow for data) or charts that restart on every pick (navigate for view state)
 
 Search params are read and written through one typed spec shared by loads and components — invalid input falls back instead of throwing, defaults never reach the URL, foreign params survive — and every write picks navigate (goto, the load re-runs) or shallow (replaceState from $app/navigation, no load, no navigation hooks), never raw history.
@@ -53,7 +55,7 @@ Search params are read and written through one typed spec shared by loads and co
 
 ## Depends on
 
-- [State management](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-state-management.md)
+- [State management](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/state-management.md)
 
 ---
 

@@ -8,6 +8,8 @@ category: "Docs & Agent Experience"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation convention only
 
 An AI-optimized docs tree where every directory's README.md is a navigation hub with topic tables, so agents read index → target file, never everything.

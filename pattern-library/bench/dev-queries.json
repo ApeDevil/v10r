@@ -1,8 +1,20 @@
 {
 	"note": "Dev relevance set for pattern search. Labelled from the registry BEFORE any ranking change (2026-10-22); ranking work may be tuned against it, so the blind holdout-queries.json is the honest generalization check. relevant = the answer an expert would pick; acceptable = a reasonable secondary answer. relevant: [] means the registry has no pattern for it.",
 	"queries": [
-		{ "id": "d01", "kind": "exact-id", "query": "layered-rag", "relevant": ["layered-rag"], "acceptable": [] },
-		{ "id": "d02", "kind": "exact-id", "query": "singleflight", "relevant": ["singleflight"], "acceptable": [] },
+		{
+			"id": "d01",
+			"kind": "exact-id",
+			"query": "layered-rag",
+			"relevant": ["layered-rag"],
+			"acceptable": []
+		},
+		{
+			"id": "d02",
+			"kind": "exact-id",
+			"query": "singleflight",
+			"relevant": ["singleflight"],
+			"acceptable": []
+		},
 		{
 			"id": "d03",
 			"kind": "exact-id",
@@ -28,14 +40,14 @@
 			"id": "d06",
 			"kind": "capability",
 			"query": "background jobs",
-			"relevant": ["jobs-scheduler"],
-			"acceptable": ["jobs-platform-scheduling", "jobs-registered-catalog"]
+			"relevant": ["job-scheduling"],
+			"acceptable": ["job-scheduling"]
 		},
 		{
 			"id": "d07",
 			"kind": "capability",
 			"query": "cron job scheduling on vercel",
-			"relevant": ["jobs-platform-scheduling", "jobs-scheduler"],
+			"relevant": ["job-scheduling"],
 			"acceptable": []
 		},
 		{
@@ -56,8 +68,8 @@
 			"id": "d10",
 			"kind": "capability",
 			"query": "rate limiting an API endpoint",
-			"relevant": ["anti-abuse-rate-limiting"],
-			"acceptable": ["architecture-rest-api"]
+			"relevant": ["rate-limiting"],
+			"acceptable": ["rest-api-conventions"]
 		},
 		{
 			"id": "d11",
@@ -105,98 +117,98 @@
 			"id": "d17",
 			"kind": "capability",
 			"query": "design tokens",
-			"relevant": ["ui-design-tokens"],
-			"acceptable": ["ui-component-system", "ui-design-philosophy"]
+			"relevant": ["design-tokens"],
+			"acceptable": ["component-system", "design-philosophy"]
 		},
 		{
 			"id": "d18",
 			"kind": "capability",
 			"query": "theme switching with a cookie",
-			"relevant": ["app-shell-settings"],
-			"acceptable": ["ui-design-philosophy"]
+			"relevant": ["visitor-style-resolution"],
+			"acceptable": ["design-philosophy"]
 		},
 		{
 			"id": "d19",
 			"kind": "capability",
 			"query": "magic link login",
-			"relevant": ["identity-passwordless-auth"],
-			"acceptable": ["forms-auth-forms"]
+			"relevant": ["passwordless-auth"],
+			"acceptable": ["auth-forms"]
 		},
 		{
 			"id": "d20",
 			"kind": "jargon",
 			"query": "passkeys webauthn",
-			"relevant": ["identity-passkeys"],
+			"relevant": ["passkeys"],
 			"acceptable": []
 		},
 		{
 			"id": "d21",
 			"kind": "capability",
 			"query": "file upload to S3-compatible storage",
-			"relevant": ["forms-file-uploads", "databases-object-storage"],
+			"relevant": ["file-uploads", "object-storage-adapter"],
 			"acceptable": []
 		},
 		{
 			"id": "d22",
 			"kind": "capability",
 			"query": "GDPR data export and deletion",
-			"relevant": ["admin-privacy-gdpr"],
-			"acceptable": ["identity-user-management"]
+			"relevant": ["gdpr-data-rights"],
+			"acceptable": ["gdpr-data-rights"]
 		},
 		{
 			"id": "d23",
 			"kind": "capability",
 			"query": "cookie consent banner",
-			"relevant": ["admin-privacy-consent-cookies"],
-			"acceptable": ["analytics-consent-sessions"]
+			"relevant": ["consent-cookies"],
+			"acceptable": ["consent-gated-sessions"]
 		},
 		{
 			"id": "d24",
 			"kind": "capability",
 			"query": "command palette",
-			"relevant": ["app-shell-quick-search"],
-			"acceptable": ["app-shell-keyboard-shortcuts"]
+			"relevant": ["command-palette"],
+			"acceptable": ["keyboard-shortcuts"]
 		},
 		{
 			"id": "d25",
 			"kind": "capability",
 			"query": "localized routing with a locale prefix in the URL",
-			"relevant": ["i18n-locale-routing"],
+			"relevant": ["locale-routing"],
 			"acceptable": []
 		},
 		{
 			"id": "d26",
 			"kind": "capability",
 			"query": "translate database content",
-			"relevant": ["i18n-db-content"],
+			"relevant": ["translated-database-content"],
 			"acceptable": []
 		},
 		{
 			"id": "d27",
 			"kind": "capability",
 			"query": "multi-step form wizard",
-			"relevant": ["forms-multi-step-dynamic"],
+			"relevant": ["multi-step-forms"],
 			"acceptable": []
 		},
 		{
 			"id": "d28",
 			"kind": "capability",
 			"query": "web push notifications",
-			"relevant": ["pwa-web-push"],
-			"acceptable": ["notifications-channels", "notifications-router-outbox"]
+			"relevant": ["web-push"],
+			"acceptable": ["notification-channels", "notification-outbox"]
 		},
 		{
 			"id": "d29",
 			"kind": "capability",
 			"query": "offline service worker caching",
-			"relevant": ["pwa-service-worker"],
+			"relevant": ["service-worker-caching"],
 			"acceptable": []
 		},
 		{
 			"id": "d30",
 			"kind": "capability",
 			"query": "server-sent events live updates",
-			"relevant": ["notifications-sse-stream", "analytics-live-feed"],
+			"relevant": ["notification-stream"],
 			"acceptable": []
 		},
 		{
@@ -218,7 +230,7 @@
 			"kind": "jargon",
 			"query": "improve LCP",
 			"relevant": ["critical-rendering-path"],
-			"acceptable": ["velocity-asset-delivery"]
+			"acceptable": ["asset-delivery-pipeline"]
 		},
 		{
 			"id": "d34",
@@ -232,41 +244,41 @@
 			"kind": "capability",
 			"query": "move heavy computation off the main thread",
 			"relevant": ["main-thread-budget"],
-			"acceptable": ["architecture-wasm-kernel"]
+			"acceptable": ["wasm-compute-kernel"]
 		},
 		{
 			"id": "d36",
 			"kind": "capability",
 			"query": "where should business logic live",
 			"relevant": ["multi-client-core"],
-			"acceptable": ["architecture-codebase-map", "architecture-runtime-layers"]
+			"acceptable": ["multi-client-core"]
 		},
 		{
 			"id": "d37",
 			"kind": "jargon",
 			"query": "hexagonal architecture ports and adapters",
 			"relevant": ["multi-client-core"],
-			"acceptable": ["architecture-runtime-layers"]
+			"acceptable": ["multi-client-core"]
 		},
 		{
 			"id": "d38",
 			"kind": "capability",
 			"query": "tool calling harness with risk tiers",
 			"relevant": ["ai-tool-harness"],
-			"acceptable": ["ai-harness-lens"]
+			"acceptable": ["agent-harness-lens"]
 		},
 		{
 			"id": "d39",
 			"kind": "capability",
 			"query": "chatbot with streaming responses",
-			"relevant": ["ai-chat-assistant"],
-			"acceptable": ["ai-surfaces", "ai-chatbot-session"]
+			"relevant": ["ai-surfaces"],
+			"acceptable": ["ai-surfaces", "chatbot-session"]
 		},
 		{
 			"id": "d40",
 			"kind": "capability",
 			"query": "audit trail of who changed what",
-			"relevant": ["admin-privacy-audit-log"],
+			"relevant": ["audit-log"],
 			"acceptable": ["provenance-record"]
 		},
 		{
@@ -288,7 +300,7 @@
 			"kind": "capability",
 			"query": "detect drift between copies of the same data",
 			"relevant": ["source-of-truth-gate"],
-			"acceptable": ["databases-polyglot-freshness"]
+			"acceptable": ["polyglot-freshness"]
 		},
 		{
 			"id": "d44",
@@ -301,29 +313,29 @@
 			"id": "d45",
 			"kind": "capability",
 			"query": "keyboard shortcuts",
-			"relevant": ["app-shell-keyboard-shortcuts"],
+			"relevant": ["keyboard-shortcuts"],
 			"acceptable": []
 		},
 		{
 			"id": "d46",
 			"kind": "capability",
 			"query": "3d model viewer",
-			"relevant": ["3d-model-viewer-customizer"],
-			"acceptable": ["3d-threlte-integration", "3d-static-animated-scenes"]
+			"relevant": ["model-viewer-customizer"],
+			"acceptable": ["threlte-integration"]
 		},
 		{
 			"id": "d47",
 			"kind": "capability",
 			"query": "charts for a dashboard",
-			"relevant": ["viz-charts"],
-			"acceptable": ["viz-plots"]
+			"relevant": ["data-visualization"],
+			"acceptable": ["data-visualization"]
 		},
 		{
 			"id": "d48",
 			"kind": "capability",
 			"query": "dense menu with too many actions",
-			"relevant": ["ui-explosive-discovery"],
-			"acceptable": ["ui-menus", "desk-panel-menus"]
+			"relevant": ["explosive-discovery"],
+			"acceptable": ["component-system", "desk-panel-menus"]
 		},
 		{
 			"id": "d49",
@@ -357,22 +369,22 @@
 			"id": "d53",
 			"kind": "capability",
 			"query": "bot protection captcha",
-			"relevant": ["anti-abuse-captcha"],
-			"acceptable": ["anti-abuse-honeypot"]
+			"relevant": ["proof-of-work-captcha"],
+			"acceptable": ["honeypot"]
 		},
 		{
 			"id": "d54",
 			"kind": "capability",
 			"query": "token-efficient prompt context format",
-			"relevant": ["ai-toon-format"],
+			"relevant": ["toon-context-format"],
 			"acceptable": []
 		},
 		{
 			"id": "d55",
 			"kind": "capability",
 			"query": "graph database traversal",
-			"relevant": ["databases-graph-traversal"],
-			"acceptable": ["databases-neo4j-connection", "databases-graph-modeling"]
+			"relevant": ["graph-traversal"],
+			"acceptable": ["neo4j-connection", "graph-modeling"]
 		},
 		{
 			"id": "d56",
@@ -392,21 +404,21 @@
 			"id": "d58",
 			"kind": "jargon",
 			"query": "RRF fusion",
-			"relevant": ["layered-rag", "ai-graph-rag"],
+			"relevant": ["layered-rag", "graph-rag"],
 			"acceptable": []
 		},
 		{
 			"id": "d59",
 			"kind": "capability",
 			"query": "redis cache",
-			"relevant": ["hierarchical-cache", "databases-cache"],
+			"relevant": ["hierarchical-cache"],
 			"acceptable": []
 		},
 		{
 			"id": "d60",
 			"kind": "capability",
 			"query": "replacement for useEffect in svelte 5 runes",
-			"relevant": ["architecture-state-management"],
+			"relevant": ["state-management"],
 			"acceptable": []
 		},
 		{
@@ -421,18 +433,42 @@
 			"kind": "multi",
 			"query": "cached dashboard that stays fast when the origin is slow",
 			"relevant": ["stale-while-revalidate"],
-			"acceptable": ["hierarchical-cache", "velocity-screen-read-model"]
+			"acceptable": ["hierarchical-cache", "screen-read-model"]
 		},
-		{ "id": "d63", "kind": "missing", "query": "kubernetes helm chart deployment", "relevant": [], "acceptable": [] },
-		{ "id": "d64", "kind": "missing", "query": "graphql federation gateway", "relevant": [], "acceptable": [] },
-		{ "id": "d65", "kind": "missing", "query": "stripe payment checkout", "relevant": [], "acceptable": [] },
-		{ "id": "d66", "kind": "missing", "query": "blockchain smart contract wallet", "relevant": [], "acceptable": [] }
+		{
+			"id": "d63",
+			"kind": "missing",
+			"query": "kubernetes helm chart deployment",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "d64",
+			"kind": "missing",
+			"query": "graphql federation gateway",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "d65",
+			"kind": "missing",
+			"query": "stripe payment checkout",
+			"relevant": [],
+			"acceptable": []
+		},
+		{
+			"id": "d66",
+			"kind": "missing",
+			"query": "blockchain smart contract wallet",
+			"relevant": [],
+			"acceptable": []
+		}
 	],
 	"plans": [
 		{
 			"id": "p01",
 			"capabilities": ["background jobs", "layered RAG"],
-			"required": ["jobs-scheduler", "layered-rag", "multi-client-core"]
+			"required": ["job-scheduling", "layered-rag", "multi-client-core"]
 		},
 		{
 			"id": "p02",
@@ -453,13 +489,15 @@
 		{
 			"id": "p04",
 			"capabilities": ["optimistic updates", "virtual list for long lists"],
-			"required": ["optimistic-mutation", "virtualized-rendering", "ui-component-system"]
+			"required": ["optimistic-mutation", "virtualized-rendering", "component-system"]
 		},
 		{
 			"id": "p05",
 			"capabilities": ["trademark name check", "fast slow-page loading"],
 			"required": [
 				"name-check",
+				"multi-source-aggregation",
+				"rate-limiting",
 				"resilience-policy",
 				"deadline-propagation",
 				"hierarchical-cache",

@@ -7,7 +7,8 @@ gate and served by the same query layer. No database projection, no graph databa
 
 Status: **accepted with adjustments** (2026-11-28, [decision register](./decision-register.md)). The adjustments
 are folded into the sections below; §C.4 (infrastructure needs) is implemented in Slice 1, see
-[slice-1.md](./slice-1.md). Everything else is the agreed target, applied slice by slice.
+[slice-1.md](./slice-1.md); entity kinds (§C.2) and the record reconciliation in Slice 2, see
+[slice-2.md](./slice-2.md). Everything else is the agreed target, applied slice by slice.
 
 ## C.1 Comparison of architectural directions
 

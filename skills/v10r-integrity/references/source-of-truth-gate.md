@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Truth & Evidence · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — the gates are tests; the cost is discipline about where facts live
 
 Every fact has exactly one owner; every other copy is typed, imported, generated with a --check, or bound by a drift test with a non-empty control — and reading the owner fails closed instead of falling back to a second source.

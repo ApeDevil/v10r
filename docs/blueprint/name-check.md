@@ -10,6 +10,22 @@ claims legal availability.
 `src/lib/server/name-check/` · **Contract:** `src/lib/name-check/report.ts` ·
 **Schema:** `src/lib/schemas/name-check.ts`
 
+## Pattern boundaries
+
+The registry holds this feature as two patterns, because they are adopted under different
+conditions and need different infrastructure:
+
+| | `multi-source-aggregation` | `name-check` |
+|---|---|---|
+| What it is | The reusable mechanism: per-source deadline, breaker, bulkhead, daily quota and shared cache around each upstream, every failure mapped to one coverage status | This feature: name similarity, the conflict signal, the report contract and the **protected public endpoint** |
+| Builds on | resilience policy, deadline propagation, hierarchical cache | multi-source aggregation, rate limiting |
+| Key-value store | conditional: only when quotas and cached reports are shared across instances (the quota counter fails open; the cache misses without Redis) | **required**: the per-IP limiter runs before any upstream call and fails closed, so without Redis the endpoint refuses instead of spending every source's quota |
+| Relational database | conditional: only when paid sources need stored, encrypted credentials | inherited, conditional |
+
+An internal or authenticated caller can adopt the aggregation alone. Emulating the public
+endpoint takes the rate-limiting contract with it; making the key-value store optional
+there would weaken the endpoint, not describe it.
+
 ## The problem it solves
 
 Clearing a name means searching six databases by hand and reconciling what they say. Each

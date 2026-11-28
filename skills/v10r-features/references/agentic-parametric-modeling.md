@@ -2,13 +2,15 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** 3D · **Tier:** deep · **Maturity:** implemented · **Risk:** medium — per-account CPU per call (bounded by schema, estimate, budget, deadline, per-account and surface limits); mesh checks prove closed manifolds, never printability or strength; not yet exercised in a real MCP host with authorization
 
 An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) engine inside the asset production pipeline validates, builds, inspects and encodes it on a separate stateless MCP service, in the visitor's browser and in tests alike, and a model link in the URL fragment reproduces it anywhere without storage. An MCP App draws a server-side preview mesh; the native viewer runs the kernel in a Web Worker.
 
 **When to use:** Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.
 
-**Needs:** required relational-db (via architecture-mcp-authorization), key-value-store (via architecture-hosted-mcp), email-delivery (via identity-passwordless-auth) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
+**Needs:** required relational-db (via mcp-authorization), key-value-store (via rate-limiting), email-delivery (via passwordless-auth) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
 
 ## Avoid when
 
@@ -59,7 +61,7 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 - A model over any limit is refused before the kernel runs, with the path of the field; the real triangle count and a deadline are checked between operations.
 - Model definitions are never logged, traced or recorded.
 - The MCP 3D service shares protocol infrastructure with the Pattern MCP and nothing else: separate endpoint, identity, registry, App and limits.
-- The MCP 3D service requires a Velociraptor account: an OAuth access token for its audience on every request (architecture-mcp-authorization).
+- The MCP 3D service requires a Velociraptor account: an OAuth access token for its audience on every request (mcp-authorization).
 
 ## Emulation notes
 
@@ -71,11 +73,11 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 ## Depends on
 
 - [Asset production pipeline](asset-production-pipeline.md)
-- [Authenticated MCP services](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-mcp-authorization.md)
-- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-hosted-mcp.md)
-- [MCP App provider](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-mcp-app-provider.md)
-- [Rate limiting](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/anti-abuse-rate-limiting.md)
-- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/3d-threlte-integration.md)
+- [MCP authorization](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/mcp-authorization.md)
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hosted-mcp.md)
+- [MCP App provider](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/mcp-app-provider.md)
+- [Rate limiting](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/rate-limiting.md)
+- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/threlte-integration.md)
 
 ---
 

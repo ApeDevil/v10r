@@ -1,0 +1,41 @@
+---
+title: "Cross-device debug pairing"
+description: "A short-lived, single-use pairing code and QR flow that attributes a phone's anonymous pageviews to an admin's identity via an HMAC-signed cookie, without…"
+category: "Admin & Privacy"
+---
+
+# Cross-device debug pairing
+
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+
+_Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
+
+**Kind:** pattern — build it in the target project
+
+**Category:** Admin & Privacy · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** medium — HMAC cookie and code claiming must resist forgery/replay
+
+A short-lived, single-use pairing code and QR flow that attributes a phone's anonymous pageviews to an admin's identity via an HMAC-signed cookie, without logging the phone in.
+
+**When to use:** Use when an admin needs to test the live site on a second device and see its activity attributed on the dashboard.
+
+**Needs:** required relational-db
+
+## Docs
+
+- [docs/blueprint/admin/pairing.md](/docs/blueprint/admin/pairing) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/admin/pairing.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/admin/pairing.md))
+
+## Code
+
+- `src/lib/server/pairing/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/pairing) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/pairing))
+
+## Tests
+
+- `src/lib/server/pairing/cookie.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/pairing/cookie.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/pairing/cookie.test.ts))
+
+## Proof
+
+- [`/pair/[code]`](/pair/[code]) (app route, no showcase)
+
+---
+
+_Machine-readable record: `debug-pairing` in `pattern-library/registry.json`._

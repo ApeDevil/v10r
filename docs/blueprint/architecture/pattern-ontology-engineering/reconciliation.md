@@ -2,7 +2,7 @@
 
 Generated for the review from `registry.json` 2.2.0 at commit 5720c96 plus the reviewer's annotations. Every record is listed. Columns: current tier/maturity, current `requires`, proposed **kind**, the proposed action, proposed infrastructure needs (target vocabulary, see [target-ontology.md](./target-ontology.md#infrastructure-needs)), and proposed typed relationships. "retain" means the record stays a pattern; its edges may still change.
 
-This is a proposal for review, not an applied change. Rows marked *(defer)* sit in the Desk, which is slated for a refactor.
+Status: **applied in Slice 2** (2026-11-28). The applied result, with every deviation from this proposal, is the manifest [`pattern-library/reconciliation/manifest.json`](../../../../pattern-library/reconciliation/manifest.json), summarized in [slice-2.md](./slice-2.md). This table is the reviewed proposal, kept as history; ids in it are the ids before Slice 2. Rows marked *(defer)* sit in the Desk, which is slated for a refactor.
 
 ## Summary
 

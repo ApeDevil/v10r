@@ -40,7 +40,7 @@ Decisions D-01 … D-14 answered 2026-11-28; golden scenarios accepted; holdout 
   required-need recall on the benchmark improves without a drop in step metrics.
 - **Checkpoint:** review the needs diff per record and the benchmark delta.
 
-## Slice 2 — Entity kinds, record reconciliation and identifiers
+## Slice 2 — Entity kinds, record reconciliation and identifiers ● implemented, at checkpoint ([slice-2.md](./slice-2.md))
 - **Objective:** the registry holds genuine reusable knowledge, each record says what adopting it means, and each
   id names its concept.
 - **Changes:** `kind: pattern | principle | workflow` with the adoption semantics of

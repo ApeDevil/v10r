@@ -224,10 +224,10 @@ Proposals — none of this is built, and none needs a paid provider for the slic
 | Need | Extension point | Reuse |
 |---|---|---|
 | Queued, user-scoped jobs | persist `AssetJob` rows; claim with a lease | `durable-step-execution` |
-| Scheduling, retries, sweeping stale jobs | a job slug | `jobs-scheduler` |
-| Persistent project storage | an `AssetStore` on R2 with `If-None-Match: *` puts | `databases-object-storage` (`#lib/server/store`) |
-| Bounded CPU / memory / disk | the isolated worker in a container with limits | `architecture-external-service` |
-| Quotas and cost accounting | per-owner triangle·seconds from `measurements`, checked before `check` | `anti-abuse-ai-budget` |
+| Scheduling, retries, sweeping stale jobs | a job slug | `job-scheduling` |
+| Persistent project storage | an `AssetStore` on R2 with `If-None-Match: *` puts | `object-storage-adapter` (`#lib/server/store`) |
+| Bounded CPU / memory / disk | the isolated worker in a container with limits | `external-service-runtime` |
+| Quotas and cost accounting | per-owner triangle·seconds from `measurements`, checked before `check` | `ai-token-budget` |
 | Approval for expensive runs | estimate → proposal → approve → run | `deskbot-approval-gate` |
 | Cancellation of queued jobs | `queued → cancelled`; running → kill the worker | `job.ts` moves |
 | GPU work (baking, rendering) | another environment + a Blender adapter with typed operations | above |

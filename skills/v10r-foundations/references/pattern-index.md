@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — documentation artifact
 
 A generated table in README.md mapping every repo pattern to the doc that explains it, the code that implements it, and the showcase page that proves it — rendered from this registry, one row per record, grouped by category.

@@ -12,6 +12,7 @@
  * `RenderOpts.isPublishedDoc` injects the one predicate the renderers need.
  */
 import { adoptionNeeds, needsSummary } from '#patterns/infrastructure-needs.ts';
+import { ADOPTION_SEMANTICS } from '#patterns/schema.ts';
 import { headingAnchors } from '../../docs/heading-anchors.server';
 import type { PatternRecord, Registry, RegRef } from './registry';
 
@@ -144,9 +145,13 @@ function readmeShowcaseCell(refs: RegRef[]): string {
 function readmeRow(pattern: PatternRecord): string {
 	const page = `${PATTERN_PAGES_DIR}/${pattern.id}.md`;
 	const title = pattern.tier === 'deep' ? `[**${pattern.title}**](${page})` : `[${pattern.title}](${page})`;
-	// Exception badge: only non-proven rows are marked, so the table stays quiet
-	// for the proven majority instead of growing a fifth column.
-	const badge = pattern.maturity === 'proven' ? '' : ` _(${pattern.maturity})_`;
+	// Exception badge: only non-pattern kinds and non-proven rows are marked, so the table stays
+	// quiet for the proven-pattern majority instead of growing a fifth column.
+	const marks = [
+		pattern.kind === 'pattern' ? '' : pattern.kind,
+		pattern.maturity === 'proven' ? '' : pattern.maturity,
+	].filter((mark) => mark.length > 0);
+	const badge = marks.length > 0 ? ` _(${marks.join(', ')})_` : '';
 	// The index is the surface agents actually load (research: on-demand MCP lookups are
 	// rarely made), so the deep rows carry their headline contraindication inline.
 	const avoid =
@@ -324,6 +329,8 @@ function patternBody(pattern: PatternRecord, registry: Registry, links: PatternL
 		);
 	}
 	sections.push(
+		`**Kind:** ${pattern.kind} — ${ADOPTION_SEMANTICS[pattern.kind]}`,
+		'',
 		`**Category:** ${categoryTitle(registry, pattern.category)} · **Tier:** ${pattern.tier} · **Maturity:** ${pattern.maturity}${pattern.verifiedAt ? ` (verified ${pattern.verifiedAt}${pattern.verifiedSha ? ` @ ${pattern.verifiedSha}` : ''})` : ''} · **Risk:** ${pattern.risk}`,
 		'',
 		pattern.summary,

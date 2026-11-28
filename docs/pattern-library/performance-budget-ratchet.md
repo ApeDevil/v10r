@@ -8,6 +8,8 @@ category: "Velocity Measurement"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Velocity Measurement · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** low — measurement and gating only; no runtime behaviour
 
 Two thresholds with different jobs: targets are where we want to be and never fail a build, ceilings are the measured value at the moment it was accepted and only ever move down. A gate wired to a target gets muted the afternoon it is added.

@@ -91,7 +91,7 @@ supports).
 | Archive sizes | 2.4 KB (data) to 34 KB (foundations), 121 KB for all eight |
 | Tampering | An archive with one appended byte: `SKILLS_WELLKNOWN_DIGEST_MISMATCH`, nothing installed |
 | Updates | `skills check` against the source lists the six not yet installed agent skills; a changed archive changes its digest |
-| Use in an external agent | Claude Code 2.1 in a fresh scratch project, after the install: it listed both v10r skills, opened `v10r-intelligence` and answered `ai-mcp-client` for consuming external MCP tools (3 turns) |
+| Use in an external agent | Claude Code 2.1 in a fresh scratch project, after the install: it listed both v10r skills, opened `v10r-intelligence` and answered `mcp-client` for consuming external MCP tools (3 turns) |
 
 The production endpoint is not live until the branch ships; the measurements above are
 against the local dev server.

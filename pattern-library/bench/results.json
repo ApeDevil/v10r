@@ -1,11 +1,11 @@
 {
-	"registryVersion": "2.2.0",
-	"patterns": 188,
+	"registryDigest": "59949b2ccad0ca92",
+	"patterns": 170,
 	"relevance": {
 		"dev": {
 			"queries": 66,
 			"accuracyAt1": 100,
-			"recallAt3": 99.2,
+			"recallAt3": 100,
 			"mrrAt10": 1,
 			"missingAbstained": "4/4",
 			"answerableGradedWeak": "1/62",
@@ -13,37 +13,33 @@
 		},
 		"holdout": {
 			"queries": 30,
-			"accuracyAt1": 76,
+			"accuracyAt1": 88,
 			"recallAt3": 88,
-			"mrrAt10": 0.847,
+			"mrrAt10": 0.906,
 			"missingAbstained": "5/5",
-			"answerableGradedWeak": "5/25",
+			"answerableGradedWeak": "6/25",
 			"misses": [
-				"h01 \"the UI should update instantly when I rename an item, but go back cleanly if the server request fails\" → top ai-agent-actions, want optimistic-mutation",
-				"h04 \"stop bots from spamming my signup form without making real people click on traffic lights\" → top admin-privacy-feedback, want anti-abuse-honeypot|anti-abuse-captcha",
-				"h09 \"signup flow split over several screens where the city dropdown depends on the chosen country and users can add extra phone numbers\" → top name-check, want forms-multi-step-dynamic",
-				"h10 \"app should still open when the phone has no connection, without ever showing a stale personalised page from cache\" → top architecture-external-service, want pwa-service-worker",
-				"h13 \"visualize how budget money flows between departments as bands whose width shows the amount\" → top architecture-request-cycle-visualizer, want viz-graphs",
+				"h09 \"signup flow split over several screens where the city dropdown depends on the chosen country and users can add extra phone numbers\" → top component-system, want multi-step-forms",
+				"h10 \"app should still open when the phone has no connection, without ever showing a stale personalised page from cache\" → top external-service-runtime, want service-worker-caching",
 				"h18 \"know when stored embeddings are outdated because I changed the chunking code, not the documents\" → top layered-rag, want derivation-key"
 			]
 		},
 		"holdout2": {
 			"queries": 40,
-			"accuracyAt1": 79.4,
+			"accuracyAt1": 82.4,
 			"recallAt3": 83.3,
-			"mrrAt10": 0.833,
+			"mrrAt10": 0.838,
 			"missingAbstained": "4/6",
-			"answerableGradedWeak": "9/34",
+			"answerableGradedWeak": "10/34",
 			"misses": [
-				"g02 \"users lose half-written work because their login silently expired; warn them first and let them sign back in without leaving the page\" → top form-draft-recovery, want app-shell-session-lifecycle",
+				"g02 \"users lose half-written work because their login silently expired; warn them first and let them sign back in without leaving the page\" → top form-draft-recovery, want session-lifecycle-ui",
 				"g08 \"store prices that take effect on a future date and still be able to fix a past mistake while keeping what we believed back then\" → top stale-while-revalidate, want temporal-data-modeling",
-				"g13 \"the support bot can't answer 'what does this button do?' because it doesn't know which page the user is looking at\" → top layered-rag, want ai-site-awareness",
-				"g14 \"where do signups drop off\" → top 3d-threlte-integration, want analytics-funnels",
-				"g17 \"map with countries shaded by value\" → top i18n-db-content, want viz-maps",
-				"g18 \"check if a username is taken while the user types, without hammering the server on every keystroke\" → top dynamic-attributes, want forms-validation-timing",
-				"g33 \"cache a slow third-party API response in memory and Redis, keep serving the old value when the API is down, and let only one request refresh it\" → top latency-tracing, want hierarchical-cache|stale-while-revalidate|singleflight",
-				"g35 \"one-to-one video calls between users in the browser\" (missing) → returned 76, top architecture-external-service",
-				"g37 \"bulk import customers from a CSV file with a column-mapping step\" (missing) → returned 47, top pim-sheet-transform-recipe"
+				"g13 \"the support bot can't answer 'what does this button do?' because it doesn't know which page the user is looking at\" → top gdpr-data-rights, want chatbot-site-awareness",
+				"g14 \"where do signups drop off\" → top architecture-engineering, want funnels",
+				"g17 \"map with countries shaded by value\" → top translated-database-content, want data-visualization",
+				"g18 \"check if a username is taken while the user types, without hammering the server on every keystroke\" → top dynamic-attributes, want validation-timing",
+				"g35 \"one-to-one video calls between users in the browser\" (missing) → returned 76, top agentic-parametric-modeling",
+				"g37 \"bulk import customers from a CSV file with a column-mapping step\" (missing) → returned 47, top pim-sheet-transform"
 			]
 		}
 	},
@@ -53,82 +49,82 @@
 			"steps": 3,
 			"requiredCovered": "3/3",
 			"extra": [],
-			"tokens": 1821
+			"tokens": 2395
 		},
 		{
 			"id": "p02",
 			"steps": 5,
 			"requiredCovered": "5/5",
 			"extra": [],
-			"tokens": 3023
+			"tokens": 3362
 		},
 		{
 			"id": "p03",
 			"steps": 3,
 			"requiredCovered": "3/3",
 			"extra": [],
-			"tokens": 1755
+			"tokens": 1935
 		},
 		{
 			"id": "p04",
 			"steps": 3,
 			"requiredCovered": "3/3",
 			"extra": [],
-			"tokens": 1336
+			"tokens": 1679
 		},
 		{
 			"id": "p05",
-			"steps": 5,
-			"requiredCovered": "5/5",
+			"steps": 7,
+			"requiredCovered": "7/7",
 			"extra": [],
-			"tokens": 2971
+			"tokens": 3619
 		}
 	],
 	"responseTokens": {
-		"toolsList": 2362,
+		"toolsList": 2412,
 		"search_patterns": {
-			"mean": 593,
-			"p50": 586,
-			"p95": 916,
-			"max": 1114
+			"mean": 678,
+			"p50": 690,
+			"p95": 1057,
+			"max": 1140
 		},
 		"trace_capability": {
-			"mean": 925,
-			"p50": 833,
-			"p95": 1823,
-			"max": 3400
+			"mean": 1062,
+			"p50": 1128,
+			"p95": 1936,
+			"max": 2495
 		},
 		"get_pattern_all": {
-			"mean": 433,
-			"p50": 216,
-			"p95": 1253,
-			"max": 3368
+			"mean": 535,
+			"p50": 307,
+			"p95": 1407,
+			"max": 3393
 		},
 		"get_pattern_deep": {
-			"mean": 963,
-			"p50": 832,
-			"p95": 1544,
-			"max": 3368
+			"mean": 990,
+			"p50": 903,
+			"p95": 1523,
+			"max": 3393
 		},
 		"recommend_emulation_plan": {
-			"mean": 2181,
-			"p50": 1821,
-			"p95": 3023,
-			"max": 3023
+			"mean": 2598,
+			"p50": 2395,
+			"p95": 3619,
+			"max": 3619
 		}
 	},
 	"latency": {
 		"search_patterns": {
-			"p50us": 162,
-			"p95us": 342
+			"p50us": 143,
+			"p95us": 275
 		},
 		"get_pattern": {
 			"p50us": 3,
 			"p95us": 12
 		},
 		"recommend_emulation_plan": {
-			"p50us": 319,
-			"p95us": 530
+			"p50us": 269,
+			"p95us": 473
 		}
 	},
 	"workflows": {
@@ -137,14 +133,14 @@
 				"id": "w1-fit-check",
 				"task": "Decide whether the cache-stampede pattern fits a target project that runs Postgres but no Redis.",
 				"calls": 3,
-				"tokens": 2339,
+				"tokens": 2615,
 				"errors": 0
 			},
 			{
 				"id": "w2-pick-between-candidates",
 				"task": "Pick between the candidate chatbot patterns for a streaming assistant.",
 				"calls": 3,
-				"tokens": 1663,
+				"tokens": 2396,
 				"errors": 0
 			},
 			{
@@ -165,28 +161,28 @@
 				"id": "w5-invariants-of-three",
 				"task": "Collect the invariants of three already-known patterns before a review.",
 				"calls": 3,
-				"tokens": 2888,
+				"tokens": 2986,
 				"errors": 0
 			},
 			{
 				"id": "w6-browse-category",
 				"task": "List what the velocity-data category offers.",
 				"calls": 2,
-				"tokens": 1005,
+				"tokens": 1139,
 				"errors": 0
 			},
 			{
 				"id": "w7-plan-two-capabilities",
 				"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
 				"calls": 1,
-				"tokens": 1864,
+				"tokens": 2438,
 				"errors": 0
 			},
 			{
 				"id": "w8-emulate-one",
 				"task": "Find, ground and start emulating the jobs pattern: card plus the runner entry point.",
 				"calls": 3,
-				"tokens": 2052,
+				"tokens": 2335,
 				"errors": 0
 			}
 		],
@@ -195,14 +191,14 @@
 				"id": "w1-fit-check",
 				"task": "Decide whether the cache-stampede pattern fits a target project that runs Postgres but no Redis.",
 				"calls": 1,
-				"tokens": 275,
+				"tokens": 356,
 				"errors": 0
 			},
 			{
 				"id": "w2-pick-between-candidates",
 				"task": "Pick between the candidate chatbot patterns for a streaming assistant.",
 				"calls": 2,
-				"tokens": 685,
+				"tokens": 1388,
 				"errors": 0
 			},
 			{
@@ -223,28 +219,28 @@
 				"id": "w5-invariants-of-three",
 				"task": "Collect the invariants of three already-known patterns before a review.",
 				"calls": 1,
-				"tokens": 952,
+				"tokens": 1050,
 				"errors": 0
 			},
 			{
 				"id": "w6-browse-category",
 				"task": "List what the velocity-data category offers.",
 				"calls": 1,
-				"tokens": 445,
+				"tokens": 441,
 				"errors": 0
 			},
 			{
 				"id": "w7-plan-two-capabilities",
 				"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
 				"calls": 1,
-				"tokens": 1904,
+				"tokens": 2525,
 				"errors": 0
 			},
 			{
 				"id": "w8-emulate-one",
 				"task": "Find, ground and start emulating the jobs pattern: card plus the runner entry point.",
 				"calls": 3,
-				"tokens": 1508,
+				"tokens": 1807,
 				"errors": 0
 			}
 		],
@@ -253,7 +249,7 @@
 				"id": "w7-plan-two-capabilities",
 				"task": "Build a plan for background jobs + grounded retrieval in a target with Postgres but no pgvector.",
 				"calls": 2,
-				"tokens": 1164,
+				"tokens": 1727,
 				"errors": 0
 			}
 		]
@@ -263,392 +259,392 @@
 			"id": "w1-fit-check",
 			"direct-baseline": {
 				"calls": 3,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 113,
-				"resultTokens": 2226,
-				"intermediateTokens": 1294,
-				"total": 4701,
-				"totalWithCachedDefinitions": 2575
+				"resultTokens": 2502,
+				"intermediateTokens": 1398,
+				"total": 5027,
+				"totalWithCachedDefinitions": 2856
 			},
 			"direct-progressive": {
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 47,
-				"resultTokens": 228,
+				"resultTokens": 309,
 				"intermediateTokens": 0,
-				"total": 2637,
-				"totalWithCachedDefinitions": 511
+				"total": 2768,
+				"totalWithCachedDefinitions": 597
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
+				"definitionTokens": 1978,
 				"callTokens": 60,
-				"resultTokens": 228,
+				"resultTokens": 309,
 				"intermediateTokens": 0,
-				"total": 2211,
-				"totalWithCachedDefinitions": 480
+				"total": 2347,
+				"totalWithCachedDefinitions": 567
 			},
 			"discovery": {
 				"calls": 2,
 				"definitionTokens": 84,
 				"callTokens": 86,
-				"resultTokens": 1139,
-				"intermediateTokens": 911,
-				"total": 1309,
-				"totalWithCachedDefinitions": 1233
+				"resultTokens": 1232,
+				"intermediateTokens": 923,
+				"total": 1402,
+				"totalWithCachedDefinitions": 1326
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 47,
-				"resultTokens": 228,
+				"resultTokens": 309,
 				"intermediateTokens": 0,
-				"total": 2637,
-				"totalWithCachedDefinitions": 511
+				"total": 2768,
+				"totalWithCachedDefinitions": 597
 			}
 		},
 		{
 			"id": "w2-pick-between-candidates",
 			"direct-baseline": {
 				"calls": 3,
-				"definitionTokens": 2362,
-				"callTokens": 113,
-				"resultTokens": 1550,
-				"intermediateTokens": 823,
-				"total": 4025,
-				"totalWithCachedDefinitions": 1899
+				"definitionTokens": 2412,
+				"callTokens": 111,
+				"resultTokens": 2285,
+				"intermediateTokens": 1463,
+				"total": 4808,
+				"totalWithCachedDefinitions": 2637
 			},
 			"direct-progressive": {
 				"calls": 2,
-				"definitionTokens": 2362,
-				"callTokens": 81,
-				"resultTokens": 604,
-				"intermediateTokens": 400,
-				"total": 3047,
-				"totalWithCachedDefinitions": 921
+				"definitionTokens": 2412,
+				"callTokens": 79,
+				"resultTokens": 1309,
+				"intermediateTokens": 487,
+				"total": 3800,
+				"totalWithCachedDefinitions": 1629
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
-				"callTokens": 73,
-				"resultTokens": 204,
+				"definitionTokens": 1978,
+				"callTokens": 71,
+				"resultTokens": 822,
 				"intermediateTokens": 0,
-				"total": 2200,
-				"totalWithCachedDefinitions": 469
+				"total": 2871,
+				"totalWithCachedDefinitions": 1091
 			},
 			"discovery": {
 				"calls": 4,
 				"definitionTokens": 84,
-				"callTokens": 159,
-				"resultTokens": 2346,
-				"intermediateTokens": 2142,
-				"total": 2589,
-				"totalWithCachedDefinitions": 2513
+				"callTokens": 157,
+				"resultTokens": 3076,
+				"intermediateTokens": 2254,
+				"total": 3317,
+				"totalWithCachedDefinitions": 3241
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 2,
-				"definitionTokens": 2362,
-				"callTokens": 81,
-				"resultTokens": 604,
-				"intermediateTokens": 400,
-				"total": 3047,
-				"totalWithCachedDefinitions": 921
+				"definitionTokens": 2412,
+				"callTokens": 79,
+				"resultTokens": 1309,
+				"intermediateTokens": 487,
+				"total": 3800,
+				"totalWithCachedDefinitions": 1629
 			}
 		},
 		{
 			"id": "w3-read-kernel-function",
 			"direct-baseline": {
 				"calls": 2,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 87,
 				"resultTokens": 2169,
 				"intermediateTokens": 1110,
-				"total": 4618,
-				"totalWithCachedDefinitions": 2492
+				"total": 4668,
+				"totalWithCachedDefinitions": 2497
 			},
 			"direct-progressive": {
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 47,
 				"resultTokens": 1285,
 				"intermediateTokens": 0,
-				"total": 3694,
-				"totalWithCachedDefinitions": 1568
+				"total": 3744,
+				"totalWithCachedDefinitions": 1573
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
+				"definitionTokens": 1978,
 				"callTokens": 60,
 				"resultTokens": 1285,
 				"intermediateTokens": 0,
-				"total": 3268,
-				"totalWithCachedDefinitions": 1537
+				"total": 3323,
+				"totalWithCachedDefinitions": 1543
 			},
 			"discovery": {
 				"calls": 2,
 				"definitionTokens": 84,
 				"callTokens": 86,
-				"resultTokens": 2150,
-				"intermediateTokens": 865,
-				"total": 2320,
-				"totalWithCachedDefinitions": 2244
+				"resultTokens": 2162,
+				"intermediateTokens": 877,
+				"total": 2332,
+				"totalWithCachedDefinitions": 2256
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 47,
 				"resultTokens": 1285,
 				"intermediateTokens": 0,
-				"total": 3694,
-				"totalWithCachedDefinitions": 1568
+				"total": 3744,
+				"totalWithCachedDefinitions": 1573
 			}
 		},
 		{
 			"id": "w4-read-doc-section",
 			"direct-baseline": {
 				"calls": 2,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 86,
 				"resultTokens": 2660,
 				"intermediateTokens": 1275,
-				"total": 5108,
-				"totalWithCachedDefinitions": 2982
+				"total": 5158,
+				"totalWithCachedDefinitions": 2987
 			},
 			"direct-progressive": {
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 49,
 				"resultTokens": 568,
 				"intermediateTokens": 0,
-				"total": 2979,
-				"totalWithCachedDefinitions": 853
+				"total": 3029,
+				"totalWithCachedDefinitions": 858
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
+				"definitionTokens": 1978,
 				"callTokens": 63,
 				"resultTokens": 568,
 				"intermediateTokens": 0,
-				"total": 2554,
-				"totalWithCachedDefinitions": 823
+				"total": 2609,
+				"totalWithCachedDefinitions": 829
 			},
 			"discovery": {
 				"calls": 2,
 				"definitionTokens": 84,
 				"callTokens": 88,
-				"resultTokens": 1433,
-				"intermediateTokens": 865,
-				"total": 1605,
-				"totalWithCachedDefinitions": 1529
+				"resultTokens": 1445,
+				"intermediateTokens": 877,
+				"total": 1617,
+				"totalWithCachedDefinitions": 1541
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 49,
 				"resultTokens": 568,
 				"intermediateTokens": 0,
-				"total": 2979,
-				"totalWithCachedDefinitions": 853
+				"total": 3029,
+				"totalWithCachedDefinitions": 858
 			}
 		},
 		{
 			"id": "w5-invariants-of-three",
 			"direct-baseline": {
 				"calls": 3,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 111,
-				"resultTokens": 2777,
-				"intermediateTokens": 1589,
-				"total": 5250,
-				"totalWithCachedDefinitions": 3124
+				"resultTokens": 2875,
+				"intermediateTokens": 1662,
+				"total": 5398,
+				"totalWithCachedDefinitions": 3227
 			},
 			"direct-progressive": {
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 54,
-				"resultTokens": 898,
+				"resultTokens": 996,
 				"intermediateTokens": 0,
-				"total": 3314,
-				"totalWithCachedDefinitions": 1188
+				"total": 3462,
+				"totalWithCachedDefinitions": 1291
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
+				"definitionTokens": 1978,
 				"callTokens": 66,
-				"resultTokens": 898,
+				"resultTokens": 996,
 				"intermediateTokens": 0,
-				"total": 2887,
-				"totalWithCachedDefinitions": 1156
+				"total": 3040,
+				"totalWithCachedDefinitions": 1260
 			},
 			"discovery": {
 				"calls": 2,
 				"definitionTokens": 84,
 				"callTokens": 93,
-				"resultTokens": 1730,
-				"intermediateTokens": 832,
-				"total": 1907,
-				"totalWithCachedDefinitions": 1831
+				"resultTokens": 1840,
+				"intermediateTokens": 844,
+				"total": 2017,
+				"totalWithCachedDefinitions": 1941
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 54,
-				"resultTokens": 898,
+				"resultTokens": 996,
 				"intermediateTokens": 0,
-				"total": 3314,
-				"totalWithCachedDefinitions": 1188
+				"total": 3462,
+				"totalWithCachedDefinitions": 1291
 			}
 		},
 		{
 			"id": "w6-browse-category",
 			"direct-baseline": {
 				"calls": 2,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 94,
-				"resultTokens": 911,
-				"intermediateTokens": 131,
-				"total": 3367,
-				"totalWithCachedDefinitions": 1241
+				"resultTokens": 1045,
+				"intermediateTokens": 269,
+				"total": 3551,
+				"totalWithCachedDefinitions": 1380
 			},
 			"direct-progressive": {
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 45,
-				"resultTokens": 400,
+				"resultTokens": 396,
 				"intermediateTokens": 0,
-				"total": 2807,
-				"totalWithCachedDefinitions": 681
+				"total": 2853,
+				"totalWithCachedDefinitions": 682
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
+				"definitionTokens": 1978,
 				"callTokens": 58,
-				"resultTokens": 400,
+				"resultTokens": 396,
 				"intermediateTokens": 0,
-				"total": 2381,
-				"totalWithCachedDefinitions": 650
+				"total": 2432,
+				"totalWithCachedDefinitions": 652
 			},
 			"discovery": {
 				"calls": 2,
 				"definitionTokens": 84,
 				"callTokens": 84,
-				"resultTokens": 1311,
-				"intermediateTokens": 911,
-				"total": 1479,
-				"totalWithCachedDefinitions": 1403
+				"resultTokens": 1319,
+				"intermediateTokens": 923,
+				"total": 1487,
+				"totalWithCachedDefinitions": 1411
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 45,
-				"resultTokens": 400,
+				"resultTokens": 396,
 				"intermediateTokens": 0,
-				"total": 2807,
-				"totalWithCachedDefinitions": 681
+				"total": 2853,
+				"totalWithCachedDefinitions": 682
 			}
 		},
 		{
 			"id": "w7-plan-two-capabilities",
 			"direct-baseline": {
 				"calls": 1,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 43,
-				"resultTokens": 1821,
+				"resultTokens": 2395,
 				"intermediateTokens": 0,
-				"total": 4226,
-				"totalWithCachedDefinitions": 2100
+				"total": 4850,
+				"totalWithCachedDefinitions": 2679
 			},
 			"direct-progressive": {
 				"calls": 2,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 105,
-				"resultTokens": 1059,
-				"intermediateTokens": 434,
-				"total": 3526,
-				"totalWithCachedDefinitions": 1400
+				"resultTokens": 1622,
+				"intermediateTokens": 593,
+				"total": 4139,
+				"totalWithCachedDefinitions": 1968
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
+				"definitionTokens": 1978,
 				"callTokens": 99,
-				"resultTokens": 625,
+				"resultTokens": 1029,
 				"intermediateTokens": 0,
-				"total": 2647,
-				"totalWithCachedDefinitions": 916
+				"total": 3106,
+				"totalWithCachedDefinitions": 1326
 			},
 			"discovery": {
 				"calls": 4,
 				"definitionTokens": 84,
 				"callTokens": 183,
-				"resultTokens": 2826,
-				"intermediateTokens": 2201,
-				"total": 3093,
-				"totalWithCachedDefinitions": 3017
+				"resultTokens": 3464,
+				"intermediateTokens": 2435,
+				"total": 3731,
+				"totalWithCachedDefinitions": 3655
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 2,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 105,
-				"resultTokens": 1059,
-				"intermediateTokens": 434,
-				"total": 3526,
-				"totalWithCachedDefinitions": 1400
+				"resultTokens": 1622,
+				"intermediateTokens": 593,
+				"total": 4139,
+				"totalWithCachedDefinitions": 1968
 			}
 		},
 		{
 			"id": "w8-emulate-one",
 			"direct-baseline": {
 				"calls": 3,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 113,
-				"resultTokens": 1939,
-				"intermediateTokens": 1490,
-				"total": 4414,
-				"totalWithCachedDefinitions": 2288
+				"resultTokens": 2222,
+				"intermediateTokens": 1773,
+				"total": 4747,
+				"totalWithCachedDefinitions": 2576
 			},
 			"direct-progressive": {
 				"calls": 3,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 125,
-				"resultTokens": 1383,
-				"intermediateTokens": 1052,
-				"total": 3870,
-				"totalWithCachedDefinitions": 1744
+				"resultTokens": 1682,
+				"intermediateTokens": 1351,
+				"total": 4219,
+				"totalWithCachedDefinitions": 2048
 			},
 			"code-mode": {
 				"calls": 1,
-				"definitionTokens": 1923,
+				"definitionTokens": 1978,
 				"callTokens": 98,
 				"resultTokens": 331,
 				"intermediateTokens": 0,
-				"total": 2352,
-				"totalWithCachedDefinitions": 621
+				"total": 2407,
+				"totalWithCachedDefinitions": 627
 			},
 			"discovery": {
 				"calls": 6,
 				"definitionTokens": 84,
 				"callTokens": 242,
-				"resultTokens": 3990,
-				"intermediateTokens": 3659,
-				"total": 4316,
-				"totalWithCachedDefinitions": 4240
+				"resultTokens": 4326,
+				"intermediateTokens": 3995,
+				"total": 4652,
+				"totalWithCachedDefinitions": 4576
 			},
 			"hybrid": {
 				"rule": "direct",
 				"calls": 3,
-				"definitionTokens": 2362,
+				"definitionTokens": 2412,
 				"callTokens": 125,
-				"resultTokens": 1383,
-				"intermediateTokens": 1052,
-				"total": 3870,
-				"totalWithCachedDefinitions": 1744
+				"resultTokens": 1682,
+				"intermediateTokens": 1351,
+				"total": 4219,
+				"totalWithCachedDefinitions": 2048
 			}
 		}
 	],
@@ -656,58 +652,58 @@
 		"rows": [
 			{
 				"tools": 8,
-				"definitionTokens": 2362,
-				"direct-progressive": 25874,
-				"code-mode": 20500,
-				"discovery": 18618,
-				"hybrid": 25874,
+				"definitionTokens": 2412,
+				"direct-progressive": 28014,
+				"code-mode": 22135,
+				"discovery": 20555,
+				"hybrid": 28014,
 				"cachedDefinitions": {
-					"direct-progressive": 8866,
-					"code-mode": 6652,
-					"discovery": 18010,
-					"hybrid": 8866
+					"direct-progressive": 10646,
+					"code-mode": 7895,
+					"discovery": 19947,
+					"hybrid": 10646
 				}
 			},
 			{
 				"tools": 32,
-				"definitionTokens": 9527,
-				"direct-progressive": 83194,
-				"code-mode": 65708,
-				"discovery": 18672,
-				"hybrid": 22345,
+				"definitionTokens": 9727,
+				"direct-progressive": 86534,
+				"code-mode": 68663,
+				"discovery": 20615,
+				"hybrid": 24171,
 				"cachedDefinitions": {
-					"direct-progressive": 14602,
-					"code-mode": 11172,
-					"discovery": 18064,
-					"hybrid": 14996
+					"direct-progressive": 16502,
+					"code-mode": 12543,
+					"discovery": 20007,
+					"hybrid": 16624
 				}
 			},
 			{
 				"tools": 128,
-				"definitionTokens": 38213,
-				"direct-progressive": 312682,
-				"code-mode": 246716,
-				"discovery": 18693,
-				"hybrid": 44987,
+				"definitionTokens": 39013,
+				"direct-progressive": 320822,
+				"code-mode": 254951,
+				"discovery": 20636,
+				"hybrid": 47473,
 				"cachedDefinitions": {
-					"direct-progressive": 37546,
-					"code-mode": 29276,
-					"discovery": 18085,
-					"hybrid": 17275
+					"direct-progressive": 39926,
+					"code-mode": 31175,
+					"discovery": 20028,
+					"hybrid": 18969
 				}
 			},
 			{
 				"tools": 512,
-				"definitionTokens": 153053,
-				"direct-progressive": 1231402,
-				"code-mode": 971516,
-				"discovery": 18705,
-				"hybrid": 135596,
+				"definitionTokens": 156253,
+				"direct-progressive": 1258742,
+				"code-mode": 1000871,
+				"discovery": 20642,
+				"hybrid": 140717,
 				"cachedDefinitions": {
-					"direct-progressive": 129418,
-					"code-mode": 101756,
-					"discovery": 18097,
-					"hybrid": 26344
+					"direct-progressive": 133718,
+					"code-mode": 105767,
+					"discovery": 20034,
+					"hybrid": 28297
 				}
 			}
 		],

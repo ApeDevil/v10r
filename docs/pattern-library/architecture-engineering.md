@@ -8,13 +8,15 @@ category: "Architecture & Request Pipeline"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Architecture & Request Pipeline · **Tier:** deep · **Maturity:** implemented · **Risk:** low — read-only reasoning over a reviewed rule table; the main risk is a recommendation read as authoritative, mitigated by showing the rule, the alternatives, the unknowns and the evidence kind on every outcome
 
 A deterministic decision discipline for where code runs, how parts talk, where data lives and how it ships. Versioned decision records (problem, alternatives, ordered rules, evidence with its kind, migrations) drive an engine that answers a workload profile with the chosen approach, the rule that chose it, why each alternative lost and which unknown factor could change it; no scoring formula and no LLM. A separate architecture model (components, zones, connections; layout stored apart) is parsed fail-closed, edited through pure operations, statically checked (security findings kept apart, fixed severity per code) and compared qualitatively. The Studio at /studio/architecture and the explore_architecture/check_architecture MCP tools run the same engine.
 
 **When to use:** Use when architecture choices (browser vs server compute, JS vs Rust/Wasm, monolith vs service, SQL vs application processing) need to be explained, reviewable and reproducible rather than asserted, and when a team or an agent should get the same answer from the same inputs.
 
-**Needs:** required wasm-toolchain (via architecture-wasm-kernel), container-host (via architecture-external-service) · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
+**Needs:** required wasm-toolchain (via wasm-compute-kernel), container-host (via external-service-runtime) · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
 
 ## Avoid when
 
@@ -83,9 +85,9 @@ A deterministic decision discipline for where code runs, how parts talk, where d
 ## Depends on
 
 - [Multi-client core](/docs/pattern-library/multi-client-core)
-- [WebAssembly compute kernel](/docs/pattern-library/architecture-wasm-kernel)
-- [External service runtime](/docs/pattern-library/architecture-external-service)
-- [Pattern MCP](/docs/pattern-library/architecture-pattern-mcp)
+- [WebAssembly compute kernel](/docs/pattern-library/wasm-compute-kernel)
+- [External service runtime](/docs/pattern-library/external-service-runtime)
+- [Pattern MCP](/docs/pattern-library/pattern-mcp)
 
 ---
 

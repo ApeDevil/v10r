@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Derivation & Provenance · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — mostly columns you already have; the failure mode is pointing provenance at mutable ids
 
 Where a value came from is recorded with the W3C PROV-DM core only: the entity pinned to a revision or content hash, the activity with its transform version, and the agent (human, software or AI, on whose behalf) — with an explicit erasure decision per trail.

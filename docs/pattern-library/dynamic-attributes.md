@@ -8,6 +8,8 @@ category: "Forms & Validation"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Forms & Validation · **Tier:** deep · **Maturity:** proven (verified 2026-11-05 @ e3023614) · **Risk:** medium — user-authored data reaches the database; the codec's bounds and refusals are the security boundary and must run on the server
 
 A record that starts almost empty and grows labelled, typed attributes its user names, with the definitions stored inline beside the values: stable attribute ids make renames free, lossy type changes keep the old value, removals are restorable, unknown kinds survive opaquely, and a fail-closed codec plus a version check guard every save, with conflicts merged by attribute id. Records can bind to a shared attribute dictionary (stable definition ids, labels per locale, append-only revisions) and be projected per consumer — renamed, nested, unit-converted — with each consumer pinned to a revision and an impact check before it moves.

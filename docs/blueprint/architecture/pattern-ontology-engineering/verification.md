@@ -33,14 +33,14 @@ the committed composition benchmark replaces this script (`bun run patterns:benc
 `pattern-library/bench/composition-scenarios.json` holds the eight design scenarios (S1–S8, the table above,
 S3 corrected once with a recorded reason) and ten holdout scenarios (H1–H10) fixed before any change.
 `composition-baseline.json` was measured at `45d883b` before any registry or planner change;
-`composition-results.json` is the latest run. Results per slice: [slice-1.md](./slice-1.md#benchmark).
+`composition-results.json` is the latest run. Results per slice: [slice-1.md](./slice-1.md#benchmark), [slice-2.md](./slice-2.md#6-benchmark-comparison) (all slices rescored under the revised expectations).
 
 | Metric (all 18 scenarios) | Baseline | Slice 1 |
 |---|---:|---:|
 | Step precision | 50.0% | 50.0% |
 | Step recall | 75.7% | 75.7% |
 | Need recall (required ∪ conditional named by the plan) | 53.3% | 76.7% |
-| Fact need recall (needs of the golden steps, selection-independent) | 43.3% | 100% |
+| Fact need recall (needs of the golden steps, selection-independent) | 43.3% | 100% (complete capability coverage against the current benchmark) |
 | Spurious required needs | 5 | 8 |
 | Plan tokens (estimated) | 8,453 | 9,278 (+9.8%) |
 

@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** implemented · **Risk:** low — rendering only; the cost is document weight on one page
 
 What the first viewport needs paints from the server HTML and its render-blocking CSS: no hydration gate on visible content, and a late-discovered LCP graphic inlined server-side once, with a hashed CSS-mask fallback for client navigation.

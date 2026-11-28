@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Truth & Evidence · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — a modelling discipline; the cost is more fields where one number was tempting
 
 "How sure are we?" is several questions — what the evidence suggests, how far we looked, who produced it and how confident they were, whether the reference still resolves, and when it goes stale — each stored in its own field, never merged into one score.

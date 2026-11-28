@@ -1,0 +1,36 @@
+---
+title: "Loading states"
+description: "Defines visual feedback for initial load, navigation, data fetch, action, and streaming states using skeleton screens and a navigation progress bar."
+category: "App Shell & Navigation"
+---
+
+# Loading states
+
+> Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
+
+_Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
+
+**Kind:** pattern — build it in the target project
+
+**Category:** App Shell & Navigation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
+
+Defines visual feedback for initial load, navigation, data fetch, action, and streaming states using skeleton screens and a navigation progress bar.
+
+**When to use:** Reach for it when a page or component needs perceived-performance feedback while data or a route is loading.
+
+## Docs
+
+- [docs/blueprint/app-shell/loading-states.md](/docs/blueprint/app-shell/loading-states) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/app-shell/loading-states.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/app-shell/loading-states.md))
+
+## Code
+
+- `src/lib/components/primitives/skeleton/` ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/components/primitives/skeleton) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/components/primitives/skeleton))
+- `src/lib/components/shell/NavigationProgress.svelte` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/components/shell/NavigationProgress.svelte) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/components/shell/NavigationProgress.svelte))
+
+## Proof
+
+- [`/showcases/ui/components/primitives`](/showcases/ui/components/primitives) — Skeleton variants in the data-display section
+
+---
+
+_Machine-readable record: `loading-states` in `pattern-library/registry.json`._

@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** medium — the gate fails a build, which is the point
 
 Optional heavyweight capabilities load behind dynamic-import boundaries, and the gated metric is not the route's own size but the shared baseline every other route pays — `baseline_js_kb`, ratcheted with ~3% headroom.

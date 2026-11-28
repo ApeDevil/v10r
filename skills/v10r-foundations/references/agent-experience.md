@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Docs & Agent Experience · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** low — read-only derived surfaces; no new state
 
 Five derived surfaces make the repo consumable by coding agents: a root AGENTS.md contract, raw-markdown doc variants with Accept negotiation, an /llms.txt URL map with in-band prior corrections, MCP tool errors that carry machine-actionable recovery steps, and a generated pattern library (README index + per-pattern docs pages) rendered from the pattern registry.

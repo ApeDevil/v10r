@@ -8,6 +8,8 @@ category: "Runtime Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 149f43a7-dirty) · **Risk:** medium — a module that relied on a side-effect import breaks silently; the gate test is the guard
 
 Compiled Svelte components run code at module scope, so the bundler keeps every component a barrel re-exports. Declaring the component directory side-effect free in the bundler makes an unused export droppable — and an import made for side effects alone silently vanishes, which a gate forbids.

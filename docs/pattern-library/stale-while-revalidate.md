@@ -8,6 +8,8 @@ category: "Data Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — the staleness window is a correctness decision, not a tuning knob
 
 A value past its TTL but inside its stale window is returned immediately and refreshed behind the response; a failing refresh leaves the stale value in place rather than turning a slow dependency into a 500.

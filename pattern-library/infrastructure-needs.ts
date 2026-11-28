@@ -59,7 +59,7 @@ export function adoptionNeeds(pattern: PatternRecord, byId: ReadonlyMap<string, 
 	return [...needs.values()];
 }
 
-/** `relational-db`, `relational-db (pinned: postgres)`, `key-value-store (via anti-abuse-rate-limiting)`. */
+/** `relational-db`, `relational-db (pinned: postgres)`, `key-value-store (via rate-limiting)`. */
 export function needLabel(need: AdoptionNeed, options: { condition?: boolean } = {}): string {
 	const details = [
 		need.pinned ? `pinned: ${need.pinned}` : '',

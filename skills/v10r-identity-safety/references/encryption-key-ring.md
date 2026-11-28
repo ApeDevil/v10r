@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Admin & Privacy · **Tier:** deep · **Maturity:** proven (verified 2026-10-23 @ 95de612-dirty) · **Risk:** medium — dropping a previous key before the sweep ran makes the secrets it sealed undecryptable; the failed sweep and the admin pages' undecryptable status say so
 
 Stored credentials are AES-256-GCM envelopes that name the key sealing them (a derived key id), opened by a ring of current and previous keys, so rotating ENCRYPTION_KEY is a ring change plus a re-seal sweep with a compare-and-swap on the envelope — never a mass re-entry of secrets.
@@ -53,7 +55,7 @@ Stored credentials are AES-256-GCM envelopes that name the key sealing them (a d
 
 ## Depends on
 
-- [Jobs and scheduling](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/jobs-scheduler.md)
+- [Jobs and scheduling](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/job-scheduling.md)
 
 ---
 

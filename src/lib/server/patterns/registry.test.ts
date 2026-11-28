@@ -57,7 +57,7 @@ describe('registry fitness fields', () => {
 
 	it('refuses a registry format this reader does not understand', () => {
 		const { errors } = parseRegistry({ ...REGISTRY, format: 2 });
-		expect(errors.some((error) => error.includes('this reader understands registry format 3'))).toBe(true);
+		expect(errors.some((error) => error.includes('this reader understands registry format 4'))).toBe(true);
 	});
 
 	it('rejects an alternative with no approach', () => {

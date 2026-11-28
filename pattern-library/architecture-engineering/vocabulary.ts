@@ -188,7 +188,7 @@ export const NODE_KINDS = {
 		deploysAs: 'app',
 		needs: [],
 		accepts: ['sse', 'websocket', 'http-rest'],
-		patterns: ['multi-client-core', 'architecture-state-management'],
+		patterns: ['multi-client-core', 'state-management'],
 	},
 	'browser-worker': {
 		label: 'Browser worker',
@@ -206,7 +206,7 @@ export const NODE_KINDS = {
 		deploysAs: 'app',
 		needs: ['wasm-toolchain'],
 		accepts: ['wasm-call'],
-		patterns: ['architecture-wasm-kernel'],
+		patterns: ['wasm-compute-kernel'],
 	},
 	'app-server': {
 		label: 'Application server',
@@ -215,7 +215,7 @@ export const NODE_KINDS = {
 		deploysAs: 'app',
 		needs: [],
 		accepts: ['http-rest', 'typed-rpc', 'sse', 'websocket', 'function-call'],
-		patterns: ['multi-client-core', 'architecture-runtime-layers'],
+		patterns: ['multi-client-core'],
 	},
 	'api-endpoint': {
 		label: 'API endpoint',
@@ -224,7 +224,7 @@ export const NODE_KINDS = {
 		deploysAs: 'app',
 		needs: [],
 		accepts: ['http-rest', 'typed-rpc', 'function-call'],
-		patterns: ['architecture-rest-api'],
+		patterns: ['rest-api-conventions'],
 	},
 	'background-worker': {
 		label: 'Background worker',
@@ -233,7 +233,7 @@ export const NODE_KINDS = {
 		deploysAs: 'worker',
 		needs: ['scheduler'],
 		accepts: ['database-outbox', 'message-queue', 'function-call'],
-		patterns: ['jobs-scheduler', 'notifications-router-outbox'],
+		patterns: ['job-scheduling', 'notification-outbox'],
 	},
 	'compute-service': {
 		label: 'Compute service',
@@ -242,7 +242,7 @@ export const NODE_KINDS = {
 		deploysAs: 'service',
 		needs: ['container-host'],
 		accepts: ['http-rest', 'typed-rpc', 'message-queue'],
-		patterns: ['architecture-external-service'],
+		patterns: ['external-service-runtime'],
 	},
 	'relational-db': {
 		label: 'Relational database',
@@ -251,7 +251,7 @@ export const NODE_KINDS = {
 		deploysAs: 'managed',
 		needs: ['relational-db'],
 		accepts: ['sql', 'database-outbox'],
-		patterns: ['databases-postgres-connection', 'databases-queries-mutations-split'],
+		patterns: ['postgres-connection', 'queries-mutations-split'],
 	},
 	'graph-db': {
 		label: 'Graph database',
@@ -260,7 +260,7 @@ export const NODE_KINDS = {
 		deploysAs: 'managed',
 		needs: ['graph-db'],
 		accepts: ['cypher'],
-		patterns: ['databases-neo4j-connection', 'databases-graph-modeling'],
+		patterns: ['neo4j-connection', 'graph-modeling'],
 	},
 	cache: {
 		label: 'Cache',
@@ -269,7 +269,7 @@ export const NODE_KINDS = {
 		deploysAs: 'managed',
 		needs: ['key-value-store'],
 		accepts: ['cache-protocol'],
-		patterns: ['databases-cache', 'hierarchical-cache'],
+		patterns: ['hierarchical-cache'],
 	},
 	'object-storage': {
 		label: 'Object storage',
@@ -278,7 +278,7 @@ export const NODE_KINDS = {
 		deploysAs: 'managed',
 		needs: ['object-storage'],
 		accepts: ['object-storage-api', 'http-rest'],
-		patterns: ['databases-object-storage', 'forms-file-uploads'],
+		patterns: ['object-storage-adapter', 'file-uploads'],
 	},
 	'external-service': {
 		label: 'External service',
@@ -287,7 +287,7 @@ export const NODE_KINDS = {
 		deploysAs: 'managed',
 		needs: ['external-api'],
 		accepts: ['http-rest', 'typed-rpc', 'websocket', 'message-queue'],
-		patterns: ['resilience-policy', 'name-check'],
+		patterns: ['resilience-policy', 'multi-source-aggregation'],
 	},
 } as const satisfies Record<
 	string,

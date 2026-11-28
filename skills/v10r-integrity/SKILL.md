@@ -1,10 +1,10 @@
 ---
 name: v10r-integrity
-description: "v10r reference patterns for Integrity in SvelteKit + TypeScript apps (Truth & Evidence; Derivation & Provenance; Durable Execution). Use when designing, building or reviewing: single source of truth, coverage reporting, incremental recomputation, generated artifact check, attribution, durable execution, autosave, license metadata — before writing it from scratch, read the matching pattern's contraindications, invariants and emulation notes. 8 patterns, 8 with full emulation cards."
+description: "v10r reference patterns for Integrity in SvelteKit + TypeScript apps (Truth & Evidence; Derivation & Provenance; Durable Execution). Use when designing, building or reviewing: anchor validation, single source of truth, coverage reporting, incremental recomputation, generated artifact check, attribution, durable execution, autosave, license metadata — before writing it from scratch, read the matching pattern's contraindications, invariants and emulation notes. 9 patterns, 8 with full emulation cards."
 license: MIT
 metadata:
   source: "v10r pattern-library registry"
-  registry-digest: "9c4a3907546a7d98"
+  registry-digest: "59949b2ccad0ca92"
   generated: "true"
 ---
 
@@ -33,6 +33,7 @@ Maturity is evidence, not opinion: **proven** = a linked test or showcase, verif
 
 ### Truth & Evidence
 
+- Resource anchor integrity (`resource-anchor-integrity`, proven) — Every #fragment a registry doc ref names must be a heading the page renders, checked through the…
 - **[Source-of-truth gate](references/source-of-truth-gate.md)** (proven · needs v10r's implementation uses relational-db, llm-provider) — Every fact has exactly one owner; every other copy is typed, imported, generated with a --check, or bound by a drift test with a non-empty…
   - Use whenever a fact must exist in more than one place — a client mirror of a server enum, a public page that states what a job enforces, a…
   - Avoid when: The value is read in exactly one place — the owner and the reader are the same line, and a gate around it is ceremony

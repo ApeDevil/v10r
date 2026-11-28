@@ -27,7 +27,7 @@ import {
 	targetProvides,
 } from './infrastructure-needs.ts';
 import type { PatternRecord, Registry, RegRef } from './schema.ts';
-import { buildById, NEED_LEVELS, topoSort } from './schema.ts';
+import { ADOPTION_SEMANTICS, buildById, NEED_LEVELS, topoSort } from './schema.ts';
 import { type Scored, scorePatterns } from './search.ts';
 
 /** MCP tools/list shape — name/description/inputSchema ONLY: `outputSchema`, `title` or
@@ -491,6 +491,7 @@ function noMatch(
 /** The always-shown part of a card: identity, evidence grade, risk and what it stands on. */
 function cardHeader(pattern: PatternRecord, needs: AdoptionNeed[]): string {
 	const facts = [
+		`**Kind:** ${pattern.kind} — ${ADOPTION_SEMANTICS[pattern.kind]}`,
 		`**Category:** ${pattern.category} · **Tier:** ${pattern.tier} · **Maturity:** ${pattern.maturity}${pattern.verifiedAt ? ` (verified ${pattern.verifiedAt})` : ''} · **Risk:** ${pattern.risk}`,
 		pattern.depends_on.length > 0 ? `**Depends on:** ${pattern.depends_on.join(', ')}` : '',
 		needs.length > 0 ? `**Needs:** ${needsSummary(needs, { condition: true })}` : '',
@@ -585,7 +586,7 @@ function searchRow(
 		pattern.avoid_when.length > 0 ? `avoid when: ${pattern.avoid_when[0]}` : '',
 	].filter((part) => part.length > 0);
 	const lines = [
-		`${index + 1}. **${pattern.title}** (\`${pattern.id}\`, ${pattern.category}, ${pattern.tier}, ${pattern.maturity})`,
+		`${index + 1}. **${pattern.title}** (\`${pattern.id}\`, ${pattern.kind === 'pattern' ? '' : `${pattern.kind}, `}${pattern.category}, ${pattern.tier}, ${pattern.maturity})`,
 		detail === 'summary' ? `   ${pattern.summary}` : '',
 		fitness.length > 0 ? `   ${fitness.join(' · ')}` : '',
 		hit ? `   _${matchLine(hit)}_` : '',
@@ -810,7 +811,7 @@ function planInfrastructure(stepNeeds: AdoptionNeed[][], target: ReadonlySet<str
 	const lines = [
 		required.length === 0
 			? 'Required infrastructure: none beyond the app runtime.'
-			: `Required infrastructure: ${required.map((need) => need.need).join(', ')}.`,
+			: `Required infrastructure: ${required.map((need) => (need.pinned ? `${need.need} (pinned: ${need.pinned})` : need.need)).join(', ')}.`,
 		at('conditional').length > 0
 			? `Conditional infrastructure: ${at('conditional')
 					.map((need) => needLabel(need, { condition: true }))
@@ -943,6 +944,7 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 		const head = [
 			`### Step ${index + 1}: ${pattern.title} (\`${id}\`)`,
 			covers ? `Satisfies: ${covers.join(', ')}` : 'Included as prerequisite (depends_on).',
+			pattern.kind === 'pattern' ? '' : `Kind: ${pattern.kind} — ${ADOPTION_SEMANTICS[pattern.kind]}`,
 			`Risk: ${pattern.risk}`,
 			...requirement,
 		];

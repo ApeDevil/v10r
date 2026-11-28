@@ -8,6 +8,8 @@ category: "AI"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** high — user-facing LLM behavior and permissions
 
 Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (Vely) vs an agentic, mutating, approval-gated deskbot — with a showcase-only rag-demo value kept out of production paths.
@@ -30,6 +32,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 - [docs/blueprint/ai/surfaces.md](/docs/blueprint/ai/surfaces) — The surface split and per-surface rules ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/surfaces.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/surfaces.md))
 - `docs/blueprint/ai/README.md` — AI subsystem hub ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/README.md))
 - [docs/blueprint/ai/desk-integration.md](/docs/blueprint/ai/desk-integration) — How the deskbot integrates with the desk ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/desk-integration.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/desk-integration.md))
+- [docs/stack/ai/ai-sdk.md](/docs/stack/ai-sdk) — Chat assistant — The chat-orchestrator module streams multi-provider LLM responses through Vely, v10r's floating chat assistant, using Vercel AI SDK v6. Reach for it when a product needs a streaming, tool-capable chat UI backed by interchangeable LLM providers. ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/stack/ai/ai-sdk.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/stack/ai/ai-sdk.md))
 
 ## Code
 

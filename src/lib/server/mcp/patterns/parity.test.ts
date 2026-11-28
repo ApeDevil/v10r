@@ -59,7 +59,7 @@ describe('hosted ↔ stdio pattern-tool parity', () => {
 			['search_patterns', { query: '*', category: 'ai', detail: 'compact' }],
 			['search_patterns', { query: '*', tier: 'deep', maturity: 'proven', detail: 'ids' }],
 			['search_patterns', { query: 'cache', detail: 'ids', tier: 'light', limit: 50 }],
-			['get_pattern', { ids: ['singleflight', 'layered-rag', 'app-shell-toasts'], sections: ['fitness', 'code'] }],
+			['get_pattern', { ids: ['singleflight', 'layered-rag', 'toasts'], sections: ['fitness', 'code'] }],
 			['get_pattern', { id: 'deskbot-approval-gate', sections: ['invariants'] }],
 			['get_file_excerpt', { path: 'docs/blueprint/velocity/data.md#singleflight--stampede-protection' }],
 			['get_file_excerpt', { path: 'src/lib/server/cache/singleflight.ts', section: 'coalesce' }],

@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Derivation & Provenance · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** medium — an undeclared input silently serves stale output; the fingerprint test is the guard
 
 A derived output stores derivationKey(transform@version, inputs) beside itself and is current exactly while a recomputed key matches — catching the code changes a content hash cannot see, and skipping re-derivation when nothing moved.

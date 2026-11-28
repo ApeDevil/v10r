@@ -10,6 +10,8 @@ category: "App Shell & Navigation"
 
 _Index card — the docs below are the canonical explanation; deep-tier pattern pages additionally carry invariants and emulation notes._
 
+**Kind:** pattern — build it in the target project
+
 **Category:** App Shell & Navigation · **Tier:** light · **Maturity:** proven (verified 2026-08-20 @ 1a130d67) · **Risk:** low — structural pattern, no external services
 
 Defines the app shell's structural layout — a collapsible sidebar for primary navigation, a main content area, and a persistent footer, with no global header.

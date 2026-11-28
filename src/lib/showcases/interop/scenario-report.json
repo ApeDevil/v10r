@@ -10,7 +10,7 @@
 			"ok": true,
 			"correlation": {
 				"traceId": "lab-scenario-1",
-				"modelDigest": "55cfcee8f1cb7685"
+				"modelDigest": "e92a4db9e12f9c72"
 			},
 			"facts": {
 				"nodes": 4,
@@ -73,7 +73,7 @@
 				"externalProtocol": "a2a",
 				"peerId": "reviewer",
 				"contractBound": true,
-				"argumentsDigest": "a7e1af20607badc0",
+				"argumentsDigest": "272b4baa1d24370d",
 				"remoteTaskId": true,
 				"remoteContextId": true
 			},

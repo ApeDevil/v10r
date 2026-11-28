@@ -8,6 +8,8 @@ category: "Runtime Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Runtime Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** medium — work moved off the response must be genuinely optional to it
 
 Only work the caller's intent depends on runs before the response; analytics, indexing, outbox routing and telemetry run after it through one wrapper that owns the platform's survival rule and the catch-before-handoff rule.

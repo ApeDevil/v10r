@@ -37,7 +37,7 @@
 						"Anything involving secrets or authorization"
 					],
 					"prefer_when": "the data is on the device and the work fits inside an interaction budget (well under 50 ms on a slow phone)",
-					"patterns": ["main-thread-budget", "architecture-state-management"]
+					"patterns": ["main-thread-budget", "state-management"]
 				},
 				{
 					"id": "browser-worker",
@@ -72,7 +72,7 @@
 					"prerequisites": [],
 					"contraindications": ["Work longer than the host's request limit", "Work that must survive the user leaving"],
 					"prefer_when": "the work needs secrets, authorization or server data, and finishes well inside a request",
-					"patterns": ["multi-client-core", "architecture-runtime-layers"]
+					"patterns": ["multi-client-core"]
 				},
 				{
 					"id": "background-job",
@@ -92,12 +92,7 @@
 					"prerequisites": ["A scheduler (cron on serverless, a persistent process on a container)"],
 					"contraindications": ["Results the user waits for interactively", "Work small enough for the request"],
 					"prefer_when": "the work runs for minutes, must continue without the user, or must retry on failure",
-					"patterns": [
-						"jobs-scheduler",
-						"jobs-platform-scheduling",
-						"notifications-router-outbox",
-						"durable-step-execution"
-					]
+					"patterns": ["job-scheduling", "notification-outbox", "durable-step-execution"]
 				},
 				{
 					"id": "separate-service",
@@ -117,43 +112,56 @@
 					"prerequisites": ["A container host", "A typed contract and a failure model"],
 					"contraindications": ["Speed alone — the boundary is not a speed argument", "Low complexity tolerance"],
 					"prefer_when": "the work needs a different runtime, isolation, or independent scaling — and the team accepts a second deployment",
-					"patterns": ["architecture-external-service", "resilience-policy", "deadline-propagation"]
+					"patterns": ["external-service-runtime", "resilience-policy", "deadline-propagation"]
 				}
 			],
 			"rules": [
 				{
 					"id": "secret-stays-on-server",
-					"when": { "sensitivity": ["secret"] },
+					"when": {
+						"sensitivity": ["secret"]
+					},
 					"choose": "server-request",
 					"because": "Secrets and authorization decisions must never ship to the device; the server request is the simplest placement that keeps them there."
 				},
 				{
 					"id": "business-rules-on-server",
-					"when": { "workload": ["business-rules"] },
+					"when": {
+						"workload": ["business-rules"]
+					},
 					"choose": "server-request",
 					"because": "Business rules and authorization are enforced where the client cannot change them: the server, in a framework-free domain."
 				},
 				{
 					"id": "must-outlive-request",
-					"when": { "background": ["required"] },
+					"when": {
+						"background": ["required"]
+					},
 					"choose": "background-job",
 					"because": "The work must continue without the user's request, so it cannot live in a request handler or the browser."
 				},
 				{
 					"id": "longer-than-request",
-					"when": { "duration": ["minutes", "hours"] },
+					"when": {
+						"duration": ["minutes", "hours"]
+					},
 					"choose": "background-job",
 					"because": "Minutes of work exceed serverless request limits and the user's patience; a job with a status is the honest shape."
 				},
 				{
 					"id": "offline-heavy-on-device",
-					"when": { "offline": ["required"], "compute": ["moderate", "heavy"] },
+					"when": {
+						"offline": ["required"],
+						"compute": ["moderate", "heavy"]
+					},
 					"choose": "browser-worker",
 					"because": "Offline work can only run on the device, and moderate or heavy CPU belongs off the main thread."
 				},
 				{
 					"id": "offline-on-device",
-					"when": { "offline": ["required"] },
+					"when": {
+						"offline": ["required"]
+					},
 					"choose": "browser-main-thread",
 					"because": "Offline work can only run on the device; light work fits on the main thread."
 				},
@@ -180,13 +188,19 @@
 				},
 				{
 					"id": "device-data-heavy",
-					"when": { "dataOrigin": ["user-device"], "compute": ["moderate", "heavy"] },
+					"when": {
+						"dataOrigin": ["user-device"],
+						"compute": ["moderate", "heavy"]
+					},
 					"choose": "browser-worker",
 					"because": "The data is already on the device; uploading it costs more than computing it there, and the CPU belongs off the main thread."
 				},
 				{
 					"id": "device-data-light",
-					"when": { "dataOrigin": ["user-device"], "compute": ["light"] },
+					"when": {
+						"dataOrigin": ["user-device"],
+						"compute": ["light"]
+					},
 					"choose": "browser-main-thread",
 					"because": "The data is on the device and the work is light; a worker would cost more in messaging than it saves."
 				}
@@ -297,7 +311,7 @@
 						"Logic that is clearer and fast enough in TypeScript"
 					],
 					"prefer_when": "the work is filtering, joining or aggregating data that already lives in the database",
-					"patterns": ["databases-queries-mutations-split", "query-budget"]
+					"patterns": ["queries-mutations-split", "query-budget"]
 				},
 				{
 					"id": "rust-wasm-browser",
@@ -321,7 +335,7 @@
 						"Small inputs where init dominates"
 					],
 					"prefer_when": "a measured, compute-dense loop over typed data that can stay resident in Wasm memory",
-					"patterns": ["architecture-wasm-kernel", "main-thread-budget"]
+					"patterns": ["wasm-compute-kernel", "main-thread-budget"]
 				},
 				{
 					"id": "rust-native-service",
@@ -336,13 +350,16 @@
 					],
 					"contraindications": ["Low complexity tolerance", "Latency-critical chatty calls"],
 					"prefer_when": "heavy server-side compute that justifies its own deployment",
-					"patterns": ["architecture-external-service"]
+					"patterns": ["external-service-runtime"]
 				}
 			],
 			"rules": [
 				{
 					"id": "query-in-sql",
-					"when": { "workload": ["data-query"], "dataOrigin": ["server-database"] },
+					"when": {
+						"workload": ["data-query"],
+						"dataOrigin": ["server-database"]
+					},
 					"choose": "sql",
 					"because": "Filtering and aggregation over database data belong in SQL, next to the data; only the result crosses the network."
 				},
@@ -446,7 +463,7 @@
 					"prerequisites": [],
 					"contraindications": ["Caller and callee in different deployment units"],
 					"prefer_when": "caller and callee are in the same deployment — which in a modular monolith is most of the time",
-					"patterns": ["multi-client-core", "architecture-codebase-map"]
+					"patterns": ["multi-client-core"]
 				},
 				{
 					"id": "http-rest",
@@ -457,7 +474,7 @@
 					"prerequisites": ["Authentication on every endpoint that crosses a trust boundary"],
 					"contraindications": ["Work longer than a request", "High-frequency bidirectional messages"],
 					"prefer_when": "an external or browser client calls short, cacheable or resource-shaped operations",
-					"patterns": ["architecture-rest-api", "architecture-error-handling"]
+					"patterns": ["rest-api-conventions", "error-handling"]
 				},
 				{
 					"id": "typed-rpc",
@@ -468,7 +485,7 @@
 					"prerequisites": ["A contract source of truth"],
 					"contraindications": ["In-process calls"],
 					"prefer_when": "the app calls a separately deployed service it owns",
-					"patterns": ["architecture-external-service", "deadline-propagation"]
+					"patterns": ["external-service-runtime", "deadline-propagation"]
 				},
 				{
 					"id": "sse",
@@ -479,7 +496,7 @@
 					"prerequisites": [],
 					"contraindications": ["High-frequency client-to-server messages"],
 					"prefer_when": "the server pushes progress, notifications or collaboration updates and the client's own writes are ordinary requests",
-					"patterns": ["notifications-sse-stream"]
+					"patterns": ["notification-stream"]
 				},
 				{
 					"id": "websocket",
@@ -493,7 +510,7 @@
 					"prerequisites": ["A container or a managed real-time service"],
 					"contraindications": ["Serverless-only hosting", "One-way updates"],
 					"prefer_when": "many small messages flow both ways with tight latency, on a host that keeps connections",
-					"patterns": ["notifications-sse-stream"]
+					"patterns": ["notification-stream"]
 				},
 				{
 					"id": "database-queue",
@@ -508,31 +525,41 @@
 					"prerequisites": ["Postgres", "A worker or scheduled drain"],
 					"contraindications": ["Interactive request/response"],
 					"prefer_when": "the work is asynchronous, must not be lost, and Postgres is already there",
-					"patterns": ["notifications-router-outbox", "jobs-scheduler", "durable-step-execution"]
+					"patterns": ["notification-outbox", "job-scheduling", "durable-step-execution"]
 				}
 			],
 			"rules": [
 				{
 					"id": "long-work-async",
-					"when": { "background": ["required"] },
+					"when": {
+						"background": ["required"]
+					},
 					"choose": "database-queue",
 					"because": "Work that outlives the request is handed over asynchronously and durably; the outbox delivers at least once without a new broker."
 				},
 				{
 					"id": "long-duration-async",
-					"when": { "duration": ["minutes", "hours"] },
+					"when": {
+						"duration": ["minutes", "hours"]
+					},
 					"choose": "database-queue",
 					"because": "Minutes of work cannot hold a request open; enqueue it and report status."
 				},
 				{
 					"id": "realtime-persistent",
-					"when": { "workload": ["realtime-collaboration"], "infrastructure": ["container-available"] },
+					"when": {
+						"workload": ["realtime-collaboration"],
+						"infrastructure": ["container-available"]
+					},
 					"choose": "websocket",
 					"because": "Bidirectional real-time collaboration on a host that keeps connections is what WebSockets are for."
 				},
 				{
 					"id": "realtime-serverless",
-					"when": { "workload": ["realtime-collaboration"], "infrastructure": ["serverless-only"] },
+					"when": {
+						"workload": ["realtime-collaboration"],
+						"infrastructure": ["serverless-only"]
+					},
 					"choose": "sse",
 					"because": "Serverless hosts do not keep WebSockets; push updates with SSE and send edits as ordinary requests."
 				},
@@ -549,13 +576,17 @@
 				},
 				{
 					"id": "public-api-rest",
-					"when": { "workload": ["light-api"] },
+					"when": {
+						"workload": ["light-api"]
+					},
 					"choose": "http-rest",
 					"because": "A lightweight API for external or browser clients is plain HTTP/REST with standard caching and errors."
 				},
 				{
 					"id": "upload-rest",
-					"when": { "workload": ["file-ingest"] },
+					"when": {
+						"workload": ["file-ingest"]
+					},
 					"choose": "http-rest",
 					"because": "Uploads are HTTP requests — ideally straight to object storage through a signed URL, with the app recording the result."
 				}
@@ -639,7 +670,7 @@
 					"prerequisites": ["A Postgres instance"],
 					"contraindications": ["Large binary blobs", "Data that must never leave the device"],
 					"prefer_when": "the data is shared, structured, or must be correct under concurrent writes",
-					"patterns": ["databases-postgres-connection", "databases-schema-type-inference", "temporal-data-modeling"]
+					"patterns": ["postgres-connection", "schema-type-inference", "temporal-data-modeling"]
 				},
 				{
 					"id": "browser-memory",
@@ -650,7 +681,7 @@
 					"prerequisites": [],
 					"contraindications": ["Data others must see", "Data that must survive the session"],
 					"prefer_when": "the data is the user's own working set and does not need to outlive the page",
-					"patterns": ["architecture-state-management"]
+					"patterns": ["state-management"]
 				},
 				{
 					"id": "indexeddb",
@@ -661,7 +692,7 @@
 					"prerequisites": ["A sync strategy and a server source of truth"],
 					"contraindications": ["Secrets", "Data that must be authoritative on the device"],
 					"prefer_when": "offline operation is required",
-					"patterns": ["pwa-service-worker", "versioned-document-session"]
+					"patterns": ["service-worker-caching", "versioned-document-session"]
 				},
 				{
 					"id": "redis-cache",
@@ -672,7 +703,7 @@
 					"prerequisites": ["A measured repeat-read hot spot"],
 					"contraindications": ["As the only copy of anything"],
 					"prefer_when": "measured repeat reads dominate and slightly stale data is acceptable",
-					"patterns": ["databases-cache", "hierarchical-cache", "stale-while-revalidate", "singleflight"]
+					"patterns": ["hierarchical-cache", "stale-while-revalidate", "singleflight"]
 				},
 				{
 					"id": "object-storage",
@@ -683,7 +714,7 @@
 					"prerequisites": ["An S3-compatible bucket"],
 					"contraindications": ["Small structured records"],
 					"prefer_when": "the data is files, media or large blobs",
-					"patterns": ["databases-object-storage", "forms-file-uploads"]
+					"patterns": ["object-storage-adapter", "file-uploads"]
 				},
 				{
 					"id": "graph-db",
@@ -694,13 +725,15 @@
 					"prerequisites": ["A traversal-heavy query that Postgres recursive CTEs serve poorly"],
 					"contraindications": ["Plain relational data"],
 					"prefer_when": "the queries are traversals over many-hop relationships",
-					"patterns": ["databases-neo4j-connection", "databases-graph-traversal", "databases-polyglot-freshness"]
+					"patterns": ["neo4j-connection", "graph-traversal", "polyglot-freshness"]
 				}
 			],
 			"rules": [
 				{
 					"id": "offline-device-store",
-					"when": { "offline": ["required"] },
+					"when": {
+						"offline": ["required"]
+					},
 					"choose": "indexeddb",
 					"because": "Offline operation needs a durable copy on the device, synchronised with a server source of truth."
 				},
@@ -725,7 +758,11 @@
 				},
 				{
 					"id": "large-uploads-object",
-					"when": { "dataVolume": ["large"], "dataOrigin": ["user-device"], "workload": ["file-ingest"] },
+					"when": {
+						"dataVolume": ["large"],
+						"dataOrigin": ["user-device"],
+						"workload": ["file-ingest"]
+					},
 					"choose": "object-storage",
 					"because": "Large uploads go straight to object storage through a signed URL rather than through the app."
 				}
@@ -803,7 +840,7 @@
 						"Logic that changes often and is clearer in TypeScript"
 					],
 					"prefer_when": "the input is large and the result is small",
-					"patterns": ["databases-queries-mutations-split", "query-budget", "no-waterfall-loading"]
+					"patterns": ["queries-mutations-split", "query-budget", "no-waterfall-loading"]
 				},
 				{
 					"id": "application-server",
@@ -833,19 +870,27 @@
 			"rules": [
 				{
 					"id": "query-near-data",
-					"when": { "workload": ["data-query"], "dataOrigin": ["server-database"] },
+					"when": {
+						"workload": ["data-query"],
+						"dataOrigin": ["server-database"]
+					},
 					"choose": "sql-in-database",
 					"because": "Querying and aggregating database data: let the database filter and aggregate so only the result crosses the network."
 				},
 				{
 					"id": "large-server-data",
-					"when": { "dataOrigin": ["server-database"], "dataVolume": ["medium", "large"] },
+					"when": {
+						"dataOrigin": ["server-database"],
+						"dataVolume": ["medium", "large"]
+					},
 					"choose": "sql-in-database",
 					"because": "Medium or large inputs in the database are reduced there; transferring them to the app to discard most of them wastes bytes and memory."
 				},
 				{
 					"id": "device-data-local",
-					"when": { "dataOrigin": ["user-device"] },
+					"when": {
+						"dataOrigin": ["user-device"]
+					},
 					"choose": "browser",
 					"because": "The data is already on the device; processing it there avoids an upload."
 				}
@@ -915,7 +960,7 @@
 					"prerequisites": [],
 					"contraindications": ["Persistent connections", "Work longer than the host's limits without a job runner"],
 					"prefer_when": "nothing in the workloads demands a persistent process or a different runtime",
-					"patterns": ["multi-client-core", "architecture-deployment", "architecture-codebase-map"]
+					"patterns": ["multi-client-core", "deployment-target"]
 				},
 				{
 					"id": "persistent-monolith",
@@ -926,7 +971,7 @@
 					"prerequisites": ["A container host"],
 					"contraindications": ["Serverless-only infrastructure"],
 					"prefer_when": "the app needs persistent connections or in-process background loops",
-					"patterns": ["architecture-deployment", "jobs-scheduler"]
+					"patterns": ["deployment-target", "job-scheduling"]
 				},
 				{
 					"id": "monolith-plus-worker",
@@ -937,7 +982,7 @@
 					"prerequisites": ["A container host, or cron on the serverless host"],
 					"contraindications": ["No work that outlives a request"],
 					"prefer_when": "work must run in the background continuously",
-					"patterns": ["jobs-scheduler", "jobs-platform-scheduling", "notifications-router-outbox"]
+					"patterns": ["job-scheduling", "notification-outbox"]
 				},
 				{
 					"id": "monolith-plus-service",
@@ -948,7 +993,7 @@
 					"prerequisites": ["A container host", "A trigger beyond speed"],
 					"contraindications": ["Low complexity tolerance"],
 					"prefer_when": "one workload needs its own runtime or scaling and the team accepts the operational cost",
-					"patterns": ["architecture-external-service"]
+					"patterns": ["external-service-runtime"]
 				},
 				{
 					"id": "distributed-services",
@@ -959,7 +1004,7 @@
 					"prerequisites": ["Several teams", "Mature operations"],
 					"contraindications": ["A solo developer or a small team", "Boundaries not yet proven in a monolith"],
 					"prefer_when": "several teams need independent release cycles over boundaries already proven in a modular monolith",
-					"patterns": ["architecture-external-service"]
+					"patterns": ["external-service-runtime"]
 				}
 			],
 			"rules": [
@@ -976,7 +1021,10 @@
 				},
 				{
 					"id": "realtime-persistent-host",
-					"when": { "workload": ["realtime-collaboration"], "infrastructure": ["container-available"] },
+					"when": {
+						"workload": ["realtime-collaboration"],
+						"infrastructure": ["container-available"]
+					},
 					"choose": "persistent-monolith",
 					"because": "Real-time connections need a process that stays up; run the same monolith on a persistent host."
 				},
@@ -1092,7 +1140,7 @@
 					"prerequisites": ["The work does not need the DOM"],
 					"contraindications": ["Work shorter than the messaging cost"],
 					"prefer_when": "the problem is jank during interaction, not total duration",
-					"patterns": ["main-thread-budget", "velocity-idle-work"]
+					"patterns": ["main-thread-budget", "idle-work"]
 				},
 				{
 					"id": "rust-wasm",
@@ -1104,7 +1152,7 @@
 					"prerequisites": ["A benchmark against an optimised JS twin, with init and copies counted"],
 					"contraindications": ["The loop is not the bottleneck", "Per-call copies of large data"],
 					"prefer_when": "a parity-gated benchmark on representative data shows the gain survives init and copies",
-					"patterns": ["architecture-wasm-kernel"]
+					"patterns": ["wasm-compute-kernel"]
 				},
 				{
 					"id": "cache-results",
@@ -1127,7 +1175,7 @@
 					"prerequisites": ["The data may leave the device"],
 					"contraindications": ["Large device data with a small result computed once", "Offline requirement"],
 					"prefer_when": "the device is too weak and the data is small or already on the server",
-					"patterns": ["multi-client-core", "velocity-asset-delivery"]
+					"patterns": ["multi-client-core", "asset-delivery-pipeline"]
 				}
 			],
 			"rules": [
@@ -1144,13 +1192,20 @@
 				},
 				{
 					"id": "interactive-jank",
-					"when": { "latency": ["interactive"], "compute": ["moderate", "heavy"], "dataOrigin": ["user-device"] },
+					"when": {
+						"latency": ["interactive"],
+						"compute": ["moderate", "heavy"],
+						"dataOrigin": ["user-device"]
+					},
 					"choose": "move-off-main-thread",
 					"because": "Interactive latency with moderate or heavy device-side work: the first fix is not blocking input."
 				},
 				{
 					"id": "repeat-api-reads",
-					"when": { "workload": ["light-api"], "latency": ["interactive"] },
+					"when": {
+						"workload": ["light-api"],
+						"latency": ["interactive"]
+					},
 					"choose": "cache-results",
 					"because": "A lightweight API with interactive latency usually wins most from caching identical repeat requests — after measuring that they repeat."
 				}

@@ -52,7 +52,7 @@ describe('ranking', () => {
 	});
 
 	it('treats an exact id as a lookup, ranked first whatever the scores', () => {
-		// Before: "layered-rag" returned ai-graph-rag first — its title repeats "rag" louder.
+		// Before: "layered-rag" returned graph-rag first — its title repeats "rag" louder.
 		expect(top('layered-rag')?.pattern.id).toBe('layered-rag');
 		expect(top('layered-rag')?.strength).toBe('strong');
 	});

@@ -63,7 +63,7 @@ function secretsOnClient(context: Context): ArchitectureFinding[] {
 				why: 'Everything shipped to a browser can be read by its user: bundles, workers and wasm modules are public.',
 				constraint: 'Secrets and authorization decisions never execute on the device.',
 				fix: 'Move the secret-holding work to an application-zone node (a server request or service) and call it from the browser.',
-				patterns: ['multi-client-core', 'identity-route-guards'],
+				patterns: ['multi-client-core', 'route-guards'],
 			}),
 		);
 }
@@ -85,7 +85,7 @@ function boundaryAuthentication(context: Context): ArchitectureFinding[] {
 					constraint:
 						'Every crossing into a more trusted zone authenticates the caller and authorizes the operation on the server.',
 					fix: 'Authenticate the connection (session cookie, bearer token, signed webhook) and authorize in the server-side domain.',
-					patterns: ['identity-route-guards', 'identity-capability-grants', 'anti-abuse-rate-limiting'],
+					patterns: ['route-guards', 'grant-requests', 'rate-limiting'],
 				}),
 			);
 		} else if (connection.authenticated === 'unknown') {
@@ -95,7 +95,7 @@ function boundaryAuthentication(context: Context): ArchitectureFinding[] {
 					why: 'Whether this is a problem depends on a fact the model does not record.',
 					constraint: 'Every crossing into a more trusted zone authenticates the caller.',
 					fix: 'State whether the connection is authenticated; if it is public on purpose, mark it "no" and expect a finding to accept.',
-					patterns: ['identity-route-guards'],
+					patterns: ['route-guards'],
 				}),
 			);
 		}
@@ -116,7 +116,7 @@ function clientDirectData(context: Context): ArchitectureFinding[] {
 				why: 'A database credential in the browser is a public credential; row access can no longer be authorized per user.',
 				constraint: 'Data stores are reached through the application zone, which authorizes every operation.',
 				fix: 'Route the access through an API endpoint or server load function that owns the query.',
-				patterns: ['multi-client-core', 'databases-queries-mutations-split'],
+				patterns: ['multi-client-core', 'queries-mutations-split'],
 			}),
 		];
 	});
@@ -138,7 +138,7 @@ function mainThreadCpu(context: Context): ArchitectureFinding[] {
 				why: 'While it runs, input and rendering wait; on slow phones a heavy task is visible jank. A heuristic: short bursts may be fine.',
 				constraint: 'Interactive work keeps each main-thread task inside the interaction budget.',
 				fix: 'Move the computation into a browser worker (and transfer buffers), or measure and show it stays under budget.',
-				patterns: ['main-thread-budget', 'velocity-idle-work'],
+				patterns: ['main-thread-budget', 'idle-work'],
 			}),
 		);
 }
@@ -152,7 +152,7 @@ function longRunningInRequest(context: Context): ArchitectureFinding[] {
 				why: 'Serverless request handlers are cut off at the host’s duration limit, and the user waits on an open request.',
 				constraint: 'Work that outlives a request runs as a job with a status, not inside the request.',
 				fix: 'Enqueue it for a background worker (database outbox) and report progress by status or SSE.',
-				patterns: ['jobs-scheduler', 'notifications-router-outbox', 'durable-step-execution'],
+				patterns: ['job-scheduling', 'notification-outbox', 'durable-step-execution'],
 			}),
 		);
 }
@@ -169,7 +169,7 @@ function unsupportedRuntime(context: Context): ArchitectureFinding[] {
 					why: 'Short-lived request handlers cannot hold a connection open between requests.',
 					constraint: 'Persistent connections need a persistent process.',
 					fix: 'Place the target on a persistent server process, or switch to SSE plus ordinary requests.',
-					patterns: ['notifications-sse-stream', 'architecture-deployment'],
+					patterns: ['notification-stream', 'deployment-target'],
 				}),
 			);
 		}
@@ -184,7 +184,7 @@ function unsupportedRuntime(context: Context): ArchitectureFinding[] {
 					constraint:
 						'State that must survive between runs lives in a store, or the worker runs as a persistent process.',
 					fix: 'Keep the state in Postgres, or set the placement to a persistent server process.',
-					patterns: ['jobs-scheduler'],
+					patterns: ['job-scheduling'],
 				}),
 			);
 		}
@@ -258,7 +258,7 @@ function unjustifiedService(context: Context): ArchitectureFinding[] {
 				why: 'A separate deployment adds a network hop, a credential, a contract and a failure mode to every call.',
 				constraint: 'Prefer the simpler architecture unless a requirement justifies the extra unit.',
 				fix: 'Fold it into the application as a domain module, or record the trait that justifies it.',
-				patterns: ['multi-client-core', 'architecture-external-service'],
+				patterns: ['multi-client-core', 'external-service-runtime'],
 			}),
 		);
 }
@@ -284,7 +284,7 @@ function sharedDataOwnership(context: Context): ArchitectureFinding[] {
 					why: 'When two deployments read and write the same tables, neither owns the schema, and a change in one breaks the other.',
 					constraint: 'Each data store has one owning deployment unit; others go through its interface.',
 					fix: 'Give the store one owner and let the other unit call that owner, or split the data.',
-					patterns: ['architecture-external-service', 'databases-queries-mutations-split'],
+					patterns: ['external-service-runtime', 'queries-mutations-split'],
 				}),
 			);
 		}

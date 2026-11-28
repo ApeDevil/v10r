@@ -168,7 +168,7 @@ Each step lists what to do and what you must see; attest each id in your copy of
    `CUSTOM v10r.proposal` for a write, and a refusal for a forged tool result or a `state`.
 7. **`mcp-apps-inspector` — MCP Apps.** `npx @modelcontextprotocol/inspector` → Streamable HTTP
    `http://localhost:5173/api/mcp/public` → call `explore_patterns` with
-   `{"id":"ai-mcp-client"}`. *Expect* the explorer View rendered and clickable; a text-only
+   `{"id":"mcp-client"}`. *Expect* the explorer View rendered and clickable; a text-only
    client gets the same answer as text.
 8. **`mcp-apps-hosts`** (optional). Claude, ChatGPT and VS Code are **untested hosts**: record a
    host only after a run there.

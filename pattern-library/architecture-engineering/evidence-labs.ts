@@ -45,7 +45,7 @@ export const EVIDENCE_LABS: readonly EvidenceLab[] = [
 		limitations:
 			'Numbers are measured on your device when you run it and are not recorded. One kernel (a blur); the result does not generalize to other workloads.',
 		decisions: ['compute-runtime', 'compute-acceleration'],
-		patterns: ['architecture-wasm-kernel', 'main-thread-budget'],
+		patterns: ['wasm-compute-kernel', 'main-thread-budget'],
 	},
 	{
 		id: 'app-server-vs-external-service',
@@ -67,7 +67,7 @@ export const EVIDENCE_LABS: readonly EvidenceLab[] = [
 		limitations:
 			'Loopback, controlled-lab and one hosted region (Render Free, Frankfurt, 2026-10-23); the doc lists what is still unmeasured hosted.',
 		decisions: ['compute-placement', 'deployment-shape', 'interaction-style'],
-		patterns: ['architecture-external-service', 'resilience-policy', 'deadline-propagation'],
+		patterns: ['external-service-runtime', 'resilience-policy', 'deadline-propagation'],
 	},
 	{
 		id: 'application-vs-database-processing',
@@ -83,6 +83,6 @@ export const EVIDENCE_LABS: readonly EvidenceLab[] = [
 		limitations:
 			'v10r has no measurement comparing SQL-side and application-side processing yet. The processing-locality decision rests on documented reasoning until one exists.',
 		decisions: ['processing-locality'],
-		patterns: ['query-budget', 'databases-queries-mutations-split'],
+		patterns: ['query-budget', 'queries-mutations-split'],
 	},
 ];

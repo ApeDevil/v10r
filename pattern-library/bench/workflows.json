@@ -51,7 +51,7 @@
 					{
 						"tool": "get_pattern",
 						"args": {
-							"id": "ai-chat-assistant"
+							"id": "ai-surfaces"
 						}
 					},
 					{
@@ -72,7 +72,7 @@
 					{
 						"tool": "get_pattern",
 						"args": {
-							"id": "ai-chat-assistant"
+							"id": "ai-surfaces"
 						}
 					}
 				]
@@ -239,7 +239,7 @@
 					{
 						"tool": "get_pattern",
 						"args": {
-							"ids": ["multi-client-core", "jobs-scheduler"],
+							"ids": ["multi-client-core", "job-scheduling"],
 							"sections": ["invariants", "code"]
 						}
 					}
@@ -260,7 +260,7 @@
 					{
 						"tool": "get_pattern",
 						"args": {
-							"id": "jobs-scheduler"
+							"id": "job-scheduling"
 						}
 					},
 					{
@@ -282,7 +282,7 @@
 					{
 						"tool": "get_pattern",
 						"args": {
-							"id": "jobs-scheduler"
+							"id": "job-scheduling"
 						}
 					},
 					{

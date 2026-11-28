@@ -8,6 +8,8 @@ category: "AI"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-09-12 @ 6307c4b6) · **Risk:** medium — external embedding/LLM providers with quota limits
 
 One shared retrieve() kernel (embed → tiers → RRF fusion) under a single user_id tenant filter, composed per turn by the chatbot profile: a deterministic corpus map anchors every turn, a relevance-gated docs lane and the catalog lane ground the prompt, and a post-stream verifier ties each path the answer names to what the turn surfaced.

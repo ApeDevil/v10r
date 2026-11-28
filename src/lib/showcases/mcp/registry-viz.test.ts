@@ -17,6 +17,7 @@ const pattern = (
 	tier: 'deep' | 'light' = 'deep',
 ) => ({
 	id,
+	kind: 'pattern' as const,
 	tier,
 	title: `Title of ${id}`,
 	category,
@@ -39,7 +40,7 @@ const pattern = (
 });
 
 const fixture: Registry = {
-	format: 3,
+	format: 4,
 	groups: [{ id: 'g', title: 'G' }],
 	categories: [
 		{ id: 'architecture', title: 'Architecture', group: 'g' },

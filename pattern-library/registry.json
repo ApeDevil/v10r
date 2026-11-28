@@ -1,5 +1,5 @@
 {
-	"format": 3,
+	"format": 4,
 	"note": "Two-tier pattern registry for the v10r pattern library — the single source of truth every derived surface is built from: the README Pattern Index, the /docs/pattern-library section (catalog + one page per record), both MCP runtimes, /showcases/mcp, and Vely's pattern tool. Deep records are full emulation cards (invariants + emulation notes required); light records are index rows (pointers only). Every path is repo-relative and validated by pattern-library/validate.ts. Records point to docs and code — they do not duplicate explanations.",
 	"groups": [
 		{
@@ -93,11 +93,6 @@
 			"group": "intelligence"
 		},
 		{
-			"id": "toolkits",
-			"title": "Toolkits",
-			"group": "intelligence"
-		},
-		{
 			"id": "office-workflows",
 			"title": "Office Workflows",
 			"group": "intelligence"
@@ -186,6 +181,7 @@
 	"patterns": [
 		{
 			"id": "multi-client-core",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Multi-client core",
 			"category": "architecture",
@@ -206,14 +202,30 @@
 					"prefer_when": "the runtime is a long-lived server with no serverless cold-start cost and a port has more than one real implementation"
 				}
 			],
-			"needs": [],
+			"needs": [
+				{
+					"need": "llm-provider",
+					"level": "implementation",
+					"why": "v10r's request-cycle visualizer (showcase) uses it: the showcase calls a model so there is a slow step to trace"
+				},
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r's request-cycle visualizer (showcase) uses it: the showcase reads the database so there is a query to trace"
+				}
+			],
 			"capabilities": [
 				"domain modules",
 				"hexagonal architecture",
 				"backend structure",
 				"multi-client backend",
 				"service layer",
-				"business logic"
+				"business logic",
+				"request lifecycle",
+				"layered architecture",
+				"file placement lookup",
+				"request visualization",
+				"developer education"
 			],
 			"keywords": [
 				"ports and adapters",
@@ -223,7 +235,23 @@
 				"service",
 				"adapter",
 				"core",
-				"hexagonal domain modules"
+				"hexagonal domain modules",
+				"layers",
+				"composition root",
+				"hexagonal",
+				"request flow",
+				"runtime layers and request flow",
+				"codebase organization",
+				"directory conventions",
+				"file placement",
+				"where does x live",
+				"codebase map",
+				"cycle",
+				"visualizer",
+				"showcase",
+				"form",
+				"api",
+				"request-cycle visualizer"
 			],
 			"depends_on": [],
 			"docs": [
@@ -245,6 +273,25 @@
 					"path": "src/lib/server",
 					"kind": "dir",
 					"note": "Per-domain modules; canonical shape is [domain]/queries.ts + mutations.ts (+ service.ts only when orchestration spans multiple infra calls)"
+				},
+				{
+					"path": "src/hooks.server.ts",
+					"note": "Runtime layers and request flow — Documents v10r's seven-layer abstraction hierarchy, from tech stack down to code, anchored by the hooks.server.ts composition root and the hexagonal domain core. Reach for it when orienting a new contributor or agent to how a request moves through the system and which layer a given file belongs to."
+				},
+				{
+					"path": "src",
+					"kind": "dir",
+					"note": "Codebase map — Provides a spatial quick-reference table mapping each kind of code (business logic, route adapters, schemas, components, state) to its canonical directory. Reach for it when deciding where a new file should live or trying to locate an existing concern in the repo."
+				},
+				{
+					"path": "src/lib/server/showcases/cycle",
+					"kind": "dir",
+					"note": "Request-cycle visualizer — An interactive showcase that visualizes the full form, REST API, and AI request cycles as they pass through the hooks chain and domain layers. Reach for it when you need a live, didactic demonstration of how a form submission, API call, or AI request actually traverses the stack."
+				},
+				{
+					"path": "src/lib/components/showcases/cycle",
+					"kind": "dir",
+					"note": "Request-cycle visualizer"
 				}
 			],
 			"tests": [
@@ -257,7 +304,23 @@
 					"note": "Adapter-boundary gate: client code reaches /api only through apiFetch"
 				}
 			],
-			"showcases": [],
+			"showcases": [
+				{
+					"path": "/showcases/cycle/form",
+					"kind": "route",
+					"note": "Request-cycle visualizer"
+				},
+				{
+					"path": "/showcases/cycle/api",
+					"kind": "route",
+					"note": "Request-cycle visualizer"
+				},
+				{
+					"path": "/showcases/cycle/ai",
+					"kind": "route",
+					"note": "Request-cycle visualizer"
+				}
+			],
 			"invariants": [
 				"Domain functions must not import from @sveltejs/kit or $app/ — binding to the request cycle breaks tool and job reuse.",
 				"AI tools RETURN structured errors — never throw.",
@@ -274,75 +337,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-runtime-layers",
-			"tier": "light",
-			"title": "Runtime layers and request flow",
-			"category": "architecture",
-			"summary": "Documents v10r's seven-layer abstraction hierarchy, from tech stack down to code, anchored by the hooks.server.ts composition root and the hexagonal domain core.",
-			"when_to_use": "Reach for it when orienting a new contributor or agent to how a request moves through the system and which layer a given file belongs to.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["request lifecycle", "layered architecture"],
-			"keywords": ["layers", "composition root", "hexagonal", "request flow"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/system-abstraction.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/hooks.server.ts"
-				}
-			],
-			"tests": [
-				{
-					"path": "src/lib/server/security/handle-chain.gate.test.ts",
-					"note": "Pins the middleware order the layer model describes"
-				}
-			],
-			"showcases": [],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "architecture-codebase-map",
-			"tier": "light",
-			"title": "Codebase map",
-			"category": "architecture",
-			"summary": "Provides a spatial quick-reference table mapping each kind of code (business logic, route adapters, schemas, components, state) to its canonical directory.",
-			"when_to_use": "Reach for it when deciding where a new file should live or trying to locate an existing concern in the repo.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["file placement lookup"],
-			"keywords": ["codebase organization", "directory conventions", "file placement", "where does x live"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/codebase-organization.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services",
-			"maturity": "implemented"
-		},
-		{
-			"id": "architecture-middleware",
+			"id": "middleware-hook-chain",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Middleware hook chain",
 			"category": "architecture",
@@ -383,9 +379,10 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-rest-api",
+			"id": "rest-api-conventions",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "REST API patterns",
+			"title": "REST API conventions",
 			"category": "architecture",
 			"summary": "Defines the file-based +server.ts convention for REST endpoints, covering Valibot validation, error() status codes, pagination, and response envelopes.",
 			"when_to_use": "Reach for it when building a new REST or SSE endpoint under src/routes/api/.",
@@ -440,7 +437,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-error-handling",
+			"id": "error-handling",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Error handling",
 			"category": "architecture",
@@ -482,7 +480,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-state-management",
+			"id": "state-management",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "State management",
 			"category": "architecture",
@@ -528,70 +527,10 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-request-cycle-visualizer",
+			"id": "deployment-target",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "Request-cycle visualizer",
-			"category": "architecture",
-			"summary": "An interactive showcase that visualizes the full form, REST API, and AI request cycles as they pass through the hooks chain and domain layers.",
-			"when_to_use": "Reach for it when you need a live, didactic demonstration of how a form submission, API call, or AI request actually traverses the stack.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				{
-					"need": "llm-provider",
-					"level": "implementation",
-					"why": "the showcase calls a model so there is a slow step to trace"
-				},
-				{
-					"need": "relational-db",
-					"level": "implementation",
-					"why": "the showcase reads the database so there is a query to trace"
-				}
-			],
-			"capabilities": ["request visualization", "developer education"],
-			"keywords": ["cycle", "request flow", "visualizer", "showcase", "form", "api"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/system-abstraction.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/showcases/cycle",
-					"kind": "dir"
-				},
-				{
-					"path": "src/lib/components/showcases/cycle",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/cycle/form",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/cycle/api",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/cycle/ai",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — structural/demo pattern, no external services",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "architecture-deployment",
-			"tier": "light",
-			"title": "Deployment",
+			"title": "Deployment target",
 			"category": "architecture",
 			"summary": "Covers the deployment setup — Vercel Node.js serverless is the one wired target (adapter-vercel hardcoded); a Bun container target (Koyeb) is a planned portability goal the job system and env parity already accommodate.",
 			"when_to_use": "Reach for it when configuring or switching the deployment adapter/target for the app.",
@@ -625,7 +564,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "architecture-testing-infra",
+			"id": "testing-infrastructure",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Testing infrastructure",
 			"category": "architecture",
@@ -685,7 +625,8 @@
 			"verifiedSha": "4d097488"
 		},
 		{
-			"id": "architecture-pattern-mcp",
+			"id": "pattern-mcp",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Pattern MCP",
 			"category": "architecture",
@@ -723,7 +664,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-hosted-mcp",
+			"id": "hosted-mcp",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Hosted MCP",
 			"category": "architecture",
@@ -732,16 +674,15 @@
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": [
-				"key-value-store",
 				{
 					"need": "relational-db",
 					"level": "implementation",
-					"why": "v10r keeps its demo-state service and tool-call telemetry in Postgres; the trust surfaces authenticate with environment bearer tokens"
+					"why": "v10r stores tool-call telemetry (mcp.call_log) and the demo-state service in Postgres; the registry is static JSON and the private and admin surfaces authenticate with environment bearer tokens, so the pattern itself needs no database"
 				}
 			],
 			"capabilities": ["hosted mcp", "bearer auth", "trust boundaries"],
 			"keywords": ["mcp", "hosted", "bearer token", "trust surface"],
-			"depends_on": [],
+			"depends_on": ["rate-limiting"],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/hosted-mcp.md"
@@ -777,7 +718,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-mcp-evolution",
+			"id": "mcp-protocol-evolution",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "MCP protocol evolution",
 			"category": "architecture",
@@ -907,9 +849,10 @@
 			"verifiedAt": "2026-11-21"
 		},
 		{
-			"id": "architecture-mcp-authorization",
+			"id": "mcp-authorization",
+			"kind": "pattern",
 			"tier": "deep",
-			"title": "Authenticated MCP services",
+			"title": "MCP authorization",
 			"category": "architecture",
 			"summary": "A specialized MCP service that needs a user account becomes an OAuth protected resource with its own audience and scope, and the app becomes its own OAuth 2.1 authorization server on the Better Auth it already runs — PKCE, RFC 9728/8414 discovery, resource-bound JWT access tokens with a per-request liveness check, Client ID Metadata Documents first and bounded Dynamic Client Registration, an authorization page that labels untrusted client metadata, and a connected-applications page whose revoke takes effect on the next request.",
 			"when_to_use": "Use when an MCP host (Claude, ChatGPT, an IDE agent) should call one of your MCP endpoints on behalf of a signed-in user of your app, with per-user quotas, consent the user can review and revoke, and no static shared secret.",
@@ -967,7 +910,7 @@
 				"revocation",
 				"oauth 2.1 protected resources on better auth"
 			],
-			"depends_on": ["architecture-hosted-mcp", "identity-passwordless-auth", "anti-abuse-rate-limiting"],
+			"depends_on": ["hosted-mcp", "passwordless-auth", "rate-limiting"],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/mcp-authorization.md",
@@ -1042,7 +985,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "architecture-agentic-architecture",
+			"id": "agentic-architecture",
+			"kind": "pattern",
 			"tier": "deep",
 			"category": "architecture",
 			"title": "Agentic architecture",
@@ -1085,7 +1029,7 @@
 				"one application architecture",
 				"optional interoperability doors"
 			],
-			"depends_on": ["ai-agent-actions", "ai-untrusted-content-boundary", "architecture-mcp-evolution"],
+			"depends_on": ["agent-actions", "untrusted-content-boundary", "mcp-protocol-evolution"],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/agentic-architecture/README.md",
@@ -1143,7 +1087,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "architecture-wasm-kernel",
+			"id": "wasm-compute-kernel",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "WebAssembly compute kernel",
 			"category": "architecture",
@@ -1224,7 +1169,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "architecture-external-service",
+			"id": "external-service-runtime",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "External service runtime",
 			"category": "architecture",
@@ -1241,7 +1187,7 @@
 					"prefer_when": "the work runs fine in the app's own runtime and has no separate release, scaling or ownership need"
 				},
 				{
-					"approach": "Rust compiled to wasm and run in the browser (architecture-wasm-kernel)",
+					"approach": "Rust compiled to wasm and run in the browser (wasm-compute-kernel)",
 					"prefer_when": "the work is compute-dense over the user's own data and needs no secret, server state or second host"
 				},
 				{
@@ -1480,6 +1426,7 @@
 		},
 		{
 			"id": "architecture-engineering",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Architecture Engineering",
 			"category": "architecture",
@@ -1533,12 +1480,7 @@
 				"explained decision records",
 				"typed architecture model and static checks"
 			],
-			"depends_on": [
-				"multi-client-core",
-				"architecture-wasm-kernel",
-				"architecture-external-service",
-				"architecture-pattern-mcp"
-			],
+			"depends_on": ["multi-client-core", "wasm-compute-kernel", "external-service-runtime", "pattern-mcp"],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture-engineering/how-it-works.md",
@@ -1656,6 +1598,7 @@
 		},
 		{
 			"id": "app-shell-layout",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Shell layout",
 			"category": "app-shell",
@@ -1692,7 +1635,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-sidebar",
+			"id": "responsive-sidebar",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Responsive sidebar",
 			"category": "app-shell",
@@ -1739,7 +1683,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-navigation",
+			"id": "navigation-structure",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Navigation structure & progressive disclosure",
 			"category": "app-shell",
@@ -1777,7 +1722,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-keyboard-shortcuts",
+			"id": "keyboard-shortcuts",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Keyboard shortcuts registry + help modal",
 			"category": "app-shell",
@@ -1818,7 +1764,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-modals",
+			"id": "modal-layer-stack",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Modals & layer stack",
 			"category": "app-shell",
@@ -1859,7 +1806,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-toasts",
+			"id": "toasts",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Toasts",
 			"category": "app-shell",
@@ -1900,7 +1848,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-session-lifecycle",
+			"id": "session-lifecycle-ui",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Session lifecycle UI",
 			"category": "app-shell",
@@ -1941,92 +1890,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-settings",
-			"tier": "light",
-			"title": "Settings page",
-			"category": "app-shell",
-			"summary": "A settings hub page covering appearance (theme cookie), language, privacy toggles, and accessibility preferences, backed by a load/save form action.",
-			"when_to_use": "Reach for it when adding a new user-configurable preference or feature toggle to the account settings hub.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["user preferences", "theme cookie", "accessibility settings"],
-			"keywords": ["settings", "preferences", "theme", "accessibility", "language"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/app-shell/settings.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/state/theme.svelte.ts"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/account/settings",
-					"kind": "approute"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "app-shell-style-randomizer",
-			"tier": "light",
-			"title": "Style randomizer",
-			"category": "app-shell",
-			"summary": "Randomizes decorative styling (typography pairing and color palette) on each visit from pre-validated, WCAG-compliant sets, kept orthogonal to the user's dark/light theme choice.",
-			"when_to_use": "Reach for it when building playground or showcase surfaces that benefit from memorable visual variation without harming accessibility.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				{
-					"need": "relational-db",
-					"level": "implementation",
-					"why": "v10r persists palettes and the chosen style in Postgres; a cookie or local storage serves the pattern equally"
-				}
-			],
-			"capabilities": ["style randomization", "palette selection"],
-			"keywords": ["style randomizer", "typography", "palette", "accessibility", "theme × typography × palette"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/foundation/style.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/styles/random",
-					"kind": "dir"
-				},
-				{
-					"path": "src/lib/server/style",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/shell/style",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — structural pattern, no external services",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "app-shell-loading-states",
+			"id": "loading-states",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Loading states",
 			"category": "app-shell",
@@ -2068,7 +1933,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-empty-states",
+			"id": "empty-states",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Empty states",
 			"category": "app-shell",
@@ -2107,7 +1973,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-page-header",
+			"id": "page-header",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Page header",
 			"category": "app-shell",
@@ -2146,7 +2013,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "app-shell-quick-search",
+			"id": "command-palette",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Quick search command palette",
 			"category": "app-shell",
@@ -2199,7 +2067,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ui-component-system",
+			"id": "component-system",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Component-first UI system",
 			"category": "ui",
@@ -2220,7 +2089,24 @@
 				}
 			],
 			"needs": [],
-			"capabilities": ["ui components", "design system", "design tokens", "component library", "styling architecture"],
+			"capabilities": [
+				"ui components",
+				"design system",
+				"design tokens",
+				"component library",
+				"styling architecture",
+				"styled primitives",
+				"cva variants",
+				"composite components",
+				"component composition",
+				"layout wrappers",
+				"spacing",
+				"data tables",
+				"dropdown menus",
+				"context menus",
+				"resizable panes",
+				"reorderable panes"
+			],
 			"keywords": [
 				"primitives",
 				"composites",
@@ -2230,7 +2116,25 @@
 				"bits ui",
 				"tokens",
 				"component-first",
-				"primitives/composites/layout"
+				"primitives/composites/layout",
+				"components",
+				"ui primitives",
+				"molecules",
+				"stack",
+				"cluster",
+				"surface",
+				"layout primitives",
+				"table",
+				"data display",
+				"tables",
+				"menus",
+				"dropdown",
+				"context menu",
+				"menu bar",
+				"context",
+				"split panes",
+				"resizable",
+				"reorderable"
 			],
 			"depends_on": [],
 			"docs": [
@@ -2249,6 +2153,10 @@
 				{
 					"path": "docs/blueprint/design/styling.md",
 					"note": "Styling flow and layout primitives"
+				},
+				{
+					"path": "docs/stack/ui/bits-ui.md",
+					"note": "UI primitives — Roughly 40 styled atomic components (Button, Input, Badge, Select, Table, etc.) that wrap Bits UI headless primitives with CVA variants and design tokens. Use as the base building block for a new UI element instead of styling a Bits UI primitive directly."
 				}
 			],
 			"code": [
@@ -2265,7 +2173,7 @@
 				{
 					"path": "src/lib/components/layout",
 					"kind": "dir",
-					"note": "Structural wrappers (Stack, Cluster, Surface)"
+					"note": "Structural wrappers (Stack, Cluster, Surface) · Layout primitives — Structural wrapper components (Stack, Cluster, Surface, PageContainer) that provide consistent spacing and layout without one-off CSS. Use to arrange child elements with consistent gaps and structure instead of writing bespoke flex/grid CSS on every page."
 				},
 				{
 					"path": "src/lib/styles/tokens.ts",
@@ -2274,6 +2182,36 @@
 				{
 					"path": "uno.config.ts",
 					"note": "UnoCSS theme wiring"
+				},
+				{
+					"path": "src/lib/components/primitives/table",
+					"kind": "dir",
+					"note": "Tables — A styled table primitive built on the primitives layer for rendering tabular data consistently across the app. Use when displaying structured, row-based data anywhere in the UI."
+				},
+				{
+					"path": "src/lib/components/composites/dropdown-menu",
+					"kind": "dir",
+					"note": "Menus — Dropdown menu, context menu, and menu bar composites built on Bits UI for triggerable and right-click action lists. Use when exposing a list of actions from a trigger button, right-click, or an app-level menu bar."
+				},
+				{
+					"path": "src/lib/components/composites/context-menu",
+					"kind": "dir",
+					"note": "Menus"
+				},
+				{
+					"path": "src/lib/components/composites/menu-bar",
+					"kind": "dir",
+					"note": "Menus"
+				},
+				{
+					"path": "src/lib/components/primitives/pane",
+					"kind": "dir",
+					"note": "Split panes — Resizable and reorderable split-pane primitives and composites for dividing screen space into adjustable regions. Use when a layout needs user-resizable or drag-reorderable panes, such as a multi-pane workspace."
+				},
+				{
+					"path": "src/lib/components/composites/reorderable-panes",
+					"kind": "dir",
+					"note": "Split panes"
 				}
 			],
 			"tests": [
@@ -2294,6 +2232,31 @@
 				{
 					"path": "/showcases/ui/tokens",
 					"kind": "route"
+				},
+				{
+					"path": "/showcases/ui/components/primitives",
+					"kind": "route",
+					"note": "UI primitives"
+				},
+				{
+					"path": "/showcases/ui/components/composites",
+					"kind": "route",
+					"note": "Composites — Higher-level components (Card, FormField, CommandPalette, Chatbot, Dock, etc.) composed from primitives that add business logic and feature behavior. Use when a UI need spans more than one primitive and carries app-specific behavior or layout."
+				},
+				{
+					"path": "/showcases/ui/tables",
+					"kind": "route",
+					"note": "Tables"
+				},
+				{
+					"path": "/showcases/ui/menus",
+					"kind": "route",
+					"note": "Menus"
+				},
+				{
+					"path": "/showcases/ui/splits",
+					"kind": "route",
+					"note": "Split panes"
 				}
 			],
 			"invariants": [
@@ -2311,7 +2274,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ui-design-philosophy",
+			"id": "design-philosophy",
+			"kind": "principle",
 			"tier": "light",
 			"title": "Design philosophy & three-tier theming",
 			"category": "ui",
@@ -2355,7 +2319,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ui-explosive-discovery",
+			"id": "explosive-discovery",
+			"kind": "principle",
 			"tier": "deep",
 			"title": "Explosive Discovery — nested depth for dense menus and pages",
 			"category": "ui",
@@ -2481,7 +2446,8 @@
 			"verifiedSha": "b9287328-dirty"
 		},
 		{
-			"id": "ui-latent-cards",
+			"id": "latent-cards",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Latent Cards — actions that rest neutral and wake on intent",
 			"category": "ui",
@@ -2526,7 +2492,7 @@
 				"scroll area card",
 				"scroll spotlight"
 			],
-			"depends_on": ["ui-explosive-discovery", "ui-primitives"],
+			"depends_on": ["explosive-discovery", "component-system"],
 			"docs": [
 				{
 					"path": "docs/blueprint/design/latent-cards.md",
@@ -2580,7 +2546,8 @@
 			"verifiedAt": "2026-11-06"
 		},
 		{
-			"id": "ui-design-tokens",
+			"id": "design-tokens",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Design tokens",
 			"category": "ui",
@@ -2589,8 +2556,19 @@
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": [],
-			"capabilities": ["design tokens", "fluid scale"],
-			"keywords": ["breakpoints", "fluid typography", "spacing", "z-index", "unocss", "fluid type/space"],
+			"capabilities": ["design tokens", "fluid scale", "typography scale"],
+			"keywords": [
+				"breakpoints",
+				"fluid typography",
+				"spacing",
+				"z-index",
+				"unocss",
+				"fluid type/space",
+				"typography",
+				"type scale",
+				"fonts",
+				"text"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -2606,6 +2584,11 @@
 				},
 				{
 					"path": "uno.config.ts"
+				},
+				{
+					"path": "src/lib/components/primitives/typography",
+					"kind": "dir",
+					"note": "Typography — Typography primitive components applying the design system's fluid type scale and heading/body/UI/code character rules. Use for any heading, body, or code text that should follow the app's typographic scale instead of raw HTML tags."
 				}
 			],
 			"tests": [],
@@ -2613,6 +2596,11 @@
 				{
 					"path": "/showcases/ui/tokens",
 					"kind": "route"
+				},
+				{
+					"path": "/showcases/ui/typography",
+					"kind": "route",
+					"note": "Typography"
 				}
 			],
 			"invariants": [],
@@ -2623,7 +2611,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ui-tonal-elevation",
+			"id": "tonal-elevation",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Tonal elevation engine",
 			"category": "ui",
@@ -2664,124 +2653,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ui-primitives",
-			"tier": "light",
-			"title": "UI primitives",
-			"category": "ui",
-			"summary": "Roughly 40 styled atomic components (Button, Input, Badge, Select, Table, etc.) that wrap Bits UI headless primitives with CVA variants and design tokens.",
-			"when_to_use": "Use as the base building block for a new UI element instead of styling a Bits UI primitive directly.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["styled primitives", "cva variants"],
-			"keywords": ["bits ui", "primitives", "cva", "components"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/design/components.md"
-				},
-				{
-					"path": "docs/stack/ui/bits-ui.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/primitives",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/components/primitives",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ui-composites",
-			"tier": "light",
-			"title": "Composites",
-			"category": "ui",
-			"summary": "Higher-level components (Card, FormField, CommandPalette, Chatbot, Dock, etc.) composed from primitives that add business logic and feature behavior.",
-			"when_to_use": "Use when a UI need spans more than one primitive and carries app-specific behavior or layout.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["composite components", "component composition"],
-			"keywords": ["composites", "molecules", "components"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/design/components.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/composites",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/components/composites",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ui-layout-primitives",
-			"tier": "light",
-			"title": "Layout primitives",
-			"category": "ui",
-			"summary": "Structural wrapper components (Stack, Cluster, Surface, PageContainer) that provide consistent spacing and layout without one-off CSS.",
-			"when_to_use": "Use to arrange child elements with consistent gaps and structure instead of writing bespoke flex/grid CSS on every page.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["layout wrappers", "spacing"],
-			"keywords": ["stack", "cluster", "surface", "layout"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/design/styling.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/layout",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/layouts",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ui-fluid-styling",
+			"id": "fluid-styling",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Fluid responsive styling",
 			"category": "ui",
@@ -2822,219 +2695,42 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ui-tables",
+			"id": "schema-validated-forms",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "Tables",
-			"category": "ui",
-			"summary": "A styled table primitive built on the primitives layer for rendering tabular data consistently across the app.",
-			"when_to_use": "Use when displaying structured, row-based data anywhere in the UI.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["data tables"],
-			"keywords": ["table", "primitives", "data display"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/design/components.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/primitives/table",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/tables",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ui-menus",
-			"tier": "light",
-			"title": "Menus",
-			"category": "ui",
-			"summary": "Dropdown menu, context menu, and menu bar composites built on Bits UI for triggerable and right-click action lists.",
-			"when_to_use": "Use when exposing a list of actions from a trigger button, right-click, or an app-level menu bar.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["dropdown menus", "context menus"],
-			"keywords": ["menus", "dropdown", "context menu", "menu bar", "context"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/design/components.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/composites/dropdown-menu",
-					"kind": "dir"
-				},
-				{
-					"path": "src/lib/components/composites/context-menu",
-					"kind": "dir"
-				},
-				{
-					"path": "src/lib/components/composites/menu-bar",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/menus",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ui-split-panes",
-			"tier": "light",
-			"title": "Split panes",
-			"category": "ui",
-			"summary": "Resizable and reorderable split-pane primitives and composites for dividing screen space into adjustable regions.",
-			"when_to_use": "Use when a layout needs user-resizable or drag-reorderable panes, such as a multi-pane workspace.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["resizable panes", "reorderable panes"],
-			"keywords": ["split panes", "resizable", "reorderable", "layout"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/design/components.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/primitives/pane",
-					"kind": "dir"
-				},
-				{
-					"path": "src/lib/components/composites/reorderable-panes",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/splits",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ui-typography",
-			"tier": "light",
-			"title": "Typography",
-			"category": "ui",
-			"summary": "Typography primitive components applying the design system's fluid type scale and heading/body/UI/code character rules.",
-			"when_to_use": "Use for any heading, body, or code text that should follow the app's typographic scale instead of raw HTML tags.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["typography scale"],
-			"keywords": ["typography", "type scale", "fonts", "text"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/design/tokens.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/primitives/typography",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/typography",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ui-decorative",
-			"tier": "light",
-			"title": "Decorative ornaments and backgrounds",
-			"category": "ui",
-			"summary": "Decorative primitive components (ornaments, backgrounds) used by the style-randomization system to vary visual flourish without affecting core UI predictability.",
-			"when_to_use": "Use when adding non-functional visual flourish (ornaments, decorative backgrounds) that should stay orthogonal to theme and layout choices.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["decorative elements"],
-			"keywords": ["decorative", "ornaments", "backgrounds", "style randomization"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/foundation/style.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/primitives/decorative",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ui/decorative",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — decorative, no functional impact",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "forms-superforms-valibot",
-			"tier": "light",
-			"title": "Superforms + Valibot foundation",
+			"title": "Schema-validated forms",
 			"category": "forms",
-			"summary": "The default form stack pairing Superforms v2 with Valibot schemas for progressive-enhancement-friendly, type-safe form validation.",
-			"when_to_use": "Use as the default for any non-auth form (CRUD, settings, contact) needing server-validated, progressively-enhanced submission.",
+			"summary": "The default form stack: one schema per form (Valibot) validated on the server and enhanced on the client (Superforms v2), type-safe and progressive-enhancement friendly, with the confirm-before-submit, reset-after-submit and edit-existing-data variants layered on the same flow.",
+			"when_to_use": "Use as the default for any non-auth form (CRUD, settings, contact) needing server-validated, progressively-enhanced submission, including forms that confirm before submitting, clear after success or pre-populate from existing data.",
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": [],
-			"capabilities": ["form validation", "progressive enhancement"],
-			"keywords": ["superforms", "valibot", "forms", "validation"],
+			"capabilities": [
+				"form validation",
+				"progressive enhancement",
+				"basic form patterns",
+				"confirm submit",
+				"reset after submit",
+				"edit forms"
+			],
+			"keywords": [
+				"superforms",
+				"valibot",
+				"forms",
+				"validation",
+				"contact form",
+				"settings form",
+				"contact",
+				"settings",
+				"basic forms",
+				"confirmation modal",
+				"reset form",
+				"edit form",
+				"confirm",
+				"reset",
+				"edit",
+				"advanced form tactics"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3059,6 +2755,31 @@
 				{
 					"path": "/showcases/forms",
 					"kind": "route"
+				},
+				{
+					"path": "/showcases/forms/basics/contact",
+					"kind": "route",
+					"note": "Basic forms — Reference contact and settings forms demonstrating the standard Superforms + Valibot schema and server-action wiring for a single-step form. Reference when building a straightforward single-step form such as a contact or settings page."
+				},
+				{
+					"path": "/showcases/forms/basics/settings",
+					"kind": "route",
+					"note": "Basic forms"
+				},
+				{
+					"path": "/showcases/forms/advanced/confirm",
+					"kind": "route",
+					"note": "Advanced form tactics — Confirmation-modal submit, reset-after-submit, and edit-with-existing-data patterns layered on top of the base Superforms flow. Use when a form needs to confirm before submitting, clear itself after a successful submit, or pre-populate from existing data."
+				},
+				{
+					"path": "/showcases/forms/advanced/reset",
+					"kind": "route",
+					"note": "Advanced form tactics"
+				},
+				{
+					"path": "/showcases/forms/advanced/edit",
+					"kind": "route",
+					"note": "Advanced form tactics"
 				}
 			],
 			"invariants": [],
@@ -3069,49 +2790,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "forms-basic-forms",
-			"tier": "light",
-			"title": "Basic forms",
-			"category": "forms",
-			"summary": "Reference contact and settings forms demonstrating the standard Superforms + Valibot schema and server-action wiring for a single-step form.",
-			"when_to_use": "Reference when building a straightforward single-step form such as a contact or settings page.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["basic form patterns"],
-			"keywords": ["contact form", "settings form", "superforms", "valibot", "contact", "settings"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/forms.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/schemas",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/forms/basics/contact",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/forms/basics/settings",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — standard crud form pattern",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "forms-validation-timing",
+			"id": "validation-timing",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Validation timing",
 			"category": "forms",
@@ -3160,7 +2840,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "forms-multi-step-dynamic",
+			"id": "multi-step-forms",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Multi-step and dynamic forms",
 			"category": "forms",
@@ -3206,53 +2887,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "forms-advanced-patterns",
-			"tier": "light",
-			"title": "Advanced form tactics",
-			"category": "forms",
-			"summary": "Confirmation-modal submit, reset-after-submit, and edit-with-existing-data patterns layered on top of the base Superforms flow.",
-			"when_to_use": "Use when a form needs to confirm before submitting, clear itself after a successful submit, or pre-populate from existing data.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["confirm submit", "reset after submit", "edit forms"],
-			"keywords": ["confirmation modal", "reset form", "edit form", "confirm", "reset", "edit"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/forms.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/schemas",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/forms/advanced/confirm",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/forms/advanced/reset",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/forms/advanced/edit",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — form ux patterns only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "forms-auth-forms",
+			"id": "auth-forms",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Auth forms",
 			"category": "forms",
@@ -3289,7 +2925,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "forms-file-uploads",
+			"id": "file-uploads",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "File uploads",
 			"category": "forms",
@@ -3338,7 +2975,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "i18n-locale-routing",
+			"id": "locale-routing",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Locale routing",
 			"category": "i18n",
@@ -3379,7 +3017,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "i18n-messages",
+			"id": "translated-messages",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Translated messages",
 			"category": "i18n",
@@ -3421,7 +3060,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "i18n-formatting",
+			"id": "locale-formatting",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Formatting & CLDR plural correctness",
 			"category": "i18n",
@@ -3464,7 +3104,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "i18n-db-content",
+			"id": "translated-database-content",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Translated database content",
 			"category": "i18n",
@@ -3495,6 +3136,7 @@
 		},
 		{
 			"id": "docs-nav-hubs",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Docs navigation hubs",
 			"category": "docs-ax",
@@ -3567,6 +3209,7 @@
 		},
 		{
 			"id": "pattern-index",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Pattern Index",
 			"category": "docs-ax",
@@ -3648,6 +3291,7 @@
 		},
 		{
 			"id": "agent-experience",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Agent experience surfaces",
 			"category": "docs-ax",
@@ -3766,9 +3410,10 @@
 		},
 		{
 			"id": "resource-anchor-integrity",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Resource anchor integrity",
-			"category": "docs-ax",
+			"category": "integrity-truth",
 			"summary": "Every #fragment a registry doc ref names must be a heading the page renders, checked through the renderer's own slugger, and every path an agent instruction file routes to must exist — a narrow, build-time slice of W3C-style resource anchoring.",
 			"when_to_use": "Use when docs, registries or agent context files deep-link into headings or route agents to repo paths that refactors can move.",
 			"avoid_when": ["Links are generated from the same source as their targets — they cannot drift"],
@@ -3822,7 +3467,8 @@
 			"verifiedSha": "91f61a76-dirty"
 		},
 		{
-			"id": "ai-agent-skills",
+			"id": "agent-skills",
+			"kind": "pattern",
 			"tier": "deep",
 			"category": "docs-ax",
 			"title": "Agent Skills generated from the pattern registry",
@@ -3896,7 +3542,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "databases-postgres-connection",
+			"id": "postgres-connection",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Postgres client and connection",
 			"category": "databases",
@@ -3943,7 +3590,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "databases-schema-type-inference",
+			"id": "schema-type-inference",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Schema and type inference",
 			"category": "databases",
@@ -3991,7 +3639,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "databases-queries-mutations-split",
+			"id": "queries-mutations-split",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Queries/mutations split",
 			"category": "databases",
@@ -4036,7 +3685,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "databases-neo4j-connection",
+			"id": "neo4j-connection",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Neo4j connection",
 			"category": "databases",
@@ -4084,7 +3734,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "databases-graph-modeling",
+			"id": "graph-modeling",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Graph modeling",
 			"category": "databases",
@@ -4122,7 +3773,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "databases-graph-traversal",
+			"id": "graph-traversal",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Graph traversal",
 			"category": "databases",
@@ -4160,7 +3812,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "databases-polyglot-freshness",
+			"id": "polyglot-freshness",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Polyglot freshness",
 			"category": "databases",
@@ -4190,9 +3843,10 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "databases-object-storage",
+			"id": "object-storage-adapter",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "Object storage",
+			"title": "Object storage adapter",
 			"category": "databases",
 			"summary": "S3-compatible object storage on Cloudflare R2, accessed via @aws-sdk/client-s3 with presigned URLs for direct client uploads and downloads.",
 			"when_to_use": "Use when the app needs to store or serve user files without routing large payloads through the server.",
@@ -4243,63 +3897,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "databases-cache",
-			"tier": "light",
-			"title": "Redis cache client",
-			"category": "databases",
-			"summary": "In-memory key-value store on Upstash Redis, reached over HTTP REST, used for rate limiting, the circuit breaker, and other ephemeral counters.",
-			"when_to_use": "Use when a feature needs fast, short-lived state, such as counters or locks, without Postgres's durability guarantees.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				{
-					"need": "key-value-store",
-					"level": "required",
-					"pinned": "redis",
-					"why": "the pattern is the Redis client and its REST transport"
-				}
-			],
-			"capabilities": ["caching", "ephemeral state"],
-			"keywords": ["redis", "upstash", "rate limiting", "ephemeral", "upstash redis", "ephemeral patterns"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/stack/data/redis.md"
-				},
-				{
-					"path": "docs/stack/ops/caching.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/cache",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/db/cache/connection",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/db/cache/patterns",
-					"kind": "route"
-				},
-				{
-					"path": "/showcases/db/cache/ephemeral",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "medium — external managed service (Upstash Redis)",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
 			"id": "temporal-data-modeling",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Temporal data modeling",
 			"category": "databases",
@@ -4368,7 +3967,8 @@
 			"verifiedSha": "91f61a76-dirty"
 		},
 		{
-			"id": "db-ops-dev-prod-schema-workflow",
+			"id": "dev-to-prod-schema-workflow",
+			"kind": "workflow",
 			"tier": "light",
 			"title": "Dev-to-prod schema workflow",
 			"category": "db-ops",
@@ -4398,9 +3998,10 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "db-ops-branch-refresh",
+			"id": "database-branch-refresh",
+			"kind": "workflow",
 			"tier": "light",
-			"title": "Neon branch refresh from prod",
+			"title": "Database branch refresh from production",
 			"category": "db-ops",
 			"summary": "Resets the dev Neon Postgres branch from its production parent through Neon's control-plane API, recording each run in a ledger and surfacing it at an admin-only page.",
 			"when_to_use": "Use when developers need production-like data in the dev branch on demand or on a schedule, without a manual dump and restore.",
@@ -4413,11 +4014,7 @@
 					"pinned": "postgres",
 					"why": "branch refresh copies a Postgres branch"
 				},
-				{
-					"need": "external-api",
-					"level": "conditional",
-					"when": "the database host offers a branching API (v10r: Neon's)"
-				}
+				"external-api"
 			],
 			"capabilities": ["branch reset", "control plane api"],
 			"keywords": ["neon", "branch refresh", "control plane", "admin", "run ledger"],
@@ -4452,9 +4049,10 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "db-ops-bootstrap-seed",
+			"id": "database-bootstrap-seed",
+			"kind": "workflow",
 			"tier": "light",
-			"title": "DB bootstrap & seed",
+			"title": "Database bootstrap and seed",
 			"category": "db-ops",
 			"summary": "Scripts and seed modules that populate a fresh database with baseline and sample data.",
 			"when_to_use": "Run when provisioning a new environment or resetting a dev database to a known-good starting state.",
@@ -4499,7 +4097,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "identity-passwordless-auth",
+			"id": "passwordless-auth",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Passwordless auth",
 			"category": "identity",
@@ -4542,9 +4141,10 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "identity-oauth",
+			"id": "oauth-sign-in",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "OAuth",
+			"title": "OAuth sign-in",
 			"category": "identity",
 			"summary": "Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's built-in OAuth plugin.",
 			"when_to_use": "Offer it alongside magic link/OTP as an alternative sign-in path for users who prefer an existing provider account.",
@@ -4593,7 +4193,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "identity-route-guards",
+			"id": "route-guards",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Route guards & per-route authorization",
 			"category": "identity",
@@ -4630,9 +4231,10 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "identity-capability-grants",
+			"id": "grant-requests",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "Capability grants",
+			"title": "Grant requests",
 			"category": "identity",
 			"summary": "A request-approve-expire workflow where users request a named capability, an admin approves or denies it, and pending requests auto-expire after 14 days.",
 			"when_to_use": "Use in place of static roles when access to a feature, such as blog authoring, needs an auditable grant/revoke lifecycle.",
@@ -4677,7 +4279,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "identity-passkeys",
+			"id": "passkeys",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Passkeys & step-up TOTP",
 			"category": "identity",
@@ -4733,45 +4336,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "identity-user-management",
-			"tier": "light",
-			"title": "User management",
-			"category": "identity",
-			"summary": "User account routes and server-side data access covering profile, settings, notifications, security, and GDPR data export.",
-			"when_to_use": "Use when building or modifying the account area where users manage their own identity, security factors, and personal data.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": ["relational-db"],
-			"capabilities": ["user account management"],
-			"keywords": ["user profile", "gdpr", "account", "settings"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/app-shell/user-account.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/db/user",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/auth/users",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "medium — handles GDPR-sensitive personal data",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "anti-abuse-captcha",
+			"id": "proof-of-work-captcha",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "ALTCHA proof-of-work captcha",
 			"category": "anti-abuse",
@@ -4818,7 +4384,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "anti-abuse-honeypot",
+			"id": "honeypot",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Honeypot",
 			"category": "anti-abuse",
@@ -4826,9 +4393,25 @@
 			"when_to_use": "Use on forms where adding a visible captcha would hurt conversion but basic bot filtering is still needed.",
 			"avoid_when": [],
 			"alternatives": [],
-			"needs": [],
-			"capabilities": ["hidden field trap", "fill-time check"],
-			"keywords": ["honeypot", "bot detection", "spam", "forms", "hidden field", "min fill time"],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r's feedback capture (implementation inventory) uses it"
+				}
+			],
+			"capabilities": ["hidden field trap", "fill-time check", "feedback form", "spam protection"],
+			"keywords": [
+				"honeypot",
+				"bot detection",
+				"spam",
+				"forms",
+				"hidden field",
+				"min fill time",
+				"feedback",
+				"form",
+				"feedback capture"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4838,6 +4421,11 @@
 			"code": [
 				{
 					"path": "src/lib/server/abuse/honeypot.ts"
+				},
+				{
+					"path": "src/lib/server/feedback",
+					"kind": "dir",
+					"note": "Feedback capture — A user feedback capture form protected by the honeypot bot-detection pattern to keep submissions spam-free. Use when adding a lightweight feedback channel that needs basic spam protection without a full captcha."
 				}
 			],
 			"tests": [],
@@ -4845,6 +4433,11 @@
 				{
 					"path": "/showcases/abuse/honeypot",
 					"kind": "route"
+				},
+				{
+					"path": "/feedback",
+					"kind": "approute",
+					"note": "Feedback capture"
 				}
 			],
 			"invariants": [],
@@ -4855,7 +4448,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "anti-abuse-rate-limiting",
+			"id": "rate-limiting",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Rate limiting",
 			"category": "anti-abuse",
@@ -4896,7 +4490,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "anti-abuse-ai-budget",
+			"id": "ai-token-budget",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "AI daily token budget",
 			"category": "anti-abuse",
@@ -4933,7 +4528,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "anti-abuse-bot-decision-audit",
+			"id": "bot-decision-audit",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Bot decision & abuse audit",
 			"category": "anti-abuse",
@@ -4973,7 +4569,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-admin-area",
+			"id": "admin-area",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Admin area, guards & data-table pattern",
 			"category": "admin-privacy",
@@ -5011,12 +4608,13 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-gdpr",
+			"id": "gdpr-data-rights",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "GDPR data transparency",
+			"title": "GDPR data rights",
 			"category": "admin-privacy",
-			"summary": "A privacy aggregator that collects everything the app knows about a user into one report, backing the view, export, and delete surfaces required by GDPR.",
-			"when_to_use": "Use it whenever a new domain stores personal data and must be reflected in access, portability, or erasure requests.",
+			"summary": "A privacy aggregator that collects everything the app knows about a user into one report, backing the view, export and erasure surfaces GDPR requires, and a visitor \"your data\" page that streams cookie state, live request metadata and the same report.",
+			"when_to_use": "Use whenever a new domain stores personal data and must be reflected in access, portability or erasure requests, and when visitors should see what analytics has captured about them.",
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": [
@@ -5030,10 +4628,38 @@
 					"need": "graph-db",
 					"level": "conditional",
 					"when": "user content is also projected into a graph store that erasure must reach"
+				},
+				{
+					"need": "key-value-store",
+					"level": "implementation",
+					"why": "the bot-hit buffer it cites is kept in Redis"
 				}
 			],
-			"capabilities": ["data aggregation", "export", "erasure"],
-			"keywords": ["gdpr", "privacy", "data export", "right to erasure", "compliance", "view", "delete"],
+			"capabilities": [
+				"data aggregation",
+				"export",
+				"erasure",
+				"user account management",
+				"gdpr transparency",
+				"data access request"
+			],
+			"keywords": [
+				"gdpr",
+				"privacy",
+				"data export",
+				"right to erasure",
+				"compliance",
+				"view",
+				"delete",
+				"user profile",
+				"account",
+				"settings",
+				"user management",
+				"art 15",
+				"my data",
+				"transparency page",
+				"visitor \"my data\" transparency"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -5051,6 +4677,16 @@
 				{
 					"path": "src/routes/api/account",
 					"kind": "dir"
+				},
+				{
+					"path": "src/lib/server/db/user",
+					"kind": "dir",
+					"note": "User management — User account routes and server-side data access covering profile, settings, notifications, security, and GDPR data export. Use when building or modifying the account area where users manage their own identity, security factors, and personal data."
+				},
+				{
+					"path": "src/lib/server/analytics",
+					"kind": "dir",
+					"note": "Visitor \"my data\" transparency — An authenticated \"Your data\" page streams cookie state, live request metadata, and a full collectUserData report so a visitor can see what analytics has captured about them. Use when a product needs a self-service transparency/export view satisfying a GDPR Art. 15 access request."
 				}
 			],
 			"tests": [],
@@ -5062,6 +4698,16 @@
 				{
 					"path": "/showcases/privacy/rights",
 					"kind": "route"
+				},
+				{
+					"path": "/showcases/auth/users",
+					"kind": "route",
+					"note": "User management"
+				},
+				{
+					"path": "/showcases/analytics/my-data",
+					"kind": "route",
+					"note": "Visitor \"my data\" transparency"
 				}
 			],
 			"invariants": [],
@@ -5072,7 +4718,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-consent-cookies",
+			"id": "consent-cookies",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Consent & cookies",
 			"category": "admin-privacy",
@@ -5112,7 +4759,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-data-retention",
+			"id": "data-retention",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Data retention policy & purge jobs",
 			"category": "admin-privacy",
@@ -5158,7 +4806,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-pairing",
+			"id": "debug-pairing",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Cross-device debug pairing",
 			"category": "admin-privacy",
@@ -5200,12 +4849,13 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-style-picking",
+			"id": "visitor-style-resolution",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "Style picking + custom palettes",
-			"category": "admin-privacy",
-			"summary": "A per-visitor palette, typography, and radius resolution system with a randomizer, manual picker, and optional saved custom palettes, deliberately without a site-wide brand lock.",
-			"when_to_use": "Use when a visitor's own style preference should drive theming instead of a fixed site-wide brand.",
+			"title": "Visitor style resolution",
+			"category": "app-shell",
+			"summary": "Per-visitor palette, typography and radius resolution: a randomizer over pre-validated, WCAG-compliant sets, a manual picker and optional saved custom palettes, kept orthogonal to the dark/light theme and deliberately without a site-wide brand lock.",
+			"when_to_use": "Use when a visitor's own style preference should drive theming instead of a fixed site-wide brand, or when playground surfaces benefit from memorable visual variation without harming accessibility.",
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": [
@@ -5215,12 +4865,49 @@
 					"why": "v10r persists the picked style in Postgres; a cookie serves the pattern equally"
 				}
 			],
-			"capabilities": ["style resolution", "custom palettes", "randomizer"],
-			"keywords": ["theming", "palette", "branding", "style picker"],
+			"capabilities": [
+				"style resolution",
+				"custom palettes",
+				"randomizer",
+				"user preferences",
+				"theme cookie",
+				"accessibility settings",
+				"style randomization",
+				"palette selection",
+				"decorative elements"
+			],
+			"keywords": [
+				"theming",
+				"palette",
+				"branding",
+				"style picker",
+				"settings",
+				"preferences",
+				"theme",
+				"accessibility",
+				"language",
+				"settings page",
+				"style randomizer",
+				"typography",
+				"theme × typography × palette",
+				"decorative",
+				"ornaments",
+				"backgrounds",
+				"style randomization",
+				"decorative ornaments and backgrounds"
+			],
 			"depends_on": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/visual-identity-architecture.md"
+				},
+				{
+					"path": "docs/blueprint/app-shell/settings.md",
+					"note": "Settings page — A settings hub page covering appearance (theme cookie), language, privacy toggles, and accessibility preferences, backed by a load/save form action. Reach for it when adding a new user-configurable preference or feature toggle to the account settings hub."
+				},
+				{
+					"path": "docs/foundation/style.md",
+					"note": "Style randomizer — Randomizes decorative styling (typography pairing and color palette) on each visit from pre-validated, WCAG-compliant sets, kept orthogonal to the user's dark/light theme choice. Reach for it when building playground or showcase surfaces that benefit from memorable visual variation without harming accessibility."
 				}
 			],
 			"code": [
@@ -5231,6 +4918,20 @@
 				{
 					"path": "src/lib/components/style",
 					"kind": "dir"
+				},
+				{
+					"path": "src/lib/state/theme.svelte.ts",
+					"note": "Settings page"
+				},
+				{
+					"path": "src/lib/styles/random",
+					"kind": "dir",
+					"note": "Style randomizer"
+				},
+				{
+					"path": "src/lib/components/primitives/decorative",
+					"kind": "dir",
+					"note": "Decorative ornaments and backgrounds — Decorative primitive components (ornaments, backgrounds) used by the style-randomization system to vary visual flourish without affecting core UI predictability. Use when adding non-functional visual flourish (ornaments, decorative backgrounds) that should stay orthogonal to theme and layout choices."
 				}
 			],
 			"tests": [],
@@ -5238,6 +4939,16 @@
 				{
 					"path": "/showcases/shell/style",
 					"kind": "route"
+				},
+				{
+					"path": "/account/settings",
+					"kind": "approute",
+					"note": "Settings page"
+				},
+				{
+					"path": "/showcases/ui/decorative",
+					"kind": "route",
+					"note": "Decorative ornaments and backgrounds"
 				}
 			],
 			"invariants": [],
@@ -5248,17 +4959,18 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-audit-log",
+			"id": "audit-log",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "Audit log and announcements",
+			"title": "Audit log",
 			"category": "admin-privacy",
-			"summary": "Admin-side systems for recording an audit trail of privileged actions and publishing site announcements, all under the admin server module.",
+			"summary": "An append-only audit trail of privileged admin actions — who did what to which record, when — under the admin server module (which also hosts the site-announcements feature).",
 			"when_to_use": "Use when an admin action needs to be logged or a message needs to be broadcast to users.",
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": ["relational-db"],
-			"capabilities": ["audit log", "announcements"],
-			"keywords": ["audit log", "announcements", "admin"],
+			"capabilities": ["audit log"],
+			"keywords": ["audit log", "announcements", "admin", "announcements"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -5286,45 +4998,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "admin-privacy-feedback",
-			"tier": "light",
-			"title": "Feedback capture",
-			"category": "admin-privacy",
-			"summary": "A user feedback capture form protected by the honeypot bot-detection pattern to keep submissions spam-free.",
-			"when_to_use": "Use when adding a lightweight feedback channel that needs basic spam protection without a full captcha.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": ["relational-db"],
-			"capabilities": ["feedback form", "spam protection"],
-			"keywords": ["feedback", "honeypot", "spam", "form"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/abuse/honeypot.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/feedback",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/feedback",
-					"kind": "approute"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — non-sensitive user feedback, spam is the main risk",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
 			"id": "ai-tool-harness",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "AI tool manifest and harness split",
 			"category": "ai",
@@ -5430,6 +5105,7 @@
 		},
 		{
 			"id": "ai-surfaces",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "AI surfaces",
 			"category": "ai",
@@ -5453,8 +5129,27 @@
 					"when": "conversations are kept beyond the page"
 				}
 			],
-			"capabilities": ["ai chat", "chatbot", "deskbot", "ai surface split", "streaming chat", "ai assistant"],
-			"keywords": ["vely", "surface", "guard", "orchestrator", "rag-demo", "citation", "deskbot split over one guard"],
+			"capabilities": [
+				"ai chat",
+				"chatbot",
+				"deskbot",
+				"ai surface split",
+				"streaming chat",
+				"ai assistant",
+				"chat orchestration"
+			],
+			"keywords": [
+				"vely",
+				"surface",
+				"guard",
+				"orchestrator",
+				"rag-demo",
+				"citation",
+				"deskbot split over one guard",
+				"streaming",
+				"ai sdk",
+				"chat assistant"
+			],
 			"depends_on": ["ai-tool-harness"],
 			"docs": [
 				{
@@ -5468,6 +5163,10 @@
 				{
 					"path": "docs/blueprint/ai/desk-integration.md",
 					"note": "How the deskbot integrates with the desk"
+				},
+				{
+					"path": "docs/stack/ai/ai-sdk.md",
+					"note": "Chat assistant — The chat-orchestrator module streams multi-provider LLM responses through Vely, v10r's floating chat assistant, using Vercel AI SDK v6. Reach for it when a product needs a streaming, tool-capable chat UI backed by interchangeable LLM providers."
 				}
 			],
 			"code": [
@@ -5546,6 +5245,7 @@
 		},
 		{
 			"id": "deskbot-approval-gate",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Deskbot approval gate",
 			"category": "ai",
@@ -5676,6 +5376,7 @@
 		},
 		{
 			"id": "layered-rag",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Grounded retrieval with a corpus map",
 			"category": "ai",
@@ -5798,6 +5499,7 @@
 		},
 		{
 			"id": "retrieval-endpoints",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Retrieval ingest/search endpoints",
 			"category": "ai",
@@ -5877,58 +5579,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ai-chat-assistant",
-			"tier": "light",
-			"title": "Chat assistant",
-			"category": "ai",
-			"summary": "The chat-orchestrator module streams multi-provider LLM responses through Vely, v10r's floating chat assistant, using Vercel AI SDK v6.",
-			"when_to_use": "Reach for it when a product needs a streaming, tool-capable chat UI backed by interchangeable LLM providers.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				"llm-provider",
-				{
-					"need": "relational-db",
-					"level": "conditional",
-					"when": "conversations are kept beyond the page"
-				}
-			],
-			"capabilities": ["streaming chat", "chat orchestration"],
-			"keywords": ["vely", "orchestrator", "streaming", "ai sdk"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/ai/README.md"
-				},
-				{
-					"path": "docs/stack/ai/ai-sdk.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/ai/chat-orchestrator.ts"
-				},
-				{
-					"path": "src/lib/components/composites/chatbot",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/ai/chatbot",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "medium — external LLM providers with quota limits",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "ai-chatbot-session",
+			"id": "chatbot-session",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Persistent minimizable chatbot session",
 			"category": "ai",
@@ -5965,7 +5617,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ai-provider-routing",
+			"id": "provider-routing",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Provider registry & routing",
 			"category": "ai",
@@ -6001,7 +5654,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ai-site-awareness",
+			"id": "chatbot-site-awareness",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Chatbot site awareness",
 			"category": "ai",
@@ -6031,7 +5685,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-graph-rag",
+			"id": "graph-rag",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Graph RAG pipeline",
 			"category": "ai",
@@ -6073,7 +5728,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ai-turn-trace",
+			"id": "turn-trace",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Turn trace and turn graph",
 			"category": "ai",
@@ -6157,7 +5813,8 @@
 			"verifiedSha": "511776fa"
 		},
 		{
-			"id": "ai-image-metadata",
+			"id": "image-metadata-reader",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Image metadata reader",
 			"category": "ai",
@@ -6166,18 +5823,38 @@
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": ["llm-provider", "object-storage", "relational-db"],
-			"capabilities": ["vision analysis", "human approval"],
-			"keywords": ["image metadata", "vision", "approval dialog", "confidence"],
+			"capabilities": ["vision analysis", "human approval", "ai metadata", "ai cropping", "embedding"],
+			"keywords": [
+				"image metadata",
+				"vision",
+				"approval dialog",
+				"confidence",
+				"image kit",
+				"upload",
+				"toolkit",
+				"ai pipeline",
+				"upload → ai pipeline → adjust → approve",
+				"persists nothing"
+			],
 			"depends_on": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/image-metadata.md"
+				},
+				{
+					"path": "docs/blueprint/ai/image-kit.md",
+					"note": "Image Kit — A single-page toolkit that chains an AI metadata reader, frame-cropper, and embedder on one uploaded image, then discards the upload after an honest approval terminal. Use as a reference for building a stateless, multi-tool AI workflow that never persists user-uploaded media."
 				}
 			],
 			"code": [
 				{
 					"path": "src/lib/server/imagemeta",
 					"kind": "dir"
+				},
+				{
+					"path": "src/lib/server/showcases/image-kit",
+					"kind": "dir",
+					"note": "Image Kit"
 				}
 			],
 			"tests": [],
@@ -6185,6 +5862,11 @@
 				{
 					"path": "/showcases/toolkits/image-metadata",
 					"kind": "route"
+				},
+				{
+					"path": "/showcases/toolkits/image-kit",
+					"kind": "route",
+					"note": "Image Kit"
 				}
 			],
 			"invariants": [],
@@ -6196,6 +5878,7 @@
 		},
 		{
 			"id": "ai-cost-monitoring",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Cost & usage monitoring",
 			"category": "ai",
@@ -6235,7 +5918,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ai-toon-format",
+			"id": "toon-context-format",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "TOON token-efficient context format",
 			"category": "ai",
@@ -6267,6 +5951,7 @@
 		},
 		{
 			"id": "ai-deskbot",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Deskbot",
 			"category": "ai",
@@ -6303,7 +5988,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "ai-harness-lens",
+			"id": "agent-harness-lens",
+			"kind": "principle",
 			"tier": "light",
 			"title": "Agent-harness audit lens",
 			"category": "ai",
@@ -6347,53 +6033,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "toolkits-image-kit",
-			"tier": "light",
-			"title": "Image Kit",
-			"category": "toolkits",
-			"summary": "A single-page toolkit that chains an AI metadata reader, frame-cropper, and embedder on one uploaded image, then discards the upload after an honest approval terminal.",
-			"when_to_use": "Use as a reference for building a stateless, multi-tool AI workflow that never persists user-uploaded media.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": ["llm-provider", "object-storage"],
-			"capabilities": ["ai metadata", "ai cropping", "embedding"],
-			"keywords": [
-				"image kit",
-				"vision",
-				"upload",
-				"toolkit",
-				"ai pipeline",
-				"upload → ai pipeline → adjust → approve",
-				"persists nothing"
-			],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/ai/image-kit.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/showcases/image-kit",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/toolkits/image-kit",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — no persistence of uploaded media, vision-call cost is the main concern",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "analytics-pageview-hook",
+			"id": "pageview-collector",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Pageview collector hook",
 			"category": "analytics",
@@ -6430,7 +6071,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "analytics-consent-sessions",
+			"id": "consent-gated-sessions",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Consent-gated sessions",
 			"category": "analytics",
@@ -6470,7 +6112,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "analytics-journeys",
+			"id": "user-journeys",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "User journeys",
 			"category": "analytics",
@@ -6507,7 +6150,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "analytics-funnels",
+			"id": "funnels",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Funnels",
 			"category": "analytics",
@@ -6545,56 +6189,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "analytics-live-feed",
-			"tier": "light",
-			"title": "Live events feed",
-			"category": "analytics",
-			"summary": "An unauthenticated, self-limiting SSE stream at /api/analytics/stream pushes live event-style updates for the showcase demo, using synthetic rather than production data.",
-			"when_to_use": "Use as a template for a rate-limited public SSE endpoint that streams live-looking activity without exposing real user data.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				"relational-db",
-				{
-					"need": "key-value-store",
-					"level": "conditional",
-					"when": "more than one instance records hits (they are buffered in the shared store)"
-				}
-			],
-			"capabilities": ["sse streaming", "live feed"],
-			"keywords": ["sse", "live events", "synthetic data", "rate limit"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/analytics/activation.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/analytics",
-					"kind": "dir"
-				},
-				{
-					"path": "src/routes/api/analytics",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/analytics/live",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — unauthenticated but self-limited (per-IP rate, connection ceiling, hard timeout)",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "analytics-rollup-cleanup",
+			"id": "analytics-rollups",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Rollup & cleanup jobs",
 			"category": "analytics",
@@ -6634,52 +6230,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "analytics-my-data-transparency",
-			"tier": "light",
-			"title": "Visitor \"my data\" transparency",
-			"category": "analytics",
-			"summary": "An authenticated \"Your data\" page streams cookie state, live request metadata, and a full collectUserData report so a visitor can see what analytics has captured about them.",
-			"when_to_use": "Use when a product needs a self-service transparency/export view satisfying a GDPR Art. 15 access request.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				"relational-db",
-				{
-					"need": "key-value-store",
-					"level": "implementation",
-					"why": "the bot-hit buffer it cites is kept in Redis"
-				}
-			],
-			"capabilities": ["gdpr transparency", "data access request"],
-			"keywords": ["art 15", "my data", "transparency page"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/stack/capabilities/gdpr.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/analytics",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/analytics/my-data",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — read-only authenticated page, no external service",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "notifications-router-outbox",
+			"id": "notification-outbox",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Notification router, outbox and delivery worker",
 			"category": "notifications",
@@ -6695,12 +6247,24 @@
 					"when": "the host has no persistent process to run the delivery worker (serverless: a cron sweep drains the outbox)"
 				}
 			],
-			"capabilities": ["notification routing", "outbox pattern"],
-			"keywords": ["outbox", "notificationservice", "delivery worker"],
+			"capabilities": ["notification routing", "outbox pattern", "database schema", "delivery log"],
+			"keywords": [
+				"outbox",
+				"notificationservice",
+				"delivery worker",
+				"notification_deliveries",
+				"schema",
+				"push_subscriptions",
+				"schema & delivery log"
+			],
 			"depends_on": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/notifications/routing.md"
+				},
+				{
+					"path": "docs/blueprint/notifications/schema.md",
+					"note": "Schema & delivery log — The multi-channel schema adds per-user channel-connection tables, verification tokens, and push subscriptions, plus a notification_deliveries table logging per-channel send status. Use as the reference schema when modeling a new channel connection or auditing delivery outcomes."
 				}
 			],
 			"code": [
@@ -6709,9 +6273,23 @@
 				},
 				{
 					"path": "src/lib/server/notifications/outbox.ts"
+				},
+				{
+					"path": "src/lib/server/db/schema/notifications",
+					"kind": "dir",
+					"note": "Schema & delivery log"
 				}
 			],
-			"tests": [],
+			"tests": [
+				{
+					"path": "src/lib/server/notifications/outbox.pglite.test.ts",
+					"note": "Schema & delivery log"
+				},
+				{
+					"path": "src/lib/server/jobs/notification-delivery.pglite.test.ts",
+					"note": "Schema & delivery log"
+				}
+			],
 			"showcases": [
 				{
 					"path": "/showcases/notifications/pipeline",
@@ -6726,7 +6304,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "notifications-channels",
+			"id": "notification-channels",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Channel providers",
 			"category": "notifications",
@@ -6780,7 +6359,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "notifications-sse-stream",
+			"id": "notification-stream",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "In-app SSE stream & notification center",
 			"category": "notifications",
@@ -6796,12 +6376,24 @@
 					"when": "the host is serverless, where pub/sub replaces the in-memory connection map"
 				}
 			],
-			"capabilities": ["sse stream", "notification center"],
-			"keywords": ["sse", "connection map", "redis pub/sub"],
+			"capabilities": ["sse stream", "notification center", "sse streaming", "live feed"],
+			"keywords": [
+				"sse",
+				"connection map",
+				"redis pub/sub",
+				"live events",
+				"synthetic data",
+				"rate limit",
+				"live events feed"
+			],
 			"depends_on": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/app-shell/notifications.md"
+				},
+				{
+					"path": "docs/blueprint/analytics/activation.md",
+					"note": "Live events feed — An unauthenticated, self-limiting SSE stream at /api/analytics/stream pushes live event-style updates for the showcase demo, using synthetic rather than production data. Use as a template for a rate-limited public SSE endpoint that streams live-looking activity without exposing real user data."
 				}
 			],
 			"code": [
@@ -6810,6 +6402,16 @@
 				},
 				{
 					"path": "src/routes/api/notifications/stream/+server.ts"
+				},
+				{
+					"path": "src/lib/server/analytics",
+					"kind": "dir",
+					"note": "Live events feed"
+				},
+				{
+					"path": "src/routes/api/analytics",
+					"kind": "dir",
+					"note": "Live events feed"
 				}
 			],
 			"tests": [],
@@ -6817,6 +6419,11 @@
 				{
 					"path": "/showcases/notifications/send",
 					"kind": "route"
+				},
+				{
+					"path": "/showcases/analytics/live",
+					"kind": "route",
+					"note": "Live events feed"
 				}
 			],
 			"invariants": [],
@@ -6827,7 +6434,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "notifications-settings-matrix",
+			"id": "notification-settings-matrix",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Settings matrix",
 			"category": "notifications",
@@ -6865,47 +6473,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "notifications-schema-delivery-log",
-			"tier": "light",
-			"title": "Schema & delivery log",
-			"category": "notifications",
-			"summary": "The multi-channel schema adds per-user channel-connection tables, verification tokens, and push subscriptions, plus a notification_deliveries table logging per-channel send status.",
-			"when_to_use": "Use as the reference schema when modeling a new channel connection or auditing delivery outcomes.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": ["relational-db"],
-			"capabilities": ["database schema", "delivery log"],
-			"keywords": ["notification_deliveries", "schema", "push_subscriptions"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/notifications/schema.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/db/schema/notifications",
-					"kind": "dir"
-				}
-			],
-			"tests": [
-				{
-					"path": "src/lib/server/notifications/outbox.pglite.test.ts"
-				},
-				{
-					"path": "src/lib/server/jobs/notification-delivery.pglite.test.ts"
-				}
-			],
-			"showcases": [],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — schema/reference only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "jobs-scheduler",
+			"id": "job-scheduling",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Jobs and scheduling",
 			"category": "jobs",
@@ -6930,8 +6499,26 @@
 					"prefer_when": "the work is a fire-and-forget side effect of one request whose silent failure is acceptable"
 				}
 			],
-			"needs": ["relational-db", "scheduler"],
-			"capabilities": ["background jobs", "cron", "scheduled tasks", "job registry", "recurring work"],
+			"needs": [
+				"relational-db",
+				"scheduler",
+				{
+					"need": "object-storage",
+					"level": "implementation",
+					"why": "v10r's registered jobs (implementation inventory) uses it: one registered job reaps orphaned blog assets in object storage"
+				}
+			],
+			"capabilities": [
+				"background jobs",
+				"cron",
+				"scheduled tasks",
+				"job registry",
+				"recurring work",
+				"cron scheduling",
+				"platform-agnostic jobs",
+				"retention jobs",
+				"cleanup jobs"
+			],
 			"keywords": [
 				"scheduler",
 				"runner",
@@ -6940,13 +6527,27 @@
 				"idempotent",
 				"slug",
 				"registry",
-				"platform-owned cadence"
+				"platform-owned cadence",
+				"api/cron",
+				"container setinterval",
+				"platform scheduling",
+				"job registry",
+				"retention window",
+				"retention",
+				"cleanup",
+				"sync",
+				"delivery",
+				"registered jobs"
 			],
 			"depends_on": ["multi-client-core"],
 			"docs": [
 				{
 					"path": "docs/blueprint/architecture/jobs.md",
 					"note": "The full pattern including cadence ownership"
+				},
+				{
+					"path": "docs/blueprint/deployment.md",
+					"note": "Platform scheduling — Cadence is owned entirely by platform config — vercel.json crons hitting /api/cron/[job] on serverless, or a single flat setInterval scheduler on persistent containers — so the job registry itself never changes when switching hosts. Use when a job must run on a schedule across more than one hosting target without duplicating scheduling logic per platform."
 				}
 			],
 			"code": [
@@ -6973,6 +6574,16 @@
 				{
 					"path": "vercel.json",
 					"note": "Where cron schedules live"
+				},
+				{
+					"path": "src/routes/api/cron",
+					"kind": "dir",
+					"note": "Platform scheduling"
+				},
+				{
+					"path": "src/lib/server/jobs",
+					"kind": "dir",
+					"note": "Registered jobs — The concrete job implementations — retention sweeps, cleanup, external sync, and delivery — are idempotent slug-keyed functions run by the shared runner and manageable from an admin UI. Use this catalog as the template when adding a new retention, cleanup, sync, or delivery job to the registry."
 				}
 			],
 			"tests": [
@@ -6990,6 +6601,11 @@
 				{
 					"path": "/showcases/jobs",
 					"kind": "route"
+				},
+				{
+					"path": "/admin/jobs",
+					"kind": "approute",
+					"note": "Registered jobs"
 				}
 			],
 			"invariants": [
@@ -7010,104 +6626,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "jobs-platform-scheduling",
-			"tier": "light",
-			"title": "Platform scheduling",
-			"category": "jobs",
-			"summary": "Cadence is owned entirely by platform config — vercel.json crons hitting /api/cron/[job] on serverless, or a single flat setInterval scheduler on persistent containers — so the job registry itself never changes when switching hosts.",
-			"when_to_use": "Use when a job must run on a schedule across more than one hosting target without duplicating scheduling logic per platform.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": ["scheduler"],
-			"capabilities": ["cron scheduling", "platform-agnostic jobs"],
-			"keywords": ["vercel cron", "setinterval", "api/cron", "container setinterval"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/architecture/jobs.md"
-				},
-				{
-					"path": "docs/blueprint/deployment.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/jobs/scheduler.ts"
-				},
-				{
-					"path": "src/routes/api/cron",
-					"kind": "dir"
-				},
-				{
-					"path": "vercel.json"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/jobs",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "medium — touches deploy config (vercel.json crons) and background execution",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "jobs-registered-catalog",
-			"tier": "light",
-			"title": "Registered jobs",
-			"category": "jobs",
-			"summary": "The concrete job implementations — retention sweeps, cleanup, external sync, and delivery — are idempotent slug-keyed functions run by the shared runner and manageable from an admin UI.",
-			"when_to_use": "Use this catalog as the template when adding a new retention, cleanup, sync, or delivery job to the registry.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				"scheduler",
-				{
-					"need": "relational-db",
-					"level": "implementation",
-					"why": "v10r's registered jobs (retention, rollups) work on Postgres tables"
-				},
-				{
-					"need": "object-storage",
-					"level": "implementation",
-					"why": "one registered job reaps orphaned blog assets in object storage"
-				}
-			],
-			"capabilities": ["retention jobs", "cleanup jobs"],
-			"keywords": ["job registry", "idempotent", "retention window", "retention", "cleanup", "sync", "delivery"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/architecture/jobs.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/server/jobs",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/admin/jobs",
-					"kind": "approute"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — idempotent, age-filtered deletes/syncs, admin-gated manual trigger",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "pwa-manifest",
+			"id": "web-app-manifest",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Localized manifest & installability",
 			"category": "pwa",
@@ -7148,7 +6668,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "pwa-service-worker",
+			"id": "service-worker-caching",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Service-worker caching contract",
 			"category": "pwa",
@@ -7197,6 +6718,7 @@
 		},
 		{
 			"id": "pwa-update-flow",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Update flow",
 			"category": "pwa",
@@ -7233,7 +6755,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "pwa-web-push",
+			"id": "web-push",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Web push channel",
 			"category": "pwa",
@@ -7272,17 +6795,60 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "viz-charts",
+			"id": "data-visualization",
+			"kind": "pattern",
 			"tier": "light",
-			"title": "Charts",
+			"title": "Data visualization",
 			"category": "viz",
-			"summary": "Chart.js wrapper components for standard statistical charts (bar, line, area, pie, radar, bubble, scatter) with SSR-safe canvas lifecycle handling.",
-			"when_to_use": "Reach for it when a page needs a standard statistical chart type backed by Chart.js rather than a custom SVG visualization.",
+			"summary": "Svelte components over specialised renderers, each loaded only in the browser: Chart.js charts and scatter plots with an SSR-safe canvas lifecycle, a canvas heatmap, @xyflow flow and state diagrams, MapLibre maps with GeoJSON choropleths, and timelines of dated events.",
+			"when_to_use": "Reach for it when a page needs a standard chart, plot, diagram, map or timeline backed by a proven renderer rather than a custom SVG visualization.",
 			"avoid_when": [],
 			"alternatives": [],
-			"needs": [],
-			"capabilities": ["bar/line/pie charts", "canvas cleanup", "ssr guard"],
-			"keywords": ["chart.js", "sparkline", "gauge", "statistics"],
+			"needs": [
+				{
+					"need": "external-api",
+					"level": "implementation",
+					"why": "v10r's maps (implementation inventory) uses it: map tiles come from a tile server"
+				}
+			],
+			"capabilities": [
+				"bar/line/pie charts",
+				"canvas cleanup",
+				"ssr guard",
+				"scatter plot",
+				"heatmap",
+				"flow diagrams",
+				"state diagrams",
+				"custom node types",
+				"webgl base map",
+				"markers",
+				"geojson choropleth",
+				"timeline rendering"
+			],
+			"keywords": [
+				"chart.js",
+				"sparkline",
+				"gauge",
+				"statistics",
+				"heatmap",
+				"scatter",
+				"canvas",
+				"plots",
+				"xyflow",
+				"svelte flow",
+				"flowchart",
+				"state machine",
+				"diagrams",
+				"maplibre",
+				"geojson",
+				"choropleth",
+				"webgl",
+				"maps",
+				"timeline",
+				"chronology",
+				"events",
+				"timelines"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -7293,6 +6859,26 @@
 				{
 					"path": "src/lib/components/viz/chart",
 					"kind": "dir"
+				},
+				{
+					"path": "src/lib/components/viz/plot",
+					"kind": "dir",
+					"note": "Plots — Chart.js scatter plots and a canvas-based heatmap component for visualizing continuous or correlated data. Use when a dataset calls for a scatter plot or heatmap rather than a categorical chart."
+				},
+				{
+					"path": "src/lib/components/viz/diagram",
+					"kind": "dir",
+					"note": "Diagrams — @xyflow/svelte-based flow and state diagram components with custom node types for interactive node-edge visualizations. Use when building an interactive flowchart or state-machine diagram that needs draggable, connectable nodes."
+				},
+				{
+					"path": "src/lib/components/viz/map",
+					"kind": "dir",
+					"note": "Maps — MapLibre GL components for a base map, markers, and GeoJSON choropleth overlays, using free CartoDB tiles. Use when a page needs an interactive WebGL map with markers or geographic data overlays."
+				},
+				{
+					"path": "src/lib/components/viz/timeline",
+					"kind": "dir",
+					"note": "Timelines — Timeline visualization components for displaying a sequence of dated events. Use when presenting chronological events or milestones rather than numeric data."
 				}
 			],
 			"tests": [],
@@ -7300,82 +6886,21 @@
 				{
 					"path": "/showcases/viz/charts",
 					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "viz-plots",
-			"tier": "light",
-			"title": "Plots",
-			"category": "viz",
-			"summary": "Chart.js scatter plots and a canvas-based heatmap component for visualizing continuous or correlated data.",
-			"when_to_use": "Use when a dataset calls for a scatter plot or heatmap rather than a categorical chart.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["scatter plot", "heatmap"],
-			"keywords": ["chart.js", "heatmap", "scatter", "canvas"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/stack/capabilities/viz.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/viz/plot",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
+				},
 				{
 					"path": "/showcases/viz/plots",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "viz-diagrams",
-			"tier": "light",
-			"title": "Diagrams",
-			"category": "viz",
-			"summary": "@xyflow/svelte-based flow and state diagram components with custom node types for interactive node-edge visualizations.",
-			"when_to_use": "Use when building an interactive flowchart or state-machine diagram that needs draggable, connectable nodes.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["flow diagrams", "state diagrams", "custom node types"],
-			"keywords": ["xyflow", "svelte flow", "flowchart", "state machine"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/stack/capabilities/viz.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/viz/diagram",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
+					"kind": "route",
+					"note": "Plots"
+				},
 				{
 					"path": "/showcases/viz/diagrams",
-					"kind": "route"
+					"kind": "route",
+					"note": "Diagrams"
+				},
+				{
+					"path": "/showcases/viz/maps",
+					"kind": "route",
+					"note": "Maps"
 				}
 			],
 			"invariants": [],
@@ -7386,7 +6911,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "viz-graphs",
+			"id": "node-graph-layout",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Node graphs",
 			"category": "viz",
@@ -7424,82 +6950,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "viz-maps",
-			"tier": "light",
-			"title": "Maps",
-			"category": "viz",
-			"summary": "MapLibre GL components for a base map, markers, and GeoJSON choropleth overlays, using free CartoDB tiles.",
-			"when_to_use": "Use when a page needs an interactive WebGL map with markers or geographic data overlays.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [
-				{
-					"need": "external-api",
-					"level": "conditional",
-					"when": "map tiles come from a tile server"
-				}
-			],
-			"capabilities": ["webgl base map", "markers", "geojson choropleth"],
-			"keywords": ["maplibre", "geojson", "choropleth", "webgl"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/stack/capabilities/viz.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/viz/map",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [
-				{
-					"path": "/showcases/viz/maps",
-					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "viz-timelines",
-			"tier": "light",
-			"title": "Timelines",
-			"category": "viz",
-			"summary": "Timeline visualization components for displaying a sequence of dated events.",
-			"when_to_use": "Use when presenting chronological events or milestones rather than numeric data.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["timeline rendering"],
-			"keywords": ["timeline", "chronology", "events"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/stack/capabilities/viz.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/viz/timeline",
-					"kind": "dir"
-				}
-			],
-			"tests": [],
-			"showcases": [],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "implemented"
-		},
-		{
-			"id": "3d-threlte-integration",
+			"id": "threlte-integration",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Threlte integration",
 			"category": "3d",
@@ -7508,8 +6960,25 @@
 			"avoid_when": [],
 			"alternatives": [],
 			"needs": [],
-			"capabilities": ["declarative three.js scenes", "ssr-off subtree", "model config registry"],
-			"keywords": ["threlte", "three.js", "webgl", "gltf", "ssr-off", "code-split model registry"],
+			"capabilities": [
+				"declarative three.js scenes",
+				"ssr-off subtree",
+				"model config registry",
+				"gltf loading",
+				"orbit controls",
+				"animation playback"
+			],
+			"keywords": [
+				"threlte",
+				"three.js",
+				"webgl",
+				"gltf",
+				"ssr-off",
+				"code-split model registry",
+				"animation mixer",
+				"orbit controls",
+				"static & animated scenes"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -7517,6 +6986,10 @@
 				},
 				{
 					"path": "docs/stack/capabilities/3d-web.md"
+				},
+				{
+					"path": "docs/blueprint/3d/3d-quick-reference.md",
+					"note": "Static & animated scenes — A shared scene component that renders either a static GLTF model with orbit controls or one with animation clips playing via an AnimationMixer. Use as the starting template for a new 3D showcase scene, static or animated."
 				}
 			],
 			"code": [
@@ -7526,6 +6999,10 @@
 				},
 				{
 					"path": "src/lib/3d/models.ts"
+				},
+				{
+					"path": "src/lib/components/3d/SceneContent.svelte",
+					"note": "Static & animated scenes"
 				}
 			],
 			"tests": [],
@@ -7533,47 +7010,16 @@
 				{
 					"path": "/showcases/3d",
 					"kind": "route"
-				}
-			],
-			"invariants": [],
-			"emulation_notes": [],
-			"risk": "low — frontend only",
-			"maturity": "proven",
-			"verifiedAt": "2026-08-20",
-			"verifiedSha": "1a130d67"
-		},
-		{
-			"id": "3d-static-animated-scenes",
-			"tier": "light",
-			"title": "Static & animated scenes",
-			"category": "3d",
-			"summary": "A shared scene component that renders either a static GLTF model with orbit controls or one with animation clips playing via an AnimationMixer.",
-			"when_to_use": "Use as the starting template for a new 3D showcase scene, static or animated.",
-			"avoid_when": [],
-			"alternatives": [],
-			"needs": [],
-			"capabilities": ["gltf loading", "orbit controls", "animation playback"],
-			"keywords": ["threlte", "gltf", "animation mixer", "orbit controls"],
-			"depends_on": [],
-			"docs": [
-				{
-					"path": "docs/blueprint/3d/3d-quick-reference.md"
-				}
-			],
-			"code": [
-				{
-					"path": "src/lib/components/3d/SceneContent.svelte"
-				}
-			],
-			"tests": [],
-			"showcases": [
+				},
 				{
 					"path": "/showcases/3d/static-scene",
-					"kind": "route"
+					"kind": "route",
+					"note": "Static & animated scenes"
 				},
 				{
 					"path": "/showcases/3d/animated-scene",
-					"kind": "route"
+					"kind": "route",
+					"note": "Static & animated scenes"
 				}
 			],
 			"invariants": [],
@@ -7584,7 +7030,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "3d-model-viewer-customizer",
+			"id": "model-viewer-customizer",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Full-screen model viewer and customizer",
 			"category": "3d",
@@ -7626,6 +7073,7 @@
 		},
 		{
 			"id": "product-connection-engine",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Product composition engine",
 			"category": "3d",
@@ -7671,7 +7119,7 @@
 				"couplings",
 				"conduits"
 			],
-			"depends_on": ["3d-threlte-integration"],
+			"depends_on": ["threlte-integration"],
 			"docs": [
 				{
 					"path": "docs/blueprint/3d/product-composition.md",
@@ -7776,6 +7224,7 @@
 		},
 		{
 			"id": "asset-production-pipeline",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Asset production pipeline",
 			"category": "3d",
@@ -7827,13 +7276,7 @@
 				"openscad",
 				"typed request → checked glb"
 			],
-			"depends_on": [
-				"3d-threlte-integration",
-				"derivation-key",
-				"provenance-record",
-				"anti-abuse-rate-limiting",
-				"architecture-hosted-mcp"
-			],
+			"depends_on": ["threlte-integration", "derivation-key", "provenance-record", "rate-limiting", "hosted-mcp"],
 			"docs": [
 				{
 					"path": "docs/blueprint/3d/asset-production.md",
@@ -7934,6 +7377,7 @@
 		},
 		{
 			"id": "agentic-parametric-modeling",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Agentic parametric modeling",
 			"category": "3d",
@@ -7996,11 +7440,11 @@
 			],
 			"depends_on": [
 				"asset-production-pipeline",
-				"architecture-mcp-authorization",
-				"architecture-hosted-mcp",
-				"ai-mcp-app-provider",
-				"anti-abuse-rate-limiting",
-				"3d-threlte-integration"
+				"mcp-authorization",
+				"hosted-mcp",
+				"mcp-app-provider",
+				"rate-limiting",
+				"threlte-integration"
 			],
 			"docs": [
 				{
@@ -8086,7 +7530,7 @@
 				"A model over any limit is refused before the kernel runs, with the path of the field; the real triangle count and a deadline are checked between operations.",
 				"Model definitions are never logged, traced or recorded.",
 				"The MCP 3D service shares protocol infrastructure with the Pattern MCP and nothing else: separate endpoint, identity, registry, App and limits.",
-				"The MCP 3D service requires a Velociraptor account: an OAuth access token for its audience on every request (architecture-mcp-authorization)."
+				"The MCP 3D service requires a Velociraptor account: an OAuth access token for its audience on every request (mcp-authorization)."
 			],
 			"emulation_notes": [
 				"Advertise the model argument as a plain object and serve the vocabulary from a describe tool: a full JSON Schema in tools/list costs ~9k tokens per connection.",
@@ -8098,7 +7542,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "content-blog-engine",
+			"id": "blog-engine",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Blog engine",
 			"category": "content",
@@ -8147,7 +7592,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "content-comments",
+			"id": "comments",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Comments",
 			"category": "content",
@@ -8186,7 +7632,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "content-markdown-pipeline",
+			"id": "markdown-pipeline",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Markdown pipeline and custom syntax",
 			"category": "content",
@@ -8238,7 +7685,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "content-markdown-editor",
+			"id": "markdown-editor",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Markdown editor",
 			"category": "content",
@@ -8277,7 +7725,8 @@
 			"verifiedSha": "1a130d67"
 		},
 		{
-			"id": "content-docs-site",
+			"id": "prerendered-docs-site",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Prerendered docs site",
 			"category": "content",
@@ -8316,6 +7765,7 @@
 		},
 		{
 			"id": "desk-workspace",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Desk workspace",
 			"category": "desk",
@@ -8441,6 +7891,7 @@
 		},
 		{
 			"id": "desk-spreadsheet-panel",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Spreadsheet panel",
 			"category": "desk",
@@ -8496,6 +7947,7 @@
 		},
 		{
 			"id": "desk-mobile-chrome",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Desk mobile chrome",
 			"category": "desk",
@@ -8557,6 +8009,7 @@
 		},
 		{
 			"id": "desk-panel-menus",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Composed panel menus",
 			"category": "desk",
@@ -8618,6 +8071,7 @@
 		},
 		{
 			"id": "desk-ai-effects",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "AI desk effects",
 			"category": "desk",
@@ -8673,6 +8127,7 @@
 		},
 		{
 			"id": "desk-explorer",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Explorer panel",
 			"category": "desk",
@@ -8729,6 +8184,7 @@
 		},
 		{
 			"id": "optimistic-mutation",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Optimistic mutation",
 			"category": "velocity-interaction",
@@ -8803,6 +8259,7 @@
 		},
 		{
 			"id": "intent-preloading",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Intent-based preloading",
 			"category": "velocity-interaction",
@@ -8877,6 +8334,7 @@
 		},
 		{
 			"id": "virtualized-rendering",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Virtualized rendering",
 			"category": "velocity-interaction",
@@ -8908,7 +8366,7 @@
 				"slow scrolling",
 				"windowing maths split from the component"
 			],
-			"depends_on": ["ui-component-system"],
+			"depends_on": ["component-system"],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/interaction.md#virtualized-rendering",
@@ -8949,7 +8407,8 @@
 			"verifiedSha": "921e8266-dirty"
 		},
 		{
-			"id": "velocity-idle-work",
+			"id": "idle-work",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Idle and speculative work",
 			"category": "velocity-interaction",
@@ -8989,6 +8448,7 @@
 		},
 		{
 			"id": "hierarchical-cache",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Hierarchical cache",
 			"category": "velocity-data",
@@ -9020,7 +8480,7 @@
 					"when": "more than one instance serves and the shared tier is wanted; one process runs on the memory tier"
 				}
 			],
-			"capabilities": ["caching", "cache tiers", "TTL", "cache invalidation", "cache scope"],
+			"capabilities": ["caching", "cache tiers", "TTL", "cache invalidation", "cache scope", "ephemeral state"],
 			"keywords": [
 				"cache",
 				"ttl",
@@ -9032,13 +8492,26 @@
 				"cache key",
 				"slow query",
 				"local → shared → origin",
-				"with key scope enforced"
+				"with key scope enforced",
+				"rate limiting",
+				"ephemeral",
+				"upstash redis",
+				"ephemeral patterns",
+				"redis cache client"
 			],
 			"depends_on": [],
 			"docs": [
 				{
 					"path": "docs/blueprint/velocity/data.md#hierarchical-cache",
 					"note": "The tiers, and key identity as a security boundary"
+				},
+				{
+					"path": "docs/stack/data/redis.md",
+					"note": "Redis cache client — In-memory key-value store on Upstash Redis, reached over HTTP REST, used for rate limiting, the circuit breaker, and other ephemeral counters. Use when a feature needs fast, short-lived state, such as counters or locks, without Postgres's durability guarantees."
+				},
+				{
+					"path": "docs/stack/ops/caching.md",
+					"note": "Redis cache client"
 				}
 			],
 			"code": [
@@ -9053,6 +8526,11 @@
 				{
 					"path": "src/lib/server/style/cookie-scope.ts",
 					"note": "Keeps the style cookie off responses meant for the CDN"
+				},
+				{
+					"path": "src/lib/server/cache",
+					"kind": "dir",
+					"note": "Redis cache client"
 				}
 			],
 			"tests": [
@@ -9067,6 +8545,21 @@
 				{
 					"path": "/showcases/velocity/data",
 					"kind": "route"
+				},
+				{
+					"path": "/showcases/db/cache/connection",
+					"kind": "route",
+					"note": "Redis cache client"
+				},
+				{
+					"path": "/showcases/db/cache/patterns",
+					"kind": "route",
+					"note": "Redis cache client"
+				},
+				{
+					"path": "/showcases/db/cache/ephemeral",
+					"kind": "route",
+					"note": "Redis cache client"
 				}
 			],
 			"invariants": [
@@ -9089,6 +8582,7 @@
 		},
 		{
 			"id": "stale-while-revalidate",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Stale-while-revalidate",
 			"category": "velocity-data",
@@ -9155,6 +8649,7 @@
 		},
 		{
 			"id": "singleflight",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Singleflight stampede protection",
 			"category": "velocity-data",
@@ -9236,6 +8731,7 @@
 		},
 		{
 			"id": "no-waterfall-loading",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "No-waterfall data loading",
 			"category": "velocity-data",
@@ -9317,7 +8813,8 @@
 			"verifiedSha": "921e8266-dirty"
 		},
 		{
-			"id": "velocity-screen-read-model",
+			"id": "screen-read-model",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Screen read model",
 			"category": "velocity-data",
@@ -9354,6 +8851,7 @@
 		},
 		{
 			"id": "query-budget",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Query budget and N+1 proof",
 			"category": "velocity-data",
@@ -9442,6 +8940,7 @@
 		},
 		{
 			"id": "critical-path-deferred-tail",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Critical path / deferred tail",
 			"category": "velocity-runtime",
@@ -9531,6 +9030,7 @@
 		},
 		{
 			"id": "critical-rendering-path",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Critical rendering path",
 			"category": "velocity-runtime",
@@ -9605,6 +9105,7 @@
 		},
 		{
 			"id": "heavy-dependency-quarantine",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Heavy dependency quarantine",
 			"category": "velocity-runtime",
@@ -9686,6 +9187,7 @@
 		},
 		{
 			"id": "side-effect-free-components",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Side-effect-free component tree",
 			"category": "velocity-runtime",
@@ -9758,6 +9260,7 @@
 		},
 		{
 			"id": "main-thread-budget",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Main-thread budget",
 			"category": "velocity-runtime",
@@ -9860,6 +9363,7 @@
 		},
 		{
 			"id": "resilience-policy",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Resilience policy",
 			"category": "velocity-runtime",
@@ -9982,7 +9486,8 @@
 			"verifiedSha": "921e8266-dirty"
 		},
 		{
-			"id": "velocity-asset-delivery",
+			"id": "asset-delivery-pipeline",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Asset delivery pipeline",
 			"category": "velocity-runtime",
@@ -10076,7 +9581,8 @@
 			"verifiedSha": "149f43a7-dirty"
 		},
 		{
-			"id": "velocity-compute-locality",
+			"id": "compute-locality",
+			"kind": "pattern",
 			"tier": "light",
 			"title": "Compute and data locality",
 			"category": "velocity-runtime",
@@ -10119,6 +9625,7 @@
 		},
 		{
 			"id": "deadline-propagation",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Deadline propagation",
 			"category": "velocity-runtime",
@@ -10206,6 +9713,7 @@
 		},
 		{
 			"id": "latency-tracing",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Latency tracing",
 			"category": "velocity-measurement",
@@ -10296,6 +9804,7 @@
 		},
 		{
 			"id": "performance-budget-ratchet",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Performance budget and ratchet",
 			"category": "velocity-measurement",
@@ -10389,6 +9898,7 @@
 		},
 		{
 			"id": "scenario-harness",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Performance scenario harness",
 			"category": "velocity-measurement",
@@ -10475,15 +9985,15 @@
 			"verifiedSha": "921e8266-dirty"
 		},
 		{
-			"id": "name-check",
+			"id": "multi-source-aggregation",
+			"kind": "pattern",
 			"tier": "deep",
-			"title": "Name check",
+			"title": "Multi-source aggregation",
 			"category": "integrations",
-			"summary": "One report from several unreliable upstreams: concurrent per-source deadlines, a breaker, bulkhead and daily quota per source, per-source coverage instead of failure, dependency-free name similarity, and a descriptive conflict signal that never claims legal availability.",
+			"summary": "One honest report from several unreliable upstreams: concurrent per-source deadlines, a breaker, bulkhead and daily quota per source, and a coverage row per source instead of an all-or-nothing failure.",
 			"when_to_use": "Use when a feature aggregates third-party APIs of uneven reliability and the user needs an honest partial answer — what was found, and where the search could not look — rather than an all-or-nothing one.",
 			"avoid_when": [
-				"One reliable upstream answers the question — per-source breakers, quotas, bulkheads and coverage rows have nothing to aggregate",
-				"The caller needs an authoritative verdict such as legal clearance — the report only describes what was found and where it could not look"
+				"One reliable upstream answers the question — per-source breakers, quotas, bulkheads and coverage rows have nothing to aggregate"
 			],
 			"alternatives": [
 				{
@@ -10511,29 +10021,26 @@
 			"capabilities": [
 				"multi-source aggregation",
 				"per-source coverage",
-				"name similarity",
 				"external api resilience",
 				"daily quota",
 				"manual fallback links"
 			],
 			"keywords": [
-				"name check",
-				"trademark",
-				"brand",
-				"euipo",
-				"gleif",
-				"rdap",
 				"fan-out",
 				"coverage",
-				"levenshtein",
-				"phonetic",
 				"quota",
 				"aggregation",
 				"partial results",
-				"resilient multi-source fan-out"
+				"resilient multi-source fan-out",
+				"upstream",
+				"bulkhead"
 			],
 			"depends_on": ["resilience-policy", "deadline-propagation", "hierarchical-cache"],
 			"docs": [
+				{
+					"path": "docs/blueprint/name-check.md#pattern-boundaries",
+					"note": "The reusable aggregation mechanism and what the name-check feature adds on top"
+				},
 				{
 					"path": "docs/blueprint/name-check.md",
 					"note": "The pattern: vocabulary, pipeline, sources, resilience, privacy, what the UI never says"
@@ -10545,42 +10052,18 @@
 					"note": "The fan-out: cache → breaker → quota → bulkhead → deadline per source; every error class mapped to one coverage status"
 				},
 				{
-					"path": "src/lib/server/name-check/similarity.ts",
-					"note": "Dependency-free similarity ladder; the best rung names itself as the basis"
-				},
-				{
-					"path": "src/lib/server/name-check/signal.ts",
-					"note": "Conflict level from explicit predicates, reasons as codes"
-				},
-				{
-					"path": "src/lib/server/name-check/sources/rdap.ts",
-					"note": "IANA bootstrap + registry override + DNS evidence + honest lookup_unavailable"
-				},
-				{
 					"path": "src/lib/server/name-check/name-source.ts",
 					"note": "The NameSource contract: territories and manualUrl before search"
 				},
 				{
 					"path": "src/lib/server/name-check/connections.ts",
 					"note": "Saved source connections → the credentials closure; configured decided once, secrets never on a field"
-				},
-				{
-					"path": "src/lib/name-check/report.ts",
-					"note": "Wire contract with no field that could render as legal availability"
 				}
 			],
 			"tests": [
 				{
 					"path": "src/lib/server/name-check/check.test.ts",
 					"note": "Partial failure, timeout, quota, credentials, cache hit, floor, scoping, and the name never reaching a log"
-				},
-				{
-					"path": "src/lib/server/name-check/similarity.test.ts",
-					"note": "The spec ladder in order, Kölner Phonetik on the textbook examples"
-				},
-				{
-					"path": "src/lib/server/name-check/signal.test.ts",
-					"note": "Each level's predicate and the manual-review rule"
 				},
 				{
 					"path": "src/lib/server/name-check/connections.test.ts",
@@ -10596,18 +10079,105 @@
 			],
 			"invariants": [
 				"A source failure changes its coverage row, never the HTTP status of the check.",
-				"The report never states legal availability, a safety verdict or a risk percentage; a similarity score is always shown with its basis.",
-				"The submitted name never reaches a log line or a store; only its sha256 keys the cache, and only successes are cached.",
 				"Every source shows its authoritative manual link, searched or not.",
 				"Vendor credentials are administrator-managed source connections sealed under ENCRYPTION_KEY, never environment variables; the only shape that reaches a client is the projection without the envelope.",
-				"The IP limiter runs before any upstream call; each live source has a daily quota, a breaker and a deadline child of the request's budget."
+				"Each live source has a daily quota, a breaker and a deadline child of the request's budget."
 			],
 			"emulation_notes": [
 				"Declare each upstream as a NameSource — territories and manualUrl first, search second. A registry you cannot query still earns a coverage row.",
 				"Map every thrown error class to exactly one coverage status in one function; new failure modes choose their status there.",
-				"Keep the similarity engine pure and fixture-tested, thresholds in config.ts; derive the level from predicates over evidence, never from a count.",
 				"Keep vendor credentials as administrator-managed source connections sealed under the deployment key, opened once per operation into a closure that hands the sources a credentials object; nothing is read from .env and the public check never fails because its settings table could not be read.",
 				"Fire an onSourceSettled callback per source so a streaming route can be added without touching the orchestration."
+			],
+			"risk": "medium — upstream contracts change without notice; a source without a usable API still needs its manual row",
+			"maturity": "proven",
+			"verifiedAt": "2026-09-18",
+			"verifiedSha": "dff6f415"
+		},
+		{
+			"id": "name-check",
+			"kind": "pattern",
+			"tier": "deep",
+			"title": "Name check",
+			"category": "integrations",
+			"summary": "Checks a proposed name against trademark registries, company registers and domains through a protected public endpoint: the IP limiter runs before any upstream call, then multi-source aggregation, dependency-free name similarity and a descriptive conflict signal that never claims legal availability.",
+			"when_to_use": "Use when users check a proposed product or company name against several registries at once and need an honest, partial-coverage answer, served from a public endpoint that must not let one caller spend the deployment's source quotas.",
+			"avoid_when": [
+				"The caller needs an authoritative verdict such as legal clearance — the report only describes what was found and where it could not look"
+			],
+			"alternatives": [
+				{
+					"approach": "Multi-source aggregation without the public name endpoint (an internal or authenticated caller)",
+					"prefer_when": "the caller is trusted or already rate-limited elsewhere, so the per-IP protection contract does not apply"
+				}
+			],
+			"needs": ["key-value-store"],
+			"capabilities": ["name similarity", "conflict signal", "name availability check", "public endpoint protection"],
+			"keywords": [
+				"name check",
+				"trademark",
+				"brand",
+				"euipo",
+				"gleif",
+				"rdap",
+				"levenshtein",
+				"phonetic",
+				"name search"
+			],
+			"depends_on": ["multi-source-aggregation", "rate-limiting"],
+			"docs": [
+				{
+					"path": "docs/blueprint/name-check.md",
+					"note": "The pattern: vocabulary, pipeline, sources, resilience, privacy, what the UI never says"
+				}
+			],
+			"code": [
+				{
+					"path": "src/lib/server/name-check/similarity.ts",
+					"note": "Dependency-free similarity ladder; the best rung names itself as the basis"
+				},
+				{
+					"path": "src/lib/server/name-check/signal.ts",
+					"note": "Conflict level from explicit predicates, reasons as codes"
+				},
+				{
+					"path": "src/lib/server/name-check/sources/rdap.ts",
+					"note": "IANA bootstrap + registry override + DNS evidence + honest lookup_unavailable"
+				},
+				{
+					"path": "src/lib/name-check/report.ts",
+					"note": "Wire contract with no field that could render as legal availability"
+				},
+				{
+					"path": "src/routes/api/name-check/+server.ts",
+					"note": "The protected public endpoint: IP limiter before any upstream call, bounded body, deadline child for the fan-out"
+				}
+			],
+			"tests": [
+				{
+					"path": "src/lib/server/name-check/similarity.test.ts",
+					"note": "The spec ladder in order, Kölner Phonetik on the textbook examples"
+				},
+				{
+					"path": "src/lib/server/name-check/signal.test.ts",
+					"note": "Each level's predicate and the manual-review rule"
+				}
+			],
+			"showcases": [
+				{
+					"path": "/showcases/name-check",
+					"kind": "route",
+					"note": "The form, the report, the coverage table with a manual link on every row"
+				}
+			],
+			"invariants": [
+				"The report never states legal availability, a safety verdict or a risk percentage; a similarity score is always shown with its basis.",
+				"The submitted name never reaches a log line or a store; only its sha256 keys the cache, and only successes are cached.",
+				"The public endpoint runs the IP rate limiter before any upstream call; the limiter fails closed, so without its key-value store the endpoint refuses rather than spending source quotas unprotected."
+			],
+			"emulation_notes": [
+				"Keep the similarity engine pure and fixture-tested, thresholds in config.ts; derive the level from predicates over evidence, never from a count.",
+				"Put the rate limiter in the route before the fan-out, and keep it fail-closed: a check spends every live source's quota, so an unprotected endpoint is a quota-exhaustion lever."
 			],
 			"risk": "medium — upstream contracts change without notice; EUIPO subscription approval takes days and its Sandbox runs on separate hosts",
 			"maturity": "proven",
@@ -10616,6 +10186,7 @@
 		},
 		{
 			"id": "source-of-truth-gate",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Source-of-truth gate",
 			"category": "integrity-truth",
@@ -10653,7 +10224,8 @@
 				"generated artifact check",
 				"fail-closed configuration",
 				"mirror binding",
-				"stale allowance ratchet"
+				"stale allowance ratchet",
+				"copy drift detection"
 			],
 			"keywords": [
 				"ssot",
@@ -10748,6 +10320,7 @@
 		},
 		{
 			"id": "evidence-status-dimensions",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Evidence status dimensions",
 			"category": "integrity-truth",
@@ -10864,6 +10437,7 @@
 		},
 		{
 			"id": "derivation-key",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Derivation key",
 			"category": "integrity-derivation",
@@ -10987,6 +10561,7 @@
 		},
 		{
 			"id": "reproducible-artifact-build",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Reproducible artifact build",
 			"category": "integrity-derivation",
@@ -11090,6 +10665,7 @@
 		},
 		{
 			"id": "provenance-record",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Provenance record",
 			"category": "integrity-derivation",
@@ -11196,6 +10772,7 @@
 		},
 		{
 			"id": "durable-step-execution",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Durable step execution",
 			"category": "integrity-execution",
@@ -11307,6 +10884,7 @@
 		},
 		{
 			"id": "versioned-document-session",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Versioned document session",
 			"category": "integrity-execution",
@@ -11405,6 +10983,7 @@
 		},
 		{
 			"id": "dynamic-attributes",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Dynamic attributes",
 			"category": "forms",
@@ -11586,6 +11165,7 @@
 		},
 		{
 			"id": "asset-rights-manifest",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Asset rights manifest",
 			"category": "integrity-truth",
@@ -11680,6 +11260,7 @@
 		},
 		{
 			"id": "encryption-key-ring",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Encryption key ring",
 			"category": "admin-privacy",
@@ -11717,7 +11298,7 @@
 				"envelopes name their key",
 				"rotation re-seals"
 			],
-			"depends_on": ["jobs-scheduler"],
+			"depends_on": ["job-scheduling"],
 			"docs": [
 				{
 					"path": "docs/blueprint/security/key-ring.md#encryption-key-ring",
@@ -11779,6 +11360,7 @@
 		},
 		{
 			"id": "url-search-state",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "URL state",
 			"category": "architecture",
@@ -11814,7 +11396,7 @@
 				"navigate",
 				"shallow writes"
 			],
-			"depends_on": ["architecture-state-management"],
+			"depends_on": ["state-management"],
 			"docs": [
 				{
 					"path": "docs/blueprint/state.md#url-state",
@@ -11875,6 +11457,7 @@
 		},
 		{
 			"id": "form-draft-recovery",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Form draft recovery",
 			"category": "forms",
@@ -11921,7 +11504,7 @@
 				"offered back",
 				"guarded only when lost"
 			],
-			"depends_on": ["forms-superforms-valibot"],
+			"depends_on": ["schema-validated-forms"],
 			"docs": [
 				{
 					"path": "docs/blueprint/forms.md#draft-recovery",
@@ -11980,7 +11563,8 @@
 			"verifiedSha": "a1f1074-dirty"
 		},
 		{
-			"id": "ai-untrusted-content-boundary",
+			"id": "untrusted-content-boundary",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Untrusted-content boundary",
 			"category": "ai",
@@ -12074,7 +11658,8 @@
 			"verifiedSha": "3cd3a97-dirty"
 		},
 		{
-			"id": "ai-agent-actions",
+			"id": "agent-actions",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "Agent actions",
 			"category": "ai",
@@ -12124,7 +11709,7 @@
 				"one tool catalogue",
 				"server and client executors"
 			],
-			"depends_on": ["ai-tool-harness", "ai-surfaces", "deskbot-approval-gate", "ai-untrusted-content-boundary"],
+			"depends_on": ["ai-tool-harness", "ai-surfaces", "deskbot-approval-gate", "untrusted-content-boundary"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-actions.md",
@@ -12217,7 +11802,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-mcp-client",
+			"id": "mcp-client",
+			"kind": "pattern",
 			"tier": "deep",
 			"category": "ai",
 			"title": "MCP client",
@@ -12257,7 +11843,7 @@
 				"peer directory",
 				"external tools projected into the one catalogue"
 			],
-			"depends_on": ["ai-tool-harness", "ai-untrusted-content-boundary", "deskbot-approval-gate"],
+			"depends_on": ["ai-tool-harness", "untrusted-content-boundary", "deskbot-approval-gate"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/mcp-client.md",
@@ -12336,7 +11922,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-mcp-app-provider",
+			"id": "mcp-app-provider",
+			"kind": "pattern",
 			"tier": "deep",
 			"category": "ai",
 			"title": "MCP App provider",
@@ -12364,7 +11951,7 @@
 				"mcp inspector",
 				"interactive view beside a text answer"
 			],
-			"depends_on": ["architecture-hosted-mcp"],
+			"depends_on": ["hosted-mcp"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/mcp-apps.md",
@@ -12417,7 +12004,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-agent-to-agent",
+			"id": "agent-to-agent",
+			"kind": "pattern",
 			"tier": "deep",
 			"category": "ai",
 			"title": "Agent to agent",
@@ -12523,7 +12111,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-generative-ui",
+			"id": "generative-ui",
+			"kind": "pattern",
 			"tier": "deep",
 			"category": "ai",
 			"title": "Generative UI",
@@ -12573,7 +12162,7 @@
 				"dedup",
 				"a2ui surfaces rendered with the app's own components"
 			],
-			"depends_on": ["ui-component-system", "ai-untrusted-content-boundary"],
+			"depends_on": ["component-system", "untrusted-content-boundary"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/generative-ui.md",
@@ -12641,7 +12230,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-webmcp",
+			"id": "webmcp",
+			"kind": "pattern",
 			"tier": "light",
 			"category": "ai",
 			"title": "WebMCP publication of client actions",
@@ -12652,7 +12242,7 @@
 			"needs": [],
 			"capabilities": ["webmcp", "browser agent tools"],
 			"keywords": ["document.modelContext", "registerTool", "origin trial"],
-			"depends_on": ["ai-agent-actions"],
+			"depends_on": ["agent-actions"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/webmcp.md",
@@ -12682,7 +12272,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-agent-user-interaction",
+			"id": "ag-ui-endpoint",
+			"kind": "pattern",
 			"tier": "light",
 			"category": "ai",
 			"title": "AG-UI endpoint over the turn stream",
@@ -12693,7 +12284,7 @@
 			"needs": ["llm-provider"],
 			"capabilities": ["ag-ui", "agent frontend events"],
 			"keywords": ["ag-ui", "copilotkit", "RUN_STARTED", "RunAgentInput", "HttpAgent", "frontend tools"],
-			"depends_on": ["ai-agent-actions"],
+			"depends_on": ["agent-actions"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-user-interaction.md",
@@ -12741,7 +12332,8 @@
 			"maturity": "implemented"
 		},
 		{
-			"id": "ai-agent-observability",
+			"id": "agent-observability",
+			"kind": "pattern",
 			"tier": "light",
 			"category": "ai",
 			"title": "Turn trace as OpenTelemetry GenAI spans",
@@ -12752,7 +12344,7 @@
 			"needs": [],
 			"capabilities": ["opentelemetry genai", "agent telemetry"],
 			"keywords": ["gen_ai", "semantic conventions", "invoke_agent", "execute_tool"],
-			"depends_on": ["ai-turn-trace"],
+			"depends_on": ["turn-trace"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-observability.md",
@@ -12783,6 +12375,7 @@
 		},
 		{
 			"id": "ai-eval-regression-suite",
+			"kind": "pattern",
 			"tier": "deep",
 			"title": "AI eval regression suite",
 			"category": "ai",
@@ -12819,7 +12412,7 @@
 				"deterministic graders over the turn trace",
 				"floor ratchet"
 			],
-			"depends_on": ["ai-turn-trace", "performance-budget-ratchet"],
+			"depends_on": ["turn-trace", "performance-budget-ratchet"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/evals.md#ai-eval-regression-suite",
@@ -12884,7 +12477,8 @@
 			"verifiedSha": "cf85a2c-dirty"
 		},
 		{
-			"id": "pim-sheet-transform-recipe",
+			"id": "pim-sheet-transform",
+			"kind": "workflow",
 			"tier": "deep",
 			"title": "PIM sheet transform with AI agents",
 			"category": "office-workflows",

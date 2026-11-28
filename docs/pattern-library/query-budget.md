@@ -8,6 +8,8 @@ category: "Data Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Data Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — measurement and gating only; the runtime census changes no behaviour
 
 Database round trips counted per request by the driver's own logger, and per operation by a gate that runs each one over two data sizes — because N+1 is a claim about how cost SCALES, which no single request can settle.

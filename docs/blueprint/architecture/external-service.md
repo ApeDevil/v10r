@@ -12,7 +12,7 @@ This is a pattern for a *boundary*, not a migration: v10r stays one SvelteKit ap
 
 Reach for a separate service when one responsibility genuinely needs a **different runtime, release cadence or resource profile** from the app: a long-lived worker, a CPU-heavy engine, a component another team or product also calls, a language-specific library.
 
-Do not, when the work fits in a `#lib/server/[domain]/` module. A second deployable doubles the things that can be down, the configuration that can drift, and the places a credential lives. In-process alternatives are cheaper, in order: a domain module (`multi-client-core`), a Web Worker or wasm for client-side compute (`architecture-wasm-kernel`), a queue worker on the same host (`workers.md`). "Rust is faster" is not a reason by itself — see [Measurement](#measurement).
+Do not, when the work fits in a `#lib/server/[domain]/` module. A second deployable doubles the things that can be down, the configuration that can drift, and the places a credential lives. In-process alternatives are cheaper, in order: a domain module (`multi-client-core`), a Web Worker or wasm for client-side compute (`wasm-compute-kernel`), a queue worker on the same host (`workers.md`). "Rust is faster" is not a reason by itself — see [Measurement](#measurement).
 
 ## Architecture
 
@@ -292,7 +292,7 @@ Set the root directory. The first deploy left it empty and gave repo-root paths 
 1. Leave the service idle for 20+ minutes, then run `EXTERNAL_SERVICE_REMOTE_URL=… EXTERNAL_SERVICE_REMOTE_TOKEN=… bun run external-service:verify -- --target remote --samples 50 --concurrency 4 --idle-gap-ms 6000 --idle-samples 5`. The first call measures the cold start; `uptimeMs` confirms the run woke the process.
 2. All negative paths and all presets must pass (401, 400, 413, client rejection, every preset's answer, spent deadline).
 3. On the deployed v10r, open `/showcases/external-service` after another idle period: **Wake and check** the *Remote host* card (cold — the cold-start badge must read "This check started the process"), then **Check** again (warm); run a preset and each drill.
-4. Record the figures and conditions in [Measurement](#measurement), then update the pattern record (`architecture-external-service`) — its remote verification is **pending** until this is done.
+4. Record the figures and conditions in [Measurement](#measurement), then update the pattern record (`external-service-runtime`) — its remote verification is **pending** until this is done.
 
 ## Measurement
 

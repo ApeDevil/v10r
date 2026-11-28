@@ -8,6 +8,8 @@ category: "Interaction Velocity"
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** Interaction Velocity · **Tier:** deep · **Maturity:** proven (verified 2026-09-09 @ 921e8266-dirty) · **Risk:** low — presentational; the data contract is unchanged
 
 A long list costs the size of the viewport instead of the size of the data; the windowing arithmetic lives in a pure module so its edge cases are testable without a browser, while the component owns only the effects.
@@ -54,7 +56,7 @@ A long list costs the size of the viewport instead of the size of the data; the 
 
 ## Depends on
 
-- [Component-first UI system](/docs/pattern-library/ui-component-system)
+- [Component-first UI system](/docs/pattern-library/component-system)
 
 ---
 

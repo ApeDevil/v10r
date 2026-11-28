@@ -2,6 +2,8 @@
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
+**Kind:** pattern — build it in the target project
+
 **Category:** AI · **Tier:** deep · **Maturity:** proven (verified 2026-10-10 @ 91f61a76-dirty) · **Risk:** high — the safety boundary for AI mutation
 
 Write/destructive desk tools never mutate inside the agent loop; they return a requiresApproval sentinel that becomes a proposal (PlanCard), executed only via an approve-route replay that records the real approver and a receipt per step — and a plan that ran can be undone once, step by step, by compare-and-swap compensation.
