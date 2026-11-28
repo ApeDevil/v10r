@@ -16,7 +16,7 @@
 
 import { needsSummary } from './infrastructure-needs.ts';
 import { type OpenConstituent, type PatternGraph, patternGraph, type ResolvedNeed } from './pattern-graph.ts';
-import { MAX_ARG_CHARS, type NextAction, type QueryDiag, type ToolDef, withNextActions } from './query.ts';
+import { MAX_ARG_CHARS, type NextAction, type QueryDiag, type ToolDef, withNextActions } from './query-contract.ts';
 import { registryDigest } from './registry-digest.ts';
 import type { PatternMaturity, PatternRecord, PatternTier, Registry } from './schema.ts';
 

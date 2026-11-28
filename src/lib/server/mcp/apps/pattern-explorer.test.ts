@@ -106,9 +106,9 @@ describe('the View resource metadata', () => {
 describe('patternRegistryWithExplorer', () => {
 	const registry = patternRegistryWithExplorer('https://v10r.example');
 
-	it('adds exactly one tool and its View to the untouched Pattern tools', () => {
-		expect(registry.tools.slice(0, -1)).toEqual(publicPatternRegistry.tools);
-		expect(registry.tools.at(-1)?.name).toBe('explore_patterns');
+	it('serves the shared Pattern tools unchanged and attaches the View to the shared explore_patterns', () => {
+		expect(registry.tools).toEqual(publicPatternRegistry.tools);
+		expect(registry.tools.filter((tool) => tool.name === 'explore_patterns')).toHaveLength(1);
 		expect(registry.views?.map((view) => view.tool)).toEqual(['explore_patterns']);
 	});
 

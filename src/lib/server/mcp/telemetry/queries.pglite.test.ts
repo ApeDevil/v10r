@@ -42,6 +42,7 @@ const {
 	getCapabilityGaps,
 	countSuppressedGaps,
 	getHealthSummary,
+	getPatternUsage,
 	getPrivateCalls,
 	getPrivateGaps,
 	getPrivateRequeries,
@@ -367,5 +368,29 @@ describe('the private producer satisfies the constraints', () => {
 		);
 		expect(row.responseText).toHaveLength(4000);
 		await expect(db.insert(mcpCallLog).values(row)).resolves.toBeDefined();
+	});
+});
+
+describe('pattern usage — read-time lineage, stored rows untouched', () => {
+	it('attributes a renamed subject to its current id and keeps a retired one apart, without rewriting rows', async () => {
+		const manifest = (await import('#patterns/reconciliation/manifest.json')).default as {
+			entries: { previousId: string; target: string; action: string }[];
+		};
+		const renamed = manifest.entries.find((entry) => entry.action === 'rename' && entry.previousId !== entry.target);
+		const retired = manifest.entries.find((entry) => entry.action === 'retire');
+		if (!renamed || !retired) throw new Error('fixture: the manifest has a rename and a retirement');
+		const base = { ...gapRow('m_a', 'x'), outcome: 'ok' as const, toolName: 'get_pattern', queryText: null };
+		await db.insert(mcpCallLog).values([
+			{ ...base, subject: renamed.previousId },
+			{ ...base, clientKey: 'm_b', subject: renamed.target },
+			{ ...base, clientKey: 'm_c', subject: retired.previousId },
+		]);
+		const usage = await getPatternUsage(SINCE, null);
+		expect(usage.current.get(renamed.target)).toBe(2);
+		expect(usage.retired).toEqual([{ from: retired.previousId, knowledgeIn: retired.target, count: 1 }]);
+		const stored = await db.select({ subject: mcpCallLog.subject }).from(mcpCallLog);
+		expect(stored.map((row) => row.subject).sort()).toEqual(
+			[renamed.previousId, renamed.target, retired.previousId].sort(),
+		);
 	});
 });

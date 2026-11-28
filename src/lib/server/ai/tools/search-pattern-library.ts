@@ -21,7 +21,7 @@ import type { SearchResult } from '#lib/search/types.ts';
 import { CATEGORIES, PATTERNS, type PatternRecord, REGISTRY } from '#lib/server/patterns/index.ts';
 import { needsSummary } from '#patterns/infrastructure-needs.ts';
 import { graphOf } from '#patterns/pattern-graph.ts';
-import { scorePatterns } from '#patterns/search.ts';
+import { type Candidate, discover } from '#patterns/planner.ts';
 import type { CatalogSink } from './search-catalog';
 
 interface ToolInput {
@@ -38,9 +38,16 @@ const BROWSE_TOKENS = new Set(['*', 'all', '_', 'list', 'everything', '.*', '%']
 
 const PAGES_BASE = '/docs/pattern-library';
 
-function toRow(pattern: PatternRecord) {
+/**
+ * One registry record as Vely reads it — the same canonical facts the Pattern MCP prints: its
+ * kind (a pattern is implemented, a workflow performed, a principle applied), typed
+ * relationships, needs by level, and, for a search hit, which evidence matched (a record that
+ * names or declares the capability owns it; a keyword or description match is only related).
+ */
+function toRow(pattern: PatternRecord, candidate?: Candidate) {
 	return {
 		id: pattern.id,
+		kind: pattern.kind,
 		title: pattern.title,
 		category: pattern.category,
 		tier: pattern.tier,
@@ -55,6 +62,18 @@ function toRow(pattern: PatternRecord) {
 		// What adopting it builds on and contains — typed, so a foundation never reads as a part.
 		builds_on: pattern.builds_on.map((entry) => entry.id),
 		composes: pattern.composes.map((entry) => (entry.level === 'required' ? entry.id : `${entry.id} (${entry.level})`)),
+		...(pattern.specializes ? { specializes: pattern.specializes.id } : {}),
+		...(pattern.references.length > 0 ? { references: pattern.references.map((entry) => entry.id) } : {}),
+		...(candidate
+			? {
+					match: {
+						evidence: candidate.evidence,
+						owns: candidate.complete && (candidate.evidence === 'name' || candidate.evidence === 'capability'),
+						matched: candidate.matched.slice(0, 3),
+						strength: candidate.strength,
+					},
+				}
+			: {}),
 		// Deep-only depth: at most ~11 records carry these, so the context cost is
 		// bounded — and they are this tool's unique value over plain doc search.
 		...(pattern.tier === 'deep'
@@ -136,18 +155,20 @@ export function createSearchPatternLibraryTool(locale: Locale, sink?: CatalogSin
 							browsed.map((pattern) => toSinkRow(pattern, locale, 0)),
 							toolCallId,
 						);
-						return { results: browsed.map(toRow), total: pool.length };
+						return { results: browsed.map((pattern) => toRow(pattern)), total: pool.length };
 					}
 
 					// The whole registry is the corpus (IDF is a property of the library), the category a filter.
-					const scored = scorePatterns(q, PATTERNS)
-						.filter((hit) => !category || hit.pattern.category === category)
+					// The same discovery the Pattern MCP plans from: ranking, grade and evidence class.
+					const byId = new Map(PATTERNS.map((pattern) => [pattern.id, pattern]));
+					const scored = discover(REGISTRY, q, PATTERNS.length)
+						.filter((hit) => !category || byId.get(hit.id)?.category === category)
 						.slice(0, cap);
 					sink?.record(
-						scored.map((hit) => toSinkRow(hit.pattern, locale, hit.score)),
+						scored.map((hit) => toSinkRow(byId.get(hit.id) as PatternRecord, locale, hit.score)),
 						toolCallId,
 					);
-					return { results: scored.map((hit) => toRow(hit.pattern)) };
+					return { results: scored.map((hit) => toRow(byId.get(hit.id) as PatternRecord, hit)) };
 				} catch (err) {
 					console.error('[ai:tool:search_pattern_library] failed:', err instanceof Error ? err.message : err);
 					return { results: [], error: 'Pattern search failed.' };

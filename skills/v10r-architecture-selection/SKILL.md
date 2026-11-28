@@ -1,10 +1,10 @@
 ---
 name: v10r-architecture-selection
-description: "Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (Foundations, Data, Identity & Safety, Intelligence, Features, Velocity, Integrity), before reading any single pattern: it maps the 170 registry patterns to the v10r group agent skills, explains infrastructure needs and typed relationships (builds on, composes, specializes), and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected."
+description: "Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (Foundations, Data, Identity & Safety, Intelligence, Features, Velocity, Integrity), before reading any single pattern: it maps the 171 registry patterns to the v10r group agent skills, explains infrastructure needs and typed relationships (builds on, composes, specializes), and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected."
 license: MIT
 metadata:
   source: "v10r pattern-library registry"
-  registry-digest: "645006606b7c9657"
+  registry-digest: "5763b3ac186c316e"
   generated: "true"
 ---
 
@@ -21,8 +21,9 @@ Use this before any v10r group agent skill when the task is "what should this pr
 1. **Name the capabilities** the project needs, in plain words ("background jobs", "layered RAG", "rate limiting").
 2. **Name the target infrastructure** using the registry's closed vocabulary of capabilities: `relational-db`, `vector-search`, `graph-db`, `key-value-store`, `object-storage`, `scheduler`, `llm-provider`, `email-delivery`, `external-api`, `web-worker`, `service-worker`, `wasm-toolchain`, `container-host` (a technology such as `postgres` or `redis` also works). Unknown is not the same as missing — ask rather than assume. Each pattern states its needs by level: *required*, *conditional* (with the condition), *optional*, or *v10r's implementation uses* (not needed to emulate it).
 3. **With the v10r Pattern MCP connected** (hosted `https://www.v10r.dev/api/mcp/public`, or the local stdio server in `mcp/`):
-   - `recommend_emulation_plan {capabilities, target_infra}` returns a plan ordered foundations and constituents first; each step carries why it is included, its contraindications, its infrastructure needs by level (including what its foundations and constituents require) and a fit verdict against `target_infra`. Conditional and optional constituents are listed as open decisions, never added silently. It never drops a step itself — you do, when a step's *Avoid when* describes the target.
-   - `get_pattern {ids, sections: ["fitness", "invariants", "emulation_notes"]}` reads up to five cards at once; `search_patterns {query: "*"}` lists the category map.
+   - **Discover**: `search_patterns` (`{query: "*"}` lists the category map), `trace_capability` (the records that *own* a capability first, then those only related to it) and `explore_patterns` (the relationship graph).
+   - **Select**: read candidates with `get_pattern {ids, sections: ["fitness", "invariants", "emulation_notes"]}` (up to five cards) and choose canonical ids. A name or a declared capability is evidence; a keyword is only a related term.
+   - **Assemble**: `recommend_emulation_plan {ids, target_infra, target_lacks, target_has}` returns one deterministic plan, foundations and constituents first; every step says why it is there, and patterns are *implemented*, workflows *performed*, principles *applied* (never steps). With `capabilities` instead of ids, each request is selected and explained, and an ambiguous one comes back with its candidates and a recovery call — never guessed. Conditional constituents are open decisions until you settle them with `conditions` (by the condition id the plan prints); optional ones are adopted only with `select` or an explicit request. A need the target lacks blocks its step and names what stands on it; an unlisted need is unknown, not absent. It never drops a step itself — you do, when a step's *Avoid when* describes the target.
 4. **Without the MCP**, do the same by hand:
    - find candidates in the group agent skills below (each has a full pattern index);
    - expand every candidate through what it *builds on* and its *required* constituents, and the foundations and constituents of what it *specializes* (the generalization itself is never a second step) — [references/relationship-graph.md](references/relationship-graph.md) lists every relationship and a build order;
@@ -43,6 +44,6 @@ Maturity is evidence, not opinion: **proven** = a linked test or showcase, verif
 | `v10r-data` | Databases & Storage, Database Operations | 12 (0) |
 | `v10r-identity-safety` | Identity & Access, Anti-Abuse, Admin & Privacy | 17 (1) |
 | `v10r-intelligence` | AI, Office Workflows | 26 (13) |
-| `v10r-features` | Analytics, Notifications, Jobs & Scheduling, PWA, Data Viz, 3D, Content & Blog, Desk Workspace, External Integrations | 34 (7) |
+| `v10r-features` | Analytics, Notifications, Jobs & Scheduling, PWA, Data Viz, 3D, Content & Blog, Desk Workspace, External Integrations | 35 (8) |
 | `v10r-velocity` | Interaction Velocity, Data Velocity, Runtime Velocity, Velocity Measurement | 22 (19) |
 | `v10r-integrity` | Truth & Evidence, Derivation & Provenance, Durable Execution | 9 (8) |

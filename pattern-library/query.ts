@@ -17,66 +17,35 @@
  */
 
 import { ARCHITECTURE_QUERIES, ARCHITECTURE_TOOLS } from './architecture-queries.ts';
+import { EXPLORE_PATTERNS_TOOL, explorePatterns } from './dependency-explorer.ts';
 import { DEFAULT_LINES, type ExcerptRequest, MAX_LINES } from './excerpt.ts';
 import { needsSummary, TARGET_INFRA_WORDS } from './infrastructure-needs.ts';
 import { type PatternGraph, patternGraph, type ResolvedNeed } from './pattern-graph.ts';
 import {
 	assemble,
+	type Candidate,
+	discover,
 	type NeedStatus,
 	type Plan,
 	type PlanStep,
 	type Selection,
 	select as selectRecord,
 } from './planner.ts';
+import { MAX_ARG_CHARS, type NextAction, type QueryDiag, type QueryOutcome, type ToolDef } from './query-contract.ts';
 import type { PatternRecord, Registry, RegRef } from './schema.ts';
 import { ADOPTION_SEMANTICS, type NEED_LEVELS } from './schema.ts';
 import { type Scored, scorePatterns } from './search.ts';
 
-/** MCP tools/list shape — name/description/inputSchema ONLY: `outputSchema`, `title` or
- *  `annotations` on any one tool made Claude Code silently drop the server's whole tool list. */
-export interface ToolDef {
-	name: string;
-	description: string;
-	inputSchema: Record<string, unknown>;
-}
-
-/**
- * A concrete next step handed to the caller on every error (the "self-reflective API" pattern:
- * agents recover measurably better from a named next call than from prose alone).
- *
- * `args` values are ALWAYS literals this module wrote — never caller text. The bounded-echo
- * discipline (get_pattern's id reflection) is the ceiling; this block adds no echo surface.
- */
-export interface NextAction {
-	tool: string;
-	args?: Record<string, string | number | boolean | readonly string[]>;
-	why: string;
-}
-
-export const NEXT_ACTIONS_HEADING = '## Next actions';
-export const MAX_NEXT_ACTIONS = 3;
-
-/**
- * Renders the trailer as TEXT inside the body — not a structured field: results are text-only
- * by hard-won convention (structuredContent makes Claude Code hide the text body), and a fixed
- * heading is exactly as machine-parsable while staying visible. Never throws; an empty array
- * returns the body unchanged.
- */
-export function withNextActions(body: string, actions: readonly NextAction[]): string {
-	if (actions.length === 0) return body;
-	const lines = actions.slice(0, MAX_NEXT_ACTIONS).map((action, index) => {
-		const args = action.args ? ` ${JSON.stringify(action.args)}` : '';
-		return `${index + 1}. \`${action.tool}\`${args} — ${action.why}`;
-	});
-	return `${body}\n\n${NEXT_ACTIONS_HEADING}\n${lines.join('\n')}`;
-}
-
-/** Why a query failed. A subset of the hosted `ToolDiag`, which carries it into telemetry. */
-export type QueryDiag = 'empty' | 'invalid_args' | 'not_found';
-
-export type QueryOutcome =
-	| { ok: true; text: string }
-	| { ok: false; text: string; diag: QueryDiag; next: readonly NextAction[] };
+export {
+	MAX_ARG_CHARS,
+	MAX_NEXT_ACTIONS,
+	NEXT_ACTIONS_HEADING,
+	type NextAction,
+	type QueryDiag,
+	type QueryOutcome,
+	type ToolDef,
+	withNextActions,
+} from './query-contract.ts';
 
 /**
  * Argument bounds. They appear in `inputSchema` so the contract is honest, but nothing in either
@@ -87,7 +56,6 @@ export type QueryOutcome =
  * per entry, so an unbounded array is a CPU amplifier reachable without credentials on the
  * hosted endpoint. 256 KB of one-character strings is still tens of thousands of entries.
  */
-export const MAX_ARG_CHARS = 512;
 export const MAX_CAPABILITIES = 20;
 /** Search hits per call. 50 covers any one category; `detail: "ids"` keeps that around 1k tokens. */
 const MAX_RESULTS = 50;
@@ -344,6 +312,7 @@ export const QUERY_TOOLS: ToolDef[] = [
 			},
 		},
 	},
+	EXPLORE_PATTERNS_TOOL,
 	...ARCHITECTURE_TOOLS,
 ];
 
@@ -353,14 +322,17 @@ export const QUERY_TOOLS: ToolDef[] = [
  * so this is the one place the progressive path is taught before any tool is called.
  */
 export const QUERY_WORKFLOW =
-	'Discover broadly, then narrow: search_patterns (query "*" maps the categories; detail "compact" adds each ' +
-	"pattern's requirements and headline contraindication; a weak-only result means no pattern covers it) or " +
-	'trace_capability; get_pattern for cards (ids for several, sections for part of one — invariants MUST hold when ' +
-	'emulating); get_file_excerpt for exact evidence (section = one heading or declaration; card paths with ' +
-	'#fragments resolve); recommend_emulation_plan for a dependency-ordered plan (target_infra marks steps the ' +
-	'target cannot support); validate_snippet to check code you wrote against v10r conventions (loop until clean); ' +
-	'explore_architecture for an explained architecture recommendation for a workload (unknown factors stay unknown; ' +
-	'include_model returns a starting model) and check_architecture to check a model for errors and risks.';
+	'Discover, select, assemble. Discover: search_patterns (query "*" maps the categories; detail "compact" adds ' +
+	"each record's requirements and headline contraindication; weak-only means no record covers it), trace_capability " +
+	'(owners of a capability first, then related records), explore_patterns (the relationship graph). Select: get_pattern ' +
+	'for cards (ids for several, sections for part of one; invariants MUST hold when emulating) and choose canonical ids. ' +
+	'Assemble: recommend_emulation_plan with "ids" for an exact, deterministic plan (or "capabilities" — each selected ' +
+	'and explained, an ambiguous one returned with candidates); settle open conditions with "conditions" by the ids it ' +
+	'prints, adopt optional parts with "select", describe the target with target_infra / target_lacks / target_has. ' +
+	'Patterns are implemented, workflows performed, principles applied (never steps). get_file_excerpt for exact evidence ' +
+	'(section = one heading or declaration); validate_snippet to check code you wrote (loop until clean); ' +
+	'explore_architecture for an explained architecture recommendation (unknown factors stay unknown) and ' +
+	'check_architecture to check a model.';
 
 /**
  * `validate_snippet`'s definition. Its ENGINE is per transport (the stdio one adds a Bun syntax
@@ -551,8 +523,12 @@ function relationshipLines(pattern: PatternRecord, graph: PatternGraph): string[
 	const inverse = (type: 'builds_on' | 'composes' | 'specializes' | 'references') =>
 		graph.edgesTo(pattern.id, type).map((edge) => edge.from);
 	const builtOnBy = inverse('builds_on');
-	const partOf = inverse('composes');
+	// The inverse of a composition keeps its level: being an optional part of a whole is not being required by it.
+	const partOf = graph
+		.edgesTo(pattern.id, 'composes')
+		.map((edge) => (edge.level === 'required' ? edge.from : `${edge.from} (${edge.level})`));
 	const specializedBy = inverse('specializes');
+	const referencedBy = inverse('references');
 	const assumptions = graph.assumptionsFor(pattern.id);
 	const principles = assumptions.filter((entry) => graph.byId.get(entry.id)?.kind === 'principle');
 	const conventions = assumptions.filter((entry) => graph.byId.get(entry.id)?.kind !== 'principle');
@@ -572,6 +548,7 @@ function relationshipLines(pattern: PatternRecord, graph: PatternGraph): string[
 		partOf.length > 0 ? `**Part of:** ${partOf.join(', ')}` : '',
 		builtOnBy.length > 0 ? `**Built on by:** ${builtOnBy.join(', ')}` : '',
 		specializedBy.length > 0 ? `**Specialized by:** ${specializedBy.join(', ')}` : '',
+		referencedBy.length > 0 ? `**Referenced by:** ${referencedBy.join(', ')} (context only)` : '',
 	].filter((line) => line.length > 0);
 }
 
@@ -866,7 +843,9 @@ export function getPattern(registry: Registry, args: Record<string, unknown>): Q
 						.map((section) => ({ section, count: sectionSize(pattern, section) }))
 						.filter(({ count }) => count > 0)
 						.map(({ section, count }) => `${section} (${count})`)
-						.join(', ')} — the invariants MUST hold when emulating. Request this card alone: get_pattern {"id":"${pattern.id}"}._`
+						.join(
+							', ',
+						)} — the invariants MUST hold when emulating. Request this card alone: get_pattern {"id":"${pattern.id}"}._`
 				: full;
 		cards.push(card);
 		size += card.length;
@@ -885,12 +864,22 @@ export function traceCapability(registry: Registry, args: Record<string, unknown
 	}
 	const all = scorePatterns(capability, registry.patterns);
 	// A trace costs ~500 tokens per pattern, so weak overlaps are never traced.
-	const scored = all.filter((hit) => hit.strength !== 'weak').slice(0, 3);
+	const strong = new Set(all.filter((hit) => hit.strength !== 'weak').map((hit) => hit.pattern.id));
+	// Ownership is not relevance: a record that names or declares the capability owns it; one that
+	// only mentions it in a keyword or its description is context. Owners are traced first.
+	const candidates = discover(registry, capability, 10).filter((candidate) => strong.has(candidate.id));
+	const owns = (candidate: Candidate) =>
+		candidate.complete && (candidate.evidence === 'name' || candidate.evidence === 'capability');
+	const scored = [...candidates.filter(owns), ...candidates.filter((candidate) => !owns(candidate))].slice(0, 3);
 	if (scored.length === 0) return noMatch(registry, `capability "${capability}"`, all);
-	const sections = scored.map((hit) => {
-		const pattern = hit.pattern;
+	const { byId } = viewOf(registry);
+	const sections = scored.map((candidate) => {
+		const pattern = byId.get(candidate.id) as PatternRecord;
 		return [
 			`## ${pattern.title} (\`${pattern.id}\`)`,
+			owns(candidate)
+				? `**Owns it:** ${candidate.evidence === 'name' ? 'its name is the capability' : `declares the capability "${candidate.matched[0]}"`}.`
+				: `**Relevant, does not own it:** matches only ${candidate.evidence === 'keyword' ? `its keyword "${candidate.matched[0]}"` : candidate.evidence === 'text' ? 'its description' : `part of its ${candidate.evidence} ("${candidate.matched[0]}")`}.`,
 			`**Concept:** ${pattern.summary} ${pattern.when_to_use}`,
 			`**Docs:**\n${refLines(pattern.docs)}`,
 			`**Code:**\n${refLines(pattern.code)}`,
@@ -904,7 +893,7 @@ export function traceCapability(registry: Registry, args: Record<string, unknown
 			.join('\n');
 	});
 	return ok(
-		`Trace for "${capability}" (${scored.length} matching pattern(s), concept → docs → code → tests → proof):\n\n${sections.join('\n\n')}`,
+		`Trace for "${capability}" (${scored.length} matching pattern(s), owners first; concept → docs → code → tests → proof):\n\n${sections.join('\n\n')}`,
 	);
 }
 
@@ -1213,7 +1202,9 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 	];
 	const declined = plan.adoption.excluded.filter((entry) => !entry.conflict).map((entry) => `\`${entry.id}\``);
 	// A need condition is moot once the need is required anyway; the rest stay visible.
-	const requiredNeeds = new Set(plan.needs.filter((entry) => entry.need.level === 'required').map((entry) => entry.need.need));
+	const requiredNeeds = new Set(
+		plan.needs.filter((entry) => entry.need.level === 'required').map((entry) => entry.need.need),
+	);
 	const unresolved = plan.unresolved.filter(
 		(condition) => condition.origin.kind === 'need' && !requiredNeeds.has(condition.origin.need),
 	);
@@ -1291,5 +1282,7 @@ export const REGISTRY_QUERIES: Record<string, (registry: Registry, args: Record<
 	get_pattern: getPattern,
 	trace_capability: traceCapability,
 	recommend_emulation_plan: recommendPlan,
+	// The text answer; the hosted MCP App adds its View and the same projection as structured content.
+	explore_patterns: (registry, args) => explorePatterns(registry, args),
 	...ARCHITECTURE_QUERIES,
 };

@@ -1,6 +1,6 @@
 /**
  * The pattern explorer MCP App: the `explore_patterns` tool and the View a supporting host
- * renders for it (SEP-1865), served on the public and private hosted surfaces next to the eight
+ * renders for it (SEP-1865), served on the public and private hosted surfaces next to the other
  * Pattern tools. See docs/blueprint/ai/mcp-apps.md.
  *
  * What is here is composition only. The graph projection is `pattern-library/dependency-explorer.ts`
@@ -16,7 +16,7 @@
 
 import { REGISTRY } from '#lib/server/patterns/index.ts';
 import type { AppView } from '#mcp/tool-server.ts';
-import { EXPLORE_PATTERNS_TOOL, EXPLORE_PATTERNS_TOOL_NAME, explorePatterns } from '#patterns/dependency-explorer.ts';
+import { EXPLORE_PATTERNS_TOOL_NAME, explorePatterns } from '#patterns/dependency-explorer.ts';
 import { publicPatternRegistry } from '../patterns/tools';
 import { errorResult, type ToolRegistry, type ToolResult } from '../types';
 import viewDocument from './pattern-explorer.view.html?raw';
@@ -51,14 +51,15 @@ function explorePatternsTool(args: unknown, siteOrigin: string): ToolResult {
 }
 
 /**
- * The read-only Pattern registry plus the explorer, for one request. `siteOrigin` is the
- * deployment the request reached, so the docs links in an answer point at the same deployment.
- * The eight Pattern tools are dispatched by the untouched `publicPatternRegistry` (which the stdio
- * server stays at parity with); this adds one tool and its View.
+ * The read-only Pattern registry plus the explorer's View, for one request. `explore_patterns`
+ * itself is a shared query tool (`pattern-library/query.ts`), answered as text by both
+ * transports; here the hosted surface attaches its View and answers it with the same projection
+ * as structured content. `siteOrigin` is the deployment the request reached, so the docs links in
+ * an answer point at the same deployment.
  */
 export function patternRegistryWithExplorer(siteOrigin: string): ToolRegistry {
 	return {
-		tools: [...publicPatternRegistry.tools, EXPLORE_PATTERNS_TOOL],
+		tools: publicPatternRegistry.tools,
 		views: [PATTERN_EXPLORER_VIEW],
 		dispatch(name, args) {
 			if (name === EXPLORE_PATTERNS_TOOL_NAME) return explorePatternsTool(args, siteOrigin);
@@ -68,7 +69,4 @@ export function patternRegistryWithExplorer(siteOrigin: string): ToolRegistry {
 }
 
 /** The tool names this surface serves — what telemetry counts as a known tool. */
-export const EXPLORER_SURFACE_TOOL_NAMES: readonly string[] = [
-	...publicPatternRegistry.tools.map((tool) => tool.name),
-	EXPLORE_PATTERNS_TOOL_NAME,
-];
+export const EXPLORER_SURFACE_TOOL_NAMES: readonly string[] = publicPatternRegistry.tools.map((tool) => tool.name);

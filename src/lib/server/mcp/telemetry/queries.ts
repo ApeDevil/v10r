@@ -17,6 +17,9 @@
 import { and, count, countDistinct, desc, eq, gte, isNotNull, max, sql } from 'drizzle-orm';
 import { db } from '#lib/server/db/index.ts';
 import { mcpCallLog } from '#lib/server/db/schema/mcp/call-log.ts';
+import { REGISTRY } from '#lib/server/patterns/index.ts';
+import { attributeUsage, historicalLineage, type ManifestEntry } from '#patterns/reconciliation/lineage.ts';
+import manifest from '#patterns/reconciliation/manifest.json';
 
 /** Bounded windows: three cacheable plans instead of an unbounded range scan. */
 export type McpWindow = '24h' | '7d' | '30d';
@@ -75,6 +78,34 @@ export async function countSuppressedGaps(since: Date): Promise<number> {
 		.groupBy(mcpCallLog.queryText, mcpCallLog.toolName)
 		.having(sql`count(distinct ${mcpCallLog.clientKey}) < ${GAP_MIN_DISTINCT_CLIENTS}`);
 	return rows.length;
+}
+
+const lineage = historicalLineage(
+	(manifest as { entries: ManifestEntry[] }).entries,
+	new Set(REGISTRY.patterns.map((pattern) => pattern.id)),
+);
+
+/**
+ * Which patterns external callers were answered with, by today's identities — read-time
+ * lineage over the stored subjects, which stay exactly as recorded (`lineage.ts`: a rename or
+ * merge attributes, a split stays ambiguous, a retired identity is kept apart). `releasedAt` is
+ * when the reconciled registry reached production (null before it has). Analytics only.
+ */
+export async function getPatternUsage(since: Date, releasedAt: Date | null) {
+	const rows = await db
+		.select({
+			subject: mcpCallLog.subject,
+			day: sql<string>`date_trunc('day', ${mcpCallLog.startedAt})::text`,
+			count: sql<number>`sum(${mcpCallLog.observedCount})::int`,
+		})
+		.from(mcpCallLog)
+		.where(and(externalOnly(since), isNotNull(mcpCallLog.subject)))
+		.groupBy(mcpCallLog.subject, sql`date_trunc('day', ${mcpCallLog.startedAt})`);
+	return attributeUsage(
+		rows.map((row) => ({ subject: row.subject as string, count: row.count, recordedAt: new Date(row.day) })),
+		lineage,
+		{ releasedAt },
+	);
 }
 
 /** Per-tool volume and failure mix. Rides the partial tool index. */

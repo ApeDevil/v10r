@@ -2,7 +2,7 @@
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
-One page per pattern record — 170 patterns (64 deep cards / 106 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
+One page per pattern record — 171 patterns (65 deep cards / 106 index rows) across 29 categories. Each page points to the docs that explain the pattern, the code that implements it, and the showcase that proves it; **bold** entries are deep-tier cards with invariants and emulation notes.
 
 This README is the GitHub navigation hub; in-app, this directory is the Pattern Library docs section — the catalog lives at `/docs/pattern-library` and every page below at `/docs/pattern-library/<id>`.
 
@@ -186,6 +186,7 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 - [Threlte integration](./threlte-integration.md)
 - [Full-screen model viewer and customizer](./model-viewer-customizer.md)
 - [**Product composition engine**](./product-connection-engine.md)
+- [**Asset production engine**](./asset-production-engine.md)
 - [**Asset production pipeline**](./asset-production-pipeline.md)
 - [**Agentic parametric modeling**](./agentic-parametric-modeling.md)
 

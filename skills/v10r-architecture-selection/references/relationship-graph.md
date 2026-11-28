@@ -52,60 +52,61 @@ Every pattern in an adoption relationship, in a valid build order (foundations a
 | 44 | `threlte-integration` (light) | `v10r-features` | — | — | — | — |
 | 45 | `model-viewer-customizer` (light) | `v10r-features` | `threlte-integration` | — | — | — |
 | 46 | `product-connection-engine` (deep) | `v10r-features` | — | `threlte-integration` (optional) | — | — |
-| 47 | `comments` (light) | `v10r-features` | `rate-limiting` | — | — | required relational-db |
-| 48 | `markdown-pipeline` (light) | `v10r-features` | — | — | — | v10r's implementation uses object-storage, relational-db |
-| 49 | `blog-engine` (light) | `v10r-features` | — | `markdown-pipeline`, `comments` (optional) | — | required relational-db · conditional object-storage |
-| 50 | `markdown-editor` (light) | `v10r-features` | `markdown-pipeline` | — | — | — |
-| 51 | `desk-workspace` (deep) | `v10r-features` | — | — | — | required relational-db |
-| 52 | `desk-spreadsheet-panel` (light) | `v10r-features` | `desk-workspace` | — | — | — |
-| 53 | `desk-mobile-chrome` (light) | `v10r-features` | `desk-workspace` | — | — | — |
-| 54 | `desk-panel-menus` (light) | `v10r-features` | `desk-workspace` | — | — | — |
-| 55 | `desk-ai-effects` (light) | `v10r-features` | `desk-workspace`, `ai-deskbot` | — | — | — |
-| 56 | `desk-explorer` (light) | `v10r-features` | `desk-workspace` | — | — | — |
-| 57 | `hierarchical-cache` (deep) | `v10r-velocity` | — | — | — | conditional key-value-store |
-| 58 | `singleflight` (deep) | `v10r-velocity` | `hierarchical-cache` | — | — | conditional key-value-store |
-| 59 | `critical-path-deferred-tail` (deep) | `v10r-velocity` | — | — | — | v10r's implementation uses relational-db |
-| 60 | `stale-while-revalidate` (deep) | `v10r-velocity` | `hierarchical-cache`, `critical-path-deferred-tail` | — | — | conditional key-value-store |
-| 61 | `resilience-policy` (deep) | `v10r-velocity` | — | — | — | conditional key-value-store |
-| 62 | `provider-routing` (light) | `v10r-intelligence` | `resilience-policy` | — | — | required llm-provider |
-| 63 | `deadline-propagation` (deep) | `v10r-velocity` | — | — | — | v10r's implementation uses relational-db |
-| 64 | `latency-tracing` (deep) | `v10r-velocity` | — | — | — | v10r's implementation uses relational-db |
-| 65 | `external-service-runtime` (deep) | `v10r-foundations` | — | `deadline-propagation`, `resilience-policy`, `latency-tracing` (optional) | — | required container-host |
-| 66 | `performance-budget-ratchet` (deep) | `v10r-velocity` | — | — | — | — |
-| 67 | `query-budget` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | required relational-db |
-| 68 | `heavy-dependency-quarantine` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | — |
-| 69 | `side-effect-free-components` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | — |
-| 70 | `scenario-harness` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | v10r's implementation uses key-value-store |
-| 71 | `multi-source-aggregation` (deep) | `v10r-features` | `resilience-policy`, `deadline-propagation`, `hierarchical-cache` | — | — | required external-api · conditional key-value-store, relational-db |
-| 72 | `name-check` (deep) | `v10r-features` | `multi-source-aggregation`, `rate-limiting` | — | — | required key-value-store |
-| 73 | `source-of-truth-gate` (deep) | `v10r-integrity` | — | — | — | v10r's implementation uses relational-db, llm-provider |
-| 74 | `derivation-key` (deep) | `v10r-integrity` | — | — | — | conditional relational-db · v10r's implementation uses llm-provider |
-| 75 | `reproducible-artifact-build` (deep) | `v10r-integrity` | — | — | — | — |
-| 76 | `pattern-index` (deep) | `v10r-foundations` | `reproducible-artifact-build` | — | — | — |
-| 77 | `agent-experience` (deep) | `v10r-foundations` | — | `pattern-index` | — | — |
-| 78 | `agent-skills` (deep) | `v10r-foundations` | `reproducible-artifact-build` | — | — | — |
-| 79 | `provenance-record` (deep) | `v10r-integrity` | — | `derivation-key` | — | required relational-db · v10r's implementation uses vector-search |
-| 80 | `asset-production-pipeline` (deep) | `v10r-features` | `rate-limiting` | `derivation-key`, `provenance-record`, `hosted-mcp` (conditional), `threlte-integration` (optional) | — | — |
-| 81 | `durable-step-execution` (deep) | `v10r-integrity` | — | — | — | required relational-db |
-| 82 | `deskbot-approval-gate` (deep) | `v10r-intelligence` | `ai-tool-harness`, `ai-surfaces` | `durable-step-execution` | — | required relational-db, llm-provider |
-| 83 | `versioned-document-session` (deep) | `v10r-integrity` | — | — | — | required relational-db |
-| 84 | `dynamic-attributes` (deep) | `v10r-foundations` | — | `versioned-document-session` | — | v10r's implementation uses relational-db |
-| 85 | `asset-rights-manifest` (deep) | `v10r-integrity` | — | — | `source-of-truth-gate` | — |
-| 86 | `encryption-key-ring` (deep) | `v10r-identity-safety` | `job-scheduling` | — | — | required relational-db, scheduler |
-| 87 | `url-search-state` (deep) | `v10r-foundations` | — | — | `state-management` | — |
-| 88 | `form-draft-recovery` (deep) | `v10r-foundations` | `schema-validated-forms` | — | — | — |
-| 89 | `untrusted-content-boundary` (deep) | `v10r-intelligence` | `ai-tool-harness`, `deskbot-approval-gate` | — | — | required llm-provider |
-| 90 | `agent-actions` (deep) | `v10r-intelligence` | `ai-tool-harness`, `ai-surfaces`, `deskbot-approval-gate`, `untrusted-content-boundary` | — | — | required llm-provider |
-| 91 | `mcp-client` (deep) | `v10r-intelligence` | `ai-tool-harness`, `untrusted-content-boundary`, `deskbot-approval-gate` | — | — | required llm-provider, external-api, relational-db |
-| 92 | `mcp-app-provider` (deep) | `v10r-intelligence` | `hosted-mcp` | — | — | — |
-| 93 | `agentic-parametric-modeling` (deep) | `v10r-features` | `hosted-mcp` | `mcp-authorization`, `mcp-app-provider` (optional), `threlte-integration` (optional) | `asset-production-pipeline` | conditional web-worker |
-| 94 | `agent-to-agent` (deep) | `v10r-intelligence` | `untrusted-content-boundary`, `deskbot-approval-gate` | — | — | required relational-db, external-api |
-| 95 | `generative-ui` (deep) | `v10r-intelligence` | `component-system`, `untrusted-content-boundary` | — | — | required llm-provider · v10r's implementation uses relational-db |
-| 96 | `webmcp` (light) | `v10r-intelligence` | `agent-actions` | — | — | — |
-| 97 | `ag-ui-endpoint` (light) | `v10r-intelligence` | `agent-actions` | — | — | required llm-provider |
-| 98 | `agent-observability` (light) | `v10r-intelligence` | `turn-trace` | — | — | — |
-| 99 | `agentic-architecture` (deep) | `v10r-foundations` | — | `agent-actions`, `untrusted-content-boundary`, `turn-trace`, `mcp-protocol-evolution` (conditional), `mcp-client` (conditional), `agent-to-agent` (conditional), `ag-ui-endpoint` (conditional), `generative-ui` (conditional), `agent-skills` (conditional), `webmcp` (optional), `agent-observability` (optional), `mcp-app-provider` (optional) | — | — |
-| 100 | `ai-eval-regression-suite` (deep) | `v10r-intelligence` | `turn-trace` | — | — | required llm-provider |
+| 47 | `asset-production-engine` (deep) | `v10r-features` | — | — | — | — |
+| 48 | `comments` (light) | `v10r-features` | `rate-limiting` | — | — | required relational-db |
+| 49 | `markdown-pipeline` (light) | `v10r-features` | — | — | — | v10r's implementation uses object-storage, relational-db |
+| 50 | `blog-engine` (light) | `v10r-features` | — | `markdown-pipeline`, `comments` (optional) | — | required relational-db · conditional object-storage |
+| 51 | `markdown-editor` (light) | `v10r-features` | `markdown-pipeline` | — | — | — |
+| 52 | `desk-workspace` (deep) | `v10r-features` | — | — | — | required relational-db |
+| 53 | `desk-spreadsheet-panel` (light) | `v10r-features` | `desk-workspace` | — | — | — |
+| 54 | `desk-mobile-chrome` (light) | `v10r-features` | `desk-workspace` | — | — | — |
+| 55 | `desk-panel-menus` (light) | `v10r-features` | `desk-workspace` | — | — | — |
+| 56 | `desk-ai-effects` (light) | `v10r-features` | `desk-workspace`, `ai-deskbot` | — | — | — |
+| 57 | `desk-explorer` (light) | `v10r-features` | `desk-workspace` | — | — | — |
+| 58 | `hierarchical-cache` (deep) | `v10r-velocity` | — | — | — | conditional key-value-store |
+| 59 | `singleflight` (deep) | `v10r-velocity` | `hierarchical-cache` | — | — | conditional key-value-store |
+| 60 | `critical-path-deferred-tail` (deep) | `v10r-velocity` | — | — | — | v10r's implementation uses relational-db |
+| 61 | `stale-while-revalidate` (deep) | `v10r-velocity` | `hierarchical-cache`, `critical-path-deferred-tail` | `singleflight` (conditional) | — | conditional key-value-store |
+| 62 | `resilience-policy` (deep) | `v10r-velocity` | — | — | — | conditional key-value-store |
+| 63 | `provider-routing` (light) | `v10r-intelligence` | `resilience-policy` | — | — | required llm-provider |
+| 64 | `deadline-propagation` (deep) | `v10r-velocity` | — | — | — | v10r's implementation uses relational-db |
+| 65 | `latency-tracing` (deep) | `v10r-velocity` | — | — | — | v10r's implementation uses relational-db |
+| 66 | `external-service-runtime` (deep) | `v10r-foundations` | — | `deadline-propagation`, `resilience-policy`, `latency-tracing` (optional) | — | required container-host |
+| 67 | `performance-budget-ratchet` (deep) | `v10r-velocity` | — | — | — | — |
+| 68 | `query-budget` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | required relational-db |
+| 69 | `heavy-dependency-quarantine` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | — |
+| 70 | `side-effect-free-components` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | — |
+| 71 | `scenario-harness` (deep) | `v10r-velocity` | `performance-budget-ratchet` | — | — | v10r's implementation uses key-value-store |
+| 72 | `multi-source-aggregation` (deep) | `v10r-features` | `resilience-policy`, `deadline-propagation`, `hierarchical-cache` | — | — | required external-api · conditional key-value-store, relational-db |
+| 73 | `name-check` (deep) | `v10r-features` | `multi-source-aggregation`, `rate-limiting` | — | — | required key-value-store |
+| 74 | `source-of-truth-gate` (deep) | `v10r-integrity` | — | — | — | v10r's implementation uses relational-db, llm-provider |
+| 75 | `derivation-key` (deep) | `v10r-integrity` | — | — | — | conditional relational-db · v10r's implementation uses llm-provider |
+| 76 | `reproducible-artifact-build` (deep) | `v10r-integrity` | — | — | — | — |
+| 77 | `pattern-index` (deep) | `v10r-foundations` | `reproducible-artifact-build` | — | — | — |
+| 78 | `agent-experience` (deep) | `v10r-foundations` | — | `pattern-index` | — | — |
+| 79 | `agent-skills` (deep) | `v10r-foundations` | `reproducible-artifact-build` | — | — | — |
+| 80 | `provenance-record` (deep) | `v10r-integrity` | — | `derivation-key` | — | required relational-db · v10r's implementation uses vector-search |
+| 81 | `asset-production-pipeline` (deep) | `v10r-features` | `rate-limiting` | `asset-production-engine`, `derivation-key`, `provenance-record`, `hosted-mcp` (conditional), `threlte-integration` (optional) | — | — |
+| 82 | `durable-step-execution` (deep) | `v10r-integrity` | — | — | — | required relational-db |
+| 83 | `deskbot-approval-gate` (deep) | `v10r-intelligence` | `ai-tool-harness`, `ai-surfaces` | `durable-step-execution` | — | required relational-db, llm-provider |
+| 84 | `versioned-document-session` (deep) | `v10r-integrity` | — | — | — | required relational-db |
+| 85 | `dynamic-attributes` (deep) | `v10r-foundations` | — | `versioned-document-session` | — | v10r's implementation uses relational-db |
+| 86 | `asset-rights-manifest` (deep) | `v10r-integrity` | — | — | `source-of-truth-gate` | — |
+| 87 | `encryption-key-ring` (deep) | `v10r-identity-safety` | `job-scheduling` | — | — | required relational-db, scheduler |
+| 88 | `url-search-state` (deep) | `v10r-foundations` | — | — | `state-management` | — |
+| 89 | `form-draft-recovery` (deep) | `v10r-foundations` | `schema-validated-forms` | — | — | — |
+| 90 | `untrusted-content-boundary` (deep) | `v10r-intelligence` | `ai-tool-harness`, `deskbot-approval-gate` | — | — | required llm-provider |
+| 91 | `agent-actions` (deep) | `v10r-intelligence` | `ai-tool-harness`, `ai-surfaces`, `deskbot-approval-gate`, `untrusted-content-boundary` | — | — | required llm-provider |
+| 92 | `mcp-client` (deep) | `v10r-intelligence` | `ai-tool-harness`, `untrusted-content-boundary`, `deskbot-approval-gate` | — | — | required llm-provider, external-api, relational-db |
+| 93 | `mcp-app-provider` (deep) | `v10r-intelligence` | `hosted-mcp` | — | — | — |
+| 94 | `agentic-parametric-modeling` (deep) | `v10r-features` | `hosted-mcp` | `mcp-authorization`, `mcp-app-provider` (optional), `threlte-integration` (optional) | `asset-production-engine` | conditional web-worker |
+| 95 | `agent-to-agent` (deep) | `v10r-intelligence` | `untrusted-content-boundary`, `deskbot-approval-gate` | — | — | required relational-db, external-api |
+| 96 | `generative-ui` (deep) | `v10r-intelligence` | `component-system`, `untrusted-content-boundary` | — | — | required llm-provider · v10r's implementation uses relational-db |
+| 97 | `webmcp` (light) | `v10r-intelligence` | `agent-actions` | — | — | — |
+| 98 | `ag-ui-endpoint` (light) | `v10r-intelligence` | `agent-actions` | — | — | required llm-provider |
+| 99 | `agent-observability` (light) | `v10r-intelligence` | `turn-trace` | — | — | — |
+| 100 | `agentic-architecture` (deep) | `v10r-foundations` | — | `agent-actions`, `untrusted-content-boundary`, `turn-trace`, `mcp-protocol-evolution` (conditional), `mcp-client` (conditional), `agent-to-agent` (conditional), `ag-ui-endpoint` (conditional), `generative-ui` (conditional), `agent-skills` (conditional), `webmcp` (optional), `agent-observability` (optional), `mcp-app-provider` (optional) | — | — |
+| 101 | `ai-eval-regression-suite` (deep) | `v10r-intelligence` | `turn-trace` | — | — | required llm-provider |
 
 ## Infrastructure → patterns
 

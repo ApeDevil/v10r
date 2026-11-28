@@ -9,6 +9,7 @@ import { REGISTRY } from '../src/lib/server/patterns/registry.ts';
 import { compositionCondition, graphOf, needCondition } from './pattern-graph.ts';
 import { assemble, discover, select } from './planner.ts';
 import { recommendPlan } from './query.ts';
+import manifest from './reconciliation/manifest.json';
 
 const plan = (args: Record<string, unknown>) => recommendPlan(REGISTRY, args);
 const steps = (text: string) =>
@@ -79,7 +80,10 @@ describe('exact-id planning', () => {
 	});
 
 	it('rejects or reports unknown ids — retired ids are never aliased', () => {
-		const alone = plan({ ids: ['architecture-hosted-mcp'] });
+		// A retired id, read from the reconciliation manifest rather than written here.
+		const retired = manifest.entries.find((entry) => entry.previousId !== entry.target)?.previousId as string;
+		expect(graph.byId.has(retired)).toBe(false);
+		const alone = plan({ ids: [retired] });
 		expect(alone.ok).toBe(false);
 		if (!alone.ok) expect(alone.diag).toBe('not_found');
 		const mixed = plan({ ids: ['hosted-mcp', 'no-such-record'] });

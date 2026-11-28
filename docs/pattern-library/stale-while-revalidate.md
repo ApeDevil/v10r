@@ -16,7 +16,7 @@ A value past its TTL but inside its stale window is returned immediately and ref
 
 **When to use:** Use when slightly stale is better than waiting: dashboards, feeds, metadata, public content, aggregate counts. Never for authorization, security state or balances requiring strong consistency.
 
-**Needs:** conditional key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store); or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)
+**Needs:** conditional key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store); or when concurrent readers or several instances can revalidate the same stale key and more than one instance refreshes the same key (the cross-instance refresh claim); or when concurrent readers or several instances can revalidate the same stale key and more than one instance serves and the shared tier is wanted; one process runs on the memory tier; or when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)
 
 ## Avoid when
 
@@ -62,6 +62,10 @@ A value past its TTL but inside its stale window is returned immediately and ref
 
 - [Hierarchical cache](/docs/pattern-library/hierarchical-cache) — Staleness windows are declared by the cache policy; SWR is the read behaviour of a cache layer that already exists.
 - [Critical path / deferred tail](/docs/pattern-library/critical-path-deferred-tail) — The refresh runs after the response through the deferred tail; any after-response mechanism with the survival rule satisfies it.
+
+**Composes (constituents of its solution)**
+
+- [Singleflight stampede protection](/docs/pattern-library/singleflight) — conditional when concurrent readers or several instances can revalidate the same stale key: Stale reads refresh behind a cross-instance refresh claim and cold misses are coalesced (src/lib/server/cache/swr.ts imports claimRefresh and coalesce); without it N readers of one stale key start N refreshes.
 
 **Assumes (platform conventions in scope)**
 

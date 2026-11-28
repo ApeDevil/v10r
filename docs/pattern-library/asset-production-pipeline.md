@@ -1,6 +1,6 @@
 ---
 title: "Asset production pipeline"
-description: "A structured, validated request becomes a checked 3D asset: a deterministic TypeScript generator builds parametric geometry, an inspector proves every shell…"
+description: "A structured, validated request becomes a checked 3D asset through the asset production engine, and one job shape around it — report, PROV-DM provenance, the…"
 category: "3D"
 ---
 
@@ -12,7 +12,7 @@ category: "3D"
 
 **Category:** 3D · **Tier:** deep · **Maturity:** proven (verified 2026-10-29 @ 6a2cd80-dirty) · **Risk:** medium — real CPU per request (bounded by budget and rate limit); checks prove file and surface integrity, never structural strength
 
-A structured, validated request becomes a checked 3D asset: a deterministic TypeScript generator builds parametric geometry, an inspector proves every shell closed and outward, a DOM-free writer emits byte-stable GLB with its derivation key inside and reads it back, and one job shape — report, PROV-DM provenance, measurements, a write-once owner-scoped store — serves an HTTP route, a CLI and MCP tools, in-process or in a killable worker process.
+A structured, validated request becomes a checked 3D asset through the asset production engine, and one job shape around it — report, PROV-DM provenance, the derivation key, measurements and a write-once owner-scoped store when the asset is kept — serves an HTTP route, a CLI and MCP tools, in-process or in a killable worker process.
 
 **When to use:** Use when an app must generate 3D assets from parameters — configurators that export, procedural parts, AI-requested variations — and every file must be reproducible, validated and attributable before anyone loads it.
 
@@ -22,7 +22,7 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 - The assets are authored by hand in a DCC tool and only need viewing — the model viewer pattern is enough
 - The geometry needs B-rep CAD operations (fillets, STEP exchange, tolerances) — use a CAD kernel (OpenCascade via replicad) behind the same request and report
-- The target needs one booleaned watertight solid (3D printing, volumes) — describe it as a parametric model (agentic-parametric-modeling), which runs Manifold behind this same pipeline
+- The target needs one booleaned watertight solid (3D printing, volumes) — describe it as a parametric model (agentic-parametric-modeling), which runs Manifold through the same engine without keeping anything
 - Imported user files must be converted, decimated, unwrapped or baked — that is Blender's job, in a container worker with typed operations
 
 ## Alternatives
@@ -37,9 +37,6 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 ## Code
 
-- `src/lib/asset-production/` — Framework-free core: engine, generators, mesh intermediate, inspection, GLB writer and read-back gate ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/asset-production) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/asset-production))
-- `src/lib/asset-production/README.md` — The core's boundaries and one responsibility per file ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/asset-production/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/asset-production/README.md))
-- `src/lib/schemas/asset-production.ts` — The request schema and the one bounds table the UI and tools read ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/schemas/asset-production.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/schemas/asset-production.ts))
 - `src/lib/server/asset-production/` — Job lifecycle, report and provenance, derivation, write-once stores, in-process and isolated environments, MCP tool registry ([GitHub](https://github.com/ApeDevil/v10r/tree/main/src/lib/server/asset-production) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/tree/main/src/lib/server/asset-production))
 - `src/routes/api/showcases/asset-production/+server.ts` — The rate-limited HTTP adapter ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/routes/api/showcases/asset-production/+server.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/routes/api/showcases/asset-production/+server.ts))
 - `scripts/asset-production/produce.ts` — CLI with the directory store ([GitHub](https://github.com/ApeDevil/v10r/blob/main/scripts/asset-production/produce.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/scripts/asset-production/produce.ts))
@@ -48,9 +45,6 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 ## Tests
 
-- `src/lib/asset-production/engine.test.ts` — Determinism, exact estimates at the bounds, sixteen refusals, cancellation and deadline, the boundary gate ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/asset-production/engine.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/asset-production/engine.test.ts))
-- `src/lib/asset-production/glb.test.ts` — Khronos validator: no error or warning; GLTFLoader loads it; damaged files refused ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/asset-production/glb.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/asset-production/glb.test.ts))
-- `src/lib/asset-production/inspect.test.ts` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/asset-production/inspect.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/asset-production/inspect.test.ts))
 - `src/lib/server/asset-production/run-job.test.ts` — Report and provenance, label-independent derivation, write-once stores, lifecycle ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/asset-production/run-job.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/asset-production/run-job.test.ts))
 - `src/lib/server/asset-production/isolated-process.test.ts` — Same bytes on Bun and Node; worker killed at deadline, on cancel and past its output cap ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/asset-production/isolated-process.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/asset-production/isolated-process.test.ts))
 - `src/lib/server/asset-production/tools.test.ts` — MCP registry: typed operations only; code, unknown generators and over-budget requests refused ([GitHub](https://github.com/ApeDevil/v10r/blob/main/src/lib/server/asset-production/tools.test.ts) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/src/lib/server/asset-production/tools.test.ts))
@@ -62,19 +56,10 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 ## Invariants
 
-- Callers ask through one strict request schema — a generator id and bounded parameters; no request can name a script, a file or an engine flag.
-- The budget is checked from an exact estimate before anything is built and from the real mesh after; an over-budget request costs one arithmetic pass.
-- Same request, same bytes — in-process or in a worker, on V8 or JSC; the label is presentation and never enters the derivation key.
-- Every exported GLB passes inspection (closed outward shells, finite values, declared envelope) and its own read-back gate; tests hold it to the Khronos validator with zero errors and warnings.
-- Findings are data with a fixed severity per code; a refused or failed run returns no bytes, and a cancelled one keeps nothing.
 - Stores are write-once and owner-scoped: a repeat run reuses, different bytes under a kept key are refused, and a job never publishes.
-- The core imports no framework, DOM or runtime API, so the same engine runs in a function, a worker process, a terminal and a browser.
 
 ## Emulation notes
 
-- Write the request schema and its single bounds table first; let the UI sliders and the tool description read the same table.
-- Give every generator an exact estimate and test estimate = actual at every bound — that is what makes the a-priori budget honest.
-- Write your own byte-stable GLB writer for generated meshes rather than exporting a scene graph; run the Khronos validator in tests.
 - Start in-process; add the isolated worker (SIGKILL deadline, stripped env, capped output) before any untrusted or heavy engine, and only then a container.
 - Expose AI access as typed operations through the same schema; mount the tool where calls are authenticated and metered, never on an anonymous endpoint.
 
@@ -86,6 +71,7 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 **Composes (constituents of its solution)**
 
+- [Asset production engine](/docs/pattern-library/asset-production-engine) — required: Every job runs one engine request: the engine checks, builds, inspects and encodes; the job adds the report, provenance, derivation and store around it.
 - [Derivation key](/docs/pattern-library/derivation-key) — required: The written GLB carries its derivation key and is current exactly while a recomputed key matches.
 - [Provenance record](/docs/pattern-library/provenance-record) — required: Every job records PROV-DM provenance of the asset it produced.
 - [Hosted MCP](/docs/pattern-library/hosted-mcp) — conditional when agents call the pipeline over MCP: The same job shape serves MCP tools; when agents must reach it, it is served by an MCP endpoint.
@@ -94,10 +80,6 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 **Assumes (platform conventions in scope)**
 
 - [Multi-client core](/docs/pattern-library/multi-client-core) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
-
-**Specialized by**
-
-- [Agentic parametric modeling](/docs/pattern-library/agentic-parametric-modeling)
 
 
 ---

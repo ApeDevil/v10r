@@ -6,11 +6,11 @@
 
 **Category:** 3D · **Tier:** deep · **Maturity:** implemented · **Risk:** medium — per-account CPU per call (bounded by schema, estimate, budget, deadline, per-account and surface limits); mesh checks prove closed manifolds, never printability or strength; not yet exercised in a real MCP host with authorization
 
-An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) engine inside the asset production pipeline validates, builds, inspects and encodes it on a separate stateless MCP service, in the visitor's browser and in tests alike, and a model link in the URL fragment reproduces it anywhere without storage. An MCP App draws a server-side preview mesh; the native viewer runs the kernel in a Web Worker.
+An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) kernel, run as a generator of the asset production engine, validates, builds, inspects and encodes it on a separate stateless MCP service, in the visitor's browser and in tests alike, and a model link in the URL fragment reproduces it anywhere without storage. An MCP App draws a server-side preview mesh; the native viewer runs the kernel in a Web Worker.
 
 **When to use:** Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.
 
-**Needs:** required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db (via mcp-authorization, passwordless-auth, provenance-record) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
+**Needs:** required email-delivery (via passwordless-auth), key-value-store (via rate-limiting), relational-db (via mcp-authorization, passwordless-auth) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
 
 ## Avoid when
 
@@ -63,14 +63,13 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 - The MCP 3D service shares protocol infrastructure with the Pattern MCP and nothing else: separate endpoint, identity, registry, App and limits.
 - The MCP 3D service requires a Velociraptor account: an OAuth access token for its audience on every request (mcp-authorization).
 
-Inherited from [Asset production pipeline](asset-production-pipeline.md) (specializes):
+Inherited from [Asset production engine](asset-production-engine.md) (specializes):
 
 - Callers ask through one strict request schema — a generator id and bounded parameters; no request can name a script, a file or an engine flag.
 - The budget is checked from an exact estimate before anything is built and from the real mesh after; an over-budget request costs one arithmetic pass.
 - Same request, same bytes — in-process or in a worker, on V8 or JSC; the label is presentation and never enters the derivation key.
 - Every exported GLB passes inspection (closed outward shells, finite values, declared envelope) and its own read-back gate; tests hold it to the Khronos validator with zero errors and warnings.
 - Findings are data with a fixed severity per code; a refused or failed run returns no bytes, and a cancelled one keeps nothing.
-- Stores are write-once and owner-scoped: a repeat run reuses, different bytes under a kept key are refused, and a job never publishes.
 - The core imports no framework, DOM or runtime API, so the same engine runs in a function, a worker process, a terminal and a browser.
 
 ## Emulation notes
@@ -94,7 +93,7 @@ Inherited from [Asset production pipeline](asset-production-pipeline.md) (specia
 
 **Specializes (its invariants hold here; it is never built twice)**
 
-- [Asset production pipeline](asset-production-pipeline.md) — Every parametric model is an asset production request: one strict request schema, same bytes, inspection before encoding.
+- [Asset production engine](asset-production-engine.md) — Every parametric model runs as one engine request (generator parametric-model): one strict request schema, exact budget before building, same bytes everywhere, inspection and read-back before any GLB leaves.
 
 **Applies (principles to review the work against)**
 

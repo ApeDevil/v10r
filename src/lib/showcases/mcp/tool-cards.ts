@@ -61,16 +61,25 @@ export const TOOL_CARDS: ToolCard[] = [
 		name: 'recommend_emulation_plan',
 		icon: 'i-lucide-list-checks',
 		summary:
-			'Assemble an emulation plan, foundations and constituents first — deterministic registry assembly, no inference.',
+			'Plan an emulation in three explained stages — selection per request (or an explicit ambiguity), then deterministic assembly through the pattern graph, every step with its reason.',
 		params: [
-			{ name: 'capabilities', detail: 'list of desired capabilities (required)' },
-			{
-				name: 'include_dependencies',
-				detail: 'expand foundations and constituents (builds on, composes), default true',
-			},
-			{ name: 'target_infra', detail: 'what the target runs — each step says whether it fits' },
-			{ name: 'detail', detail: 'full (default) · outline (steps and fitness only)' },
+			{ name: 'capabilities', detail: 'what the target needs, in words — each selected and explained' },
+			{ name: 'ids', detail: 'canonical record ids to plan exactly; unknown ids reported, never aliased' },
+			{ name: 'conditions', detail: 'settled conditions by the id a plan prints; unknown ones left out' },
+			{ name: 'select', detail: 'optional or conditional constituents to adopt' },
+			{ name: 'exclude', detail: 'records the target refuses — a step needing one is a conflict' },
+			{ name: 'target_infra', detail: 'infrastructure the target has' },
+			{ name: 'target_lacks', detail: 'infrastructure it lacks — steps needing it are blocked' },
+			{ name: 'target_has', detail: 'records it already has an equivalent of — not built again' },
+			{ name: 'detail', detail: 'compact (default) · full (docs, code, tests, invariants per step)' },
 		],
+	},
+	{
+		name: 'explore_patterns',
+		icon: 'i-lucide-git-fork',
+		summary:
+			'Explore the relationship graph — one pattern with what adopting it builds and what builds on it, or the whole graph by category; an interactive View where the host supports MCP Apps.',
+		params: [{ name: 'id', detail: 'a pattern id; omit for the overview' }],
 	},
 	{
 		name: 'explore_architecture',

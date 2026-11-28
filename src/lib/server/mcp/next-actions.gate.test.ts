@@ -1,7 +1,7 @@
 /**
  * NEXT-ACTIONS CONVENTION GATE.
  *
- * The registry tools live once in `pattern-library/query.ts`, where a failure without recovery
+ * The registry tools live once in `pattern-library/query.ts` (their contract in `query-contract.ts`), where a failure without recovery
  * steps is a type error (`QueryOutcome` requires `next`); the hosted side adds `errorResult`'s
  * required third parameter. The stdio-only branches in `mcp/tools.ts` are pinned here as a
  * static scan, the house style for cross-boundary invariants (see
@@ -20,7 +20,7 @@ import { describe, expect, it } from 'vitest';
 import { NEXT_ACTIONS_HEADING } from './types';
 
 const TOOLS_PATH = join(process.cwd(), 'mcp', 'tools.ts');
-const QUERY_PATH = join(process.cwd(), 'pattern-library', 'query.ts');
+const QUERY_PATH = join(process.cwd(), 'pattern-library', 'query-contract.ts');
 const TOOL_SERVER_PATH = join(process.cwd(), 'mcp', 'tool-server.ts');
 
 /** Balanced-paren argument extraction for every `fail(` CALL (the definition is skipped). */

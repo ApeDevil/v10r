@@ -23,6 +23,7 @@ import { noopMcpObserver, type ToolRegistry } from './types';
 const PATTERN_TOOL_NAMES = [
 	'check_architecture',
 	'explore_architecture',
+	'explore_patterns',
 	'get_file_excerpt',
 	'get_pattern',
 	'recommend_emulation_plan',
@@ -88,7 +89,7 @@ async function connectClient() {
 }
 
 describe('MCP SDK interoperability (real client over HTTP)', () => {
-	it('initializes and lists exactly the eight read-only pattern tools', async () => {
+	it('initializes and lists exactly the nine read-only pattern tools', async () => {
 		const { client, transport } = await connectClient();
 		try {
 			const { tools } = await client.listTools();
@@ -264,7 +265,7 @@ async function connectV2(mode: 'legacy' | 'auto' | { pin: string }) {
  * its own so the legacy path and the modern path are proven independently, not through each other.
  */
 describe('MCP SDK v2 client interoperability (HTTP)', () => {
-	it('legacy mode: the plain initialize handshake, eight tools, a working call', async () => {
+	it('legacy mode: the plain initialize handshake, nine tools, a working call', async () => {
 		const { client, transport, wire } = await connectV2('legacy');
 		try {
 			expect(client.getProtocolEra()).toBe('legacy');
@@ -361,7 +362,7 @@ describe('MCP SDK v2 client interoperability (stdio)', () => {
 		['legacy', 'legacy', 'mcp/server.bundle.js'],
 		['auto', 'modern', 'mcp/server.bundle.js'],
 	] as const) {
-		it(`${entry}, ${JSON.stringify(mode)} mode: connects in the ${era} era, lists eight tools and calls one`, async () => {
+		it(`${entry}, ${JSON.stringify(mode)} mode: connects in the ${era} era, lists nine tools and calls one`, async () => {
 			const client = await connectStdio(mode, entry);
 			try {
 				expect(client.getProtocolEra()).toBe(era);

@@ -63,6 +63,10 @@ Concurrent callers for one key share one execution, and across instances a refre
 
 - [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md) — Server-side records put their logic in a framework-free domain module behind thin adapters (UI, AI tools, REST, jobs); they assume this layering instead of rebuilding it.
 
+**Part of**
+
+- [Stale-while-revalidate](stale-while-revalidate.md) (conditional)
+
 
 ---
 

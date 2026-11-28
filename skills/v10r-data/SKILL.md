@@ -4,7 +4,7 @@ description: "v10r reference patterns for Data in SvelteKit + TypeScript apps (D
 license: MIT
 metadata:
   source: "v10r pattern-library registry"
-  registry-digest: "645006606b7c9657"
+  registry-digest: "5763b3ac186c316e"
   generated: "true"
 ---
 
