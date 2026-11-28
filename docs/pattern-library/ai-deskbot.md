@@ -1,10 +1,10 @@
 ---
-title: "Deskbot (AI in the desk workspace)"
+title: "Deskbot"
 description: "An agentic AI surface embedded in the desk workspace calls desk-mutating tools, with writes routed through the harness's proposal-and-approval gate."
 category: "AI"
 ---
 
-# Deskbot (AI in the desk workspace)
+# Deskbot
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 An agentic AI surface embedded in the desk workspace calls desk-mutating tools, with writes routed through the harness's proposal-and-approval gate.
 
 **When to use:** Use when an AI assistant needs to act on a workspace's files and panels, not just answer read-only questions.
+
+**Needs:** required llm-provider, relational-db
 
 ## Docs
 

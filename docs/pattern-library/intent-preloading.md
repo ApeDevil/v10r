@@ -1,10 +1,10 @@
 ---
-title: "Intent-based preloading (six levels over SvelteKit triggers)"
+title: "Intent-based preloading"
 description: "A policy layer over the app-wide `data-sveltekit-preload-data=\"hover\"` default, for the two cases the blanket setting gets wrong: routes too expensive to…"
 category: "Interaction Velocity"
 ---
 
-# Intent-based preloading (six levels over SvelteKit triggers)
+# Intent-based preloading
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

@@ -1,10 +1,10 @@
 ---
-title: "State management (Svelte 5 runes)"
+title: "State management"
 description: "Establishes v10r's rune-based state strategy — $state/$derived for component state, .svelte.ts modules or the Context API for shared state, with an SSR-safety…"
 category: "Architecture & Request Pipeline"
 ---
 
-# State management (Svelte 5 runes)
+# State management
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Establishes v10r's rune-based state strategy — $state/$derived for component state, .svelte.ts modules or the Context API for shared state, with an SSR-safety rule against module-level state leaking across requests.
 
 **When to use:** Reach for it when deciding whether shared reactive state should be a .svelte.ts module or Context-API-provided, especially anything touched during SSR.
+
+**Needs:** v10r's implementation uses llm-provider
 
 ## Docs
 

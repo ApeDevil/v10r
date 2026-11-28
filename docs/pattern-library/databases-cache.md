@@ -1,10 +1,10 @@
 ---
-title: "Cache (Upstash Redis, ephemeral patterns)"
+title: "Redis cache client"
 description: "In-memory key-value store on Upstash Redis, reached over HTTP REST, used for rate limiting, the circuit breaker, and other ephemeral counters."
 category: "Databases & Storage"
 ---
 
-# Cache (Upstash Redis, ephemeral patterns)
+# Redis cache client
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 In-memory key-value store on Upstash Redis, reached over HTTP REST, used for rate limiting, the circuit breaker, and other ephemeral counters.
 
 **When to use:** Use when a feature needs fast, short-lived state, such as counters or locks, without Postgres's durability guarantees.
+
+**Needs:** required key-value-store (pinned: redis)
 
 ## Docs
 

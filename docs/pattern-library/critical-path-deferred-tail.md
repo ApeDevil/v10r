@@ -14,6 +14,8 @@ Only work the caller's intent depends on runs before the response; analytics, in
 
 **When to use:** Use whenever an operation performs secondary effects before returning. Not for a durable write that must be acknowledged before the response.
 
+**Needs:** v10r's implementation uses relational-db
+
 ## Avoid when
 
 - The side effect is a durable write the caller must see acknowledged — that is critical work, not a deferred tail
@@ -59,7 +61,7 @@ Only work the caller's intent depends on runs before the response; analytics, in
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](/docs/pattern-library/multi-client-core)
+- [Multi-client core](/docs/pattern-library/multi-client-core)
 
 ---
 

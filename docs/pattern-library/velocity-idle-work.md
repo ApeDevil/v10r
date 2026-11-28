@@ -28,7 +28,7 @@ Useful non-critical preparation performed after the page is interactive: preload
 
 ## Depends on
 
-- [Intent-based preloading (six levels over SvelteKit triggers)](/docs/pattern-library/intent-preloading)
+- [Intent-based preloading](/docs/pattern-library/intent-preloading)
 
 ---
 

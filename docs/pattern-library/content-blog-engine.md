@@ -1,10 +1,10 @@
 ---
-title: "Blog engine (posts, revisions, locale-aware publishing)"
+title: "Blog engine"
 description: "A DB-backed blog system with posts, immutable revisions, and locale-aware publishing supporting multiple authors."
 category: "Content & Blog"
 ---
 
-# Blog engine (posts, revisions, locale-aware publishing)
+# Blog engine
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A DB-backed blog system with posts, immutable revisions, and locale-aware publishing supporting multiple authors.
 
 **When to use:** Use when building a real content/blog section that needs draft/publish workflows and per-locale revisions.
+
+**Needs:** required relational-db · conditional object-storage (when posts carry uploaded images)
 
 ## Docs
 

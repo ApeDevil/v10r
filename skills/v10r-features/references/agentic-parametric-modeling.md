@@ -1,4 +1,4 @@
-# Agentic parametric modeling (MCP 3D)
+# Agentic parametric modeling
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 
 **When to use:** Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.
 
-**Requires:** web-worker
+**Needs:** required relational-db (via architecture-mcp-authorization), key-value-store (via architecture-hosted-mcp), email-delivery (via identity-passwordless-auth) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
 
 ## Avoid when
 
@@ -70,12 +70,12 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 
 ## Depends on
 
-- [Asset production pipeline (typed request → checked GLB)](asset-production-pipeline.md)
-- [Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-mcp-authorization.md)
-- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-hosted-mcp.md)
-- [MCP App provider (an interactive View beside a text answer)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-mcp-app-provider.md)
-- [Rate limiting (sliding window, fail-closed)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/anti-abuse-rate-limiting.md)
-- [Threlte integration (SSR-off, code-split model registry)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/3d-threlte-integration.md)
+- [Asset production pipeline](asset-production-pipeline.md)
+- [Authenticated MCP services](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-mcp-authorization.md)
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-hosted-mcp.md)
+- [MCP App provider](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-mcp-app-provider.md)
+- [Rate limiting](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/anti-abuse-rate-limiting.md)
+- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/3d-threlte-integration.md)
 
 ---
 

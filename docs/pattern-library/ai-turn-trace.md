@@ -1,10 +1,10 @@
 ---
-title: "Turn trace (recorded account of every AI turn) + turn graph"
+title: "Turn trace and turn graph"
 description: "Every chatbot and deskbot turn records what was available, considered, included per model call, executed and cited — from the actual execution, never a second…"
 category: "AI"
 ---
 
-# Turn trace (recorded account of every AI turn) + turn graph
+# Turn trace and turn graph
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Every chatbot and deskbot turn records what was available, considered, included per model call, executed and cited — from the actual execution, never a second run — streams it while the turn runs, persists it once, and lets the turn’s owner open it as a three-column turn graph (sources → context and model calls → tools, recorded relations only), a tree and a timeline on the showcase pages.
 
 **When to use:** Use when an AI feature must be explainable after the fact: what the prompt contained block by block, what retrieval considered versus what the prompt took, which tools ran with what result, how provider attempts rotated, and what the answer actually cited.
+
+**Needs:** required relational-db, llm-provider (via ai-surfaces)
 
 ## Docs
 
@@ -42,7 +44,7 @@ Every chatbot and deskbot turn records what was available, considered, included 
 
 ## Depends on
 
-- [AI surfaces (chatbot vs deskbot split over one guard)](/docs/pattern-library/ai-surfaces)
+- [AI surfaces](/docs/pattern-library/ai-surfaces)
 
 ---
 

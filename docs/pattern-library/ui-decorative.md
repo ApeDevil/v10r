@@ -1,10 +1,10 @@
 ---
-title: "Decorative (ornaments · backgrounds)"
+title: "Decorative ornaments and backgrounds"
 description: "Decorative primitive components (ornaments, backgrounds) used by the style-randomization system to vary visual flourish without affecting core UI…"
 category: "UI Components & Design System"
 ---
 
-# Decorative (ornaments · backgrounds)
+# Decorative ornaments and backgrounds
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

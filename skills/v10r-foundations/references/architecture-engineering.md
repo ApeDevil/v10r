@@ -1,4 +1,4 @@
-# Architecture Engineering (explained decision records, a typed architecture model and static checks)
+# Architecture Engineering
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 A deterministic decision discipline for where code runs, how parts talk, where data lives and how it ships. Versioned decision records (problem, alternatives, ordered rules, evidence with its kind, migrations) drive an engine that answers a workload profile with the chosen approach, the rule that chose it, why each alternative lost and which unknown factor could change it; no scoring formula and no LLM. A separate architecture model (components, zones, connections; layout stored apart) is parsed fail-closed, edited through pure operations, statically checked (security findings kept apart, fixed severity per code) and compared qualitatively. The Studio at /studio/architecture and the explore_architecture/check_architecture MCP tools run the same engine.
 
 **When to use:** Use when architecture choices (browser vs server compute, JS vs Rust/Wasm, monolith vs service, SQL vs application processing) need to be explained, reviewable and reproducible rather than asserted, and when a team or an agent should get the same answer from the same inputs.
+
+**Needs:** required wasm-toolchain (via architecture-wasm-kernel), container-host (via architecture-external-service) · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
 
 ## Avoid when
 
@@ -74,10 +76,10 @@ A deterministic decision discipline for where code runs, how parts talk, where d
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](multi-client-core.md)
-- [Rust→wasm compute kernel (vendored, plugin-free)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-wasm-kernel.md)
-- [External service runtime (a separately deployed backend behind a typed client)](architecture-external-service.md)
-- [Pattern MCP (agent-queryable pattern registry, local stdio)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-pattern-mcp.md)
+- [Multi-client core](multi-client-core.md)
+- [WebAssembly compute kernel](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-wasm-kernel.md)
+- [External service runtime](architecture-external-service.md)
+- [Pattern MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-pattern-mcp.md)
 
 ---
 

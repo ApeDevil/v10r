@@ -1,10 +1,10 @@
 ---
-title: "Channel providers (email · Telegram · Discord)"
+title: "Channel providers"
 description: "Email (Resend), Telegram (bot API), and Discord (OAuth2) each implement a common provider interface (send/validateConnection/getProviderName) behind their own…"
 category: "Notifications"
 ---
 
-# Channel providers (email · Telegram · Discord)
+# Channel providers
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Email (Resend), Telegram (bot API), and Discord (OAuth2) each implement a common provider interface (send/validateConnection/getProviderName) behind their own connection and token-management flow.
 
 **When to use:** Use when adding or maintaining an outbound notification channel that must plug into the shared router and outbox.
+
+**Needs:** required relational-db · conditional email-delivery (when the email channel is enabled), external-api (when chat channels are enabled (Telegram bot API, Discord))
 
 ## Docs
 

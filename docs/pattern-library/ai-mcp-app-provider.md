@@ -1,10 +1,10 @@
 ---
-title: "MCP App provider (an interactive View beside a text answer)"
+title: "MCP App provider"
 description: "Serve one read-only MCP tool with a ui:// View through the official ext-apps helpers: a self-contained, network-less HTML View built apart from the app…"
 category: "AI"
 ---
 
-# MCP App provider (an interactive View beside a text answer)
+# MCP App provider
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "AI"
 Serve one read-only MCP tool with a ui:// View through the official ext-apps helpers: a self-contained, network-less HTML View built apart from the app, linked by _meta.ui, with a complete text and structuredContent answer for hosts that render no View. The View reuses the tool's own data and the host's theme; it holds no authority of its own.
 
 **When to use:** Use when a tool's answer is easier to explore than to read, such as a graph or a filterable list, and the hosts in your audience render MCP Apps.
+
+**Needs:** required key-value-store (via architecture-hosted-mcp)
 
 ## Avoid when
 
@@ -56,7 +58,7 @@ Serve one read-only MCP tool with a ui:// View through the official ext-apps hel
 
 ## Depends on
 
-- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](/docs/pattern-library/architecture-hosted-mcp)
+- [Hosted MCP](/docs/pattern-library/architecture-hosted-mcp)
 
 ---
 

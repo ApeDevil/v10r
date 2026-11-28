@@ -1,4 +1,4 @@
-# Critical rendering path (the LCP element paints from the document)
+# Critical rendering path
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 

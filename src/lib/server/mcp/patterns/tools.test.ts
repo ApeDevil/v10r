@@ -130,9 +130,9 @@ describe('progressive disclosure — search_patterns', () => {
 		expect(sizes[1]).toBeLessThan(sizes[2]);
 	});
 
-	it('puts the rule-out facts on the row: dependencies, requirements, headline contraindication', () => {
+	it('puts the rule-out facts on the row: dependencies, needs by level, headline contraindication', () => {
 		const text = textOf(call('search_patterns', { query: 'layered rag', detail: 'compact', limit: 1 }));
-		expect(text).toContain('requires postgres, pgvector, ai-provider');
+		expect(text).toContain('needs required relational-db, vector-search, llm-provider · conditional graph-db');
 		expect(text).toContain('avoid when: ');
 	});
 
@@ -178,10 +178,12 @@ describe('progressive disclosure — get_pattern', () => {
 		expect(text).toContain('MUST hold when emulating');
 	});
 
-	it('always keeps the header: dependencies and required infrastructure are never filtered away', () => {
+	it('always keeps the header: dependencies and infrastructure needs are never filtered away', () => {
 		const text = textOf(call('get_pattern', { id: 'layered-rag', sections: ['invariants'] }));
 		expect(text).toContain('**Depends on:** multi-client-core');
-		expect(text).toContain('**Requires:** postgres, pgvector, ai-provider');
+		expect(text).toContain(
+			'**Needs:** required relational-db, vector-search, llm-provider · conditional graph-db (when the graph tier answers multi-hop relationship questions)',
+		);
 	});
 
 	it('a full card announces nothing withheld', () => {
@@ -241,12 +243,28 @@ describe('evidence navigation — get_file_excerpt', () => {
 });
 
 describe('applicability — what adopting a pattern really takes', () => {
-	it('carries requirements through dependencies, naming where they come from', () => {
-		// singleflight requires nothing itself; its dependency hierarchical-cache requires Redis.
-		const card = textOf(call('get_pattern', { id: 'singleflight', sections: ['overview'] }));
-		expect(card).toContain('**Requires:** redis (via hierarchical-cache)');
-		const row = textOf(call('search_patterns', { query: 'cache stampede protection', detail: 'compact', limit: 1 }));
-		expect(row).toContain('requires redis (via hierarchical-cache)');
+	it('carries required needs through dependencies, naming where they come from', () => {
+		// The MCP App provider declares nothing itself; the hosted MCP it builds on needs a shared store.
+		const card = textOf(call('get_pattern', { id: 'ai-mcp-app-provider', sections: ['overview'] }));
+		expect(card).toContain('**Needs:** required key-value-store (via architecture-hosted-mcp)');
+		// The hosted MCP's Postgres is v10r's implementation choice: never inherited by what builds on it.
+		expect(card).not.toContain('relational-db');
+		const row = textOf(call('search_patterns', { query: 'mcp app provider', detail: 'compact', limit: 1 }));
+		expect(row).toContain('needs required key-value-store (via architecture-hosted-mcp)');
+	});
+
+	it('keeps the strictest level when a need arrives twice', () => {
+		// Its own email need is implementation-level; the passwordless sign-in it builds on requires it.
+		const card = textOf(call('get_pattern', { id: 'architecture-mcp-authorization', sections: ['overview'] }));
+		expect(card).toContain('email-delivery (via identity-passwordless-auth)');
+		expect(card).not.toContain("v10r's implementation uses email-delivery");
+	});
+
+	it('says what v10r merely happens to use, apart from what a pattern needs', () => {
+		const card = textOf(call('get_pattern', { id: 'architecture-hosted-mcp', sections: ['overview'] }));
+		expect(card).toContain("**Needs:** required key-value-store · v10r's implementation uses relational-db");
+		const plan = textOf(call('recommend_emulation_plan', { capabilities: ['hosted mcp'], detail: 'outline' }));
+		expect(plan).toMatch(/- Required infrastructure: [^\n]*key-value-store/);
 	});
 
 	it('marks plan steps against a declared target, keeping unknown and missing apart', () => {
@@ -254,20 +272,27 @@ describe('applicability — what adopting a pattern really takes', () => {
 		const unknown = textOf(call('recommend_emulation_plan', { capabilities }));
 		expect(unknown).not.toContain('Fits the target');
 		expect(unknown).not.toContain('Target lacks');
-		const declared = textOf(call('recommend_emulation_plan', { capabilities, target_infra: ['postgres'] }));
-		expect(declared).toContain('**Target lacks pgvector, ai-provider — drop or replace this step');
+		// A technology word implies its capability: postgres satisfies relational-db.
+		const declared = textOf(call('recommend_emulation_plan', { capabilities, target_infra: ['postgres', 'cron'] }));
+		expect(declared).toContain('**Target lacks vector-search, llm-provider — drop or replace this step');
 		expect(declared).toContain('Fits the target.');
-		expect(declared).toContain('The target lacks pgvector, ai-provider');
+		expect(declared).toContain('The target lacks vector-search, llm-provider');
+		// A conditional need is a question to settle, never a silent requirement or a silent pass.
+		expect(declared).toContain('Check against the target: graph-db (when the graph tier answers');
 		const complete = textOf(
-			call('recommend_emulation_plan', { capabilities, target_infra: ['postgres', 'pgvector', 'ai-provider'] }),
+			call('recommend_emulation_plan', {
+				capabilities,
+				target_infra: ['relational-db', 'pgvector', 'llm-provider', 'scheduler', 'neo4j'],
+			}),
 		);
-		expect(complete).toContain('the target has all of it');
+		expect(complete).toContain('The target has every required need.');
+		expect(complete).not.toContain('Target lacks');
 	});
 
 	it('refuses a target_infra word outside the vocabulary', () => {
-		const result = call('recommend_emulation_plan', { capabilities: ['jobs'], target_infra: ['mysql'] });
+		const result = call('recommend_emulation_plan', { capabilities: ['jobs'], target_infra: ['oracle-rac'] });
 		expect(result.diag).toBe('invalid_args');
-		expect(textOf(result)).toContain('postgres, pgvector');
+		expect(textOf(result)).toContain('relational-db, vector-search');
 	});
 
 	it('outlines a plan without dropping the count of what it withholds', () => {

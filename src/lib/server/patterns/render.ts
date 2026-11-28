@@ -11,6 +11,7 @@
  * registry, checking doc publication, writing files — belongs to the script;
  * `RenderOpts.isPublishedDoc` injects the one predicate the renderers need.
  */
+import { adoptionNeeds, needsSummary } from '#patterns/infrastructure-needs.ts';
 import { headingAnchors } from '../../docs/heading-anchors.server';
 import type { PatternRecord, Registry, RegRef } from './registry';
 
@@ -330,8 +331,9 @@ function patternBody(pattern: PatternRecord, registry: Registry, links: PatternL
 		`**When to use:** ${pattern.when_to_use}`,
 		'',
 	);
-	if (pattern.requires.length > 0) {
-		sections.push(`**Requires:** ${pattern.requires.join(', ')}`, '');
+	const needs = adoptionNeeds(pattern, byId);
+	if (needs.length > 0) {
+		sections.push(`**Needs:** ${needsSummary(needs, { condition: true })}`, '');
 	}
 	if (pattern.avoid_when.length > 0) {
 		sections.push('## Avoid when', '', bulletLines(pattern.avoid_when), '');

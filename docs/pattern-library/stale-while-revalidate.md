@@ -1,10 +1,10 @@
 ---
-title: "Stale-while-revalidate (and stale-if-error)"
+title: "Stale-while-revalidate"
 description: "A value past its TTL but inside its stale window is returned immediately and refreshed behind the response; a failing refresh leaves the stale value in place…"
 category: "Data Velocity"
 ---
 
-# Stale-while-revalidate (and stale-if-error)
+# Stale-while-revalidate
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Data Velocity"
 A value past its TTL but inside its stale window is returned immediately and refreshed behind the response; a failing refresh leaves the stale value in place rather than turning a slow dependency into a 500.
 
 **When to use:** Use when slightly stale is better than waiting: dashboards, feeds, metadata, public content, aggregate counts. Never for authorization, security state or balances requiring strong consistency.
+
+**Needs:** conditional key-value-store (when cached values are shared across instances (the refresh claim lives in the shared store))
 
 ## Avoid when
 
@@ -54,7 +56,7 @@ A value past its TTL but inside its stale window is returned immediately and ref
 
 ## Depends on
 
-- [Hierarchical cache (local → shared → origin, with key scope enforced)](/docs/pattern-library/hierarchical-cache)
+- [Hierarchical cache](/docs/pattern-library/hierarchical-cache)
 - [Critical path / deferred tail](/docs/pattern-library/critical-path-deferred-tail)
 
 ---

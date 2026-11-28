@@ -1,10 +1,10 @@
 ---
-title: "Chatbot site awareness (page context)"
+title: "Chatbot site awareness"
 description: "Server-resolved page context is injected as a passive block into the chatbot's prompt so deictic questions like \"how does this work?\" resolve to the page the…"
 category: "AI"
 ---
 
-# Chatbot site awareness (page context)
+# Chatbot site awareness
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Server-resolved page context is injected as a passive block into the chatbot's prompt so deictic questions like "how does this work?" resolve to the page the user is viewing.
 
 **When to use:** Use when a floating assistant needs to ground answers in whatever public page the user currently has open.
+
+**Needs:** required llm-provider
 
 ## Docs
 

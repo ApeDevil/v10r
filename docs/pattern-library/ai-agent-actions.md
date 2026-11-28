@@ -1,10 +1,10 @@
 ---
-title: "Agent actions (one tool catalogue, server and client executors)"
+title: "Agent actions"
 description: "Every action the assistant may take is one tool-catalogue entry with a risk (what it changes) and an executor (server or client). A client action has no…"
 category: "AI"
 ---
 
-# Agent actions (one tool catalogue, server and client executors)
+# Agent actions
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Every action the assistant may take is one tool-catalogue entry with a risk (wha
 
 **When to use:** Use when an in-app assistant must operate live interface state (layout, focus, selection, navigation) as part of the same turn that reads or proposes changes to server data, and must report honestly whether the interface change happened.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -76,11 +76,10 @@ Every action the assistant may take is one tool-catalogue entry with a risk (wha
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](/docs/pattern-library/ai-tool-harness)
-- [AI surfaces (chatbot vs deskbot split over one guard)](/docs/pattern-library/ai-surfaces)
-- [Deskbot approval gate (proposal → approve, plan-gated mutation)](/docs/pattern-library/deskbot-approval-gate)
-- [Untrusted-content boundary (the lethal trifecta, one rule per leg)](/docs/pattern-library/ai-untrusted-content-boundary)
-- [Desk workspace (dock layout, focus architecture, mobile projection)](/docs/pattern-library/desk-workspace)
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
+- [AI surfaces](/docs/pattern-library/ai-surfaces)
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate)
+- [Untrusted-content boundary](/docs/pattern-library/ai-untrusted-content-boundary)
 
 ---
 

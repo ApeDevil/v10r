@@ -1,10 +1,10 @@
 ---
-title: "Testing infrastructure (Vitest, PGlite isolation)"
+title: "Testing infrastructure"
 description: "Two vitest lanes over one config: a fast `unit` lane and a `db` lane whose files restore a PGlite datadir snapshot built once per run, plus the…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Testing infrastructure (Vitest, PGlite isolation)
+# Testing infrastructure
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Two vitest lanes over one config: a fast `unit` lane and a `db` lane whose files restore a PGlite datadir snapshot built once per run, plus the source-scanning gate tests that ratchet architectural and naming invariants.
 
 **When to use:** Reach for it when writing tests that need database isolation, when deciding whether a guarantee earns a test at all, or when adding a gate that scans the source tree.
+
+**Needs:** v10r's implementation uses relational-db
 
 ## Docs
 

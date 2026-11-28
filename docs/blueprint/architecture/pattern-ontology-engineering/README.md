@@ -1,7 +1,9 @@
 # Pattern Ontology Engineering — review package
 
-Analysis and plan only (2026-11-28, reviewed commit `5720c96`). Nothing in the platform was changed. Stopped at
-the review gate: implementation waits for ApeDevil's decisions in the [decision register](./decision-register.md).
+Review accepted by ApeDevil on 2026-11-28 (reviewed commit `5720c96`); his rulings are in the
+[decision register](./decision-register.md) and the target ontology and roadmap are reconciled with them.
+**Slice 1 is implemented** ([slice-1.md](./slice-1.md)) and stopped at its review checkpoint; nothing proceeds to
+Slice 2 without ApeDevil's word. The outcome section below is the review's finding, measured before Slice 1.
 
 ## Outcome
 
@@ -26,6 +28,7 @@ a typed relationship graph inside the existing registry (direction B), no databa
 | [decision-register.md](./decision-register.md) | G. 14 decisions (evidence vs preference) and open questions |
 | [verification.md](./verification.md) | Measured baseline on eight scenarios and the targets |
 | [enforcement.md](./enforcement.md) | Gates (deterministic vs judgement) and authoring procedures |
+| [slice-1.md](./slice-1.md) | Slice 1: what changed and why, the needs and titles manifests, benchmark, limits |
 | [presentation.html](./presentation.html) | H. Interactive review presentation (self-contained) |
 
 ## Verification limits

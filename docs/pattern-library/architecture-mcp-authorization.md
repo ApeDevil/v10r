@@ -1,10 +1,10 @@
 ---
-title: "Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)"
+title: "Authenticated MCP services"
 description: "A specialized MCP service that needs a user account becomes an OAuth protected resource with its own audience and scope, and the app becomes its own OAuth 2.1…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)
+# Authenticated MCP services
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Architecture & Request Pipeline"
 A specialized MCP service that needs a user account becomes an OAuth protected resource with its own audience and scope, and the app becomes its own OAuth 2.1 authorization server on the Better Auth it already runs — PKCE, RFC 9728/8414 discovery, resource-bound JWT access tokens with a per-request liveness check, Client ID Metadata Documents first and bounded Dynamic Client Registration, an authorization page that labels untrusted client metadata, and a connected-applications page whose revoke takes effect on the next request.
 
 **When to use:** Use when an MCP host (Claude, ChatGPT, an IDE agent) should call one of your MCP endpoints on behalf of a signed-in user of your app, with per-user quotas, consent the user can review and revoke, and no static shared secret.
+
+**Needs:** required relational-db, email-delivery (via identity-passwordless-auth), key-value-store (via architecture-hosted-mcp)
 
 ## Avoid when
 
@@ -66,9 +68,9 @@ A specialized MCP service that needs a user account becomes an OAuth protected r
 
 ## Depends on
 
-- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](/docs/pattern-library/architecture-hosted-mcp)
-- [Passwordless auth (magic link + OTP)](/docs/pattern-library/identity-passwordless-auth)
-- [Rate limiting (sliding window, fail-closed)](/docs/pattern-library/anti-abuse-rate-limiting)
+- [Hosted MCP](/docs/pattern-library/architecture-hosted-mcp)
+- [Passwordless auth](/docs/pattern-library/identity-passwordless-auth)
+- [Rate limiting](/docs/pattern-library/anti-abuse-rate-limiting)
 
 ---
 

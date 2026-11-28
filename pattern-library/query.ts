@@ -18,8 +18,16 @@
 
 import { ARCHITECTURE_QUERIES, ARCHITECTURE_TOOLS } from './architecture-queries.ts';
 import { DEFAULT_LINES, type ExcerptRequest, MAX_LINES } from './excerpt.ts';
-import type { PatternRecord, PatternRequirement, Registry, RegRef } from './schema.ts';
-import { buildById, PATTERN_REQUIREMENTS, topoSort } from './schema.ts';
+import {
+	type AdoptionNeed,
+	adoptionNeeds,
+	needLabel,
+	needsSummary,
+	TARGET_INFRA_WORDS,
+	targetProvides,
+} from './infrastructure-needs.ts';
+import type { PatternRecord, Registry, RegRef } from './schema.ts';
+import { buildById, NEED_LEVELS, topoSort } from './schema.ts';
 import { type Scored, scorePatterns } from './search.ts';
 
 /** MCP tools/list shape — name/description/inputSchema ONLY: `outputSchema`, `title` or
@@ -85,14 +93,15 @@ const MAX_RESULTS = 50;
 const MAX_CARDS = 5;
 
 /**
- * What the TARGET project already runs, from the closed `PATTERN_REQUIREMENTS` vocabulary. Absent
- * means unknown — rows then state requirements without a verdict; present, every row and step
- * says whether the target has what the pattern needs, its dependencies' needs included.
+ * What the TARGET project already runs: infrastructure need ids or the technologies that provide
+ * them (`INFRASTRUCTURE_NEEDS`). Absent means unknown — rows then state needs without a verdict;
+ * present, every step says whether the target has what it needs, its dependencies' needs included.
  */
 const TARGET_INFRA_SCHEMA = {
 	type: 'array',
-	items: { type: 'string', enum: PATTERN_REQUIREMENTS },
-	description: 'What the target project HAS, e.g. ["postgres"] ([] = none); each result then says whether it fits.',
+	items: { type: 'string', enum: TARGET_INFRA_WORDS },
+	description:
+		'What the target project HAS — capabilities or technologies, e.g. ["relational-db"] or ["postgres", "redis"] ([] = none); each step then says whether it fits.',
 };
 
 const PLAN_DETAILS = ['outline', 'full'] as const;
@@ -375,34 +384,12 @@ export const LIST_EVERYTHING: NextAction = {
 	why: 'lists every category with its pattern counts.',
 };
 
-/** A requirement and, when it is inherited, the dependency it comes from. */
-interface Need {
-	need: PatternRequirement;
-	via?: string;
-}
-
 /** Per-registry derived lookups, computed once per registry object rather than per call. */
 interface RegistryView {
 	byId: Map<string, PatternRecord>;
 	order: string[];
-	/** Own requirements plus every dependency's, transitively — what adopting the pattern really takes. */
-	needs: Map<string, Need[]>;
-}
-
-function needsOf(pattern: PatternRecord, byId: Map<string, PatternRecord>): Need[] {
-	const needs: Need[] = pattern.requires.map((need) => ({ need }));
-	const seen = new Set([pattern.id]);
-	const queue = [...pattern.depends_on];
-	while (queue.length > 0) {
-		const id = queue.shift();
-		if (id === undefined || seen.has(id)) continue;
-		seen.add(id);
-		const dep = byId.get(id);
-		if (!dep) continue;
-		for (const need of dep.requires) if (!needs.some((known) => known.need === need)) needs.push({ need, via: id });
-		queue.push(...dep.depends_on);
-	}
-	return needs;
+	/** Own needs plus every dependency's required and conditional ones — what adopting the pattern takes. */
+	needs: Map<string, AdoptionNeed[]>;
 }
 
 const views = new WeakMap<Registry, RegistryView>();
@@ -414,7 +401,7 @@ function viewOf(registry: Registry): RegistryView {
 		view = {
 			byId,
 			order: registry.patterns.map((pattern) => pattern.id),
-			needs: new Map(registry.patterns.map((pattern) => [pattern.id, needsOf(pattern, byId)])),
+			needs: new Map(registry.patterns.map((pattern) => [pattern.id, adoptionNeeds(pattern, byId)])),
 		};
 		views.set(registry, view);
 	}
@@ -428,17 +415,15 @@ function refLines(refs: RegRef[]): string {
 	return refs.map((ref) => `- ${ref.path}${ref.note ? ` — ${ref.note}` : ''}`).join('\n');
 }
 
-const needsText = (needs: Need[]) => needs.map(({ need, via }) => (via ? `${need} (via ${via})` : need)).join(', ');
-
 /** Parse `target_infra`: absent → unknown (`null`); otherwise only vocabulary words are accepted. */
 function targetOf(args: Record<string, unknown>): { ok: true; target: ReadonlySet<string> | null } | QueryOutcome {
 	if (args.target_infra === undefined) return { ok: true, target: null };
 	const values = Array.isArray(args.target_infra) ? args.target_infra : null;
-	if (values === null || values.some((value) => !(PATTERN_REQUIREMENTS as readonly unknown[]).includes(value))) {
-		return failure(`"target_infra" must be an array of: ${PATTERN_REQUIREMENTS.join(', ')}.`, 'invalid_args', [
+	if (values === null || values.some((value) => !(TARGET_INFRA_WORDS as readonly unknown[]).includes(value))) {
+		return failure(`"target_infra" must be an array of: ${TARGET_INFRA_WORDS.join(', ')}.`, 'invalid_args', [
 			{
 				tool: 'recommend_emulation_plan',
-				args: { capabilities: ['background jobs'], target_infra: ['postgres'] },
+				args: { capabilities: ['background jobs'], target_infra: ['relational-db'] },
 				why: 'a well-formed example call.',
 			},
 		]);
@@ -504,11 +489,11 @@ function noMatch(
 }
 
 /** The always-shown part of a card: identity, evidence grade, risk and what it stands on. */
-function cardHeader(pattern: PatternRecord, needs: Need[]): string {
+function cardHeader(pattern: PatternRecord, needs: AdoptionNeed[]): string {
 	const facts = [
 		`**Category:** ${pattern.category} · **Tier:** ${pattern.tier} · **Maturity:** ${pattern.maturity}${pattern.verifiedAt ? ` (verified ${pattern.verifiedAt})` : ''} · **Risk:** ${pattern.risk}`,
 		pattern.depends_on.length > 0 ? `**Depends on:** ${pattern.depends_on.join(', ')}` : '',
-		needs.length > 0 ? `**Requires:** ${needsText(needs)}` : '',
+		needs.length > 0 ? `**Needs:** ${needsSummary(needs, { condition: true })}` : '',
 	].filter((line) => line.length > 0);
 	return `# ${pattern.title} (\`${pattern.id}\`)\n\n${facts.join('\n')}`;
 }
@@ -524,7 +509,7 @@ function cardSection(pattern: PatternRecord, section: CardSection): string {
 		case 'overview':
 			return `${pattern.summary}\n\n**When to use:** ${pattern.when_to_use}`;
 		case 'fitness':
-			// `requires` lives in the header, so a card filtered to one section never hides it.
+			// Needs live in the header, so a card filtered to one section never hides them.
 			return fitnessLines(pattern).join('\n');
 		case 'docs':
 			return `## Docs to read\n${refLines(pattern.docs)}`;
@@ -547,7 +532,11 @@ function cardSection(pattern: PatternRecord, section: CardSection): string {
  * A card, whole or in part. What a partial card leaves out is NAMED in a closing line, with
  * counts — selective disclosure must never read as "this pattern has no invariants".
  */
-function patternCard(pattern: PatternRecord, needs: Need[], sections: readonly CardSection[] = CARD_SECTIONS): string {
+function patternCard(
+	pattern: PatternRecord,
+	needs: AdoptionNeed[],
+	sections: readonly CardSection[] = CARD_SECTIONS,
+): string {
 	const shown = sections.map((section) => cardSection(pattern, section)).filter((text) => text.length > 0);
 	const withheld = CARD_SECTIONS.filter((section) => !sections.includes(section))
 		.map((section) => ({ section, size: sectionSize(pattern, section) }))
@@ -580,12 +569,18 @@ function matchLine(hit: Scored): string {
 }
 
 /** One search row at the requested detail. `compact` is what ruling a pattern in or out needs. */
-function searchRow(pattern: PatternRecord, index: number, detail: SearchDetail, needs: Need[], hit?: Scored): string {
+function searchRow(
+	pattern: PatternRecord,
+	index: number,
+	detail: SearchDetail,
+	needs: AdoptionNeed[],
+	hit?: Scored,
+): string {
 	const strength = hit ? ` · ${hit.strength}` : '';
 	if (detail === 'ids') return `${index + 1}. \`${pattern.id}\` — ${pattern.title}${strength}`;
 	const fitness = [
 		// Transitive: what adopting it really takes, its dependencies' infrastructure included.
-		needs.length > 0 ? `requires ${needsText(needs)}` : '',
+		needs.length > 0 ? `needs ${needsSummary(needs)}` : '',
 		pattern.depends_on.length > 0 ? `depends on ${pattern.depends_on.join(', ')}` : '',
 		pattern.avoid_when.length > 0 ? `avoid when: ${pattern.avoid_when[0]}` : '',
 	].filter((part) => part.length > 0);
@@ -777,6 +772,71 @@ export function traceCapability(registry: Registry, args: Record<string, unknown
 	);
 }
 
+/**
+ * A step's fit against the target. A required need the target lacks (or a pin it does not meet)
+ * blocks the step; a conditional one is a question the agent must settle against the target.
+ */
+function stepVerdict(stepNeeds: AdoptionNeed[], target: ReadonlySet<string>): string {
+	const blocking = stepNeeds.filter((need) => need.level === 'required' && !targetProvides(target, need).provided);
+	const unsettled = stepNeeds.filter((need) => need.level === 'conditional' && !targetProvides(target, need).provided);
+	const pins = blocking.filter((need) => targetProvides(target, need).pinMismatch);
+	return [
+		blocking.length > 0
+			? `**Target lacks ${blocking.map((need) => needLabel(need)).join(', ')} — drop or replace this step, and the steps that build on it.**`
+			: '',
+		...pins.map((need) => `Pinned to ${need.pinned}: ${need.why}.`),
+		unsettled.length > 0
+			? `Check against the target: ${unsettled.map((need) => needLabel(need, { condition: true })).join(', ')}.`
+			: '',
+		blocking.length === 0 && unsettled.length === 0 ? 'Fits the target.' : '',
+	]
+		.filter((line) => line.length > 0)
+		.join('\n');
+}
+
+/**
+ * The plan's infrastructure, by level. A need is listed once, at the strictest level any step
+ * holds it; optional and implementation needs are each step's own and never block anything.
+ */
+function planInfrastructure(stepNeeds: AdoptionNeed[][], target: ReadonlySet<string> | null): string[] {
+	const strictest = new Map<string, AdoptionNeed>();
+	for (const need of stepNeeds.flat()) {
+		const known = strictest.get(need.need);
+		if (!known || NEED_LEVELS.indexOf(need.level) < NEED_LEVELS.indexOf(known.level)) strictest.set(need.need, need);
+	}
+	const at = (level: (typeof NEED_LEVELS)[number]) => [...strictest.values()].filter((need) => need.level === level);
+	const required = at('required');
+	const missing = target ? required.filter((need) => !targetProvides(target, need).provided) : [];
+	const lines = [
+		required.length === 0
+			? 'Required infrastructure: none beyond the app runtime.'
+			: `Required infrastructure: ${required.map((need) => need.need).join(', ')}.`,
+		at('conditional').length > 0
+			? `Conditional infrastructure: ${at('conditional')
+					.map((need) => needLabel(need, { condition: true }))
+					.join(', ')}. Settle each condition against the target.`
+			: '',
+		at('optional').length > 0
+			? `Optional infrastructure: ${at('optional')
+					.map((need) => `${need.need} (${need.why})`)
+					.join(', ')}.`
+			: '',
+		at('implementation').length > 0
+			? `v10r's implementation also uses ${at('implementation')
+					.map((need) => need.need)
+					.join(', ')}: not needed to emulate the patterns (each step says why).`
+			: '',
+		target === null
+			? required.length > 0
+				? 'If the target lacks a required need, drop or replace the step that needs it.'
+				: ''
+			: missing.length === 0
+				? 'The target has every required need.'
+				: `The target lacks ${missing.map((need) => need.need).join(', ')}: the steps marked above need it.`,
+	];
+	return lines.filter((line) => line.length > 0);
+}
+
 export function recommendPlan(registry: Registry, args: Record<string, unknown>): QueryOutcome {
 	// Refuse rather than truncate — a plan silently built from the first 20 of 5000
 	// capabilities looks complete and is not.
@@ -876,14 +936,9 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 		if (!pattern) return `${index + 1}. ${id}`;
 		const covers = satisfies.get(id);
 		const stepNeeds = needs.get(id) ?? [];
-		const lacking = target ? stepNeeds.filter(({ need }) => !target.has(need)) : [];
 		const requirement = [
-			stepNeeds.length > 0 ? `Requires: ${needsText(stepNeeds)}` : '',
-			target === null
-				? ''
-				: lacking.length > 0
-					? `**Target lacks ${needsText(lacking)} — drop or replace this step, and the steps that build on it.**`
-					: 'Fits the target.',
+			stepNeeds.length > 0 ? `Needs: ${needsSummary(stepNeeds, { condition: true })}` : '',
+			target === null ? '' : stepVerdict(stepNeeds, target),
 		].filter((line) => line.length > 0);
 		const head = [
 			`### Step ${index + 1}: ${pattern.title} (\`${id}\`)`,
@@ -918,19 +973,13 @@ export function recommendPlan(registry: Registry, args: Record<string, unknown>)
 	const overBudget = detail === 'full' && fullSize > PLAN_BUDGET_CHARS;
 	if (overBudget) steps = order.map((id, index) => renderStep(id, index, true));
 	const outlined = detail === 'outline' || overBudget;
-	const planNeeds = [...new Set(order.flatMap((id) => (needs.get(id) ?? []).map(({ need }) => need)))];
-	const missing = target ? planNeeds.filter((need) => !target.has(need)) : [];
-	const requiresNote =
-		planNeeds.length === 0
-			? 'This plan requires no infrastructure beyond the app runtime.'
-			: target === null
-				? `This plan requires: ${planNeeds.join(', ')}. If the target project lacks one, drop or replace the step that needs it.`
-				: missing.length === 0
-					? `This plan requires: ${planNeeds.join(', ')} — the target has all of it.`
-					: `This plan requires: ${planNeeds.join(', ')}. The target lacks ${missing.join(', ')}: the steps marked above need it.`;
+	const infrastructure = planInfrastructure(
+		order.map((id) => needs.get(id) ?? []),
+		target,
+	);
 	const notes = [
 		'Assembled deterministically from the registry — no inference. Adapt each pattern to the target project; emulate, do not clone.',
-		requiresNote,
+		...infrastructure,
 		lightOnly.length > 0 ? `Related index entries (no deep card yet): ${lightOnly.join('; ')}.` : '',
 		unmatched.length > 0
 			? `Unmatched capabilities (no registry entry yet — cover manually or search with different terms): ${unmatched.join(', ')}.`

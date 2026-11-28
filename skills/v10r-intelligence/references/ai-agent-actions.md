@@ -1,4 +1,4 @@
-# Agent actions (one tool catalogue, server and client executors)
+# Agent actions
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Every action the assistant may take is one tool-catalogue entry with a risk (wha
 
 **When to use:** Use when an in-app assistant must operate live interface state (layout, focus, selection, navigation) as part of the same turn that reads or proposes changes to server data, and must report honestly whether the interface change happened.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -70,11 +70,10 @@ Every action the assistant may take is one tool-catalogue entry with a risk (wha
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](ai-tool-harness.md)
-- [AI surfaces (chatbot vs deskbot split over one guard)](ai-surfaces.md)
-- [Deskbot approval gate (proposal → approve, plan-gated mutation)](deskbot-approval-gate.md)
-- [Untrusted-content boundary (the lethal trifecta, one rule per leg)](ai-untrusted-content-boundary.md)
-- [Desk workspace (dock layout, focus architecture, mobile projection)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/desk-workspace.md)
+- [AI tool manifest and harness split](ai-tool-harness.md)
+- [AI surfaces](ai-surfaces.md)
+- [Deskbot approval gate](deskbot-approval-gate.md)
+- [Untrusted-content boundary](ai-untrusted-content-boundary.md)
 
 ---
 

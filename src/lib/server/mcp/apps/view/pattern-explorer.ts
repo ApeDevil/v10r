@@ -185,7 +185,7 @@ function linkList(entries: Array<{ id: string; depth?: number }>, empty: string)
 
 function focusCard(exploration: Extract<PatternExploration, { kind: 'focus' }>): HTMLElement {
 	const { focus } = exploration;
-	const needs = focus.requires.map(({ need, via }) => (via ? `${need} (via ${via})` : need)).join(', ');
+	const needs = focus.needsSummary;
 	const more = focus.invariantCount - focus.invariants.length;
 	const docs = el('button', { type: 'button', class: 'action' }, 'Open docs');
 	docs.addEventListener('click', () => {
@@ -208,7 +208,7 @@ function focusCard(exploration: Extract<PatternExploration, { kind: 'focus' }>):
 			el('span', { class: 'badge' }, focus.category),
 		),
 		el('p', {}, focus.summary),
-		el('p', { class: 'muted' }, `Requires: ${needs.length > 0 ? needs : 'nothing beyond the app runtime'}`),
+		el('p', { class: 'muted' }, `Needs: ${needs.length > 0 ? needs : 'nothing beyond the app runtime'}`),
 		focus.avoidWhen ? el('p', { class: 'muted' }, `Avoid when: ${focus.avoidWhen}`) : null,
 		focus.invariantCount > 0
 			? el(
@@ -295,7 +295,7 @@ function render(): void {
 				'header',
 				{ class: 'bar' },
 				el('h1', {}, 'Pattern dependencies'),
-				exploration ? el('span', { class: 'version' }, `registry ${exploration.registryVersion}`) : null,
+				exploration ? el('span', { class: 'version' }, `registry ${exploration.registryDigest}`) : null,
 			),
 			filter,
 			picker(),

@@ -10,7 +10,7 @@
  * filesystem access. This module is under `#lib/server`, so it never reaches a client bundle.
  */
 import registryJson from '#patterns/registry.json';
-import type { PatternRecord, RegCategory, Registry } from '#patterns/schema.ts';
+import { buildById, type PatternRecord, type RegCategory, type Registry } from '#patterns/schema.ts';
 
 export type {
 	PatternMaturity,
@@ -28,6 +28,8 @@ export const REGISTRY = registryJson as unknown as Registry;
 export const PATTERNS: PatternRecord[] = REGISTRY.patterns;
 
 export const CATEGORIES: RegCategory[] = REGISTRY.categories;
+
+export const PATTERN_BY_ID: ReadonlyMap<string, PatternRecord> = buildById(REGISTRY);
 
 /** Deep tier only — the records that carry invariants/emulation notes (excerpt allowlist, DAG, plans). */
 export const DEEP_PATTERNS: PatternRecord[] = PATTERNS.filter((pattern) => pattern.tier === 'deep');

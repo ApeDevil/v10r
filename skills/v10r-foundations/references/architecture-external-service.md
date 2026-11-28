@@ -1,4 +1,4 @@
-# External service runtime (a separately deployed backend behind a typed client)
+# External service runtime
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 
 **When to use:** Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.
 
-**Requires:** container-host
+**Needs:** required container-host · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
 
 ## Avoid when
 
@@ -105,10 +105,10 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](multi-client-core.md)
-- [Deadline propagation (one budget, divided)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/deadline-propagation.md)
-- [Resilience policy (breaker, bulkhead, shedding, bounded retry)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/resilience-policy.md)
-- [Latency tracing (a v10r span API, Server-Timing as one renderer)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/latency-tracing.md)
+- [Multi-client core](multi-client-core.md)
+- [Deadline propagation](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/deadline-propagation.md)
+- [Resilience policy](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/resilience-policy.md)
+- [Latency tracing](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/latency-tracing.md)
 
 ---
 

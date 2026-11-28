@@ -16,6 +16,8 @@ An unauthenticated, self-limiting SSE stream at /api/analytics/stream pushes liv
 
 **When to use:** Use as a template for a rate-limited public SSE endpoint that streams live-looking activity without exposing real user data.
 
+**Needs:** required relational-db · conditional key-value-store (when more than one instance records hits (they are buffered in the shared store))
+
 ## Docs
 
 - [docs/blueprint/analytics/activation.md](/docs/blueprint/analytics/activation) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/analytics/activation.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/analytics/activation.md))

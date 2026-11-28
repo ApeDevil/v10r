@@ -1,10 +1,10 @@
 ---
-title: "Singleflight / stampede protection (nobody waits on a lock)"
+title: "Singleflight stampede protection"
 description: "Concurrent callers for one key share one execution, and across instances a refresh claim stops N instances refreshing the same stale key N times — but a cold…"
 category: "Data Velocity"
 ---
 
-# Singleflight / stampede protection (nobody waits on a lock)
+# Singleflight stampede protection
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Data Velocity"
 Concurrent callers for one key share one execution, and across instances a refresh claim stops N instances refreshing the same stale key N times — but a cold caller never blocks on a lock, so a failed leader can never become an outage.
 
 **When to use:** Use for expensive cache rebuilds, external provider calls, AI calls, aggregate queries and read-model refreshes — anything where a synchronised expiry produces simultaneous identical work.
+
+**Needs:** conditional key-value-store (when more than one instance refreshes the same key (the cross-instance refresh claim))
 
 ## Avoid when
 
@@ -57,7 +59,7 @@ Concurrent callers for one key share one execution, and across instances a refre
 
 ## Depends on
 
-- [Hierarchical cache (local → shared → origin, with key scope enforced)](/docs/pattern-library/hierarchical-cache)
+- [Hierarchical cache](/docs/pattern-library/hierarchical-cache)
 
 ---
 

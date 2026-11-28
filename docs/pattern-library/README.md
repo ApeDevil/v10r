@@ -8,177 +8,177 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 
 ### Architecture & Request Pipeline
 
-- [**Multi-client core (hexagonal domain modules)**](./multi-client-core.md)
-- [Runtime layers & request flow (7-layer view)](./architecture-runtime-layers.md)
-- [Codebase map ("where does X live")](./architecture-codebase-map.md)
-- [Middleware / 14-stage hook chain (CSRF, headers, guards)](./architecture-middleware.md)
-- [REST API patterns (pagination, envelopes, rate limits)](./architecture-rest-api.md)
-- [Error handling (expected/unexpected/form/API)](./architecture-error-handling.md)
-- [State management (Svelte 5 runes)](./architecture-state-management.md)
-- [Request-cycle visualizer (form · API · AI)](./architecture-request-cycle-visualizer.md)
-- [Deployment (Vercel serverless, container target planned)](./architecture-deployment.md)
-- [Testing infrastructure (Vitest, PGlite isolation)](./architecture-testing-infra.md)
-- [Pattern MCP (agent-queryable pattern registry, local stdio)](./architecture-pattern-mcp.md)
-- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](./architecture-hosted-mcp.md)
-- [**MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)**](./architecture-mcp-evolution.md)
-- [**Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)**](./architecture-mcp-authorization.md)
-- [**Agentic architecture (one application architecture, optional interoperability doors)**](./architecture-agentic-architecture.md)
-- [Rust→wasm compute kernel (vendored, plugin-free)](./architecture-wasm-kernel.md)
-- [**External service runtime (a separately deployed backend behind a typed client)**](./architecture-external-service.md)
-- [**Architecture Engineering (explained decision records, a typed architecture model and static checks)**](./architecture-engineering.md)
-- [**URL state (one typed spec for search params, navigate vs shallow writes)**](./url-search-state.md)
+- [**Multi-client core**](./multi-client-core.md)
+- [Runtime layers and request flow](./architecture-runtime-layers.md)
+- [Codebase map](./architecture-codebase-map.md)
+- [Middleware hook chain](./architecture-middleware.md)
+- [REST API patterns](./architecture-rest-api.md)
+- [Error handling](./architecture-error-handling.md)
+- [State management](./architecture-state-management.md)
+- [Request-cycle visualizer](./architecture-request-cycle-visualizer.md)
+- [Deployment](./architecture-deployment.md)
+- [Testing infrastructure](./architecture-testing-infra.md)
+- [Pattern MCP](./architecture-pattern-mcp.md)
+- [Hosted MCP](./architecture-hosted-mcp.md)
+- [**MCP protocol evolution**](./architecture-mcp-evolution.md)
+- [**Authenticated MCP services**](./architecture-mcp-authorization.md)
+- [**Agentic architecture**](./architecture-agentic-architecture.md)
+- [WebAssembly compute kernel](./architecture-wasm-kernel.md)
+- [**External service runtime**](./architecture-external-service.md)
+- [**Architecture Engineering**](./architecture-engineering.md)
+- [**URL state**](./url-search-state.md)
 
 ### App Shell & Navigation
 
-- [Shell layout (no global header, sidebar-first)](./app-shell-layout.md)
-- [Responsive sidebar (rail / drawer / FAB)](./app-shell-sidebar.md)
+- [Shell layout](./app-shell-layout.md)
+- [Responsive sidebar](./app-shell-sidebar.md)
 - [Navigation structure & progressive disclosure](./app-shell-navigation.md)
 - [Keyboard shortcuts registry + help modal](./app-shell-keyboard-shortcuts.md)
 - [Modals & layer stack](./app-shell-modals.md)
-- [Toasts (stacking, undo)](./app-shell-toasts.md)
-- [Session lifecycle UI (expiry, re-auth)](./app-shell-session-lifecycle.md)
-- [Settings (theme cookie, language, a11y)](./app-shell-settings.md)
-- [Style randomizer (theme × typography × palette)](./app-shell-style-randomizer.md)
-- [Loading states (skeletons, nav progress)](./app-shell-loading-states.md)
+- [Toasts](./app-shell-toasts.md)
+- [Session lifecycle UI](./app-shell-session-lifecycle.md)
+- [Settings page](./app-shell-settings.md)
+- [Style randomizer](./app-shell-style-randomizer.md)
+- [Loading states](./app-shell-loading-states.md)
 - [Empty states](./app-shell-empty-states.md)
-- [Page header (per-page, XSS-safe)](./app-shell-page-header.md)
-- [Quick Search / command palette (two-lane FTS)](./app-shell-quick-search.md)
+- [Page header](./app-shell-page-header.md)
+- [Quick search command palette](./app-shell-quick-search.md)
 
 ### UI Components & Design System
 
-- [**Component-first UI system (primitives/composites/layout, CVA, tokens)**](./ui-component-system.md)
+- [**Component-first UI system**](./ui-component-system.md)
 - [Design philosophy & three-tier theming](./ui-design-philosophy.md)
 - [**Explosive Discovery — nested depth for dense menus and pages**](./ui-explosive-discovery.md)
 - [**Latent Cards — actions that rest neutral and wake on intent**](./ui-latent-cards.md)
-- [Design tokens (breakpoints, fluid type/space, z-index)](./ui-design-tokens.md)
-- [Tonal (surface) elevation engine](./ui-tonal-elevation.md)
-- [Primitives (~40 Bits UI wrappers)](./ui-primitives.md)
+- [Design tokens](./ui-design-tokens.md)
+- [Tonal elevation engine](./ui-tonal-elevation.md)
+- [UI primitives](./ui-primitives.md)
 - [Composites](./ui-composites.md)
-- [Layout primitives (Stack, Cluster, Surface)](./ui-layout-primitives.md)
-- [Fluid responsive styling (UnoCSS, container queries)](./ui-fluid-styling.md)
+- [Layout primitives](./ui-layout-primitives.md)
+- [Fluid responsive styling](./ui-fluid-styling.md)
 - [Tables](./ui-tables.md)
-- [Menus (dropdown, context, menu bar)](./ui-menus.md)
-- [Split panes (resizable · reorderable)](./ui-split-panes.md)
+- [Menus](./ui-menus.md)
+- [Split panes](./ui-split-panes.md)
 - [Typography](./ui-typography.md)
-- [Decorative (ornaments · backgrounds)](./ui-decorative.md)
+- [Decorative ornaments and backgrounds](./ui-decorative.md)
 
 ### Forms & Validation
 
 - [Superforms + Valibot foundation](./forms-superforms-valibot.md)
-- [Basic forms (contact · settings)](./forms-basic-forms.md)
-- [Validation timing (realtime · async · server)](./forms-validation-timing.md)
-- [Multi-step & dynamic (wizard · dynamic · dependent)](./forms-multi-step-dynamic.md)
-- [Advanced (confirm · reset · edit)](./forms-advanced-patterns.md)
-- [Auth forms (Better Auth client, not Superforms)](./forms-auth-forms.md)
-- [File uploads (withFiles + Sharp + R2)](./forms-file-uploads.md)
-- [**Dynamic attributes (self-describing records the user defines at runtime)**](./dynamic-attributes.md)
-- [**Form draft recovery (kept in the browser, offered back, guarded only when lost)**](./form-draft-recovery.md)
+- [Basic forms](./forms-basic-forms.md)
+- [Validation timing](./forms-validation-timing.md)
+- [Multi-step and dynamic forms](./forms-multi-step-dynamic.md)
+- [Advanced form tactics](./forms-advanced-patterns.md)
+- [Auth forms](./forms-auth-forms.md)
+- [File uploads](./forms-file-uploads.md)
+- [**Dynamic attributes**](./dynamic-attributes.md)
+- [**Form draft recovery**](./form-draft-recovery.md)
 
 ### Internationalization (i18n)
 
-- [Locale routing (optional catch-all, matcher, 308 canonical)](./i18n-locale-routing.md)
-- [Messages (Paraglide JS, ICU, compile-time)](./i18n-messages.md)
+- [Locale routing](./i18n-locale-routing.md)
+- [Translated messages](./i18n-messages.md)
 - [Formatting & CLDR plural correctness](./i18n-formatting.md)
-- [DB content i18n (JSONB sidecar + `tc()`)](./i18n-db-content.md)
+- [Translated database content](./i18n-db-content.md)
 
 ### Docs & Agent Experience
 
-- [**Docs navigation hubs (README-per-directory convention)**](./docs-nav-hubs.md)
-- [**Pattern Index (the generated README capability map)**](./pattern-index.md)
-- [**Agent Experience (AX) surfaces**](./agent-experience.md)
-- [Resource anchor integrity (fragments and routing paths resolve)](./resource-anchor-integrity.md)
+- [**Docs navigation hubs**](./docs-nav-hubs.md)
+- [**Pattern Index**](./pattern-index.md)
+- [**Agent experience surfaces**](./agent-experience.md)
+- [Resource anchor integrity](./resource-anchor-integrity.md)
 - [**Agent Skills generated from the pattern registry**](./ai-agent-skills.md)
 
 ### Databases & Storage
 
-- [Postgres client & connection (Neon serverless)](./databases-postgres-connection.md)
-- [Schema & type inference (Drizzle, 14 namespaces)](./databases-schema-type-inference.md)
-- [Queries/mutations split (reads-writes duality)](./databases-queries-mutations-split.md)
-- [Neo4j connection (Aura)](./databases-neo4j-connection.md)
+- [Postgres client and connection](./databases-postgres-connection.md)
+- [Schema and type inference](./databases-schema-type-inference.md)
+- [Queries/mutations split](./databases-queries-mutations-split.md)
+- [Neo4j connection](./databases-neo4j-connection.md)
 - [Graph modeling](./databases-graph-modeling.md)
 - [Graph traversal](./databases-graph-traversal.md)
-- [Polyglot freshness (Postgres ↔ Neo4j sync)](./databases-polyglot-freshness.md)
-- [Object storage (Cloudflare R2, presigned transfer)](./databases-object-storage.md)
-- [Cache (Upstash Redis, ephemeral patterns)](./databases-cache.md)
-- [Temporal data modeling (how much time to store)](./temporal-data-modeling.md)
+- [Polyglot freshness](./databases-polyglot-freshness.md)
+- [Object storage](./databases-object-storage.md)
+- [Redis cache client](./databases-cache.md)
+- [Temporal data modeling](./temporal-data-modeling.md)
 
 ### Database Operations
 
-- [Dev→prod schema workflow (push-only, no migrations dir)](./db-ops-dev-prod-schema-workflow.md)
-- [Neon branch refresh from prod (control plane, run ledger)](./db-ops-branch-refresh.md)
+- [Dev-to-prod schema workflow](./db-ops-dev-prod-schema-workflow.md)
+- [Neon branch refresh from prod](./db-ops-branch-refresh.md)
 - [DB bootstrap & seed](./db-ops-bootstrap-seed.md)
 
 ### Identity & Access
 
-- [Passwordless auth (magic link + OTP)](./identity-passwordless-auth.md)
-- [OAuth (GitHub, Google)](./identity-oauth.md)
+- [Passwordless auth](./identity-passwordless-auth.md)
+- [OAuth](./identity-oauth.md)
 - [Route guards & per-route authorization](./identity-route-guards.md)
-- [Capability grants (request → approve → expire)](./identity-capability-grants.md)
+- [Capability grants](./identity-capability-grants.md)
 - [Passkeys & step-up TOTP](./identity-passkeys.md)
 - [User management](./identity-user-management.md)
 
 ### Anti-Abuse
 
 - [ALTCHA proof-of-work captcha](./anti-abuse-captcha.md)
-- [Honeypot (hidden field + min fill time)](./anti-abuse-honeypot.md)
-- [Rate limiting (sliding window, fail-closed)](./anti-abuse-rate-limiting.md)
+- [Honeypot](./anti-abuse-honeypot.md)
+- [Rate limiting](./anti-abuse-rate-limiting.md)
 - [AI daily token budget](./anti-abuse-ai-budget.md)
 - [Bot decision & abuse audit](./anti-abuse-bot-decision-audit.md)
 
 ### Admin & Privacy
 
 - [Admin area, guards & data-table pattern](./admin-privacy-admin-area.md)
-- [GDPR data transparency (view · export · delete)](./admin-privacy-gdpr.md)
+- [GDPR data transparency](./admin-privacy-gdpr.md)
 - [Consent & cookies](./admin-privacy-consent-cookies.md)
 - [Data retention policy & purge jobs](./admin-privacy-data-retention.md)
-- [Cross-device debug pairing (QR + HMAC cookie)](./admin-privacy-pairing.md)
+- [Cross-device debug pairing](./admin-privacy-pairing.md)
 - [Style picking + custom palettes](./admin-privacy-style-picking.md)
 - [Audit log and announcements](./admin-privacy-audit-log.md)
 - [Feedback capture](./admin-privacy-feedback.md)
-- [**Encryption key ring (envelopes name their key, rotation re-seals)**](./encryption-key-ring.md)
+- [**Encryption key ring**](./encryption-key-ring.md)
 
 ### AI
 
-- [**AI tool manifest & harness split (tool defs, risk metadata, registry)**](./ai-tool-harness.md)
-- [**AI surfaces (chatbot vs deskbot split over one guard)**](./ai-surfaces.md)
-- [**Deskbot approval gate (proposal → approve, plan-gated mutation)**](./deskbot-approval-gate.md)
+- [**AI tool manifest and harness split**](./ai-tool-harness.md)
+- [**AI surfaces**](./ai-surfaces.md)
+- [**Deskbot approval gate**](./deskbot-approval-gate.md)
 - [**Grounded retrieval with a corpus map**](./layered-rag.md)
-- [**Retrieval ingest/search endpoints (one ingest door, /api/retrieval/*)**](./retrieval-endpoints.md)
-- [Chat assistant "Vely" (orchestrator, streaming)](./ai-chat-assistant.md)
+- [**Retrieval ingest/search endpoints**](./retrieval-endpoints.md)
+- [Chat assistant](./ai-chat-assistant.md)
 - [Persistent minimizable chatbot session](./ai-chatbot-session.md)
-- [Provider registry & routing (chat/tools/vision + circuit breaker)](./ai-provider-routing.md)
-- [Chatbot site awareness (page context)](./ai-site-awareness.md)
-- [Graph RAG pipeline (three tiers, RRF fusion)](./ai-graph-rag.md)
-- [Turn trace (recorded account of every AI turn) + turn graph](./ai-turn-trace.md)
-- [Image metadata reader (vision)](./ai-image-metadata.md)
+- [Provider registry & routing](./ai-provider-routing.md)
+- [Chatbot site awareness](./ai-site-awareness.md)
+- [Graph RAG pipeline](./ai-graph-rag.md)
+- [Turn trace and turn graph](./ai-turn-trace.md)
+- [Image metadata reader](./ai-image-metadata.md)
 - [Cost & usage monitoring](./ai-cost-monitoring.md)
 - [TOON token-efficient context format](./ai-toon-format.md)
-- [Deskbot (AI in the desk workspace)](./ai-deskbot.md)
-- [Agent-harness audit lens (loop/context/policy/tools)](./ai-harness-lens.md)
-- [**Untrusted-content boundary (the lethal trifecta, one rule per leg)**](./ai-untrusted-content-boundary.md)
-- [**Agent actions (one tool catalogue, server and client executors)**](./ai-agent-actions.md)
-- [**MCP client (external tools projected into the one catalogue)**](./ai-mcp-client.md)
-- [**MCP App provider (an interactive View beside a text answer)**](./ai-mcp-app-provider.md)
-- [**Agent to agent (A2A specialist agents, served and delegated)**](./ai-agent-to-agent.md)
-- [**Generative UI (A2UI surfaces rendered with the app's own components)**](./ai-generative-ui.md)
-- [WebMCP publication of client actions (experiment)](./ai-webmcp.md)
-- [AG-UI endpoint over the turn stream (experiment)](./ai-agent-user-interaction.md)
+- [Deskbot](./ai-deskbot.md)
+- [Agent-harness audit lens](./ai-harness-lens.md)
+- [**Untrusted-content boundary**](./ai-untrusted-content-boundary.md)
+- [**Agent actions**](./ai-agent-actions.md)
+- [**MCP client**](./ai-mcp-client.md)
+- [**MCP App provider**](./ai-mcp-app-provider.md)
+- [**Agent to agent**](./ai-agent-to-agent.md)
+- [**Generative UI**](./ai-generative-ui.md)
+- [WebMCP publication of client actions](./ai-webmcp.md)
+- [AG-UI endpoint over the turn stream](./ai-agent-user-interaction.md)
 - [Turn trace as OpenTelemetry GenAI spans](./ai-agent-observability.md)
-- [**AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)**](./ai-eval-regression-suite.md)
+- [**AI eval regression suite**](./ai-eval-regression-suite.md)
 
 ### Toolkits
 
-- [Image Kit (upload → AI pipeline → adjust → approve, persists nothing)](./toolkits-image-kit.md)
+- [Image Kit](./toolkits-image-kit.md)
 
 ### Office Workflows
 
-- [**PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)**](./pim-sheet-transform-recipe.md)
+- [**PIM sheet transform with AI agents**](./pim-sheet-transform-recipe.md)
 
 ### Analytics
 
-- [Pageview collector hook (last of 14 middleware stages)](./analytics-pageview-hook.md)
-- [Consent-gated sessions (cookieless day-rotating id)](./analytics-consent-sessions.md)
-- [User journeys (client beacon)](./analytics-journeys.md)
+- [Pageview collector hook](./analytics-pageview-hook.md)
+- [Consent-gated sessions](./analytics-consent-sessions.md)
+- [User journeys](./analytics-journeys.md)
 - [Funnels](./analytics-funnels.md)
 - [Live events feed](./analytics-live-feed.md)
 - [Rollup & cleanup jobs](./analytics-rollup-cleanup.md)
@@ -186,24 +186,24 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 
 ### Notifications
 
-- [Router, outbox & delivery worker](./notifications-router-outbox.md)
-- [Channel providers (email · Telegram · Discord)](./notifications-channels.md)
+- [Notification router, outbox and delivery worker](./notifications-router-outbox.md)
+- [Channel providers](./notifications-channels.md)
 - [In-app SSE stream & notification center](./notifications-sse-stream.md)
-- [Settings matrix (channel × type)](./notifications-settings-matrix.md)
+- [Settings matrix](./notifications-settings-matrix.md)
 - [Schema & delivery log](./notifications-schema-delivery-log.md)
 
 ### Jobs & Scheduling
 
-- [**Jobs & scheduling (registry, runner, platform-owned cadence)**](./jobs-scheduler.md)
-- [Platform scheduling (Vercel cron vs container `setInterval`)](./jobs-platform-scheduling.md)
-- [Registered jobs (retention, cleanup, sync, delivery)](./jobs-registered-catalog.md)
+- [**Jobs and scheduling**](./jobs-scheduler.md)
+- [Platform scheduling](./jobs-platform-scheduling.md)
+- [Registered jobs](./jobs-registered-catalog.md)
 
 ### PWA
 
 - [Localized manifest & installability](./pwa-manifest.md)
-- [Service-worker caching contract (HTML network-only, kill switch)](./pwa-service-worker.md)
-- [Update flow (silent + idle toast, no auto skipWaiting)](./pwa-update-flow.md)
-- [Web push channel (declarative JSON, no PII)](./pwa-web-push.md)
+- [Service-worker caching contract](./pwa-service-worker.md)
+- [Update flow](./pwa-update-flow.md)
+- [Web push channel](./pwa-web-push.md)
 
 ### Data Viz
 
@@ -216,81 +216,81 @@ This README is the GitHub navigation hub; in-app, this directory is the Pattern 
 
 ### 3D
 
-- [Threlte integration (SSR-off, code-split model registry)](./3d-threlte-integration.md)
+- [Threlte integration](./3d-threlte-integration.md)
 - [Static & animated scenes](./3d-static-animated-scenes.md)
-- [Full-screen model viewer & customizer (layout reset)](./3d-model-viewer-customizer.md)
-- [**Product composition engine (typed ports, couplings, conduits)**](./product-connection-engine.md)
-- [**Asset production pipeline (typed request → checked GLB)**](./asset-production-pipeline.md)
-- [**Agentic parametric modeling (MCP 3D)**](./agentic-parametric-modeling.md)
+- [Full-screen model viewer and customizer](./3d-model-viewer-customizer.md)
+- [**Product composition engine**](./product-connection-engine.md)
+- [**Asset production pipeline**](./asset-production-pipeline.md)
+- [**Agentic parametric modeling**](./agentic-parametric-modeling.md)
 
 ### Content & Blog
 
-- [Blog engine (posts, revisions, locale-aware publishing)](./content-blog-engine.md)
-- [Comments (flat, per-locale, moderated)](./content-comments.md)
-- [Markdown pipeline & custom syntax (directives, wikilinks)](./content-markdown-pipeline.md)
-- [Markdown editor (CodeMirror, slash commands)](./content-markdown-editor.md)
+- [Blog engine](./content-blog-engine.md)
+- [Comments](./content-comments.md)
+- [Markdown pipeline and custom syntax](./content-markdown-pipeline.md)
+- [Markdown editor](./content-markdown-editor.md)
 - [Prerendered docs site](./content-docs-site.md)
 
 ### Desk Workspace
 
-- [**Desk workspace (dock layout, focus architecture, mobile projection)**](./desk-workspace.md)
-- [Spreadsheet panel (file type, dual-mode)](./desk-spreadsheet-panel.md)
-- [Desk mobile chrome (tab strip + pill + drawers)](./desk-mobile-chrome.md)
-- [Composed panel menus (one array, desktop kebab + mobile sheet)](./desk-panel-menus.md)
-- [AI desk effects (tool results drive the workspace)](./desk-ai-effects.md)
-- [Explorer panel (unified file tree over N sources)](./desk-explorer.md)
+- [**Desk workspace**](./desk-workspace.md)
+- [Spreadsheet panel](./desk-spreadsheet-panel.md)
+- [Desk mobile chrome](./desk-mobile-chrome.md)
+- [Composed panel menus](./desk-panel-menus.md)
+- [AI desk effects](./desk-ai-effects.md)
+- [Explorer panel](./desk-explorer.md)
 
 ### External Integrations
 
-- [**Name check (resilient multi-source fan-out)**](./name-check.md)
+- [**Name check**](./name-check.md)
 
 ### Interaction Velocity
 
-- [**Optimistic mutation (fold-based rollback, idempotency keys)**](./optimistic-mutation.md)
-- [**Intent-based preloading (six levels over SvelteKit triggers)**](./intent-preloading.md)
-- [**Virtualized rendering (windowing maths split from the component)**](./virtualized-rendering.md)
+- [**Optimistic mutation**](./optimistic-mutation.md)
+- [**Intent-based preloading**](./intent-preloading.md)
+- [**Virtualized rendering**](./virtualized-rendering.md)
 - [Idle and speculative work](./velocity-idle-work.md)
 
 ### Data Velocity
 
-- [**Hierarchical cache (local → shared → origin, with key scope enforced)**](./hierarchical-cache.md)
-- [**Stale-while-revalidate (and stale-if-error)**](./stale-while-revalidate.md)
-- [**Singleflight / stampede protection (nobody waits on a lock)**](./singleflight.md)
+- [**Hierarchical cache**](./hierarchical-cache.md)
+- [**Stale-while-revalidate**](./stale-while-revalidate.md)
+- [**Singleflight stampede protection**](./singleflight.md)
 - [**No-waterfall data loading**](./no-waterfall-loading.md)
 - [Screen read model](./velocity-screen-read-model.md)
-- [**Query budget and N+1 proof (counting is not proving)**](./query-budget.md)
+- [**Query budget and N+1 proof**](./query-budget.md)
 
 ### Runtime Velocity
 
 - [**Critical path / deferred tail**](./critical-path-deferred-tail.md)
-- [**Critical rendering path (the LCP element paints from the document)**](./critical-rendering-path.md)
-- [**Heavy dependency quarantine (the baseline is the metric)**](./heavy-dependency-quarantine.md)
-- [**Side-effect-free component tree (barrels that tree-shake)**](./side-effect-free-components.md)
-- [**Main-thread budget (worker → WASM, each step measured)**](./main-thread-budget.md)
-- [**Resilience policy (breaker, bulkhead, shedding, bounded retry)**](./resilience-policy.md)
+- [**Critical rendering path**](./critical-rendering-path.md)
+- [**Heavy dependency quarantine**](./heavy-dependency-quarantine.md)
+- [**Side-effect-free component tree**](./side-effect-free-components.md)
+- [**Main-thread budget**](./main-thread-budget.md)
+- [**Resilience policy**](./resilience-policy.md)
 - [**Asset delivery pipeline**](./velocity-asset-delivery.md)
 - [Compute and data locality](./velocity-compute-locality.md)
-- [**Deadline propagation (one budget, divided)**](./deadline-propagation.md)
+- [**Deadline propagation**](./deadline-propagation.md)
 
 ### Velocity Measurement
 
-- [**Latency tracing (a v10r span API, Server-Timing as one renderer)**](./latency-tracing.md)
-- [**Performance budget and ratchet (targets aspire, ceilings hold)**](./performance-budget-ratchet.md)
-- [**Performance scenario harness (adverse conditions, committed)**](./scenario-harness.md)
+- [**Latency tracing**](./latency-tracing.md)
+- [**Performance budget and ratchet**](./performance-budget-ratchet.md)
+- [**Performance scenario harness**](./scenario-harness.md)
 
 ### Truth & Evidence
 
-- [**Source-of-truth gate (one owner, bound copies)**](./source-of-truth-gate.md)
-- [**Evidence status dimensions (verdict, coverage, confidence, freshness kept apart)**](./evidence-status-dimensions.md)
-- [**Asset rights manifest (owned rights record + gate over shipped files)**](./asset-rights-manifest.md)
+- [**Source-of-truth gate**](./source-of-truth-gate.md)
+- [**Evidence status dimensions**](./evidence-status-dimensions.md)
+- [**Asset rights manifest**](./asset-rights-manifest.md)
 
 ### Derivation & Provenance
 
-- [**Derivation key (freshness by input fingerprint)**](./derivation-key.md)
-- [**Reproducible artifact build (regenerate-and-diff, or manifest + digest)**](./reproducible-artifact-build.md)
-- [**Provenance record (entity, activity, agent — PROV-DM core)**](./provenance-record.md)
+- [**Derivation key**](./derivation-key.md)
+- [**Reproducible artifact build**](./reproducible-artifact-build.md)
+- [**Provenance record**](./provenance-record.md)
 
 ### Durable Execution
 
-- [**Durable step execution (claim, lease, fence, receipts)**](./durable-step-execution.md)
-- [**Versioned document session (save queue, drafts, CAS, explicit conflict)**](./versioned-document-session.md)
+- [**Durable step execution**](./durable-step-execution.md)
+- [**Versioned document session**](./versioned-document-session.md)

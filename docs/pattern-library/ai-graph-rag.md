@@ -1,10 +1,10 @@
 ---
-title: "Graph RAG pipeline (three tiers, RRF fusion)"
+title: "Graph RAG pipeline"
 description: "Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph traversal across three parallel tiers, fused by reciprocal rank fusion, for more…"
 category: "AI"
 ---
 
-# Graph RAG pipeline (three tiers, RRF fusion)
+# Graph RAG pipeline
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph traversal across three parallel tiers, fused by reciprocal rank fusion, for more explainable answers.
 
 **When to use:** Use when vector search alone misses multi-hop relationship queries that a knowledge graph can answer.
+
+**Needs:** required graph-db, vector-search, relational-db, llm-provider
 
 ## Docs
 

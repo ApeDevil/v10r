@@ -16,6 +16,8 @@ WebAuthn passkeys serve as a phishing-resistant first-factor sign-in credential,
 
 **When to use:** Use passkeys to harden sign-in and step-up TOTP to re-verify identity right before a sensitive action like disabling 2FA.
 
+**Needs:** required relational-db · conditional key-value-store (when step-up stamps must hold across instances) · v10r's implementation uses email-delivery
+
 ## Docs
 
 - [docs/blueprint/auth.md](/docs/blueprint/auth) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/auth.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/auth.md))

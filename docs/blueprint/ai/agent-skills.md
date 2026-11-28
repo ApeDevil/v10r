@@ -17,7 +17,7 @@ corpus. A hand-written set of skills would be a second body of knowledge that dr
 | Agent skill | Contents |
 |---|---|
 | `v10r-architecture-selection` | How to choose patterns: the requirement vocabulary, `recommend_emulation_plan` / `get_pattern` / `search_patterns` over MCP, the by-hand method, the group table; `references/dependency-graph.md` (every `depends_on` edge in build order) |
-| `v10r-<group>` × 7 (foundations, data, identity-safety, intelligence, features, velocity, integrity) | When to use, the method (avoid-when and alternatives first, then requires/depends-on, invariants as MUST-hold), a maturity legend (implemented ≠ proven; non-proven rows bold), the group's pattern index; `references/<id>.md` per deep record |
+| `v10r-<group>` × 7 (foundations, data, identity-safety, intelligence, features, velocity, integrity) | When to use, the method (avoid-when and alternatives first, then infrastructure needs by level and depends-on, invariants as MUST-hold), a maturity legend (implemented ≠ proven; non-proven rows bold), the group's pattern index; `references/<id>.md` per deep record |
 
 Granularity is one skill per registry **group**: every installed skill's description sits in
 the agent's context permanently (8 ≈ cheap; 30 categories ≈ 6k tokens), a group is a domain an
@@ -29,7 +29,7 @@ agent recognises from a task, and per-pattern detail is disclosed on demand.
 - Validator: `src/lib/server/patterns/agent-skill-spec.ts` — name rules and name = directory,
   description 1–1,024 chars, `compatibility` ≤ 500, `metadata` a string map, `allowed-tools`,
   unknown fields, body ≤ 500 lines and ≤ 5,000 tokens (errors, not warnings), broken relative
-  links. `metadata`: `{ source, registry-version, generated: "true" }`; `license: MIT`.
+  links. `metadata`: `{ source, registry-digest, generated: "true" }`; `license: MIT`.
 
 ## Sizes
 

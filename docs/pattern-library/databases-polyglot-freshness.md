@@ -1,10 +1,10 @@
 ---
-title: "Polyglot freshness (Postgres ↔ Neo4j sync)"
+title: "Polyglot freshness"
 description: "Documents strategies for keeping references between Postgres and Neo4j valid, since no foreign keys exist across the two stores."
 category: "Databases & Storage"
 ---
 
-# Polyglot freshness (Postgres ↔ Neo4j sync)
+# Polyglot freshness
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Documents strategies for keeping references between Postgres and Neo4j valid, since no foreign keys exist across the two stores.
 
 **When to use:** Apply when a delete or update in one store, such as a Postgres user or item, must propagate to or invalidate related Neo4j nodes.
+
+**Needs:** required relational-db, graph-db
 
 ## Docs
 

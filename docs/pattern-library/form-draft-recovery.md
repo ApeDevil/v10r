@@ -1,10 +1,10 @@
 ---
-title: "Form draft recovery (kept in the browser, offered back, guarded only when lost)"
+title: "Form draft recovery"
 description: "What a person types into a form is kept in localStorage per account and form, stripped of credential-like fields, offered back after a closed tab or crash…"
 category: "Forms & Validation"
 ---
 
-# Form draft recovery (kept in the browser, offered back, guarded only when lost)
+# Form draft recovery
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

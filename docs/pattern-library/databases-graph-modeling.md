@@ -16,6 +16,8 @@ Defines how entities and their relationships are represented as nodes and edges 
 
 **When to use:** Use when deciding how to structure related entities, such as recommendations or knowledge graphs, that would otherwise need recursive SQL.
 
+**Needs:** required graph-db
+
 ## Docs
 
 - [docs/blueprint/db/graph.md](/docs/blueprint/db/graph) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/db/graph.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/db/graph.md))

@@ -1,10 +1,10 @@
 ---
-title: "Settings matrix (channel × type)"
+title: "Settings matrix"
 description: "The settings UI renders a channel-by-notification-type matrix backed by a form schema, letting a user toggle which channels receive which notification types."
 category: "Notifications"
 ---
 
-# Settings matrix (channel × type)
+# Settings matrix
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 The settings UI renders a channel-by-notification-type matrix backed by a form schema, letting a user toggle which channels receive which notification types.
 
 **When to use:** Use when users need granular per-channel, per-type control over which notifications they receive.
+
+**Needs:** required relational-db
 
 ## Docs
 

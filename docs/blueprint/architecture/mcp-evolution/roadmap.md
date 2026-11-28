@@ -171,7 +171,7 @@ revisit trigger from D7. No code change needed beyond optional wording.
 | Server-side progressive discovery | Roadmap (experimental) | A spec'd method; a catalogue > 40 tools |
 | Tool result shape redesign | Roadmap | Unblocks C2 |
 | Annotations deprecation (SEP-2200) | Proposal | Decides whether B1 is worth keeping |
-| ETags for results | Roadmap | Would let `get_pattern` results be cached by registry version |
+| ETags for results | Roadmap | Would let `get_pattern` results be cached by registry digest |
 | Tasks extension → core | Extension / roadmap | Only if a long-running tool appears |
 | MCP Apps | Extension | A Studio result that a card cannot express |
 | DPoP, workload identity, CIMD | Roadmap / stable SHOULD | A second holder of an operator surface (D7) |

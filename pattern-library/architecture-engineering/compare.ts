@@ -2,12 +2,12 @@
  * Compare two architecture models — typically a baseline and a variant derived from it.
  *
  * Everything counted here is read off the models: nodes, placements, connections, zones,
- * deployment units, network boundaries, operational requirements and findings. Latency and
+ * deployment units, network boundaries, operational infrastructure needs and findings. Latency and
  * complexity are described *qualitatively*, from those counts, and every such statement is
  * marked `basis: 'qualitative'` — no number in a comparison is a measurement, and none is
  * presented as one. Adding a component is never scored as an improvement by itself.
  */
-import type { PatternRequirement } from '../schema.ts';
+import type { InfrastructureNeed } from '../schema.ts';
 import type { ArchitectureConnection, ArchitectureModel, ArchitectureNode } from './architecture-model.ts';
 import { checkArchitecture } from './checks.ts';
 import type { ArchitectureFinding } from './findings.ts';
@@ -29,7 +29,7 @@ export interface ModelSummary {
 	network_connections: number;
 	synchronous_network_connections: number;
 	trust_boundary_crossings: number;
-	requirements: PatternRequirement[];
+	infrastructure_needs: InfrastructureNeed[];
 	findings: ArchitectureFinding[];
 }
 
@@ -48,7 +48,7 @@ export interface ArchitectureComparison {
 	placements: { id: string; label: string; from: string; to: string }[];
 	connections: { added: ArchitectureConnection[]; removed: ArchitectureConnection[]; changed: NodeChange[] };
 	zones: { added: string[]; removed: string[] };
-	requirements: { added: PatternRequirement[]; removed: PatternRequirement[] };
+	infrastructure_needs: { added: InfrastructureNeed[]; removed: InfrastructureNeed[] };
 	findings: { introduced: ArchitectureFinding[]; resolved: ArchitectureFinding[] };
 	assessment: QualitativeAssessment[];
 }
@@ -71,9 +71,8 @@ function summarize(model: ArchitectureModel): ModelSummary {
 		const to = byId.get(connection.to);
 		return !!from && !!to && from.zone !== to.zone;
 	});
-	const requirements = new Set<PatternRequirement>();
-	for (const node of model.nodes)
-		for (const requirement of NODE_KINDS[node.kind].requires) requirements.add(requirement);
+	const infrastructure_needs = new Set<InfrastructureNeed>();
+	for (const node of model.nodes) for (const need of NODE_KINDS[node.kind].needs) infrastructure_needs.add(need);
 	return {
 		id: model.id,
 		name: model.name,
@@ -82,7 +81,7 @@ function summarize(model: ArchitectureModel): ModelSummary {
 		network_connections: network.length,
 		synchronous_network_connections: network.filter((connection) => connection.mode === 'sync').length,
 		trust_boundary_crossings: crossings.length,
-		requirements: [...requirements].sort(compareText),
+		infrastructure_needs: [...infrastructure_needs].sort(compareText),
 		findings: checkArchitecture(model),
 	};
 }
@@ -154,14 +153,14 @@ function assess(
 					? `The variant has ${plural(-syncDelta, 'fewer synchronous network call')}, so request paths that used them have fewer round trips — not measured here.`
 					: 'The number of synchronous network calls is unchanged; latency differences, if any, come from placement — not measured here.',
 	});
-	const addedRequirements = variant.requirements.filter((requirement) => !baseline.requirements.includes(requirement));
+	const addedNeeds = variant.infrastructure_needs.filter((need) => !baseline.infrastructure_needs.includes(need));
 	out.push({
 		dimension: 'operations',
 		basis: 'qualitative',
 		statement:
-			addedRequirements.length > 0
-				? `The variant needs infrastructure the baseline does not: ${addedRequirements.join(', ')}.`
-				: 'No new infrastructure requirements.',
+			addedNeeds.length > 0
+				? `The variant needs infrastructure the baseline does not: ${addedNeeds.join(', ')}.`
+				: 'No new infrastructure needs.',
 	});
 	const crossingDelta = variant.trust_boundary_crossings - baseline.trust_boundary_crossings;
 	const securityIntroduced = introduced.filter((entry) => entry.category === 'security').length;
@@ -214,9 +213,9 @@ export function compareArchitectures(baseline: ArchitectureModel, variant: Archi
 				.filter((change) => change.changes.length > 0),
 		},
 		zones: { added: zones.added.map((zone) => zone.id), removed: zones.removed.map((zone) => zone.id) },
-		requirements: {
-			added: b.requirements.filter((requirement) => !a.requirements.includes(requirement)),
-			removed: a.requirements.filter((requirement) => !b.requirements.includes(requirement)),
+		infrastructure_needs: {
+			added: b.infrastructure_needs.filter((need) => !a.infrastructure_needs.includes(need)),
+			removed: a.infrastructure_needs.filter((need) => !b.infrastructure_needs.includes(need)),
 		},
 		findings: { introduced, resolved },
 		assessment: assess(a, b, introduced, resolved),

@@ -16,6 +16,8 @@ A per-visitor palette, typography, and radius resolution system with a randomize
 
 **When to use:** Use when a visitor's own style preference should drive theming instead of a fixed site-wide brand.
 
+**Needs:** v10r's implementation uses relational-db
+
 ## Docs
 
 - [docs/blueprint/visual-identity-architecture.md](/docs/blueprint/visual-identity-architecture) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/visual-identity-architecture.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/visual-identity-architecture.md))

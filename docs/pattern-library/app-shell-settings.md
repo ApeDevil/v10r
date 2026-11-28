@@ -1,10 +1,10 @@
 ---
-title: "Settings (theme cookie, language, a11y)"
+title: "Settings page"
 description: "A settings hub page covering appearance (theme cookie), language, privacy toggles, and accessibility preferences, backed by a load/save form action."
 category: "App Shell & Navigation"
 ---
 
-# Settings (theme cookie, language, a11y)
+# Settings page
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

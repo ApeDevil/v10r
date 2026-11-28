@@ -1,10 +1,10 @@
 ---
-title: "AI tool manifest & harness split (tool defs, risk metadata, registry)"
+title: "AI tool manifest and harness split"
 description: "Tool definitions are thin wrappers whose risk-tier metadata and per-surface membership live in a registry, with harness concerns (agent loop, compaction…"
 category: "AI"
 ---
 
-# AI tool manifest & harness split (tool defs, risk metadata, registry)
+# AI tool manifest and harness split
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 
 **When to use:** Use as soon as an LLM gets tools: the manifest/harness split is what keeps tool permissions auditable and surfaces honest.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider
 
 ## Avoid when
 
@@ -59,7 +59,7 @@ Tool definitions are thin wrappers whose risk-tier metadata and per-surface memb
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](/docs/pattern-library/multi-client-core)
+- [Multi-client core](/docs/pattern-library/multi-client-core)
 
 ---
 

@@ -1,10 +1,10 @@
 ---
-title: "Retrieval ingest/search endpoints (one ingest door, /api/retrieval/*)"
+title: "Retrieval ingest/search endpoints"
 description: "The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a unified ingest door: the app runtime and the Bun docs-ingest script share the…"
 category: "AI"
 ---
 
-# Retrieval ingest/search endpoints (one ingest door, /api/retrieval/*)
+# Retrieval ingest/search endpoints
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a
 
 **When to use:** Use when the corpus must be maintainable from more than one runtime (app UI and scripts) without forking chunking logic.
 
-**Requires:** postgres, pgvector, ai-provider
+**Needs:** required relational-db, vector-search, llm-provider · conditional graph-db (when the graph tier answers multi-hop relationship questions; via layered-rag)
 
 ## Avoid when
 

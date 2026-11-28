@@ -1,10 +1,10 @@
 ---
-title: "Router, outbox & delivery worker"
+title: "Notification router, outbox and delivery worker"
 description: "sendNotification() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on containers…"
 category: "Notifications"
 ---
 
-# Router, outbox & delivery worker
+# Notification router, outbox and delivery worker
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 sendNotification() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on containers or a cron sweep on Vercel.
 
 **When to use:** Use as the single entry point for sending any multi-channel notification instead of calling a channel provider directly.
+
+**Needs:** required relational-db · conditional scheduler (when the host has no persistent process to run the delivery worker (serverless: a cron sweep drains the outbox))
 
 ## Docs
 

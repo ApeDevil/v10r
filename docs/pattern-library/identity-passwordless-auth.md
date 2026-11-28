@@ -1,10 +1,10 @@
 ---
-title: "Passwordless auth (magic link + OTP)"
+title: "Passwordless auth"
 description: "Session-based authentication through Better Auth using a magic link and OTP code sent together in one email, with no passwords stored."
 category: "Identity & Access"
 ---
 
-# Passwordless auth (magic link + OTP)
+# Passwordless auth
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Session-based authentication through Better Auth using a magic link and OTP code sent together in one email, with no passwords stored.
 
 **When to use:** Use as the primary sign-in method to avoid password-related breach risk and reset friction.
+
+**Needs:** required relational-db, email-delivery
 
 ## Docs
 

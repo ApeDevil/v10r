@@ -1,10 +1,10 @@
 ---
-title: "AI surfaces (chatbot vs deskbot split over one guard)"
+title: "AI surfaces"
 description: "Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (Vely) vs an agentic, mutating, approval-gated deskbot — with a showcase-only…"
 category: "AI"
 ---
 
-# AI surfaces (chatbot vs deskbot split over one guard)
+# AI surfaces
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 **When to use:** Use when one product needs both a safe answer-bot and an acting agent: splitting the surface (not forking the stack) keeps permissions and prompts honest per surface.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider · conditional relational-db (when conversations are kept beyond the page)
 
 ## Avoid when
 
@@ -66,7 +66,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](/docs/pattern-library/ai-tool-harness)
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
 
 ---
 

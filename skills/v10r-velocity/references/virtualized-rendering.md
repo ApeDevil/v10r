@@ -1,4 +1,4 @@
-# Virtualized rendering (windowing maths split from the component)
+# Virtualized rendering
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -48,7 +48,7 @@ A long list costs the size of the viewport instead of the size of the data; the 
 
 ## Depends on
 
-- [Component-first UI system (primitives/composites/layout, CVA, tokens)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ui-component-system.md)
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ui-component-system.md)
 
 ---
 

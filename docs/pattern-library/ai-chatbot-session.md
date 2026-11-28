@@ -16,6 +16,8 @@ A client-side Svelte state machine keeps Vely's conversation alive across page n
 
 **When to use:** Use when a floating chat widget must survive route changes and reloads without losing the live thread.
 
+**Needs:** required llm-provider
+
 ## Docs
 
 - [docs/blueprint/ai/persistent-chatbot.md](/docs/blueprint/ai/persistent-chatbot) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/ai/persistent-chatbot.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/ai/persistent-chatbot.md))

@@ -1,10 +1,10 @@
 ---
 name: v10r-architecture-selection
-description: "Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (Foundations, Data, Identity & Safety, Intelligence, Features, Velocity, Integrity), before reading any single pattern: it maps the 199 registry patterns to the v10r group agent skills, explains requires/depends_on, and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected."
+description: "Choose which v10r SvelteKit reference patterns to emulate, and in what order, for a new project or a new capability. Use when planning an app architecture or a feature that spans several concerns (Foundations, Data, Identity & Safety, Intelligence, Features, Velocity, Integrity), before reading any single pattern: it maps the 199 registry patterns to the v10r group agent skills, explains infrastructure needs and depends_on, and how to use the v10r Pattern MCP tools recommend_emulation_plan and get_pattern when connected."
 license: MIT
 metadata:
   source: "v10r pattern-library registry"
-  registry-version: "2.2.0"
+  registry-digest: "9c4a3907546a7d98"
   generated: "true"
 ---
 
@@ -19,14 +19,14 @@ Use this before any v10r group agent skill when the task is "what should this pr
 ## Method
 
 1. **Name the capabilities** the project needs, in plain words ("background jobs", "layered RAG", "rate limiting").
-2. **Name the target infrastructure** using the registry's closed vocabulary: `ai-provider`, `container-host`, `cron`, `pgvector`, `postgres`, `redis`, `third-party-api`, `web-worker`. Unknown is not the same as missing — ask rather than assume.
+2. **Name the target infrastructure** using the registry's closed vocabulary of capabilities: `relational-db`, `vector-search`, `graph-db`, `key-value-store`, `object-storage`, `scheduler`, `llm-provider`, `email-delivery`, `external-api`, `web-worker`, `service-worker`, `wasm-toolchain`, `container-host` (a technology such as `postgres` or `redis` also works). Unknown is not the same as missing — ask rather than assume. Each pattern states its needs by level: *required*, *conditional* (with the condition), *optional*, or *v10r's implementation uses* (not needed to emulate it).
 3. **With the v10r Pattern MCP connected** (hosted `https://www.v10r.dev/api/mcp/public`, or the local stdio server in `mcp/`):
-   - `recommend_emulation_plan {capabilities, target_infra}` returns a dependency-ordered plan; each step carries its contraindications, required infrastructure (including what its dependencies need) and a fit verdict against `target_infra`. It never drops a step itself — you do, when a step's *Avoid when* describes the target.
+   - `recommend_emulation_plan {capabilities, target_infra}` returns a dependency-ordered plan; each step carries its contraindications, its infrastructure needs by level (including what its dependencies require) and a fit verdict against `target_infra`. It never drops a step itself — you do, when a step's *Avoid when* describes the target.
    - `get_pattern {ids, sections: ["fitness", "invariants", "emulation_notes"]}` reads up to five cards at once; `search_patterns {query: "*"}` lists the category map.
 4. **Without the MCP**, do the same by hand:
    - find candidates in the group agent skills below (each has a full pattern index);
    - expand every candidate through *depends on* — [references/dependency-graph.md](references/dependency-graph.md) lists every edge and a build order;
-   - union the *requires* of the whole set, including the dependencies', and compare it with the target;
+   - union the *required* and *conditional* needs of the whole set, including the dependencies', and compare them with the target (an *optional* or *v10r's implementation uses* need never rules a pattern out);
    - drop any pattern whose *Avoid when* matches, and prefer a listed *Alternative* when its condition holds.
 5. **Build in dependency order**, one pattern at a time, keeping each deep card's invariants.
 

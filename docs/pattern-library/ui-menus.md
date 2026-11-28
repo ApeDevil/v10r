@@ -1,10 +1,10 @@
 ---
-title: "Menus (dropdown, context, menu bar)"
+title: "Menus"
 description: "Dropdown menu, context menu, and menu bar composites built on Bits UI for triggerable and right-click action lists."
 category: "UI Components & Design System"
 ---
 
-# Menus (dropdown, context, menu bar)
+# Menus
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

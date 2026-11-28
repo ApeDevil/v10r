@@ -1,4 +1,4 @@
-# Versioned document session (save queue, drafts, CAS, explicit conflict)
+# Versioned document session
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ A browser-edited document stays server-authoritative: debounced serialised saves
 
 **When to use:** Use for documents a user edits over time while the server, another tab or an AI write can change them — sheets, notes, settings pages with autosave.
 
-**Requires:** postgres
+**Needs:** required relational-db
 
 ## Avoid when
 

@@ -25,8 +25,24 @@ optional **0 of 2**, scenarios where the right existing pattern was unreachable 
 (S2, S6). Retrieval relevance (`mcp:bench`, Acc@1) for comparison: dev 100, holdout 80, holdout2 79.4 — search
 is good; composition is where the decisions go wrong.
 
-Reproduce: `bun -e` over `REGISTRY_QUERIES.recommend_emulation_plan` (script in the review notes); Slice 5 turns
-this table into committed bench fixtures.
+Reproduce: `bun -e` over `REGISTRY_QUERIES.recommend_emulation_plan` (script in the review notes). Since Slice 1
+the committed composition benchmark replaces this script (`bun run patterns:bench`, section 1a).
+
+## 1a. Composition benchmark (committed in Slice 1)
+
+`pattern-library/bench/composition-scenarios.json` holds the eight design scenarios (S1–S8, the table above,
+S3 corrected once with a recorded reason) and ten holdout scenarios (H1–H10) fixed before any change.
+`composition-baseline.json` was measured at `45d883b` before any registry or planner change;
+`composition-results.json` is the latest run. Results per slice: [slice-1.md](./slice-1.md#benchmark).
+
+| Metric (all 18 scenarios) | Baseline | Slice 1 |
+|---|---:|---:|
+| Step precision | 50.0% | 50.0% |
+| Step recall | 75.7% | 75.7% |
+| Need recall (required ∪ conditional named by the plan) | 53.3% | 76.7% |
+| Fact need recall (needs of the golden steps, selection-independent) | 43.3% | 100% |
+| Spurious required needs | 5 | 8 |
+| Plan tokens (estimated) | 8,453 | 9,278 (+9.8%) |
 
 ## 2. Targets after Slices 1–3
 

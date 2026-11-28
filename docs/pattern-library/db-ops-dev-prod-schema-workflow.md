@@ -1,10 +1,10 @@
 ---
-title: "Dev→prod schema workflow (push-only, no migrations dir)"
+title: "Dev-to-prod schema workflow"
 description: "Uses drizzle-kit push for schema changes during development and defers versioned generate/migrate SQL files until production holds real data."
 category: "Database Operations"
 ---
 
-# Dev→prod schema workflow (push-only, no migrations dir)
+# Dev-to-prod schema workflow
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Uses drizzle-kit push for schema changes during development and defers versioned generate/migrate SQL files until production holds real data.
 
 **When to use:** Follow this while prototyping solo, then switch to generate+migrate before a production database with real user data goes live.
+
+**Needs:** required relational-db
 
 ## Docs
 

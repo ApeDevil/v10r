@@ -1,10 +1,10 @@
 ---
-title: "Durable step execution (claim, lease, fence, receipts)"
+title: "Durable step execution"
 description: "Multi-step work that can be killed halfway survives without a workflow engine: a conditional status machine, one claim, a database-clock lease with a reaper…"
 category: "Durable Execution"
 ---
 
-# Durable step execution (claim, lease, fence, receipts)
+# Durable step execution
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Multi-step work that can be killed halfway survives without a workflow engine: a
 
 **When to use:** Use for short, few-step work that outlives a request or can be interrupted — outbox delivery, replaying an approved AI plan, driving an external long-running operation.
 
-**Requires:** postgres
+**Needs:** required relational-db
 
 ## Avoid when
 

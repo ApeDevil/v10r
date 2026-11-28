@@ -1,10 +1,10 @@
 ---
-title: "Rate limiting (sliding window, fail-closed)"
+title: "Rate limiting"
 description: "A sliding-window rate limiter factory backed by Upstash Redis that produces per-purpose limiters (email, IP, comments, grants) and fails closed when Redis is…"
 category: "Anti-Abuse"
 ---
 
-# Rate limiting (sliding window, fail-closed)
+# Rate limiting
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A sliding-window rate limiter factory backed by Upstash Redis that produces per-purpose limiters (email, IP, comments, grants) and fails closed when Redis is unavailable.
 
 **When to use:** Use whenever an endpoint or action needs abuse-resistant request throttling with predictable fail-closed behavior.
+
+**Needs:** required key-value-store
 
 ## Docs
 

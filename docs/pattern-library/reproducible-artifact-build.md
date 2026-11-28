@@ -1,10 +1,10 @@
 ---
-title: "Reproducible artifact build (regenerate-and-diff, or manifest + digest)"
+title: "Reproducible artifact build"
 description: "Committed generated artifacts are proven current by the gate: regenerate-and-diff (missing and orphan outputs included) when the generator can run there, an…"
 category: "Derivation & Provenance"
 ---
 
-# Reproducible artifact build (regenerate-and-diff, or manifest + digest)
+# Reproducible artifact build
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

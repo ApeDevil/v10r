@@ -16,6 +16,8 @@ A per-user daily token cap stored in Redis that prevents a single authenticated 
 
 **When to use:** Apply it to any AI-backed feature where per-user spend must be bounded before a request is served.
 
+**Needs:** required key-value-store, llm-provider
+
 ## Docs
 
 - [docs/blueprint/abuse/ai-budget.md](/docs/blueprint/abuse/ai-budget) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/abuse/ai-budget.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/abuse/ai-budget.md))

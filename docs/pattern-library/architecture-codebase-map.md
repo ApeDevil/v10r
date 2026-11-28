@@ -1,10 +1,10 @@
 ---
-title: "Codebase map (\"where does X live\")"
+title: "Codebase map"
 description: "Provides a spatial quick-reference table mapping each kind of code (business logic, route adapters, schemas, components, state) to its canonical directory."
 category: "Architecture & Request Pipeline"
 ---
 
-# Codebase map ("where does X live")
+# Codebase map
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

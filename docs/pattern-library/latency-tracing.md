@@ -1,10 +1,10 @@
 ---
-title: "Latency tracing (a v10r span API, Server-Timing as one renderer)"
+title: "Latency tracing"
 description: "Every layer records spans into a request-scoped recorder stamped by the outermost handler; `Server-Timing` renders them for callers who already see internals…"
 category: "Velocity Measurement"
 ---
 
-# Latency tracing (a v10r span API, Server-Timing as one renderer)
+# Latency tracing
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Velocity Measurement"
 Every layer records spans into a request-scoped recorder stamped by the outermost handler; `Server-Timing` renders them for callers who already see internals, and `unattributed` reports the wall-clock time no span claimed.
 
 **When to use:** Use anywhere performance matters and a slow response needs to decompose — the request lifecycle, domain operations, databases, caches, external services.
+
+**Needs:** v10r's implementation uses relational-db
 
 ## Avoid when
 

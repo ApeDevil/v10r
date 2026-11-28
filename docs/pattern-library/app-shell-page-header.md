@@ -1,10 +1,10 @@
 ---
-title: "Page header (per-page, XSS-safe)"
+title: "Page header"
 description: "A per-page header component (breadcrumbs, title, actions) rendered inside the main content area instead of a global header, keeping page-specific chrome…"
 category: "App Shell & Navigation"
 ---
 
-# Page header (per-page, XSS-safe)
+# Page header
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

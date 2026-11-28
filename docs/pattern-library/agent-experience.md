@@ -1,10 +1,10 @@
 ---
-title: "Agent Experience (AX) surfaces"
+title: "Agent experience surfaces"
 description: "Five derived surfaces make the repo consumable by coding agents: a root AGENTS.md contract, raw-markdown doc variants with Accept negotiation, an /llms.txt…"
 category: "Docs & Agent Experience"
 ---
 
-# Agent Experience (AX) surfaces
+# Agent experience surfaces
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -67,7 +67,7 @@ Five derived surfaces make the repo consumable by coding agents: a root AGENTS.m
 
 ## Depends on
 
-- [Docs navigation hubs (README-per-directory convention)](/docs/pattern-library/docs-nav-hubs)
+- [Docs navigation hubs](/docs/pattern-library/docs-nav-hubs)
 
 ---
 

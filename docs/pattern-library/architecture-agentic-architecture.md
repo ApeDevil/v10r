@@ -1,10 +1,10 @@
 ---
-title: "Agentic architecture (one application architecture, optional interoperability doors)"
+title: "Agentic architecture"
 description: "How an application becomes AI-accessible, AI-interactive and AI-adaptive without a second architecture per standard: the tool catalogue, orchestrator…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Agentic architecture (one application architecture, optional interoperability doors)
+# Agentic architecture
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Architecture & Request Pipeline"
 How an application becomes AI-accessible, AI-interactive and AI-adaptive without a second architecture per standard: the tool catalogue, orchestrator, approval gate, untrusted-content boundary and turn trace stay authoritative, and MCP, A2A, AG-UI, A2UI, WebMCP, Agent Skills and OpenTelemetry are adapters that translate into them and never decide. A living matrix grades every technology (upstream, SDK and implementation maturity kept apart) with an adoption decision and a reassessment trigger.
 
 **When to use:** Use when deciding which agentic standards an application should speak, and how, without accumulating runtimes: before adopting a protocol, framework or generative-UI format.
+
+**Needs:** required llm-provider (via ai-agent-actions), relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -60,9 +62,9 @@ How an application becomes AI-accessible, AI-interactive and AI-adaptive without
 
 ## Depends on
 
-- [Agent actions (one tool catalogue, server and client executors)](/docs/pattern-library/ai-agent-actions)
-- [Untrusted-content boundary (the lethal trifecta, one rule per leg)](/docs/pattern-library/ai-untrusted-content-boundary)
-- [MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)](/docs/pattern-library/architecture-mcp-evolution)
+- [Agent actions](/docs/pattern-library/ai-agent-actions)
+- [Untrusted-content boundary](/docs/pattern-library/ai-untrusted-content-boundary)
+- [MCP protocol evolution](/docs/pattern-library/architecture-mcp-evolution)
 
 ---
 

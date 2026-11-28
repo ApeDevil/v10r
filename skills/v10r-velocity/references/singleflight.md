@@ -1,4 +1,4 @@
-# Singleflight / stampede protection (nobody waits on a lock)
+# Singleflight stampede protection
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 Concurrent callers for one key share one execution, and across instances a refresh claim stops N instances refreshing the same stale key N times — but a cold caller never blocks on a lock, so a failed leader can never become an outage.
 
 **When to use:** Use for expensive cache rebuilds, external provider calls, AI calls, aggregate queries and read-model refreshes — anything where a synchronised expiry produces simultaneous identical work.
+
+**Needs:** conditional key-value-store (when more than one instance refreshes the same key (the cross-instance refresh claim))
 
 ## Avoid when
 
@@ -51,7 +53,7 @@ Concurrent callers for one key share one execution, and across instances a refre
 
 ## Depends on
 
-- [Hierarchical cache (local → shared → origin, with key scope enforced)](hierarchical-cache.md)
+- [Hierarchical cache](hierarchical-cache.md)
 
 ---
 

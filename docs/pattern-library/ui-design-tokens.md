@@ -1,10 +1,10 @@
 ---
-title: "Design tokens (breakpoints, fluid type/space, z-index)"
+title: "Design tokens"
 description: "Centralizes breakpoints, fluid typography/spacing clamp() scales, and z-index values in a single tokens.ts file consumed by the UnoCSS theme so no component…"
 category: "UI Components & Design System"
 ---
 
-# Design tokens (breakpoints, fluid type/space, z-index)
+# Design tokens
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

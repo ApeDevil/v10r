@@ -1,10 +1,10 @@
 ---
-title: "Resilience policy (breaker, bulkhead, shedding, bounded retry)"
+title: "Resilience policy"
 description: "Four separate decisions about an unhealthy dependency — should we call it, how much of the pool may it hold, is this work worth doing under pressure, and is…"
 category: "Runtime Velocity"
 ---
 
-# Resilience policy (breaker, bulkhead, shedding, bounded retry)
+# Resilience policy
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Runtime Velocity"
 Four separate decisions about an unhealthy dependency — should we call it, how much of the pool may it hold, is this work worth doing under pressure, and is this failure worth repeating — kept apart because none of them substitutes for another.
 
 **When to use:** Use around any dependency that can fail, throttle or slow down: AI providers, Redis, the database, external APIs, object storage.
+
+**Needs:** conditional key-value-store (when breaker state must be shared across instances)
 
 ## Avoid when
 

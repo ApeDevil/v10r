@@ -1,10 +1,10 @@
 ---
-title: "Spreadsheet panel (file type, dual-mode)"
+title: "Spreadsheet panel"
 description: "A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI, with one formula evaluator shared by the…"
 category: "Desk Workspace"
 ---
 
-# Spreadsheet panel (file type, dual-mode)
+# Spreadsheet panel
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI, with one formula evaluator shared by the grid and the AI write path so a stored sheet never disagrees with itself.
 
 **When to use:** Use when a desk-based workspace needs to support tabular/spreadsheet data alongside markdown documents.
+
+**Needs:** required relational-db (via desk-workspace)
 
 ## Docs
 
@@ -37,7 +39,7 @@ A spreadsheet file type managed through the desk's unified file registry, editab
 
 ## Depends on
 
-- [Desk workspace (dock layout, focus architecture, mobile projection)](/docs/pattern-library/desk-workspace)
+- [Desk workspace](/docs/pattern-library/desk-workspace)
 
 ---
 

@@ -1,10 +1,10 @@
 ---
-title: "Postgres client & connection (Neon serverless)"
+title: "Postgres client and connection"
 description: "Sets up the Drizzle client for PostgreSQL using the Neon serverless driver as the app's single database connection entrypoint."
 category: "Databases & Storage"
 ---
 
-# Postgres client & connection (Neon serverless)
+# Postgres client and connection
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Sets up the Drizzle client for PostgreSQL using the Neon serverless driver as the app's single database connection entrypoint.
 
 **When to use:** Reach for it whenever server-side code needs a database handle to run Drizzle queries.
+
+**Needs:** required relational-db (pinned: postgres)
 
 ## Docs
 

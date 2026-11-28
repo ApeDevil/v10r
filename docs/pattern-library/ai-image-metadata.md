@@ -1,10 +1,10 @@
 ---
-title: "Image metadata reader (vision)"
+title: "Image metadata reader"
 description: "A vision-capable LLM proposes title, caption, alt text, keywords, and category for an uploaded image, which a human reviews and approves before anything…"
 category: "AI"
 ---
 
-# Image metadata reader (vision)
+# Image metadata reader
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A vision-capable LLM proposes title, caption, alt text, keywords, and category for an uploaded image, which a human reviews and approves before anything persists.
 
 **When to use:** Use when uploaded media needs AI-drafted metadata but a human must confirm every field before it is saved.
+
+**Needs:** required llm-provider, object-storage, relational-db
 
 ## Docs
 

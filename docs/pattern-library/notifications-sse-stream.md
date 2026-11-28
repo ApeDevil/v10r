@@ -16,6 +16,8 @@ One SSE route serves notifications in real time over two transports: an in-memor
 
 **When to use:** Use when the UI needs near-real-time in-app notification delivery without standing up a third-party pub/sub service.
 
+**Needs:** required relational-db · conditional key-value-store (when the host is serverless, where pub/sub replaces the in-memory connection map)
+
 ## Docs
 
 - [docs/blueprint/app-shell/notifications.md](/docs/blueprint/app-shell/notifications) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/app-shell/notifications.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/app-shell/notifications.md))

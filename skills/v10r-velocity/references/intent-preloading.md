@@ -1,4 +1,4 @@
-# Intent-based preloading (six levels over SvelteKit triggers)
+# Intent-based preloading
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 

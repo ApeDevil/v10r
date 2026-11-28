@@ -1,10 +1,10 @@
 ---
-title: "Capability grants (request → approve → expire)"
+title: "Capability grants"
 description: "A request-approve-expire workflow where users request a named capability, an admin approves or denies it, and pending requests auto-expire after 14 days."
 category: "Identity & Access"
 ---
 
-# Capability grants (request → approve → expire)
+# Capability grants
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A request-approve-expire workflow where users request a named capability, an admin approves or denies it, and pending requests auto-expire after 14 days.
 
 **When to use:** Use in place of static roles when access to a feature, such as blog authoring, needs an auditable grant/revoke lifecycle.
+
+**Needs:** required relational-db · conditional scheduler (when grant requests expire on a schedule)
 
 ## Docs
 

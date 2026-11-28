@@ -16,6 +16,8 @@ The overall admin area architecture — a vertical sidebar, route guards, and a 
 
 **When to use:** Reference this when adding a new admin page or list view that needs consistent guarding and table UX.
 
+**Needs:** required relational-db
+
 ## Docs
 
 - `docs/blueprint/admin/README.md` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/admin/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/admin/README.md))

@@ -1,10 +1,10 @@
 ---
-title: "Layout primitives (Stack, Cluster, Surface)"
+title: "Layout primitives"
 description: "Structural wrapper components (Stack, Cluster, Surface, PageContainer) that provide consistent spacing and layout without one-off CSS."
 category: "UI Components & Design System"
 ---
 
-# Layout primitives (Stack, Cluster, Surface)
+# Layout primitives
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

@@ -1,4 +1,4 @@
-# Optimistic mutation (fold-based rollback, idempotency keys)
+# Optimistic mutation
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 

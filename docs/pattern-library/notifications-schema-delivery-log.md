@@ -16,6 +16,8 @@ The multi-channel schema adds per-user channel-connection tables, verification t
 
 **When to use:** Use as the reference schema when modeling a new channel connection or auditing delivery outcomes.
 
+**Needs:** required relational-db
+
 ## Docs
 
 - [docs/blueprint/notifications/schema.md](/docs/blueprint/notifications/schema) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/notifications/schema.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/notifications/schema.md))

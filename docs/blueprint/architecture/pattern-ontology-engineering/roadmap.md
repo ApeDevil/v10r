@@ -17,7 +17,7 @@ benchmark is re-run and its results committed at every checkpoint**, compared wi
 ## Slice 0 — Ratify the review ✓
 Decisions D-01 … D-14 answered 2026-11-28; golden scenarios accepted; holdout scenarios required.
 
-## Slice 1 — Benchmark baseline and truthful infrastructure facts
+## Slice 1 — Benchmark baseline and truthful infrastructure facts ● implemented, at checkpoint ([slice-1.md](./slice-1.md))
 - **Objective:** a committed composition benchmark measures plans before anything changes; every record states
   its infrastructure needs at the right level; no title states a volatile fact; the registry has a content identity.
 - **Changes:**
@@ -36,7 +36,7 @@ Decisions D-01 … D-14 answered 2026-11-28; golden scenarios accepted; holdout 
 - **Not in this slice:** selection logic (deep-only, runner-up rule) and edge semantics: they change in Slice 4
   and Slice 3, measured against the Slice 1 baseline.
 - **Acceptance:** 0 records whose code imports an adapter they do not declare; "hosted mcp" plan names
-  `relational-db, key-value-store`; 0 node-kind contradictions; 0 title numerals outside the allow-list;
+  `key-value-store` (`relational-db` corrected to implementation level, see [slice-1.md](./slice-1.md#unresolved-issues)); 0 node-kind contradictions; 0 title numerals outside the allow-list;
   required-need recall on the benchmark improves without a drop in step metrics.
 - **Checkpoint:** review the needs diff per record and the benchmark delta.
 

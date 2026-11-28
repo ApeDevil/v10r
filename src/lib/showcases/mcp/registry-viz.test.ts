@@ -24,7 +24,7 @@ const pattern = (
 	when_to_use: '',
 	avoid_when: [],
 	alternatives: [],
-	requires: [],
+	needs: [],
 	capabilities: [],
 	keywords: [],
 	depends_on,
@@ -39,7 +39,7 @@ const pattern = (
 });
 
 const fixture: Registry = {
-	version: '0.0.0',
+	format: 3,
 	groups: [{ id: 'g', title: 'G' }],
 	categories: [
 		{ id: 'architecture', title: 'Architecture', group: 'g' },

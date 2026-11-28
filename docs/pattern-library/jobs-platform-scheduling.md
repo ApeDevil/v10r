@@ -1,10 +1,10 @@
 ---
-title: "Platform scheduling (Vercel cron vs container `setInterval`)"
+title: "Platform scheduling"
 description: "Cadence is owned entirely by platform config — vercel.json crons hitting /api/cron/[job] on serverless, or a single flat setInterval scheduler on persistent…"
 category: "Jobs & Scheduling"
 ---
 
-# Platform scheduling (Vercel cron vs container `setInterval`)
+# Platform scheduling
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Cadence is owned entirely by platform config — vercel.json crons hitting /api/cron/[job] on serverless, or a single flat setInterval scheduler on persistent containers — so the job registry itself never changes when switching hosts.
 
 **When to use:** Use when a job must run on a schedule across more than one hosting target without duplicating scheduling logic per platform.
+
+**Needs:** required scheduler
 
 ## Docs
 

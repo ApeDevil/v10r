@@ -22,6 +22,11 @@ For *translation* vocabulary (en/de/ru term lock, voice per locale) see
 | An AI model vendor | `provider` | — |
 | An external notification transport | `channel` | `NotificationProvider`, `notifications/providers/` |
 | An infrastructure service we depend on | `dependency` | monitoring `ProviderStatus` / `ProviderResult` |
+| A capability a pattern needs the target project to run (relational database, key-value store, …) | **infrastructure need** (`InfrastructureNeed`, `INFRASTRUCTURE_NEEDS` in `pattern-library/schema.ts`; a record's `needs`) — named for the capability, never the product; v10r's product is the need's **binding** | `requires` / `PATTERN_REQUIREMENTS`, `requirement` (that word is retired for workload profiles too), product words as needs (`postgres`, `redis`, `cron`, `ai-provider`, `third-party-api`) |
+| How strictly a pattern needs one | **need level**: `required`, `conditional` (with `when`), `optional` (with `why`), `implementation` (v10r's reference uses it, the pattern does not; with `why`) | `soft`/`hard` requirement, "nice to have" |
+| A need that only one technology satisfies | a **pin** (`pinned`, with `why`) | `locked`, `hard dependency` |
+| A technology a target names instead of a capability (`postgres`, `redis`) | **technology** (`TECHNOLOGY_NEED`); `target_infra` accepts need ids and technologies | `vendor`, `provider` (that is an AI model vendor) |
+| The registry's content identity | **registry digest** (`registryDigest`, `pattern-library/registry-digest.ts`); the schema shape is the registry **format** (`REGISTRY_FORMAT`) | registry `version` (a hand-bumped string that never moved with the content) |
 | The person who runs a deployment: Impressum provider, GDPR controller, DSA contact point | `siteOperator` (`#lib/server/legal`) | hard-coded identities on each legal page |
 | The placeholder controller the privacy showcase renders instead of a real identity | `templateController` (`#lib/showcases/privacy`) | — |
 | A job execution | `run` (owned by `jobs/`) | — |
@@ -358,10 +363,13 @@ share. Each is spoken for:
   class.
 - **`tier`** — a rung in a graded scale: a pattern record's depth (`deep`/`light`) and a
   cache level (`local`/`shared`/`origin`). Not a synonym for layer, lane or surface.
-- **`capability`** — a shared word, one concept, three subjects, always qualified:
+- **`capability`** — a shared word, one concept, four subjects, always qualified:
   `ModelCapabilities` (what a **model** can do), the product capabilities under
-  `docs/stack/capabilities/`, and `AssistantCapability` (what an **assistant** can do — the
-  unit a profile is composed from, `ai/capabilities/`). A bare `Capability` is never right.
+  `docs/stack/capabilities/`, `AssistantCapability` (what an **assistant** can do — the
+  unit a profile is composed from, `ai/capabilities/`), and a pattern record's `capabilities`
+  (what a **pattern** enables — free discovery vocabulary, D-07). An **infrastructure need**
+  names a capability the *target* must run; it is the need, not a `capability` field. A bare
+  `Capability` is never right.
 - **`profile`** — the per-surface variant of a shared thing: an *assistant* profile
   (`AssistantProfile`, the top), the *retrieval* profile (which corpus and tiers a surface
   asks the shared kernel for) and the *location-awareness* profile (site- vs desk-awareness)

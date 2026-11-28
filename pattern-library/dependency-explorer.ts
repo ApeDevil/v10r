@@ -12,8 +12,10 @@
  * next-action convention it reuses.
  */
 
+import { type AdoptionNeed, adoptionNeeds, needsSummary } from './infrastructure-needs.ts';
 import { MAX_ARG_CHARS, type NextAction, type QueryDiag, type ToolDef, withNextActions } from './query.ts';
-import type { PatternMaturity, PatternRecord, PatternRequirement, PatternTier, Registry } from './schema.ts';
+import { registryDigest } from './registry-digest.ts';
+import type { PatternMaturity, PatternRecord, PatternTier, Registry } from './schema.ts';
 import { buildById, topoSort } from './schema.ts';
 
 export const EXPLORE_PATTERNS_TOOL_NAME = 'explore_patterns';
@@ -26,7 +28,7 @@ const MAX_HUBS = 5;
 export const EXPLORE_PATTERNS_TOOL: ToolDef = {
 	name: EXPLORE_PATTERNS_TOOL_NAME,
 	description:
-		"Explore the pattern library's dependency graph. With `id`: that pattern's maturity, requirements, an invariants summary, every prerequisite it builds on (depends_on, transitively, in adoption order) and every pattern that builds on it, with a docs link. Without `id`: the patterns that sit in the graph, by category, and its hubs. Read-only. Hosts that support MCP Apps render it as an interactive explorer; every other client gets the same answer as text.",
+		"Explore the pattern library's dependency graph. With `id`: that pattern's maturity, infrastructure needs by level, an invariants summary, every prerequisite it builds on (depends_on, transitively, in adoption order) and every pattern that builds on it, with a docs link. Without `id`: the patterns that sit in the graph, by category, and its hubs. Read-only. Hosts that support MCP Apps render it as an interactive explorer; every other client gets the same answer as text.",
 	inputSchema: {
 		type: 'object',
 		properties: {
@@ -58,8 +60,10 @@ export interface ExploredPrerequisite {
 export interface ExploredFocus extends ExploredPattern {
 	summary: string;
 	risk: string;
-	/** Own requirements and the ones inherited through a prerequisite (`via`). */
-	requires: Array<{ need: PatternRequirement; via?: string }>;
+	/** Own needs and the required/conditional ones inherited through a prerequisite (`via`). */
+	needs: AdoptionNeed[];
+	/** The same needs as one line by level, as every surface prints them. */
+	needsSummary: string;
 	invariantCount: number;
 	invariants: string[];
 	/** The first contraindication, when the record names one. */
@@ -86,13 +90,15 @@ export interface ExploredCategory {
 export type PatternExploration =
 	| {
 			kind: 'focus';
-			registryVersion: string;
+			/** Content identity of the registry answered from (see `registry-digest.ts`). */
+			registryDigest: string;
 			focus: ExploredFocus;
 			patterns: ExploredPattern[];
 	  }
 	| {
 			kind: 'overview';
-			registryVersion: string;
+			/** Content identity of the registry answered from (see `registry-digest.ts`). */
+			registryDigest: string;
 			categories: ExploredCategory[];
 			hubs: Array<{ id: string; dependents: number }>;
 			/** Registry patterns outside the graph — no prerequisite and no dependent. */
@@ -147,16 +153,6 @@ export function patternDocsUrl(id: string, options: ExploreOptions = {}): string
 	return `${options.siteOrigin ?? ''}/docs/pattern-library/${id}`;
 }
 
-function inheritedNeeds(pattern: PatternRecord, order: string[], byId: Map<string, PatternRecord>) {
-	const needs: Array<{ need: PatternRequirement; via?: string }> = pattern.requires.map((need) => ({ need }));
-	for (const id of order) {
-		for (const need of byId.get(id)?.requires ?? []) {
-			if (!needs.some((known) => known.need === need)) needs.push({ need, via: id });
-		}
-	}
-	return needs;
-}
-
 function focusOn(registry: Registry, pattern: PatternRecord, options: ExploreOptions): ExplorationOutcome {
 	const byId = buildById(registry);
 	const registryOrder = registry.patterns.map((entry) => entry.id);
@@ -165,11 +161,13 @@ function focusOn(registry: Registry, pattern: PatternRecord, options: ExploreOpt
 	const downstream = walk(pattern.id, (id) => dependents.get(id) ?? []);
 	const { order, cyclic } = topoSort([...upstream.keys()], byId, registryOrder);
 	const allDependents = registryOrder.filter((id) => downstream.has(id));
+	const needs = adoptionNeeds(pattern, byId);
 	const focus: ExploredFocus = {
 		...node(pattern),
 		summary: pattern.summary,
 		risk: pattern.risk,
-		requires: inheritedNeeds(pattern, order, byId),
+		needs,
+		needsSummary: needsSummary(needs, { condition: true }),
 		invariantCount: pattern.invariants.length,
 		invariants: pattern.invariants.slice(0, MAX_SUMMARY_INVARIANTS),
 		avoidWhen: pattern.avoid_when[0] ?? null,
@@ -183,7 +181,7 @@ function focusOn(registry: Registry, pattern: PatternRecord, options: ExploreOpt
 	const named = new Set([pattern.id, ...order, ...allDependents]);
 	const exploration: PatternExploration = {
 		kind: 'focus',
-		registryVersion: registry.version,
+		registryDigest: registryDigest(registry),
 		focus,
 		patterns: registry.patterns.filter((entry) => named.has(entry.id)).map(node),
 	};
@@ -197,13 +195,12 @@ function label(id: string, byId: Map<string, PatternRecord>): string {
 
 function focusText(focus: ExploredFocus, byId: Map<string, PatternRecord>): string {
 	const list = (ids: string[]) => (ids.length === 0 ? '- (none)' : ids.map((id) => `- ${label(id, byId)}`).join('\n'));
-	const needs = focus.requires.map(({ need, via }) => (via ? `${need} (via ${via})` : need)).join(', ');
 	const more = focus.invariantCount - focus.invariants.length;
 	const body = [
 		`# ${focus.title} (\`${focus.id}\`)`,
 		`${focus.tier} · ${focus.maturity} · ${focus.category}`,
 		focus.summary,
-		`Requires: ${needs.length > 0 ? needs : 'nothing beyond the app runtime'}`,
+		`Needs: ${focus.needsSummary || 'nothing beyond the app runtime'}`,
 		focus.avoidWhen ? `Avoid when: ${focus.avoidWhen}` : '',
 		focus.invariantCount > 0
 			? `## Invariants (${focus.invariantCount})\n${focus.invariants.map((line) => `- ${line}`).join('\n')}${more > 0 ? `\n- … ${more} more in get_pattern` : ''}`
@@ -243,14 +240,14 @@ function overview(registry: Registry): ExplorationOutcome {
 		.slice(0, MAX_HUBS);
 	const exploration: PatternExploration = {
 		kind: 'overview',
-		registryVersion: registry.version,
+		registryDigest: registryDigest(registry),
 		categories,
 		hubs,
 		unconnected: registry.patterns.length - connected.length,
 		patterns: connected.map(node),
 	};
 	const body = [
-		`# Pattern dependency graph (registry ${registry.version})`,
+		`# Pattern dependency graph (registry ${exploration.registryDigest})`,
 		`${connected.length} of ${registry.patterns.length} patterns build on another or are built on; ${exploration.unconnected} stand alone.`,
 		`## Hubs (most built on)\n${hubs.map((hub) => `- \`${hub.id}\` — ${hub.dependents} direct dependent(s)`).join('\n')}`,
 		`## By category\n${categories.map((category) => `- ${category.title}: ${category.patterns.map((id) => `\`${id}\``).join(', ')}`).join('\n')}`,

@@ -1,4 +1,4 @@
-# Heavy dependency quarantine (the baseline is the metric)
+# Heavy dependency quarantine
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -50,7 +50,7 @@ Optional heavyweight capabilities load behind dynamic-import boundaries, and the
 
 ## Depends on
 
-- [Performance budget and ratchet (targets aspire, ceilings hold)](performance-budget-ratchet.md)
+- [Performance budget and ratchet](performance-budget-ratchet.md)
 
 ---
 

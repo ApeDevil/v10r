@@ -16,6 +16,8 @@ Projects a recorded turn trace onto invoke_agent, chat and execute_tool spans wi
 
 **When to use:** Use when an OpenTelemetry backend should read agent turns without a second tracer.
 
+**Needs:** required relational-db (via ai-turn-trace), llm-provider (via ai-surfaces)
+
 ## Avoid when
 
 - No telemetry backend exists — the trace and admin pages already answer the questions
@@ -38,7 +40,7 @@ Projects a recorded turn trace onto invoke_agent, chat and execute_tool spans wi
 
 ## Depends on
 
-- [Turn trace (recorded account of every AI turn) + turn graph](/docs/pattern-library/ai-turn-trace)
+- [Turn trace and turn graph](/docs/pattern-library/ai-turn-trace)
 
 ---
 

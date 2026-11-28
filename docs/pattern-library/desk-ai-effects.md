@@ -1,10 +1,10 @@
 ---
-title: "AI desk effects (tool results drive the workspace)"
+title: "AI desk effects"
 description: "AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify/scroll) through an EffectActions facade; the dispatcher returns…"
 category: "Desk Workspace"
 ---
 
-# AI desk effects (tool results drive the workspace)
+# AI desk effects
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify/scroll) through an EffectActions facade; the dispatcher returns applied/failed per effect and failures surface in the I/O Log panel instead of being swallowed.
 
 **When to use:** Use when an AI assistant should manipulate a live UI workspace: effects go through the same single-writer actions as user input, so AI behavior stays consistent with direct manipulation.
+
+**Needs:** required relational-db (via desk-workspace), llm-provider (via ai-deskbot)
 
 ## Docs
 
@@ -35,8 +37,8 @@ AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify
 
 ## Depends on
 
-- [Desk workspace (dock layout, focus architecture, mobile projection)](/docs/pattern-library/desk-workspace)
-- [Deskbot (AI in the desk workspace)](/docs/pattern-library/ai-deskbot)
+- [Desk workspace](/docs/pattern-library/desk-workspace)
+- [Deskbot](/docs/pattern-library/ai-deskbot)
 
 ---
 

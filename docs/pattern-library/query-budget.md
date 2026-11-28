@@ -1,10 +1,10 @@
 ---
-title: "Query budget and N+1 proof (counting is not proving)"
+title: "Query budget and N+1 proof"
 description: "Database round trips counted per request by the driver's own logger, and per operation by a gate that runs each one over two data sizes — because N+1 is a…"
 category: "Data Velocity"
 ---
 
-# Query budget and N+1 proof (counting is not proving)
+# Query budget and N+1 proof
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Database round trips counted per request by the driver's own logger, and per ope
 
 **When to use:** Use on any user-facing path that touches a datastore, and on every list endpoint without exception.
 
-**Requires:** postgres
+**Needs:** required relational-db
 
 ## Avoid when
 
@@ -61,7 +61,7 @@ Database round trips counted per request by the driver's own logger, and per ope
 
 ## Depends on
 
-- [Performance budget and ratchet (targets aspire, ceilings hold)](/docs/pattern-library/performance-budget-ratchet)
+- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
 
 ---
 

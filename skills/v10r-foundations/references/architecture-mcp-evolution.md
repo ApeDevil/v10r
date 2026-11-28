@@ -1,4 +1,4 @@
-# MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)
+# MCP protocol evolution
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -61,7 +61,7 @@ One endpoint serves both MCP generations — the 2025 initialize handshake and t
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](multi-client-core.md)
+- [Multi-client core](multi-client-core.md)
 
 ---
 

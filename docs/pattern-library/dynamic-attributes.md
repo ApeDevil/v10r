@@ -1,10 +1,10 @@
 ---
-title: "Dynamic attributes (self-describing records the user defines at runtime)"
+title: "Dynamic attributes"
 description: "A record that starts almost empty and grows labelled, typed attributes its user names, with the definitions stored inline beside the values: stable attribute…"
 category: "Forms & Validation"
 ---
 
-# Dynamic attributes (self-describing records the user defines at runtime)
+# Dynamic attributes
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Forms & Validation"
 A record that starts almost empty and grows labelled, typed attributes its user names, with the definitions stored inline beside the values: stable attribute ids make renames free, lossy type changes keep the old value, removals are restorable, unknown kinds survive opaquely, and a fail-closed codec plus a version check guard every save, with conflicts merged by attribute id. Records can bind to a shared attribute dictionary (stable definition ids, labels per locale, append-only revisions) and be projected per consumer — renamed, nested, unit-converted — with each consumer pinned to a revision and an impact check before it moves.
 
 **When to use:** Use when the facts on a record differ from one record to the next and belong to the person writing them — an asset panel, a character sheet, a sample log — and the record loads and saves as one unit.
+
+**Needs:** required relational-db (via versioned-document-session)
 
 ## Avoid when
 
@@ -79,7 +81,7 @@ A record that starts almost empty and grows labelled, typed attributes its user 
 
 ## Depends on
 
-- [Versioned document session (save queue, drafts, CAS, explicit conflict)](/docs/pattern-library/versioned-document-session)
+- [Versioned document session](/docs/pattern-library/versioned-document-session)
 
 ---
 

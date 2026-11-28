@@ -1,10 +1,10 @@
 ---
-title: "Pattern MCP (agent-queryable pattern registry, local stdio)"
+title: "Pattern MCP"
 description: "A read-only local stdio MCP server that exposes v10r's curated pattern registry (docs, code, tests, invariants) to coding agents so they can emulate patterns…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Pattern MCP (agent-queryable pattern registry, local stdio)
+# Pattern MCP
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

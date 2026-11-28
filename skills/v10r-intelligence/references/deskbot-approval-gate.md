@@ -1,4 +1,4 @@
-# Deskbot approval gate (proposal → approve, plan-gated mutation)
+# Deskbot approval gate
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Write/destructive desk tools never mutate inside the agent loop; they return a r
 
 **When to use:** Mandatory companion to any mutating AI tool: it converts 'the model wants to write' into an auditable human decision.
 
-**Requires:** postgres, ai-provider
+**Needs:** required relational-db, llm-provider
 
 ## Avoid when
 
@@ -63,9 +63,9 @@ Write/destructive desk tools never mutate inside the agent loop; they return a r
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](ai-tool-harness.md)
-- [AI surfaces (chatbot vs deskbot split over one guard)](ai-surfaces.md)
-- [Durable step execution (claim, lease, fence, receipts)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/durable-step-execution.md)
+- [AI tool manifest and harness split](ai-tool-harness.md)
+- [AI surfaces](ai-surfaces.md)
+- [Durable step execution](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/durable-step-execution.md)
 
 ---
 

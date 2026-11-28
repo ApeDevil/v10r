@@ -1,10 +1,10 @@
 ---
-title: "Neo4j connection (Aura)"
+title: "Neo4j connection"
 description: "Connects to a managed Neo4j Aura database over its HTTP Query API via fetch, with no driver, session, or connection pool."
 category: "Databases & Storage"
 ---
 
-# Neo4j connection (Aura)
+# Neo4j connection
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Connects to a managed Neo4j Aura database over its HTTP Query API via fetch, with no driver, session, or connection pool.
 
 **When to use:** Reach for it when server code needs to execute Cypher queries against the graph store.
+
+**Needs:** required graph-db (pinned: neo4j)
 
 ## Docs
 

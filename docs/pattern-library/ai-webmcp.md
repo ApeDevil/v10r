@@ -1,10 +1,10 @@
 ---
-title: "WebMCP publication of client actions (experiment)"
+title: "WebMCP publication of client actions"
 description: "Publishes existing client-action contracts to the browser's own agent through document.modelContext when it exists: same schema, runner, timeouts and bounded…"
 category: "AI"
 ---
 
-# WebMCP publication of client actions (experiment)
+# WebMCP publication of client actions
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Publishes existing client-action contracts to the browser's own agent through document.modelContext when it exists: same schema, runner, timeouts and bounded results; only read and view actions; a per-minute budget; withdrawn on dispose. Progressive enhancement only.
 
 **When to use:** Use when bounded client actions exist and external browser agents should operate the view without screen-scraping.
+
+**Needs:** required llm-provider (via ai-agent-actions), relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -39,7 +41,7 @@ Publishes existing client-action contracts to the browser's own agent through do
 
 ## Depends on
 
-- [Agent actions (one tool catalogue, server and client executors)](/docs/pattern-library/ai-agent-actions)
+- [Agent actions](/docs/pattern-library/ai-agent-actions)
 
 ---
 

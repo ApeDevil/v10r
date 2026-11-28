@@ -16,6 +16,8 @@ Frequently-read views are served from a purpose-built projection instead of rebu
 
 **When to use:** Use when one screen repeatedly needs several tables, counts, permissions and aggregates at once. Not for a screen a direct query already answers.
 
+**Needs:** required relational-db
+
 ## Docs
 
 - [docs/blueprint/velocity/data.md#screen-read-model](/docs/blueprint/velocity/data) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/velocity/data.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/velocity/data.md))

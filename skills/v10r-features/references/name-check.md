@@ -1,4 +1,4 @@
-# Name check (resilient multi-source fan-out)
+# Name check
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ One report from several unreliable upstreams: concurrent per-source deadlines, a
 
 **When to use:** Use when a feature aggregates third-party APIs of uneven reliability and the user needs an honest partial answer — what was found, and where the search could not look — rather than an all-or-nothing one.
 
-**Requires:** postgres, third-party-api
+**Needs:** required external-api · conditional key-value-store (when daily per-source quotas and cached reports are shared across instances), relational-db (when paid sources need stored, encrypted API credentials)
 
 ## Avoid when
 
@@ -64,9 +64,9 @@ One report from several unreliable upstreams: concurrent per-source deadlines, a
 
 ## Depends on
 
-- [Resilience policy (breaker, bulkhead, shedding, bounded retry)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/resilience-policy.md)
-- [Deadline propagation (one budget, divided)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/deadline-propagation.md)
-- [Hierarchical cache (local → shared → origin, with key scope enforced)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hierarchical-cache.md)
+- [Resilience policy](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/resilience-policy.md)
+- [Deadline propagation](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/deadline-propagation.md)
+- [Hierarchical cache](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/hierarchical-cache.md)
 
 ---
 

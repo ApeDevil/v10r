@@ -1,10 +1,10 @@
 ---
-title: "Shell layout (no global header, sidebar-first)"
+title: "Shell layout"
 description: "Defines the app shell's structural layout — a collapsible sidebar for primary navigation, a main content area, and a persistent footer, with no global header."
 category: "App Shell & Navigation"
 ---
 
-# Shell layout (no global header, sidebar-first)
+# Shell layout
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

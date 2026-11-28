@@ -1,10 +1,10 @@
 ---
-title: "Advanced (confirm · reset · edit)"
+title: "Advanced form tactics"
 description: "Confirmation-modal submit, reset-after-submit, and edit-with-existing-data patterns layered on top of the base Superforms flow."
 category: "Forms & Validation"
 ---
 
-# Advanced (confirm · reset · edit)
+# Advanced form tactics
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

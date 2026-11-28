@@ -1,4 +1,4 @@
-# Form draft recovery (kept in the browser, offered back, guarded only when lost)
+# Form draft recovery
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 

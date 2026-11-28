@@ -1,10 +1,10 @@
 ---
-title: "Comments (flat, per-locale, moderated)"
+title: "Comments"
 description: "A flat, per-locale comment system with a short author edit window and admin moderation (hide/unhide/remove)."
 category: "Content & Blog"
 ---
 
-# Comments (flat, per-locale, moderated)
+# Comments
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A flat, per-locale comment system with a short author edit window and admin moderation (hide/unhide/remove).
 
 **When to use:** Use when a content page needs reader comments with moderation controls rather than nested threads.
+
+**Needs:** required relational-db
 
 ## Docs
 

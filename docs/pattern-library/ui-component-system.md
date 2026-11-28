@@ -1,10 +1,10 @@
 ---
-title: "Component-first UI system (primitives/composites/layout, CVA, tokens)"
+title: "Component-first UI system"
 description: "A layered component system — Bits UI → primitives (styled atoms) → composites (business logic) → layout (structural wrappers) — styled entirely through CVA →…"
 category: "UI Components & Design System"
 ---
 
-# Component-first UI system (primitives/composites/layout, CVA, tokens)
+# Component-first UI system
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

@@ -1,5 +1,5 @@
 {
-	"version": "2.2.0",
+	"format": 3,
 	"note": "Two-tier pattern registry for the v10r pattern library — the single source of truth every derived surface is built from: the README Pattern Index, the /docs/pattern-library section (catalog + one page per record), both MCP runtimes, /showcases/mcp, and Vely's pattern tool. Deep records are full emulation cards (invariants + emulation notes required); light records are index rows (pointers only). Every path is repo-relative and validated by pattern-library/validate.ts. Records point to docs and code — they do not duplicate explanations.",
 	"groups": [
 		{
@@ -187,7 +187,7 @@
 		{
 			"id": "multi-client-core",
 			"tier": "deep",
-			"title": "Multi-client core (hexagonal domain modules)",
+			"title": "Multi-client core",
 			"category": "architecture",
 			"summary": "One backend operations layer (#lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero duplicated business logic.",
 			"when_to_use": "Reach for this whenever a backend capability must be reachable from more than one entry point (page action, API route, AI tool, cron job). It is the foundation nearly every other v10r pattern builds on.",
@@ -206,7 +206,7 @@
 					"prefer_when": "the runtime is a long-lived server with no serverless cold-start cost and a port has more than one real implementation"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"domain modules",
 				"hexagonal architecture",
@@ -215,7 +215,16 @@
 				"service layer",
 				"business logic"
 			],
-			"keywords": ["ports and adapters", "framework-free", "queries", "mutations", "service", "adapter", "core"],
+			"keywords": [
+				"ports and adapters",
+				"framework-free",
+				"queries",
+				"mutations",
+				"service",
+				"adapter",
+				"core",
+				"hexagonal domain modules"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -267,13 +276,13 @@
 		{
 			"id": "architecture-runtime-layers",
 			"tier": "light",
-			"title": "Runtime layers & request flow (7-layer view)",
+			"title": "Runtime layers and request flow",
 			"category": "architecture",
 			"summary": "Documents v10r's seven-layer abstraction hierarchy, from tech stack down to code, anchored by the hooks.server.ts composition root and the hexagonal domain core.",
 			"when_to_use": "Reach for it when orienting a new contributor or agent to how a request moves through the system and which layer a given file belongs to.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["request lifecycle", "layered architecture"],
 			"keywords": ["layers", "composition root", "hexagonal", "request flow"],
 			"depends_on": [],
@@ -304,15 +313,15 @@
 		{
 			"id": "architecture-codebase-map",
 			"tier": "light",
-			"title": "Codebase map (\"where does X live\")",
+			"title": "Codebase map",
 			"category": "architecture",
 			"summary": "Provides a spatial quick-reference table mapping each kind of code (business logic, route adapters, schemas, components, state) to its canonical directory.",
 			"when_to_use": "Reach for it when deciding where a new file should live or trying to locate an existing concern in the repo.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["file placement lookup"],
-			"keywords": ["codebase organization", "directory conventions", "file placement"],
+			"keywords": ["codebase organization", "directory conventions", "file placement", "where does x live"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -335,15 +344,15 @@
 		{
 			"id": "architecture-middleware",
 			"tier": "light",
-			"title": "Middleware / 14-stage hook chain (CSRF, headers, guards)",
+			"title": "Middleware hook chain",
 			"category": "architecture",
 			"summary": "Describes the ordered SvelteKit hook chain in src/hooks.server.ts — security headers, i18n, auth, CSRF, session, consent, and guards — as the single source of truth for request interception.",
 			"when_to_use": "Reach for it when adding or reordering cross-cutting request handling such as auth, CSRF, or security headers.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["request interception", "cross-cutting concerns"],
-			"keywords": ["hooks", "csrf", "security headers", "handle chain"],
+			"keywords": ["hooks", "csrf", "security headers", "handle chain", "headers", "guards"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -376,15 +385,21 @@
 		{
 			"id": "architecture-rest-api",
 			"tier": "light",
-			"title": "REST API patterns (pagination, envelopes, rate limits)",
+			"title": "REST API patterns",
 			"category": "architecture",
 			"summary": "Defines the file-based +server.ts convention for REST endpoints, covering Valibot validation, error() status codes, pagination, and response envelopes.",
 			"when_to_use": "Reach for it when building a new REST or SSE endpoint under src/routes/api/.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "implementation",
+					"why": "v10r's API rate limiter (src/lib/server/http) counts in Redis; the envelope and error contract need nothing"
+				}
+			],
 			"capabilities": ["rest endpoints", "pagination", "response envelopes"],
-			"keywords": ["rest api", "server.ts", "pagination", "rate limits"],
+			"keywords": ["rest api", "server.ts", "pagination", "rate limits", "envelopes"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -427,15 +442,15 @@
 		{
 			"id": "architecture-error-handling",
 			"tier": "light",
-			"title": "Error handling (expected/unexpected/form/API)",
+			"title": "Error handling",
 			"category": "architecture",
 			"summary": "Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail(), Response.json()).",
 			"when_to_use": "Reach for it when deciding how to surface a failure from a load function, form action, or API endpoint.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["error classification", "error handling"],
-			"keywords": ["error handling", "fail", "handleerror", "status codes"],
+			"keywords": ["error handling", "fail", "handleerror", "status codes", "expected/unexpected/form/api"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -469,13 +484,19 @@
 		{
 			"id": "architecture-state-management",
 			"tier": "light",
-			"title": "State management (Svelte 5 runes)",
+			"title": "State management",
 			"category": "architecture",
 			"summary": "Establishes v10r's rune-based state strategy — $state/$derived for component state, .svelte.ts modules or the Context API for shared state, with an SSR-safety rule against module-level state leaking across requests.",
 			"when_to_use": "Reach for it when deciding whether shared reactive state should be a .svelte.ts module or Context-API-provided, especially anything touched during SSR.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "llm-provider",
+					"level": "implementation",
+					"why": "the chat client store in src/lib/state wraps the AI SDK; rune-based state itself needs nothing"
+				}
+			],
 			"capabilities": ["reactive state", "ssr-safe sharing"],
 			"keywords": ["svelte 5", "runes", "state management", "context api"],
 			"depends_on": [],
@@ -509,15 +530,26 @@
 		{
 			"id": "architecture-request-cycle-visualizer",
 			"tier": "light",
-			"title": "Request-cycle visualizer (form · API · AI)",
+			"title": "Request-cycle visualizer",
 			"category": "architecture",
 			"summary": "An interactive showcase that visualizes the full form, REST API, and AI request cycles as they pass through the hooks chain and domain layers.",
 			"when_to_use": "Reach for it when you need a live, didactic demonstration of how a form submission, API call, or AI request actually traverses the stack.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "llm-provider",
+					"level": "implementation",
+					"why": "the showcase calls a model so there is a slow step to trace"
+				},
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "the showcase reads the database so there is a query to trace"
+				}
+			],
 			"capabilities": ["request visualization", "developer education"],
-			"keywords": ["cycle", "request flow", "visualizer", "showcase"],
+			"keywords": ["cycle", "request flow", "visualizer", "showcase", "form", "api"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -559,15 +591,15 @@
 		{
 			"id": "architecture-deployment",
 			"tier": "light",
-			"title": "Deployment (Vercel serverless, container target planned)",
+			"title": "Deployment",
 			"category": "architecture",
 			"summary": "Covers the deployment setup — Vercel Node.js serverless is the one wired target (adapter-vercel hardcoded); a Bun container target (Koyeb) is a planned portability goal the job system and env parity already accommodate.",
 			"when_to_use": "Reach for it when configuring or switching the deployment adapter/target for the app.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["deployment configuration", "adapter selection"],
-			"keywords": ["vercel", "koyeb", "deployment", "adapter"],
+			"keywords": ["vercel", "koyeb", "deployment", "adapter", "vercel serverless"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -595,15 +627,29 @@
 		{
 			"id": "architecture-testing-infra",
 			"tier": "light",
-			"title": "Testing infrastructure (Vitest, PGlite isolation)",
+			"title": "Testing infrastructure",
 			"category": "architecture",
 			"summary": "Two vitest lanes over one config: a fast `unit` lane and a `db` lane whose files restore a PGlite datadir snapshot built once per run, plus the source-scanning gate tests that ratchet architectural and naming invariants.",
 			"when_to_use": "Reach for it when writing tests that need database isolation, when deciding whether a guarantee earns a test at all, or when adding a gate that scans the source tree.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "database tests run against PGlite, an in-process Postgres; the test layering itself needs no infrastructure"
+				}
+			],
 			"capabilities": ["test isolation", "in-process database", "source-scanning gates"],
-			"keywords": ["vitest", "pglite", "testing", "database isolation", "gate tests", "test strategy"],
+			"keywords": [
+				"vitest",
+				"pglite",
+				"testing",
+				"database isolation",
+				"gate tests",
+				"test strategy",
+				"pglite isolation"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -641,15 +687,15 @@
 		{
 			"id": "architecture-pattern-mcp",
 			"tier": "light",
-			"title": "Pattern MCP (agent-queryable pattern registry, local stdio)",
+			"title": "Pattern MCP",
 			"category": "architecture",
 			"summary": "A read-only local stdio MCP server that exposes v10r's curated pattern registry (docs, code, tests, invariants) to coding agents so they can emulate patterns instead of grepping.",
 			"when_to_use": "Reach for it when an agent needs to query or emulate an existing v10r pattern from outside the repo, or when adding a new pattern record.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["pattern registry", "agent tooling", "mcp server"],
-			"keywords": ["mcp", "pattern registry", "stdio", "emulation"],
+			"keywords": ["mcp", "pattern registry", "stdio", "emulation", "agent-queryable pattern registry", "local stdio"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -679,13 +725,20 @@
 		{
 			"id": "architecture-hosted-mcp",
 			"tier": "light",
-			"title": "Hosted MCP (four trust surfaces: public · private · admin · admin page)",
+			"title": "Hosted MCP",
 			"category": "architecture",
 			"summary": "Serves the pattern registry and a separate demo-state service over HTTP through distinct trust boundaries — an unauthenticated public endpoint, a bearer-gated private pattern endpoint and a bearer-gated admin endpoint, plus the protected admin page.",
 			"when_to_use": "Reach for it when exposing an MCP tool registry over HTTP with differing authentication and telemetry requirements per surface.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"key-value-store",
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r keeps its demo-state service and tool-call telemetry in Postgres; the trust surfaces authenticate with environment bearer tokens"
+				}
+			],
 			"capabilities": ["hosted mcp", "bearer auth", "trust boundaries"],
 			"keywords": ["mcp", "hosted", "bearer token", "trust surface"],
 			"depends_on": [],
@@ -726,7 +779,7 @@
 		{
 			"id": "architecture-mcp-evolution",
 			"tier": "deep",
-			"title": "MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)",
+			"title": "MCP protocol evolution",
 			"category": "architecture",
 			"summary": "One endpoint serves both MCP generations — the 2025 initialize handshake and the stateless 2026-07-28 per-request _meta protocol — through the official TypeScript SDK v2, composed over the existing tool registries by one bridge module, with the official conformance suite and SDK clients as the regression authority and a benchmark that prices alternatives before anything is adopted.",
 			"when_to_use": "Reach for this when an MCP server must move to a new protocol revision without breaking the clients still on the old one, or when deciding whether a new MCP capability (Code Mode, tool discovery, an extension) is worth adopting.",
@@ -745,7 +798,7 @@
 					"prefer_when": "the old clients can be pointed at a different URL and the two eras never need one registration"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"mcp protocol versioning",
 				"dual-era mcp",
@@ -764,7 +817,11 @@
 				"conformance",
 				"code mode",
 				"tool discovery",
-				"backward compatibility"
+				"backward compatibility",
+				"official sdk",
+				"dual-era serving",
+				"conformance lane",
+				"evidence-gated adoption"
 			],
 			"depends_on": ["multi-client-core"],
 			"docs": [
@@ -852,7 +909,7 @@
 		{
 			"id": "architecture-mcp-authorization",
 			"tier": "deep",
-			"title": "Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)",
+			"title": "Authenticated MCP services",
 			"category": "architecture",
 			"summary": "A specialized MCP service that needs a user account becomes an OAuth protected resource with its own audience and scope, and the app becomes its own OAuth 2.1 authorization server on the Better Auth it already runs — PKCE, RFC 9728/8414 discovery, resource-bound JWT access tokens with a per-request liveness check, Client ID Metadata Documents first and bounded Dynamic Client Registration, an authorization page that labels untrusted client metadata, and a connected-applications page whose revoke takes effect on the next request.",
 			"when_to_use": "Use when an MCP host (Claude, ChatGPT, an IDE agent) should call one of your MCP endpoints on behalf of a signed-in user of your app, with per-user quotas, consent the user can review and revoke, and no static shared secret.",
@@ -875,7 +932,14 @@
 					"prefer_when": "the service reads and writes nothing per user and abuse is not observed"
 				}
 			],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "email-delivery",
+					"level": "implementation",
+					"why": "sign-in emails come from the account authentication it builds on, not from the authorization server"
+				}
+			],
 			"capabilities": [
 				"mcp authorization",
 				"oauth authorization server",
@@ -900,7 +964,8 @@
 				"oauth-provider",
 				"bearer challenge",
 				"www-authenticate",
-				"revocation"
+				"revocation",
+				"oauth 2.1 protected resources on better auth"
 			],
 			"depends_on": ["architecture-hosted-mcp", "identity-passwordless-auth", "anti-abuse-rate-limiting"],
 			"docs": [
@@ -980,7 +1045,7 @@
 			"id": "architecture-agentic-architecture",
 			"tier": "deep",
 			"category": "architecture",
-			"title": "Agentic architecture (one application architecture, optional interoperability doors)",
+			"title": "Agentic architecture",
 			"summary": "How an application becomes AI-accessible, AI-interactive and AI-adaptive without a second architecture per standard: the tool catalogue, orchestrator, approval gate, untrusted-content boundary and turn trace stay authoritative, and MCP, A2A, AG-UI, A2UI, WebMCP, Agent Skills and OpenTelemetry are adapters that translate into them and never decide. A living matrix grades every technology (upstream, SDK and implementation maturity kept apart) with an adoption decision and a reassessment trigger.",
 			"when_to_use": "Use when deciding which agentic standards an application should speak, and how, without accumulating runtimes: before adopting a protocol, framework or generative-UI format.",
 			"avoid_when": [
@@ -997,7 +1062,7 @@
 					"prefer_when": "a one-off prototype that will not grow a second standard"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"agentic architecture",
 				"interoperability adapters",
@@ -1016,7 +1081,9 @@
 				"acp",
 				"mcp apps",
 				"durable execution",
-				"interoperability"
+				"interoperability",
+				"one application architecture",
+				"optional interoperability doors"
 			],
 			"depends_on": ["ai-agent-actions", "ai-untrusted-content-boundary", "architecture-mcp-evolution"],
 			"docs": [
@@ -1078,15 +1145,30 @@
 		{
 			"id": "architecture-wasm-kernel",
 			"tier": "light",
-			"title": "Rust→wasm compute kernel (vendored, plugin-free)",
+			"title": "WebAssembly compute kernel",
 			"category": "architecture",
 			"summary": "Rust crate compiled to wasm in an ephemeral container, artifacts vendored into src/lib/wasm/kernel/, loaded via ?url + explicit init with zero Vite plugins, benchmarked honestly against a line-for-line JS twin with a vitest parity gate.",
 			"when_to_use": "Reach for it when a browser workload is compute-dense over typed data (convolution, physics, hashing) and the data can stay resident in wasm linear memory — and to see why string-heavy or per-call-copy workloads should stay in JS.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"wasm-toolchain",
+				{
+					"need": "container-host",
+					"level": "conditional",
+					"when": "the same kernel also runs as a separately deployed evaluation service"
+				}
+			],
 			"capabilities": ["wasm compute offload", "honest benchmarking"],
-			"keywords": ["webassembly", "rust", "wasm-bindgen", "vendored artifact", "boundary cost"],
+			"keywords": [
+				"webassembly",
+				"rust",
+				"wasm-bindgen",
+				"vendored artifact",
+				"boundary cost",
+				"vendored",
+				"plugin-free"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -1144,7 +1226,7 @@
 		{
 			"id": "architecture-external-service",
 			"tier": "deep",
-			"title": "External service runtime (a separately deployed backend behind a typed client)",
+			"title": "External service runtime",
 			"category": "architecture",
 			"summary": "A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one server-only service client: a code-generated OpenAPI contract with generated TS types and drift-checked runtime mirrors, service-enforced bearer auth, request deadlines, one failure kind per cause, request ids and a Server-Timing split. Hardened by measurement: non-blocking stdout logging, SERVICE_TOKEN_PREVIOUS rotation, a 16 KiB head cap, a contract release record with skew diagnosis, cargo-deny, and a 0.1 CPU benchmark profile. Verified locally (container, real client, showcase, controlled lab) and in production on Render Free Frankfurt (end to end, failure paths measured); hosted cold-start and warm percentiles are still unmeasured.",
 			"when_to_use": "Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.",
@@ -1167,7 +1249,7 @@
 					"prefer_when": "the caller credential must not be a shared static secret, or requests must resist replay"
 				}
 			],
-			"requires": ["container-host"],
+			"needs": ["container-host"],
 			"capabilities": [
 				"external service",
 				"separately deployed backend",
@@ -1197,7 +1279,8 @@
 				"expand contract",
 				"log backpressure",
 				"cargo-deny",
-				"cgroup cpu quota"
+				"cgroup cpu quota",
+				"separately deployed backend behind a typed client"
 			],
 			"depends_on": ["multi-client-core", "deadline-propagation", "resilience-policy", "latency-tracing"],
 			"docs": [
@@ -1398,7 +1481,7 @@
 		{
 			"id": "architecture-engineering",
 			"tier": "deep",
-			"title": "Architecture Engineering (explained decision records, a typed architecture model and static checks)",
+			"title": "Architecture Engineering",
 			"category": "architecture",
 			"summary": "A deterministic decision discipline for where code runs, how parts talk, where data lives and how it ships. Versioned decision records (problem, alternatives, ordered rules, evidence with its kind, migrations) drive an engine that answers a workload profile with the chosen approach, the rule that chose it, why each alternative lost and which unknown factor could change it; no scoring formula and no LLM. A separate architecture model (components, zones, connections; layout stored apart) is parsed fail-closed, edited through pure operations, statically checked (security findings kept apart, fixed severity per code) and compared qualitatively. The Studio at /studio/architecture and the explore_architecture/check_architecture MCP tools run the same engine.",
 			"when_to_use": "Use when architecture choices (browser vs server compute, JS vs Rust/Wasm, monolith vs service, SQL vs application processing) need to be explained, reviewable and reproducible rather than asserted, and when a team or an agent should get the same answer from the same inputs.",
@@ -1421,7 +1504,7 @@
 					"prefer_when": "the need is communicating an architecture, not checking it or deriving it from a workload"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"architecture decision records",
 				"architecture recommendation",
@@ -1446,7 +1529,9 @@
 				"trust boundary",
 				"explainable recommendation",
 				"deterministic rules",
-				"studio"
+				"studio",
+				"explained decision records",
+				"typed architecture model and static checks"
 			],
 			"depends_on": [
 				"multi-client-core",
@@ -1572,15 +1657,15 @@
 		{
 			"id": "app-shell-layout",
 			"tier": "light",
-			"title": "Shell layout (no global header, sidebar-first)",
+			"title": "Shell layout",
 			"category": "app-shell",
 			"summary": "Defines the app shell's structural layout — a collapsible sidebar for primary navigation, a main content area, and a persistent footer, with no global header.",
 			"when_to_use": "Reach for it when building or modifying the top-level app shell wrapper or its breakpoint/z-index behavior.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["shell layout", "sidebar-first navigation"],
-			"keywords": ["app shell", "layout", "breakpoints", "z-index"],
+			"keywords": ["app shell", "layout", "breakpoints", "z-index", "no global header", "sidebar-first"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -1609,15 +1694,21 @@
 		{
 			"id": "app-shell-sidebar",
 			"tier": "light",
-			"title": "Responsive sidebar (rail / drawer / FAB)",
+			"title": "Responsive sidebar",
 			"category": "app-shell",
 			"summary": "Implements an asymmetric responsive sidebar — a persistent hover-expanding rail on desktop and an off-canvas thumb-accessible drawer on mobile, triggered by a FAB.",
 			"when_to_use": "Reach for it when adapting primary navigation to different viewport sizes or adjusting sidebar width/expand behavior.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "service-worker",
+					"level": "implementation",
+					"why": "the shell's update prompt (in the same component directory) talks to the service worker; the sidebar does not"
+				}
+			],
 			"capabilities": ["responsive sidebar", "rail navigation", "mobile drawer"],
-			"keywords": ["sidebar", "rail", "drawer", "fab", "responsive"],
+			"keywords": ["sidebar", "rail", "drawer", "fab", "responsive", "rail / drawer / fab"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -1656,7 +1747,7 @@
 			"when_to_use": "Reach for it when adding a new top-level navigation item or deciding how its children should be disclosed.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["progressive disclosure", "nav hierarchy"],
 			"keywords": ["navigation", "progressive disclosure", "dropdown", "nav item"],
 			"depends_on": [],
@@ -1694,7 +1785,7 @@
 			"when_to_use": "Reach for it when adding a new keyboard shortcut or needing conflict-free discoverability across the app shell.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["keyboard shortcuts", "shortcut discoverability"],
 			"keywords": ["keyboard shortcuts", "hotkeys", "command palette", "help modal"],
 			"depends_on": [],
@@ -1735,7 +1826,7 @@
 			"when_to_use": "Reach for it when opening a new modal that must coexist with, or stack above, other overlays.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["modal stack", "overlay management"],
 			"keywords": ["modals", "dialog", "layer stack", "overlay"],
 			"depends_on": [],
@@ -1770,15 +1861,15 @@
 		{
 			"id": "app-shell-toasts",
 			"tier": "light",
-			"title": "Toasts (stacking, undo)",
+			"title": "Toasts",
 			"category": "app-shell",
 			"summary": "Ephemeral, stacking feedback messages (success/error/warning/info) shown in response to user-initiated actions, distinct from the persistent notification center.",
 			"when_to_use": "Reach for it when giving immediate feedback for a user action such as a save, delete, or copy, optionally with an undo affordance.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["toast notifications", "stacking feedback"],
-			"keywords": ["toast", "undo", "feedback", "notifications"],
+			"keywords": ["toast", "undo", "feedback", "notifications", "stacking"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -1811,13 +1902,13 @@
 		{
 			"id": "app-shell-session-lifecycle",
 			"tier": "light",
-			"title": "Session lifecycle UI (expiry, re-auth)",
+			"title": "Session lifecycle UI",
 			"category": "app-shell",
 			"summary": "Shell-level UI that reacts to authentication session state — showing an expiry warning, a re-authentication modal on expiry, and immediate redirect on revocation.",
 			"when_to_use": "Reach for it when handling session expiry warnings or re-authentication prompts inside the app shell.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["session expiry ui", "re-authentication"],
 			"keywords": ["session", "expiry", "re-auth", "revocation"],
 			"depends_on": [],
@@ -1852,15 +1943,15 @@
 		{
 			"id": "app-shell-settings",
 			"tier": "light",
-			"title": "Settings (theme cookie, language, a11y)",
+			"title": "Settings page",
 			"category": "app-shell",
 			"summary": "A settings hub page covering appearance (theme cookie), language, privacy toggles, and accessibility preferences, backed by a load/save form action.",
 			"when_to_use": "Reach for it when adding a new user-configurable preference or feature toggle to the account settings hub.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["user preferences", "theme cookie", "accessibility settings"],
-			"keywords": ["settings", "preferences", "theme", "accessibility"],
+			"keywords": ["settings", "preferences", "theme", "accessibility", "language"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -1889,15 +1980,21 @@
 		{
 			"id": "app-shell-style-randomizer",
 			"tier": "light",
-			"title": "Style randomizer (theme × typography × palette)",
+			"title": "Style randomizer",
 			"category": "app-shell",
 			"summary": "Randomizes decorative styling (typography pairing and color palette) on each visit from pre-validated, WCAG-compliant sets, kept orthogonal to the user's dark/light theme choice.",
 			"when_to_use": "Reach for it when building playground or showcase surfaces that benefit from memorable visual variation without harming accessibility.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r persists palettes and the chosen style in Postgres; a cookie or local storage serves the pattern equally"
+				}
+			],
 			"capabilities": ["style randomization", "palette selection"],
-			"keywords": ["style randomizer", "typography", "palette", "accessibility"],
+			"keywords": ["style randomizer", "typography", "palette", "accessibility", "theme × typography × palette"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -1931,15 +2028,15 @@
 		{
 			"id": "app-shell-loading-states",
 			"tier": "light",
-			"title": "Loading states (skeletons, nav progress)",
+			"title": "Loading states",
 			"category": "app-shell",
 			"summary": "Defines visual feedback for initial load, navigation, data fetch, action, and streaming states using skeleton screens and a navigation progress bar.",
 			"when_to_use": "Reach for it when a page or component needs perceived-performance feedback while data or a route is loading.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["loading skeletons", "navigation progress"],
-			"keywords": ["loading states", "skeleton", "progress bar", "perceived performance"],
+			"keywords": ["loading states", "skeleton", "progress bar", "perceived performance", "skeletons", "nav progress"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -1979,7 +2076,7 @@
 			"when_to_use": "Reach for it when a list, search, or page has no data to render and needs a first-run or zero-result affordance instead of a blank screen.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["empty state ui"],
 			"keywords": ["empty states", "first-run", "zero results", "placeholder"],
 			"depends_on": [],
@@ -2012,13 +2109,13 @@
 		{
 			"id": "app-shell-page-header",
 			"tier": "light",
-			"title": "Page header (per-page, XSS-safe)",
+			"title": "Page header",
 			"category": "app-shell",
 			"summary": "A per-page header component (breadcrumbs, title, actions) rendered inside the main content area instead of a global header, keeping page-specific chrome scoped and safe against XSS.",
 			"when_to_use": "Reach for it when a page needs a title, breadcrumbs, or action buttons without adding a site-wide header.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["page header", "breadcrumbs"],
 			"keywords": ["page header", "breadcrumbs", "xss-safe", "per-page"],
 			"depends_on": [],
@@ -2051,15 +2148,21 @@
 		{
 			"id": "app-shell-quick-search",
 			"tier": "light",
-			"title": "Quick Search / command palette (two-lane FTS)",
+			"title": "Quick search command palette",
 			"category": "app-shell",
 			"summary": "A universal search combining an instant client-side lane with a debounced server-side full-text-search lane, surfaced via a Cmd+K command palette and a dedicated /search page.",
 			"when_to_use": "Reach for it when adding a new searchable surface (page, doc, showcase) or extending the command palette's result grouping.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r's server lane answers from Postgres full-text search; the palette and keyboard model need none"
+				}
+			],
 			"capabilities": ["command palette", "full-text search", "two-lane search"],
-			"keywords": ["quick search", "command palette", "fts", "cmd+k"],
+			"keywords": ["quick search", "command palette", "fts", "cmd+k", "two-lane fts"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -2098,7 +2201,7 @@
 		{
 			"id": "ui-component-system",
 			"tier": "deep",
-			"title": "Component-first UI system (primitives/composites/layout, CVA, tokens)",
+			"title": "Component-first UI system",
 			"category": "ui",
 			"summary": "A layered component system — Bits UI → primitives (styled atoms) → composites (business logic) → layout (structural wrappers) — styled entirely through CVA → UnoCSS → design-token CSS variables.",
 			"when_to_use": "Emulate when a project needs consistent UI at any scale: the layer split keeps styling decisions in one place and bans ad-hoc HTML.",
@@ -2116,9 +2219,19 @@
 					"prefer_when": "a larger ecosystem and documentation matter more than build speed and the app needs no runtime theming or rebuild-free dark mode"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["ui components", "design system", "design tokens", "component library", "styling architecture"],
-			"keywords": ["primitives", "composites", "layout", "cva", "unocss", "bits ui", "tokens", "component-first"],
+			"keywords": [
+				"primitives",
+				"composites",
+				"layout",
+				"cva",
+				"unocss",
+				"bits ui",
+				"tokens",
+				"component-first",
+				"primitives/composites/layout"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -2206,7 +2319,7 @@
 			"when_to_use": "Read before making a visual design decision or introducing a new design token, to keep it aligned with the system's principles and token layering.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["design principles", "token layering"],
 			"keywords": ["design system", "philosophy", "theming", "tokens"],
 			"depends_on": [],
@@ -2263,7 +2376,7 @@
 					"prefer_when": "one or two actions dominate the context and the rest form a short secondary list with no directions to name"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"choice-load review",
 				"semantic action grouping",
@@ -2390,7 +2503,7 @@
 					"prefer_when": "the actions are many or rarely used and need no visual presence at all"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"neutral-at-rest actions",
 				"hover, focus and touch engagement",
@@ -2469,15 +2582,15 @@
 		{
 			"id": "ui-design-tokens",
 			"tier": "light",
-			"title": "Design tokens (breakpoints, fluid type/space, z-index)",
+			"title": "Design tokens",
 			"category": "ui",
 			"summary": "Centralizes breakpoints, fluid typography/spacing clamp() scales, and z-index values in a single tokens.ts file consumed by the UnoCSS theme so no component hardcodes design values.",
 			"when_to_use": "Reach for this when adding or changing a spacing, breakpoint, typography, or stacking-order value that should be shared across the app.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["design tokens", "fluid scale"],
-			"keywords": ["breakpoints", "fluid typography", "spacing", "z-index", "unocss"],
+			"keywords": ["breakpoints", "fluid typography", "spacing", "z-index", "unocss", "fluid type/space"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -2512,13 +2625,13 @@
 		{
 			"id": "ui-tonal-elevation",
 			"tier": "light",
-			"title": "Tonal (surface) elevation engine",
+			"title": "Tonal elevation engine",
 			"category": "ui",
 			"summary": "A pure, SSR-safe TypeScript engine that computes each surface's relative depth (parent level + 1) via Svelte context and stamps it as a data-elevation attribute, decoupled from z-index.",
 			"when_to_use": "Use when a new stacked surface (menu, dialog, panel) needs a consistent tonal depth cue that survives Bits UI portals.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["surface depth", "elevation context"],
 			"keywords": ["elevation", "surfaces", "portals", "context"],
 			"depends_on": [],
@@ -2553,13 +2666,13 @@
 		{
 			"id": "ui-primitives",
 			"tier": "light",
-			"title": "Primitives (~40 Bits UI wrappers)",
+			"title": "UI primitives",
 			"category": "ui",
 			"summary": "Roughly 40 styled atomic components (Button, Input, Badge, Select, Table, etc.) that wrap Bits UI headless primitives with CVA variants and design tokens.",
 			"when_to_use": "Use as the base building block for a new UI element instead of styling a Bits UI primitive directly.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["styled primitives", "cva variants"],
 			"keywords": ["bits ui", "primitives", "cva", "components"],
 			"depends_on": [],
@@ -2600,7 +2713,7 @@
 			"when_to_use": "Use when a UI need spans more than one primitive and carries app-specific behavior or layout.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["composite components", "component composition"],
 			"keywords": ["composites", "molecules", "components"],
 			"depends_on": [],
@@ -2632,13 +2745,13 @@
 		{
 			"id": "ui-layout-primitives",
 			"tier": "light",
-			"title": "Layout primitives (Stack, Cluster, Surface)",
+			"title": "Layout primitives",
 			"category": "ui",
 			"summary": "Structural wrapper components (Stack, Cluster, Surface, PageContainer) that provide consistent spacing and layout without one-off CSS.",
 			"when_to_use": "Use to arrange child elements with consistent gaps and structure instead of writing bespoke flex/grid CSS on every page.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["layout wrappers", "spacing"],
 			"keywords": ["stack", "cluster", "surface", "layout"],
 			"depends_on": [],
@@ -2670,13 +2783,13 @@
 		{
 			"id": "ui-fluid-styling",
 			"tier": "light",
-			"title": "Fluid responsive styling (UnoCSS, container queries)",
+			"title": "Fluid responsive styling",
 			"category": "ui",
 			"summary": "A UnoCSS-driven mobile-first strategy combining clamp()-based fluid typography/spacing, media-query breakpoints for page layout, and container queries for self-contained component responsiveness.",
 			"when_to_use": "Apply when a component or page needs to scale smoothly across viewport sizes or respond to its own container rather than the viewport.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["fluid typography", "container queries"],
 			"keywords": ["unocss", "responsive", "container queries", "mobile-first"],
 			"depends_on": [],
@@ -2717,7 +2830,7 @@
 			"when_to_use": "Use when displaying structured, row-based data anywhere in the UI.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["data tables"],
 			"keywords": ["table", "primitives", "data display"],
 			"depends_on": [],
@@ -2749,15 +2862,15 @@
 		{
 			"id": "ui-menus",
 			"tier": "light",
-			"title": "Menus (dropdown, context, menu bar)",
+			"title": "Menus",
 			"category": "ui",
 			"summary": "Dropdown menu, context menu, and menu bar composites built on Bits UI for triggerable and right-click action lists.",
 			"when_to_use": "Use when exposing a list of actions from a trigger button, right-click, or an app-level menu bar.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["dropdown menus", "context menus"],
-			"keywords": ["menus", "dropdown", "context menu", "menu bar"],
+			"keywords": ["menus", "dropdown", "context menu", "menu bar", "context"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -2795,13 +2908,13 @@
 		{
 			"id": "ui-split-panes",
 			"tier": "light",
-			"title": "Split panes (resizable · reorderable)",
+			"title": "Split panes",
 			"category": "ui",
 			"summary": "Resizable and reorderable split-pane primitives and composites for dividing screen space into adjustable regions.",
 			"when_to_use": "Use when a layout needs user-resizable or drag-reorderable panes, such as a multi-pane workspace.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["resizable panes", "reorderable panes"],
 			"keywords": ["split panes", "resizable", "reorderable", "layout"],
 			"depends_on": [],
@@ -2843,7 +2956,7 @@
 			"when_to_use": "Use for any heading, body, or code text that should follow the app's typographic scale instead of raw HTML tags.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["typography scale"],
 			"keywords": ["typography", "type scale", "fonts", "text"],
 			"depends_on": [],
@@ -2875,13 +2988,13 @@
 		{
 			"id": "ui-decorative",
 			"tier": "light",
-			"title": "Decorative (ornaments · backgrounds)",
+			"title": "Decorative ornaments and backgrounds",
 			"category": "ui",
 			"summary": "Decorative primitive components (ornaments, backgrounds) used by the style-randomization system to vary visual flourish without affecting core UI predictability.",
 			"when_to_use": "Use when adding non-functional visual flourish (ornaments, decorative backgrounds) that should stay orthogonal to theme and layout choices.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["decorative elements"],
 			"keywords": ["decorative", "ornaments", "backgrounds", "style randomization"],
 			"depends_on": [],
@@ -2919,7 +3032,7 @@
 			"when_to_use": "Use as the default for any non-auth form (CRUD, settings, contact) needing server-validated, progressively-enhanced submission.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["form validation", "progressive enhancement"],
 			"keywords": ["superforms", "valibot", "forms", "validation"],
 			"depends_on": [],
@@ -2958,15 +3071,15 @@
 		{
 			"id": "forms-basic-forms",
 			"tier": "light",
-			"title": "Basic forms (contact · settings)",
+			"title": "Basic forms",
 			"category": "forms",
 			"summary": "Reference contact and settings forms demonstrating the standard Superforms + Valibot schema and server-action wiring for a single-step form.",
 			"when_to_use": "Reference when building a straightforward single-step form such as a contact or settings page.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["basic form patterns"],
-			"keywords": ["contact form", "settings form", "superforms", "valibot"],
+			"keywords": ["contact form", "settings form", "superforms", "valibot", "contact", "settings"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3000,15 +3113,15 @@
 		{
 			"id": "forms-validation-timing",
 			"tier": "light",
-			"title": "Validation timing (realtime · async · server)",
+			"title": "Validation timing",
 			"category": "forms",
 			"summary": "Demonstrates the three Superforms validation timing strategies: realtime (oninput), debounced async server checks, and onblur/server-only validation.",
 			"when_to_use": "Use when deciding how aggressively a field should validate, e.g. instant feedback vs. debounced async server checks vs. submit-time only.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["validation timing", "async validation"],
-			"keywords": ["validation", "realtime", "debounce", "async"],
+			"keywords": ["validation", "realtime", "debounce", "async", "server"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3049,15 +3162,15 @@
 		{
 			"id": "forms-multi-step-dynamic",
 			"tier": "light",
-			"title": "Multi-step & dynamic (wizard · dynamic · dependent)",
+			"title": "Multi-step and dynamic forms",
 			"category": "forms",
 			"summary": "Wizard (per-step schema validation), dynamic array fields, and dependent/cascading field patterns built on top of Superforms.",
 			"when_to_use": "Use when a form spans multiple steps, has user-added repeating fields, or has fields whose options depend on another field's value.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["multi-step wizard", "dependent fields"],
-			"keywords": ["wizard", "dynamic fields", "dependent fields", "cascade"],
+			"keywords": ["wizard", "dynamic fields", "dependent fields", "cascade", "dynamic", "dependent"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3095,15 +3208,15 @@
 		{
 			"id": "forms-advanced-patterns",
 			"tier": "light",
-			"title": "Advanced (confirm · reset · edit)",
+			"title": "Advanced form tactics",
 			"category": "forms",
 			"summary": "Confirmation-modal submit, reset-after-submit, and edit-with-existing-data patterns layered on top of the base Superforms flow.",
 			"when_to_use": "Use when a form needs to confirm before submitting, clear itself after a successful submit, or pre-populate from existing data.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["confirm submit", "reset after submit", "edit forms"],
-			"keywords": ["confirmation modal", "reset form", "edit form"],
+			"keywords": ["confirmation modal", "reset form", "edit form", "confirm", "reset", "edit"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3141,15 +3254,15 @@
 		{
 			"id": "forms-auth-forms",
 			"tier": "light",
-			"title": "Auth forms (Better Auth client, not Superforms)",
+			"title": "Auth forms",
 			"category": "forms",
 			"summary": "Passwordless login (magic link + OTP) and OAuth forms built directly on the Better Auth client instead of Superforms, since Better Auth already handles rate limiting and token validation.",
 			"when_to_use": "Use for any authentication entry point (email login, OTP verification, OAuth) instead of wiring the flow through Superforms.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["passwordless login", "oauth forms"],
-			"keywords": ["better auth", "magic link", "otp", "oauth"],
+			"keywords": ["better auth", "magic link", "otp", "oauth", "better auth client", "not superforms"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3178,15 +3291,22 @@
 		{
 			"id": "forms-file-uploads",
 			"tier": "light",
-			"title": "File uploads (withFiles + Sharp + R2)",
+			"title": "File uploads",
 			"category": "forms",
 			"summary": "Server-side file upload handling that processes images with Sharp and persists them to Cloudflare R2, validating file metadata via Valibot rather than the file bytes themselves in-schema.",
 			"when_to_use": "Use when a form needs to accept file uploads (e.g. images) that are processed and stored server-side.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"object-storage",
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r records upload metadata (avatars, blog assets) in Postgres"
+				}
+			],
 			"capabilities": ["file uploads", "image processing"],
-			"keywords": ["file upload", "sharp", "r2", "object storage"],
+			"keywords": ["file upload", "sharp", "r2", "object storage", "withfiles"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3220,15 +3340,15 @@
 		{
 			"id": "i18n-locale-routing",
 			"tier": "light",
-			"title": "Locale routing (optional catch-all, matcher, 308 canonical)",
+			"title": "Locale routing",
 			"category": "i18n",
 			"summary": "URL-based locale routing using an optional [[locale=locale]] catch-all segment and a param matcher, with the unprefixed default locale (en) 308-redirected from /en/* to keep canonical URLs.",
 			"when_to_use": "Use when adding or reasoning about localized routes so URLs stay canonical and SEO-safe across locales.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["locale routing", "canonical redirects"],
-			"keywords": ["locale", "routing", "param matcher", "paraglide"],
+			"keywords": ["locale", "routing", "param matcher", "paraglide", "optional catch-all", "matcher", "308 canonical"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3261,15 +3381,15 @@
 		{
 			"id": "i18n-messages",
 			"tier": "light",
-			"title": "Messages (Paraglide JS, ICU, compile-time)",
+			"title": "Translated messages",
 			"category": "i18n",
 			"summary": "Compile-time translated messages via Paraglide JS v2 using ICU MessageFormat, authored as per-language JSON files that compile to typed functions.",
 			"when_to_use": "Use when adding or editing any user-facing translatable string.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["compiled messages", "icu messageformat"],
-			"keywords": ["paraglide", "i18n messages", "icu", "translations"],
+			"keywords": ["paraglide", "i18n messages", "icu", "translations", "paraglide js", "compile-time"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3309,7 +3429,7 @@
 			"when_to_use": "Use whenever displaying a date, number, currency, or relative-time value that should format per the visitor's locale.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["locale formatting", "cldr plurals"],
 			"keywords": ["intl", "date formatting", "number formatting", "cldr"],
 			"depends_on": [],
@@ -3346,13 +3466,13 @@
 		{
 			"id": "i18n-db-content",
 			"tier": "light",
-			"title": "DB content i18n (JSONB sidecar + `tc()`)",
+			"title": "Translated database content",
 			"category": "i18n",
 			"summary": "A source-column plus JSONB-sidecar convention (e.g. name / name_i18n) for translating short database fields, resolved at read time by the tc() helper with an explicit locale argument.",
 			"when_to_use": "Use when a database field (title, name, summary) needs per-locale translations stored alongside the English canonical value.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["db content translation", "jsonb sidecar"],
 			"keywords": ["database i18n", "jsonb", "tc()", "translation map"],
 			"depends_on": [],
@@ -3376,7 +3496,7 @@
 		{
 			"id": "docs-nav-hubs",
 			"tier": "deep",
-			"title": "Docs navigation hubs (README-per-directory convention)",
+			"title": "Docs navigation hubs",
 			"category": "docs-ax",
 			"summary": "An AI-optimized docs tree where every directory's README.md is a navigation hub with topic tables, so agents read index → target file, never everything.",
 			"when_to_use": "Adopt in any repo meant to be read by AI agents: it turns documentation from a pile of files into an addressable index.",
@@ -3394,9 +3514,17 @@
 					"prefer_when": "doc metadata already lives in a machine-readable manifest, so a hand-written topic table would be a second copy"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["docs navigation", "ai-readable docs", "documentation structure", "docs index"],
-			"keywords": ["readme", "hub", "topic table", "navigation", "findability", "docs convention"],
+			"keywords": [
+				"readme",
+				"hub",
+				"topic table",
+				"navigation",
+				"findability",
+				"docs convention",
+				"readme-per-directory convention"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3440,9 +3568,9 @@
 		{
 			"id": "pattern-index",
 			"tier": "deep",
-			"title": "Pattern Index (the generated README capability map)",
+			"title": "Pattern Index",
 			"category": "docs-ax",
-			"summary": "A generated table in README.md mapping every repo pattern to the doc that explains it, the code that implements it, and the showcase page that proves it — rendered from this registry (136 rows, 20 categories, two tiers).",
+			"summary": "A generated table in README.md mapping every repo pattern to the doc that explains it, the code that implements it, and the showcase page that proves it — rendered from this registry, one row per record, grouped by category.",
 			"when_to_use": "Use as the top-level discovery surface for what a reference repo can do; it is the human-readable projection of this registry, regenerated by patterns:build.",
 			"avoid_when": [
 				"No machine-readable registry to generate it from — a hand-maintained index drifts, as this one's row count did",
@@ -3459,9 +3587,18 @@
 					"prefer_when": "the index is read in the running app rather than in the repo README"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["pattern index", "capability map", "pattern discovery"],
-			"keywords": ["readme", "index", "catalog", "map", "showcase", "proof", "generated"],
+			"keywords": [
+				"readme",
+				"index",
+				"catalog",
+				"map",
+				"showcase",
+				"proof",
+				"generated",
+				"generated readme capability map"
+			],
 			"depends_on": ["docs-nav-hubs"],
 			"docs": [
 				{
@@ -3512,7 +3649,7 @@
 		{
 			"id": "agent-experience",
 			"tier": "deep",
-			"title": "Agent Experience (AX) surfaces",
+			"title": "Agent experience surfaces",
 			"category": "docs-ax",
 			"summary": "Five derived surfaces make the repo consumable by coding agents: a root AGENTS.md contract, raw-markdown doc variants with Accept negotiation, an /llms.txt URL map with in-band prior corrections, MCP tool errors that carry machine-actionable recovery steps, and a generated pattern library (README index + per-pattern docs pages) rendered from the pattern registry.",
 			"when_to_use": "Adopt when a repo's primary consumers are AI agents: it turns passive docs into addressable, self-correcting surfaces without any hand-maintained duplicate content.",
@@ -3531,7 +3668,7 @@
 					"prefer_when": "a framework with millions of consumers can afford to maintain a second, full-text corpus"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"agent experience",
 				"llms.txt",
@@ -3630,13 +3767,13 @@
 		{
 			"id": "resource-anchor-integrity",
 			"tier": "light",
-			"title": "Resource anchor integrity (fragments and routing paths resolve)",
+			"title": "Resource anchor integrity",
 			"category": "docs-ax",
 			"summary": "Every #fragment a registry doc ref names must be a heading the page renders, checked through the renderer's own slugger, and every path an agent instruction file routes to must exist — a narrow, build-time slice of W3C-style resource anchoring.",
 			"when_to_use": "Use when docs, registries or agent context files deep-link into headings or route agents to repo paths that refactors can move.",
 			"avoid_when": ["Links are generated from the same source as their targets — they cannot drift"],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["anchor validation", "link integrity", "stale reference detection", "hidden character scan"],
 			"keywords": [
 				"anchor",
@@ -3649,7 +3786,8 @@
 				"claude.md",
 				"rehype-slug",
 				"web annotation",
-				"selector"
+				"selector",
+				"fragments and routing paths resolve"
 			],
 			"depends_on": [],
 			"docs": [
@@ -3700,7 +3838,7 @@
 					"prefer_when": "the official SDK serves it and your consumers prefer protocol over files"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"agent skills",
 				"portable agent knowledge",
@@ -3760,15 +3898,22 @@
 		{
 			"id": "databases-postgres-connection",
 			"tier": "light",
-			"title": "Postgres client & connection (Neon serverless)",
+			"title": "Postgres client and connection",
 			"category": "databases",
 			"summary": "Sets up the Drizzle client for PostgreSQL using the Neon serverless driver as the app's single database connection entrypoint.",
 			"when_to_use": "Reach for it whenever server-side code needs a database handle to run Drizzle queries.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "required",
+					"pinned": "postgres",
+					"why": "the pattern is the Postgres connection setup itself (serverless driver, pooling, per-request client)"
+				}
+			],
 			"capabilities": ["db connection", "serverless driver"],
-			"keywords": ["postgres", "neon", "drizzle", "serverless"],
+			"keywords": ["postgres", "neon", "drizzle", "serverless", "neon serverless"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3800,13 +3945,20 @@
 		{
 			"id": "databases-schema-type-inference",
 			"tier": "light",
-			"title": "Schema & type inference (Drizzle, 14 namespaces)",
+			"title": "Schema and type inference",
 			"category": "databases",
-			"summary": "Drizzle table definitions split across 14 pgSchema() namespaces and re-exported from a single schema index for compile-time type inference.",
+			"summary": "Drizzle table definitions split across pgSchema() namespaces, one per domain, and re-exported from a single schema index for compile-time type inference.",
 			"when_to_use": "Use when adding or changing database tables and query results need to stay type-safe end to end.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "vector-search",
+					"level": "implementation",
+					"why": "one schema namespace declares pgvector columns; type inference does not depend on them"
+				}
+			],
 			"capabilities": ["schema definition", "type inference"],
 			"keywords": ["drizzle", "schema", "namespaces", "postgres"],
 			"depends_on": [],
@@ -3841,15 +3993,22 @@
 		{
 			"id": "databases-queries-mutations-split",
 			"tier": "light",
-			"title": "Queries/mutations split (reads-writes duality)",
+			"title": "Queries/mutations split",
 			"category": "databases",
 			"summary": "Splits each domain's database access into separate queries.ts (reads) and mutations.ts (writes) modules.",
 			"when_to_use": "Apply when structuring a new domain's database layer so reads and writes stay independently reusable across UI, API, and job clients.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "vector-search",
+					"level": "implementation",
+					"why": "the retrieval query modules use pgvector; the split itself does not"
+				}
+			],
 			"capabilities": ["code organization"],
-			"keywords": ["queries", "mutations", "domain module", "reads-writes"],
+			"keywords": ["queries", "mutations", "domain module", "reads-writes", "reads-writes duality"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -3879,13 +4038,20 @@
 		{
 			"id": "databases-neo4j-connection",
 			"tier": "light",
-			"title": "Neo4j connection (Aura)",
+			"title": "Neo4j connection",
 			"category": "databases",
 			"summary": "Connects to a managed Neo4j Aura database over its HTTP Query API via fetch, with no driver, session, or connection pool.",
 			"when_to_use": "Reach for it when server code needs to execute Cypher queries against the graph store.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "graph-db",
+					"level": "required",
+					"pinned": "neo4j",
+					"why": "the pattern is the Neo4j connection over its HTTP Query API"
+				}
+			],
 			"capabilities": ["db connection", "http query api"],
 			"keywords": ["neo4j", "aura", "graph", "cypher"],
 			"depends_on": [],
@@ -3926,7 +4092,7 @@
 			"when_to_use": "Use when deciding how to structure related entities, such as recommendations or knowledge graphs, that would otherwise need recursive SQL.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["graph-db"],
 			"capabilities": ["graph modeling"],
 			"keywords": ["neo4j", "nodes", "relationships", "graph"],
 			"depends_on": [],
@@ -3964,7 +4130,7 @@
 			"when_to_use": "Use when a feature needs to walk relationships between entities, like related-to queries or navigation paths.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["graph-db"],
 			"capabilities": ["graph traversal"],
 			"keywords": ["neo4j", "cypher", "shortest path", "traversal"],
 			"depends_on": [],
@@ -3996,13 +4162,13 @@
 		{
 			"id": "databases-polyglot-freshness",
 			"tier": "light",
-			"title": "Polyglot freshness (Postgres ↔ Neo4j sync)",
+			"title": "Polyglot freshness",
 			"category": "databases",
 			"summary": "Documents strategies for keeping references between Postgres and Neo4j valid, since no foreign keys exist across the two stores.",
 			"when_to_use": "Apply when a delete or update in one store, such as a Postgres user or item, must propagate to or invalidate related Neo4j nodes.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db", "graph-db"],
 			"capabilities": ["cross-store consistency"],
 			"keywords": ["polyglot persistence", "postgres", "neo4j", "reconciliation"],
 			"depends_on": [],
@@ -4026,15 +4192,22 @@
 		{
 			"id": "databases-object-storage",
 			"tier": "light",
-			"title": "Object storage (Cloudflare R2, presigned transfer)",
+			"title": "Object storage",
 			"category": "databases",
 			"summary": "S3-compatible object storage on Cloudflare R2, accessed via @aws-sdk/client-s3 with presigned URLs for direct client uploads and downloads.",
 			"when_to_use": "Use when the app needs to store or serve user files without routing large payloads through the server.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"object-storage",
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r records stored-object metadata in Postgres"
+				}
+			],
 			"capabilities": ["object storage", "presigned urls"],
-			"keywords": ["r2", "s3", "cloudflare", "presigned url"],
+			"keywords": ["r2", "s3", "cloudflare", "presigned url", "presigned transfer"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4072,15 +4245,22 @@
 		{
 			"id": "databases-cache",
 			"tier": "light",
-			"title": "Cache (Upstash Redis, ephemeral patterns)",
+			"title": "Redis cache client",
 			"category": "databases",
 			"summary": "In-memory key-value store on Upstash Redis, reached over HTTP REST, used for rate limiting, the circuit breaker, and other ephemeral counters.",
 			"when_to_use": "Use when a feature needs fast, short-lived state, such as counters or locks, without Postgres's durability guarantees.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "required",
+					"pinned": "redis",
+					"why": "the pattern is the Redis client and its REST transport"
+				}
+			],
 			"capabilities": ["caching", "ephemeral state"],
-			"keywords": ["redis", "upstash", "rate limiting", "ephemeral"],
+			"keywords": ["redis", "upstash", "rate limiting", "ephemeral", "upstash redis", "ephemeral patterns"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4121,7 +4301,7 @@
 		{
 			"id": "temporal-data-modeling",
 			"tier": "light",
-			"title": "Temporal data modeling (how much time to store)",
+			"title": "Temporal data modeling",
 			"category": "databases",
 			"summary": "A four-rung ladder — last write, transaction time (revision rows), valid time (periods, non-overlap by exclusion constraint), bitemporal — climbed only as far as a question someone actually asks; bitemporal only for auditable retroactive corrections.",
 			"when_to_use": "Use when deciding whether a table needs history, an effective period, or both.",
@@ -4129,7 +4309,14 @@
 				"Nobody asks what was true at a past date — updated_at plus a revision table answers every edit-history question"
 			],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "vector-search",
+					"level": "implementation",
+					"why": "the schema directory it points at also declares pgvector columns"
+				}
+			],
 			"capabilities": ["valid time", "transaction time", "bitemporal", "as-of query", "range non-overlap"],
 			"keywords": [
 				"temporal",
@@ -4141,7 +4328,8 @@
 				"tstzrange",
 				"exclusion constraint",
 				"without overlaps",
-				"effective date"
+				"effective date",
+				"how much time to store"
 			],
 			"depends_on": [],
 			"docs": [
@@ -4182,15 +4370,15 @@
 		{
 			"id": "db-ops-dev-prod-schema-workflow",
 			"tier": "light",
-			"title": "Dev→prod schema workflow (push-only, no migrations dir)",
+			"title": "Dev-to-prod schema workflow",
 			"category": "db-ops",
 			"summary": "Uses drizzle-kit push for schema changes during development and defers versioned generate/migrate SQL files until production holds real data.",
 			"when_to_use": "Follow this while prototyping solo, then switch to generate+migrate before a production database with real user data goes live.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["schema migration workflow"],
-			"keywords": ["drizzle-kit", "push", "migrations", "workflow"],
+			"keywords": ["drizzle-kit", "push", "migrations", "workflow", "push-only", "no migrations dir"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4212,15 +4400,27 @@
 		{
 			"id": "db-ops-branch-refresh",
 			"tier": "light",
-			"title": "Neon branch refresh from prod (control plane, run ledger)",
+			"title": "Neon branch refresh from prod",
 			"category": "db-ops",
 			"summary": "Resets the dev Neon Postgres branch from its production parent through Neon's control-plane API, recording each run in a ledger and surfacing it at an admin-only page.",
 			"when_to_use": "Use when developers need production-like data in the dev branch on demand or on a schedule, without a manual dump and restore.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "required",
+					"pinned": "postgres",
+					"why": "branch refresh copies a Postgres branch"
+				},
+				{
+					"need": "external-api",
+					"level": "conditional",
+					"when": "the database host offers a branching API (v10r: Neon's)"
+				}
+			],
 			"capabilities": ["branch reset", "control plane api"],
-			"keywords": ["neon", "branch refresh", "control plane", "admin"],
+			"keywords": ["neon", "branch refresh", "control plane", "admin", "run ledger"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4260,7 +4460,19 @@
 			"when_to_use": "Run when provisioning a new environment or resetting a dev database to a known-good starting state.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "graph-db",
+					"level": "conditional",
+					"when": "the project mirrors its catalogue into a graph store"
+				},
+				{
+					"need": "llm-provider",
+					"level": "conditional",
+					"when": "the seed also embeds documents for retrieval"
+				}
+			],
 			"capabilities": ["seeding", "bootstrap"],
 			"keywords": ["seed", "bootstrap", "scripts", "database setup"],
 			"depends_on": [],
@@ -4289,13 +4501,13 @@
 		{
 			"id": "identity-passwordless-auth",
 			"tier": "light",
-			"title": "Passwordless auth (magic link + OTP)",
+			"title": "Passwordless auth",
 			"category": "identity",
 			"summary": "Session-based authentication through Better Auth using a magic link and OTP code sent together in one email, with no passwords stored.",
 			"when_to_use": "Use as the primary sign-in method to avoid password-related breach risk and reset friction.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db", "email-delivery"],
 			"capabilities": ["magic link", "otp"],
 			"keywords": ["better-auth", "passwordless", "sessions", "email"],
 			"depends_on": [],
@@ -4332,13 +4544,26 @@
 		{
 			"id": "identity-oauth",
 			"tier": "light",
-			"title": "OAuth (GitHub, Google)",
+			"title": "OAuth",
 			"category": "identity",
 			"summary": "Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's built-in OAuth plugin.",
 			"when_to_use": "Offer it alongside magic link/OTP as an alternative sign-in path for users who prefer an existing provider account.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				"external-api",
+				{
+					"need": "email-delivery",
+					"level": "implementation",
+					"why": "factor-change notices are sent by the auth module it lives in"
+				},
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "sessions must be revoked across instances (the revocation list is shared)"
+				}
+			],
 			"capabilities": ["oauth sign-in"],
 			"keywords": ["github", "google", "oauth", "better-auth"],
 			"depends_on": [],
@@ -4376,7 +4601,7 @@
 			"when_to_use": "Use on any route or endpoint that must restrict access beyond plain authentication, including the 404-not-403 admin gate.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["authorization guards"],
 			"keywords": ["route guards", "authorization", "admin gate", "403/404"],
 			"depends_on": [],
@@ -4407,15 +4632,22 @@
 		{
 			"id": "identity-capability-grants",
 			"tier": "light",
-			"title": "Capability grants (request → approve → expire)",
+			"title": "Capability grants",
 			"category": "identity",
 			"summary": "A request-approve-expire workflow where users request a named capability, an admin approves or denies it, and pending requests auto-expire after 14 days.",
 			"when_to_use": "Use in place of static roles when access to a feature, such as blog authoring, needs an auditable grant/revoke lifecycle.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "scheduler",
+					"level": "conditional",
+					"when": "grant requests expire on a schedule"
+				}
+			],
 			"capabilities": ["capability grants"],
-			"keywords": ["grants", "authorization", "request approval", "expiry"],
+			"keywords": ["grants", "authorization", "request approval", "expiry", "request → approve → expire"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4453,7 +4685,19 @@
 			"when_to_use": "Use passkeys to harden sign-in and step-up TOTP to re-verify identity right before a sensitive action like disabling 2FA.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "email-delivery",
+					"level": "implementation",
+					"why": "factor-change notices are sent by the auth module it lives in"
+				},
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "step-up stamps must hold across instances"
+				}
+			],
 			"capabilities": ["passkeys", "step-up totp"],
 			"keywords": ["webauthn", "totp", "step-up", "mfa"],
 			"depends_on": [],
@@ -4497,7 +4741,7 @@
 			"when_to_use": "Use when building or modifying the account area where users manage their own identity, security factors, and personal data.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["user account management"],
 			"keywords": ["user profile", "gdpr", "account", "settings"],
 			"depends_on": [],
@@ -4535,7 +4779,13 @@
 			"when_to_use": "Reach for it on public forms that need bot resistance without third-party captcha services or extra user interaction.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "solved challenges must be refused on replay across instances"
+				}
+			],
 			"capabilities": ["proof-of-work", "hmac verification", "replay protection"],
 			"keywords": ["altcha", "captcha", "bot detection", "proof-of-work", "hmac"],
 			"depends_on": [],
@@ -4570,15 +4820,15 @@
 		{
 			"id": "anti-abuse-honeypot",
 			"tier": "light",
-			"title": "Honeypot (hidden field + min fill time)",
+			"title": "Honeypot",
 			"category": "anti-abuse",
 			"summary": "A no-interaction bot check combining a hidden form field bots tend to fill with a minimum elapsed-time threshold between render and submit.",
 			"when_to_use": "Use on forms where adding a visible captcha would hurt conversion but basic bot filtering is still needed.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["hidden field trap", "fill-time check"],
-			"keywords": ["honeypot", "bot detection", "spam", "forms"],
+			"keywords": ["honeypot", "bot detection", "spam", "forms", "hidden field", "min fill time"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4607,13 +4857,13 @@
 		{
 			"id": "anti-abuse-rate-limiting",
 			"tier": "light",
-			"title": "Rate limiting (sliding window, fail-closed)",
+			"title": "Rate limiting",
 			"category": "anti-abuse",
 			"summary": "A sliding-window rate limiter factory backed by Upstash Redis that produces per-purpose limiters (email, IP, comments, grants) and fails closed when Redis is unavailable.",
 			"when_to_use": "Use whenever an endpoint or action needs abuse-resistant request throttling with predictable fail-closed behavior.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["key-value-store"],
 			"capabilities": ["sliding window", "fail-closed", "per-key limiter"],
 			"keywords": ["rate limit", "upstash", "redis", "throttling", "abuse"],
 			"depends_on": [],
@@ -4654,7 +4904,7 @@
 			"when_to_use": "Apply it to any AI-backed feature where per-user spend must be bounded before a request is served.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["key-value-store", "llm-provider"],
 			"capabilities": ["token budget", "cost control"],
 			"keywords": ["ai budget", "token cap", "rate limit", "cost control", "abuse"],
 			"depends_on": [],
@@ -4691,7 +4941,7 @@
 			"when_to_use": "Use when a new abuse-detection signal needs to plug into the shared decision and audit-logging pipeline.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["decision aggregation", "audit logging"],
 			"keywords": ["bot detection", "audit log", "abuse", "decision"],
 			"depends_on": [],
@@ -4731,7 +4981,7 @@
 			"when_to_use": "Reference this when adding a new admin page or list view that needs consistent guarding and table UX.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["route guards", "data table"],
 			"keywords": ["admin", "guards", "data table", "sidebar"],
 			"depends_on": [],
@@ -4763,15 +5013,27 @@
 		{
 			"id": "admin-privacy-gdpr",
 			"tier": "light",
-			"title": "GDPR data transparency (view · export · delete)",
+			"title": "GDPR data transparency",
 			"category": "admin-privacy",
 			"summary": "A privacy aggregator that collects everything the app knows about a user into one report, backing the view, export, and delete surfaces required by GDPR.",
 			"when_to_use": "Use it whenever a new domain stores personal data and must be reflected in access, portability, or erasure requests.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "object-storage",
+					"level": "conditional",
+					"when": "users own stored files (avatars, uploads) that export and erasure must reach"
+				},
+				{
+					"need": "graph-db",
+					"level": "conditional",
+					"when": "user content is also projected into a graph store that erasure must reach"
+				}
+			],
 			"capabilities": ["data aggregation", "export", "erasure"],
-			"keywords": ["gdpr", "privacy", "data export", "right to erasure", "compliance"],
+			"keywords": ["gdpr", "privacy", "data export", "right to erasure", "compliance", "view", "delete"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -4818,7 +5080,7 @@
 			"when_to_use": "Use before writing any non-essential cookie or client-side tracking value that requires prior user consent.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["consent state", "cookie gating"],
 			"keywords": ["consent", "cookies", "gdpr", "eprivacy", "banner"],
 			"depends_on": [],
@@ -4858,7 +5120,15 @@
 			"when_to_use": "Use when a new data domain needs an automatic expiry/purge cycle rather than indefinite retention.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				"scheduler",
+				{
+					"need": "object-storage",
+					"level": "conditional",
+					"when": "retained data includes stored files"
+				}
+			],
 			"capabilities": ["scheduled purge", "retention policy"],
 			"keywords": ["data retention", "purge", "jobs", "privacy", "gdpr"],
 			"depends_on": [],
@@ -4890,13 +5160,13 @@
 		{
 			"id": "admin-privacy-pairing",
 			"tier": "light",
-			"title": "Cross-device debug pairing (QR + HMAC cookie)",
+			"title": "Cross-device debug pairing",
 			"category": "admin-privacy",
 			"summary": "A short-lived, single-use pairing code and QR flow that attributes a phone's anonymous pageviews to an admin's identity via an HMAC-signed cookie, without logging the phone in.",
 			"when_to_use": "Use when an admin needs to test the live site on a second device and see its activity attributed on the dashboard.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["pairing code", "hmac cookie", "qr flow"],
 			"keywords": ["pairing", "debug", "admin", "hmac", "qr code"],
 			"depends_on": [],
@@ -4938,7 +5208,13 @@
 			"when_to_use": "Use when a visitor's own style preference should drive theming instead of a fixed site-wide brand.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r persists the picked style in Postgres; a cookie serves the pattern equally"
+				}
+			],
 			"capabilities": ["style resolution", "custom palettes", "randomizer"],
 			"keywords": ["theming", "palette", "branding", "style picker"],
 			"depends_on": [],
@@ -4980,7 +5256,7 @@
 			"when_to_use": "Use when an admin action needs to be logged or a message needs to be broadcast to users.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["audit log", "announcements"],
 			"keywords": ["audit log", "announcements", "admin"],
 			"depends_on": [],
@@ -5018,7 +5294,7 @@
 			"when_to_use": "Use when adding a lightweight feedback channel that needs basic spam protection without a full captcha.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["feedback form", "spam protection"],
 			"keywords": ["feedback", "honeypot", "spam", "form"],
 			"depends_on": [],
@@ -5050,7 +5326,7 @@
 		{
 			"id": "ai-tool-harness",
 			"tier": "deep",
-			"title": "AI tool manifest & harness split (tool defs, risk metadata, registry)",
+			"title": "AI tool manifest and harness split",
 			"category": "ai",
 			"summary": "Tool definitions are thin wrappers whose risk-tier metadata and per-surface membership live in a registry, with harness concerns (agent loop, compaction, policy) factored out separately.",
 			"when_to_use": "Use as soon as an LLM gets tools: the manifest/harness split is what keeps tool permissions auditable and surfaces honest.",
@@ -5068,7 +5344,7 @@
 					"prefer_when": "there are only one or two mutating tools, so approval fatigue has no room to build up"
 				}
 			],
-			"requires": ["ai-provider"],
+			"needs": ["llm-provider"],
 			"capabilities": [
 				"ai tools",
 				"tool calling",
@@ -5077,7 +5353,18 @@
 				"agent loop",
 				"tool manifest"
 			],
-			"keywords": ["toolmeta", "risk tier", "fail-closed", "step cap", "compaction", "policy governor", "leak guard"],
+			"keywords": [
+				"toolmeta",
+				"risk tier",
+				"fail-closed",
+				"step cap",
+				"compaction",
+				"policy governor",
+				"leak guard",
+				"tool defs",
+				"risk metadata",
+				"registry"
+			],
 			"depends_on": ["multi-client-core"],
 			"docs": [
 				{
@@ -5144,7 +5431,7 @@
 		{
 			"id": "ai-surfaces",
 			"tier": "deep",
-			"title": "AI surfaces (chatbot vs deskbot split over one guard)",
+			"title": "AI surfaces",
 			"category": "ai",
 			"summary": "Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (Vely) vs an agentic, mutating, approval-gated deskbot — with a showcase-only rag-demo value kept out of production paths.",
 			"when_to_use": "Use when one product needs both a safe answer-bot and an acting agent: splitting the surface (not forking the stack) keeps permissions and prompts honest per surface.",
@@ -5158,9 +5445,16 @@
 					"prefer_when": "there is one permission set and one corpus, so there is no surface to dispatch on"
 				}
 			],
-			"requires": ["ai-provider"],
+			"needs": [
+				"llm-provider",
+				{
+					"need": "relational-db",
+					"level": "conditional",
+					"when": "conversations are kept beyond the page"
+				}
+			],
 			"capabilities": ["ai chat", "chatbot", "deskbot", "ai surface split", "streaming chat", "ai assistant"],
-			"keywords": ["vely", "surface", "guard", "orchestrator", "rag-demo", "citation"],
+			"keywords": ["vely", "surface", "guard", "orchestrator", "rag-demo", "citation", "deskbot split over one guard"],
 			"depends_on": ["ai-tool-harness"],
 			"docs": [
 				{
@@ -5253,7 +5547,7 @@
 		{
 			"id": "deskbot-approval-gate",
 			"tier": "deep",
-			"title": "Deskbot approval gate (proposal → approve, plan-gated mutation)",
+			"title": "Deskbot approval gate",
 			"category": "ai",
 			"summary": "Write/destructive desk tools never mutate inside the agent loop; they return a requiresApproval sentinel that becomes a proposal (PlanCard), executed only via an approve-route replay that records the real approver and a receipt per step — and a plan that ran can be undone once, step by step, by compare-and-swap compensation.",
 			"when_to_use": "Mandatory companion to any mutating AI tool: it converts 'the model wants to write' into an auditable human decision.",
@@ -5267,7 +5561,7 @@
 					"prefer_when": "every mutation is cheaply reversible, as desk creates are, so an auto-approved in-loop run loses nothing"
 				}
 			],
-			"requires": ["postgres", "ai-provider"],
+			"needs": ["relational-db", "llm-provider"],
 			"capabilities": [
 				"approval gate",
 				"human in the loop",
@@ -5290,7 +5584,9 @@
 				"revert",
 				"rollback",
 				"compensation",
-				"changeset"
+				"changeset",
+				"proposal → approve",
+				"plan-gated mutation"
 			],
 			"depends_on": ["ai-tool-harness", "ai-surfaces", "durable-step-execution"],
 			"docs": [
@@ -5400,7 +5696,16 @@
 					"prefer_when": "the project is Python-first, where the framework ecosystem is mature, and inspectable seams matter less than ready-made loaders"
 				}
 			],
-			"requires": ["postgres", "pgvector", "ai-provider"],
+			"needs": [
+				"relational-db",
+				"vector-search",
+				"llm-provider",
+				{
+					"need": "graph-db",
+					"level": "conditional",
+					"when": "the graph tier answers multi-hop relationship questions"
+				}
+			],
 			"capabilities": [
 				"rag",
 				"retrieval",
@@ -5494,7 +5799,7 @@
 		{
 			"id": "retrieval-endpoints",
 			"tier": "deep",
-			"title": "Retrieval ingest/search endpoints (one ingest door, /api/retrieval/*)",
+			"title": "Retrieval ingest/search endpoints",
 			"category": "ai",
 			"summary": "The RAG corpus is fed and queried through /api/retrieval/* HTTP endpoints plus a unified ingest door: the app runtime and the Bun docs-ingest script share the same pure planChunks() core.",
 			"when_to_use": "Use when the corpus must be maintainable from more than one runtime (app UI and scripts) without forking chunking logic.",
@@ -5508,9 +5813,18 @@
 					"prefer_when": "documents arrive only through the app UI and are never bulk-loaded by a script"
 				}
 			],
-			"requires": ["postgres", "pgvector", "ai-provider"],
+			"needs": ["relational-db", "vector-search", "llm-provider"],
 			"capabilities": ["rag ingest", "corpus ingest", "retrieval api", "search endpoint", "document ingestion"],
-			"keywords": ["ingest door", "planchunks", "chunking", "resume-safe", "idempotent", "stream"],
+			"keywords": [
+				"ingest door",
+				"planchunks",
+				"chunking",
+				"resume-safe",
+				"idempotent",
+				"stream",
+				"one ingest door",
+				"/api/retrieval/*"
+			],
 			"depends_on": ["layered-rag"],
 			"docs": [
 				{
@@ -5565,13 +5879,20 @@
 		{
 			"id": "ai-chat-assistant",
 			"tier": "light",
-			"title": "Chat assistant \"Vely\" (orchestrator, streaming)",
+			"title": "Chat assistant",
 			"category": "ai",
 			"summary": "The chat-orchestrator module streams multi-provider LLM responses through Vely, v10r's floating chat assistant, using Vercel AI SDK v6.",
 			"when_to_use": "Reach for it when a product needs a streaming, tool-capable chat UI backed by interchangeable LLM providers.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"llm-provider",
+				{
+					"need": "relational-db",
+					"level": "conditional",
+					"when": "conversations are kept beyond the page"
+				}
+			],
 			"capabilities": ["streaming chat", "chat orchestration"],
 			"keywords": ["vely", "orchestrator", "streaming", "ai sdk"],
 			"depends_on": [],
@@ -5615,7 +5936,7 @@
 			"when_to_use": "Use when a floating chat widget must survive route changes and reloads without losing the live thread.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["llm-provider"],
 			"capabilities": ["persistent session", "minimize state"],
 			"keywords": ["chatbot session", "minimize", "dock", "state machine"],
 			"depends_on": [],
@@ -5646,15 +5967,15 @@
 		{
 			"id": "ai-provider-routing",
 			"tier": "light",
-			"title": "Provider registry & routing (chat/tools/vision + circuit breaker)",
+			"title": "Provider registry & routing",
 			"category": "ai",
 			"summary": "Resolver functions pick an active chat, tool-calling, or vision LLM provider per turn and trip a Redis-backed circuit breaker on rate-limited providers.",
 			"when_to_use": "Use when an app must route between multiple LLM providers by capability and needs cross-instance cooldown on failures.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["llm-provider"],
 			"capabilities": ["provider routing", "circuit breaker"],
-			"keywords": ["provider registry", "cooldown", "resolver", "fallback"],
+			"keywords": ["provider registry", "cooldown", "resolver", "fallback", "chat/tools/vision"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -5682,13 +6003,13 @@
 		{
 			"id": "ai-site-awareness",
 			"tier": "light",
-			"title": "Chatbot site awareness (page context)",
+			"title": "Chatbot site awareness",
 			"category": "ai",
 			"summary": "Server-resolved page context is injected as a passive block into the chatbot's prompt so deictic questions like \"how does this work?\" resolve to the page the user is viewing.",
 			"when_to_use": "Use when a floating assistant needs to ground answers in whatever public page the user currently has open.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["llm-provider"],
 			"capabilities": ["page context", "deixis grounding"],
 			"keywords": ["site awareness", "page context", "deixis", "grounding"],
 			"depends_on": [],
@@ -5712,15 +6033,15 @@
 		{
 			"id": "ai-graph-rag",
 			"tier": "light",
-			"title": "Graph RAG pipeline (three tiers, RRF fusion)",
+			"title": "Graph RAG pipeline",
 			"category": "ai",
 			"summary": "Vector-similarity chunk retrieval is combined with Neo4j knowledge-graph traversal across three parallel tiers, fused by reciprocal rank fusion, for more explainable answers.",
 			"when_to_use": "Use when vector search alone misses multi-hop relationship queries that a knowledge graph can answer.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["graph-db", "vector-search", "relational-db", "llm-provider"],
 			"capabilities": ["graph rag", "tiered retrieval"],
-			"keywords": ["neo4j", "rrf fusion", "tiers", "knowledge graph"],
+			"keywords": ["neo4j", "rrf fusion", "tiers", "knowledge graph", "three tiers"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -5754,13 +6075,13 @@
 		{
 			"id": "ai-turn-trace",
 			"tier": "light",
-			"title": "Turn trace (recorded account of every AI turn) + turn graph",
+			"title": "Turn trace and turn graph",
 			"category": "ai",
 			"summary": "Every chatbot and deskbot turn records what was available, considered, included per model call, executed and cited — from the actual execution, never a second run — streams it while the turn runs, persists it once, and lets the turn’s owner open it as a three-column turn graph (sources → context and model calls → tools, recorded relations only), a tree and a timeline on the showcase pages.",
 			"when_to_use": "Use when an AI feature must be explainable after the fact: what the prompt contained block by block, what retrieval considered versus what the prompt took, which tools ran with what result, how provider attempts rotated, and what the answer actually cited.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["turn trace", "observability", "turn inspector", "turn graph", "prompt provenance"],
 			"keywords": [
 				"trace",
@@ -5838,13 +6159,13 @@
 		{
 			"id": "ai-image-metadata",
 			"tier": "light",
-			"title": "Image metadata reader (vision)",
+			"title": "Image metadata reader",
 			"category": "ai",
 			"summary": "A vision-capable LLM proposes title, caption, alt text, keywords, and category for an uploaded image, which a human reviews and approves before anything persists.",
 			"when_to_use": "Use when uploaded media needs AI-drafted metadata but a human must confirm every field before it is saved.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["llm-provider", "object-storage", "relational-db"],
 			"capabilities": ["vision analysis", "human approval"],
 			"keywords": ["image metadata", "vision", "approval dialog", "confidence"],
 			"depends_on": [],
@@ -5882,7 +6203,7 @@
 			"when_to_use": "Use when multiple AI surfaces need a single cross-surface view of token usage and reference spend.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["cost monitoring", "usage telemetry"],
 			"keywords": ["usage summary", "pricing", "admin", "token cost"],
 			"depends_on": [],
@@ -5922,7 +6243,7 @@
 			"when_to_use": "Use when prompt context is large structured/tabular data and token budget for the call is tight.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["prompt compaction", "context formatting"],
 			"keywords": ["toon", "token efficiency", "serialization", "prompt context"],
 			"depends_on": [],
@@ -5947,15 +6268,15 @@
 		{
 			"id": "ai-deskbot",
 			"tier": "light",
-			"title": "Deskbot (AI in the desk workspace)",
+			"title": "Deskbot",
 			"category": "ai",
 			"summary": "An agentic AI surface embedded in the desk workspace calls desk-mutating tools, with writes routed through the harness's proposal-and-approval gate.",
 			"when_to_use": "Use when an AI assistant needs to act on a workspace's files and panels, not just answer read-only questions.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["llm-provider", "relational-db"],
 			"capabilities": ["agentic ai", "desk tool calling"],
-			"keywords": ["deskbot", "desk integration", "agent", "tool calling"],
+			"keywords": ["deskbot", "desk integration", "agent", "tool calling", "ai in the desk workspace"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -5984,15 +6305,15 @@
 		{
 			"id": "ai-harness-lens",
 			"tier": "light",
-			"title": "Agent-harness audit lens (loop/context/policy/tools)",
+			"title": "Agent-harness audit lens",
 			"category": "ai",
 			"summary": "A conceptual audit lens (not a module) names which slice — loop, context, policy, or tools — owns each agent-harness primitive such as compaction, step caps, and approval gating.",
 			"when_to_use": "Use when auditing whether an LLM-agent product has the harness primitives it needs and where each one is implemented.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["harness audit", "agent loop"],
-			"keywords": ["harness lens", "compaction", "policy governor", "step cap"],
+			"keywords": ["harness lens", "compaction", "policy governor", "step cap", "loop/context/policy/tools"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6028,15 +6349,23 @@
 		{
 			"id": "toolkits-image-kit",
 			"tier": "light",
-			"title": "Image Kit (upload → AI pipeline → adjust → approve, persists nothing)",
+			"title": "Image Kit",
 			"category": "toolkits",
 			"summary": "A single-page toolkit that chains an AI metadata reader, frame-cropper, and embedder on one uploaded image, then discards the upload after an honest approval terminal.",
 			"when_to_use": "Use as a reference for building a stateless, multi-tool AI workflow that never persists user-uploaded media.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["llm-provider", "object-storage"],
 			"capabilities": ["ai metadata", "ai cropping", "embedding"],
-			"keywords": ["image kit", "vision", "upload", "toolkit", "ai pipeline"],
+			"keywords": [
+				"image kit",
+				"vision",
+				"upload",
+				"toolkit",
+				"ai pipeline",
+				"upload → ai pipeline → adjust → approve",
+				"persists nothing"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6066,13 +6395,13 @@
 		{
 			"id": "analytics-pageview-hook",
 			"tier": "light",
-			"title": "Pageview collector hook (last of 14 middleware stages)",
+			"title": "Pageview collector hook",
 			"category": "analytics",
-			"summary": "A hooks.server.ts middleware stage that runs last in the 14-stage sequence and records public GET pageviews into separate anonymous and authenticated lanes only after auth and routing have resolved; sessions gain human_confirmed_at via a consent-free confirm ping so dashboards count JS-corroborated visitors, and collection is muted in dev because every environment shares one database.",
+			"summary": "A hooks.server.ts middleware stage that runs last in the hook sequence and records public GET pageviews into separate anonymous and authenticated lanes only after auth and routing have resolved; sessions gain human_confirmed_at via a consent-free confirm ping so dashboards count JS-corroborated visitors, and collection is muted in dev because every environment shares one database.",
 			"when_to_use": "Reach for it when first-party pageview logging needs to sit directly in the request hook chain instead of a third-party analytics script.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["pageview tracking", "middleware hook"],
 			"keywords": ["hooks.server.ts", "sequence", "waituntil", "pageview"],
 			"depends_on": [],
@@ -6103,15 +6432,15 @@
 		{
 			"id": "analytics-consent-sessions",
 			"tier": "light",
-			"title": "Consent-gated sessions (cookieless day-rotating id)",
+			"title": "Consent-gated sessions",
 			"category": "analytics",
 			"summary": "Session identification switches between a cookie-based id under the analytics consent tier and a cookieless hash(visitorId + UTC day) id under the necessary tier, so both tiers still produce a countable session.",
 			"when_to_use": "Use when session tracking must stay legally gated by consent tier (TDDDG/ePrivacy) while still counting unique sessions at the lowest tier.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["consent management", "cookieless sessions"],
-			"keywords": ["consent tier", "eprivacy", "session id", "cookieless"],
+			"keywords": ["consent tier", "eprivacy", "session id", "cookieless", "cookieless day-rotating id"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6143,15 +6472,15 @@
 		{
 			"id": "analytics-journeys",
 			"tier": "light",
-			"title": "User journeys (client beacon)",
+			"title": "User journeys",
 			"category": "analytics",
 			"summary": "Page-to-page journeys are computed in Postgres with a LEAD() window function over consecutive pageviews in a session and shown as a ranked table rather than an aggregate flow diagram.",
 			"when_to_use": "Use when you need real per-visitor navigation paths without merging visitors with different journeys into one misleading diagram.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["user journeys", "session analysis"],
-			"keywords": ["journey beacon", "window function", "session flow"],
+			"keywords": ["journey beacon", "window function", "session flow", "client beacon"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6186,7 +6515,7 @@
 			"when_to_use": "Use when measuring step-by-step conversion through a defined sequence of pages or events.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["funnel analysis", "conversion tracking"],
 			"keywords": ["funnel", "session dedup", "conversion"],
 			"depends_on": [],
@@ -6224,7 +6553,14 @@
 			"when_to_use": "Use as a template for a rate-limited public SSE endpoint that streams live-looking activity without exposing real user data.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "more than one instance records hits (they are buffered in the shared store)"
+				}
+			],
 			"capabilities": ["sse streaming", "live feed"],
 			"keywords": ["sse", "live events", "synthetic data", "rate limit"],
 			"depends_on": [],
@@ -6266,7 +6602,7 @@
 			"when_to_use": "Use this pair as the pattern for turning raw event tables into a trend-friendly daily rollup while keeping storage bounded.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db", "scheduler"],
 			"capabilities": ["scheduled rollup", "data retention"],
 			"keywords": ["daily rollup", "retention window", "analytics cleanup"],
 			"depends_on": [],
@@ -6306,7 +6642,14 @@
 			"when_to_use": "Use when a product needs a self-service transparency/export view satisfying a GDPR Art. 15 access request.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "key-value-store",
+					"level": "implementation",
+					"why": "the bot-hit buffer it cites is kept in Redis"
+				}
+			],
 			"capabilities": ["gdpr transparency", "data access request"],
 			"keywords": ["art 15", "my data", "transparency page"],
 			"depends_on": [],
@@ -6338,13 +6681,20 @@
 		{
 			"id": "notifications-router-outbox",
 			"tier": "light",
-			"title": "Router, outbox & delivery worker",
+			"title": "Notification router, outbox and delivery worker",
 			"category": "notifications",
 			"summary": "sendNotification() writes an in-app record, evaluates the settings matrix per channel, then queues outbox rows delivered by an in-process worker on containers or a cron sweep on Vercel.",
 			"when_to_use": "Use as the single entry point for sending any multi-channel notification instead of calling a channel provider directly.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "scheduler",
+					"level": "conditional",
+					"when": "the host has no persistent process to run the delivery worker (serverless: a cron sweep drains the outbox)"
+				}
+			],
 			"capabilities": ["notification routing", "outbox pattern"],
 			"keywords": ["outbox", "notificationservice", "delivery worker"],
 			"depends_on": [],
@@ -6378,15 +6728,27 @@
 		{
 			"id": "notifications-channels",
 			"tier": "light",
-			"title": "Channel providers (email · Telegram · Discord)",
+			"title": "Channel providers",
 			"category": "notifications",
 			"summary": "Email (Resend), Telegram (bot API), and Discord (OAuth2) each implement a common provider interface (send/validateConnection/getProviderName) behind their own connection and token-management flow.",
 			"when_to_use": "Use when adding or maintaining an outbound notification channel that must plug into the shared router and outbox.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "email-delivery",
+					"level": "conditional",
+					"when": "the email channel is enabled"
+				},
+				{
+					"need": "external-api",
+					"level": "conditional",
+					"when": "chat channels are enabled (Telegram bot API, Discord)"
+				}
+			],
 			"capabilities": ["channel providers", "oauth2 connection"],
-			"keywords": ["resend", "telegram", "discord", "provider interface"],
+			"keywords": ["resend", "telegram", "discord", "provider interface", "email"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6426,7 +6788,14 @@
 			"when_to_use": "Use when the UI needs near-real-time in-app notification delivery without standing up a third-party pub/sub service.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "the host is serverless, where pub/sub replaces the in-memory connection map"
+				}
+			],
 			"capabilities": ["sse stream", "notification center"],
 			"keywords": ["sse", "connection map", "redis pub/sub"],
 			"depends_on": [],
@@ -6460,15 +6829,15 @@
 		{
 			"id": "notifications-settings-matrix",
 			"tier": "light",
-			"title": "Settings matrix (channel × type)",
+			"title": "Settings matrix",
 			"category": "notifications",
 			"summary": "The settings UI renders a channel-by-notification-type matrix backed by a form schema, letting a user toggle which channels receive which notification types.",
 			"when_to_use": "Use when users need granular per-channel, per-type control over which notifications they receive.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["settings matrix", "channel preferences"],
-			"keywords": ["settings matrix", "preferences", "notification types"],
+			"keywords": ["settings matrix", "preferences", "notification types", "channel × type"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6504,7 +6873,7 @@
 			"when_to_use": "Use as the reference schema when modeling a new channel connection or auditing delivery outcomes.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["database schema", "delivery log"],
 			"keywords": ["notification_deliveries", "schema", "push_subscriptions"],
 			"depends_on": [],
@@ -6538,7 +6907,7 @@
 		{
 			"id": "jobs-scheduler",
 			"tier": "deep",
-			"title": "Jobs & scheduling (registry, runner, platform-owned cadence)",
+			"title": "Jobs and scheduling",
 			"category": "jobs",
 			"summary": "A slug → {execute, cadence} job registry with a unified runner. The registry owns what runs and how often it is due (daily | weekly); the platform owns only the clock — one daily /api/cron/due sweep on Vercel, a flat interval on persistent hosts — so switching hosts needs zero job-code change.",
 			"when_to_use": "Use for any recurring or background work — the registry/runner split keeps jobs testable and host-portable.",
@@ -6561,9 +6930,18 @@
 					"prefer_when": "the work is a fire-and-forget side effect of one request whose silent failure is acceptable"
 				}
 			],
-			"requires": ["postgres"],
+			"needs": ["relational-db", "scheduler"],
 			"capabilities": ["background jobs", "cron", "scheduled tasks", "job registry", "recurring work"],
-			"keywords": ["scheduler", "runner", "vercel cron", "setinterval", "idempotent", "slug"],
+			"keywords": [
+				"scheduler",
+				"runner",
+				"vercel cron",
+				"setinterval",
+				"idempotent",
+				"slug",
+				"registry",
+				"platform-owned cadence"
+			],
 			"depends_on": ["multi-client-core"],
 			"docs": [
 				{
@@ -6634,15 +7012,15 @@
 		{
 			"id": "jobs-platform-scheduling",
 			"tier": "light",
-			"title": "Platform scheduling (Vercel cron vs container `setInterval`)",
+			"title": "Platform scheduling",
 			"category": "jobs",
 			"summary": "Cadence is owned entirely by platform config — vercel.json crons hitting /api/cron/[job] on serverless, or a single flat setInterval scheduler on persistent containers — so the job registry itself never changes when switching hosts.",
 			"when_to_use": "Use when a job must run on a schedule across more than one hosting target without duplicating scheduling logic per platform.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["scheduler"],
 			"capabilities": ["cron scheduling", "platform-agnostic jobs"],
-			"keywords": ["vercel cron", "setinterval", "api/cron"],
+			"keywords": ["vercel cron", "setinterval", "api/cron", "container setinterval"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6681,15 +7059,27 @@
 		{
 			"id": "jobs-registered-catalog",
 			"tier": "light",
-			"title": "Registered jobs (retention, cleanup, sync, delivery)",
+			"title": "Registered jobs",
 			"category": "jobs",
 			"summary": "The concrete job implementations — retention sweeps, cleanup, external sync, and delivery — are idempotent slug-keyed functions run by the shared runner and manageable from an admin UI.",
 			"when_to_use": "Use this catalog as the template when adding a new retention, cleanup, sync, or delivery job to the registry.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"scheduler",
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r's registered jobs (retention, rollups) work on Postgres tables"
+				},
+				{
+					"need": "object-storage",
+					"level": "implementation",
+					"why": "one registered job reaps orphaned blog assets in object storage"
+				}
+			],
 			"capabilities": ["retention jobs", "cleanup jobs"],
-			"keywords": ["job registry", "idempotent", "retention window"],
+			"keywords": ["job registry", "idempotent", "retention window", "retention", "cleanup", "sync", "delivery"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6725,7 +7115,7 @@
 			"when_to_use": "Use when the app must be installable across locales with a manifest that stays consistent with the visitor's language.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["web manifest", "installability"],
 			"keywords": ["manifest.webmanifest", "maskable icons", "paraglide"],
 			"depends_on": [],
@@ -6760,7 +7150,7 @@
 		{
 			"id": "pwa-service-worker",
 			"tier": "light",
-			"title": "Service-worker caching contract (HTML network-only, kill switch)",
+			"title": "Service-worker caching contract",
 			"category": "pwa",
 			"summary": "The custom service worker precaches only the icons and the offline page's own assets (parsed from its HTML), fills the rest of the hashed build cache-first as it is used, serves HTML and __data.json network-only, never intercepts /api/* or SSE, and ships a kill switch that force-wipes caches and unregisters on a bad deploy.",
 			"when_to_use": "Use when you need an installable offline shell without caching personalized HTML, plus a documented recovery path for a broken worker.",
@@ -6768,9 +7158,9 @@
 				"Unvisited routes must work fully offline — precaching only the offline shell leaves them to the offline page"
 			],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["service-worker"],
 			"capabilities": ["service worker", "offline fallback"],
-			"keywords": ["service worker", "cache contract", "kill switch", "precache", "offline shell"],
+			"keywords": ["service worker", "cache contract", "kill switch", "precache", "offline shell", "html network-only"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6808,15 +7198,15 @@
 		{
 			"id": "pwa-update-flow",
 			"tier": "light",
-			"title": "Update flow (silent + idle toast, no auto skipWaiting)",
+			"title": "Update flow",
 			"category": "pwa",
 			"summary": "A pending service-worker update rides the next client-side navigation silently, or for navigation-less sessions surfaces one persistent reload toast after 30 minutes, and never auto-activates with skipWaiting().",
 			"when_to_use": "Use when rolling out a new service-worker version without disrupting an in-progress user session.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["service-worker"],
 			"capabilities": ["update prompt", "service worker update"],
-			"keywords": ["skipwaiting", "controllerchange", "update toast"],
+			"keywords": ["skipwaiting", "controllerchange", "update toast", "silent", "idle toast", "no auto skipwaiting"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6845,15 +7235,23 @@
 		{
 			"id": "pwa-web-push",
 			"tier": "light",
-			"title": "Web push channel (declarative JSON, no PII)",
+			"title": "Web push channel",
 			"category": "pwa",
 			"summary": "Web push uses one Declarative Web Push JSON payload carrying no PII (brand title, generic body, same-origin navigate path) so real content only loads after tap-through session auth, delivered synchronously and bypassing the outbox.",
 			"when_to_use": "Use when adding browser push notifications that must render on iOS Safari without SW code while staying privacy-safe on lock screens.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"service-worker",
+				"relational-db",
+				{
+					"need": "email-delivery",
+					"level": "implementation",
+					"why": "the channels directory it points at also holds the email channel"
+				}
+			],
 			"capabilities": ["web push", "declarative push"],
-			"keywords": ["vapid", "declarative web push", "push_subscriptions", "no pii"],
+			"keywords": ["vapid", "declarative web push", "push_subscriptions", "no pii", "declarative json"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -6882,7 +7280,7 @@
 			"when_to_use": "Reach for it when a page needs a standard statistical chart type backed by Chart.js rather than a custom SVG visualization.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["bar/line/pie charts", "canvas cleanup", "ssr guard"],
 			"keywords": ["chart.js", "sparkline", "gauge", "statistics"],
 			"depends_on": [],
@@ -6920,7 +7318,7 @@
 			"when_to_use": "Use when a dataset calls for a scatter plot or heatmap rather than a categorical chart.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["scatter plot", "heatmap"],
 			"keywords": ["chart.js", "heatmap", "scatter", "canvas"],
 			"depends_on": [],
@@ -6958,7 +7356,7 @@
 			"when_to_use": "Use when building an interactive flowchart or state-machine diagram that needs draggable, connectable nodes.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["flow diagrams", "state diagrams", "custom node types"],
 			"keywords": ["xyflow", "svelte flow", "flowchart", "state machine"],
 			"depends_on": [],
@@ -6996,7 +7394,7 @@
 			"when_to_use": "Use when visualizing relationships, hierarchies, or flow volumes between entities as a node graph.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["force-directed layout", "tree/dag layout", "sankey flow"],
 			"keywords": ["d3", "network graph", "dag", "sankey"],
 			"depends_on": [],
@@ -7034,7 +7432,13 @@
 			"when_to_use": "Use when a page needs an interactive WebGL map with markers or geographic data overlays.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "external-api",
+					"level": "conditional",
+					"when": "map tiles come from a tile server"
+				}
+			],
 			"capabilities": ["webgl base map", "markers", "geojson choropleth"],
 			"keywords": ["maplibre", "geojson", "choropleth", "webgl"],
 			"depends_on": [],
@@ -7072,7 +7476,7 @@
 			"when_to_use": "Use when presenting chronological events or milestones rather than numeric data.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["timeline rendering"],
 			"keywords": ["timeline", "chronology", "events"],
 			"depends_on": [],
@@ -7097,15 +7501,15 @@
 		{
 			"id": "3d-threlte-integration",
 			"tier": "light",
-			"title": "Threlte integration (SSR-off, code-split model registry)",
+			"title": "Threlte integration",
 			"category": "3d",
 			"summary": "Threlte 8 is wired into SvelteKit with SSR and prerendering disabled for the 3D route subtree, plus a static model config registry driving camera, lights, and controls.",
 			"when_to_use": "Use when adding any Three.js/WebGL 3D scene to a SvelteKit route in this app.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["declarative three.js scenes", "ssr-off subtree", "model config registry"],
-			"keywords": ["threlte", "three.js", "webgl", "gltf"],
+			"keywords": ["threlte", "three.js", "webgl", "gltf", "ssr-off", "code-split model registry"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -7147,7 +7551,7 @@
 			"when_to_use": "Use as the starting template for a new 3D showcase scene, static or animated.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["gltf loading", "orbit controls", "animation playback"],
 			"keywords": ["threlte", "gltf", "animation mixer", "orbit controls"],
 			"depends_on": [],
@@ -7182,13 +7586,13 @@
 		{
 			"id": "3d-model-viewer-customizer",
 			"tier": "light",
-			"title": "Full-screen model viewer & customizer (layout reset)",
+			"title": "Full-screen model viewer and customizer",
 			"category": "3d",
 			"summary": "A full-screen model viewer and GLTF customizer (materials, parts, morph targets, presets) that resets the app layout while open.",
 			"when_to_use": "Use when a 3D showcase needs an immersive, full-screen viewer with live material or part customization.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["material customization", "morph-target presets", "layout reset"],
 			"keywords": ["gltf customizer", "viewer scene", "morph targets", "full-screen"],
 			"depends_on": [],
@@ -7223,7 +7627,7 @@
 		{
 			"id": "product-connection-engine",
 			"tier": "deep",
-			"title": "Product composition engine (typed ports, couplings, conduits)",
+			"title": "Product composition engine",
 			"category": "3d",
 			"summary": "Reusable 3D products with typed connection ports join into an editable assembly: a framework-free core keeps definitions, occurrences, ports, couplings, conduit routes and port rules apart, validates and edits them deterministically, and a thin Threlte layer renders and edits the result.",
 			"when_to_use": "Use when users assemble products that connect through defined points — pipes and fittings, cables and devices, modular furniture — and the assembly must be saved, validated against port rules and edited by pointer and keyboard.",
@@ -7243,7 +7647,7 @@
 					"prefer_when": "routes need fittings catalogues, bend radii, sizing or certified drawings"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"product configurator",
 				"connectable 3d parts",
@@ -7262,7 +7666,10 @@
 				"threlte",
 				"transform controls",
 				"ifc",
-				"undo"
+				"undo",
+				"typed ports",
+				"couplings",
+				"conduits"
 			],
 			"depends_on": ["3d-threlte-integration"],
 			"docs": [
@@ -7370,7 +7777,7 @@
 		{
 			"id": "asset-production-pipeline",
 			"tier": "deep",
-			"title": "Asset production pipeline (typed request → checked GLB)",
+			"title": "Asset production pipeline",
 			"category": "3d",
 			"summary": "A structured, validated request becomes a checked 3D asset: a deterministic TypeScript generator builds parametric geometry, an inspector proves every shell closed and outward, a DOM-free writer emits byte-stable GLB with its derivation key inside and reads it back, and one job shape — report, PROV-DM provenance, measurements, a write-once owner-scoped store — serves an HTTP route, a CLI and MCP tools, in-process or in a killable worker process.",
 			"when_to_use": "Use when an app must generate 3D assets from parameters — configurators that export, procedural parts, AI-requested variations — and every file must be reproducible, validated and attributable before anyone loads it.",
@@ -7394,7 +7801,7 @@
 					"prefer_when": "the asset never leaves one user's tab and no server-side proof or storage is needed"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"procedural 3d generation",
 				"parametric geometry",
@@ -7417,7 +7824,8 @@
 				"worker process",
 				"mcp",
 				"blender",
-				"openscad"
+				"openscad",
+				"typed request → checked glb"
 			],
 			"depends_on": [
 				"3d-threlte-integration",
@@ -7527,7 +7935,7 @@
 		{
 			"id": "agentic-parametric-modeling",
 			"tier": "deep",
-			"title": "Agentic parametric modeling (MCP 3D)",
+			"title": "Agentic parametric modeling",
 			"category": "3d",
 			"summary": "An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) engine inside the asset production pipeline validates, builds, inspects and encodes it on a separate stateless MCP service, in the visitor's browser and in tests alike, and a model link in the URL fragment reproduces it anywhere without storage. An MCP App draws a server-side preview mesh; the native viewer runs the kernel in a Web Worker.",
 			"when_to_use": "Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.",
@@ -7550,7 +7958,13 @@
 					"prefer_when": "the object family is fixed (a configurator) and only its parameters change"
 				}
 			],
-			"requires": ["web-worker"],
+			"needs": [
+				{
+					"need": "web-worker",
+					"level": "conditional",
+					"when": "the app shows the model in the native viewer, where the kernel runs in a Web Worker"
+				}
+			],
 			"capabilities": [
 				"parametric 3d modeling",
 				"ai tool for 3d",
@@ -7686,15 +8100,22 @@
 		{
 			"id": "content-blog-engine",
 			"tier": "light",
-			"title": "Blog engine (posts, revisions, locale-aware publishing)",
+			"title": "Blog engine",
 			"category": "content",
 			"summary": "A DB-backed blog system with posts, immutable revisions, and locale-aware publishing supporting multiple authors.",
 			"when_to_use": "Use when building a real content/blog section that needs draft/publish workflows and per-locale revisions.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				"relational-db",
+				{
+					"need": "object-storage",
+					"level": "conditional",
+					"when": "posts carry uploaded images"
+				}
+			],
 			"capabilities": ["post revisions", "locale-aware publishing", "multi-author drafts"],
-			"keywords": ["blog", "revisions", "i18n", "publishing"],
+			"keywords": ["blog", "revisions", "i18n", "publishing", "posts"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -7728,15 +8149,15 @@
 		{
 			"id": "content-comments",
 			"tier": "light",
-			"title": "Comments (flat, per-locale, moderated)",
+			"title": "Comments",
 			"category": "content",
 			"summary": "A flat, per-locale comment system with a short author edit window and admin moderation (hide/unhide/remove).",
 			"when_to_use": "Use when a content page needs reader comments with moderation controls rather than nested threads.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["per-locale comments", "moderation", "author edit window"],
-			"keywords": ["comments", "moderation", "blog", "flat threads"],
+			"keywords": ["comments", "moderation", "blog", "flat threads", "flat", "per-locale", "moderated"],
 			"depends_on": [],
 			"docs": [
 				{
@@ -7767,13 +8188,24 @@
 		{
 			"id": "content-markdown-pipeline",
 			"tier": "light",
-			"title": "Markdown pipeline & custom syntax (directives, wikilinks)",
+			"title": "Markdown pipeline and custom syntax",
 			"category": "content",
 			"summary": "A remark/rehype-based markdown rendering pipeline extended with custom directive syntax for embeds; wikilink cross-references are designed for but not yet implemented.",
 			"when_to_use": "Use when rendering blog/content markdown that needs project-specific directive syntax beyond plain CommonMark.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [
+				{
+					"need": "object-storage",
+					"level": "implementation",
+					"why": "v10r's content push uploads referenced assets to object storage; rendering needs none"
+				},
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r's content push records assets in Postgres; rendering needs none"
+				}
+			],
 			"capabilities": ["directive syntax", "markdown ast processing"],
 			"keywords": ["remark", "rehype", "directives", "wikilinks"],
 			"depends_on": [],
@@ -7808,13 +8240,13 @@
 		{
 			"id": "content-markdown-editor",
 			"tier": "light",
-			"title": "Markdown editor (CodeMirror, slash commands)",
+			"title": "Markdown editor",
 			"category": "content",
 			"summary": "A CodeMirror-based source markdown editor with a slash-command palette that auto-inserts custom syntax.",
 			"when_to_use": "Use when authoring or editing markdown content that relies on the project's custom directive syntax.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["codemirror editing", "slash commands"],
 			"keywords": ["markdown editor", "codemirror", "slash command", "authoring"],
 			"depends_on": [],
@@ -7853,7 +8285,7 @@
 			"when_to_use": "Use when publishing static, self-verifying documentation pages alongside the live app.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["prerendered docs", "self-documenting pages"],
 			"keywords": ["docs", "prerender", "static site"],
 			"depends_on": [],
@@ -7885,7 +8317,7 @@
 		{
 			"id": "desk-workspace",
 			"tier": "deep",
-			"title": "Desk workspace (dock layout, focus architecture, mobile projection)",
+			"title": "Desk workspace",
 			"category": "desk",
 			"summary": "A full-page multi-panel workspace on a binary split-tree dock: resizable panes, drag-and-drop tabs, a panel-type registry, typed cross-panel pub/sub (DeskBus), one persisted desktop tree with total focus derivation, and a mobile chrome that is a projection over the same state — never a second layout.",
 			"when_to_use": "Use for IDE-like authoring surfaces where several content types (editor, explorer, spreadsheet, AI bot) must coexist, communicate, and stay AI-drivable — and where the same workspace must work on phones without forking its state model.",
@@ -7904,7 +8336,7 @@
 					"prefer_when": "the workspace is one section of a page rather than the whole viewport"
 				}
 			],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": [
 				"dock layout panels",
 				"workspace persistence",
@@ -7913,7 +8345,20 @@
 				"mobile workspace projection",
 				"panel registry"
 			],
-			"keywords": ["desk", "dock", "dock", "split tree", "docklayout", "deskbus", "focus", "panels", "drag-and-drop"],
+			"keywords": [
+				"desk",
+				"dock",
+				"dock",
+				"split tree",
+				"docklayout",
+				"deskbus",
+				"focus",
+				"panels",
+				"drag-and-drop",
+				"dock layout",
+				"focus architecture",
+				"mobile projection"
+			],
 			"depends_on": ["multi-client-core"],
 			"docs": [
 				{
@@ -7997,15 +8442,15 @@
 		{
 			"id": "desk-spreadsheet-panel",
 			"tier": "light",
-			"title": "Spreadsheet panel (file type, dual-mode)",
+			"title": "Spreadsheet panel",
 			"category": "desk",
 			"summary": "A spreadsheet file type managed through the desk's unified file registry, editable in a dual-mode (grid/panel) UI, with one formula evaluator shared by the grid and the AI write path so a stored sheet never disagrees with itself.",
 			"when_to_use": "Use when a desk-based workspace needs to support tabular/spreadsheet data alongside markdown documents.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["spreadsheet grid", "dual-mode panel"],
-			"keywords": ["spreadsheet", "desk", "file registry", "sti"],
+			"keywords": ["spreadsheet", "desk", "file registry", "sti", "file type", "dual-mode"],
 			"depends_on": ["desk-workspace"],
 			"docs": [
 				{
@@ -8052,15 +8497,25 @@
 		{
 			"id": "desk-mobile-chrome",
 			"tier": "light",
-			"title": "Desk mobile chrome (tab strip + pill + drawers)",
+			"title": "Desk mobile chrome",
 			"category": "desk",
 			"summary": "Phone chrome for the dock workspace: a scrollable top tab strip of open panel instances, a bottom-right controls pill (commands sheet + panels drawer) sitting left of the app FAB via slot tokens, and a soft-keyboard watcher that hides floating chrome while typing.",
 			"when_to_use": "Use when a desktop multi-panel workspace must work on phones without forking its layout state — the chrome only focuses, opens, and closes panels on the persisted desktop tree.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["mobile workspace chrome", "bottom sheet menus", "soft keyboard handling"],
-			"keywords": ["mobile", "tab strip", "drawer", "bottom sheet", "fab", "keyboard inset", "visualviewport"],
+			"keywords": [
+				"mobile",
+				"tab strip",
+				"drawer",
+				"bottom sheet",
+				"fab",
+				"keyboard inset",
+				"visualviewport",
+				"pill",
+				"drawers"
+			],
 			"depends_on": ["desk-workspace"],
 			"docs": [
 				{
@@ -8103,15 +8558,25 @@
 		{
 			"id": "desk-panel-menus",
 			"tier": "light",
-			"title": "Composed panel menus (one array, desktop kebab + mobile sheet)",
+			"title": "Composed panel menus",
 			"category": "desk",
 			"summary": "A context-scoped registry where each panel instance registers its command menus, composed with a dock-supplied Panel floor menu and View menu into one array that the desktop kebab and the mobile commands sheet both render.",
 			"when_to_use": "Use when per-panel commands must appear identically on multiple surfaces (desktop menus, mobile sheets, shortcut handlers) without each surface maintaining its own copy.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["per-panel command menus", "menu composition"],
-			"keywords": ["menus", "kebab", "commands", "registry", "context-scoped", "parity"],
+			"keywords": [
+				"menus",
+				"kebab",
+				"commands",
+				"registry",
+				"context-scoped",
+				"parity",
+				"one array",
+				"desktop kebab",
+				"mobile sheet"
+			],
 			"depends_on": ["desk-workspace"],
 			"docs": [
 				{
@@ -8154,15 +8619,23 @@
 		{
 			"id": "desk-ai-effects",
 			"tier": "light",
-			"title": "AI desk effects (tool results drive the workspace)",
+			"title": "AI desk effects",
 			"category": "desk",
 			"summary": "AI tool results dispatch typed desk effects (open/focus/refresh/highlight/notify/scroll) through an EffectActions facade; the dispatcher returns applied/failed per effect and failures surface in the I/O Log panel instead of being swallowed.",
 			"when_to_use": "Use when an AI assistant should manipulate a live UI workspace: effects go through the same single-writer actions as user input, so AI behavior stays consistent with direct manipulation.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["ai-driven ui effects", "tool result dispatch"],
-			"keywords": ["deskbot", "effects", "dispatch", "io log", "notify", "highlight"],
+			"keywords": [
+				"deskbot",
+				"effects",
+				"dispatch",
+				"io log",
+				"notify",
+				"highlight",
+				"tool results drive the workspace"
+			],
 			"depends_on": ["desk-workspace", "ai-deskbot"],
 			"docs": [
 				{
@@ -8201,15 +8674,24 @@
 		{
 			"id": "desk-explorer",
 			"tier": "light",
-			"title": "Explorer panel (unified file tree over N sources)",
+			"title": "Explorer panel",
 			"category": "desk",
 			"summary": "One recursive tree over heterogeneous content APIs: adapters normalize every source into an ExplorerNode with a capability set, and the context menu, touch kebab, drag-and-drop, and inline rename/delete are all driven by capabilities — not per-type branching.",
 			"when_to_use": "Use when a file-browser UI must merge several backends (posts, assets, files) and every row action should be declaratively controlled per item type.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["unified file tree", "capability-driven menus", "adapter normalization"],
-			"keywords": ["explorer", "tree", "adapters", "capabilities", "context menu", "drag-and-drop", "kebab"],
+			"keywords": [
+				"explorer",
+				"tree",
+				"adapters",
+				"capabilities",
+				"context menu",
+				"drag-and-drop",
+				"kebab",
+				"unified file tree over n sources"
+			],
 			"depends_on": ["desk-workspace"],
 			"docs": [
 				{
@@ -8248,7 +8730,7 @@
 		{
 			"id": "optimistic-mutation",
 			"tier": "deep",
-			"title": "Optimistic mutation (fold-based rollback, idempotency keys)",
+			"title": "Optimistic mutation",
 			"category": "velocity-interaction",
 			"summary": "The confirmed value and the pending intents are stored separately and the UI reads the fold of one over the other, so a failed mutation rolls back exactly — even with later mutations applied on top — and a repeated intent executes once.",
 			"when_to_use": "Use for reversible, predictable actions where failure is uncommon: rename, toggle, reorder, move, favourite. Never for payments, irreversible deletion, or permission changes.",
@@ -8263,7 +8745,7 @@
 					"prefer_when": "the action is irreversible, touches authorization, or has an outcome the client cannot predict"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["optimistic UI", "instant interaction", "rollback", "idempotency", "perceived latency"],
 			"keywords": [
 				"optimistic",
@@ -8273,7 +8755,9 @@
 				"idempotency key",
 				"double-click",
 				"reconcile",
-				"perceived"
+				"perceived",
+				"fold-based rollback",
+				"idempotency keys"
 			],
 			"depends_on": [],
 			"docs": [
@@ -8320,7 +8804,7 @@
 		{
 			"id": "intent-preloading",
 			"tier": "deep",
-			"title": "Intent-based preloading (six levels over SvelteKit triggers)",
+			"title": "Intent-based preloading",
 			"category": "velocity-interaction",
 			"summary": "A policy layer over the app-wide `data-sveltekit-preload-data=\"hover\"` default, for the two cases the blanket setting gets wrong: routes too expensive to speculate on, and next screens predictable enough that waiting for a hover wastes the idle time.",
 			"when_to_use": "Use when a link's cost or its probability differs from the average — an expensive report gets `code`, a strongly predicted next step gets `code-data` or a programmatic preload.",
@@ -8335,9 +8819,19 @@
 					"prefer_when": "every link has roughly average cost and probability, so no per-link policy is needed"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["preloading", "prefetch", "speculative navigation", "idle work"],
-			"keywords": ["preload", "prefetch", "hover", "viewport", "navigation", "speculative", "instant", "idle"],
+			"keywords": [
+				"preload",
+				"prefetch",
+				"hover",
+				"viewport",
+				"navigation",
+				"speculative",
+				"instant",
+				"idle",
+				"six levels over sveltekit triggers"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -8384,7 +8878,7 @@
 		{
 			"id": "virtualized-rendering",
 			"tier": "deep",
-			"title": "Virtualized rendering (windowing maths split from the component)",
+			"title": "Virtualized rendering",
 			"category": "velocity-interaction",
 			"summary": "A long list costs the size of the viewport instead of the size of the data; the windowing arithmetic lives in a pure module so its edge cases are testable without a browser, while the component owns only the effects.",
 			"when_to_use": "Use above roughly 200 rows for tables, trees, explorer lists, timelines, feeds and logs. Below that, windowing adds more complexity than it removes.",
@@ -8402,7 +8896,7 @@
 					"prefer_when": "row heights genuinely vary and the scroll-jump risk that measurement brings is accepted"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["virtualization", "windowing", "long lists", "large tables"],
 			"keywords": [
 				"virtual list",
@@ -8411,7 +8905,8 @@
 				"ten thousand rows",
 				"scroll",
 				"overscan",
-				"slow scrolling"
+				"slow scrolling",
+				"windowing maths split from the component"
 			],
 			"depends_on": ["ui-component-system"],
 			"docs": [
@@ -8462,7 +8957,7 @@
 			"when_to_use": "Use to spend the idle time between the critical render and the next interaction — warming caches, loading probable feature code, preparing indexes.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["idle work", "speculative preparation", "lazy hydration"],
 			"keywords": ["idle", "requestidlecallback", "speculative", "lazy hydration", "intersection observer"],
 			"depends_on": ["intent-preloading"],
@@ -8495,7 +8990,7 @@
 		{
 			"id": "hierarchical-cache",
 			"tier": "deep",
-			"title": "Hierarchical cache (local → shared → origin, with key scope enforced)",
+			"title": "Hierarchical cache",
 			"category": "velocity-data",
 			"summary": "A read walks outward from process memory to Redis to the origin. The policy declares namespace, TTL, stale window and scope, and `cacheKey` refuses both scope mistakes — a per-user key with no owner, and a shared key handed one.",
 			"when_to_use": "Use when reads substantially outnumber writes, the result is expensive and reused, and bounded staleness is acceptable. Not because a cache exists.",
@@ -8518,7 +9013,13 @@
 					"prefer_when": "the app runs as one long-lived instance, so there is no second instance for a shared tier to serve"
 				}
 			],
-			"requires": ["redis"],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "more than one instance serves and the shared tier is wanted; one process runs on the memory tier"
+				}
+			],
 			"capabilities": ["caching", "cache tiers", "TTL", "cache invalidation", "cache scope"],
 			"keywords": [
 				"cache",
@@ -8529,7 +9030,9 @@
 				"invalidation",
 				"stale",
 				"cache key",
-				"slow query"
+				"slow query",
+				"local → shared → origin",
+				"with key scope enforced"
 			],
 			"depends_on": [],
 			"docs": [
@@ -8587,7 +9090,7 @@
 		{
 			"id": "stale-while-revalidate",
 			"tier": "deep",
-			"title": "Stale-while-revalidate (and stale-if-error)",
+			"title": "Stale-while-revalidate",
 			"category": "velocity-data",
 			"summary": "A value past its TTL but inside its stale window is returned immediately and refreshed behind the response; a failing refresh leaves the stale value in place rather than turning a slow dependency into a 500.",
 			"when_to_use": "Use when slightly stale is better than waiting: dashboards, feeds, metadata, public content, aggregate counts. Never for authorization, security state or balances requiring strong consistency.",
@@ -8602,7 +9105,13 @@
 					"prefer_when": "a reader must never see a value past its TTL and paying the recompute latency is acceptable"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "cached values are shared across instances (the refresh claim lives in the shared store)"
+				}
+			],
 			"capabilities": ["stale-while-revalidate", "stale-if-error", "background refresh", "bounded staleness"],
 			"keywords": ["swr", "stale", "revalidate", "dashboard", "feed", "slow page", "background refresh"],
 			"depends_on": ["hierarchical-cache", "critical-path-deferred-tail"],
@@ -8647,7 +9156,7 @@
 		{
 			"id": "singleflight",
 			"tier": "deep",
-			"title": "Singleflight / stampede protection (nobody waits on a lock)",
+			"title": "Singleflight stampede protection",
 			"category": "velocity-data",
 			"summary": "Concurrent callers for one key share one execution, and across instances a refresh claim stops N instances refreshing the same stale key N times — but a cold caller never blocks on a lock, so a failed leader can never become an outage.",
 			"when_to_use": "Use for expensive cache rebuilds, external provider calls, AI calls, aggregate queries and read-model refreshes — anything where a synchronised expiry produces simultaneous identical work.",
@@ -8666,7 +9175,13 @@
 					"prefer_when": "the app runs on one instance, or duplicate refreshes across instances are cheap"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "more than one instance refreshes the same key (the cross-instance refresh claim)"
+				}
+			],
 			"capabilities": ["singleflight", "request coalescing", "stampede protection", "thundering herd"],
 			"keywords": [
 				"stampede",
@@ -8675,7 +9190,8 @@
 				"singleflight",
 				"dogpile",
 				"cache expiry",
-				"duplicate work"
+				"duplicate work",
+				"nobody waits on a lock"
 			],
 			"depends_on": ["hierarchical-cache"],
 			"docs": [
@@ -8744,7 +9260,18 @@
 					"prefer_when": "the parallel calls are the same lookup repeated per item — that is N+1, and batching removes the round trips"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "the query census that counts round trips per request reads the database layer"
+				},
+				{
+					"need": "key-value-store",
+					"level": "implementation",
+					"why": "the showcase caches its measurements in Redis"
+				}
+			],
 			"capabilities": ["concurrency", "parallel loading", "N+1 avoidance", "request fan-out"],
 			"keywords": ["waterfall", "sequential", "parallel", "promise.all", "n+1", "slow page", "concurrent", "await"],
 			"depends_on": [],
@@ -8798,7 +9325,7 @@
 			"when_to_use": "Use when one screen repeatedly needs several tables, counts, permissions and aggregates at once. Not for a screen a direct query already answers.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["relational-db"],
 			"capabilities": ["read model", "projection", "denormalization", "dashboard performance"],
 			"keywords": ["read model", "projection", "rollup", "aggregate", "dashboard", "cqrs", "materialized"],
 			"depends_on": [],
@@ -8828,7 +9355,7 @@
 		{
 			"id": "query-budget",
 			"tier": "deep",
-			"title": "Query budget and N+1 proof (counting is not proving)",
+			"title": "Query budget and N+1 proof",
 			"category": "velocity-data",
 			"summary": "Database round trips counted per request by the driver's own logger, and per operation by a gate that runs each one over two data sizes — because N+1 is a claim about how cost SCALES, which no single request can settle.",
 			"when_to_use": "Use on any user-facing path that touches a datastore, and on every list endpoint without exception.",
@@ -8846,7 +9373,7 @@
 					"prefer_when": "the question is why one query is slow, not how many round trips an operation makes"
 				}
 			],
-			"requires": ["postgres"],
+			"needs": ["relational-db"],
 			"capabilities": ["query budget", "N+1 detection", "round-trip counting", "EXPLAIN", "index verification"],
 			"keywords": [
 				"n+1",
@@ -8858,7 +9385,8 @@
 				"slow query",
 				"orm",
 				"hnsw",
-				"budget"
+				"budget",
+				"counting is not proving"
 			],
 			"depends_on": ["performance-budget-ratchet"],
 			"docs": [
@@ -8938,7 +9466,13 @@
 					"prefer_when": "the result belongs inside the response body and should stream in after the first bytes"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "the cited example defers analytics writes to Postgres"
+				}
+			],
 			"capabilities": ["deferred work", "after-response execution", "fire-and-forget", "background effects"],
 			"keywords": [
 				"defer",
@@ -8998,7 +9532,7 @@
 		{
 			"id": "critical-rendering-path",
 			"tier": "deep",
-			"title": "Critical rendering path (the LCP element paints from the document)",
+			"title": "Critical rendering path",
 			"category": "velocity-runtime",
 			"summary": "What the first viewport needs paints from the server HTML and its render-blocking CSS: no hydration gate on visible content, and a late-discovered LCP graphic inlined server-side once, with a hashed CSS-mask fallback for client navigation.",
 			"when_to_use": "Use when lab or field data shows LCP landing with hydration or the load event — the LCP element is hidden until JavaScript runs, or is an image found only after CSS and layout.",
@@ -9017,7 +9551,7 @@
 					"prefer_when": "the LCP element is a raster image that can be a real element rather than a CSS background or mask"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"largest contentful paint",
 				"server-side rendering",
@@ -9033,7 +9567,8 @@
 				"preload",
 				"render blocking",
 				"hero",
-				"critical rendering path"
+				"critical rendering path",
+				"lcp element paints from the document"
 			],
 			"depends_on": [],
 			"docs": [
@@ -9071,7 +9606,7 @@
 		{
 			"id": "heavy-dependency-quarantine",
 			"tier": "deep",
-			"title": "Heavy dependency quarantine (the baseline is the metric)",
+			"title": "Heavy dependency quarantine",
 			"category": "velocity-runtime",
 			"summary": "Optional heavyweight capabilities load behind dynamic-import boundaries, and the gated metric is not the route's own size but the shared baseline every other route pays — `baseline_js_kb`, ratcheted with ~3% headroom.",
 			"when_to_use": "Use when a dependency is large, feature-specific, rarely used, browser-only or expensive to initialize — 3D, maps, charts, editors, graph visualization.",
@@ -9089,7 +9624,7 @@
 					"prefer_when": "images or fonts, not client JavaScript, dominate page load"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["code splitting", "bundle budget", "dynamic import", "dependency isolation"],
 			"keywords": [
 				"bundle",
@@ -9099,7 +9634,8 @@
 				"baseline",
 				"tree shaking",
 				"threejs",
-				"chunk"
+				"chunk",
+				"baseline is the metric"
 			],
 			"depends_on": ["performance-budget-ratchet"],
 			"docs": [
@@ -9151,7 +9687,7 @@
 		{
 			"id": "side-effect-free-components",
 			"tier": "deep",
-			"title": "Side-effect-free component tree (barrels that tree-shake)",
+			"title": "Side-effect-free component tree",
 			"category": "velocity-runtime",
 			"summary": "Compiled Svelte components run code at module scope, so the bundler keeps every component a barrel re-exports. Declaring the component directory side-effect free in the bundler makes an unused export droppable — and an import made for side effects alone silently vanishes, which a gate forbids.",
 			"when_to_use": "Use when a Svelte component library is consumed through barrel files and the shared or per-route bundle carries components the page never renders.",
@@ -9169,7 +9705,7 @@
 					"prefer_when": "the components ship as a separate npm package rather than an in-repo directory"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["tree shaking", "bundle size", "barrel files", "dead code elimination"],
 			"keywords": [
 				"tree shaking",
@@ -9181,7 +9717,8 @@
 				"vite",
 				"bundle",
 				"svelte components",
-				"index.ts"
+				"index.ts",
+				"barrels that tree-shake"
 			],
 			"depends_on": ["performance-budget-ratchet"],
 			"docs": [
@@ -9222,7 +9759,7 @@
 		{
 			"id": "main-thread-budget",
 			"tier": "deep",
-			"title": "Main-thread budget (worker → WASM, each step measured)",
+			"title": "Main-thread budget",
 			"category": "velocity-runtime",
 			"summary": "Expensive browser work moves off the main thread only where measurement justifies it: cheap stays inline, noticeable CPU work goes to a Web Worker, and WASM is reached for last — benchmarked against a line-for-line JS implementation including transfer cost.",
 			"when_to_use": "Use for large parsing, image processing, graph layout, data crunching or expensive editor operations — anything that would otherwise block input and rendering.",
@@ -9245,9 +9782,28 @@
 					"prefer_when": "a WASM kernel has not beaten a line-for-line JS implementation with transfer cost included"
 				}
 			],
-			"requires": ["web-worker"],
+			"needs": [
+				"web-worker",
+				{
+					"need": "wasm-toolchain",
+					"level": "optional",
+					"why": "the WebAssembly rung, for kernels worth compiling"
+				}
+			],
 			"capabilities": ["web workers", "wasm", "compute isolation", "main thread", "responsiveness"],
-			"keywords": ["worker", "wasm", "webassembly", "main thread", "blocking", "jank", "inp", "offload", "rust"],
+			"keywords": [
+				"worker",
+				"wasm",
+				"webassembly",
+				"main thread",
+				"blocking",
+				"jank",
+				"inp",
+				"offload",
+				"rust",
+				"worker → wasm",
+				"each step measured"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -9305,7 +9861,7 @@
 		{
 			"id": "resilience-policy",
 			"tier": "deep",
-			"title": "Resilience policy (breaker, bulkhead, shedding, bounded retry)",
+			"title": "Resilience policy",
 			"category": "velocity-runtime",
 			"summary": "Four separate decisions about an unhealthy dependency — should we call it, how much of the pool may it hold, is this work worth doing under pressure, and is this failure worth repeating — kept apart because none of them substitutes for another.",
 			"when_to_use": "Use around any dependency that can fail, throttle or slow down: AI providers, Redis, the database, external APIs, object storage.",
@@ -9328,7 +9884,13 @@
 					"prefer_when": "the dependency backs a read whose stale result is acceptable during an outage"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "breaker state must be shared across instances"
+				}
+			],
 			"capabilities": [
 				"circuit breaker",
 				"bulkhead",
@@ -9353,7 +9915,9 @@
 				"retry storm",
 				"noisy neighbour",
 				"tail latency",
-				"dependency down"
+				"dependency down",
+				"breaker",
+				"shedding"
 			],
 			"depends_on": [],
 			"docs": [
@@ -9438,7 +10002,13 @@
 					"prefer_when": "the framework already ships one; v10r's generator parses woff2 with Node's zlib to avoid a dependency and lands within 0.5% of next/font's values"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "object-storage",
+					"level": "conditional",
+					"when": "assets are served from object storage"
+				}
+			],
 			"capabilities": ["font loading", "layout shift", "image delivery", "CDN delivery", "responsive images"],
 			"keywords": [
 				"font",
@@ -9514,7 +10084,7 @@
 			"when_to_use": "Use when the architecture contains remote databases, caches, object storage or AI providers — which is to say, almost always on serverless.",
 			"avoid_when": [],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["deployment locality", "region placement", "cross-region latency", "locality probe"],
 			"keywords": ["region", "edge", "locality", "cold start", "cross-region", "latency", "deployment", "round trip"],
 			"depends_on": [],
@@ -9550,7 +10120,7 @@
 		{
 			"id": "deadline-propagation",
 			"tier": "deep",
-			"title": "Deadline propagation (one budget, divided)",
+			"title": "Deadline propagation",
 			"category": "velocity-runtime",
 			"summary": "A latency budget stamped once at the edge, from which every downstream operation takes what is LEFT rather than a fresh window of its own — so the request has a stated bound instead of the sum of independently-chosen timeouts.",
 			"when_to_use": "Use when a request or job calls external APIs, AI providers, distributed services, several databases in sequence, or anything that retries.",
@@ -9565,7 +10135,13 @@
 					"prefer_when": "the operation is one call with no nested or retried work beneath it"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "the cited example is a job that refreshes rows in Postgres"
+				}
+			],
 			"capabilities": ["deadline propagation", "timeout budget", "cancellation", "bounded request latency"],
 			"keywords": [
 				"deadline",
@@ -9576,7 +10152,9 @@
 				"tail latency",
 				"slow api",
 				"hanging request",
-				"504"
+				"504",
+				"one budget",
+				"divided"
 			],
 			"depends_on": ["resilience-policy"],
 			"docs": [
@@ -9629,7 +10207,7 @@
 		{
 			"id": "latency-tracing",
 			"tier": "deep",
-			"title": "Latency tracing (a v10r span API, Server-Timing as one renderer)",
+			"title": "Latency tracing",
 			"category": "velocity-measurement",
 			"summary": "Every layer records spans into a request-scoped recorder stamped by the outermost handler; `Server-Timing` renders them for callers who already see internals, and `unattributed` reports the wall-clock time no span claimed.",
 			"when_to_use": "Use anywhere performance matters and a slow response needs to decompose — the request lifecycle, domain operations, databases, caches, external services.",
@@ -9648,7 +10226,13 @@
 					"prefer_when": "you only need to know that a response is slow, not which layer made it slow"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "the query census beside the tracer reads the database layer"
+				}
+			],
 			"capabilities": ["tracing", "spans", "server-timing", "latency attribution", "observability"],
 			"keywords": [
 				"tracing",
@@ -9658,7 +10242,8 @@
 				"slow response",
 				"attribution",
 				"opentelemetry",
-				"profiling"
+				"profiling",
+				"server-timing as one renderer"
 			],
 			"depends_on": [],
 			"docs": [
@@ -9712,7 +10297,7 @@
 		{
 			"id": "performance-budget-ratchet",
 			"tier": "deep",
-			"title": "Performance budget and ratchet (targets aspire, ceilings hold)",
+			"title": "Performance budget and ratchet",
 			"category": "velocity-measurement",
 			"summary": "Two thresholds with different jobs: targets are where we want to be and never fail a build, ceilings are the measured value at the moment it was accepted and only ever move down. A gate wired to a target gets muted the afternoon it is added.",
 			"when_to_use": "Use for any deterministic metric worth defending — shared JS, route JS, prerendered document weight, known expensive queries.",
@@ -9726,9 +10311,20 @@
 					"prefer_when": "the metric is noisy or field-measured and only needs to stay visible"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["performance budget", "regression gate", "ratchet", "bundle size"],
-			"keywords": ["budget", "ratchet", "ceiling", "regression", "bundle size", "gate", "web vitals", "target"],
+			"keywords": [
+				"budget",
+				"ratchet",
+				"ceiling",
+				"regression",
+				"bundle size",
+				"gate",
+				"web vitals",
+				"target",
+				"targets aspire",
+				"ceilings hold"
+			],
 			"depends_on": [],
 			"docs": [
 				{
@@ -9794,7 +10390,7 @@
 		{
 			"id": "scenario-harness",
 			"tier": "deep",
-			"title": "Performance scenario harness (adverse conditions, committed)",
+			"title": "Performance scenario harness",
 			"category": "velocity-measurement",
 			"summary": "Representative paths driven under one adverse condition at a time — cold cache, expiry burst, hanging dependency, failing dependency, concurrency, refusal — with the deterministic columns gated and the timings only reported. A system is not proven fast because localhost is fast.",
 			"when_to_use": "Use once the obvious latency work is done and the remaining risk is behaviour under failure and load rather than in the happy path.",
@@ -9813,7 +10409,13 @@
 					"prefer_when": "the condition is cold compute, network latency or large-dataset behaviour a simulated dependency cannot reproduce"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "key-value-store",
+					"level": "implementation",
+					"why": "the scenarios exercise the Redis tier as one adverse dependency"
+				}
+			],
 			"capabilities": ["scenario testing", "load behaviour", "failure testing", "resilience proof"],
 			"keywords": [
 				"scenario",
@@ -9825,7 +10427,9 @@
 				"harness",
 				"benchmark",
 				"adverse",
-				"degradation"
+				"degradation",
+				"adverse conditions",
+				"committed"
 			],
 			"depends_on": ["performance-budget-ratchet", "resilience-policy"],
 			"docs": [
@@ -9873,7 +10477,7 @@
 		{
 			"id": "name-check",
 			"tier": "deep",
-			"title": "Name check (resilient multi-source fan-out)",
+			"title": "Name check",
 			"category": "integrations",
 			"summary": "One report from several unreliable upstreams: concurrent per-source deadlines, a breaker, bulkhead and daily quota per source, per-source coverage instead of failure, dependency-free name similarity, and a descriptive conflict signal that never claims legal availability.",
 			"when_to_use": "Use when a feature aggregates third-party APIs of uneven reliability and the user needs an honest partial answer — what was found, and where the search could not look — rather than an all-or-nothing one.",
@@ -9891,7 +10495,19 @@
 					"prefer_when": "one reliable source covers the whole question and a failure can simply be an error response"
 				}
 			],
-			"requires": ["postgres", "third-party-api"],
+			"needs": [
+				"external-api",
+				{
+					"need": "key-value-store",
+					"level": "conditional",
+					"when": "daily per-source quotas and cached reports are shared across instances"
+				},
+				{
+					"need": "relational-db",
+					"level": "conditional",
+					"when": "paid sources need stored, encrypted API credentials"
+				}
+			],
 			"capabilities": [
 				"multi-source aggregation",
 				"per-source coverage",
@@ -9913,7 +10529,8 @@
 				"phonetic",
 				"quota",
 				"aggregation",
-				"partial results"
+				"partial results",
+				"resilient multi-source fan-out"
 			],
 			"depends_on": ["resilience-policy", "deadline-propagation", "hierarchical-cache"],
 			"docs": [
@@ -10000,7 +10617,7 @@
 		{
 			"id": "source-of-truth-gate",
 			"tier": "deep",
-			"title": "Source-of-truth gate (one owner, bound copies)",
+			"title": "Source-of-truth gate",
 			"category": "integrity-truth",
 			"summary": "Every fact has exactly one owner; every other copy is typed, imported, generated with a --check, or bound by a drift test with a non-empty control — and reading the owner fails closed instead of falling back to a second source.",
 			"when_to_use": "Use whenever a fact must exist in more than one place — a client mirror of a server enum, a public page that states what a job enforces, a script that runs outside the bundler, two runtimes serving one registry.",
@@ -10018,7 +10635,18 @@
 					"prefer_when": "never for authoritative configuration; acceptable only for presentation defaults where a wrong value is harmless"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "the cited example gates AI provider connections stored in Postgres"
+				},
+				{
+					"need": "llm-provider",
+					"level": "implementation",
+					"why": "the cited example gates AI provider connections"
+				}
+			],
 			"capabilities": [
 				"single source of truth",
 				"drift test",
@@ -10040,7 +10668,9 @@
 				"fail closed",
 				"fallback",
 				"duplicate",
-				"sync"
+				"sync",
+				"one owner",
+				"bound copies"
 			],
 			"depends_on": [],
 			"docs": [
@@ -10119,7 +10749,7 @@
 		{
 			"id": "evidence-status-dimensions",
 			"tier": "deep",
-			"title": "Evidence status dimensions (verdict, coverage, confidence, freshness kept apart)",
+			"title": "Evidence status dimensions",
 			"category": "integrity-truth",
 			"summary": "\"How sure are we?\" is several questions — what the evidence suggests, how far we looked, who produced it and how confident they were, whether the reference still resolves, and when it goes stale — each stored in its own field, never merged into one score.",
 			"when_to_use": "Use when a system reports findings a person will act on: aggregated external lookups, AI-proposed values, citations, verification grades, performance verdicts.",
@@ -10133,7 +10763,7 @@
 					"prefer_when": "ranking candidates internally where no one acts on the number itself — never as a stored or displayed status"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"coverage reporting",
 				"confidence vs acceptance",
@@ -10155,7 +10785,8 @@
 				"grade",
 				"score",
 				"verdict",
-				"epistemic"
+				"epistemic",
+				"freshness kept apart"
 			],
 			"depends_on": [],
 			"docs": [
@@ -10234,7 +10865,7 @@
 		{
 			"id": "derivation-key",
 			"tier": "deep",
-			"title": "Derivation key (freshness by input fingerprint)",
+			"title": "Derivation key",
 			"category": "integrity-derivation",
 			"summary": "A derived output stores derivationKey(transform@version, inputs) beside itself and is current exactly while a recomputed key matches — catching the code changes a content hash cannot see, and skipping re-derivation when nothing moved.",
 			"when_to_use": "Use for any stored output derived from inputs through code that evolves: chunks and embeddings, rendered projections, extracted metadata, anything expensive to recompute or read while stale.",
@@ -10252,7 +10883,18 @@
 					"prefer_when": "recomputation is cheap enough that comment edits re-deriving everything costs nothing"
 				}
 			],
-			"requires": ["postgres"],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "conditional",
+					"when": "derived outputs live in a database (the key is stored beside them)"
+				},
+				{
+					"need": "llm-provider",
+					"level": "implementation",
+					"why": "v10r's main example derives embeddings for retrieval chunks"
+				}
+			],
 			"capabilities": [
 				"incremental recomputation",
 				"stale output detection",
@@ -10275,7 +10917,8 @@
 				"re-embed",
 				"content hash",
 				"dependency graph",
-				"cycle"
+				"cycle",
+				"freshness by input fingerprint"
 			],
 			"depends_on": [],
 			"docs": [
@@ -10345,7 +10988,7 @@
 		{
 			"id": "reproducible-artifact-build",
 			"tier": "deep",
-			"title": "Reproducible artifact build (regenerate-and-diff, or manifest + digest)",
+			"title": "Reproducible artifact build",
 			"category": "integrity-derivation",
 			"summary": "Committed generated artifacts are proven current by the gate: regenerate-and-diff (missing and orphan outputs included) when the generator can run there, an SLSA-shaped manifest of input/output digests plus a pinned toolchain when it cannot — each artifact labelled bit-for-bit or input-addressed.",
 			"when_to_use": "Use for any generated output committed to the repo or shipped as a file: generated docs and indexes, snapshots, compiled binaries, vendored builds.",
@@ -10363,7 +11006,7 @@
 					"prefer_when": "the toolchain can run in CI cheaply — stronger than a manifest, which only proves the files match what was hashed"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"generated artifact check",
 				"build manifest",
@@ -10385,7 +11028,9 @@
 				"vendored",
 				"wasm",
 				"determinism",
-				"stale artifact"
+				"stale artifact",
+				"regenerate-and-diff",
+				"or manifest"
 			],
 			"depends_on": [],
 			"docs": [
@@ -10446,7 +11091,7 @@
 		{
 			"id": "provenance-record",
 			"tier": "deep",
-			"title": "Provenance record (entity, activity, agent — PROV-DM core)",
+			"title": "Provenance record",
 			"category": "integrity-derivation",
 			"summary": "Where a value came from is recorded with the W3C PROV-DM core only: the entity pinned to a revision or content hash, the activity with its transform version, and the agent (human, software or AI, on whose behalf) — with an explicit erasure decision per trail.",
 			"when_to_use": "Use when a reader must tell who or what produced a value — AI-drafted vs human-edited fields, published revisions, derived corpora, privileged actions, built binaries.",
@@ -10460,7 +11105,14 @@
 					"prefer_when": "a lineage backend consumes pipeline-level events across many jobs"
 				}
 			],
-			"requires": ["postgres"],
+			"needs": [
+				"relational-db",
+				{
+					"need": "vector-search",
+					"level": "implementation",
+					"why": "the revision table it cites also stores embeddings"
+				}
+			],
 			"capabilities": [
 				"attribution",
 				"ai vs human authorship",
@@ -10481,7 +11133,10 @@
 				"derived from",
 				"who changed",
 				"origin",
-				"gdpr"
+				"gdpr",
+				"entity",
+				"activity",
+				"agent — prov-dm core"
 			],
 			"depends_on": ["derivation-key"],
 			"docs": [
@@ -10542,7 +11197,7 @@
 		{
 			"id": "durable-step-execution",
 			"tier": "deep",
-			"title": "Durable step execution (claim, lease, fence, receipts)",
+			"title": "Durable step execution",
 			"category": "integrity-execution",
 			"summary": "Multi-step work that can be killed halfway survives without a workflow engine: a conditional status machine, one claim, a database-clock lease with a reaper, a fence so a stale owner cannot write, and per-step receipts committed with each step's effect.",
 			"when_to_use": "Use for short, few-step work that outlives a request or can be interrupted — outbox delivery, replaying an approved AI plan, driving an external long-running operation.",
@@ -10560,7 +11215,7 @@
 					"prefer_when": "a long-running worker process is available, which serverless Hobby hosting does not give you"
 				}
 			],
-			"requires": ["postgres"],
+			"needs": ["relational-db"],
 			"capabilities": [
 				"durable execution",
 				"lease and reaper",
@@ -10586,7 +11241,9 @@
 				"retry",
 				"compensation",
 				"skip locked",
-				"reaper"
+				"reaper",
+				"claim",
+				"receipts"
 			],
 			"depends_on": [],
 			"docs": [
@@ -10651,7 +11308,7 @@
 		{
 			"id": "versioned-document-session",
 			"tier": "deep",
-			"title": "Versioned document session (save queue, drafts, CAS, explicit conflict)",
+			"title": "Versioned document session",
 			"category": "integrity-execution",
 			"summary": "A browser-edited document stays server-authoritative: debounced serialised saves carrying their base version, compare-and-swap rejection as an explicit conflict state, per-writer local drafts no other tab can erase, and reloads that fetch before they replace.",
 			"when_to_use": "Use for documents a user edits over time while the server, another tab or an AI write can change them — sheets, notes, settings pages with autosave.",
@@ -10669,7 +11326,7 @@
 					"prefer_when": "edits are rare and a lost tab costs nothing"
 				}
 			],
-			"requires": ["postgres"],
+			"needs": ["relational-db"],
 			"capabilities": [
 				"autosave",
 				"compare-and-swap",
@@ -10691,7 +11348,10 @@
 				"multi-tab",
 				"localstorage",
 				"sync",
-				"crdt"
+				"crdt",
+				"save queue",
+				"drafts",
+				"explicit conflict"
 			],
 			"depends_on": [],
 			"docs": [
@@ -10746,7 +11406,7 @@
 		{
 			"id": "dynamic-attributes",
 			"tier": "deep",
-			"title": "Dynamic attributes (self-describing records the user defines at runtime)",
+			"title": "Dynamic attributes",
 			"category": "forms",
 			"summary": "A record that starts almost empty and grows labelled, typed attributes its user names, with the definitions stored inline beside the values: stable attribute ids make renames free, lossy type changes keep the old value, removals are restorable, unknown kinds survive opaquely, and a fail-closed codec plus a version check guard every save, with conflicts merged by attribute id. Records can bind to a shared attribute dictionary (stable definition ids, labels per locale, append-only revisions) and be projected per consumer — renamed, nested, unit-converted — with each consumer pinned to a revision and an impact check before it moves.",
 			"when_to_use": "Use when the facts on a record differ from one record to the next and belong to the person writing them — an asset panel, a character sheet, a sample log — and the record loads and saves as one unit.",
@@ -10770,7 +11430,13 @@
 					"prefer_when": "the schema is fixed or comes from outside, and the user fills it in rather than defines it"
 				}
 			],
-			"requires": [],
+			"needs": [
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r stores attribute records in the Desk's Postgres tables"
+				}
+			],
 			"capabilities": [
 				"user-defined fields",
 				"typed values",
@@ -10806,7 +11472,8 @@
 				"syndication",
 				"channel mapping",
 				"attribute dictionary",
-				"versioned labels"
+				"versioned labels",
+				"self-describing records the user defines at runtime"
 			],
 			"depends_on": ["versioned-document-session"],
 			"docs": [
@@ -10920,7 +11587,7 @@
 		{
 			"id": "asset-rights-manifest",
 			"tier": "deep",
-			"title": "Asset rights manifest (owned rights record + gate over shipped files)",
+			"title": "Asset rights manifest",
 			"category": "integrity-truth",
 			"summary": "Every third-party file the app ships carries one AssetRights record (author, SPDX license, source) owned by the module that uses it, derived into every surface that credits it, and gated against the files actually present — metadata presence and shape, never a legal conclusion.",
 			"when_to_use": "Use when the app ships third-party media — models, photos, fonts, sounds — whose licenses require attribution or restrict use.",
@@ -10938,7 +11605,7 @@
 					"prefer_when": "users upload the assets at runtime, so no module can own the record at build time"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["license metadata", "attribution", "spdx", "asset inventory gate", "credits page"],
 			"keywords": [
 				"license",
@@ -10953,7 +11620,9 @@
 				"asset",
 				"model",
 				"photo",
-				"font"
+				"font",
+				"owned rights record",
+				"gate over shipped files"
 			],
 			"depends_on": ["source-of-truth-gate"],
 			"docs": [
@@ -11012,7 +11681,7 @@
 		{
 			"id": "encryption-key-ring",
 			"tier": "deep",
-			"title": "Encryption key ring (envelopes name their key, rotation re-seals)",
+			"title": "Encryption key ring",
 			"category": "admin-privacy",
 			"summary": "Stored credentials are AES-256-GCM envelopes that name the key sealing them (a derived key id), opened by a ring of current and previous keys, so rotating ENCRYPTION_KEY is a ring change plus a re-seal sweep with a compare-and-swap on the envelope — never a mass re-entry of secrets.",
 			"when_to_use": "Use when the app stores third-party credentials or other secrets encrypted under a deployment key that must be rotatable.",
@@ -11030,7 +11699,7 @@
 					"prefer_when": "the envelope format cannot change, e.g. a third-party reader parses it"
 				}
 			],
-			"requires": ["postgres", "cron"],
+			"needs": ["relational-db", "scheduler"],
 			"capabilities": ["key rotation", "credentials at rest", "envelope encryption", "re-encryption sweep", "key id"],
 			"keywords": [
 				"encryption",
@@ -11044,7 +11713,9 @@
 				"ciphertext",
 				"reseal",
 				"re-encrypt",
-				"keyring"
+				"keyring",
+				"envelopes name their key",
+				"rotation re-seals"
 			],
 			"depends_on": ["jobs-scheduler"],
 			"docs": [
@@ -11109,7 +11780,7 @@
 		{
 			"id": "url-search-state",
 			"tier": "deep",
-			"title": "URL state (one typed spec for search params, navigate vs shallow writes)",
+			"title": "URL state",
 			"category": "architecture",
 			"summary": "Search params are read and written through one typed spec shared by loads and components — invalid input falls back instead of throwing, defaults never reach the URL, foreign params survive — and every write picks navigate (goto, the load re-runs) or shallow (replaceState from $app/navigation, no load, no navigation hooks), never raw history.",
 			"when_to_use": "Use when sort, paging, a search term or a view selection must survive reload, sharing and back/forward.",
@@ -11127,7 +11798,7 @@
 					"prefer_when": "the state should survive back/forward but must not be shareable"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["url state", "search params", "shareable list state", "shallow routing", "typed query params"],
 			"keywords": [
 				"search params",
@@ -11138,7 +11809,10 @@
 				"shallow routing",
 				"sort",
 				"pagination params",
-				"bookmark"
+				"bookmark",
+				"one typed spec for search params",
+				"navigate",
+				"shallow writes"
 			],
 			"depends_on": ["architecture-state-management"],
 			"docs": [
@@ -11202,7 +11876,7 @@
 		{
 			"id": "form-draft-recovery",
 			"tier": "deep",
-			"title": "Form draft recovery (kept in the browser, offered back, guarded only when lost)",
+			"title": "Form draft recovery",
 			"category": "forms",
 			"summary": "What a person types into a form is kept in localStorage per account and form, stripped of credential-like fields, offered back after a closed tab or crash (never applied on its own), cleared on a valid submit; the leave prompt fires only when the draft could not be kept.",
 			"when_to_use": "Use when a form takes long enough to fill that losing it to a closed tab, crash or expired session would hurt.",
@@ -11224,7 +11898,7 @@
 					"prefer_when": "the form is short and a leave prompt is all the protection it needs"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": [
 				"form drafts",
 				"draft recovery",
@@ -11242,7 +11916,10 @@
 				"beforenavigate",
 				"lost input",
 				"localstorage",
-				"tainted"
+				"tainted",
+				"kept in the browser",
+				"offered back",
+				"guarded only when lost"
 			],
 			"depends_on": ["forms-superforms-valibot"],
 			"docs": [
@@ -11305,7 +11982,7 @@
 		{
 			"id": "ai-untrusted-content-boundary",
 			"tier": "deep",
-			"title": "Untrusted-content boundary (the lethal trifecta, one rule per leg)",
+			"title": "Untrusted-content boundary",
 			"category": "ai",
 			"summary": "Every AI tool declares where its result comes from and whether it can send data out; user-origin results reach the model as one escaped <untrusted-content> element (this turn via toModelOutput, replayed turns via the history), external-reach tools must be approval-gated, and model output renders no image or unlisted link — a gate test holds all three legs.",
 			"when_to_use": "Use when an assistant reads content a user or third party wrote — files, retrieved documents, web pages, tool output — and can also act or answer with links.",
@@ -11323,7 +12000,7 @@
 					"prefer_when": "you want telemetry on attempts on top of the structural rule, never instead of it"
 				}
 			],
-			"requires": ["ai-provider"],
+			"needs": ["llm-provider"],
 			"capabilities": [
 				"prompt injection defense",
 				"lethal trifecta",
@@ -11341,7 +12018,8 @@
 				"tomodeloutput",
 				"jailbreak",
 				"poisoned document",
-				"delimiter"
+				"delimiter",
+				"one rule per leg"
 			],
 			"depends_on": ["ai-tool-harness", "deskbot-approval-gate"],
 			"docs": [
@@ -11398,7 +12076,7 @@
 		{
 			"id": "ai-agent-actions",
 			"tier": "deep",
-			"title": "Agent actions (one tool catalogue, server and client executors)",
+			"title": "Agent actions",
 			"category": "ai",
 			"summary": "Every action the assistant may take is one tool-catalogue entry with a risk (what it changes) and an executor (server or client). A client action has no server execute: the call streams to the browser that sent the turn, a registered handler validates it, acts, reads the interface back and answers a bounded result, and the same turn continues — so one turn can find a file on the server and open it in a panel, without a second registry, transport or orchestrator.",
 			"when_to_use": "Use when an in-app assistant must operate live interface state (layout, focus, selection, navigation) as part of the same turn that reads or proposes changes to server data, and must report honestly whether the interface change happened.",
@@ -11417,7 +12095,7 @@
 					"prefer_when": "actions must reach a browser other than the one that sent the turn, or outlive the request — and you can afford shared state across instances"
 				}
 			],
-			"requires": ["ai-provider"],
+			"needs": ["llm-provider"],
 			"capabilities": [
 				"agent actions",
 				"client-side tools",
@@ -11442,15 +12120,11 @@
 				"continuation",
 				"webmcp",
 				"ui sdk",
-				"frontend tools"
+				"frontend tools",
+				"one tool catalogue",
+				"server and client executors"
 			],
-			"depends_on": [
-				"ai-tool-harness",
-				"ai-surfaces",
-				"deskbot-approval-gate",
-				"ai-untrusted-content-boundary",
-				"desk-workspace"
-			],
+			"depends_on": ["ai-tool-harness", "ai-surfaces", "deskbot-approval-gate", "ai-untrusted-content-boundary"],
 			"docs": [
 				{
 					"path": "docs/blueprint/ai/agent-actions.md",
@@ -11546,7 +12220,7 @@
 			"id": "ai-mcp-client",
 			"tier": "deep",
 			"category": "ai",
-			"title": "MCP client (external tools projected into the one catalogue)",
+			"title": "MCP client",
 			"summary": "Consume external MCP servers with the official TypeScript client: an SSRF-guarded fetch with no token passthrough, bounded listing with fingerprints and drift detection, and a projection into the existing tool catalogue's vocabulary — namespaced names, reach external, user-origin results, and a risk the deployment assigns (write by default; read only for listed, fingerprint-pinned tools). Annotations are recorded as untrusted hints and never lower a risk. Wired to the deskbot through the external-operations domain: an operator-managed peer directory with fingerprint activation, every peer call approval-gated behind a disclosure card, a content screen that refuses secrets and requires a separate authorization for quoted read content, and a persistent execution claim that runs an approval at most once and settles an interrupted call as unknown, never retried.",
 			"when_to_use": "Use when an assistant should call tools another party operates and you can name and review that peer.",
 			"avoid_when": [
@@ -11559,7 +12233,7 @@
 					"prefer_when": "you are on AI SDK v7 and accept the AI SDK's own protocol implementation instead of the official SDK"
 				}
 			],
-			"requires": ["third-party-api"],
+			"needs": ["llm-provider", "external-api", "relational-db"],
 			"capabilities": [
 				"mcp client",
 				"external tool consumption",
@@ -11580,7 +12254,8 @@
 				"external operation",
 				"execution claim",
 				"content screen",
-				"peer directory"
+				"peer directory",
+				"external tools projected into the one catalogue"
 			],
 			"depends_on": ["ai-tool-harness", "ai-untrusted-content-boundary", "deskbot-approval-gate"],
 			"docs": [
@@ -11664,7 +12339,7 @@
 			"id": "ai-mcp-app-provider",
 			"tier": "deep",
 			"category": "ai",
-			"title": "MCP App provider (an interactive View beside a text answer)",
+			"title": "MCP App provider",
 			"summary": "Serve one read-only MCP tool with a ui:// View through the official ext-apps helpers: a self-contained, network-less HTML View built apart from the app, linked by _meta.ui, with a complete text and structuredContent answer for hosts that render no View. The View reuses the tool's own data and the host's theme; it holds no authority of its own.",
 			"when_to_use": "Use when a tool's answer is easier to explore than to read, such as a graph or a filterable list, and the hosts in your audience render MCP Apps.",
 			"avoid_when": [
@@ -11677,7 +12352,7 @@
 					"prefer_when": "the interaction happens inside your app rather than in third-party MCP hosts"
 				}
 			],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["mcp apps", "ui resource", "interactive tool result", "host theming", "text fallback"],
 			"keywords": [
 				"sep-1865",
@@ -11686,7 +12361,8 @@
 				"registerAppTool",
 				"structuredContent",
 				"sandboxed iframe",
-				"mcp inspector"
+				"mcp inspector",
+				"interactive view beside a text answer"
 			],
 			"depends_on": ["architecture-hosted-mcp"],
 			"docs": [
@@ -11744,7 +12420,7 @@
 			"id": "ai-agent-to-agent",
 			"tier": "deep",
 			"category": "ai",
-			"title": "Agent to agent (A2A specialist agents, served and delegated)",
+			"title": "Agent to agent",
 			"summary": "Serve a specialist agent over A2A 1.0 with the official JS SDK behind a SvelteKit route (agent card, JSON-RPC, SSE) and delegate to independently implemented agents through an allowlisted client on the shared pinned peer egress that types every answer as a claim. Assistant-driven delegation is an approval-gated external operation: operator-listed peers, a disclosure of what is sent to whom, a binding over the agent card, budgets and depth one, cancellation of the remote task on timeout or abort. The served skills run deterministic architecture checks, so tasks cost no model quota and complete inside the request.",
 			"when_to_use": "Use when an evaluation belongs to an independently operated agent (another team, language or framework), or when your own specialist should be callable by such agents.",
 			"avoid_when": [
@@ -11761,7 +12437,7 @@
 					"prefer_when": "you own both sides and the contract is fixed"
 				}
 			],
-			"requires": [],
+			"needs": ["relational-db", "external-api"],
 			"capabilities": [
 				"a2a server",
 				"a2a client",
@@ -11780,7 +12456,9 @@
 				"external operation",
 				"delegation budget",
 				"pinned egress",
-				"cancel task"
+				"cancel task",
+				"a2a specialist agents",
+				"served and delegated"
 			],
 			"depends_on": ["architecture-engineering"],
 			"docs": [
@@ -11848,7 +12526,7 @@
 			"id": "ai-generative-ui",
 			"tier": "deep",
 			"category": "ai",
-			"title": "Generative UI (A2UI surfaces rendered with the app's own components)",
+			"title": "Generative UI",
 			"summary": "The model composes interfaces as A2UI v1.0 data from a closed catalog the application defines; a policy and the official validator refuse anything outside it; a lazy Svelte 5 adapter over the lit-free core of @a2ui/web_core renders it with the app's own components and tokens, binds inputs locally and emits bounded view-risk actions. The catalog has a general section (layout, text, notices, disclosure, form fields with bound errors, a data-table bar chart, progress) and a domain section a derived app replaces. Each press carries an event id and a submission key, and is admitted once against the persisted conversation by a claimed row id, so a retry or double click starts no second turn. The human-facing record stays separate from the model prompt. A2UI Express is the model-output language (about 40 % fewer tokens than A2UI JSON, measured).",
 			"when_to_use": "Use when the shape of an answer depends on the question and must be interactive — forms for missing inputs, comparisons, choices, updates to what is on screen.",
 			"avoid_when": [
@@ -11865,7 +12543,14 @@
 					"prefer_when": "the view is a full application a third party ships"
 				}
 			],
-			"requires": ["ai-provider"],
+			"needs": [
+				"llm-provider",
+				{
+					"need": "relational-db",
+					"level": "implementation",
+					"why": "v10r records surface actions for the action door"
+				}
+			],
 			"capabilities": [
 				"generative ui",
 				"a2ui renderer",
@@ -11885,7 +12570,8 @@
 				"lazy renderer",
 				"event id",
 				"submission key",
-				"dedup"
+				"dedup",
+				"a2ui surfaces rendered with the app's own components"
 			],
 			"depends_on": ["ui-component-system", "ai-untrusted-content-boundary"],
 			"docs": [
@@ -11958,12 +12644,12 @@
 			"id": "ai-webmcp",
 			"tier": "light",
 			"category": "ai",
-			"title": "WebMCP publication of client actions (experiment)",
+			"title": "WebMCP publication of client actions",
 			"summary": "Publishes existing client-action contracts to the browser's own agent through document.modelContext when it exists: same schema, runner, timeouts and bounded results; only read and view actions; a per-minute budget; withdrawn on dispose. Progressive enhancement only.",
 			"when_to_use": "Use when bounded client actions exist and external browser agents should operate the view without screen-scraping.",
 			"avoid_when": ["The action changes stored data", "A page would depend on it — the API is in an origin trial"],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["webmcp", "browser agent tools"],
 			"keywords": ["document.modelContext", "registerTool", "origin trial"],
 			"depends_on": ["ai-agent-actions"],
@@ -11999,12 +12685,12 @@
 			"id": "ai-agent-user-interaction",
 			"tier": "light",
 			"category": "ai",
-			"title": "AG-UI endpoint over the turn stream (experiment)",
+			"title": "AG-UI endpoint over the turn stream",
 			"summary": "Serves an existing AI SDK agent to AG-UI clients without a second runtime: RunAgentInput is validated by the official schemas and mapped onto the surface's own request, the same orchestrator turn runs, and its stream is projected to AG-UI events under a deny-by-default export policy. Client actions are AG-UI frontend tools; server tool results replay only under a server-issued ticket; state and resume are refused, approvals stay on the approve route.",
 			"when_to_use": "Use when an AG-UI frontend must talk to an existing AI SDK agent.",
 			"avoid_when": ["Your only client is your own — keep the AI SDK stream"],
 			"alternatives": [],
-			"requires": [],
+			"needs": ["llm-provider"],
 			"capabilities": ["ag-ui", "agent frontend events"],
 			"keywords": ["ag-ui", "copilotkit", "RUN_STARTED", "RunAgentInput", "HttpAgent", "frontend tools"],
 			"depends_on": ["ai-agent-actions"],
@@ -12063,7 +12749,7 @@
 			"when_to_use": "Use when an OpenTelemetry backend should read agent turns without a second tracer.",
 			"avoid_when": ["No telemetry backend exists — the trace and admin pages already answer the questions"],
 			"alternatives": [],
-			"requires": [],
+			"needs": [],
 			"capabilities": ["opentelemetry genai", "agent telemetry"],
 			"keywords": ["gen_ai", "semantic conventions", "invoke_agent", "execute_tool"],
 			"depends_on": ["ai-turn-trace"],
@@ -12098,7 +12784,7 @@
 		{
 			"id": "ai-eval-regression-suite",
 			"tier": "deep",
-			"title": "AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)",
+			"title": "AI eval regression suite",
 			"category": "ai",
 			"summary": "A committed golden set of questions, each with the facts its recorded turn must show — citations surfaced not recalled, the right tool called, no forbidden tool, an approval stop, no invented command — graded by pure functions over the turn trace, with a pass-rate floor that only rises; live runs go through the app's own routes against a local dev server.",
 			"when_to_use": "Use when prompts, retrieval, tools or models change often and unit tests mock the model, so quality regressions would ship unnoticed.",
@@ -12116,7 +12802,7 @@
 					"prefer_when": "only the retrieval layer changes and no model call is needed to score it"
 				}
 			],
-			"requires": ["ai-provider", "postgres"],
+			"needs": ["llm-provider"],
 			"capabilities": ["ai evals", "golden set", "regression testing", "deterministic grading", "quality ratchet"],
 			"keywords": [
 				"eval",
@@ -12129,7 +12815,9 @@
 				"hallucination",
 				"citation check",
 				"prompt regression",
-				"quality gate"
+				"quality gate",
+				"deterministic graders over the turn trace",
+				"floor ratchet"
 			],
 			"depends_on": ["ai-turn-trace", "performance-budget-ratchet"],
 			"docs": [
@@ -12198,7 +12886,7 @@
 		{
 			"id": "pim-sheet-transform-recipe",
 			"tier": "deep",
-			"title": "PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)",
+			"title": "PIM sheet transform with AI agents",
 			"category": "office-workflows",
 			"summary": "Supplier Excel/CSV product exports become a target's import sheet without the model touching a row: the agent reads a bounded column profile and proposes a typed transform recipe, a column walk refuses imagined columns, code runs the recipe over every row (unreadable values left unchanged and listed by source line), and a target-schema check over the full output is the definition of done — in a bounded propose → run → check → revise loop, in-app, or from a terminal agent with the `pim` program over plain job folders (no git, no repo; one dated output folder per run).",
 			"when_to_use": "Use when product data (supplier exports, ERP dumps, marketplace templates) arrives as spreadsheets that must be analysed and transformed into a fixed import format, the same kind of file recurs, or the sheet is too large to check by eye.",
@@ -12221,7 +12909,7 @@
 					"prefer_when": "the logic needs real code (lookups against an ERP, conditional derivations) beyond the op vocabulary"
 				}
 			],
-			"requires": ["ai-provider"],
+			"needs": ["llm-provider"],
 			"capabilities": [
 				"pim",
 				"product data",
@@ -12250,7 +12938,11 @@
 				"etl",
 				"job folder",
 				"no git",
-				"standalone executable"
+				"standalone executable",
+				"profile",
+				"proposed recipe",
+				"deterministic run",
+				"target check"
 			],
 			"depends_on": [],
 			"docs": [

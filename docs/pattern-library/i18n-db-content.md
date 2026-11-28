@@ -1,10 +1,10 @@
 ---
-title: "DB content i18n (JSONB sidecar + `tc()`)"
+title: "Translated database content"
 description: "A source-column plus JSONB-sidecar convention (e.g. name / name_i18n) for translating short database fields, resolved at read time by the tc() helper with an…"
 category: "Internationalization (i18n)"
 ---
 
-# DB content i18n (JSONB sidecar + `tc()`)
+# Translated database content
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A source-column plus JSONB-sidecar convention (e.g. name / name_i18n) for translating short database fields, resolved at read time by the tc() helper with an explicit locale argument.
 
 **When to use:** Use when a database field (title, name, summary) needs per-locale translations stored alongside the English canonical value.
+
+**Needs:** required relational-db
 
 ## Docs
 

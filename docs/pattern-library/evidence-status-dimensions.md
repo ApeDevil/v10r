@@ -1,10 +1,10 @@
 ---
-title: "Evidence status dimensions (verdict, coverage, confidence, freshness kept apart)"
+title: "Evidence status dimensions"
 description: "\"How sure are we?\" is several questions — what the evidence suggests, how far we looked, who produced it and how confident they were, whether the reference…"
 category: "Truth & Evidence"
 ---
 
-# Evidence status dimensions (verdict, coverage, confidence, freshness kept apart)
+# Evidence status dimensions
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

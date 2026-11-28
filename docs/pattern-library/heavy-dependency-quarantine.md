@@ -1,10 +1,10 @@
 ---
-title: "Heavy dependency quarantine (the baseline is the metric)"
+title: "Heavy dependency quarantine"
 description: "Optional heavyweight capabilities load behind dynamic-import boundaries, and the gated metric is not the route's own size but the shared baseline every other…"
 category: "Runtime Velocity"
 ---
 
-# Heavy dependency quarantine (the baseline is the metric)
+# Heavy dependency quarantine
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -56,7 +56,7 @@ Optional heavyweight capabilities load behind dynamic-import boundaries, and the
 
 ## Depends on
 
-- [Performance budget and ratchet (targets aspire, ceilings hold)](/docs/pattern-library/performance-budget-ratchet)
+- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
 
 ---
 

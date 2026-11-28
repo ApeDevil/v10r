@@ -24,7 +24,7 @@ unless noted. "Conf." = official conformance scenario.
 | `Mcp-Method` / `Mcp-Name` validation | Stable MUST | Supported (OWS, Base64 sentinel; -32020) | Routing; trustworthy telemetry | Done — A3 | Conf. `http-header-validation` 14/14 | Adopt | 2026-11-21 |
 | `resultType` on results | Stable MUST | Supported (modern path) | Wire-schema validity | Done — A3 | Conf. `tools-list`, `tools-call-*` wire checks pass | Adopt | 2026-11-21 |
 | Caching hints `ttlMs` / `cacheScope` | Stable MUST | Supported on discover + `tools/list` (1 h; `public`/`private` per surface) | Fewer `tools/list` calls | Done — A3/B3 | Conf. `caching` 4/7 (3 = prompts/resources, not advertised) | Adopt | 2026-11-21 |
-| ETags | Proposal (roadmap) | Missing | Result caching by registry version | Monitor | roadmap | Defer | 2026-11-21 |
+| ETags | Proposal (roadmap) | Missing | Result caching by registry digest | Monitor | roadmap | Defer | 2026-11-21 |
 | Error codes -32020…-32022 + HTTP 400/404 | Stable MUST | Supported (-32020, -32022, 404 / -32601); -32021 N/A — no method needs a client capability | Modern-client recovery | Done — A3 | `http.test.ts`; conformance | Adopt | 2026-11-21 |
 | Modern-client fallback to legacy | Stable SHOULD (client) | Not needed any more — modern clients stay modern | — | — | SDK v2 `auto` connects modern, no `initialize` | Superseded by A3 | 2026-11-21 |
 | No protocol sessions | Stable | Supported | Serverless fit | — | `hosted-mcp.md` §E | Adopt (keep) | 2026-11-21 |

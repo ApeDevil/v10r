@@ -16,6 +16,8 @@ A self-hosted proof-of-work captcha where the client solves a CPU-bound puzzle a
 
 **When to use:** Reach for it on public forms that need bot resistance without third-party captcha services or extra user interaction.
 
+**Needs:** conditional key-value-store (when solved challenges must be refused on replay across instances)
+
 ## Docs
 
 - [docs/blueprint/abuse/captcha.md](/docs/blueprint/abuse/captcha) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/abuse/captcha.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/abuse/captcha.md))

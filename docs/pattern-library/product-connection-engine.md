@@ -1,10 +1,10 @@
 ---
-title: "Product composition engine (typed ports, couplings, conduits)"
+title: "Product composition engine"
 description: "Reusable 3D products with typed connection ports join into an editable assembly: a framework-free core keeps definitions, occurrences, ports, couplings…"
 category: "3D"
 ---
 
-# Product composition engine (typed ports, couplings, conduits)
+# Product composition engine
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -77,7 +77,7 @@ Reusable 3D products with typed connection ports join into an editable assembly:
 
 ## Depends on
 
-- [Threlte integration (SSR-off, code-split model registry)](/docs/pattern-library/3d-threlte-integration)
+- [Threlte integration](/docs/pattern-library/3d-threlte-integration)
 
 ---
 

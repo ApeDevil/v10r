@@ -1,10 +1,10 @@
 ---
-title: "Object storage (Cloudflare R2, presigned transfer)"
+title: "Object storage"
 description: "S3-compatible object storage on Cloudflare R2, accessed via @aws-sdk/client-s3 with presigned URLs for direct client uploads and downloads."
 category: "Databases & Storage"
 ---
 
-# Object storage (Cloudflare R2, presigned transfer)
+# Object storage
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 S3-compatible object storage on Cloudflare R2, accessed via @aws-sdk/client-s3 with presigned URLs for direct client uploads and downloads.
 
 **When to use:** Use when the app needs to store or serve user files without routing large payloads through the server.
+
+**Needs:** required object-storage · v10r's implementation uses relational-db
 
 ## Docs
 

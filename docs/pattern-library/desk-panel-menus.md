@@ -1,10 +1,10 @@
 ---
-title: "Composed panel menus (one array, desktop kebab + mobile sheet)"
+title: "Composed panel menus"
 description: "A context-scoped registry where each panel instance registers its command menus, composed with a dock-supplied Panel floor menu and View menu into one array…"
 category: "Desk Workspace"
 ---
 
-# Composed panel menus (one array, desktop kebab + mobile sheet)
+# Composed panel menus
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A context-scoped registry where each panel instance registers its command menus, composed with a dock-supplied Panel floor menu and View menu into one array that the desktop kebab and the mobile commands sheet both render.
 
 **When to use:** Use when per-panel commands must appear identically on multiple surfaces (desktop menus, mobile sheets, shortcut handlers) without each surface maintaining its own copy.
+
+**Needs:** required relational-db (via desk-workspace)
 
 ## Docs
 
@@ -36,7 +38,7 @@ A context-scoped registry where each panel instance registers its command menus,
 
 ## Depends on
 
-- [Desk workspace (dock layout, focus architecture, mobile projection)](/docs/pattern-library/desk-workspace)
+- [Desk workspace](/docs/pattern-library/desk-workspace)
 
 ---
 

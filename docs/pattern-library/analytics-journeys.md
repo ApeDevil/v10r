@@ -1,10 +1,10 @@
 ---
-title: "User journeys (client beacon)"
+title: "User journeys"
 description: "Page-to-page journeys are computed in Postgres with a LEAD() window function over consecutive pageviews in a session and shown as a ranked table rather than…"
 category: "Analytics"
 ---
 
-# User journeys (client beacon)
+# User journeys
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Page-to-page journeys are computed in Postgres with a LEAD() window function over consecutive pageviews in a session and shown as a ranked table rather than an aggregate flow diagram.
 
 **When to use:** Use when you need real per-visitor navigation paths without merging visitors with different journeys into one misleading diagram.
+
+**Needs:** required relational-db
 
 ## Docs
 

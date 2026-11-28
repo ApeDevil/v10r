@@ -1,10 +1,10 @@
 ---
-title: "Runtime layers & request flow (7-layer view)"
+title: "Runtime layers and request flow"
 description: "Documents v10r's seven-layer abstraction hierarchy, from tech stack down to code, anchored by the hooks.server.ts composition root and the hexagonal domain…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Runtime layers & request flow (7-layer view)
+# Runtime layers and request flow
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

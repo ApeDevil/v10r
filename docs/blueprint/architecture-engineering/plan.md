@@ -13,7 +13,7 @@ how to build it; Architecture Studio lets a developer construct and evaluate it.
 ## 1. Relevant existing capabilities
 
 See the inventory table in [research.md §1](./research.md#1-internal-inventory--what-already-exists).
-In one line each: the pattern registry (fitness vocabulary, maturity, `requires`), the
+In one line each: the pattern registry (fitness vocabulary, maturity, infrastructure `needs`), the
 deterministic MCP query layer, the drift guard, `product-composition` (the template for an
 editable graph document), the attribute editor (undo/redo), the form-draft store (local
 persistence), `FlowDiagram` over `@xyflow/svelte` (lazy canvas), and the wasm and
@@ -38,7 +38,7 @@ external-service showcases (evidence).
 | Reused | How |
 |---|---|
 | `pattern-library/registry.json` | Every decision alternative and model node links patterns **by id**; validation fails on an unknown id. No content is copied |
-| `PATTERN_REQUIREMENTS` | A node kind's operational requirements use the same closed vocabulary, so a comparison can say "variant B adds `container-host`" in the registry's own words |
+| `INFRASTRUCTURE_NEEDS` | A node kind's infrastructure needs use the same closed vocabulary (and `patterns:validate` checks each is declared by one of the kind's patterns), so a comparison can say "variant B adds `container-host`" in the registry's own words |
 | `pattern-library/validate.ts` | Extended to validate the decision catalogue (pattern ids, evidence refs) |
 | `pattern-library/query.ts` tool contract | Two new deterministic tools added to `QUERY_TOOLS`/`REGISTRY_QUERIES` — both transports pick them up |
 | `FlowDiagram.svelte` | Gains `onconnect` and `onnodedragstop` pass-throughs; stays lazily loaded |
@@ -60,7 +60,7 @@ reaches it as `#patterns/architecture-engineering/*`. Validation is hand-rolled 
 
 | File | Responsibility |
 |---|---|
-| `vocabulary.ts` | Closed vocabularies: engineering domains, workload factors and their values, node kinds (default placement, allowed placements, `requires`), placements, protocols, zone kinds, evidence kinds |
+| `vocabulary.ts` | Closed vocabularies: engineering domains, workload factors and their values, node kinds (default placement, allowed placements, infrastructure `needs`), placements, protocols, zone kinds, evidence kinds |
 | `decisions.json` | The decision catalogue (data) |
 | `decision-record.ts` | Decision record types and fail-closed parse; pattern-id resolution |
 | `explore.ts` | The decision engine: workload profile → recommendation per decision |
@@ -151,7 +151,7 @@ interface ArchitectureLayout { format: 1; positions: Record<string, { x: number;
 Node kinds (12): `browser-app`, `browser-worker`, `wasm-module`, `app-server`,
 `api-endpoint`, `background-worker`, `compute-service`, `relational-db`, `graph-db`,
 `cache`, `object-storage`, `external-service`. Each declares allowed placements, a default,
-and `requires` (from `PATTERN_REQUIREMENTS`).
+and `needs` (from `INFRASTRUCTURE_NEEDS`).
 
 The diagram is a projection: positions live only in `ArchitectureLayout`. Parsing treats
 input as untrusted: strict objects, bounded sizes (nodes ≤ 200, strings ≤ 2 000 chars),
@@ -190,7 +190,7 @@ No check measures anything; none may claim performance numbers.
 Two models → added/removed/changed nodes (by id), placement changes, connection changes,
 zone changes, deployment units (distinct runtimes that must be deployed), network
 boundaries crossed, synchronous network hops, operational requirements (union of node
-`requires`, diffed), findings diff. Latency and complexity are reported as **qualitative**
+infrastructure needs, diffed), findings diff. Latency and complexity are reported as **qualitative**
 statements labelled *qualitative — not measured*, with links to evidence where it exists.
 
 ### 4.7 Persistence

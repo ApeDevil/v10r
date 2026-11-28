@@ -1,10 +1,10 @@
 ---
-title: "Service-worker caching contract (HTML network-only, kill switch)"
+title: "Service-worker caching contract"
 description: "The custom service worker precaches only the icons and the offline page's own assets (parsed from its HTML), fills the rest of the hashed build cache-first as…"
 category: "PWA"
 ---
 
-# Service-worker caching contract (HTML network-only, kill switch)
+# Service-worker caching contract
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 The custom service worker precaches only the icons and the offline page's own assets (parsed from its HTML), fills the rest of the hashed build cache-first as it is used, serves HTML and __data.json network-only, never intercepts /api/* or SSE, and ships a kill switch that force-wipes caches and unregisters on a bad deploy.
 
 **When to use:** Use when you need an installable offline shell without caching personalized HTML, plus a documented recovery path for a broken worker.
+
+**Needs:** required service-worker
 
 ## Avoid when
 

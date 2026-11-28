@@ -1,10 +1,10 @@
 ---
-title: "Desk mobile chrome (tab strip + pill + drawers)"
+title: "Desk mobile chrome"
 description: "Phone chrome for the dock workspace: a scrollable top tab strip of open panel instances, a bottom-right controls pill (commands sheet + panels drawer) sitting…"
 category: "Desk Workspace"
 ---
 
-# Desk mobile chrome (tab strip + pill + drawers)
+# Desk mobile chrome
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Phone chrome for the dock workspace: a scrollable top tab strip of open panel instances, a bottom-right controls pill (commands sheet + panels drawer) sitting left of the app FAB via slot tokens, and a soft-keyboard watcher that hides floating chrome while typing.
 
 **When to use:** Use when a desktop multi-panel workspace must work on phones without forking its layout state — the chrome only focuses, opens, and closes panels on the persisted desktop tree.
+
+**Needs:** required relational-db (via desk-workspace)
 
 ## Docs
 
@@ -36,7 +38,7 @@ Phone chrome for the dock workspace: a scrollable top tab strip of open panel in
 
 ## Depends on
 
-- [Desk workspace (dock layout, focus architecture, mobile projection)](/docs/pattern-library/desk-workspace)
+- [Desk workspace](/docs/pattern-library/desk-workspace)
 
 ---
 

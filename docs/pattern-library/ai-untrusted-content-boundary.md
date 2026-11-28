@@ -1,10 +1,10 @@
 ---
-title: "Untrusted-content boundary (the lethal trifecta, one rule per leg)"
+title: "Untrusted-content boundary"
 description: "Every AI tool declares where its result comes from and whether it can send data out; user-origin results reach the model as one escaped <untrusted-content>…"
 category: "AI"
 ---
 
-# Untrusted-content boundary (the lethal trifecta, one rule per leg)
+# Untrusted-content boundary
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Every AI tool declares where its result comes from and whether it can send data 
 
 **When to use:** Use when an assistant reads content a user or third party wrote — files, retrieved documents, web pages, tool output — and can also act or answer with links.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -57,8 +57,8 @@ Every AI tool declares where its result comes from and whether it can send data 
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](/docs/pattern-library/ai-tool-harness)
-- [Deskbot approval gate (proposal → approve, plan-gated mutation)](/docs/pattern-library/deskbot-approval-gate)
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
+- [Deskbot approval gate](/docs/pattern-library/deskbot-approval-gate)
 
 ---
 

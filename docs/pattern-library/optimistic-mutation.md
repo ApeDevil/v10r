@@ -1,10 +1,10 @@
 ---
-title: "Optimistic mutation (fold-based rollback, idempotency keys)"
+title: "Optimistic mutation"
 description: "The confirmed value and the pending intents are stored separately and the UI reads the fold of one over the other, so a failed mutation rolls back exactly …"
 category: "Interaction Velocity"
 ---
 
-# Optimistic mutation (fold-based rollback, idempotency keys)
+# Optimistic mutation
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

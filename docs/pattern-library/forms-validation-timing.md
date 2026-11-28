@@ -1,10 +1,10 @@
 ---
-title: "Validation timing (realtime · async · server)"
+title: "Validation timing"
 description: "Demonstrates the three Superforms validation timing strategies: realtime (oninput), debounced async server checks, and onblur/server-only validation."
 category: "Forms & Validation"
 ---
 
-# Validation timing (realtime · async · server)
+# Validation timing
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

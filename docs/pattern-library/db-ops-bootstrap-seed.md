@@ -16,6 +16,8 @@ Scripts and seed modules that populate a fresh database with baseline and sample
 
 **When to use:** Run when provisioning a new environment or resetting a dev database to a known-good starting state.
 
+**Needs:** required relational-db · conditional graph-db (when the project mirrors its catalogue into a graph store), llm-provider (when the seed also embeds documents for retrieval)
+
 ## Docs
 
 - `docs/blueprint/data/README.md` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/data/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/data/README.md))

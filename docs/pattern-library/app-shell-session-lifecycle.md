@@ -1,10 +1,10 @@
 ---
-title: "Session lifecycle UI (expiry, re-auth)"
+title: "Session lifecycle UI"
 description: "Shell-level UI that reacts to authentication session state — showing an expiry warning, a re-authentication modal on expiry, and immediate redirect on…"
 category: "App Shell & Navigation"
 ---
 
-# Session lifecycle UI (expiry, re-auth)
+# Session lifecycle UI
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

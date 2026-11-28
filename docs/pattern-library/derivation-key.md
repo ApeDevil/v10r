@@ -1,10 +1,10 @@
 ---
-title: "Derivation key (freshness by input fingerprint)"
+title: "Derivation key"
 description: "A derived output stores derivationKey(transform@version, inputs) beside itself and is current exactly while a recomputed key matches — catching the code…"
 category: "Derivation & Provenance"
 ---
 
-# Derivation key (freshness by input fingerprint)
+# Derivation key
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ A derived output stores derivationKey(transform@version, inputs) beside itself a
 
 **When to use:** Use for any stored output derived from inputs through code that evolves: chunks and embeddings, rendered projections, extracted metadata, anything expensive to recompute or read while stale.
 
-**Requires:** postgres
+**Needs:** conditional relational-db (when derived outputs live in a database (the key is stored beside them)) · v10r's implementation uses llm-provider
 
 ## Avoid when
 

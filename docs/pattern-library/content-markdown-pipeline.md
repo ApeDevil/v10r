@@ -1,10 +1,10 @@
 ---
-title: "Markdown pipeline & custom syntax (directives, wikilinks)"
+title: "Markdown pipeline and custom syntax"
 description: "A remark/rehype-based markdown rendering pipeline extended with custom directive syntax for embeds; wikilink cross-references are designed for but not yet…"
 category: "Content & Blog"
 ---
 
-# Markdown pipeline & custom syntax (directives, wikilinks)
+# Markdown pipeline and custom syntax
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A remark/rehype-based markdown rendering pipeline extended with custom directive syntax for embeds; wikilink cross-references are designed for but not yet implemented.
 
 **When to use:** Use when rendering blog/content markdown that needs project-specific directive syntax beyond plain CommonMark.
+
+**Needs:** v10r's implementation uses object-storage, relational-db
 
 ## Docs
 

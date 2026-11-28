@@ -1,10 +1,10 @@
 ---
-title: "Primitives (~40 Bits UI wrappers)"
+title: "UI primitives"
 description: "Roughly 40 styled atomic components (Button, Input, Badge, Select, Table, etc.) that wrap Bits UI headless primitives with CVA variants and design tokens."
 category: "UI Components & Design System"
 ---
 
-# Primitives (~40 Bits UI wrappers)
+# UI primitives
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

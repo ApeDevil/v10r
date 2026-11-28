@@ -219,7 +219,7 @@ describe('evolution example', () => {
 		expect(comparison.derived).toBe(true);
 		expect(comparison.nodes.added.map((node) => node.id)).toEqual(['solver-service']);
 		expect(comparison.variant.deployment_units.length).toBeGreaterThan(comparison.baseline.deployment_units.length);
-		expect(comparison.requirements.added).toContain('container-host');
+		expect(comparison.infrastructure_needs.added).toContain('container-host');
 		expect(comparison.assessment.every((entry) => entry.basis === 'qualitative')).toBe(true);
 		expect(comparison.assessment.find((entry) => entry.dimension === 'deployment-complexity')?.statement).toMatch(
 			/adds 1 deployment unit/,

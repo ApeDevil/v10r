@@ -1,10 +1,10 @@
 ---
-title: "Desk workspace (dock layout, focus architecture, mobile projection)"
+title: "Desk workspace"
 description: "A full-page multi-panel workspace on a binary split-tree dock: resizable panes, drag-and-drop tabs, a panel-type registry, typed cross-panel pub/sub…"
 category: "Desk Workspace"
 ---
 
-# Desk workspace (dock layout, focus architecture, mobile projection)
+# Desk workspace
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "Desk Workspace"
 A full-page multi-panel workspace on a binary split-tree dock: resizable panes, drag-and-drop tabs, a panel-type registry, typed cross-panel pub/sub (DeskBus), one persisted desktop tree with total focus derivation, and a mobile chrome that is a projection over the same state — never a second layout.
 
 **When to use:** Use for IDE-like authoring surfaces where several content types (editor, explorer, spreadsheet, AI bot) must coexist, communicate, and stay AI-drivable — and where the same workspace must work on phones without forking its state model.
+
+**Needs:** required relational-db
 
 ## Avoid when
 
@@ -68,7 +70,7 @@ A full-page multi-panel workspace on a binary split-tree dock: resizable panes, 
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](/docs/pattern-library/multi-client-core)
+- [Multi-client core](/docs/pattern-library/multi-client-core)
 
 ---
 

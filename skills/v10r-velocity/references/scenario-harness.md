@@ -1,4 +1,4 @@
-# Performance scenario harness (adverse conditions, committed)
+# Performance scenario harness
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 Representative paths driven under one adverse condition at a time — cold cache, expiry burst, hanging dependency, failing dependency, concurrency, refusal — with the deterministic columns gated and the timings only reported. A system is not proven fast because localhost is fast.
 
 **When to use:** Use once the obvious latency work is done and the remaining risk is behaviour under failure and load rather than in the happy path.
+
+**Needs:** conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
 
 ## Avoid when
 
@@ -50,8 +52,8 @@ Representative paths driven under one adverse condition at a time — cold cache
 
 ## Depends on
 
-- [Performance budget and ratchet (targets aspire, ceilings hold)](performance-budget-ratchet.md)
-- [Resilience policy (breaker, bulkhead, shedding, bounded retry)](resilience-policy.md)
+- [Performance budget and ratchet](performance-budget-ratchet.md)
+- [Resilience policy](resilience-policy.md)
 
 ---
 

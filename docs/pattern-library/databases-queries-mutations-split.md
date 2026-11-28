@@ -1,10 +1,10 @@
 ---
-title: "Queries/mutations split (reads-writes duality)"
+title: "Queries/mutations split"
 description: "Splits each domain's database access into separate queries.ts (reads) and mutations.ts (writes) modules."
 category: "Databases & Storage"
 ---
 
-# Queries/mutations split (reads-writes duality)
+# Queries/mutations split
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Splits each domain's database access into separate queries.ts (reads) and mutations.ts (writes) modules.
 
 **When to use:** Apply when structuring a new domain's database layer so reads and writes stay independently reusable across UI, API, and job clients.
+
+**Needs:** required relational-db · v10r's implementation uses vector-search
 
 ## Docs
 

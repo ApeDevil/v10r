@@ -1,10 +1,10 @@
 ---
-title: "Provider registry & routing (chat/tools/vision + circuit breaker)"
+title: "Provider registry & routing"
 description: "Resolver functions pick an active chat, tool-calling, or vision LLM provider per turn and trip a Redis-backed circuit breaker on rate-limited providers."
 category: "AI"
 ---
 
-# Provider registry & routing (chat/tools/vision + circuit breaker)
+# Provider registry & routing
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Resolver functions pick an active chat, tool-calling, or vision LLM provider per turn and trip a Redis-backed circuit breaker on rate-limited providers.
 
 **When to use:** Use when an app must route between multiple LLM providers by capability and needs cross-instance cooldown on failures.
+
+**Needs:** required llm-provider
 
 ## Docs
 

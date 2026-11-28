@@ -1,4 +1,4 @@
-# MCP client (external tools projected into the one catalogue)
+# MCP client
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Consume external MCP servers with the official TypeScript client: an SSRF-guarde
 
 **When to use:** Use when an assistant should call tools another party operates and you can name and review that peer.
 
-**Requires:** third-party-api
+**Needs:** required llm-provider, external-api, relational-db
 
 ## Avoid when
 
@@ -61,9 +61,9 @@ Consume external MCP servers with the official TypeScript client: an SSRF-guarde
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](ai-tool-harness.md)
-- [Untrusted-content boundary (the lethal trifecta, one rule per leg)](ai-untrusted-content-boundary.md)
-- [Deskbot approval gate (proposal → approve, plan-gated mutation)](deskbot-approval-gate.md)
+- [AI tool manifest and harness split](ai-tool-harness.md)
+- [Untrusted-content boundary](ai-untrusted-content-boundary.md)
+- [Deskbot approval gate](deskbot-approval-gate.md)
 
 ---
 

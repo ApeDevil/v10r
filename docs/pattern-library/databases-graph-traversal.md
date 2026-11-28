@@ -16,6 +16,8 @@ Runs Cypher traversal queries, such as shortest-path and multi-hop lookups, over
 
 **When to use:** Use when a feature needs to walk relationships between entities, like related-to queries or navigation paths.
 
+**Needs:** required graph-db
+
 ## Docs
 
 - [docs/blueprint/db/graph.md](/docs/blueprint/db/graph) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/db/graph.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/db/graph.md))

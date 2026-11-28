@@ -1,6 +1,7 @@
 {
+	"scenarioChanges": 1,
 	"measuredAt": "2026-11-28",
-	"commit": "342f22d",
+	"commit": "45d883b-dirty",
 	"registryDigest": "946d83d3652c7402",
 	"patterns": 199,
 	"totals": {
@@ -12,7 +13,7 @@
 			"missingSteps": 2,
 			"optionalAsRequired": 2,
 			"optionalListedAsOptional": "0/2",
-			"needRecall": 57.9,
+			"needRecall": 61.1,
 			"spuriousNeeds": 5,
 			"planTokensEstimated": 6021
 		},
@@ -36,7 +37,7 @@
 			"missingSteps": 9,
 			"optionalAsRequired": 2,
 			"optionalListedAsOptional": "0/2",
-			"needRecall": 51.6,
+			"needRecall": 53.3,
 			"spuriousNeeds": 5,
 			"planTokensEstimated": 8453
 		}
@@ -75,6 +76,10 @@
 			"needsFound": ["relational-db"],
 			"needsMissing": ["key-value-store", "email-delivery"],
 			"spuriousNeeds": ["llm-provider", "external-api"],
+			"named": {
+				"required": ["llm-provider", "relational-db", "external-api"],
+				"conditional": []
+			},
 			"planChars": 4851
 		},
 		{
@@ -104,6 +109,10 @@
 			"needsFound": [],
 			"needsMissing": ["key-value-store"],
 			"spuriousNeeds": ["llm-provider", "relational-db"],
+			"named": {
+				"required": ["llm-provider", "relational-db"],
+				"conditional": []
+			},
 			"planChars": 2882
 		},
 		{
@@ -124,8 +133,12 @@
 			"optionalAsRequired": [],
 			"optionalListed": [],
 			"needsFound": [],
-			"needsMissing": ["relational-db", "key-value-store"],
+			"needsMissing": ["key-value-store"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": [],
+				"conditional": []
+			},
 			"planChars": 2033
 		},
 		{
@@ -153,6 +166,10 @@
 			"needsFound": ["relational-db", "web-worker"],
 			"needsMissing": ["key-value-store", "email-delivery"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["relational-db", "web-worker"],
+				"conditional": []
+			},
 			"planChars": 4366
 		},
 		{
@@ -185,6 +202,10 @@
 			"needsFound": [],
 			"needsMissing": [],
 			"spuriousNeeds": ["container-host"],
+			"named": {
+				"required": ["container-host"],
+				"conditional": []
+			},
 			"planChars": 4013
 		},
 		{
@@ -201,6 +222,10 @@
 			"needsFound": ["relational-db", "vector-search", "llm-provider"],
 			"needsMissing": ["graph-db"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["llm-provider", "relational-db", "vector-search"],
+				"conditional": []
+			},
 			"planChars": 2025
 		},
 		{
@@ -217,6 +242,10 @@
 			"needsFound": ["relational-db", "scheduler"],
 			"needsMissing": [],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["relational-db", "scheduler"],
+				"conditional": []
+			},
 			"planChars": 1710
 		},
 		{
@@ -233,6 +262,10 @@
 			"needsFound": ["relational-db", "key-value-store", "external-api"],
 			"needsMissing": [],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["key-value-store", "relational-db", "external-api"],
+				"conditional": []
+			},
 			"planChars": 2203
 		},
 		{
@@ -249,6 +282,10 @@
 			"needsFound": ["relational-db"],
 			"needsMissing": ["scheduler"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["relational-db"],
+				"conditional": []
+			},
 			"planChars": 1164
 		},
 		{
@@ -265,6 +302,10 @@
 			"needsFound": [],
 			"needsMissing": ["relational-db", "email-delivery"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": [],
+				"conditional": []
+			},
 			"planChars": 256
 		},
 		{
@@ -281,6 +322,10 @@
 			"needsFound": [],
 			"needsMissing": ["object-storage"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": [],
+				"conditional": []
+			},
 			"planChars": 778
 		},
 		{
@@ -297,6 +342,10 @@
 			"needsFound": ["relational-db"],
 			"needsMissing": ["scheduler"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["relational-db"],
+				"conditional": []
+			},
 			"planChars": 807
 		},
 		{
@@ -313,6 +362,10 @@
 			"needsFound": ["key-value-store"],
 			"needsMissing": [],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["key-value-store"],
+				"conditional": []
+			},
 			"planChars": 2074
 		},
 		{
@@ -329,6 +382,10 @@
 			"needsFound": [],
 			"needsMissing": [],
 			"spuriousNeeds": [],
+			"named": {
+				"required": [],
+				"conditional": []
+			},
 			"planChars": 748
 		},
 		{
@@ -345,6 +402,10 @@
 			"needsFound": ["relational-db"],
 			"needsMissing": [],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["relational-db"],
+				"conditional": []
+			},
 			"planChars": 814
 		},
 		{
@@ -361,6 +422,10 @@
 			"needsFound": ["relational-db"],
 			"needsMissing": [],
 			"spuriousNeeds": [],
+			"named": {
+				"required": ["relational-db"],
+				"conditional": []
+			},
 			"planChars": 1252
 		},
 		{
@@ -377,6 +442,10 @@
 			"needsFound": [],
 			"needsMissing": ["service-worker", "relational-db"],
 			"spuriousNeeds": [],
+			"named": {
+				"required": [],
+				"conditional": []
+			},
 			"planChars": 745
 		},
 		{
@@ -393,6 +462,10 @@
 			"needsFound": [],
 			"needsMissing": [],
 			"spuriousNeeds": [],
+			"named": {
+				"required": [],
+				"conditional": []
+			},
 			"planChars": 1089
 		}
 	]

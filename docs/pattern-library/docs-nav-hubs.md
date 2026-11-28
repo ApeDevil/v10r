@@ -1,10 +1,10 @@
 ---
-title: "Docs navigation hubs (README-per-directory convention)"
+title: "Docs navigation hubs"
 description: "An AI-optimized docs tree where every directory's README.md is a navigation hub with topic tables, so agents read index → target file, never everything."
 category: "Docs & Agent Experience"
 ---
 
-# Docs navigation hubs (README-per-directory convention)
+# Docs navigation hubs
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

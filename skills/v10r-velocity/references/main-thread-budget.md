@@ -1,4 +1,4 @@
-# Main-thread budget (worker → WASM, each step measured)
+# Main-thread budget
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Expensive browser work moves off the main thread only where measurement justifie
 
 **When to use:** Use for large parsing, image processing, graph layout, data crunching or expensive editor operations — anything that would otherwise block input and rendering.
 
-**Requires:** web-worker
+**Needs:** required web-worker · optional wasm-toolchain
 
 ## Avoid when
 

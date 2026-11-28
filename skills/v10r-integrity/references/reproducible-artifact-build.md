@@ -1,4 +1,4 @@
-# Reproducible artifact build (regenerate-and-diff, or manifest + digest)
+# Reproducible artifact build
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 

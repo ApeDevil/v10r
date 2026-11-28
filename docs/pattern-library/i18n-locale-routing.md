@@ -1,10 +1,10 @@
 ---
-title: "Locale routing (optional catch-all, matcher, 308 canonical)"
+title: "Locale routing"
 description: "URL-based locale routing using an optional [[locale=locale]] catch-all segment and a param matcher, with the unprefixed default locale (en) 308-redirected…"
 category: "Internationalization (i18n)"
 ---
 
-# Locale routing (optional catch-all, matcher, 308 canonical)
+# Locale routing
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

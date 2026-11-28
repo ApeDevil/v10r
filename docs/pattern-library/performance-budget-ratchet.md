@@ -1,10 +1,10 @@
 ---
-title: "Performance budget and ratchet (targets aspire, ceilings hold)"
+title: "Performance budget and ratchet"
 description: "Two thresholds with different jobs: targets are where we want to be and never fail a build, ceilings are the measured value at the moment it was accepted and…"
 category: "Velocity Measurement"
 ---
 
-# Performance budget and ratchet (targets aspire, ceilings hold)
+# Performance budget and ratchet
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

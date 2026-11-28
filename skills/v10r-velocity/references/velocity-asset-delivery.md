@@ -8,6 +8,8 @@ Keeping images and fonts from dominating page load: metric-matched fallback face
 
 **When to use:** Use wherever fonts or media are served — the JavaScript budget usually gets the attention while the bytes and the layout shift are elsewhere.
 
+**Needs:** conditional object-storage (when assets are served from object storage)
+
 ## Avoid when
 
 - The face renders unlike its default metrics (bold display headings, optical-size axes), where a computed fallback makes the swap shift worse

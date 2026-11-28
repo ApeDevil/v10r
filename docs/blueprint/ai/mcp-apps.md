@@ -26,7 +26,7 @@ One read-only App, **the pattern dependency explorer**, on the public and privat
   re-focus, filter the list, open the docs page through the host.
 
 Why this candidate over a Studio view: it reuses the registry the Pattern MCP already serves —
-`depends_on`, `maturity`, `invariants`, `requires` and `topoSort` from `pattern-library/schema.ts` —
+`depends_on`, `maturity`, `invariants`, `needs` and `topoSort` from `pattern-library/schema.ts` —
 and needs no input the host cannot type (the Studio architecture view needs a workload profile
 and model file). It is also something the existing text tools answer only piecemeal: no tool
 lists *dependents*.

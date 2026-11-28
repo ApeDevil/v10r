@@ -1,4 +1,4 @@
-# Asset production pipeline (typed request → checked GLB)
+# Asset production pipeline
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 A structured, validated request becomes a checked 3D asset: a deterministic TypeScript generator builds parametric geometry, an inspector proves every shell closed and outward, a DOM-free writer emits byte-stable GLB with its derivation key inside and reads it back, and one job shape — report, PROV-DM provenance, measurements, a write-once owner-scoped store — serves an HTTP route, a CLI and MCP tools, in-process or in a killable worker process.
 
 **When to use:** Use when an app must generate 3D assets from parameters — configurators that export, procedural parts, AI-requested variations — and every file must be reproducible, validated and attributable before anyone loads it.
+
+**Needs:** required relational-db (via provenance-record), key-value-store (via anti-abuse-rate-limiting)
 
 ## Avoid when
 
@@ -70,11 +72,11 @@ A structured, validated request becomes a checked 3D asset: a deterministic Type
 
 ## Depends on
 
-- [Threlte integration (SSR-off, code-split model registry)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/3d-threlte-integration.md)
-- [Derivation key (freshness by input fingerprint)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/derivation-key.md)
-- [Provenance record (entity, activity, agent — PROV-DM core)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/provenance-record.md)
-- [Rate limiting (sliding window, fail-closed)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/anti-abuse-rate-limiting.md)
-- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-hosted-mcp.md)
+- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/3d-threlte-integration.md)
+- [Derivation key](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/derivation-key.md)
+- [Provenance record](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/provenance-record.md)
+- [Rate limiting](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/anti-abuse-rate-limiting.md)
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-hosted-mcp.md)
 
 ---
 

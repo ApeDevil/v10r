@@ -1,10 +1,10 @@
 ---
-title: "Responsive sidebar (rail / drawer / FAB)"
+title: "Responsive sidebar"
 description: "Implements an asymmetric responsive sidebar — a persistent hover-expanding rail on desktop and an off-canvas thumb-accessible drawer on mobile, triggered by a…"
 category: "App Shell & Navigation"
 ---
 
-# Responsive sidebar (rail / drawer / FAB)
+# Responsive sidebar
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Implements an asymmetric responsive sidebar — a persistent hover-expanding rail on desktop and an off-canvas thumb-accessible drawer on mobile, triggered by a FAB.
 
 **When to use:** Reach for it when adapting primary navigation to different viewport sizes or adjusting sidebar width/expand behavior.
+
+**Needs:** v10r's implementation uses service-worker
 
 ## Docs
 

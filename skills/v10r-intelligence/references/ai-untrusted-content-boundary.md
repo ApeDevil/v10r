@@ -1,4 +1,4 @@
-# Untrusted-content boundary (the lethal trifecta, one rule per leg)
+# Untrusted-content boundary
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Every AI tool declares where its result comes from and whether it can send data 
 
 **When to use:** Use when an assistant reads content a user or third party wrote — files, retrieved documents, web pages, tool output — and can also act or answer with links.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -51,8 +51,8 @@ Every AI tool declares where its result comes from and whether it can send data 
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](ai-tool-harness.md)
-- [Deskbot approval gate (proposal → approve, plan-gated mutation)](deskbot-approval-gate.md)
+- [AI tool manifest and harness split](ai-tool-harness.md)
+- [Deskbot approval gate](deskbot-approval-gate.md)
 
 ---
 

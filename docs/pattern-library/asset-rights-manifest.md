@@ -1,10 +1,10 @@
 ---
-title: "Asset rights manifest (owned rights record + gate over shipped files)"
+title: "Asset rights manifest"
 description: "Every third-party file the app ships carries one AssetRights record (author, SPDX license, source) owned by the module that uses it, derived into every…"
 category: "Truth & Evidence"
 ---
 
-# Asset rights manifest (owned rights record + gate over shipped files)
+# Asset rights manifest
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -58,7 +58,7 @@ Every third-party file the app ships carries one AssetRights record (author, SPD
 
 ## Depends on
 
-- [Source-of-truth gate (one owner, bound copies)](/docs/pattern-library/source-of-truth-gate)
+- [Source-of-truth gate](/docs/pattern-library/source-of-truth-gate)
 
 ---
 

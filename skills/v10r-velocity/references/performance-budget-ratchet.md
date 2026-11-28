@@ -1,4 +1,4 @@
-# Performance budget and ratchet (targets aspire, ceilings hold)
+# Performance budget and ratchet
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 

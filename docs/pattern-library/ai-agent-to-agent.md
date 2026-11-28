@@ -1,10 +1,10 @@
 ---
-title: "Agent to agent (A2A specialist agents, served and delegated)"
+title: "Agent to agent"
 description: "Serve a specialist agent over A2A 1.0 with the official JS SDK behind a SvelteKit route (agent card, JSON-RPC, SSE) and delegate to independently implemented…"
 category: "AI"
 ---
 
-# Agent to agent (A2A specialist agents, served and delegated)
+# Agent to agent
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -13,6 +13,8 @@ category: "AI"
 Serve a specialist agent over A2A 1.0 with the official JS SDK behind a SvelteKit route (agent card, JSON-RPC, SSE) and delegate to independently implemented agents through an allowlisted client on the shared pinned peer egress that types every answer as a claim. Assistant-driven delegation is an approval-gated external operation: operator-listed peers, a disclosure of what is sent to whom, a binding over the agent card, budgets and depth one, cancellation of the remote task on timeout or abort. The served skills run deterministic architecture checks, so tasks cost no model quota and complete inside the request.
 
 **When to use:** Use when an evaluation belongs to an independently operated agent (another team, language or framework), or when your own specialist should be callable by such agents.
+
+**Needs:** required relational-db, external-api, wasm-toolchain (via architecture-wasm-kernel), container-host (via architecture-external-service) · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
 
 ## Avoid when
 
@@ -62,7 +64,7 @@ Serve a specialist agent over A2A 1.0 with the official JS SDK behind a SvelteKi
 
 ## Depends on
 
-- [Architecture Engineering (explained decision records, a typed architecture model and static checks)](/docs/pattern-library/architecture-engineering)
+- [Architecture Engineering](/docs/pattern-library/architecture-engineering)
 
 ---
 

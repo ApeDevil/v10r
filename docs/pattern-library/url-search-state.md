@@ -1,10 +1,10 @@
 ---
-title: "URL state (one typed spec for search params, navigate vs shallow writes)"
+title: "URL state"
 description: "Search params are read and written through one typed spec shared by loads and components — invalid input falls back instead of throwing, defaults never reach…"
 category: "Architecture & Request Pipeline"
 ---
 
-# URL state (one typed spec for search params, navigate vs shallow writes)
+# URL state
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -59,7 +59,7 @@ Search params are read and written through one typed spec shared by loads and co
 
 ## Depends on
 
-- [State management (Svelte 5 runes)](/docs/pattern-library/architecture-state-management)
+- [State management](/docs/pattern-library/architecture-state-management)
 
 ---
 

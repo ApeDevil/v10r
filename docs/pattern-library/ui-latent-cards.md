@@ -63,7 +63,7 @@ A card whose actions sit in their final place, neutral but enabled, and take the
 ## Depends on
 
 - [Explosive Discovery — nested depth for dense menus and pages](/docs/pattern-library/ui-explosive-discovery)
-- [Primitives (~40 Bits UI wrappers)](/docs/pattern-library/ui-primitives)
+- [UI primitives](/docs/pattern-library/ui-primitives)
 
 ---
 

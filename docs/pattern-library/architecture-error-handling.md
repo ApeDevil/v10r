@@ -1,10 +1,10 @@
 ---
-title: "Error handling (expected/unexpected/form/API)"
+title: "Error handling"
 description: "Classifies errors into expected, unexpected, form, and API categories, each handled by a distinct SvelteKit mechanism (error(), handleError, fail()…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Error handling (expected/unexpected/form/API)
+# Error handling
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

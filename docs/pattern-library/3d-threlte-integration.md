@@ -1,10 +1,10 @@
 ---
-title: "Threlte integration (SSR-off, code-split model registry)"
+title: "Threlte integration"
 description: "Threlte 8 is wired into SvelteKit with SSR and prerendering disabled for the 3D route subtree, plus a static model config registry driving camera, lights, and…"
 category: "3D"
 ---
 
-# Threlte integration (SSR-off, code-split model registry)
+# Threlte integration
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

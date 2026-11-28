@@ -1,10 +1,10 @@
 ---
-title: "Style randomizer (theme × typography × palette)"
+title: "Style randomizer"
 description: "Randomizes decorative styling (typography pairing and color palette) on each visit from pre-validated, WCAG-compliant sets, kept orthogonal to the user's…"
 category: "App Shell & Navigation"
 ---
 
-# Style randomizer (theme × typography × palette)
+# Style randomizer
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Randomizes decorative styling (typography pairing and color palette) on each visit from pre-validated, WCAG-compliant sets, kept orthogonal to the user's dark/light theme choice.
 
 **When to use:** Reach for it when building playground or showcase surfaces that benefit from memorable visual variation without harming accessibility.
+
+**Needs:** v10r's implementation uses relational-db
 
 ## Docs
 

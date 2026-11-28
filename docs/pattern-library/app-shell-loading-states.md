@@ -1,10 +1,10 @@
 ---
-title: "Loading states (skeletons, nav progress)"
+title: "Loading states"
 description: "Defines visual feedback for initial load, navigation, data fetch, action, and streaming states using skeleton screens and a navigation progress bar."
 category: "App Shell & Navigation"
 ---
 
-# Loading states (skeletons, nav progress)
+# Loading states
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

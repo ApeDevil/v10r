@@ -1,4 +1,4 @@
-# Multi-client core (hexagonal domain modules)
+# Multi-client core
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 

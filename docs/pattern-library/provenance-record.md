@@ -1,10 +1,10 @@
 ---
-title: "Provenance record (entity, activity, agent — PROV-DM core)"
+title: "Provenance record"
 description: "Where a value came from is recorded with the W3C PROV-DM core only: the entity pinned to a revision or content hash, the activity with its transform version…"
 category: "Derivation & Provenance"
 ---
 
-# Provenance record (entity, activity, agent — PROV-DM core)
+# Provenance record
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Where a value came from is recorded with the W3C PROV-DM core only: the entity p
 
 **When to use:** Use when a reader must tell who or what produced a value — AI-drafted vs human-edited fields, published revisions, derived corpora, privileged actions, built binaries.
 
-**Requires:** postgres
+**Needs:** required relational-db · v10r's implementation uses vector-search
 
 ## Avoid when
 
@@ -57,7 +57,7 @@ Where a value came from is recorded with the W3C PROV-DM core only: the entity p
 
 ## Depends on
 
-- [Derivation key (freshness by input fingerprint)](/docs/pattern-library/derivation-key)
+- [Derivation key](/docs/pattern-library/derivation-key)
 
 ---
 

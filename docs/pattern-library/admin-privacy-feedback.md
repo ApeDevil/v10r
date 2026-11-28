@@ -16,6 +16,8 @@ A user feedback capture form protected by the honeypot bot-detection pattern to 
 
 **When to use:** Use when adding a lightweight feedback channel that needs basic spam protection without a full captcha.
 
+**Needs:** required relational-db
+
 ## Docs
 
 - [docs/blueprint/abuse/honeypot.md](/docs/blueprint/abuse/honeypot) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/abuse/honeypot.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/abuse/honeypot.md))

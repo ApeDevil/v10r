@@ -1,10 +1,10 @@
 ---
-title: "Split panes (resizable · reorderable)"
+title: "Split panes"
 description: "Resizable and reorderable split-pane primitives and composites for dividing screen space into adjustable regions."
 category: "UI Components & Design System"
 ---
 
-# Split panes (resizable · reorderable)
+# Split panes
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

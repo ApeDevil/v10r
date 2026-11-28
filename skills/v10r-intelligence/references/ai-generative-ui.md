@@ -1,4 +1,4 @@
-# Generative UI (A2UI surfaces rendered with the app's own components)
+# Generative UI
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ The model composes interfaces as A2UI v1.0 data from a closed catalog the applic
 
 **When to use:** Use when the shape of an answer depends on the question and must be interactive — forms for missing inputs, comparisons, choices, updates to what is on screen.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -60,8 +60,8 @@ The model composes interfaces as A2UI v1.0 data from a closed catalog the applic
 
 ## Depends on
 
-- [Component-first UI system (primitives/composites/layout, CVA, tokens)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ui-component-system.md)
-- [Untrusted-content boundary (the lethal trifecta, one rule per leg)](ai-untrusted-content-boundary.md)
+- [Component-first UI system](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ui-component-system.md)
+- [Untrusted-content boundary](ai-untrusted-content-boundary.md)
 
 ---
 

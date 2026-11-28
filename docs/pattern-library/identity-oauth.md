@@ -1,10 +1,10 @@
 ---
-title: "OAuth (GitHub, Google)"
+title: "OAuth"
 description: "Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's built-in OAuth plugin."
 category: "Identity & Access"
 ---
 
-# OAuth (GitHub, Google)
+# OAuth
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Sign-in via OAuth 2.0 providers, GitHub and Google, wired through Better Auth's built-in OAuth plugin.
 
 **When to use:** Offer it alongside magic link/OTP as an alternative sign-in path for users who prefer an existing provider account.
+
+**Needs:** required relational-db, external-api · conditional key-value-store (when sessions must be revoked across instances (the revocation list is shared)) · v10r's implementation uses email-delivery
 
 ## Docs
 

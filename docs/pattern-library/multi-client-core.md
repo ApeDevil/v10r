@@ -1,10 +1,10 @@
 ---
-title: "Multi-client core (hexagonal domain modules)"
+title: "Multi-client core"
 description: "One backend operations layer (#lib/server/[domain]/) serves four clients — human UI, AI tools, REST API, background jobs — via thin wrappers, with zero…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Multi-client core (hexagonal domain modules)
+# Multi-client core
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

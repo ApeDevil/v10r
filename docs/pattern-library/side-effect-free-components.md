@@ -1,10 +1,10 @@
 ---
-title: "Side-effect-free component tree (barrels that tree-shake)"
+title: "Side-effect-free component tree"
 description: "Compiled Svelte components run code at module scope, so the bundler keeps every component a barrel re-exports. Declaring the component directory side-effect…"
 category: "Runtime Velocity"
 ---
 
-# Side-effect-free component tree (barrels that tree-shake)
+# Side-effect-free component tree
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -51,7 +51,7 @@ Compiled Svelte components run code at module scope, so the bundler keeps every 
 
 ## Depends on
 
-- [Performance budget and ratchet (targets aspire, ceilings hold)](/docs/pattern-library/performance-budget-ratchet)
+- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
 
 ---
 

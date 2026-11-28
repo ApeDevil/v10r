@@ -1,4 +1,4 @@
-# Agent Experience (AX) surfaces
+# Agent experience surfaces
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -61,7 +61,7 @@ Five derived surfaces make the repo consumable by coding agents: a root AGENTS.m
 
 ## Depends on
 
-- [Docs navigation hubs (README-per-directory convention)](docs-nav-hubs.md)
+- [Docs navigation hubs](docs-nav-hubs.md)
 
 ---
 

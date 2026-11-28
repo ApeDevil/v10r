@@ -1,10 +1,10 @@
 ---
-title: "Main-thread budget (worker → WASM, each step measured)"
+title: "Main-thread budget"
 description: "Expensive browser work moves off the main thread only where measurement justifies it: cheap stays inline, noticeable CPU work goes to a Web Worker, and WASM…"
 category: "Runtime Velocity"
 ---
 
-# Main-thread budget (worker → WASM, each step measured)
+# Main-thread budget
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Expensive browser work moves off the main thread only where measurement justifie
 
 **When to use:** Use for large parsing, image processing, graph layout, data crunching or expensive editor operations — anything that would otherwise block input and rendering.
 
-**Requires:** web-worker
+**Needs:** required web-worker · optional wasm-toolchain
 
 ## Avoid when
 

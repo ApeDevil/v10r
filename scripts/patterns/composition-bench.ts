@@ -18,13 +18,17 @@
  * - optionalAsRequired = golden-optional constituents the plan made a mandatory step
  * - needRecall = golden required ∪ conditional needs the plan names at the required or conditional level
  * - spuriousNeeds = needs the plan states as REQUIRED that the golden set does not list at any level
+ * - factNeedRecall = golden needs covered by the required/conditional needs of the golden STEPS,
+ *   read from the registry directly: whether the facts are complete, independent of step selection
  */
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { adoptionNeeds } from '../../pattern-library/infrastructure-needs.ts';
 import { loadRegistry } from '../../pattern-library/load.ts';
 import { REGISTRY_QUERIES } from '../../pattern-library/query.ts';
 import { registryDigest } from '../../pattern-library/registry-digest.ts';
+import { buildById, type Registry } from '../../pattern-library/schema.ts';
 
 const ROOT = resolve(import.meta.dir, '../..');
 const SCENARIOS = resolve(ROOT, 'pattern-library/bench/composition-scenarios.json');
@@ -61,43 +65,47 @@ interface ScenarioResult {
 	needsFound: string[];
 	needsMissing: string[];
 	spuriousNeeds: string[];
+	/** Golden needs the golden steps' own declared and inherited needs do not cover (selection-independent). */
+	factNeedsMissing: string[];
+	/** What the plan itself named, kept so a later scenario correction can rescore this result. */
+	named: { required: string[]; conditional: string[] };
 	planChars: number;
 }
-
-const LEGACY_WORDS: Record<string, string> = {
-	postgres: 'relational-db',
-	pgvector: 'vector-search',
-	neo4j: 'graph-db',
-	redis: 'key-value-store',
-	cron: 'scheduler',
-	'ai-provider': 'llm-provider',
-	'third-party-api': 'external-api',
-};
 
 /** Steps print as `### Step N: Title (`id`)` in both the full and the outlined plan. */
 function parsePlan(text: string): ParsedPlan {
 	const steps = [...text.matchAll(/^### Step \d+: .*\(`([a-z0-9-]+)`\)\s*$/gm)].map((match) => match[1]);
 	const list = (label: RegExp) => {
-		const line = text.match(label)?.[1] ?? '';
+		let line = text.match(label)?.[1] ?? '';
+		// Labels carry details in (possibly nested) parentheses; the ids are what remains.
+		while (/\([^()]*\)/.test(line)) line = line.replace(/\([^()]*\)/g, '');
 		return line
+			.split(/\.(?:\s|$)/)[0]
 			.split(/,\s*/)
-			.map((need) =>
-				need
-					.replace(/\s*\(.*$/, '')
-					.replace(/[.`]/g, '')
-					.trim(),
-			)
+			.map((need) => need.trim())
 			.filter((need) => /^[a-z0-9-]+$/.test(need));
 	};
-	// Baseline only (registry 2.2.0): one flat "requires" line in the retired requirement words. Removed
-	// with the vocabulary change; the committed baseline result keeps what it measured.
-	const legacy = list(/^- This plan requires: (.+?)(?: —|\.)/m).map((word) => LEGACY_WORDS[word] ?? word);
 	return {
 		steps,
-		requiredNeeds: legacy.length > 0 ? legacy : list(/^- Required infrastructure: (.+)$/m),
+		requiredNeeds: list(/^- Required infrastructure: (.+)$/m),
 		conditionalNeeds: list(/^- Conditional infrastructure: (.+)$/m),
 		text,
 	};
+}
+
+function factGaps(registry: Registry, scenario: Scenario, goldenNeeds: string[]): string[] {
+	const byId = buildById(registry);
+	const covered = new Set(
+		scenario.required.flatMap((id) => {
+			const pattern = byId.get(id);
+			return pattern
+				? adoptionNeeds(pattern, byId)
+						.filter((need) => need.level === 'required' || need.level === 'conditional')
+						.map((need) => need.need)
+				: [];
+		}),
+	);
+	return goldenNeeds.filter((need) => !covered.has(need));
 }
 
 function measure(scenario: Scenario): ScenarioResult {
@@ -132,6 +140,8 @@ function measure(scenario: Scenario): ScenarioResult {
 		needsFound: goldenNeeds.filter((need) => named.has(need)),
 		needsMissing: goldenNeeds.filter((need) => !named.has(need)),
 		spuriousNeeds: plan.requiredNeeds.filter((need) => !goldenNeeds.includes(need)),
+		named: { required: plan.requiredNeeds, conditional: plan.conditionalNeeds },
+		factNeedsMissing: factGaps(registry, scenario, goldenNeeds),
 		planChars: outcome.text.length,
 	};
 }
@@ -162,6 +172,7 @@ function aggregate(results: ScenarioResult[]) {
 			goldenNeeds,
 		),
 		spuriousNeeds: sum((result) => result.spuriousNeeds.length),
+		factNeedRecall: pct(goldenNeeds - sum((result) => result.factNeedsMissing.length), goldenNeeds),
 		planTokensEstimated: Math.ceil(sum((result) => result.planChars) / 4),
 	};
 }
@@ -180,7 +191,10 @@ const { scenarios } = JSON.parse(readFileSync(SCENARIOS, 'utf8')) as { scenarios
 const { registry } = loadRegistry();
 if (!registry) throw new Error('registry did not load');
 const results = scenarios.map(measure);
+const scenarioChanges = (JSON.parse(readFileSync(SCENARIOS, 'utf8')) as { changes: unknown[] }).changes.length;
 const report = {
+	/** How many recorded scenario corrections this result was scored with (see the fixture's `changes`). */
+	scenarioChanges,
 	measuredAt: new Date().toISOString().slice(0, 10),
 	commit: commitOf(),
 	registryDigest: registryDigest(registry),

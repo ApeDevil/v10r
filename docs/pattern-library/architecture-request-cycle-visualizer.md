@@ -1,10 +1,10 @@
 ---
-title: "Request-cycle visualizer (form · API · AI)"
+title: "Request-cycle visualizer"
 description: "An interactive showcase that visualizes the full form, REST API, and AI request cycles as they pass through the hooks chain and domain layers."
 category: "Architecture & Request Pipeline"
 ---
 
-# Request-cycle visualizer (form · API · AI)
+# Request-cycle visualizer
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 An interactive showcase that visualizes the full form, REST API, and AI request cycles as they pass through the hooks chain and domain layers.
 
 **When to use:** Reach for it when you need a live, didactic demonstration of how a form submission, API call, or AI request actually traverses the stack.
+
+**Needs:** v10r's implementation uses llm-provider, relational-db
 
 ## Docs
 

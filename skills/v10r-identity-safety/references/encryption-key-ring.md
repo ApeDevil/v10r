@@ -1,4 +1,4 @@
-# Encryption key ring (envelopes name their key, rotation re-seals)
+# Encryption key ring
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Stored credentials are AES-256-GCM envelopes that name the key sealing them (a d
 
 **When to use:** Use when the app stores third-party credentials or other secrets encrypted under a deployment key that must be rotatable.
 
-**Requires:** postgres, cron
+**Needs:** required relational-db, scheduler
 
 ## Avoid when
 
@@ -53,7 +53,7 @@ Stored credentials are AES-256-GCM envelopes that name the key sealing them (a d
 
 ## Depends on
 
-- [Jobs & scheduling (registry, runner, platform-owned cadence)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/jobs-scheduler.md)
+- [Jobs and scheduling](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/jobs-scheduler.md)
 
 ---
 

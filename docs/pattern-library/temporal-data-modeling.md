@@ -1,10 +1,10 @@
 ---
-title: "Temporal data modeling (how much time to store)"
+title: "Temporal data modeling"
 description: "A four-rung ladder — last write, transaction time (revision rows), valid time (periods, non-overlap by exclusion constraint), bitemporal — climbed only as far…"
 category: "Databases & Storage"
 ---
 
-# Temporal data modeling (how much time to store)
+# Temporal data modeling
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A four-rung ladder — last write, transaction time (revision rows), valid time (periods, non-overlap by exclusion constraint), bitemporal — climbed only as far as a question someone actually asks; bitemporal only for auditable retroactive corrections.
 
 **When to use:** Use when deciding whether a table needs history, an effective period, or both.
+
+**Needs:** required relational-db · v10r's implementation uses vector-search
 
 ## Avoid when
 

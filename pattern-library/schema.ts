@@ -26,28 +26,73 @@ export type PatternTier = 'deep' | 'light';
 export type PatternMaturity = 'planned' | 'implemented' | 'proven';
 
 /**
- * Infrastructure a pattern needs the TARGET project to have — a closed vocabulary so a
- * recommender can union it across a plan and a reader can rule a pattern out before
- * reading it. Frameworks are not listed: every pattern assumes the v10r stack's runtime.
+ * Infrastructure needs: the capabilities a pattern can need the TARGET project to run, named for
+ * the capability (a relational database), never for the product v10r happens to use (Postgres).
+ * `binding` is v10r's reference implementation; `technologies` are the words a target may name
+ * instead of the capability (`target_infra: ["postgres"]`). Frameworks are not listed: every
+ * pattern assumes the v10r stack's runtime. Closed on purpose: a recommender unions needs across a
+ * plan, and a reader rules a pattern out before reading it.
  */
-export const PATTERN_REQUIREMENTS = [
-	'postgres',
-	'pgvector',
-	'neo4j',
-	'redis',
-	'object-storage',
-	'cron',
-	'ai-provider',
-	'third-party-api',
-	'web-worker',
-	'wasm-toolchain',
-	'service-worker',
+export const INFRASTRUCTURE_NEEDS = [
+	{
+		id: 'relational-db',
+		title: 'Relational database',
+		binding: 'PostgreSQL (Neon) through Drizzle',
+		technologies: ['postgres', 'mysql', 'sqlite'],
+	},
+	{ id: 'vector-search', title: 'Vector search', binding: 'pgvector inside PostgreSQL', technologies: ['pgvector'] },
+	{ id: 'graph-db', title: 'Graph database', binding: 'Neo4j Aura over the HTTP Query API', technologies: ['neo4j'] },
+	{ id: 'key-value-store', title: 'Shared key-value store', binding: 'Redis (Upstash, REST)', technologies: ['redis'] },
+	{ id: 'object-storage', title: 'Object storage', binding: 'Cloudflare R2 over the S3 API', technologies: ['s3'] },
+	{ id: 'scheduler', title: 'Scheduler', binding: 'Vercel cron calling the jobs runner', technologies: ['cron'] },
+	{ id: 'llm-provider', title: 'LLM provider', binding: 'provider-agnostic AI SDK adapters', technologies: [] },
+	{ id: 'email-delivery', title: 'Email delivery', binding: 'Resend', technologies: ['resend'] },
+	{ id: 'external-api', title: 'External API', binding: 'per pattern, named in when/why', technologies: [] },
+	{ id: 'web-worker', title: 'Web worker', binding: 'browser dedicated workers', technologies: [] },
+	{ id: 'service-worker', title: 'Service worker', binding: 'SvelteKit service worker', technologies: [] },
+	{ id: 'wasm-toolchain', title: 'WebAssembly toolchain', binding: 'Rust compiled with wasm-pack', technologies: [] },
 	// A second deploy target that runs an OCI container next to the app (Podman locally,
 	// a container host such as Render remotely) — for a separately deployed service.
-	'container-host',
-] as const;
+	{
+		id: 'container-host',
+		title: 'Container host',
+		binding: 'Podman locally, a container host remotely',
+		technologies: ['podman', 'docker'],
+	},
+] as const satisfies readonly { id: string; title: string; binding: string; technologies: readonly string[] }[];
 
-export type PatternRequirement = (typeof PATTERN_REQUIREMENTS)[number];
+export type InfrastructureNeed = (typeof INFRASTRUCTURE_NEEDS)[number]['id'];
+export const INFRASTRUCTURE_NEED_IDS: readonly InfrastructureNeed[] = INFRASTRUCTURE_NEEDS.map((entry) => entry.id);
+
+/** Technology word → the need it provides (`postgres` → `relational-db`). */
+export const TECHNOLOGY_NEED: ReadonlyMap<string, InfrastructureNeed> = new Map(
+	INFRASTRUCTURE_NEEDS.flatMap((entry) => entry.technologies.map((technology) => [technology, entry.id] as const)),
+);
+
+/**
+ * How strictly a pattern needs a capability. `required`: it cannot work without it.
+ * `conditional`: required only when `when` holds for the target. `optional`: improves the pattern
+ * but is not needed (`why`). `implementation`: v10r's reference implementation uses it, the
+ * pattern does not (`why`) — a technology never becomes mandatory merely because v10r uses it.
+ */
+export const NEED_LEVELS = ['required', 'conditional', 'optional', 'implementation'] as const;
+export type NeedLevel = (typeof NEED_LEVELS)[number];
+
+/** One declared need. `pinned` says the capability is not substitutable: only that technology fits. */
+export interface NeedDeclaration {
+	need: InfrastructureNeed;
+	level: NeedLevel;
+	when?: string;
+	why?: string;
+	pinned?: string;
+}
+
+/** As authored: a bare need id is shorthand for `{need, level: "required"}`. */
+export type NeedEntry = InfrastructureNeed | NeedDeclaration;
+
+export function needDeclaration(entry: NeedEntry): NeedDeclaration {
+	return typeof entry === 'string' ? { need: entry, level: 'required' } : entry;
+}
 
 /** A considered alternative and the condition under which it beats this pattern. */
 export interface RegAlternative {
@@ -74,6 +119,24 @@ export interface RegCategory {
 	group: string;
 }
 
+/**
+ * Numerals that are part of a concept's name, not a count or a version (D-09). Anything else with
+ * a digit in a title — "14-stage", "~40 wrappers", "Svelte 5" — is a volatile fact.
+ */
+export const TITLE_NUMERALS_ALLOWED = ['N+1', '3D', 'OAuth 2.1', 'A2A', 'A2UI', 'S3', 'i18n', 'Neo4j'] as const;
+
+/**
+ * A title names the concept. Returns what does not belong in one: numerals outside the allow-list
+ * and a parenthetical (a summary squeezed into the name). Empty = canonical.
+ */
+export function volatileTitleFacts(title: string): string[] {
+	let rest = title;
+	for (const allowed of TITLE_NUMERALS_ALLOWED) rest = rest.split(allowed).join(' ');
+	const facts = [...rest.matchAll(/[~#]?\S*\d\S*/g)].map((match) => match[0]);
+	if (/[()]/.test(title)) facts.push('(…)');
+	return facts;
+}
+
 export interface PatternRecord {
 	id: string;
 	tier: PatternTier;
@@ -90,8 +153,8 @@ export interface PatternRecord {
 	avoid_when: string[];
 	/** Simpler or different approaches the pattern was chosen over, and when they win instead. */
 	alternatives: RegAlternative[];
-	/** What the target project must already run (see `PATTERN_REQUIREMENTS`). */
-	requires: PatternRequirement[];
+	/** Infrastructure the pattern needs, each at a level (see `INFRASTRUCTURE_NEEDS`, `NEED_LEVELS`). */
+	needs: NeedEntry[];
 	capabilities: string[];
 	keywords: string[];
 	depends_on: string[];
@@ -109,8 +172,15 @@ export interface PatternRecord {
 	verifiedSha?: string;
 }
 
+/**
+ * The registry's schema format. Readers refuse any other value: a format change renames or
+ * reshapes fields, and every reader changes with it in the same commit (no compatibility layer).
+ * Content identity is not a version number — see `registry-digest.ts`.
+ */
+export const REGISTRY_FORMAT = 3;
+
 export interface Registry {
-	version: string;
+	format: typeof REGISTRY_FORMAT;
 	note?: string;
 	groups: RegGroup[];
 	categories: RegCategory[];
@@ -122,7 +192,10 @@ export const REGISTRY_FILENAME = 'registry.json';
 const REF_KINDS: readonly string[] = ['file', 'dir', 'route', 'approute', 'anchor'];
 const TIERS: readonly string[] = ['deep', 'light'];
 const MATURITIES: readonly string[] = ['planned', 'implemented', 'proven'];
-const REQUIREMENTS: readonly string[] = PATTERN_REQUIREMENTS;
+const NEEDS_BY_ID = new Map<string, (typeof INFRASTRUCTURE_NEEDS)[number]>(
+	INFRASTRUCTURE_NEEDS.map((entry) => [entry.id, entry]),
+);
+const LEVELS: readonly string[] = NEED_LEVELS;
 const VERIFIED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const STRING_LIST_FIELDS = [
@@ -158,6 +231,64 @@ function validateRef(value: unknown, where: string, errors: string[]): void {
 	if (value.kind !== undefined && (typeof value.kind !== 'string' || !REF_KINDS.includes(value.kind))) {
 		errors.push(`${where}: ref.kind must be one of ${REF_KINDS.join('|')}`);
 	}
+}
+
+const nonEmpty = (value: unknown) => typeof value === 'string' && value.trim().length > 0;
+
+/**
+ * Needs contract: one declaration per need; the level decides which explanation is mandatory —
+ * `conditional` states its condition (`when`), `optional` and `implementation` state their reason
+ * (`why`), and a pin names one of the need's technologies and says why it cannot be substituted.
+ */
+function validateNeeds(value: unknown, where: string, errors: string[]): void {
+	if (!Array.isArray(value)) {
+		errors.push(`${where}.needs: must be an array`);
+		return;
+	}
+	const seen = new Set<string>();
+	value.forEach((entry, index) => {
+		const at = `${where}.needs[${index}]`;
+		const declaration = typeof entry === 'string' ? { need: entry, level: 'required' } : entry;
+		if (!isRecord(declaration)) {
+			errors.push(`${at}: must be a need id or {need, level, when?, why?, pinned?}`);
+			return;
+		}
+		const definition = typeof declaration.need === 'string' ? NEEDS_BY_ID.get(declaration.need) : undefined;
+		if (!definition) {
+			errors.push(`${at}.need: '${String(declaration.need)}' is not one of ${[...NEEDS_BY_ID.keys()].join('|')}`);
+			return;
+		}
+		if (seen.has(definition.id)) errors.push(`${at}: '${definition.id}' is declared twice — keep one level`);
+		seen.add(definition.id);
+		const level = declaration.level;
+		if (typeof level !== 'string' || !LEVELS.includes(level)) {
+			errors.push(`${at}.level: must be one of ${LEVELS.join('|')}`);
+			return;
+		}
+		if (level === 'conditional' && !nonEmpty(declaration.when)) {
+			errors.push(`${at}: a conditional need states its condition in "when"`);
+		}
+		if (level !== 'conditional' && declaration.when !== undefined) {
+			errors.push(`${at}: "when" belongs to conditional needs only`);
+		}
+		if ((level === 'optional' || level === 'implementation') && !nonEmpty(declaration.why)) {
+			errors.push(`${at}: an ${level} need states its reason in "why"`);
+		}
+		if (declaration.pinned !== undefined) {
+			const technologies: readonly string[] = definition.technologies;
+			if (level !== 'required' && level !== 'conditional') {
+				errors.push(`${at}.pinned: only a required or conditional need can be pinned`);
+			} else if (typeof declaration.pinned !== 'string' || !technologies.includes(declaration.pinned)) {
+				errors.push(
+					`${at}.pinned: must be one of ${definition.id}'s technologies (${technologies.join('|') || 'none'})`,
+				);
+			}
+			if (!nonEmpty(declaration.why)) errors.push(`${at}: a pinned need says why the technology cannot be substituted`);
+		}
+		for (const key of Object.keys(declaration)) {
+			if (!['need', 'level', 'when', 'why', 'pinned'].includes(key)) errors.push(`${at}: unknown field '${key}'`);
+		}
+	});
 }
 
 function validatePattern(value: unknown, index: number, errors: string[]): void {
@@ -197,15 +328,7 @@ function validatePattern(value: unknown, index: number, errors: string[]): void 
 			}
 		});
 	}
-	if (!isStringArray(value.requires)) {
-		errors.push(`${where}.requires: must be an array of strings`);
-	} else {
-		for (const requirement of value.requires) {
-			if (!REQUIREMENTS.includes(requirement)) {
-				errors.push(`${where}.requires: '${requirement}' is not one of ${REQUIREMENTS.join('|')}`);
-			}
-		}
-	}
+	validateNeeds(value.needs, where, errors);
 	for (const field of REF_LIST_FIELDS) {
 		const list = value[field];
 		if (!Array.isArray(list)) {
@@ -320,8 +443,8 @@ export function parseRegistry(data: unknown): { registry: Registry | null; error
 	if (!isRecord(data)) {
 		return { registry: null, errors: ['registry root must be an object'] };
 	}
-	if (typeof data.version !== 'string') {
-		errors.push('version: must be a string');
+	if (data.format !== REGISTRY_FORMAT) {
+		errors.push(`format: this reader understands registry format ${REGISTRY_FORMAT}, got ${String(data.format)}`);
 	}
 	const categoryIds = validateTaxonomy(data, errors);
 	if (!Array.isArray(data.patterns) || data.patterns.length === 0) {

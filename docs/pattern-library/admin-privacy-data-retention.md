@@ -16,6 +16,8 @@ Scheduled jobs that enforce data-retention policy by purging stale records on a 
 
 **When to use:** Use when a new data domain needs an automatic expiry/purge cycle rather than indefinite retention.
 
+**Needs:** required relational-db, scheduler · conditional object-storage (when retained data includes stored files)
+
 ## Docs
 
 - [docs/blueprint/architecture/jobs.md](/docs/blueprint/architecture/jobs) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/jobs.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/jobs.md))

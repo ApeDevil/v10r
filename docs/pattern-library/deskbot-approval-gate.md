@@ -1,10 +1,10 @@
 ---
-title: "Deskbot approval gate (proposal → approve, plan-gated mutation)"
+title: "Deskbot approval gate"
 description: "Write/destructive desk tools never mutate inside the agent loop; they return a requiresApproval sentinel that becomes a proposal (PlanCard), executed only via…"
 category: "AI"
 ---
 
-# Deskbot approval gate (proposal → approve, plan-gated mutation)
+# Deskbot approval gate
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Write/destructive desk tools never mutate inside the agent loop; they return a r
 
 **When to use:** Mandatory companion to any mutating AI tool: it converts 'the model wants to write' into an auditable human decision.
 
-**Requires:** postgres, ai-provider
+**Needs:** required relational-db, llm-provider
 
 ## Avoid when
 
@@ -69,9 +69,9 @@ Write/destructive desk tools never mutate inside the agent loop; they return a r
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](/docs/pattern-library/ai-tool-harness)
-- [AI surfaces (chatbot vs deskbot split over one guard)](/docs/pattern-library/ai-surfaces)
-- [Durable step execution (claim, lease, fence, receipts)](/docs/pattern-library/durable-step-execution)
+- [AI tool manifest and harness split](/docs/pattern-library/ai-tool-harness)
+- [AI surfaces](/docs/pattern-library/ai-surfaces)
+- [Durable step execution](/docs/pattern-library/durable-step-execution)
 
 ---
 

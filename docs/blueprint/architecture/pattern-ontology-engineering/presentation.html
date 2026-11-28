@@ -69,8 +69,9 @@ ol.steps li.opt{color:var(--muted)}
 
 <div class="wrap">
 <nav aria-label="Sections">
-  <div class="brand">POE review · 5720c96</div>
+  <div class="brand">POE · Slice 1 checkpoint</div>
   <a href="#overview">Overview</a>
+  <a href="#slice1">Slice 1 result</a>
   <a href="#current">Current ontology</a>
   <a href="#edges">What depends_on means</a>
   <a href="#findings">Findings</a>
@@ -85,9 +86,32 @@ ol.steps li.opt{color:var(--muted)}
 <main id="main"></main>
 </div>
 
+<template id="t-slice1"><section>
+  <div class="eyebrow">Slice 1 · benchmark baseline and truthful infrastructure facts · checkpoint</div>
+  <h2>The facts are complete. Selection is next.</h2>
+  <p>Every record now states its infrastructure needs by level (required, conditional, optional, implementation), checked against the adapters its code imports. Given the right steps, the registry names every need the golden sets expect, in design and holdout alike. What still goes wrong is which steps the planner picks, which Slice 4 changes.</p>
+  <div class="grid">
+    <div class="panel stat"><b>76.7%</b><span>need recall, 18 scenarios (was 53.3%)</span></div>
+    <div class="panel stat"><b>100%</b><span>fact need recall (was 43.3%)</span></div>
+    <div class="panel stat"><b>0</b><span>records importing an adapter they do not declare</span></div>
+    <div class="panel stat"><b>0</b><span>node-kind need contradictions (was 11)</span></div>
+    <div class="panel stat"><b>145</b><span>titles made canonical, 0 volatile numerals</span></div>
+    <div class="panel stat"><b>+9.8%</b><span>plan tokens (target ≤ +10%)</span></div>
+  </div>
+  <div class="filters" id="bfilters" role="group" aria-label="Scenario set"></div>
+  <div class="panel scroll"><table><thead><tr><th>Metric</th><th class="num">Baseline</th><th class="num">Slice 1</th><th>Reading</th></tr></thead><tbody id="btable"></tbody></table></div>
+  <div class="panel"><h3>Open for your review</h3><ul style="margin:6px 0 0;padding-left:20px">
+    <li><b>S3 golden correction:</b> hosted MCP authenticates with environment tokens, so <code>relational-db</code> is implementation level there. Recorded with its reason; confirm or overrule.</li>
+    <li><b>S8 levels:</b> <code>name-check</code> declares its database and key-value store as conditional; the golden set says required.</li>
+    <li><b>Spurious needs 5 → 8:</b> all from steps the planner should not have picked, now visible because their needs are truthful.</li>
+    <li><b>Maturity warnings:</b> 13 "promote to proven" warnings remain, the rule D-08 rejects; Slice 5 replaces it.</li>
+  </ul></div>
+</section></template>
+
 <template id="t-overview"><section>
-  <div class="eyebrow">Pattern Ontology Engineering · analysis and plan only</div>
+  <div class="eyebrow">Pattern Ontology Engineering · review accepted 2026-11-28 · Slice 1 implemented, awaiting review</div>
   <h1>The registry is sound. Its relationships are not typed.</h1>
+  <p class="panel" style="margin-bottom:12px"><b>Status:</b> ApeDevil accepted the review and ruled on all 14 decisions. Slice 1 (benchmark baseline, truthful infrastructure needs, canonical titles) is on the branch and stopped at its checkpoint; see <a href="#slice1">Slice 1 result</a>. The figures below are the review baseline, measured before Slice 1.</p>
   <p>One authority in git, deterministic tools, fail-closed gates and fitness before the how are worth keeping. But one untyped <code>depends_on</code> carries five meanings, every light record omits its infrastructure, documentation depth decides what a plan may contain, and most "proven" grades come from one bulk stamp. On eight emulation scenarios, plans were 48% precise and found 56% of the infrastructure they need.</p>
   <div class="grid">
     <div class="panel stat"><b>199</b><span>records · 63 deep · 136 light</span></div>
@@ -97,7 +121,7 @@ ol.steps li.opt{color:var(--muted)}
     <div class="panel stat"><b>48%</b><span>plan step precision (8 scenarios)</span></div>
     <div class="panel stat"><b>56%</b><span>required infrastructure found</span></div>
   </div>
-  <div class="panel"><h3>Recommendation</h3><p style="margin-top:6px">Keep the registry as the only authority and type it: <code>builds_on</code>, <code>composes</code> (optional with a condition), <code>specializes</code>; a closed <code>kind</code>; capability-level infrastructure needs; maturity derived from evidence; one declared platform baseline. No database or graph-store projection. Eight slices, each ending at a review checkpoint.</p></div>
+  <div class="panel"><h3>Recommendation</h3><p style="margin-top:6px">Keep the registry as the only authority and type it: <code>builds_on</code>, <code>composes</code> (optional with a condition), <code>specializes</code>; a closed <code>kind</code>; capability-level infrastructure needs; maturity derived from evidence; scoped platform assumptions. No database or graph-store projection. Eight slices, each ending at a review checkpoint.</p></div>
 </section></template>
 
 <template id="t-current"><section>
@@ -233,15 +257,15 @@ ol.steps li.opt{color:var(--muted)}
 </section></template>
 
 <template id="t-roadmap"><section>
-  <div class="eyebrow">F · eight slices, each with a review checkpoint</div>
+  <div class="eyebrow">F · reconciled with the rulings · each slice ends at a review checkpoint</div>
   <h2>Roadmap</h2>
   <div class="panel" id="slices" style="display:flex;flex-direction:column;gap:12px"></div>
 </section></template>
 
 <template id="t-decisions"><section>
-  <div class="eyebrow">G · awaiting ApeDevil</div>
+  <div class="eyebrow">G · ruled by ApeDevil 2026-11-28</div>
   <h2>Decisions</h2>
-  <div class="panel scroll"><table><thead><tr><th>ID</th><th>Decision</th><th>Recommendation</th><th>Basis</th></tr></thead><tbody id="dtable"></tbody></table></div>
+  <div class="panel scroll"><table><thead><tr><th>ID</th><th>Decision</th><th>Ruling</th><th>Basis</th></tr></thead><tbody id="dtable"></tbody></table></div>
 </section></template>
 
 <script>
@@ -258,13 +282,16 @@ const PLANS={
 const PSUM=[["S1 mcp authorization",10,4,6,"1/3"],["S2 rate limiting",5,0,5,"0/1"],["S3 hosted mcp",5,2,3,"0/2"],["S4 agentic parametric modeling",10,8,"0 (+2 forced)","1/3"],["S5 architecture engineering",7,1,6,"—"],["S6 grounded answers + graph rag",3,1,2,"3/4"],["S7 encryption key rotation",2,2,0,"2/2"],["S8 resilient multi-source lookup",4,4,0,"3/3"],["Total",46,22,22,"10/18 (56%)"]];
 const KINDS=[["pattern",163,""],["implementation (fold into a pattern)",23,"b"],["principle",4,"o"],["workflow",4,"o"],["showcase",3,"x"],["documentation view",2,"x"]];
 const ALIGN=[["Pattern identity","A","R","—","D","D","D","R"],["Relationships","A","—","—","D","D","D","—"],["Inverses, closures","—","—","—","D","D","D","—"],["Infrastructure needs","A","—","—","D","D","D","checked"],["Evidence, maturity","A / derived","—","—","D","D","D","shared vocabulary"],["Decisions","R","—","—","D","D","—","A"],["Showcases","R","—","R","R","A","R","R"]];
-const SLICES=[["0","Ratify the review","Decisions D-01 to D-14, golden scenarios."],["1","Truthful facts and vocabulary","Capability-level needs on every record, import-scan gate, AE consistency gate, canonical titles, content digest, naming rows."],["2","Typed relationships, one graph module","builds_on / composes / specializes replace depends_on; baseline declared once; pattern-graph.ts replaces three walkers."],["3","MCP and Vely read the typed graph","ids on the plan tool, light steps eligible, optional constituents, why-included chain, explore_patterns on stdio, shared Vely rows."],["4","Evidence-derived maturity","Typed evidence shared with AE; proven, demonstrated, implemented, planned computed."],["5","Measure composition","Golden scenarios in the bench, baseline first; capability-vocabulary decision on the numbers."],["6","Reconcile records and human surfaces","kind field, merges and folds (199 → about 165), one Pattern Explorer, back-links, PatternRef."],["7","Semantic-integrity gates","Retired terms from naming.md, prose counts, overlap report, authoring procedure."],["8","Platform vocabulary (optional)","Outcomes, owners, corpora, Neo4j identities."]];
-const DECISIONS=[["D-01","Direction B, golden scenarios","Yes","evidence"],["D-02","Project the graph into Postgres or Neo4j","No","evidence"],["D-03","kind: pattern | principle | workflow","Yes","both"],["D-04","Retire 28 non-pattern records, merge duplicates","Yes","preference"],["D-05","Platform baseline list","Yes, multi-client-core","evidence"],["D-06","Capability-level needs with bindings","Yes","evidence"],["D-07","Controlled capability vocabulary","Not now; decide on Slice 5 numbers","evidence"],["D-08","Derived maturity, add demonstrated, drop verifiedSha","Yes","both"],["D-09","Titles are canonical names","Yes","preference"],["D-10","Rename 150 prefixed ids","No mass rename","preference"],["D-11","Keep 7 groups, 30 categories as homes","Yes, fold toolkits","preference"],["D-12","Gate scope for naming claims","Fix docs, generate retired list","preference"],["D-13","Platform vocabulary beyond patterns","Separate later slice","preference"],["D-14","Desk-bound names in AI patterns","Drop edge now, rename with Desk refactor","preference"]];
+const SLICES=[["0 ✓","Ratify the review","D-01 to D-14 ruled 2026-11-28; golden scenarios accepted; holdouts required."],["1 ●","Benchmark baseline and truthful infrastructure facts","Composition benchmark with holdouts, baseline first; leveled needs on every record; import-scan, node-kind and title gates; content digest; Desk edge dropped. Implemented, at checkpoint."],["2","Kinds, reconciliation, identifiers","pattern / principle / workflow with adoption semantics; retire and merge with a preservation gate; identifier review and rename manifest, no aliases."],["3","Typed relationships, scoped assumptions","builds_on / composes / specializes with defined semantics; scoped platform assumptions; pattern-graph.ts replaces three walkers."],["4","Ontology-aware planning","ids on the plan tool, light records eligible, kinds honoured, optional with tri-state conditions, a reason per step; MCP and Vely share it."],["5","Evidence model","Refs, results, scope, provenance, freshness, applicability; maturity derived; demonstrated defined; unreliable SHAs removed."],["6","Human surfaces","One Pattern Explorer on one projection; inverses, needs and maturity on pages; back-links."],["7","Integrity gates","Claims match enforcement; authoring path."],["8","Platform-wide semantic integrity (mandatory)","Persistence vocabularies, owners, corpora, Neo4j identities, cross-layer terms."]];
+const DECISIONS=[["D-01","Direction B: typed graph inside the registry","Approved; 8 golden + independent holdouts","evidence"],["D-02","No Postgres or Neo4j projection","Approved","evidence"],["D-03","kind: pattern | principle | workflow","Approved; earlier, with adoption semantics","both"],["D-04","Retire and merge records","Approved; preserve knowledge, count irrelevant","preference"],["D-05","Platform assumptions","Adjusted: scoped, four kinds, no silent baseline","evidence"],["D-06","Capability-level needs","Approved with levels: required, conditional, optional, implementation","evidence"],["D-07","Controlled capability vocabulary","Deferred; exact id selection required","evidence"],["D-08","Evidence-derived maturity","Adjusted: test existence never proves; six evidence facets","both"],["D-09","Titles are canonical names","Approved","preference"],["D-10","Identifiers","Adjusted: review all, fix wrong ones, no aliases, manifest","preference"],["D-11","Taxonomy","Navigation only","preference"],["D-12","Claims match enforcement","Approved","preference"],["D-13","Platform-wide vocabulary","Mandatory (Slice 8)","preference"],["D-14","Desk-bound edges","Drop now; renames with the Desk refactor","preference"]];
+const BENCH={all:[["Step precision","50.0%","50.0%","unchanged by design: selection changes in Slice 4"],["Step recall","75.7%","75.7%","unchanged by design"],["Need recall","53.3%","76.7%","every miss belongs to a step the planner did not pick"],["Fact need recall","43.3%","100%","needs complete given the right steps"],["Spurious required needs","5","8","all from unnecessary steps"],["Plan tokens","8,453","9,278","+9.8%"]],design:[["Step precision","46.7%","46.7%",""],["Step recall","91.3%","91.3%",""],["Need recall","61.1%","94.4%",""],["Fact need recall","55.6%","100%",""],["Spurious required needs","5","8","S1, S2, S3, S5"],["Plan tokens","6,021","6,615",""]],holdout:[["Step precision","63.6%","63.6%",""],["Step recall","50.0%","50.0%","5 holdouts need light records the planner cannot reach yet"],["Need recall","41.7%","50.0%",""],["Fact need recall","25.0%","100%","holdouts fixed before any change"],["Spurious required needs","0","0",""],["Plan tokens","2,432","2,663",""]]};
 
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function bars(el,rows,max){el.innerHTML=rows.map(([l,v,c])=>`<div class="bar"><span>${esc(l)}</span><i class="${c}" style="width:${(v/max*100).toFixed(1)}%"></i><b class="mono">${v}</b></div>`).join("");}
 const setup={
+ slice1(){let k="all";const f=$("#bfilters");const draw=()=>{$("#btable").innerHTML=BENCH[k].map(r=>`<tr><td>${esc(r[0])}</td><td class="num">${esc(r[1])}</td><td class="num">${esc(r[2])}</td><td>${esc(r[3])}</td></tr>`).join("");f.querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",String(b.dataset.v===k))})};
+  f.innerHTML=[["all","All 18"],["design","Design 8"],["holdout","Holdout 10"]].map(([v,l])=>`<button type="button" data-v="${v}">${l}</button>`).join("");f.addEventListener("click",e=>{const b=e.target.closest("button");if(b){k=b.dataset.v;draw()}});draw()},
  edges(){bars($("#edgebars"),EDGES,29)},
  findings(){let sev="all";const f=$("#ffilters");const draw=()=>{$("#ftable").innerHTML=FINDINGS.filter(r=>sev==="all"||r[3]===sev).map(r=>`<tr><td class="mono">${r[0]}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td><span class="pill ${r[3]}">${r[3]}</span></td></tr>`).join("");f.querySelectorAll("button").forEach(b=>{b.setAttribute("aria-pressed",String(b.dataset.v===sev))})};
   f.innerHTML=["all","high","medium","low"].map(v=>`<button type="button" data-v="${v}">${v} (${v==="all"?FINDINGS.length:FINDINGS.filter(r=>r[3]===v).length})</button>`).join("");f.addEventListener("click",e=>{const b=e.target.closest("button");if(b){sev=b.dataset.v;draw()}});draw()},
@@ -278,7 +305,7 @@ const setup={
  roadmap(){$("#slices").innerHTML=SLICES.map(s=>`<div class="slice"><div class="n">S${s[0]}</div><div><h3>${esc(s[1])}</h3><p style="margin-top:4px">${esc(s[2])}</p></div></div>`).join("")},
  decisions(){$("#dtable").innerHTML=DECISIONS.map(d=>`<tr><td class="mono">${d[0]}</td><td>${esc(d[1])}</td><td>${esc(d[2])}</td><td><span class="pill ${d[3]==="evidence"?"good":d[3]==="both"?"low":"medium"}">${d[3]}</span></td></tr>`).join("")}
 };
-const VIEWS=["overview","current","edges","findings","proposed","composition","plans","records","alignment","roadmap","decisions"];
+const VIEWS=["overview","slice1","current","edges","findings","proposed","composition","plans","records","alignment","roadmap","decisions"];
 function show(){const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"overview";$("#main").replaceChildren($(`#t-${v}`).content.cloneNode(true));setup[v]?.();document.querySelectorAll("nav a").forEach(a=>{a.setAttribute("aria-current",String(a.getAttribute("href")===`#${v}`))});}
 addEventListener("hashchange",show);show();
 </script>

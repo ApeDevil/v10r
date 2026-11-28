@@ -1,10 +1,10 @@
 ---
-title: "MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)"
+title: "MCP protocol evolution"
 description: "One endpoint serves both MCP generations — the 2025 initialize handshake and the stateless 2026-07-28 per-request _meta protocol — through the official…"
 category: "Architecture & Request Pipeline"
 ---
 
-# MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)
+# MCP protocol evolution
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -67,7 +67,7 @@ One endpoint serves both MCP generations — the 2025 initialize handshake and t
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](/docs/pattern-library/multi-client-core)
+- [Multi-client core](/docs/pattern-library/multi-client-core)
 
 ---
 

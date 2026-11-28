@@ -1,4 +1,4 @@
-# Deadline propagation (one budget, divided)
+# Deadline propagation
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 A latency budget stamped once at the edge, from which every downstream operation takes what is LEFT rather than a fresh window of its own — so the request has a stated bound instead of the sum of independently-chosen timeouts.
 
 **When to use:** Use when a request or job calls external APIs, AI providers, distributed services, several databases in sequence, or anything that retries.
+
+**Needs:** conditional key-value-store (when breaker state must be shared across instances; via resilience-policy) · v10r's implementation uses relational-db
 
 ## Avoid when
 
@@ -54,7 +56,7 @@ A latency budget stamped once at the edge, from which every downstream operation
 
 ## Depends on
 
-- [Resilience policy (breaker, bulkhead, shedding, bounded retry)](resilience-policy.md)
+- [Resilience policy](resilience-policy.md)
 
 ---
 

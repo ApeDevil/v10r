@@ -1,10 +1,10 @@
 ---
-title: "Deployment (Vercel serverless, container target planned)"
+title: "Deployment"
 description: "Covers the deployment setup — Vercel Node.js serverless is the one wired target (adapter-vercel hardcoded); a Bun container target (Koyeb) is a planned…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Deployment (Vercel serverless, container target planned)
+# Deployment
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

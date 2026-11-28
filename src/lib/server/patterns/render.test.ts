@@ -25,7 +25,7 @@ function makePattern(overrides: Partial<PatternRecord>): PatternRecord {
 		when_to_use: 'When testing.',
 		avoid_when: [],
 		alternatives: [],
-		requires: [],
+		needs: [],
 		capabilities: [],
 		keywords: ['test'],
 		depends_on: [],
@@ -48,7 +48,7 @@ const DEEP = makePattern({
 	capabilities: ['deep things'],
 	avoid_when: ['the list is short', 'nobody reads it'],
 	alternatives: [{ approach: 'A plain loop', prefer_when: 'n stays under a hundred' }],
-	requires: ['postgres'],
+	needs: ['relational-db'],
 	invariants: ['never break'],
 	emulation_notes: ['copy carefully'],
 	code: [{ path: 'src/lib/server/alpha', kind: 'dir' }],
@@ -69,7 +69,7 @@ const LIGHT = makePattern({
 });
 
 const REGISTRY: Registry = {
-	version: '2.0.0',
+	format: 3,
 	groups: [
 		{ id: 'g-one', title: 'Group One' },
 		{ id: 'g-two', title: 'Group Two' },
@@ -176,7 +176,7 @@ describe('renderPatternPage', () => {
 	});
 	it('renders the fitness block before the docs', () => {
 		const page = renderPatternPage(DEEP, REGISTRY, ALL_PUBLISHED);
-		expect(page).toContain('**Requires:** postgres');
+		expect(page).toContain('**Needs:** required relational-db');
 		expect(page).toContain('## Avoid when\n\n- the list is short\n- nobody reads it');
 		expect(page).toContain('- **A plain loop** — prefer when n stays under a hundred');
 		expect(page.indexOf('## Avoid when')).toBeLessThan(page.indexOf('## Docs'));

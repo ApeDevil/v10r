@@ -1,4 +1,4 @@
-# MCP App provider (an interactive View beside a text answer)
+# MCP App provider
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 Serve one read-only MCP tool with a ui:// View through the official ext-apps helpers: a self-contained, network-less HTML View built apart from the app, linked by _meta.ui, with a complete text and structuredContent answer for hosts that render no View. The View reuses the tool's own data and the host's theme; it holds no authority of its own.
 
 **When to use:** Use when a tool's answer is easier to explore than to read, such as a graph or a filterable list, and the hosts in your audience render MCP Apps.
+
+**Needs:** required key-value-store (via architecture-hosted-mcp)
 
 ## Avoid when
 
@@ -50,7 +52,7 @@ Serve one read-only MCP tool with a ui:// View through the official ext-apps hel
 
 ## Depends on
 
-- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-hosted-mcp.md)
+- [Hosted MCP](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-hosted-mcp.md)
 
 ---
 

@@ -1,10 +1,10 @@
 ---
-title: "Full-screen model viewer & customizer (layout reset)"
+title: "Full-screen model viewer and customizer"
 description: "A full-screen model viewer and GLTF customizer (materials, parts, morph targets, presets) that resets the app layout while open."
 category: "3D"
 ---
 
-# Full-screen model viewer & customizer (layout reset)
+# Full-screen model viewer and customizer
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

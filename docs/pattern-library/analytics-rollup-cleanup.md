@@ -16,6 +16,8 @@ Two scheduled jobs aggregate yesterday's events into a daily_page_stats table an
 
 **When to use:** Use this pair as the pattern for turning raw event tables into a trend-friendly daily rollup while keeping storage bounded.
 
+**Needs:** required relational-db, scheduler
+
 ## Docs
 
 - [docs/blueprint/architecture/jobs.md](/docs/blueprint/architecture/jobs) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/architecture/jobs.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/architecture/jobs.md))

@@ -1,4 +1,4 @@
-# Hierarchical cache (local → shared → origin, with key scope enforced)
+# Hierarchical cache
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ A read walks outward from process memory to Redis to the origin. The policy decl
 
 **When to use:** Use when reads substantially outnumber writes, the result is expensive and reused, and bounded staleness is acceptable. Not because a cache exists.
 
-**Requires:** redis
+**Needs:** conditional key-value-store (when more than one instance serves and the shared tier is wanted; one process runs on the memory tier)
 
 ## Avoid when
 

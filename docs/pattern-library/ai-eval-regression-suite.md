@@ -1,10 +1,10 @@
 ---
-title: "AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)"
+title: "AI eval regression suite"
 description: "A committed golden set of questions, each with the facts its recorded turn must show — citations surfaced not recalled, the right tool called, no forbidden…"
 category: "AI"
 ---
 
-# AI eval regression suite (golden set, deterministic graders over the turn trace, floor ratchet)
+# AI eval regression suite
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ A committed golden set of questions, each with the facts its recorded turn must 
 
 **When to use:** Use when prompts, retrieval, tools or models change often and unit tests mock the model, so quality regressions would ship unnoticed.
 
-**Requires:** ai-provider, postgres
+**Needs:** required llm-provider, relational-db (via ai-turn-trace)
 
 ## Avoid when
 
@@ -60,8 +60,8 @@ A committed golden set of questions, each with the facts its recorded turn must 
 
 ## Depends on
 
-- [Turn trace (recorded account of every AI turn) + turn graph](/docs/pattern-library/ai-turn-trace)
-- [Performance budget and ratchet (targets aspire, ceilings hold)](/docs/pattern-library/performance-budget-ratchet)
+- [Turn trace and turn graph](/docs/pattern-library/ai-turn-trace)
+- [Performance budget and ratchet](/docs/pattern-library/performance-budget-ratchet)
 
 ---
 

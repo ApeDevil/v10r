@@ -14,7 +14,7 @@ One shared retrieve() kernel (embed → tiers → RRF fusion) under a single use
 
 **When to use:** Use when a project needs grounded answers over a corpus: start with read-only search plus citation/provenance before adding any mutating tools.
 
-**Requires:** postgres, pgvector, ai-provider
+**Needs:** required relational-db, vector-search, llm-provider · conditional graph-db (when the graph tier answers multi-hop relationship questions)
 
 ## Avoid when
 
@@ -68,7 +68,7 @@ One shared retrieve() kernel (embed → tiers → RRF fusion) under a single use
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](/docs/pattern-library/multi-client-core)
+- [Multi-client core](/docs/pattern-library/multi-client-core)
 
 ---
 

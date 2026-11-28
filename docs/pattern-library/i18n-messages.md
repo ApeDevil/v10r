@@ -1,10 +1,10 @@
 ---
-title: "Messages (Paraglide JS, ICU, compile-time)"
+title: "Translated messages"
 description: "Compile-time translated messages via Paraglide JS v2 using ICU MessageFormat, authored as per-language JSON files that compile to typed functions."
 category: "Internationalization (i18n)"
 ---
 
-# Messages (Paraglide JS, ICU, compile-time)
+# Translated messages
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

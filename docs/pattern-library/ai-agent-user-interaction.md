@@ -1,10 +1,10 @@
 ---
-title: "AG-UI endpoint over the turn stream (experiment)"
+title: "AG-UI endpoint over the turn stream"
 description: "Serves an existing AI SDK agent to AG-UI clients without a second runtime: RunAgentInput is validated by the official schemas and mapped onto the surface's…"
 category: "AI"
 ---
 
-# AG-UI endpoint over the turn stream (experiment)
+# AG-UI endpoint over the turn stream
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Serves an existing AI SDK agent to AG-UI clients without a second runtime: RunAgentInput is validated by the official schemas and mapped onto the surface's own request, the same orchestrator turn runs, and its stream is projected to AG-UI events under a deny-by-default export policy. Client actions are AG-UI frontend tools; server tool results replay only under a server-issued ticket; state and resume are refused, approvals stay on the approve route.
 
 **When to use:** Use when an AG-UI frontend must talk to an existing AI SDK agent.
+
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -44,7 +46,7 @@ Serves an existing AI SDK agent to AG-UI clients without a second runtime: RunAg
 
 ## Depends on
 
-- [Agent actions (one tool catalogue, server and client executors)](/docs/pattern-library/ai-agent-actions)
+- [Agent actions](/docs/pattern-library/ai-agent-actions)
 
 ---
 

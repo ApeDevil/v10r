@@ -1,10 +1,10 @@
 ---
-title: "Toasts (stacking, undo)"
+title: "Toasts"
 description: "Ephemeral, stacking feedback messages (success/error/warning/info) shown in response to user-initiated actions, distinct from the persistent notification…"
 category: "App Shell & Navigation"
 ---
 
-# Toasts (stacking, undo)
+# Toasts
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

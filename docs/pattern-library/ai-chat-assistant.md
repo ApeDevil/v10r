@@ -1,10 +1,10 @@
 ---
-title: "Chat assistant \"Vely\" (orchestrator, streaming)"
+title: "Chat assistant"
 description: "The chat-orchestrator module streams multi-provider LLM responses through Vely, v10r's floating chat assistant, using Vercel AI SDK v6."
 category: "AI"
 ---
 
-# Chat assistant "Vely" (orchestrator, streaming)
+# Chat assistant
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 The chat-orchestrator module streams multi-provider LLM responses through Vely, v10r's floating chat assistant, using Vercel AI SDK v6.
 
 **When to use:** Reach for it when a product needs a streaming, tool-capable chat UI backed by interchangeable LLM providers.
+
+**Needs:** required llm-provider · conditional relational-db (when conversations are kept beyond the page)
 
 ## Docs
 

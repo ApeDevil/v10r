@@ -1,10 +1,10 @@
 ---
-title: "Basic forms (contact · settings)"
+title: "Basic forms"
 description: "Reference contact and settings forms demonstrating the standard Superforms + Valibot schema and server-action wiring for a single-step form."
 category: "Forms & Validation"
 ---
 
-# Basic forms (contact · settings)
+# Basic forms
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

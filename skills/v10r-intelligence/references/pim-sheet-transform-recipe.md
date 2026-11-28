@@ -1,4 +1,4 @@
-# PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)
+# PIM sheet transform with AI agents
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Supplier Excel/CSV product exports become a target's import sheet without the mo
 
 **When to use:** Use when product data (supplier exports, ERP dumps, marketplace templates) arrives as spreadsheets that must be analysed and transformed into a fixed import format, the same kind of file recurs, or the sheet is too large to check by eye.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider
 
 ## Avoid when
 

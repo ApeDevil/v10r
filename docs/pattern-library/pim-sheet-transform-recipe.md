@@ -1,10 +1,10 @@
 ---
-title: "PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)"
+title: "PIM sheet transform with AI agents"
 description: "Supplier Excel/CSV product exports become a target's import sheet without the model touching a row: the agent reads a bounded column profile and proposes a…"
 category: "Office Workflows"
 ---
 
-# PIM sheet transform with AI agents (profile, proposed recipe, deterministic run, target check)
+# PIM sheet transform with AI agents
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Supplier Excel/CSV product exports become a target's import sheet without the mo
 
 **When to use:** Use when product data (supplier exports, ERP dumps, marketplace templates) arrives as spreadsheets that must be analysed and transformed into a fixed import format, the same kind of file recurs, or the sheet is too large to check by eye.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider
 
 ## Avoid when
 

@@ -1,4 +1,4 @@
-# Derivation key (freshness by input fingerprint)
+# Derivation key
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ A derived output stores derivationKey(transform@version, inputs) beside itself a
 
 **When to use:** Use for any stored output derived from inputs through code that evolves: chunks and embeddings, rendered projections, extracted metadata, anything expensive to recompute or read while stale.
 
-**Requires:** postgres
+**Needs:** conditional relational-db (when derived outputs live in a database (the key is stored beside them)) · v10r's implementation uses llm-provider
 
 ## Avoid when
 

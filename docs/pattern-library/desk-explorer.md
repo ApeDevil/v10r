@@ -1,10 +1,10 @@
 ---
-title: "Explorer panel (unified file tree over N sources)"
+title: "Explorer panel"
 description: "One recursive tree over heterogeneous content APIs: adapters normalize every source into an ExplorerNode with a capability set, and the context menu, touch…"
 category: "Desk Workspace"
 ---
 
-# Explorer panel (unified file tree over N sources)
+# Explorer panel
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 One recursive tree over heterogeneous content APIs: adapters normalize every source into an ExplorerNode with a capability set, and the context menu, touch kebab, drag-and-drop, and inline rename/delete are all driven by capabilities — not per-type branching.
 
 **When to use:** Use when a file-browser UI must merge several backends (posts, assets, files) and every row action should be declaratively controlled per item type.
+
+**Needs:** required relational-db (via desk-workspace)
 
 ## Docs
 
@@ -32,7 +34,7 @@ One recursive tree over heterogeneous content APIs: adapters normalize every sou
 
 ## Depends on
 
-- [Desk workspace (dock layout, focus architecture, mobile projection)](/docs/pattern-library/desk-workspace)
+- [Desk workspace](/docs/pattern-library/desk-workspace)
 
 ---
 

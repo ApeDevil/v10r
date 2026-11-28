@@ -18,7 +18,8 @@
 import { jsonSchema, tool } from 'ai';
 import type { Locale } from '#lib/i18n/index.ts';
 import type { SearchResult } from '#lib/search/types.ts';
-import { CATEGORIES, PATTERNS, type PatternRecord } from '#lib/server/patterns/index.ts';
+import { CATEGORIES, PATTERN_BY_ID, PATTERNS, type PatternRecord } from '#lib/server/patterns/index.ts';
+import { adoptionNeeds, needsSummary } from '#patterns/infrastructure-needs.ts';
 import { scorePatterns } from '#patterns/search.ts';
 import type { CatalogSink } from './search-catalog';
 
@@ -48,12 +49,13 @@ function toRow(pattern: PatternRecord) {
 		path: `${PAGES_BASE}/${pattern.id}`,
 		docs: pattern.docs.map((ref) => ref.path),
 		showcases: pattern.showcases.map((ref) => ref.path),
+		// Structural facts are tier-independent: every record states its infrastructure needs.
+		needs: needsSummary(adoptionNeeds(pattern, PATTERN_BY_ID), { condition: true }),
 		// Deep-only depth: at most ~11 records carry these, so the context cost is
 		// bounded — and they are this tool's unique value over plain doc search.
 		...(pattern.tier === 'deep'
 			? {
 					avoid_when: pattern.avoid_when,
-					requires: pattern.requires,
 					invariants: pattern.invariants,
 					emulation_notes: pattern.emulation_notes,
 				}

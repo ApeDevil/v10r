@@ -1,10 +1,10 @@
 ---
-title: "Critical rendering path (the LCP element paints from the document)"
+title: "Critical rendering path"
 description: "What the first viewport needs paints from the server HTML and its render-blocking CSS: no hydration gate on visible content, and a late-discovered LCP graphic…"
 category: "Runtime Velocity"
 ---
 
-# Critical rendering path (the LCP element paints from the document)
+# Critical rendering path
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

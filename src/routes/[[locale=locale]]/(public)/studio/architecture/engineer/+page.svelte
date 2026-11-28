@@ -101,8 +101,8 @@ const hasChanges = $derived(
 			comparison.connections.added,
 			comparison.connections.removed,
 			comparison.connections.changed,
-			comparison.requirements.added,
-			comparison.requirements.removed,
+			comparison.infrastructure_needs.added,
+			comparison.infrastructure_needs.removed,
 		].some((list) => list.length > 0),
 );
 </script>
@@ -242,8 +242,8 @@ const hasChanges = $derived(
 						</tr>
 						<tr>
 							<th scope="row">{m.studio_compare_requirements()}</th>
-							<td>{comparison.baseline.requirements.join(', ') || '—'}</td>
-							<td>{comparison.variant.requirements.join(', ') || '—'}</td>
+							<td>{comparison.baseline.infrastructure_needs.join(', ') || '—'}</td>
+							<td>{comparison.variant.infrastructure_needs.join(', ') || '—'}</td>
 						</tr>
 						<tr>
 							<th scope="row">{m.studio_compare_findings()}</th>
@@ -279,8 +279,8 @@ const hasChanges = $derived(
 					{#each comparison.connections.added as connection}<li>+ {connection.from} → {connection.to} ({connection.protocol})</li>{/each}
 					{#each comparison.connections.removed as connection}<li>− {connection.from} → {connection.to} ({connection.protocol})</li>{/each}
 					{#each comparison.connections.changed as change}<li>~ {change.label}: {change.changes.join('; ')}</li>{/each}
-					{#each comparison.requirements.added as requirement}<li>+ {m.studio_compare_requirement()} {requirement}</li>{/each}
-					{#each comparison.requirements.removed as requirement}<li>− {m.studio_compare_requirement()} {requirement}</li>{/each}
+					{#each comparison.infrastructure_needs.added as need}<li>+ {m.studio_compare_requirement()} {need}</li>{/each}
+					{#each comparison.infrastructure_needs.removed as need}<li>− {m.studio_compare_requirement()} {need}</li>{/each}
 				</ul>
 
 				{#if comparison.findings.introduced.length > 0 || comparison.findings.resolved.length > 0}

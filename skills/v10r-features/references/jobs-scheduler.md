@@ -1,4 +1,4 @@
-# Jobs & scheduling (registry, runner, platform-owned cadence)
+# Jobs and scheduling
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ A slug → {execute, cadence} job registry with a unified runner. The registry o
 
 **When to use:** Use for any recurring or background work — the registry/runner split keeps jobs testable and host-portable.
 
-**Requires:** postgres
+**Needs:** required relational-db, scheduler
 
 ## Avoid when
 
@@ -61,7 +61,7 @@ A slug → {execute, cadence} job registry with a unified runner. The registry o
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md)
+- [Multi-client core](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/multi-client-core.md)
 
 ---
 

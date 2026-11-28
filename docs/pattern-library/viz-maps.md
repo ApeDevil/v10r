@@ -16,6 +16,8 @@ MapLibre GL components for a base map, markers, and GeoJSON choropleth overlays,
 
 **When to use:** Use when a page needs an interactive WebGL map with markers or geographic data overlays.
 
+**Needs:** conditional external-api (when map tiles come from a tile server)
+
 ## Docs
 
 - [docs/stack/capabilities/viz.md](/docs/stack/viz) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/stack/capabilities/viz.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/stack/capabilities/viz.md))

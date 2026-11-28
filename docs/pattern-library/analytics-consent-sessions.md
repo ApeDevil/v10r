@@ -1,10 +1,10 @@
 ---
-title: "Consent-gated sessions (cookieless day-rotating id)"
+title: "Consent-gated sessions"
 description: "Session identification switches between a cookie-based id under the analytics consent tier and a cookieless hash(visitorId + UTC day) id under the necessary…"
 category: "Analytics"
 ---
 
-# Consent-gated sessions (cookieless day-rotating id)
+# Consent-gated sessions
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

@@ -1,10 +1,10 @@
 ---
-title: "Name check (resilient multi-source fan-out)"
+title: "Name check"
 description: "One report from several unreliable upstreams: concurrent per-source deadlines, a breaker, bulkhead and daily quota per source, per-source coverage instead of…"
 category: "External Integrations"
 ---
 
-# Name check (resilient multi-source fan-out)
+# Name check
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ One report from several unreliable upstreams: concurrent per-source deadlines, a
 
 **When to use:** Use when a feature aggregates third-party APIs of uneven reliability and the user needs an honest partial answer — what was found, and where the search could not look — rather than an all-or-nothing one.
 
-**Requires:** postgres, third-party-api
+**Needs:** required external-api · conditional key-value-store (when daily per-source quotas and cached reports are shared across instances), relational-db (when paid sources need stored, encrypted API credentials)
 
 ## Avoid when
 
@@ -70,9 +70,9 @@ One report from several unreliable upstreams: concurrent per-source deadlines, a
 
 ## Depends on
 
-- [Resilience policy (breaker, bulkhead, shedding, bounded retry)](/docs/pattern-library/resilience-policy)
-- [Deadline propagation (one budget, divided)](/docs/pattern-library/deadline-propagation)
-- [Hierarchical cache (local → shared → origin, with key scope enforced)](/docs/pattern-library/hierarchical-cache)
+- [Resilience policy](/docs/pattern-library/resilience-policy)
+- [Deadline propagation](/docs/pattern-library/deadline-propagation)
+- [Hierarchical cache](/docs/pattern-library/hierarchical-cache)
 
 ---
 

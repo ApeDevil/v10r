@@ -1,4 +1,4 @@
-# Source-of-truth gate (one owner, bound copies)
+# Source-of-truth gate
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 Every fact has exactly one owner; every other copy is typed, imported, generated with a --check, or bound by a drift test with a non-empty control — and reading the owner fails closed instead of falling back to a second source.
 
 **When to use:** Use whenever a fact must exist in more than one place — a client mirror of a server enum, a public page that states what a job enforces, a script that runs outside the bundler, two runtimes serving one registry.
+
+**Needs:** v10r's implementation uses relational-db, llm-provider
 
 ## Avoid when
 

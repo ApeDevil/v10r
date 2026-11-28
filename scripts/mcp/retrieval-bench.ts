@@ -29,6 +29,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { handleToolCall, TOOLS, type ToolContext } from '../../mcp/tools.ts';
 import { loadRegistry } from '../../pattern-library/load.ts';
+import { registryDigest } from '../../pattern-library/registry-digest.ts';
 import { scorePatterns } from '../../pattern-library/search.ts';
 import { catalogueScale, compareStrategies, type MeasuredStep, type MeasuredWorkflow } from './interface-strategies.ts';
 
@@ -243,7 +244,7 @@ const variants = [...new Set(workflows.flatMap((workflow) => Object.keys(workflo
 const measuredWorkflows = measureWorkflows(workflows);
 const strategyModel = { estimateTokens, callOverheadTokens: CALL_OVERHEAD_TOKENS };
 const report = {
-	registryVersion: registry.version,
+	registryDigest: registryDigest(registry),
 	patterns: registry.patterns.length,
 	relevance: {
 		dev: relevance(dev.queries),

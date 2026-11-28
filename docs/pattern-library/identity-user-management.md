@@ -16,6 +16,8 @@ User account routes and server-side data access covering profile, settings, noti
 
 **When to use:** Use when building or modifying the account area where users manage their own identity, security factors, and personal data.
 
+**Needs:** required relational-db
+
 ## Docs
 
 - [docs/blueprint/app-shell/user-account.md](/docs/blueprint/app-shell/user-account) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/app-shell/user-account.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/app-shell/user-account.md))

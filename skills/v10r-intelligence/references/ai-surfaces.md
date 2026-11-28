@@ -1,4 +1,4 @@
-# AI surfaces (chatbot vs deskbot split over one guard)
+# AI surfaces
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 **When to use:** Use when one product needs both a safe answer-bot and an acting agent: splitting the surface (not forking the stack) keeps permissions and prompts honest per surface.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider · conditional relational-db (when conversations are kept beyond the page)
 
 ## Avoid when
 
@@ -60,7 +60,7 @@ Two AI surfaces over one shared guard: a read-only, citation-faithful chatbot (V
 
 ## Depends on
 
-- [AI tool manifest & harness split (tool defs, risk metadata, registry)](ai-tool-harness.md)
+- [AI tool manifest and harness split](ai-tool-harness.md)
 
 ---
 

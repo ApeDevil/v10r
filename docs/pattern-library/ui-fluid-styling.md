@@ -1,10 +1,10 @@
 ---
-title: "Fluid responsive styling (UnoCSS, container queries)"
+title: "Fluid responsive styling"
 description: "A UnoCSS-driven mobile-first strategy combining clamp()-based fluid typography/spacing, media-query breakpoints for page layout, and container queries for…"
 category: "UI Components & Design System"
 ---
 
-# Fluid responsive styling (UnoCSS, container queries)
+# Fluid responsive styling
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

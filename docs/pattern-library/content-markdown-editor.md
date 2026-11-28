@@ -1,10 +1,10 @@
 ---
-title: "Markdown editor (CodeMirror, slash commands)"
+title: "Markdown editor"
 description: "A CodeMirror-based source markdown editor with a slash-command palette that auto-inserts custom syntax."
 category: "Content & Blog"
 ---
 
-# Markdown editor (CodeMirror, slash commands)
+# Markdown editor
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

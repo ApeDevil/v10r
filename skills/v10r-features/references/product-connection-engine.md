@@ -1,4 +1,4 @@
-# Product composition engine (typed ports, couplings, conduits)
+# Product composition engine
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -71,7 +71,7 @@ Reusable 3D products with typed connection ports join into an editable assembly:
 
 ## Depends on
 
-- [Threlte integration (SSR-off, code-split model registry)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/3d-threlte-integration.md)
+- [Threlte integration](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/3d-threlte-integration.md)
 
 ---
 

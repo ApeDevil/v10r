@@ -1,10 +1,10 @@
 ---
-title: "Virtualized rendering (windowing maths split from the component)"
+title: "Virtualized rendering"
 description: "A long list costs the size of the viewport instead of the size of the data; the windowing arithmetic lives in a pure module so its edge cases are testable…"
 category: "Interaction Velocity"
 ---
 
-# Virtualized rendering (windowing maths split from the component)
+# Virtualized rendering
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -54,7 +54,7 @@ A long list costs the size of the viewport instead of the size of the data; the 
 
 ## Depends on
 
-- [Component-first UI system (primitives/composites/layout, CVA, tokens)](/docs/pattern-library/ui-component-system)
+- [Component-first UI system](/docs/pattern-library/ui-component-system)
 
 ---
 

@@ -16,6 +16,8 @@ Admin-side systems for recording an audit trail of privileged actions and publis
 
 **When to use:** Use when an admin action needs to be logged or a message needs to be broadcast to users.
 
+**Needs:** required relational-db
+
 ## Docs
 
 - `docs/blueprint/admin/README.md` ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/admin/README.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/admin/README.md))

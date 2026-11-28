@@ -1,10 +1,10 @@
 ---
-title: "Agent-harness audit lens (loop/context/policy/tools)"
+title: "Agent-harness audit lens"
 description: "A conceptual audit lens (not a module) names which slice — loop, context, policy, or tools — owns each agent-harness primitive such as compaction, step caps…"
 category: "AI"
 ---
 
-# Agent-harness audit lens (loop/context/policy/tools)
+# Agent-harness audit lens
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

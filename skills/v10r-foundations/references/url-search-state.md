@@ -1,4 +1,4 @@
-# URL state (one typed spec for search params, navigate vs shallow writes)
+# URL state
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -53,7 +53,7 @@ Search params are read and written through one typed spec shared by loads and co
 
 ## Depends on
 
-- [State management (Svelte 5 runes)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-state-management.md)
+- [State management](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/architecture-state-management.md)
 
 ---
 

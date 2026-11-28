@@ -1,4 +1,4 @@
-# Provenance record (entity, activity, agent — PROV-DM core)
+# Provenance record
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -8,7 +8,7 @@ Where a value came from is recorded with the W3C PROV-DM core only: the entity p
 
 **When to use:** Use when a reader must tell who or what produced a value — AI-drafted vs human-edited fields, published revisions, derived corpora, privileged actions, built binaries.
 
-**Requires:** postgres
+**Needs:** required relational-db · v10r's implementation uses vector-search
 
 ## Avoid when
 
@@ -51,7 +51,7 @@ Where a value came from is recorded with the W3C PROV-DM core only: the entity p
 
 ## Depends on
 
-- [Derivation key (freshness by input fingerprint)](derivation-key.md)
+- [Derivation key](derivation-key.md)
 
 ---
 

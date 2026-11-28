@@ -16,6 +16,8 @@ An authenticated "Your data" page streams cookie state, live request metadata, a
 
 **When to use:** Use when a product needs a self-service transparency/export view satisfying a GDPR Art. 15 access request.
 
+**Needs:** required relational-db · v10r's implementation uses key-value-store
+
 ## Docs
 
 - [docs/stack/capabilities/gdpr.md](/docs/stack/gdpr) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/stack/capabilities/gdpr.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/stack/capabilities/gdpr.md))

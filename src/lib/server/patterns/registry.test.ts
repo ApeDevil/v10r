@@ -3,10 +3,11 @@ import { parseRegistry } from '#patterns/schema.ts';
 import { DEEP_PATTERNS, REGISTRY } from './registry';
 
 /**
- * The fitness fields (`avoid_when`, `alternatives`, `requires`) are what lets a reader rule a
+ * The fitness fields (`avoid_when`, `alternatives`, `needs`) are what lets a reader rule a
  * pattern OUT. They are enforced structurally in `pattern-library/schema.ts`; these cases pin
  * the rules that would otherwise rot silently: a deep card without a contraindication, and a
- * requirement outside the closed vocabulary (which would make the plan-wide union useless).
+ * need outside the closed vocabulary (which would make the plan-wide union useless), and a need
+ * level that does not say what it must (a condition, a reason, a substitutable pin).
  */
 function withPattern(patch: Record<string, unknown>) {
 	const base = DEEP_PATTERNS[0];
@@ -23,9 +24,40 @@ describe('registry fitness fields', () => {
 		expect(errors.some((error) => error.includes('avoid_when: deep records must have at least one entry'))).toBe(true);
 	});
 
-	it('rejects a requirement outside the closed vocabulary', () => {
-		const { errors } = parseRegistry(withPattern({ requires: ['postgres', 'kafka'] }));
-		expect(errors.some((error) => error.includes("requires: 'kafka' is not one of"))).toBe(true);
+	it('rejects a need outside the closed vocabulary', () => {
+		const { errors } = parseRegistry(withPattern({ needs: ['relational-db', 'kafka' as never] }));
+		expect(errors.some((error) => error.includes("needs[1].need: 'kafka' is not one of"))).toBe(true);
+	});
+
+	it('makes each need level state what it must: a condition, a reason, a substitutable pin', () => {
+		const { errors } = parseRegistry(
+			withPattern({
+				needs: [
+					{ need: 'key-value-store', level: 'conditional' },
+					{ need: 'graph-db', level: 'implementation' },
+					{ need: 'relational-db', level: 'required', pinned: 'oracle', why: 'locks' },
+					{ need: 'scheduler', level: 'optional', why: 'nightly', when: 'never' },
+				],
+			}),
+		);
+		expect(errors.some((error) => error.includes('needs[0]: a conditional need states its condition'))).toBe(true);
+		expect(errors.some((error) => error.includes('needs[1]: an implementation need states its reason'))).toBe(true);
+		expect(errors.some((error) => error.includes("needs[2].pinned: must be one of relational-db's technologies"))).toBe(
+			true,
+		);
+		expect(errors.some((error) => error.includes('needs[3]: "when" belongs to conditional needs only'))).toBe(true);
+	});
+
+	it('refuses a need declared twice', () => {
+		const { errors } = parseRegistry(
+			withPattern({ needs: ['relational-db', { need: 'relational-db', level: 'optional', why: 'x' }] }),
+		);
+		expect(errors.some((error) => error.includes("'relational-db' is declared twice"))).toBe(true);
+	});
+
+	it('refuses a registry format this reader does not understand', () => {
+		const { errors } = parseRegistry({ ...REGISTRY, format: 2 });
+		expect(errors.some((error) => error.includes('this reader understands registry format 3'))).toBe(true);
 	});
 
 	it('rejects an alternative with no approach', () => {

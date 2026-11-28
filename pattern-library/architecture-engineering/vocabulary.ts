@@ -13,7 +13,7 @@
  *   - deployment unit (the app, a separate service) is what is shipped and scaled together.
  * A `Placement` names the third; `NODE_KINDS[*].deploysAs` names the fourth.
  */
-import type { PatternRequirement } from '../schema.ts';
+import type { InfrastructureNeed } from '../schema.ts';
 
 /** The five initial engineering domains. Order is display order. */
 export const ENGINEERING_DOMAINS = ['execution', 'communication', 'data', 'deployment', 'performance'] as const;
@@ -186,7 +186,7 @@ export const NODE_KINDS = {
 		placements: ['browser-main-thread'],
 		zone: 'client',
 		deploysAs: 'app',
-		requires: [],
+		needs: [],
 		accepts: ['sse', 'websocket', 'http-rest'],
 		patterns: ['multi-client-core', 'architecture-state-management'],
 	},
@@ -195,7 +195,7 @@ export const NODE_KINDS = {
 		placements: ['browser-worker'],
 		zone: 'client',
 		deploysAs: 'app',
-		requires: ['web-worker'],
+		needs: ['web-worker'],
 		accepts: ['post-message'],
 		patterns: ['main-thread-budget'],
 	},
@@ -204,7 +204,7 @@ export const NODE_KINDS = {
 		placements: ['browser-worker', 'browser-main-thread'],
 		zone: 'client',
 		deploysAs: 'app',
-		requires: ['wasm-toolchain'],
+		needs: ['wasm-toolchain'],
 		accepts: ['wasm-call'],
 		patterns: ['architecture-wasm-kernel'],
 	},
@@ -213,7 +213,7 @@ export const NODE_KINDS = {
 		placements: ['server-request', 'server-persistent'],
 		zone: 'application',
 		deploysAs: 'app',
-		requires: [],
+		needs: [],
 		accepts: ['http-rest', 'typed-rpc', 'sse', 'websocket', 'function-call'],
 		patterns: ['multi-client-core', 'architecture-runtime-layers'],
 	},
@@ -222,7 +222,7 @@ export const NODE_KINDS = {
 		placements: ['server-request', 'edge'],
 		zone: 'application',
 		deploysAs: 'app',
-		requires: [],
+		needs: [],
 		accepts: ['http-rest', 'typed-rpc', 'function-call'],
 		patterns: ['architecture-rest-api'],
 	},
@@ -231,7 +231,7 @@ export const NODE_KINDS = {
 		placements: ['background-worker', 'server-persistent'],
 		zone: 'application',
 		deploysAs: 'worker',
-		requires: ['cron'],
+		needs: ['scheduler'],
 		accepts: ['database-outbox', 'message-queue', 'function-call'],
 		patterns: ['jobs-scheduler', 'notifications-router-outbox'],
 	},
@@ -240,7 +240,7 @@ export const NODE_KINDS = {
 		placements: ['separate-service'],
 		zone: 'application',
 		deploysAs: 'service',
-		requires: ['container-host'],
+		needs: ['container-host'],
 		accepts: ['http-rest', 'typed-rpc', 'message-queue'],
 		patterns: ['architecture-external-service'],
 	},
@@ -249,7 +249,7 @@ export const NODE_KINDS = {
 		placements: ['database'],
 		zone: 'data',
 		deploysAs: 'managed',
-		requires: ['postgres'],
+		needs: ['relational-db'],
 		accepts: ['sql', 'database-outbox'],
 		patterns: ['databases-postgres-connection', 'databases-queries-mutations-split'],
 	},
@@ -258,7 +258,7 @@ export const NODE_KINDS = {
 		placements: ['database'],
 		zone: 'data',
 		deploysAs: 'managed',
-		requires: ['neo4j'],
+		needs: ['graph-db'],
 		accepts: ['cypher'],
 		patterns: ['databases-neo4j-connection', 'databases-graph-modeling'],
 	},
@@ -267,7 +267,7 @@ export const NODE_KINDS = {
 		placements: ['managed-service', 'database'],
 		zone: 'data',
 		deploysAs: 'managed',
-		requires: ['redis'],
+		needs: ['key-value-store'],
 		accepts: ['cache-protocol'],
 		patterns: ['databases-cache', 'hierarchical-cache'],
 	},
@@ -276,7 +276,7 @@ export const NODE_KINDS = {
 		placements: ['managed-service'],
 		zone: 'data',
 		deploysAs: 'managed',
-		requires: ['object-storage'],
+		needs: ['object-storage'],
 		accepts: ['object-storage-api', 'http-rest'],
 		patterns: ['databases-object-storage', 'forms-file-uploads'],
 	},
@@ -285,9 +285,9 @@ export const NODE_KINDS = {
 		placements: ['managed-service'],
 		zone: 'third-party',
 		deploysAs: 'managed',
-		requires: ['third-party-api'],
+		needs: ['external-api'],
 		accepts: ['http-rest', 'typed-rpc', 'websocket', 'message-queue'],
-		patterns: ['resilience-policy'],
+		patterns: ['resilience-policy', 'name-check'],
 	},
 } as const satisfies Record<
 	string,
@@ -297,7 +297,8 @@ export const NODE_KINDS = {
 		zone: ZoneKind;
 		/** What gets shipped: `app` = inside the main deployment; `worker`/`service` = an extra unit; `managed` = someone else runs it. */
 		deploysAs: 'app' | 'worker' | 'service' | 'managed';
-		requires: readonly PatternRequirement[];
+		/** Infrastructure this kind of node is (see `INFRASTRUCTURE_NEEDS`); each need is declared by one of `patterns`. */
+		needs: readonly InfrastructureNeed[];
 		/** Protocols this kind can be the *target* of. */
 		accepts: readonly Protocol[];
 		/** Registry patterns that implement this kind in v10r. */

@@ -1,10 +1,10 @@
 ---
-title: "Quick Search / command palette (two-lane FTS)"
+title: "Quick search command palette"
 description: "A universal search combining an instant client-side lane with a debounced server-side full-text-search lane, surfaced via a Cmd+K command palette and a…"
 category: "App Shell & Navigation"
 ---
 
-# Quick Search / command palette (two-lane FTS)
+# Quick search command palette
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A universal search combining an instant client-side lane with a debounced server-side full-text-search lane, surfaced via a Cmd+K command palette and a dedicated /search page.
 
 **When to use:** Reach for it when adding a new searchable surface (page, doc, showcase) or extending the command palette's result grouping.
+
+**Needs:** v10r's implementation uses relational-db
 
 ## Docs
 

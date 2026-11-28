@@ -1,10 +1,10 @@
 ---
-title: "Rust→wasm compute kernel (vendored, plugin-free)"
+title: "WebAssembly compute kernel"
 description: "Rust crate compiled to wasm in an ephemeral container, artifacts vendored into src/lib/wasm/kernel/, loaded via ?url + explicit init with zero Vite plugins…"
 category: "Architecture & Request Pipeline"
 ---
 
-# Rust→wasm compute kernel (vendored, plugin-free)
+# WebAssembly compute kernel
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Rust crate compiled to wasm in an ephemeral container, artifacts vendored into src/lib/wasm/kernel/, loaded via ?url + explicit init with zero Vite plugins, benchmarked honestly against a line-for-line JS twin with a vitest parity gate.
 
 **When to use:** Reach for it when a browser workload is compute-dense over typed data (convolution, physics, hashing) and the data can stay resident in wasm linear memory — and to see why string-heavy or per-call-copy workloads should stay in JS.
+
+**Needs:** required wasm-toolchain · conditional container-host (when the same kernel also runs as a separately deployed evaluation service)
 
 ## Docs
 

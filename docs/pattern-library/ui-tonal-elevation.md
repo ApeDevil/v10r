@@ -1,10 +1,10 @@
 ---
-title: "Tonal (surface) elevation engine"
+title: "Tonal elevation engine"
 description: "A pure, SSR-safe TypeScript engine that computes each surface's relative depth (parent level + 1) via Svelte context and stamps it as a data-elevation…"
 category: "UI Components & Design System"
 ---
 
-# Tonal (surface) elevation engine
+# Tonal elevation engine
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

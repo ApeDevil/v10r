@@ -1,4 +1,4 @@
-# Agentic architecture (one application architecture, optional interoperability doors)
+# Agentic architecture
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 How an application becomes AI-accessible, AI-interactive and AI-adaptive without a second architecture per standard: the tool catalogue, orchestrator, approval gate, untrusted-content boundary and turn trace stay authoritative, and MCP, A2A, AG-UI, A2UI, WebMCP, Agent Skills and OpenTelemetry are adapters that translate into them and never decide. A living matrix grades every technology (upstream, SDK and implementation maturity kept apart) with an adoption decision and a reassessment trigger.
 
 **When to use:** Use when deciding which agentic standards an application should speak, and how, without accumulating runtimes: before adopting a protocol, framework or generative-UI format.
+
+**Needs:** required llm-provider (via ai-agent-actions), relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -54,9 +56,9 @@ How an application becomes AI-accessible, AI-interactive and AI-adaptive without
 
 ## Depends on
 
-- [Agent actions (one tool catalogue, server and client executors)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-agent-actions.md)
-- [Untrusted-content boundary (the lethal trifecta, one rule per leg)](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-untrusted-content-boundary.md)
-- [MCP protocol evolution (official SDK, dual-era serving, conformance lane, evidence-gated adoption)](architecture-mcp-evolution.md)
+- [Agent actions](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-agent-actions.md)
+- [Untrusted-content boundary](https://github.com/ApeDevil/v10r/blob/main/docs/pattern-library/ai-untrusted-content-boundary.md)
+- [MCP protocol evolution](architecture-mcp-evolution.md)
 
 ---
 

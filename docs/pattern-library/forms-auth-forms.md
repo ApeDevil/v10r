@@ -1,10 +1,10 @@
 ---
-title: "Auth forms (Better Auth client, not Superforms)"
+title: "Auth forms"
 description: "Passwordless login (magic link + OTP) and OAuth forms built directly on the Better Auth client instead of Superforms, since Better Auth already handles rate…"
 category: "Forms & Validation"
 ---
 
-# Auth forms (Better Auth client, not Superforms)
+# Auth forms
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

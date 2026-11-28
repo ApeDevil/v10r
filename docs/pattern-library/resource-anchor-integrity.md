@@ -1,10 +1,10 @@
 ---
-title: "Resource anchor integrity (fragments and routing paths resolve)"
+title: "Resource anchor integrity"
 description: "Every #fragment a registry doc ref names must be a heading the page renders, checked through the renderer's own slugger, and every path an agent instruction…"
 category: "Docs & Agent Experience"
 ---
 
-# Resource anchor integrity (fragments and routing paths resolve)
+# Resource anchor integrity
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

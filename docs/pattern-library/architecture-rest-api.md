@@ -1,10 +1,10 @@
 ---
-title: "REST API patterns (pagination, envelopes, rate limits)"
+title: "REST API patterns"
 description: "Defines the file-based +server.ts convention for REST endpoints, covering Valibot validation, error() status codes, pagination, and response envelopes."
 category: "Architecture & Request Pipeline"
 ---
 
-# REST API patterns (pagination, envelopes, rate limits)
+# REST API patterns
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Defines the file-based +server.ts convention for REST endpoints, covering Valibot validation, error() status codes, pagination, and response envelopes.
 
 **When to use:** Reach for it when building a new REST or SSE endpoint under src/routes/api/.
+
+**Needs:** v10r's implementation uses key-value-store
 
 ## Docs
 

@@ -1,10 +1,10 @@
 ---
-title: "Agentic parametric modeling (MCP 3D)"
+title: "Agentic parametric modeling"
 description: "An assistant describes a solid as a typed feature graph — parameters, operations, outputs — never as code; one deterministic Manifold (WASM) engine inside the…"
 category: "3D"
 ---
 
-# Agentic parametric modeling (MCP 3D)
+# Agentic parametric modeling
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 
 **When to use:** Use when an AI assistant should create or modify 3D geometry to view and export — parts, enclosures, procedural forms — and every result must be validated, bounded, reproducible and free of executed code, with no model database.
 
-**Requires:** web-worker
+**Needs:** required relational-db (via architecture-mcp-authorization), key-value-store (via architecture-hosted-mcp), email-delivery (via identity-passwordless-auth) · conditional web-worker (when the app shows the model in the native viewer, where the kernel runs in a Web Worker)
 
 ## Avoid when
 
@@ -76,12 +76,12 @@ An assistant describes a solid as a typed feature graph — parameters, operatio
 
 ## Depends on
 
-- [Asset production pipeline (typed request → checked GLB)](/docs/pattern-library/asset-production-pipeline)
-- [Authenticated MCP services (OAuth 2.1 protected resources on Better Auth)](/docs/pattern-library/architecture-mcp-authorization)
-- [Hosted MCP (four trust surfaces: public · private · admin · admin page)](/docs/pattern-library/architecture-hosted-mcp)
-- [MCP App provider (an interactive View beside a text answer)](/docs/pattern-library/ai-mcp-app-provider)
-- [Rate limiting (sliding window, fail-closed)](/docs/pattern-library/anti-abuse-rate-limiting)
-- [Threlte integration (SSR-off, code-split model registry)](/docs/pattern-library/3d-threlte-integration)
+- [Asset production pipeline](/docs/pattern-library/asset-production-pipeline)
+- [Authenticated MCP services](/docs/pattern-library/architecture-mcp-authorization)
+- [Hosted MCP](/docs/pattern-library/architecture-hosted-mcp)
+- [MCP App provider](/docs/pattern-library/ai-mcp-app-provider)
+- [Rate limiting](/docs/pattern-library/anti-abuse-rate-limiting)
+- [Threlte integration](/docs/pattern-library/3d-threlte-integration)
 
 ---
 

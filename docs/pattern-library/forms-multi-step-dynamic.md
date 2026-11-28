@@ -1,10 +1,10 @@
 ---
-title: "Multi-step & dynamic (wizard · dynamic · dependent)"
+title: "Multi-step and dynamic forms"
 description: "Wizard (per-step schema validation), dynamic array fields, and dependent/cascading field patterns built on top of Superforms."
 category: "Forms & Validation"
 ---
 
-# Multi-step & dynamic (wizard · dynamic · dependent)
+# Multi-step and dynamic forms
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

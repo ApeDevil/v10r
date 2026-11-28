@@ -1,10 +1,10 @@
 ---
-title: "File uploads (withFiles + Sharp + R2)"
+title: "File uploads"
 description: "Server-side file upload handling that processes images with Sharp and persists them to Cloudflare R2, validating file metadata via Valibot rather than the…"
 category: "Forms & Validation"
 ---
 
-# File uploads (withFiles + Sharp + R2)
+# File uploads
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 Server-side file upload handling that processes images with Sharp and persists them to Cloudflare R2, validating file metadata via Valibot rather than the file bytes themselves in-schema.
 
 **When to use:** Use when a form needs to accept file uploads (e.g. images) that are processed and stored server-side.
+
+**Needs:** required object-storage · v10r's implementation uses relational-db
 
 ## Docs
 

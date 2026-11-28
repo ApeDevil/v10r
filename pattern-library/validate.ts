@@ -11,8 +11,11 @@ import { headingAnchors } from '../src/lib/docs/heading-anchors.server.ts';
 import { checkDecisionReferences, parseDecisionCatalog } from './architecture-engineering/decision-record.ts';
 import decisionCatalogJson from './architecture-engineering/decisions.json';
 import { EVIDENCE_LABS } from './architecture-engineering/evidence-labs.ts';
+import { NODE_KINDS } from './architecture-engineering/vocabulary.ts';
+import { scanInfrastructureEvidence } from './infrastructure-evidence.ts';
+import { declaredNeeds } from './infrastructure-needs.ts';
 import { loadRegistry } from './load.ts';
-import { buildById, type RegRef, topoSort } from './schema.ts';
+import { buildById, type RegRef, TITLE_NUMERALS_ALLOWED, topoSort, volatileTitleFacts } from './schema.ts';
 
 const ROOT = process.env.V10R_ROOT ?? resolve(import.meta.dir, '..');
 const SHOWCASE_REGISTRY = 'src/lib/showcases/catalog/registry.ts';
@@ -128,6 +131,50 @@ for (const pattern of registry.patterns) {
 				`${pattern.id}: verifiedAt ${pattern.verifiedAt} is ${Number.isNaN(ageDays) ? 'unparseable' : `${ageDays} days old`} — re-verify the proof surface`,
 			);
 		}
+	}
+}
+
+// Needs evidence: every infrastructure adapter the record's code imports directly must be declared
+// on the record at some level — required, conditional, optional or implementation. Declaring it
+// "implementation" is honest (v10r's reference uses it, the pattern does not); omitting it is not.
+for (const pattern of registry.patterns) {
+	const declared = new Set(declaredNeeds(pattern).map((declaration) => declaration.need));
+	for (const evidence of scanInfrastructureEvidence(ROOT, pattern)) {
+		if (!declared.has(evidence.need)) {
+			errors.push(
+				`${pattern.id}.needs: its code uses ${evidence.need} (${evidence.file} imports '${evidence.signal}') — declare it at the level that is true (required, conditional, optional, or implementation with why), or exempt a survey ref in infrastructure-evidence.ts`,
+			);
+		}
+	}
+}
+
+// Architecture Engineering node kinds speak the same need vocabulary: each need a node kind stands
+// for must be declared by at least one of the patterns said to implement that kind.
+for (const [kind, definition] of Object.entries(NODE_KINDS)) {
+	const patterns = definition.patterns.map((id) => byId.get(id));
+	for (const [index, pattern] of patterns.entries()) {
+		if (!pattern)
+			errors.push(`NODE_KINDS.${kind}.patterns[${index}]: '${definition.patterns[index]}' is not in the registry`);
+	}
+	for (const need of definition.needs) {
+		const declaredBy = patterns.filter(
+			(pattern) => pattern && declaredNeeds(pattern).some((entry) => entry.need === need),
+		);
+		if (declaredBy.length === 0) {
+			errors.push(
+				`NODE_KINDS.${kind}: needs ${need}, but none of its patterns (${definition.patterns.join(', ')}) declares it`,
+			);
+		}
+	}
+}
+
+// Titles name the concept. Counts, versions and other volatile facts belong in the summary or are
+// derived (D-09); the allow-list holds numerals that are part of a concept's name.
+for (const pattern of registry.patterns) {
+	for (const fact of volatileTitleFacts(pattern.title)) {
+		errors.push(
+			`${pattern.id}.title: '${fact}' in "${pattern.title}" is a volatile fact — name the concept, move the fact to the summary (allowed numerals: ${TITLE_NUMERALS_ALLOWED.join(', ')})`,
+		);
 	}
 }
 

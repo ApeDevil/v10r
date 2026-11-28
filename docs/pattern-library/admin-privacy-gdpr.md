@@ -1,10 +1,10 @@
 ---
-title: "GDPR data transparency (view · export · delete)"
+title: "GDPR data transparency"
 description: "A privacy aggregator that collects everything the app knows about a user into one report, backing the view, export, and delete surfaces required by GDPR."
 category: "Admin & Privacy"
 ---
 
-# GDPR data transparency (view · export · delete)
+# GDPR data transparency
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -15,6 +15,8 @@ _Index card — the docs below are the canonical explanation; deep-tier pattern 
 A privacy aggregator that collects everything the app knows about a user into one report, backing the view, export, and delete surfaces required by GDPR.
 
 **When to use:** Use it whenever a new domain stores personal data and must be reflected in access, portability, or erasure requests.
+
+**Needs:** required relational-db · conditional object-storage (when users own stored files (avatars, uploads) that export and erasure must reach), graph-db (when user content is also projected into a graph store that erasure must reach)
 
 ## Docs
 

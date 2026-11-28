@@ -18,6 +18,7 @@ export { buildCatalog, type Catalog, type CatalogCategory, type CatalogGroup, ty
 export {
 	CATEGORIES,
 	DEEP_PATTERNS,
+	PATTERN_BY_ID,
 	PATTERNS,
 	type PatternMaturity,
 	type PatternRecord,

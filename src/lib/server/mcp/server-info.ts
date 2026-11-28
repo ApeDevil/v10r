@@ -5,16 +5,20 @@
  */
 
 import { REGISTRY } from '#lib/server/patterns/index.ts';
+import { registryDigest } from '#patterns/registry-digest.ts';
 import { VERCEL_ENV, VERCEL_GIT_COMMIT_SHA } from '$app/env/private';
 
 /** Mirrors package.json "version". Kept as a constant to avoid bundling package.json here. */
 export const APP_VERSION = '0.0.1';
 
+/** The registry's content identity — which pattern knowledge answered, independent of the deploy. */
+const PATTERN_REGISTRY_DIGEST = registryDigest(REGISTRY);
+
 /** Full deploy identity — the Vercel commit SHA + env. For AUTHENTICATED surfaces only. */
 export function buildInfo() {
 	return {
 		app: APP_VERSION,
-		patternRegistry: REGISTRY.version,
+		patternRegistry: PATTERN_REGISTRY_DIGEST,
 		commit: VERCEL_GIT_COMMIT_SHA || 'local',
 		environment: VERCEL_ENV || 'development',
 	};
@@ -26,5 +30,5 @@ export function buildInfo() {
  * internet-facing surface.
  */
 export function publicBuildInfo() {
-	return { app: APP_VERSION, patternRegistry: REGISTRY.version };
+	return { app: APP_VERSION, patternRegistry: PATTERN_REGISTRY_DIGEST };
 }

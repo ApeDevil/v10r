@@ -8,6 +8,8 @@ Independent operations execute concurrently; sequential waiting requires a real 
 
 **When to use:** Use whenever one request needs several independent resources. Reach for it fourth, after removing the fetch, combining the query, and batching.
 
+**Needs:** v10r's implementation uses relational-db, key-value-store
+
 ## Avoid when
 
 - The second call needs the first one's result — sequential waiting is correct when the dependency is real

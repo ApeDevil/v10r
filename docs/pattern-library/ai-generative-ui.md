@@ -1,10 +1,10 @@
 ---
-title: "Generative UI (A2UI surfaces rendered with the app's own components)"
+title: "Generative UI"
 description: "The model composes interfaces as A2UI v1.0 data from a closed catalog the application defines; a policy and the official validator refuse anything outside it…"
 category: "AI"
 ---
 
-# Generative UI (A2UI surfaces rendered with the app's own components)
+# Generative UI
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ The model composes interfaces as A2UI v1.0 data from a closed catalog the applic
 
 **When to use:** Use when the shape of an answer depends on the question and must be interactive — forms for missing inputs, comparisons, choices, updates to what is on screen.
 
-**Requires:** ai-provider
+**Needs:** required llm-provider, relational-db (via deskbot-approval-gate)
 
 ## Avoid when
 
@@ -66,8 +66,8 @@ The model composes interfaces as A2UI v1.0 data from a closed catalog the applic
 
 ## Depends on
 
-- [Component-first UI system (primitives/composites/layout, CVA, tokens)](/docs/pattern-library/ui-component-system)
-- [Untrusted-content boundary (the lethal trifecta, one rule per leg)](/docs/pattern-library/ai-untrusted-content-boundary)
+- [Component-first UI system](/docs/pattern-library/ui-component-system)
+- [Untrusted-content boundary](/docs/pattern-library/ai-untrusted-content-boundary)
 
 ---
 

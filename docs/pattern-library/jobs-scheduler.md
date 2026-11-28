@@ -1,10 +1,10 @@
 ---
-title: "Jobs & scheduling (registry, runner, platform-owned cadence)"
+title: "Jobs and scheduling"
 description: "A slug → {execute, cadence} job registry with a unified runner. The registry owns what runs and how often it is due (daily | weekly); the platform owns only…"
 category: "Jobs & Scheduling"
 ---
 
-# Jobs & scheduling (registry, runner, platform-owned cadence)
+# Jobs and scheduling
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ A slug → {execute, cadence} job registry with a unified runner. The registry o
 
 **When to use:** Use for any recurring or background work — the registry/runner split keeps jobs testable and host-portable.
 
-**Requires:** postgres
+**Needs:** required relational-db, scheduler
 
 ## Avoid when
 
@@ -67,7 +67,7 @@ A slug → {execute, cadence} job registry with a unified runner. The registry o
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](/docs/pattern-library/multi-client-core)
+- [Multi-client core](/docs/pattern-library/multi-client-core)
 
 ---
 

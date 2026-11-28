@@ -6,6 +6,10 @@ the platform: **high** = an agent or human is led to a wrong or incomplete archi
 surface misinforms or two surfaces disagree; **low** = drift or friction. The recommended resolutions refer to
 the roadmap slices in [roadmap.md](./roadmap.md).
 
+**Resolved in Slice 1** ([slice-1.md](./slice-1.md)): F02, F05, F06, F17, F18, F27 and the edge half of F30
+(the Desk rename waits for the Desk refactor). F21 is resolved for infrastructure needs only; its fitness and
+evidence half stays open.
+
 ## Overview
 
 | ID | Title | Layers | Sev | Status |

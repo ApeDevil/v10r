@@ -1,4 +1,4 @@
-# Side-effect-free component tree (barrels that tree-shake)
+# Side-effect-free component tree
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -45,7 +45,7 @@ Compiled Svelte components run code at module scope, so the bundler keeps every 
 
 ## Depends on
 
-- [Performance budget and ratchet (targets aspire, ceilings hold)](performance-budget-ratchet.md)
+- [Performance budget and ratchet](performance-budget-ratchet.md)
 
 ---
 

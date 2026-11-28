@@ -1,10 +1,10 @@
 ---
-title: "External service runtime (a separately deployed backend behind a typed client)"
+title: "External service runtime"
 description: "A separately deployed service — reference: the Rust/Axum runtime lab, an order-rules engine, in its own OCI container — is reached only through one…"
 category: "Architecture & Request Pipeline"
 ---
 
-# External service runtime (a separately deployed backend behind a typed client)
+# External service runtime
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 
 **When to use:** Use when one responsibility needs its own runtime, release cadence or resource profile — a CPU-heavy engine, a component another product also calls, a language-specific library — and the app must keep working when that process is down.
 
-**Requires:** container-host
+**Needs:** required container-host · conditional key-value-store (when breaker state must be shared across instances; via resilience-policy)
 
 ## Avoid when
 
@@ -111,10 +111,10 @@ A separately deployed service — reference: the Rust/Axum runtime lab, an order
 
 ## Depends on
 
-- [Multi-client core (hexagonal domain modules)](/docs/pattern-library/multi-client-core)
-- [Deadline propagation (one budget, divided)](/docs/pattern-library/deadline-propagation)
-- [Resilience policy (breaker, bulkhead, shedding, bounded retry)](/docs/pattern-library/resilience-policy)
-- [Latency tracing (a v10r span API, Server-Timing as one renderer)](/docs/pattern-library/latency-tracing)
+- [Multi-client core](/docs/pattern-library/multi-client-core)
+- [Deadline propagation](/docs/pattern-library/deadline-propagation)
+- [Resilience policy](/docs/pattern-library/resilience-policy)
+- [Latency tracing](/docs/pattern-library/latency-tracing)
 
 ---
 

@@ -1,4 +1,4 @@
-# Asset rights manifest (owned rights record + gate over shipped files)
+# Asset rights manifest
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -52,7 +52,7 @@ Every third-party file the app ships carries one AssetRights record (author, SPD
 
 ## Depends on
 
-- [Source-of-truth gate (one owner, bound copies)](source-of-truth-gate.md)
+- [Source-of-truth gate](source-of-truth-gate.md)
 
 ---
 

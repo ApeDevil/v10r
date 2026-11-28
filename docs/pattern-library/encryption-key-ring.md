@@ -1,10 +1,10 @@
 ---
-title: "Encryption key ring (envelopes name their key, rotation re-seals)"
+title: "Encryption key ring"
 description: "Stored credentials are AES-256-GCM envelopes that name the key sealing them (a derived key id), opened by a ring of current and previous keys, so rotating…"
 category: "Admin & Privacy"
 ---
 
-# Encryption key ring (envelopes name their key, rotation re-seals)
+# Encryption key ring
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 
@@ -14,7 +14,7 @@ Stored credentials are AES-256-GCM envelopes that name the key sealing them (a d
 
 **When to use:** Use when the app stores third-party credentials or other secrets encrypted under a deployment key that must be rotatable.
 
-**Requires:** postgres, cron
+**Needs:** required relational-db, scheduler
 
 ## Avoid when
 
@@ -59,7 +59,7 @@ Stored credentials are AES-256-GCM envelopes that name the key sealing them (a d
 
 ## Depends on
 
-- [Jobs & scheduling (registry, runner, platform-owned cadence)](/docs/pattern-library/jobs-scheduler)
+- [Jobs and scheduling](/docs/pattern-library/jobs-scheduler)
 
 ---
 

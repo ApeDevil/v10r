@@ -49,7 +49,7 @@ The canonical pattern registry is projected into spec-valid Agent Skills (one pe
 
 ## Depends on
 
-- [Pattern Index (the generated README capability map)](pattern-index.md)
+- [Pattern Index](pattern-index.md)
 
 ---
 

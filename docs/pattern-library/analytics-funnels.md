@@ -16,6 +16,8 @@ Funnel conversion is computed as count(distinct session_id) per step in one grou
 
 **When to use:** Use when measuring step-by-step conversion through a defined sequence of pages or events.
 
+**Needs:** required relational-db
+
 ## Docs
 
 - [docs/blueprint/analytics/activation.md](/docs/blueprint/analytics/activation) ([GitHub](https://github.com/ApeDevil/v10r/blob/main/docs/blueprint/analytics/activation.md) · [GitLab](https://gitlab.com/ApeDevil/v10r/-/blob/main/docs/blueprint/analytics/activation.md))

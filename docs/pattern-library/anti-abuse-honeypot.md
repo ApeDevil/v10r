@@ -1,10 +1,10 @@
 ---
-title: "Honeypot (hidden field + min fill time)"
+title: "Honeypot"
 description: "A no-interaction bot check combining a hidden form field bots tend to fill with a minimum elapsed-time threshold between render and submit."
 category: "Anti-Abuse"
 ---
 
-# Honeypot (hidden field + min fill time)
+# Honeypot
 
 > Generated from `pattern-library/registry.json` — do not edit by hand; change the registry and run `bun run patterns:build`.
 

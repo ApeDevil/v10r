@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
+import { registryDigest } from '#patterns/registry-digest.ts';
 import { splitSkillFile, validateAgentSkillTree } from './agent-skill-spec';
 import { AGENT_SKILLS_DIR, agentSkillNameFor, renderAgentSkills, SELECTION_AGENT_SKILL } from './agent-skills';
 import { REGISTRY } from './registry';
@@ -52,7 +53,7 @@ describe('renderAgentSkills', () => {
 		}
 	});
 
-	it('carries deterministic metadata: registry version, no timestamps', () => {
+	it('carries deterministic metadata: registry digest, no timestamps', () => {
 		for (const [path, content] of generated) {
 			if (!path.endsWith('/SKILL.md')) continue;
 			const parts = splitSkillFile(content);
@@ -60,7 +61,7 @@ describe('renderAgentSkills', () => {
 			expect(frontmatter.license).toBe('MIT');
 			expect(frontmatter.metadata).toEqual({
 				source: 'v10r pattern-library registry',
-				'registry-version': REGISTRY.version,
+				'registry-digest': registryDigest(REGISTRY),
 				generated: 'true',
 			});
 		}

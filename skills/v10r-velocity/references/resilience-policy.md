@@ -1,4 +1,4 @@
-# Resilience policy (breaker, bulkhead, shedding, bounded retry)
+# Resilience policy
 
 > Generated from `pattern-library/registry.json` by `scripts/agent-skills/build.ts` — do not edit; change the registry and run `bun run skills:build`.
 
@@ -7,6 +7,8 @@
 Four separate decisions about an unhealthy dependency — should we call it, how much of the pool may it hold, is this work worth doing under pressure, and is this failure worth repeating — kept apart because none of them substitutes for another.
 
 **When to use:** Use around any dependency that can fail, throttle or slow down: AI providers, Redis, the database, external APIs, object storage.
+
+**Needs:** conditional key-value-store (when breaker state must be shared across instances)
 
 ## Avoid when
 
